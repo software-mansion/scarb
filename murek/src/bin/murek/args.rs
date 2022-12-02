@@ -6,6 +6,7 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
+use murek::metadata::MetadataVersion;
 
 /// Cairo's project manager.
 #[derive(Parser, Clone, Debug)]
@@ -39,8 +40,22 @@ pub enum Command {
     Commands,
     /// Print path to current **Murek.toml** file to standard output.
     ManifestPath,
+    /// Output the resolved dependencies of a package, the concrete used versions including
+    /// overrides, in machine-readable format.
+    Metadata(MetadataArgs),
 
     /// External command (`murek-*` executable).
     #[command(external_subcommand)]
     External(Vec<OsString>),
+}
+
+/// Arguments accepted by the `metadata` command.
+#[derive(Parser, Clone, Debug)]
+pub struct MetadataArgs {
+    // Format version.
+    #[arg(long, value_name = "VERSION")]
+    pub format_version: MetadataVersion,
+    /// Output information only about the workspace members and don't fetch dependencies.
+    #[arg(long)]
+    pub no_deps: bool,
 }

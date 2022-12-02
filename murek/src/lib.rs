@@ -5,6 +5,7 @@
 pub mod core;
 pub mod dirs;
 mod internal;
+pub mod metadata;
 pub mod ops;
 mod resolver;
 mod sources;

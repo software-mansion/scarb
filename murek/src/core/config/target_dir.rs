@@ -9,7 +9,7 @@ use crate::internal::fsx;
 
 pub struct TargetDir {
     // This is deliberately private to enforce usage of profiles.
-    path: PathBuf,
+    pub path: PathBuf,
 }
 
 pub struct ProfileTargetDir {

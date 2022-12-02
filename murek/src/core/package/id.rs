@@ -55,10 +55,7 @@ impl Deref for PackageId {
 }
 
 impl Serialize for PackageId {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         s.collect_str(&format_args!(
             "{} {} ({})",
             self.name,
@@ -69,10 +66,7 @@ impl Serialize for PackageId {
 }
 
 impl<'de> Deserialize<'de> for PackageId {
-    fn deserialize<D>(d: D) -> Result<PackageId, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<PackageId, D::Error> {
         use serde::de::Error;
 
         let string = String::deserialize(d)?;

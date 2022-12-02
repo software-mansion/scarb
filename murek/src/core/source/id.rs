@@ -3,6 +3,7 @@ use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smol_str::SmolStr;
 use url::Url;
 
@@ -204,6 +205,20 @@ impl fmt::Debug for SourceId {
         } else {
             write!(f, "{}", self.to_pretty_url())
         }
+    }
+}
+
+impl Serialize for SourceId {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.collect_str(&self.to_pretty_url())
+    }
+}
+
+impl<'de> Deserialize<'de> for SourceId {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<SourceId, D::Error> {
+        use serde::de::Error;
+        let string = String::deserialize(d)?;
+        SourceId::from_pretty_url(&string).map_err(Error::custom)
     }
 }
 
