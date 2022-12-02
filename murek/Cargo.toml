@@ -1,0 +1,38 @@
+[package]
+name = "murek"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+clap-verbosity-flag.workspace = true
+clap.workspace = true
+compiler.workspace = true
+create-output-dir = { path = "../utils/create-output-dir" }
+directories.workspace = true
+itertools.workspace = true
+once_cell.workspace = true
+semver.workspace = true
+serde.workspace = true
+smol.workspace = true
+smol_str.workspace = true
+thiserror.workspace = true
+toml_edit.workspace = true
+tracing-futures.workspace = true
+tracing-log.workspace = true
+tracing-subscriber.workspace = true
+tracing.workspace = true
+url.workspace = true
+which.workspace = true
+
+[dev-dependencies]
+assert_fs.workspace = true
+indoc.workspace = true
+libc.workspace = true
+predicates.workspace = true
+serde_test.workspace = true
+snapbox.workspace = true
+test-case.workspace = true
