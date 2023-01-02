@@ -14,7 +14,7 @@ fn simple() {
         )
         .unwrap();
     t.child("src/lib.cairo")
-        .write_str(r"func main() -> felt { 42 }")
+        .write_str(r"fn main() -> felt { 42 }")
         .unwrap();
 
     Command::new(cargo_bin!("murek"))

@@ -245,6 +245,244 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfb24e866b15a1af2a1b663f10c6b6b8f397a84aadb828f12e5b289ec23a3a3c"
 
 [[package]]
+name = "cairo-compiler"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cairo-defs",
+ "cairo-diagnostics",
+ "cairo-filesystem",
+ "cairo-lowering",
+ "cairo-parser",
+ "cairo-plugins",
+ "cairo-project",
+ "cairo-semantic",
+ "cairo-sierra",
+ "cairo-sierra-generator",
+ "cairo-syntax",
+ "cairo-utils",
+ "clap",
+ "log",
+ "salsa",
+ "thiserror",
+]
+
+[[package]]
+name = "cairo-debug"
+version = "0.1.0"
+
+[[package]]
+name = "cairo-defs"
+version = "0.1.0"
+dependencies = [
+ "cairo-debug",
+ "cairo-diagnostics",
+ "cairo-filesystem",
+ "cairo-parser",
+ "cairo-syntax",
+ "cairo-utils",
+ "indexmap",
+ "itertools",
+ "salsa",
+ "smol_str",
+ "thiserror",
+]
+
+[[package]]
+name = "cairo-diagnostics"
+version = "0.1.0"
+dependencies = [
+ "cairo-filesystem",
+ "cairo-utils",
+ "itertools",
+ "salsa",
+]
+
+[[package]]
+name = "cairo-filesystem"
+version = "0.1.0"
+dependencies = [
+ "cairo-debug",
+ "cairo-project",
+ "cairo-utils",
+ "path-clean",
+ "salsa",
+ "smol_str",
+]
+
+[[package]]
+name = "cairo-lowering"
+version = "0.1.0"
+dependencies = [
+ "cairo-debug",
+ "cairo-defs",
+ "cairo-diagnostics",
+ "cairo-filesystem",
+ "cairo-parser",
+ "cairo-proc-macros",
+ "cairo-semantic",
+ "cairo-syntax",
+ "cairo-utils",
+ "id-arena",
+ "itertools",
+ "log",
+ "num-bigint",
+ "num-traits",
+ "salsa",
+ "smol_str",
+]
+
+[[package]]
+name = "cairo-parser"
+version = "0.1.0"
+dependencies = [
+ "cairo-diagnostics",
+ "cairo-filesystem",
+ "cairo-syntax",
+ "cairo-syntax-codegen",
+ "cairo-utils",
+ "colored",
+ "itertools",
+ "log",
+ "salsa",
+ "smol_str",
+]
+
+[[package]]
+name = "cairo-plugins"
+version = "0.1.0"
+dependencies = [
+ "cairo-defs",
+ "cairo-diagnostics",
+ "cairo-filesystem",
+ "cairo-parser",
+ "cairo-semantic",
+ "cairo-syntax",
+ "cairo-utils",
+ "indoc",
+ "itertools",
+ "pretty_assertions",
+ "salsa",
+ "smol_str",
+]
+
+[[package]]
+name = "cairo-proc-macros"
+version = "0.1.0"
+dependencies = [
+ "cairo-debug",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "cairo-project"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "smol_str",
+ "thiserror",
+ "toml",
+]
+
+[[package]]
+name = "cairo-semantic"
+version = "0.1.0"
+dependencies = [
+ "cairo-debug",
+ "cairo-defs",
+ "cairo-diagnostics",
+ "cairo-filesystem",
+ "cairo-parser",
+ "cairo-proc-macros",
+ "cairo-syntax",
+ "cairo-utils",
+ "id-arena",
+ "itertools",
+ "num-bigint",
+ "num-traits",
+ "pretty_assertions",
+ "salsa",
+ "smol_str",
+ "unescaper",
+]
+
+[[package]]
+name = "cairo-sierra"
+version = "0.1.0"
+dependencies = [
+ "cairo-utils",
+ "const-fnv1a-hash",
+ "convert_case",
+ "derivative",
+ "itertools",
+ "lalrpop",
+ "lalrpop-util",
+ "num-bigint",
+ "num-traits",
+ "regex",
+ "salsa",
+ "serde",
+ "smol_str",
+ "thiserror",
+]
+
+[[package]]
+name = "cairo-sierra-generator"
+version = "0.1.0"
+dependencies = [
+ "cairo-debug",
+ "cairo-defs",
+ "cairo-diagnostics",
+ "cairo-filesystem",
+ "cairo-lowering",
+ "cairo-parser",
+ "cairo-plugins",
+ "cairo-proc-macros",
+ "cairo-semantic",
+ "cairo-sierra",
+ "cairo-syntax",
+ "cairo-utils",
+ "id-arena",
+ "itertools",
+ "num-bigint",
+ "salsa",
+ "smol_str",
+]
+
+[[package]]
+name = "cairo-syntax"
+version = "0.1.0"
+dependencies = [
+ "cairo-debug",
+ "cairo-filesystem",
+ "cairo-utils",
+ "salsa",
+ "smol_str",
+]
+
+[[package]]
+name = "cairo-syntax-codegen"
+version = "0.1.0"
+dependencies = [
+ "cairo-utils",
+ "genco",
+ "log",
+ "xshell",
+]
+
+[[package]]
+name = "cairo-utils"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "env_logger",
+ "indexmap",
+ "itertools",
+ "log",
+]
+
+[[package]]
 name = "cargo-util"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -390,29 +628,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "compiler"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "db_utils",
- "defs",
- "filesystem",
- "log",
- "lowering",
- "parser",
- "plugins",
- "project",
- "salsa",
- "semantic",
- "sierra",
- "sierra_generator",
- "syntax",
- "thiserror",
- "utils",
-]
-
-[[package]]
 name = "concolor"
 version = "0.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -462,6 +677,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b7bda66e858c683005a53a9a60c69a4aca7eeaa45d124526e389f7aec8e62f38"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "convert_case"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec182b0ca2f35d8fc196cf3404988fd8b8c739a4d270ff118a398feb0cbec1ca"
+dependencies = [
+ "unicode-segmentation",
 ]
 
 [[package]]
@@ -570,46 +794,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "db_utils"
-version = "0.1.0"
-
-[[package]]
-name = "debug"
-version = "0.1.0"
-
-[[package]]
-name = "defs"
-version = "0.1.0"
+name = "derivative"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
 dependencies = [
- "db_utils",
- "debug",
- "diagnostics",
- "filesystem",
- "indexmap",
- "itertools",
- "parser",
- "salsa",
- "smol_str",
- "syntax",
- "thiserror",
- "utils",
-]
-
-[[package]]
-name = "diagnostics"
-version = "0.1.0"
-dependencies = [
- "db_utils",
- "filesystem",
- "itertools",
- "salsa",
-]
-
-[[package]]
-name = "diagnostics_proc_macros"
-version = "0.1.0"
-dependencies = [
- "debug",
+ "proc-macro2",
  "quote",
  "syn",
 ]
@@ -741,18 +931,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a407cfaa3385c4ae6b23e84623d48c2798d06e3e6a1878f7f59f17b3f86499"
 dependencies = [
  "instant",
-]
-
-[[package]]
-name = "filesystem"
-version = "0.1.0"
-dependencies = [
- "db_utils",
- "debug",
- "path-clean",
- "project",
- "salsa",
- "smol_str",
 ]
 
 [[package]]
@@ -1170,29 +1348,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lowering"
-version = "0.1.0"
-dependencies = [
- "db_utils",
- "debug",
- "defs",
- "diagnostics",
- "diagnostics_proc_macros",
- "filesystem",
- "id-arena",
- "itertools",
- "log",
- "num-bigint",
- "num-traits",
- "parser",
- "salsa",
- "semantic",
- "smol_str",
- "syntax",
- "utils",
-]
-
-[[package]]
 name = "matchers"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1223,9 +1378,9 @@ dependencies = [
  "anyhow",
  "assert_fs",
  "async-trait",
+ "cairo-compiler",
  "clap",
  "clap-verbosity-flag",
- "compiler",
  "create-output-dir",
  "directories",
  "indoc",
@@ -1440,23 +1595,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parser"
-version = "0.1.0"
-dependencies = [
- "colored",
- "db_utils",
- "diagnostics",
- "filesystem",
- "itertools",
- "log",
- "salsa",
- "smol_str",
- "syntax",
- "syntax_codegen",
- "utils",
-]
-
-[[package]]
 name = "path-clean"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1524,23 +1662,6 @@ name = "pkg-config"
 version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ac9a59f73473f1b8d852421e59e64809f025994837ef743615c6d0c5b305160"
-
-[[package]]
-name = "plugins"
-version = "0.1.0"
-dependencies = [
- "db_utils",
- "defs",
- "diagnostics",
- "filesystem",
- "indoc",
- "itertools",
- "parser",
- "salsa",
- "smol_str",
- "syntax",
- "utils",
-]
 
 [[package]]
 name = "polling"
@@ -1637,16 +1758,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ea3d908b0e36316caf9e9e2c4625cdde190a7e6f440d794667ed17a1855e725"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "project"
-version = "0.1.0"
-dependencies = [
- "serde",
- "smol_str",
- "thiserror",
- "toml",
 ]
 
 [[package]]
@@ -1802,28 +1913,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8132065adcfd6e02db789d9285a0deb2f3fcb04002865ab67d5fb103533898"
 
 [[package]]
-name = "semantic"
-version = "0.1.0"
-dependencies = [
- "db_utils",
- "debug",
- "defs",
- "diagnostics",
- "diagnostics_proc_macros",
- "filesystem",
- "id-arena",
- "itertools",
- "num-bigint",
- "num-traits",
- "parser",
- "pretty_assertions",
- "salsa",
- "smol_str",
- "syntax",
- "utils",
-]
-
-[[package]]
 name = "semver"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1886,47 +1975,6 @@ name = "shell-escape"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45bb67a18fa91266cc7807181f62f9178a6873bfad7dc788c42e6430db40184f"
-
-[[package]]
-name = "sierra"
-version = "0.1.0"
-dependencies = [
- "const-fnv1a-hash",
- "itertools",
- "lalrpop",
- "lalrpop-util",
- "num-bigint",
- "num-traits",
- "regex",
- "salsa",
- "serde",
- "smol_str",
- "thiserror",
- "utils",
-]
-
-[[package]]
-name = "sierra_generator"
-version = "0.1.0"
-dependencies = [
- "db_utils",
- "debug",
- "defs",
- "diagnostics",
- "diagnostics_proc_macros",
- "filesystem",
- "id-arena",
- "itertools",
- "lowering",
- "num-bigint",
- "parser",
- "salsa",
- "semantic",
- "sierra",
- "smol_str",
- "syntax",
- "utils",
-]
 
 [[package]]
 name = "signal-hook"
@@ -2066,28 +2114,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "syntax"
-version = "0.1.0"
-dependencies = [
- "db_utils",
- "debug",
- "filesystem",
- "salsa",
- "smol_str",
- "utils",
-]
-
-[[package]]
-name = "syntax_codegen"
-version = "0.1.0"
-dependencies = [
- "genco",
- "log",
- "utils",
- "xshell",
 ]
 
 [[package]]
@@ -2320,6 +2346,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "unescaper"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "995483205de764db1185c9461a000fff73fa4b9ee2bbe4c8b4027a94692700fe"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
 name = "unicode-bidi"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2368,17 +2403,6 @@ dependencies = [
  "idna",
  "percent-encoding",
  "serde",
-]
-
-[[package]]
-name = "utils"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "env_logger",
- "indexmap",
- "itertools",
- "log",
 ]
 
 [[package]]

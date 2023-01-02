@@ -14,7 +14,7 @@ assert_fs = { version = "1.0.9", features = ["color-auto"] }
 async-trait = "0.1.59"
 clap = { version = "4.0.26", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.0"
-compiler = { version = "0.1.0", path = "../cairo/crates/compiler" }
+cairo-compiler = { version = "0.1.0", path = "../cairo/crates/cairo-compiler" }
 directories = "4.0.1"
 indoc = "1.0"
 itertools = "0.10.5"

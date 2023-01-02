@@ -15,7 +15,7 @@ fn compile_simple() {
         )
         .unwrap();
     t.child("src/lib.cairo")
-        .write_str(r#"func f() -> felt { 42 }"#)
+        .write_str(r#"fn f() -> felt { 42 }"#)
         .unwrap();
 
     Command::new(cargo_bin!("murek"))
@@ -203,7 +203,7 @@ fn compile_multiple_packages() {
             r#"
             mod sum_two;
 
-            func fib(a: felt, b: felt, n: felt) -> felt {
+            fn fib(a: felt, b: felt, n: felt) -> felt {
                 match n {
                     0 => a,
                     _ => fib(b, sum_two::sum_two(a, b), decrement::decrement(n)),
@@ -214,7 +214,7 @@ fn compile_multiple_packages() {
         .unwrap();
 
     t.child("src/sum_two.cairo")
-        .write_str(r#"func sum_two(a: felt, b: felt) -> felt { a + b }"#)
+        .write_str(r#"fn sum_two(a: felt, b: felt) -> felt { a + b }"#)
         .unwrap();
 
     t.child("decrement/Murek.toml")
@@ -230,7 +230,7 @@ fn compile_multiple_packages() {
     t.child("decrement/src/lib.cairo")
         .write_str(
             r#"
-            func decrement(x: felt) -> felt { x - 1 }
+            fn decrement(x: felt) -> felt { x - 1 }
             "#,
         )
         .unwrap();
@@ -265,7 +265,7 @@ fn compile_with_nested_deps() {
         .unwrap();
 
     t.child("src/lib.cairo")
-        .write_str(r"func f() -> felt { y::f() }")
+        .write_str(r"fn f() -> felt { y::f() }")
         .unwrap();
 
     t.child("y/Murek.toml")
@@ -282,7 +282,7 @@ fn compile_with_nested_deps() {
         .unwrap();
 
     t.child("y/src/lib.cairo")
-        .write_str(r"func f() -> felt { z::f() }")
+        .write_str(r"fn f() -> felt { z::f() }")
         .unwrap();
 
     t.child("z/Murek.toml")
@@ -299,7 +299,7 @@ fn compile_with_nested_deps() {
         .unwrap();
 
     t.child("z/src/lib.cairo")
-        .write_str(r"func f() -> felt { q::f() }")
+        .write_str(r"fn f() -> felt { q::f() }")
         .unwrap();
 
     t.child("q/Murek.toml")
@@ -313,7 +313,7 @@ fn compile_with_nested_deps() {
         .unwrap();
 
     t.child("q/src/lib.cairo")
-        .write_str(r"func f() -> felt { 42 }")
+        .write_str(r"fn f() -> felt { 42 }")
         .unwrap();
 
     Command::new(cargo_bin!("murek"))
