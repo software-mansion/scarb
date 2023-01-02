@@ -29,11 +29,11 @@ impl<'c> Workspace<'c> {
     }
 
     pub fn root(&self) -> &Path {
-        &self.package.root()
+        self.package.root()
     }
 
     pub fn manifest_path(&self) -> &Path {
-        &self.package.manifest_path()
+        self.package.manifest_path()
     }
 
     pub fn target_dir(&self) -> Result<&TargetDir> {
