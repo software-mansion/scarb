@@ -36,8 +36,8 @@ impl<'c> Workspace<'c> {
         self.package.manifest_path()
     }
 
-    pub fn target_dir(&self) -> Result<&TargetDir> {
-        self.config.target_dir()
+    pub fn target_dir(&self) -> &TargetDir {
+        &self.config.target_dir
     }
 
     /// Returns the current package of this workspace.

@@ -75,7 +75,7 @@ impl ProjectMetadata {
         Ok(Self {
             version: MetadataVersionPin::<1>,
             app_exe: ws.config().app_exe().ok().map(Into::into),
-            target_dir: ws.config().target_dir().ok().map(|it| it.path.clone()),
+            target_dir: Some(ws.config().target_dir.as_unchecked().to_path_buf()),
             workspace: WorkspaceMetadata::collect(ws, opts)?,
         })
     }

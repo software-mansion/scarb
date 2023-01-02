@@ -1,8 +1,8 @@
 use std::fs;
 
 use anyhow::Result;
-use cairo_compiler::CompilerConfig;
 use cairo_compiler::project::{ProjectConfig, ProjectConfigContent};
+use cairo_compiler::CompilerConfig;
 
 use crate::core::workspace::Workspace;
 use crate::ops;
@@ -20,9 +20,9 @@ pub fn compile(ws: &Workspace<'_>, on_diagnostic: Box<dyn FnMut(String)>) -> Res
     )?;
 
     fs::write(
-        ws.target_dir()?
-            .profile("release")?
-            .path
+        ws.target_dir()
+            .child("release")
+            .as_existent()?
             .join(format!("{}.sierra", ws.current_package()?.id.name)),
         sierra_program.to_string(),
     )?;

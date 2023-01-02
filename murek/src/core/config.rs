@@ -6,21 +6,20 @@ use once_cell::sync::OnceCell;
 use tracing::trace;
 use which::which_in;
 
-pub use target_dir::*;
-
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::dirs::AppDirs;
+use crate::internal::fsx::{GuardedExistedPathBuf, GuardedExistedPathBufOpts};
 use crate::MUREK_ENV;
 
-mod target_dir;
+pub type TargetDir = GuardedExistedPathBuf<'static>;
 
 #[derive(Debug)]
 pub struct Config {
     pub manifest_path: PathBuf,
     pub dirs: AppDirs,
+    pub target_dir: TargetDir,
 
-    target_dir: OnceCell<TargetDir>,
     app_exe: OnceCell<PathBuf>,
 }
 
@@ -32,10 +31,21 @@ impl Config {
             }
         }
 
+        let target_dir_path = manifest_path
+            .parent()
+            .expect("parent of manifest path must always exist")
+            .join("target");
+        let target_dir = TargetDir::with_options(
+            target_dir_path,
+            GuardedExistedPathBufOpts {
+                is_output_dir: true,
+            },
+        );
+
         Ok(Self {
             manifest_path,
             dirs,
-            target_dir: OnceCell::new(),
+            target_dir,
             app_exe: OnceCell::new(),
         })
     }
@@ -44,14 +54,6 @@ impl Config {
         self.manifest_path
             .parent()
             .expect("parent of manifest path must always exist")
-    }
-
-    /// The `target` output directory to use.
-    ///
-    /// Callers should prefer [`Workspace::target_dir`] instead.
-    pub fn target_dir(&self) -> Result<&TargetDir> {
-        self.target_dir
-            .get_or_try_init(|| TargetDir::init(self.root()))
     }
 
     pub fn app_exe(&self) -> Result<&Path> {
