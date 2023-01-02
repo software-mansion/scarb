@@ -98,6 +98,25 @@ Caused by:
 }
 
 #[test]
+fn compile_with_manifest_not_a_file() {
+    let t = assert_fs::TempDir::new().unwrap();
+    t.child("Murek.toml").create_dir_all().unwrap();
+    Command::new(cargo_bin!("murek"))
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .code(1)
+        .stderr_matches(
+            "\
+Error: failed to read manifest at `[..]/Murek.toml`
+
+Caused by:
+    Is a directory (os error 21)
+",
+        );
+}
+
+#[test]
 fn compile_with_invalid_empty_name() {
     let t = assert_fs::TempDir::new().unwrap();
     t.child("Murek.toml")

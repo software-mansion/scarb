@@ -124,5 +124,32 @@ fn path_override_no_manifest() {
         .stdout_eq(format!("{}\n", manifest.path().display()));
 }
 
-// TODO(mkaput): Test environment variable
-// TODO(mkaput): Test manifest is not a file
+#[test]
+fn path_override_via_env() {
+    let t = assert_fs::TempDir::new().unwrap();
+
+    let subdir = t.child("foobar");
+    subdir.create_dir_all().unwrap();
+
+    let manifest = subdir.child("Murek.toml");
+    manifest
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            "#,
+        )
+        .unwrap();
+
+    Command::new(cargo_bin!("murek"))
+        .env("MUREK_MANIFEST_PATH", manifest.path())
+        .arg("manifest-path")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(format!(
+            "{}\n",
+            fs::canonicalize(manifest.path()).unwrap().display()
+        ));
+}
