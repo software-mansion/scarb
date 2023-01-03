@@ -3,7 +3,7 @@ use std::io::Read;
 use std::net::TcpListener;
 use std::path::Path;
 use std::process::{Child, Stdio};
-use std::{env, fs, io, iter, process};
+use std::{env, io, iter, process};
 
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
@@ -105,6 +105,7 @@ fn ctrl_c(child: &mut Child) {
 
 #[cfg(unix)]
 fn make_executable(path: &Path) {
+    use std::fs;
     use std::os::unix::prelude::*;
     let mut perms = fs::metadata(path).unwrap().permissions();
     perms.set_mode(perms.mode() | 0o700);
@@ -112,4 +113,4 @@ fn make_executable(path: &Path) {
 }
 
 #[cfg(windows)]
-fn make_executable(path: &Path) {}
+fn make_executable(_path: &Path) {}
