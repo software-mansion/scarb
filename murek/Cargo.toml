@@ -14,6 +14,7 @@ clap.workspace = true
 cairo-compiler.workspace = true
 create-output-dir = { path = "../utils/create-output-dir" }
 directories.workspace = true
+dunce.workspace = true
 itertools.workspace = true
 once_cell.workspace = true
 semver.workspace = true
