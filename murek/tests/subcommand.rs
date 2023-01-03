@@ -10,7 +10,12 @@ use assert_fs::TempDir;
 use indoc::formatdoc;
 use snapbox::cmd::{cargo_bin, Command};
 
+// TODO(mkaput): Fix this test.
 #[test]
+#[cfg_attr(
+    not(target_os = "unix"),
+    ignore = "This test should write a Rust code, because currently it only assumes Unix."
+)]
 fn subcommand() {
     let t = assert_fs::TempDir::new().unwrap();
     write_script(
