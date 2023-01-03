@@ -27,7 +27,7 @@ fn project_version_is_bound_to_cairo_version() {
         .as_array_of_tables()
         .unwrap()
         .iter()
-        .find(|t| t["name"].as_value().unwrap().as_str().unwrap() == "cairo-compiler")
+        .find(|t| t["name"].as_value().unwrap().as_str().unwrap() == "cairo-lang-compiler")
         .unwrap()["version"]
         .as_value()
         .unwrap()
