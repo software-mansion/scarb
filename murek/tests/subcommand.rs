@@ -79,7 +79,7 @@ fn ctrl_c_kills_everyone() {
 
 fn write_script(name: &str, script_source: &str, t: &TempDir) {
     let script = t.child(format!("murek-{name}{}", env::consts::EXE_SUFFIX));
-    script.write_str(&script_source).unwrap();
+    script.write_str(script_source).unwrap();
     make_executable(script.path());
 }
 
