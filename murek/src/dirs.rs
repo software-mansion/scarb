@@ -15,7 +15,7 @@ pub struct AppDirs {
 }
 
 impl AppDirs {
-    pub fn default() -> Result<Self> {
+    pub fn std() -> Result<Self> {
         let pd = ProjectDirs::from("co", "starkware", "murek").ok_or_else(|| {
             anyhow!("no valid home directory path could be retrieved from the operating system")
         })?;
