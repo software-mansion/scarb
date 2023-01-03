@@ -1,8 +1,11 @@
 use anyhow::Result;
+
 use murek::core::Config;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(config: &Config) -> Result<()> {
-    println!("{}", config.manifest_path.display());
+    let canonical =
+        dunce::canonicalize(&config.manifest_path).unwrap_or_else(|_| config.manifest_path.clone());
+    println!("{}", canonical.display());
     Ok(())
 }

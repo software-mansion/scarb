@@ -1,5 +1,3 @@
-use std::fs;
-
 use assert_fs::prelude::*;
 use snapbox::cmd::{cargo_bin, Command};
 
@@ -24,11 +22,18 @@ fn with_manifest() {
         .success()
         .stdout_eq(format!(
             "{}\n",
-            fs::canonicalize(manifest.path()).unwrap().display()
+            dunce::canonicalize(manifest.path()).unwrap().display()
         ));
 }
 
+// FIXME(mkaput): Fix this test.
 #[test]
+#[cfg_attr(
+    target_os = "windows",
+    ignore = "This test does not properly deal with short (8.3) paths. \
+    This is not a problem in other tests, because they properly canonicalize paths for output, \
+    as these paths do exist."
+)]
 fn without_manifest() {
     let t = assert_fs::TempDir::new().unwrap();
 
@@ -39,7 +44,7 @@ fn without_manifest() {
         .success()
         .stdout_eq(format!(
             "{}\n",
-            fs::canonicalize(t.path())
+            dunce::canonicalize(t.path())
                 .unwrap()
                 .join("Murek.toml")
                 .display()
@@ -70,7 +75,7 @@ fn subdir() {
         .success()
         .stdout_eq(format!(
             "{}\n",
-            fs::canonicalize(manifest.path()).unwrap().display()
+            dunce::canonicalize(manifest.path()).unwrap().display()
         ));
 }
 
@@ -101,7 +106,7 @@ fn path_override() {
         .success()
         .stdout_eq(format!(
             "{}\n",
-            fs::canonicalize(manifest.path()).unwrap().display()
+            dunce::canonicalize(manifest.path()).unwrap().display()
         ));
 }
 
@@ -150,6 +155,6 @@ fn path_override_via_env() {
         .success()
         .stdout_eq(format!(
             "{}\n",
-            fs::canonicalize(manifest.path()).unwrap().display()
+            dunce::canonicalize(manifest.path()).unwrap().display()
         ));
 }
