@@ -1,3 +1,5 @@
+use std::fs;
+
 use assert_fs::prelude::*;
 use predicates::prelude::*;
 use snapbox::cmd::{cargo_bin, Command};
@@ -54,19 +56,20 @@ fn compile_with_syntax_error() {
 #[test]
 fn compile_without_manifest() {
     let t = assert_fs::TempDir::new().unwrap();
+    let cause = fs::read(t.child("Murek.toml")).unwrap_err();
     Command::new(cargo_bin!("murek"))
         .arg("build")
         .current_dir(&t)
         .assert()
         .code(1)
-        .stderr_matches(
+        .stderr_matches(format!(
             "\
 Error: failed to read manifest at `[..]/Murek.toml`
 
 Caused by:
-    No such file or directory (os error 2)
-",
-        );
+    {cause}
+"
+        ));
 }
 
 #[test]
@@ -82,38 +85,40 @@ fn compile_with_lowercase_murek_toml() {
             "#,
         )
         .unwrap();
+    let cause = fs::read(t.child("Murek.toml")).unwrap_err();
     Command::new(cargo_bin!("murek"))
         .arg("build")
         .current_dir(&t)
         .assert()
         .code(1)
-        .stderr_matches(
+        .stderr_matches(format!(
             "\
 Error: failed to read manifest at `[..]/Murek.toml`
 
 Caused by:
-    No such file or directory (os error 2)
-",
-        );
+    {cause}
+"
+        ));
 }
 
 #[test]
 fn compile_with_manifest_not_a_file() {
     let t = assert_fs::TempDir::new().unwrap();
     t.child("Murek.toml").create_dir_all().unwrap();
+    let cause = fs::read(t.child("Murek.toml")).unwrap_err();
     Command::new(cargo_bin!("murek"))
         .arg("build")
         .current_dir(&t)
         .assert()
         .code(1)
-        .stderr_matches(
+        .stderr_matches(format!(
             "\
 Error: failed to read manifest at `[..]/Murek.toml`
 
 Caused by:
-    Is a directory (os error 21)
-",
-        );
+    {cause}
+"
+        ));
 }
 
 #[test]
