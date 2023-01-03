@@ -160,12 +160,12 @@ fn local_dependencies() {
   },
   "packages": [
     {
-      "id": "q 1.0.0 (path+file://[..])",
+      "id": "q 1.0.0 (path+file://[..]/q/)",
       "name": "q",
       "version": "1.0.0",
       "source": "path+file://[..]",
       "root": "[..]",
-      "manifest_path": "[..]/q/Murek.toml",
+      "manifest_path": "[..]/Murek.toml",
       "dependencies": []
     },
     {
@@ -184,12 +184,12 @@ fn local_dependencies() {
       ]
     },
     {
-      "id": "y 1.0.0 (path+file://[..])",
+      "id": "y 1.0.0 (path+file://[..]/y/)",
       "name": "y",
       "version": "1.0.0",
       "source": "path+file://[..]",
       "root": "[..]",
-      "manifest_path": "[..]/y/Murek.toml",
+      "manifest_path": "[..]/Murek.toml",
       "dependencies": [
         {
           "name": "q",
@@ -204,12 +204,12 @@ fn local_dependencies() {
       ]
     },
     {
-      "id": "z 1.0.0 (path+file://[..])",
+      "id": "z 1.0.0 (path+file://[..]/z/)",
       "name": "z",
       "version": "1.0.0",
       "source": "path+file://[..]",
       "root": "[..]",
-      "manifest_path": "[..]/z/Murek.toml",
+      "manifest_path": "[..]/Murek.toml",
       "dependencies": [
         {
           "name": "q",
