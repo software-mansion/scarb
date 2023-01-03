@@ -1,7 +1,7 @@
+use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::{env, fs};
 
 use anyhow::{bail, Context, Result};
 
@@ -47,6 +47,7 @@ fn find_external_subcommand(cmd: &str, config: &Config) -> Option<PathBuf> {
 
 #[cfg(unix)]
 fn is_executable<P: AsRef<Path>>(path: P) -> bool {
+    use std::fs;
     use std::os::unix::prelude::*;
     fs::metadata(path)
         .map(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
