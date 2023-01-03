@@ -2,10 +2,9 @@
 
 ## Marek
 
-1. `murek metadata`, 1:1 how it's done in Cargo
-2. UI
-3. PubGrub
-4. StarkNet: `[command-dependencies]` and `[[command.provides.build.step.post]]`?
+1. UI
+2. PubGrub
+3. StarkNet: `[command-dependencies]` and `[[command.provides.build.step.post]]`?
 
 ## Free to take
 

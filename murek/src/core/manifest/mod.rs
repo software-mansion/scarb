@@ -27,7 +27,7 @@ pub struct Summary {
 #[derive(Clone, Debug)]
 pub struct ManifestDependency {
     pub name: SmolStr,
-    pub version: VersionReq,
+    pub version_req: VersionReq,
     pub source_id: SourceId,
 }
 
@@ -37,6 +37,6 @@ impl ManifestDependency {
     }
 
     pub fn matches_package_id(&self, package_id: PackageId) -> bool {
-        package_id.name == self.name && self.version.matches(&package_id.version)
+        package_id.name == self.name && self.version_req.matches(&package_id.version)
     }
 }

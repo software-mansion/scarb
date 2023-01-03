@@ -120,7 +120,7 @@ impl DetailedTomlDependency {
     fn to_dependency(&self, name: &str, manifest_path: &Path) -> Result<ManifestDependency> {
         validate_package_name(name, "dependency name")?;
 
-        let version = self.version.to_owned().unwrap_or(VersionReq::STAR);
+        let version_req = self.version.to_owned().unwrap_or(VersionReq::STAR);
 
         if self.branch.is_some() || self.tag.is_some() || self.rev.is_some() {
             if self.git.is_none() {
@@ -178,7 +178,7 @@ impl DetailedTomlDependency {
 
         Ok(ManifestDependency {
             name: name.into(),
-            version,
+            version_req,
             source_id,
         })
     }

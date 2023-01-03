@@ -295,6 +295,7 @@ fn compile_with_nested_deps() {
             version = "1.0.0"
 
             [dependencies]
+            q = { path = "../q" }
             z = { path = "../z" }
             "#,
         )

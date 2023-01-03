@@ -1,3 +1,5 @@
+// NOTE: All collections must have stable sorting in order to provide reproducible outputs!
+
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
@@ -29,20 +31,20 @@ pub struct ProjectMetadata {
     pub app_exe: Option<PathBuf>,
     pub target_dir: Option<PathBuf>,
     pub workspace: WorkspaceMetadata,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct WorkspaceMetadata {
-    pub workspace_root: PathBuf,
-    pub members: Vec<PackageId>,
     pub packages: Vec<PackageMetadata>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct WorkspaceMetadata {
+    pub root: PathBuf,
+    pub members: Vec<PackageId>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PackageMetadata {
+    pub id: PackageId,
     pub name: SmolStr,
     pub version: Version,
-    pub id: PackageId,
     pub source: SourceId,
     pub root: PathBuf,
     pub manifest_path: PathBuf,
@@ -52,8 +54,10 @@ pub struct PackageMetadata {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DependencyMetadata {
     pub name: SmolStr,
-    pub version: VersionReq,
-    pub source_id: SourceId,
+    pub version_req: VersionReq,
+    pub source: SourceId,
+    // TODO(mkaput): Perhaps point to resolved package id here?
+    //   This will make it easier for consumers to navigate the output.
 }
 
 impl Metadata {
@@ -72,58 +76,70 @@ impl Metadata {
 
 impl ProjectMetadata {
     pub fn collect(ws: &Workspace<'_>, opts: &MetadataOptions) -> Result<Self> {
-        Ok(Self {
-            version: MetadataVersionPin::<1>,
-            app_exe: ws.config().app_exe().ok().map(Into::into),
-            target_dir: Some(ws.config().target_dir.as_unchecked().to_path_buf()),
-            workspace: WorkspaceMetadata::collect(ws, opts)?,
-        })
-    }
-}
-
-impl WorkspaceMetadata {
-    pub fn collect(ws: &Workspace<'_>, opts: &MetadataOptions) -> Result<Self> {
-        let packages = if opts.no_deps {
+        let mut packages: Vec<PackageMetadata> = if !opts.no_deps {
             let resolve = resolve_workspace(ws)?;
             resolve
                 .packages
                 .values()
-                .cloned()
                 .map(PackageMetadata::new)
                 .collect()
         } else {
-            ws.members().map(PackageMetadata::new).collect()
+            ws.members().map(|p| PackageMetadata::new(&p)).collect()
         };
 
+        packages.sort_by_key(|p| p.id);
+
         Ok(Self {
-            workspace_root: ws.root().into(),
-            members: ws.members().map(|it| it.id).collect(),
+            version: MetadataVersionPin::<1>,
+            app_exe: ws.config().app_exe().ok().map(Into::into),
+            target_dir: Some(ws.config().target_dir.as_unchecked().to_path_buf()),
+            workspace: WorkspaceMetadata::new(ws)?,
             packages,
         })
     }
 }
 
+impl WorkspaceMetadata {
+    pub fn new(ws: &Workspace<'_>) -> Result<Self> {
+        let mut members: Vec<PackageId> = ws.members().map(|it| it.id).collect();
+        members.sort();
+
+        Ok(Self {
+            root: ws.root().into(),
+            members,
+        })
+    }
+}
+
 impl PackageMetadata {
-    pub fn new(package: Package) -> Self {
+    pub fn new(package: &Package) -> Self {
+        let mut dependencies: Vec<DependencyMetadata> = package
+            .manifest
+            .summary
+            .dependencies
+            .iter()
+            .map(DependencyMetadata::new)
+            .collect();
+        dependencies.sort_by_key(|d| (d.name.clone(), d.source));
+
         Self {
+            id: package.id,
             name: package.id.name.clone(),
             version: package.id.version.clone(),
-            id: package.id,
             source: package.id.source_id,
             root: package.root().to_path_buf(),
             manifest_path: package.manifest_path().to_path_buf(),
-            // TODO(mkaput): Implement this.
-            dependencies: Vec::new(),
+            dependencies,
         }
     }
 }
 
 impl DependencyMetadata {
-    pub fn new(dependency: ManifestDependency) -> Self {
+    pub fn new(dependency: &ManifestDependency) -> Self {
         Self {
-            name: dependency.name,
-            version: dependency.version,
-            source_id: dependency.source_id,
+            name: dependency.name.clone(),
+            version_req: dependency.version_req.clone(),
+            source: dependency.source_id,
         }
     }
 }
