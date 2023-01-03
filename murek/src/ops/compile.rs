@@ -1,8 +1,8 @@
 use std::fs;
 
 use anyhow::Result;
-use cairo_compiler::project::{ProjectConfig, ProjectConfigContent};
-use cairo_compiler::CompilerConfig;
+use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
+use cairo_lang_compiler::CompilerConfig;
 
 use crate::core::workspace::Workspace;
 use crate::ops;
@@ -11,7 +11,7 @@ use crate::ops;
 pub fn compile(ws: &Workspace<'_>, on_diagnostic: Box<dyn FnMut(String)>) -> Result<()> {
     let project_config = build_project_config(ws)?;
 
-    let sierra_program = cairo_compiler::compile(
+    let sierra_program = cairo_lang_compiler::compile(
         project_config,
         CompilerConfig {
             on_diagnostic: Some(on_diagnostic),
