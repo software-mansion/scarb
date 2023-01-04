@@ -9,14 +9,15 @@ rust-version.workspace = true
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
+cairo-lang-compiler.workspace = true
 clap-verbosity-flag.workspace = true
 clap.workspace = true
-cairo-lang-compiler.workspace = true
 create-output-dir = { path = "../utils/create-output-dir" }
 directories.workspace = true
 dunce.workspace = true
 itertools.workspace = true
 once_cell.workspace = true
+pubgrub.workspace = true
 semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
