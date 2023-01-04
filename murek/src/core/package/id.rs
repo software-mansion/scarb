@@ -101,7 +101,7 @@ impl fmt::Display for PackageId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} v{}", self.name, self.version)?;
 
-        if !self.source_id.is_default_registry() {
+        if !self.source_id.is_main_registry() {
             write!(f, " ({})", self.source_id)?;
         }
 
