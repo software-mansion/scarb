@@ -5,7 +5,6 @@ use anyhow::Result;
 use crate::core::package::{Package, PackageId};
 use crate::core::registry::Registry;
 use crate::core::workspace::Workspace;
-use crate::internal::asyncx::AwaitSync;
 use crate::resolver;
 
 pub struct WorkspaceResolution {
@@ -27,10 +26,6 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolution> {
         .collect::<Vec<_>>();
 
     let resolve = resolver::resolve(&members_summaries, &mut registry, ws.config())?;
-
-    let resolved_package_ids = resolve.package_ids().collect::<Vec<_>>();
-    let packages = registry.download(&resolved_package_ids).await_sync()?;
-    let packages = HashMap::from_iter(packages.into_iter().map(|pkg| (pkg.id, pkg)));
-
+    let packages = resolve.download_packages(&mut registry)?;
     Ok(WorkspaceResolution { packages })
 }

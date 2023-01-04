@@ -62,7 +62,7 @@ impl<'c> Registry<'c> {
     }
 
     /// Fetches full packages by their IDs.
-    pub async fn download(&mut self, packages: &[PackageId]) -> Result<Vec<Package>> {
+    pub async fn download_many(&mut self, packages: &[PackageId]) -> Result<Vec<Package>> {
         // TODO(mkaput): Download stuff in parallel using futures::join_iter.
         let mut downloaded = Vec::with_capacity(packages.len());
 

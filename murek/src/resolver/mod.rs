@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 
 use crate::core::package::PackageName;
 use crate::core::registry::Registry;
-use crate::core::{Config, PackageId, Summary};
+use crate::core::{Config, Package, PackageId, Summary};
 use crate::internal::asyncx::AwaitSync;
 
 // TODO(mkaput): Produce lockfile out of this.
@@ -19,6 +19,21 @@ pub struct Resolve {
 impl Resolve {
     pub fn package_ids(&self) -> impl Iterator<Item = PackageId> + '_ {
         self.packages.values().copied()
+    }
+
+    /// Gather [`Package`] instances from this resolver result, by asking the [`Registry`]
+    /// to download resolved packages.
+    ///
+    /// Currently, it is expected that all packages are already downloaded during resolution,
+    /// so the `download` calls in this method should be cheap, but this may change the future.
+    pub fn download_packages(
+        &self,
+        registry: &mut Registry<'_>,
+    ) -> Result<HashMap<PackageId, Package>> {
+        let resolved_package_ids = self.package_ids().collect::<Vec<_>>();
+        let packages = registry.download_many(&resolved_package_ids).await_sync()?;
+        let packages = HashMap::from_iter(packages.into_iter().map(|pkg| (pkg.id, pkg)));
+        Ok(packages)
     }
 }
 
