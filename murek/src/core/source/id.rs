@@ -183,7 +183,7 @@ impl Deref for SourceId {
     }
 }
 
-impl fmt::Display for SourceId {
+impl fmt::Debug for SourceId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_tuple("SourceId")
             .field(&self.url.to_string())
@@ -192,16 +192,11 @@ impl fmt::Display for SourceId {
     }
 }
 
-impl fmt::Debug for SourceId {
+impl fmt::Display for SourceId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.kind == SourceKind::Path {
-            let path = self
-                .url
-                .to_file_path()
-                .expect("expected file:// URL here")
-                .display()
-                .to_string();
-            write!(f, "{path}")
+            let path = self.url.to_file_path().expect("expected file:// URL here");
+            write!(f, "{}", path.display())
         } else {
             write!(f, "{}", self.to_pretty_url())
         }
