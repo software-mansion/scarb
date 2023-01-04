@@ -1,40 +1,22 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use anyhow::{anyhow, Result};
 
-use crate::core::package::PackageName;
-use crate::core::registry::Registry;
-use crate::core::{Config, Package, PackageId, Summary};
-use crate::internal::asyncx::AwaitSync;
+use crate::core::registry::cache::RegistryCache;
+use crate::core::{Config, PackageId, Summary};
+use crate::resolver::pubgrub_dependency_provider::RegistryDependencyProvider;
+use crate::resolver::pubgrub_types::{PubGrubPackage, PubGrubVersion};
+
+mod pubgrub_dependency_provider;
+mod pubgrub_types;
 
 // TODO(mkaput): Produce lockfile out of this.
 /// Represents a fully-resolved package dependency graph.
 ///
 /// Each node in the graph is a package and edges represent dependencies between packages.
 pub struct Resolve {
-    pub packages: HashMap<PackageName, PackageId>,
-    pub summaries: HashMap<PackageId, Summary>,
-}
-
-impl Resolve {
-    pub fn package_ids(&self) -> impl Iterator<Item = PackageId> + '_ {
-        self.packages.values().copied()
-    }
-
-    /// Gather [`Package`] instances from this resolver result, by asking the [`Registry`]
-    /// to download resolved packages.
-    ///
-    /// Currently, it is expected that all packages are already downloaded during resolution,
-    /// so the `download` calls in this method should be cheap, but this may change the future.
-    pub fn download_packages(
-        &self,
-        registry: &mut Registry<'_>,
-    ) -> Result<HashMap<PackageId, Package>> {
-        let resolved_package_ids = self.package_ids().collect::<Vec<_>>();
-        let packages = registry.download_many(&resolved_package_ids).await_sync()?;
-        let packages = HashMap::from_iter(packages.into_iter().map(|pkg| (pkg.id, pkg)));
-        Ok(packages)
-    }
+    pub package_ids: HashSet<PackageId>,
+    pub targets: HashMap<PackageId, HashSet<PackageId>>,
 }
 
 /// Builds the list of all packages required to build the first argument.
@@ -52,44 +34,40 @@ impl Resolve {
 /// * `config` - [`Config`] object.
 pub fn resolve(
     summaries: &[Summary],
-    registry: &mut Registry<'_>,
+    registry: &mut RegistryCache<'_>,
     _config: &Config,
 ) -> Result<Resolve> {
-    let mut packages = HashMap::from_iter(
-        summaries
-            .iter()
-            .map(|s| (s.package_id.name.clone(), s.package_id)),
-    );
-    let mut summaries = HashMap::from_iter(summaries.iter().map(|s| (s.package_id, s.clone())));
+    // TODO(mkaput): Parallelize this, resolve each member in parallel thread,
+    //   synchronizing via RegistryCache.
+    let mut package_ids = HashSet::new();
+    let mut targets = HashMap::new();
+    let dependency_provider = RegistryDependencyProvider::new(registry);
+    for summary in summaries {
+        let pubgrub_package = summary.package_id.into();
+        let pubgrub_version: PubGrubVersion = summary.package_id.into();
+        let solution = pubgrub::solver::resolve::<PubGrubPackage, PubGrubVersion>(
+            &dependency_provider,
+            pubgrub_package,
+            pubgrub_version,
+        )
+        .map_err(|err| {
+            anyhow!(
+                "failed to resolve dependencies for package {}:\n{}",
+                summary.package_id,
+                err
+            )
+        })?;
 
-    // TODO(mkaput): This is very bad, use PubGrub here.
-    let mut queue: Vec<PackageId> = summaries.keys().copied().collect();
-    while !queue.is_empty() {
-        let mut next_queue = Vec::new();
-
-        for package_id in queue {
-            for dep in summaries[&package_id].dependencies.clone() {
-                if packages.contains_key(&dep.name) {
-                    continue;
-                }
-
-                let results = registry.query(&dep).await_sync()?;
-
-                let dep_summary = results
-                    .first()
-                    .ok_or_else(|| anyhow!("cannot find package {}", dep.name))?;
-
-                packages.insert(dep_summary.package_id.name.clone(), dep_summary.package_id);
-                summaries.insert(dep_summary.package_id, dep_summary.clone());
-                next_queue.push(dep_summary.package_id);
-            }
-        }
-
-        queue = next_queue;
+        let unit_package_ids: HashSet<PackageId> = solution
+            .values()
+            .map(|v| v.as_package_id(&summary.package_id.name))
+            .collect();
+        package_ids.extend(unit_package_ids.iter());
+        targets.insert(summary.package_id, unit_package_ids);
     }
 
     Ok(Resolve {
-        packages,
-        summaries,
+        package_ids,
+        targets,
     })
 }
