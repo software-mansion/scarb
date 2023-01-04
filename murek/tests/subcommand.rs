@@ -13,7 +13,7 @@ use snapbox::cmd::{cargo_bin, Command};
 // TODO(mkaput): Fix this test.
 #[test]
 #[cfg_attr(
-    not(target_os = "unix"),
+    not(target_family = "unix"),
     ignore = "This test should write a Rust code, because currently it only assumes Unix."
 )]
 fn subcommand() {
