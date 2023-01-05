@@ -6,10 +6,6 @@ on:
       - main
   pull_request:
 
-env:
-  # Make sure CI fails on all warnings, including Clippy lints.
-  RUSTFLAGS: "-Dwarnings"
-
 jobs:
   test:
     name: test ${{ matrix.name }}
@@ -39,6 +35,9 @@ jobs:
 
   clippy:
     runs-on: ubuntu-latest
+    env:
+      # Make sure CI fails on all warnings, including Clippy lints.
+      RUSTFLAGS: "-Dwarnings"
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
