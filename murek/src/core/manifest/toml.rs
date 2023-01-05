@@ -102,10 +102,7 @@ impl TomlManifest {
         }
 
         Ok(Manifest {
-            summary: Summary {
-                package_id,
-                dependencies,
-            },
+            summary: Summary::new(package_id, dependencies),
         })
     }
 }
