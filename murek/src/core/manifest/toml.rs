@@ -31,16 +31,16 @@ pub struct TomlPackage {
     pub name: SmolStr,
     pub version: Version,
     pub authors: Option<Vec<String>>,
-    pub custom_links: Option<BTreeMap<String, Url>>,
+    pub custom_links: Option<BTreeMap<String, String>>,
     pub custom_metadata: Option<BTreeMap<String, String>>,
     pub description: Option<String>,
-    pub documentation: Option<Url>,
-    pub homepage: Option<Url>,
+    pub documentation: Option<String>,
+    pub homepage: Option<String>,
     pub keywords: Option<Vec<String>>,
     pub license: Option<String>,
     pub license_file: Option<PathBuf>,
     pub readme: Option<PathBuf>,
-    pub repository: Option<Url>,
+    pub repository: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

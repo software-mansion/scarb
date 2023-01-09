@@ -5,7 +5,6 @@ use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::Arc;
-use url::Url;
 
 use crate::core::package::PackageId;
 use crate::core::source::SourceId;
@@ -57,16 +56,16 @@ impl Summary {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ManifestMetadata {
     pub authors: Option<Vec<String>>,
-    pub custom_links: Option<BTreeMap<String, Url>>,
+    pub custom_links: Option<BTreeMap<String, String>>,
     pub custom_metadata: Option<BTreeMap<String, String>>,
     pub description: Option<String>,
-    pub documentation: Option<Url>,
-    pub homepage: Option<Url>,
+    pub documentation: Option<String>,
+    pub homepage: Option<String>,
     pub keywords: Option<Vec<String>>,
     pub license: Option<String>,
     pub license_file: Option<PathBuf>,
     pub readme: Option<PathBuf>,
-    pub repository: Option<Url>,
+    pub repository: Option<String>,
 }
 
 #[derive(Clone, Debug)]
