@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use url::Url;
 
-use crate::core::manifest::{ManifestDependency, Metadata, Summary};
+use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary};
 use crate::core::package::PackageId;
 use crate::core::restricted_names::validate_package_name;
 use crate::core::source::{GitReference, SourceId};
@@ -114,7 +114,7 @@ impl TomlManifest {
 
         Ok(Manifest {
             summary: Summary::new(package_id, dependencies),
-            metadata: Metadata {
+            metadata: ManifestMetadata {
                 authors: package.authors.clone(),
                 custom_links: package.custom_links.clone(),
                 custom_metadata: package.custom_metadata.clone(),
