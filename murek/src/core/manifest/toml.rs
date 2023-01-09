@@ -38,8 +38,8 @@ pub struct TomlPackage {
     pub homepage: Option<String>,
     pub keywords: Option<Vec<String>>,
     pub license: Option<String>,
-    pub license_file: Option<PathBuf>,
-    pub readme: Option<PathBuf>,
+    pub license_file: Option<String>,
+    pub readme: Option<String>,
     pub repository: Option<String>,
 }
 
