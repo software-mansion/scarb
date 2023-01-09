@@ -40,7 +40,18 @@ fn simple() {
       "source": "path+file://[..]",
       "root": "[..]",
       "manifest_path": "[..]/Murek.toml",
-      "dependencies": []
+      "dependencies": [],
+      "authors": null,
+      "custom_links": null,
+      "custom_metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     }
   ]
 }
@@ -166,7 +177,18 @@ fn local_dependencies() {
       "source": "path+file://[..]",
       "root": "[..]",
       "manifest_path": "[..]/Murek.toml",
-      "dependencies": []
+      "dependencies": [],
+      "authors": null,
+      "custom_links": null,
+      "custom_metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     },
     {
       "id": "x 1.0.0 (path+file://[..])",
@@ -181,7 +203,18 @@ fn local_dependencies() {
           "version_req": "*",
           "source": "path+file://[..]/y/"
         }
-      ]
+      ],
+      "authors": null,
+      "custom_links": null,
+      "custom_metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     },
     {
       "id": "y 1.0.0 (path+file://[..]/y/)",
@@ -201,7 +234,18 @@ fn local_dependencies() {
           "version_req": "*",
           "source": "path+file://[..]/z/"
         }
-      ]
+      ],
+      "authors": null,
+      "custom_links": null,
+      "custom_metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     },
     {
       "id": "z 1.0.0 (path+file://[..]/z/)",
@@ -216,7 +260,18 @@ fn local_dependencies() {
           "version_req": "*",
           "source": "path+file://[..]/q/"
         }
-      ]
+      ],
+      "authors": null,
+      "custom_links": null,
+      "custom_metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     }
   ]
 }
@@ -261,7 +316,18 @@ fn no_dep() {
           "version_req": "*",
           "source": "path+file://[..]/y/"
         }
-      ]
+      ],
+      "authors": null,
+      "custom_links": null,
+      "custom_metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     }
   ]
 }

@@ -1,11 +1,13 @@
 // NOTE: All collections must have stable sorting in order to provide reproducible outputs!
 
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+use url::Url;
 
 pub use metadata_version::*;
 
@@ -49,6 +51,17 @@ pub struct PackageMetadata {
     pub root: PathBuf,
     pub manifest_path: PathBuf,
     pub dependencies: Vec<DependencyMetadata>,
+    pub authors: Option<Vec<String>>,
+    pub custom_links: Option<BTreeMap<String, Url>>,
+    pub custom_metadata: Option<BTreeMap<String, String>>,
+    pub description: Option<String>,
+    pub documentation: Option<Url>,
+    pub homepage: Option<Url>,
+    pub keywords: Option<Vec<String>>,
+    pub license: Option<String>,
+    pub license_file: Option<PathBuf>,
+    pub readme: Option<PathBuf>,
+    pub repository: Option<Url>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -130,6 +143,17 @@ impl PackageMetadata {
             root: package.root().to_path_buf(),
             manifest_path: package.manifest_path().to_path_buf(),
             dependencies,
+            authors: package.manifest.metadata.authors.clone(),
+            custom_links: package.manifest.metadata.custom_links.clone(),
+            custom_metadata: package.manifest.metadata.clone().custom_metadata,
+            description: package.manifest.metadata.description.clone(),
+            documentation: package.manifest.metadata.documentation.clone(),
+            homepage: package.manifest.metadata.homepage.clone(),
+            keywords: package.manifest.metadata.keywords.clone(),
+            license: package.manifest.metadata.license.clone(),
+            license_file: package.manifest.metadata.license_file.clone(),
+            readme: package.manifest.metadata.readme.clone(),
+            repository: package.manifest.metadata.repository.clone(),
         }
     }
 }
