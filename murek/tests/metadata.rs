@@ -335,4 +335,95 @@ fn no_dep() {
         );
 }
 
+#[test]
+fn manifest_metadata() {
+    let t = assert_fs::TempDir::new().unwrap();
+    t.child("Murek.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            description = "Some interesting description to read!"
+            authors = ["John Doe <john.doe@swmansion.com>", "Jane Doe <jane.doe@swmansion.com>"]
+            keywords = ["some", "project", "keywords"]
+
+            homepage = "http://www.homepage.com/"
+            documentation = "http://docs.homepage.com/"
+            repository = "http://github.com/johndoe/repo"
+
+            license = "MIT License"
+            license-file = "./license.md"
+            readme = "./readme.md"
+
+            [package.custom-links]
+            hello = "https://world.com/"
+
+            [package.custom-metadata]
+            meta = "data"
+            numeric = "1231"
+            key = "value"
+            "#,
+        )
+        .unwrap();
+
+    Command::new(cargo_bin!("murek"))
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(
+            r#"{
+  "version": 1,
+  "app_exe": "[..]",
+  "target_dir": "[..]/target",
+  "workspace": {
+    "root": "[..]",
+    "members": [
+      "hello 0.1.0 (path+file://[..])"
+    ]
+  },
+  "packages": [
+    {
+      "id": "hello 0.1.0 (path+file://[..])",
+      "name": "hello",
+      "version": "0.1.0",
+      "source": "path+file://[..]",
+      "root": "[..]",
+      "manifest_path": "[..]/Murek.toml",
+      "dependencies": [],
+      "authors": [
+        "John Doe <john.doe@swmansion.com>",
+        "Jane Doe <jane.doe@swmansion.com>"
+      ],
+      "custom_links": {
+        "hello": "https://world.com/"
+      },
+      "custom_metadata": {
+        "key": "value",
+        "meta": "data",
+        "numeric": "1231"
+      },
+      "description": "Some interesting description to read!",
+      "documentation": "http://docs.homepage.com/",
+      "homepage": "http://www.homepage.com/",
+      "keywords": [
+        "some",
+        "project",
+        "keywords"
+      ],
+      "license": "MIT License",
+      "license_file": "./license.md",
+      "readme": "./readme.md",
+      "repository": "http://github.com/johndoe/repo"
+    }
+  ]
+}
+"#,
+        );
+}
+
 // TODO(mkaput): Add tests with workspaces
