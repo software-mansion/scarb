@@ -4,8 +4,8 @@
 
 pub use config::Config;
 pub use manifest::{
-    DetailedTomlDependency, Manifest, ManifestDependency, Summary, TomlDependency, TomlManifest,
-    TomlPackage, MANIFEST_FILE_NAME,
+    DetailedTomlDependency, Manifest, ManifestDependency, Summary, SummaryInner, TomlDependency,
+    TomlManifest, TomlPackage, MANIFEST_FILE_NAME,
 };
 pub use package::{Package, PackageId, PackageIdInner, PackageInner};
 pub use source::{GitReference, SourceId, SourceIdInner, SourceKind};
