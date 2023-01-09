@@ -43,3 +43,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all-targets --all-features -- --no-deps
+
+  rustdoc:
+    runs-on: ubuntu-latest
+    env:
+      # Make sure CI fails on all warnings, including Clippy lints.
+      RUSTDOCFLAGS: "-Dwarnings"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo doc --all-features --no-deps
