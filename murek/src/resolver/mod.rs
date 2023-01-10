@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use anyhow::{anyhow, Result};
 
@@ -7,19 +7,15 @@ use crate::core::registry::cache::RegistryCache;
 use crate::core::{Config, PackageId, Summary};
 use crate::internal::asyncx::AwaitSync;
 
+mod compilation_units;
+
 // TODO(mkaput): Produce lockfile out of this.
 /// Represents a fully-resolved package dependency graph.
 ///
 /// Each node in the graph is a package and edges represent dependencies between packages.
 pub struct Resolve {
-    pub packages: HashMap<PackageName, PackageId>,
-    pub summaries: HashMap<PackageId, Summary>,
-}
-
-impl Resolve {
-    pub fn package_ids(&self) -> impl Iterator<Item = PackageId> + '_ {
-        self.packages.values().copied()
-    }
+    pub package_ids: HashSet<PackageId>,
+    pub compilation_units: HashMap<PackageId, HashSet<PackageId>>,
 }
 
 /// Builds the list of all packages required to build the first argument.
@@ -45,7 +41,10 @@ pub fn resolve(
             .iter()
             .map(|s| (s.package_id.name.clone(), s.package_id)),
     );
-    let mut summaries = HashMap::from_iter(summaries.iter().map(|s| (s.package_id, s.clone())));
+    let mut summaries: HashMap<_, _> = summaries
+        .iter()
+        .map(|s| (s.package_id, s.clone()))
+        .collect();
 
     // TODO(mkaput): This is very bad, use PubGrub here.
     let mut queue: Vec<PackageId> = summaries.keys().copied().collect();
@@ -73,8 +72,46 @@ pub fn resolve(
         queue = next_queue;
     }
 
+    let package_ids = packages.values().copied().collect();
+
+    let compilation_units = compilation_units::collect(
+        summaries
+            .values()
+            .map(|summary| CUNode::new(summary, &packages)),
+    );
+
     Ok(Resolve {
-        packages,
-        summaries,
+        package_ids,
+        compilation_units,
     })
+}
+
+struct CUNode {
+    package_id: PackageId,
+    dependencies: HashSet<PackageId>,
+}
+
+impl CUNode {
+    fn new(summary: &Summary, packages: &HashMap<PackageName, PackageId>) -> Self {
+        Self {
+            package_id: summary.package_id,
+            dependencies: summary
+                .dependencies
+                .iter()
+                .map(|dep| packages[&dep.name])
+                .collect(),
+        }
+    }
+}
+
+impl compilation_units::Node for CUNode {
+    type Id = PackageId;
+
+    fn id(&self) -> Self::Id {
+        self.package_id
+    }
+
+    fn direct_dependencies(&self) -> &HashSet<Self::Id> {
+        &self.dependencies
+    }
 }

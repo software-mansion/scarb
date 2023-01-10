@@ -47,10 +47,10 @@ async fn async_collect_packages_from_resolve_graph(
     resolve: &Resolve,
     registry: &mut RegistryCache<'_>,
 ) -> Result<HashMap<PackageId, Package>> {
-    let mut packages = HashMap::with_capacity(resolve.packages.len());
+    let mut packages = HashMap::with_capacity(resolve.package_ids.len());
     // TODO(mkaput): Parallelize this loop, this is tricky because RegistryCache, Registry
     //   and Source take &mut self.
-    for &package_id in resolve.packages.values() {
+    for &package_id in resolve.package_ids.iter() {
         let package = registry.download(package_id).await?;
         packages.insert(package_id, package);
     }
