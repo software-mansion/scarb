@@ -5,10 +5,10 @@ use anyhow::Result;
 use crate::core::package::{Package, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::Registry;
+use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::internal::asyncx::AwaitSync;
 use crate::resolver;
-pub use crate::resolver::Resolve;
 
 pub struct WorkspaceResolution {
     pub resolve: Resolve,
