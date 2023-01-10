@@ -4,19 +4,11 @@ use anyhow::{anyhow, Result};
 
 use crate::core::package::PackageName;
 use crate::core::registry::cache::RegistryCache;
+use crate::core::resolver::Resolve;
 use crate::core::{Config, PackageId, Summary};
 use crate::internal::asyncx::AwaitSync;
 
 mod compilation_units;
-
-// TODO(mkaput): Produce lockfile out of this.
-/// Represents a fully-resolved package dependency graph.
-///
-/// Each node in the graph is a package and edges represent dependencies between packages.
-pub struct Resolve {
-    pub package_ids: HashSet<PackageId>,
-    pub compilation_units: HashMap<PackageId, HashSet<PackageId>>,
-}
 
 /// Builds the list of all packages required to build the first argument.
 ///
