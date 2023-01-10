@@ -8,6 +8,7 @@ pub use manifest::{
     TomlManifest, TomlPackage, MANIFEST_FILE_NAME,
 };
 pub use package::{Package, PackageId, PackageIdInner, PackageInner};
+pub use resolver::Resolve;
 pub use source::{GitReference, SourceId, SourceIdInner, SourceKind};
 pub use workspace::Workspace;
 
@@ -15,6 +16,7 @@ pub(crate) mod config;
 pub(crate) mod manifest;
 pub(crate) mod package;
 pub(crate) mod registry;
+pub(crate) mod resolver;
 pub(crate) mod restricted_names;
 pub(crate) mod source;
 pub(crate) mod workspace;
