@@ -11,6 +11,8 @@ use crate::core::Workspace;
 use crate::core::{Config, ManifestDependency, Package, PackageId, SourceId, Summary};
 use crate::sources::PathSource;
 
+pub mod cache;
+
 /// Source of information about a group of packages.
 pub struct Registry<'c> {
     config: &'c Config,
@@ -55,23 +57,15 @@ impl<'c> Registry<'c> {
         source_id.load(self.config)
     }
 
-    /// Attempts to find the packages that match a dependency request.
+    /// Attempt to find the packages that match a dependency request.
     pub async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         let source = self.ensure_loaded(dependency.source_id)?;
         source.query(dependency).await
     }
 
-    /// Fetches full packages by their IDs.
-    pub async fn download_many(&mut self, packages: &[PackageId]) -> Result<Vec<Package>> {
-        // TODO(mkaput): Download stuff in parallel using futures::join_iter.
-        let mut downloaded = Vec::with_capacity(packages.len());
-
-        for package_id in packages {
-            let source = self.ensure_loaded(package_id.source_id)?;
-            let package = source.download(*package_id).await?;
-            downloaded.push(package);
-        }
-
-        Ok(downloaded)
+    /// Fetch full package by its ID.
+    pub async fn download(&mut self, package_id: PackageId) -> Result<Package> {
+        let source = self.ensure_loaded(package_id.source_id)?;
+        source.download(package_id).await
     }
 }
