@@ -5,6 +5,7 @@ use anyhow::Result;
 use crate::core::package::{Package, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::Registry;
+use crate::core::registry::source_map::SourceMap;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::internal::asyncx::AwaitSync;
@@ -23,8 +24,8 @@ pub struct WorkspaceResolution {
 )]
 pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolution> {
     async {
-        let registry = Registry::preloaded(ws.members(), ws.config());
-        let mut registry_cache = RegistryCache::new(registry);
+        let source_map = SourceMap::preloaded(ws.members(), ws.config());
+        let mut registry_cache = RegistryCache::new(source_map);
 
         let members_summaries = ws
             .members()
