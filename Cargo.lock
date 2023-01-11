@@ -1377,6 +1377,7 @@ dependencies = [
  "itertools",
  "libc",
  "once_cell",
+ "petgraph",
  "predicates",
  "semver",
  "serde",
