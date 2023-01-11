@@ -43,6 +43,7 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolution> {
     Ok(WorkspaceResolution { resolve, packages })
 }
 
+#[tracing::instrument(level = "trace", skip_all)]
 async fn async_collect_packages_from_resolve_graph(
     resolve: &Resolve,
     registry: &mut RegistryCache<'_>,
