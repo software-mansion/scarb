@@ -15,10 +15,11 @@ jobs:
         include:
           - name: linux x86-64
             os: ubuntu-latest
-          - name: macos x86-64
-            os: macos-latest
-          - name: windows x86-64
-            os: windows-latest
+          # TODO(mkaput): Enable these when we will go open source.
+          # - name: macos x86-64
+          #   os: macos-latest
+          # - name: windows x86-64
+          #   os: windows-latest
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
