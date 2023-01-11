@@ -39,7 +39,9 @@ fn build_project_config(
     member_id: PackageId,
     resolution: &WorkspaceResolution,
 ) -> Result<ProjectConfig> {
-    let crate_roots = resolution.resolve.collect_compilation_unit_of(member_id)
+    let crate_roots = resolution
+        .resolve
+        .collect_compilation_unit_of(member_id)
         .iter()
         .map(|id| {
             let pkg = &resolution.packages[id];
