@@ -1,14 +1,12 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
+use petgraph::graphmap::DiGraphMap;
 
-use crate::core::package::PackageName;
 use crate::core::registry::cache::RegistryCache;
 use crate::core::resolver::Resolve;
 use crate::core::{Config, PackageId, Summary};
 use crate::internal::asyncx::AwaitSync;
-
-mod compilation_units;
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -28,11 +26,14 @@ pub fn resolve(
     registry: &mut RegistryCache<'_>,
     _config: &Config,
 ) -> Result<Resolve> {
-    let mut packages = HashMap::from_iter(
+    let mut graph = DiGraphMap::new();
+
+    let mut packages: HashMap<_, _> = HashMap::from_iter(
         summaries
             .iter()
             .map(|s| (s.package_id.name.clone(), s.package_id)),
     );
+
     let mut summaries: HashMap<_, _> = summaries
         .iter()
         .map(|s| (s.package_id, s.clone()))
@@ -44,6 +45,8 @@ pub fn resolve(
         let mut next_queue = Vec::new();
 
         for package_id in queue {
+            graph.add_node(package_id);
+
             for dep in summaries[&package_id].dependencies.clone() {
                 if packages.contains_key(&dep.name) {
                     continue;
@@ -55,55 +58,17 @@ pub fn resolve(
                     .first()
                     .ok_or_else(|| anyhow!("cannot find package {}", dep.name))?;
 
-                packages.insert(dep_summary.package_id.name.clone(), dep_summary.package_id);
-                summaries.insert(dep_summary.package_id, dep_summary.clone());
-                next_queue.push(dep_summary.package_id);
+                let dep_package_id = dep_summary.package_id;
+
+                graph.add_edge(package_id, dep_package_id, ());
+                packages.insert(dep_package_id.name.clone(), dep_package_id);
+                summaries.insert(dep_package_id, dep_summary.clone());
+                next_queue.push(dep_package_id);
             }
         }
 
         queue = next_queue;
     }
 
-    let package_ids = packages.values().copied().collect();
-
-    let compilation_units = compilation_units::collect(
-        summaries
-            .values()
-            .map(|summary| CUNode::new(summary, &packages)),
-    );
-
-    Ok(Resolve {
-        package_ids,
-        compilation_units,
-    })
-}
-
-struct CUNode {
-    package_id: PackageId,
-    dependencies: HashSet<PackageId>,
-}
-
-impl CUNode {
-    fn new(summary: &Summary, packages: &HashMap<PackageName, PackageId>) -> Self {
-        Self {
-            package_id: summary.package_id,
-            dependencies: summary
-                .dependencies
-                .iter()
-                .map(|dep| packages[&dep.name])
-                .collect(),
-        }
-    }
-}
-
-impl compilation_units::Node for CUNode {
-    type Id = PackageId;
-
-    fn id(&self) -> Self::Id {
-        self.package_id
-    }
-
-    fn direct_dependencies(&self) -> &HashSet<Self::Id> {
-        &self.dependencies
-    }
+    Ok(Resolve { graph })
 }
