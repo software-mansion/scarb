@@ -8,7 +8,7 @@ pub use manifest::{
     TomlManifest, TomlPackage, MANIFEST_FILE_NAME,
 };
 pub use package::{Package, PackageId, PackageIdInner, PackageInner};
-pub use resolver::Resolve;
+pub use resolver::{CompilationUnit, Resolve};
 pub use source::{GitReference, SourceId, SourceIdInner, SourceKind};
 pub use workspace::Workspace;
 
