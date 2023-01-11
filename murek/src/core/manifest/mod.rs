@@ -1,5 +1,7 @@
 use semver::VersionReq;
+use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -17,6 +19,7 @@ pub const MANIFEST_FILE_NAME: &str = "Murek.toml";
 #[derive(Clone, Debug)]
 pub struct Manifest {
     pub summary: Summary,
+    pub metadata: ManifestMetadata,
 }
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
@@ -46,6 +49,23 @@ impl Summary {
             dependencies,
         }))
     }
+}
+
+/// Subset of a [`Manifest`] that contains package metadata.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ManifestMetadata {
+    pub authors: Option<Vec<String>>,
+    pub urls: Option<BTreeMap<String, String>>,
+    #[serde(rename = "metadata")]
+    pub custom_metadata: Option<BTreeMap<String, String>>,
+    pub description: Option<String>,
+    pub documentation: Option<String>,
+    pub homepage: Option<String>,
+    pub keywords: Option<Vec<String>>,
+    pub license: Option<String>,
+    pub license_file: Option<String>,
+    pub readme: Option<String>,
+    pub repository: Option<String>,
 }
 
 #[derive(Clone, Debug)]

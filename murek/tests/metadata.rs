@@ -40,7 +40,18 @@ fn simple() {
       "source": "path+file://[..]",
       "root": "[..]",
       "manifest_path": "[..]/Murek.toml",
-      "dependencies": []
+      "dependencies": [],
+      "authors": null,
+      "urls": null,
+      "metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     }
   ]
 }
@@ -166,7 +177,18 @@ fn local_dependencies() {
       "source": "path+file://[..]",
       "root": "[..]",
       "manifest_path": "[..]/Murek.toml",
-      "dependencies": []
+      "dependencies": [],
+      "authors": null,
+      "urls": null,
+      "metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     },
     {
       "id": "x 1.0.0 (path+file://[..])",
@@ -181,7 +203,18 @@ fn local_dependencies() {
           "version_req": "*",
           "source": "path+file://[..]/y/"
         }
-      ]
+      ],
+      "authors": null,
+      "urls": null,
+      "metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     },
     {
       "id": "y 1.0.0 (path+file://[..]/y/)",
@@ -201,7 +234,18 @@ fn local_dependencies() {
           "version_req": "*",
           "source": "path+file://[..]/z/"
         }
-      ]
+      ],
+      "authors": null,
+      "urls": null,
+      "metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     },
     {
       "id": "z 1.0.0 (path+file://[..]/z/)",
@@ -216,7 +260,18 @@ fn local_dependencies() {
           "version_req": "*",
           "source": "path+file://[..]/q/"
         }
-      ]
+      ],
+      "authors": null,
+      "urls": null,
+      "metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
     }
   ]
 }
@@ -261,7 +316,109 @@ fn no_dep() {
           "version_req": "*",
           "source": "path+file://[..]/y/"
         }
-      ]
+      ],
+      "authors": null,
+      "urls": null,
+      "metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
+    }
+  ]
+}
+"#,
+        );
+}
+
+#[test]
+fn manifest_metadata() {
+    let t = assert_fs::TempDir::new().unwrap();
+    t.child("Murek.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            description = "Some interesting description to read!"
+            authors = ["John Doe <john.doe@swmansion.com>", "Jane Doe <jane.doe@swmansion.com>"]
+            keywords = ["some", "project", "keywords"]
+
+            homepage = "http://www.homepage.com/"
+            documentation = "http://docs.homepage.com/"
+            repository = "http://github.com/johndoe/repo"
+
+            license = "MIT License"
+            license-file = "./license.md"
+            readme = "./readme.md"
+
+            [package.urls]
+            hello = "https://world.com/"
+
+            [package.metadata]
+            meta = "data"
+            numeric = "1231"
+            key = "value"
+            "#,
+        )
+        .unwrap();
+
+    Command::new(cargo_bin!("murek"))
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(
+            r#"{
+  "version": 1,
+  "app_exe": "[..]",
+  "target_dir": "[..]/target",
+  "workspace": {
+    "root": "[..]",
+    "members": [
+      "hello 0.1.0 (path+file://[..])"
+    ]
+  },
+  "packages": [
+    {
+      "id": "hello 0.1.0 (path+file://[..])",
+      "name": "hello",
+      "version": "0.1.0",
+      "source": "path+file://[..]",
+      "root": "[..]",
+      "manifest_path": "[..]/Murek.toml",
+      "dependencies": [],
+      "authors": [
+        "John Doe <john.doe@swmansion.com>",
+        "Jane Doe <jane.doe@swmansion.com>"
+      ],
+      "urls": {
+        "hello": "https://world.com/"
+      },
+      "metadata": {
+        "key": "value",
+        "meta": "data",
+        "numeric": "1231"
+      },
+      "description": "Some interesting description to read!",
+      "documentation": "http://docs.homepage.com/",
+      "homepage": "http://www.homepage.com/",
+      "keywords": [
+        "some",
+        "project",
+        "keywords"
+      ],
+      "license": "MIT License",
+      "license_file": "./license.md",
+      "readme": "./readme.md",
+      "repository": "http://github.com/johndoe/repo"
     }
   ]
 }

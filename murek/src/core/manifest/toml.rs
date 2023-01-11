@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use url::Url;
 
-use crate::core::manifest::{ManifestDependency, Summary};
+use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary};
 use crate::core::package::PackageId;
 use crate::core::restricted_names::validate_package_name;
 use crate::core::source::{GitReference, SourceId};
@@ -30,6 +30,17 @@ pub struct TomlManifest {
 pub struct TomlPackage {
     pub name: SmolStr,
     pub version: Version,
+    pub authors: Option<Vec<String>>,
+    pub urls: Option<BTreeMap<String, String>>,
+    pub description: Option<String>,
+    pub documentation: Option<String>,
+    pub homepage: Option<String>,
+    pub keywords: Option<Vec<String>>,
+    pub license: Option<String>,
+    pub license_file: Option<String>,
+    pub readme: Option<String>,
+    pub repository: Option<String>,
+    pub metadata: Option<BTreeMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -103,6 +114,19 @@ impl TomlManifest {
 
         Ok(Manifest {
             summary: Summary::new(package_id, dependencies),
+            metadata: ManifestMetadata {
+                authors: package.authors.clone(),
+                urls: package.urls.clone(),
+                custom_metadata: package.metadata.clone(),
+                description: package.description.clone(),
+                documentation: package.documentation.clone(),
+                homepage: package.homepage.clone(),
+                keywords: package.keywords.clone(),
+                license: package.license.clone(),
+                license_file: package.license_file.clone(),
+                readme: package.readme.clone(),
+                repository: package.repository.clone(),
+            },
         })
     }
 }

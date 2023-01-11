@@ -9,6 +9,7 @@ use smol_str::SmolStr;
 
 pub use metadata_version::*;
 
+use crate::core::manifest::ManifestMetadata;
 use crate::core::{ManifestDependency, Package, PackageId, SourceId, Workspace};
 use crate::ops::resolve_workspace;
 
@@ -49,6 +50,9 @@ pub struct PackageMetadata {
     pub root: PathBuf,
     pub manifest_path: PathBuf,
     pub dependencies: Vec<DependencyMetadata>,
+
+    #[serde(flatten)]
+    pub manifest_metadata: ManifestMetadata,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -130,6 +134,7 @@ impl PackageMetadata {
             root: package.root().to_path_buf(),
             manifest_path: package.manifest_path().to_path_buf(),
             dependencies,
+            manifest_metadata: package.manifest.metadata.clone(),
         }
     }
 }
