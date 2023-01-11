@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::{anyhow, Result};
 use petgraph::graphmap::DiGraphMap;
 
-use crate::core::registry::cache::RegistryCache;
+use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::{Config, PackageId, Summary};
 
@@ -18,12 +18,14 @@ use crate::core::{Config, PackageId, Summary};
 /// * `registry` - this is the source from which all package summaries are loaded.
 ///     It is expected that this is extensively configured ahead of time and is idempotent with
 ///     our requests to it (aka returns the same results for the same query every time).
+///     It is also advised to implement internal caching, as the resolver may frequently ask
+///     repetitive queries.
 ///
 /// * `config` - [`Config`] object.
 #[tracing::instrument(level = "trace", skip_all)]
 pub async fn resolve(
     summaries: &[Summary],
-    registry: &mut RegistryCache<'_>,
+    registry: &mut dyn Registry,
     _config: &Config,
 ) -> Result<Resolve> {
     let mut graph = DiGraphMap::new();
