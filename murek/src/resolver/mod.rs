@@ -21,6 +21,7 @@ use crate::internal::asyncx::AwaitSync;
 ///     our requests to it (aka returns the same results for the same query every time).
 ///
 /// * `config` - [`Config`] object.
+#[tracing::instrument(level = "trace", skip_all)]
 pub fn resolve(
     summaries: &[Summary],
     registry: &mut RegistryCache<'_>,
