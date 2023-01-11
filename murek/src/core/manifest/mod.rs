@@ -1,11 +1,12 @@
-use semver::VersionReq;
-use smol_str::SmolStr;
 use std::ops::Deref;
 use std::sync::Arc;
 
-use crate::core::package::PackageId;
-use crate::core::source::SourceId;
+use semver::VersionReq;
+
 pub use toml::*;
+
+use crate::core::package::{PackageId, PackageName};
+use crate::core::source::SourceId;
 
 mod toml;
 
@@ -50,7 +51,7 @@ impl Summary {
 
 #[derive(Clone, Debug)]
 pub struct ManifestDependency {
-    pub name: SmolStr,
+    pub name: PackageName,
     pub version_req: VersionReq,
     pub source_id: SourceId,
 }
