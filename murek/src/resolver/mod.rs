@@ -22,7 +22,7 @@ use crate::internal::asyncx::AwaitSync;
 ///
 /// * `config` - [`Config`] object.
 #[tracing::instrument(level = "trace", skip_all)]
-pub fn resolve(
+pub async fn resolve(
     summaries: &[Summary],
     registry: &mut RegistryCache<'_>,
     _config: &Config,
