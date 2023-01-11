@@ -55,7 +55,8 @@ impl Summary {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ManifestMetadata {
     pub authors: Option<Vec<String>>,
-    pub custom_links: Option<BTreeMap<String, String>>,
+    pub urls: Option<BTreeMap<String, String>>,
+    #[serde(rename = "metadata")]
     pub custom_metadata: Option<BTreeMap<String, String>>,
     pub description: Option<String>,
     pub documentation: Option<String>,

@@ -31,8 +31,7 @@ pub struct TomlPackage {
     pub name: SmolStr,
     pub version: Version,
     pub authors: Option<Vec<String>>,
-    pub custom_links: Option<BTreeMap<String, String>>,
-    pub custom_metadata: Option<BTreeMap<String, String>>,
+    pub urls: Option<BTreeMap<String, String>>,
     pub description: Option<String>,
     pub documentation: Option<String>,
     pub homepage: Option<String>,
@@ -41,6 +40,7 @@ pub struct TomlPackage {
     pub license_file: Option<String>,
     pub readme: Option<String>,
     pub repository: Option<String>,
+    pub metadata: Option<BTreeMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -116,8 +116,8 @@ impl TomlManifest {
             summary: Summary::new(package_id, dependencies),
             metadata: ManifestMetadata {
                 authors: package.authors.clone(),
-                custom_links: package.custom_links.clone(),
-                custom_metadata: package.custom_metadata.clone(),
+                urls: package.urls.clone(),
+                custom_metadata: package.metadata.clone(),
                 description: package.description.clone(),
                 documentation: package.documentation.clone(),
                 homepage: package.homepage.clone(),

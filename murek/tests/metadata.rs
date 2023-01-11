@@ -42,8 +42,8 @@ fn simple() {
       "manifest_path": "[..]/Murek.toml",
       "dependencies": [],
       "authors": null,
-      "custom_links": null,
-      "custom_metadata": null,
+      "urls": null,
+      "metadata": null,
       "description": null,
       "documentation": null,
       "homepage": null,
@@ -179,8 +179,8 @@ fn local_dependencies() {
       "manifest_path": "[..]/Murek.toml",
       "dependencies": [],
       "authors": null,
-      "custom_links": null,
-      "custom_metadata": null,
+      "urls": null,
+      "metadata": null,
       "description": null,
       "documentation": null,
       "homepage": null,
@@ -205,8 +205,8 @@ fn local_dependencies() {
         }
       ],
       "authors": null,
-      "custom_links": null,
-      "custom_metadata": null,
+      "urls": null,
+      "metadata": null,
       "description": null,
       "documentation": null,
       "homepage": null,
@@ -236,8 +236,8 @@ fn local_dependencies() {
         }
       ],
       "authors": null,
-      "custom_links": null,
-      "custom_metadata": null,
+      "urls": null,
+      "metadata": null,
       "description": null,
       "documentation": null,
       "homepage": null,
@@ -262,8 +262,8 @@ fn local_dependencies() {
         }
       ],
       "authors": null,
-      "custom_links": null,
-      "custom_metadata": null,
+      "urls": null,
+      "metadata": null,
       "description": null,
       "documentation": null,
       "homepage": null,
@@ -318,8 +318,8 @@ fn no_dep() {
         }
       ],
       "authors": null,
-      "custom_links": null,
-      "custom_metadata": null,
+      "urls": null,
+      "metadata": null,
       "description": null,
       "documentation": null,
       "homepage": null,
@@ -357,10 +357,10 @@ fn manifest_metadata() {
             license-file = "./license.md"
             readme = "./readme.md"
 
-            [package.custom-links]
+            [package.urls]
             hello = "https://world.com/"
 
-            [package.custom-metadata]
+            [package.metadata]
             meta = "data"
             numeric = "1231"
             key = "value"
@@ -399,10 +399,10 @@ fn manifest_metadata() {
         "John Doe <john.doe@swmansion.com>",
         "Jane Doe <jane.doe@swmansion.com>"
       ],
-      "custom_links": {
+      "urls": {
         "hello": "https://world.com/"
       },
-      "custom_metadata": {
+      "metadata": {
         "key": "value",
         "meta": "data",
         "numeric": "1231"

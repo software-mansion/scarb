@@ -52,7 +52,7 @@ pub struct PackageMetadata {
     pub dependencies: Vec<DependencyMetadata>,
 
     #[serde(flatten)]
-    manifest_metadata: ManifestMetadata,
+    pub manifest_metadata: ManifestMetadata,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
