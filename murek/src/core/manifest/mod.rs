@@ -1,13 +1,14 @@
-use semver::VersionReq;
-use serde::{Deserialize, Serialize};
-use smol_str::SmolStr;
 use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::sync::Arc;
 
-use crate::core::package::PackageId;
-use crate::core::source::SourceId;
+use semver::VersionReq;
+use serde::{Deserialize, Serialize};
+
 pub use toml::*;
+
+use crate::core::package::{PackageId, PackageName};
+use crate::core::source::SourceId;
 
 mod toml;
 
@@ -70,7 +71,7 @@ pub struct ManifestMetadata {
 
 #[derive(Clone, Debug)]
 pub struct ManifestDependency {
-    pub name: SmolStr,
+    pub name: PackageName,
     pub version_req: VersionReq,
     pub source_id: SourceId,
 }
