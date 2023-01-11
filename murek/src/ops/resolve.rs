@@ -22,29 +22,32 @@ pub struct WorkspaceResolution {
     fields(root = ws.root().display().to_string())
 )]
 pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolution> {
-    let registry = Registry::preloaded(ws.members(), ws.config());
-    let mut registry_cache = RegistryCache::new(registry);
+    async {
+        let registry = Registry::preloaded(ws.members(), ws.config());
+        let mut registry_cache = RegistryCache::new(registry);
 
-    let members_summaries = ws
-        .members()
-        .map(|pkg| pkg.manifest.summary.clone())
-        .collect::<Vec<_>>();
+        let members_summaries = ws
+            .members()
+            .map(|pkg| pkg.manifest.summary.clone())
+            .collect::<Vec<_>>();
 
-    let resolve = resolver::resolve(&members_summaries, &mut registry_cache, ws.config())?;
+        let resolve =
+            resolver::resolve(&members_summaries, &mut registry_cache, ws.config()).await?;
 
-    // Gather [`Package`] instances from this resolver result, by asking the [`RegistryCache`]
-    // to download resolved packages.
-    //
-    // Currently, it is expected that all packages are already downloaded during resolution,
-    // so the `download` calls in this method should be cheap, but this may change the future.
-    let packages =
-        async_collect_packages_from_resolve_graph(&resolve, &mut registry_cache).await_sync()?;
+        // Gather [`Package`] instances from this resolver result, by asking the [`RegistryCache`]
+        // to download resolved packages.
+        //
+        // Currently, it is expected that all packages are already downloaded during resolution,
+        // so the `download` calls in this method should be cheap, but this may change the future.
+        let packages = collect_packages_from_resolve_graph(&resolve, &mut registry_cache).await?;
 
-    Ok(WorkspaceResolution { resolve, packages })
+        Ok(WorkspaceResolution { resolve, packages })
+    }
+    .await_sync()
 }
 
 #[tracing::instrument(level = "trace", skip_all)]
-async fn async_collect_packages_from_resolve_graph(
+async fn collect_packages_from_resolve_graph(
     resolve: &Resolve,
     registry: &mut RegistryCache<'_>,
 ) -> Result<HashMap<PackageId, Package>> {

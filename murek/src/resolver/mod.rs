@@ -6,7 +6,6 @@ use petgraph::graphmap::DiGraphMap;
 use crate::core::registry::cache::RegistryCache;
 use crate::core::resolver::Resolve;
 use crate::core::{Config, PackageId, Summary};
-use crate::internal::asyncx::AwaitSync;
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -22,7 +21,7 @@ use crate::internal::asyncx::AwaitSync;
 ///
 /// * `config` - [`Config`] object.
 #[tracing::instrument(level = "trace", skip_all)]
-pub fn resolve(
+pub async fn resolve(
     summaries: &[Summary],
     registry: &mut RegistryCache<'_>,
     _config: &Config,
@@ -53,7 +52,7 @@ pub fn resolve(
                     continue;
                 }
 
-                let results = registry.query(&dep).await_sync()?;
+                let results = registry.query(&dep).await?;
 
                 let dep_summary = results
                     .first()
