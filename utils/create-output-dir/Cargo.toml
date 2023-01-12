@@ -1,9 +1,13 @@
 [package]
 name = "create-output-dir"
-version = "1.0.0"
+version = "0.1.0"
+description = "Create an excluded from cache directory atomically"
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+repository.workspace = true
+readme = "README.md"
+license.workspace = true
+categories = ["filesystem", "os"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
