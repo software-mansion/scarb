@@ -3,6 +3,7 @@ use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smol_str::SmolStr;
 use url::Url;
@@ -33,6 +34,8 @@ pub enum SourceKind {
     Path,
     /// A git repository.
     Git(GitReference),
+    /// A remote registry.
+    Registry,
 }
 
 /// Information to find a specific commit in a Git repository.
@@ -69,9 +72,21 @@ impl SourceId {
         Self::new(url.clone(), SourceKind::Git(reference.clone()))
     }
 
+    pub fn for_registry(url: &Url) -> Result<Self> {
+        Self::new(url.clone(), SourceKind::Registry)
+    }
+
+    pub fn default_registry() -> Self {
+        static CACHE: Lazy<SourceId> = Lazy::new(|| {
+            // TODO(mkaput): Extract this string as a named constant when will be implemented.
+            let url = Url::parse("https://example.com").unwrap();
+            SourceId::for_registry(&url).unwrap()
+        });
+        *CACHE
+    }
+
     pub fn is_default_registry(self) -> bool {
-        // TODO(mkaput): Return `true` for default registry here.
-        false
+        self == Self::default_registry()
     }
 
     pub fn is_path(self) -> bool {
@@ -113,6 +128,10 @@ impl SourceId {
                     GitReference::DefaultBranch => {}
                 }
                 format!("git+{}", url)
+            }
+
+            SourceKind::Registry => {
+                format!("registry+{}", self.url)
             }
         }
     }
@@ -158,6 +177,7 @@ impl SourceId {
         match self.kind {
             SourceKind::Path => Ok(Box::new(PathSource::new(self, config))),
             SourceKind::Git(_) => todo!("Git sources are not implemented yet"),
+            SourceKind::Registry => todo!("Remote registry sources are not implemented yet"),
         }
     }
 }
@@ -180,6 +200,12 @@ impl Deref for SourceId {
 
     fn deref(&self) -> &Self::Target {
         self.0
+    }
+}
+
+impl Default for SourceId {
+    fn default() -> Self {
+        SourceId::default_registry()
     }
 }
 
