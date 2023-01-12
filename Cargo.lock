@@ -1373,6 +1373,7 @@ dependencies = [
  "create-output-dir",
  "directories",
  "dunce",
+ "id-arena",
  "indoc",
  "itertools",
  "libc",

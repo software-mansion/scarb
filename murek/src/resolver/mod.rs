@@ -1,3 +1,15 @@
+//! Implementation of the [PubGrub] version solving algorithm for Scarb.
+//!
+//! This implementation is heavily based on two other ones, to such degree that some portions of
+//! their source code has been copied here unchanged:
+//!
+//! 1. [`hex_solver`] from Elixir's Hex package manager,
+//! 2. [`pubgrub`] Rust crate.
+//!
+//! [PubGrub]: https://nex3.medium.com/pubgrub-2fb6470504f
+//! [`hex_solver`]: https://github.com/hexpm/hex_solver
+//! [`pubgrub`]: https://github.com/pubgrub-rs/pubgrub
+
 use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
@@ -6,6 +18,13 @@ use petgraph::graphmap::DiGraphMap;
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::{Config, PackageId, Summary};
+
+mod incompatibility;
+mod incompatibility_set;
+mod package_range;
+mod package_ref;
+mod term;
+mod version_constraint;
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -73,4 +92,35 @@ pub async fn resolve(
     }
 
     Ok(Resolve { graph })
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::core::registry::mock::MockRegistry;
+
+    fn run(registry: &str, query: impl IntoIterator<Item = (&str, &str)>) -> String {
+        let registry = MockRegistry::from_toml(registry);
+    }
+
+    #[test]
+    fn nested_deps() {
+        let registry = r#"
+            [foo]
+            version = "1.0.0"
+
+            [foo.dependencies]
+            bar = "=1.0.0"
+
+            [bar]
+            version = "1.0.0"
+        "#;
+
+        assert_eq!(
+            &run(registry, [("bar", "1.0.0")]),
+            r#"
+                bar v1.0.0
+                foo v1.0.0
+            "#
+        );
+    }
 }
