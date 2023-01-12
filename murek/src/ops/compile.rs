@@ -7,7 +7,7 @@ use cairo_lang_compiler::CompilerConfig;
 use crate::core::workspace::Workspace;
 use crate::core::PackageId;
 use crate::ops;
-use crate::ops::WorkspaceResolution;
+use crate::ops::WorkspaceResolve;
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn compile(ws: &Workspace<'_>, on_diagnostic: Box<dyn FnMut(String)>) -> Result<()> {
@@ -35,16 +35,13 @@ pub fn compile(ws: &Workspace<'_>, on_diagnostic: Box<dyn FnMut(String)>) -> Res
     Ok(())
 }
 
-fn build_project_config(
-    member_id: PackageId,
-    resolution: &WorkspaceResolution,
-) -> Result<ProjectConfig> {
-    let crate_roots = resolution
+fn build_project_config(member_id: PackageId, resolve: &WorkspaceResolve) -> Result<ProjectConfig> {
+    let crate_roots = resolve
         .resolve
         .collect_compilation_unit_of(member_id)
         .iter()
         .map(|id| {
-            let pkg = &resolution.packages[id];
+            let pkg = &resolve.packages[id];
             (pkg.id.name.clone(), pkg.source_dir())
         })
         .collect();
@@ -52,7 +49,7 @@ fn build_project_config(
     let content = ProjectConfigContent { crate_roots };
 
     Ok(ProjectConfig {
-        base_path: resolution.packages[&member_id].root().into(),
+        base_path: resolve.packages[&member_id].root().into(),
         content,
     })
 }
