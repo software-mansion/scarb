@@ -44,6 +44,37 @@ impl PackageId {
         };
         Self(CACHE.intern(inner))
     }
+
+    #[cfg(test)]
+    pub(crate) fn from_display_str(string: &str) -> Result<Self> {
+        use anyhow::{anyhow, bail};
+
+        let mut s = string.splitn(3, ' ');
+
+        let name = s.next().unwrap().into();
+
+        let Some(version) = s.next() else {
+            bail!("invalid displayed PackageId: missing version");
+        };
+        let Some(version) = version.strip_prefix('v') else {
+            bail!("invalid displayed PackageId: version does not start with letter `v`");
+        };
+        let version = version
+            .to_version()
+            .map_err(|err| anyhow!("invalid displayed PackageId: {}", err))?;
+
+        let Some(source_id) = s.next() else {
+            todo!("Default SourceId is not implemented yet.")
+        };
+        let source_id = if source_id.starts_with('(') && source_id.ends_with(')') {
+            &source_id[1..source_id.len() - 1]
+        } else {
+            bail!("invalid displayed PackageId: source url is not wrapped with parentheses",);
+        };
+        let source_id = SourceId::from_display_str(source_id)?;
+
+        Ok(PackageId::pure(name, version, source_id))
+    }
 }
 
 impl Deref for PackageId {
