@@ -5,7 +5,7 @@ use petgraph::graphmap::DiGraphMap;
 
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
-use crate::core::{Config, PackageId, Summary};
+use crate::core::{PackageId, Summary};
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -20,14 +20,8 @@ use crate::core::{Config, PackageId, Summary};
 ///     our requests to it (aka returns the same results for the same query every time).
 ///     It is also advised to implement internal caching, as the resolver may frequently ask
 ///     repetitive queries.
-///
-/// * `config` - [`Config`] object.
 #[tracing::instrument(level = "trace", skip_all)]
-pub async fn resolve(
-    summaries: &[Summary],
-    registry: &mut dyn Registry,
-    _config: &Config,
-) -> Result<Resolve> {
+pub async fn resolve(summaries: &[Summary], registry: &mut dyn Registry) -> Result<Resolve> {
     let mut graph = DiGraphMap::new();
 
     let mut packages: HashMap<_, _> = HashMap::from_iter(
