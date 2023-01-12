@@ -2,6 +2,7 @@
 
 use std::fs;
 
+use semver::{BuildMetadata, Prerelease, Version};
 use toml_edit::Document;
 
 /// Checks that package version in [`Cairo.toml`] is exactly the same as the version of `Cairo`
@@ -17,13 +18,15 @@ fn project_version_is_bound_to_cairo_version() {
         .parse()
         .unwrap();
 
-    let package_version = cargo_toml["workspace"]["package"]["version"]
+    let mut package_version: Version = cargo_toml["workspace"]["package"]["version"]
         .as_value()
         .unwrap()
         .as_str()
+        .unwrap()
+        .parse()
         .unwrap();
 
-    let cairo_version = cargo_lock["package"]
+    let mut cairo_version: Version = cargo_lock["package"]
         .as_array_of_tables()
         .unwrap()
         .iter()
@@ -32,7 +35,15 @@ fn project_version_is_bound_to_cairo_version() {
         .as_value()
         .unwrap()
         .as_str()
+        .unwrap()
+        .parse()
         .unwrap();
+
+    // Allow differences in prerelease and build metadata
+    package_version.pre = Prerelease::EMPTY;
+    package_version.build = BuildMetadata::EMPTY;
+    cairo_version.pre = Prerelease::EMPTY;
+    cairo_version.build = BuildMetadata::EMPTY;
 
     assert_eq!(package_version, cairo_version);
 }
