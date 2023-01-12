@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "murek",
+    "scarb",
     "utils/create-output-dir"
 ]
 

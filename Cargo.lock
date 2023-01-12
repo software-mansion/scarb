@@ -1381,44 +1381,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "murek"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_fs",
- "async-trait",
- "cairo-lang-compiler",
- "clap",
- "clap-verbosity-flag",
- "create-output-dir",
- "directories",
- "dunce",
- "indoc",
- "itertools",
- "libc",
- "once_cell",
- "petgraph",
- "predicates",
- "semver",
- "serde",
- "serde_json",
- "serde_test",
- "similar-asserts",
- "smol",
- "smol_str",
- "snapbox",
- "test-case",
- "thiserror",
- "toml_edit",
- "tracing",
- "tracing-futures",
- "tracing-log",
- "tracing-subscriber",
- "url",
- "which",
-]
-
-[[package]]
 name = "new_debug_unreachable"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1919,6 +1881,44 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "scarb"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_fs",
+ "async-trait",
+ "cairo-lang-compiler",
+ "clap",
+ "clap-verbosity-flag",
+ "create-output-dir",
+ "directories",
+ "dunce",
+ "indoc",
+ "itertools",
+ "libc",
+ "once_cell",
+ "petgraph",
+ "predicates",
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_test",
+ "similar-asserts",
+ "smol",
+ "smol_str",
+ "snapbox",
+ "test-case",
+ "thiserror",
+ "toml_edit",
+ "tracing",
+ "tracing-futures",
+ "tracing-log",
+ "tracing-subscriber",
+ "url",
+ "which",
 ]
 
 [[package]]
