@@ -4,8 +4,8 @@ use anyhow::Result;
 
 use crate::core::package::{Package, PackageId};
 use crate::core::registry::cache::RegistryCache;
-use crate::core::registry::Registry;
 use crate::core::registry::source_map::SourceMap;
+use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::internal::asyncx::AwaitSync;
@@ -32,8 +32,7 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolution> {
             .map(|pkg| pkg.manifest.summary.clone())
             .collect::<Vec<_>>();
 
-        let resolve =
-            resolver::resolve(&members_summaries, &mut registry_cache, ws.config()).await?;
+        let resolve = resolver::resolve(&members_summaries, &mut registry_cache).await?;
 
         // Gather [`Package`] instances from this resolver result, by asking the [`RegistryCache`]
         // to download resolved packages.
