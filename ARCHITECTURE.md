@@ -3,6 +3,8 @@
 This document describes the high-level architecture of Scarb.
 If you want to familiarize yourself with the code base, you are just in the right place!
 
+Some parts are not implemented, yet already documented in present tense, to outline what is expected to be developed.
+
 ## Bird's Eye View
 
 ```mermaid
@@ -108,6 +110,8 @@ _any_ package, no matter of its source.
 Version solving consists in efficiently finding a set of packages and versions that satisfy all the constraints of a
 given project dependencies.
 
+**THIS IS NOT IMPLEMENTED YET.**
+
 Scarb uses [PubGrub][pubgrub-algo-docs] algorithm for version resolution.
 It is known for having both good performance and providing human-understandable explanations of failures.
 Algorithm implementation is provided by the [`pubgrub`][pubgrub-crate] crate,
@@ -140,8 +144,6 @@ on users' machines.
 
 The `corelib` is treated as a regular package, that is _injected_ to all packages as a dependency under the hood.
 This package has a special source ID, which maps to the `CorelibSource` implementation.
-It embeds `corelib` source in Scrub data segment, and unpacks it to the registry cache directory, if it is not already
-present there.
 A side effect of this approach is that `corelib` is included in the lockfile.
 
 ### Targets
