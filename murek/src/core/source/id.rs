@@ -10,7 +10,6 @@ use url::Url;
 use crate::core::source::Source;
 use crate::core::Config;
 use crate::internal::static_hash_cache::StaticHashCache;
-use crate::sources::PathSource;
 
 /// Unique identifier for a source of packages.
 ///
@@ -153,8 +152,18 @@ impl SourceId {
         }
     }
 
+    #[cfg(test)]
+    pub(crate) fn from_display_str(string: &str) -> Result<Self> {
+        if string.starts_with('/') {
+            Self::for_path(&PathBuf::try_from(string)?)
+        } else {
+            Self::from_pretty_url(string)
+        }
+    }
+
     /// Creates an implementation of `Source` corresponding to this ID.
     pub fn load<'c>(self, config: &'c Config) -> Result<Box<dyn Source + 'c>> {
+        use crate::sources::*;
         match self.kind {
             SourceKind::Path => Ok(Box::new(PathSource::new(self, config))),
             SourceKind::Git(_) => todo!("Git sources are not implemented yet"),

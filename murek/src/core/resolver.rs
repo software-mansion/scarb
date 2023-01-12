@@ -9,6 +9,7 @@ use crate::core::PackageId;
 /// Represents a fully-resolved package dependency graph.
 ///
 /// Each node in the graph is a package and edges represent dependencies between packages.
+#[derive(Debug)]
 pub struct Resolve {
     /// Directional graph representing package dependencies.
     ///
