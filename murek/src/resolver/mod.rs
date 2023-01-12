@@ -100,10 +100,10 @@ pub async fn resolve(summaries: &[Summary], registry: &mut dyn Registry) -> Resu
         incompatibilities.sort();
         let incompatibilities = incompatibilities.join("\n");
         bail!(formatdoc! {"
-            Version resolution failed:
+            Version solving failed:
             {incompatibilities}
 
-            Scarb does not have real version resolution algorithm yet.
+            Scarb does not have real version solving algorithm yet.
             Perhaps in the future this conflict could be resolved, but currently,
             please upgrade your dependencies to use latest versions of their dependencies.
         "});
@@ -303,10 +303,10 @@ mod tests {
             //     "foo v1.0.0 (/main)"
             // ]),
             Err(indoc! {"
-            Version resolution failed:
+            Version solving failed:
             - bar v2.0.0 (/main/) cannot use baz v1.0.0 (/main/), because bar requires baz ^2.0.0
 
-            Scarb does not have real version resolution algorithm yet.
+            Scarb does not have real version solving algorithm yet.
             Perhaps in the future this conflict could be resolved, but currently,
             please upgrade your dependencies to use latest versions of their dependencies.
             "}),
@@ -333,10 +333,10 @@ mod tests {
             //     "foo v2.9.0 (/main)"
             // ]),
             Err(indoc! {"
-            Version resolution failed:
+            Version solving failed:
             - foo v2.7.0 (/main/) cannot use baz v2.1.0 (/main/), because foo requires baz ~1.7.1
 
-            Scarb does not have real version resolution algorithm yet.
+            Scarb does not have real version solving algorithm yet.
             Perhaps in the future this conflict could be resolved, but currently,
             please upgrade your dependencies to use latest versions of their dependencies.
             "}),

@@ -11,7 +11,7 @@ use crate::core::workspace::Workspace;
 use crate::internal::asyncx::AwaitSync;
 use crate::resolver;
 
-pub struct WorkspaceResolution {
+pub struct WorkspaceResolve {
     pub resolve: Resolve,
     pub packages: HashMap<PackageId, Package>,
 }
@@ -22,7 +22,7 @@ pub struct WorkspaceResolution {
     skip_all,
     fields(root = ws.root().display().to_string())
 )]
-pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolution> {
+pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
     async {
         let source_map = SourceMap::preloaded(ws.members(), ws.config());
         let mut registry_cache = RegistryCache::new(source_map);
@@ -41,7 +41,7 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolution> {
         // so the `download` calls in this method should be cheap, but this may change the future.
         let packages = collect_packages_from_resolve_graph(&resolve, &mut registry_cache).await?;
 
-        Ok(WorkspaceResolution { resolve, packages })
+        Ok(WorkspaceResolve { resolve, packages })
     }
     .await_sync()
 }
