@@ -1,0 +1,7 @@
+contact_links:
+  - name: Scarb Community
+    url: https://github.com/software-mansion/scarb/discussions
+    about: Please ask and answer questions here.
+  - name: Scarb Security
+    url: https://github.com/software-mansion/scarb/security/advisories
+    about: Please report security vulnerabilities here.
