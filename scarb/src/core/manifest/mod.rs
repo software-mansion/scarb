@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -83,5 +84,17 @@ impl ManifestDependency {
 
     pub fn matches_package_id(&self, package_id: PackageId) -> bool {
         package_id.name == self.name && self.version_req.matches(&package_id.version)
+    }
+}
+
+impl fmt::Display for ManifestDependency {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {}", self.name, self.version_req)?;
+
+        if !self.source_id.is_default_registry() {
+            write!(f, " ({})", self.source_id)?;
+        }
+
+        Ok(())
     }
 }
