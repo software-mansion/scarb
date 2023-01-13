@@ -69,8 +69,20 @@ impl SourceId {
     }
 
     pub fn is_default_registry(self) -> bool {
+        // TODO(mkaput): This will be unnecessary when we will have general default registry.
+        #[cfg(test)]
+        return self == Self::mock_default();
+
         // TODO(mkaput): Return `true` for default registry here.
+        #[cfg(not(test))]
         false
+    }
+
+    // TODO(mkaput): This will be unnecessary when we will have general default registry.
+    #[cfg(test)]
+    pub(crate) fn mock_default() -> Self {
+        let url = Url::parse("https://git.test/default.git").unwrap();
+        Self::for_git(&url, &GitReference::DefaultBranch).unwrap()
     }
 
     pub fn is_path(self) -> bool {
@@ -154,11 +166,9 @@ impl SourceId {
 
     #[cfg(test)]
     pub(crate) fn from_display_str(string: &str) -> Result<Self> {
-        if string.starts_with('/') {
-            Self::for_path(&PathBuf::try_from(string)?)
-        } else {
-            Self::from_pretty_url(string)
-        }
+        use std::ffi::OsString;
+        Self::for_path(&PathBuf::from(OsString::from(string)))
+            .or_else(|_| Self::from_pretty_url(string))
     }
 
     /// Creates an implementation of `Source` corresponding to this ID.
