@@ -1,3 +1,10 @@
+//! This crate provides only one function, `create_output_dir` which creates an excluded from cache
+//! directory atomically with its parents as needed.
+//!
+//! Under the hood, this function simply calls
+//! [`cargo_util::paths::create_dir_all_excluded_from_backups_atomic`],
+//! but in the future it will contain this code directly, reducing dependency build time.
+
 use std::path::Path;
 
 use anyhow::Result;
