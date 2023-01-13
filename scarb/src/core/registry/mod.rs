@@ -90,13 +90,7 @@ pub(crate) mod mock {
             Ok(self
                 .index
                 .get(&(dependency.name.clone(), dependency.source_id))
-                .ok_or_else(|| {
-                    anyhow!(
-                        "MockRegistry/query: unknown package {} ({})",
-                        dependency.name,
-                        dependency.source_id
-                    )
-                })?
+                .ok_or_else(|| anyhow!("MockRegistry/query: cannot find {dependency}"))?
                 .iter()
                 .copied()
                 .filter(|id| dependency.version_req.matches(&id.version))
@@ -149,6 +143,14 @@ pub(crate) mod mock {
     pub(crate) use deps;
 
     macro_rules! dep {
+        (($n:literal, $v:literal)) => {
+            $crate::core::ManifestDependency {
+                name: ($n).into(),
+                version_req: ::semver::VersionReq::parse($v).unwrap(),
+                source_id: $crate::core::SourceId::mock_default(),
+            }
+        };
+
         (($n:literal, $v:literal, $s:literal)) => {
             $crate::core::ManifestDependency {
                 name: ($n).into(),

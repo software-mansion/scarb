@@ -179,45 +179,45 @@ mod tests {
     #[test]
     fn single_fixed_dep() {
         check(
-            registry![("foo v1.0.0 (/foo)", []),],
-            &[deps![("foo", "=1.0.0", "/foo")]],
-            Ok(pkgs!["foo v1.0.0 (/foo)"]),
+            registry![("foo v1.0.0", []),],
+            &[deps![("foo", "=1.0.0")]],
+            Ok(pkgs!["foo v1.0.0"]),
         )
     }
 
     #[test]
     fn single_caret_dep() {
         check(
-            registry![("foo v1.0.0 (/foo)", []),],
-            &[deps![("foo", "1.0.0", "/foo")]],
-            Ok(pkgs!["foo v1.0.0 (/foo)"]),
+            registry![("foo v1.0.0", []),],
+            &[deps![("foo", "1.0.0")]],
+            Ok(pkgs!["foo v1.0.0"]),
         )
     }
 
     #[test]
     fn single_fixed_dep_with_multiple_versions() {
         check(
-            registry![("foo v1.1.0 (/foo)", []), ("foo v1.0.0 (/foo)", []),],
-            &[deps![("foo", "=1.0.0", "/foo")]],
-            Ok(pkgs!["foo v1.0.0 (/foo)"]),
+            registry![("foo v1.1.0", []), ("foo v1.0.0", []),],
+            &[deps![("foo", "=1.0.0")]],
+            Ok(pkgs!["foo v1.0.0"]),
         )
     }
 
     #[test]
     fn single_caret_dep_with_multiple_versions() {
         check(
-            registry![("foo v1.1.0 (/foo)", []), ("foo v1.0.0 (/foo)", []),],
-            &[deps![("foo", "1.0.0", "/foo")]],
-            Ok(pkgs!["foo v1.1.0 (/foo)"]),
+            registry![("foo v1.1.0", []), ("foo v1.0.0", []),],
+            &[deps![("foo", "1.0.0")]],
+            Ok(pkgs!["foo v1.1.0"]),
         )
     }
 
     #[test]
     fn single_tilde_dep_with_multiple_versions() {
         check(
-            registry![("foo v1.1.0 (/foo)", []), ("foo v1.0.0 (/foo)", []),],
-            &[deps![("foo", "~1.0.0", "/foo")]],
-            Ok(pkgs!["foo v1.0.0 (/foo)"]),
+            registry![("foo v1.1.0", []), ("foo v1.0.0", []),],
+            &[deps![("foo", "~1.0.0")]],
+            Ok(pkgs!["foo v1.0.0"]),
         )
     }
 
@@ -225,12 +225,12 @@ mod tests {
     fn single_older_dep_with_dependency_and_multiple_versions() {
         check(
             registry![
-                ("foo v1.1.0 (/foo)", []),
-                ("foo v1.0.0 (/foo)", [("bar", "=1.0.0", "/bar")]),
-                ("bar v1.0.0 (/bar)", []),
+                ("foo v1.1.0", []),
+                ("foo v1.0.0", [("bar", "=1.0.0")]),
+                ("bar v1.0.0", []),
             ],
-            &[deps![("foo", "<1.1.0", "/foo")]],
-            Ok(pkgs!["bar v1.0.0 (/bar)", "foo v1.0.0 (/foo)"]),
+            &[deps![("foo", "<1.1.0")]],
+            Ok(pkgs!["bar v1.0.0", "foo v1.0.0"]),
         )
     }
 
@@ -238,12 +238,12 @@ mod tests {
     fn single_newer_dep_without_dependency_and_multiple_versions() {
         check(
             registry![
-                ("foo v1.1.0 (/foo)", []),
-                ("foo v1.0.0 (/foo)", [("bar", "=1.0.0", "/bar")]),
-                ("bar v1.0.0 (/bar)", []),
+                ("foo v1.1.0", []),
+                ("foo v1.0.0", [("bar", "=1.0.0")]),
+                ("bar v1.0.0", []),
             ],
-            &[deps![("foo", "1.1.0", "/foo")]],
-            Ok(pkgs!["foo v1.1.0 (/foo)"]),
+            &[deps![("foo", "1.1.0")]],
+            Ok(pkgs!["foo v1.1.0"]),
         )
     }
 
@@ -251,33 +251,30 @@ mod tests {
     fn prioritize_stable_versions() {
         check(
             registry![
-                ("foo v1.0.0 (/foo)", []),
-                ("foo v1.1.0 (/foo)", []),
-                ("foo v1.2.0-dev (/foo)", []),
+                ("foo v1.0.0", []),
+                ("foo v1.1.0", []),
+                ("foo v1.2.0-dev", []),
             ],
-            &[deps![("foo", "1.1.0", "/foo")]],
-            Ok(pkgs!["foo v1.1.0 (/foo)"]),
+            &[deps![("foo", "1.1.0")]],
+            Ok(pkgs!["foo v1.1.0"]),
         )
     }
 
     #[test]
     fn two_deps() {
         check(
-            registry![("foo v1.0.0 (/foo)", []), ("bar v2.0.0 (/bar)", []),],
-            &[deps![("foo", "1", "/foo")], deps![("bar", "2", "/bar")]],
-            Ok(pkgs!["bar v2.0.0 (/bar)", "foo v1.0.0 (/foo)"]),
+            registry![("foo v1.0.0", []), ("bar v2.0.0", []),],
+            &[deps![("foo", "1")], deps![("bar", "2")]],
+            Ok(pkgs!["bar v2.0.0", "foo v1.0.0"]),
         )
     }
 
     #[test]
     fn nested_deps() {
         check(
-            registry![
-                ("foo v1.0.0 (/foo)", [("bar", "1.0.0", "/bar")]),
-                ("bar v1.0.0 (/bar)", []),
-            ],
-            &[deps![("foo", "1.0", "/foo")]],
-            Ok(pkgs!["bar v1.0.0 (/bar)", "foo v1.0.0 (/foo)"]),
+            registry![("foo v1.0.0", [("bar", "1.0.0")]), ("bar v1.0.0", []),],
+            &[deps![("foo", "1.0")]],
+            Ok(pkgs!["bar v1.0.0", "foo v1.0.0"]),
         )
     }
 
@@ -285,26 +282,23 @@ mod tests {
     fn backtrack_1() {
         check(
             registry![
-                (
-                    "foo v2.0.0 (/main)",
-                    [("bar", "2.0.0", "/main"), ("baz", "1.0.0", "/main")]
-                ),
-                ("foo v1.0.0 (/main)", [("bar", "1.0.0", "/main")]),
-                ("bar v2.0.0 (/main)", [("baz", "2.0.0", "/main")]),
-                ("bar v1.0.0 (/main)", [("baz", "1.0.0", "/main")]),
-                ("baz v2.0.0 (/main)", []),
-                ("baz v1.0.0 (/main)", []),
+                ("foo v2.0.0", [("bar", "2.0.0"), ("baz", "1.0.0")]),
+                ("foo v1.0.0", [("bar", "1.0.0")]),
+                ("bar v2.0.0", [("baz", "2.0.0")]),
+                ("bar v1.0.0", [("baz", "1.0.0")]),
+                ("baz v2.0.0", []),
+                ("baz v1.0.0", []),
             ],
-            &[deps![("foo", "*", "/main")]],
+            &[deps![("foo", "*")]],
             // TODO(mkaput): Expected result is commented out.
             // Ok(pkgs![
-            //     "bar v1.0.0 (/main)",
-            //     "baz v1.0.0 (/main)",
-            //     "foo v1.0.0 (/main)"
+            //     "bar v1.0.0",
+            //     "baz v1.0.0",
+            //     "foo v1.0.0"
             // ]),
             Err(indoc! {"
             Version solving failed:
-            - bar v2.0.0 (/main/) cannot use baz v1.0.0 (/main/), because bar requires baz ^2.0.0
+            - bar v2.0.0 cannot use baz v1.0.0, because bar requires baz ^2.0.0
 
             Scarb does not have real version solving algorithm yet.
             Perhaps in the future this conflict could be resolved, but currently,
@@ -317,24 +311,24 @@ mod tests {
     fn backtrack_2() {
         check(
             registry![
-                ("foo v2.6.0 (/main)", [("baz", "~1.7.0", "/main")]),
-                ("foo v2.7.0 (/main)", [("baz", "~1.7.1", "/main")]),
-                ("foo v2.8.0 (/main)", [("baz", "~1.7.1", "/main")]),
-                ("foo v2.9.0 (/main)", [("baz", "1.8.0", "/main")]),
-                ("bar v1.1.1 (/main)", [("baz", ">= 1.7.0", "/main")]),
-                ("baz v1.8.0 (/main)", []),
-                ("baz v2.1.0 (/main)", []),
+                ("foo v2.6.0", [("baz", "~1.7.0")]),
+                ("foo v2.7.0", [("baz", "~1.7.1")]),
+                ("foo v2.8.0", [("baz", "~1.7.1")]),
+                ("foo v2.9.0", [("baz", "1.8.0")]),
+                ("bar v1.1.1", [("baz", ">= 1.7.0")]),
+                ("baz v1.8.0", []),
+                ("baz v2.1.0", []),
             ],
-            &[deps![("bar", "~1.1.0", "/main"), ("foo", "~2.7", "/main")]],
+            &[deps![("bar", "~1.1.0"), ("foo", "~2.7")]],
             // TODO(mkaput): Expected result is commented out.
             // Ok(pkgs![
-            //     "bar v1.1.1 (/main)",
-            //     "baz v1.8.0 (/main)",
-            //     "foo v2.9.0 (/main)"
+            //     "bar v1.1.1",
+            //     "baz v1.8.0",
+            //     "foo v2.9.0"
             // ]),
             Err(indoc! {"
             Version solving failed:
-            - foo v2.7.0 (/main/) cannot use baz v2.1.0 (/main/), because foo requires baz ~1.7.1
+            - foo v2.7.0 cannot use baz v2.1.0, because foo requires baz ~1.7.1
 
             Scarb does not have real version solving algorithm yet.
             Perhaps in the future this conflict could be resolved, but currently,
@@ -348,12 +342,12 @@ mod tests {
     fn overlapping_ranges() {
         check(
             registry![
-                ("foo v1.0.0 (/foo)", [("bar", "*", "/bar")]),
-                ("foo v1.1.0 (/foo)", [("bar", "2", "/bar")]),
-                ("bar v1.0.0 (/bar)", []),
+                ("foo v1.0.0", [("bar", "*")]),
+                ("foo v1.1.0", [("bar", "2")]),
+                ("bar v1.0.0", []),
             ],
-            &[deps![("foo", "1", "/foo")]],
-            Ok(pkgs!["bar v1.0.0 (/bar)", "foo v1.0.0 (/foo)"]),
+            &[deps![("foo", "1")]],
+            Ok(pkgs!["bar v1.0.0", "foo v1.0.0"]),
         )
     }
 
@@ -361,11 +355,11 @@ mod tests {
     fn cycle() {
         check(
             registry![
-                ("foo v1.0.0 (/main)", [("bar", "2.0.0", "/main")]),
-                ("bar v2.0.0 (/main)", [("foo", "1.0.0", "/main")]),
+                ("foo v1.0.0", [("bar", "2.0.0")]),
+                ("bar v2.0.0", [("foo", "1.0.0")]),
             ],
-            &[deps![("foo", "1", "/main")]],
-            Ok(pkgs!["bar v2.0.0 (/main)", "foo v1.0.0 (/main)"]),
+            &[deps![("foo", "1")]],
+            Ok(pkgs!["bar v2.0.0", "foo v1.0.0"]),
         )
     }
 
@@ -373,16 +367,16 @@ mod tests {
     fn missing_dependency() {
         check(
             registry![],
-            &[deps![("foo", "1.0.0", "/foo")]],
-            Err(r#"MockRegistry/query: unknown package foo (/foo/)"#),
+            &[deps![("foo", "1.0.0")]],
+            Err(r#"MockRegistry/query: cannot find foo ^1.0.0"#),
         )
     }
 
     #[test]
     fn unsatisfied_version_constraint() {
         check(
-            registry![("foo v2.0.0 (/foo)", []),],
-            &[deps![("foo", "1.0.0", "/foo")]],
+            registry![("foo v2.0.0", []),],
+            &[deps![("foo", "1.0.0")]],
             Err(r#"cannot find package foo"#),
         )
     }
@@ -390,9 +384,9 @@ mod tests {
     #[test]
     fn unsatisfied_source_constraint() {
         check(
-            registry![("foo v1.0.0 (/not-foo)", []),],
-            &[deps![("foo", "1.0.0", "/foo")]],
-            Err(r#"MockRegistry/query: unknown package foo (/foo/)"#),
+            registry![("foo v1.0.0", []),],
+            &[deps![("foo", "1.0.0", "git+https://example.git/foo.git")]],
+            Err(r#"MockRegistry/query: cannot find foo ^1.0.0 (git+https://example.git/foo.git)"#),
         )
     }
 
@@ -400,14 +394,14 @@ mod tests {
     fn no_matching_transient_dependency_1() {
         check(
             registry![
-                ("a v3.9.4 (/main)", [("b", "3.9.4", "/main")]),
-                ("a v3.9.5 (/main)", [("b", "3.9.5", "/main")]),
-                ("a v3.9.8 (/main)", [("b", "3.9.8", "/main")]),
-                ("b v3.8.5-rc.2 (/main)", []),
-                ("b v3.8.5 (/main)", []),
-                ("b v3.8.14 (/main)", []),
+                ("a v3.9.4", [("b", "3.9.4")]),
+                ("a v3.9.5", [("b", "3.9.5")]),
+                ("a v3.9.8", [("b", "3.9.8")]),
+                ("b v3.8.5-rc.2", []),
+                ("b v3.8.5", []),
+                ("b v3.8.14", []),
             ],
-            &[deps![("a", "~3.6", "/main"), ("b", "~3.6", "/main")]],
+            &[deps![("a", "~3.6"), ("b", "~3.6")]],
             Err(r#"cannot find package a"#),
         )
     }
@@ -416,22 +410,18 @@ mod tests {
     fn no_matching_transient_dependency_2() {
         check(
             registry![
-                ("a v3.8.10 (/main)", [("b", "3.8.10", "/main")]),
-                ("a v3.8.11 (/main)", [("b", "3.8.11", "/main")]),
-                ("a v3.8.14 (/main)", [("b", "3.8.14", "/main")]),
-                ("a v3.8.25 (/main)", [("b", "3.8.25", "/main")]),
-                ("c v1.1.0 (/main)", [("d", "~2.8.0", "/main")]),
-                ("d v2.8.3 (/main)", []),
-                ("b v3.8.14 (/main)", [("d", "2.11.0", "/main")]),
-                ("b v3.8.25 (/main)", [("d", "3.1.0", "/main")]),
-                ("b v3.8.5-rc.2 (/main)", [("d", "2.9.0", "/main")]),
-                ("b v3.8.5 (/main)", [("d", "2.9.0", "/main")]),
+                ("a v3.8.10", [("b", "3.8.10")]),
+                ("a v3.8.11", [("b", "3.8.11")]),
+                ("a v3.8.14", [("b", "3.8.14")]),
+                ("a v3.8.25", [("b", "3.8.25")]),
+                ("c v1.1.0", [("d", "~2.8.0")]),
+                ("d v2.8.3", []),
+                ("b v3.8.14", [("d", "2.11.0")]),
+                ("b v3.8.25", [("d", "3.1.0")]),
+                ("b v3.8.5-rc.2", [("d", "2.9.0")]),
+                ("b v3.8.5", [("d", "2.9.0")]),
             ],
-            &[deps![
-                ("a", "~3.6", "/main"),
-                ("c", "~1.1", "/main"),
-                ("b", "~3.6", "/main")
-            ]],
+            &[deps![("a", "~3.6"), ("c", "~1.1"), ("b", "~3.6")]],
             Err(r#"cannot find package a"#),
         )
     }
@@ -440,29 +430,21 @@ mod tests {
     fn no_matching_transient_dependency_3() {
         check(
             registry![
-                ("a v3.8.25 (/main)", [("b", "3.8.25", "/main")]),
-                ("b v3.8.12-rc.3 (/main)", [("d", "2.11.0", "/main")]),
-                ("a v3.8.21 (/main)", [("b", "3.8.21", "/main")]),
-                ("b v3.8.19 (/main)", [("d", "3.1.0", "/main")]),
-                ("b v3.8.25 (/main)", [("d", "3.1.0", "/main")]),
-                ("e v1.6.0 (/main)", [("a", "~3.8.0", "/main")]),
-                ("b v3.8.14 (/main)", [("d", "2.11.0", "/main")]),
-                ("a v3.9.8 (/main)", [("b", "3.9.8", "/main")]),
-                ("a v3.8.5 (/main)", [("b", "3.8.5", "/main")]),
+                ("a v3.8.25", [("b", "3.8.25")]),
+                ("b v3.8.12-rc.3", [("d", "2.11.0")]),
+                ("a v3.8.21", [("b", "3.8.21")]),
+                ("b v3.8.19", [("d", "3.1.0")]),
+                ("b v3.8.25", [("d", "3.1.0")]),
+                ("e v1.6.0", [("a", "~3.8.0")]),
+                ("b v3.8.14", [("d", "2.11.0")]),
+                ("a v3.9.8", [("b", "3.9.8")]),
+                ("a v3.8.5", [("b", "3.8.5")]),
                 (
-                    "e v1.3.2 (/main)",
-                    [
-                        ("a", "~3.7.11", "/main"),
-                        ("d", "~2.9", "/main"),
-                        ("b", "~3.7.11", "/main")
-                    ]
+                    "e v1.3.2",
+                    [("a", "~3.7.11"), ("d", "~2.9"), ("b", "~3.7.11")]
                 ),
             ],
-            &[deps![
-                ("e", "~1.0", "/main"),
-                ("a", "~3.7", "/main"),
-                ("b", "~3.7", "/main")
-            ]],
+            &[deps![("e", "~1.0"), ("a", "~3.7"), ("b", "~3.7")]],
             Err(r#"cannot find package e"#),
         )
     }
@@ -717,15 +699,21 @@ mod tests {
     fn mixed_sources() {
         check(
             registry![
-                ("foo v1.0.0 (/main)", [("baz", "1.0.0", "/baz")]),
-                ("bar v1.0.0 (/main)", [("baz", "1.0.0", "/baz")]),
-                ("baz v1.0.0 (/baz)", []),
+                (
+                    "foo v1.0.0",
+                    [("baz", "1.0.0", "git+https://example.com/baz.git")]
+                ),
+                (
+                    "bar v1.0.0",
+                    [("baz", "1.0.0", "git+https://example.com/baz.git")]
+                ),
+                ("baz v1.0.0 (git+https://example.com/baz.git)", []),
             ],
-            &[deps![("foo", "1.0.0", "/main"), ("bar", "1.0.0", "/main")]],
+            &[deps![("foo", "1.0.0"), ("bar", "1.0.0")]],
             Ok(pkgs![
-                "bar v1.0.0 (/main)",
-                "baz v1.0.0 (/baz)",
-                "foo v1.0.0 (/main)"
+                "bar v1.0.0",
+                "baz v1.0.0 (git+https://example.com/baz.git)",
+                "foo v1.0.0"
             ]),
         )
     }
@@ -734,17 +722,23 @@ mod tests {
     fn source_conflict() {
         check(
             registry![
-                ("foo v1.0.0 (/main)", [("baz", "1.0.0", "/foo-baz")]),
-                ("bar v1.0.0 (/main)", [("baz", "1.0.0", "/bar-baz")]),
-                ("baz v1.0.0 (/foo-baz)", []),
-                ("baz v1.0.0 (/bar-baz)", []),
+                (
+                    "foo v1.0.0",
+                    [("baz", "1.0.0", "git+https://example.com/foo.git")]
+                ),
+                (
+                    "bar v1.0.0",
+                    [("baz", "1.0.0", "git+https://example.com/bar.git")]
+                ),
+                ("baz v1.0.0 (git+https://example.com/foo.git)", []),
+                ("baz v1.0.0 (git+https://example.com/bar.git)", []),
             ],
-            &[deps![("foo", "1.0.0", "/main"), ("bar", "1.0.0", "/main")]],
+            &[deps![("foo", "1.0.0"), ("bar", "1.0.0")]],
             Err(indoc! {"
                 found dependencies on the same package `baz` coming from \
                 incompatible sources:
-                source 1: /foo-baz/
-                source 2: /bar-baz/
+                source 1: git+https://example.com/foo.git
+                source 2: git+https://example.com/bar.git
             "}),
         )
     }

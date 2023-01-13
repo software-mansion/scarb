@@ -63,15 +63,19 @@ impl PackageId {
             .to_version()
             .map_err(|err| anyhow!("invalid displayed PackageId: {}", err))?;
 
-        let Some(source_id) = s.next() else {
-            todo!("Default SourceId is not implemented yet.")
+        let source_id = match s.next() {
+            None => SourceId::mock_default(),
+            Some(source_id) => {
+                let source_id = if source_id.starts_with('(') && source_id.ends_with(')') {
+                    &source_id[1..source_id.len() - 1]
+                } else {
+                    bail!(
+                        "invalid displayed PackageId: source url is not wrapped with parentheses",
+                    );
+                };
+                SourceId::from_display_str(source_id)?
+            }
         };
-        let source_id = if source_id.starts_with('(') && source_id.ends_with(')') {
-            &source_id[1..source_id.len() - 1]
-        } else {
-            bail!("invalid displayed PackageId: source url is not wrapped with parentheses",);
-        };
-        let source_id = SourceId::from_display_str(source_id)?;
 
         Ok(PackageId::pure(name, version, source_id))
     }
