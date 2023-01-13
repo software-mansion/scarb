@@ -11,6 +11,10 @@ directly, reducing dependency build time.
 
 All notable changes to this project are documented on the [GitHub releases] page.
 
+## Credits
+
+This crate is an extract from [`cargo-util`][cargo-util], developed by the Rust project contributors.
+
 [cargo-util]: https://crates.io/crates/cargo-util
 
 [github releases]: https://github.com/software-mansion/scarb/releases
