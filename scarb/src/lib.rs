@@ -15,3 +15,4 @@ mod resolver;
 mod sources;
 
 pub const SCARB_ENV: &str = "SCARB";
+pub const CORELIB_REPO_URL: &str = "https://github.com/starkware-libs/cairo.git";

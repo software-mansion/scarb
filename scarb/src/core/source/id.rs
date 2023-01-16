@@ -10,6 +10,7 @@ use url::Url;
 use crate::core::source::Source;
 use crate::core::Config;
 use crate::internal::static_hash_cache::StaticHashCache;
+use crate::CORELIB_REPO_URL;
 
 /// Unique identifier for a source of packages.
 ///
@@ -32,6 +33,8 @@ pub enum SourceKind {
     Path,
     /// A git repository.
     Git(GitReference),
+    /// The Cairo core library.
+    Corelib(GitReference),
 }
 
 /// Information to find a specific commit in a Git repository.
@@ -66,6 +69,13 @@ impl SourceId {
 
     pub fn for_git(url: &Url, reference: &GitReference) -> Result<Self> {
         Self::new(url.clone(), SourceKind::Git(reference.clone()))
+    }
+
+    pub fn for_corelib(version: &str) -> Result<Self> {
+        let url = Url::parse(CORELIB_REPO_URL).unwrap();
+        let version_tag = format!("v{}", version);
+        let reference = GitReference::Tag(version_tag.into());
+        SourceId::for_git(&url, &reference)
     }
 
     pub fn is_default_registry(self) -> bool {
@@ -125,6 +135,15 @@ impl SourceId {
                 }
                 format!("git+{}", url)
             }
+
+            SourceKind::Corelib(reference) => match reference {
+                GitReference::Tag(tag) => {
+                    format!("corelib+{}?tag={}", self.url.clone(), tag)
+                }
+                _ => {
+                    panic!("corelib source must be tagged with version")
+                }
+            },
         }
     }
 
@@ -177,6 +196,7 @@ impl SourceId {
         match self.kind {
             SourceKind::Path => Ok(Box::new(PathSource::new(self, config))),
             SourceKind::Git(_) => todo!("Git sources are not implemented yet"),
+            SourceKind::Corelib(_) => Ok(Box::new(CorelibSource::new(self, config))),
         }
     }
 }
@@ -191,6 +211,10 @@ impl SourceId {
 
     pub(crate) fn mock_path() -> SourceId {
         SourceId::for_path(&std::env::temp_dir()).unwrap()
+    }
+
+    pub(crate) fn mock_corelib() -> SourceId {
+        SourceId::for_corelib("0.1.0").unwrap()
     }
 }
 

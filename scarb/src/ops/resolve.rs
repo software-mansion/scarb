@@ -2,14 +2,18 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
+use crate::core::manifest::ManifestMetadata;
 use crate::core::package::{Package, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::source_map::SourceMap;
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
+use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
+use crate::core::{Manifest, Summary};
 use crate::internal::asyncx::AwaitSync;
 use crate::resolver;
+use clap::crate_version;
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -24,7 +28,10 @@ pub struct WorkspaceResolve {
 )]
 pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
     async {
-        let source_map = SourceMap::preloaded(ws.members(), ws.config());
+        let packages = ws.members();
+        let corelib_package: Package = corelib_package(ws).unwrap();
+
+        let source_map = SourceMap::preloaded(packages.chain([corelib_package]), ws.config());
         let mut registry_cache = RegistryCache::new(source_map);
 
         let members_summaries = ws
@@ -44,6 +51,35 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
         Ok(WorkspaceResolve { resolve, packages })
     }
     .await_sync()
+}
+
+fn corelib_package(ws: &Workspace<'_>) -> Result<Package> {
+    let version = crate_version!();
+    let source_id = SourceId::for_corelib(version).unwrap();
+    let corelib_path = ws.config().dirs.registry_src_dir.join("corelib");
+    let package_id = PackageId::new("corelib", version, source_id.clone()).unwrap();
+    let manifest = Manifest {
+        summary: Summary::new(package_id, Vec::new()),
+        metadata: ManifestMetadata {
+            authors: None,
+            urls: None,
+            custom_metadata: None,
+            description: None,
+            documentation: None,
+            homepage: None,
+            keywords: None,
+            license: None,
+            license_file: None,
+            readme: None,
+            repository: None,
+        },
+    };
+
+    Ok(Package::new(
+        package_id,
+        corelib_path.join("cairo_project.toml"),
+        Box::new(manifest),
+    ))
 }
 
 #[tracing::instrument(level = "trace", skip_all)]

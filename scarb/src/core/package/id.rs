@@ -194,4 +194,11 @@ mod tests {
         let pkg_id = PackageId::new("foo", "1.0.0", source_id).unwrap();
         assert_eq!(format!("foo v1.0.0 ({source_id})"), pkg_id.to_string());
     }
+
+    #[test]
+    fn display_corelib_source_id() {
+        let source_id = SourceId::mock_corelib();
+        let pkg_id = PackageId::new("foo", "1.0.0", source_id).unwrap();
+        assert_eq!(format!("foo v1.0.0 ({source_id})"), pkg_id.to_string());
+    }
 }

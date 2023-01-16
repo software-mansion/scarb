@@ -11,6 +11,7 @@ use directories::ProjectDirs;
 pub struct AppDirs {
     pub cache_dir: PathBuf,
     pub config_dir: PathBuf,
+    pub registry_src_dir: PathBuf,
     pub path_dirs: Vec<PathBuf>,
 }
 
@@ -35,6 +36,7 @@ impl AppDirs {
         Ok(Self {
             cache_dir: pd.cache_dir().into(),
             config_dir: pd.config_dir().into(),
+            registry_src_dir: pd.cache_dir().join("registry").join("src").into(),
             path_dirs,
         })
     }
@@ -48,6 +50,7 @@ impl fmt::Display for AppDirs {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "cache dir:  {}", self.cache_dir.display())?;
         writeln!(f, "config dir: {}", self.config_dir.display())?;
+        writeln!(f, "registry src dir: {}", self.registry_src_dir.display())?;
         writeln!(f, "PATH:       {}", self.path_env().to_string_lossy())?;
         Ok(())
     }
