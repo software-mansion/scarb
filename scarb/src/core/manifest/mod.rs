@@ -13,8 +13,6 @@ use crate::core::source::SourceId;
 
 mod toml;
 
-pub const MANIFEST_FILE_NAME: &str = "Scarb.toml";
-
 /// Contains all the information about a package, as loaded from the manifest file.
 ///
 /// This is deserialized using the [`TomlManifest`] type.

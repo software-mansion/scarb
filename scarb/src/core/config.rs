@@ -10,6 +10,7 @@ use which::which_in;
 use crate::core::Workspace;
 use crate::dirs::AppDirs;
 use crate::internal::fsx::{GuardedExistedPathBuf, GuardedExistedPathBufOpts};
+use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
 
 pub type TargetDir = GuardedExistedPathBuf<'static>;
@@ -34,7 +35,7 @@ impl Config {
         let target_dir_path = manifest_path
             .parent()
             .expect("parent of manifest path must always exist")
-            .join("target");
+            .join(DEFAULT_TARGET_DIR_NAME);
         let target_dir = TargetDir::with_options(
             target_dir_path,
             GuardedExistedPathBufOpts {
