@@ -25,6 +25,7 @@ indoc.workspace = true
 itertools.workspace = true
 once_cell.workspace = true
 petgraph.workspace = true
+rust-embed.workspace = true
 semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
