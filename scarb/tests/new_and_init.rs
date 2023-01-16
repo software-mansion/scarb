@@ -137,6 +137,24 @@ fn new_explicit_project_name() {
 }
 
 #[test]
+fn init_existing_manifest() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    let t = pt.child("hello");
+    t.create_dir_all().unwrap();
+
+    t.child("Scarb.toml").write_str("Scarb is great!").unwrap();
+
+    Command::new(cargo_bin!("scarb"))
+        .arg("init")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stderr_eq(indoc! {r#"
+            Error: `scarb init` cannot be run on existing Scarb packages
+        "#});
+}
+
+#[test]
 fn init_does_not_overwrite_gitignore() {
     let pt = assert_fs::TempDir::new().unwrap();
     let t = pt.child("hello");
