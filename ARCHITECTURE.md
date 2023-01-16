@@ -135,16 +135,14 @@ The Cairo compiler is used as a crate, which means that it is compiled into the 
 **Scarb is tightly bound to specific Cairo version**.
 The entire compilation process is contained within the `ops::compile` op.
 
-### Cairo `corelib`
+### Cairo `core`
 
-**THIS IS NOT IMPLEMENTED YET.**
-
-Because Cairo compiler is built-in, an important problem is how to install Cairo's standard library, `corelib`,
+Because Cairo compiler is built-in, an important problem is how to install Cairo's standard library, `core`,
 on users' machines.
 
-The `corelib` is treated as a regular package, that is _injected_ to all packages as a dependency under the hood.
-This package has a special source ID, which maps to the `CorelibSource` implementation.
-A side effect of this approach is that `corelib` is included in the lockfile.
+The `core` is treated as a regular package, that is _injected_ to all packages as a dependency under the hood.
+This package has a special source ID, which maps to the `CoreSource` implementation.
+A side effect of this approach is that `core` is included in the lockfile.
 
 ### Targets
 
