@@ -34,3 +34,10 @@ fn read_workspace_impl<'c>(
 
     Workspace::from_single_package(package, config)
 }
+
+#[tracing::instrument(level = "debug")]
+pub fn read_package_with_source_id(manifest_path: &Path, source_id: SourceId) -> Result<Package> {
+    let manifest = Box::new(ops::read_manifest(manifest_path, source_id)?);
+    let package = Package::new(manifest.summary.package_id, manifest_path.into(), manifest);
+    Ok(package)
+}
