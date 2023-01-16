@@ -155,6 +155,24 @@ fn init_existing_manifest() {
 }
 
 #[test]
+fn init_existing_source() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    let t = pt.child("hello");
+    t.create_dir_all().unwrap();
+
+    let src = t.child("src/lib.cairo");
+    src.write_str("Scarb is great!").unwrap();
+
+    Command::new(cargo_bin!("scarb"))
+        .arg("init")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert_eq!(fs::read_to_string(src).unwrap(), "Scarb is great!");
+}
+
+#[test]
 fn init_does_not_overwrite_gitignore() {
     let pt = assert_fs::TempDir::new().unwrap();
     let t = pt.child("hello");
