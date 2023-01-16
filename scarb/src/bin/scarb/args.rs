@@ -6,6 +6,8 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
+
+use scarb::core::PackageName;
 use scarb::metadata::MetadataVersion;
 
 /// Cairo's project manager.
@@ -38,15 +40,27 @@ pub enum Command {
     Clean,
     /// List installed commands.
     Commands,
+    /// Create a new Scarb package in existing directory.
+    Init(InitArgs),
     /// Print path to current **Scarb.toml** file to standard output.
     ManifestPath,
     /// Output the resolved dependencies of a package, the concrete used versions including
     /// overrides, in machine-readable format.
     Metadata(MetadataArgs),
+    /// Create a new Scarb package at <PATH>.
+    New(NewArgs),
 
     /// External command (`scarb-*` executable).
     #[command(external_subcommand)]
     External(Vec<OsString>),
+}
+
+/// Arguments accepted by the `init` command.
+#[derive(Parser, Clone, Debug)]
+pub struct InitArgs {
+    /// Set the resulting package name, defaults to the directory name.
+    #[arg(long)]
+    pub name: Option<PackageName>,
 }
 
 /// Arguments accepted by the `metadata` command.
@@ -58,4 +72,12 @@ pub struct MetadataArgs {
     /// Output information only about the workspace members and don't fetch dependencies.
     #[arg(long)]
     pub no_deps: bool,
+}
+
+/// Arguments accepted by the `new` command.
+#[derive(Parser, Clone, Debug)]
+pub struct NewArgs {
+    pub path: PathBuf,
+    #[command(flatten)]
+    pub init: InitArgs,
 }
