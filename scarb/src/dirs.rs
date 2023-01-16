@@ -1,7 +1,7 @@
 use std::env;
 use std::ffi::OsString;
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 use directories::ProjectDirs;
@@ -41,6 +41,10 @@ impl AppDirs {
 
     pub fn path_env(&self) -> OsString {
         env::join_paths(self.path_dirs.iter()).unwrap()
+    }
+
+    pub fn registry_dir(&self, category: impl AsRef<Path>) -> PathBuf {
+        self.cache_dir.join("registry").join(category)
     }
 }
 
