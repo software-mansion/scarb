@@ -2,6 +2,7 @@ use std::fmt;
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use once_cell::sync::OnceCell;
 
 use crate::core::config::Config;
 use crate::core::manifest::{ManifestDependency, Summary};
@@ -15,7 +16,7 @@ use crate::ops;
 pub struct PathSource<'c> {
     source_id: SourceId,
     config: &'c Config,
-    packages: Option<Vec<Package>>,
+    packages: OnceCell<Vec<Package>>,
 }
 
 impl<'c> PathSource<'c> {
@@ -25,7 +26,7 @@ impl<'c> PathSource<'c> {
         Self {
             source_id,
             config,
-            packages: None,
+            packages: OnceCell::new(),
         }
     }
 
@@ -45,26 +46,22 @@ impl<'c> PathSource<'c> {
         }
 
         Self {
-            packages: Some(packages.into()),
+            packages: OnceCell::from(packages.to_vec()),
             ..Self::new(packages[0].id.source_id, config)
         }
     }
 
-    fn ensure_loaded(&mut self) -> Result<&Vec<Package>> {
-        if self.packages.is_none() {
-            self.packages = Some(self.read_packages()?);
-        }
-
-        Ok(self.packages.as_ref().unwrap())
+    fn ensure_loaded(&self) -> Result<&Vec<Package>> {
+        self.packages
+            .get_or_try_init(|| Self::read_packages(self.source_id, self.config))
     }
 
-    fn read_packages(&mut self) -> Result<Vec<Package>> {
-        let root = self
-            .source_id
+    fn read_packages(source_id: SourceId, config: &Config) -> Result<Vec<Package>> {
+        let root = source_id
             .to_path()
             .expect("this has to be a path source ID")
             .join(MANIFEST_FILE_NAME);
-        let ws = ops::read_workspace_with_source_id(&root, self.source_id, self.config)?;
+        let ws = ops::read_workspace_with_source_id(&root, source_id, config)?;
         Ok(ws.members().collect())
     }
 }
