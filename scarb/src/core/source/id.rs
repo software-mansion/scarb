@@ -2,7 +2,7 @@ use std::fmt;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smol_str::SmolStr;
 use url::Url;
@@ -32,6 +32,8 @@ pub enum SourceKind {
     Path,
     /// A git repository.
     Git(GitReference),
+    /// The Cairo core library.
+    Core,
 }
 
 /// Information to find a specific commit in a Git repository.
@@ -66,6 +68,11 @@ impl SourceId {
 
     pub fn for_git(url: &Url, reference: &GitReference) -> Result<Self> {
         Self::new(url.clone(), SourceKind::Git(reference.clone()))
+    }
+
+    pub fn for_core() -> Self {
+        let url = Url::parse("https://github.com/starkware-libs/cairo.git").unwrap();
+        SourceId::pure(url, SourceKind::Core)
     }
 
     pub fn is_default_registry(self) -> bool {
@@ -125,6 +132,8 @@ impl SourceId {
                 }
                 format!("git+{}", url)
             }
+
+            SourceKind::Core => format!("core+{}", self.url),
         }
     }
 
@@ -160,6 +169,12 @@ impl SourceId {
 
             "path" => SourceId::new(url, SourceKind::Path),
 
+            "core" => {
+                let stencil = SourceId::for_core();
+                ensure!(url == stencil.url, "there is only one valid core url");
+                Ok(stencil)
+            }
+
             kind => bail!("unsupported source protocol: {kind}"),
         }
     }
@@ -177,6 +192,7 @@ impl SourceId {
         match self.kind {
             SourceKind::Path => Ok(Box::new(PathSource::new(self, config))),
             SourceKind::Git(_) => todo!("Git sources are not implemented yet"),
+            SourceKind::Core => Ok(Box::new(CorelibSource::new(config))),
         }
     }
 }
@@ -244,6 +260,7 @@ mod tests {
 
     #[test_case(SourceId::mock_git())]
     #[test_case(SourceId::mock_path())]
+    #[test_case(SourceId::for_core())]
     fn equality_after_pretty_url_conversion(source_id: SourceId) {
         assert_eq!(
             SourceId::from_pretty_url(&source_id.to_pretty_url()).unwrap(),
