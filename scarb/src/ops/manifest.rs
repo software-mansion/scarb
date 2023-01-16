@@ -3,8 +3,9 @@ use std::{env, fs};
 
 use anyhow::{Context, Result};
 
-use crate::core::manifest::{Manifest, TomlManifest, MANIFEST_FILE_NAME};
+use crate::core::manifest::{Manifest, TomlManifest};
 use crate::core::source::SourceId;
+use crate::MANIFEST_FILE_NAME;
 
 #[tracing::instrument(level = "debug", skip_all)]
 pub fn read_manifest(manifest_path: &Path, source_id: SourceId) -> anyhow::Result<Manifest> {

@@ -5,6 +5,7 @@ use std::sync::Arc;
 pub use id::*;
 
 use crate::core::manifest::Manifest;
+use crate::DEFAULT_SOURCE_DIR_NAME;
 
 mod id;
 
@@ -48,6 +49,6 @@ impl Package {
     }
 
     pub fn source_dir(&self) -> PathBuf {
-        self.root().join("src")
+        self.root().join(DEFAULT_SOURCE_DIR_NAME)
     }
 }
