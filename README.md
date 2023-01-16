@@ -3,6 +3,20 @@
 Scarb is the project management tool for the [Cairo] language.
 Scarb manages your dependencies, compiles your projects and works as an extensible platform assisting in development.
 
+## Getting started
+
+### Installation
+
+Binary archives for all major platforms (Linux, macOS, Windows) are published on our [GitHub releases] page.
+Simply download suitable one, extract, and move the `scarb` executable to a directory reachable by your `PATH`.
+In the future, an automated installer is planned to be created.
+
+### Creating new project
+
+```shell
+$ scarb new project/directory
+```
+
 ## Changelog
 
 All notable changes to this project are documented on the [GitHub releases] page.
