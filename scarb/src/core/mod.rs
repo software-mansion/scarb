@@ -7,7 +7,7 @@ pub use manifest::{
     DetailedTomlDependency, Manifest, ManifestDependency, Summary, SummaryInner, TomlDependency,
     TomlManifest, TomlPackage,
 };
-pub use package::{Package, PackageId, PackageIdInner, PackageInner};
+pub use package::{Package, PackageId, PackageIdInner, PackageInner, PackageName};
 pub use resolver::{CompilationUnit, Resolve};
 pub use source::{GitReference, SourceId, SourceIdInner, SourceKind};
 pub use workspace::Workspace;
