@@ -11,19 +11,19 @@ use create_output_dir::create_output_dir;
 
 /// Equivalent to [`std::fs::canonicalize`] with better error messages.
 pub fn canonicalize(p: impl AsRef<Path>) -> Result<PathBuf> {
-    _canonicalize(p.as_ref())
+    canonicalize_impl(p.as_ref())
 }
 
-fn _canonicalize(p: &Path) -> Result<PathBuf> {
+fn canonicalize_impl(p: &Path) -> Result<PathBuf> {
     fs::canonicalize(p).with_context(|| format!("failed to get absolute path of `{}`", p.display()))
 }
 
 /// Equivalent to [`std::fs::create_dir_all`] with better error messages.
 pub fn create_dir_all(p: impl AsRef<Path>) -> Result<()> {
-    _create_dir_all(p.as_ref())
+    create_dir_all_impl(p.as_ref())
 }
 
-fn _create_dir_all(p: &Path) -> Result<()> {
+fn create_dir_all_impl(p: &Path) -> Result<()> {
     fs::create_dir_all(p)
         .with_context(|| format!("failed to create directory `{}`", p.display()))?;
     Ok(())
@@ -31,13 +31,24 @@ fn _create_dir_all(p: &Path) -> Result<()> {
 
 /// Equivalent to [`std::fs::remove_dir_all`] with better error messages.
 pub fn remove_dir_all(p: impl AsRef<Path>) -> Result<()> {
-    _remove_dir_all(p.as_ref())
+    remove_dir_all_impl(p.as_ref())
 }
 
-fn _remove_dir_all(p: &Path) -> Result<()> {
+fn remove_dir_all_impl(p: &Path) -> Result<()> {
     fs::remove_dir_all(p)
         .with_context(|| format!("failed to remove directory `{}`", p.display()))?;
     Ok(())
+}
+
+/// Equivalent to [`std::fs::write`] with better error messages.
+pub fn write(path: impl AsRef<Path>, contents: impl AsRef<[u8]>) -> Result<()> {
+    let path = path.as_ref();
+    let contents = contents.as_ref();
+    write_impl(path, contents)
+}
+
+fn write_impl(path: &Path, contents: &[u8]) -> Result<()> {
+    fs::write(path, contents).with_context(|| format!("failed to write `{}`", path.display()))
 }
 
 #[derive(Copy, Clone, Debug, Default)]
