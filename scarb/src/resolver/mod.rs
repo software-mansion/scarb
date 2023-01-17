@@ -44,7 +44,7 @@ pub async fn resolve(summaries: &[Summary], registry: &mut dyn Registry) -> Resu
         for package_id in queue {
             graph.add_node(package_id);
 
-            for dep in summaries[&package_id].dependencies.clone() {
+            for dep in summaries[&package_id].clone().full_dependencies() {
                 if let Some(existing) = packages.get(&dep.name) {
                     if existing.source_id != dep.source_id {
                         bail!(
@@ -63,7 +63,7 @@ pub async fn resolve(summaries: &[Summary], registry: &mut dyn Registry) -> Resu
                     }
                 }
 
-                let results = registry.query(&dep).await?;
+                let results = registry.query(dep).await?;
 
                 let Some(dep_summary) = results.first() else {
                     bail!("cannot find package {}", dep.name)
@@ -84,7 +84,7 @@ pub async fn resolve(summaries: &[Summary], registry: &mut dyn Registry) -> Resu
     // Detect incompatibilities and bail in case ones are found.
     let mut incompatibilities = Vec::new();
     for from_package in graph.nodes() {
-        for manifest_dependency in &summaries[&from_package].dependencies {
+        for manifest_dependency in summaries[&from_package].full_dependencies() {
             let to_package = packages[&manifest_dependency.name];
             if !manifest_dependency.matches_package_id(to_package) {
                 let message = format!(
@@ -157,7 +157,7 @@ mod tests {
             .map(|r| {
                 r.graph
                     .nodes()
-                    .filter(|id| !id.name.starts_with('$'))
+                    .filter(|id| !id.name.starts_with('$') && id.source_id != SourceId::for_core())
                     .sorted()
                     .collect_vec()
             })

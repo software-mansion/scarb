@@ -3,6 +3,7 @@ use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
 
+use once_cell::sync::Lazy;
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
 
@@ -56,6 +57,26 @@ impl Summary {
 
     fn new(data: SummaryInner) -> Self {
         Self(Arc::new(data))
+    }
+
+    pub fn full_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
+        self.dependencies.iter().chain(self.implicit_dependencies())
+    }
+
+    pub fn implicit_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
+        static CORE_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| ManifestDependency {
+            name: "core".into(),
+            version_req: VersionReq::STAR,
+            source_id: SourceId::for_core(),
+        });
+
+        let mut deps: Vec<&ManifestDependency> = Vec::new();
+
+        if !self.no_core {
+            deps.push(&CORE_DEPENDENCY);
+        }
+
+        deps.into_iter()
     }
 }
 

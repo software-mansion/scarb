@@ -38,7 +38,12 @@ pub(crate) mod mock {
 
     impl MockRegistry {
         pub fn new() -> Self {
-            Default::default()
+            let mut reg = Self::default();
+            reg.put(
+                PackageId::new("core", "1.0.0", SourceId::for_core()).unwrap(),
+                Vec::new(),
+            );
+            reg
         }
 
         pub fn put(&mut self, package_id: PackageId, mut dependencies: Vec<ManifestDependency>) {
@@ -71,17 +76,29 @@ pub(crate) mod mock {
             match self.packages.entry(package_id) {
                 Entry::Occupied(entry) => Ok(entry.get().clone()),
                 Entry::Vacant(entry) => {
-                    let summary =
-                        Summary::minimal(package_id, self.dependencies[&package_id].clone());
-                    let manifest = Box::new(Manifest {
-                        summary,
-                        metadata: Default::default(),
-                    });
-                    let package = Package::new(package_id, PathBuf::new(), manifest);
+                    let package =
+                        Self::build_package(package_id, self.dependencies[&package_id].clone());
                     entry.insert(package.clone());
                     Ok(package)
                 }
             }
+        }
+
+        fn build_package(package_id: PackageId, dependencies: Vec<ManifestDependency>) -> Package {
+            let mut sb = Summary::build(package_id).with_dependencies(dependencies);
+
+            if package_id.source_id == SourceId::for_core() {
+                sb = sb.no_core(true);
+            }
+
+            let summary = sb.finish();
+
+            let manifest = Box::new(Manifest {
+                summary,
+                metadata: Default::default(),
+            });
+
+            Package::new(package_id, PathBuf::new(), manifest)
         }
     }
 

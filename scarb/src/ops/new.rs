@@ -88,7 +88,7 @@ fn infer_name(name: Option<PackageName>, path: &Path) -> Result<PackageName> {
 fn check_name(name: &PackageName) -> Result<()> {
     restricted_names::validate_package_name(name, "package name")?;
     // TODO(mkaput): Check not Cairo keyword.
-    // TODO(mkaput): Warn if name is `corelib`.
+    // TODO(mkaput): Warn if name is `core`.
     Ok(())
 }
 
