@@ -1,5 +1,6 @@
 use assert_fs::prelude::*;
-use snapbox::cmd::{cargo_bin, Command};
+
+use crate::support::command::scarb_command;
 
 #[test]
 fn with_manifest() {
@@ -15,7 +16,7 @@ fn with_manifest() {
         )
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("manifest-path")
         .current_dir(&t)
         .assert()
@@ -37,7 +38,7 @@ fn with_manifest() {
 fn without_manifest() {
     let t = assert_fs::TempDir::new().unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("manifest-path")
         .current_dir(&t)
         .assert()
@@ -68,7 +69,7 @@ fn subdir() {
     let subdir = t.child("foobar");
     subdir.create_dir_all().unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("manifest-path")
         .current_dir(&subdir)
         .assert()
@@ -97,7 +98,7 @@ fn path_override() {
         )
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("--manifest-path")
         .arg(manifest.path())
         .arg("manifest-path")
@@ -119,7 +120,7 @@ fn path_override_no_manifest() {
 
     let manifest = subdir.child("Scarb.toml");
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("--manifest-path")
         .arg(manifest.path())
         .arg("manifest-path")
@@ -147,7 +148,7 @@ fn path_override_via_env() {
         )
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .env("SCARB_MANIFEST_PATH", manifest.path())
         .arg("manifest-path")
         .current_dir(&t)

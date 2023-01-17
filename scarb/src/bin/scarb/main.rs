@@ -25,7 +25,9 @@ fn main() -> Result<()> {
         )
         .init();
 
-    let dirs = AppDirs::std()?;
+    let mut dirs = AppDirs::std()?;
+    dirs.apply_env_overrides()?;
+
     let manifest_path = ops::find_manifest_path(args.manifest_path.as_deref())?;
     let mut config = Config::init(manifest_path, dirs)?;
     commands::run(args.command, &mut config)

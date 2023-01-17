@@ -1,5 +1,6 @@
 use assert_fs::prelude::*;
-use snapbox::cmd::{cargo_bin, Command};
+
+use crate::support::command::scarb_command;
 
 #[test]
 fn simple() {
@@ -14,7 +15,7 @@ fn simple() {
         )
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -72,7 +73,7 @@ fn fails_without_format_version() {
         )
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("metadata")
         .current_dir(&t)
         .assert()
@@ -151,7 +152,7 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
 fn local_dependencies() {
     let t = assert_fs::TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -283,7 +284,7 @@ fn local_dependencies() {
 fn no_dep() {
     let t = assert_fs::TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -368,7 +369,7 @@ fn manifest_metadata() {
         )
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
