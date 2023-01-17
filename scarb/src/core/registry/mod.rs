@@ -71,7 +71,8 @@ pub(crate) mod mock {
             match self.packages.entry(package_id) {
                 Entry::Occupied(entry) => Ok(entry.get().clone()),
                 Entry::Vacant(entry) => {
-                    let summary = Summary::new(package_id, self.dependencies[&package_id].clone());
+                    let summary =
+                        Summary::minimal(package_id, self.dependencies[&package_id].clone());
                     let manifest = Box::new(Manifest {
                         summary,
                         metadata: Default::default(),

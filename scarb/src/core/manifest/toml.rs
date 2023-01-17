@@ -41,6 +41,8 @@ pub struct TomlPackage {
     pub readme: Option<String>,
     pub repository: Option<String>,
     pub metadata: Option<BTreeMap<String, String>>,
+    /// **UNSTABLE** This package does not depend on Cairo's `core`.
+    pub no_core: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -112,8 +114,13 @@ impl TomlManifest {
             dependencies.push(toml_dep.to_dependency(name, manifest_path)?);
         }
 
+        let no_core = package.no_core.unwrap_or(false);
+
         Ok(Manifest {
-            summary: Summary::new(package_id, dependencies),
+            summary: Summary::build(package_id)
+                .with_dependencies(dependencies)
+                .no_core(no_core)
+                .finish(),
             metadata: ManifestMetadata {
                 authors: package.authors.clone(),
                 urls: package.urls.clone(),
