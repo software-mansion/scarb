@@ -120,8 +120,7 @@ impl PackageMetadata {
         let mut dependencies: Vec<DependencyMetadata> = package
             .manifest
             .summary
-            .dependencies
-            .iter()
+            .full_dependencies()
             .map(DependencyMetadata::new)
             .collect();
         dependencies.sort_by_key(|d| (d.name.clone(), d.source));

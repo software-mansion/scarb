@@ -35,13 +35,39 @@ fn simple() {
   },
   "packages": [
     {
+      "id": "core 0.1.0 (core+https://github.com/starkware-libs/cairo.git)",
+      "name": "core",
+      "version": "0.1.0",
+      "source": "core+https://github.com/starkware-libs/cairo.git",
+      "root": "[..]",
+      "manifest_path": "[..]/Scarb.toml",
+      "dependencies": [],
+      "authors": null,
+      "urls": null,
+      "metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
+    },
+    {
       "id": "hello 0.1.0 (path+file://[..])",
       "name": "hello",
       "version": "0.1.0",
       "source": "path+file://[..]",
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [],
+      "dependencies": [
+        {
+          "name": "core",
+          "version_req": "*",
+          "source": "core+https://github.com/starkware-libs/cairo.git"
+        }
+      ],
       "authors": null,
       "urls": null,
       "metadata": null,
@@ -172,13 +198,39 @@ fn local_dependencies() {
   },
   "packages": [
     {
+      "id": "core 0.1.0 (core+https://github.com/starkware-libs/cairo.git)",
+      "name": "core",
+      "version": "0.1.0",
+      "source": "core+https://github.com/starkware-libs/cairo.git",
+      "root": "[..]",
+      "manifest_path": "[..]/Scarb.toml",
+      "dependencies": [],
+      "authors": null,
+      "urls": null,
+      "metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
+    },
+    {
       "id": "q 1.0.0 (path+file://[..]/q/)",
       "name": "q",
       "version": "1.0.0",
       "source": "path+file://[..]",
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [],
+      "dependencies": [
+        {
+          "name": "core",
+          "version_req": "*",
+          "source": "core+https://github.com/starkware-libs/cairo.git"
+        }
+      ],
       "authors": null,
       "urls": null,
       "metadata": null,
@@ -199,6 +251,11 @@ fn local_dependencies() {
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
       "dependencies": [
+        {
+          "name": "core",
+          "version_req": "*",
+          "source": "core+https://github.com/starkware-libs/cairo.git"
+        },
         {
           "name": "y",
           "version_req": "*",
@@ -225,6 +282,11 @@ fn local_dependencies() {
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
       "dependencies": [
+        {
+          "name": "core",
+          "version_req": "*",
+          "source": "core+https://github.com/starkware-libs/cairo.git"
+        },
         {
           "name": "q",
           "version_req": "*",
@@ -256,6 +318,11 @@ fn local_dependencies() {
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
       "dependencies": [
+        {
+          "name": "core",
+          "version_req": "*",
+          "source": "core+https://github.com/starkware-libs/cairo.git"
+        },
         {
           "name": "q",
           "version_req": "*",
@@ -312,6 +379,11 @@ fn no_dep() {
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
       "dependencies": [
+        {
+          "name": "core",
+          "version_req": "*",
+          "source": "core+https://github.com/starkware-libs/cairo.git"
+        },
         {
           "name": "y",
           "version_req": "*",
@@ -389,13 +461,39 @@ fn manifest_metadata() {
   },
   "packages": [
     {
+      "id": "core 0.1.0 (core+https://github.com/starkware-libs/cairo.git)",
+      "name": "core",
+      "version": "0.1.0",
+      "source": "core+https://github.com/starkware-libs/cairo.git",
+      "root": "[..]",
+      "manifest_path": "[..]/Scarb.toml",
+      "dependencies": [],
+      "authors": null,
+      "urls": null,
+      "metadata": null,
+      "description": null,
+      "documentation": null,
+      "homepage": null,
+      "keywords": null,
+      "license": null,
+      "license_file": null,
+      "readme": null,
+      "repository": null
+    },
+    {
       "id": "hello 0.1.0 (path+file://[..])",
       "name": "hello",
       "version": "0.1.0",
       "source": "path+file://[..]",
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [],
+      "dependencies": [
+        {
+          "name": "core",
+          "version_req": "*",
+          "source": "core+https://github.com/starkware-libs/cairo.git"
+        }
+      ],
       "authors": [
         "John Doe <john.doe@swmansion.com>",
         "Jane Doe <jane.doe@swmansion.com>"
