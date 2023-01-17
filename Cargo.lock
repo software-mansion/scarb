@@ -253,7 +253,7 @@ checksum = "572f695136211188308f16ad2ca5c851a712c464060ae6974944458eb83880ba"
 [[package]]
 name = "cairo-lang-compiler"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "anyhow",
  "cairo-lang-defs",
@@ -277,12 +277,12 @@ dependencies = [
 [[package]]
 name = "cairo-lang-debug"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 
 [[package]]
 name = "cairo-lang-defs"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-diagnostics",
@@ -300,7 +300,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-diagnostics"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-utils",
@@ -311,7 +311,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-filesystem"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-project",
@@ -324,7 +324,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-lowering"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -347,7 +347,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-parser"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
@@ -364,7 +364,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-plugins"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -383,7 +383,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-proc-macros"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-debug",
  "quote",
@@ -393,7 +393,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-project"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "serde",
  "smol_str",
@@ -404,7 +404,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-semantic"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -427,7 +427,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-utils",
  "const-fnv1a-hash",
@@ -448,7 +448,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-generator"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -472,19 +472,20 @@ dependencies = [
 [[package]]
 name = "cairo-lang-syntax"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
  "cairo-lang-utils",
  "salsa",
  "smol_str",
+ "substring",
 ]
 
 [[package]]
 name = "cairo-lang-syntax-codegen"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "cairo-lang-utils",
  "genco",
@@ -495,7 +496,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-utils"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/cairo?branch=mkaput/tmp/detect-corelib-workaround#7de3b72d251f9968e31dd4ee377f857d21e9f6d1"
+source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372"
 dependencies = [
  "chrono",
  "env_logger",
@@ -2149,6 +2150,15 @@ name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
+
+[[package]]
+name = "substring"
+version = "1.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42ee6433ecef213b2e72f587ef64a2f5943e7cd16fbd82dbe8bc07486c534c86"
+dependencies = [
+ "autocfg",
+]
 
 [[package]]
 name = "syn"
