@@ -2,7 +2,8 @@ use std::fs;
 
 use assert_fs::prelude::*;
 use predicates::prelude::*;
-use snapbox::cmd::{cargo_bin, Command};
+
+use crate::support::command::scarb_command;
 
 #[test]
 fn compile_simple() {
@@ -20,7 +21,7 @@ fn compile_simple() {
         .write_str(r#"fn f() -> felt { 42 }"#)
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -45,7 +46,7 @@ fn compile_with_syntax_error() {
         .write_str(r"invalid syntax")
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -57,7 +58,7 @@ fn compile_with_syntax_error() {
 fn compile_without_manifest() {
     let t = assert_fs::TempDir::new().unwrap();
     let cause = fs::read(t.child("Scarb.toml")).unwrap_err();
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -86,7 +87,7 @@ fn compile_with_lowercase_scarb_toml() {
         )
         .unwrap();
     let cause = fs::read(t.child("Scarb.toml")).unwrap_err();
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -106,7 +107,7 @@ fn compile_with_manifest_not_a_file() {
     let t = assert_fs::TempDir::new().unwrap();
     t.child("Scarb.toml").create_dir_all().unwrap();
     let cause = fs::read(t.child("Scarb.toml")).unwrap_err();
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -133,7 +134,7 @@ fn compile_with_invalid_empty_name() {
             "#,
         )
         .unwrap();
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -160,7 +161,7 @@ fn compile_with_invalid_version() {
             "#,
         )
         .unwrap();
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -190,7 +191,7 @@ fn compile_with_invalid_non_numeric_dep_version() {
             "#,
         )
         .unwrap();
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -259,7 +260,7 @@ fn compile_multiple_packages() {
         )
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -341,7 +342,7 @@ fn compile_with_nested_deps() {
         .write_str(r"fn f() -> felt { 42 }")
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()

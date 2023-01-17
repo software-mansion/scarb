@@ -39,6 +39,18 @@ impl AppDirs {
         })
     }
 
+    pub fn apply_env_overrides(&mut self) -> Result<()> {
+        if let Some(path) = env::var_os("SCARB_CACHE") {
+            self.cache_dir = PathBuf::from(path);
+        }
+
+        if let Some(path) = env::var_os("SCARB_CONFIG") {
+            self.config_dir = PathBuf::from(path);
+        }
+
+        Ok(())
+    }
+
     pub fn path_env(&self) -> OsString {
         env::join_paths(self.path_dirs.iter()).unwrap()
     }

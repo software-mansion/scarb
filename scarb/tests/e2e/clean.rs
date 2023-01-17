@@ -1,5 +1,6 @@
 use assert_fs::prelude::*;
-use snapbox::cmd::{cargo_bin, Command};
+
+use crate::support::command::scarb_command;
 
 #[test]
 fn simple() {
@@ -17,14 +18,14 @@ fn simple() {
         .write_str(r"fn main() -> felt { 42 }")
         .unwrap();
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("build")
         .current_dir(&t)
         .assert()
         .success();
     t.child("target").assert(predicates::path::is_dir());
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .arg("clean")
         .current_dir(&t)
         .assert()

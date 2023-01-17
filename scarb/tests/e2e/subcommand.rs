@@ -8,7 +8,9 @@ use std::{env, io, iter, process};
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::formatdoc;
-use snapbox::cmd::{cargo_bin, Command};
+use snapbox::cmd::cargo_bin;
+
+use crate::support::command::scarb_command;
 
 // TODO(mkaput): Fix this test.
 #[test]
@@ -30,7 +32,7 @@ fn subcommand() {
         &t,
     );
 
-    Command::new(cargo_bin!("scarb"))
+    scarb_command()
         .args(["hello", "beautiful", "world"])
         .env("PATH", path_with_temp_dir(&t))
         .assert()
