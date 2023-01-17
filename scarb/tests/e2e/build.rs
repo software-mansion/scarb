@@ -1,6 +1,7 @@
 use std::fs;
 
 use assert_fs::prelude::*;
+use indoc::indoc;
 use predicates::prelude::*;
 
 use crate::support::command::scarb_command;
@@ -43,7 +44,7 @@ fn compile_with_syntax_error() {
         )
         .unwrap();
     t.child("src/lib.cairo")
-        .write_str(r"invalid syntax")
+        .write_str(r"not_a_keyword")
         .unwrap();
 
     scarb_command()
@@ -51,7 +52,15 @@ fn compile_with_syntax_error() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stderr_eq("Error: Compilation failed.\n");
+        .stdout_eq(indoc! {r#"
+            error: Skipped tokens. Expected: Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum or an attribute.
+             --> lib.cairo:1:1
+            not_a_keyword
+            ^***********^
+
+
+            error: Compilation failed.
+        "#});
 }
 
 #[test]
@@ -63,9 +72,9 @@ fn compile_without_manifest() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stderr_matches(format!(
+        .stdout_matches(format!(
             "\
-Error: failed to read manifest at `[..]/Scarb.toml`
+error: failed to read manifest at `[..]/Scarb.toml`
 
 Caused by:
     {cause}
@@ -92,9 +101,9 @@ fn compile_with_lowercase_scarb_toml() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stderr_matches(format!(
+        .stdout_matches(format!(
             "\
-Error: failed to read manifest at `[..]/Scarb.toml`
+error: failed to read manifest at `[..]/Scarb.toml`
 
 Caused by:
     {cause}
@@ -112,9 +121,9 @@ fn compile_with_manifest_not_a_file() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stderr_matches(format!(
+        .stdout_matches(format!(
             "\
-Error: failed to read manifest at `[..]/Scarb.toml`
+error: failed to read manifest at `[..]/Scarb.toml`
 
 Caused by:
     {cause}
@@ -139,9 +148,9 @@ fn compile_with_invalid_empty_name() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stderr_matches(
+        .stdout_matches(
             "\
-Error: failed to parse manifest at `[..]/Scarb.toml`
+error: failed to parse manifest at `[..]/Scarb.toml`
 
 Caused by:
     empty string cannot be used as package name
@@ -166,9 +175,9 @@ fn compile_with_invalid_version() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stderr_matches(
+        .stdout_matches(
             "\
-Error: failed to parse manifest at `[..]/Scarb.toml`
+error: failed to parse manifest at `[..]/Scarb.toml`
 
 Caused by:
     unexpected character 'y' while parsing major version number for key `package.version`
@@ -196,9 +205,9 @@ fn compile_with_invalid_non_numeric_dep_version() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stderr_matches(
+        .stdout_matches(
             "\
-Error: failed to parse manifest at `[..]/Scarb.toml`
+error: failed to parse manifest at `[..]/Scarb.toml`
 
 Caused by:
     data did not match any variant of untagged enum TomlDependency for key `dependencies.moo`
@@ -265,8 +274,7 @@ fn compile_multiple_packages() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("")
-        .stderr_eq("");
+        .stdout_eq("");
 
     t.child("target/release/fib.sierra")
         .assert(predicates::str::is_empty().not());
@@ -347,8 +355,7 @@ fn compile_with_nested_deps() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("")
-        .stderr_eq("");
+        .stdout_eq("");
 
     t.child("target/release/x.sierra")
         .assert(predicates::str::is_empty().not());

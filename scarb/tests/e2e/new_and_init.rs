@@ -74,6 +74,7 @@ fn new_no_path_arg() {
         .arg("new")
         .assert()
         .failure()
+        .stdout_eq("")
         .stderr_matches(indoc! {r#"
             error: the following required arguments were not provided:
               <PATH>
@@ -96,8 +97,8 @@ fn new_existing() {
         .current_dir(&pt)
         .assert()
         .failure()
-        .stderr_eq(indoc! {r#"
-            Error: destination `hello` already exists
+        .stdout_eq(indoc! {r#"
+            error: destination `hello` already exists
             Use `scarb init` to initialize the directory.
         "#});
 }
@@ -111,8 +112,8 @@ fn invalid_package_name() {
         .current_dir(&pt)
         .assert()
         .failure()
-        .stderr_eq(indoc! {r#"
-            Error: invalid character `-` in package name: `a-b`, characters must be ASCII letter, ASCII numbers or underscore
+        .stdout_eq(indoc! {r#"
+            error: invalid character `-` in package name: `a-b`, characters must be ASCII letter, ASCII numbers or underscore
         "#});
 }
 
@@ -151,8 +152,8 @@ fn init_existing_manifest() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stderr_eq(indoc! {r#"
-            Error: `scarb init` cannot be run on existing Scarb packages
+        .stdout_eq(indoc! {r#"
+            error: `scarb init` cannot be run on existing Scarb packages
         "#});
 }
 
