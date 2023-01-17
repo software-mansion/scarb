@@ -32,6 +32,7 @@ pub struct Summary(Arc<SummaryInner>);
 pub struct SummaryInner {
     pub package_id: PackageId,
     pub dependencies: Vec<ManifestDependency>,
+    pub no_core: bool,
 }
 
 impl Deref for Summary {
@@ -43,11 +44,53 @@ impl Deref for Summary {
 }
 
 impl Summary {
-    pub fn new(package_id: PackageId, dependencies: Vec<ManifestDependency>) -> Self {
-        Self(Arc::new(SummaryInner {
+    pub fn build(package_id: PackageId) -> SummaryBuilder {
+        SummaryBuilder::new(package_id)
+    }
+
+    pub fn minimal(package_id: PackageId, dependencies: Vec<ManifestDependency>) -> Self {
+        Self::build(package_id)
+            .with_dependencies(dependencies)
+            .finish()
+    }
+
+    fn new(data: SummaryInner) -> Self {
+        Self(Arc::new(data))
+    }
+}
+
+#[derive(Debug)]
+pub struct SummaryBuilder {
+    package_id: PackageId,
+    dependencies: Vec<ManifestDependency>,
+    no_core: bool,
+}
+
+impl SummaryBuilder {
+    fn new(package_id: PackageId) -> Self {
+        Self {
             package_id,
-            dependencies,
-        }))
+            dependencies: Vec::new(),
+            no_core: false,
+        }
+    }
+
+    pub fn with_dependencies(mut self, dependencies: Vec<ManifestDependency>) -> Self {
+        self.dependencies = dependencies;
+        self
+    }
+
+    pub fn no_core(mut self, no_core: bool) -> Self {
+        self.no_core = no_core;
+        self
+    }
+
+    pub fn finish(self) -> Summary {
+        Summary::new(SummaryInner {
+            package_id: self.package_id,
+            dependencies: self.dependencies,
+            no_core: self.no_core,
+        })
     }
 }
 
