@@ -12,10 +12,11 @@ use scarb::ops;
 mod args;
 mod commands;
 
-fn main() -> Result<()> {
+fn main() {
     let args: Args = Args::parse();
 
     tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
         .with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
         .with_env_filter(
             EnvFilter::builder()
@@ -25,6 +26,13 @@ fn main() -> Result<()> {
         )
         .init();
 
+    if let Err(err) = cli_main(args) {
+        println!("error: {err:?}");
+        std::process::exit(1);
+    }
+}
+
+fn cli_main(args: Args) -> Result<()> {
     let mut dirs = AppDirs::std()?;
     dirs.apply_env_overrides()?;
 
