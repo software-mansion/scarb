@@ -96,7 +96,7 @@ impl ProjectMetadata {
         Ok(Self {
             version: MetadataVersionPin::<1>,
             app_exe: ws.config().app_exe().ok().map(Into::into),
-            target_dir: Some(ws.config().target_dir.as_unchecked().to_path_buf()),
+            target_dir: Some(ws.target_dir().as_unchecked().to_path_buf()),
             workspace: WorkspaceMetadata::new(ws)?,
             packages,
         })

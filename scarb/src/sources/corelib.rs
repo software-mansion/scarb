@@ -35,7 +35,7 @@ impl<'c> CorelibSource<'c> {
     }
 
     fn load(&self) -> Result<Package> {
-        let registry_dir = self.config.dirs.registry_dir("core");
+        let registry_dir = self.config.dirs().registry_dir("core");
         fsx::create_dir_all(&registry_dir)?;
 
         // TODO(mkaput): Include hash part here.

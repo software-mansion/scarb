@@ -22,7 +22,7 @@ pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) 
     let exit_status = Command::new(&cmd)
         .args(args)
         .env(SCARB_ENV, config.app_exe()?)
-        .env("PATH", config.dirs.path_env())
+        .env("PATH", config.dirs().path_env())
         .spawn()
         .with_context(|| format!("failed to spawn subcommand: {}", cmd.display()))?
         .wait()
@@ -38,7 +38,7 @@ pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) 
 fn find_external_subcommand(cmd: &str, config: &Config) -> Option<PathBuf> {
     let command_exe = format!("scarb-{}{}", cmd, env::consts::EXE_SUFFIX);
     config
-        .dirs
+        .dirs()
         .path_dirs
         .iter()
         .map(|dir| dir.join(&command_exe))

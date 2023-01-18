@@ -1,5 +1,6 @@
 use std::env;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
 use once_cell::sync::OnceCell;
@@ -17,10 +18,9 @@ pub type TargetDir = GuardedExistedPathBuf<'static>;
 
 #[derive(Debug)]
 pub struct Config {
-    pub manifest_path: PathBuf,
-    pub dirs: AppDirs,
-    pub target_dir: TargetDir,
-
+    manifest_path: PathBuf,
+    dirs: Arc<AppDirs>,
+    target_dir: TargetDir,
     app_exe: OnceCell<PathBuf>,
 }
 
@@ -43,6 +43,8 @@ impl Config {
             },
         );
 
+        let dirs = dirs.into();
+
         Ok(Self {
             manifest_path,
             dirs,
@@ -51,10 +53,22 @@ impl Config {
         })
     }
 
+    pub fn manifest_path(&self) -> &Path {
+        &self.manifest_path
+    }
+
     pub fn root(&self) -> &Path {
-        self.manifest_path
+        self.manifest_path()
             .parent()
             .expect("parent of manifest path must always exist")
+    }
+
+    pub fn dirs(&self) -> &AppDirs {
+        &self.dirs
+    }
+
+    pub fn target_dir(&self) -> &TargetDir {
+        &self.target_dir
     }
 
     pub fn app_exe(&self) -> Result<&Path> {
@@ -93,7 +107,7 @@ impl Config {
                         .map(PathBuf::from)
                         .next()
                         .ok_or_else(|| anyhow!("no argv[0]"))?;
-                    which_in(argv0, Some(self.dirs.path_env()), env::current_dir()?)
+                    which_in(argv0, Some(self.dirs().path_env()), env::current_dir()?)
                         .map_err(Into::into)
                 };
 

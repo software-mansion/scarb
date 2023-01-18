@@ -37,7 +37,7 @@ impl<'c> Workspace<'c> {
     }
 
     pub fn target_dir(&self) -> &TargetDir {
-        &self.config.target_dir
+        self.config.target_dir()
     }
 
     /// Returns the current package of this workspace.
