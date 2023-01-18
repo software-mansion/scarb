@@ -35,28 +35,23 @@ impl<'c> CorelibSource<'c> {
     }
 
     fn load(&self) -> Result<Package> {
-        let registry_dir = self.config.dirs().registry_dir("core");
-        fsx::create_dir_all(&registry_dir)?;
+        // TODO(mkaput): Include core version or hash part here.
+        let root = self
+            .config
+            .download_depot()
+            .get_or_download("core", "core", |tmp| {
+                for path in Corelib::iter() {
+                    let full_path = tmp.join(path.as_ref());
+                    let data = Corelib::get(path.as_ref()).unwrap().data;
+                    fsx::create_dir_all(full_path.parent().unwrap())?;
+                    fsx::write(full_path, data)?;
+                }
 
-        // TODO(mkaput): Include hash part here.
-        // TODO(mkaput): Locking.
-        let extracted_path = registry_dir.join("core");
+                Ok(())
+            })?;
 
-        if extracted_path.exists() {
-            fsx::remove_dir_all(&extracted_path)?;
-        }
-
-        fsx::create_dir_all(&extracted_path)?;
-
-        for path in Corelib::iter() {
-            let full_path = extracted_path.join(path.as_ref());
-            let data = Corelib::get(path.as_ref()).unwrap().data;
-            fsx::create_dir_all(full_path.parent().unwrap())?;
-            fsx::write(full_path, data)?;
-        }
-
-        let root = extracted_path.join(MANIFEST_FILE_NAME);
-        ops::read_package_with_source_id(&root, SourceId::for_core())
+        let manifest_path = root.join(MANIFEST_FILE_NAME);
+        ops::read_package_with_source_id(&manifest_path, SourceId::for_core())
     }
 }
 
