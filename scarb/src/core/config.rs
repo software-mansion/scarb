@@ -29,7 +29,7 @@ pub struct Config {
 impl Config {
     pub fn init(manifest_path: PathBuf, dirs: AppDirs) -> Result<Self> {
         if tracing::enabled!(tracing::Level::TRACE) {
-            for line in format!("{dirs}").lines() {
+            for line in dirs.to_string().lines() {
                 trace!("{line}");
             }
         }

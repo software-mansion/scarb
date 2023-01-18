@@ -62,6 +62,6 @@ mod tests {
     #[test_case("0foo" => "the name `0foo` cannot be used as a P, names cannot start with a digit")]
     #[test_case("fo-o" => "invalid character `-` in P: `fo-o`, characters must be ASCII letter, ASCII numbers or underscore")]
     fn validate_incorrect_package_name(name: &str) -> String {
-        format!("{}", validate_package_name(name, "P").unwrap_err())
+        validate_package_name(name, "P").unwrap_err().to_string()
     }
 }
