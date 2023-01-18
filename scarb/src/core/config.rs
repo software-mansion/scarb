@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
+use camino::{Utf8Path, Utf8PathBuf};
 use once_cell::sync::OnceCell;
 use tracing::trace;
 use which::which_in;
@@ -19,7 +20,7 @@ pub type TargetDir = GuardedExistedPathBuf<'static>;
 
 #[derive(Debug)]
 pub struct Config {
-    manifest_path: PathBuf,
+    manifest_path: Utf8PathBuf,
     dirs: Arc<AppDirs>,
     target_dir: TargetDir,
     app_exe: OnceCell<PathBuf>,
@@ -27,7 +28,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn init(manifest_path: PathBuf, dirs: AppDirs) -> Result<Self> {
+    pub fn init(manifest_path: Utf8PathBuf, dirs: AppDirs) -> Result<Self> {
         if tracing::enabled!(tracing::Level::TRACE) {
             for line in dirs.to_string().lines() {
                 trace!("{line}");
@@ -58,11 +59,11 @@ impl Config {
         })
     }
 
-    pub fn manifest_path(&self) -> &Path {
+    pub fn manifest_path(&self) -> &Utf8Path {
         &self.manifest_path
     }
 
-    pub fn root(&self) -> &Path {
+    pub fn root(&self) -> &Utf8Path {
         self.manifest_path()
             .parent()
             .expect("parent of manifest path must always exist")

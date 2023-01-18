@@ -3,8 +3,8 @@
 //! CLI arguments datastructures.
 
 use std::ffi::OsString;
-use std::path::PathBuf;
 
+use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand};
 
 use scarb::core::PackageName;
@@ -16,7 +16,7 @@ use scarb::metadata::MetadataVersion;
 pub struct Args {
     /// Override path to a directory containing a **Scarb.toml** file.
     #[arg(long, env = "SCARB_MANIFEST_PATH")]
-    pub manifest_path: Option<PathBuf>,
+    pub manifest_path: Option<Utf8PathBuf>,
 
     /// Logging verbosity.
     #[command(flatten)]
@@ -77,7 +77,7 @@ pub struct MetadataArgs {
 /// Arguments accepted by the `new` command.
 #[derive(Parser, Clone, Debug)]
 pub struct NewArgs {
-    pub path: PathBuf,
+    pub path: Utf8PathBuf,
     #[command(flatten)]
     pub init: InitArgs,
 }

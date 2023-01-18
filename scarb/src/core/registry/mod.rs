@@ -20,10 +20,10 @@ pub trait Registry {
 pub(crate) mod mock {
     use std::collections::hash_map::Entry;
     use std::collections::{HashMap, HashSet};
-    use std::path::PathBuf;
 
     use anyhow::{anyhow, bail, Result};
     use async_trait::async_trait;
+    use camino::Utf8PathBuf;
     use itertools::Itertools;
 
     use crate::core::package::PackageName;
@@ -99,7 +99,7 @@ pub(crate) mod mock {
                 metadata: Default::default(),
             });
 
-            Package::new(package_id, PathBuf::new(), manifest)
+            Package::new(package_id, Utf8PathBuf::new(), manifest)
         }
     }
 

@@ -1,6 +1,5 @@
-use std::path::Path;
-
 use anyhow::Result;
+use camino::Utf8Path;
 
 use crate::core::config::{Config, TargetDir};
 use crate::core::package::Package;
@@ -28,11 +27,11 @@ impl<'c> Workspace<'c> {
         self.config
     }
 
-    pub fn root(&self) -> &Path {
+    pub fn root(&self) -> &Utf8Path {
         self.package.root()
     }
 
-    pub fn manifest_path(&self) -> &Path {
+    pub fn manifest_path(&self) -> &Utf8Path {
         self.package.manifest_path()
     }
 

@@ -3,7 +3,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
+use camino::{Utf8Path, Utf8PathBuf};
 use once_cell::sync::OnceCell;
 use tracing::trace;
 
@@ -49,6 +50,38 @@ pub fn write(path: impl AsRef<Path>, contents: impl AsRef<[u8]>) -> Result<()> {
 
 fn write_impl(path: &Path, contents: &[u8]) -> Result<()> {
     fs::write(path, contents).with_context(|| format!("failed to write `{}`", path.display()))
+}
+
+pub trait PathUtf8Ext {
+    fn try_as_utf8(&'_ self) -> Result<&'_ Utf8Path>;
+
+    fn try_to_utf8(&self) -> Result<Utf8PathBuf> {
+        self.try_as_utf8().map(|p| p.to_path_buf())
+    }
+}
+
+pub trait PathBufUtf8Ext {
+    fn try_into_utf8(self) -> Result<Utf8PathBuf>;
+}
+
+impl PathUtf8Ext for Path {
+    fn try_as_utf8(&'_ self) -> Result<&'_ Utf8Path> {
+        Utf8Path::from_path(self)
+            .ok_or_else(|| anyhow!("path `{}` is not UTF-8 encoded", self.display()))
+    }
+}
+
+impl PathUtf8Ext for PathBuf {
+    fn try_as_utf8(&'_ self) -> Result<&'_ Utf8Path> {
+        self.as_path().try_as_utf8()
+    }
+}
+
+impl PathBufUtf8Ext for PathBuf {
+    fn try_into_utf8(self) -> Result<Utf8PathBuf> {
+        Utf8PathBuf::from_path_buf(self)
+            .map_err(|path| anyhow!("path `{}` is not UTF-8 encoded", path.display()))
+    }
 }
 
 #[derive(Copy, Clone, Debug, Default)]
