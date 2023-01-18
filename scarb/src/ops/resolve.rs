@@ -20,7 +20,7 @@ pub struct WorkspaceResolve {
 #[tracing::instrument(
     level = "debug",
     skip_all,
-    fields(root = ws.root().display().to_string())
+    fields(root = ws.root().to_string())
 )]
 pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
     async {

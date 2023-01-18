@@ -1,16 +1,19 @@
 use std::env;
 use std::ffi::OsString;
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
+use camino::Utf8PathBuf;
 use directories::ProjectDirs;
+
+use crate::internal::fsx::{PathBufUtf8Ext, PathUtf8Ext};
 
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct AppDirs {
-    pub cache_dir: PathBuf,
-    pub config_dir: PathBuf,
+    pub cache_dir: Utf8PathBuf,
+    pub config_dir: Utf8PathBuf,
     pub path_dirs: Vec<PathBuf>,
 }
 
@@ -33,19 +36,19 @@ impl AppDirs {
         };
 
         Ok(Self {
-            cache_dir: pd.cache_dir().into(),
-            config_dir: pd.config_dir().into(),
+            cache_dir: pd.cache_dir().try_to_utf8()?,
+            config_dir: pd.config_dir().try_to_utf8()?,
             path_dirs,
         })
     }
 
     pub fn apply_env_overrides(&mut self) -> Result<()> {
         if let Some(path) = env::var_os("SCARB_CACHE") {
-            self.cache_dir = PathBuf::from(path);
+            self.cache_dir = PathBuf::from(path).try_into_utf8()?;
         }
 
         if let Some(path) = env::var_os("SCARB_CONFIG") {
-            self.config_dir = PathBuf::from(path);
+            self.config_dir = PathBuf::from(path).try_into_utf8()?;
         }
 
         Ok(())
@@ -55,15 +58,15 @@ impl AppDirs {
         env::join_paths(self.path_dirs.iter()).unwrap()
     }
 
-    pub fn registry_dir(&self, category: impl AsRef<Path>) -> PathBuf {
+    pub fn registry_dir(&self, category: &str) -> Utf8PathBuf {
         self.cache_dir.join("registry").join(category)
     }
 }
 
 impl fmt::Display for AppDirs {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "cache dir:  {}", self.cache_dir.display())?;
-        writeln!(f, "config dir: {}", self.config_dir.display())?;
+        writeln!(f, "cache dir:  {}", self.cache_dir)?;
+        writeln!(f, "config dir: {}", self.config_dir)?;
         writeln!(f, "PATH:       {}", self.path_env().to_string_lossy())?;
         Ok(())
     }

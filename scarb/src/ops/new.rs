@@ -1,6 +1,5 @@
-use std::path::{Path, PathBuf};
-
 use anyhow::{bail, ensure, Context, Result};
+use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
 
 use crate::core::{restricted_names, Config, PackageName};
@@ -9,7 +8,7 @@ use crate::{DEFAULT_SOURCE_DIR_NAME, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME
 
 #[derive(Debug)]
 pub struct InitOptions {
-    pub path: PathBuf,
+    pub path: Utf8PathBuf,
     pub name: Option<PackageName>,
 }
 
@@ -22,7 +21,7 @@ pub fn new_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
     ensure!(
         !opts.path.exists(),
         "destination `{}` already exists\nUse `scarb init` to initialize the directory.",
-        opts.path.display()
+        opts.path
     );
 
     let name = infer_name(opts.name, &opts.path)?;
@@ -35,12 +34,7 @@ pub fn new_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
         },
         config,
     )
-    .with_context(|| {
-        format!(
-            "failed to create package `{name}` at `{}`",
-            opts.path.display()
-        )
-    })?;
+    .with_context(|| format!("failed to create package `{name}` at `{}`", opts.path))?;
 
     Ok(NewResult { name })
 }
@@ -66,7 +60,7 @@ pub fn init_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
     Ok(NewResult { name })
 }
 
-fn infer_name(name: Option<PackageName>, path: &Path) -> Result<PackageName> {
+fn infer_name(name: Option<PackageName>, path: &Utf8Path) -> Result<PackageName> {
     if let Some(name) = name {
         Ok(name)
     } else {
@@ -75,10 +69,6 @@ fn infer_name(name: Option<PackageName>, path: &Path) -> Result<PackageName> {
                 "cannot infer package name from path {:?}\nUse --name to override.",
                 path.as_os_str()
             );
-        };
-
-        let Some(file_name) = file_name.to_str() else {
-            bail!("cannot create package with a non-unicode name: {:?}", file_name);
         };
 
         Ok(file_name.into())
@@ -93,7 +83,7 @@ fn check_name(name: &PackageName) -> Result<()> {
 }
 
 struct MkOpts {
-    path: PathBuf,
+    path: Utf8PathBuf,
     name: PackageName,
 }
 

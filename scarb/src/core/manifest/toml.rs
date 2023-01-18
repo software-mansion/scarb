@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
+use camino::{Utf8Path, Utf8PathBuf};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
@@ -13,6 +13,7 @@ use crate::core::package::PackageId;
 use crate::core::restricted_names::validate_package_name;
 use crate::core::source::{GitReference, SourceId};
 use crate::internal::fsx;
+use crate::internal::fsx::PathUtf8Ext;
 
 use super::Manifest;
 
@@ -60,7 +61,7 @@ pub struct DetailedTomlDependency {
     pub version: Option<VersionReq>,
 
     /// Relative to the file it appears in.
-    pub path: Option<PathBuf>,
+    pub path: Option<Utf8PathBuf>,
 
     pub git: Option<Url>,
     pub branch: Option<String>,
@@ -69,12 +70,12 @@ pub struct DetailedTomlDependency {
 }
 
 impl TomlManifest {
-    pub fn read_from_path(path: &Path) -> Result<Self> {
+    pub fn read_from_path(path: &Utf8Path) -> Result<Self> {
         let contents = fs::read_to_string(path)
-            .with_context(|| format!("failed to read manifest at `{}`", path.display()))?;
+            .with_context(|| format!("failed to read manifest at `{}`", path))?;
 
         Self::read_from_str(&contents)
-            .with_context(|| format!("failed to parse manifest at `{}`", path.display()))
+            .with_context(|| format!("failed to parse manifest at `{}`", path))
     }
 
     pub fn read_from_str(contents: &str) -> Result<Self> {
@@ -95,7 +96,7 @@ impl TomlDependency {
 }
 
 impl TomlManifest {
-    pub fn to_manifest(&self, manifest_path: &Path, source_id: SourceId) -> Result<Manifest> {
+    pub fn to_manifest(&self, manifest_path: &Utf8Path, source_id: SourceId) -> Result<Manifest> {
         let Some(package) = self.package.as_deref() else {
             bail!("no `package` section found");
         };
@@ -139,13 +140,13 @@ impl TomlManifest {
 }
 
 impl TomlDependency {
-    fn to_dependency(&self, name: &str, manifest_path: &Path) -> Result<ManifestDependency> {
+    fn to_dependency(&self, name: &str, manifest_path: &Utf8Path) -> Result<ManifestDependency> {
         self.resolve().to_dependency(name, manifest_path)
     }
 }
 
 impl DetailedTomlDependency {
-    fn to_dependency(&self, name: &str, manifest_path: &Path) -> Result<ManifestDependency> {
+    fn to_dependency(&self, name: &str, manifest_path: &Utf8Path) -> Result<ManifestDependency> {
         validate_package_name(name, "dependency name")?;
 
         let version_req = self.version.to_owned().unwrap_or(VersionReq::STAR);
@@ -184,7 +185,8 @@ impl DetailedTomlDependency {
                     .expect("manifest path must always have parent");
                 let path = root.join(path);
                 let path = fsx::canonicalize(path)?;
-                SourceId::for_path(&path)?
+                let path = path.try_as_utf8()?;
+                SourceId::for_path(path)?
             }
 
             (_, Some(git), None) => {

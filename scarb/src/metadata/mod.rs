@@ -3,6 +3,7 @@
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
+use camino::Utf8PathBuf;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
@@ -11,6 +12,7 @@ pub use metadata_version::*;
 
 use crate::core::manifest::ManifestMetadata;
 use crate::core::{ManifestDependency, Package, PackageId, SourceId, Workspace};
+use crate::internal::fsx::PathUtf8Ext;
 use crate::ops::resolve_workspace;
 
 mod metadata_version;
@@ -30,14 +32,14 @@ pub enum Metadata {
 pub struct ProjectMetadata {
     pub version: MetadataVersionPin<1>,
     pub app_exe: Option<PathBuf>,
-    pub target_dir: Option<PathBuf>,
+    pub target_dir: Option<Utf8PathBuf>,
     pub workspace: WorkspaceMetadata,
     pub packages: Vec<PackageMetadata>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WorkspaceMetadata {
-    pub root: PathBuf,
+    pub root: Utf8PathBuf,
     pub members: Vec<PackageId>,
 }
 
@@ -47,8 +49,8 @@ pub struct PackageMetadata {
     pub name: SmolStr,
     pub version: Version,
     pub source: SourceId,
-    pub root: PathBuf,
-    pub manifest_path: PathBuf,
+    pub root: Utf8PathBuf,
+    pub manifest_path: Utf8PathBuf,
     pub dependencies: Vec<DependencyMetadata>,
 
     #[serde(flatten)]
@@ -96,7 +98,7 @@ impl ProjectMetadata {
         Ok(Self {
             version: MetadataVersionPin::<1>,
             app_exe: ws.config().app_exe().ok().map(Into::into),
-            target_dir: Some(ws.target_dir().as_unchecked().to_path_buf()),
+            target_dir: Some(ws.target_dir().as_unchecked().try_as_utf8()?.to_path_buf()),
             workspace: WorkspaceMetadata::new(ws)?,
             packages,
         })

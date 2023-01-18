@@ -36,7 +36,7 @@ fn build_project_config(member_id: PackageId, resolve: &WorkspaceResolve) -> Res
         .iter()
         .map(|id| {
             let pkg = &resolve.packages[id];
-            (pkg.id.name.clone(), pkg.source_dir())
+            (pkg.id.name.clone(), pkg.source_dir().into_std_path_buf())
         })
         .collect();
 

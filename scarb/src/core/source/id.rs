@@ -1,14 +1,15 @@
 use std::fmt;
 use std::ops::Deref;
-use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
+use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smol_str::SmolStr;
 use url::Url;
 
 use crate::core::source::Source;
 use crate::core::Config;
+use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::static_hash_cache::StaticHashCache;
 
 /// Unique identifier for a source of packages.
@@ -60,9 +61,9 @@ impl SourceId {
         Self(CACHE.intern(inner))
     }
 
-    pub fn for_path(path: &Path) -> Result<Self> {
+    pub fn for_path(path: &Utf8Path) -> Result<Self> {
         let url = Url::from_directory_path(path)
-            .map_err(|_| anyhow!("path ({}) is not absolute", path.display()))?;
+            .map_err(|_| anyhow!("path ({}) is not absolute", path))?;
         Self::new(url, SourceKind::Path)
     }
 
@@ -96,12 +97,14 @@ impl SourceId {
         self.kind == SourceKind::Path
     }
 
-    pub fn to_path(self) -> Option<PathBuf> {
+    pub fn to_path(self) -> Option<Utf8PathBuf> {
         match self.kind {
             SourceKind::Path => Some(
                 self.url
                     .to_file_path()
-                    .expect("this has to be a file:// URL"),
+                    .expect("this has to be a file:// URL")
+                    .try_into_utf8()
+                    .expect("URLs are UTF-8 encoded"),
             ),
 
             _ => None,
@@ -181,9 +184,7 @@ impl SourceId {
 
     #[cfg(test)]
     pub(crate) fn from_display_str(string: &str) -> Result<Self> {
-        use std::ffi::OsString;
-        Self::for_path(&PathBuf::from(OsString::from(string)))
-            .or_else(|_| Self::from_pretty_url(string))
+        Self::for_path(&Utf8PathBuf::from(string)).or_else(|_| Self::from_pretty_url(string))
     }
 
     /// Creates an implementation of `Source` corresponding to this ID.
@@ -206,7 +207,10 @@ impl SourceId {
     }
 
     pub(crate) fn mock_path() -> SourceId {
-        SourceId::for_path(&std::env::temp_dir()).unwrap()
+        use crate::internal::fsx::PathUtf8Ext;
+        let path = std::env::temp_dir();
+        let path = path.try_as_utf8().unwrap();
+        SourceId::for_path(path).unwrap()
     }
 }
 

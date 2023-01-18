@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use anyhow::Result;
+use camino::{Utf8Path, Utf8PathBuf};
 
 use crate::dirs::AppDirs;
 use crate::internal::fsx;
@@ -20,8 +20,8 @@ impl DownloadDepot {
         &self,
         category: &str,
         package_key: &str,
-        downloader: impl FnOnce(&Path) -> Result<()>,
-    ) -> Result<PathBuf> {
+        downloader: impl FnOnce(&Utf8Path) -> Result<()>,
+    ) -> Result<Utf8PathBuf> {
         // TODO(mkaput): Locking and computing checksum.
         let registry_dir = self.dirs.registry_dir(category);
         fsx::create_dir_all(&registry_dir)?;

@@ -1,6 +1,5 @@
-use std::path::Path;
-
 use anyhow::Result;
+use camino::Utf8Path;
 
 use crate::core::config::Config;
 use crate::core::package::Package;
@@ -9,14 +8,14 @@ use crate::core::workspace::Workspace;
 use crate::ops;
 
 #[tracing::instrument(level = "debug", skip(config))]
-pub fn read_workspace<'c>(manifest_path: &Path, config: &'c Config) -> Result<Workspace<'c>> {
+pub fn read_workspace<'c>(manifest_path: &Utf8Path, config: &'c Config) -> Result<Workspace<'c>> {
     let source_id = SourceId::for_path(manifest_path)?;
     read_workspace_impl(manifest_path, source_id, config)
 }
 
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn read_workspace_with_source_id<'c>(
-    manifest_path: &Path,
+    manifest_path: &Utf8Path,
     source_id: SourceId,
     config: &'c Config,
 ) -> Result<Workspace<'c>> {
@@ -24,7 +23,7 @@ pub fn read_workspace_with_source_id<'c>(
 }
 
 fn read_workspace_impl<'c>(
-    manifest_path: &Path,
+    manifest_path: &Utf8Path,
     source_id: SourceId,
     config: &'c Config,
 ) -> Result<Workspace<'c>> {
@@ -36,7 +35,10 @@ fn read_workspace_impl<'c>(
 }
 
 #[tracing::instrument(level = "debug")]
-pub fn read_package_with_source_id(manifest_path: &Path, source_id: SourceId) -> Result<Package> {
+pub fn read_package_with_source_id(
+    manifest_path: &Utf8Path,
+    source_id: SourceId,
+) -> Result<Package> {
     let manifest = Box::new(ops::read_manifest(manifest_path, source_id)?);
     let package = Package::new(manifest.summary.package_id, manifest_path.into(), manifest);
     Ok(package)

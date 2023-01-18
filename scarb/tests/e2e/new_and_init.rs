@@ -7,6 +7,7 @@ use predicates::prelude::*;
 use scarb::core::TomlManifest;
 
 use crate::support::command::scarb_command;
+use crate::support::fsx::AssertFsUtf8Ext;
 
 #[test]
 fn new_simple() {
@@ -25,7 +26,7 @@ fn new_simple() {
     assert!(t.child("src/lib.cairo").is_file());
     assert!(t.child(".gitignore").is_file());
 
-    let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").path()).unwrap();
+    let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
     assert_eq!(toml_manifest.package.unwrap().name, "hello");
 
     scarb_command()
@@ -55,7 +56,7 @@ fn init_simple() {
     assert!(t.child("src/lib.cairo").is_file());
     assert!(t.child(".gitignore").is_file());
 
-    let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").path()).unwrap();
+    let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
     assert_eq!(toml_manifest.package.unwrap().name, "hello");
 
     scarb_command()
@@ -135,7 +136,7 @@ fn new_explicit_project_name() {
 
     let t = pt.child("hello");
 
-    let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").path()).unwrap();
+    let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
     assert_eq!(toml_manifest.package.unwrap().name, "world");
 }
 
