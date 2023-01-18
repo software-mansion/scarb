@@ -8,7 +8,7 @@ use crate::args::MetadataArgs;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
-    let ws = ops::read_workspace(&config.manifest_path, config)?;
+    let ws = ops::read_workspace(config.manifest_path(), config)?;
 
     let opts = MetadataOptions {
         version: args.format_version,
