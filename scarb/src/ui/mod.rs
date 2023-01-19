@@ -2,11 +2,13 @@ use clap::ValueEnum;
 
 pub use machine::*;
 pub use message::*;
+pub use status::*;
 pub use typed::*;
 pub use value::*;
 
 mod machine;
 mod message;
+mod status;
 mod typed;
 mod value;
 

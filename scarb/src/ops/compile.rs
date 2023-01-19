@@ -1,21 +1,60 @@
+use std::time::Instant;
 use std::{fs, mem};
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_compiler::{CompilerConfig, SierraProgram};
+use indicatif::HumanDuration;
 
 use crate::core::workspace::Workspace;
-use crate::core::{Config, PackageId};
+use crate::core::{Config, Package, PackageId};
 use crate::ops;
 use crate::ops::WorkspaceResolve;
-use crate::ui::TypedMessage;
+use crate::ui::{Status, TypedMessage};
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn compile(ws: &Workspace<'_>) -> Result<()> {
+    let start_time = Instant::now();
+
+    let resolve = ops::resolve_workspace(ws)?;
+
     // FIXME(mkaput): Iterate over all members here if current package is not set.
     let current_package = ws.current_package()?;
-    let resolve = ops::resolve_workspace(ws)?;
-    let project_config = build_project_config(current_package.id, &resolve)?;
+
+    ws.config().ui().print(Status::new(
+        "Compiling",
+        "green",
+        &current_package.id.to_string(),
+    ));
+
+    compile_package(current_package, ws, &resolve).map_err(|err| {
+        // TODO(mkaput): Make this an enum upstream.
+        if err.to_string() == "Compilation failed." {
+            anyhow!(
+                "could not compile `{}` due to previous error",
+                current_package.id.name
+            )
+        } else {
+            err
+        }
+    })?;
+
+    let elapsed_time = HumanDuration(start_time.elapsed());
+    ws.config().ui().print(Status::new(
+        "Finished",
+        "green",
+        &format!("release target(s) in {elapsed_time}"),
+    ));
+
+    Ok(())
+}
+
+fn compile_package(
+    current_package: &Package,
+    ws: &Workspace<'_>,
+    resolve: &WorkspaceResolve,
+) -> Result<()> {
+    let project_config = build_project_config(current_package.id, resolve)?;
 
     let compiler_config = CompilerConfig {
         on_diagnostic: {
