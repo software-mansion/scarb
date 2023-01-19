@@ -20,14 +20,14 @@ impl<'a, T> Message for ValueMessage<'a, T>
 where
     T: Display + Serialize,
 {
-    fn text(self) -> String
+    fn text(&self) -> String
     where
         Self: Sized,
     {
         self.value.to_string()
     }
 
-    fn structured<S: Serializer>(self, ser: S) -> Result<S::Ok, S::Error>
+    fn structured<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error>
     where
         Self: Sized,
     {
