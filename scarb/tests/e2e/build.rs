@@ -64,6 +64,34 @@ fn compile_with_syntax_error() {
 }
 
 #[test]
+fn compile_with_syntax_error_json() {
+    let t = assert_fs::TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            "#,
+        )
+        .unwrap();
+    t.child("src/lib.cairo")
+        .write_str(r"not_a_keyword")
+        .unwrap();
+
+    scarb_command()
+        .arg("--json")
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .code(1)
+        .stdout_eq(indoc! {r#"
+            {"type":"diagnostic","message":"error: Skipped tokens. Expected: Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum or an attribute.\n --> lib.cairo:1:1\nnot_a_keyword\n^***********^\n\n"}
+            {"type":"error","message":"Compilation failed."}
+        "#});
+}
+
+#[test]
 fn compile_without_manifest() {
     let t = assert_fs::TempDir::new().unwrap();
     let cause = fs::read(t.child("Scarb.toml")).unwrap_err();
