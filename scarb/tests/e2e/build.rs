@@ -52,14 +52,15 @@ fn compile_with_syntax_error() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_eq(indoc! {r#"
+        .stdout_matches(indoc! {r#"
+               Compiling hello v0.1.0 ([..])
             error: Skipped tokens. Expected: Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum or an attribute.
              --> lib.cairo:1:1
             not_a_keyword
             ^***********^
 
 
-            error: Compilation failed.
+            error: could not compile `hello` due to previous error
         "#});
 }
 
@@ -85,9 +86,10 @@ fn compile_with_syntax_error_json() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_eq(indoc! {r#"
-            {"type":"diagnostic","message":"error: Skipped tokens. Expected: Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum or an attribute.\n --> lib.cairo:1:1\nnot_a_keyword\n^***********^\n\n"}
-            {"type":"error","message":"Compilation failed."}
+        .stdout_matches(indoc! {r#"
+            {"status":"compiling","message":"hello v0.1.0 ([..])"}
+            {"type":"diagnostic","message":"error: Skipped tokens. Expected: Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum or an attribute./n --> lib.cairo:1:1/nnot_a_keyword/n^***********^/n/n"}
+            {"type":"error","message":"could not compile `hello` due to previous error"}
         "#});
 }
 
@@ -302,7 +304,10 @@ fn compile_multiple_packages() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_matches(indoc! {r#"
+            [..] Compiling fib v1.0.0 ([..])
+            [..]  Finished release target(s) in [..]
+        "#});
 
     t.child("target/release/fib.sierra")
         .assert(predicates::str::is_empty().not());
@@ -383,7 +388,10 @@ fn compile_with_nested_deps() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_matches(indoc! {r#"
+            [..] Compiling x v1.0.0 ([..])
+            [..]  Finished release target(s) in [..]
+        "#});
 
     t.child("target/release/x.sierra")
         .assert(predicates::str::is_empty().not());
