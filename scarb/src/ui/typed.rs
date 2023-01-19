@@ -1,6 +1,7 @@
-use crate::ui::Message;
 use console::Style;
 use serde::{Serialize, Serializer};
+
+use crate::ui::Message;
 
 #[derive(Serialize)]
 pub struct TypedMessage<'a> {
@@ -8,7 +9,7 @@ pub struct TypedMessage<'a> {
     message: &'a str,
 
     #[serde(skip)]
-    type_style: Option<&'a Style>,
+    type_style: Option<&'a str>,
     #[serde(skip)]
     skip_type_for_text: bool,
 }
@@ -23,7 +24,7 @@ impl<'a> TypedMessage<'a> {
         }
     }
 
-    pub fn styled(ty: &'a str, type_style: &'a Style, message: &'a str) -> Self {
+    pub fn styled(ty: &'a str, type_style: &'a str, message: &'a str) -> Self {
         Self {
             r#type: ty,
             message,
@@ -50,7 +51,8 @@ impl<'a> Message for TypedMessage<'a> {
             format!(
                 "{}: {}",
                 self.type_style
-                    .unwrap_or(&Style::new())
+                    .map(Style::from_dotted_str)
+                    .unwrap_or_else(Style::new)
                     .apply_to(self.r#type),
                 self.message
             )

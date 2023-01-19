@@ -1,5 +1,4 @@
 use clap::ValueEnum;
-use console::Style;
 
 pub use machine::*;
 pub use message::*;
@@ -45,18 +44,10 @@ impl Ui {
     }
 
     pub fn warn(&self, message: impl AsRef<str>) {
-        self.print(TypedMessage::styled(
-            "warn",
-            &Style::new().yellow(),
-            message.as_ref(),
-        ))
+        self.print(TypedMessage::styled("warn", "yellow", message.as_ref()))
     }
 
     pub fn error(&self, message: impl AsRef<str>) {
-        self.print(TypedMessage::styled(
-            "error",
-            &Style::new().red(),
-            message.as_ref(),
-        ))
+        self.print(TypedMessage::styled("error", "red", message.as_ref()))
     }
 }
