@@ -1,4 +1,3 @@
-use std::time::Instant;
 use std::{fs, mem};
 
 use anyhow::{anyhow, Result};
@@ -14,8 +13,6 @@ use crate::ui::{Status, TypedMessage};
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn compile(ws: &Workspace<'_>) -> Result<()> {
-    let start_time = Instant::now();
-
     let resolve = ops::resolve_workspace(ws)?;
 
     // FIXME(mkaput): Iterate over all members here if current package is not set.
@@ -39,7 +36,7 @@ pub fn compile(ws: &Workspace<'_>) -> Result<()> {
         }
     })?;
 
-    let elapsed_time = HumanDuration(start_time.elapsed());
+    let elapsed_time = HumanDuration(ws.config().elapsed_time());
     ws.config().ui().print(Status::new(
         "Finished",
         "green",

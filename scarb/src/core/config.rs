@@ -1,6 +1,7 @@
 use std::env;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use anyhow::{anyhow, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
@@ -27,10 +28,13 @@ pub struct Config {
     app_exe: OnceCell<PathBuf>,
     download_depot: DownloadDepot,
     ui: Ui,
+    creation_time: Instant,
 }
 
 impl Config {
     pub fn init(manifest_path: Utf8PathBuf, dirs: AppDirs, ui: Ui) -> Result<Self> {
+        let creation_time = Instant::now();
+
         if tracing::enabled!(tracing::Level::TRACE) {
             for line in dirs.to_string().lines() {
                 trace!("{line}");
@@ -59,6 +63,7 @@ impl Config {
             app_exe: OnceCell::new(),
             download_depot,
             ui,
+            creation_time,
         })
     }
 
@@ -134,5 +139,9 @@ impl Config {
 
     pub fn ui(&self) -> &Ui {
         &self.ui
+    }
+
+    pub fn elapsed_time(&self) -> Duration {
+        self.creation_time.elapsed()
     }
 }
