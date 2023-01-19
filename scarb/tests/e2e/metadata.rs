@@ -525,4 +525,28 @@ fn manifest_metadata() {
         );
 }
 
+#[test]
+fn json_output_is_not_pretty() {
+    let t = assert_fs::TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            "#,
+        )
+        .unwrap();
+
+    scarb_command()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches("{\"version\":1,[..]}\n");
+}
+
 // TODO(mkaput): Add tests with workspaces
