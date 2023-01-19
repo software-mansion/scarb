@@ -13,6 +13,7 @@ use crate::core::registry::download_depot::DownloadDepot;
 use crate::core::Workspace;
 use crate::dirs::AppDirs;
 use crate::internal::fsx::{GuardedExistedPathBuf, GuardedExistedPathBufOpts};
+use crate::ui::Ui;
 use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
 
@@ -25,10 +26,11 @@ pub struct Config {
     target_dir: TargetDir,
     app_exe: OnceCell<PathBuf>,
     download_depot: DownloadDepot,
+    ui: Ui,
 }
 
 impl Config {
-    pub fn init(manifest_path: Utf8PathBuf, dirs: AppDirs) -> Result<Self> {
+    pub fn init(manifest_path: Utf8PathBuf, dirs: AppDirs, ui: Ui) -> Result<Self> {
         if tracing::enabled!(tracing::Level::TRACE) {
             for line in dirs.to_string().lines() {
                 trace!("{line}");
@@ -56,6 +58,7 @@ impl Config {
             target_dir,
             app_exe: OnceCell::new(),
             download_depot,
+            ui,
         })
     }
 
@@ -127,5 +130,9 @@ impl Config {
 
     pub fn download_depot(&self) -> &DownloadDepot {
         &self.download_depot
+    }
+
+    pub fn ui(&self) -> &Ui {
+        &self.ui
     }
 }

@@ -693,6 +693,7 @@ dependencies = [
  "encode_unicode",
  "lazy_static",
  "libc",
+ "unicode-width",
  "windows-sys",
 ]
 
@@ -1995,6 +1996,7 @@ dependencies = [
  "camino",
  "clap",
  "clap-verbosity-flag",
+ "console",
  "create-output-dir",
  "directories",
  "dunce",
