@@ -4,10 +4,12 @@ use console::Style;
 pub use machine::*;
 pub use message::*;
 pub use typed::*;
+pub use value::*;
 
 mod machine;
 mod message;
 mod typed;
+mod value;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
 pub enum OutputFormat {

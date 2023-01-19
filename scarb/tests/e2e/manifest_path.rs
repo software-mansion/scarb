@@ -159,3 +159,26 @@ fn path_override_via_env() {
             dunce::canonicalize(manifest.path()).unwrap().display()
         ));
 }
+
+#[test]
+fn json_output() {
+    let t = assert_fs::TempDir::new().unwrap();
+    let manifest = t.child("Scarb.toml");
+    manifest
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            "#,
+        )
+        .unwrap();
+
+    scarb_command()
+        .arg("--json")
+        .arg("manifest-path")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches("{\"path\":\"[..]\"}\n");
+}
