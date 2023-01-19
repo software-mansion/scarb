@@ -36,7 +36,7 @@ impl Ui {
         Self { output_format }
     }
 
-    pub fn print(&self, message: impl Message) {
+    pub fn print<T: Message>(&self, message: T) {
         match self.output_format {
             OutputFormat::Text => message.print_text(),
             OutputFormat::Json => message.print_json(),
