@@ -1,9 +1,11 @@
 use clap::ValueEnum;
 use console::Style;
 
+pub use machine::*;
 pub use message::*;
 pub use typed::*;
 
+mod machine;
 mod message;
 mod typed;
 

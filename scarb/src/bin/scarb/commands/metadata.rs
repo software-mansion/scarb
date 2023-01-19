@@ -1,8 +1,9 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use scarb::core::Config;
 use scarb::metadata::{Metadata, MetadataOptions};
 use scarb::ops;
+use scarb::ui::MachineMessage;
 
 use crate::args::MetadataArgs;
 
@@ -17,8 +18,7 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
 
     let metadata = Metadata::collect(&ws, &opts)?;
 
-    let json = serde_json::to_string_pretty(&metadata).context("Failed to produce JSON output.")?;
-    println!("{json}");
+    config.ui().print(MachineMessage(metadata));
 
     Ok(())
 }

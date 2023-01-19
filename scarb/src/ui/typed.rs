@@ -1,6 +1,6 @@
-use serde::{Serialize, Serializer};
-use console::Style;
 use crate::ui::Message;
+use console::Style;
+use serde::{Serialize, Serializer};
 
 #[derive(Serialize)]
 pub struct TypedMessage<'a> {
