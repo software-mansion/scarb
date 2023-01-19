@@ -13,6 +13,7 @@ pub mod metadata;
 pub mod ops;
 mod resolver;
 mod sources;
+pub mod ui;
 
 pub const SCARB_ENV: &str = "SCARB";
 

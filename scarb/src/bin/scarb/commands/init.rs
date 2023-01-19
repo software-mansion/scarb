@@ -20,6 +20,6 @@ pub fn run(args: InitArgs, config: &Config) -> Result<()> {
         },
         config,
     )?;
-    println!("Created package.");
+    config.ui().print("Created package.");
     Ok(())
 }

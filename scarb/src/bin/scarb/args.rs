@@ -9,6 +9,7 @@ use clap::{Parser, Subcommand};
 
 use scarb::core::PackageName;
 use scarb::metadata::MetadataVersion;
+use scarb::ui::OutputFormat;
 
 /// Cairo's project manager.
 #[derive(Parser, Clone, Debug)]
@@ -22,9 +23,24 @@ pub struct Args {
     #[command(flatten)]
     pub verbose: clap_verbosity_flag::Verbosity,
 
+    /// Print machine-readable output in [NDJSON](https://github.com/ndjson/ndjson-spec) format.
+    #[arg(long)]
+    pub json: bool,
+
     /// Subcommand and its arguments.
     #[command(subcommand)]
     pub command: Command,
+}
+
+impl Args {
+    /// Construct [`OutputFormat`] value from these arguments.
+    pub fn output_format(&self) -> OutputFormat {
+        if self.json {
+            OutputFormat::Json
+        } else {
+            OutputFormat::default()
+        }
+    }
 }
 
 /// Subcommand and its arguments.

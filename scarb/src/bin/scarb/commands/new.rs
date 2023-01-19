@@ -15,6 +15,8 @@ pub fn run(args: NewArgs, config: &Config) -> Result<()> {
         config,
     )?;
 
-    println!("Created `{}` package.", result.name);
+    config
+        .ui()
+        .print(format!("Created `{}` package.", result.name));
     Ok(())
 }
