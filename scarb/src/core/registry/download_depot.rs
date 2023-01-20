@@ -23,19 +23,16 @@ impl DownloadDepot {
         downloader: impl FnOnce(&Utf8Path) -> Result<()>,
     ) -> Result<Utf8PathBuf> {
         // TODO(mkaput): Locking and computing checksum.
-        let registry_dir = self.dirs.registry_dir(category);
-        fsx::create_dir_all(&registry_dir)?;
+        let registry_dir = self.dirs.registry_dir();
+        let category_dir = registry_dir.child(category);
+        let extracted_path = category_dir.child(package_key);
 
-        let extracted_path = registry_dir.join(package_key);
-
-        if extracted_path.exists() {
-            fsx::remove_dir_all(&extracted_path)?;
+        if extracted_path.path_unchecked().exists() {
+            fsx::remove_dir_all(extracted_path.path_unchecked())?;
         }
 
-        fsx::create_dir_all(&extracted_path)?;
+        downloader(extracted_path.path_existent()?)?;
 
-        downloader(&extracted_path)?;
-
-        Ok(extracted_path)
+        Ok(extracted_path.path_unchecked().to_path_buf())
     }
 }

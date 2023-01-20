@@ -4,16 +4,16 @@ use std::fmt;
 use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
-use camino::Utf8PathBuf;
 use directories::ProjectDirs;
 
+use crate::flock::{Filesystem, RootFilesystem};
 use crate::internal::fsx::{PathBufUtf8Ext, PathUtf8Ext};
 
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct AppDirs {
-    pub cache_dir: Utf8PathBuf,
-    pub config_dir: Utf8PathBuf,
+    pub cache_dir: RootFilesystem,
+    pub config_dir: RootFilesystem,
     pub path_dirs: Vec<PathBuf>,
 }
 
@@ -35,20 +35,25 @@ impl AppDirs {
             path_dirs.push(home_bin);
         };
 
+        let cache_dir = pd.cache_dir().try_to_utf8()?;
+        let config_dir = pd.config_dir().try_to_utf8()?;
+
         Ok(Self {
-            cache_dir: pd.cache_dir().try_to_utf8()?,
-            config_dir: pd.config_dir().try_to_utf8()?,
+            cache_dir: RootFilesystem::new_output_dir(cache_dir),
+            config_dir: RootFilesystem::new(config_dir),
             path_dirs,
         })
     }
 
     pub fn apply_env_overrides(&mut self) -> Result<()> {
         if let Some(path) = env::var_os("SCARB_CACHE") {
-            self.cache_dir = PathBuf::from(path).try_into_utf8()?;
+            let cache_dir = PathBuf::from(path).try_into_utf8()?;
+            self.cache_dir = RootFilesystem::new_output_dir(cache_dir);
         }
 
         if let Some(path) = env::var_os("SCARB_CONFIG") {
-            self.config_dir = PathBuf::from(path).try_into_utf8()?;
+            let config_dir = PathBuf::from(path).try_into_utf8()?;
+            self.config_dir = RootFilesystem::new(config_dir);
         }
 
         Ok(())
@@ -58,8 +63,8 @@ impl AppDirs {
         env::join_paths(self.path_dirs.iter()).unwrap()
     }
 
-    pub fn registry_dir(&self, category: &str) -> Utf8PathBuf {
-        self.cache_dir.join("registry").join(category)
+    pub fn registry_dir(&self) -> Filesystem<'_> {
+        self.cache_dir.child("registry")
     }
 }
 
