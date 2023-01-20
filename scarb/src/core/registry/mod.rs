@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use crate::core::{ManifestDependency, Package, PackageId, Summary};
 
 pub mod cache;
-pub mod download_depot;
+pub mod download;
 pub mod source_map;
 
 #[async_trait(?Send)]

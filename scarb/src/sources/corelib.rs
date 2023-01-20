@@ -8,6 +8,7 @@ use rust_embed::RustEmbed;
 use crate::core::config::Config;
 use crate::core::manifest::{ManifestDependency, Summary};
 use crate::core::package::{Package, PackageId};
+use crate::core::registry::download::download_package_to_cache;
 use crate::core::source::{Source, SourceId};
 use crate::core::MANIFEST_FILE_NAME;
 use crate::internal::fsx;
@@ -36,19 +37,16 @@ impl<'c> CorelibSource<'c> {
 
     fn load(&self) -> Result<Package> {
         // TODO(mkaput): Include core version or hash part here.
-        let root = self
-            .config
-            .download_depot()
-            .get_or_download("core", "core", |tmp| {
-                for path in Corelib::iter() {
-                    let full_path = tmp.join(path.as_ref());
-                    let data = Corelib::get(path.as_ref()).unwrap().data;
-                    fsx::create_dir_all(full_path.parent().unwrap())?;
-                    fsx::write(full_path, data)?;
-                }
+        let root = download_package_to_cache("core", "core", self.config, |tmp| {
+            for path in Corelib::iter() {
+                let full_path = tmp.join(path.as_ref());
+                let data = Corelib::get(path.as_ref()).unwrap().data;
+                fsx::create_dir_all(full_path.parent().unwrap())?;
+                fsx::write(full_path, data)?;
+            }
 
-                Ok(())
-            })?;
+            Ok(())
+        })?;
 
         let manifest_path = root.join(MANIFEST_FILE_NAME);
         ops::read_package_with_source_id(&manifest_path, SourceId::for_core())
