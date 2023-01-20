@@ -1,7 +1,7 @@
-use std::env;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use std::{env, mem};
 
 use anyhow::{anyhow, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
@@ -12,7 +12,7 @@ use which::which_in;
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::dirs::AppDirs;
-use crate::flock::RootFilesystem;
+use crate::flock::{AdvisoryLock, RootFilesystem};
 use crate::ui::Ui;
 use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
@@ -25,6 +25,9 @@ pub struct Config {
     app_exe: OnceCell<PathBuf>,
     ui: Ui,
     creation_time: Instant,
+    // HACK: This should be the lifetime of Config itself, but we cannot express that, so we
+    //   put 'static here and transmute in getter function.
+    package_cache_lock: OnceCell<AdvisoryLock<'static>>,
 }
 
 impl Config {
@@ -46,7 +49,6 @@ impl Config {
 
         let dirs = Arc::new(dirs);
 
-
         Ok(Self {
             manifest_path,
             dirs,
@@ -54,6 +56,7 @@ impl Config {
             app_exe: OnceCell::new(),
             ui,
             creation_time,
+            package_cache_lock: OnceCell::new(),
         })
     }
 
@@ -129,5 +132,18 @@ impl Config {
 
     pub fn elapsed_time(&self) -> Duration {
         self.creation_time.elapsed()
+    }
+
+    pub fn package_cache_lock<'a>(&'a self) -> &AdvisoryLock<'a> {
+        // UNSAFE: These mem::transmute calls only change generic lifetime parameters.
+        let static_al: &AdvisoryLock<'static> = self.package_cache_lock.get_or_init(|| {
+            let not_static_al =
+                self.dirs()
+                    .cache_dir
+                    .advisory_lock(".package-cache.lock", "package cache", self);
+            unsafe { mem::transmute(not_static_al) }
+        });
+        let not_static_al: &AdvisoryLock<'a> = unsafe { mem::transmute(static_al) };
+        not_static_al
     }
 }

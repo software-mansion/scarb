@@ -1,5 +1,6 @@
 use std::fs::{File, OpenOptions};
 use std::ops::{Deref, DerefMut};
+use std::sync::{Arc, Mutex, Weak};
 use std::{fmt, io};
 
 use anyhow::{Context, Result};
@@ -52,6 +53,49 @@ impl Drop for FileLockGuard {
         if let Some(file) = self.file.take() {
             let _ = file.unlock();
         }
+    }
+}
+
+/// An exclusive lock over a global entity identified by a path within a [`Filesystem`].
+#[derive(Debug)]
+pub struct AdvisoryLock<'f> {
+    path: Utf8PathBuf,
+    description: String,
+    file_lock: Mutex<
+        // This Arc is shared between all guards within the process.
+        // Here it is Weak, because AdvisoryLock itself does not keep the lock
+        // (only guards do).
+        Weak<FileLockGuard>,
+    >,
+    filesystem: &'f Filesystem<'f>,
+    config: &'f Config,
+}
+
+#[derive(Debug)]
+pub struct AdvisoryLockGuard(Arc<FileLockGuard>);
+
+impl<'f> AdvisoryLock<'f> {
+    /// Acquires this advisory lock.
+    ///
+    /// This lock is global per-process and can be acquired recursively.
+    /// An RAII structure is returned to release the lock, and if this process abnormally
+    /// terminates the lock is also released.
+    pub fn acquire(&self) -> Result<AdvisoryLockGuard> {
+        let mut slot = self.file_lock.lock().unwrap();
+
+        let file_lock_arc = match slot.upgrade() {
+            Some(arc) => arc,
+            None => {
+                let arc = Arc::new(self.filesystem.open_rw(
+                    &self.path,
+                    &self.description,
+                    self.config,
+                )?);
+                *slot = Arc::downgrade(&arc);
+                arc
+            }
+        };
+        Ok(AdvisoryLockGuard(file_lock_arc))
     }
 }
 
@@ -196,6 +240,22 @@ impl<'a> Filesystem<'a> {
             path,
             lock_kind,
         })
+    }
+
+    /// Construct an [`AdvisoryLock`] within this file system.
+    pub fn advisory_lock(
+        &'a self,
+        path: impl AsRef<Utf8Path>,
+        description: impl ToString,
+        config: &'a Config,
+    ) -> AdvisoryLock<'a> {
+        AdvisoryLock {
+            path: path.as_ref().to_path_buf(),
+            description: description.to_string(),
+            file_lock: Mutex::new(Weak::new()),
+            filesystem: self,
+            config,
+        }
     }
 }
 

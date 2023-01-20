@@ -9,8 +9,8 @@ use directories::ProjectDirs;
 use crate::flock::{Filesystem, RootFilesystem};
 use crate::internal::fsx::{PathBufUtf8Ext, PathUtf8Ext};
 
+// TODO(mkaput): Construction needs refinement here.
 #[derive(Debug)]
-#[non_exhaustive]
 pub struct AppDirs {
     pub cache_dir: RootFilesystem,
     pub config_dir: RootFilesystem,
