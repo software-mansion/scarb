@@ -9,7 +9,6 @@ use once_cell::sync::OnceCell;
 use tracing::trace;
 use which::which_in;
 
-use crate::core::registry::download_depot::DownloadDepot;
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::dirs::AppDirs;
@@ -24,7 +23,6 @@ pub struct Config {
     dirs: Arc<AppDirs>,
     target_dir: RootFilesystem,
     app_exe: OnceCell<PathBuf>,
-    download_depot: DownloadDepot,
     ui: Ui,
     creation_time: Instant,
 }
@@ -48,14 +46,12 @@ impl Config {
 
         let dirs = Arc::new(dirs);
 
-        let download_depot = DownloadDepot::new(dirs.clone());
 
         Ok(Self {
             manifest_path,
             dirs,
             target_dir,
             app_exe: OnceCell::new(),
-            download_depot,
             ui,
             creation_time,
         })
@@ -125,10 +121,6 @@ impl Config {
                     .context("could not get the path to scarb executable")
             })
             .map(AsRef::as_ref)
-    }
-
-    pub fn download_depot(&self) -> &DownloadDepot {
-        &self.download_depot
     }
 
     pub fn ui(&self) -> &Ui {
