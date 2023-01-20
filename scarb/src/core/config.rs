@@ -13,7 +13,7 @@ use crate::core::registry::download_depot::DownloadDepot;
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::dirs::AppDirs;
-use crate::internal::fsx::{GuardedExistedPathBuf, GuardedExistedPathBufOpts};
+use crate::internal::fsx::GuardedExistedPathBuf;
 use crate::ui::Ui;
 use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
@@ -41,15 +41,11 @@ impl Config {
             }
         }
 
-        let target_dir_path = manifest_path
-            .parent()
-            .expect("parent of manifest path must always exist")
-            .join(DEFAULT_TARGET_DIR_NAME);
-        let target_dir = TargetDir::with_options(
-            target_dir_path,
-            GuardedExistedPathBufOpts {
-                is_output_dir: true,
-            },
+        let target_dir = TargetDir::new_output_dir(
+            manifest_path
+                .parent()
+                .expect("parent of manifest path must always exist")
+                .join(DEFAULT_TARGET_DIR_NAME),
         );
 
         let dirs = Arc::new(dirs);
