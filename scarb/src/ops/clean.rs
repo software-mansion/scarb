@@ -5,6 +5,7 @@ use crate::internal::fsx;
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn clean(config: &Config) -> Result<()> {
-    fsx::remove_dir_all(config.target_dir().as_unchecked())
-        .context("failed to clean generated artifacts")
+    // FIXME(mkaput): I'm not sure if we don't need locks here?
+    let path = config.target_dir().path_unchecked();
+    fsx::remove_dir_all(path).context("failed to clean generated artifacts")
 }

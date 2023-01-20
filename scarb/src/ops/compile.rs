@@ -1,4 +1,5 @@
-use std::{fs, mem};
+use std::io::Write;
+use std::mem;
 
 use anyhow::{anyhow, Result};
 use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
@@ -71,13 +72,13 @@ fn compile_package(
     };
     let sierra_program = run_compile(project_config, compiler_config)?;
 
-    fs::write(
-        ws.target_dir()
-            .child("release")
-            .as_existent()?
-            .join(format!("{}.sierra", current_package.id.name)),
-        sierra_program.to_string(),
+    let target = ws.target_dir().child("release");
+    let mut file = target.open_rw(
+        format!("{}.sierra", current_package.id.name),
+        "output file",
+        ws.config(),
     )?;
+    file.write_all(sierra_program.to_string().as_bytes())?;
 
     Ok(())
 }

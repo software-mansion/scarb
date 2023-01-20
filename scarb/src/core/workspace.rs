@@ -1,8 +1,9 @@
 use anyhow::Result;
 use camino::Utf8Path;
 
-use crate::core::config::{Config, TargetDir};
+use crate::core::config::Config;
 use crate::core::package::Package;
+use crate::flock::RootFilesystem;
 
 // TODO(mkaput): Support real workspaces.
 /// The core abstraction for working with a workspace of packages.
@@ -35,7 +36,7 @@ impl<'c> Workspace<'c> {
         self.package.manifest_path()
     }
 
-    pub fn target_dir(&self) -> &TargetDir {
+    pub fn target_dir(&self) -> &RootFilesystem {
         self.config.target_dir()
     }
 

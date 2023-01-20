@@ -8,6 +8,11 @@ use crate::support::command::scarb_command;
 
 #[test]
 fn compile_simple() {
+    // `TempDir::new` creates the directory, while `create_output_dir` does not mark directory as
+    // ephemeral if it already exists.
+    // Therefore, we use `.child` here to ensure that cache directory does not exist when running.
+    let cache_dir = assert_fs::TempDir::new().unwrap().child("c");
+
     let t = assert_fs::TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
@@ -23,12 +28,26 @@ fn compile_simple() {
         .unwrap();
 
     scarb_command()
+        .env("SCARB_CACHE", cache_dir.path())
         .arg("build")
         .current_dir(&t)
         .assert()
         .success();
+
     t.child("target/release/hello.sierra")
         .assert(predicates::str::is_empty().not());
+
+    t.child("target/CACHEDIR.TAG")
+        .assert(predicates::path::exists());
+    t.child("target/release/CACHEDIR.TAG")
+        .assert(predicates::path::exists().not());
+
+    cache_dir
+        .child("registry/core/core/Scarb.toml")
+        .assert(predicates::path::exists());
+    cache_dir
+        .child("CACHEDIR.TAG")
+        .assert(predicates::path::exists());
 }
 
 #[test]
