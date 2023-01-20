@@ -23,6 +23,7 @@ console.workspace = true
 create-output-dir = { version = "0.1.0", path = "../utils/create-output-dir" }
 directories.workspace = true
 dunce.workspace = true
+fs4.workspace = true
 indicatif.workspace = true
 indoc.workspace = true
 itertools.workspace = true
