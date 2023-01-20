@@ -84,39 +84,37 @@ impl PathBufUtf8Ext for PathBuf {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default)]
-pub struct GuardedExistedPathBufOpts {
-    pub is_output_dir: bool,
-}
-
 #[derive(Debug)]
 pub struct GuardedExistedPathBuf<'p> {
     path: PathBuf,
-    opts: GuardedExistedPathBufOpts,
     creation_lock: OnceCell<()>,
     parent: Option<&'p GuardedExistedPathBuf<'p>>,
+    is_output_dir: bool,
 }
 
 impl<'p> GuardedExistedPathBuf<'p> {
     pub fn new(path: impl Into<PathBuf>) -> Self {
-        Self::with_options(path, Default::default())
-    }
-
-    pub fn with_options(path: impl Into<PathBuf>, opts: GuardedExistedPathBufOpts) -> Self {
         Self {
             path: path.into(),
-            opts,
             creation_lock: OnceCell::new(),
             parent: None,
+            is_output_dir: false,
+        }
+    }
+
+    pub fn new_output_dir(path: impl Into<PathBuf>) -> Self {
+        Self {
+            is_output_dir: true,
+            ..Self::new(path)
         }
     }
 
     pub fn child(&'p self, path: impl AsRef<Path>) -> Self {
         Self {
             path: self.path.join(path),
-            opts: self.opts,
             creation_lock: OnceCell::new(),
             parent: Some(self),
+            is_output_dir: false,
         }
     }
 
@@ -148,10 +146,10 @@ impl<'p> GuardedExistedPathBuf<'p> {
                 trace!(
                     "creating directory {}; output_dir={}",
                     &self.path.display(),
-                    self.opts.is_output_dir
+                    self.is_output_dir
                 );
 
-                if self.opts.is_output_dir {
+                if self.is_output_dir {
                     create_output_dir(&self.path)
                 } else {
                     create_dir_all(&self.path)
