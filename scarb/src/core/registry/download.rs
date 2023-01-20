@@ -10,7 +10,10 @@ pub fn download_package_to_cache(
     config: &Config,
     downloader: impl FnOnce(&Utf8Path) -> Result<()>,
 ) -> Result<Utf8PathBuf> {
+    // TODO(mkaput): Operate on temporary directory and do atomic swap while locked.
     // TODO(mkaput): Computing checksum.
+    let _lock = config.package_cache_lock().acquire()?;
+
     let registry_dir = config.dirs().registry_dir();
     let category_dir = registry_dir.child(category);
     let extracted_path = category_dir.child(package_key);
