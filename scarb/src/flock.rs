@@ -1,6 +1,6 @@
 use std::fs::{File, OpenOptions};
-use std::io;
 use std::ops::{Deref, DerefMut};
+use std::{fmt, io};
 
 use anyhow::{Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
@@ -196,6 +196,12 @@ impl<'a> Filesystem<'a> {
             path,
             lock_kind,
         })
+    }
+}
+
+impl<'a> fmt::Display for Filesystem<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.root)
     }
 }
 

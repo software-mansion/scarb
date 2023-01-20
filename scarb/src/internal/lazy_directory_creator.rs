@@ -1,3 +1,5 @@
+use std::fmt;
+
 use camino::{Utf8Path, Utf8PathBuf};
 use once_cell::sync::OnceCell;
 use tracing::trace;
@@ -67,5 +69,11 @@ impl<'p> LazyDirectoryCreator<'p> {
                 }
             })
             .copied()
+    }
+}
+
+impl<'p> fmt::Display for LazyDirectoryCreator<'p> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.as_unchecked())
     }
 }
