@@ -13,18 +13,16 @@ use crate::core::registry::download_depot::DownloadDepot;
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::dirs::AppDirs;
-use crate::internal::lazy_directory_creator::LazyDirectoryCreator;
+use crate::flock::RootFilesystem;
 use crate::ui::Ui;
 use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
-
-pub type TargetDir = LazyDirectoryCreator<'static>;
 
 #[derive(Debug)]
 pub struct Config {
     manifest_path: Utf8PathBuf,
     dirs: Arc<AppDirs>,
-    target_dir: TargetDir,
+    target_dir: RootFilesystem,
     app_exe: OnceCell<PathBuf>,
     download_depot: DownloadDepot,
     ui: Ui,
@@ -41,7 +39,7 @@ impl Config {
             }
         }
 
-        let target_dir = TargetDir::new_output_dir(
+        let target_dir = RootFilesystem::new_output_dir(
             manifest_path
                 .parent()
                 .expect("parent of manifest path must always exist")
@@ -77,7 +75,7 @@ impl Config {
         &self.dirs
     }
 
-    pub fn target_dir(&self) -> &TargetDir {
+    pub fn target_dir(&self) -> &RootFilesystem {
         &self.target_dir
     }
 

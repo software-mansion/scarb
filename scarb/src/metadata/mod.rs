@@ -12,7 +12,6 @@ pub use metadata_version::*;
 
 use crate::core::manifest::ManifestMetadata;
 use crate::core::{ManifestDependency, Package, PackageId, SourceId, Workspace};
-use crate::internal::fsx::PathUtf8Ext;
 use crate::ops::resolve_workspace;
 
 mod metadata_version;
@@ -98,7 +97,7 @@ impl ProjectMetadata {
         Ok(Self {
             version: MetadataVersionPin::<1>,
             app_exe: ws.config().app_exe().ok().map(Into::into),
-            target_dir: Some(ws.target_dir().as_unchecked().try_as_utf8()?.to_path_buf()),
+            target_dir: Some(ws.target_dir().path_unchecked().to_path_buf()),
             workspace: WorkspaceMetadata::new(ws)?,
             packages,
         })

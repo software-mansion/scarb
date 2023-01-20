@@ -8,6 +8,7 @@
 
 pub mod core;
 pub mod dirs;
+pub mod flock;
 mod internal;
 pub mod metadata;
 pub mod ops;
