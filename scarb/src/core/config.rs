@@ -13,12 +13,12 @@ use crate::core::registry::download_depot::DownloadDepot;
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::dirs::AppDirs;
-use crate::internal::fsx::GuardedExistedPathBuf;
+use crate::internal::lazy_directory_creator::LazyDirectoryCreator;
 use crate::ui::Ui;
 use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
 
-pub type TargetDir = GuardedExistedPathBuf<'static>;
+pub type TargetDir = LazyDirectoryCreator<'static>;
 
 #[derive(Debug)]
 pub struct Config {
