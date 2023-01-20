@@ -17,13 +17,13 @@ pub enum FileLockKind {
 }
 
 #[derive(Debug)]
-pub struct LockedFile {
+pub struct FileLockGuard {
     file: Option<File>,
     path: Utf8PathBuf,
     lock_kind: FileLockKind,
 }
 
-impl LockedFile {
+impl FileLockGuard {
     pub fn path(&self) -> &Utf8Path {
         self.path.as_path()
     }
@@ -33,7 +33,7 @@ impl LockedFile {
     }
 }
 
-impl Deref for LockedFile {
+impl Deref for FileLockGuard {
     type Target = File;
 
     fn deref(&self) -> &Self::Target {
@@ -41,13 +41,13 @@ impl Deref for LockedFile {
     }
 }
 
-impl DerefMut for LockedFile {
+impl DerefMut for FileLockGuard {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.file.as_mut().unwrap()
     }
 }
 
-impl Drop for LockedFile {
+impl Drop for FileLockGuard {
     fn drop(&mut self) {
         if let Some(file) = self.file.take() {
             let _ = file.unlock();
@@ -119,7 +119,7 @@ impl<'a> Filesystem<'a> {
         path: impl AsRef<Utf8Path>,
         description: &str,
         config: &Config,
-    ) -> Result<LockedFile> {
+    ) -> Result<FileLockGuard> {
         self.open(
             path.as_ref(),
             OpenOptions::new().read(true).write(true).create(true),
@@ -144,7 +144,7 @@ impl<'a> Filesystem<'a> {
         path: impl AsRef<Utf8Path>,
         description: &str,
         config: &Config,
-    ) -> Result<LockedFile> {
+    ) -> Result<FileLockGuard> {
         self.open(
             path.as_ref(),
             OpenOptions::new().read(true),
@@ -161,7 +161,7 @@ impl<'a> Filesystem<'a> {
         lock_kind: FileLockKind,
         description: &str,
         config: &Config,
-    ) -> Result<LockedFile> {
+    ) -> Result<FileLockGuard> {
         let path = self.root.as_existent()?.join(path);
 
         let file = opts
@@ -191,7 +191,7 @@ impl<'a> Filesystem<'a> {
             }
         }
 
-        Ok(LockedFile {
+        Ok(FileLockGuard {
             file: Some(file),
             path,
             lock_kind,
