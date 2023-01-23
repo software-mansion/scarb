@@ -21,6 +21,5 @@ pub(crate) mod manifest;
 pub(crate) mod package;
 pub(crate) mod registry;
 pub(crate) mod resolver;
-pub(crate) mod restricted_names;
 pub(crate) mod source;
 pub(crate) mod workspace;

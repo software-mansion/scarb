@@ -25,6 +25,7 @@ pub(crate) mod mock {
     use async_trait::async_trait;
     use camino::Utf8PathBuf;
     use itertools::Itertools;
+    use semver::Version;
 
     use crate::core::package::PackageName;
     use crate::core::registry::Registry;
@@ -41,7 +42,11 @@ pub(crate) mod mock {
         pub fn new() -> Self {
             let mut reg = Self::default();
             reg.put(
-                PackageId::new("core", "1.0.0", SourceId::for_core()).unwrap(),
+                PackageId::new(
+                    PackageName::CORE,
+                    Version::new(1, 0, 0),
+                    SourceId::for_core(),
+                ),
                 Vec::new(),
             );
             reg
@@ -163,7 +168,7 @@ pub(crate) mod mock {
     macro_rules! dep {
         (($n:literal, $v:literal)) => {
             $crate::core::ManifestDependency {
-                name: ($n).into(),
+                name: $crate::core::PackageName::new($n),
                 version_req: ::semver::VersionReq::parse($v).unwrap(),
                 source_id: $crate::core::SourceId::mock_default(),
             }
@@ -171,7 +176,7 @@ pub(crate) mod mock {
 
         (($n:literal, $v:literal, $s:literal)) => {
             $crate::core::ManifestDependency {
-                name: ($n).into(),
+                name: $crate::core::PackageName::new($n),
                 version_req: ::semver::VersionReq::parse($v).unwrap(),
                 source_id: $crate::core::SourceId::from_display_str($s).unwrap(),
             }

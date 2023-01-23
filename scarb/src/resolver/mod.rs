@@ -133,14 +133,13 @@ mod tests {
         roots: &[&[ManifestDependency]],
         expected: Result<&[PackageId], &str>,
     ) {
-        let root_names = (1..).map(|n| PackageName::from(format!("${n}")));
+        let root_names = (1..).map(|n| PackageName::new(format!("ROOT_{n}")));
 
         let summaries = roots
             .iter()
             .zip(root_names)
             .map(|(&deps, name)| {
-                let package_id =
-                    PackageId::pure(name, Version::new(1, 0, 0), SourceId::mock_path());
+                let package_id = PackageId::new(name, Version::new(1, 0, 0), SourceId::mock_path());
                 registry.put(package_id, deps.to_vec());
                 registry
                     .get_package(package_id)
@@ -157,7 +156,10 @@ mod tests {
             .map(|r| {
                 r.graph
                     .nodes()
-                    .filter(|id| !id.name.starts_with('$') && id.source_id != SourceId::for_core())
+                    .filter(|id| {
+                        !id.name.as_str().starts_with("ROOT_")
+                            && id.source_id != SourceId::for_core()
+                    })
                     .sorted()
                     .collect_vec()
             })

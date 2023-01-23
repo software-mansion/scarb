@@ -27,7 +27,7 @@ fn new_simple() {
     assert!(t.child(".gitignore").is_file());
 
     let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
-    assert_eq!(toml_manifest.package.unwrap().name, "hello");
+    assert_eq!(toml_manifest.package.unwrap().name.as_str(), "hello");
 
     Scarb::quick_snapbox()
         .arg("build")
@@ -57,7 +57,7 @@ fn init_simple() {
     assert!(t.child(".gitignore").is_file());
 
     let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
-    assert_eq!(toml_manifest.package.unwrap().name, "hello");
+    assert_eq!(toml_manifest.package.unwrap().name.as_str(), "hello");
 
     Scarb::quick_snapbox()
         .arg("build")
@@ -137,7 +137,7 @@ fn new_explicit_project_name() {
     let t = pt.child("hello");
 
     let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
-    assert_eq!(toml_manifest.package.unwrap().name, "world");
+    assert_eq!(toml_manifest.package.unwrap().name.as_str(), "world");
 }
 
 #[test]

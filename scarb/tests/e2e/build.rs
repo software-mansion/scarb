@@ -202,7 +202,7 @@ fn compile_with_invalid_empty_name() {
 error: failed to parse manifest at `[..]/Scarb.toml`
 
 Caused by:
-    empty string cannot be used as package name
+    empty string cannot be used as package name for key `package.name`
 ",
         );
 }

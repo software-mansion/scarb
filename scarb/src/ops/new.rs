@@ -2,7 +2,7 @@ use anyhow::{bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
 
-use crate::core::{restricted_names, Config, PackageName};
+use crate::core::{Config, PackageName};
 use crate::internal::fsx;
 use crate::{DEFAULT_SOURCE_DIR_NAME, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
 
@@ -25,7 +25,6 @@ pub fn new_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
     );
 
     let name = infer_name(opts.name, &opts.path)?;
-    check_name(&name)?;
 
     mk(
         MkOpts {
@@ -46,7 +45,6 @@ pub fn init_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
     );
 
     let name = infer_name(opts.name, &opts.path)?;
-    check_name(&name)?;
 
     mk(
         MkOpts {
@@ -71,15 +69,8 @@ fn infer_name(name: Option<PackageName>, path: &Utf8Path) -> Result<PackageName>
             );
         };
 
-        Ok(file_name.into())
+        PackageName::try_new(file_name)
     }
-}
-
-fn check_name(name: &PackageName) -> Result<()> {
-    restricted_names::validate_package_name(name, "package name")?;
-    // TODO(mkaput): Check not Cairo keyword.
-    // TODO(mkaput): Warn if name is `core`.
-    Ok(())
 }
 
 struct MkOpts {

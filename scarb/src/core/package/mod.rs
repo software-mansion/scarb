@@ -4,11 +4,13 @@ use std::sync::Arc;
 use camino::{Utf8Path, Utf8PathBuf};
 
 pub use id::*;
+pub use name::*;
 
 use crate::core::manifest::Manifest;
 use crate::DEFAULT_SOURCE_DIR_NAME;
 
 mod id;
+mod name;
 
 /// See [`PackageInner`] for public fields reference.
 #[derive(Clone, Debug)]
