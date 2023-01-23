@@ -5,15 +5,15 @@ use anyhow::{bail, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
-use smol_str::SmolStr;
 use url::Url;
 
 use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary};
 use crate::core::package::PackageId;
-use crate::core::restricted_names::validate_package_name;
 use crate::core::source::{GitReference, SourceId};
+use crate::core::PackageName;
 use crate::internal::fsx;
 use crate::internal::fsx::PathUtf8Ext;
+use crate::internal::to_version::ToVersion;
 
 use super::Manifest;
 
@@ -22,14 +22,14 @@ use super::Manifest;
 #[serde(rename_all = "kebab-case")]
 pub struct TomlManifest {
     pub package: Option<Box<TomlPackage>>,
-    pub dependencies: Option<BTreeMap<SmolStr, TomlDependency>>,
+    pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
 }
 
 /// Represents the `package` section of a `Scarb.toml`.
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlPackage {
-    pub name: SmolStr,
+    pub name: PackageName,
     pub version: Version,
     pub authors: Option<Vec<String>>,
     pub urls: Option<BTreeMap<String, String>>,
@@ -103,16 +103,13 @@ impl TomlManifest {
 
         let package_id = {
             let name = package.name.clone();
-            validate_package_name(&name, "package name")?;
-
-            let version = package.version.clone();
-
-            PackageId::pure(name, version, source_id)
+            let version = package.version.clone().to_version()?;
+            PackageId::new(name, version, source_id)
         };
 
         let mut dependencies = Vec::new();
         for (name, toml_dep) in self.dependencies.iter().flatten() {
-            dependencies.push(toml_dep.to_dependency(name, manifest_path)?);
+            dependencies.push(toml_dep.to_dependency(name.clone(), manifest_path)?);
         }
 
         let no_core = package.no_core.unwrap_or(false);
@@ -140,15 +137,21 @@ impl TomlManifest {
 }
 
 impl TomlDependency {
-    fn to_dependency(&self, name: &str, manifest_path: &Utf8Path) -> Result<ManifestDependency> {
+    fn to_dependency(
+        &self,
+        name: PackageName,
+        manifest_path: &Utf8Path,
+    ) -> Result<ManifestDependency> {
         self.resolve().to_dependency(name, manifest_path)
     }
 }
 
 impl DetailedTomlDependency {
-    fn to_dependency(&self, name: &str, manifest_path: &Utf8Path) -> Result<ManifestDependency> {
-        validate_package_name(name, "dependency name")?;
-
+    fn to_dependency(
+        &self,
+        name: PackageName,
+        manifest_path: &Utf8Path,
+    ) -> Result<ManifestDependency> {
         let version_req = self.version.to_owned().unwrap_or(VersionReq::STAR);
 
         if self.branch.is_some() || self.tag.is_some() || self.rev.is_some() {
@@ -207,7 +210,7 @@ impl DetailedTomlDependency {
         };
 
         Ok(ManifestDependency {
-            name: name.into(),
+            name,
             version_req,
             source_id,
         })

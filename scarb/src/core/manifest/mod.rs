@@ -65,7 +65,7 @@ impl Summary {
 
     pub fn implicit_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
         static CORE_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| ManifestDependency {
-            name: "core".into(),
+            name: PackageName::CORE,
             version_req: VersionReq::STAR,
             source_id: SourceId::for_core(),
         });

@@ -4,13 +4,11 @@ use std::ops::Deref;
 use anyhow::Result;
 use semver::Version;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use smol_str::SmolStr;
 
 use crate::core::source::SourceId;
+use crate::core::PackageName;
 use crate::internal::static_hash_cache::StaticHashCache;
 use crate::internal::to_version::ToVersion;
-
-pub type PackageName = SmolStr;
 
 /// See [`PackageIdInner`] for public fields reference.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -25,17 +23,7 @@ pub struct PackageIdInner {
 }
 
 impl PackageId {
-    pub fn new(
-        name: impl Into<PackageName>,
-        version: impl ToVersion,
-        source_id: SourceId,
-    ) -> Result<Self> {
-        let name = name.into();
-        let version = version.to_version()?;
-        Ok(Self::pure(name, version, source_id))
-    }
-
-    pub fn pure(name: PackageName, version: Version, source_id: SourceId) -> Self {
+    pub fn new(name: PackageName, version: Version, source_id: SourceId) -> Self {
         static CACHE: StaticHashCache<PackageIdInner> = StaticHashCache::new();
         let inner = PackageIdInner {
             name,
@@ -47,11 +35,12 @@ impl PackageId {
 
     #[cfg(test)]
     pub(crate) fn from_display_str(string: &str) -> Result<Self> {
-        use anyhow::{anyhow, bail};
+        use anyhow::{anyhow, bail, Context};
 
         let mut s = string.splitn(3, ' ');
 
-        let name = s.next().unwrap().into();
+        let name =
+            PackageName::try_new(s.next().unwrap()).context("invalid displayed PackageId")?;
 
         let Some(version) = s.next() else {
             bail!("invalid displayed PackageId: missing version");
@@ -77,7 +66,7 @@ impl PackageId {
             }
         };
 
-        Ok(PackageId::pure(name, version, source_id))
+        Ok(PackageId::new(name, version, source_id))
     }
 }
 
@@ -107,7 +96,8 @@ impl<'de> Deserialize<'de> for PackageId {
         let string = String::deserialize(d)?;
         let mut s = string.splitn(3, ' ');
 
-        let name = s.next().unwrap().into();
+        let name = PackageName::try_new(s.next().unwrap())
+            .map_err(|err| Error::custom(format_args!("invalid serialized PackageId: {err}")))?;
 
         let Some(version) = s.next() else {
             return Err(Error::custom("invalid serialized PackageId: missing version"));
@@ -128,7 +118,7 @@ impl<'de> Deserialize<'de> for PackageId {
         };
         let source_id = SourceId::from_pretty_url(url).map_err(Error::custom)?;
 
-        Ok(PackageId::pure(name, version, source_id))
+        Ok(PackageId::new(name, version, source_id))
     }
 }
 
@@ -156,11 +146,13 @@ impl fmt::Debug for PackageId {
 
 #[cfg(test)]
 mod tests {
+    use semver::Version;
     use serde_test::{assert_de_tokens_error, assert_tokens, Token};
     use test_case::test_case;
 
     use crate::core::package::PackageId;
     use crate::core::source::SourceId;
+    use crate::core::PackageName;
 
     fn leak_string(string: String) -> &'static str {
         Box::leak(string.into_boxed_str())
@@ -169,7 +161,9 @@ mod tests {
     #[test_case(SourceId::mock_git())]
     #[test_case(SourceId::mock_path())]
     fn serialization(source_id: SourceId) {
-        let pkg_id = PackageId::new("foo", "1.0.0", source_id).unwrap();
+        let name = PackageName::new("foo");
+        let version = Version::new(1, 0, 0);
+        let pkg_id = PackageId::new(name, version, source_id);
         let expected = format!("foo 1.0.0 ({})", source_id.to_pretty_url());
         assert_tokens(&pkg_id, &[Token::Str(leak_string(expected))]);
     }
@@ -190,8 +184,10 @@ mod tests {
 
     #[test]
     fn display() {
+        let name = PackageName::new("foo");
+        let version = Version::new(1, 0, 0);
         let source_id = SourceId::mock_path();
-        let pkg_id = PackageId::new("foo", "1.0.0", source_id).unwrap();
+        let pkg_id = PackageId::new(name, version, source_id);
         assert_eq!(format!("foo v1.0.0 ({source_id})"), pkg_id.to_string());
     }
 }

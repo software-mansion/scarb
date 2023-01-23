@@ -6,7 +6,6 @@ use anyhow::{bail, Result};
 use camino::Utf8PathBuf;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
-use smol_str::SmolStr;
 
 pub use metadata_version::*;
 
@@ -45,7 +44,7 @@ pub struct WorkspaceMetadata {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PackageMetadata {
     pub id: PackageId,
-    pub name: SmolStr,
+    pub name: String,
     pub version: Version,
     pub source: SourceId,
     pub root: Utf8PathBuf,
@@ -58,7 +57,7 @@ pub struct PackageMetadata {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DependencyMetadata {
-    pub name: SmolStr,
+    pub name: String,
     pub version_req: VersionReq,
     pub source: SourceId,
     // TODO(mkaput): Perhaps point to resolved package id here?
@@ -128,7 +127,7 @@ impl PackageMetadata {
 
         Self {
             id: package.id,
-            name: package.id.name.clone(),
+            name: package.id.name.to_string(),
             version: package.id.version.clone(),
             source: package.id.source_id,
             root: package.root().to_path_buf(),
@@ -142,7 +141,7 @@ impl PackageMetadata {
 impl DependencyMetadata {
     pub fn new(dependency: &ManifestDependency) -> Self {
         Self {
-            name: dependency.name.clone(),
+            name: dependency.name.to_string(),
             version_req: dependency.version_req.clone(),
             source: dependency.source_id,
         }
