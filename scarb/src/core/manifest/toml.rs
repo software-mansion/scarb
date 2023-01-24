@@ -1,13 +1,19 @@
 use std::collections::BTreeMap;
 use std::fs;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
+use smol_str::SmolStr;
+use toml_edit::easy::Value;
+use tracing::trace;
 use url::Url;
 
-use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary};
+use crate::core::manifest::{
+    ExternalTargetKind, LibTargetKind, ManifestDependency, ManifestMetadata, Summary, Target,
+    TargetKind,
+};
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
 use crate::core::PackageName;
@@ -23,6 +29,8 @@ use super::Manifest;
 pub struct TomlManifest {
     pub package: Option<Box<TomlPackage>>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
+    pub lib: Option<TomlLibTarget>,
+    pub target: Option<BTreeMap<TomlTargetKindName, TomlExternalTarget>>,
 }
 
 /// Represents the `package` section of a `Scarb.toml`.
@@ -67,6 +75,70 @@ pub struct DetailedTomlDependency {
     pub branch: Option<String>,
     pub tag: Option<String>,
     pub rev: Option<String>,
+}
+
+#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[serde(into = "SmolStr", try_from = "SmolStr")]
+pub struct TomlTargetKindName(SmolStr);
+
+impl TomlTargetKindName {
+    pub fn try_new(name: SmolStr) -> Result<Self> {
+        ensure!(&name != "lib", "target kind `lib` is reserved");
+        Ok(Self(name))
+    }
+
+    pub fn to_smol_str(&self) -> SmolStr {
+        self.0.clone()
+    }
+
+    pub fn into_smol_str(self) -> SmolStr {
+        self.0
+    }
+}
+
+impl From<TomlTargetKindName> for SmolStr {
+    fn from(value: TomlTargetKindName) -> Self {
+        value.into_smol_str()
+    }
+}
+
+impl TryFrom<SmolStr> for TomlTargetKindName {
+    type Error = anyhow::Error;
+
+    fn try_from(value: SmolStr) -> Result<Self> {
+        TomlTargetKindName::try_new(value)
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TomlLibTarget {
+    /// The name of the target.
+    ///
+    /// Defaults to package name.
+    pub name: Option<SmolStr>,
+
+    /// Enable Sierra code generation.
+    ///
+    /// Defaults to `true`.
+    pub sierra: Option<bool>,
+
+    /// Enable CASM code generation.
+    ///
+    /// Defaults to `false`.
+    pub casm: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TomlExternalTarget {
+    /// The name of the target.
+    ///
+    /// Defaults to package name.
+    pub name: Option<SmolStr>,
+
+    #[serde(flatten)]
+    pub params: BTreeMap<SmolStr, Value>,
 }
 
 impl TomlManifest {
@@ -114,11 +186,14 @@ impl TomlManifest {
 
         let no_core = package.no_core.unwrap_or(false);
 
+        let targets = self.collect_targets(package.name.to_smol_str())?;
+
         Ok(Manifest {
             summary: Summary::build(package_id)
                 .with_dependencies(dependencies)
                 .no_core(no_core)
                 .finish(),
+            targets,
             metadata: ManifestMetadata {
                 authors: package.authors.clone(),
                 urls: package.urls.clone(),
@@ -133,6 +208,55 @@ impl TomlManifest {
                 repository: package.repository.clone(),
             },
         })
+    }
+
+    fn collect_targets(&self, package_name: SmolStr) -> Result<Vec<Target>> {
+        let mut targets = Vec::new();
+
+        if let Some(lib_toml) = &self.lib {
+            let mut kind = LibTargetKind::default();
+            if let Some(sierra) = lib_toml.sierra {
+                kind.sierra = sierra;
+            }
+            if let Some(casm) = lib_toml.casm {
+                kind.casm = casm;
+            }
+
+            let kind = TargetKind::Lib(kind);
+
+            let name = lib_toml
+                .name
+                .clone()
+                .unwrap_or_else(|| package_name.clone());
+
+            let target = Target::new(name, kind);
+            targets.push(target);
+        }
+
+        for (kind_name_toml, ext_toml) in self.target.iter().flatten() {
+            let kind = ExternalTargetKind {
+                kind_name: kind_name_toml.to_smol_str(),
+                params: ext_toml.params.clone(),
+            };
+            let kind = TargetKind::External(kind);
+
+            let name = ext_toml
+                .name
+                .clone()
+                .unwrap_or_else(|| package_name.clone());
+
+            let target = Target::new(name, kind);
+            targets.push(target);
+        }
+
+        if targets.is_empty() {
+            trace!("manifest has no targets, assuming default `lib` target");
+            let kind = TargetKind::Lib(LibTargetKind::default());
+            let target = Target::new(package_name, kind);
+            targets.push(target);
+        }
+
+        Ok(targets)
     }
 }
 

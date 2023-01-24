@@ -7,19 +7,23 @@ use once_cell::sync::Lazy;
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
 
+pub use target::*;
 pub use toml::*;
 
 use crate::core::package::{PackageId, PackageName};
 use crate::core::source::SourceId;
 
+mod target;
 mod toml;
 
 /// Contains all the information about a package, as loaded from the manifest file.
 ///
 /// This is deserialized using the [`TomlManifest`] type.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub struct Manifest {
     pub summary: Summary,
+    pub targets: Vec<Target>,
     pub metadata: ManifestMetadata,
 }
 
