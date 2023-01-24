@@ -86,7 +86,7 @@ fn compile_package(
 fn build_project_config(member_id: PackageId, resolve: &WorkspaceResolve) -> Result<ProjectConfig> {
     let crate_roots = resolve
         .resolve
-        .collect_compilation_unit_of(member_id)
+        .package_components_of(member_id)
         .iter()
         .map(|id| {
             let pkg = &resolve.packages[id];

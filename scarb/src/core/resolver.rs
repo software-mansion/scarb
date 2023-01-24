@@ -17,9 +17,9 @@ pub struct Resolve {
     pub graph: DiGraphMap<PackageId, ()>,
 }
 
-/// Collection of all [`PackageId`]s or packages needed to provide as _crate roots_ to
+/// Collection of all [`PackageId`]s of packages needed to provide as _crate roots_ to
 /// the Cairo compiler in order to build a particular package (named _root package_).
-pub type CompilationUnit = HashSet<PackageId>;
+pub type PackageComponentsIds = HashSet<PackageId>;
 
 impl Resolve {
     /// Iterator over all [`PackageId`]s (nodes) present in this graph.
@@ -29,8 +29,11 @@ impl Resolve {
         self.graph.nodes()
     }
 
-    /// Construct [`CompilationUnit`] for a root package.
-    pub fn collect_compilation_unit_of(&self, root_package: PackageId) -> CompilationUnit {
+    /// Collect all [`PackageId`]s needed to compile a root package.
+    ///
+    /// # Safety
+    /// * Asserts that `root_package` is a node in this graph.
+    pub fn package_components_of(&self, root_package: PackageId) -> PackageComponentsIds {
         assert!(&self.graph.contains_node(root_package));
         Dfs::new(&self.graph, root_package)
             .iter(&self.graph)
