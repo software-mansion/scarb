@@ -1,6 +1,6 @@
 [package]
 name = "create-output-dir"
-version = "0.1.0"
+version = "1.0.0"
 description = "Create an excluded from cache directory atomically"
 edition.workspace = true
 rust-version.workspace = true
@@ -13,4 +13,12 @@ categories = ["filesystem", "os"]
 
 [dependencies]
 anyhow.workspace = true
-cargo-util = "0.2.2"
+tempfile.workspace = true
+
+[target."cfg(target_os = \"macos\")".dependencies.core-foundation]
+version = "0.9.3"
+features = ["mac_os_10_7_support"]
+
+[target."cfg(windows)".dependencies.winapi]
+version = "0.3.9"
+features = ["minwindef"]
