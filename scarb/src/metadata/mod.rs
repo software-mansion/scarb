@@ -1,15 +1,19 @@
 // NOTE: All collections must have stable sorting in order to provide reproducible outputs!
 
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
 use camino::Utf8PathBuf;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
+use toml_edit::easy::Value;
 
 pub use metadata_version::*;
 
-use crate::core::manifest::ManifestMetadata;
+use crate::core::manifest::{
+    ExternalTargetKind, LibTargetKind, ManifestMetadata, Target, TargetKind,
+};
 use crate::core::{ManifestDependency, Package, PackageId, SourceId, Workspace};
 use crate::ops::resolve_workspace;
 
@@ -50,6 +54,7 @@ pub struct PackageMetadata {
     pub root: Utf8PathBuf,
     pub manifest_path: Utf8PathBuf,
     pub dependencies: Vec<DependencyMetadata>,
+    pub targets: Vec<TargetMetadata>,
 
     #[serde(flatten)]
     pub manifest_metadata: ManifestMetadata,
@@ -62,6 +67,13 @@ pub struct DependencyMetadata {
     pub source: SourceId,
     // TODO(mkaput): Perhaps point to resolved package id here?
     //   This will make it easier for consumers to navigate the output.
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TargetMetadata {
+    pub kind: String,
+    pub name: String,
+    pub params: BTreeMap<String, Value>,
 }
 
 impl Metadata {
@@ -125,6 +137,14 @@ impl PackageMetadata {
             .collect();
         dependencies.sort_by_key(|d| (d.name.clone(), d.source));
 
+        let mut targets: Vec<TargetMetadata> = package
+            .manifest
+            .targets
+            .iter()
+            .map(TargetMetadata::new)
+            .collect();
+        targets.sort_by_key(|t| (t.kind.clone(), t.name.clone()));
+
         Self {
             id: package.id,
             name: package.id.name.to_string(),
@@ -133,6 +153,7 @@ impl PackageMetadata {
             root: package.root().to_path_buf(),
             manifest_path: package.manifest_path().to_path_buf(),
             dependencies,
+            targets,
             manifest_metadata: package.manifest.metadata.clone(),
         }
     }
@@ -145,5 +166,32 @@ impl DependencyMetadata {
             version_req: dependency.version_req.clone(),
             source: dependency.source_id,
         }
+    }
+}
+
+impl TargetMetadata {
+    pub fn new(target: &Target) -> Self {
+        let name = target.name.to_string();
+
+        let (kind, params) = match &target.kind {
+            TargetKind::Lib(LibTargetKind { sierra, casm }) => {
+                let kind = "lib".to_string();
+                let params = BTreeMap::from([
+                    ("sierra".to_string(), Value::from(*sierra)),
+                    ("casm".to_string(), Value::from(*casm)),
+                ]);
+                (kind, params)
+            }
+            TargetKind::External(ExternalTargetKind { kind_name, params }) => {
+                let kind = kind_name.to_string();
+                let params = params
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.clone()))
+                    .collect();
+                (kind, params)
+            }
+        };
+
+        TargetMetadata { kind, name, params }
     }
 }

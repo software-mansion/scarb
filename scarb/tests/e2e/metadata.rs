@@ -42,6 +42,16 @@ fn simple() {
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
       "dependencies": [],
+      "targets": [
+        {
+          "kind": "lib",
+          "name": "core",
+          "params": {
+            "casm": false,
+            "sierra": true
+          }
+        }
+      ],
       "authors": null,
       "urls": null,
       "metadata": null,
@@ -66,6 +76,16 @@ fn simple() {
           "name": "core",
           "version_req": "*",
           "source": "core+https://github.com/starkware-libs/cairo.git"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "lib",
+          "name": "hello",
+          "params": {
+            "casm": false,
+            "sierra": true
+          }
         }
       ],
       "authors": null,
@@ -205,6 +225,16 @@ fn local_dependencies() {
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
       "dependencies": [],
+      "targets": [
+        {
+          "kind": "lib",
+          "name": "core",
+          "params": {
+            "casm": false,
+            "sierra": true
+          }
+        }
+      ],
       "authors": null,
       "urls": null,
       "metadata": null,
@@ -229,6 +259,16 @@ fn local_dependencies() {
           "name": "core",
           "version_req": "*",
           "source": "core+https://github.com/starkware-libs/cairo.git"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "lib",
+          "name": "q",
+          "params": {
+            "casm": false,
+            "sierra": true
+          }
         }
       ],
       "authors": null,
@@ -260,6 +300,16 @@ fn local_dependencies() {
           "name": "y",
           "version_req": "*",
           "source": "path+file://[..]/y/"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "lib",
+          "name": "x",
+          "params": {
+            "casm": false,
+            "sierra": true
+          }
         }
       ],
       "authors": null,
@@ -298,6 +348,16 @@ fn local_dependencies() {
           "source": "path+file://[..]/z/"
         }
       ],
+      "targets": [
+        {
+          "kind": "lib",
+          "name": "y",
+          "params": {
+            "casm": false,
+            "sierra": true
+          }
+        }
+      ],
       "authors": null,
       "urls": null,
       "metadata": null,
@@ -327,6 +387,16 @@ fn local_dependencies() {
           "name": "q",
           "version_req": "*",
           "source": "path+file://[..]/q/"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "lib",
+          "name": "z",
+          "params": {
+            "casm": false,
+            "sierra": true
+          }
         }
       ],
       "authors": null,
@@ -390,6 +460,16 @@ fn no_dep() {
           "source": "path+file://[..]/y/"
         }
       ],
+      "targets": [
+        {
+          "kind": "lib",
+          "name": "x",
+          "params": {
+            "casm": false,
+            "sierra": true
+          }
+        }
+      ],
       "authors": null,
       "urls": null,
       "metadata": null,
@@ -409,7 +489,7 @@ fn no_dep() {
 }
 
 #[test]
-fn manifest_metadata() {
+fn manifest_targets_and_metadata() {
     let t = assert_fs::TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
@@ -437,6 +517,17 @@ fn manifest_metadata() {
             meta = "data"
             numeric = "1231"
             key = "value"
+
+            [lib]
+            sierra = false
+            casm = true
+
+            [target.example]
+            string = "bar"
+            number = 1234
+            bool = true
+            array = ["a", 1]
+            table = { x = "y" }
             "#,
         )
         .unwrap();
@@ -468,6 +559,16 @@ fn manifest_metadata() {
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
       "dependencies": [],
+      "targets": [
+        {
+          "kind": "lib",
+          "name": "core",
+          "params": {
+            "casm": false,
+            "sierra": true
+          }
+        }
+      ],
       "authors": null,
       "urls": null,
       "metadata": null,
@@ -492,6 +593,32 @@ fn manifest_metadata() {
           "name": "core",
           "version_req": "*",
           "source": "core+https://github.com/starkware-libs/cairo.git"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "example",
+          "name": "hello",
+          "params": {
+            "array": [
+              "a",
+              1
+            ],
+            "bool": true,
+            "number": 1234,
+            "string": "bar",
+            "table": {
+              "x": "y"
+            }
+          }
+        },
+        {
+          "kind": "lib",
+          "name": "hello",
+          "params": {
+            "casm": true,
+            "sierra": false
+          }
         }
       ],
       "authors": [

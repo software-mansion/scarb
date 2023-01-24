@@ -100,6 +100,7 @@ pub(crate) mod mock {
 
             let manifest = Box::new(Manifest {
                 summary,
+                targets: Vec::new(),
                 metadata: Default::default(),
             });
 
