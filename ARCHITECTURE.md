@@ -44,27 +44,6 @@ This crate consist of primarily two modules:
 
 ```mermaid
 classDiagram
-    direction LR
-    class Config~'c~
-    class Workspace~'c~ {
-        + members() Iter~Package~
-    }
-    class Package {
-        + PackageId
-        + Manifest
-    }
-    class Manifest {
-        + Summary
-        + Vec~ManifestDependency~
-    }
-    class Summary {
-        + PackageID
-    }
-    class ManifestDependency {
-        + String name
-        + VersionReq
-        + SourceId
-    }
     class PackageId {
         + String name
         + Version
@@ -77,16 +56,67 @@ classDiagram
     class TomlManifest {
         Serialization of Scrab.toml
     }
+    class Config~'c~ {
+        - manifest path
+        - app dirs, like config, cache, PATH, etc.
+        - target directory handle
+        - ui
+        - global locks
+    }
+    class Workspace~'c~ {
+        + members() Iter~Package~
+    }
+    class Package {
+        + PackageId
+        + Manifest
+    }
+    class Manifest {
+        + Summary
+        + Vec~Target~
+        + not important metadata
+    }
+    class Summary {
+        + PackageID
+        + Vec~ManifestDependency~
+        + metadata important for version solving
+    }
+    class ManifestDependency {
+        + String name
+        + VersionReq
+        + SourceId
+    }
+    class Target {
+        + TargetKind
+        + String name
+        + BTreeMap~String, *~ params
+    }
+    class CompilationUnit {
+        Contains all information
+        needed to compile a Target
+    }
+    class Resolve {
+        Version solver output,
+        dependency graph.
+    }
+    class WorkspaceResolve {
+        + Resolve resolve
+        + Vec~Package~ packages
+    }
 
-    Workspace~'c~ ..> Config~'c~
+    Workspace~'c~ *-- Config~'c~
     Workspace~'c~ o-- * Package
     Package -- Manifest
     Manifest -- Summary
-    Manifest o-- * ManifestDependency
+    Manifest o-- * Target
+    Summary o-- * ManifestDependency
     %% Package .. PackageId
     %% ManifestDependency .. SourceId
     PackageId -- SourceId
     Manifest ..> TomlManifest : is created from
+    WorkspaceResolve *-- Resolve
+    WorkspaceResolve *-- Package
+    CompilationUnit ..> WorkspaceResolve : is created from
+    CompilationUnit ..> Target : is created from
 ```
 
 ### Sources and the internal registry
@@ -130,7 +160,8 @@ internally.
 
 ## Scarb Compiler
 
-The `scarb build` command compiles all workspace members and produces outputs in the `target` directory.
+The `scarb build` command compiles all compilation units found in a workspace and produces outputs
+in the `target` directory.
 The Cairo compiler is used as a crate, which means that it is compiled into the Scarb binary itself and thus,
 **Scarb is tightly bound to specific Cairo version**.
 The entire compilation process is contained within the `ops::compile` op.
