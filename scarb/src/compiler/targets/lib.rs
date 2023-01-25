@@ -31,7 +31,7 @@ pub fn compile_lib(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     };
     let sierra_program = run_compile(project_config, compiler_config)?;
 
-    let target = ws.target_dir().child("release");
+    let target = unit.profile.target_dir(ws.config());
     let mut file = target.open_rw(
         format!("{}.sierra", unit.target.name),
         "output file",

@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
-use crate::core::manifest::Target;
-use crate::core::Package;
+use crate::compiler::Profile;
+use crate::core::{Package, Target};
 
 /// An object that has enough information so that Scarb knows how to build it.
 #[derive(Clone, Debug)]
@@ -13,6 +13,9 @@ pub struct CompilationUnit {
     /// Collection of all [`Package`]s needed to provide as _crate roots_ to
     /// the Cairo compiler in order to build `package`.
     pub components: Vec<Package>,
+    /// The profile contains information about *how* the build should be run, including debug
+    /// level, etc.
+    pub profile: Profile,
 }
 
 impl CompilationUnit {
