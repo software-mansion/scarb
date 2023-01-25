@@ -17,6 +17,7 @@ anyhow = "1.0.66"
 assert_fs = { version = "1.0.9", features = ["color-auto"] }
 async-trait = "0.1.63"
 cairo-lang-compiler = { version = "0.1.0", git = "https://github.com/maciektr/cairo", branch = "maciektr/corelib_path" }
+cairo-lang-sierra-to-casm = { version = "0.1.0", git = "https://github.com/maciektr/cairo", branch = "maciektr/corelib_path" }
 camino = { version = "1.1.2", features = ["serde1"] }
 clap = { version = "4.1", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.0"
