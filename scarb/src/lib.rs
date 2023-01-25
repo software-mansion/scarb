@@ -6,6 +6,7 @@
 #![deny(rustdoc::private_intra_doc_links)]
 #![warn(rust_2018_idioms)]
 
+pub mod compiler;
 pub mod core;
 pub mod dirs;
 pub mod flock;
