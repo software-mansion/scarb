@@ -58,10 +58,37 @@ impl Target {
 }
 
 impl TargetKind {
+    pub fn downcast<K: TargetKindDowncast>(&self) -> &K {
+        K::downcast_from(self)
+    }
+
     pub fn name(&self) -> &str {
         match self {
             TargetKind::Lib(_) => "lib",
             TargetKind::External(ExternalTargetKind { kind_name, .. }) => kind_name,
+        }
+    }
+}
+
+#[doc(hidden)]
+pub trait TargetKindDowncast {
+    fn downcast_from(target_kind: &TargetKind) -> &Self;
+}
+
+impl TargetKindDowncast for LibTargetKind {
+    fn downcast_from(target_kind: &TargetKind) -> &Self {
+        match target_kind {
+            TargetKind::Lib(lib) => lib,
+            _ => panic!("TargetKind::Lib was expected here"),
+        }
+    }
+}
+
+impl TargetKindDowncast for ExternalTargetKind {
+    fn downcast_from(target_kind: &TargetKind) -> &Self {
+        match target_kind {
+            TargetKind::External(ext) => ext,
+            _ => panic!("TargetKind::External was expected here"),
         }
     }
 }
