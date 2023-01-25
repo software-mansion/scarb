@@ -522,7 +522,7 @@ fn manifest_targets_and_metadata() {
             sierra = false
             casm = true
 
-            [target.example]
+            [[target.example]]
             string = "bar"
             number = 1234
             bool = true
