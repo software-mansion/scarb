@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
-use crate::compiler::CompilationUnit;
+use crate::compiler::{CompilationUnit, Profile};
 use crate::core::package::{Package, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::source_map::SourceMap;
@@ -71,6 +71,10 @@ pub fn generate_compilation_units(
                 package: member.clone(),
                 target: target.clone(),
                 components: components.clone(),
+                // TODO(mkaput): Support defining profiles in manifest.
+                profile: Profile {
+                    name: "release".into(),
+                },
             };
             units.push(unit);
         }
