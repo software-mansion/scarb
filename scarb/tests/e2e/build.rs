@@ -489,9 +489,9 @@ fn compile_with_custom_lib_target() {
             version = "0.1.0"
             
             [lib]
-            name = "nothello"
-            sierra = true # TODO: Set to false
-            casm = false # TODO: Set to true
+            name = "not_hello"
+            sierra = false
+            casm = true
             "#,
         )
         .unwrap();
@@ -509,12 +509,12 @@ fn compile_with_custom_lib_target() {
         [..]  Finished release target(s) in [..]
         "#});
 
-    // t.child("target/release/nothello.casm")
-    //     .assert(predicates::str::is_empty().not());
-    t.child("target/release/nothello.sierra")
-        .assert(predicates::path::exists());
+    t.child("target/release/not_hello.casm")
+        .assert(predicates::str::is_empty().not());
+    t.child("target/release/not_hello.sierra")
+        .assert(predicates::path::exists().not());
     t.child("target/release/hello.sierra")
         .assert(predicates::path::exists().not());
-    // t.child("target/release/hello.casm")
-    //     .assert(predicates::path::exists().not());
+    t.child("target/release/hello.casm")
+        .assert(predicates::path::exists().not());
 }
