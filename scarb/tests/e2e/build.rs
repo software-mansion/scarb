@@ -417,6 +417,68 @@ fn compile_with_nested_deps() {
 }
 
 #[test]
+fn compile_with_duplicate_targets_1() {
+    let t = assert_fs::TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            
+            [[target.example]]
+            
+            [[target.example]]
+            "#,
+        )
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        error: failed to parse manifest at `[..]/Scarb.toml`
+
+        Caused by:
+            manifest contains duplicate target definitions `example`, consider explicitly naming targets with the `name` field
+        "#});
+}
+
+#[test]
+fn compile_with_duplicate_targets_2() {
+    let t = assert_fs::TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            
+            [[target.example]]
+            name = "x"
+            
+            [[target.example]]
+            name = "x"
+            "#,
+        )
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        error: failed to parse manifest at `[..]/Scarb.toml`
+        
+        Caused by:
+            manifest contains duplicate target definitions `example (x)`, use different target names to resolve the conflict
+        "#});
+}
+
+#[test]
 fn compile_with_custom_lib_target() {
     let t = assert_fs::TempDir::new().unwrap();
     t.child("Scarb.toml")

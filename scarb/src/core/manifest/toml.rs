@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fs;
 
 use anyhow::{bail, ensure, Context, Result};
@@ -30,7 +30,7 @@ pub struct TomlManifest {
     pub package: Option<Box<TomlPackage>>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub lib: Option<TomlLibTarget>,
-    pub target: Option<BTreeMap<TomlTargetKindName, TomlExternalTarget>>,
+    pub target: Option<BTreeMap<TomlTargetKindName, Vec<TomlExternalTarget>>>,
 }
 
 /// Represents the `package` section of a `Scarb.toml`.
@@ -233,7 +233,12 @@ impl TomlManifest {
             targets.push(target);
         }
 
-        for (kind_name_toml, ext_toml) in self.target.iter().flatten() {
+        for (kind_name_toml, ext_toml) in self
+            .target
+            .iter()
+            .flatten()
+            .flat_map(|(k, vs)| vs.iter().map(|v| (k.clone(), v)))
+        {
             let kind = ExternalTargetKind {
                 kind_name: kind_name_toml.to_smol_str(),
                 params: ext_toml.params.clone(),
@@ -249,6 +254,8 @@ impl TomlManifest {
             targets.push(target);
         }
 
+        Self::check_unique_targets(&targets, &package_name)?;
+
         if targets.is_empty() {
             trace!("manifest has no targets, assuming default `lib` target");
             let kind = TargetKind::Lib(LibTargetKind::default());
@@ -257,6 +264,29 @@ impl TomlManifest {
         }
 
         Ok(targets)
+    }
+
+    fn check_unique_targets(targets: &[Target], package_name: &str) -> Result<()> {
+        let mut used = HashSet::with_capacity(targets.len());
+        for target in targets {
+            if !used.insert((target.kind.name(), target.name.as_str())) {
+                if target.name == package_name {
+                    bail!(
+                        "manifest contains duplicate target definitions `{}`, \
+                        consider explicitly naming targets with the `name` field",
+                        target.kind.name()
+                    )
+                } else {
+                    bail!(
+                        "manifest contains duplicate target definitions `{} ({})`, \
+                        use different target names to resolve the conflict",
+                        target.kind.name(),
+                        target.name
+                    )
+                }
+            }
+        }
+        Ok(())
     }
 }
 
