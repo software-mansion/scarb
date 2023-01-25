@@ -6,36 +6,23 @@ use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_compiler::{CompilerConfig, SierraProgram};
 use indicatif::HumanDuration;
 
+use crate::compiler::CompilationUnit;
 use crate::core::workspace::Workspace;
-use crate::core::{Config, Package, PackageId};
+use crate::core::Config;
 use crate::ops;
-use crate::ops::WorkspaceResolve;
 use crate::ui::{Status, TypedMessage};
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn compile(ws: &Workspace<'_>) -> Result<()> {
     let resolve = ops::resolve_workspace(ws)?;
+    let compilation_units = ops::generate_compilation_units(&resolve, ws)?;
 
-    // FIXME(mkaput): Iterate over all members here if current package is not set.
-    let current_package = ws.current_package()?;
-
-    ws.config().ui().print(Status::new(
-        "Compiling",
-        "green",
-        &current_package.id.to_string(),
-    ));
-
-    compile_package(current_package, ws, &resolve).map_err(|err| {
-        // TODO(mkaput): Make this an enum upstream.
-        if err.to_string() == "Compilation failed." {
-            anyhow!(
-                "could not compile `{}` due to previous error",
-                current_package.id.name
-            )
-        } else {
-            err
-        }
-    })?;
+    // TODO(mkaput): Parallelize this loop.
+    //   Caveat: This shouldn't be just rayon::map call, because we will introduce dependencies
+    //   between compilation units in the future.
+    for unit in compilation_units {
+        compile_unit(unit, ws)?;
+    }
 
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
     ws.config().ui().print(Status::new(
@@ -47,12 +34,28 @@ pub fn compile(ws: &Workspace<'_>) -> Result<()> {
     Ok(())
 }
 
-fn compile_package(
-    current_package: &Package,
-    ws: &Workspace<'_>,
-    resolve: &WorkspaceResolve,
-) -> Result<()> {
-    let project_config = build_project_config(current_package.id, resolve)?;
+fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+    let package_name = unit.package.id.name.clone();
+
+    ws.config()
+        .ui()
+        .print(Status::new("Compiling", "green", &unit.name()));
+
+    compile_unit_impl(unit, ws).map_err(|err| {
+        // TODO(mkaput): Make this an enum upstream.
+        if err.to_string() == "Compilation failed." {
+            anyhow!("could not compile `{package_name}` due to previous error")
+        } else {
+            err
+        }
+    })?;
+
+    Ok(())
+}
+
+// TODO(mkaput): Compile each kind appropriately.
+fn compile_unit_impl(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+    let project_config = build_project_config(&unit)?;
 
     let compiler_config = CompilerConfig {
         on_diagnostic: {
@@ -74,7 +77,7 @@ fn compile_package(
 
     let target = ws.target_dir().child("release");
     let mut file = target.open_rw(
-        format!("{}.sierra", current_package.id.name),
+        format!("{}.sierra", unit.target.name),
         "output file",
         ws.config(),
     )?;
@@ -83,13 +86,11 @@ fn compile_package(
     Ok(())
 }
 
-fn build_project_config(member_id: PackageId, resolve: &WorkspaceResolve) -> Result<ProjectConfig> {
-    let crate_roots = resolve
-        .resolve
-        .package_components_of(member_id)
+fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
+    let crate_roots = unit
+        .components
         .iter()
-        .map(|id| {
-            let pkg = &resolve.packages[id];
+        .map(|pkg| {
             (
                 pkg.id.name.to_smol_str(),
                 pkg.source_dir().into_std_path_buf(),
@@ -100,7 +101,7 @@ fn build_project_config(member_id: PackageId, resolve: &WorkspaceResolve) -> Res
     let content = ProjectConfigContent { crate_roots };
 
     Ok(ProjectConfig {
-        base_path: resolve.packages[&member_id].root().into(),
+        base_path: unit.package.root().into(),
         content,
     })
 }

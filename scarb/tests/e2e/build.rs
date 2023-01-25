@@ -415,3 +415,44 @@ fn compile_with_nested_deps() {
     t.child("target/release/x.sierra")
         .assert(predicates::str::is_empty().not());
 }
+
+#[test]
+fn compile_with_custom_lib_target() {
+    let t = assert_fs::TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            
+            [lib]
+            name = "nothello"
+            sierra = true # TODO: Set to false
+            casm = false # TODO: Set to true
+            "#,
+        )
+        .unwrap();
+    t.child("src/lib.cairo")
+        .write_str(r#"fn f() -> felt { 42 }"#)
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling hello v0.1.0 ([..])
+        [..]  Finished release target(s) in [..]
+        "#});
+
+    // t.child("target/release/nothello.casm")
+    //     .assert(predicates::str::is_empty().not());
+    t.child("target/release/nothello.sierra")
+        .assert(predicates::path::exists());
+    t.child("target/release/hello.sierra")
+        .assert(predicates::path::exists().not());
+    // t.child("target/release/hello.casm")
+    //     .assert(predicates::path::exists().not());
+}

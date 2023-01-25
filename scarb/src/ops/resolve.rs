@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
+use crate::compiler::CompilationUnit;
 use crate::core::package::{Package, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::source_map::SourceMap;
@@ -14,6 +15,17 @@ use crate::resolver;
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
     pub packages: HashMap<PackageId, Package>,
+}
+
+impl WorkspaceResolve {
+    pub fn package_components_of(&self, root_package: PackageId) -> Vec<Package> {
+        assert!(self.packages.contains_key(&root_package));
+        self.resolve
+            .package_components_of(root_package)
+            .into_iter()
+            .map(|id| self.packages[&id].clone())
+            .collect()
+    }
 }
 
 /// Resolves workspace dependencies and downloads missing packages.
@@ -44,6 +56,26 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
         Ok(WorkspaceResolve { resolve, packages })
     }
     .await_sync()
+}
+
+#[tracing::instrument(skip_all, level = "debug")]
+pub fn generate_compilation_units(
+    resolve: &WorkspaceResolve,
+    ws: &Workspace<'_>,
+) -> Result<Vec<CompilationUnit>> {
+    let mut units = Vec::with_capacity(ws.members().size_hint().0);
+    for member in ws.members() {
+        let components = resolve.package_components_of(member.id);
+        for target in &member.manifest.targets {
+            let unit = CompilationUnit {
+                package: member.clone(),
+                target: target.clone(),
+                components: components.clone(),
+            };
+            units.push(unit);
+        }
+    }
+    Ok(units)
 }
 
 #[tracing::instrument(level = "trace", skip_all)]
