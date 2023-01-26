@@ -2,6 +2,7 @@ mod build;
 mod build_starknet_contract;
 mod clean;
 mod flock;
+mod fmt;
 mod manifest_path;
 mod metadata;
 mod new_and_init;
