@@ -371,6 +371,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-lang-formatter"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#e0665d8fd3626762eebc21e85d7defc4cc4dc6a1"
+dependencies = [
+ "anyhow",
+ "cairo-lang-diagnostics",
+ "cairo-lang-filesystem",
+ "cairo-lang-parser",
+ "cairo-lang-syntax",
+ "cairo-lang-utils",
+ "clap",
+ "colored",
+ "diffy",
+ "ignore",
+ "itertools",
+ "log",
+ "salsa",
+ "smol_str",
+]
+
+[[package]]
 name = "cairo-lang-lowering"
 version = "1.0.0-alpha.2"
 source = "git+https://github.com/starkware-libs/cairo.git#e0665d8fd3626762eebc21e85d7defc4cc4dc6a1"
@@ -941,6 +962,15 @@ name = "difflib"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6184e33543162437515c2e2b48714794e37845ec9851711914eec9d308f6ebe8"
+
+[[package]]
+name = "diffy"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e616e59155c92257e84970156f506287853355f58cd4a6eb167385722c32b790"
+dependencies = [
+ "nu-ansi-term",
+]
 
 [[package]]
 name = "digest"
@@ -2168,6 +2198,7 @@ dependencies = [
  "async-trait",
  "cairo-lang-compiler",
  "cairo-lang-filesystem",
+ "cairo-lang-formatter",
  "cairo-lang-sierra-to-casm",
  "cairo-lang-starknet",
  "cairo-lang-utils",
@@ -2176,9 +2207,11 @@ dependencies = [
  "clap-verbosity-flag",
  "console",
  "create-output-dir",
+ "diffy",
  "directories",
  "dunce",
  "fs4",
+ "ignore",
  "indicatif",
  "indoc 2.0.0",
  "io_tee",

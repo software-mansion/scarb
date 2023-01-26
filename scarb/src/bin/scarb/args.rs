@@ -56,6 +56,8 @@ pub enum Command {
     Clean,
     /// List installed commands.
     Commands,
+    /// Format project files.
+    Fmt(FmtArgs),
     /// Create a new Scarb package in existing directory.
     Init(InitArgs),
     /// Print path to current **Scarb.toml** file to standard output.
@@ -96,4 +98,18 @@ pub struct NewArgs {
     pub path: Utf8PathBuf,
     #[command(flatten)]
     pub init: InitArgs,
+}
+
+/// Arguments accepted by the `fmt` command.
+#[derive(Parser, Clone, Debug)]
+pub struct FmtArgs {
+    /// Only check if files are formatted, do not write the changes to disk.
+    #[arg(short, long, default_value_t = false)]
+    pub check: bool,
+    /// Do not color output.
+    #[arg(long, default_value_t = false)]
+    pub no_color: bool,
+    /// Specify package to format.
+    #[arg(short, long, value_name = "PACKAGE")]
+    pub package: Option<PackageName>,
 }

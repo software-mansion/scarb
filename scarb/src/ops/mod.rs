@@ -4,6 +4,7 @@
 
 pub use clean::*;
 pub use compile::*;
+pub use fmt::*;
 pub use manifest::*;
 pub use new::*;
 pub use resolve::*;
@@ -12,6 +13,7 @@ pub use workspace::*;
 
 mod clean;
 mod compile;
+mod fmt;
 mod manifest;
 mod new;
 mod resolve;
