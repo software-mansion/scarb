@@ -3,6 +3,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use anyhow::{bail, Result};
+use cairo_lang_filesystem::db::CORELIB_CRATE_NAME;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
@@ -28,7 +29,7 @@ use crate::core::Package;
 pub struct PackageName(SmolStr);
 
 impl PackageName {
-    pub const CORE: Self = PackageName(SmolStr::new_inline("core"));
+    pub const CORE: Self = PackageName(SmolStr::new_inline(CORELIB_CRATE_NAME));
 
     /// Constructs and validates new [`PackageName`].
     ///

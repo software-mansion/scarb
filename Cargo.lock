@@ -266,9 +266,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "572f695136211188308f16ad2ca5c851a712c464060ae6974944458eb83880ba"
 
 [[package]]
+name = "cairo-felt"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "250f460db3bb8e8589812495fdca7301e9674b3a2c81f2380e9c07d914979a42"
+dependencies = [
+ "lazy_static",
+ "num-bigint",
+ "num-integer",
+ "num-traits 0.2.15",
+ "serde",
+]
+
+[[package]]
 name = "cairo-lang-casm"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-utils",
  "indoc",
@@ -279,8 +292,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-compiler"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "anyhow",
  "cairo-lang-defs",
@@ -303,13 +316,13 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-debug"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 
 [[package]]
 name = "cairo-lang-defs"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-diagnostics",
@@ -321,13 +334,12 @@ dependencies = [
  "itertools",
  "salsa",
  "smol_str",
- "thiserror",
 ]
 
 [[package]]
 name = "cairo-lang-diagnostics"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-utils",
@@ -337,8 +349,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-eq-solver"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-utils",
  "good_lp",
@@ -348,11 +360,10 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-filesystem"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-debug",
- "cairo-lang-project",
  "cairo-lang-utils",
  "path-clean",
  "salsa",
@@ -361,8 +372,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-lowering"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -384,8 +395,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-parser"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
@@ -401,8 +412,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-plugins"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -420,8 +431,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-proc-macros"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-debug",
  "quote",
@@ -430,9 +441,10 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-project"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
+ "cairo-lang-filesystem",
  "serde",
  "smol_str",
  "thiserror",
@@ -441,8 +453,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-semantic"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -464,8 +476,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-utils",
  "const-fnv1a-hash",
@@ -485,8 +497,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-ap-change"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
@@ -497,8 +509,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-gas"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
@@ -509,8 +521,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-generator"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -533,10 +545,11 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-sierra-to-casm"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "assert_matches",
+ "cairo-felt",
  "cairo-lang-casm",
  "cairo-lang-sierra",
  "cairo-lang-sierra-ap-change",
@@ -552,8 +565,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-syntax"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
@@ -565,8 +578,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-syntax-codegen"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "cairo-lang-utils",
  "genco",
@@ -576,8 +589,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-utils"
-version = "0.1.0"
-source = "git+https://github.com/maciektr/cairo?branch=maciektr/corelib_path#1c2ba92647f00f7eaf5af79492ebb3e767608ab5"
+version = "1.0.0-alpha.2"
+source = "git+https://github.com/starkware-libs/cairo.git#86175a56cbd36709e9ce9b20122f07f4b322f397"
 dependencies = [
  "chrono",
  "env_logger",
@@ -1581,6 +1594,7 @@ dependencies = [
  "autocfg",
  "num-integer",
  "num-traits 0.2.15",
+ "serde",
 ]
 
 [[package]]
@@ -2103,6 +2117,7 @@ dependencies = [
  "assert_fs",
  "async-trait",
  "cairo-lang-compiler",
+ "cairo-lang-filesystem",
  "cairo-lang-sierra-to-casm",
  "camino",
  "clap",
