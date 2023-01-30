@@ -1,6 +1,6 @@
 use assert_fs::prelude::*;
 
-use crate::support::command::scarb_command;
+use crate::support::command::Scarb;
 
 #[test]
 fn simple() {
@@ -15,7 +15,7 @@ fn simple() {
         )
         .unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -99,7 +99,7 @@ fn fails_without_format_version() {
         )
         .unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("metadata")
         .current_dir(&t)
         .assert()
@@ -178,7 +178,7 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
 fn local_dependencies() {
     let t = assert_fs::TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -351,7 +351,7 @@ fn local_dependencies() {
 fn no_dep() {
     let t = assert_fs::TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -441,7 +441,7 @@ fn manifest_metadata() {
         )
         .unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -538,7 +538,7 @@ fn json_output_is_not_pretty() {
         )
         .unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version")

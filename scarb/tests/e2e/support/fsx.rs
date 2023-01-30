@@ -18,7 +18,19 @@ impl AssertFsUtf8Ext for TempDir {
     }
 }
 
+impl AssertFsUtf8Ext for &TempDir {
+    fn utf8_path(&self) -> &Utf8Path {
+        self.path().try_as_utf8().unwrap()
+    }
+}
+
 impl AssertFsUtf8Ext for ChildPath {
+    fn utf8_path(&self) -> &Utf8Path {
+        self.path().try_as_utf8().unwrap()
+    }
+}
+
+impl AssertFsUtf8Ext for &ChildPath {
     fn utf8_path(&self) -> &Utf8Path {
         self.path().try_as_utf8().unwrap()
     }
