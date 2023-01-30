@@ -50,8 +50,7 @@ pub(crate) mod mock {
         pub fn put(&mut self, package_id: PackageId, mut dependencies: Vec<ManifestDependency>) {
             assert!(
                 !self.has_package(package_id),
-                "Package {} is already in registry",
-                package_id
+                "Package {package_id} is already in registry"
             );
 
             self.index
