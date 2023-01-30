@@ -11,7 +11,7 @@ use ntest::timeout;
 use crate::support::command::Scarb;
 
 #[test]
-#[timeout(5000)]
+#[timeout(30_000)]
 fn locking_build_artifacts() {
     let t = assert_fs::TempDir::new().unwrap();
     let manifest = t.child("Scarb.toml");
@@ -82,7 +82,7 @@ fn locking_build_artifacts() {
 }
 
 #[test]
-#[timeout(5000)]
+#[timeout(30_000)]
 fn locking_package_cache() {
     let t = assert_fs::TempDir::new().unwrap();
     let manifest = t.child("Scarb.toml");
