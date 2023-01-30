@@ -1,6 +1,6 @@
 use assert_fs::prelude::*;
 
-use crate::support::command::scarb_command;
+use crate::support::command::Scarb;
 
 #[test]
 fn simple() {
@@ -18,14 +18,14 @@ fn simple() {
         .write_str(r"fn main() -> felt { 42 }")
         .unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
         .success();
     t.child("target").assert(predicates::path::is_dir());
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("clean")
         .current_dir(&t)
         .assert()

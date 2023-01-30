@@ -6,14 +6,14 @@ use predicates::prelude::*;
 
 use scarb::core::TomlManifest;
 
-use crate::support::command::scarb_command;
+use crate::support::command::Scarb;
 use crate::support::fsx::AssertFsUtf8Ext;
 
 #[test]
 fn new_simple() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("new")
         .arg("hello")
         .current_dir(&pt)
@@ -29,7 +29,7 @@ fn new_simple() {
     let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
     assert_eq!(toml_manifest.package.unwrap().name, "hello");
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -45,7 +45,7 @@ fn init_simple() {
     let t = pt.child("hello");
     t.create_dir_all().unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("init")
         .current_dir(&t)
         .assert()
@@ -59,7 +59,7 @@ fn init_simple() {
     let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
     assert_eq!(toml_manifest.package.unwrap().name, "hello");
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -71,7 +71,7 @@ fn init_simple() {
 
 #[test]
 fn new_no_path_arg() {
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("new")
         .assert()
         .failure()
@@ -92,7 +92,7 @@ fn new_existing() {
     let t = pt.child("hello");
     t.create_dir_all().unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("new")
         .arg("hello")
         .current_dir(&pt)
@@ -107,7 +107,7 @@ fn new_existing() {
 #[test]
 fn invalid_package_name() {
     let pt = assert_fs::TempDir::new().unwrap();
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("new")
         .arg("a-b")
         .current_dir(&pt)
@@ -125,7 +125,7 @@ fn invalid_package_name() {
 fn new_explicit_project_name() {
     let pt = assert_fs::TempDir::new().unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("new")
         .arg("hello")
         .arg("--name")
@@ -148,7 +148,7 @@ fn init_existing_manifest() {
 
     t.child("Scarb.toml").write_str("Scarb is great!").unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("init")
         .current_dir(&t)
         .assert()
@@ -167,7 +167,7 @@ fn init_existing_source() {
     let src = t.child("src/lib.cairo");
     src.write_str("Scarb is great!").unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("init")
         .current_dir(&t)
         .assert()
@@ -183,7 +183,7 @@ fn init_does_not_overwrite_gitignore() {
     t.create_dir_all().unwrap();
     t.child(".gitignore").write_str("examples\n").unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("init")
         .current_dir(&t)
         .assert()

@@ -4,7 +4,7 @@ use assert_fs::prelude::*;
 use indoc::indoc;
 use predicates::prelude::*;
 
-use crate::support::command::scarb_command;
+use crate::support::command::Scarb;
 
 #[test]
 fn compile_simple() {
@@ -27,7 +27,7 @@ fn compile_simple() {
         .write_str(r#"fn f() -> felt { 42 }"#)
         .unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .env("SCARB_CACHE", cache_dir.path())
         .arg("build")
         .current_dir(&t)
@@ -66,7 +66,7 @@ fn compile_with_syntax_error() {
         .write_str(r"not_a_keyword")
         .unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -99,7 +99,7 @@ fn compile_with_syntax_error_json() {
         .write_str(r"not_a_keyword")
         .unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("--json")
         .arg("build")
         .current_dir(&t)
@@ -116,7 +116,7 @@ fn compile_with_syntax_error_json() {
 fn compile_without_manifest() {
     let t = assert_fs::TempDir::new().unwrap();
     let cause = fs::read(t.child("Scarb.toml")).unwrap_err();
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -145,7 +145,7 @@ fn compile_with_lowercase_scarb_toml() {
         )
         .unwrap();
     let cause = fs::read(t.child("Scarb.toml")).unwrap_err();
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -165,7 +165,7 @@ fn compile_with_manifest_not_a_file() {
     let t = assert_fs::TempDir::new().unwrap();
     t.child("Scarb.toml").create_dir_all().unwrap();
     let cause = fs::read(t.child("Scarb.toml")).unwrap_err();
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -192,7 +192,7 @@ fn compile_with_invalid_empty_name() {
             "#,
         )
         .unwrap();
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -219,7 +219,7 @@ fn compile_with_invalid_version() {
             "#,
         )
         .unwrap();
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -249,7 +249,7 @@ fn compile_with_invalid_non_numeric_dep_version() {
             "#,
         )
         .unwrap();
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -318,7 +318,7 @@ fn compile_multiple_packages() {
         )
         .unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -402,7 +402,7 @@ fn compile_with_nested_deps() {
         .write_str(r"fn f() -> felt { 42 }")
         .unwrap();
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()

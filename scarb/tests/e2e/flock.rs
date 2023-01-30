@@ -4,13 +4,7 @@ use std::time::Duration;
 use assert_fs::fixture::{FileWriteStr, PathChild};
 use indoc::indoc;
 
-use scarb::core::Config;
-use scarb::dirs::AppDirs;
-use scarb::flock::RootFilesystem;
-use scarb::ui::{OutputFormat, Ui};
-
-use crate::support::command::scarb_command;
-use crate::support::fsx::{AssertFsUtf8Ext, PathUtf8Ext};
+use crate::support::command::Scarb;
 
 #[test]
 fn locking_build_artifacts() {
@@ -29,12 +23,7 @@ fn locking_build_artifacts() {
         .write_str(r#"fn f() -> felt { 42 }"#)
         .unwrap();
 
-    let config = Config::init(
-        manifest.utf8_path().to_path_buf(),
-        AppDirs::std().unwrap(),
-        Ui::new(OutputFormat::Text),
-    )
-    .unwrap();
+    let config = Scarb::test_config(&manifest);
 
     let lock = config
         .target_dir()
@@ -47,7 +36,8 @@ fn locking_build_artifacts() {
             drop(lock);
         });
 
-        scarb_command()
+        Scarb::from_config(&config)
+            .snapbox()
             .arg("build")
             .current_dir(&t)
             .timeout(Duration::from_secs(10))
@@ -63,9 +53,6 @@ fn locking_build_artifacts() {
 
 #[test]
 fn locking_package_cache() {
-    let cache_dir = assert_fs::TempDir::new().unwrap();
-    let config_dir = assert_fs::TempDir::new().unwrap();
-
     let t = assert_fs::TempDir::new().unwrap();
     let manifest = t.child("Scarb.toml");
     manifest
@@ -81,16 +68,7 @@ fn locking_package_cache() {
         .write_str(r#"fn f() -> felt { 42 }"#)
         .unwrap();
 
-    let config = Config::init(
-        manifest.utf8_path().to_path_buf(),
-        AppDirs {
-            cache_dir: RootFilesystem::new(cache_dir.try_as_utf8().unwrap().to_path_buf()),
-            config_dir: RootFilesystem::new(config_dir.try_as_utf8().unwrap().to_path_buf()),
-            path_dirs: Vec::new(),
-        },
-        Ui::new(OutputFormat::Text),
-    )
-    .unwrap();
+    let config = Scarb::test_config(&manifest);
 
     let lock = config.package_cache_lock().acquire();
 
@@ -100,9 +78,8 @@ fn locking_package_cache() {
             drop(lock);
         });
 
-        scarb_command()
-            .env("SCARB_CACHE", cache_dir.path())
-            .env("SCARB_CONFIG", config_dir.path())
+        Scarb::from_config(&config)
+            .snapbox()
             .arg("build")
             .current_dir(&t)
             .timeout(Duration::from_secs(10))

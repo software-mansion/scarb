@@ -10,7 +10,7 @@ use assert_fs::TempDir;
 use indoc::formatdoc;
 use snapbox::cmd::cargo_bin;
 
-use crate::support::command::scarb_command;
+use crate::support::command::Scarb;
 
 // TODO(mkaput): Fix this test.
 #[test]
@@ -32,7 +32,7 @@ fn subcommand() {
         &t,
     );
 
-    scarb_command()
+    Scarb::quick_snapbox()
         .args(["hello", "beautiful", "world"])
         .env("PATH", path_with_temp_dir(&t))
         .assert()
