@@ -72,10 +72,10 @@ pub struct DetailedTomlDependency {
 impl TomlManifest {
     pub fn read_from_path(path: &Utf8Path) -> Result<Self> {
         let contents = fs::read_to_string(path)
-            .with_context(|| format!("failed to read manifest at `{}`", path))?;
+            .with_context(|| format!("failed to read manifest at `{path}`"))?;
 
         Self::read_from_str(&contents)
-            .with_context(|| format!("failed to parse manifest at `{}`", path))
+            .with_context(|| format!("failed to parse manifest at `{path}`"))
     }
 
     pub fn read_from_str(contents: &str) -> Result<Self> {

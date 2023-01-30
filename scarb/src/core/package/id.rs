@@ -114,7 +114,7 @@ impl<'de> Deserialize<'de> for PackageId {
         };
         let version = version
             .to_version()
-            .map_err(|err| Error::custom(format_args!("invalid serialized PackageId: {}", err)))?;
+            .map_err(|err| Error::custom(format_args!("invalid serialized PackageId: {err}")))?;
 
         let Some(url) = s.next() else {
             return Err(Error::custom("invalid serialized PackageId: missing source url"));

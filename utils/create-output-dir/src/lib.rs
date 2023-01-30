@@ -73,7 +73,7 @@ fn exclude_from_backups(path: &Path) {
 ",
             match guess_application_name() {
                 None => String::new(),
-                Some(name) => format!(" created by {}", name),
+                Some(name) => format!(" created by {name}"),
             }
         ),
     );

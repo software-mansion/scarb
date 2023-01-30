@@ -7,7 +7,7 @@ members = [
 [workspace.package]
 version = "0.1.0-alpha.0"
 edition = "2021"
-rust-version = "1.66"
+rust-version = "1.67"
 repository = "https://github.com/software-mansion/scarb"
 readme = "README.md"
 license = "MIT"

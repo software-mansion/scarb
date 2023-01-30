@@ -12,7 +12,7 @@ use crate::MANIFEST_FILE_NAME;
 pub fn read_manifest(manifest_path: &Utf8Path, source_id: SourceId) -> anyhow::Result<Manifest> {
     let toml = TomlManifest::read_from_path(manifest_path)?;
     toml.to_manifest(manifest_path, source_id)
-        .with_context(|| format!("failed to parse manifest at `{}`", manifest_path))
+        .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))
 }
 
 #[tracing::instrument(level = "debug")]

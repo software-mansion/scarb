@@ -133,7 +133,7 @@ impl SourceId {
                     }
                     GitReference::DefaultBranch => {}
                 }
-                format!("git+{}", url)
+                format!("git+{url}")
             }
 
             SourceKind::Core => format!("core+{}", self.url),

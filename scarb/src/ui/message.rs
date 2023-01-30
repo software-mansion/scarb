@@ -38,7 +38,7 @@ pub trait Message {
     {
         let text = self.text();
         if !text.is_empty() {
-            println!("{}", text);
+            println!("{text}");
         }
     }
 

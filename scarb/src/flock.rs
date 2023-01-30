@@ -210,7 +210,7 @@ impl<'a> Filesystem<'a> {
 
         let file = opts
             .open(&path)
-            .with_context(|| format!("failed to open: {}", path))?;
+            .with_context(|| format!("failed to open: {path}"))?;
 
         match lock_kind {
             FileLockKind::Exclusive => {
