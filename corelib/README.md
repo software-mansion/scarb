@@ -4,4 +4,4 @@ In the future we plan to automatically pull `core` from Cairo's repository.
 
 This directory also contains a custom [`Scarb.toml`](./Scarb.toml) for this package.
 
-[`core`]: https://github.com/starkware-libs/cairo/tree/2db4a5c96ddfcbeeadf2bf3e1ad47098e3055372/corelib
+[`core`]: https://github.com/starkware-libs/cairo/tree/86175a56cbd36709e9ce9b20122f07f4b322f397/corelib

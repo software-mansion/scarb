@@ -2,13 +2,16 @@ use std::io::Write;
 use std::mem;
 
 use anyhow::{Context, Result};
+use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
-use cairo_lang_compiler::{CompilerConfig, SierraProgram};
-use cairo_lang_sierra_to_casm::compiler::CairoProgram;
-use cairo_lang_sierra_to_casm::metadata::calc_metadata;
+use cairo_lang_compiler::CompilerConfig;
+use cairo_lang_filesystem::db::FilesGroup;
+use cairo_lang_filesystem::ids::{CrateLongId, Directory};
+use cairo_lang_sierra_to_casm::metadata::{calc_metadata, MetadataComputationConfig};
+use tracing::{span, trace, Level};
 
 use crate::compiler::CompilationUnit;
-use crate::core::{Config, LibTargetKind, Workspace};
+use crate::core::{Config, LibTargetKind, PackageName, Workspace};
 use crate::ui::TypedMessage;
 
 #[tracing::instrument(level = "trace", skip_all, fields(unit = unit.name()))]
@@ -23,7 +26,14 @@ pub fn compile_lib(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 
     let target_dir = unit.profile.target_dir(ws.config());
 
-    let project_config = build_project_config(&unit)?;
+    let db = {
+        let project_config = build_project_config(&unit)?;
+        trace!(project_config = ?project_config);
+
+        let mut b = RootDatabase::builder();
+        b.with_project_config(project_config);
+        b.build()
+    };
 
     let compiler_config = CompilerConfig {
         on_diagnostic: {
@@ -42,7 +52,12 @@ pub fn compile_lib(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         ..CompilerConfig::default()
     };
 
-    let sierra_program = compile_sierra(project_config, compiler_config)?;
+    let main_crate_ids = vec![db.intern_crate(CrateLongId(unit.package.id.name.to_smol_str()))];
+
+    let sierra_program = {
+        let _ = span!(Level::TRACE, "compile_sierra").enter();
+        cairo_lang_compiler::compile_prepared_db(db, main_crate_ids, compiler_config)?
+    };
 
     if props.sierra {
         let mut file = target_dir.open_rw(
@@ -54,7 +69,22 @@ pub fn compile_lib(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     }
 
     if props.casm {
-        let cairo_program = compile_casm(&sierra_program)?;
+        let gas_usage_check = true;
+
+        let metadata = {
+            let _ = span!(Level::TRACE, "casm_calc_metadata");
+            calc_metadata(&sierra_program, MetadataComputationConfig::default())
+                .context("failed calculating Sierra variables")?
+        };
+
+        let cairo_program = {
+            let _ = span!(Level::TRACE, "compile_casm");
+            cairo_lang_sierra_to_casm::compiler::compile(
+                &sierra_program,
+                &metadata,
+                gas_usage_check,
+            )?
+        };
 
         let mut file = target_dir.open_rw(
             format!("{}.casm", unit.target.name),
@@ -71,6 +101,7 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
     let crate_roots = unit
         .components
         .iter()
+        .filter(|pkg| pkg.id.name != PackageName::CORE)
         .map(|pkg| {
             (
                 pkg.id.name.to_smol_str(),
@@ -79,28 +110,17 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         })
         .collect();
 
+    let corelib = unit
+        .components
+        .iter()
+        .find(|pkg| pkg.id.name == PackageName::CORE)
+        .map(|pkg| Directory(pkg.source_dir().into_std_path_buf()));
+
     let content = ProjectConfigContent { crate_roots };
 
     Ok(ProjectConfig {
         base_path: unit.package.root().into(),
+        corelib,
         content,
     })
-}
-
-#[tracing::instrument(level = "trace", skip(compiler_config))]
-fn compile_sierra(
-    project_config: ProjectConfig,
-    compiler_config: CompilerConfig,
-) -> Result<SierraProgram> {
-    cairo_lang_compiler::compile(project_config, compiler_config)
-}
-
-#[tracing::instrument(level = "trace", skip_all)]
-fn compile_casm(sierra_program: &SierraProgram) -> Result<CairoProgram> {
-    use cairo_lang_sierra_to_casm::compiler::compile;
-
-    let gas_usage_check = true;
-    let metadata = calc_metadata(sierra_program).context("failed calculating Sierra variables")?;
-    let cairo_program = compile(sierra_program, &metadata, gas_usage_check)?;
-    Ok(cairo_program)
 }

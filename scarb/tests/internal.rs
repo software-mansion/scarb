@@ -8,6 +8,7 @@ use toml_edit::Document;
 /// Checks that package version in [`Cairo.toml`] is exactly the same as the version of `Cairo`
 /// dependency, because this project is tightly coupled with it.
 #[test]
+#[ignore = "Scarb is not ready to be version synced with Cairo"]
 fn project_version_is_bound_to_cairo_version() {
     let cargo_toml: Document = fs::read_to_string("../Cargo.toml")
         .unwrap()
