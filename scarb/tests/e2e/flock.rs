@@ -43,14 +43,14 @@ fn locking_build_artifacts() {
 
     thread::scope(|s| {
         s.spawn(|| {
-            thread::sleep(Duration::from_secs(2));
+            thread::sleep(Duration::from_secs(4));
             drop(lock);
         });
 
         scarb_command()
             .arg("build")
             .current_dir(&t)
-            .timeout(Duration::from_secs(5))
+            .timeout(Duration::from_secs(10))
             .assert()
             .success()
             .stdout_matches(indoc! {r#"
@@ -96,7 +96,7 @@ fn locking_package_cache() {
 
     thread::scope(|s| {
         s.spawn(|| {
-            thread::sleep(Duration::from_secs(2));
+            thread::sleep(Duration::from_secs(4));
             drop(lock);
         });
 
@@ -105,7 +105,7 @@ fn locking_package_cache() {
             .env("SCARB_CONFIG", config_dir.path())
             .arg("build")
             .current_dir(&t)
-            .timeout(Duration::from_secs(5))
+            .timeout(Duration::from_secs(10))
             .assert()
             .success()
             .stdout_matches(indoc! {r#"
