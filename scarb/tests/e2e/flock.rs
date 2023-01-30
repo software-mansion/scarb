@@ -1,12 +1,17 @@
+use std::io::{BufRead, BufReader};
+use std::process::Stdio;
+use std::sync::{Arc, Barrier};
 use std::thread;
-use std::time::Duration;
 
 use assert_fs::fixture::{FileWriteStr, PathChild};
 use indoc::indoc;
+use io_tee::TeeReader;
+use ntest::timeout;
 
 use crate::support::command::Scarb;
 
 #[test]
+#[timeout(5000)]
 fn locking_build_artifacts() {
     let t = assert_fs::TempDir::new().unwrap();
     let manifest = t.child("Scarb.toml");
@@ -25,33 +30,59 @@ fn locking_build_artifacts() {
 
     let config = Scarb::test_config(&manifest);
 
-    let lock = config
-        .target_dir()
-        .child("release")
-        .open_rw("hello.sierra", "artifact", &config);
-
     thread::scope(|s| {
-        s.spawn(|| {
-            thread::sleep(Duration::from_secs(4));
-            drop(lock);
+        let lock =
+            config
+                .target_dir()
+                .child("release")
+                .open_rw("hello.sierra", "artifact", &config);
+        let barrier = Arc::new(Barrier::new(2));
+
+        s.spawn({
+            let barrier = barrier.clone();
+            move || {
+                barrier.wait();
+                drop(lock);
+            }
         });
 
-        Scarb::from_config(&config)
-            .snapbox()
+        let mut proc = Scarb::from_config(&config)
+            .std()
             .arg("build")
             .current_dir(&t)
-            .timeout(Duration::from_secs(10))
-            .assert()
-            .success()
-            .stdout_matches(indoc! {r#"
-                [..] Compiling hello v0.1.0 ([..])
-                [..]  Blocking waiting for file lock on output file
-                [..]  Finished release target(s) in [..]
-            "#});
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let mut stdout_acc = Vec::<u8>::new();
+        let stdout = proc.stdout.take().unwrap();
+        let stdout = TeeReader::new(stdout, &mut stdout_acc);
+        let stdout = BufReader::new(stdout);
+        for line in stdout.lines() {
+            let line = line.unwrap();
+
+            if line.contains("waiting for file lock on output file") {
+                barrier.wait();
+            }
+        }
+
+        let ecode = proc.wait().unwrap();
+        assert!(ecode.success());
+
+        snapbox::assert_matches(
+            indoc! {r#"
+            [..] Compiling hello v0.1.0 ([..])
+            [..]  Blocking waiting for file lock on output file
+            [..]  Finished release target(s) in [..]
+            "#},
+            stdout_acc,
+        );
     });
 }
 
 #[test]
+#[timeout(5000)]
 fn locking_package_cache() {
     let t = assert_fs::TempDir::new().unwrap();
     let manifest = t.child("Scarb.toml");
@@ -70,25 +101,49 @@ fn locking_package_cache() {
 
     let config = Scarb::test_config(&manifest);
 
-    let lock = config.package_cache_lock().acquire();
-
     thread::scope(|s| {
-        s.spawn(|| {
-            thread::sleep(Duration::from_secs(4));
-            drop(lock);
+        let lock = config.package_cache_lock().acquire();
+        let barrier = Arc::new(Barrier::new(2));
+
+        s.spawn({
+            let barrier = barrier.clone();
+            move || {
+                barrier.wait();
+                drop(lock);
+            }
         });
 
-        Scarb::from_config(&config)
-            .snapbox()
+        let mut proc = Scarb::from_config(&config)
+            .std()
             .arg("build")
             .current_dir(&t)
-            .timeout(Duration::from_secs(10))
-            .assert()
-            .success()
-            .stdout_matches(indoc! {r#"
-                [..]  Blocking waiting for file lock on package cache
-                [..] Compiling hello v0.1.0 ([..])
-                [..]  Finished release target(s) in [..]
-            "#});
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let mut stdout_acc = Vec::<u8>::new();
+        let stdout = proc.stdout.take().unwrap();
+        let stdout = TeeReader::new(stdout, &mut stdout_acc);
+        let stdout = BufReader::new(stdout);
+        for line in stdout.lines() {
+            let line = line.unwrap();
+
+            if line.contains("waiting for file lock on package cache") {
+                barrier.wait();
+            }
+        }
+
+        let ecode = proc.wait().unwrap();
+        assert!(ecode.success());
+
+        snapbox::assert_matches(
+            indoc! {r#"
+            [..]  Blocking waiting for file lock on package cache
+            [..] Compiling hello v0.1.0 ([..])
+            [..]  Finished release target(s) in [..]
+            "#},
+            stdout_acc,
+        );
     });
 }
