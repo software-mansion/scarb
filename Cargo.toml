@@ -19,6 +19,8 @@ async-trait = "0.1.63"
 cairo-lang-compiler = { version = "1.0.0-alpha.2", git = "https://github.com/starkware-libs/cairo.git" }
 cairo-lang-filesystem = { version = "1.0.0-alpha.2", git = "https://github.com/starkware-libs/cairo.git" }
 cairo-lang-sierra-to-casm = { version = "1.0.0-alpha.2", git = "https://github.com/starkware-libs/cairo.git" }
+cairo-lang-starknet = { version = "1.0.0-alpha.2", git = "https://github.com/starkware-libs/cairo.git" }
+cairo-lang-utils = { version = "1.0.0-alpha.2", git = "https://github.com/starkware-libs/cairo.git" }
 camino = { version = "1.1.2", features = ["serde1"] }
 clap = { version = "4.1", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.0"

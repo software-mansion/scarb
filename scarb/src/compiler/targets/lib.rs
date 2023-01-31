@@ -1,17 +1,17 @@
 use std::io::Write;
-use std::mem;
 
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::{CrateLongId, Directory};
+use cairo_lang_filesystem::ids::{CrateId, CrateLongId, Directory};
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, MetadataComputationConfig};
 use tracing::{span, trace, Level};
 
 use crate::compiler::CompilationUnit;
-use crate::core::{Config, LibTargetKind, PackageName, Workspace};
+use crate::core::{LibTargetKind, PackageName, Workspace};
 use crate::ui::TypedMessage;
 
 #[tracing::instrument(level = "trace", skip_all, fields(unit = unit.name()))]
@@ -26,37 +26,17 @@ pub fn compile_lib(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 
     let target_dir = unit.profile.target_dir(ws.config());
 
-    let db = {
-        let project_config = build_project_config(&unit)?;
-        trace!(project_config = ?project_config);
+    let mut db = RootDatabase::builder()
+        .with_project_config(build_project_config(&unit)?)
+        .build()?;
 
-        let mut b = RootDatabase::builder();
-        b.with_project_config(project_config);
-        b.build()
-    };
+    let compiler_config = build_compiler_config(ws);
 
-    let compiler_config = CompilerConfig {
-        on_diagnostic: {
-            // UNSAFE: We are not actually creating a dangling `Config` reference here,
-            //   because diagnostic callback by definition should rather be dropped
-            //   when compilation ends.
-            let config: &'static Config = unsafe { mem::transmute(ws.config()) };
-            Some(Box::new({
-                |diagnostic: String| {
-                    config
-                        .ui()
-                        .print(TypedMessage::naked_text("diagnostic", &diagnostic));
-                }
-            }))
-        },
-        ..CompilerConfig::default()
-    };
-
-    let main_crate_ids = vec![db.intern_crate(CrateLongId(unit.package.id.name.to_smol_str()))];
+    let main_crate_ids = collect_main_crate_ids(&unit, &db);
 
     let sierra_program = {
         let _ = span!(Level::TRACE, "compile_sierra").enter();
-        cairo_lang_compiler::compile_prepared_db(db, main_crate_ids, compiler_config)?
+        cairo_lang_compiler::compile_prepared_db(&mut db, main_crate_ids, compiler_config)?
     };
 
     if props.sierra {
@@ -97,7 +77,7 @@ pub fn compile_lib(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     Ok(())
 }
 
-fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
+pub(super) fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
     let crate_roots = unit
         .components
         .iter()
@@ -118,9 +98,31 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
 
     let content = ProjectConfigContent { crate_roots };
 
-    Ok(ProjectConfig {
+    let project_config = ProjectConfig {
         base_path: unit.package.root().into(),
         corelib,
         content,
-    })
+    };
+
+    trace!(?project_config);
+
+    Ok(project_config)
+}
+
+pub(super) fn build_compiler_config<'c>(ws: &Workspace<'c>) -> CompilerConfig<'c> {
+    CompilerConfig {
+        diagnostics_reporter: DiagnosticsReporter::callback({
+            let config = ws.config();
+            |diagnostic: String| {
+                config
+                    .ui()
+                    .print(TypedMessage::naked_text("diagnostic", &diagnostic));
+            }
+        }),
+        ..CompilerConfig::default()
+    }
+}
+
+pub(super) fn collect_main_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
+    vec![db.intern_crate(CrateLongId(unit.package.id.name.to_smol_str()))]
 }

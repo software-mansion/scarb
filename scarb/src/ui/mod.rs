@@ -52,4 +52,8 @@ impl Ui {
     pub fn error(&self, message: impl AsRef<str>) {
         self.print(TypedMessage::styled("error", "red", message.as_ref()))
     }
+
+    pub fn anyhow(&self, error: &anyhow::Error) {
+        self.error(format!("{error:?}"))
+    }
 }

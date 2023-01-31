@@ -32,7 +32,7 @@ fn main() {
 
     if let Err(err) = cli_main(args) {
         let ui = Ui::new(output_format);
-        ui.error(format!("{err:?}"));
+        ui.anyhow(&err);
         std::process::exit(1);
     }
 }

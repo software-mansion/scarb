@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use indicatif::HumanDuration;
 
 use crate::compiler::targets::TargetCompilerMap;
@@ -45,13 +46,16 @@ fn compile_unit(
         .load(&unit.target.kind)?
         .compile(unit, ws)
         .map_err(|err| {
-            // TODO(mkaput): Make this an enum upstream.
-            if err.to_string() == "Compilation failed." {
-                anyhow!("could not compile `{package_name}` due to previous error")
-            } else {
-                err
+            if !suppress_error(&err) {
+                ws.config().ui().anyhow(&err);
             }
+
+            anyhow!("could not compile `{package_name}` due to previous error")
         })?;
 
     Ok(())
+}
+
+fn suppress_error(err: &anyhow::Error) -> bool {
+    matches!(err.downcast_ref(), Some(&DiagnosticsError))
 }
