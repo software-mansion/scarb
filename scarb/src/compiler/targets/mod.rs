@@ -10,6 +10,7 @@ use crate::compiler::CompilationUnit;
 use crate::core::{TargetKind, Workspace};
 
 mod lib;
+mod starknet_contract;
 
 pub trait TargetCompiler {
     fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()>;
@@ -48,7 +49,14 @@ impl TargetCompilerMap {
     fn build(kind: &TargetKind) -> Result<Box<dyn TargetCompiler>> {
         match kind {
             TargetKind::Lib(_) => Ok(Box::new(&lib::compile_lib)),
-            TargetKind::External(_) => todo!("External targets are not implemented yet."),
+            TargetKind::External(ext) => {
+                // TODO(mkaput): starknet-contract should be implemented as an extension.
+                if ext.kind_name == "starknet-contract" {
+                    return Ok(Box::new(&starknet_contract::compile_contract));
+                }
+
+                todo!("External targets are not implemented yet.")
+            }
         }
     }
 }

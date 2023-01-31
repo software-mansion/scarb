@@ -1,4 +1,5 @@
 mod build;
+mod build_starknet_contract;
 mod clean;
 mod flock;
 mod manifest_path;

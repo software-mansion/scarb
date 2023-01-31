@@ -5,6 +5,7 @@ use indoc::indoc;
 use predicates::prelude::*;
 
 use crate::support::command::Scarb;
+use crate::support::fsx::ChildPathEx;
 
 #[test]
 fn compile_simple() {
@@ -34,13 +35,8 @@ fn compile_simple() {
         .assert()
         .success();
 
-    t.child("target/release/hello.sierra")
-        .assert(predicates::str::is_empty().not());
-
-    t.child("target/CACHEDIR.TAG")
-        .assert(predicates::path::exists());
-    t.child("target/release/CACHEDIR.TAG")
-        .assert(predicates::path::exists().not());
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "release"]);
+    assert_eq!(t.child("target/release").files(), vec!["hello.sierra"]);
 
     cache_dir
         .child("registry/core/core/Scarb.toml")
