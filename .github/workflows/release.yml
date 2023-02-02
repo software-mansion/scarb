@@ -2,63 +2,54 @@ name: Release
 
 on:
   push:
-    tags: [ "v*" ]
+    tags:
+      - v[0-9]+.*
 
 permissions:
   contents: write
 
 jobs:
-  create-release:
-    name: draft github release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Draft GitHub release
-        uses: softprops/action-gh-release@v1
-        with:
-          generate_release_notes: true
-          draft: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
-
   build:
     name: build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-    needs: [ "create-release" ]
     continue-on-error: true
+
+    env:
+      # Cross-compiled targets will override this to `cross`.
+      CARGO: cargo
 
     strategy:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-20.04
-            cross: false
+            os: ubuntu-latest
+            # Use cross to link oldest GLIBC possible.
+            cross: true
 
+          # Note: MUSL may not be possible to use in the future when we'll have compiler plugins.
           #- target: x86_64-unknown-linux-musl
           #  os: ubuntu-latest
           #  cross: true
 
           #- target: armv7-unknown-linux-gnueabihf
-          #  os: ubuntu-20.04
+          #  os: ubuntu-latest
           #  cross: true
 
-          #- target: aarch64-unknown-linux-gnu
-          #  os: ubuntu-20.04
-          #  cross: true
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
 
           - target: x86_64-apple-darwin
-            os: macos-latest
-            cross: false
+            os: macos-12
 
           - target: aarch64-apple-darwin
-            os: macos-latest
-            cross: true
+            os: macos-12
 
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            cross: false
 
           #- target: aarch64-pc-windows-msvc
           #  os: windows-latest
-          #  cross: true
 
     steps:
       - uses: actions/checkout@v3
@@ -67,48 +58,102 @@ jobs:
         with:
           target: ${{ matrix.target }}
 
-      - name: cargo build
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: ${{ matrix.cross }}
-          command: build
-          args: --release --locked --target ${{ matrix.target }}
+      - name: Install cross
+        if: matrix.cross
+        uses: taiki-e/install-action@cross
 
-      - name: package
+      - name: Enable cross-compilation
+        if: matrix.cross
+        shell: bash
+        run: |
+          echo "CARGO=cross" >> $GITHUB_ENV
+
+      - name: Build
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }}
+
+      - name: Package
         shell: bash
         run: |
           set -euxo pipefail
           
           STAGING="scarb-${{ github.ref_name }}-${{ matrix.target }}"
           echo "STAGING=$STAGING" >> $GITHUB_ENV
-          mkdir -p "$STAGING"
           
-          ext=""
-          [[ "${{ matrix.target }}" == *-windows-* ]] && ext=".exe"
-          
-          for crate in "scarb"; do
-            cp "target/${{ matrix.target }}/release/${crate}${ext}" "$STAGING/"
-          done
-          
-          cp -r README.md LICENSE "$STAGING/"
+          ci/package-release.sh "${{ matrix.target }}" "$STAGING"
 
-      - name: archive (tar)
-        if: "! contains(matrix.target, '-windows-')"
-        shell: bash
-        run: |
-          set -euxo pipefail
-          tar czvf "${{ env.STAGING }}.tar.gz" "${{ env.STAGING }}"
-
-      - name: archive (zip)
-        if: "contains(matrix.target, '-windows-')"
-        shell: bash
-        run: |
-          set -euxo pipefail
-          7z a "${{ env.STAGING }}.zip" "${{ env.STAGING }}"
-
-      - name: upload
-        uses: softprops/action-gh-release@v1
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
         with:
-          files: |
-            ${{ env.STAGING }}.tar.gz
-            ${{ env.STAGING }}.zip
+          name: build-${{ matrix.target }}
+          path: ${{ env.STAGING }}.*
+
+  verify:
+    name: verify ${{ matrix.os }} ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    needs: build
+
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-20.04
+
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-22.04
+
+          - target: x86_64-apple-darwin
+            os: macos-12
+
+          - target: x86_64-pc-windows-msvc
+            os: windows-2019
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: build-${{ matrix.target }}
+          path: target/verify
+
+      - name: Run verification script
+        shell: bash
+        run: |
+          archive=$(find target/verify -name 'scarb-*.zip' -o -name 'scarb-*.tar.gz')
+          ci/verify-release.sh "$archive" "${{ github.ref_name }}"
+
+  create-release:
+    name: draft release
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts-dl
+
+      - name: Unpack artifacts to staging directory
+        run: |
+          mkdir -p artifacts
+          mv artifacts-dl/build-*/scarb-* artifacts/
+
+      - name: Compute checksums
+        working-directory: artifacts
+        run: sha256sum -b scarb-* > checksums.sha256
+
+      - name: Draft GitHub release
+        id: draft-release
+        uses: taiki-e/create-gh-release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: $version
+          draft: true
+
+      - name: Upload artifacts to the release
+        working-directory: artifacts
+        run: gh release upload "$TAG" *
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.draft-release.outputs.computed-prefix }}${{ steps.draft-release.outputs.version }}
