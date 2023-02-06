@@ -7,7 +7,7 @@ use anyhow::{bail, Result};
 use camino::Utf8PathBuf;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
-use toml_edit::easy::Value;
+use toml::Value;
 
 pub use metadata_version::*;
 
