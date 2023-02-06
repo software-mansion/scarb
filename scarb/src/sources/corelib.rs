@@ -56,10 +56,6 @@ impl<'c> CorelibSource<'c> {
 
 #[async_trait]
 impl<'c> Source for CorelibSource<'c> {
-    fn source_id(&self) -> SourceId {
-        SourceId::for_core()
-    }
-
     #[tracing::instrument(level = "trace", skip(self))]
     async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         let package = self.ensure_loaded().await?;
