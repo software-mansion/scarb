@@ -198,8 +198,12 @@ fn compile_with_invalid_empty_name() {
 error: failed to parse manifest at `[..]/Scarb.toml`
 
 Caused by:
-    empty string cannot be used as package name for key `package.name`
-",
+    TOML parse error at line 3, column 20
+      |
+    3 |             name = \"\"
+      |                    ^^
+    empty string cannot be used as package name
+    \n",
         );
 }
 
@@ -225,8 +229,12 @@ fn compile_with_invalid_version() {
 error: failed to parse manifest at `[..]/Scarb.toml`
 
 Caused by:
-    unexpected character 'y' while parsing major version number for key `package.version`
-",
+    TOML parse error at line 4, column 23
+      |
+    4 |             version = \"y\"
+      |                       ^^^
+    unexpected character 'y' while parsing major version number
+    \n",
         );
 }
 
@@ -255,8 +263,12 @@ fn compile_with_invalid_non_numeric_dep_version() {
 error: failed to parse manifest at `[..]/Scarb.toml`
 
 Caused by:
-    data did not match any variant of untagged enum TomlDependency for key `dependencies.moo`
-",
+    TOML parse error at line 7, column 19
+      |
+    7 |             moo = \"y\"
+      |                   ^^^
+    data did not match any variant of untagged enum TomlDependency
+    \n",
         );
 }
 
