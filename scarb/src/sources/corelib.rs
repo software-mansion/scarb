@@ -2,8 +2,8 @@ use std::fmt;
 
 use anyhow::{ensure, Result};
 use async_trait::async_trait;
-use once_cell::sync::OnceCell;
 use rust_embed::RustEmbed;
+use smol::lock::OnceCell;
 
 use crate::core::config::Config;
 use crate::core::manifest::{ManifestDependency, Summary};
@@ -31,11 +31,11 @@ impl<'c> CorelibSource<'c> {
         }
     }
 
-    fn ensure_loaded(&mut self) -> Result<Package> {
-        self.package.get_or_try_init(|| self.load()).cloned()
+    async fn ensure_loaded(&mut self) -> Result<Package> {
+        self.package.get_or_try_init(|| self.load()).await.cloned()
     }
 
-    fn load(&self) -> Result<Package> {
+    async fn load(&self) -> Result<Package> {
         // TODO(mkaput): Include core version or hash part here.
         let root = download_package_to_cache("core", "core", self.config, |tmp| {
             for path in Corelib::iter() {
@@ -46,7 +46,8 @@ impl<'c> CorelibSource<'c> {
             }
 
             Ok(())
-        })?;
+        })
+        .await?;
 
         let manifest_path = root.join(MANIFEST_FILE_NAME);
         ops::read_package_with_source_id(&manifest_path, SourceId::for_core())
@@ -61,7 +62,7 @@ impl<'c> Source for CorelibSource<'c> {
 
     #[tracing::instrument(level = "trace", skip(self))]
     async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
-        let package = self.ensure_loaded()?;
+        let package = self.ensure_loaded().await?;
         if dependency.matches_summary(&package.manifest.summary) {
             Ok(vec![package.manifest.summary.clone()])
         } else {
@@ -71,7 +72,7 @@ impl<'c> Source for CorelibSource<'c> {
 
     #[tracing::instrument(level = "trace", skip(self))]
     async fn download(&mut self, package_id: PackageId) -> Result<Package> {
-        let package = self.ensure_loaded()?;
+        let package = self.ensure_loaded().await?;
         ensure!(package.id == package_id, "unknown package {package_id}");
         Ok(package)
     }

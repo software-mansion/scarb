@@ -1,6 +1,7 @@
+use smol::lock::Mutex;
 use std::fs::{File, OpenOptions};
 use std::ops::{Deref, DerefMut};
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{Arc, Weak};
 use std::{fmt, io};
 
 use anyhow::{Context, Result};
@@ -8,6 +9,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use fs4::{lock_contended_error, FileExt};
 
 use crate::core::Config;
+use crate::internal::asyncx::AwaitSync;
 use crate::internal::lazy_directory_creator::LazyDirectoryCreator;
 use crate::ui::Status;
 
@@ -81,7 +83,12 @@ impl<'f> AdvisoryLock<'f> {
     /// An RAII structure is returned to release the lock, and if this process abnormally
     /// terminates the lock is also released.
     pub fn acquire(&self) -> Result<AdvisoryLockGuard> {
-        let mut slot = self.file_lock.lock().unwrap();
+        self.acquire_async().await_sync()
+    }
+
+    /// Async version of [`Self::acquire`].
+    pub async fn acquire_async(&self) -> Result<AdvisoryLockGuard> {
+        let mut slot = self.file_lock.lock().await;
 
         let file_lock_arc = match slot.upgrade() {
             Some(arc) => arc,
