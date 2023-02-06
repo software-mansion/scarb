@@ -68,10 +68,6 @@ impl<'c> PathSource<'c> {
 
 #[async_trait]
 impl<'c> Source for PathSource<'c> {
-    fn source_id(&self) -> SourceId {
-        self.source_id
-    }
-
     #[tracing::instrument(level = "trace", skip(self))]
     async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         Ok(self
