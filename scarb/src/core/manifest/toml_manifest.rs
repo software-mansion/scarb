@@ -151,7 +151,7 @@ impl TomlManifest {
     }
 
     pub fn read_from_str(contents: &str) -> Result<Self> {
-        toml_edit::easy::from_str(contents).map_err(Into::into)
+        toml::from_str(contents).map_err(Into::into)
     }
 }
 
