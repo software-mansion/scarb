@@ -193,18 +193,16 @@ fn compile_with_invalid_empty_name() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(
-            "\
-error: failed to parse manifest at `[..]/Scarb.toml`
+        .stdout_matches(indoc! {"\
+            error: failed to parse manifest at `[..]/Scarb.toml`
 
-Caused by:
-    TOML parse error at line 3, column 20
-      |
-    3 |             name = \"\"
-      |                    ^^
-    empty string cannot be used as package name
-    \n",
-        );
+            Caused by:
+                TOML parse error at line 3, column 20
+                  |
+                3 |             name = \"\"
+                  |                    ^^
+                empty string cannot be used as package name
+                \n",});
 }
 
 #[test]
@@ -224,18 +222,16 @@ fn compile_with_invalid_version() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(
-            "\
-error: failed to parse manifest at `[..]/Scarb.toml`
+        .stdout_matches(indoc! {"\
+            error: failed to parse manifest at `[..]/Scarb.toml`
 
-Caused by:
-    TOML parse error at line 4, column 23
-      |
-    4 |             version = \"y\"
-      |                       ^^^
-    unexpected character 'y' while parsing major version number
-    \n",
-        );
+            Caused by:
+                TOML parse error at line 4, column 23
+                  |
+                4 |             version = \"y\"
+                  |                       ^^^
+                unexpected character 'y' while parsing major version number
+                \n"});
 }
 
 #[test]
@@ -258,18 +254,16 @@ fn compile_with_invalid_non_numeric_dep_version() {
         .current_dir(&t)
         .assert()
         .code(1)
-        .stdout_matches(
-            "\
-error: failed to parse manifest at `[..]/Scarb.toml`
+        .stdout_matches(indoc! {"\
+            error: failed to parse manifest at `[..]/Scarb.toml`
 
-Caused by:
-    TOML parse error at line 7, column 19
-      |
-    7 |             moo = \"y\"
-      |                   ^^^
-    data did not match any variant of untagged enum TomlDependency
-    \n",
-        );
+            Caused by:
+                TOML parse error at line 7, column 19
+                  |
+                7 |             moo = \"y\"
+                  |                   ^^^
+                data did not match any variant of untagged enum TomlDependency
+                \n"});
 }
 
 #[test]
