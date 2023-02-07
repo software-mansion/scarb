@@ -1,8 +1,9 @@
 use std::fmt;
+use std::ops::Deref;
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use once_cell::sync::OnceCell;
+use smol::lock::OnceCell;
 
 use crate::core::config::Config;
 use crate::core::manifest::{ManifestDependency, Summary};
@@ -16,7 +17,7 @@ use crate::MANIFEST_FILE_NAME;
 pub struct PathSource<'c> {
     source_id: SourceId,
     config: &'c Config,
-    packages: OnceCell<Vec<Package>>,
+    packages: PackagesCell,
 }
 
 impl<'c> PathSource<'c> {
@@ -26,7 +27,7 @@ impl<'c> PathSource<'c> {
         Self {
             source_id,
             config,
-            packages: OnceCell::new(),
+            packages: PackagesCell::new(Self::fetch_workspace_at_root),
         }
     }
 
@@ -45,18 +46,20 @@ impl<'c> PathSource<'c> {
             );
         }
 
+        let source_id = packages[0].id.source_id;
+
         Self {
-            packages: OnceCell::from(packages.to_vec()),
-            ..Self::new(packages[0].id.source_id, config)
+            source_id,
+            config,
+            packages: PackagesCell::preloaded(packages.to_vec()),
         }
     }
 
-    fn ensure_loaded(&self) -> Result<&Vec<Package>> {
-        self.packages
-            .get_or_try_init(|| Self::read_packages(self.source_id, self.config))
+    async fn packages(&self) -> Result<&[Package]> {
+        self.packages.try_get(self.source_id, self.config).await
     }
 
-    fn read_packages(source_id: SourceId, config: &Config) -> Result<Vec<Package>> {
+    fn fetch_workspace_at_root(source_id: SourceId, config: &Config) -> Result<Vec<Package>> {
         let root = source_id
             .to_path()
             .expect("this has to be a path source ID")
@@ -71,7 +74,8 @@ impl<'c> Source for PathSource<'c> {
     #[tracing::instrument(level = "trace", skip(self))]
     async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         Ok(self
-            .ensure_loaded()?
+            .packages()
+            .await?
             .iter()
             .map(|pkg| pkg.manifest.summary.clone())
             .filter(|summary| dependency.matches_summary(summary))
@@ -80,7 +84,8 @@ impl<'c> Source for PathSource<'c> {
 
     #[tracing::instrument(level = "trace", skip(self))]
     async fn download(&mut self, id: PackageId) -> Result<Package> {
-        self.ensure_loaded()?
+        self.packages()
+            .await?
             .iter()
             .find(|pkg| pkg.id == id)
             .cloned()
@@ -93,5 +98,45 @@ impl<'c> fmt::Debug for PathSource<'c> {
         f.debug_struct("PathSource")
             .field("source", &self.source_id.to_string())
             .finish_non_exhaustive()
+    }
+}
+
+type PackagesScanner = dyn Fn(SourceId, &Config) -> Result<Vec<Package>> + Send + Sync;
+
+struct PackagesCell {
+    cell: OnceCell<Vec<Package>>,
+    scanner: Option<Box<PackagesScanner>>,
+}
+
+impl PackagesCell {
+    fn new(
+        scanner: impl Fn(SourceId, &Config) -> Result<Vec<Package>> + Send + Sync + 'static,
+    ) -> Self {
+        Self {
+            cell: OnceCell::new(),
+            scanner: Some(Box::new(scanner)),
+        }
+    }
+
+    fn preloaded(packages: Vec<Package>) -> Self {
+        Self {
+            cell: OnceCell::from(packages),
+            scanner: None,
+        }
+    }
+
+    async fn try_get(&self, source_id: SourceId, config: &Config) -> Result<&[Package]> {
+        self.cell
+            .get_or_try_init(|| async {
+                // FIXME: Technically one should wrap `f` call in `smol::unblock` in order to avoid
+                //   blocking async executor. But quick local benchmarks on our test suite at the
+                //   time of writing this actually pointed out that this slows them down by few %.
+                //   In the future, it is possible that `smol::unblock` may actually help, or this
+                //   has to be debunked with proper benchmarks.
+                let f = self.scanner.as_ref().unwrap().deref();
+                f(source_id, config)
+            })
+            .await
+            .map(|v| v.as_slice())
     }
 }
