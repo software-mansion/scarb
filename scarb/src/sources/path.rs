@@ -3,6 +3,7 @@ use std::ops::Deref;
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use camino::Utf8Path;
 use smol::lock::OnceCell;
 
 use crate::core::config::Config;
@@ -22,12 +23,17 @@ pub struct PathSource<'c> {
 
 impl<'c> PathSource<'c> {
     pub fn new(source_id: SourceId, config: &'c Config) -> Self {
-        assert!(source_id.is_path(), "path sources cannot be remote");
+        let root = source_id
+            .to_path()
+            .expect("path sources cannot be remote")
+            .join(MANIFEST_FILE_NAME);
 
         Self {
             source_id,
             config,
-            packages: PackagesCell::new(Self::fetch_workspace_at_root),
+            packages: PackagesCell::new(move |source_id, config| {
+                Self::fetch_workspace_at_root(&root, source_id, config)
+            }),
         }
     }
 
@@ -55,17 +61,36 @@ impl<'c> PathSource<'c> {
         }
     }
 
+    pub fn recursive_at(path: &Utf8Path, source_id: SourceId, config: &'c Config) -> Self {
+        Self {
+            source_id,
+            config,
+            packages: PackagesCell::new({
+                let path = path.to_path_buf();
+                move |source_id, config| Self::find_packages_recursive(&path, source_id, config)
+            }),
+        }
+    }
+
     async fn packages(&self) -> Result<&[Package]> {
         self.packages.try_get(self.source_id, self.config).await
     }
 
-    fn fetch_workspace_at_root(source_id: SourceId, config: &Config) -> Result<Vec<Package>> {
-        let root = source_id
-            .to_path()
-            .expect("this has to be a path source ID")
-            .join(MANIFEST_FILE_NAME);
-        let ws = ops::read_workspace_with_source_id(&root, source_id, config)?;
+    fn fetch_workspace_at_root(
+        root: &Utf8Path,
+        source_id: SourceId,
+        config: &Config,
+    ) -> Result<Vec<Package>> {
+        let ws = ops::read_workspace_with_source_id(root, source_id, config)?;
         Ok(ws.members().collect())
+    }
+
+    fn find_packages_recursive(
+        root: &Utf8Path,
+        source_id: SourceId,
+        config: &Config,
+    ) -> Result<Vec<Package>> {
+        ops::find_all_packages_recursive_with_source_id(root, source_id, config)
     }
 }
 
