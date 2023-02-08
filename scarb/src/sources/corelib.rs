@@ -31,7 +31,7 @@ impl<'c> CorelibSource<'c> {
         }
     }
 
-    async fn ensure_loaded(&mut self) -> Result<Package> {
+    async fn ensure_loaded(&self) -> Result<Package> {
         self.package.get_or_try_init(|| self.load()).await.cloned()
     }
 
@@ -59,7 +59,7 @@ impl<'c> CorelibSource<'c> {
 #[async_trait]
 impl<'c> Source for CorelibSource<'c> {
     #[tracing::instrument(level = "trace", skip(self))]
-    async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
+    async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         let package = self.ensure_loaded().await?;
         if dependency.matches_summary(&package.manifest.summary) {
             Ok(vec![package.manifest.summary.clone()])
@@ -69,7 +69,7 @@ impl<'c> Source for CorelibSource<'c> {
     }
 
     #[tracing::instrument(level = "trace", skip(self))]
-    async fn download(&mut self, package_id: PackageId) -> Result<Package> {
+    async fn download(&self, package_id: PackageId) -> Result<Package> {
         let package = self.ensure_loaded().await?;
         ensure!(package.id == package_id, "unknown package {package_id}");
         Ok(package)

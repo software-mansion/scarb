@@ -72,7 +72,7 @@ impl<'c> PathSource<'c> {
 #[async_trait]
 impl<'c> Source for PathSource<'c> {
     #[tracing::instrument(level = "trace", skip(self))]
-    async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
+    async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         Ok(self
             .packages()
             .await?
@@ -83,7 +83,7 @@ impl<'c> Source for PathSource<'c> {
     }
 
     #[tracing::instrument(level = "trace", skip(self))]
-    async fn download(&mut self, id: PackageId) -> Result<Package> {
+    async fn download(&self, id: PackageId) -> Result<Package> {
         self.packages()
             .await?
             .iter()
