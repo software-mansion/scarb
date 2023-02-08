@@ -12,7 +12,11 @@ pub struct Status<'a> {
 }
 
 impl<'a> Status<'a> {
-    pub fn new(status: &'a str, color: &'a str, message: &'a str) -> Self {
+    pub fn new(status: &'a str, message: &'a str) -> Self {
+        Self::with_color(status, "green", message)
+    }
+
+    pub fn with_color(status: &'a str, color: &'a str, message: &'a str) -> Self {
         Self {
             status,
             color,

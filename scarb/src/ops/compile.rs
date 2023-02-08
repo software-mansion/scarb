@@ -24,7 +24,6 @@ pub fn compile(ws: &Workspace<'_>) -> Result<()> {
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
     ws.config().ui().print(Status::new(
         "Finished",
-        "green",
         &format!("release target(s) in {elapsed_time}"),
     ));
 
@@ -40,7 +39,7 @@ fn compile_unit(
 
     ws.config()
         .ui()
-        .print(Status::new("Compiling", "green", &unit.name()));
+        .print(Status::new("Compiling", &unit.name()));
 
     compilers
         .load(&unit.target.kind)?
