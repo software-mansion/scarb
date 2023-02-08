@@ -27,6 +27,10 @@ pub struct Args {
     #[arg(long)]
     pub json: bool,
 
+    /// Run without accessing the network.
+    #[arg(long, env = "SCARB_OFFLINE")]
+    pub offline: bool,
+
     /// Subcommand and its arguments.
     #[command(subcommand)]
     pub command: Command,

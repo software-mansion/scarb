@@ -28,6 +28,7 @@ pub struct Config {
     // HACK: This should be the lifetime of Config itself, but we cannot express that, so we
     //   put 'static here and transmute in getter function.
     package_cache_lock: OnceCell<AdvisoryLock<'static>>,
+    offline: bool,
 }
 
 impl Config {
@@ -57,6 +58,7 @@ impl Config {
             ui,
             creation_time,
             package_cache_lock: OnceCell::new(),
+            offline: false,
         })
     }
 
@@ -145,5 +147,23 @@ impl Config {
         });
         let not_static_al: &AdvisoryLock<'a> = unsafe { mem::transmute(static_al) };
         not_static_al
+    }
+
+    /// States whether the _Offline Mode_ is turned on.
+    ///
+    /// For checking whether Scarb can communicate with the network, prefer to use
+    /// [`Self::network_allowed`], as it might pull information from other sources in the future.
+    pub const fn offline(&self) -> bool {
+        self.offline
+    }
+
+    pub fn set_offline(&mut self, offline: bool) {
+        self.offline = offline;
+    }
+
+    /// If `false`, Scarb should never access the network, but otherwise it should continue operating
+    /// if possible.
+    pub const fn network_allowed(&self) -> bool {
+        !self.offline()
     }
 }
