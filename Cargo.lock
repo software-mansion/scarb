@@ -2246,6 +2246,7 @@ dependencies = [
  "tracing-log",
  "tracing-subscriber",
  "url",
+ "walkdir",
  "which",
 ]
 

@@ -51,6 +51,7 @@ tracing-log.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true
 url.workspace = true
+walkdir.workspace = true
 which.workspace = true
 
 [dev-dependencies]
