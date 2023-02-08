@@ -31,6 +31,7 @@ diffy = "0.3.0"
 directories = "4.0.1"
 dunce = "1.0.3"
 fs4 = "0.6.2"
+git-repository = { version = "0.35.0" }
 ignore = "0.4.20"
 indicatif = "0.17.3"
 indoc = "2.0.0"
