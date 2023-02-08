@@ -193,6 +193,7 @@ fn compile_with_invalid_empty_name() {
         .current_dir(&t)
         .assert()
         .code(1)
+        // Note: Toml parser prints additional white characters and a line in diagnostics.
         .stdout_matches(indoc! {"\
             error: failed to parse manifest at `[..]/Scarb.toml`
 
@@ -222,6 +223,7 @@ fn compile_with_invalid_version() {
         .current_dir(&t)
         .assert()
         .code(1)
+        // Note: Toml parser prints additional white characters and a line in diagnostics.
         .stdout_matches(indoc! {"\
             error: failed to parse manifest at `[..]/Scarb.toml`
 
@@ -254,6 +256,7 @@ fn compile_with_invalid_non_numeric_dep_version() {
         .current_dir(&t)
         .assert()
         .code(1)
+        // Note: Toml parser prints additional white characters and a line in diagnostics.
         .stdout_matches(indoc! {"\
             error: failed to parse manifest at `[..]/Scarb.toml`
 
