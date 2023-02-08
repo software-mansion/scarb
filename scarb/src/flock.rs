@@ -294,7 +294,7 @@ fn acquire(
         }
     }
 
-    config.ui().print(Status::new(
+    config.ui().print(Status::with_color(
         "Blocking",
         "cyan",
         &format!("waiting for file lock on {description}"),
