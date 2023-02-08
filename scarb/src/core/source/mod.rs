@@ -11,8 +11,8 @@ mod id;
 #[async_trait]
 pub trait Source {
     /// Attempts to find the packages that match a dependency request.
-    async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>>;
+    async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>>;
 
     /// Fetches the full package for each name and version specified.
-    async fn download(&mut self, id: PackageId) -> Result<Package>;
+    async fn download(&self, id: PackageId) -> Result<Package>;
 }
