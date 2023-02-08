@@ -9,7 +9,7 @@ use crate::internal::fsx::{PathBufUtf8Ext, PathUtf8Ext};
 use crate::MANIFEST_FILE_NAME;
 
 #[tracing::instrument(level = "debug", skip_all)]
-pub fn read_manifest(manifest_path: &Utf8Path, source_id: SourceId) -> anyhow::Result<Manifest> {
+pub fn read_manifest(manifest_path: &Utf8Path, source_id: SourceId) -> Result<Manifest> {
     let toml = TomlManifest::read_from_path(manifest_path)?;
     toml.to_manifest(manifest_path, source_id)
         .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))
