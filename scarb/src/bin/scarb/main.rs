@@ -45,5 +45,6 @@ fn cli_main(args: Args) -> Result<()> {
 
     let manifest_path = ops::find_manifest_path(args.manifest_path.as_deref())?;
     let mut config = Config::init(manifest_path, dirs, ui)?;
+    config.set_offline(args.offline);
     commands::run(args.command, &mut config)
 }
