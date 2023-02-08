@@ -8,13 +8,13 @@ use semver::VersionReq;
 use serde::{Deserialize, Serialize};
 
 pub use target::*;
-pub use toml::*;
+pub use toml_manifest::*;
 
 use crate::core::package::{PackageId, PackageName};
 use crate::core::source::SourceId;
 
 mod target;
-mod toml;
+mod toml_manifest;
 
 /// Contains all the information about a package, as loaded from the manifest file.
 ///

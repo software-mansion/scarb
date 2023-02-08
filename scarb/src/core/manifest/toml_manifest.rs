@@ -6,7 +6,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
-use toml_edit::easy::Value;
+use toml::Value;
 use tracing::trace;
 use url::Url;
 
@@ -151,7 +151,7 @@ impl TomlManifest {
     }
 
     pub fn read_from_str(contents: &str) -> Result<Self> {
-        toml_edit::easy::from_str(contents).map_err(Into::into)
+        toml::from_str(contents).map_err(Into::into)
     }
 }
 

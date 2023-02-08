@@ -3,7 +3,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 use smol_str::SmolStr;
-use toml_edit::easy::Value;
+use toml::Value;
 
 /// See [`TargetInner`] for public fields reference.
 #[derive(Clone, Debug)]
