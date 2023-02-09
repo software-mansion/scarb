@@ -3,32 +3,25 @@ use std::process::Stdio;
 use std::sync::{Arc, Barrier};
 use std::thread;
 
-use assert_fs::fixture::{FileWriteStr, PathChild};
+use assert_fs::fixture::PathChild;
 use indoc::indoc;
 use io_tee::TeeReader;
 use ntest::timeout;
 
 use crate::support::command::Scarb;
+use crate::support::project_builder::ProjectBuilder;
 
 #[test]
 #[timeout(30_000)]
 fn locking_build_artifacts() {
     let t = assert_fs::TempDir::new().unwrap();
-    let manifest = t.child("Scarb.toml");
-    manifest
-        .write_str(
-            r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-            "#,
-        )
-        .unwrap();
-    t.child("src/lib.cairo")
-        .write_str(r#"fn f() -> felt { 42 }"#)
-        .unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
 
-    let config = Scarb::test_config(&manifest);
+    let manifest = t.child("Scarb.toml");
+    let config = Scarb::test_config(manifest);
 
     thread::scope(|s| {
         let lock =
@@ -85,21 +78,13 @@ fn locking_build_artifacts() {
 #[timeout(30_000)]
 fn locking_package_cache() {
     let t = assert_fs::TempDir::new().unwrap();
-    let manifest = t.child("Scarb.toml");
-    manifest
-        .write_str(
-            r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-            "#,
-        )
-        .unwrap();
-    t.child("src/lib.cairo")
-        .write_str(r#"fn f() -> felt { 42 }"#)
-        .unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
 
-    let config = Scarb::test_config(&manifest);
+    let manifest = t.child("Scarb.toml");
+    let config = Scarb::test_config(manifest);
 
     thread::scope(|s| {
         let lock = config.package_cache_lock().acquire();
