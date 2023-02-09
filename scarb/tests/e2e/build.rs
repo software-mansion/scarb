@@ -6,6 +6,7 @@ use predicates::prelude::*;
 
 use crate::support::command::Scarb;
 use crate::support::fsx::ChildPathEx;
+use crate::support::project_builder::ProjectBuilder;
 
 #[test]
 fn compile_simple() {
@@ -15,18 +16,7 @@ fn compile_simple() {
     let cache_dir = assert_fs::TempDir::new().unwrap().child("c");
 
     let t = assert_fs::TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-            "#,
-        )
-        .unwrap();
-    t.child("src/lib.cairo")
-        .write_str(r#"fn f() -> felt { 42 }"#)
-        .unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
 
     Scarb::quick_snapbox()
         .env("SCARB_CACHE", cache_dir.path())
@@ -49,18 +39,11 @@ fn compile_simple() {
 #[test]
 fn compile_with_syntax_error() {
     let t = assert_fs::TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-            "#,
-        )
-        .unwrap();
-    t.child("src/lib.cairo")
-        .write_str(r"not_a_keyword")
-        .unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .lib_cairo("not_a_keyword")
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("build")
@@ -82,18 +65,11 @@ fn compile_with_syntax_error() {
 #[test]
 fn compile_with_syntax_error_json() {
     let t = assert_fs::TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-            "#,
-        )
-        .unwrap();
-    t.child("src/lib.cairo")
-        .write_str(r"not_a_keyword")
-        .unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .lib_cairo("not_a_keyword")
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("--json")

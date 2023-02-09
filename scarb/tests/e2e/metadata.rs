@@ -1,19 +1,15 @@
 use assert_fs::prelude::*;
 
 use crate::support::command::Scarb;
+use crate::support::project_builder::ProjectBuilder;
 
 #[test]
 fn simple() {
     let t = assert_fs::TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-            "#,
-        )
-        .unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("metadata")
@@ -109,15 +105,7 @@ fn simple() {
 #[test]
 fn fails_without_format_version() {
     let t = assert_fs::TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-            "#,
-        )
-        .unwrap();
+    ProjectBuilder::start().build(&t);
 
     Scarb::quick_snapbox()
         .arg("metadata")
@@ -655,15 +643,10 @@ fn manifest_targets_and_metadata() {
 #[test]
 fn json_output_is_not_pretty() {
     let t = assert_fs::TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-            "#,
-        )
-        .unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("--json")
