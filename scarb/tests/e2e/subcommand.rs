@@ -7,7 +7,7 @@ use std::{env, io, iter, process};
 
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
-use indoc::formatdoc;
+use indoc::{formatdoc, indoc};
 use snapbox::cmd::cargo_bin;
 
 use crate::support::command::Scarb;
@@ -38,6 +38,41 @@ fn subcommand() {
         .assert()
         .success()
         .stdout_eq("Hello beautiful world\n");
+}
+
+#[test]
+#[cfg(unix)]
+fn env_variables_are_passed() {
+    let t = TempDir::new().unwrap();
+    write_script(
+        "env",
+        indoc! {
+            r#"
+            #!/bin/bash
+            required=(
+                PATH
+                SCARB
+                SCARB_CACHE
+                SCARB_CONFIG
+                SCARB_MANIFEST_DIR
+            )
+            for v in "${required[@]}"; do
+                if test -z "${!v}"
+                then
+                    echo "Variable $v is not set!"
+                    exit 1
+                fi
+            done
+            "#
+        },
+        &t,
+    );
+
+    Scarb::quick_snapbox()
+        .args(["env"])
+        .env("PATH", path_with_temp_dir(&t))
+        .assert()
+        .success();
 }
 
 // TODO(mkaput): Fix this test.

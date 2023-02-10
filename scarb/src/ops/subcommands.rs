@@ -24,6 +24,9 @@ pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) 
     cmd.args(args);
     cmd.env(SCARB_ENV, config.app_exe()?);
     cmd.env("PATH", config.dirs().path_env());
+    cmd.env("SCARB_CACHE", config.dirs().cache_dir.path_unchecked());
+    cmd.env("SCARB_CONFIG", config.dirs().config_dir.path_unchecked());
+    cmd.env("SCARB_MANIFEST_DIR", config.root());
     exec_replace(&mut cmd)
 }
 
