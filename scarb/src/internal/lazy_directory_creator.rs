@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, path};
 
 use camino::{Utf8Path, Utf8PathBuf};
 use once_cell::sync::OnceCell;
@@ -6,7 +6,6 @@ use tracing::trace;
 
 use crate::internal::fsx;
 
-#[derive(Debug)]
 pub struct LazyDirectoryCreator<'p> {
     path: Utf8PathBuf,
     creation_lock: OnceCell<()>,
@@ -75,5 +74,32 @@ impl<'p> LazyDirectoryCreator<'p> {
 impl<'p> fmt::Display for LazyDirectoryCreator<'p> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_unchecked())
+    }
+}
+
+impl<'p> fmt::Debug for LazyDirectoryCreator<'p> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let base = self
+            .parent
+            .map(|p| p.path.as_path())
+            .unwrap_or_else(|| Utf8Path::new(""));
+        if let Ok(stem) = self.path.strip_prefix(base) {
+            write!(f, "<{base}>{}{stem}", path::MAIN_SEPARATOR)?;
+        } else {
+            write!(f, "{}", self.path)?;
+            if let Some(parent) = self.parent {
+                write!(f, r#", parent: "{}""#, parent.path)?;
+            }
+        }
+
+        if self.creation_lock.get().is_some() {
+            write!(f, ", created")?;
+        }
+
+        if self.is_output_dir {
+            write!(f, ", output")?;
+        }
+
+        Ok(())
     }
 }

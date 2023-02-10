@@ -1,4 +1,3 @@
-use smol::lock::Mutex;
 use std::fs::{File, OpenOptions};
 use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Weak};
@@ -7,6 +6,7 @@ use std::{fmt, io};
 use anyhow::{Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use fs4::{lock_contended_error, FileExt};
+use smol::lock::Mutex;
 
 use crate::core::Config;
 use crate::internal::asyncx::AwaitSync;
@@ -116,7 +116,6 @@ pub type RootFilesystem = Filesystem<'static>;
 /// multiple instances of Scarb and its extensions.
 ///
 /// All paths within a [`Filesystem`] must be UTF-8 encoded.
-#[derive(Debug)]
 pub struct Filesystem<'a> {
     root: LazyDirectoryCreator<'a>,
 }
@@ -269,6 +268,12 @@ impl<'a> Filesystem<'a> {
 impl<'a> fmt::Display for Filesystem<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.root)
+    }
+}
+
+impl<'a> fmt::Debug for Filesystem<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("Filesystem").field(&self.root).finish()
     }
 }
 
