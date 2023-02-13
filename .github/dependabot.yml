@@ -9,6 +9,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "cairo-lang-*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
