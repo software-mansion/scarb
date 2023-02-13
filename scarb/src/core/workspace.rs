@@ -1,3 +1,5 @@
+use std::fmt;
+
 use anyhow::Result;
 use camino::Utf8Path;
 
@@ -12,7 +14,6 @@ use crate::flock::RootFilesystem;
 ///
 /// A workspace is often created very early on and then threaded through all other functions.
 /// It's typically through this object that the current package is loaded and/or learned about.
-#[derive(Debug)]
 pub struct Workspace<'c> {
     config: &'c Config,
     package: Package,
@@ -53,5 +54,13 @@ impl<'c> Workspace<'c> {
     /// Returns an iterator over all packages in this workspace
     pub fn members(&self) -> impl Iterator<Item = Package> {
         [self.package.clone()].into_iter()
+    }
+}
+
+impl<'c> fmt::Debug for Workspace<'c> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Workspace")
+            .field("package", &self.package)
+            .finish_non_exhaustive()
     }
 }

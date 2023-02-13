@@ -17,7 +17,6 @@ use crate::ui::Ui;
 use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
 
-#[derive(Debug)]
 pub struct Config {
     manifest_path: Utf8PathBuf,
     dirs: Arc<AppDirs>,
