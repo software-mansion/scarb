@@ -59,7 +59,6 @@ impl Drop for FileLockGuard {
 }
 
 /// An exclusive lock over a global entity identified by a path within a [`Filesystem`].
-#[derive(Debug)]
 pub struct AdvisoryLock<'f> {
     path: Utf8PathBuf,
     description: String,
