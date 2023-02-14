@@ -48,6 +48,10 @@ impl<'p> LazyDirectoryCreator<'p> {
         Ok(&self.path)
     }
 
+    pub const fn is_output_dir(&self) -> bool {
+        self.is_output_dir
+    }
+
     fn ensure_created(&self) -> anyhow::Result<()> {
         if let Some(parent) = self.parent {
             parent.ensure_created()?;
