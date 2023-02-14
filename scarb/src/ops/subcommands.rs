@@ -1,11 +1,12 @@
 use std::env;
 use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 
 use crate::core::Config;
+use crate::process::{exec_replace, is_executable};
 use crate::SCARB_ENV;
 
 #[tracing::instrument(level = "debug", skip(config))]
@@ -19,20 +20,11 @@ pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) 
     // TODO(mkaput): Write a test that CTRL+C kills everything, like Cargo's death,
     //   but perhaps use an external bash script? Use Job Objects or smth else to fix it.
 
-    let exit_status = Command::new(&cmd)
-        .args(args)
-        .env(SCARB_ENV, config.app_exe()?)
-        .env("PATH", config.dirs().path_env())
-        .spawn()
-        .with_context(|| format!("failed to spawn subcommand: {}", cmd.display()))?
-        .wait()
-        .with_context(|| format!("failed to wait for subcommand to finish: {}", cmd.display()))?;
-
-    if exit_status.success() {
-        Ok(())
-    } else {
-        bail!("process exited unsuccessfully: {exit_status}");
-    }
+    let mut cmd = Command::new(cmd);
+    cmd.args(args);
+    cmd.env(SCARB_ENV, config.app_exe()?);
+    cmd.env("PATH", config.dirs().path_env());
+    exec_replace(&mut cmd)
 }
 
 fn find_external_subcommand(cmd: &str, config: &Config) -> Option<PathBuf> {
@@ -43,18 +35,4 @@ fn find_external_subcommand(cmd: &str, config: &Config) -> Option<PathBuf> {
         .iter()
         .map(|dir| dir.join(&command_exe))
         .find(|file| is_executable(file))
-}
-
-#[cfg(unix)]
-fn is_executable<P: AsRef<Path>>(path: P) -> bool {
-    use std::fs;
-    use std::os::unix::prelude::*;
-    fs::metadata(path)
-        .map(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
-        .unwrap_or(false)
-}
-
-#[cfg(windows)]
-fn is_executable<P: AsRef<Path>>(path: P) -> bool {
-    path.as_ref().is_file()
 }
