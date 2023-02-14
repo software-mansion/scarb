@@ -115,6 +115,14 @@ impl SourceId {
         matches!(self.kind, SourceKind::Git(_))
     }
 
+    /// Gets the [`GitReference`] if this is a [`SourceKind::Git`] source, otherwise `None`.
+    pub fn git_reference(self) -> Option<GitReference> {
+        match &self.kind {
+            SourceKind::Git(reference) => Some(reference.clone()),
+            _ => None,
+        }
+    }
+
     pub fn to_pretty_url(self) -> String {
         match &self.kind {
             SourceKind::Path => format!("path+{}", self.url),
@@ -192,7 +200,7 @@ impl SourceId {
         use crate::sources::*;
         match self.kind {
             SourceKind::Path => Ok(Box::new(PathSource::new(self, config))),
-            SourceKind::Git(_) => todo!("Git sources are not implemented yet"),
+            SourceKind::Git(_) => Ok(Box::new(GitSource::new(self, config)?)),
             SourceKind::Core => Ok(Box::new(CorelibSource::new(config))),
         }
     }
