@@ -6,9 +6,12 @@ use std::ffi::OsString;
 
 use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand};
+use tracing::level_filters::LevelFilter;
+use tracing_log::AsTrace;
 
 use scarb::core::PackageName;
 use scarb::metadata::MetadataVersion;
+use scarb::ui;
 use scarb::ui::OutputFormat;
 
 /// Cairo's project manager.
@@ -116,4 +119,18 @@ pub struct FmtArgs {
     /// Specify package to format.
     #[arg(short, long, value_name = "PACKAGE")]
     pub package: Option<PackageName>,
+}
+
+impl Args {
+    /// Get [`ui::Verbosity`] out of this arguments.
+    pub fn ui_verbosity(&self) -> ui::Verbosity {
+        let filter = self.verbose.log_level_filter().as_trace();
+        if filter >= LevelFilter::WARN {
+            ui::Verbosity::Verbose
+        } else if filter > LevelFilter::OFF {
+            ui::Verbosity::Normal
+        } else {
+            ui::Verbosity::Quiet
+        }
+    }
 }
