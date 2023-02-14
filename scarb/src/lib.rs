@@ -13,6 +13,7 @@ pub mod flock;
 mod internal;
 pub mod metadata;
 pub mod ops;
+mod process;
 mod resolver;
 mod sources;
 pub mod ui;
