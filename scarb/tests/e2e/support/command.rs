@@ -8,7 +8,7 @@ use snapbox::cmd::Command as SnapboxCommand;
 use scarb::core::Config;
 use scarb::dirs::AppDirs;
 use scarb::flock::RootFilesystem;
-use scarb::ui::{OutputFormat, Ui};
+use scarb::ui::{OutputFormat, Ui, Verbosity};
 
 use crate::support::fsx::{AssertFsUtf8Ext, PathUtf8Ext};
 
@@ -59,7 +59,7 @@ impl Scarb {
                 config_dir: RootFilesystem::new(config_dir.try_as_utf8().unwrap().to_path_buf()),
                 path_dirs: Vec::new(),
             },
-            Ui::new(OutputFormat::Text),
+            Ui::new(Verbosity::Verbose, OutputFormat::Text),
         )
         .unwrap()
     }

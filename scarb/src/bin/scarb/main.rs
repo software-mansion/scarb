@@ -27,11 +27,10 @@ fn main() {
         )
         .init();
 
-    // Copy values used in error reporting.
-    let output_format = args.output_format();
+    // Pre-create Ui used in error reporting, because we will move `args` to `cli_main`.
+    let ui = Ui::new(args.ui_verbosity(), args.output_format());
 
     if let Err(err) = cli_main(args) {
-        let ui = Ui::new(output_format);
         ui.anyhow(&err);
         std::process::exit(1);
     }
@@ -41,7 +40,7 @@ fn cli_main(args: Args) -> Result<()> {
     let mut dirs = AppDirs::std()?;
     dirs.apply_env_overrides()?;
 
-    let ui = Ui::new(args.output_format());
+    let ui = Ui::new(args.ui_verbosity(), args.output_format());
 
     let manifest_path = ops::find_manifest_path(args.manifest_path.as_deref())?;
     let mut config = Config::init(manifest_path, dirs, ui)?;

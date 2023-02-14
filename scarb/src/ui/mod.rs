@@ -12,6 +12,24 @@ mod status;
 mod typed;
 mod value;
 
+/// The requested verbosity of output.
+///
+/// # Ordering
+/// [`Verbosity::Quiet`] < [`Verbosity::Normal`] < [`Verbosity::Verbose`]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum Verbosity {
+    Quiet,
+    Normal,
+    Verbose,
+}
+
+impl Default for Verbosity {
+    fn default() -> Self {
+        Self::Normal
+    }
+}
+
+/// The requested format of output (either textual or JSON).
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
 pub enum OutputFormat {
     Text,
@@ -30,18 +48,35 @@ impl Default for OutputFormat {
 /// All human-oriented messaging (basically all writes to `stdout`) must go through this object.
 #[derive(Debug)]
 pub struct Ui {
+    verbosity: Verbosity,
     output_format: OutputFormat,
 }
 
 impl Ui {
-    pub fn new(output_format: OutputFormat) -> Self {
-        Self { output_format }
+    pub fn new(verbosity: Verbosity, output_format: OutputFormat) -> Self {
+        Self {
+            verbosity,
+            output_format,
+        }
+    }
+
+    pub fn verbosity(&self) -> Verbosity {
+        self.verbosity
+    }
+
+    pub fn output_format(&self) -> OutputFormat {
+        self.output_format
     }
 
     pub fn print<T: Message>(&self, message: T) {
-        match self.output_format {
-            OutputFormat::Text => message.print_text(),
-            OutputFormat::Json => message.print_json(),
+        if self.verbosity > Verbosity::Quiet {
+            self.do_print(message);
+        }
+    }
+
+    pub fn verbose<T: Message>(&self, message: T) {
+        if self.verbosity >= Verbosity::Verbose {
+            self.do_print(message);
         }
     }
 
@@ -55,5 +90,24 @@ impl Ui {
 
     pub fn anyhow(&self, error: &anyhow::Error) {
         self.error(format!("{error:?}"))
+    }
+
+    fn do_print<T: Message>(&self, message: T) {
+        match self.output_format {
+            OutputFormat::Text => message.print_text(),
+            OutputFormat::Json => message.print_json(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Verbosity;
+
+    #[test]
+    fn verbosity_ord() {
+        use Verbosity::*;
+        assert!(Quiet < Normal);
+        assert!(Normal < Verbose);
     }
 }
