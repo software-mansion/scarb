@@ -10,6 +10,7 @@ use smol::lock::Mutex;
 
 use crate::core::Config;
 use crate::internal::asyncx::AwaitSync;
+use crate::internal::fsx;
 use crate::internal::lazy_directory_creator::LazyDirectoryCreator;
 use crate::ui::Status;
 
@@ -261,6 +262,26 @@ impl<'a> Filesystem<'a> {
             filesystem: self,
             config,
         }
+    }
+
+    /// Remove the directory underlying this filesystem and create it again.
+    ///
+    /// # Safety
+    /// This is very simple internal method meant to be used in very specific use-cases, so its
+    /// implementation does not handle all cases.
+    /// 1. Panics if this is an output filesystem.
+    /// 2. Child filesystems will stop working properly after recreation.
+    pub(crate) unsafe fn recreate(&self) -> Result<()> {
+        if self.root.is_output_dir() {
+            panic!("cannot recreate output filesystems");
+        }
+
+        let path = self.root.as_unchecked();
+        if path.exists() {
+            fsx::remove_dir_all(path)?;
+        }
+        fsx::create_dir_all(path)?;
+        Ok(())
     }
 }
 
