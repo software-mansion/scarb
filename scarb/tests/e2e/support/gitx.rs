@@ -1,7 +1,8 @@
 use std::path::Path;
 use std::{fmt, fs};
 
-use assert_fs::fixture::{ChildPath, PathChild};
+use assert_fs::fixture::ChildPath;
+use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use snapbox::cmd::Command;
 use url::Url;
@@ -27,6 +28,19 @@ impl GitProject {
 
     pub fn child(&self, path: impl AsRef<Path>) -> ChildPath {
         self.p.child(path)
+    }
+
+    pub fn change_file(&self, path: impl AsRef<Path>, data: &str) {
+        self.child(path).write_str(data).unwrap();
+        self.commit();
+    }
+
+    pub fn checkout_branch(&self, name: &str) {
+        self.git(["checkout", "-b", name]);
+    }
+
+    pub fn tag(&self, name: &str) {
+        self.git(["tag", "-a", name, "-m", "test tag"])
     }
 }
 
