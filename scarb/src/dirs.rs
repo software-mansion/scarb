@@ -19,7 +19,7 @@ pub struct AppDirs {
 
 impl AppDirs {
     pub fn std() -> Result<Self> {
-        let pd = ProjectDirs::from("co", "starkware", "scarb").ok_or_else(|| {
+        let pd = ProjectDirs::from("com", "swmansion", "scarb").ok_or_else(|| {
             anyhow!("no valid home directory path could be retrieved from the operating system")
         })?;
 
