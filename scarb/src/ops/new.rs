@@ -86,7 +86,9 @@ fn mk(MkOpts { path, name }: MkOpts, _config: &Config) -> Result<()> {
     // TODO(mkaput): Print a message to the user that they need to add `target` themself.
     let gitignore = path.join(".gitignore");
     if !gitignore.exists() {
-        fsx::write(gitignore, DEFAULT_TARGET_DIR_NAME)?;
+        let ignore = vec![DEFAULT_TARGET_DIR_NAME];
+        let ignore = ignore.join("\n") + "\n";
+        fsx::write(gitignore, ignore)?;
     }
 
     // Create the `Scarb.toml` file.
