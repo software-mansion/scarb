@@ -169,17 +169,16 @@ fn compile_with_invalid_empty_name() {
         .current_dir(&t)
         .assert()
         .code(1)
-        // Note: Toml parser prints additional white characters and a line in diagnostics.
-        .stdout_matches(indoc! {"\
+        .stdout_matches(indoc! {r#"
             error: failed to parse manifest at `[..]/Scarb.toml`
 
             Caused by:
                 TOML parse error at line 3, column 20
                   |
-                3 |             name = \"\"
+                3 |             name = ""
                   |                    ^^
                 empty string cannot be used as package name
-                \n",});
+        "#});
 }
 
 #[test]
@@ -199,17 +198,16 @@ fn compile_with_invalid_version() {
         .current_dir(&t)
         .assert()
         .code(1)
-        // Note: Toml parser prints additional white characters and a line in diagnostics.
-        .stdout_matches(indoc! {"\
+        .stdout_matches(indoc! {r#"
             error: failed to parse manifest at `[..]/Scarb.toml`
 
             Caused by:
                 TOML parse error at line 4, column 23
                   |
-                4 |             version = \"y\"
+                4 |             version = "y"
                   |                       ^^^
                 unexpected character 'y' while parsing major version number
-                \n"});
+        "#});
 }
 
 #[test]
@@ -232,17 +230,16 @@ fn compile_with_invalid_non_numeric_dep_version() {
         .current_dir(&t)
         .assert()
         .code(1)
-        // Note: Toml parser prints additional white characters and a line in diagnostics.
-        .stdout_matches(indoc! {"\
+        .stdout_matches(indoc! {r#"
             error: failed to parse manifest at `[..]/Scarb.toml`
 
             Caused by:
                 TOML parse error at line 7, column 19
                   |
-                7 |             moo = \"y\"
+                7 |             moo = "y"
                   |                   ^^^
                 data did not match any variant of untagged enum TomlDependency
-                \n"});
+        "#});
 }
 
 #[test]
