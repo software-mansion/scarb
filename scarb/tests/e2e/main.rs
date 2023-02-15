@@ -4,6 +4,7 @@ mod clean;
 mod flock;
 mod fmt;
 mod git_source;
+mod git_source_network;
 mod manifest_path;
 mod metadata;
 mod new_and_init;
