@@ -7,7 +7,7 @@ pub trait Message {
     /// Return textual representation of this message.
     ///
     /// Default implementation returns empty string, making [`Ui`] skip printing this message.
-    fn text(&self) -> String
+    fn text(self) -> String
     where
         Self: Sized,
     {
@@ -18,7 +18,7 @@ pub trait Message {
     ///
     /// Default implementation does not serialize anything, making [`Ui`] skip printing
     /// this message.
-    fn structured<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error>
+    fn structured<S: Serializer>(self, ser: S) -> Result<S::Ok, S::Error>
     where
         Self: Sized,
     {
@@ -32,7 +32,7 @@ pub trait Message {
     //   because they are not considered stable.
 
     #[doc(hidden)]
-    fn print_text(&self)
+    fn print_text(self)
     where
         Self: Sized,
     {
@@ -43,7 +43,7 @@ pub trait Message {
     }
 
     #[doc(hidden)]
-    fn print_json(&self)
+    fn print_json(self)
     where
         Self: Sized,
     {
@@ -67,16 +67,13 @@ pub trait Message {
 }
 
 impl Message for &str {
-    fn text(&self) -> String {
+    fn text(self) -> String {
         self.to_string()
     }
 }
 
 impl Message for String {
-    fn text(&self) -> String
-    where
-        Self: Sized,
-    {
-        self.clone()
+    fn text(self) -> String {
+        self
     }
 }

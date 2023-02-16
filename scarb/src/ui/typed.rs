@@ -44,7 +44,7 @@ impl<'a> TypedMessage<'a> {
 }
 
 impl<'a> Message for TypedMessage<'a> {
-    fn text(&self) -> String {
+    fn text(self) -> String {
         if self.skip_type_for_text {
             self.message.to_string()
         } else {
@@ -59,7 +59,7 @@ impl<'a> Message for TypedMessage<'a> {
         }
     }
 
-    fn structured<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+    fn structured<S: Serializer>(self, ser: S) -> Result<S::Ok, S::Error> {
         self.serialize(ser)
     }
 }
