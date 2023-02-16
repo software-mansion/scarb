@@ -4,7 +4,7 @@ use indoc::{formatdoc, indoc};
 
 use crate::core::{Config, PackageName};
 use crate::internal::fsx;
-use crate::{DEFAULT_SOURCE_DIR_NAME, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
+use crate::{ops, DEFAULT_SOURCE_DIR_NAME, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
 
 #[derive(Debug)]
 pub struct InitOptions {
@@ -78,7 +78,7 @@ struct MkOpts {
     name: PackageName,
 }
 
-fn mk(MkOpts { path, name }: MkOpts, _config: &Config) -> Result<()> {
+fn mk(MkOpts { path, name }: MkOpts, config: &Config) -> Result<()> {
     // Create project directory in case we are called from `new` op.
     fsx::create_dir_all(&path)?;
 
@@ -92,8 +92,9 @@ fn mk(MkOpts { path, name }: MkOpts, _config: &Config) -> Result<()> {
     }
 
     // Create the `Scarb.toml` file.
+    let manifest_path = path.join(MANIFEST_FILE_NAME);
     fsx::write(
-        path.join(MANIFEST_FILE_NAME),
+        &manifest_path,
         formatdoc! {r#"
             [package]
             name = "{name}"
@@ -125,15 +126,13 @@ fn mk(MkOpts { path, name }: MkOpts, _config: &Config) -> Result<()> {
         )?;
     }
 
-    // TODO(mkaput): Take this from Cargo:
-    //   if let Err(e) = Workspace::new(&path.join("Cargo.toml"), config) {
-    //       crate::display_warning_with_error(
-    //           "compiling this new package may not work due to invalid \
-    //            workspace configuration",
-    //           &e,
-    //           &mut config.shell(),
-    //       );
-    //   }
+    if let Err(err) = ops::read_workspace(&manifest_path, config) {
+        config.ui().warn(formatdoc! {r#"
+            compiling this new package may not work due to invalid workspace configuration
+
+            {err:?}
+        "#})
+    }
 
     Ok(())
 }
