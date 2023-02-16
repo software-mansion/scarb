@@ -17,6 +17,7 @@ mod process;
 mod resolver;
 mod sources;
 pub mod ui;
+pub mod version;
 
 pub const SCARB_ENV: &str = "SCARB";
 

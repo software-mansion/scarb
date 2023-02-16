@@ -9,6 +9,7 @@ readme.workspace = true
 license.workspace = true
 categories = ["command-line-utilities", "development-tools"]
 keywords = ["cairo-lang", "starknet"]
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -65,3 +66,6 @@ serde_test.workspace = true
 similar-asserts.workspace = true
 snapbox.workspace = true
 test-case.workspace = true
+
+[build-dependencies]
+toml_edit.workspace = true
