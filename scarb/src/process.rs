@@ -1,10 +1,12 @@
+use std::ffi::OsStr;
+use std::fmt;
 use std::path::Path;
 use std::process::Command;
 
 use anyhow::{anyhow, bail, Context, Result};
 
 use crate::core::Config;
-use crate::ui::Status;
+use crate::ui::{Spinner, Status};
 
 // TODO(mkaput): Do what is documented here, take a look at what cargo-util does.
 /// Replaces the current process with the target process.
@@ -46,9 +48,9 @@ pub fn exec_replace(cmd: &mut Command) -> Result<()> {
 /// Runs the process, waiting for completion, and mapping non-success exit codes to an error.
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn exec(cmd: &mut Command, config: &Config) -> Result<()> {
-    config
-        .ui()
-        .verbose(Status::new("Running", &format!("{cmd:?}")));
+    let cmd_str = shlex_join(cmd);
+    config.ui().verbose(Status::new("Running", &cmd_str));
+    let _spinner = config.ui().widget(Spinner::new(cmd_str));
 
     let output = cmd
         .output()
@@ -73,4 +75,35 @@ pub fn is_executable<P: AsRef<Path>>(path: P) -> bool {
 #[cfg(windows)]
 pub fn is_executable<P: AsRef<Path>>(path: P) -> bool {
     path.as_ref().is_file()
+}
+
+/// Python's [`shlex.join`] for [`Command`].
+///
+/// [`shlex.join`]: https://docs.python.org/3/library/shlex.html#shlex.join
+fn shlex_join(cmd: &Command) -> String {
+    ShlexJoin(cmd).to_string()
+}
+
+struct ShlexJoin<'a>(&'a Command);
+
+impl<'a> fmt::Display for ShlexJoin<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fn write_quoted(f: &mut fmt::Formatter<'_>, s: &OsStr) -> fmt::Result {
+            let utf = s.to_string_lossy();
+            if utf.contains('"') {
+                write!(f, "{s:?}")
+            } else {
+                write!(f, "{utf}")
+            }
+        }
+
+        let cmd = &self.0;
+        write_quoted(f, cmd.get_program())?;
+
+        for arg in cmd.get_args() {
+            write!(f, " ")?;
+            write_quoted(f, arg)?;
+        }
+        Ok(())
+    }
 }

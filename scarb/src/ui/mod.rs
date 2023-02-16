@@ -2,15 +2,19 @@ use clap::ValueEnum;
 
 pub use machine::*;
 pub use message::*;
+pub use spinner::*;
 pub use status::*;
 pub use typed::*;
 pub use value::*;
+pub use widget::*;
 
 mod machine;
 mod message;
+mod spinner;
 mod status;
 mod typed;
 mod value;
+mod widget;
 
 /// The requested verbosity of output.
 ///
@@ -69,7 +73,7 @@ impl Ui {
     }
 
     pub fn print<T: Message>(&self, message: T) {
-        if self.verbosity > Verbosity::Quiet {
+        if self.verbosity >= Verbosity::Normal {
             self.do_print(message);
         }
     }
@@ -77,6 +81,15 @@ impl Ui {
     pub fn verbose<T: Message>(&self, message: T) {
         if self.verbosity >= Verbosity::Verbose {
             self.do_print(message);
+        }
+    }
+
+    pub fn widget<T: Widget>(&self, widget: T) -> Option<T::Handle> {
+        if self.output_format == OutputFormat::Text && self.verbosity >= Verbosity::Normal {
+            let handle = widget.text();
+            Some(handle)
+        } else {
+            None
         }
     }
 
