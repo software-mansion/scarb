@@ -66,39 +66,6 @@ pub trait Message {
     }
 }
 
-impl<T> Message for &T
-where
-    T: Message,
-{
-    fn text(&self) -> String
-    where
-        Self: Sized,
-    {
-        (*self).text()
-    }
-
-    fn structured<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error>
-    where
-        Self: Sized,
-    {
-        (*self).structured(ser)
-    }
-
-    fn print_text(&self)
-    where
-        Self: Sized,
-    {
-        (*self).print_text()
-    }
-
-    fn print_json(&self)
-    where
-        Self: Sized,
-    {
-        (*self).print_json()
-    }
-}
-
 impl Message for &str {
     fn text(&self) -> String {
         self.to_string()
