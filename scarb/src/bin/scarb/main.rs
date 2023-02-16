@@ -1,7 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
 use tracing_log::AsTrace;
-use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::EnvFilter;
 
 use args::Args;
@@ -18,7 +17,6 @@ fn main() {
 
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
-        .with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
         .with_env_filter(
             EnvFilter::builder()
                 .with_default_directive(args.verbose.log_level_filter().as_trace().into())
