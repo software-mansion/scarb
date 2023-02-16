@@ -13,10 +13,11 @@ use scarb::core::PackageName;
 use scarb::metadata::MetadataVersion;
 use scarb::ui;
 use scarb::ui::OutputFormat;
+use scarb::version;
 
-/// Cairo's project manager.
+/// The Cairo package manager.
 #[derive(Parser, Clone, Debug)]
-#[command(author, version, about)]
+#[command(author, version = version::get().short(), long_version = version::get().long())]
 pub struct Args {
     /// Override path to a directory containing a **Scarb.toml** file.
     #[arg(long, env = "SCARB_MANIFEST_PATH")]
