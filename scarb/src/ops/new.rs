@@ -1,6 +1,7 @@
 use anyhow::{bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
+use itertools::Itertools;
 
 use crate::core::{Config, PackageName};
 use crate::internal::fsx;
@@ -82,14 +83,7 @@ fn mk(MkOpts { path, name }: MkOpts, config: &Config) -> Result<()> {
     // Create project directory in case we are called from `new` op.
     fsx::create_dir_all(&path)?;
 
-    // Write VCS ignore file.
-    // TODO(mkaput): Print a message to the user that they need to add `target` themself.
-    let gitignore = path.join(".gitignore");
-    if !gitignore.exists() {
-        let ignore = vec![DEFAULT_TARGET_DIR_NAME];
-        let ignore = ignore.join("\n") + "\n";
-        fsx::write(gitignore, ignore)?;
-    }
+    write_vcs_ignore(&path, config)?;
 
     // Create the `Scarb.toml` file.
     let manifest_path = path.join(MANIFEST_FILE_NAME);
@@ -132,6 +126,31 @@ fn mk(MkOpts { path, name }: MkOpts, config: &Config) -> Result<()> {
 
             {err:?}
         "#})
+    }
+
+    Ok(())
+}
+
+/// Write VCS ignore file.
+fn write_vcs_ignore(path: &Utf8Path, config: &Config) -> Result<()> {
+    let patterns = vec![DEFAULT_TARGET_DIR_NAME];
+
+    let gitignore = path.join(".gitignore");
+    if !gitignore.exists() {
+        let ignore = patterns.join("\n") + "\n";
+        fsx::write(&gitignore, ignore)?;
+    } else {
+        let lines = patterns
+            .into_iter()
+            .map(|pat| format!("    {pat}"))
+            .join("\n");
+        config
+            .ui()
+            .warn(formatdoc! {r#"
+                file `{gitignore}` already exists in this directory, ensure following patterns are ignored:
+
+                {lines}
+            "#});
     }
 
     Ok(())
