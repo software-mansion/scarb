@@ -1,9 +1,12 @@
 use std::ffi::OsStr;
-use std::fmt;
+use std::io::{BufRead, BufReader, Read};
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
+use std::sync::Arc;
+use std::{fmt, thread};
 
 use anyhow::{anyhow, bail, Context, Result};
+use tracing::{debug, debug_span, warn, Span};
 
 use crate::core::Config;
 use crate::ui::{Spinner, Status};
@@ -44,22 +47,63 @@ pub fn exec_replace(cmd: &mut Command) -> Result<()> {
     }
 }
 
-// TODO(mkaput): Capture stdout/stderr in intelligent way.
 /// Runs the process, waiting for completion, and mapping non-success exit codes to an error.
-#[tracing::instrument(level = "debug", skip(config))]
+#[tracing::instrument(level = "trace", skip_all)]
 pub fn exec(cmd: &mut Command, config: &Config) -> Result<()> {
     let cmd_str = shlex_join(cmd);
+
     config.ui().verbose(Status::new("Running", &cmd_str));
-    let _spinner = config.ui().widget(Spinner::new(cmd_str));
+    let _spinner = config.ui().widget(Spinner::new(cmd_str.clone()));
 
-    let output = cmd
-        .output()
-        .with_context(|| anyhow!("could not execute process {cmd:?}"))?;
+    return thread::scope(move |s| {
+        let mut proc = cmd
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .with_context(|| anyhow!("could not execute process: {cmd_str}"))?;
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        bail!("process did not exit successfully: {}", output.status);
+        let span = Arc::new(debug_span!("exec", pid = proc.id()));
+        let _enter = span.enter();
+        debug!("{cmd_str}");
+
+        let stdout = proc.stdout.take().expect("we asked Rust to pipe stdout");
+        s.spawn({
+            let span = debug_span!("out");
+            move || {
+                let mut stdout = stdout;
+                pipe_to_logs(&span, &mut stdout);
+            }
+        });
+
+        let stderr = proc.stderr.take().expect("we asked Rust to pipe stderr");
+        s.spawn({
+            let span = debug_span!("err");
+            move || {
+                let mut stderr = stderr;
+                pipe_to_logs(&span, &mut stderr);
+            }
+        });
+
+        let exit_status = proc
+            .wait()
+            .with_context(|| anyhow!("could not wait for proces termination: {cmd_str}"))?;
+        if exit_status.success() {
+            Ok(())
+        } else {
+            bail!("process did not exit successfully: {exit_status}");
+        }
+    });
+
+    fn pipe_to_logs(span: &Span, stream: &mut dyn Read) {
+        let _enter = span.enter();
+        let stream = BufReader::with_capacity(128, stream);
+        for line in stream.lines() {
+            match line {
+                Ok(line) => debug!("{line}"),
+                Err(err) => warn!("{err:?}"),
+            }
+        }
     }
 }
 
