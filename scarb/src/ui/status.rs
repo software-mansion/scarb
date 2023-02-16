@@ -26,10 +26,7 @@ impl<'a> Status<'a> {
 }
 
 impl<'a> Message for Status<'a> {
-    fn text(&self) -> String
-    where
-        Self: Sized,
-    {
+    fn text(self) -> String {
         format!(
             "{} {}",
             Style::from_dotted_str(self.color).bold().apply_to(pad_str(
@@ -42,10 +39,7 @@ impl<'a> Message for Status<'a> {
         )
     }
 
-    fn structured<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error>
-    where
-        Self: Sized,
-    {
+    fn structured<S: Serializer>(self, ser: S) -> Result<S::Ok, S::Error> {
         let status = self.status.to_lowercase();
         Status {
             status: &status,
