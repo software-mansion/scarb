@@ -8,7 +8,7 @@ use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId, Directory};
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, MetadataComputationConfig};
-use tracing::{span, trace, Level};
+use tracing::{trace, trace_span};
 
 use crate::compiler::CompilationUnit;
 use crate::core::{LibTargetKind, PackageName, Workspace};
@@ -35,7 +35,7 @@ pub fn compile_lib(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let main_crate_ids = collect_main_crate_ids(&unit, &db);
 
     let sierra_program = {
-        let _ = span!(Level::TRACE, "compile_sierra").enter();
+        let _ = trace_span!("compile_sierra").enter();
         cairo_lang_compiler::compile_prepared_db(&mut db, main_crate_ids, compiler_config)?
     };
 
@@ -52,13 +52,13 @@ pub fn compile_lib(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         let gas_usage_check = true;
 
         let metadata = {
-            let _ = span!(Level::TRACE, "casm_calc_metadata");
+            let _ = trace_span!("casm_calc_metadata");
             calc_metadata(&sierra_program, MetadataComputationConfig::default())
                 .context("failed calculating Sierra variables")?
         };
 
         let cairo_program = {
-            let _ = span!(Level::TRACE, "compile_casm");
+            let _ = trace_span!("compile_casm");
             cairo_lang_sierra_to_casm::compiler::compile(
                 &sierra_program,
                 &metadata,

@@ -7,7 +7,7 @@ use cairo_lang_starknet::contract::find_contracts;
 use cairo_lang_starknet::contract_class::compile_prepared_db;
 use cairo_lang_starknet::db::StarknetRootDatabaseBuilderEx;
 use cairo_lang_utils::Upcast;
-use tracing::{span, trace, Level};
+use tracing::{trace, trace_span};
 
 use crate::compiler::targets::lib::{
     build_compiler_config, build_project_config, collect_main_crate_ids,
@@ -36,7 +36,7 @@ pub fn compile_contract(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()>
     let main_crate_ids = collect_main_crate_ids(&unit, &db);
 
     let contracts = {
-        let _ = span!(Level::TRACE, "find_contracts").enter();
+        let _ = trace_span!("find_contracts").enter();
         find_contracts(&db, &main_crate_ids)
     };
 
@@ -50,7 +50,7 @@ pub fn compile_contract(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()>
     let contracts = contracts.iter().collect::<Vec<_>>();
 
     let classes = {
-        let _ = span!(Level::TRACE, "compile_starknet").enter();
+        let _ = trace_span!("compile_starknet").enter();
         compile_prepared_db(&mut db, &contracts, compiler_config)?
     };
 
