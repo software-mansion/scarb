@@ -12,6 +12,7 @@ fn commit_info() {
     if !Path::new("../.git").exists() {
         return;
     }
+    println!("cargo:rerun-if-changed=../.git/index");
     let output = match Command::new("git")
         .arg("log")
         .arg("-1")
@@ -33,6 +34,7 @@ fn commit_info() {
 }
 
 fn cairo_version() {
+    println!("cargo:rerun-if-changed=../Cargo.lock");
     let Ok(lock) = fs::read_to_string("../Cargo.lock") else { return };
     let Ok(lock) = toml_edit::Document::from_str(&lock) else { return };
     let Some(lock) = lock["package"].as_array_of_tables() else { return };
