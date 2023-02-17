@@ -18,12 +18,13 @@ use crate::ops;
 #[folder = "../corelib"]
 struct Corelib;
 
-pub struct CorelibSource<'c> {
+/// Serves Cairo standard library packages.
+pub struct StandardLibSource<'c> {
     config: &'c Config,
     package: OnceCell<Package>,
 }
 
-impl<'c> CorelibSource<'c> {
+impl<'c> StandardLibSource<'c> {
     pub fn new(config: &'c Config) -> Self {
         Self {
             config,
@@ -57,7 +58,7 @@ impl<'c> CorelibSource<'c> {
 }
 
 #[async_trait]
-impl<'c> Source for CorelibSource<'c> {
+impl<'c> Source for StandardLibSource<'c> {
     #[tracing::instrument(level = "trace", skip(self))]
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         let package = self.ensure_loaded().await?;
@@ -76,8 +77,8 @@ impl<'c> Source for CorelibSource<'c> {
     }
 }
 
-impl<'c> fmt::Debug for CorelibSource<'c> {
+impl<'c> fmt::Debug for StandardLibSource<'c> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("CorelibSource").finish_non_exhaustive()
+        f.debug_struct("StandardLibSource").finish_non_exhaustive()
     }
 }
