@@ -53,6 +53,22 @@ fn simple() {
             r#"{
   "version": 1,
   "app_exe": "[..]",
+  "app_version_info": {
+    "version": "[..]",
+    "commit_info": {
+      "short_commit_hash": "[..]",
+      "commit_hash": "[..]",
+      "commit_date": "[..]"
+    },
+    "cairo": {
+      "version": "[..]",
+      "commit_info": {
+        "short_commit_hash": "[..]",
+        "commit_hash": "[..]",
+        "commit_date": [..]
+      }
+    }
+  },
   "target_dir": "[..]/target",
   "workspace": {
     "root": "[..]",

@@ -2,7 +2,10 @@
 
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
+
 /// Scarb's version.
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VersionInfo {
     pub version: String,
     pub commit_info: Option<CommitInfo>,
@@ -10,12 +13,14 @@ pub struct VersionInfo {
 }
 
 /// Cairo's version.
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CairoVersionInfo {
     pub version: String,
     pub commit_info: Option<CommitInfo>,
 }
 
 /// Information about the Git repository where the crate was built from.
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CommitInfo {
     pub short_commit_hash: String,
     pub commit_hash: String,

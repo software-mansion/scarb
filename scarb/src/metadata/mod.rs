@@ -16,6 +16,7 @@ use crate::core::manifest::{
 };
 use crate::core::{ManifestDependency, Package, PackageId, SourceId, Workspace};
 use crate::ops::resolve_workspace;
+use crate::version::VersionInfo;
 
 mod metadata_version;
 
@@ -34,6 +35,7 @@ pub enum Metadata {
 pub struct ProjectMetadata {
     pub version: MetadataVersionPin<1>,
     pub app_exe: Option<PathBuf>,
+    pub app_version_info: VersionInfo,
     pub target_dir: Option<Utf8PathBuf>,
     pub workspace: WorkspaceMetadata,
     pub packages: Vec<PackageMetadata>,
@@ -108,6 +110,7 @@ impl ProjectMetadata {
         Ok(Self {
             version: MetadataVersionPin::<1>,
             app_exe: ws.config().app_exe().ok().map(Into::into),
+            app_version_info: crate::version::get(),
             target_dir: Some(ws.target_dir().path_unchecked().to_path_buf()),
             workspace: WorkspaceMetadata::new(ws)?,
             packages,
