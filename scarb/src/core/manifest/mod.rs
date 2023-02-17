@@ -71,7 +71,7 @@ impl Summary {
         static CORE_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| ManifestDependency {
             name: PackageName::CORE,
             version_req: VersionReq::STAR,
-            source_id: SourceId::for_core(),
+            source_id: SourceId::for_std(),
         });
 
         let mut deps: Vec<&ManifestDependency> = Vec::new();

@@ -158,7 +158,7 @@ mod tests {
                     .nodes()
                     .filter(|id| {
                         !id.name.as_str().starts_with("ROOT_")
-                            && id.source_id != SourceId::for_core()
+                            && id.source_id != SourceId::for_std()
                     })
                     .sorted()
                     .collect_vec()
