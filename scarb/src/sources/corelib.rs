@@ -51,7 +51,7 @@ impl<'c> CorelibSource<'c> {
 
         let manifest_path = root.join(MANIFEST_FILE_NAME);
         let ws =
-            ops::read_workspace_with_source_id(&manifest_path, SourceId::for_core(), self.config)?;
+            ops::read_workspace_with_source_id(&manifest_path, SourceId::for_std(), self.config)?;
         Ok(ws.members().next().unwrap())
     }
 }

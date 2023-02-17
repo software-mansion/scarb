@@ -78,10 +78,10 @@ fn simple() {
   },
   "packages": [
     {
-      "id": "core 0.1.0 (core+https://github.com/starkware-libs/cairo.git)",
+      "id": "core 0.1.0 (std)",
       "name": "core",
       "version": "0.1.0",
-      "source": "core+https://github.com/starkware-libs/cairo.git",
+      "source": "std",
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
       "dependencies": [],
@@ -118,7 +118,7 @@ fn simple() {
         {
           "name": "core",
           "version_req": "*",
-          "source": "core+https://github.com/starkware-libs/cairo.git"
+          "source": "std"
         }
       ],
       "targets": [

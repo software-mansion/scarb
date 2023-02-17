@@ -1,8 +1,9 @@
 use std::fmt;
 use std::ops::Deref;
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smol_str::SmolStr;
 use url::Url;
@@ -33,9 +34,13 @@ pub enum SourceKind {
     Path,
     /// A git repository.
     Git(GitReference),
-    /// The Cairo core library.
-    Core,
+    /// The Cairo standard library.
+    Std,
 }
+
+const PATH_SOURCE_PROTOCOL: &str = "path";
+const GIT_SOURCE_PROTOCOL: &str = "git";
+const STD_SOURCE_PROTOCOL: &str = "std";
 
 /// Information to find a specific commit in a Git repository.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -71,9 +76,12 @@ impl SourceId {
         Self::new(url.clone(), SourceKind::Git(reference.clone()))
     }
 
-    pub fn for_core() -> Self {
-        let url = Url::parse("https://github.com/starkware-libs/cairo.git").unwrap();
-        SourceId::pure(url, SourceKind::Core)
+    pub fn for_std() -> Self {
+        static CACHE: Lazy<SourceId> = Lazy::new(|| {
+            let url = Url::parse("std:").unwrap();
+            SourceId::pure(url, SourceKind::Std)
+        });
+        *CACHE
     }
 
     pub fn is_default_registry(self) -> bool {
@@ -125,7 +133,7 @@ impl SourceId {
 
     pub fn to_pretty_url(self) -> String {
         match &self.kind {
-            SourceKind::Path => format!("path+{}", self.url),
+            SourceKind::Path => format!("{PATH_SOURCE_PROTOCOL}+{}", self.url),
 
             SourceKind::Git(reference) => {
                 let mut url = self.url.clone();
@@ -141,14 +149,18 @@ impl SourceId {
                     }
                     GitReference::DefaultBranch => {}
                 }
-                format!("git+{url}")
+                format!("{GIT_SOURCE_PROTOCOL}+{url}")
             }
 
-            SourceKind::Core => format!("core+{}", self.url),
+            SourceKind::Std => STD_SOURCE_PROTOCOL.to_string(),
         }
     }
 
     pub fn from_pretty_url(pretty_url: &str) -> Result<Self> {
+        if pretty_url == STD_SOURCE_PROTOCOL {
+            return Ok(Self::for_std());
+        }
+
         let (kind, url) = {
             let mut parts = pretty_url.splitn(2, '+');
             (
@@ -163,7 +175,7 @@ impl SourceId {
             Url::parse(url).with_context(|| format!("cannot parse source URL: {pretty_url}"))?;
 
         match kind {
-            "git" => {
+            GIT_SOURCE_PROTOCOL => {
                 let mut reference = GitReference::DefaultBranch;
                 for (k, v) in url.query_pairs() {
                     match &k[..] {
@@ -178,13 +190,7 @@ impl SourceId {
                 SourceId::for_git(&url, &reference)
             }
 
-            "path" => SourceId::new(url, SourceKind::Path),
-
-            "core" => {
-                let stencil = SourceId::for_core();
-                ensure!(url == stencil.url, "there is only one valid core url");
-                Ok(stencil)
-            }
+            PATH_SOURCE_PROTOCOL => SourceId::new(url, SourceKind::Path),
 
             kind => bail!("unsupported source protocol: {kind}"),
         }
@@ -201,7 +207,7 @@ impl SourceId {
         match self.kind {
             SourceKind::Path => Ok(Box::new(PathSource::new(self, config))),
             SourceKind::Git(_) => Ok(Box::new(GitSource::new(self, config)?)),
-            SourceKind::Core => Ok(Box::new(CorelibSource::new(config))),
+            SourceKind::Std => Ok(Box::new(CorelibSource::new(config))),
         }
     }
 }
@@ -272,7 +278,7 @@ mod tests {
 
     #[test_case(SourceId::mock_git())]
     #[test_case(SourceId::mock_path())]
-    #[test_case(SourceId::for_core())]
+    #[test_case(SourceId::for_std())]
     fn equality_after_pretty_url_conversion(source_id: SourceId) {
         assert_eq!(
             SourceId::from_pretty_url(&source_id.to_pretty_url()).unwrap(),
