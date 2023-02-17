@@ -120,7 +120,7 @@ impl SummaryBuilder {
 }
 
 /// Subset of a [`Manifest`] that contains package metadata.
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ManifestMetadata {
     pub authors: Option<Vec<String>>,
     pub urls: Option<BTreeMap<String, String>>,
