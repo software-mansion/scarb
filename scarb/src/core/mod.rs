@@ -5,8 +5,8 @@
 pub use config::Config;
 pub use manifest::{
     DetailedTomlDependency, ExternalTargetKind, LibTargetKind, Manifest, ManifestDependency,
-    Summary, SummaryInner, Target, TargetInner, TargetKind, TomlDependency, TomlExternalTarget,
-    TomlLibTarget, TomlManifest, TomlPackage, TomlTargetKindName,
+    ManifestMetadata, Summary, SummaryInner, Target, TargetInner, TargetKind, TomlDependency,
+    TomlExternalTarget, TomlLibTarget, TomlManifest, TomlPackage, TomlTargetKindName,
 };
 pub use package::{Package, PackageId, PackageIdInner, PackageInner, PackageName};
 pub use resolver::{PackageComponentsIds, Resolve};
