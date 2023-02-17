@@ -1,7 +1,38 @@
+use std::collections::BTreeMap;
+
 use assert_fs::prelude::*;
+use snapbox::cmd::Command;
+
+use scarb::core::ManifestMetadata;
+use scarb::metadata::ProjectMetadata;
 
 use crate::support::command::Scarb;
 use crate::support::project_builder::ProjectBuilder;
+
+trait CommandExt {
+    fn stdout_json(self) -> ProjectMetadata;
+}
+
+impl CommandExt for Command {
+    fn stdout_json(self) -> ProjectMetadata {
+        let output = self.output().expect("Failed to spawn command");
+        serde_json::de::from_slice(&output.stdout).expect("Failed to deserialize stdout to JSON")
+    }
+}
+
+fn packages_and_deps(meta: ProjectMetadata) -> BTreeMap<String, Vec<String>> {
+    meta.packages
+        .into_iter()
+        .map(|p| {
+            let deps = p
+                .dependencies
+                .into_iter()
+                .map(|d| d.name)
+                .collect::<Vec<_>>();
+            (p.name, deps)
+        })
+        .collect::<BTreeMap<_, _>>()
+}
 
 #[test]
 fn simple() {
@@ -186,294 +217,43 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
 fn local_dependencies() {
     let t = assert_fs::TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
-    Scarb::quick_snapbox()
+    let meta = Scarb::quick_snapbox()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
         .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(
-            r#"{
-  "version": 1,
-  "app_exe": "[..]",
-  "target_dir": "[..]/target",
-  "workspace": {
-    "root": "[..]",
-    "members": [
-      "x 1.0.0 (path+file://[..])"
-    ]
-  },
-  "packages": [
-    {
-      "id": "core 0.1.0 (core+https://github.com/starkware-libs/cairo.git)",
-      "name": "core",
-      "version": "0.1.0",
-      "source": "core+https://github.com/starkware-libs/cairo.git",
-      "root": "[..]",
-      "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [],
-      "targets": [
-        {
-          "kind": "lib",
-          "name": "core",
-          "params": {
-            "casm": false,
-            "sierra": true
-          }
-        }
-      ],
-      "authors": null,
-      "urls": null,
-      "metadata": null,
-      "description": null,
-      "documentation": null,
-      "homepage": null,
-      "keywords": null,
-      "license": null,
-      "license_file": null,
-      "readme": null,
-      "repository": null
-    },
-    {
-      "id": "q 1.0.0 (path+file://[..]/q/)",
-      "name": "q",
-      "version": "1.0.0",
-      "source": "path+file://[..]",
-      "root": "[..]",
-      "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [
-        {
-          "name": "core",
-          "version_req": "*",
-          "source": "core+https://github.com/starkware-libs/cairo.git"
-        }
-      ],
-      "targets": [
-        {
-          "kind": "lib",
-          "name": "q",
-          "params": {
-            "casm": false,
-            "sierra": true
-          }
-        }
-      ],
-      "authors": null,
-      "urls": null,
-      "metadata": null,
-      "description": null,
-      "documentation": null,
-      "homepage": null,
-      "keywords": null,
-      "license": null,
-      "license_file": null,
-      "readme": null,
-      "repository": null
-    },
-    {
-      "id": "x 1.0.0 (path+file://[..])",
-      "name": "x",
-      "version": "1.0.0",
-      "source": "path+file://[..]",
-      "root": "[..]",
-      "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [
-        {
-          "name": "core",
-          "version_req": "*",
-          "source": "core+https://github.com/starkware-libs/cairo.git"
-        },
-        {
-          "name": "y",
-          "version_req": "*",
-          "source": "path+file://[..]/y/"
-        }
-      ],
-      "targets": [
-        {
-          "kind": "lib",
-          "name": "x",
-          "params": {
-            "casm": false,
-            "sierra": true
-          }
-        }
-      ],
-      "authors": null,
-      "urls": null,
-      "metadata": null,
-      "description": null,
-      "documentation": null,
-      "homepage": null,
-      "keywords": null,
-      "license": null,
-      "license_file": null,
-      "readme": null,
-      "repository": null
-    },
-    {
-      "id": "y 1.0.0 (path+file://[..]/y/)",
-      "name": "y",
-      "version": "1.0.0",
-      "source": "path+file://[..]",
-      "root": "[..]",
-      "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [
-        {
-          "name": "core",
-          "version_req": "*",
-          "source": "core+https://github.com/starkware-libs/cairo.git"
-        },
-        {
-          "name": "q",
-          "version_req": "*",
-          "source": "path+file://[..]/q/"
-        },
-        {
-          "name": "z",
-          "version_req": "*",
-          "source": "path+file://[..]/z/"
-        }
-      ],
-      "targets": [
-        {
-          "kind": "lib",
-          "name": "y",
-          "params": {
-            "casm": false,
-            "sierra": true
-          }
-        }
-      ],
-      "authors": null,
-      "urls": null,
-      "metadata": null,
-      "description": null,
-      "documentation": null,
-      "homepage": null,
-      "keywords": null,
-      "license": null,
-      "license_file": null,
-      "readme": null,
-      "repository": null
-    },
-    {
-      "id": "z 1.0.0 (path+file://[..]/z/)",
-      "name": "z",
-      "version": "1.0.0",
-      "source": "path+file://[..]",
-      "root": "[..]",
-      "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [
-        {
-          "name": "core",
-          "version_req": "*",
-          "source": "core+https://github.com/starkware-libs/cairo.git"
-        },
-        {
-          "name": "q",
-          "version_req": "*",
-          "source": "path+file://[..]/q/"
-        }
-      ],
-      "targets": [
-        {
-          "kind": "lib",
-          "name": "z",
-          "params": {
-            "casm": false,
-            "sierra": true
-          }
-        }
-      ],
-      "authors": null,
-      "urls": null,
-      "metadata": null,
-      "description": null,
-      "documentation": null,
-      "homepage": null,
-      "keywords": null,
-      "license": null,
-      "license_file": null,
-      "readme": null,
-      "repository": null
-    }
-  ]
-}
-"#,
-        );
+        .stdout_json();
+    assert_eq!(
+        packages_and_deps(meta),
+        BTreeMap::from_iter([
+            ("core".to_string(), vec![]),
+            ("q".to_string(), vec!["core".to_string()]),
+            ("x".to_string(), vec!["core".to_string(), "y".to_string()]),
+            (
+                "y".to_string(),
+                vec!["core".to_string(), "q".to_string(), "z".to_string()]
+            ),
+            ("z".to_string(), vec!["core".to_string(), "q".to_string()]),
+        ])
+    )
 }
 
 #[test]
 fn no_dep() {
     let t = assert_fs::TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
-    Scarb::quick_snapbox()
+    let meta = Scarb::quick_snapbox()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
         .arg("--no-deps")
         .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(
-            r#"{
-  "version": 1,
-  "app_exe": "[..]",
-  "target_dir": "[..]/target",
-  "workspace": {
-    "root": "[..]",
-    "members": [
-      "x 1.0.0 (path+file://[..])"
-    ]
-  },
-  "packages": [
-    {
-      "id": "x 1.0.0 (path+file://[..])",
-      "name": "x",
-      "version": "1.0.0",
-      "source": "path+file://[..]",
-      "root": "[..]",
-      "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [
-        {
-          "name": "core",
-          "version_req": "*",
-          "source": "core+https://github.com/starkware-libs/cairo.git"
-        },
-        {
-          "name": "y",
-          "version_req": "*",
-          "source": "path+file://[..]/y/"
-        }
-      ],
-      "targets": [
-        {
-          "kind": "lib",
-          "name": "x",
-          "params": {
-            "casm": false,
-            "sierra": true
-          }
-        }
-      ],
-      "authors": null,
-      "urls": null,
-      "metadata": null,
-      "description": null,
-      "documentation": null,
-      "homepage": null,
-      "keywords": null,
-      "license": null,
-      "license_file": null,
-      "readme": null,
-      "repository": null
-    }
-  ]
-}
-"#,
-        );
+        .stdout_json();
+
+    assert_eq!(
+        packages_and_deps(meta),
+        BTreeMap::from_iter([("x".to_string(), vec!["core".to_string(), "y".to_string()])])
+    );
 }
 
 #[test]
@@ -490,9 +270,9 @@ fn manifest_targets_and_metadata() {
             authors = ["John Doe <john.doe@swmansion.com>", "Jane Doe <jane.doe@swmansion.com>"]
             keywords = ["some", "project", "keywords"]
 
-            homepage = "http://www.homepage.com/"
-            documentation = "http://docs.homepage.com/"
-            repository = "http://github.com/johndoe/repo"
+            homepage = "https://www.homepage.com/"
+            documentation = "https://docs.homepage.com/"
+            repository = "https://github.com/johndoe/repo"
 
             license = "MIT License"
             license-file = "./license.md"
@@ -520,124 +300,47 @@ fn manifest_targets_and_metadata() {
         )
         .unwrap();
 
-    Scarb::quick_snapbox()
+    let meta = Scarb::quick_snapbox()
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
         .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(
-            r#"{
-  "version": 1,
-  "app_exe": "[..]",
-  "target_dir": "[..]/target",
-  "workspace": {
-    "root": "[..]",
-    "members": [
-      "hello 0.1.0 (path+file://[..])"
-    ]
-  },
-  "packages": [
-    {
-      "id": "core 0.1.0 (core+https://github.com/starkware-libs/cairo.git)",
-      "name": "core",
-      "version": "0.1.0",
-      "source": "core+https://github.com/starkware-libs/cairo.git",
-      "root": "[..]",
-      "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [],
-      "targets": [
-        {
-          "kind": "lib",
-          "name": "core",
-          "params": {
-            "casm": false,
-            "sierra": true
-          }
+        .stdout_json();
+
+    assert_eq!(
+        meta.packages
+            .into_iter()
+            .find(|p| p.name == "hello")
+            .unwrap()
+            .manifest_metadata,
+        ManifestMetadata {
+            authors: Some(vec![
+                "John Doe <john.doe@swmansion.com>".to_string(),
+                "Jane Doe <jane.doe@swmansion.com>".to_string(),
+            ],),
+            urls: Some(BTreeMap::from_iter([(
+                "hello".to_string(),
+                "https://world.com/".to_string()
+            ),]),),
+            custom_metadata: Some(BTreeMap::from_iter([
+                ("key".to_string(), "value".to_string()),
+                ("meta".to_string(), "data".to_string()),
+                ("numeric".to_string(), "1231".to_string()),
+            ]),),
+            description: Some("Some interesting description to read!".to_string(),),
+            documentation: Some("https://docs.homepage.com/".to_string(),),
+            homepage: Some("https://www.homepage.com/".to_string(),),
+            keywords: Some(vec![
+                "some".to_string(),
+                "project".to_string(),
+                "keywords".to_string(),
+            ],),
+            license: Some("MIT License".to_string(),),
+            license_file: Some("./license.md".to_string(),),
+            readme: Some("./readme.md".to_string(),),
+            repository: Some("https://github.com/johndoe/repo".to_string(),),
         }
-      ],
-      "authors": null,
-      "urls": null,
-      "metadata": null,
-      "description": null,
-      "documentation": null,
-      "homepage": null,
-      "keywords": null,
-      "license": null,
-      "license_file": null,
-      "readme": null,
-      "repository": null
-    },
-    {
-      "id": "hello 0.1.0 (path+file://[..])",
-      "name": "hello",
-      "version": "0.1.0",
-      "source": "path+file://[..]",
-      "root": "[..]",
-      "manifest_path": "[..]/Scarb.toml",
-      "dependencies": [
-        {
-          "name": "core",
-          "version_req": "*",
-          "source": "core+https://github.com/starkware-libs/cairo.git"
-        }
-      ],
-      "targets": [
-        {
-          "kind": "example",
-          "name": "hello",
-          "params": {
-            "array": [
-              "a",
-              1
-            ],
-            "bool": true,
-            "number": 1234,
-            "string": "bar",
-            "table": {
-              "x": "y"
-            }
-          }
-        },
-        {
-          "kind": "lib",
-          "name": "hello",
-          "params": {
-            "casm": true,
-            "sierra": false
-          }
-        }
-      ],
-      "authors": [
-        "John Doe <john.doe@swmansion.com>",
-        "Jane Doe <jane.doe@swmansion.com>"
-      ],
-      "urls": {
-        "hello": "https://world.com/"
-      },
-      "metadata": {
-        "key": "value",
-        "meta": "data",
-        "numeric": "1231"
-      },
-      "description": "Some interesting description to read!",
-      "documentation": "http://docs.homepage.com/",
-      "homepage": "http://www.homepage.com/",
-      "keywords": [
-        "some",
-        "project",
-        "keywords"
-      ],
-      "license": "MIT License",
-      "license_file": "./license.md",
-      "readme": "./readme.md",
-      "repository": "http://github.com/johndoe/repo"
-    }
-  ]
-}
-"#,
-        );
+    );
 }
 
 #[test]
