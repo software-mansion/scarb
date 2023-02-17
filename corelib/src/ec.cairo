@@ -19,6 +19,7 @@ type NonZeroEcPoint = NonZero::<EcPoint>;
 impl NonZeroEcPointCopy of Copy::<NonZeroEcPoint>;
 impl OptionNonZeroEcPointCopy of Copy::<Option::<NonZeroEcPoint>>;
 impl NonZeroEcPointDrop of Drop::<NonZeroEcPoint>;
+impl OptionNonZeroEcPointDrop of Drop::<Option::<NonZeroEcPoint>>;
 
 /// Returns the zero point of the curve ("the point at infinity").
 extern fn ec_point_zero() -> EcPoint nopanic;
@@ -129,6 +130,13 @@ impl EcPointAdd of Add::<EcPoint> {
     }
 }
 
+impl EcPointAddEq of AddEq::<EcPoint> {
+    #[inline(always)]
+    fn add_eq(ref self: EcPoint, other: EcPoint) {
+        self = Add::add(self, other);
+    }
+}
+
 impl EcPointSub of Sub::<EcPoint> {
     /// Computes the difference between two points on the curve.
     fn sub(p: EcPoint, q: EcPoint) -> EcPoint {
@@ -141,5 +149,12 @@ impl EcPointSub of Sub::<EcPoint> {
         };
         // p - q = p + (-q).
         p + ec_neg(q)
+    }
+}
+
+impl EcPointSubEq of SubEq::<EcPoint> {
+    #[inline(always)]
+    fn sub_eq(ref self: EcPoint, other: EcPoint) {
+        self = Sub::sub(self, other);
     }
 }

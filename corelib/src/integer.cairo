@@ -2,6 +2,8 @@ use result::ResultTrait;
 use result::ResultTraitImpl;
 use option::OptionTrait;
 use option::OptionTraitImpl;
+use traits::Into;
+use traits::TryInto;
 
 #[derive(Copy, Drop)]
 extern type u128;
@@ -61,6 +63,12 @@ impl U128Add of Add::<u128> {
         u128_overflowing_add(a, b).expect('u128_add Overflow')
     }
 }
+impl U128AddEq of AddEq::<u128> {
+    #[inline(always)]
+    fn add_eq(ref self: u128, other: u128) {
+        self = Add::add(self, other);
+    }
+}
 
 #[panic_with('u128_sub OF', u128_sub)]
 fn u128_checked_sub(a: u128, b: u128) -> Option::<u128> implicits(RangeCheck) nopanic {
@@ -75,6 +83,12 @@ impl U128Sub of Sub::<u128> {
         u128_overflowing_sub(a, b).expect('u128_sub Overflow')
     }
 }
+impl U128SubEq of SubEq::<u128> {
+    #[inline(always)]
+    fn sub_eq(ref self: u128, other: u128) {
+        self = Sub::sub(self, other);
+    }
+}
 
 fn u128_checked_mul(a: u128, b: u128) -> Option::<u128> implicits(RangeCheck) nopanic {
     let (top_word, bottom_word) = u128_wide_mul(a, b);
@@ -87,6 +101,12 @@ fn u128_checked_mul(a: u128, b: u128) -> Option::<u128> implicits(RangeCheck) no
 impl U128Mul of Mul::<u128> {
     fn mul(a: u128, b: u128) -> u128 {
         u128_checked_mul(a, b).expect('u128_mul Overflow')
+    }
+}
+impl U128MulEq of MulEq::<u128> {
+    #[inline(always)]
+    fn mul_eq(ref self: u128, other: u128) {
+        self = Mul::mul(self, other);
     }
 }
 
@@ -107,11 +127,23 @@ impl U128Div of Div::<u128> {
         q
     }
 }
+impl U128DivEq of DivEq::<u128> {
+    #[inline(always)]
+    fn div_eq(ref self: u128, other: u128) {
+        self = Div::div(self, other);
+    }
+}
 
 impl U128Rem of Rem::<u128> {
     fn rem(a: u128, b: u128) -> u128 {
         let (q, r) = u128_safe_divmod(a, u128_as_non_zero(b));
         r
+    }
+}
+impl U128RemEq of RemEq::<u128> {
+    #[inline(always)]
+    fn rem_eq(ref self: u128, other: u128) {
+        self = Rem::rem(self, other);
     }
 }
 
@@ -250,6 +282,12 @@ impl U8Add of Add::<u8> {
         u8_overflowing_add(a, b).expect('u8_add Overflow')
     }
 }
+impl U8AddEq of AddEq::<u8> {
+    #[inline(always)]
+    fn add_eq(ref self: u8, other: u8) {
+        self = Add::add(self, other);
+    }
+}
 
 fn u8_checked_sub(a: u8, b: u8) -> Option::<u8> implicits(RangeCheck) nopanic {
     match u8_overflowing_sub(a, b) {
@@ -263,11 +301,16 @@ impl U8Sub of Sub::<u8> {
         u8_overflowing_sub(a, b).expect('u8_sub Overflow')
     }
 }
+impl U8SubEq of SubEq::<u8> {
+    #[inline(always)]
+    fn sub_eq(ref self: u8, other: u8) {
+        self = Sub::sub(self, other);
+    }
+}
 
 extern fn u8_wide_mul(a: u8, b: u8) -> u16 implicits() nopanic;
 impl U8Mul of Mul::<u8> {
     fn mul(a: u8, b: u8) -> u8 {
-        // TODO(orizi): Use direct conversion, instead of going through felt.
         u8_try_from_felt(u16_to_felt(u8_wide_mul(a, b))).expect('u8_mul Overflow')
     }
 }
@@ -604,6 +647,12 @@ impl U64Add of Add::<u64> {
         u64_overflowing_add(a, b).expect('u64_add Overflow')
     }
 }
+impl U64AddEq of AddEq::<u64> {
+    #[inline(always)]
+    fn add_eq(ref self: u64, other: u64) {
+        self = Add::add(self, other);
+    }
+}
 
 fn u64_checked_sub(a: u64, b: u64) -> Option::<u64> implicits(RangeCheck) nopanic {
     match u64_overflowing_sub(a, b) {
@@ -615,6 +664,12 @@ fn u64_checked_sub(a: u64, b: u64) -> Option::<u64> implicits(RangeCheck) nopani
 impl U64Sub of Sub::<u64> {
     fn sub(a: u64, b: u64) -> u64 {
         u64_overflowing_sub(a, b).expect('u64_sub Overflow')
+    }
+}
+impl U64SubEq of SubEq::<u64> {
+    #[inline(always)]
+    fn sub_eq(ref self: u64, other: u64) {
+        self = Sub::sub(self, other);
     }
 }
 
@@ -721,6 +776,12 @@ impl U256Add of Add::<u256> {
         u256_checked_add(a, b).expect('u256_add Overflow')
     }
 }
+impl U256AddEq of AddEq::<u256> {
+    #[inline(always)]
+    fn add_eq(ref self: u256, other: u256) {
+        self = Add::add(self, other);
+    }
+}
 
 #[panic_with('u256_sub OF', u256_sub)]
 fn u256_checked_sub(a: u256, b: u256) -> Option::<u256> implicits(RangeCheck) nopanic {
@@ -737,6 +798,12 @@ impl U256Sub of Sub::<u256> {
         u256_checked_sub(a, b).expect('u256_sub Overflow')
     }
 }
+impl U256SubEq of SubEq::<u256> {
+    #[inline(always)]
+    fn sub_eq(ref self: u256, other: u256) {
+        self = Sub::sub(self, other);
+    }
+}
 
 fn u256_checked_mul(a: u256, b: u256) -> Option::<u256> implicits(RangeCheck) {
     let (r, overflow) = u256_overflow_mul(a, b);
@@ -750,6 +817,12 @@ fn u256_checked_mul(a: u256, b: u256) -> Option::<u256> implicits(RangeCheck) {
 impl U256Mul of Mul::<u256> {
     fn mul(a: u256, b: u256) -> u256 {
         u256_checked_mul(a, b).expect('u256_mul Overflow')
+    }
+}
+impl U256MulEq of MulEq::<u256> {
+    #[inline(always)]
+    fn mul_eq(ref self: u256, other: u256) {
+        self = Mul::mul(self, other);
     }
 }
 
@@ -813,3 +886,92 @@ fn u256_from_felt(a: felt) -> u256 implicits(RangeCheck) nopanic {
         U128sFromFeltResult::Wide((high, low)) => u256 { low, high },
     }
 }
+
+/// Conversions.
+impl FeltTryIntoU8 of TryInto::<felt, u8> {
+    fn try_into(self: felt) -> Option::<u8> {
+        u8_try_from_felt(self)
+    }
+}
+impl U8IntoFelt of Into::<u8, felt> {
+    fn into(self: u8) -> felt {
+        u8_to_felt(self)
+    }
+}
+impl FeltTryIntoU16 of TryInto::<felt, u16> {
+    fn try_into(self: felt) -> Option::<u16> {
+        u16_try_from_felt(self)
+    }
+}
+impl U16IntoFelt of Into::<u16, felt> {
+    fn into(self: u16) -> felt {
+        u16_to_felt(self)
+    }
+}
+impl FeltTryIntoU32 of TryInto::<felt, u32> {
+    fn try_into(self: felt) -> Option::<u32> {
+        u32_try_from_felt(self)
+    }
+}
+impl U32IntoFelt of Into::<u32, felt> {
+    fn into(self: u32) -> felt {
+        u32_to_felt(self)
+    }
+}
+impl FeltTryIntoU64 of TryInto::<felt, u64> {
+    fn try_into(self: felt) -> Option::<u64> {
+        u64_try_from_felt(self)
+    }
+}
+impl U64IntoFelt of Into::<u64, felt> {
+    fn into(self: u64) -> felt {
+        u64_to_felt(self)
+    }
+}
+impl FeltTryIntoU128 of TryInto::<felt, u128> {
+    fn try_into(self: felt) -> Option::<u128> {
+        u128_try_from_felt(self)
+    }
+}
+impl U128IntoFelt of Into::<u128, felt> {
+    fn into(self: u128) -> felt {
+        u128_to_felt(self)
+    }
+}
+impl FeltIntoU256 of Into::<felt, u256> {
+    fn into(self: felt) -> u256 {
+        u256_from_felt(self)
+    }
+}
+impl U16TryIntoU8 of TryInto::<u16, u8> {
+    fn try_into(self: u16) -> Option::<u8> {
+        // TODO(orizi): Use direct conversion, instead of going through felt.
+        let as_felt: felt = self.into();
+        as_felt.try_into()
+    }
+}
+impl U32TryIntoU16 of TryInto::<u32, u16> {
+    fn try_into(self: u32) -> Option::<u16> {
+        // TODO(orizi): Use direct conversion, instead of going through felt.
+        let as_felt: felt = self.into();
+        as_felt.try_into()
+    }
+}
+impl U64TryIntoU32 of TryInto::<u64, u32> {
+    fn try_into(self: u64) -> Option::<u32> {
+        // TODO(orizi): Use direct conversion, instead of going through felt.
+        let as_felt: felt = self.into();
+        as_felt.try_into()
+    }
+}
+impl U128TryIntoU64 of TryInto::<u128, u64> {
+    fn try_into(self: u128) -> Option::<u64> {
+        // TODO(orizi): Use direct conversion, instead of going through felt.
+        let as_felt: felt = self.into();
+        as_felt.try_into()
+    }
+}
+
+// TODO(lior): Restrict the function (using traits) in the high-level compiler so that wrong types
+//   will not lead to Sierra errors.
+extern fn upcast<FromType, ToType>(x: FromType) -> ToType nopanic;
