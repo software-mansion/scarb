@@ -207,7 +207,7 @@ impl SourceId {
         match self.kind {
             SourceKind::Path => Ok(Box::new(PathSource::new(self, config))),
             SourceKind::Git(_) => Ok(Box::new(GitSource::new(self, config)?)),
-            SourceKind::Std => Ok(Box::new(CorelibSource::new(config))),
+            SourceKind::Std => Ok(Box::new(StandardLibSource::new(config))),
         }
     }
 }

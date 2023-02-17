@@ -1,7 +1,7 @@
-pub use corelib::*;
 pub use git::*;
 pub use path::*;
+pub use standard_lib::*;
 
-mod corelib;
 mod git;
 mod path;
+mod standard_lib;
