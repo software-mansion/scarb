@@ -2,6 +2,8 @@ use array::ArrayTrait;
 use dict::DictFeltToTrait;
 use option::OptionTrait;
 use option::OptionTraitImpl;
+use core::traits::TryInto;
+use core::traits::Into;
 
 #[test]
 #[should_panic]
@@ -36,9 +38,7 @@ fn test_bool_operators() {
     assert(!(true ^ true), '!(t ^ t)');
 }
 
-impl OptionEcPointCopy of Copy::<Option::<NonZeroEcPoint>>;
-impl NonZeroEcPointDrop of Drop::<NonZeroEcPoint>;
-use core::traits::ToBool;
+use ec::OptionNonZeroEcPointDrop;
 
 #[test]
 fn test_ec_operations() {
@@ -82,7 +82,7 @@ fn test_ec_operations() {
     assert(sub_y == y, 'bad y for 2p - p');
 
     // Compute `p - p`.
-    assert(ec_point_is_zero(p - p).to_bool(), 'p - p did not return 0.');
+    assert(ec_point_is_zero(p - p).into(), 'p - p did not return 0.');
 
     // Compute `(-p) - p`.
     let (sub2_x, sub2_y) = ec_point_unwrap(ec_point_non_zero(ec_neg(p) - p));
@@ -166,6 +166,7 @@ fn test_felt_operators() {
     assert(1231 - 231 == 1000, '1231-231=1000');
     assert(1 * 3 == 3, '1 * 3 == 3');
     assert(3 * 6 == 18, '3 * 6 == 18');
+    assert(-3 == 1 - 4, '-3 == 1 - 4');
     assert(1 < 4, '1 < 4');
     assert(1 <= 4, '1 <= 4');
     assert(!(4 < 4), '!(4 < 4)');
@@ -451,7 +452,7 @@ fn test_u64_operators() {
     assert(1_u64 * 3_u64 == 3_u64, '1 * 3 == 3');
     assert(2_u64 * 4_u64 == 8_u64, '2 * 4 == 8');
     assert(5010670477878974275_u64 / 7_u64 == 715810068268424896_u64, 'Wrong division result.');
-    assert(5010670477878974275_u64 % 7_u64 == 3_u64, '5010670477878974275 % 7 == 5');
+    assert(5010670477878974275_u64 % 7_u64 == 3_u64, '5010670477878974275 % 7 == 3');
     assert(1_u64 < 4_u64, '1 < 4');
     assert(1_u64 <= 4_u64, '1 <= 4');
     assert(!(4_u64 < 4_u64), '!(4 < 4)');
@@ -652,9 +653,9 @@ fn as_u256(high: u128, low: u128) -> u256 {
 
 #[test]
 fn test_u256_from_felt() {
-    assert(u256_from_felt(1) == as_u256(0_u128, 1_u128), 'into 1');
+    assert(1.into() == as_u256(0_u128, 1_u128), 'into 1');
     assert(
-        u256_from_felt(170141183460469231731687303715884105728 * 2) == as_u256(1_u128, 0_u128),
+        (170141183460469231731687303715884105728 * 2).into() == as_u256(1_u128, 0_u128),
         'into 2**128'
     );
 }
@@ -790,37 +791,45 @@ fn test_u256_mul_overflow_2() {
     as_u256(0_u128, pow_2_127()) * as_u256(2_u128, 0_u128);
 }
 
-// TODO(orizi): Switch to operators and literals when added.
-fn test_array_helper(idx: usize) -> felt {
+fn test_array_helper() -> Array::<felt> {
     let mut arr = ArrayTrait::new();
     arr.append(10);
     arr.append(11);
     arr.append(12);
-    array_at(ref arr, idx)
+    arr
 }
 
 #[test]
 fn test_array() {
-    assert(test_array_helper(0_usize) == 10, 'array[0] == 10');
-    assert(test_array_helper(1_usize) == 11, 'array[1] == 11');
-    assert(test_array_helper(2_usize) == 12, 'array[2] == 12');
+    let arr = test_array_helper();
+    assert(*arr.at(0_usize) == 10, 'array[0] == 10');
+    assert(*arr.at(1_usize) == 11, 'array[1] == 11');
+    assert(*arr.at(2_usize) == 12, 'array[2] == 12');
 }
 
 #[test]
 #[should_panic]
 fn test_array_out_of_bound_1() {
-    test_array_helper(3_usize);
+    let arr = test_array_helper();
+    arr.at(3_usize);
 }
 
 #[test]
 #[should_panic]
 fn test_array_out_of_bound_2() {
-    test_array_helper(11_usize);
+    let arr = test_array_helper();
+    arr.at(11_usize);
 }
 
 #[test]
 fn test_dict_new() -> DictFeltTo::<felt> {
     DictFeltToTrait::new()
+}
+
+#[test]
+fn test_dict_squash_empty() {
+    let mut dict: DictFeltTo::<felt> = DictFeltToTrait::new();
+    let squashed_dict = dict.squash();
 }
 
 #[test]
