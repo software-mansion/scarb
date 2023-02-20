@@ -51,7 +51,7 @@ fn compile_with_syntax_error() {
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-               Compiling hello v0.1.0 ([..])
+               Compiling hello v0.1.0 ([..]Scarb.toml)
             error: Skipped tokens. Expected: Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum or an attribute.
              --> lib.cairo:1:1
             not_a_keyword
@@ -78,7 +78,7 @@ fn compile_with_syntax_error_json() {
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-            {"status":"compiling","message":"hello v0.1.0 ([..])"}
+            {"status":"compiling","message":"hello v0.1.0 ([..]Scarb.toml)"}
             {"type":"diagnostic","message":"error: Skipped tokens. Expected: Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum or an attribute./n --> lib.cairo:1:1/nnot_a_keyword/n^***********^/n/n"}
             {"type":"error","message":"could not compile `hello` due to previous error"}
         "#});
@@ -302,7 +302,7 @@ fn compile_multiple_packages() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..] Compiling fib v1.0.0 ([..])
+            [..] Compiling fib v1.0.0 ([..]Scarb.toml)
             [..]  Finished release target(s) in [..]
         "#});
 
@@ -386,7 +386,7 @@ fn compile_with_nested_deps() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..] Compiling x v1.0.0 ([..])
+            [..] Compiling x v1.0.0 ([..]Scarb.toml)
             [..]  Finished release target(s) in [..]
         "#});
 
