@@ -102,7 +102,7 @@ impl Ui {
     }
 
     pub fn anyhow(&self, error: &anyhow::Error) {
-        // Note: Some errors, particularly ones from `toml_edit` like to add trailing newlines.
+        // NOTE: Some errors, particularly ones from `toml_edit` like to add trailing newlines.
         //   This isn't a big problem for users, but it's causing issues in tests, where trailing
         //   whitespace collides with `indoc`.
         self.error(format!("{error:?}").trim())
