@@ -3,7 +3,6 @@ use std::fmt;
 use anyhow::{ensure, Result};
 use url::Url;
 
-use crate::core::SourceId;
 use crate::internal::stable_hash::short_hash;
 
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
@@ -43,10 +42,6 @@ impl CanonicalUrl {
         }
 
         Ok(Self(url))
-    }
-
-    pub fn for_source_id(source_id: SourceId) -> Result<Self> {
-        Self::new(&source_id.url)
     }
 
     pub fn ident(&self) -> String {

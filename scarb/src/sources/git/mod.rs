@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use smol::lock::OnceCell;
 use smol::unblock;
+use url::Url;
 
 use canonical_url::CanonicalUrl;
 use client::{GitRemote, Rev};
@@ -37,13 +38,27 @@ struct InnerState<'c> {
 
 impl<'c> GitSource<'c> {
     pub fn new(source_id: SourceId, config: &'c Config) -> Result<Self> {
-        let canonical_url = CanonicalUrl::for_source_id(source_id)?;
+        Self::with_custom_repo(
+            &source_id.url,
+            source_id.git_reference().unwrap(),
+            source_id,
+            config,
+        )
+    }
+
+    pub fn with_custom_repo(
+        repo_url: &Url,
+        requested_reference: GitReference,
+        source_id: SourceId,
+        config: &'c Config,
+    ) -> Result<Self> {
+        let canonical_url = CanonicalUrl::new(repo_url)?;
 
         Ok(Self {
             source_id,
             config,
             remote: GitRemote::new(canonical_url),
-            requested_reference: source_id.git_reference().unwrap(),
+            requested_reference,
             // TODO(mkaput): Pull this somehow from the lockfile.
             locked_rev: None,
             inner: OnceCell::new(),
