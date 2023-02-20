@@ -26,7 +26,7 @@ jobs:
             # Use cross to link oldest GLIBC possible.
             cross: true
 
-          # Note: MUSL may not be possible to use in the future when we'll have compiler plugins.
+          # NOTE: MUSL may not be possible to use in the future when we'll have compiler plugins.
           #- target: x86_64-unknown-linux-musl
           #  os: ubuntu-latest
           #  cross: true
