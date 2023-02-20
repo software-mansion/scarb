@@ -68,10 +68,15 @@ impl Summary {
     }
 
     pub fn implicit_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
-        static CORE_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| ManifestDependency {
-            name: PackageName::CORE,
-            version_req: VersionReq::STAR,
-            source_id: SourceId::for_std(),
+        static CORE_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| {
+            // NOTE: Pin `core` to exact version, because we know that's the only one we have.
+            let cairo_version = crate::version::get().cairo.version;
+            let version_req = VersionReq::parse(&format!("={cairo_version}")).unwrap();
+            ManifestDependency {
+                name: PackageName::CORE,
+                version_req,
+                source_id: SourceId::for_std(),
+            }
         });
 
         let mut deps: Vec<&ManifestDependency> = Vec::new();
