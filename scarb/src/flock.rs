@@ -14,6 +14,8 @@ use crate::internal::fsx;
 use crate::internal::lazy_directory_creator::LazyDirectoryCreator;
 use crate::ui::Status;
 
+const OK_FILE: &str = ".scarb-ok";
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum FileLockKind {
     Shared,
@@ -281,6 +283,18 @@ impl<'a> Filesystem<'a> {
             fsx::remove_dir_all(path)?;
         }
         fsx::create_dir_all(path)?;
+        Ok(())
+    }
+
+    /// Checks if this filesystem has a valid `.scarb-ok` file.
+    pub fn is_ok(&self) -> bool {
+        self.path_unchecked().join(OK_FILE).exists()
+    }
+
+    /// Marks this filesystem as being properly set up (whatever this means is up to user),
+    /// by creating a `.scarb-ok` file.
+    pub fn mark_ok(&self) -> Result<()> {
+        let _ = fsx::create(self.path_existent()?.join(OK_FILE))?;
         Ok(())
     }
 }
