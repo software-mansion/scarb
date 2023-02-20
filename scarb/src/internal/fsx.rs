@@ -1,51 +1,60 @@
-//! Mostly [`std::fs`] extensions with extra error messaging.
+//! Mostly [`fs`] extensions with extra error messaging.
 
 use std::fs;
+use std::fs::File;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 
-/// Equivalent to [`std::fs::canonicalize`] with better error messages.
+/// Equivalent to [`fs::canonicalize`] with better error messages.
 pub fn canonicalize(p: impl AsRef<Path>) -> Result<PathBuf> {
-    canonicalize_impl(p.as_ref())
+    return inner(p.as_ref());
+
+    fn inner(p: &Path) -> Result<PathBuf> {
+        fs::canonicalize(p)
+            .with_context(|| format!("failed to get absolute path of `{}`", p.display()))
+    }
 }
 
-fn canonicalize_impl(p: &Path) -> Result<PathBuf> {
-    fs::canonicalize(p).with_context(|| format!("failed to get absolute path of `{}`", p.display()))
-}
-
-/// Equivalent to [`std::fs::create_dir_all`] with better error messages.
+/// Equivalent to [`fs::create_dir_all`] with better error messages.
 pub fn create_dir_all(p: impl AsRef<Path>) -> Result<()> {
-    create_dir_all_impl(p.as_ref())
+    return inner(p.as_ref());
+
+    fn inner(p: &Path) -> Result<()> {
+        fs::create_dir_all(p)
+            .with_context(|| format!("failed to create directory `{}`", p.display()))?;
+        Ok(())
+    }
 }
 
-fn create_dir_all_impl(p: &Path) -> Result<()> {
-    fs::create_dir_all(p)
-        .with_context(|| format!("failed to create directory `{}`", p.display()))?;
-    Ok(())
-}
-
-/// Equivalent to [`std::fs::remove_dir_all`] with better error messages.
+/// Equivalent to [`fs::remove_dir_all`] with better error messages.
 pub fn remove_dir_all(p: impl AsRef<Path>) -> Result<()> {
-    remove_dir_all_impl(p.as_ref())
+    return inner(p.as_ref());
+
+    fn inner(p: &Path) -> Result<()> {
+        fs::remove_dir_all(p)
+            .with_context(|| format!("failed to remove directory `{}`", p.display()))?;
+        Ok(())
+    }
 }
 
-fn remove_dir_all_impl(p: &Path) -> Result<()> {
-    fs::remove_dir_all(p)
-        .with_context(|| format!("failed to remove directory `{}`", p.display()))?;
-    Ok(())
-}
-
-/// Equivalent to [`std::fs::write`] with better error messages.
+/// Equivalent to [`fs::write`] with better error messages.
 pub fn write(path: impl AsRef<Path>, contents: impl AsRef<[u8]>) -> Result<()> {
-    let path = path.as_ref();
-    let contents = contents.as_ref();
-    write_impl(path, contents)
+    return inner(path.as_ref(), contents.as_ref());
+
+    fn inner(path: &Path, contents: &[u8]) -> Result<()> {
+        fs::write(path, contents).with_context(|| format!("failed to write `{}`", path.display()))
+    }
 }
 
-fn write_impl(path: &Path, contents: &[u8]) -> Result<()> {
-    fs::write(path, contents).with_context(|| format!("failed to write `{}`", path.display()))
+/// Equivalent to [`File::create`] with better error messages.
+pub fn create(path: impl AsRef<Path>) -> Result<File> {
+    return inner(path.as_ref());
+
+    fn inner(path: &Path) -> Result<File> {
+        File::create(path).with_context(|| format!("failed to create `{}`", path.display()))
+    }
 }
 
 pub trait PathUtf8Ext {
