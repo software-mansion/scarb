@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use crate::core::{ManifestDependency, Package, PackageId, Summary};
 
 pub mod cache;
-pub mod download;
 pub mod source_map;
 
 #[async_trait(?Send)]
@@ -25,7 +24,6 @@ pub(crate) mod mock {
     use async_trait::async_trait;
     use camino::Utf8PathBuf;
     use itertools::Itertools;
-    use semver::Version;
 
     use crate::core::package::PackageName;
     use crate::core::registry::Registry;
@@ -44,7 +42,7 @@ pub(crate) mod mock {
             reg.put(
                 PackageId::new(
                     PackageName::CORE,
-                    Version::new(1, 0, 0),
+                    crate::version::get().cairo.version.parse().unwrap(),
                     SourceId::for_std(),
                 ),
                 Vec::new(),

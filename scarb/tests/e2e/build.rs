@@ -29,7 +29,7 @@ fn compile_simple() {
     assert_eq!(t.child("target/release").files(), vec!["hello.sierra"]);
 
     cache_dir
-        .child("registry/core/core/Scarb.toml")
+        .child("registry/std")
         .assert(predicates::path::exists());
     cache_dir
         .child("CACHEDIR.TAG")

@@ -1,59 +1,67 @@
 use std::fmt;
 
-use anyhow::{ensure, Result};
+use anyhow::{Context, Result};
 use async_trait::async_trait;
-use rust_embed::RustEmbed;
+use include_dir::{include_dir, Dir};
 use smol::lock::OnceCell;
+use tracing::trace;
 
 use crate::core::config::Config;
 use crate::core::manifest::{ManifestDependency, Summary};
 use crate::core::package::{Package, PackageId};
-use crate::core::registry::download::download_package_to_cache;
-use crate::core::source::{Source, SourceId};
-use crate::core::MANIFEST_FILE_NAME;
-use crate::internal::fsx;
-use crate::ops;
-
-#[derive(RustEmbed)]
-#[folder = "../corelib"]
-struct Corelib;
+use crate::core::source::Source;
+use crate::core::SourceId;
+use crate::sources::PathSource;
 
 /// Serves Cairo standard library packages.
 pub struct StandardLibSource<'c> {
     config: &'c Config,
-    package: OnceCell<Package>,
+    path_source: OnceCell<PathSource<'c>>,
 }
 
 impl<'c> StandardLibSource<'c> {
     pub fn new(config: &'c Config) -> Self {
         Self {
             config,
-            package: OnceCell::new(),
+            path_source: OnceCell::new(),
         }
     }
 
-    async fn ensure_loaded(&self) -> Result<Package> {
-        self.package.get_or_try_init(|| self.load()).await.cloned()
+    async fn ensure_loaded(&self) -> Result<&PathSource<'c>> {
+        self.path_source.get_or_try_init(|| self.load()).await
     }
 
-    async fn load(&self) -> Result<Package> {
-        // TODO(mkaput): Include core version or hash part here.
-        let root = download_package_to_cache("core", "core", self.config, |tmp| {
-            for path in Corelib::iter() {
-                let full_path = tmp.join(path.as_ref());
-                let data = Corelib::get(path.as_ref()).unwrap().data;
-                fsx::create_dir_all(full_path.parent().unwrap())?;
-                fsx::write(full_path, data)?;
+    #[tracing::instrument(name = "standard_lib_source_load", level = "trace", skip(self))]
+    async fn load(&self) -> Result<PathSource<'c>> {
+        static CORE: Dir<'_> = include_dir!("$SCARB_CORE_PATH");
+
+        let tag = core_version_tag();
+
+        let registry_fs = self.config.dirs().registry_dir();
+        let std_fs = registry_fs.child("std");
+        let tag_fs = std_fs.child(&tag);
+        let tag_path = tag_fs.path_existent()?;
+
+        if !tag_fs.is_ok() {
+            trace!("extracting Cairo standard library: {tag}");
+            let _lock = self.config.package_cache_lock().acquire_async().await?;
+
+            unsafe {
+                tag_fs.recreate()?;
             }
 
-            Ok(())
-        })
-        .await?;
+            let core_fs = tag_fs.child("core");
+            CORE.extract(core_fs.path_existent()?)
+                .context("failed to extract Cairo standard library")?;
 
-        let manifest_path = root.join(MANIFEST_FILE_NAME);
-        let ws =
-            ops::read_workspace_with_source_id(&manifest_path, SourceId::for_std(), self.config)?;
-        Ok(ws.members().next().unwrap())
+            tag_fs.mark_ok()?;
+        }
+
+        Ok(PathSource::recursive_at(
+            tag_path,
+            SourceId::for_std(),
+            self.config,
+        ))
     }
 }
 
@@ -61,19 +69,12 @@ impl<'c> StandardLibSource<'c> {
 impl<'c> Source for StandardLibSource<'c> {
     #[tracing::instrument(level = "trace", skip(self))]
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
-        let package = self.ensure_loaded().await?;
-        if dependency.matches_summary(&package.manifest.summary) {
-            Ok(vec![package.manifest.summary.clone()])
-        } else {
-            Ok(Vec::new())
-        }
+        self.ensure_loaded().await?.query(dependency).await
     }
 
     #[tracing::instrument(level = "trace", skip(self))]
     async fn download(&self, package_id: PackageId) -> Result<Package> {
-        let package = self.ensure_loaded().await?;
-        ensure!(package.id == package_id, "unknown package {package_id}");
-        Ok(package)
+        self.ensure_loaded().await?.download(package_id).await
     }
 }
 
@@ -81,4 +82,15 @@ impl<'c> fmt::Debug for StandardLibSource<'c> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("StandardLibSource").finish_non_exhaustive()
     }
+}
+
+fn core_version_tag() -> String {
+    let core_version_info = crate::version::get().cairo;
+    core_version_info
+        .commit_info
+        .map(|commit| {
+            assert!(!commit.short_commit_hash.starts_with('v'));
+            commit.short_commit_hash
+        })
+        .unwrap_or_else(|| format!("v{}", core_version_info.version))
 }
