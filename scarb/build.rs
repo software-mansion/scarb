@@ -1,11 +1,15 @@
-use std::fs;
-use std::path::Path;
+use std::fs::File;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str::FromStr;
+use std::{env, fs, io};
+
+use zip::ZipArchive;
 
 fn main() {
     commit_info();
-    cairo_version();
+    let rev = cairo_version();
+    download_core(&rev);
 }
 
 fn commit_info() {
@@ -33,23 +37,80 @@ fn commit_info() {
     println!("cargo:rustc-env=SCARB_COMMIT_DATE={}", next())
 }
 
-fn cairo_version() {
+fn cairo_version() -> String {
     println!("cargo:rerun-if-changed=../Cargo.lock");
-    let Ok(lock) = fs::read_to_string("../Cargo.lock") else { return };
-    let Ok(lock) = toml_edit::Document::from_str(&lock) else { return };
-    let Some(lock) = lock["package"].as_array_of_tables() else { return };
-    let Some(cairo_lock) = lock.into_iter().find(|t| {
-        t["name"].as_value().and_then(|v| v.as_str()).unwrap_or_default() == "cairo-lang-compiler"
-    }) else {
-        return;
-    };
-    let Some(version) = cairo_lock["version"].as_str() else { return };
+    let lock = fs::read_to_string("../Cargo.lock").expect("Failed to read Cargo.lock");
+    let lock = toml_edit::Document::from_str(&lock).expect("Failed to parse Cargo.lock as TOML");
+    let lock = lock["package"].as_array_of_tables().unwrap();
+    let cairo_lock = lock
+        .into_iter()
+        .find(|t| {
+            t["name"]
+                .as_value()
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                == "cairo-lang-compiler"
+        })
+        .expect("Failed to find cairo-lang-compiler package in lock");
+    let version = cairo_lock["version"].as_str().unwrap();
     println!("cargo:rustc-env=SCARB_CAIRO_VERSION={version}");
     if let Some(source) = cairo_lock["source"].as_str() {
         if source.starts_with("git+") {
             if let Some((_, commit)) = source.split_once('#') {
                 println!("cargo:rustc-env=SCARB_CAIRO_COMMIT_HASH={commit}");
+                return commit.to_string();
             }
         }
     }
+    format!("refs/tags/v{version}")
+}
+
+fn download_core(rev: &str) {
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let core_path = PathBuf::from_iter([&out_dir, "core"]);
+
+    if !core_path.is_dir() {
+        let url = format!("https://github.com/starkware-libs/cairo/archive/{rev}.zip");
+        let cairo_zip = PathBuf::from_iter([&out_dir, "cairo.zip"]);
+
+        let mut curl = Command::new("curl");
+        curl.args(["--proto", "=https", "--tlsv1.2", "-fL"]);
+        curl.arg("-o");
+        curl.arg(&cairo_zip);
+        curl.arg(&url);
+        eprintln!("{curl:?}");
+        let curl_exit = curl.status().expect("Failed to start curl");
+        if !curl_exit.success() {
+            panic!("Failed to download {url} with curl")
+        }
+
+        fs::create_dir_all(&core_path).unwrap();
+        let cairo_file = File::open(cairo_zip).unwrap();
+        let mut cairo_archive = ZipArchive::new(cairo_file).unwrap();
+        for i in 0..cairo_archive.len() {
+            let mut input = cairo_archive.by_index(i).unwrap();
+
+            if input.name().ends_with('/') {
+                continue;
+            }
+
+            let path = input.enclosed_name().unwrap();
+
+            let path = PathBuf::from_iter(path.components().skip(1));
+            let Ok(path) = path.strip_prefix("corelib") else {
+                continue;
+            };
+
+            let path = core_path.join(path);
+
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent).unwrap();
+            }
+
+            let mut output = File::create(path).unwrap();
+            io::copy(&mut input, &mut output).unwrap();
+        }
+    }
+
+    println!("cargo:rustc-env=SCARB_CORE_PATH={}", core_path.display());
 }
