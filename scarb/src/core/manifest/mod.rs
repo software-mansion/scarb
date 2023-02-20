@@ -136,7 +136,7 @@ pub struct ManifestMetadata {
     pub repository: Option<String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ManifestDependency {
     pub name: PackageName,
     pub version_req: VersionReq,
@@ -162,5 +162,11 @@ impl fmt::Display for ManifestDependency {
         }
 
         Ok(())
+    }
+}
+
+impl fmt::Debug for ManifestDependency {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ManifestDependency({self})")
     }
 }
