@@ -12,7 +12,6 @@ use std::process::Command;
 
 use anyhow::{anyhow, bail, Context, Result};
 use camino::Utf8PathBuf;
-use git_repository as git;
 
 use crate::core::{Config, GitReference};
 use crate::flock::Filesystem;
@@ -45,7 +44,7 @@ impl fmt::Debug for GitRemote {
 pub struct GitDatabase {
     remote: GitRemote,
     path: Utf8PathBuf,
-    repo: git::Repository,
+    repo: gix::Repository,
 }
 
 impl fmt::Debug for GitDatabase {
@@ -67,7 +66,7 @@ pub struct GitCheckout<'d> {
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Rev {
-    oid: git::ObjectId,
+    oid: gix::ObjectId,
 }
 
 impl fmt::Display for Rev {
@@ -82,8 +81,8 @@ impl fmt::Debug for Rev {
     }
 }
 
-impl From<git::ObjectId> for Rev {
-    fn from(oid: git::ObjectId) -> Self {
+impl From<gix::ObjectId> for Rev {
+    fn from(oid: gix::ObjectId) -> Self {
         Self { oid }
     }
 }
@@ -147,8 +146,8 @@ impl GitDatabase {
     #[tracing::instrument(level = "trace")]
     pub fn open(remote: &GitRemote, fs: &Filesystem<'_>) -> Result<Self> {
         let path = fs.path_existent()?;
-        let opts = git::open::Options::default().open_path_as_is(true);
-        let repo = git::open_opts(path, opts)?;
+        let opts = gix::open::Options::default().open_path_as_is(true);
+        let repo = gix::open_opts(path, opts)?;
         Ok(Self {
             remote: remote.clone(),
             path: path.to_path_buf(),
@@ -159,7 +158,7 @@ impl GitDatabase {
     #[tracing::instrument(level = "trace")]
     pub fn init_bare(remote: &GitRemote, fs: &Filesystem<'_>) -> Result<Self> {
         let path = fs.path_existent()?;
-        let repo = git::init_bare(path)?;
+        let repo = gix::init_bare(path)?;
         Ok(Self {
             remote: remote.clone(),
             path: path.to_path_buf(),

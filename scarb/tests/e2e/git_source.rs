@@ -2,7 +2,7 @@ use std::fs;
 
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
-use git_repository::refs::transaction::PreviousValue;
+use gix::refs::transaction::PreviousValue;
 use indoc::{formatdoc, indoc};
 
 use crate::support::command::Scarb;
@@ -126,7 +126,7 @@ fn compile_git_dep_pull_request() {
             .build(&t)
     });
 
-    let repo = git_repository::open(git_dep.p.path()).unwrap();
+    let repo = gix::open(git_dep.p.path()).unwrap();
     repo.reference(
         "refs/pull/330/head",
         repo.head_id().unwrap(),
