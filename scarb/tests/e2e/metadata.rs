@@ -78,9 +78,9 @@ fn simple() {
   },
   "packages": [
     {
-      "id": "core 0.1.0 (std)",
+      "id": "core [..] (std)",
       "name": "core",
-      "version": "0.1.0",
+      "version": "[..]",
       "source": "std",
       "root": "[..]",
       "manifest_path": "[..]/Scarb.toml",
@@ -117,7 +117,7 @@ fn simple() {
       "dependencies": [
         {
           "name": "core",
-          "version_req": "*",
+          "version_req": "=[..]",
           "source": "std"
         }
       ],
