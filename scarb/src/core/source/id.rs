@@ -249,7 +249,13 @@ impl fmt::Display for SourceId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.kind == SourceKind::Path {
             let path = self.url.to_file_path().expect("expected file:// URL here");
-            write!(f, "{}", path.display())
+            let mut path_string = path.display().to_string();
+            // Do not display trailing slashes.
+            if path_string.len() > 1 && (path_string.ends_with('\\') || path_string.ends_with('/'))
+            {
+                path_string.pop();
+            }
+            write!(f, "{}", path_string)
         } else {
             write!(f, "{}", self.to_pretty_url())
         }
@@ -284,5 +290,11 @@ mod tests {
             SourceId::from_pretty_url(&source_id.to_pretty_url()).unwrap(),
             source_id
         );
+    }
+
+    #[test_case(SourceId::mock_path())]
+    fn source_id_display_does_not_contain_trailing_slashes(source_id: SourceId) {
+        assert!(!source_id.to_string().ends_with('/'));
+        assert!(!source_id.to_string().ends_with('\\'));
     }
 }
