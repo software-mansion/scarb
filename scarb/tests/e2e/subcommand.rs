@@ -76,6 +76,40 @@ fn env_variables_are_passed() {
         .success();
 }
 
+#[test]
+#[cfg(unix)]
+fn env_scarb_log_is_passed_verbatim() {
+    let t = TempDir::new().unwrap();
+    write_script(
+        "env",
+        indoc! {
+            r#"
+            #!/usr/bin/env bash
+
+            if [[ "$SCARB_LOG" != "test=filter" ]]
+            then
+                echo "Variable SCARB_LOG has incorrect value $SCARB_LOG!"
+                exit 1
+            fi
+
+            if [[ "$SCARB_UI_VERBOSITY" != "verbose" ]]
+            then
+                echo "Variable SCARB_UI_VERBOSITY has incorrect value $SCARB_UI_VERBOSITY!"
+                exit 1
+            fi
+            "#
+        },
+        &t,
+    );
+
+    Scarb::quick_snapbox()
+        .args(["-vvvv", "env"])
+        .env("PATH", path_with_temp_dir(&t))
+        .env("SCARB_LOG", "test=filter")
+        .assert()
+        .success();
+}
+
 // TODO(mkaput): Fix this test.
 #[test]
 #[ignore] // something doesn't work here
