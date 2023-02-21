@@ -57,6 +57,15 @@ pub fn create(path: impl AsRef<Path>) -> Result<File> {
     }
 }
 
+/// Equivalent to [`fs::read_to_string`] with better error messages.
+pub fn read_to_string(path: impl AsRef<Path>) -> Result<String> {
+    return inner(path.as_ref());
+
+    fn inner(path: &Path) -> Result<String> {
+        fs::read_to_string(path).with_context(|| format!("failed to read `{}`", path.display()))
+    }
+}
+
 pub trait PathUtf8Ext {
     fn try_as_utf8(&'_ self) -> Result<&'_ Utf8Path>;
 
