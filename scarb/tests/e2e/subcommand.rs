@@ -55,6 +55,7 @@ fn env_variables_are_passed() {
                 SCARB_CACHE
                 SCARB_CONFIG
                 SCARB_MANIFEST_DIR
+                SCARB_UI_VERBOSITY
             )
             for v in "${required[@]}"; do
                 if test -z "${!v}"
