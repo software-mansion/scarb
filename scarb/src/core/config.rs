@@ -27,6 +27,7 @@ pub struct Config {
     // HACK: This should be the lifetime of Config itself, but we cannot express that, so we
     //   put 'static here and transmute in getter function.
     package_cache_lock: OnceCell<AdvisoryLock<'static>>,
+    scarb_log: String,
     offline: bool,
 }
 
@@ -49,6 +50,8 @@ impl Config {
 
         let dirs = Arc::new(dirs);
 
+        let scarb_log = env::var("SCARB_LOG").unwrap_or_default();
+
         Ok(Self {
             manifest_path,
             dirs,
@@ -57,6 +60,7 @@ impl Config {
             ui,
             creation_time,
             package_cache_lock: OnceCell::new(),
+            scarb_log,
             offline: false,
         })
     }
@@ -69,6 +73,10 @@ impl Config {
         self.manifest_path()
             .parent()
             .expect("parent of manifest path must always exist")
+    }
+
+    pub fn scarb_log(&self) -> &str {
+        &self.scarb_log
     }
 
     pub fn dirs(&self) -> &AppDirs {
