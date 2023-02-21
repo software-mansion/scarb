@@ -133,3 +133,15 @@ pub struct FmtArgs {
     #[arg(short, long)]
     pub package: Option<PackageName>,
 }
+
+#[cfg(test)]
+mod tests {
+    use clap::CommandFactory;
+
+    use super::ScarbArgs;
+
+    #[test]
+    fn verify() {
+        ScarbArgs::command().debug_assert();
+    }
+}
