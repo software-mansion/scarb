@@ -18,7 +18,7 @@ use scarb::version;
 /// The Cairo package manager.
 #[derive(Parser, Clone, Debug)]
 #[command(author, version = version::get().short(), long_version = version::get().long())]
-pub struct Args {
+pub struct ScarbArgs {
     /// Override path to a directory containing a Scarb.toml file.
     #[arg(long, env = "SCARB_MANIFEST_PATH", global = true)]
     pub manifest_path: Option<Utf8PathBuf>,
@@ -40,13 +40,25 @@ pub struct Args {
     pub command: Command,
 }
 
-impl Args {
+impl ScarbArgs {
     /// Construct [`OutputFormat`] value from these arguments.
     pub fn output_format(&self) -> OutputFormat {
         if self.json {
             OutputFormat::Json
         } else {
             OutputFormat::default()
+        }
+    }
+
+    /// Get [`ui::Verbosity`] out of this arguments.
+    pub fn ui_verbosity(&self) -> ui::Verbosity {
+        let filter = self.verbose.log_level_filter().as_trace();
+        if filter >= LevelFilter::WARN {
+            ui::Verbosity::Verbose
+        } else if filter > LevelFilter::OFF {
+            ui::Verbosity::Normal
+        } else {
+            ui::Verbosity::Quiet
         }
     }
 }
@@ -120,18 +132,4 @@ pub struct FmtArgs {
     /// Specify package to format.
     #[arg(short, long)]
     pub package: Option<PackageName>,
-}
-
-impl Args {
-    /// Get [`ui::Verbosity`] out of this arguments.
-    pub fn ui_verbosity(&self) -> ui::Verbosity {
-        let filter = self.verbose.log_level_filter().as_trace();
-        if filter >= LevelFilter::WARN {
-            ui::Verbosity::Verbose
-        } else if filter > LevelFilter::OFF {
-            ui::Verbosity::Normal
-        } else {
-            ui::Verbosity::Quiet
-        }
-    }
 }
