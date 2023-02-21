@@ -67,7 +67,7 @@ fn cairo_version() -> String {
 
 fn download_core(rev: &str) {
     let out_dir = env::var("OUT_DIR").unwrap();
-    let core_path = PathBuf::from_iter([&out_dir, "core"]);
+    let core_path = PathBuf::from_iter([&out_dir, &format!("core-{}", ident(rev))]);
 
     if !core_path.is_dir() {
         let url = format!("https://github.com/starkware-libs/cairo/archive/{rev}.zip");
@@ -113,4 +113,12 @@ fn download_core(rev: &str) {
     }
 
     println!("cargo:rustc-env=SCARB_CORE_PATH={}", core_path.display());
+}
+
+fn ident(id: &str) -> String {
+    let mut ident = String::with_capacity(id.len());
+    for ch in id.chars() {
+        ident.push(if ch.is_ascii_alphanumeric() { ch } else { '_' })
+    }
+    ident
 }
