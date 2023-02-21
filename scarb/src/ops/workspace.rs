@@ -132,16 +132,14 @@ pub fn find_all_packages_recursive_with_source_id(
                     config.ui().warn({
                         let path_a = relative_source_path(e.key().source_id, source_id);
                         let path_b = relative_source_path(pkg.id.source_id, source_id);
-
-                        let pkg_id = pkg.id;
                         formatdoc! {"
-                            found duplicate packages named `{pkg_id}`
+                            found duplicate packages named `{pkg}`
 
                             Found locations:
                             - {path_a}
                             - {path_b}
 
-                            Because of this, referencing package `{pkg_id}` will fail.
+                            Because of this, referencing package `{pkg}` will fail.
                         "}
                     });
 

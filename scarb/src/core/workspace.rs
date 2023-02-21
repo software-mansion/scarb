@@ -6,6 +6,7 @@ use camino::Utf8Path;
 use crate::core::config::Config;
 use crate::core::package::Package;
 use crate::flock::RootFilesystem;
+use crate::MANIFEST_FILE_NAME;
 
 // TODO(mkaput): Support real workspaces.
 /// The core abstraction for working with a workspace of packages.
@@ -54,6 +55,18 @@ impl<'c> Workspace<'c> {
     /// Returns an iterator over all packages in this workspace
     pub fn members(&self) -> impl Iterator<Item = Package> {
         [self.package.clone()].into_iter()
+    }
+}
+
+impl<'c> fmt::Display for Workspace<'c> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let manifest_path = self.manifest_path();
+        let path = if manifest_path.file_name() == Some(MANIFEST_FILE_NAME) {
+            self.root()
+        } else {
+            manifest_path
+        };
+        write!(f, "{path}")
     }
 }
 

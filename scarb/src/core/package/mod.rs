@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -53,5 +54,11 @@ impl Package {
 
     pub fn source_dir(&self) -> Utf8PathBuf {
         self.root().join(DEFAULT_SOURCE_DIR_NAME)
+    }
+}
+
+impl fmt::Display for Package {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.id)
     }
 }
