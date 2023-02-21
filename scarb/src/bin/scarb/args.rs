@@ -19,20 +19,20 @@ use scarb::version;
 #[derive(Parser, Clone, Debug)]
 #[command(author, version = version::get().short(), long_version = version::get().long())]
 pub struct Args {
-    /// Override path to a directory containing a **Scarb.toml** file.
-    #[arg(long, env = "SCARB_MANIFEST_PATH")]
+    /// Override path to a directory containing a Scarb.toml file.
+    #[arg(long, env = "SCARB_MANIFEST_PATH", global = true)]
     pub manifest_path: Option<Utf8PathBuf>,
 
     /// Logging verbosity.
     #[command(flatten)]
     pub verbose: clap_verbosity_flag::Verbosity,
 
-    /// Print machine-readable output in [NDJSON](https://github.com/ndjson/ndjson-spec) format.
-    #[arg(long)]
+    /// Print machine-readable output in NDJSON format.
+    #[arg(long, global = true)]
     pub json: bool,
 
     /// Run without accessing the network.
-    #[arg(long, env = "SCARB_OFFLINE")]
+    #[arg(long, env = "SCARB_OFFLINE", global = true)]
     pub offline: bool,
 
     /// Subcommand and its arguments.
@@ -68,7 +68,7 @@ pub enum Command {
     Fmt(FmtArgs),
     /// Create a new Scarb package in existing directory.
     Init(InitArgs),
-    /// Print path to current **Scarb.toml** file to standard output.
+    /// Print path to current Scarb.toml file to standard output.
     ManifestPath,
     /// Output the resolved dependencies of a package, the concrete used versions including
     /// overrides, in machine-readable format.
@@ -118,7 +118,7 @@ pub struct FmtArgs {
     #[arg(long, default_value_t = false)]
     pub no_color: bool,
     /// Specify package to format.
-    #[arg(short, long, value_name = "PACKAGE")]
+    #[arg(short, long)]
     pub package: Option<PackageName>,
 }
 
