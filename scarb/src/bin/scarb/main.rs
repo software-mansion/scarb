@@ -3,7 +3,7 @@ use clap::Parser;
 use tracing_log::AsTrace;
 use tracing_subscriber::EnvFilter;
 
-use args::Args;
+use args::ScarbArgs;
 use scarb::core::Config;
 use scarb::dirs::AppDirs;
 use scarb::ops;
@@ -13,7 +13,7 @@ mod args;
 mod commands;
 
 fn main() {
-    let args: Args = Args::parse();
+    let args = ScarbArgs::parse();
 
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
@@ -34,7 +34,7 @@ fn main() {
     }
 }
 
-fn cli_main(args: Args) -> Result<()> {
+fn cli_main(args: ScarbArgs) -> Result<()> {
     let mut dirs = AppDirs::std()?;
     dirs.apply_env_overrides()?;
 
