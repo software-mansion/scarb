@@ -37,6 +37,26 @@ fn compile_simple() {
 }
 
 #[test]
+fn quiet_output() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start().build(&t);
+
+    Scarb::quick_snapbox()
+        .args(["build", "-q"])
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq("");
+
+    Scarb::quick_snapbox()
+        .args(["--json", "-q", "build"])
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq("");
+}
+
+#[test]
 fn compile_with_syntax_error() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
