@@ -41,6 +41,39 @@ fn subcommand() {
 }
 
 #[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "This test should write a Rust code, because currently it only assumes Unix."
+)]
+fn list_commands() {
+    let t = TempDir::new().unwrap();
+    write_script(
+        "hello",
+        &formatdoc!(
+            r#"
+            #!/usr/bin/env python3
+            import sys
+            print("Hello", *sys.argv[1:])
+            "#
+        ),
+        &t,
+    );
+
+    Scarb::quick_snapbox()
+        .args(["commands"])
+        .env("PATH", path_with_temp_dir(&t))
+        .assert()
+        .success()
+        .stdout_matches(indoc! {
+            r#"
+            Installed Commands:
+            hello: /[..]/scarb-hello
+
+            "#,
+        });
+}
+
+#[test]
 #[cfg(unix)]
 fn env_variables_are_passed() {
     let t = TempDir::new().unwrap();
@@ -86,13 +119,11 @@ fn env_scarb_log_is_passed_verbatim() {
         indoc! {
             r#"
             #!/usr/bin/env bash
-
             if [[ "$SCARB_LOG" != "test=filter" ]]
             then
                 echo "Variable SCARB_LOG has incorrect value $SCARB_LOG!"
                 exit 1
             fi
-
             if [[ "$SCARB_UI_VERBOSITY" != "verbose" ]]
             then
                 echo "Variable SCARB_UI_VERBOSITY has incorrect value $SCARB_UI_VERBOSITY!"
