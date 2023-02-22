@@ -34,12 +34,15 @@ pub enum SourceKind {
     Path,
     /// A git repository.
     Git(GitReference),
+    /// A remote registry.
+    Registry,
     /// The Cairo standard library.
     Std,
 }
 
 const PATH_SOURCE_PROTOCOL: &str = "path";
 const GIT_SOURCE_PROTOCOL: &str = "git";
+const REGISTRY_SOURCE_PROTOCOL: &str = "registry";
 const STD_SOURCE_PROTOCOL: &str = "std";
 
 /// Information to find a specific commit in a Git repository.
@@ -76,6 +79,10 @@ impl SourceId {
         Self::new(url.clone(), SourceKind::Git(reference.clone()))
     }
 
+    pub fn for_registry(url: &Url) -> Result<Self> {
+        Self::new(url.clone(), SourceKind::Registry)
+    }
+
     pub fn for_std() -> Self {
         static CACHE: Lazy<SourceId> = Lazy::new(|| {
             let url = Url::parse("std:").unwrap();
@@ -84,21 +91,16 @@ impl SourceId {
         *CACHE
     }
 
-    pub fn is_default_registry(self) -> bool {
-        // TODO(mkaput): This will be unnecessary when we will have general default registry.
-        #[cfg(test)]
-        return self == Self::mock_default();
-
-        // TODO(mkaput): Return `true` for default registry here.
-        #[cfg(not(test))]
-        false
+    pub fn default_registry() -> Self {
+        static CACHE: Lazy<SourceId> = Lazy::new(|| {
+            let url = Url::parse("https://there-is-no-default-registry-yet.com").unwrap();
+            SourceId::pure(url, SourceKind::Registry)
+        });
+        *CACHE
     }
 
-    // TODO(mkaput): This will be unnecessary when we will have general default registry.
-    #[cfg(test)]
-    pub(crate) fn mock_default() -> Self {
-        let url = Url::parse("https://git.test/default.git").unwrap();
-        Self::for_git(&url, &GitReference::DefaultBranch).unwrap()
+    pub fn is_default_registry(self) -> bool {
+        self == Self::default_registry()
     }
 
     pub fn is_path(self) -> bool {
@@ -152,6 +154,8 @@ impl SourceId {
                 format!("{GIT_SOURCE_PROTOCOL}+{url}")
             }
 
+            SourceKind::Registry => format!("{REGISTRY_SOURCE_PROTOCOL}+{}", self.url),
+
             SourceKind::Std => STD_SOURCE_PROTOCOL.to_string(),
         }
     }
@@ -192,6 +196,8 @@ impl SourceId {
 
             PATH_SOURCE_PROTOCOL => SourceId::new(url, SourceKind::Path),
 
+            REGISTRY_SOURCE_PROTOCOL => SourceId::for_registry(&url),
+
             kind => bail!("unsupported source protocol: {kind}"),
         }
     }
@@ -207,6 +213,7 @@ impl SourceId {
         match self.kind {
             SourceKind::Path => Ok(Box::new(PathSource::new(self, config))),
             SourceKind::Git(_) => Ok(Box::new(GitSource::new(self, config)?)),
+            SourceKind::Registry => todo!("Registry sources are not implemented yet."),
             SourceKind::Std => Ok(Box::new(StandardLibSource::new(config))),
         }
     }
@@ -284,6 +291,7 @@ mod tests {
 
     #[test_case(SourceId::mock_git())]
     #[test_case(SourceId::mock_path())]
+    #[test_case(SourceId::default_registry())]
     #[test_case(SourceId::for_std())]
     fn equality_after_pretty_url_conversion(source_id: SourceId) {
         assert_eq!(
