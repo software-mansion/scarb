@@ -11,6 +11,7 @@ pub mod core;
 pub mod dirs;
 pub mod flock;
 mod internal;
+pub mod manifest_editor;
 pub mod metadata;
 pub mod ops;
 mod process;

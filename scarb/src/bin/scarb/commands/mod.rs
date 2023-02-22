@@ -22,7 +22,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
 
     match command {
         // Keep these sorted alphabetically.
-        Add => add::run(config),
+        Add(args) => add::run(args, config),
         Build => build::run(config),
         Clean => clean::run(config),
         Commands => commands::run(config),

@@ -10,6 +10,7 @@ use tracing::level_filters::LevelFilter;
 use tracing_log::AsTrace;
 
 use scarb::core::PackageName;
+use scarb::manifest_editor::DepId;
 use scarb::metadata::MetadataVersion;
 use scarb::ui;
 use scarb::ui::OutputFormat;
@@ -68,8 +69,8 @@ impl ScarbArgs {
 pub enum Command {
     // Keep these sorted alphabetically.
     // External should go last.
-    /// Add dependencies to a manifest file.
-    Add,
+    /// Add dependencies to a Scarb.toml manifest file.
+    Add(AddArgs),
     /// Compile current project.
     Build,
     /// Remove generated artifacts.
@@ -132,6 +133,66 @@ pub struct FmtArgs {
     /// Specify package to format.
     #[arg(short, long)]
     pub package: Option<PackageName>,
+}
+
+/// Arguments accepted by the `add` command.
+#[derive(Parser, Clone, Debug)]
+pub struct AddArgs {
+    /// Reference to a package to add as a dependency
+    ///
+    /// You can reference a package by:
+    /// - `<name>`, like `scarb add quaireaux` (the latest version will be used)
+    /// - `<name>@<version-req>`, like `scarb add quaireaux@1` or `scarb add quaireaux@=0.1.0`
+    #[arg(value_name = "DEP_ID", verbatim_doc_comment)]
+    pub packages: Vec<DepId>,
+
+    /// Do not actually write the manifest.
+    #[arg(long)]
+    pub dry_run: bool,
+
+    /// Specify package to modify.
+    #[arg(short, long)]
+    pub package: Option<PackageName>,
+
+    /// _Source_ section.
+    #[command(flatten, next_help_heading = "Source")]
+    pub source: AddSourceArgs,
+}
+
+/// _Source_ section of [`AddArgs`].
+#[derive(Parser, Clone, Debug)]
+pub struct AddSourceArgs {
+    /// Filesystem path to local package to add.
+    #[arg(long, conflicts_with_all = ["git", "GitRefGroup"])]
+    pub path: Option<Utf8PathBuf>,
+
+    /// Git repository location
+    ///
+    /// Without any other information, Scarb will use the latest commit on the default branch.
+    #[arg(long, value_name = "URI")]
+    pub git: Option<String>,
+
+    /// Git reference args for `--git`.
+    #[command(flatten)]
+    pub git_ref: GitRefGroup,
+}
+
+/// Git reference specification arguments.
+#[derive(Parser, Clone, Debug)]
+pub struct GitRefGroup {
+    /// Git branch to download the package from.
+    #[arg(long, requires = "git", conflicts_with_all = ["tag", "rev"])]
+    pub branch: Option<String>,
+
+    /// Git tag to download the package from.
+    #[arg(long, requires = "git", conflicts_with_all = ["branch", "rev"])]
+    pub tag: Option<String>,
+
+    /// Git reference to download the package from
+    ///
+    /// This is the catch-all, handling hashes to named references in remote repositories.
+    #[arg(long, requires = "git")]
+    pub rev: Option<String>,
 }
 
 #[cfg(test)]

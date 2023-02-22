@@ -1,3 +1,4 @@
+mod add;
 mod build;
 mod build_starknet_contract;
 mod clean;
