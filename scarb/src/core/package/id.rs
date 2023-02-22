@@ -53,7 +53,7 @@ impl PackageId {
             .map_err(|err| anyhow!("invalid displayed PackageId: {}", err))?;
 
         let source_id = match s.next() {
-            None => SourceId::mock_default(),
+            None => SourceId::default_registry(),
             Some(source_id) => {
                 let source_id = if source_id.starts_with('(') && source_id.ends_with(')') {
                     &source_id[1..source_id.len() - 1]

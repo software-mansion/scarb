@@ -169,7 +169,7 @@ pub(crate) mod mock {
             $crate::core::ManifestDependency {
                 name: $crate::core::PackageName::new($n),
                 version_req: ::semver::VersionReq::parse($v).unwrap(),
-                source_id: $crate::core::SourceId::mock_default(),
+                source_id: $crate::core::SourceId::default_registry(),
             }
         };
 

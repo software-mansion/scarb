@@ -360,7 +360,7 @@ impl DetailedTomlDependency {
                 SourceId::for_git(git, &reference)?
             }
 
-            (Some(_), None, None) => todo!("Registry sources are not implemented yet."),
+            (Some(_), None, None) => SourceId::default_registry(),
         };
 
         Ok(ManifestDependency {
