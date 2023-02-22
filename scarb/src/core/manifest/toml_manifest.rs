@@ -309,20 +309,20 @@ impl DetailedTomlDependency {
         let version_req = self.version.to_owned().unwrap_or(VersionReq::STAR);
 
         if self.branch.is_some() || self.tag.is_some() || self.rev.is_some() {
-            if self.git.is_none() {
-                bail!("dependency ({name}) is non-Git, but provides `branch`, `tag` or `rev`");
-            }
+            ensure!(
+                self.git.is_some(),
+                "dependency ({name}) is non-Git, but provides `branch`, `tag` or `rev`"
+            );
 
-            let n_refs = [&self.branch, &self.tag, &self.rev]
-                .iter()
-                .filter(|o| o.is_some())
-                .count();
-            if n_refs > 1 {
-                bail!(
-                    "dependency ({name}) specification is ambiguous, \
-                    only one of `branch`, `tag` or `rev` is allowed"
-                );
-            }
+            ensure!(
+                [&self.branch, &self.tag, &self.rev]
+                    .iter()
+                    .filter(|o| o.is_some())
+                    .count()
+                    <= 1,
+                "dependency ({name}) specification is ambiguous, \
+                only one of `branch`, `tag` or `rev` is allowed"
+            );
         }
 
         let source_id = match (self.version.as_ref(), self.git.as_ref(), self.path.as_ref()) {
