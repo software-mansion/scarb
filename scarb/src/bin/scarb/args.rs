@@ -21,7 +21,7 @@ use scarb::version;
 #[command(author, version = version::get().short(), long_version = version::get().long())]
 pub struct ScarbArgs {
     /// Override path to a directory containing a Scarb.toml file.
-    #[arg(long, env = "SCARB_MANIFEST_PATH", global = true)]
+    #[arg(long, env = "SCARB_MANIFEST_PATH", hide_short_help = true)]
     pub manifest_path: Option<Utf8PathBuf>,
 
     /// Logging verbosity.
@@ -29,11 +29,11 @@ pub struct ScarbArgs {
     pub verbose: clap_verbosity_flag::Verbosity,
 
     /// Print machine-readable output in NDJSON format.
-    #[arg(long, global = true)]
+    #[arg(long)]
     pub json: bool,
 
     /// Run without accessing the network.
-    #[arg(long, env = "SCARB_OFFLINE", global = true)]
+    #[arg(long, env = "SCARB_OFFLINE", hide_short_help = true)]
     pub offline: bool,
 
     /// Directory for all generated artifacts.
@@ -41,7 +41,7 @@ pub struct ScarbArgs {
         long,
         env = "SCARB_TARGET_DIR",
         value_name = "DIRECTORY",
-        global = true
+        hide_short_help = true
     )]
     pub target_dir: Option<Utf8PathBuf>,
 
