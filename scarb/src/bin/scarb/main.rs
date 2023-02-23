@@ -41,7 +41,7 @@ fn cli_main(args: ScarbArgs) -> Result<()> {
     let ui = Ui::new(args.ui_verbosity(), args.output_format());
 
     let manifest_path = ops::find_manifest_path(args.manifest_path.as_deref())?;
-    let mut config = Config::init(manifest_path, dirs, ui)?;
+    let mut config = Config::init(manifest_path, dirs, ui, args.target_dir)?;
     config.set_offline(args.offline);
     commands::run(args.command, &mut config)
 }

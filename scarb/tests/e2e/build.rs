@@ -516,3 +516,24 @@ fn compile_with_custom_lib_target() {
     t.child("target/release/hello.casm")
         .assert(predicates::path::exists().not());
 }
+
+#[test]
+fn override_target_dir() {
+    let target_dir = assert_fs::TempDir::new().unwrap();
+
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("--target-dir")
+        .arg(target_dir.path())
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target").assert(predicates::path::exists().not());
+    target_dir
+        .child("release/hello.sierra")
+        .assert(predicates::path::exists());
+}

@@ -36,6 +36,15 @@ pub struct ScarbArgs {
     #[arg(long, env = "SCARB_OFFLINE", global = true)]
     pub offline: bool,
 
+    /// Directory for all generated artifacts.
+    #[arg(
+        long,
+        env = "SCARB_TARGET_DIR",
+        value_name = "DIRECTORY",
+        global = true
+    )]
+    pub target_dir: Option<Utf8PathBuf>,
+
     /// Subcommand and its arguments.
     #[command(subcommand)]
     pub command: Command,

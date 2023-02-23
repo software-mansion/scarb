@@ -54,6 +54,7 @@ fn env_variables_are_passed() {
                 SCARB
                 SCARB_CACHE
                 SCARB_CONFIG
+                SCARB_TARGET_DIR
                 SCARB_MANIFEST_DIR
                 SCARB_UI_VERBOSITY
             )
