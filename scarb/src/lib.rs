@@ -14,7 +14,7 @@ mod internal;
 pub mod manifest_editor;
 pub mod metadata;
 pub mod ops;
-mod process;
+pub mod process;
 mod resolver;
 mod sources;
 pub mod ui;
@@ -26,3 +26,4 @@ pub const MANIFEST_FILE_NAME: &str = "Scarb.toml";
 
 pub const DEFAULT_SOURCE_DIR_NAME: &str = "src";
 pub const DEFAULT_TARGET_DIR_NAME: &str = "target";
+pub const EXTERNAL_CMD_PREFIX: &str = "scarb-";

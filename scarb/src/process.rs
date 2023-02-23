@@ -22,7 +22,7 @@ use crate::ui::{Spinner, Status};
 /// In doing so (and by effectively ignoring it) we should emulate proxying Ctrl-C handling to
 /// the application at hand, which will either terminate or handle it itself.
 /// According to Microsoft's documentation at
-/// https://docs.microsoft.com/en-us/windows/console/ctrl-c-and-ctrl-break-signals.
+/// <https://docs.microsoft.com/en-us/windows/console/ctrl-c-and-ctrl-break-signals>.
 /// the Ctrl-C signal is sent to all processes attached to a terminal, which should include our
 /// child process. If the child terminates then we'll reap them in Cargo pretty quickly, and if
 /// the child handles the signal then we won't terminate (and we shouldn't!) until the process
@@ -151,3 +151,15 @@ impl<'a> fmt::Display for ShlexJoin<'a> {
         Ok(())
     }
 }
+
+#[cfg(unix)]
+pub fn make_executable(path: &Path) {
+    use std::fs;
+    use std::os::unix::prelude::*;
+    let mut perms = fs::metadata(path).unwrap().permissions();
+    perms.set_mode(perms.mode() | 0o700);
+    fs::set_permissions(path, perms).unwrap();
+}
+
+#[cfg(windows)]
+pub fn make_executable(_path: &Path) {}

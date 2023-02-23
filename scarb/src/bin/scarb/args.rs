@@ -13,7 +13,6 @@ use tracing_log::AsTrace;
 use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
 use scarb::metadata::MetadataVersion;
-use scarb::ops::CommandInfo;
 use scarb::ui;
 use scarb::ui::OutputFormat;
 use scarb::version;
@@ -92,16 +91,16 @@ impl ScarbArgs {
         }
     }
 
-    pub fn get_subcommands() -> BTreeMap<String, CommandInfo> {
-        let mut commands = BTreeMap::new();
-        let command = Self::command();
-        for sub in command.get_subcommands() {
-            let name = sub.get_name().to_string();
-            let about = sub.get_about().map(|s| s.to_string());
-            let info = CommandInfo::BuiltIn { about };
-            commands.insert(name, info);
-        }
-        commands
+    pub fn get_builtin_subcommands() -> BTreeMap<String, Option<String>> {
+        Self::command()
+            .get_subcommands()
+            .into_iter()
+            .map(|sub| {
+                let name = sub.get_name().to_string();
+                let about = sub.get_about().map(|s| s.to_string());
+                (name, about)
+            })
+            .collect()
     }
 }
 
