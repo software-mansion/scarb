@@ -32,7 +32,12 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn init(manifest_path: Utf8PathBuf, dirs: AppDirs, ui: Ui) -> Result<Self> {
+    pub fn init(
+        manifest_path: Utf8PathBuf,
+        dirs: AppDirs,
+        ui: Ui,
+        target_dir_override: Option<Utf8PathBuf>,
+    ) -> Result<Self> {
         let creation_time = Instant::now();
 
         if tracing::enabled!(tracing::Level::TRACE) {
@@ -41,12 +46,12 @@ impl Config {
             }
         }
 
-        let target_dir = RootFilesystem::new_output_dir(
+        let target_dir = RootFilesystem::new_output_dir(target_dir_override.unwrap_or_else(|| {
             manifest_path
                 .parent()
                 .expect("parent of manifest path must always exist")
-                .join(DEFAULT_TARGET_DIR_NAME),
-        );
+                .join(DEFAULT_TARGET_DIR_NAME)
+        }));
 
         let dirs = Arc::new(dirs);
 

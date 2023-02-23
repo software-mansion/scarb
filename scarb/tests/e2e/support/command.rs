@@ -60,6 +60,7 @@ impl Scarb {
                 path_dirs: Vec::new(),
             },
             Ui::new(Verbosity::Verbose, OutputFormat::Text),
+            None,
         )
         .unwrap()
     }

@@ -26,6 +26,7 @@ pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) 
     cmd.env("PATH", config.dirs().path_env());
     cmd.env("SCARB_CACHE", config.dirs().cache_dir.path_unchecked());
     cmd.env("SCARB_CONFIG", config.dirs().config_dir.path_unchecked());
+    cmd.env("SCARB_TARGET_DIR", config.target_dir().path_unchecked());
     cmd.env("SCARB_MANIFEST_DIR", config.root());
     cmd.env("SCARB_UI_VERBOSITY", config.ui().verbosity().to_string());
     cmd.env("SCARB_LOG", config.scarb_log());
