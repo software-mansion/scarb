@@ -1,3 +1,4 @@
+use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -13,7 +14,7 @@ use which::which_in;
 use crate::core::Workspace;
 use crate::dirs::AppDirs;
 use crate::flock::{AdvisoryLock, RootFilesystem};
-use crate::ui::Ui;
+use crate::ui::{OutputFormat, Ui, Verbosity};
 use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
 
@@ -27,18 +28,25 @@ pub struct Config {
     // HACK: This should be the lifetime of Config itself, but we cannot express that, so we
     //   put 'static here and transmute in getter function.
     package_cache_lock: OnceCell<AdvisoryLock<'static>>,
-    scarb_log: String,
+    log_filter_directive: OsString,
     offline: bool,
 }
 
 impl Config {
-    pub fn init(
-        manifest_path: Utf8PathBuf,
-        dirs: AppDirs,
-        ui: Ui,
-        target_dir_override: Option<Utf8PathBuf>,
-    ) -> Result<Self> {
+    pub fn builder(manifest_path: impl Into<Utf8PathBuf>) -> ConfigBuilder {
+        ConfigBuilder::new(manifest_path.into())
+    }
+
+    fn build(b: ConfigBuilder) -> Result<Self> {
         let creation_time = Instant::now();
+
+        let ui = Ui::new(b.ui_verbosity, b.ui_output_format);
+
+        let dirs = Arc::new(AppDirs::init(
+            b.global_cache_dir_override,
+            b.global_config_dir_override,
+            b.path_env_override,
+        )?);
 
         if tracing::enabled!(tracing::Level::TRACE) {
             for line in dirs.to_string().lines() {
@@ -46,27 +54,24 @@ impl Config {
             }
         }
 
-        let target_dir = RootFilesystem::new_output_dir(target_dir_override.unwrap_or_else(|| {
-            manifest_path
-                .parent()
-                .expect("parent of manifest path must always exist")
-                .join(DEFAULT_TARGET_DIR_NAME)
-        }));
-
-        let dirs = Arc::new(dirs);
-
-        let scarb_log = env::var("SCARB_LOG").unwrap_or_default();
+        let target_dir =
+            RootFilesystem::new_output_dir(b.target_dir_override.unwrap_or_else(|| {
+                b.manifest_path
+                    .parent()
+                    .expect("parent of manifest path must always exist")
+                    .join(DEFAULT_TARGET_DIR_NAME)
+            }));
 
         Ok(Self {
-            manifest_path,
+            manifest_path: b.manifest_path,
             dirs,
             target_dir,
             app_exe: OnceCell::new(),
             ui,
             creation_time,
             package_cache_lock: OnceCell::new(),
-            scarb_log,
-            offline: false,
+            log_filter_directive: b.log_filter_directive.unwrap_or_default(),
+            offline: b.offline,
         })
     }
 
@@ -80,8 +85,8 @@ impl Config {
             .expect("parent of manifest path must always exist")
     }
 
-    pub fn scarb_log(&self) -> &str {
-        &self.scarb_log
+    pub fn log_filter_directive(&self) -> &OsStr {
+        &self.log_filter_directive
     }
 
     pub fn dirs(&self) -> &AppDirs {
@@ -169,13 +174,94 @@ impl Config {
         self.offline
     }
 
-    pub fn set_offline(&mut self, offline: bool) {
-        self.offline = offline;
-    }
-
     /// If `false`, Scarb should never access the network, but otherwise it should continue operating
     /// if possible.
     pub const fn network_allowed(&self) -> bool {
         !self.offline()
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ConfigBuilder {
+    manifest_path: Utf8PathBuf,
+    global_config_dir_override: Option<Utf8PathBuf>,
+    global_cache_dir_override: Option<Utf8PathBuf>,
+    path_env_override: Option<Vec<PathBuf>>,
+    target_dir_override: Option<Utf8PathBuf>,
+    ui_verbosity: Verbosity,
+    ui_output_format: OutputFormat,
+    offline: bool,
+    log_filter_directive: Option<OsString>,
+}
+
+impl ConfigBuilder {
+    fn new(manifest_path: Utf8PathBuf) -> Self {
+        Self {
+            manifest_path,
+            global_config_dir_override: None,
+            global_cache_dir_override: None,
+            path_env_override: None,
+            target_dir_override: None,
+            ui_verbosity: Verbosity::Normal,
+            ui_output_format: OutputFormat::Text,
+            offline: false,
+            log_filter_directive: None,
+        }
+    }
+
+    pub fn build(self) -> Result<Config> {
+        Config::build(self)
+    }
+
+    pub fn global_config_dir_override(
+        mut self,
+        global_config_dir_override: Option<impl Into<Utf8PathBuf>>,
+    ) -> Self {
+        self.global_config_dir_override = global_config_dir_override.map(Into::into);
+        self
+    }
+
+    pub fn global_cache_dir_override(
+        mut self,
+        global_cache_dir_override: Option<impl Into<Utf8PathBuf>>,
+    ) -> Self {
+        self.global_cache_dir_override = global_cache_dir_override.map(Into::into);
+        self
+    }
+
+    pub fn path_env_override(
+        mut self,
+        path_env_override: Option<impl IntoIterator<Item = impl Into<PathBuf>>>,
+    ) -> Self {
+        self.path_env_override = path_env_override.map(|p| p.into_iter().map(Into::into).collect());
+        self
+    }
+
+    pub fn target_dir_override(mut self, target_dir_override: Option<Utf8PathBuf>) -> Self {
+        self.target_dir_override = target_dir_override;
+        self
+    }
+
+    pub fn ui_verbosity(mut self, ui_verbosity: Verbosity) -> Self {
+        self.ui_verbosity = ui_verbosity;
+        self
+    }
+
+    pub fn ui_output_format(mut self, ui_output_format: OutputFormat) -> Self {
+        self.ui_output_format = ui_output_format;
+        self
+    }
+
+    pub fn offline(mut self, offline: bool) -> Self {
+        self.offline = offline;
+        self
+    }
+
+    pub fn log_filter_directive(
+        mut self,
+        log_filter_directive: Option<impl Into<OsString>>,
+    ) -> Self {
+        self.log_filter_directive = log_filter_directive.map(Into::into);
+        self
     }
 }
