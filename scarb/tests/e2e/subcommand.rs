@@ -1,13 +1,13 @@
 use std::ffi::OsString;
 use std::io::Read;
 use std::net::TcpListener;
-use std::path::Path;
 use std::process::{Child, Stdio};
 use std::{env, io, iter, process};
 
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
+use scarb::process::make_executable;
 use snapbox::cmd::cargo_bin;
 
 use crate::support::command::Scarb;
@@ -45,37 +45,7 @@ fn subcommand() {
     not(target_family = "unix"),
     ignore = "This test should write a Rust code, because currently it only assumes Unix."
 )]
-fn list_commands_builtin_only() {
-    let t = TempDir::new().unwrap();
-
-    Scarb::quick_snapbox()
-        .args(["commands"])
-        .env("PATH", path_with_temp_dir(&t))
-        .assert()
-        .success()
-        .stdout_matches(indoc! {
-            r#"
-            Installed Commands:
-            add                 : Add dependencies to a Scarb.toml manifest file
-            build               : Compile current project
-            clean               : Remove generated artifacts
-            commands            : List installed commands
-            fmt                 : Format project files
-            init                : Create a new Scarb package in existing directory
-            manifest-path       : Print path to current Scarb.toml file to standard output
-            metadata            : Output the resolved dependencies of a package, the concrete used versions including overrides, in machine-readable format
-            new                 : Create a new Scarb package at <PATH>
-
-            "#,
-        });
-}
-
-#[test]
-#[cfg_attr(
-    not(target_family = "unix"),
-    ignore = "This test should write a Rust code, because currently it only assumes Unix."
-)]
-fn list_commands() {
+fn list_commands_e2e() {
     let t = TempDir::new().unwrap();
     write_script(
         "hello",
@@ -89,27 +59,14 @@ fn list_commands() {
         &t,
     );
 
-    Scarb::quick_snapbox()
+    let cmd = Scarb::quick_snapbox()
         .args(["commands"])
         .env("PATH", path_with_temp_dir(&t))
         .assert()
-        .success()
-        .stdout_matches(indoc! {
-            r#"
-            Installed Commands:
-            add                 : Add dependencies to a Scarb.toml manifest file
-            build               : Compile current project
-            clean               : Remove generated artifacts
-            commands            : List installed commands
-            fmt                 : Format project files
-            hello               : /[..]/scarb-hello
-            init                : Create a new Scarb package in existing directory
-            manifest-path       : Print path to current Scarb.toml file to standard output
-            metadata            : Output the resolved dependencies of a package, the concrete used versions including overrides, in machine-readable format
-            new                 : Create a new Scarb package at <PATH>
-
-            "#,
-        });
+        .success();
+    let output = cmd.get_output().stdout.clone();
+    let stdout = String::from_utf8(output).unwrap();
+    assert!(stdout.starts_with("Installed Commands:\n"))
 }
 
 #[test]
@@ -250,15 +207,3 @@ fn ctrl_c(child: &mut Child) {
 fn ctrl_c(child: &mut Child) {
     child.kill().unwrap();
 }
-
-#[cfg(unix)]
-fn make_executable(path: &Path) {
-    use std::fs;
-    use std::os::unix::prelude::*;
-    let mut perms = fs::metadata(path).unwrap().permissions();
-    perms.set_mode(perms.mode() | 0o700);
-    fs::set_permissions(path, perms).unwrap();
-}
-
-#[cfg(windows)]
-fn make_executable(_path: &Path) {}
