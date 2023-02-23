@@ -45,6 +45,36 @@ fn subcommand() {
     not(target_family = "unix"),
     ignore = "This test should write a Rust code, because currently it only assumes Unix."
 )]
+fn list_commands_builtin_only() {
+    let t = TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .args(["commands"])
+        .env("PATH", path_with_temp_dir(&t))
+        .assert()
+        .success()
+        .stdout_matches(indoc! {
+            r#"
+            Installed Commands:
+            add                 : Add dependencies to a Scarb.toml manifest file
+            build               : Compile current project
+            clean               : Remove generated artifacts
+            commands            : List installed commands
+            fmt                 : Format project files
+            init                : Create a new Scarb package in existing directory
+            manifest-path       : Print path to current Scarb.toml file to standard output
+            metadata            : Output the resolved dependencies of a package, the concrete used versions including overrides, in machine-readable format
+            new                 : Create a new Scarb package at <PATH>
+
+            "#,
+        });
+}
+
+#[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "This test should write a Rust code, because currently it only assumes Unix."
+)]
 fn list_commands() {
     let t = TempDir::new().unwrap();
     write_script(
@@ -67,7 +97,16 @@ fn list_commands() {
         .stdout_matches(indoc! {
             r#"
             Installed Commands:
-            hello: /[..]/scarb-hello
+            add                 : Add dependencies to a Scarb.toml manifest file
+            build               : Compile current project
+            clean               : Remove generated artifacts
+            commands            : List installed commands
+            fmt                 : Format project files
+            hello               : /[..]/scarb-hello
+            init                : Create a new Scarb package in existing directory
+            manifest-path       : Print path to current Scarb.toml file to standard output
+            metadata            : Output the resolved dependencies of a package, the concrete used versions including overrides, in machine-readable format
+            new                 : Create a new Scarb package at <PATH>
 
             "#,
         });

@@ -11,14 +11,19 @@ use crate::core::Config;
 use crate::process::{exec_replace, is_executable};
 use crate::SCARB_ENV;
 
+pub const EXTERNAL_CMD_PREFIX: &str = "scarb-";
+
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub enum CommandInfo {
+    BuiltIn { about: Option<String> },
     External { path: PathBuf },
 }
 
 impl Display for CommandInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            CommandInfo::BuiltIn { about: Some(about) } => write!(f, "{}", about),
+            CommandInfo::BuiltIn { about: None } => write!(f, "",),
             CommandInfo::External { path } => write!(f, "{}", path.display()),
         }
     }
@@ -32,15 +37,18 @@ impl Display for CommandsList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Installed Commands:")?;
         for (name, info) in self.commands.iter() {
-            writeln!(f, "{name}: {info}")?;
+            writeln!(f, "{:<20}: {info}", name)?;
         }
         Ok(())
     }
 }
 
-#[tracing::instrument(level = "debug", skip(config))]
-pub fn list_commands(config: &Config) -> CommandsList {
-    let prefix = "scarb-";
+#[tracing::instrument(level = "debug", skip(config, builtins))]
+pub fn list_commands(
+    config: &Config,
+    builtins: &mut BTreeMap<String, CommandInfo>,
+) -> CommandsList {
+    let prefix = EXTERNAL_CMD_PREFIX;
     let suffix = env::consts::EXE_SUFFIX;
 
     let mut commands = BTreeMap::new();
@@ -67,6 +75,9 @@ pub fn list_commands(config: &Config) -> CommandsList {
             }
         }
     }
+
+    // In case of name conflict, builtin commands take precedence.
+    commands.append(builtins);
 
     CommandsList { commands }
 }
@@ -96,7 +107,7 @@ pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) 
 }
 
 fn find_external_subcommand(cmd: &str, config: &Config) -> Option<PathBuf> {
-    let command_exe = format!("scarb-{}{}", cmd, env::consts::EXE_SUFFIX);
+    let command_exe = format!("{EXTERNAL_CMD_PREFIX}{cmd}{}", env::consts::EXE_SUFFIX);
     config
         .dirs()
         .path_dirs
