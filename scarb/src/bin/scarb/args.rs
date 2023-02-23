@@ -36,6 +36,24 @@ pub struct ScarbArgs {
     #[arg(long, env = "SCARB_OFFLINE", hide_short_help = true)]
     pub offline: bool,
 
+    /// Directory for all cache data stored by Scarb.
+    #[arg(
+        long,
+        env = "SCARB_CACHE",
+        value_name = "DIRECTORY",
+        hide_short_help = true
+    )]
+    pub global_cache_dir: Option<Utf8PathBuf>,
+
+    /// Directory for global Scarb configuration files.
+    #[arg(
+        long,
+        env = "SCARB_CONFIG",
+        value_name = "DIRECTORY",
+        hide_short_help = true
+    )]
+    pub global_config_dir: Option<Utf8PathBuf>,
+
     /// Directory for all generated artifacts.
     #[arg(
         long,

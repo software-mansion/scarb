@@ -4,12 +4,12 @@ use std::fmt;
 use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
+use camino::Utf8PathBuf;
 use directories::ProjectDirs;
 
 use crate::flock::{Filesystem, RootFilesystem};
-use crate::internal::fsx::{PathBufUtf8Ext, PathUtf8Ext};
+use crate::internal::fsx::PathUtf8Ext;
 
-// TODO(mkaput): Construction needs refinement here.
 #[derive(Debug)]
 pub struct AppDirs {
     pub cache_dir: RootFilesystem,
@@ -18,45 +18,49 @@ pub struct AppDirs {
 }
 
 impl AppDirs {
-    pub fn std() -> Result<Self> {
+    pub(crate) fn init(
+        cache_dir_override: Option<Utf8PathBuf>,
+        config_dir_override: Option<Utf8PathBuf>,
+        path_dirs_override: Option<Vec<PathBuf>>,
+    ) -> Result<Self> {
         let pd = ProjectDirs::from("com", "swmansion", "scarb").ok_or_else(|| {
             anyhow!("no valid home directory path could be retrieved from the operating system")
         })?;
 
-        let mut path_dirs = if let Some(val) = env::var_os("PATH") {
-            env::split_paths(&val).collect()
-        } else {
-            vec![]
+        let path_dirs = match path_dirs_override {
+            Some(p) => p,
+            None => {
+                let mut path_dirs = if let Some(val) = env::var_os("PATH") {
+                    env::split_paths(&val).collect()
+                } else {
+                    vec![]
+                };
+
+                let home_bin = pd.data_local_dir().join("bin");
+
+                if !path_dirs.iter().any(|p| p == &home_bin) {
+                    path_dirs.push(home_bin);
+                };
+
+                path_dirs
+            }
         };
 
-        let home_bin = pd.data_local_dir().join("bin");
-
-        if !path_dirs.iter().any(|p| p == &home_bin) {
-            path_dirs.push(home_bin);
+        let cache_dir = match cache_dir_override {
+            Some(p) => p,
+            None => pd.cache_dir().try_to_utf8()?,
         };
 
-        let cache_dir = pd.cache_dir().try_to_utf8()?;
-        let config_dir = pd.config_dir().try_to_utf8()?;
+        let config_dir = match config_dir_override {
+            Some(p) => p,
+            None => pd.config_dir().try_to_utf8()?,
+        };
 
         Ok(Self {
             cache_dir: RootFilesystem::new_output_dir(cache_dir),
             config_dir: RootFilesystem::new(config_dir),
             path_dirs,
         })
-    }
-
-    pub fn apply_env_overrides(&mut self) -> Result<()> {
-        if let Some(path) = env::var_os("SCARB_CACHE") {
-            let cache_dir = PathBuf::from(path).try_into_utf8()?;
-            self.cache_dir = RootFilesystem::new_output_dir(cache_dir);
-        }
-
-        if let Some(path) = env::var_os("SCARB_CONFIG") {
-            let config_dir = PathBuf::from(path).try_into_utf8()?;
-            self.config_dir = RootFilesystem::new(config_dir);
-        }
-
-        Ok(())
     }
 
     pub fn path_env(&self) -> OsString {

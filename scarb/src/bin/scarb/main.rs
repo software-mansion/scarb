@@ -1,3 +1,5 @@
+use std::env;
+
 use anyhow::Result;
 use clap::Parser;
 use tracing_log::AsTrace;
@@ -5,7 +7,6 @@ use tracing_subscriber::EnvFilter;
 
 use args::ScarbArgs;
 use scarb::core::Config;
-use scarb::dirs::AppDirs;
 use scarb::ops;
 use scarb::ui::Ui;
 
@@ -35,13 +36,20 @@ fn main() {
 }
 
 fn cli_main(args: ScarbArgs) -> Result<()> {
-    let mut dirs = AppDirs::std()?;
-    dirs.apply_env_overrides()?;
-
-    let ui = Ui::new(args.ui_verbosity(), args.output_format());
+    let ui_verbosity = args.ui_verbosity();
+    let ui_output_format = args.output_format();
 
     let manifest_path = ops::find_manifest_path(args.manifest_path.as_deref())?;
-    let mut config = Config::init(manifest_path, dirs, ui, args.target_dir)?;
-    config.set_offline(args.offline);
+
+    let mut config = Config::builder(manifest_path)
+        .global_cache_dir_override(args.global_cache_dir)
+        .global_config_dir_override(args.global_config_dir)
+        .target_dir_override(args.target_dir)
+        .ui_verbosity(ui_verbosity)
+        .ui_output_format(ui_output_format)
+        .offline(args.offline)
+        .log_filter_directive(env::var_os("SCARB_LOG"))
+        .build()?;
+
     commands::run(args.command, &mut config)
 }

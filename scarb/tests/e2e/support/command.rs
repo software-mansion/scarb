@@ -1,3 +1,5 @@
+use std::ffi::OsString;
+use std::iter;
 use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 
@@ -6,15 +8,14 @@ use snapbox::cmd::cargo_bin;
 use snapbox::cmd::Command as SnapboxCommand;
 
 use scarb::core::Config;
-use scarb::dirs::AppDirs;
-use scarb::flock::RootFilesystem;
-use scarb::ui::{OutputFormat, Ui, Verbosity};
+use scarb::ui::Verbosity;
 
 use crate::support::fsx::{AssertFsUtf8Ext, PathUtf8Ext};
 
 pub struct Scarb {
     cache: EnvPath,
     config: EnvPath,
+    log: OsString,
 }
 
 impl Scarb {
@@ -22,6 +23,7 @@ impl Scarb {
         Self {
             cache: EnvPath::temp_dir(),
             config: EnvPath::temp_dir(),
+            log: "scarb=trace".into(),
         }
     }
 
@@ -29,6 +31,7 @@ impl Scarb {
         Self {
             cache: EnvPath::borrow(config.dirs().cache_dir.path_unchecked().as_std_path()),
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
+            log: config.log_filter_directive().to_os_string(),
         }
     }
 
@@ -42,7 +45,7 @@ impl Scarb {
 
     pub fn std(self) -> StdCommand {
         let mut cmd = StdCommand::new(cargo_bin!("scarb"));
-        cmd.env("SCARB_LOG", "scarb=trace");
+        cmd.env("SCARB_LOG", self.log);
         cmd.env("SCARB_CACHE", self.cache.path());
         cmd.env("SCARB_CONFIG", self.config.path());
         cmd
@@ -52,17 +55,14 @@ impl Scarb {
         let cache_dir = TempDir::new().unwrap();
         let config_dir = TempDir::new().unwrap();
 
-        Config::init(
-            manifest.utf8_path().to_path_buf(),
-            AppDirs {
-                cache_dir: RootFilesystem::new(cache_dir.try_as_utf8().unwrap().to_path_buf()),
-                config_dir: RootFilesystem::new(config_dir.try_as_utf8().unwrap().to_path_buf()),
-                path_dirs: Vec::new(),
-            },
-            Ui::new(Verbosity::Verbose, OutputFormat::Text),
-            None,
-        )
-        .unwrap()
+        Config::builder(manifest.utf8_path())
+            .global_cache_dir_override(Some(cache_dir.try_as_utf8().unwrap()))
+            .global_config_dir_override(Some(config_dir.try_as_utf8().unwrap()))
+            .path_env_override(Some(iter::empty::<PathBuf>()))
+            .ui_verbosity(Verbosity::Verbose)
+            .log_filter_directive(Some("scarb=trace"))
+            .build()
+            .unwrap()
     }
 }
 
