@@ -6,6 +6,9 @@ use anyhow::Result;
 use itertools::Itertools;
 use smol_str::SmolStr;
 
+pub use lib::*;
+pub use starknet_contract::*;
+
 use crate::compiler::Compiler;
 use crate::core::TargetKind;
 
@@ -35,11 +38,11 @@ impl TargetCompilerMap {
 
     fn build(kind: &TargetKind) -> Result<Box<dyn Compiler>> {
         match kind {
-            TargetKind::Lib(_) => Ok(Box::new(&lib::compile_lib)),
+            TargetKind::Lib(_) => Ok(Box::new(LibCompiler)),
             TargetKind::External(ext) => {
                 // TODO(mkaput): starknet-contract should be implemented as an extension.
                 if ext.kind_name == "starknet-contract" {
-                    return Ok(Box::new(&starknet_contract::compile_contract));
+                    return Ok(Box::new(StarknetContractCompiler));
                 }
 
                 todo!("External targets are not implemented yet.")
