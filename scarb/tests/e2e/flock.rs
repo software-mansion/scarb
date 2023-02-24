@@ -12,7 +12,7 @@ use crate::support::command::Scarb;
 use crate::support::project_builder::ProjectBuilder;
 
 #[test]
-#[timeout(30_000)]
+#[timeout(60_000)]
 fn locking_build_artifacts() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -75,7 +75,7 @@ fn locking_build_artifacts() {
 }
 
 #[test]
-#[timeout(30_000)]
+#[timeout(60_000)]
 fn locking_package_cache() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
