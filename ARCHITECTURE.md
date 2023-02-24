@@ -172,8 +172,13 @@ Because Cairo compiler is built-in, an important problem is how to install Cairo
 on users' machines.
 
 The `core` is treated as a regular package, that is _injected_ to all packages as a dependency under the hood.
-This package has a special source ID, which maps to the `CoreSource` implementation.
-A side effect of this approach is that `core` is included in the lockfile.
+This package has a special source ID, called `std`, which maps to the `StandardLibSource` implementation.
+A side effect of this approach is that `core` can be specified in `[dependencies`] and it is included in the lockfile.
+
+`core` library is downloaded from Cairo Git repository in `build.rs` and is embedded into Scarb binary.
+`StandardLibSource` extracts it to cache directory. All these operations are lazy, if there is already `core` archive
+in `/target/`, `build.rs` will not attempt to re-download it, and if `core` has been extracted to cache, it will not be
+overwritten.
 
 ### Targets
 
