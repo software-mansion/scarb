@@ -6,27 +6,14 @@ use anyhow::Result;
 use itertools::Itertools;
 use smol_str::SmolStr;
 
-use crate::compiler::CompilationUnit;
-use crate::core::{TargetKind, Workspace};
+use crate::compiler::Compiler;
+use crate::core::TargetKind;
 
 mod lib;
 mod starknet_contract;
 
-pub trait TargetCompiler {
-    fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()>;
-}
-
-impl<F> TargetCompiler for F
-where
-    F: Fn(CompilationUnit, &Workspace<'_>) -> Result<()>,
-{
-    fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-        self(unit, ws)
-    }
-}
-
 pub struct TargetCompilerMap {
-    map: HashMap<SmolStr, Box<dyn TargetCompiler>>,
+    map: HashMap<SmolStr, Box<dyn Compiler>>,
 }
 
 impl TargetCompilerMap {
@@ -36,7 +23,7 @@ impl TargetCompilerMap {
         }
     }
 
-    pub fn load(&mut self, kind: &TargetKind) -> Result<&dyn TargetCompiler> {
+    pub fn load(&mut self, kind: &TargetKind) -> Result<&dyn Compiler> {
         match self.map.entry(kind.name().into()) {
             Entry::Occupied(entry) => Ok(&**entry.into_mut()),
             Entry::Vacant(entry) => {
@@ -46,7 +33,7 @@ impl TargetCompilerMap {
         }
     }
 
-    fn build(kind: &TargetKind) -> Result<Box<dyn TargetCompiler>> {
+    fn build(kind: &TargetKind) -> Result<Box<dyn Compiler>> {
         match kind {
             TargetKind::Lib(_) => Ok(Box::new(&lib::compile_lib)),
             TargetKind::External(ext) => {
