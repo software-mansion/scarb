@@ -64,7 +64,7 @@ impl Config {
                     .join(DEFAULT_TARGET_DIR_NAME)
             }));
 
-        let compilers = CompilerRepository::std();
+        let compilers = b.compilers.unwrap_or_else(CompilerRepository::std);
 
         Ok(Self {
             manifest_path: b.manifest_path,
@@ -190,7 +190,7 @@ impl Config {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct ConfigBuilder {
     manifest_path: Utf8PathBuf,
     global_config_dir_override: Option<Utf8PathBuf>,
@@ -201,6 +201,7 @@ pub struct ConfigBuilder {
     ui_output_format: OutputFormat,
     offline: bool,
     log_filter_directive: Option<OsString>,
+    compilers: Option<CompilerRepository>,
 }
 
 impl ConfigBuilder {
@@ -215,6 +216,7 @@ impl ConfigBuilder {
             ui_output_format: OutputFormat::Text,
             offline: false,
             log_filter_directive: None,
+            compilers: None,
         }
     }
 
@@ -271,6 +273,11 @@ impl ConfigBuilder {
         log_filter_directive: Option<impl Into<OsString>>,
     ) -> Self {
         self.log_filter_directive = log_filter_directive.map(Into::into);
+        self
+    }
+
+    pub fn compilers(mut self, compilers: CompilerRepository) -> Self {
+        self.compilers = Some(compilers);
         self
     }
 }
