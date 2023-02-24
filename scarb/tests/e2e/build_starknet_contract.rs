@@ -7,21 +7,16 @@ use indoc::indoc;
 
 use crate::support::command::Scarb;
 use crate::support::fsx::ChildPathEx;
+use crate::support::project_builder::ProjectBuilder;
 
 #[test]
 fn compile_starknet_contract() {
     let t = assert_fs::TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(indoc! {r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-
-            [[target.starknet-contract]]
-        "#})
-        .unwrap();
-    t.child("src/lib.cairo")
-        .write_str(indoc! {r#"
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra("[[target.starknet-contract]]")
+        .lib_cairo(indoc! {r#"
             #[contract]
             mod HelloStarknet {
                 struct Storage {
@@ -41,7 +36,7 @@ fn compile_starknet_contract() {
                 }
             }
         "#})
-        .unwrap();
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("build")
@@ -64,47 +59,45 @@ fn compile_starknet_contract() {
 #[test]
 fn compile_many_contracts() {
     let t = assert_fs::TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(indoc! {r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
             [lib]
             sierra = true
             casm = true
 
             [[target.starknet-contract]]
             name = "a"
-            
+
             [[target.starknet-contract]]
             name = "b"
         "#})
-        .unwrap();
-    t.child("src/lib.cairo")
-        .write_str(indoc! {r#"
+        .lib_cairo(indoc! {r#"
             mod hello;
             mod foo;
         "#})
-        .unwrap();
-    t.child("src/hello.cairo")
-        .write_str(indoc! {r#"
-            #[contract]
-            mod Hello {
-                #[external]
-                fn hello() {}
-            }
-        "#})
-        .unwrap();
-    t.child("src/foo.cairo")
-        .write_str(indoc! {r#"
-            #[contract]
-            mod Foo {
-                #[external]
-                fn foo() -> felt { 42 }
-            }
-        "#})
-        .unwrap();
+        .src(
+            "src/hello.cairo",
+            indoc! {r#"
+                #[contract]
+                mod Hello {
+                    #[external]
+                    fn hello() {}
+                }
+            "#},
+        )
+        .src(
+            "src/foo.cairo",
+            indoc! {r#"
+                #[contract]
+                mod Foo {
+                    #[external]
+                    fn foo() -> felt { 42 }
+                }
+            "#},
+        )
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("build")
@@ -138,16 +131,13 @@ fn compile_many_contracts() {
 #[test]
 fn unexpected_target_props() {
     let t = assert_fs::TempDir::new().unwrap();
-    t.child("Scarb.toml")
-        .write_str(indoc! {r#"
-            [package]
-            name = "hello"
-            version = "0.1.0"
-
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
             foo = true
         "#})
-        .unwrap();
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("build")
@@ -155,7 +145,7 @@ fn unexpected_target_props() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        [..] Compiling hello v0.1.0 ([..])
+        [..] Compiling hello [..]
         error: target `starknet-contract` does not accept any parameters
         error: could not compile `hello` due to previous error
         "#});
