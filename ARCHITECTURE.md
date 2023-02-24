@@ -33,7 +33,7 @@ This crate consist of primarily two modules:
 
 1. `core` - contains all data structures representing project model and workspace state.
    Use these only for read operations.
-   See the [Data model](#data-model) section for more information.
+   See the [Core data model](#core-data-model) section for more information.
 2. `ops` (_operations_) - contains functions for performing all kinds of mutations of the project.
    If you are looking for a function to resolve packages, build the project
    or modify `Scarb.toml` - this is the place to look at.
