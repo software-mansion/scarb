@@ -20,7 +20,7 @@ SCARB=$(find target/verify/bin -name 'scarb' -o -name 'scarb.exe')
 
 "$SCARB" --version
 
-"$SCARB" --version | grep -Fq "$EXPECTED_VERSION"
+"$SCARB" -V | grep -Fq "$EXPECTED_VERSION"
 
 "$SCARB" --help
 
