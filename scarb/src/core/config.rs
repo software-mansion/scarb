@@ -11,9 +11,9 @@ use tracing::trace;
 use which::which_in;
 
 use crate::compiler::CompilerRepository;
+use crate::core::AppDirs;
 #[cfg(doc)]
 use crate::core::Workspace;
-use crate::dirs::AppDirs;
 use crate::flock::{AdvisoryLock, RootFilesystem};
 use crate::ui::{OutputFormat, Ui, Verbosity};
 use crate::DEFAULT_TARGET_DIR_NAME;
