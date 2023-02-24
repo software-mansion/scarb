@@ -9,7 +9,7 @@ use cairo_lang_starknet::db::StarknetRootDatabaseBuilderEx;
 use cairo_lang_utils::Upcast;
 use tracing::{trace, trace_span};
 
-use crate::compiler::targets::lib::{
+use crate::compiler::helpers::{
     build_compiler_config, build_project_config, collect_main_crate_ids,
 };
 use crate::compiler::{CompilationUnit, Compiler};

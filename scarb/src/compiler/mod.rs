@@ -6,6 +6,7 @@ pub use profile::*;
 use crate::core::Workspace;
 
 mod compilation_unit;
+pub mod helpers;
 mod profile;
 pub(crate) mod targets;
 
