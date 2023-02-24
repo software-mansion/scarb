@@ -3,6 +3,7 @@
 //! For read operations and workspace mutations, see [`crate::ops`] module.
 
 pub use config::Config;
+pub use dirs::AppDirs;
 pub use manifest::{
     DetailedTomlDependency, ExternalTargetKind, LibTargetKind, Manifest, ManifestDependency,
     ManifestMetadata, Summary, SummaryInner, Target, TargetInner, TargetKind, TomlDependency,
@@ -18,6 +19,7 @@ pub use crate::DEFAULT_TARGET_DIR_NAME;
 pub use crate::MANIFEST_FILE_NAME;
 
 pub(crate) mod config;
+mod dirs;
 pub(crate) mod manifest;
 pub(crate) mod package;
 pub(crate) mod registry;
