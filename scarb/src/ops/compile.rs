@@ -2,7 +2,6 @@ use anyhow::{anyhow, Result};
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use indicatif::HumanDuration;
 
-use crate::compiler::targets::TargetCompilerMap;
 use crate::compiler::CompilationUnit;
 use crate::core::workspace::Workspace;
 use crate::ops;
@@ -12,11 +11,10 @@ use crate::ui::Status;
 pub fn compile(ws: &Workspace<'_>) -> Result<()> {
     let resolve = ops::resolve_workspace(ws)?;
     let compilation_units = ops::generate_compilation_units(&resolve, ws)?;
-    let mut compilers = TargetCompilerMap::new();
 
     // TODO(mkaput): Parallelize this loop.
     for unit in compilation_units {
-        compile_unit(unit, &mut compilers, ws)?;
+        compile_unit(unit, ws)?;
     }
 
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
@@ -28,27 +26,20 @@ pub fn compile(ws: &Workspace<'_>) -> Result<()> {
     Ok(())
 }
 
-fn compile_unit(
-    unit: CompilationUnit,
-    compilers: &mut TargetCompilerMap,
-    ws: &Workspace<'_>,
-) -> Result<()> {
+fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package_name = unit.package.id.name.clone();
 
     ws.config()
         .ui()
         .print(Status::new("Compiling", &unit.name()));
 
-    compilers
-        .load(&unit.target.kind)?
-        .compile(unit, ws)
-        .map_err(|err| {
-            if !suppress_error(&err) {
-                ws.config().ui().anyhow(&err);
-            }
+    ws.config().compilers().compile(unit, ws).map_err(|err| {
+        if !suppress_error(&err) {
+            ws.config().ui().anyhow(&err);
+        }
 
-            anyhow!("could not compile `{package_name}` due to previous error")
-        })?;
+        anyhow!("could not compile `{package_name}` due to previous error")
+    })?;
 
     Ok(())
 }
