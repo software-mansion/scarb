@@ -38,8 +38,9 @@ fn commit_info() {
 }
 
 fn cairo_version() -> String {
-    println!("cargo:rerun-if-changed=../Cargo.lock");
-    let lock = fs::read_to_string("../Cargo.lock").expect("Failed to read Cargo.lock");
+    let cargo_lock = find_cargo_lock();
+    println!("cargo:rerun-if-changed={}", cargo_lock.display());
+    let lock = fs::read_to_string(cargo_lock).expect("Failed to read Cargo.lock");
     let lock = toml_edit::Document::from_str(&lock).expect("Failed to parse Cargo.lock as TOML");
     let lock = lock["package"].as_array_of_tables().unwrap();
     let cairo_lock = lock
@@ -121,4 +122,21 @@ fn ident(id: &str) -> String {
         ident.push(if ch.is_ascii_alphanumeric() { ch } else { '_' })
     }
     ident
+}
+
+fn find_cargo_lock() -> PathBuf {
+    let in_workspace = PathBuf::from("../Cargo.lock");
+    if in_workspace.exists() {
+        return in_workspace;
+    }
+
+    let in_package = PathBuf::from("Cargo.lock");
+    if in_package.exists() {
+        return in_package;
+    }
+
+    panic!(
+        "Couldn't find Cargo.lock of this package. \
+        Something's wrong with build execution environment."
+    )
 }
