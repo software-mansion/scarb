@@ -1,7 +1,9 @@
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
+use camino::Utf8PathBuf;
 use semver::Version;
 use toml_edit::{Document, Item, Table, Value};
 
@@ -16,8 +18,9 @@ mod to_version;
 pub struct ProjectBuilder {
     name: String,
     version: Version,
-    lib_cairo: String,
+    src: HashMap<Utf8PathBuf, String>,
     deps: Vec<(String, Value)>,
+    manifest_extra: String,
 }
 
 impl ProjectBuilder {
@@ -29,8 +32,12 @@ impl ProjectBuilder {
         Self {
             name: format!("pkg{n}"),
             version: Version::new(1, n, 0),
-            lib_cairo: format!(r#"fn f{n}() -> felt {{ {n} }}"#),
+            src: HashMap::from_iter([(
+                Utf8PathBuf::from("src/lib.cairo"),
+                format!(r#"fn f{n}() -> felt {{ {n} }}"#),
+            )]),
             deps: Vec::new(),
+            manifest_extra: String::new(),
         }
     }
 
@@ -44,13 +51,22 @@ impl ProjectBuilder {
         self
     }
 
-    pub fn lib_cairo(mut self, lib_cairo: impl Into<String>) -> Self {
-        self.lib_cairo = lib_cairo.into();
+    pub fn src(mut self, path: impl Into<Utf8PathBuf>, source: impl Into<String>) -> Self {
+        self.src.insert(path.into(), source.into());
         self
+    }
+
+    pub fn lib_cairo(self, source: impl Into<String>) -> Self {
+        self.src("src/lib.cairo", source.into())
     }
 
     pub fn dep(mut self, name: impl Into<String>, dep: impl ToDep) -> Self {
         self.deps.push((name.into(), dep.to_dep()));
+        self
+    }
+
+    pub fn manifest_extra(mut self, extra: impl Into<String>) -> Self {
+        self.manifest_extra = extra.into();
         self
     }
 
@@ -63,17 +79,24 @@ impl ProjectBuilder {
             doc["dependencies"][name.clone()] = Item::Value(dep.clone());
         }
 
-        let manifest = doc.to_string();
+        let mut manifest = doc.to_string();
+
+        if !self.manifest_extra.is_empty() {
+            manifest.push('\n');
+            manifest.push_str(&self.manifest_extra);
+        }
+
         t.child("Scarb.toml").write_str(&manifest).unwrap();
     }
 
     pub fn just_code(&self, t: &impl PathChild) {
-        t.child("src/lib.cairo").write_str(&self.lib_cairo).unwrap();
+        for (path, source) in &self.src {
+            t.child(path).write_str(source).unwrap();
+        }
     }
 
     pub fn build(&self, t: &impl PathChild) {
         self.just_manifest(t);
-
         self.just_code(t);
     }
 }
