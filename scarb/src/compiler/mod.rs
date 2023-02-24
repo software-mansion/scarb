@@ -9,15 +9,8 @@ mod compilation_unit;
 mod profile;
 pub(crate) mod targets;
 
-pub trait Compiler {
-    fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()>;
-}
+pub trait Compiler: Sync {
+    fn target_kind(&self) -> &str;
 
-impl<F> Compiler for F
-where
-    F: Fn(CompilationUnit, &Workspace<'_>) -> Result<()>,
-{
-    fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-        self(unit, ws)
-    }
+    fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()>;
 }
