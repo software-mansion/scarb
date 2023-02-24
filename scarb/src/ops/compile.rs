@@ -15,8 +15,6 @@ pub fn compile(ws: &Workspace<'_>) -> Result<()> {
     let mut compilers = TargetCompilerMap::new();
 
     // TODO(mkaput): Parallelize this loop.
-    //   Caveat: This shouldn't be just rayon::map call, because we will introduce dependencies
-    //   between compilation units in the future.
     for unit in compilation_units {
         compile_unit(unit, &mut compilers, ws)?;
     }
