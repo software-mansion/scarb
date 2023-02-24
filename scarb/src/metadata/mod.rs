@@ -1,20 +1,21 @@
 // NOTE: All collections must have stable sorting in order to provide reproducible outputs!
 
-use std::collections::BTreeMap;
-use std::path::PathBuf;
-
 use anyhow::{bail, Result};
 use camino::Utf8PathBuf;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::path::PathBuf;
 use toml::Value;
 
+use crate::compiler::{CompilationUnit, Profile};
 pub use metadata_version::*;
 
 use crate::core::manifest::{
     ExternalTargetKind, LibTargetKind, ManifestMetadata, Target, TargetKind,
 };
 use crate::core::{ManifestDependency, Package, PackageId, SourceId, Workspace};
+use crate::ops;
 use crate::ops::resolve_workspace;
 use crate::version::VersionInfo;
 
@@ -39,6 +40,7 @@ pub struct ProjectMetadata {
     pub target_dir: Option<Utf8PathBuf>,
     pub workspace: WorkspaceMetadata,
     pub packages: Vec<PackageMetadata>,
+    pub compilation_units: Vec<CompilationUnitMetadata>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -78,6 +80,14 @@ pub struct TargetMetadata {
     pub params: BTreeMap<String, Value>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CompilationUnitMetadata {
+    pub package: PackageId,
+    pub target: TargetMetadata,
+    pub components: Vec<PackageId>,
+    pub profile: Profile,
+}
+
 impl Metadata {
     pub fn collect(ws: &Workspace<'_>, opts: &MetadataOptions) -> Result<Self> {
         if opts.version != MetadataVersion::V1 {
@@ -94,15 +104,26 @@ impl Metadata {
 
 impl ProjectMetadata {
     pub fn collect(ws: &Workspace<'_>, opts: &MetadataOptions) -> Result<Self> {
-        let mut packages: Vec<PackageMetadata> = if !opts.no_deps {
+        let (mut packages, compilation_units) = if !opts.no_deps {
             let resolve = resolve_workspace(ws)?;
-            resolve
+            let packages: Vec<PackageMetadata> = resolve
                 .packages
                 .values()
                 .map(PackageMetadata::new)
-                .collect()
+                .collect();
+
+            let mut compilation_units: Vec<CompilationUnitMetadata> =
+                ops::generate_compilation_units(&resolve, ws)?
+                    .iter()
+                    .map(CompilationUnitMetadata::new)
+                    .collect();
+
+            compilation_units.sort_by_key(|c| c.package);
+
+            (packages, compilation_units)
         } else {
-            ws.members().map(|p| PackageMetadata::new(&p)).collect()
+            let packages = ws.members().map(|p| PackageMetadata::new(&p)).collect();
+            (packages, Vec::new())
         };
 
         packages.sort_by_key(|p| p.id);
@@ -114,6 +135,7 @@ impl ProjectMetadata {
             target_dir: Some(ws.target_dir().path_unchecked().to_path_buf()),
             workspace: WorkspaceMetadata::new(ws)?,
             packages,
+            compilation_units,
         })
     }
 }
@@ -196,5 +218,19 @@ impl TargetMetadata {
         };
 
         TargetMetadata { kind, name, params }
+    }
+}
+
+impl CompilationUnitMetadata {
+    pub fn new(compilation_unit: &CompilationUnit) -> Self {
+        let mut components: Vec<PackageId> =
+            compilation_unit.components.iter().map(|p| p.id).collect();
+        components.sort();
+        Self {
+            package: compilation_unit.package.id,
+            target: TargetMetadata::new(&compilation_unit.target),
+            components,
+            profile: compilation_unit.profile.clone(),
+        }
     }
 }
