@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
 use crate::core::Config;
@@ -6,7 +7,7 @@ use crate::core::Target;
 use crate::flock::Filesystem;
 
 /// Profile settings used to determine which compiler flags to use for a [`Target`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Profile {
     pub name: SmolStr,
 }

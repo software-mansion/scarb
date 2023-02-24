@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use assert_fs::prelude::*;
 use snapbox::cmd::Command;
 
-use scarb::core::ManifestMetadata;
+use scarb::core::{ManifestMetadata, PackageName};
 use scarb::metadata::ProjectMetadata;
 
 use crate::support::command::Scarb;
@@ -48,6 +48,28 @@ fn simple() {
         .arg("1")
         .current_dir(&t)
         .stdout_json();
+}
+
+#[test]
+fn includes_compilation_units() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
+
+    let output = Scarb::quick_snapbox()
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json();
+
+    assert!(!output.compilation_units.is_empty());
+    let unit = &output.compilation_units[0];
+    assert_eq!(unit.package.name, PackageName::new("hello"));
+    assert_eq!(unit.target.name, "hello");
+    assert!(!unit.components.is_empty());
 }
 
 #[test]
