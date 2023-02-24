@@ -10,6 +10,7 @@ use once_cell::sync::OnceCell;
 use tracing::trace;
 use which::which_in;
 
+use crate::compiler::CompilerRepository;
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::dirs::AppDirs;
@@ -30,6 +31,7 @@ pub struct Config {
     package_cache_lock: OnceCell<AdvisoryLock<'static>>,
     log_filter_directive: OsString,
     offline: bool,
+    compilers: CompilerRepository,
 }
 
 impl Config {
@@ -62,6 +64,8 @@ impl Config {
                     .join(DEFAULT_TARGET_DIR_NAME)
             }));
 
+        let compilers = CompilerRepository::std();
+
         Ok(Self {
             manifest_path: b.manifest_path,
             dirs,
@@ -72,6 +76,7 @@ impl Config {
             package_cache_lock: OnceCell::new(),
             log_filter_directive: b.log_filter_directive.unwrap_or_default(),
             offline: b.offline,
+            compilers,
         })
     }
 
@@ -178,6 +183,10 @@ impl Config {
     /// if possible.
     pub const fn network_allowed(&self) -> bool {
         !self.offline()
+    }
+
+    pub fn compilers(&self) -> &CompilerRepository {
+        &self.compilers
     }
 }
 
