@@ -4,6 +4,7 @@ use indoc::indoc;
 use predicates::prelude::*;
 
 use crate::support::command::Scarb;
+use crate::support::project_builder::ProjectBuilder;
 
 #[test]
 fn compile_with_duplicate_targets_1() {
@@ -106,4 +107,42 @@ fn compile_with_custom_lib_target() {
         .assert(predicates::path::exists().not());
     t.child("target/release/hello.casm")
         .assert(predicates::path::exists().not());
+}
+
+#[test]
+fn compile_dep_not_a_lib() {
+    let t = TempDir::new().unwrap();
+
+    let dep = t.child("dep");
+    ProjectBuilder::start()
+        .name("dep")
+        .version("1.0.0")
+        .manifest_extra("[[target.starknet-contract]]")
+        .lib_cairo("fn forty_two() -> felt { 42 }")
+        .build(&dep);
+
+    let hello = t.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep", &dep)
+        .lib_cairo("fn hellp() -> felt { dep::forty_two() }")
+        .build(&hello);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&hello)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            warn: hello v1.0.0 ([..]) ignoring invalid dependency `dep` which is missing a lib target
+               Compiling hello v1.0.0 ([..])
+            error: Identifier not found.
+             --> lib.cairo:1:22
+            fn hellp() -> felt { dep::forty_two() }
+                                 ^*^
+
+
+            error: could not compile `hello` due to previous error
+        "#});
 }
