@@ -61,7 +61,21 @@ pub fn generate_compilation_units(
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members() {
-        let components = resolve.package_components_of(member.id).collect::<Vec<_>>();
+        let components = resolve
+            .package_components_of(member.id)
+            .filter(|pkg| {
+                let is_self_or_lib = member.id == pkg.id || pkg.is_lib();
+                // Print a warning if this dependency is not a library.
+                if !is_self_or_lib {
+                    ws.config().ui().warn(format!(
+                        "{} ignoring invalid dependency `{}` which is missing a lib target",
+                        member.id, pkg.id.name
+                    ));
+                }
+                is_self_or_lib
+            })
+            .collect::<Vec<_>>();
+
         for target in &member.manifest.targets {
             let unit = CompilationUnit {
                 package: member.clone(),

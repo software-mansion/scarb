@@ -8,6 +8,7 @@ pub use id::*;
 pub use name::*;
 
 use crate::core::manifest::Manifest;
+use crate::core::Target;
 use crate::DEFAULT_SOURCE_DIR_NAME;
 
 mod id;
@@ -54,6 +55,10 @@ impl Package {
 
     pub fn source_dir(&self) -> Utf8PathBuf {
         self.root().join(DEFAULT_SOURCE_DIR_NAME)
+    }
+
+    pub fn is_lib(&self) -> bool {
+        self.manifest.targets.iter().any(Target::is_lib)
     }
 }
 

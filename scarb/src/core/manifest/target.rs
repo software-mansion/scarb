@@ -55,6 +55,10 @@ impl Target {
     pub fn new(name: SmolStr, kind: TargetKind) -> Self {
         Self(Arc::new(TargetInner { name, kind }))
     }
+
+    pub fn is_lib(&self) -> bool {
+        matches!(self.kind, TargetKind::Lib(_))
+    }
 }
 
 impl TargetKind {
