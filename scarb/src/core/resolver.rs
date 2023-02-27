@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-
+use itertools::Itertools;
 use petgraph::graphmap::DiGraphMap;
 use petgraph::visit::{Dfs, Walker};
 
@@ -17,10 +16,6 @@ pub struct Resolve {
     pub graph: DiGraphMap<PackageId, ()>,
 }
 
-/// Collection of all [`PackageId`]s of packages needed to provide as _crate roots_ to
-/// the Cairo compiler in order to build a particular package (named _root package_).
-pub type PackageComponentsIds = HashSet<PackageId>;
-
 impl Resolve {
     /// Iterator over all [`PackageId`]s (nodes) present in this graph.
     ///
@@ -31,12 +26,18 @@ impl Resolve {
 
     /// Collect all [`PackageId`]s needed to compile a root package.
     ///
+    /// Returns a collection of all [`PackageId`]s of packages needed to provide as _crate roots_
+    /// to the Cairo compiler in order to build a particular package (named _root package_).
+    ///
     /// # Safety
     /// * Asserts that `root_package` is a node in this graph.
-    pub fn package_components_of(&self, root_package: PackageId) -> PackageComponentsIds {
+    pub fn package_components_of(
+        &self,
+        root_package: PackageId,
+    ) -> impl Iterator<Item = PackageId> + '_ {
         assert!(&self.graph.contains_node(root_package));
         Dfs::new(&self.graph, root_package)
             .iter(&self.graph)
-            .collect()
+            .unique()
     }
 }
