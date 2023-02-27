@@ -10,7 +10,7 @@ pub use manifest::{
     TomlExternalTarget, TomlLibTarget, TomlManifest, TomlPackage, TomlTargetKindName,
 };
 pub use package::{Package, PackageId, PackageIdInner, PackageInner, PackageName};
-pub use resolver::{PackageComponentsIds, Resolve};
+pub use resolver::Resolve;
 pub use source::{GitReference, SourceId, SourceIdInner, SourceKind};
 pub use workspace::Workspace;
 

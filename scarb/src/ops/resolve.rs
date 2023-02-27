@@ -18,13 +18,14 @@ pub struct WorkspaceResolve {
 }
 
 impl WorkspaceResolve {
-    pub fn package_components_of(&self, root_package: PackageId) -> Vec<Package> {
+    pub fn package_components_of(
+        &self,
+        root_package: PackageId,
+    ) -> impl Iterator<Item = Package> + '_ {
         assert!(self.packages.contains_key(&root_package));
         self.resolve
             .package_components_of(root_package)
-            .into_iter()
             .map(|id| self.packages[&id].clone())
-            .collect()
     }
 }
 
@@ -60,7 +61,7 @@ pub fn generate_compilation_units(
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members() {
-        let components = resolve.package_components_of(member.id);
+        let components = resolve.package_components_of(member.id).collect::<Vec<_>>();
         for target in &member.manifest.targets {
             let unit = CompilationUnit {
                 package: member.clone(),
