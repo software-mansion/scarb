@@ -10,6 +10,7 @@ mod git_source_network;
 mod manifest_path;
 mod metadata;
 mod new_and_init;
+mod remove;
 mod resolver_with_git;
 mod subcommand;
 pub(crate) mod support;

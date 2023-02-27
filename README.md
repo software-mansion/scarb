@@ -81,6 +81,8 @@ _**Also:** You can specify package version like this: `quaireaux@0.1.0`, but see
 
 _**Also:** `--git` supports `--branch`, `--tag` and `--rev` arguments._
 
+_**Also:** `scarb rm` removes a dependency._
+
 ### Formatting
 
 ```shell

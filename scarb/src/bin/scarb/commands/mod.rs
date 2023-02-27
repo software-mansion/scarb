@@ -16,6 +16,7 @@ pub mod init;
 pub mod manifest_path;
 pub mod metadata;
 pub mod new;
+pub mod remove;
 
 pub fn run(command: Command, config: &mut Config) -> Result<()> {
     use Command::*;
@@ -32,5 +33,6 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         ManifestPath => manifest_path::run(config),
         Metadata(args) => metadata::run(args, config),
         New(args) => new::run(args, config),
+        Remove(args) => remove::run(args, config),
     }
 }
