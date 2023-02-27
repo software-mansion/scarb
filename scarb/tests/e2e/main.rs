@@ -1,6 +1,7 @@
 mod add;
 mod build;
 mod build_starknet_contract;
+mod build_targets;
 mod clean;
 mod flock;
 mod fmt;
