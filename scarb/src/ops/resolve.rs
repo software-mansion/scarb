@@ -46,11 +46,6 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
 
         let resolve = resolver::resolve(&members_summaries, &mut registry_cache).await?;
 
-        // Gather [`Package`] instances from this resolver result, by asking the [`RegistryCache`]
-        // to download resolved packages.
-        //
-        // Currently, it is expected that all packages are already downloaded during resolution,
-        // so the `download` calls in this method should be cheap, but this may change the future.
         let packages = collect_packages_from_resolve_graph(&resolve, &mut registry_cache).await?;
 
         Ok(WorkspaceResolve { resolve, packages })
@@ -82,6 +77,11 @@ pub fn generate_compilation_units(
     Ok(units)
 }
 
+/// Gather [`Package`] instances from this resolver result, by asking the [`RegistryCache`]
+/// to download resolved packages.
+///
+/// Currently, it is expected that all packages are already downloaded during resolution,
+/// so the `download` calls in this method should be cheap, but this may change the future.
 #[tracing::instrument(level = "trace", skip_all)]
 async fn collect_packages_from_resolve_graph(
     resolve: &Resolve,
