@@ -8,6 +8,7 @@ use toml_edit::Document;
 
 pub use add::AddDependency;
 pub use dep_id::DepId;
+pub use remove::RemoveDependency;
 
 use crate::core::Config;
 use crate::internal::fsx;
@@ -15,6 +16,7 @@ use crate::internal::fsx::PathBufUtf8Ext;
 
 mod add;
 mod dep_id;
+mod remove;
 mod tomlx;
 
 pub trait Op {

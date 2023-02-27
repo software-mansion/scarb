@@ -111,6 +111,11 @@ pub enum Command {
     // External should go last.
     /// Add dependencies to a Scarb.toml manifest file.
     Add(AddArgs),
+
+    /// Remove dependencies from a manifest file
+    #[command(alias = "rm")]
+    Remove(RemoveArgs),
+
     /// Compile current project.
     Build,
     /// Remove generated artifacts.
@@ -215,6 +220,22 @@ pub struct AddSourceArgs {
     /// Git reference args for `--git`.
     #[command(flatten)]
     pub git_ref: GitRefGroup,
+}
+
+/// Arguments accepted by the `remove` command.
+#[derive(Parser, Clone, Debug)]
+pub struct RemoveArgs {
+    /// Dependencies to be removed
+    #[arg(value_name = "DEP_ID", required = true)]
+    pub packages: Vec<PackageName>,
+
+    /// Do not actually write the manifest.
+    #[arg(long)]
+    pub dry_run: bool,
+
+    /// Specify package to modify.
+    #[arg(short, long)]
+    pub package: Option<PackageName>,
 }
 
 /// Git reference specification arguments.
