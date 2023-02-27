@@ -1,4 +1,5 @@
 use assert_fs::prelude::*;
+use assert_fs::TempDir;
 use indoc::indoc;
 use predicates::prelude::*;
 
@@ -6,7 +7,7 @@ use crate::support::command::Scarb;
 
 #[test]
 fn compile_with_duplicate_targets_1() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
             r#"
@@ -36,7 +37,7 @@ fn compile_with_duplicate_targets_1() {
 
 #[test]
 fn compile_with_duplicate_targets_2() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
             r#"
@@ -68,7 +69,7 @@ fn compile_with_duplicate_targets_2() {
 
 #[test]
 fn compile_with_custom_lib_target() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
             r#"

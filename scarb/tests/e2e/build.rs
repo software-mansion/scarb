@@ -1,6 +1,7 @@
 use std::fs;
 
 use assert_fs::prelude::*;
+use assert_fs::TempDir;
 use indoc::indoc;
 use predicates::prelude::*;
 
@@ -13,9 +14,9 @@ fn compile_simple() {
     // `TempDir::new` creates the directory, while `create_output_dir` does not mark directory as
     // ephemeral if it already exists.
     // Therefore, we use `.child` here to ensure that cache directory does not exist when running.
-    let cache_dir = assert_fs::TempDir::new().unwrap().child("c");
+    let cache_dir = TempDir::new().unwrap().child("c");
 
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
     Scarb::quick_snapbox()
@@ -38,7 +39,7 @@ fn compile_simple() {
 
 #[test]
 fn quiet_output() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start().build(&t);
 
     Scarb::quick_snapbox()
@@ -58,7 +59,7 @@ fn quiet_output() {
 
 #[test]
 fn compile_with_syntax_error() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -84,7 +85,7 @@ fn compile_with_syntax_error() {
 
 #[test]
 fn compile_with_syntax_error_json() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -106,7 +107,7 @@ fn compile_with_syntax_error_json() {
 
 #[test]
 fn compile_without_manifest() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     let cause = fs::read(t.child("Scarb.toml")).unwrap_err();
     Scarb::quick_snapbox()
         .arg("build")
@@ -126,7 +127,7 @@ Caused by:
 #[test]
 #[cfg(target_os = "linux")]
 fn compile_with_lowercase_scarb_toml() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     t.child("scarb.toml")
         .write_str(
             r#"
@@ -154,7 +155,7 @@ Caused by:
 
 #[test]
 fn compile_with_manifest_not_a_file() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     t.child("Scarb.toml").create_dir_all().unwrap();
     let cause = fs::read(t.child("Scarb.toml")).unwrap_err();
     Scarb::quick_snapbox()
@@ -174,7 +175,7 @@ Caused by:
 
 #[test]
 fn compile_with_invalid_empty_name() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
             r#"
@@ -203,7 +204,7 @@ fn compile_with_invalid_empty_name() {
 
 #[test]
 fn compile_with_invalid_version() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
             r#"
@@ -232,7 +233,7 @@ fn compile_with_invalid_version() {
 
 #[test]
 fn compile_with_invalid_non_numeric_dep_version() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
             r#"
@@ -264,7 +265,7 @@ fn compile_with_invalid_non_numeric_dep_version() {
 
 #[test]
 fn compile_multiple_packages() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
 
     t.child("Scarb.toml")
         .write_str(
@@ -332,7 +333,7 @@ fn compile_multiple_packages() {
 
 #[test]
 fn compile_with_nested_deps() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
 
     t.child("Scarb.toml")
         .write_str(
@@ -416,9 +417,9 @@ fn compile_with_nested_deps() {
 
 #[test]
 fn override_target_dir() {
-    let target_dir = assert_fs::TempDir::new().unwrap();
+    let target_dir = TempDir::new().unwrap();
 
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
     Scarb::quick_snapbox()
