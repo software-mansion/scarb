@@ -225,7 +225,7 @@ pub struct AddSourceArgs {
 /// Arguments accepted by the `remove` command.
 #[derive(Parser, Clone, Debug)]
 pub struct RemoveArgs {
-    /// Dependencies to be removed
+    /// Dependencies to be removed.
     #[arg(value_name = "DEP_ID", required = true)]
     pub packages: Vec<PackageName>,
 
