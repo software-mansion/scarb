@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use camino::Utf8PathBuf;
 
 use scarb::core::Config;
-use scarb::ops;
+use scarb::ops::{self, VersionControl};
 
 use crate::args::InitArgs;
 
@@ -17,6 +17,13 @@ pub fn run(args: InitArgs, config: &Config) -> Result<()> {
         ops::InitOptions {
             name: args.name,
             path,
+            // At the moment, we only support Git but ideally, we want to
+            // support more VCS and allow user to explicitly specify which VCS to use.
+            vcs: if args.no_vcs {
+                VersionControl::NoVcs
+            } else {
+                VersionControl::Git
+            },
         },
         config,
     )?;

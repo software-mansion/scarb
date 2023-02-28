@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use scarb::core::Config;
-use scarb::ops;
+use scarb::ops::{self, VersionControl};
 
 use crate::args::NewArgs;
 
@@ -11,6 +11,13 @@ pub fn run(args: NewArgs, config: &Config) -> Result<()> {
         ops::InitOptions {
             name: args.init.name,
             path: args.path,
+            // At the moment, we only support Git but ideally, we want to
+            // support more VCS and allow user to explicitly specify which VCS to use.
+            vcs: if args.init.no_vcs {
+                VersionControl::NoVcs
+            } else {
+                VersionControl::Git
+            },
         },
         config,
     )?;

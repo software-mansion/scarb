@@ -25,6 +25,39 @@ fn new_simple() {
     assert!(t.child("Scarb.toml").is_file());
     assert!(t.child("src/lib.cairo").is_file());
     assert!(t.child(".gitignore").is_file());
+    assert!(t.child(".git").is_dir());
+
+    let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
+    assert_eq!(toml_manifest.package.unwrap().name.as_str(), "hello");
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/release/hello.sierra")
+        .assert(predicates::str::is_empty().not());
+}
+
+#[test]
+fn new_simple_without_vcs() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("hello")
+        .arg("--no-vcs")
+        .current_dir(&pt)
+        .assert()
+        .success();
+
+    let t = pt.child("hello");
+    assert!(t.is_dir());
+    assert!(t.child("Scarb.toml").is_file());
+    assert!(t.child("src/lib.cairo").is_file());
+    assert!(!t.child(".gitignore").exists());
+    assert!(!t.child(".git").exists());
 
     let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
     assert_eq!(toml_manifest.package.unwrap().name.as_str(), "hello");
@@ -55,6 +88,39 @@ fn init_simple() {
     assert!(t.child("Scarb.toml").is_file());
     assert!(t.child("src/lib.cairo").is_file());
     assert!(t.child(".gitignore").is_file());
+    assert!(t.child(".git").is_dir());
+
+    let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
+    assert_eq!(toml_manifest.package.unwrap().name.as_str(), "hello");
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/release/hello.sierra")
+        .assert(predicates::str::is_empty().not());
+}
+
+#[test]
+fn init_simple_without_vcs() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    let t = pt.child("hello");
+    t.create_dir_all().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("init")
+        .arg("--no-vcs")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert!(t.is_dir());
+    assert!(t.child("Scarb.toml").is_file());
+    assert!(t.child("src/lib.cairo").is_file());
+    assert!(!t.child(".gitignore").exists());
+    assert!(!t.child(".git").exists());
 
     let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
     assert_eq!(toml_manifest.package.unwrap().name.as_str(), "hello");

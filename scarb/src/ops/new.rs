@@ -7,10 +7,17 @@ use crate::core::{Config, PackageName};
 use crate::internal::fsx;
 use crate::{ops, DEFAULT_SOURCE_DIR_NAME, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum VersionControl {
+    Git,
+    NoVcs,
+}
+
 #[derive(Debug)]
 pub struct InitOptions {
     pub path: Utf8PathBuf,
     pub name: Option<PackageName>,
+    pub vcs: VersionControl,
 }
 
 #[derive(Debug)]
@@ -31,6 +38,7 @@ pub fn new_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
         MkOpts {
             path: opts.path.clone(),
             name: name.clone(),
+            version_control: opts.vcs,
         },
         config,
     )
@@ -51,6 +59,7 @@ pub fn init_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
         MkOpts {
             path: opts.path,
             name: name.clone(),
+            version_control: opts.vcs,
         },
         config,
     )
@@ -77,13 +86,22 @@ fn infer_name(name: Option<PackageName>, path: &Utf8Path) -> Result<PackageName>
 struct MkOpts {
     path: Utf8PathBuf,
     name: PackageName,
+    version_control: VersionControl,
 }
 
-fn mk(MkOpts { path, name }: MkOpts, config: &Config) -> Result<()> {
+fn mk(
+    MkOpts {
+        path,
+        name,
+        version_control,
+    }: MkOpts,
+    config: &Config,
+) -> Result<()> {
     // Create project directory in case we are called from `new` op.
     fsx::create_dir_all(&path)?;
 
-    write_vcs_ignore(&path, config)?;
+    init_vcs(&path, version_control)?;
+    write_vcs_ignore(&path, config, version_control)?;
 
     // Create the `Scarb.toml` file.
     let manifest_path = path.join(MANIFEST_FILE_NAME);
@@ -131,14 +149,31 @@ fn mk(MkOpts { path, name }: MkOpts, config: &Config) -> Result<()> {
     Ok(())
 }
 
+fn init_vcs(path: &Utf8Path, vcs: VersionControl) -> Result<()> {
+    match vcs {
+        VersionControl::Git => {
+            if !path.join(".git").exists() {
+                gix::init(path)?;
+            }
+        }
+        VersionControl::NoVcs => {}
+    }
+
+    Ok(())
+}
+
 /// Write VCS ignore file.
-fn write_vcs_ignore(path: &Utf8Path, config: &Config) -> Result<()> {
+fn write_vcs_ignore(path: &Utf8Path, config: &Config, vcs: VersionControl) -> Result<()> {
     let patterns = vec![DEFAULT_TARGET_DIR_NAME];
 
-    let gitignore = path.join(".gitignore");
-    if !gitignore.exists() {
+    let fp_ignore = match vcs {
+        VersionControl::Git => path.join(".gitignore"),
+        VersionControl::NoVcs => return Ok(()),
+    };
+
+    if !fp_ignore.exists() {
         let ignore = patterns.join("\n") + "\n";
-        fsx::write(&gitignore, ignore)?;
+        fsx::write(&fp_ignore, ignore)?;
     } else {
         let lines = patterns
             .into_iter()
@@ -147,7 +182,7 @@ fn write_vcs_ignore(path: &Utf8Path, config: &Config) -> Result<()> {
         config
             .ui()
             .warn(formatdoc! {r#"
-                file `{gitignore}` already exists in this directory, ensure following patterns are ignored:
+                file `{fp_ignore}` already exists in this directory, ensure following patterns are ignored:
 
                 {lines}
             "#});
