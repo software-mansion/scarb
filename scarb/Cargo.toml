@@ -32,6 +32,7 @@ diffy.workspace = true
 directories.workspace = true
 dunce.workspace = true
 fs4.workspace = true
+futures.workspace = true
 gix.workspace = true
 ignore.workspace = true
 include_dir.workspace = true
