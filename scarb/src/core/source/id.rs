@@ -1,5 +1,6 @@
 use std::fmt;
 use std::ops::Deref;
+use std::sync::Arc;
 
 use anyhow::{anyhow, bail, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
@@ -208,13 +209,13 @@ impl SourceId {
     }
 
     /// Creates an implementation of `Source` corresponding to this ID.
-    pub fn load<'c>(self, config: &'c Config) -> Result<Box<dyn Source + 'c>> {
+    pub fn load<'c>(self, config: &'c Config) -> Result<Arc<dyn Source + 'c>> {
         use crate::sources::*;
         match self.kind {
-            SourceKind::Path => Ok(Box::new(PathSource::new(self, config))),
-            SourceKind::Git(_) => Ok(Box::new(GitSource::new(self, config)?)),
+            SourceKind::Path => Ok(Arc::new(PathSource::new(self, config))),
+            SourceKind::Git(_) => Ok(Arc::new(GitSource::new(self, config)?)),
             SourceKind::Registry => todo!("Registry sources are not implemented yet."),
-            SourceKind::Std => Ok(Box::new(StandardLibSource::new(config))),
+            SourceKind::Std => Ok(Arc::new(StandardLibSource::new(config))),
         }
     }
 }

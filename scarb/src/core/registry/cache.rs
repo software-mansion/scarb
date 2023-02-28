@@ -20,12 +20,12 @@ impl<'c> RegistryCache<'c> {
 #[async_trait(?Send)]
 impl<'c> Registry for RegistryCache<'c> {
     /// Attempt to find the packages that match dependency request.
-    async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
+    async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         self.registry.query(dependency).await
     }
 
     /// Fetch full package by its ID.
-    async fn download(&mut self, package_id: PackageId) -> Result<Package> {
+    async fn download(&self, package_id: PackageId) -> Result<Package> {
         self.registry.download(package_id).await
     }
 }

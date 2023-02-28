@@ -9,16 +9,16 @@ pub mod source_map;
 #[async_trait(?Send)]
 pub trait Registry {
     /// Attempt to find the packages that match a dependency request.
-    async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>>;
+    async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>>;
 
     /// Fetch full package by its ID.
-    async fn download(&mut self, package_id: PackageId) -> Result<Package>;
+    async fn download(&self, package_id: PackageId) -> Result<Package>;
 }
 
 #[cfg(test)]
 pub(crate) mod mock {
-    use std::collections::hash_map::Entry;
     use std::collections::{HashMap, HashSet};
+    use std::sync::RwLock;
 
     use anyhow::{anyhow, bail, Result};
     use async_trait::async_trait;
@@ -29,11 +29,11 @@ pub(crate) mod mock {
     use crate::core::registry::Registry;
     use crate::core::{Manifest, ManifestDependency, Package, PackageId, SourceId, Summary};
 
-    #[derive(Clone, Debug, Default)]
+    #[derive(Debug, Default)]
     pub struct MockRegistry {
         index: HashMap<(PackageName, SourceId), HashSet<PackageId>>,
         dependencies: HashMap<PackageId, Vec<ManifestDependency>>,
-        packages: HashMap<PackageId, Package>,
+        packages: RwLock<HashMap<PackageId, Package>>,
     }
 
     impl MockRegistry {
@@ -71,19 +71,24 @@ pub(crate) mod mock {
             self.dependencies.contains_key(&package_id)
         }
 
-        pub fn get_package(&mut self, package_id: PackageId) -> Result<Package> {
+        pub fn get_package(&self, package_id: PackageId) -> Result<Package> {
             if !self.has_package(package_id) {
                 bail!("MockRegistry/get_package: unknown package {package_id}");
             }
 
-            match self.packages.entry(package_id) {
-                Entry::Occupied(entry) => Ok(entry.get().clone()),
-                Entry::Vacant(entry) => {
-                    let package =
-                        Self::build_package(package_id, self.dependencies[&package_id].clone());
-                    entry.insert(package.clone());
-                    Ok(package)
-                }
+            let packages = self.packages.read().unwrap();
+            if packages.contains_key(&package_id) {
+                Ok(packages[&package_id].clone())
+            } else {
+                drop(packages);
+
+                let package =
+                    Self::build_package(package_id, self.dependencies[&package_id].clone());
+
+                let mut packages = self.packages.write().unwrap();
+                packages.insert(package_id, package.clone());
+
+                Ok(package)
             }
         }
 
@@ -108,7 +113,7 @@ pub(crate) mod mock {
 
     #[async_trait(?Send)]
     impl Registry for MockRegistry {
-        async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
+        async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
             Ok(self
                 .index
                 .get(&(dependency.name.clone(), dependency.source_id))
@@ -121,7 +126,7 @@ pub(crate) mod mock {
                 .collect())
         }
 
-        async fn download(&mut self, package_id: PackageId) -> Result<Package> {
+        async fn download(&self, package_id: PackageId) -> Result<Package> {
             self.get_package(package_id)
         }
     }
