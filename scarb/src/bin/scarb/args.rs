@@ -145,6 +145,10 @@ pub struct InitArgs {
     /// Set the resulting package name, defaults to the directory name.
     #[arg(long)]
     pub name: Option<PackageName>,
+
+    /// Do not initialize a new Git repository.
+    #[arg(long)]
+    pub no_vcs: bool,
 }
 
 /// Arguments accepted by the `metadata` command.
