@@ -141,7 +141,7 @@ pub struct ManifestMetadata {
     pub repository: Option<String>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct ManifestDependency {
     pub name: PackageName,
     pub version_req: VersionReq,
