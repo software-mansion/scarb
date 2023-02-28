@@ -1,9 +1,10 @@
 use std::collections::HashMap;
-use std::ops::DerefMut;
+use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
 use itertools::Itertools;
+use smol::lock::RwLock;
 use tracing::trace;
 
 use crate::core::registry::Registry;
@@ -16,7 +17,7 @@ use crate::sources::PathSource;
 /// Source of information about a group of packages.
 pub struct SourceMap<'c> {
     config: &'c Config,
-    sources: HashMap<SourceId, Box<dyn Source + 'c>>,
+    sources: RwLock<HashMap<SourceId, Arc<dyn Source + 'c>>>,
 }
 
 impl<'c> SourceMap<'c> {
@@ -33,42 +34,37 @@ impl<'c> SourceMap<'c> {
         let sources = sources.into_iter().map(|(source_id, packages)| {
             let packages = packages.collect::<Vec<_>>();
             let source = PathSource::preloaded(&packages, config);
-            let source: Box<dyn Source + 'c> = Box::new(source);
+            let source: Arc<dyn Source + 'c> = Arc::new(source);
             (source_id, source)
         });
-        let sources = HashMap::from_iter(sources);
-
+        let sources = RwLock::new(HashMap::from_iter(sources));
         Self { config, sources }
     }
 
-    fn ensure_loaded(&mut self, source_id: SourceId) -> Result<&mut (dyn Source + 'c)> {
-        // We can't use Entry API here because `load` usage of &self conflicts with it.
-        #[allow(clippy::map_entry)]
-        if !self.sources.contains_key(&source_id) {
-            let source = self.load(source_id)?;
-            self.sources.insert(source_id, source);
+    async fn ensure_loaded(&self, source_id: SourceId) -> Result<Arc<dyn Source + 'c>> {
+        let loaded_source = self.sources.read().await.get(&source_id).cloned();
+        if let Some(source) = loaded_source {
+            Ok(source)
+        } else {
+            trace!("loading source: {source_id}");
+            let source = source_id.load(self.config)?;
+            self.sources.write().await.insert(source_id, source.clone());
+            Ok(source)
         }
-
-        Ok(self.sources.get_mut(&source_id).unwrap().deref_mut())
-    }
-
-    fn load(&self, source_id: SourceId) -> Result<Box<dyn Source + 'c>> {
-        trace!("loading source: {source_id}");
-        source_id.load(self.config)
     }
 }
 
 #[async_trait(?Send)]
 impl<'c> Registry for SourceMap<'c> {
     /// Attempt to find the packages that match a dependency request.
-    async fn query(&mut self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
-        let source = self.ensure_loaded(dependency.source_id)?;
+    async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
+        let source = self.ensure_loaded(dependency.source_id).await?;
         source.query(dependency).await
     }
 
     /// Fetch full package by its ID.
-    async fn download(&mut self, package_id: PackageId) -> Result<Package> {
-        let source = self.ensure_loaded(package_id.source_id)?;
+    async fn download(&self, package_id: PackageId) -> Result<Package> {
+        let source = self.ensure_loaded(package_id.source_id).await?;
         source.download(package_id).await
     }
 }
