@@ -44,10 +44,6 @@ pub fn run(args: RemoveArgs, config: &mut Config) -> Result<()> {
 fn build_ops(packages: Vec<PackageName>) -> Vec<Box<dyn Op>> {
     packages
         .into_iter()
-        .map(|dep_name| -> Box<dyn Op> {
-            Box::new(RemoveDependency {
-                dep: Some(dep_name),
-            })
-        })
+        .map(|dep| -> Box<dyn Op> { Box::new(RemoveDependency { dep }) })
         .collect()
 }
