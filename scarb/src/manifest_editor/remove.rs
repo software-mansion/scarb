@@ -9,7 +9,7 @@ use super::{Op, OpCtx};
 
 #[derive(Debug, Default)]
 pub struct RemoveDependency {
-    pub dep: Option<PackageName>,
+    pub dep: PackageName,
 }
 
 impl Op for RemoveDependency {
