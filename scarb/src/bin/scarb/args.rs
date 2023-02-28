@@ -112,7 +112,7 @@ pub enum Command {
     /// Add dependencies to a Scarb.toml manifest file.
     Add(AddArgs),
 
-    /// Remove dependencies from a manifest file
+    /// Remove dependencies from a manifest file.
     #[command(alias = "rm")]
     Remove(RemoveArgs),
 
