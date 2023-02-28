@@ -67,6 +67,7 @@ ntest.workspace = true
 predicates.workspace = true
 serde_test.workspace = true
 similar-asserts.workspace = true
+smol-potat.workspace = true
 snapbox.workspace = true
 test-case.workspace = true
 
