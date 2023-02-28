@@ -3193,6 +3193,7 @@ dependencies = [
  "serde_test",
  "similar-asserts",
  "smol",
+ "smol-potat",
  "smol_str",
  "snapbox",
  "test-case",
@@ -3380,6 +3381,27 @@ dependencies = [
  "async-process",
  "blocking",
  "futures-lite",
+]
+
+[[package]]
+name = "smol-potat"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "894ffa61af5c0fab697c8c29b1ab10cb6ec4978a1ccac4a81b5b312df1ffd88e"
+dependencies = [
+ "async-io",
+ "smol-potat-macro",
+]
+
+[[package]]
+name = "smol-potat-macro"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b7cd8129a18069385b4eadaa81182b1451fab312ad6f58d1d99253082bf3932"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
