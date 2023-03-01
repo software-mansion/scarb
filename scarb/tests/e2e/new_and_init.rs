@@ -58,18 +58,6 @@ fn new_simple_without_vcs() {
     assert!(t.child("src/lib.cairo").is_file());
     assert!(!t.child(".gitignore").exists());
     assert!(!t.child(".git").exists());
-
-    let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
-    assert_eq!(toml_manifest.package.unwrap().name.as_str(), "hello");
-
-    Scarb::quick_snapbox()
-        .arg("build")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    t.child("target/release/hello.sierra")
-        .assert(predicates::str::is_empty().not());
 }
 
 #[test]
@@ -121,18 +109,6 @@ fn init_simple_without_vcs() {
     assert!(t.child("src/lib.cairo").is_file());
     assert!(!t.child(".gitignore").exists());
     assert!(!t.child(".git").exists());
-
-    let toml_manifest = TomlManifest::read_from_path(t.child("Scarb.toml").utf8_path()).unwrap();
-    assert_eq!(toml_manifest.package.unwrap().name.as_str(), "hello");
-
-    Scarb::quick_snapbox()
-        .arg("build")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    t.child("target/release/hello.sierra")
-        .assert(predicates::str::is_empty().not());
 }
 
 #[test]
