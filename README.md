@@ -95,13 +95,10 @@ $ scarb fmt
 $ scarb fmt -c
 ```
 
-## Changelog
+## Changelog and roadmap
 
 All notable changes to this project are documented on the [GitHub releases] page.
 
-## Roadmap
-
-Our goal is to release first release candidate in proximity to the Starknet v0.11 release in February.
 We track project roadmap [here](https://github.com/orgs/software-mansion/projects/4/views/1).
 
 ## Credits
