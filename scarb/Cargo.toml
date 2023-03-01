@@ -6,7 +6,6 @@ rust-version.workspace = true
 authors.workspace = true
 categories = ["command-line-utilities", "development-tools"]
 description = "The Cairo package manager"
-documentation.workspace = true
 edition.workspace = true
 homepage.workspace = true
 keywords = ["cairo-lang", "starknet"]

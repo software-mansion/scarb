@@ -10,7 +10,6 @@ edition = "2021"
 rust-version = "1.67"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
-documentation = "https://github.com/software-mansion/scarb#readme"
 homepage = "https://github.com/software-mansion/scarb#readme"
 license = "MIT"
 readme = "README.md"
