@@ -1,14 +1,19 @@
 [package]
 name = "scarb"
 version.workspace = true
-description = "The Cairo package manager"
-edition.workspace = true
 rust-version.workspace = true
-repository.workspace = true
-readme.workspace = true
-license.workspace = true
+
+authors.workspace = true
 categories = ["command-line-utilities", "development-tools"]
+description = "The Cairo package manager"
+documentation.workspace = true
+edition.workspace = true
+homepage.workspace = true
 keywords = ["cairo-lang", "starknet"]
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+
 build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -8,9 +8,13 @@ members = [
 version = "0.1.0-alpha.2"
 edition = "2021"
 rust-version = "1.67"
-repository = "https://github.com/software-mansion/scarb"
-readme = "README.md"
+
+authors = ["Software Mansion <contact@swmansion.com>"]
+documentation = "https://github.com/software-mansion/scarb#readme"
+homepage = "https://github.com/software-mansion/scarb#readme"
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/software-mansion/scarb"
 
 [workspace.dependencies]
 anyhow = "1.0.66"
