@@ -32,7 +32,7 @@ pub struct GitSource<'c> {
 
 struct InnerState<'c> {
     path_source: PathSource<'c>,
-    // TODO(mkaput): Update rev lock in the lockfile with this value.
+    // TODO(#126): Update rev lock in the lockfile with this value.
     actual_rev: Rev,
 }
 
@@ -59,7 +59,7 @@ impl<'c> GitSource<'c> {
             config,
             remote: GitRemote::new(canonical_url),
             requested_reference,
-            // TODO(mkaput): Pull this somehow from the lockfile.
+            // TODO(#126): Pull this somehow from the lockfile.
             locked_rev: None,
             inner: OnceCell::new(),
         })

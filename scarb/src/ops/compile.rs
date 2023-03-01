@@ -12,7 +12,6 @@ pub fn compile(ws: &Workspace<'_>) -> Result<()> {
     let resolve = ops::resolve_workspace(ws)?;
     let compilation_units = ops::generate_compilation_units(&resolve, ws)?;
 
-    // TODO(mkaput): Parallelize this loop.
     for unit in compilation_units {
         compile_unit(unit, ws)?;
     }

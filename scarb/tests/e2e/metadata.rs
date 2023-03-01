@@ -301,4 +301,4 @@ fn json_output_is_not_pretty() {
         .stdout_matches("{\"version\":1,[..]}\n");
 }
 
-// TODO(mkaput): Add tests with workspaces
+// TODO(#12): Add tests with workspaces

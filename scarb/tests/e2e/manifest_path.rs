@@ -27,7 +27,6 @@ fn with_manifest() {
         ));
 }
 
-// FIXME(mkaput): Fix this test.
 #[test]
 #[cfg_attr(
     target_os = "windows",

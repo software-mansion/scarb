@@ -118,8 +118,8 @@ fn invalid_package_name() {
         "#});
 }
 
-// TODO(mkaput): Test keyword as name.
-// TODO(mkaput): Test core as name.
+// TODO(#131): Test keyword as name.
+// TODO(#131): Test core as name.
 
 #[test]
 fn new_explicit_project_name() {

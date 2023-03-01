@@ -10,7 +10,7 @@ use crate::args::{AddArgs, AddSourceArgs};
 pub fn run(args: AddArgs, config: &mut Config) -> Result<()> {
     let ws = ops::read_workspace(config.manifest_path(), config)?;
 
-    // TODO(mkaput): Extract more generic pattern for this. See `Packages` struct in Cargo.
+    // TODO(#127): Extract more generic pattern for this. See `Packages` struct in Cargo.
     let package = match args.package {
         Some(name) => ws
             .members()

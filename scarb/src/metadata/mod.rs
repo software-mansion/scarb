@@ -69,8 +69,6 @@ pub struct DependencyMetadata {
     pub name: String,
     pub version_req: VersionReq,
     pub source: SourceId,
-    // TODO(mkaput): Perhaps point to resolved package id here?
-    //   This will make it easier for consumers to navigate the output.
 }
 
 #[derive(Serialize, Deserialize, Debug)]

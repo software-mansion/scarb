@@ -23,7 +23,7 @@ use crate::core::{PackageId, Summary};
 ///     repetitive queries.
 #[tracing::instrument(level = "trace", skip_all)]
 pub async fn resolve(summaries: &[Summary], registry: &mut dyn Registry) -> Result<Resolve> {
-    // TODO(mkaput): This is very bad, use PubGrub here.
+    // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::new();
 
     let mut packages: HashMap<_, _> = HashMap::from_iter(
@@ -292,7 +292,7 @@ mod tests {
                 ("baz v1.0.0", []),
             ],
             &[deps![("foo", "*")]],
-            // TODO(mkaput): Expected result is commented out.
+            // TODO(#2): Expected result is commented out.
             // Ok(pkgs![
             //     "bar v1.0.0",
             //     "baz v1.0.0",
@@ -322,7 +322,7 @@ mod tests {
                 ("baz v2.1.0", []),
             ],
             &[deps![("bar", "~1.1.0"), ("foo", "~2.7")]],
-            // TODO(mkaput): Expected result is commented out.
+            // TODO(#2): Expected result is commented out.
             // Ok(pkgs![
             //     "bar v1.1.1",
             //     "baz v1.8.0",

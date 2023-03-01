@@ -17,7 +17,7 @@ pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) 
     };
 
     // TODO(mkaput): Jobserver.
-    // TODO(mkaput): Write a test that CTRL+C kills everything, like Cargo's death,
+    // TODO(#129): Write a test that CTRL+C kills everything, like Cargo's death,
     //   but perhaps use an external bash script? Use Job Objects or smth else to fix it.
 
     let mut cmd = Command::new(cmd);

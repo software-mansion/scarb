@@ -11,7 +11,7 @@ use tracing::{debug, debug_span, warn, Span};
 use crate::core::Config;
 use crate::ui::{Spinner, Status};
 
-// TODO(mkaput): Do what is documented here, take a look at what cargo-util does.
+// TODO(#125): Do what is documented here, take a look at what cargo-util does.
 /// Replaces the current process with the target process.
 ///
 /// On Unix, this executes the process using the Unix syscall `execvp`, which will block this

@@ -191,7 +191,7 @@ fn compile_with_nested_paths() {
         .success();
 }
 
-// TODO(mkaput): Redo TomlDependency deserializer to stick parsing particular variant
+// TODO(#130): Redo TomlDependency deserializer to stick parsing particular variant
 //   if specific keyword appears.
 #[test]
 fn compile_with_short_ssh_git() {
@@ -220,8 +220,8 @@ fn compile_with_short_ssh_git() {
         "#});
 }
 
-// TODO(mkaput): Add tests with submodules.
-// TODO(mkaput): Add tests with `scarb update`.
+// TODO(#133): Add tests with submodules.
+// TODO(#132): Add tests with `scarb update`.
 
 #[test]
 fn stale_cached_version() {
@@ -254,7 +254,7 @@ fn stale_cached_version() {
     t.child("target/release/hello.sierra")
         .assert(predicates::str::contains("11111111111101"));
 
-    // TODO(mkaput): Lockfile should prevent updating.
+    // TODO(#126): Lockfile should prevent updating.
     //   When lockfile will be implemented, uncomment this and implement missing parts.
     // Scarb::quick_snapbox()
     //     .arg("build")

@@ -12,7 +12,6 @@ use snapbox::cmd::cargo_bin;
 
 use crate::support::command::Scarb;
 
-// TODO(mkaput): Fix this test.
 #[test]
 #[cfg_attr(
     not(target_family = "unix"),
@@ -138,7 +137,7 @@ fn env_scarb_log_is_passed_verbatim() {
         .success();
 }
 
-// TODO(mkaput): Fix this test.
+// TODO(#129): Fix this test.
 #[test]
 #[ignore] // something doesn't work here
 fn ctrl_c_kills_everyone() {

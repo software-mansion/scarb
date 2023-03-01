@@ -56,7 +56,7 @@ pub fn edit(
         )?;
     }
 
-    // TODO(mkaput): Sort dependencies and scripts etc.
+    // TODO(#128): Sort dependencies and scripts etc.
 
     let new_raw_manifest = doc.to_string();
     if new_raw_manifest == original_raw_manifest {

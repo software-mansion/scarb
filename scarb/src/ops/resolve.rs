@@ -81,7 +81,7 @@ pub fn generate_compilation_units(
                 package: member.clone(),
                 target: target.clone(),
                 components: components.clone(),
-                // TODO(mkaput): Support defining profiles in manifest.
+                // TODO(#120): Support defining profiles in manifest.
                 profile: Profile {
                     name: "release".into(),
                 },
@@ -103,8 +103,7 @@ async fn collect_packages_from_resolve_graph(
     registry: &mut RegistryCache<'_>,
 ) -> Result<HashMap<PackageId, Package>> {
     let mut packages = HashMap::with_capacity(resolve.package_ids().size_hint().0);
-    // TODO(mkaput): Parallelize this loop, this is tricky because RegistryCache, Registry
-    //   and Source take &mut self.
+    // TODO(#6): Parallelize this loop.
     for package_id in resolve.package_ids() {
         let package = registry.download(package_id).await?;
         packages.insert(package_id, package);

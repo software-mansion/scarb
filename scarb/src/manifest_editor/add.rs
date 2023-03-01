@@ -133,7 +133,7 @@ impl Dep {
         Ok(Dep { name, source })
     }
 
-    // TODO(mkaput): With namespaced packages, this should produce a path.
+    // TODO(#13): With namespaced packages, this should produce a path.
     fn toml_key(&self) -> &str {
         self.name.as_str()
     }

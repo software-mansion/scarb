@@ -4,7 +4,7 @@ use petgraph::visit::{Dfs, Walker};
 
 use crate::core::PackageId;
 
-// TODO(mkaput): Produce lockfile out of this.
+// TODO(#126): Produce lockfile out of this.
 /// Represents a fully-resolved package dependency graph.
 ///
 /// Each node in the graph is a package and edges represent dependencies between packages.

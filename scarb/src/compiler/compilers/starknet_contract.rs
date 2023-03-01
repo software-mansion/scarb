@@ -15,7 +15,7 @@ use crate::compiler::helpers::{
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{ExternalTargetKind, Workspace};
 
-// TODO(mkaput): starknet-contract should be implemented as an extension.
+// TODO(#111): starknet-contract should be implemented as an extension.
 pub struct StarknetContractCompiler;
 
 impl Compiler for StarknetContractCompiler {

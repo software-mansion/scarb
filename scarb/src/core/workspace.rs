@@ -8,7 +8,7 @@ use crate::core::package::Package;
 use crate::flock::RootFilesystem;
 use crate::MANIFEST_FILE_NAME;
 
-// TODO(mkaput): Support real workspaces.
+// TODO(#12): Support real workspaces.
 /// The core abstraction for working with a workspace of packages.
 ///
 /// **Note:** Currently only single-package workspaces are supported.
