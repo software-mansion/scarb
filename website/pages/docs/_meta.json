@@ -1,0 +1,13 @@
+{
+  "index": "Introduction",
+  "cheatsheet": "Cheat sheet",
+  "guides": {
+    "title": "Guides"
+  },
+  "reference": {
+    "title": "Reference"
+  },
+  "extensions": {
+    "title": "Extensions"
+  }
+}

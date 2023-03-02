@@ -1,0 +1,122 @@
+import { Callout } from "nextra-theme-docs";
+
+# Cheat sheet
+
+Get started with Scarb by following a cheatsheet of the most important commands.
+
+## Creating new project
+
+```shell copy
+scarb new project/directory
+```
+
+<Callout>
+  There is `scarb init{:shell}` which runs in current directory instead of creating new
+  one.
+</Callout>
+
+## Compiling
+
+```shell copy
+scarb build
+```
+
+Built Sierra code of this package will be written to `target/release` directory.
+
+<Callout>`scarb clean{:shell}` cleans `target` directory.</Callout>
+
+### Building CASM
+
+Add following to `Scarb.toml`:
+
+```toml copy
+[lib]
+casm = true
+```
+
+Adding following line to `[lib]{:toml}` section will stop building Sierra code:
+
+```toml copy
+sierra = false
+```
+
+### Building StarkNet contracts
+
+Add following to `Scarb.toml`:
+
+```toml copy
+[[target.starknet-contract]]
+```
+
+<Callout type="warning">
+  Ensure there is no `[lib]{:toml}` section, they are conflicting until
+  [#91](https://github.com/software-mansion/scarb/issues/91) will be done.
+</Callout>
+
+## Adding dependencies
+
+### In manifest
+
+Add dependency hosted on a Git repository:
+
+```toml copy
+[dependencies]
+quaireaux = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
+```
+
+Add dependency located in local path:
+
+```toml copy
+[dependencies]
+quaireaux = { path = "path/to/quaireaux" }
+```
+
+<Callout>
+  You can add `version` field to specify package version requirement.
+</Callout>
+
+<Callout>
+  You can add `branch`, `tag` and `rev` fields to Git dependencies.
+</Callout>
+
+<Callout>
+  You can use `ssh://` URLs, Scarb uses local `git` installation for all network
+  operations.
+</Callout>
+
+### Via `scarb add`
+
+Add dependency hosted on a Git repository:
+
+```shell copy
+scarb add quaireaux --git https://github.com/keep-starknet-strange/quaireaux.git
+```
+
+Add dependency located in local path:
+
+```shell copy
+scarb add quaireaux --path path/to/quaireaux
+```
+
+<Callout>
+  You can specify package version like this: `quaireaux@0.1.0`, but see remarks
+  in previous section.
+</Callout>
+
+<Callout>`--git` supports `--branch`, `--tag` and `--rev` arguments.</Callout>
+
+<Callout>`scarb rm{:shell}` removes a dependency.</Callout>
+
+## Formatting
+
+Format Cairo code:
+
+```shell copy
+scarb fmt
+```
+
+Check formatting in CI:
+
+```shell copy
+scarb fmt -c
+```

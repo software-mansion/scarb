@@ -1,0 +1,39 @@
+# Introduction
+
+Scarb is the [Cairo](https://cairo-lang.org) package manager.
+Scarb downloads your Cairo package's dependencies, compiles your projects (either pure Cairo or StarkNet contracts),
+and works as an entrypoint for other tooling to work with your code, such as [Protostar](https://docs.swmansion.com/protostar) or IDEs.
+
+Scarb is heavily inspired by [Cargo](https://doc.rust-lang.org/cargo/).
+The goal is to make programmers used to writing Rust feel at home.
+
+## Installation
+
+See installation instructions on the [download](/download) page.
+
+## Command line help
+
+Scarb is designed to be discoverable straight from the terminal.
+If you want to get the information about available commands and flags, you can always use:
+
+```shell copy
+scarb -h
+```
+
+Or, for even more details:
+
+```shell copy
+scarb --help
+```
+
+If you want to get the detailed information about a certain command and available flags, you can always use:
+
+```shell
+scarb COMMAND --help
+```
+
+For example:
+
+```shell copy
+scarb build --help
+```
