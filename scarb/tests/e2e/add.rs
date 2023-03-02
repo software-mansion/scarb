@@ -350,3 +350,61 @@ fn overwrite_change_source_from_path_to_git() {
         "#})
         .run();
 }
+
+#[test]
+fn should_sort_if_already_sorted() {
+    ManifestEditHarness::offline()
+        .args(["add", "cat@2.0.0"])
+        .input(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+
+            [dependencies]
+            bar = "1.0.0"
+            dep = "1.0.0"
+            foo = "1.0.0"
+        "#})
+        .output(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+
+            [dependencies]
+            bar = "1.0.0"
+            cat = "2.0.0"
+            dep = "1.0.0"
+            foo = "1.0.0"
+        "#})
+        .run();
+}
+
+#[test]
+fn should_not_sort_if_already_unsorted() {
+    ManifestEditHarness::offline()
+        .args(["add", "apple@1.0.0"])
+        .input(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+
+            [dependencies]
+            bar = "1.0.0"
+            foo = "1.0.0"
+            
+            dep = "1.0.0"
+        "#})
+        .output(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+
+            [dependencies]
+            bar = "1.0.0"
+            foo = "1.0.0"
+            
+            dep = "1.0.0"
+            apple = "1.0.0"
+        "#})
+        .run();
+}
