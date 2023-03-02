@@ -1,0 +1,21 @@
+{
+  "index": {
+    "title": "Scarb",
+    "type": "page",
+    "display": "hidden",
+    "theme": {
+      "layout": "full",
+      "typesetting": "article"
+    }
+  },
+  "download": {
+    "type": "page",
+    "theme": {
+      "typesetting": "article"
+    }
+  },
+  "docs": {
+    "type": "page",
+    "title": "Documentation"
+  }
+}

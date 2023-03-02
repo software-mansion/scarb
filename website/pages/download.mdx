@@ -1,0 +1,64 @@
+---
+title: Download
+---
+
+import { BigLink } from "../components/bigLink";
+import { Callout } from "nextra-theme-docs";
+
+# Download Scarb
+
+Scarb is a native command line application that is available for Linux, macOS and Windows on all common CPU architectures.
+
+Currently, we publish release archives on our GitHub releases page, we recommend to download a suitable archive for the latest version and follow installation instructions.
+In the future, we plan to provide a dedicated installer for all platforms.
+We also include change logs for each release on this page.
+
+<BigLink
+  href="https://github.com/software-mansion/scarb/releases"
+  text="Go to Scarb releases on GitHub"
+/>
+
+## Requirements
+
+To download Git dependencies, Scarb requires a Git executable to be available in the `PATH` environment variable.
+
+## Installation
+
+As for now, Scarb needs manual installation, but necessary steps are kept to minimum:
+
+1. Download the release archive matching your operating system and CPU architecture.
+2. Extract it to a location where you would like to have Scarb installed.
+   A folder named `scarb` in your home directory (so: `~/scarb`) will suffice.
+3. Add path to the `scarb/bin` directory to your `PATH` environment variable.
+4. Verify installation by running the following command in new terminal session, it should print Scarb and Cairo language versions:
+   ```shell copy
+   scarb --version
+   ```
+
+_Enjoy!_
+
+## Scarb as a library
+
+Scarb is a [Rust](https://rust-lang.org) crate which can be used as a library in your applications.
+We publish each release of Scarb to [crates.io](https://crates.io), the official package registry for Rust.
+
+<Callout type="warning">
+  Using Scarb crate has certain caveats, consult [related
+  documentation](/docs/extensions/scarb-crate) for more information before use.
+</Callout>
+
+<BigLink
+  href="https://crates.io/crates/scarb"
+  text="Go to Scarb on crates.io"
+/>
+
+## Source code
+
+Scarb is an open source project developed by [Software Mansion](https://swmansion.com), available under terms of the MIT License.
+We host our Git repository on GitHub.
+We also welcome external contributors!
+
+<BigLink
+  href="https://github.com/software-mansion/scarb"
+  text="Go to Scarb on GitHub"
+/>
