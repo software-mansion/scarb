@@ -52,8 +52,19 @@ impl Op for AddDependency {
 
         let dep = Dep::resolve(*self, ctx)?;
 
+        let was_sorted = tab.as_table_like().map_or(true, |dep_table| {
+            let values = dep_table.get_values();
+            is_sorted(values.iter().map(|(key, _)| key[0]))
+        });
+
         let dep_key = dep.toml_key().to_string();
         dep.upsert(tab.as_table_like_mut().unwrap().entry(&dep_key));
+
+        if was_sorted {
+            if let Some(table) = tab.as_table_like_mut() {
+                table.sort_values();
+            }
+        }
 
         if let Some(t) = tab.as_inline_table_mut() {
             t.fmt()
@@ -221,4 +232,21 @@ fn path_value(manifest_path: &Utf8Path, abs_path: &Utf8Path) -> String {
         .expect("Both paths should be absolute at this point.")
         .as_str()
         .replace('\\', "/")
+}
+
+// Based on Iterator::is_sorted from nightly std; remove in favor of that when stabilized.
+fn is_sorted(mut item: impl Iterator<Item = impl PartialOrd>) -> bool {
+    let mut last = match item.next() {
+        Some(e) => e,
+        None => return true,
+    };
+
+    for current in item {
+        if current < last {
+            return false;
+        }
+        last = current;
+    }
+
+    true
 }
