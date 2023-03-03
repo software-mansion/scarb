@@ -377,6 +377,62 @@ fn should_sort_if_already_sorted() {
             foo = "1.0.0"
         "#})
         .run();
+
+    ManifestEditHarness::offline()
+        .args(["add", "cat@2.0.0"])
+        .input(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+
+            [dependencies]
+            bar = "1.0.0"
+            
+            dep = "1.0.0"
+            foo = "1.0.0"
+        "#})
+        .output(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+
+            [dependencies]
+            bar = "1.0.0"
+            cat = "2.0.0"
+
+            dep = "1.0.0"
+            foo = "1.0.0"
+        "#})
+        .run();
+
+    ManifestEditHarness::offline()
+        .args(["add", "dog@2.0.0"])
+        .input(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+
+            [dependencies]
+            bar = "1.0.0"
+            cat = "2.0.0"
+            
+            dep = "1.0.0"
+            foo = "1.0.0"
+        "#})
+        .output(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+
+            [dependencies]
+            bar = "1.0.0"
+            cat = "2.0.0"
+            
+            dep = "1.0.0"
+            dog = "2.0.0"
+            foo = "1.0.0"
+        "#})
+        .run();
 }
 
 #[test]
@@ -391,7 +447,6 @@ fn should_not_sort_if_already_unsorted() {
             [dependencies]
             bar = "1.0.0"
             foo = "1.0.0"
-            
             dep = "1.0.0"
         "#})
         .output(indoc! {r#"
@@ -402,7 +457,6 @@ fn should_not_sort_if_already_unsorted() {
             [dependencies]
             bar = "1.0.0"
             foo = "1.0.0"
-            
             dep = "1.0.0"
             apple = "1.0.0"
         "#})
