@@ -1,0 +1,24 @@
+# Working on an Existing Scarb Package
+
+If you download an existing package that uses Scarb, it's really easy to get going.
+
+First, get the package from somewhere. For example, the [`quaireaux`](https://github.com/keep-starknet-strange/quaireaux) package is hosted on GitHub, and we 'll clone its repository using Git.
+
+```shell copy
+git clone https://github.com/keep-starknet-strange/quaireaux
+cd quaireaux
+cat Scarb.toml
+```
+
+Then to build it, use `scarb build{:shell}`:
+
+```shell copy
+scarb build
+```
+
+```text filename="Output"
+   Compiling quaireaux v0.1.0 (/path/to/package/quaireaux/Scarb.toml)
+    Finished release target(s) in 4 seconds
+```
+
+This will fetch all of the dependencies and then build them, along with the package.
