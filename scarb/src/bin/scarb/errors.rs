@@ -1,7 +1,4 @@
-use anyhow::Result;
 use thiserror::Error;
-
-pub type ScarbResult<T> = Result<T, ErrorWithExitCode>;
 
 /// The ErrorWithExitCode is the error type used at Scarb's CLI-layer.
 #[derive(Error, Debug)]
