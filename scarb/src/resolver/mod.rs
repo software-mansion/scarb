@@ -6,7 +6,7 @@ use petgraph::graphmap::DiGraphMap;
 
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
-use crate::core::{PackageId, Summary};
+use crate::core::{PackageId, PackageName, SourceId, Summary};
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -46,6 +46,14 @@ pub async fn resolve(summaries: &[Summary], registry: &mut dyn Registry) -> Resu
 
             for dep in summaries[&package_id].clone().full_dependencies() {
                 if let Some(existing) = packages.get(&dep.name) {
+                    // NOTE: We only support user defined `core` libraries defined
+                    // at the top level of the workspace. `std` is guarantted to
+                    // come after the user defined depndency since implicit dependencies
+                    // are appended to user defined dependencies.
+                    if dep.name == PackageName::CORE && dep.source_id == SourceId::for_std() {
+                        continue;
+                    }
+
                     if existing.source_id != dep.source_id {
                         bail!(
                             indoc! {"
