@@ -12,6 +12,10 @@ fn main() {
     download_core(&rev);
 }
 
+fn is_docs_rs() -> bool {
+    env::var("DOCS_RS").is_ok()
+}
+
 fn commit_info() {
     if !Path::new("../.git").exists() {
         return;
@@ -68,8 +72,18 @@ fn cairo_version() -> String {
 
 fn download_core(rev: &str) {
     let out_dir = env::var("OUT_DIR").unwrap();
-    let core_path = PathBuf::from_iter([&out_dir, &format!("core-{}", ident(rev))]);
+    if is_docs_rs() {
+        eprintln!("Docs.rs build detected. Skipping corelib download.");
+        let core_stub_path = PathBuf::from_iter([&out_dir, "core-stub"]);
+        fs::create_dir_all(&core_stub_path).unwrap();
+        println!(
+            "cargo:rustc-env=SCARB_CORE_PATH={}",
+            core_stub_path.display()
+        );
+        return;
+    }
 
+    let core_path = PathBuf::from_iter([&out_dir, &format!("core-{}", ident(rev))]);
     if !core_path.is_dir() {
         let url = format!("https://github.com/starkware-libs/cairo/archive/{rev}.zip");
         let cairo_zip = PathBuf::from_iter([&out_dir, "cairo.zip"]);
