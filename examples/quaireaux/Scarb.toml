@@ -1,9 +1,0 @@
-[package]
-name = "with_quaireaux"
-version = "0.1.0"
-
-[dependencies]
-quaireaux = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
-
-[lib]
-casm = true
