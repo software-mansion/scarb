@@ -1,0 +1,168 @@
+# The Manifest Format
+
+The `Scarb.toml` file, present in each package, is called its _manifest_.
+It is written in the [TOML](https://toml.io/) format.
+It contains metadata that is needed to compile the package.
+It has to be placed in the root of your project.
+Use the `scarb manifest-path{:shell}` command to locate the manifest used in current directory.
+
+Every manifest file consists of the following sections:
+
+## `[package]`
+
+The first section in a `Scarb.toml` is `[package]{:toml}`.
+
+```toml copy filename="Scarb.toml"
+[package]
+name = "hello_world" # the name of the package
+version = "0.1.0"    # the current version, obeying semver
+authors = ["Alice <a@example.com>", "Bob <b@example.com>"]
+```
+
+The only required fields are [`name`](#name) and [`version`](#version).
+
+### `name`
+
+The package name is an identifier used to refer to the package.
+It is used when listed as a dependency in another package, and as the default name of targets.
+
+The name must use only ASCII alphanumeric characters or `_`, and cannot be empty.
+It cannot also start with underscore.
+
+In other words, it must match the following regular expression:
+
+```
+^[a-zA-Z0-9][a-zA-Z0-9_]+$
+```
+
+### `version`
+
+Scarb bakes in the concept of [Semantic Versioning](https://semver.org/), so make sure you follow some basic rules:
+
+1. Before you reach 1.0.0, anything goes, but if you make breaking changes, increment the minor version.
+2. After 1.0.0, only make breaking changes when you increment the major version.
+   Do not break the build.
+3. After 1.0.0, don’t add any new public API in patch-level versions.
+   Always increment the minor version if you add any new public structs, traits, fields, types, functions, methods, impls or anything else.
+4. Use version numbers with three numeric parts such as 1.0.0 rather than 1.0.
+
+### `authors`
+
+This optional field lists the people or organizations that are considered the "authors" of the package.
+The exact meaning is open to interpretation - it may list the original primary authors, current maintainers, or owners of the package.
+An optional email address may be included within angled brackets at the end of each author entry.
+
+```toml
+[package]
+authors = ["Software Mansion <contact@swmansion.com>", "Starkware"]
+```
+
+### `description`
+
+The description is a short blurb about the package.
+Package registries or indexers may display it with your package, some registries may even require it.
+This should be plain text (not Markdown).
+
+```toml
+[package]
+description = "A short description of my package."
+```
+
+### `documentation`
+
+This field specifies a URL to a website hosting the crate's documentation.
+
+```toml
+[package]
+documentation = "https://john.github.io/cairo-package"
+```
+
+### `readme`
+
+This field should be the path to a file in the package root (relative to this `Scarb.toml`) that contains general information about the package.
+
+```toml
+[package]
+readme = "README.md
+```
+
+### `homepage`
+
+This field should be a URL to a site that is the home page for your package.
+
+```toml
+[package]
+homepage = "https://example.com/"
+```
+
+### `repository`
+
+This field should be a URL to the source repository for your package.
+
+```toml
+[package]
+repository = "https://github.com/software-mansion/scarb"
+```
+
+### `license` and `license-file`
+
+The `license` field contains the name of the software license that the package is released under.
+The `license-file` field contains the path to a file containing the text of the license (relative to this `Scarb.toml`).
+
+Package registries must interpret the `license` field as an [SPDX 2 license expression](https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/).
+The license name must be a known license from the [SPDX license list](https://spdx.org/licenses/).
+
+SPDX license expressions support AND and OR operators to combine multiple licenses.
+
+```toml
+[package]
+license = "MIT OR Apache-2.0"
+```
+
+Using `OR` indicates the user may choose either license.
+Using `AND` indicates the user must comply with both licenses simultaneously.
+The `WITH` operator indicates a license with a special exception.
+Some examples:
+
+- `MIT OR Apache-2.0`
+- `LGPL-2.1-only AND MIT AND BSD-2-Clause`
+- `GPL-2.0-or-later WITH Bison-exception-2.2`
+
+If a package is using a nonstandard license, then the `license-file` field may be specified instead of the `license` field.
+
+```toml
+[package]
+license-file = "LICENSE.txt"
+```
+
+### `keywords`
+
+This field is an array of strings that describe your package.
+This can help when searching for the package on a registry, and it is allowed to choose any words that would help someone find this package.
+
+```toml
+[package]
+keywords = ["account", "wallet", "erc-20"]
+```
+
+It is recommended that keywords are ASCII text, starting with a letter and only containing letters, numbers and `-`.
+Additionally, keywords should have at most 20 characters, and single package should not provide more than 5 keywords.
+
+### `urls`
+
+This field is a map of additional internet links related to this package.
+Keys are human-readable link names, and values are URLs.
+
+```toml
+[package.urls]
+"We can help you build your project" = "https://swmansion.com/services/"
+"We're hiring" = "https://swmansion.com/careers/"
+```
+
+## `[dependencies]`
+
+See [Specifying Dependencies](./specifying-dependencies) page.
+
+## Target tables: `[lib]` and `[[target]]`
+
+See [Targets](./targets) page.
