@@ -1,10 +1,12 @@
 use std::env;
 
-use anyhow::Result;
+use anyhow::{Error, Result};
 use clap::Parser;
+use tracing::debug;
 use tracing_log::AsTrace;
 use tracing_subscriber::EnvFilter;
 
+use crate::errors::ErrorWithExitCode;
 use args::ScarbArgs;
 use scarb::core::Config;
 use scarb::ops;
@@ -12,6 +14,7 @@ use scarb::ui::Ui;
 
 mod args;
 mod commands;
+mod errors;
 
 fn main() {
     let args = ScarbArgs::parse();
@@ -30,6 +33,20 @@ fn main() {
     let ui = Ui::new(args.ui_verbosity(), args.output_format());
 
     if let Err(err) = cli_main(args) {
+        exit_with_error(err, &ui);
+    }
+}
+
+fn exit_with_error(err: Error, ui: &Ui) {
+    debug!("exit_with_error; err={:?}", err);
+
+    if let Some(error_with_exit_code) = err.downcast_ref::<ErrorWithExitCode>() {
+        let ErrorWithExitCode { source, exit_code } = error_with_exit_code;
+        if let Some(source_err) = source {
+            ui.anyhow(source_err);
+        }
+        std::process::exit(*exit_code);
+    } else {
         ui.anyhow(&err);
         std::process::exit(1);
     }
