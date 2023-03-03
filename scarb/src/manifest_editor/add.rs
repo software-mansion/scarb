@@ -52,10 +52,10 @@ impl Op for AddDependency {
 
         let dep = Dep::resolve(*self, ctx)?;
 
-        let was_sorted = tab.as_table_like().map_or(true, |dep_table| {
-            let values = dep_table.get_values();
+        let was_sorted = {
+            let values = tab.as_table_like().unwrap().get_values();
             is_sorted(values.iter().map(|(key, _)| key[0]))
-        });
+        };
 
         let dep_key = dep.toml_key().to_string();
         dep.upsert(tab.as_table_like_mut().unwrap().entry(&dep_key));
