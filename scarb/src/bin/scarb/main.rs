@@ -40,8 +40,7 @@ fn main() {
 fn exit_with_error(err: Error, ui: &Ui) {
     debug!("exit_with_error; err={:?}", err);
 
-    if let Some(error_with_exit_code) = err.downcast_ref::<ErrorWithExitCode>() {
-        let ErrorWithExitCode { source, exit_code } = error_with_exit_code;
+    if let Some(ErrorWithExitCode { source, exit_code }) = err.downcast_ref::<ErrorWithExitCode>() {
         if let Some(source_err) = source {
             ui.anyhow(source_err);
         }
