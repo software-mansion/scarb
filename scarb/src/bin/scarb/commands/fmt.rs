@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::args::FmtArgs;
-use crate::errors::ErrorWithExitCode;
+use crate::errors::error_with_exit_code;
 use scarb::core::Config;
 use scarb::ops;
 
@@ -18,6 +18,6 @@ pub fn run(args: FmtArgs, config: &Config) -> Result<()> {
     )? {
         Ok(())
     } else {
-        Err(ErrorWithExitCode::code(1).into())
+        error_with_exit_code(1)
     }
 }

@@ -1,3 +1,4 @@
+use anyhow::Result;
 use thiserror::Error;
 
 /// The ErrorWithExitCode is the error type used at Scarb's CLI-layer.
@@ -38,4 +39,8 @@ impl From<std::io::Error> for ErrorWithExitCode {
     fn from(err: std::io::Error) -> ErrorWithExitCode {
         ErrorWithExitCode::new(err.into(), 1)
     }
+}
+
+pub fn error_with_exit_code<T>(code: i32) -> Result<T> {
+    Err(ErrorWithExitCode::code(code).into())
 }
