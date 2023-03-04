@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 use scarb::core::Config;
 use scarb::manifest_editor::{AddDependency, DepId, EditManifestOptions, Op};
@@ -10,14 +10,7 @@ use crate::args::{AddArgs, AddSourceArgs};
 pub fn run(args: AddArgs, config: &mut Config) -> Result<()> {
     let ws = ops::read_workspace(config.manifest_path(), config)?;
 
-    // TODO(#127): Extract more generic pattern for this. See `Packages` struct in Cargo.
-    let package = match args.package {
-        Some(name) => ws
-            .members()
-            .find(|pkg| pkg.id.name == name)
-            .ok_or_else(|| anyhow!("package `{name}` not found in workspace `{ws}`"))?,
-        None => ws.current_package()?.clone(),
-    };
+    let package = args.packages_filter.match_one(&ws)?;
 
     manifest_editor::edit(
         package.manifest_path(),

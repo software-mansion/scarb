@@ -10,7 +10,8 @@ use clap::{CommandFactory, Parser, Subcommand};
 use tracing::level_filters::LevelFilter;
 use tracing_log::AsTrace;
 
-use scarb::core::PackageName;
+use anyhow::{anyhow, Result};
+use scarb::core::{Package, PackageName, Workspace};
 use scarb::manifest_editor::DepId;
 use scarb::metadata::MetadataVersion;
 use scarb::ui;
@@ -199,9 +200,8 @@ pub struct AddArgs {
     #[arg(long)]
     pub dry_run: bool,
 
-    /// Specify package to modify.
-    #[arg(short, long)]
-    pub package: Option<PackageName>,
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
 
     /// _Source_ section.
     #[command(flatten, next_help_heading = "Source")]
@@ -237,9 +237,27 @@ pub struct RemoveArgs {
     #[arg(long)]
     pub dry_run: bool,
 
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
+}
+
+#[derive(Parser, Clone, Debug)]
+pub struct PackagesFilter {
     /// Specify package to modify.
-    #[arg(short, long)]
-    pub package: Option<PackageName>,
+    #[arg(short, long, value_name = "SPEC")]
+    package: Option<PackageName>,
+}
+
+impl PackagesFilter {
+    pub fn match_one(&self, ws: &Workspace<'_>) -> Result<Package> {
+        match &self.package {
+            Some(name) => ws
+                .members()
+                .find(|pkg| &pkg.id.name == name)
+                .ok_or_else(|| anyhow!("package `{name}` not found in workspace `{ws}`")),
+            None => ws.current_package().cloned(),
+        }
+    }
 }
 
 /// Git reference specification arguments.
