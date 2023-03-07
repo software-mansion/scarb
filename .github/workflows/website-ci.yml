@@ -1,0 +1,30 @@
+name: Website CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'website/**'
+  pull_request:
+    paths:
+      - 'website/**'
+  merge_group:
+
+jobs:
+  fmt-and-lint:
+    name: format and lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./website
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci
+      - run: npm run fmt:check
+      - run: npm run lint
