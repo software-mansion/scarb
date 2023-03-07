@@ -3,6 +3,7 @@ use std::fs;
 use assert_fs::prelude::*;
 use indoc::indoc;
 use predicates::prelude::*;
+use toml::{Table, Value};
 
 use scarb::core::TomlManifest;
 
@@ -144,6 +145,34 @@ fn new_existing() {
             error: destination `hello` already exists
             Use `scarb init` to initialize the directory.
         "#});
+}
+
+#[test]
+fn issue_148() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    let output = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("new")
+        .arg("hello")
+        .current_dir(&pt)
+        .output()
+        .expect("Failed to spawn command");
+
+    if !output.stdout.is_empty() {
+        let parsed: Table = serde_json::de::from_slice(&output.stdout).unwrap();
+
+        for (_, value) in parsed {
+            if let Value::String(s) = value {
+                assert!(!s.contains(
+                "compiling this new package may not work due to invalid workspace configuration"
+            ));
+            }
+        }
+    }
+
+    let t = pt.child("hello");
+    assert!(t.is_dir());
 }
 
 #[test]

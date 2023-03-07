@@ -1,3 +1,4 @@
+use crate::internal::fsx::PathBufUtf8Ext;
 use anyhow::{bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
@@ -100,11 +101,17 @@ fn mk(
     // Create project directory in case we are called from `new` op.
     fsx::create_dir_all(&path)?;
 
-    init_vcs(&path, version_control)?;
-    write_vcs_ignore(&path, config, version_control)?;
+    let canonical_path = if let Ok(canonicalize_path) = fsx::canonicalize(&path) {
+        canonicalize_path.try_into_utf8()?
+    } else {
+        path
+    };
+
+    init_vcs(&canonical_path, version_control)?;
+    write_vcs_ignore(&canonical_path, config, version_control)?;
 
     // Create the `Scarb.toml` file.
-    let manifest_path = path.join(MANIFEST_FILE_NAME);
+    let manifest_path = canonical_path.join(MANIFEST_FILE_NAME);
     fsx::write(
         &manifest_path,
         formatdoc! {r#"
@@ -121,7 +128,7 @@ fn mk(
 
     // Create hello world source files (with respective parent directories) if source directory
     // does not exist.
-    let source_dir = path.join(DEFAULT_SOURCE_DIR_NAME);
+    let source_dir = canonical_path.join(DEFAULT_SOURCE_DIR_NAME);
     if !source_dir.exists() {
         fsx::create_dir_all(&source_dir)?;
 
