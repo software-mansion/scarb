@@ -36,7 +36,8 @@ Such targets are called _external_ and are defined in a `[[target.*]]{:toml}` ar
   This is not fully implemented, and we track this work in [#111](https://github.com/software-mansion/scarb/issues/111).
   As for now, Scarb only supports internally hardcoded targets:
 
-  - [`starknet-contract`](../starknet/contract-target)
+- [`starknet-contract`](../starknet/contract-target)
+
 </Callout>
 
 If multiple targets of the same kind are defined in the package, they all must specify unique [names](#name).
@@ -52,9 +53,10 @@ name = "foo"  # The name of the target.
 ```
 
 <Callout type="warning">
-  Scarb reserves itself a right to introduce new global configuration fields in future versions.
-  Potentially, new parameters may end up being conflicting with ones accepted by external targets.
-  Introducing new parameters will always be done in major Scarb version bump, and will be loudly communicated earlier.
+  Scarb reserves itself a right to introduce new global configuration fields in
+  future versions. Potentially, new parameters may end up being conflicting with
+  ones accepted by external targets. Introducing new parameters will always be
+  done in major Scarb version bump, and will be loudly communicated earlier.
 </Callout>
 
 ### `name`
