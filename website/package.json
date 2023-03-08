@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "export": "next export && touch out/.nojekyll",
+    "clean": "rm -rf .next out",
     "fmt": "prettier --write .",
     "fmt:check": "prettier --check .",
     "start": "next start",
