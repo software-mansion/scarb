@@ -5,7 +5,7 @@ import { DocsThemeConfig } from "nextra-theme-docs";
 
 const config: DocsThemeConfig = {
   logo: <Logo />,
-  // primaryHue: 239,
+  primaryHue: { light: 239, dark: 204 },
   // banner: {
   //   key: "scarb-0.1-released",
   //   text: (
