@@ -6,6 +6,7 @@ use std::sync::Arc;
 use once_cell::sync::Lazy;
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
+use toml::Value;
 
 pub use target::*;
 pub use toml_manifest::*;
@@ -125,12 +126,10 @@ impl SummaryBuilder {
 }
 
 /// Subset of a [`Manifest`] that contains package metadata.
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct ManifestMetadata {
     pub authors: Option<Vec<String>>,
     pub urls: Option<BTreeMap<String, String>>,
-    #[serde(rename = "metadata")]
-    pub custom_metadata: Option<BTreeMap<String, String>>,
     pub description: Option<String>,
     pub documentation: Option<String>,
     pub homepage: Option<String>,
@@ -139,6 +138,8 @@ pub struct ManifestMetadata {
     pub license_file: Option<String>,
     pub readme: Option<String>,
     pub repository: Option<String>,
+    #[serde(rename = "tool")]
+    pub tool_metadata: Option<BTreeMap<String, Value>>,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash)]

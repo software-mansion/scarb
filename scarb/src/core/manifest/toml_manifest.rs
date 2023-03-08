@@ -31,6 +31,7 @@ pub struct TomlManifest {
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub lib: Option<TomlLibTarget>,
     pub target: Option<BTreeMap<TomlTargetKindName, Vec<TomlExternalTarget>>>,
+    pub tool: Option<BTreeMap<String, Value>>,
 }
 
 /// Represents the `package` section of a `Scarb.toml`.
@@ -49,7 +50,6 @@ pub struct TomlPackage {
     pub license_file: Option<String>,
     pub readme: Option<String>,
     pub repository: Option<String>,
-    pub metadata: Option<BTreeMap<String, String>>,
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
     pub no_core: Option<bool>,
 }
@@ -197,7 +197,6 @@ impl TomlManifest {
             metadata: ManifestMetadata {
                 authors: package.authors.clone(),
                 urls: package.urls.clone(),
-                custom_metadata: package.metadata.clone(),
                 description: package.description.clone(),
                 documentation: package.documentation.clone(),
                 homepage: package.homepage.clone(),
@@ -206,6 +205,7 @@ impl TomlManifest {
                 license_file: package.license_file.clone(),
                 readme: package.readme.clone(),
                 repository: package.repository.clone(),
+                tool_metadata: self.tool.clone(),
             },
         })
     }

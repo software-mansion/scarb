@@ -2,9 +2,10 @@ use std::collections::BTreeMap;
 
 use assert_fs::prelude::*;
 use snapbox::cmd::Command;
+use toml::Value;
 
 use scarb::core::{ManifestMetadata, PackageName};
-use scarb::metadata::ProjectMetadata;
+use scarb::metadata::{PackageMetadata, ProjectMetadata};
 
 use crate::support::command::Scarb;
 use crate::support::project_builder::ProjectBuilder;
@@ -18,6 +19,13 @@ impl CommandExt for Command {
         let output = self.output().expect("Failed to spawn command");
         serde_json::de::from_slice(&output.stdout).expect("Failed to deserialize stdout to JSON")
     }
+}
+
+fn packages_by_name(meta: ProjectMetadata) -> BTreeMap<String, PackageMetadata> {
+    meta.packages
+        .into_iter()
+        .map(|p| (p.name.clone(), p))
+        .collect::<BTreeMap<_, _>>()
 }
 
 fn packages_and_deps(meta: ProjectMetadata) -> BTreeMap<String, Vec<String>> {
@@ -225,6 +233,13 @@ fn manifest_targets_and_metadata() {
             numeric = "1231"
             key = "value"
 
+            [tool]
+            meta = "data"
+            numeric = 1231
+
+            [tool.table]
+            key = "value"
+
             [lib]
             sierra = false
             casm = true
@@ -235,6 +250,7 @@ fn manifest_targets_and_metadata() {
             bool = true
             array = ["a", 1]
             table = { x = "y" }
+
             "#,
         )
         .unwrap();
@@ -261,11 +277,6 @@ fn manifest_targets_and_metadata() {
                 "hello".to_string(),
                 "https://world.com/".to_string()
             ),]),),
-            custom_metadata: Some(BTreeMap::from_iter([
-                ("key".to_string(), "value".to_string()),
-                ("meta".to_string(), "data".to_string()),
-                ("numeric".to_string(), "1231".to_string()),
-            ]),),
             description: Some("Some interesting description to read!".to_string(),),
             documentation: Some("https://docs.homepage.com/".to_string(),),
             homepage: Some("https://www.homepage.com/".to_string(),),
@@ -278,8 +289,62 @@ fn manifest_targets_and_metadata() {
             license_file: Some("./license.md".to_string(),),
             readme: Some("./readme.md".to_string(),),
             repository: Some("https://github.com/johndoe/repo".to_string(),),
+            tool_metadata: Some(BTreeMap::from_iter([
+                ("meta".to_string(), Value::String("data".to_string())),
+                ("numeric".to_string(), Value::Integer(1231)),
+                (
+                    "table".to_string(),
+                    Value::Table(toml::map::Map::from_iter([(
+                        "key".to_string(),
+                        Value::String("value".to_string())
+                    ),]))
+                ),
+            ])),
         }
     );
+}
+
+#[test]
+fn tool_metadata_is_packaged_contained() {
+    let t = assert_fs::TempDir::new().unwrap();
+    create_local_dependencies_setup(&t);
+    t.child("q/Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "q"
+            version = "1.0.0"
+
+            [tool.table]
+            key = "value"
+            "#,
+        )
+        .unwrap();
+    let meta = Scarb::quick_snapbox()
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json();
+    assert_eq!(
+        packages_by_name(meta)
+            .into_iter()
+            .map(|(k, p)| (k, p.manifest_metadata.tool_metadata))
+            .collect::<BTreeMap<_, _>>(),
+        BTreeMap::from_iter([
+            ("core".to_string(), None),
+            (
+                "q".to_string(),
+                Some(BTreeMap::from_iter([(
+                    "table".to_string(),
+                    BTreeMap::from_iter([("key".to_string(), "value".to_string())]).into()
+                )]))
+            ),
+            ("x".to_string(), None),
+            ("y".to_string(), None),
+            ("z".to_string(), None),
+        ])
+    )
 }
 
 #[test]
