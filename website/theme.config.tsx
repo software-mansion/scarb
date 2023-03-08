@@ -2,7 +2,6 @@ import { Logo } from "@/components/logo";
 import { SWM } from "@/components/swm";
 import { useRouter } from "next/router";
 import { DocsThemeConfig } from "nextra-theme-docs";
-import React from "react";
 
 const config: DocsThemeConfig = {
   logo: <Logo />,

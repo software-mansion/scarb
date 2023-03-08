@@ -1,6 +1,6 @@
-import swm from "../public/swm.svg";
 import Image from "next/image";
-import React, { ReactElement } from "react";
+import { ReactElement } from "react";
+import swm from "../public/swm.svg";
 
 export function SWM(): ReactElement {
   return (
