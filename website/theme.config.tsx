@@ -21,12 +21,24 @@ const config: DocsThemeConfig = {
     "https://github.com/software-mansion/scarb/tree/main/website",
   useNextSeoProps() {
     const { asPath } = useRouter();
-    if (asPath !== "/") {
-      return {
-        titleTemplate: "%s – Scarb",
-      };
-    }
+    return {
+      titleTemplate: asPath === "/" ? "%s" : "%s – Scarb",
+      description:
+        "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
+      twitter: {
+        cardType: "summary_large_image",
+        site: "@swmansionxyz",
+        handle: "@jajakobyly",
+      },
+    };
   },
+  head: (
+    <>
+      <meta httpEquiv="Content-Language" content="en" />
+      <meta name="msapplication-TileColor" content="#fff" />
+      <meta name="apple-mobile-web-app-title" content="Scarb" />
+    </>
+  ),
   editLink: {
     text: "Edit this page on GitHub →",
   },
