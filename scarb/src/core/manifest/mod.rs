@@ -9,12 +9,14 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use toml::Value;
 
+pub use scripts::*;
 pub use target::*;
 pub use toml_manifest::*;
 
 use crate::core::package::{PackageId, PackageName};
 use crate::core::source::SourceId;
 
+mod scripts;
 mod target;
 mod toml_manifest;
 
@@ -28,6 +30,7 @@ pub struct Manifest {
     pub targets: Vec<Target>,
     pub metadata: ManifestMetadata,
     pub compiler_config: ManifestCompilerConfig,
+    pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
 }
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.

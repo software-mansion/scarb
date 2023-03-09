@@ -1,16 +1,14 @@
-use std::ffi::OsString;
 use std::io::Read;
 use std::net::TcpListener;
 use std::process::{Child, Stdio};
-use std::{env, io, iter, process};
+use std::{env, io, process};
 
-use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
-use scarb::process::make_executable;
 use snapbox::cmd::cargo_bin;
 
 use crate::support::command::Scarb;
+use crate::support::filesystem::{path_with_temp_dir, write_script};
 
 #[test]
 #[cfg_attr(
@@ -179,19 +177,6 @@ fn ctrl_c_kills_everyone() {
         Ok(n) => assert_eq!(n, 0),
         Err(e) => assert_eq!(e.kind(), io::ErrorKind::ConnectionReset),
     }
-}
-
-fn write_script(name: &str, script_source: &str, t: &TempDir) {
-    let script = t.child(format!("scarb-{name}{}", env::consts::EXE_SUFFIX));
-    script.write_str(script_source).unwrap();
-    make_executable(script.path());
-}
-
-fn path_with_temp_dir(t: &TempDir) -> OsString {
-    let script_path = iter::once(t.path().to_path_buf());
-    let os_path = env::var_os("PATH").unwrap();
-    let other_paths = env::split_paths(&os_path);
-    env::join_paths(script_path.chain(other_paths)).unwrap()
 }
 
 #[cfg(unix)]

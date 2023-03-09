@@ -106,6 +106,7 @@ pub(crate) mod mock {
                 targets: Vec::new(),
                 metadata: Default::default(),
                 compiler_config: Default::default(),
+                scripts: Default::default(),
             });
 
             Package::new(package_id, Utf8PathBuf::new(), manifest)

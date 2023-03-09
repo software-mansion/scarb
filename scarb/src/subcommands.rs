@@ -1,0 +1,32 @@
+use crate::core::Config;
+use crate::SCARB_ENV;
+use std::collections::HashMap;
+use std::ffi::OsString;
+
+pub const EXTERNAL_CMD_PREFIX: &str = "scarb-";
+
+/// Defines env vars passed to external subcommands.
+pub fn get_env_vars(config: &Config) -> anyhow::Result<HashMap<OsString, OsString>> {
+    Ok(HashMap::from_iter([
+        ("PATH".into(), config.dirs().path_env()),
+        (
+            "SCARB_CACHE".into(),
+            config.dirs().cache_dir.path_unchecked().into(),
+        ),
+        (
+            "SCARB_CONFIG".into(),
+            config.dirs().config_dir.path_unchecked().into(),
+        ),
+        ("SCARB_LOG".into(), config.log_filter_directive().into()),
+        ("SCARB_MANIFEST_PATH".into(), config.manifest_path().into()),
+        (
+            "SCARB_TARGET_DIR".into(),
+            config.target_dir().path_unchecked().into(),
+        ),
+        (
+            "SCARB_UI_VERBOSITY".into(),
+            config.ui().verbosity().to_string().into(),
+        ),
+        (SCARB_ENV.into(), config.app_exe()?.into()),
+    ]))
+}
