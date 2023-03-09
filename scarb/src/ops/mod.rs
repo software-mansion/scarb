@@ -9,6 +9,7 @@ pub use manifest::*;
 pub use metadata::*;
 pub use new::*;
 pub use resolve::*;
+pub use scripts::*;
 pub use subcommands::*;
 pub use workspace::*;
 
@@ -19,5 +20,6 @@ mod manifest;
 mod metadata;
 mod new;
 mod resolve;
+mod scripts;
 mod subcommands;
 mod workspace;

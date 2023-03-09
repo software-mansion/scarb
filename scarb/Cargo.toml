@@ -28,6 +28,7 @@ clap.workspace = true
 console.workspace = true
 create-output-dir = { version = "1.0.0", path = "../utils/create-output-dir" }
 data-encoding.workspace = true
+deno_task_shell.workspace = true
 diffy.workspace = true
 directories.workspace = true
 dunce.workspace = true

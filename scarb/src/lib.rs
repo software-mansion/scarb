@@ -15,13 +15,13 @@ pub mod ops;
 pub mod process;
 mod resolver;
 mod sources;
+mod subcommands;
 pub mod ui;
 pub mod version;
 
 pub const SCARB_ENV: &str = "SCARB";
-
 pub const MANIFEST_FILE_NAME: &str = "Scarb.toml";
-
 pub const DEFAULT_SOURCE_PATH: &str = "src/lib.cairo";
 pub const DEFAULT_TARGET_DIR_NAME: &str = "target";
-pub const EXTERNAL_CMD_PREFIX: &str = "scarb-";
+
+pub use subcommands::EXTERNAL_CMD_PREFIX;

@@ -3,13 +3,16 @@ use std::fs;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
+use itertools::Itertools;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+use std::str::FromStr;
 use toml::Value;
 use tracing::trace;
 use url::Url;
 
+use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::{
     ManifestCompilerConfig, ManifestDependency, ManifestMetadata, Summary, Target,
 };
@@ -33,6 +36,7 @@ pub struct TomlManifest {
     pub target: Option<BTreeMap<TomlTargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
     pub cairo: Option<TomlCairo>,
     pub tool: Option<BTreeMap<SmolStr, Value>>,
+    pub scripts: Option<BTreeMap<SmolStr, String>>,
 }
 
 /// Represents the `package` section of a `Scarb.toml`.
@@ -199,6 +203,16 @@ impl TomlManifest {
 
         let compiler_config = self.collect_compiler_config();
 
+        let scripts: BTreeMap<SmolStr, ScriptDefinition> = self
+            .scripts
+            .clone()
+            .unwrap_or_default()
+            .into_iter()
+            .map(|(name, script)| -> Result<(SmolStr, ScriptDefinition)> {
+                Ok((name, ScriptDefinition::from_str(&script)?))
+            })
+            .try_collect()?;
+
         Ok(Manifest {
             summary: Summary::build(package_id)
                 .with_dependencies(dependencies)
@@ -219,6 +233,7 @@ impl TomlManifest {
                 tool_metadata: self.tool.clone(),
             },
             compiler_config,
+            scripts,
         })
     }
 

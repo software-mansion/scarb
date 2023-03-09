@@ -8,6 +8,7 @@ use std::ffi::OsString;
 use anyhow::{anyhow, Result};
 use camino::Utf8PathBuf;
 use clap::{CommandFactory, Parser, Subcommand};
+use smol_str::SmolStr;
 use tracing::level_filters::LevelFilter;
 use tracing_log::AsTrace;
 
@@ -110,11 +111,9 @@ pub enum Command {
     // External should go last.
     /// Add dependencies to a Scarb.toml manifest file.
     Add(AddArgs),
-
     /// Remove dependencies from a manifest file.
     #[command(alias = "rm")]
     Remove(RemoveArgs),
-
     /// Compile current project.
     Build,
     /// Remove generated artifacts.
@@ -132,10 +131,27 @@ pub enum Command {
     Metadata(MetadataArgs),
     /// Create a new Scarb package at <PATH>.
     New(NewArgs),
+    /// Run arbitrary package scripts.
+    Run(ScriptsRunnerArgs),
 
     /// External command (`scarb-*` executable).
     #[command(external_subcommand)]
     External(Vec<OsString>),
+}
+
+/// Arguments accepted by the `run` command.
+#[derive(Parser, Clone, Debug)]
+#[clap(trailing_var_arg = true)]
+pub struct ScriptsRunnerArgs {
+    /// The name of the script from manifest file to execute.
+    pub script: Option<SmolStr>,
+
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
+
+    /// Arguments to pass to executed script.
+    #[clap(allow_hyphen_values = true)]
+    pub args: Vec<OsString>,
 }
 
 /// Arguments accepted by the `init` command.

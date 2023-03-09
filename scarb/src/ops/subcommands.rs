@@ -7,7 +7,7 @@ use anyhow::{bail, Result};
 
 use crate::core::Config;
 use crate::process::{exec_replace, is_executable};
-use crate::{EXTERNAL_CMD_PREFIX, SCARB_ENV};
+use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX};
 
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) -> Result<()> {
@@ -22,14 +22,8 @@ pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) 
 
     let mut cmd = Command::new(cmd);
     cmd.args(args);
-    cmd.env(SCARB_ENV, config.app_exe()?);
-    cmd.env("PATH", config.dirs().path_env());
-    cmd.env("SCARB_CACHE", config.dirs().cache_dir.path_unchecked());
-    cmd.env("SCARB_CONFIG", config.dirs().config_dir.path_unchecked());
-    cmd.env("SCARB_TARGET_DIR", config.target_dir().path_unchecked());
-    cmd.env("SCARB_MANIFEST_PATH", config.manifest_path());
-    cmd.env("SCARB_UI_VERBOSITY", config.ui().verbosity().to_string());
-    cmd.env("SCARB_LOG", config.log_filter_directive());
+    cmd.envs(get_env_vars(config)?);
+
     exec_replace(&mut cmd)
 }
 
