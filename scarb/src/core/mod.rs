@@ -5,9 +5,10 @@
 pub use config::Config;
 pub use dirs::AppDirs;
 pub use manifest::{
-    DetailedTomlDependency, ExternalTargetKind, LibTargetKind, Manifest, ManifestDependency,
-    ManifestMetadata, Summary, SummaryInner, Target, TargetInner, TargetKind, TomlDependency,
-    TomlExternalTarget, TomlLibTarget, TomlManifest, TomlPackage, TomlTargetKindName,
+    DetailedTomlDependency, ExternalTargetKind, LibTargetKind, Manifest, ManifestCompilerConfig,
+    ManifestDependency, ManifestMetadata, Summary, SummaryInner, Target, TargetInner, TargetKind,
+    TomlDependency, TomlExternalTarget, TomlLibTarget, TomlManifest, TomlPackage,
+    TomlTargetKindName,
 };
 pub use package::{Package, PackageId, PackageIdInner, PackageInner, PackageName};
 pub use resolver::Resolve;

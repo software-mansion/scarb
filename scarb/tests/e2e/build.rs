@@ -435,3 +435,27 @@ fn override_target_dir() {
         .child("release/hello.sierra")
         .assert(predicates::path::exists());
 }
+
+#[test]
+fn sierra_replace_ids() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo("fn example() -> felt { 42 }")
+        .manifest_extra(
+            r#"
+            [cairo]
+            sierra-replace-ids = true
+            "#,
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/release/hello.sierra")
+        .assert(predicates::str::contains("hello::example@0() -> (felt);"));
+}

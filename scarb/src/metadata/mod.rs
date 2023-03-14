@@ -1,22 +1,22 @@
 // NOTE: All collections must have stable sorting in order to provide reproducible outputs!
 
+use std::collections::BTreeMap;
+use std::path::PathBuf;
+
 use anyhow::{bail, Result};
 use camino::Utf8PathBuf;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
-use std::path::PathBuf;
 use toml::Value;
 
-use crate::compiler::{CompilationUnit, Profile};
 pub use metadata_version::*;
 
+use crate::compiler::{CompilationUnit, Profile};
 use crate::core::manifest::{
-    ExternalTargetKind, LibTargetKind, ManifestMetadata, Target, TargetKind,
+    ExternalTargetKind, LibTargetKind, ManifestCompilerConfig, ManifestMetadata, Target, TargetKind,
 };
 use crate::core::{ManifestDependency, Package, PackageId, SourceId, Workspace};
 use crate::ops;
-use crate::ops::resolve_workspace;
 use crate::version::VersionInfo;
 
 mod metadata_version;
@@ -84,6 +84,7 @@ pub struct CompilationUnitMetadata {
     pub target: TargetMetadata,
     pub components: Vec<PackageId>,
     pub profile: Profile,
+    pub compiler_config: ManifestCompilerConfig,
 }
 
 impl Metadata {
@@ -103,7 +104,7 @@ impl Metadata {
 impl ProjectMetadata {
     pub fn collect(ws: &Workspace<'_>, opts: &MetadataOptions) -> Result<Self> {
         let (mut packages, compilation_units) = if !opts.no_deps {
-            let resolve = resolve_workspace(ws)?;
+            let resolve = ops::resolve_workspace(ws)?;
             let packages: Vec<PackageMetadata> = resolve
                 .packages
                 .values()
@@ -229,6 +230,7 @@ impl CompilationUnitMetadata {
             target: TargetMetadata::new(&compilation_unit.target),
             components,
             profile: compilation_unit.profile.clone(),
+            compiler_config: compilation_unit.compiler_config.clone(),
         }
     }
 }
