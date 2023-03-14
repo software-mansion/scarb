@@ -33,7 +33,7 @@ impl Compiler for LibCompiler {
             .with_project_config(build_project_config(&unit)?)
             .build()?;
 
-        let compiler_config = build_compiler_config(ws);
+        let compiler_config = build_compiler_config(&unit, ws);
 
         let main_crate_ids = collect_main_crate_ids(&unit, &db);
 

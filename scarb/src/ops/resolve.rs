@@ -85,6 +85,7 @@ pub fn generate_compilation_units(
                 profile: Profile {
                     name: "release".into(),
                 },
+                compiler_config: member.manifest.compiler_config.clone(),
             };
             units.push(unit);
         }

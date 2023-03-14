@@ -1,6 +1,7 @@
 use std::fmt::Write;
 
 use crate::compiler::Profile;
+use crate::core::manifest::ManifestCompilerConfig;
 use crate::core::{Package, Target};
 
 /// An object that has enough information so that Scarb knows how to build it.
@@ -16,6 +17,8 @@ pub struct CompilationUnit {
     /// The profile contains information about *how* the build should be run, including debug
     /// level, etc.
     pub profile: Profile,
+    /// Cairo compiler configuration parameters to use in this unit.
+    pub compiler_config: ManifestCompilerConfig,
 }
 
 impl CompilationUnit {

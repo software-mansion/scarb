@@ -11,8 +11,8 @@ use tracing::trace;
 use url::Url;
 
 use crate::core::manifest::{
-    ExternalTargetKind, LibTargetKind, ManifestDependency, ManifestMetadata, Summary, Target,
-    TargetKind,
+    ExternalTargetKind, LibTargetKind, ManifestCompilerConfig, ManifestDependency,
+    ManifestMetadata, Summary, Target, TargetKind,
 };
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
@@ -31,6 +31,7 @@ pub struct TomlManifest {
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub lib: Option<TomlLibTarget>,
     pub target: Option<BTreeMap<TomlTargetKindName, Vec<TomlExternalTarget>>>,
+    pub cairo: Option<TomlCairo>,
     pub tool: Option<BTreeMap<String, Value>>,
 }
 
@@ -141,6 +142,23 @@ pub struct TomlExternalTarget {
     pub params: BTreeMap<SmolStr, Value>,
 }
 
+#[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TomlCairo {
+    /// Replace all names in generated Sierra code with dummy counterparts, representing the
+    /// expanded information about the named items.
+    ///
+    /// For libfuncs and types that would be recursively opening their generic arguments.
+    /// For functions, that would be their original name in Cairo.
+    /// For example, while the Sierra name be `[6]`, with this flag turned on it might be:
+    /// - For libfuncs: `felt_const<2>` or `unbox<Box<Box<felt>>>`.
+    /// - For types: `felt` or `Box<Box<felt>>`.
+    /// - For user functions: `test::foo`.
+    ///
+    /// Defaults to `false`.
+    pub sierra_replace_ids: Option<bool>,
+}
+
 impl TomlManifest {
     pub fn read_from_path(path: &Utf8Path) -> Result<Self> {
         let contents = fs::read_to_string(path)
@@ -188,6 +206,8 @@ impl TomlManifest {
 
         let targets = self.collect_targets(package.name.to_smol_str())?;
 
+        let compiler_config = self.collect_compiler_config();
+
         Ok(Manifest {
             summary: Summary::build(package_id)
                 .with_dependencies(dependencies)
@@ -207,6 +227,7 @@ impl TomlManifest {
                 repository: package.repository.clone(),
                 tool_metadata: self.tool.clone(),
             },
+            compiler_config,
         })
     }
 
@@ -287,6 +308,16 @@ impl TomlManifest {
             }
         }
         Ok(())
+    }
+
+    fn collect_compiler_config(&self) -> ManifestCompilerConfig {
+        let mut config = ManifestCompilerConfig::default();
+        if let Some(cairo) = &self.cairo {
+            if let Some(sierra_replace_ids) = cairo.sierra_replace_ids {
+                config.sierra_replace_ids = sierra_replace_ids;
+            }
+        }
+        config
     }
 }
 

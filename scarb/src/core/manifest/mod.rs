@@ -26,6 +26,7 @@ pub struct Manifest {
     pub summary: Summary,
     pub targets: Vec<Target>,
     pub metadata: ManifestMetadata,
+    pub compiler_config: ManifestCompilerConfig,
 }
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
@@ -140,6 +141,20 @@ pub struct ManifestMetadata {
     pub repository: Option<String>,
     #[serde(rename = "tool")]
     pub tool_metadata: Option<BTreeMap<String, Value>>,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct ManifestCompilerConfig {
+    /// Replace all names in generated Sierra code with dummy counterparts, representing the
+    /// expanded information about the named items.
+    ///
+    /// For libfuncs and types that would be recursively opening their generic arguments.
+    /// For functions, that would be their original name in Cairo.
+    /// For example, while the Sierra name be `[6]`, with this flag turned on it might be:
+    /// - For libfuncs: `felt_const<2>` or `unbox<Box<Box<felt>>>`.
+    /// - For types: `felt` or `Box<Box<felt>>`.
+    /// - For user functions: `test::foo`.
+    pub sierra_replace_ids: bool,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash)]

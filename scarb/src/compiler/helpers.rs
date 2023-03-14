@@ -45,7 +45,7 @@ pub fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
     Ok(project_config)
 }
 
-pub fn build_compiler_config<'c>(ws: &Workspace<'c>) -> CompilerConfig<'c> {
+pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> CompilerConfig<'c> {
     CompilerConfig {
         diagnostics_reporter: DiagnosticsReporter::callback({
             let config = ws.config();
@@ -55,6 +55,7 @@ pub fn build_compiler_config<'c>(ws: &Workspace<'c>) -> CompilerConfig<'c> {
                     .print(TypedMessage::naked_text("diagnostic", &diagnostic));
             }
         }),
+        replace_ids: unit.compiler_config.sierra_replace_ids,
         ..CompilerConfig::default()
     }
 }
