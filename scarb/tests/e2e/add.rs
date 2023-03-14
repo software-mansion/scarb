@@ -217,7 +217,7 @@ fn git() {
             version = "1.0.0"
 
             [dependencies]
-            dep = { git = "https://example.com" }
+            dep = { git = "https://example.com/" }
         "#})
         .run();
 }
@@ -237,7 +237,7 @@ fn git_version() {
             version = "1.0.0"
 
             [dependencies]
-            dep = { version = "1.0.0", git = "https://example.com" }
+            dep = { version = "1.0.0", git = "https://example.com/" }
         "#})
         .run();
 }
@@ -261,7 +261,7 @@ fn git_spec(what: &str) {
             version = "1.0.0"
 
             [dependencies]
-            dep = {{ git = "https://example.com", {what} = "abcd" }}
+            dep = {{ git = "https://example.com/", {what} = "abcd" }}
         "#})
         .run();
 }
@@ -346,7 +346,7 @@ fn overwrite_change_source_from_path_to_git() {
             version = "1.0.0"
 
             [dependencies]
-            dep = { version = "1.2.3", git = "https://example.com", branch = "abc" }
+            dep = { version = "1.2.3", git = "https://example.com/", branch = "abc" }
         "#})
         .run();
 }
