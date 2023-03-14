@@ -95,7 +95,6 @@ impl ScarbArgs {
     pub fn get_builtin_subcommands() -> BTreeMap<String, Option<String>> {
         Self::command()
             .get_subcommands()
-            .into_iter()
             .map(|sub| {
                 let name = sub.get_name().to_string();
                 let about = sub.get_about().map(|s| s.to_string());
