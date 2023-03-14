@@ -18,7 +18,7 @@ use crate::ui::Status;
 
 use super::PathSource;
 
-mod canonical_url;
+pub mod canonical_url;
 mod client;
 
 pub struct GitSource<'c> {

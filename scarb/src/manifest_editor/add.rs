@@ -3,10 +3,12 @@ use std::mem;
 use anyhow::{anyhow, ensure, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use toml_edit::{value, Document, Entry, InlineTable, Item};
+use url::Url;
 
 use crate::core::{GitReference, PackageName};
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
+use crate::sources::canonical_url::CanonicalUrl;
 
 use super::tomlx::get_table_mut;
 use super::{DepId, Op, OpCtx};
@@ -126,6 +128,13 @@ impl Dep {
                 Rev(rev.into())
             } else {
                 DefaultBranch
+            };
+
+            let git = match Url::parse(&git) {
+                Ok(url) => CanonicalUrl::new(&url)
+                    .map(|git_url| git_url.as_str().to_string())
+                    .unwrap_or(git),
+                Err(_) => git,
             };
 
             Box::new(GitSource {
