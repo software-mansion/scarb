@@ -167,6 +167,29 @@ See [Specifying Dependencies](./specifying-dependencies) page.
 
 See [Targets](./targets) page.
 
+## `[cairo]`
+
+Adjust Cairo compiler configuration parameters when compiling this package.
+These options are not taken into consideration when this package is used as a dependency for another package.
+
+### `sierra-replace-ids`
+
+Replace all names in generated Sierra code with dummy counterparts, representing the
+expanded information about the named items.
+
+For libfuncs and types that would be recursively opening their generic arguments.
+For functions, that would be their original name in Cairo.
+For example, while the Sierra name be `[6]`, with this flag turned on it might be:
+
+- For libfuncs: `felt_const<2>` or `unbox<Box<Box<felt>>>`.
+- For types: `felt` or `Box<Box<felt>>`.
+- For user functions: `test::foo`.
+
+```toml
+[cairo]
+sierra-replace-ids = true
+```
+
 ## `[tool]`
 
 This section can be used for tools which would like to store package configuration in Scarb.toml.
