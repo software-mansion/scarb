@@ -61,7 +61,7 @@ tempfile = "3.4.0"
 test-case = "3.0.0"
 thiserror = "1.0.39"
 toml = "0.7.1"
-toml_edit = { version = "0.19.4", features = ["serde"] }
+toml_edit = { version = "0.19.6", features = ["serde"] }
 tracing = "0.1.37"
 tracing-futures = "0.2.5"
 tracing-log = "0.1.3"

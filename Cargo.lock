@@ -3210,7 +3210,7 @@ dependencies = [
  "test-case",
  "thiserror",
  "toml 0.7.2",
- "toml_edit 0.19.4",
+ "toml_edit 0.19.6",
  "tracing",
  "tracing-futures",
  "tracing-log",
@@ -3695,7 +3695,7 @@ dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime 0.6.1",
- "toml_edit 0.19.4",
+ "toml_edit 0.19.6",
 ]
 
 [[package]]
@@ -3726,9 +3726,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.19.4"
+version = "0.19.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a1eb0622d28f4b9c90adc4ea4b2b46b47663fde9ac5fafcb14a1369d5508825"
+checksum = "08de71aa0d6e348f070457f85af8bd566e2bc452156a423ddf22861b3a953fae"
 dependencies = [
  "indexmap",
  "serde",
