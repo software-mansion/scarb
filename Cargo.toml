@@ -18,7 +18,7 @@ repository = "https://github.com/software-mansion/scarb"
 [workspace.dependencies]
 anyhow = "1.0.66"
 assert_fs = { version = "1.0.9", features = ["color-auto"] }
-async-trait = "0.1.63"
+async-trait = "0.1.66"
 cairo-lang-compiler = "1.0.0-alpha.3"
 cairo-lang-filesystem = "1.0.0-alpha.3"
 cairo-lang-formatter = "1.0.0-alpha.3"
