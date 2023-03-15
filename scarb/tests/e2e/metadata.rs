@@ -1,34 +1,33 @@
 use std::collections::BTreeMap;
 
 use assert_fs::prelude::*;
+use serde_json::json;
 use snapbox::cmd::Command;
-use toml::Value;
 
-use scarb::core::{ManifestMetadata, PackageName};
-use scarb::metadata::{PackageMetadata, ProjectMetadata};
+use scarb_metadata::{ManifestMetadata, Metadata, PackageMetadata};
 
 use crate::support::command::Scarb;
 use crate::support::project_builder::ProjectBuilder;
 
 trait CommandExt {
-    fn stdout_json(self) -> ProjectMetadata;
+    fn stdout_json(self) -> Metadata;
 }
 
 impl CommandExt for Command {
-    fn stdout_json(self) -> ProjectMetadata {
+    fn stdout_json(self) -> Metadata {
         let output = self.output().expect("Failed to spawn command");
         serde_json::de::from_slice(&output.stdout).expect("Failed to deserialize stdout to JSON")
     }
 }
 
-fn packages_by_name(meta: ProjectMetadata) -> BTreeMap<String, PackageMetadata> {
+fn packages_by_name(meta: Metadata) -> BTreeMap<String, PackageMetadata> {
     meta.packages
         .into_iter()
         .map(|p| (p.name.clone(), p))
         .collect::<BTreeMap<_, _>>()
 }
 
-fn packages_and_deps(meta: ProjectMetadata) -> BTreeMap<String, Vec<String>> {
+fn packages_and_deps(meta: Metadata) -> BTreeMap<String, Vec<String>> {
     meta.packages
         .into_iter()
         .map(|p| {
@@ -75,7 +74,7 @@ fn includes_compilation_units() {
 
     assert!(!output.compilation_units.is_empty());
     let unit = &output.compilation_units[0];
-    assert_eq!(unit.package.name, PackageName::new("hello"));
+    assert!(unit.package.repr.starts_with("hello "));
     assert_eq!(unit.target.name, "hello");
     assert!(!unit.components.is_empty());
 }
@@ -289,16 +288,10 @@ fn manifest_targets_and_metadata() {
             license_file: Some("./license.md".to_string(),),
             readme: Some("./readme.md".to_string(),),
             repository: Some("https://github.com/johndoe/repo".to_string(),),
-            tool_metadata: Some(BTreeMap::from_iter([
-                ("meta".to_string(), Value::String("data".to_string())),
-                ("numeric".to_string(), Value::Integer(1231)),
-                (
-                    "table".to_string(),
-                    Value::Table(toml::map::Map::from_iter([(
-                        "key".to_string(),
-                        Value::String("value".to_string())
-                    ),]))
-                ),
+            tool: Some(BTreeMap::from_iter([
+                ("meta".to_string(), json!("data")),
+                ("numeric".to_string(), json!(1231)),
+                ("table".to_string(), json!({ "key": "value" }))
             ])),
         }
     );
@@ -329,7 +322,7 @@ fn tool_metadata_is_packaged_contained() {
     assert_eq!(
         packages_by_name(meta)
             .into_iter()
-            .map(|(k, p)| (k, p.manifest_metadata.tool_metadata))
+            .map(|(k, p)| (k, p.manifest_metadata.tool))
             .collect::<BTreeMap<_, _>>(),
         BTreeMap::from_iter([
             ("core".to_string(), None),
@@ -337,7 +330,7 @@ fn tool_metadata_is_packaged_contained() {
                 "q".to_string(),
                 Some(BTreeMap::from_iter([(
                     "table".to_string(),
-                    BTreeMap::from_iter([("key".to_string(), "value".to_string())]).into()
+                    json!({ "key": "value" })
                 )]))
             ),
             ("x".to_string(), None),
