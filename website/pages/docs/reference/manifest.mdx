@@ -166,3 +166,18 @@ See [Specifying Dependencies](./specifying-dependencies) page.
 ## Target tables: `[lib]` and `[[target]]`
 
 See [Targets](./targets) page.
+
+## `[tool]`
+
+This section can be used for tools which would like to store package configuration in Scarb.toml.
+Scarb by default will warn about unused keys in Scarb.toml to assist in detecting typos and such.
+The `[tool]{:toml}` table, however, is completely ignored by Scarb and will not be warned about.
+For example:
+
+```toml copy filename="Scarb.toml"
+[tool.some_tool_name]
+some_key = "some_value"
+```
+
+No fields in this section are required or defined by Scarb.
+Each field can accept any valid toml value including a table.
