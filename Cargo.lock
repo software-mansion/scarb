@@ -3201,6 +3201,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "scarb-metadata"
+version = "1.0.0"
+dependencies = [
+ "camino",
+ "indoc 2.0.1",
+ "semver",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -1,0 +1,21 @@
+[package]
+name = "scarb-metadata"
+version = "1.0.0"
+rust-version.workspace = true
+edition.workspace = true
+
+authors.workspace = true
+categories = ["development-tools"]
+description = "Structured access to the output of `scarb metadata`."
+homepage.workspace = true
+keywords = ["cairo-lang", "starknet", "scarb"]
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+
+[dependencies]
+camino.workspace = true
+indoc.workspace = true
+semver.workspace = true
+serde.workspace = true
+serde_json.workspace = true

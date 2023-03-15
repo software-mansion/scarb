@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "scarb",
+    "scarb-metadata",
     "utils/create-output-dir"
 ]
 
