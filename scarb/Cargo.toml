@@ -2,13 +2,13 @@
 name = "scarb"
 version.workspace = true
 rust-version.workspace = true
+edition.workspace = true
 
 authors.workspace = true
 categories = ["command-line-utilities", "development-tools"]
 description = "The Cairo package manager"
-edition.workspace = true
 homepage.workspace = true
-keywords = ["cairo-lang", "starknet"]
+keywords = ["cairo-lang", "starknet", "scarb"]
 license.workspace = true
 readme.workspace = true
 repository.workspace = true
