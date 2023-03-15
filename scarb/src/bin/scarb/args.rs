@@ -5,15 +5,14 @@
 use std::collections::BTreeMap;
 use std::ffi::OsString;
 
+use anyhow::{anyhow, Result};
 use camino::Utf8PathBuf;
 use clap::{CommandFactory, Parser, Subcommand};
 use tracing::level_filters::LevelFilter;
 use tracing_log::AsTrace;
 
-use anyhow::{anyhow, Result};
 use scarb::core::{Package, PackageName, Workspace};
 use scarb::manifest_editor::DepId;
-use scarb::metadata::MetadataVersion;
 use scarb::ui;
 use scarb::ui::OutputFormat;
 use scarb::version;
@@ -156,7 +155,7 @@ pub struct InitArgs {
 pub struct MetadataArgs {
     // Format version.
     #[arg(long, value_name = "VERSION")]
-    pub format_version: MetadataVersion,
+    pub format_version: u64,
     /// Output information only about the workspace members and don't fetch dependencies.
     #[arg(long)]
     pub no_deps: bool,

@@ -68,6 +68,15 @@ impl PackageId {
 
         Ok(PackageId::new(name, version, source_id))
     }
+
+    pub fn to_serialized_string(&self) -> String {
+        format!(
+            "{} {} ({})",
+            self.name,
+            self.version,
+            self.source_id.to_pretty_url(),
+        )
+    }
 }
 
 impl Deref for PackageId {
@@ -80,12 +89,7 @@ impl Deref for PackageId {
 
 impl Serialize for PackageId {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        s.collect_str(&format_args!(
-            "{} {} ({})",
-            self.name,
-            self.version,
-            self.source_id.to_pretty_url(),
-        ))
+        s.collect_str(&self.to_serialized_string())
     }
 }
 

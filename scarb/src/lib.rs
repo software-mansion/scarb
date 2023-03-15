@@ -11,7 +11,6 @@ pub mod core;
 pub mod flock;
 mod internal;
 pub mod manifest_editor;
-pub mod metadata;
 pub mod ops;
 pub mod process;
 mod resolver;
