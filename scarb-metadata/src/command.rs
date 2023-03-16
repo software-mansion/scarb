@@ -47,7 +47,7 @@ impl MetadataCommandError {
 
 /// A builder for `scarb metadata` command invocation.
 ///
-/// In detail, this will always execute `scarb metadata --json --format-version N`, where `N`
+/// In detail, this will always execute `scarb --json metadata --format-version N`, where `N`
 /// matches metadata version understandable by this crate version.
 #[derive(Clone, Debug, Default)]
 pub struct MetadataCommand {

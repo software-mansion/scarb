@@ -6,8 +6,13 @@
     Structured access to the output of `scarb metadata --format-version ", env!("CARGO_PKG_VERSION_MAJOR"), r#"`.
     Usually used by Scarb extensions and other developer tools.
 
-    See the [Scarb documentation](https://docs.swmansion.com/scarb/documentation) for details on
+    [Scarb](https://docs.swmansion.com/scarb) is a build toolchain and package manager for
+    the [Cairo language](https://www.cairo-lang.org/).
+    See the [Scarb documentation](https://docs.swmansion.com/scarb/docs) for details on
     Scarb itself.
+
+    With the `command` feature (enabled by default), this crate also exposes an ergonomic interface
+    to collect metadata from Scarb: [`MetadataCommand`].
 "#}]
 
 use std::collections::BTreeMap;
