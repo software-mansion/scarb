@@ -19,6 +19,7 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
+use std::ops::Index;
 use std::path::PathBuf;
 
 use camino::Utf8PathBuf;
@@ -240,6 +241,17 @@ pub struct CommitInfo {
     pub commit_hash: String,
     /// Commit author date if known.
     pub commit_date: Option<String>,
+}
+
+impl<'a> Index<&'a PackageId> for Metadata {
+    type Output = PackageMetadata;
+
+    fn index(&self, idx: &'a PackageId) -> &Self::Output {
+        self.packages
+            .iter()
+            .find(|p| p.id == *idx)
+            .unwrap_or_else(|| panic!("no package with this ID: {idx}"))
+    }
 }
 
 impl PackageMetadata {
