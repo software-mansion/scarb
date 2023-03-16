@@ -2,7 +2,9 @@ use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
 
+use anyhow::{anyhow, Result};
 use camino::{Utf8Path, Utf8PathBuf};
+use serde::Deserialize;
 
 pub use id::*;
 pub use name::*;
@@ -59,6 +61,29 @@ impl Package {
 
     pub fn is_lib(&self) -> bool {
         self.manifest.targets.iter().any(Target::is_lib)
+    }
+
+    pub fn has_tool_metadata(&self, tool_name: &str) -> bool {
+        self.tool_metadata(tool_name).is_some()
+    }
+
+    pub fn tool_metadata(&self, tool_name: &str) -> Option<&toml::Value> {
+        self.manifest
+            .metadata
+            .tool_metadata
+            .as_ref()?
+            .get(tool_name)
+    }
+
+    pub fn fetch_tool_metadata(&self, tool_name: &str) -> Result<&toml::Value> {
+        self.tool_metadata(tool_name)
+            .ok_or_else(|| anyhow!("package manifest `{self}` has no [tool.{tool_name}] section"))
+    }
+
+    pub fn fetch_tool_metadata_as<T: Deserialize<'static>>(&self, tool_name: &str) -> Result<T> {
+        let toml_value = self.fetch_tool_metadata(tool_name)?;
+        let structured = toml_value.clone().try_into()?;
+        Ok(structured)
     }
 }
 
