@@ -234,3 +234,11 @@ pub struct CommitInfo {
     /// Commit author date if known.
     pub commit_date: Option<String>,
 }
+
+impl PackageMetadata {
+    /// Get value of the `[tool.*]` section in this package's manifest, for specific `tool_name`,
+    /// including any transformations applied by Scarb.
+    pub fn tool_metadata(&self, tool_name: &str) -> Option<&serde_json::Value> {
+        self.manifest_metadata.tool.as_ref()?.get(tool_name)
+    }
+}
