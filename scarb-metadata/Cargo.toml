@@ -15,6 +15,7 @@ repository.workspace = true
 
 [dependencies]
 camino.workspace = true
+derive_builder = { workspace = true, optional = true }
 semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -25,5 +26,6 @@ assert_fs.workspace = true
 snapbox.workspace = true
 
 [features]
-default = ["command"]
+default = ["builder", "command"]
+builder = ["dep:derive_builder"]
 command = ["dep:thiserror"]

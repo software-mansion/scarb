@@ -31,6 +31,7 @@ clap = { version = "4.1", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.0"
 console = "0.15.5"
 data-encoding = "2.3.3"
+derive_builder = "0.12.0"
 diffy = "0.3.0"
 directories = "4.0.1"
 dunce = "1.0.3"

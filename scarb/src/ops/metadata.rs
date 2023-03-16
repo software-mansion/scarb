@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use anyhow::{bail, Result};
+use semver::Version;
 use serde_json::json;
 
 use scarb_metadata as m;
@@ -52,25 +53,26 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
 
     packages.sort_by_key(|p| p.id.clone());
 
-    Ok(m::Metadata {
-        version: m::VersionPin,
-        app_exe: ws.config().app_exe().ok().map(Into::into),
-        app_version_info: collect_app_version_metadata(),
-        target_dir: Some(ws.target_dir().path_unchecked().to_path_buf()),
-        workspace: collect_workspace_metadata(ws)?,
-        packages,
-        compilation_units,
-    })
+    Ok(m::MetadataBuilder::default()
+        .app_exe(ws.config().app_exe().ok().map(|p| p.to_path_buf()))
+        .app_version_info(collect_app_version_metadata())
+        .target_dir(Some(ws.target_dir().path_unchecked().to_path_buf()))
+        .workspace(collect_workspace_metadata(ws)?)
+        .packages(packages)
+        .compilation_units(compilation_units)
+        .build()
+        .unwrap())
 }
 
 fn collect_workspace_metadata(ws: &Workspace<'_>) -> Result<m::WorkspaceMetadata> {
     let mut members: Vec<m::PackageId> = ws.members().map(|it| wrap_package_id(it.id)).collect();
     members.sort();
 
-    Ok(m::WorkspaceMetadata {
-        manifest_path: ws.manifest_path().into(),
-        members,
-    })
+    Ok(m::WorkspaceMetadataBuilder::default()
+        .manifest_path(ws.manifest_path())
+        .members(members)
+        .build()
+        .unwrap())
 }
 
 fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
@@ -90,41 +92,48 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
         .collect();
     targets.sort_by_key(|t| (t.kind.clone(), t.name.clone()));
 
-    m::PackageMetadata {
-        id: wrap_package_id(package.id),
-        name: package.id.name.to_string(),
-        version: package.id.version.clone(),
-        source: wrap_source_id(package.id.source_id),
-        manifest_path: package.manifest_path().to_path_buf(),
-        dependencies,
-        targets,
-        manifest_metadata: m::ManifestMetadata {
-            authors: package.manifest.metadata.authors.clone(),
-            description: package.manifest.metadata.description.clone(),
-            documentation: package.manifest.metadata.documentation.clone(),
-            homepage: package.manifest.metadata.homepage.clone(),
-            keywords: package.manifest.metadata.keywords.clone(),
-            license: package.manifest.metadata.license.clone(),
-            license_file: package.manifest.metadata.license_file.clone(),
-            readme: package.manifest.metadata.readme.clone(),
-            repository: package.manifest.metadata.repository.clone(),
-            urls: package.manifest.metadata.urls.clone(),
-            tool: package
+    let manifest_metadata = m::ManifestMetadataBuilder::default()
+        .authors(package.manifest.metadata.authors.clone())
+        .description(package.manifest.metadata.description.clone())
+        .documentation(package.manifest.metadata.documentation.clone())
+        .homepage(package.manifest.metadata.homepage.clone())
+        .keywords(package.manifest.metadata.keywords.clone())
+        .license(package.manifest.metadata.license.clone())
+        .license_file(package.manifest.metadata.license_file.clone())
+        .readme(package.manifest.metadata.readme.clone())
+        .repository(package.manifest.metadata.repository.clone())
+        .urls(package.manifest.metadata.urls.clone())
+        .tool(
+            package
                 .manifest
                 .metadata
                 .tool_metadata
                 .as_ref()
                 .map(btree_toml_to_json),
-        },
-    }
+        )
+        .build()
+        .unwrap();
+
+    m::PackageMetadataBuilder::default()
+        .id(wrap_package_id(package.id))
+        .name(package.id.name.clone())
+        .version(package.id.version.clone())
+        .source(wrap_source_id(package.id.source_id))
+        .manifest_path(package.manifest_path())
+        .dependencies(dependencies)
+        .targets(targets)
+        .manifest_metadata(manifest_metadata)
+        .build()
+        .unwrap()
 }
 
 fn collect_dependency_metadata(dependency: &ManifestDependency) -> m::DependencyMetadata {
-    m::DependencyMetadata {
-        name: dependency.name.to_string(),
-        version_req: dependency.version_req.clone(),
-        source: wrap_source_id(dependency.source_id),
-    }
+    m::DependencyMetadataBuilder::default()
+        .name(dependency.name.to_string())
+        .version_req(dependency.version_req.clone())
+        .source(wrap_source_id(dependency.source_id))
+        .build()
+        .unwrap()
 }
 
 fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
@@ -149,7 +158,12 @@ fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
         }
     };
 
-    m::TargetMetadata { kind, name, params }
+    m::TargetMetadataBuilder::default()
+        .name(name)
+        .kind(kind)
+        .params(params)
+        .build()
+        .unwrap()
 }
 
 fn collect_compilation_unit_metadata(
@@ -161,40 +175,54 @@ fn collect_compilation_unit_metadata(
         .map(|p| wrap_package_id(p.id))
         .collect();
     components.sort();
-    m::CompilationUnitMetadata {
-        package: wrap_package_id(compilation_unit.package.id),
-        target: collect_target_metadata(&compilation_unit.target),
-        components,
-        compiler_config: serde_json::to_value(&compilation_unit.compiler_config)
-            .expect("Compiler config should always be JSON serializable."),
-    }
+
+    let compiler_config = serde_json::to_value(&compilation_unit.compiler_config)
+        .expect("Compiler config should always be JSON serializable.");
+
+    m::CompilationUnitMetadataBuilder::default()
+        .package(wrap_package_id(compilation_unit.package.id))
+        .target(collect_target_metadata(&compilation_unit.target))
+        .components(components)
+        .compiler_config(compiler_config)
+        .build()
+        .unwrap()
 }
 
 fn collect_app_version_metadata() -> m::VersionInfo {
     let v = crate::version::get();
-    m::VersionInfo {
-        version: v
-            .version
-            .parse()
-            .expect("Scarb version should always be SemVer"),
-        commit_info: v.commit_info.map(wrap_commit_info),
-        cairo: m::CairoVersionInfo {
-            version: v
-                .cairo
-                .version
-                .parse()
-                .expect("Cairo version should always be SemVer"),
-            commit_info: v.cairo.commit_info.map(wrap_commit_info),
-        },
-    }
+
+    let scarb_version: Version = v
+        .version
+        .parse()
+        .expect("Scarb version should always be SemVer");
+
+    let cairo_version: Version = v
+        .cairo
+        .version
+        .parse()
+        .expect("Cairo version should always be SemVer");
+
+    let cairo = m::CairoVersionInfoBuilder::default()
+        .version(cairo_version)
+        .commit_info(v.cairo.commit_info.map(wrap_commit_info))
+        .build()
+        .unwrap();
+
+    m::VersionInfoBuilder::default()
+        .version(scarb_version)
+        .commit_info(v.commit_info.map(wrap_commit_info))
+        .cairo(cairo)
+        .build()
+        .unwrap()
 }
 
 fn wrap_commit_info(ci: CommitInfo) -> m::CommitInfo {
-    m::CommitInfo {
-        short_commit_hash: ci.short_commit_hash,
-        commit_hash: ci.commit_hash,
-        commit_date: ci.commit_date,
-    }
+    m::CommitInfoBuilder::default()
+        .short_commit_hash(ci.short_commit_hash)
+        .commit_hash(ci.commit_hash)
+        .commit_date(ci.commit_date)
+        .build()
+        .unwrap()
 }
 
 fn wrap_package_id(id: PackageId) -> m::PackageId {

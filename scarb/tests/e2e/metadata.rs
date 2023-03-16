@@ -4,7 +4,7 @@ use assert_fs::prelude::*;
 use serde_json::json;
 use snapbox::cmd::Command;
 
-use scarb_metadata::{ManifestMetadata, Metadata, PackageMetadata};
+use scarb_metadata::{ManifestMetadataBuilder, Metadata, PackageMetadata};
 
 use crate::support::command::Scarb;
 use crate::support::project_builder::ProjectBuilder;
@@ -267,33 +267,34 @@ fn manifest_targets_and_metadata() {
             .find(|p| p.name == "hello")
             .unwrap()
             .manifest_metadata,
-        ManifestMetadata {
-            authors: Some(vec![
+        ManifestMetadataBuilder::default()
+            .authors(Some(vec![
                 "John Doe <john.doe@swmansion.com>".to_string(),
                 "Jane Doe <jane.doe@swmansion.com>".to_string(),
-            ],),
-            urls: Some(BTreeMap::from_iter([(
+            ]))
+            .urls(BTreeMap::from_iter([(
                 "hello".to_string(),
                 "https://world.com/".to_string()
-            ),]),),
-            description: Some("Some interesting description to read!".to_string(),),
-            documentation: Some("https://docs.homepage.com/".to_string(),),
-            homepage: Some("https://www.homepage.com/".to_string(),),
-            keywords: Some(vec![
+            )]))
+            .description(Some("Some interesting description to read!".to_string()))
+            .documentation(Some("https://docs.homepage.com/".to_string()))
+            .homepage(Some("https://www.homepage.com/".to_string()))
+            .keywords(Some(vec![
                 "some".to_string(),
                 "project".to_string(),
                 "keywords".to_string(),
-            ],),
-            license: Some("MIT License".to_string(),),
-            license_file: Some("./license.md".to_string(),),
-            readme: Some("./readme.md".to_string(),),
-            repository: Some("https://github.com/johndoe/repo".to_string(),),
-            tool: Some(BTreeMap::from_iter([
+            ]))
+            .license(Some("MIT License".to_string()))
+            .license_file(Some("./license.md".to_string()))
+            .readme(Some("./readme.md".to_string()))
+            .repository(Some("https://github.com/johndoe/repo".to_string()))
+            .tool(Some(BTreeMap::from_iter([
                 ("meta".to_string(), json!("data")),
                 ("numeric".to_string(), json!(1231)),
                 ("table".to_string(), json!({ "key": "value" }))
-            ])),
-        }
+            ])))
+            .build()
+            .unwrap()
     );
 }
 
