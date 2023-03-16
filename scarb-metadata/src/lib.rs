@@ -23,6 +23,8 @@ use std::ops::Index;
 use std::path::PathBuf;
 
 use camino::Utf8PathBuf;
+#[cfg(feature = "builder")]
+use derive_builder::Builder;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
@@ -70,11 +72,15 @@ impl fmt::Display for SourceId {
 
 /// Top level data structure printed by `scarb metadata`.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
 pub struct Metadata {
     // NOTE: This field must always be first! `MetadataCommand` is assuming this.
     /// The metadata format version.
     ///
     /// This struct will not deserialize if version does not match.
+    #[builder(setter(skip))]
     pub version: VersionPin,
 
     /// Path to `scarb` executable.
@@ -102,6 +108,9 @@ pub struct Metadata {
 
 /// Current workspace metadata.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
 pub struct WorkspaceMetadata {
     /// Path to the manifest file defining this workspace.
     pub manifest_path: Utf8PathBuf,
@@ -112,6 +121,9 @@ pub struct WorkspaceMetadata {
 
 /// Metadata of single Scarb package.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
 pub struct PackageMetadata {
     /// Package ID.
     pub id: PackageId,
@@ -144,6 +156,9 @@ pub struct PackageMetadata {
 /// Only the `name` field is strictly sourced from `Scarb.toml`, the rest is processed by Scarb
 /// when processing this file.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
 pub struct DependencyMetadata {
     /// Package name.
     pub name: String,
@@ -155,6 +170,9 @@ pub struct DependencyMetadata {
 
 /// Package target information.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
 pub struct TargetMetadata {
     /// Target kind: `lib`, `starknet-contract`, etc.
     pub kind: String,
@@ -166,6 +184,9 @@ pub struct TargetMetadata {
 
 /// Scarb compilation unit information.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
 pub struct CompilationUnitMetadata {
     /// Main package to be built.
     pub package: PackageId,
@@ -183,6 +204,9 @@ pub struct CompilationUnitMetadata {
 
 /// Various metadata fields from package manifest.
 #[derive(Clone, Serialize, Deserialize, Debug, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
 pub struct ManifestMetadata {
     /// List of the people or organizations that are considered the "authors" of the package.
     pub authors: Option<Vec<String>>,
@@ -214,6 +238,9 @@ pub struct ManifestMetadata {
 
 /// Scarb's version.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
 pub struct VersionInfo {
     /// Version of Scarb.
     pub version: Version,
@@ -225,6 +252,9 @@ pub struct VersionInfo {
 
 /// Cairo's version.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
 pub struct CairoVersionInfo {
     /// Version of the Cairo compiler.
     pub version: Version,
@@ -234,6 +264,9 @@ pub struct CairoVersionInfo {
 
 /// Information about the Git repository where Scarb or Cairo was built from.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
 pub struct CommitInfo {
     /// Git commit hash, shortened.
     pub short_commit_hash: String,
