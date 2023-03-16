@@ -19,3 +19,12 @@ indoc.workspace = true
 semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+thiserror = { workspace = true, optional = true }
+
+[dev-dependencies]
+assert_fs.workspace = true
+snapbox.workspace = true
+
+[features]
+default = ["command"]
+command = ["dep:thiserror"]

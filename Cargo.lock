@@ -3205,11 +3205,14 @@ dependencies = [
 name = "scarb-metadata"
 version = "1.0.0"
 dependencies = [
+ "assert_fs",
  "camino",
  "indoc 2.0.1",
  "semver",
  "serde",
  "serde_json",
+ "snapbox",
+ "thiserror",
 ]
 
 [[package]]
