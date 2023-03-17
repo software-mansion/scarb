@@ -2,15 +2,11 @@ use std::collections::BTreeMap;
 
 use anyhow::{bail, Result};
 use semver::Version;
-use serde_json::json;
 
 use scarb_metadata as m;
 
 use crate::compiler::CompilationUnit;
-use crate::core::{
-    ExternalTargetKind, LibTargetKind, ManifestDependency, Package, PackageId, SourceId, Target,
-    TargetKind, Workspace,
-};
+use crate::core::{ManifestDependency, Package, PackageId, SourceId, Target, Workspace};
 use crate::ops;
 use crate::version::CommitInfo;
 
@@ -137,31 +133,10 @@ fn collect_dependency_metadata(dependency: &ManifestDependency) -> m::Dependency
 }
 
 fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
-    let name = target.name.to_string();
-
-    let (kind, params) = match &target.kind {
-        TargetKind::Lib(LibTargetKind { sierra, casm }) => {
-            let kind = "lib".to_string();
-            let params = json!({
-                "sierra": sierra,
-                "casm": casm
-            });
-            (kind, params)
-        }
-        TargetKind::External(ExternalTargetKind { kind_name, params }) => {
-            let kind = kind_name.to_string();
-            let params = params
-                .iter()
-                .map(|(k, v)| (k.clone(), toml_to_json(v)))
-                .collect();
-            (kind, params)
-        }
-    };
-
     m::TargetMetadataBuilder::default()
-        .name(name)
-        .kind(kind)
-        .params(params)
+        .kind(target.kind.to_string())
+        .name(target.name.to_string())
+        .params(toml_to_json(&target.params))
         .build()
         .unwrap()
 }

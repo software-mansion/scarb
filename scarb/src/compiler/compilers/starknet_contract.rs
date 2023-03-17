@@ -1,7 +1,7 @@
 use std::iter::zip;
 use std::ops::DerefMut;
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_starknet::contract::find_contracts;
 use cairo_lang_starknet::contract_class::compile_prepared_db;
@@ -13,7 +13,7 @@ use crate::compiler::helpers::{
     build_compiler_config, build_project_config, collect_main_crate_ids,
 };
 use crate::compiler::{CompilationUnit, Compiler};
-use crate::core::{ExternalTargetKind, Workspace};
+use crate::core::Workspace;
 
 // TODO(#111): starknet-contract should be implemented as an extension.
 pub struct StarknetContractCompiler;
@@ -24,13 +24,6 @@ impl Compiler for StarknetContractCompiler {
     }
 
     fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-        let props = unit.target.kind.downcast::<ExternalTargetKind>();
-        ensure!(
-            props.params.is_empty(),
-            "target `{}` does not accept any parameters",
-            props.kind_name
-        );
-
         let target_dir = unit.profile.target_dir(ws.config());
 
         let mut db = RootDatabase::builder()

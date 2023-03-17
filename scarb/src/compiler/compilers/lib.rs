@@ -3,23 +3,39 @@ use std::io::Write;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, MetadataComputationConfig};
+use serde::{Deserialize, Serialize};
 use tracing::trace_span;
 
 use crate::compiler::helpers::{
     build_compiler_config, build_project_config, collect_main_crate_ids,
 };
 use crate::compiler::{CompilationUnit, Compiler};
-use crate::core::{LibTargetKind, Workspace};
+use crate::core::{Target, Workspace};
 
 pub struct LibCompiler;
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Props {
+    pub sierra: bool,
+    pub casm: bool,
+}
+
+impl Default for Props {
+    fn default() -> Self {
+        Self {
+            sierra: true,
+            casm: false,
+        }
+    }
+}
+
 impl Compiler for LibCompiler {
     fn target_kind(&self) -> &str {
-        "lib"
+        Target::LIB
     }
 
     fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-        let props = unit.target.kind.downcast::<LibTargetKind>();
+        let props: Props = unit.target.props()?;
         if !props.sierra && !props.casm {
             ws.config().ui().warn(
                 "both Sierra and CASM lib targets have been disabled, \
