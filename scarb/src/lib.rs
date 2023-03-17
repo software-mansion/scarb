@@ -22,7 +22,6 @@ pub const SCARB_ENV: &str = "SCARB";
 
 pub const MANIFEST_FILE_NAME: &str = "Scarb.toml";
 
-pub const DEFAULT_SOURCE_DIR_NAME: &str = "src";
 pub const DEFAULT_SOURCE_PATH: &str = "src/lib.cairo";
 pub const DEFAULT_TARGET_DIR_NAME: &str = "target";
 pub const EXTERNAL_CMD_PREFIX: &str = "scarb-";

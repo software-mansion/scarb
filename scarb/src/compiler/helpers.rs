@@ -10,7 +10,7 @@ use cairo_lang_filesystem::ids::{CrateId, CrateLongId, Directory};
 use tracing::trace;
 
 use crate::compiler::CompilationUnit;
-use crate::core::{PackageName, Workspace};
+use crate::core::{PackageName, Target, Workspace};
 use crate::ui::TypedMessage;
 
 pub fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
@@ -19,9 +19,19 @@ pub fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         .iter()
         .filter(|pkg| pkg.id.name != PackageName::CORE)
         .map(|pkg| {
+            // If this is this compilation's unit main package, then use the target we are building.
+            // Otherwise, assume library target for all dependency packages, because that's what it
+            // is for. We can safely unwrap here, because compilation unit generator ensures that
+            // all dependencies have library target.
+            let target = if pkg.id == unit.package.id {
+                &unit.target
+            } else {
+                pkg.fetch_target(Target::LIB).unwrap()
+            };
+
             (
                 pkg.id.name.to_smol_str(),
-                pkg.source_dir().into_std_path_buf(),
+                target.source_root().as_std_path().to_path_buf(),
             )
         })
         .collect();
@@ -30,7 +40,15 @@ pub fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         .components
         .iter()
         .find(|pkg| pkg.id.name == PackageName::CORE)
-        .map(|pkg| Directory(pkg.source_dir().into_std_path_buf()));
+        .map(|pkg| {
+            Directory(
+                pkg.fetch_target(Target::LIB)
+                    .unwrap()
+                    .source_root()
+                    .as_std_path()
+                    .to_path_buf(),
+            )
+        });
 
     let content = ProjectConfigContent { crate_roots };
 

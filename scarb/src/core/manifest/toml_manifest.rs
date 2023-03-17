@@ -19,6 +19,7 @@ use crate::core::PackageName;
 use crate::internal::fsx;
 use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::to_version::ToVersion;
+use crate::DEFAULT_SOURCE_PATH;
 
 use super::Manifest;
 
@@ -173,6 +174,10 @@ impl TomlDependency {
 
 impl TomlManifest {
     pub fn to_manifest(&self, manifest_path: &Utf8Path, source_id: SourceId) -> Result<Manifest> {
+        let root = manifest_path
+            .parent()
+            .expect("manifest path parent must always exist");
+
         let Some(package) = self.package.as_deref() else {
             bail!("no `package` section found");
         };
@@ -190,7 +195,7 @@ impl TomlManifest {
 
         let no_core = package.no_core.unwrap_or(false);
 
-        let targets = self.collect_targets(package.name.to_smol_str())?;
+        let targets = self.collect_targets(package.name.to_smol_str(), root)?;
 
         let compiler_config = self.collect_compiler_config();
 
@@ -217,7 +222,9 @@ impl TomlManifest {
         })
     }
 
-    fn collect_targets(&self, package_name: SmolStr) -> Result<Vec<Target>> {
+    fn collect_targets(&self, package_name: SmolStr, root: &Utf8Path) -> Result<Vec<Target>> {
+        let default_source_path = root.join(DEFAULT_SOURCE_PATH);
+
         let mut targets = Vec::new();
 
         if let Some(lib_toml) = &self.lib {
@@ -226,7 +233,12 @@ impl TomlManifest {
                 .clone()
                 .unwrap_or_else(|| package_name.clone());
 
-            let target = Target::try_from_structured_params(Target::LIB, name, &lib_toml.params)?;
+            let target = Target::try_from_structured_params(
+                Target::LIB,
+                name,
+                default_source_path.clone(),
+                &lib_toml.params,
+            )?;
             targets.push(target);
         }
 
@@ -241,7 +253,12 @@ impl TomlManifest {
                 .clone()
                 .unwrap_or_else(|| package_name.clone());
 
-            let target = Target::try_from_structured_params(kind_toml, name, &ext_toml.params)?;
+            let target = Target::try_from_structured_params(
+                kind_toml,
+                name,
+                default_source_path.clone(),
+                &ext_toml.params,
+            )?;
             targets.push(target);
         }
 
@@ -249,7 +266,7 @@ impl TomlManifest {
 
         if targets.is_empty() {
             trace!("manifest has no targets, assuming default `lib` target");
-            let target = Target::without_params(Target::LIB, package_name);
+            let target = Target::without_params(Target::LIB, package_name, default_source_path);
             targets.push(target);
         }
 

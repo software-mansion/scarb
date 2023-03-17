@@ -11,7 +11,6 @@ pub use name::*;
 
 use crate::core::manifest::Manifest;
 use crate::core::Target;
-use crate::DEFAULT_SOURCE_DIR_NAME;
 
 mod id;
 mod name;
@@ -55,12 +54,17 @@ impl Package {
         &self.manifest_path
     }
 
-    pub fn source_dir(&self) -> Utf8PathBuf {
-        self.root().join(DEFAULT_SOURCE_DIR_NAME)
-    }
-
     pub fn is_lib(&self) -> bool {
         self.manifest.targets.iter().any(Target::is_lib)
+    }
+
+    pub fn target(&self, kind: &str) -> Option<&Target> {
+        self.manifest.targets.iter().find(|t| t.kind == kind)
+    }
+
+    pub fn fetch_target(&self, kind: &str) -> Result<&Target> {
+        self.target(kind)
+            .ok_or_else(|| anyhow!("package `{self}` has no target `{kind}`"))
     }
 
     pub fn has_tool_metadata(&self, tool_name: &str) -> bool {
