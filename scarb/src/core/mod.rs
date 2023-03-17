@@ -15,10 +15,6 @@ pub use resolver::Resolve;
 pub use source::{GitReference, SourceId, SourceIdInner, SourceKind};
 pub use workspace::Workspace;
 
-pub use crate::DEFAULT_SOURCE_DIR_NAME;
-pub use crate::DEFAULT_TARGET_DIR_NAME;
-pub use crate::MANIFEST_FILE_NAME;
-
 pub(crate) mod config;
 mod dirs;
 pub(crate) mod manifest;
