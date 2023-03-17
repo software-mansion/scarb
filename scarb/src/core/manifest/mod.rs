@@ -143,7 +143,7 @@ pub struct ManifestMetadata {
     pub tool_metadata: Option<BTreeMap<String, Value>>,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, Hash)]
 pub struct ManifestCompilerConfig {
     /// Replace all names in generated Sierra code with dummy counterparts, representing the
     /// expanded information about the named items.
