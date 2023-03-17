@@ -156,6 +156,7 @@ fn collect_compilation_unit_metadata(
         .expect("Compiler config should always be JSON serializable.");
 
     m::CompilationUnitMetadataBuilder::default()
+        .id(compilation_unit.id())
         .package(wrap_package_id(compilation_unit.package.id))
         .target(collect_target_metadata(&compilation_unit.target))
         .components(components)
