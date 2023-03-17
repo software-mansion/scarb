@@ -82,6 +82,30 @@ impl fmt::Display for SourceId {
     }
 }
 
+/// An "opaque" identifier for a compilation unit.
+/// It is possible to inspect the `repr` field, if the need arises,
+/// but its precise format is an implementation detail and is subject to change.
+///
+/// [`Metadata`] can be indexed by [`CompilationUnitId`].
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[serde(transparent)]
+pub struct CompilationUnitId {
+    /// The underlying string representation of the ID.
+    pub repr: String,
+}
+
+impl From<String> for CompilationUnitId {
+    fn from(repr: String) -> Self {
+        Self { repr }
+    }
+}
+
+impl fmt::Display for CompilationUnitId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.repr, f)
+    }
+}
+
 /// Top level data structure printed by `scarb metadata`.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "builder", derive(Builder))]
@@ -202,14 +226,20 @@ pub struct TargetMetadata {
 #[cfg_attr(feature = "builder", builder(setter(into)))]
 #[non_exhaustive]
 pub struct CompilationUnitMetadata {
+    /// Unique ID of this compilation unit.
+    pub id: CompilationUnitId,
+
     /// Main package to be built.
     pub package: PackageId,
+
     /// Selected target of the main package.
     pub target: TargetMetadata,
+
     /// IDs of all packages to be included in this compilation.
     ///
     /// This is the ID of the main package and all its transitive dependencies.
     pub components: Vec<PackageId>,
+
     /// Cairo compiler config.
     ///
     /// This is unstructured, because this can rapidly change throughout Scarb lifetime.
@@ -298,6 +328,17 @@ impl<'a> Index<&'a PackageId> for Metadata {
             .iter()
             .find(|p| p.id == *idx)
             .unwrap_or_else(|| panic!("no package with this ID: {idx}"))
+    }
+}
+
+impl<'a> Index<&'a CompilationUnitId> for Metadata {
+    type Output = CompilationUnitMetadata;
+
+    fn index(&self, idx: &'a CompilationUnitId) -> &Self::Output {
+        self.compilation_units
+            .iter()
+            .find(|p| p.id == *idx)
+            .unwrap_or_else(|| panic!("no compilation unit with this ID: {idx}"))
     }
 }
 
