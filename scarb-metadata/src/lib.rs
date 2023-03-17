@@ -40,12 +40,18 @@ mod version_pin;
 /// It is possible to inspect the `repr` field, if the need arises,
 /// but its precise format is an implementation detail and is subject to change.
 ///
-/// `Metadata` can be indexed by `PackageId`.
+/// [`Metadata`] can be indexed by [`PackageId`].
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(transparent)]
 pub struct PackageId {
     /// The underlying string representation of the ID.
     pub repr: String,
+}
+
+impl From<String> for PackageId {
+    fn from(repr: String) -> Self {
+        Self { repr }
+    }
 }
 
 impl fmt::Display for PackageId {
@@ -62,6 +68,12 @@ impl fmt::Display for PackageId {
 pub struct SourceId {
     /// The underlying string representation of the ID.
     pub repr: String,
+}
+
+impl From<String> for SourceId {
+    fn from(repr: String) -> Self {
+        Self { repr }
+    }
 }
 
 impl fmt::Display for SourceId {
