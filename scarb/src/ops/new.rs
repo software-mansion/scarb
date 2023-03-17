@@ -1,4 +1,3 @@
-use crate::internal::fsx::PathBufUtf8Ext;
 use anyhow::{bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
@@ -6,7 +5,8 @@ use itertools::Itertools;
 
 use crate::core::{Config, PackageName};
 use crate::internal::fsx;
-use crate::{ops, DEFAULT_SOURCE_DIR_NAME, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
+use crate::internal::fsx::PathBufUtf8Ext;
+use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum VersionControl {
@@ -126,14 +126,13 @@ fn mk(
         "#},
     )?;
 
-    // Create hello world source files (with respective parent directories) if source directory
-    // does not exist.
-    let source_dir = canonical_path.join(DEFAULT_SOURCE_DIR_NAME);
-    if !source_dir.exists() {
-        fsx::create_dir_all(&source_dir)?;
+    // Create hello world source files (with respective parent directories) if none exist.
+    let source_path = canonical_path.join(DEFAULT_SOURCE_PATH);
+    if !source_path.exists() {
+        fsx::create_dir_all(source_path.parent().unwrap())?;
 
         fsx::write(
-            source_dir.join("lib.cairo"),
+            source_path,
             indoc! {r#"
                 fn fib(a: felt252, b: felt252, n: felt252) -> felt252 {
                     match n {
