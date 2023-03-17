@@ -27,14 +27,14 @@ impl CompilationUnit {
     }
 
     pub fn has_custom_name(&self) -> bool {
-        self.target.kind.name() != self.package.id.name.as_str()
+        self.target.kind != self.package.id.name.as_str()
     }
 
     pub fn name(&self) -> String {
         let mut string = String::new();
 
         if self.is_sole_for_package() {
-            write!(&mut string, "{}", self.target.kind.name()).unwrap();
+            write!(&mut string, "{}", self.target.kind).unwrap();
 
             if self.has_custom_name() {
                 write!(&mut string, "({})", self.target.name).unwrap();

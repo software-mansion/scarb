@@ -40,8 +40,8 @@ impl CompilerRepository {
     }
 
     pub fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-        let target_kind = SmolStr::new(unit.target.kind.name());
-        let Some(compiler) = self.compilers.get(&target_kind) else {
+        let target_kind = &unit.target.kind;
+        let Some(compiler) = self.compilers.get(target_kind) else {
             bail!("unknown compiler for target `{target_kind}`");
         };
         compiler.compile(unit, ws)

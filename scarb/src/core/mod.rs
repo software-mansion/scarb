@@ -4,12 +4,7 @@
 
 pub use config::Config;
 pub use dirs::AppDirs;
-pub use manifest::{
-    DetailedTomlDependency, ExternalTargetKind, LibTargetKind, Manifest, ManifestCompilerConfig,
-    ManifestDependency, ManifestMetadata, Summary, SummaryInner, Target, TargetInner, TargetKind,
-    TomlDependency, TomlExternalTarget, TomlLibTarget, TomlManifest, TomlPackage,
-    TomlTargetKindName,
-};
+pub use manifest::*;
 pub use package::{Package, PackageId, PackageIdInner, PackageInner, PackageName};
 pub use resolver::Resolve;
 pub use source::{GitReference, SourceId, SourceIdInner, SourceKind};

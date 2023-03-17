@@ -128,29 +128,6 @@ fn compile_many_contracts() {
     }
 }
 
-#[test]
-fn unexpected_target_props() {
-    let t = assert_fs::TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .manifest_extra(indoc! {r#"
-            [[target.starknet-contract]]
-            foo = true
-        "#})
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("build")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-        [..] Compiling hello [..]
-        error: target `starknet-contract` does not accept any parameters
-        error: could not compile `hello` due to previous error
-        "#});
-}
-
 fn assert_is_contract_class(child: &ChildPath) {
     let contract_json = fs::read_to_string(child.path()).unwrap();
     serde_json::from_str::<ContractClass>(&contract_json).unwrap();

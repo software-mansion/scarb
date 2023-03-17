@@ -11,8 +11,7 @@ use tracing::trace;
 use url::Url;
 
 use crate::core::manifest::{
-    ExternalTargetKind, LibTargetKind, ManifestCompilerConfig, ManifestDependency,
-    ManifestMetadata, Summary, Target, TargetKind,
+    ManifestCompilerConfig, ManifestDependency, ManifestMetadata, Summary, Target,
 };
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
@@ -29,8 +28,8 @@ use super::Manifest;
 pub struct TomlManifest {
     pub package: Option<Box<TomlPackage>>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
-    pub lib: Option<TomlLibTarget>,
-    pub target: Option<BTreeMap<TomlTargetKindName, Vec<TomlExternalTarget>>>,
+    pub lib: Option<TomlTarget<TomlLibTargetParams>>,
+    pub target: Option<BTreeMap<TomlTargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
     pub cairo: Option<TomlCairo>,
     pub tool: Option<BTreeMap<String, Value>>,
 }
@@ -80,11 +79,11 @@ pub struct DetailedTomlDependency {
 
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
 #[serde(into = "SmolStr", try_from = "SmolStr")]
-pub struct TomlTargetKindName(SmolStr);
+pub struct TomlTargetKind(SmolStr);
 
-impl TomlTargetKindName {
+impl TomlTargetKind {
     pub fn try_new(name: SmolStr) -> Result<Self> {
-        ensure!(&name != "lib", "target kind `lib` is reserved");
+        ensure!(name != Target::LIB, "target kind `{name}` is reserved");
         Ok(Self(name))
     }
 
@@ -97,50 +96,37 @@ impl TomlTargetKindName {
     }
 }
 
-impl From<TomlTargetKindName> for SmolStr {
-    fn from(value: TomlTargetKindName) -> Self {
+impl From<TomlTargetKind> for SmolStr {
+    fn from(value: TomlTargetKind) -> Self {
         value.into_smol_str()
     }
 }
 
-impl TryFrom<SmolStr> for TomlTargetKindName {
+impl TryFrom<SmolStr> for TomlTargetKind {
     type Error = anyhow::Error;
 
     fn try_from(value: SmolStr) -> Result<Self> {
-        TomlTargetKindName::try_new(value)
+        TomlTargetKind::try_new(value)
     }
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct TomlLibTarget {
-    /// The name of the target.
-    ///
-    /// Defaults to package name.
+pub struct TomlTarget<P> {
     pub name: Option<SmolStr>,
 
-    /// Enable Sierra code generation.
-    ///
-    /// Defaults to `true`.
-    pub sierra: Option<bool>,
-
-    /// Enable CASM code generation.
-    ///
-    /// Defaults to `false`.
-    pub casm: Option<bool>,
+    #[serde(flatten)]
+    pub params: P,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct TomlExternalTarget {
-    /// The name of the target.
-    ///
-    /// Defaults to package name.
-    pub name: Option<SmolStr>,
-
-    #[serde(flatten)]
-    pub params: BTreeMap<SmolStr, Value>,
+pub struct TomlLibTargetParams {
+    pub sierra: Option<bool>,
+    pub casm: Option<bool>,
 }
+
+pub type TomlExternalTargetParams = BTreeMap<SmolStr, Value>;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -235,43 +221,27 @@ impl TomlManifest {
         let mut targets = Vec::new();
 
         if let Some(lib_toml) = &self.lib {
-            let mut kind = LibTargetKind::default();
-            if let Some(sierra) = lib_toml.sierra {
-                kind.sierra = sierra;
-            }
-            if let Some(casm) = lib_toml.casm {
-                kind.casm = casm;
-            }
-
-            let kind = TargetKind::Lib(kind);
-
             let name = lib_toml
                 .name
                 .clone()
                 .unwrap_or_else(|| package_name.clone());
 
-            let target = Target::new(name, kind);
+            let target = Target::try_from_structured_params(Target::LIB, name, &lib_toml.params)?;
             targets.push(target);
         }
 
-        for (kind_name_toml, ext_toml) in self
+        for (kind_toml, ext_toml) in self
             .target
             .iter()
             .flatten()
             .flat_map(|(k, vs)| vs.iter().map(|v| (k.clone(), v)))
         {
-            let kind = ExternalTargetKind {
-                kind_name: kind_name_toml.to_smol_str(),
-                params: ext_toml.params.clone(),
-            };
-            let kind = TargetKind::External(kind);
-
             let name = ext_toml
                 .name
                 .clone()
                 .unwrap_or_else(|| package_name.clone());
 
-            let target = Target::new(name, kind);
+            let target = Target::try_from_structured_params(kind_toml, name, &ext_toml.params)?;
             targets.push(target);
         }
 
@@ -279,8 +249,7 @@ impl TomlManifest {
 
         if targets.is_empty() {
             trace!("manifest has no targets, assuming default `lib` target");
-            let kind = TargetKind::Lib(LibTargetKind::default());
-            let target = Target::new(package_name, kind);
+            let target = Target::without_params(Target::LIB, package_name);
             targets.push(target);
         }
 
@@ -290,18 +259,18 @@ impl TomlManifest {
     fn check_unique_targets(targets: &[Target], package_name: &str) -> Result<()> {
         let mut used = HashSet::with_capacity(targets.len());
         for target in targets {
-            if !used.insert((target.kind.name(), target.name.as_str())) {
+            if !used.insert((target.kind.as_str(), target.name.as_str())) {
                 if target.name == package_name {
                     bail!(
                         "manifest contains duplicate target definitions `{}`, \
                         consider explicitly naming targets with the `name` field",
-                        target.kind.name()
+                        target.kind
                     )
                 } else {
                     bail!(
                         "manifest contains duplicate target definitions `{} ({})`, \
                         use different target names to resolve the conflict",
-                        target.kind.name(),
+                        target.kind,
                         target.name
                     )
                 }

@@ -1,9 +1,9 @@
-use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::sync::Arc;
 
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
-use toml::Value;
 
 /// See [`TargetInner`] for public fields reference.
 #[derive(Clone, Debug)]
@@ -12,8 +12,9 @@ pub struct Target(Arc<TargetInner>);
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct TargetInner {
+    pub kind: SmolStr,
     pub name: SmolStr,
-    pub kind: TargetKind,
+    pub params: toml::Value,
 }
 
 impl Deref for Target {
@@ -24,75 +25,50 @@ impl Deref for Target {
     }
 }
 
-#[derive(Debug)]
-pub enum TargetKind {
-    Lib(LibTargetKind),
-    External(ExternalTargetKind),
-}
-
-#[derive(Debug)]
-pub struct LibTargetKind {
-    pub sierra: bool,
-    pub casm: bool,
-}
-
-impl Default for LibTargetKind {
-    fn default() -> Self {
-        Self {
-            sierra: true,
-            casm: false,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct ExternalTargetKind {
-    pub kind_name: SmolStr,
-    pub params: BTreeMap<SmolStr, Value>,
-}
-
 impl Target {
-    pub fn new(name: SmolStr, kind: TargetKind) -> Self {
-        Self(Arc::new(TargetInner { name, kind }))
+    pub const LIB: &'static str = "lib";
+
+    pub fn new(kind: impl Into<SmolStr>, name: impl Into<SmolStr>, params: toml::Value) -> Self {
+        assert!(params.is_table(), "params must be a TOML table");
+        Self(Arc::new(TargetInner {
+            kind: kind.into(),
+            name: name.into(),
+            params,
+        }))
+    }
+
+    pub fn without_params(kind: impl Into<SmolStr>, name: impl Into<SmolStr>) -> Self {
+        Self::new(kind, name, toml::Value::Table(toml::Table::new()))
+    }
+
+    pub fn try_from_structured_params(
+        kind: impl Into<SmolStr>,
+        name: impl Into<SmolStr>,
+        params: impl Serialize,
+    ) -> Result<Self> {
+        let params = toml::Value::try_from(params)?;
+        Ok(Self::new(kind, name, params))
     }
 
     pub fn is_lib(&self) -> bool {
-        matches!(self.kind, TargetKind::Lib(_))
-    }
-}
-
-impl TargetKind {
-    pub fn downcast<K: TargetKindDowncast>(&self) -> &K {
-        K::downcast_from(self)
+        self.kind == Self::LIB
     }
 
-    pub fn name(&self) -> &str {
-        match self {
-            TargetKind::Lib(_) => "lib",
-            TargetKind::External(ExternalTargetKind { kind_name, .. }) => kind_name,
-        }
-    }
-}
+    pub fn props<'de, P>(&self) -> Result<P>
+    where
+        P: Default + Serialize + Deserialize<'de>,
+    {
+        let mut params = toml::Value::try_from(P::default())?;
 
-#[doc(hidden)]
-pub trait TargetKindDowncast {
-    fn downcast_from(target_kind: &TargetKind) -> &Self;
-}
+        params.as_table_mut().unwrap().extend(
+            self.params
+                .as_table()
+                .unwrap()
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone())),
+        );
 
-impl TargetKindDowncast for LibTargetKind {
-    fn downcast_from(target_kind: &TargetKind) -> &Self {
-        match target_kind {
-            TargetKind::Lib(lib) => lib,
-            _ => panic!("TargetKind::Lib was expected here"),
-        }
-    }
-}
-
-impl TargetKindDowncast for ExternalTargetKind {
-    fn downcast_from(target_kind: &TargetKind) -> &Self {
-        match target_kind {
-            TargetKind::External(ext) => ext,
-            _ => panic!("TargetKind::External was expected here"),
-        }
+        let props = toml::Value::try_into(params)?;
+        Ok(props)
     }
 }
