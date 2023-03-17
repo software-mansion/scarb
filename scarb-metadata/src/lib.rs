@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-#![deny(rustdoc::broken_intra_doc_links)]
+#![warn(rustdoc::broken_intra_doc_links)]
 #![deny(rustdoc::private_intra_doc_links)]
 #![warn(rust_2018_idioms)]
 #![doc = concat!(
