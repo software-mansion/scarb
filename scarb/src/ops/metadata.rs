@@ -136,6 +136,7 @@ fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
     m::TargetMetadataBuilder::default()
         .kind(target.kind.to_string())
         .name(target.name.to_string())
+        .source_path(target.source_path.clone())
         .params(toml_to_json(&target.params))
         .build()
         .unwrap()
