@@ -22,7 +22,7 @@ use std::fmt;
 use std::ops::Index;
 use std::path::PathBuf;
 
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 #[cfg(feature = "builder")]
 use derive_builder::Builder;
 use semver::{Version, VersionReq};
@@ -178,6 +178,8 @@ pub struct TargetMetadata {
     pub kind: String,
     /// Target name, often this is a default, which is the package name.
     pub name: String,
+    /// Path to the main source file of the target.
+    pub source_path: Utf8PathBuf,
     /// Unstructured target parameters.
     pub params: serde_json::Value,
 }
@@ -292,5 +294,14 @@ impl PackageMetadata {
     /// including any transformations applied by Scarb.
     pub fn tool_metadata(&self, tool_name: &str) -> Option<&serde_json::Value> {
         self.manifest_metadata.tool.as_ref()?.get(tool_name)
+    }
+}
+
+impl TargetMetadata {
+    /// Path to the main source directory of the target.
+    pub fn source_root(&self) -> &Utf8Path {
+        self.source_path
+            .parent()
+            .expect("Source path is guaranteed to point to a file.")
     }
 }
