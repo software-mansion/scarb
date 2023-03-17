@@ -1,3 +1,4 @@
+use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -7,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
 /// See [`TargetInner`] for public fields reference.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash)]
 pub struct Target(Arc<TargetInner>);
 
 #[derive(Debug)]
@@ -94,5 +95,14 @@ impl Target {
 
         let props = toml::Value::try_into(params)?;
         Ok(props)
+    }
+}
+
+impl Hash for TargetInner {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.kind.hash(state);
+        self.name.hash(state);
+        self.source_path.hash(state);
+        self.params.to_string().hash(state);
     }
 }

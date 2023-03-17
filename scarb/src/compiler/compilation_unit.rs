@@ -1,8 +1,10 @@
 use std::fmt::Write;
+use std::hash::Hash;
 
 use crate::compiler::Profile;
 use crate::core::manifest::ManifestCompilerConfig;
 use crate::core::{Package, Target};
+use crate::internal::stable_hash::StableHasher;
 
 /// An object that has enough information so that Scarb knows how to build it.
 #[derive(Clone, Debug)]
@@ -30,6 +32,10 @@ impl CompilationUnit {
         self.target.kind != self.package.id.name.as_str()
     }
 
+    pub fn id(&self) -> String {
+        format!("{}-{}", self.package.id.name, self.digest())
+    }
+
     pub fn name(&self) -> String {
         let mut string = String::new();
 
@@ -46,5 +52,17 @@ impl CompilationUnit {
         write!(&mut string, "{}", self.package.id).unwrap();
 
         string
+    }
+
+    pub fn digest(&self) -> String {
+        let mut hasher = StableHasher::new();
+        self.package.id.hash(&mut hasher);
+        self.target.hash(&mut hasher);
+        for component in &self.components {
+            component.id.hash(&mut hasher);
+        }
+        self.profile.name.hash(&mut hasher);
+        self.compiler_config.hash(&mut hasher);
+        hasher.finish_as_short_hash()
     }
 }

@@ -16,6 +16,11 @@ impl StableHasher {
         #[allow(deprecated)]
         Self(SipHasher::new())
     }
+
+    pub fn finish_as_short_hash(&self) -> String {
+        let hash = self.finish();
+        BASE32HEX_NOPAD.encode(&hash.to_le_bytes())
+    }
 }
 
 impl Hasher for StableHasher {
@@ -29,13 +34,9 @@ impl Hasher for StableHasher {
 }
 
 pub fn short_hash(hashable: &impl Hash) -> String {
-    let hash = {
-        let mut hasher = StableHasher::new();
-        hashable.hash(&mut hasher);
-        hasher.finish()
-    };
-
-    BASE32HEX_NOPAD.encode(&hash.to_le_bytes())
+    let mut hasher = StableHasher::new();
+    hashable.hash(&mut hasher);
+    hasher.finish_as_short_hash()
 }
 
 #[cfg(test)]

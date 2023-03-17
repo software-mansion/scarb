@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Result;
+use itertools::Itertools;
 
 use crate::compiler::{CompilationUnit, Profile};
 use crate::core::package::{Package, PackageId};
@@ -90,6 +91,12 @@ pub fn generate_compilation_units(
             units.push(unit);
         }
     }
+
+    assert!(
+        units.iter().map(CompilationUnit::id).all_unique(),
+        "All generated compilation units must have unique IDs."
+    );
+
     Ok(units)
 }
 
