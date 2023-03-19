@@ -2,8 +2,8 @@ use std::{fmt, mem};
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use smol::lock::OnceCell;
-use smol::unblock;
+use tokio::sync::OnceCell;
+use tokio::task::spawn_blocking;
 use url::Url;
 
 use canonical_url::CanonicalUrl;
@@ -81,8 +81,10 @@ impl<'c> GitSource<'c> {
         //   but `smol::unblock` lifetime bounds force us to think so.
         let config: &'static Config = unsafe { mem::transmute(self.config) };
 
-        return unblock(move || inner(source_id, remote, requested_reference, locked_rev, config))
-            .await;
+        return spawn_blocking(move || {
+            inner(source_id, remote, requested_reference, locked_rev, config)
+        })
+        .await?;
 
         fn inner(
             source_id: SourceId,
