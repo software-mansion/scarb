@@ -122,17 +122,18 @@ mod tests {
     use itertools::Itertools;
     use semver::Version;
     use similar_asserts::assert_serde_eq;
+    use tokio::runtime::Builder;
 
     use crate::core::package::PackageName;
     use crate::core::registry::mock::{deps, pkgs, registry, MockRegistry};
     use crate::core::{ManifestDependency, PackageId, SourceId};
-    use crate::internal::asyncx::AwaitSync;
 
     fn check(
         mut registry: MockRegistry,
         roots: &[&[ManifestDependency]],
         expected: Result<&[PackageId], &str>,
     ) {
+        let runtime = Builder::new_multi_thread().build().unwrap();
         let root_names = (1..).map(|n| PackageName::new(format!("ROOT_{n}")));
 
         let summaries = roots
@@ -150,7 +151,7 @@ mod tests {
             })
             .collect_vec();
 
-        let resolve = super::resolve(&summaries, &mut registry).await_sync();
+        let resolve = runtime.block_on(super::resolve(&summaries, &mut registry));
 
         let resolve = resolve
             .map(|r| {

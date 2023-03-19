@@ -4,7 +4,7 @@ use std::hash::Hash;
 use anyhow::Result;
 use futures::future::{LocalBoxFuture, Shared};
 use futures::prelude::*;
-use smol::lock::RwLock;
+use tokio::sync::RwLock;
 
 use crate::internal::cloneable_error::CloneableResult;
 
@@ -58,7 +58,7 @@ mod tests {
 
     use super::AsyncCache;
 
-    #[smol_potat::test]
+    #[tokio::test]
     async fn load() {
         let cache = AsyncCache::new((), |key: usize, _ctx: ()| {
             static COUNTER: AtomicU8 = AtomicU8::new(0);
@@ -71,7 +71,7 @@ mod tests {
         assert_eq!(cache.load(2).await.unwrap(), (2, 1));
     }
 
-    #[smol_potat::test]
+    #[tokio::test]
     async fn load_err() {
         let cache = AsyncCache::new((), |key: usize, _ctx: ()| {
             static COUNTER: AtomicU8 = AtomicU8::new(0);

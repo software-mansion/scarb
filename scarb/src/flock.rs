@@ -6,10 +6,9 @@ use std::{fmt, io};
 use anyhow::{Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use fs4::{lock_contended_error, FileExt};
-use smol::lock::Mutex;
+use tokio::sync::Mutex;
 
 use crate::core::Config;
-use crate::internal::asyncx::AwaitSync;
 use crate::internal::fsx;
 use crate::internal::lazy_directory_creator::LazyDirectoryCreator;
 use crate::ui::Status;
@@ -79,16 +78,11 @@ pub struct AdvisoryLock<'f> {
 pub struct AdvisoryLockGuard(Arc<FileLockGuard>);
 
 impl<'f> AdvisoryLock<'f> {
-    /// Acquires this advisory lock.
+    /// Acquires this advisory lock in an async manner.
     ///
     /// This lock is global per-process and can be acquired recursively.
     /// An RAII structure is returned to release the lock, and if this process abnormally
     /// terminates the lock is also released.
-    pub fn acquire(&self) -> Result<AdvisoryLockGuard> {
-        self.acquire_async().await_sync()
-    }
-
-    /// Async version of [`Self::acquire`].
     pub async fn acquire_async(&self) -> Result<AdvisoryLockGuard> {
         let mut slot = self.file_lock.lock().await;
 

@@ -4,7 +4,7 @@ use std::ops::Deref;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use camino::Utf8Path;
-use smol::lock::OnceCell;
+use tokio::sync::OnceCell;
 
 use crate::core::config::Config;
 use crate::core::manifest::{ManifestDependency, Summary};

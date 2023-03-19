@@ -4,7 +4,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use async_trait::async_trait;
 use itertools::Itertools;
-use smol::lock::RwLock;
+use tokio::sync::RwLock;
 use tracing::trace;
 
 use crate::core::registry::Registry;

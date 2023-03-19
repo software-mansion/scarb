@@ -46,7 +46,7 @@ scarb-metadata = { version = "1.0.1", path = "../scarb-metadata", default-featur
 semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-smol.workspace = true
+tokio.workspace = true
 smol_str.workspace = true
 thiserror.workspace = true
 toml.workspace = true
@@ -68,7 +68,6 @@ ntest.workspace = true
 predicates.workspace = true
 serde_test.workspace = true
 similar-asserts.workspace = true
-smol-potat.workspace = true
 snapbox.workspace = true
 test-case.workspace = true
 
