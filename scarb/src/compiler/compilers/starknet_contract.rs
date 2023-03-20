@@ -55,7 +55,7 @@ impl Compiler for StarknetContractCompiler {
         };
 
         for (decl, class) in zip(contracts, classes) {
-            let target_name = &unit.target.name;
+            let target_name = &unit.target().name;
             let contract_name = decl.submodule_id.name(db.upcast());
             let mut file = target_dir.open_rw(
                 format!("{target_name}_{contract_name}.json"),

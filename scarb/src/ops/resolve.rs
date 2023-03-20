@@ -3,13 +3,14 @@ use std::collections::HashMap;
 use anyhow::Result;
 use itertools::Itertools;
 
-use crate::compiler::{CompilationUnit, Profile};
+use crate::compiler::{CompilationUnit, CompilationUnitComponent, Profile};
 use crate::core::package::{Package, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::source_map::SourceMap;
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
+use crate::core::Target;
 use crate::internal::asyncx::AwaitSync;
 use crate::resolver;
 
@@ -62,7 +63,7 @@ pub fn generate_compilation_units(
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members() {
-        let components = resolve
+        let mut packages = resolve
             .package_components_of(member.id)
             .filter(|pkg| {
                 let is_self_or_lib = member.id == pkg.id || pkg.is_lib();
@@ -77,11 +78,42 @@ pub fn generate_compilation_units(
             })
             .collect::<Vec<_>>();
 
-        for target in &member.manifest.targets {
+        // Ensure the member is first element, and it is followed by `core`, to ensure the order
+        // invariant of the `CompilationUnit::components` field holds.
+        packages.sort_by_key(|package| {
+            if package.id == member.id {
+                0
+            } else if package.id.is_core() {
+                1
+            } else {
+                2
+            }
+        });
+
+        for member_target in &member.manifest.targets {
+            let components = packages
+                .iter()
+                .cloned()
+                .map(|package| {
+                    // If this is this compilation's unit main package, then use the target we are
+                    // building. Otherwise, assume library target for all dependency packages,
+                    // because that's what it is for.
+                    let target = if package.id == member.id {
+                        member_target
+                    } else {
+                        // We can safely unwrap here, because compilation unit generator ensures
+                        // that all dependencies have library target.
+                        package.fetch_target(Target::LIB).unwrap()
+                    };
+                    let target = target.clone();
+
+                    CompilationUnitComponent { package, target }
+                })
+                .collect();
+
             let unit = CompilationUnit {
-                package: member.clone(),
-                target: target.clone(),
-                components: components.clone(),
+                main_package_id: member.id,
+                components,
                 // TODO(#120): Support defining profiles in manifest.
                 profile: Profile {
                     name: "release".into(),
