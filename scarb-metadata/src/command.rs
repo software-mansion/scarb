@@ -163,17 +163,20 @@ impl MetadataCommand {
             .unwrap_or_else(|| PathBuf::from("scarb"));
 
         let mut cmd = Command::new(scarb);
+
         cmd.arg("--json");
+
+        if let Some(manifest_path) = &self.manifest_path {
+            cmd.arg("--manifest-path").arg(manifest_path);
+        }
+
         cmd.arg("metadata");
+
         cmd.arg("--format-version");
         cmd.arg(VersionPin.numeric().to_string());
 
         if self.no_deps {
             cmd.arg("--no-deps");
-        }
-
-        if let Some(manifest_path) = &self.manifest_path {
-            cmd.arg("--manifest-path").arg(manifest_path);
         }
 
         if let Some(path) = &self.current_dir {
