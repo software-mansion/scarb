@@ -71,8 +71,12 @@ impl SourceId {
     }
 
     pub fn for_path(path: &Utf8Path) -> Result<Self> {
-        let url = Url::from_directory_path(path)
-            .map_err(|_| anyhow!("path ({}) is not absolute", path))?;
+        let url = if path.is_dir() {
+            Url::from_directory_path(path)
+        } else {
+            Url::from_file_path(path)
+        };
+        let url = url.map_err(|_| anyhow!("path ({}) is not absolute", path))?;
         Self::new(url, SourceKind::Path)
     }
 
@@ -257,13 +261,7 @@ impl fmt::Display for SourceId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.kind == SourceKind::Path {
             let path = self.url.to_file_path().expect("expected file:// URL here");
-            let mut path_string = path.display().to_string();
-            // Do not display trailing slashes.
-            if path_string.len() > 1 && (path_string.ends_with('\\') || path_string.ends_with('/'))
-            {
-                path_string.pop();
-            }
-            write!(f, "{}", path_string)
+            write!(f, "{}", path.display())
         } else {
             write!(f, "{}", self.to_pretty_url())
         }
@@ -299,11 +297,5 @@ mod tests {
             SourceId::from_pretty_url(&source_id.to_pretty_url()).unwrap(),
             source_id
         );
-    }
-
-    #[test_case(SourceId::mock_path())]
-    fn source_id_display_does_not_contain_trailing_slashes(source_id: SourceId) {
-        assert!(!source_id.to_string().ends_with('/'));
-        assert!(!source_id.to_string().ends_with('\\'));
     }
 }
