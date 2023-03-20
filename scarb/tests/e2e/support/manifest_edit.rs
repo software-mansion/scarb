@@ -42,7 +42,7 @@ impl ManifestEditHarness {
         t.child("Scarb.toml").write_str(&input_manifest).unwrap();
 
         t.child("src/lib.cairo")
-            .write_str("fn foo() -> felt { 42 }")
+            .write_str("fn foo() -> felt252 { 42 }")
             .unwrap();
 
         let cmd = self.cmd.current_dir(&t).assert();

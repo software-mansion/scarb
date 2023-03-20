@@ -135,7 +135,7 @@ fn mk(
         fsx::write(
             source_dir.join("lib.cairo"),
             indoc! {r#"
-                fn fib(a: felt, b: felt, n: felt) -> felt {
+                fn fib(a: felt252, b: felt252, n: felt252) -> felt252 {
                     match n {
                         0 => a,
                         _ => fib(b, a + b, n - 1),

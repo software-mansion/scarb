@@ -285,7 +285,7 @@ fn compile_multiple_packages() {
             r#"
             mod sum_two;
 
-            fn fib(a: felt, b: felt, n: felt) -> felt {
+            fn fib(a: felt252, b: felt252, n: felt252) -> felt252 {
                 match n {
                     0 => a,
                     _ => fib(b, sum_two::sum_two(a, b), decrement::decrement(n)),
@@ -296,7 +296,7 @@ fn compile_multiple_packages() {
         .unwrap();
 
     t.child("src/sum_two.cairo")
-        .write_str(r#"fn sum_two(a: felt, b: felt) -> felt { a + b }"#)
+        .write_str(r#"fn sum_two(a: felt252, b: felt252) -> felt252 { a + b }"#)
         .unwrap();
 
     t.child("decrement/Scarb.toml")
@@ -312,7 +312,7 @@ fn compile_multiple_packages() {
     t.child("decrement/src/lib.cairo")
         .write_str(
             r#"
-            fn decrement(x: felt) -> felt { x - 1 }
+            fn decrement(x: felt252) -> felt252 { x - 1 }
             "#,
         )
         .unwrap();
@@ -349,7 +349,7 @@ fn compile_with_nested_deps() {
         .unwrap();
 
     t.child("src/lib.cairo")
-        .write_str(r"fn f() -> felt { y::f() }")
+        .write_str(r"fn f() -> felt252 { y::f() }")
         .unwrap();
 
     t.child("y/Scarb.toml")
@@ -367,7 +367,7 @@ fn compile_with_nested_deps() {
         .unwrap();
 
     t.child("y/src/lib.cairo")
-        .write_str(r"fn f() -> felt { z::f() }")
+        .write_str(r"fn f() -> felt252 { z::f() }")
         .unwrap();
 
     t.child("z/Scarb.toml")
@@ -384,7 +384,7 @@ fn compile_with_nested_deps() {
         .unwrap();
 
     t.child("z/src/lib.cairo")
-        .write_str(r"fn f() -> felt { q::f() }")
+        .write_str(r"fn f() -> felt252 { q::f() }")
         .unwrap();
 
     t.child("q/Scarb.toml")
@@ -398,7 +398,7 @@ fn compile_with_nested_deps() {
         .unwrap();
 
     t.child("q/src/lib.cairo")
-        .write_str(r"fn f() -> felt { 42 }")
+        .write_str(r"fn f() -> felt252 { 42 }")
         .unwrap();
 
     Scarb::quick_snapbox()
@@ -441,7 +441,7 @@ fn sierra_replace_ids() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
-        .lib_cairo("fn example() -> felt { 42 }")
+        .lib_cairo("fn example() -> felt252 { 42 }")
         .manifest_extra(
             r#"
             [cairo]
@@ -457,5 +457,7 @@ fn sierra_replace_ids() {
         .success();
 
     t.child("target/release/hello.sierra")
-        .assert(predicates::str::contains("hello::example@0() -> (felt);"));
+        .assert(predicates::str::contains(
+            "hello::example@0() -> (felt252);",
+        ));
 }

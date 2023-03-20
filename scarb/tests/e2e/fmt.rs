@@ -5,9 +5,9 @@ use std::fs;
 
 use crate::support::command::Scarb;
 
-const SIMPLE_ORIGINAL: &str = r"fn main()    ->    felt      {      42      }";
+const SIMPLE_ORIGINAL: &str = r"fn main()    ->    felt252      {      42      }";
 const SIMPLE_FORMATTED: &str = indoc! {r#"
-    fn main() -> felt {
+    fn main() -> felt252 {
         42
     }
     "#
@@ -44,9 +44,9 @@ fn simple_check_invalid() {
              --- original
             +++ modified
             @@ -1 +1,3 @@
-            -fn main()    ->    felt      {      42      }
+            -fn main()    ->    felt252      {      42      }
             / No newline at end of file
-            +fn main() -> felt {
+            +fn main() -> felt252 {
             +    42
             +}
 

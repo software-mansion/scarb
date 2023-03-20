@@ -15,7 +15,7 @@ fn compile_simple_git_dep() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
-            .lib_cairo("fn hello() -> felt { 42 }")
+            .lib_cairo("fn hello() -> felt252 { 42 }")
             .build(&t)
     });
 
@@ -24,7 +24,7 @@ fn compile_simple_git_dep() {
         .name("hello")
         .version("1.0.0")
         .dep("dep1", &git_dep)
-        .lib_cairo("fn world() -> felt { dep1::hello() }")
+        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -46,12 +46,12 @@ fn compile_git_dep_branch() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
-            .lib_cairo("fn hello() -> felt { 42 }")
+            .lib_cairo("fn hello() -> felt252 { 42 }")
             .build(&t)
     });
 
     git_dep.checkout_branch("foo");
-    git_dep.change_file("src/lib.cairo", "fn branched() -> felt { 53 }");
+    git_dep.change_file("src/lib.cairo", "fn branched() -> felt252 { 53 }");
 
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -64,7 +64,7 @@ fn compile_git_dep_branch() {
                 branch = "foo"
             "#},
         )
-        .lib_cairo("fn world() -> felt { dep1::branched() }")
+        .lib_cairo("fn world() -> felt252 { dep1::branched() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -84,11 +84,11 @@ fn compile_git_dep_tag() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
-            .lib_cairo("fn hello() -> felt { 42 }")
+            .lib_cairo("fn hello() -> felt252 { 42 }")
             .build(&t)
     });
 
-    git_dep.change_file("src/lib.cairo", "fn tagged() -> felt { 53 }");
+    git_dep.change_file("src/lib.cairo", "fn tagged() -> felt252 { 53 }");
     git_dep.tag("v1.4.0");
 
     let t = TempDir::new().unwrap();
@@ -102,7 +102,7 @@ fn compile_git_dep_tag() {
                 tag = "v1.4.0"
             "#},
         )
-        .lib_cairo("fn world() -> felt { dep1::tagged() }")
+        .lib_cairo("fn world() -> felt252 { dep1::tagged() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -122,7 +122,7 @@ fn compile_git_dep_pull_request() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
-            .lib_cairo("fn hello() -> felt { 42 }")
+            .lib_cairo("fn hello() -> felt252 { 42 }")
             .build(&t)
     });
 
@@ -146,7 +146,7 @@ fn compile_git_dep_pull_request() {
                 rev = "refs/pull/330/head"
             "#},
         )
-        .lib_cairo("fn world() -> felt { dep1::hello() }")
+        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -166,13 +166,13 @@ fn compile_with_nested_paths() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
-            .lib_cairo("fn hello() -> felt { dep2::hello() }")
+            .lib_cairo("fn hello() -> felt252 { dep2::hello() }")
             .dep("dep2", r#" path = "vendor/dep2" "#)
             .build(&t);
 
         ProjectBuilder::start()
             .name("dep2")
-            .lib_cairo("fn hello() -> felt { 42 }")
+            .lib_cairo("fn hello() -> felt252 { 42 }")
             .build(&t.child("vendor/dep2"));
     });
 
@@ -181,7 +181,7 @@ fn compile_with_nested_paths() {
         .name("hello")
         .version("1.0.0")
         .dep("dep1", &git_dep)
-        .lib_cairo("fn world() -> felt { dep1::hello() }")
+        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -200,7 +200,7 @@ fn compile_with_short_ssh_git() {
         .name("hello")
         .version("1.0.0")
         .dep("dep", r#" git = "git@github.com:a/dep" "#)
-        .lib_cairo("fn world() -> felt { dep1::hello() }")
+        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -228,7 +228,7 @@ fn stale_cached_version() {
     let dep = gitx::new("dep", |t| {
         ProjectBuilder::start()
             .name("dep")
-            .lib_cairo("fn hello() -> felt { 11111111111101 }")
+            .lib_cairo("fn hello() -> felt252 { 11111111111101 }")
             .build(&t)
     });
 
@@ -237,7 +237,7 @@ fn stale_cached_version() {
         .name("hello")
         .version("1.0.0")
         .dep("dep", &dep)
-        .lib_cairo("fn world() -> felt { dep::hello() }")
+        .lib_cairo("fn world() -> felt252 { dep::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -271,7 +271,7 @@ fn stale_cached_version() {
     //
     // remove lockfile here
 
-    dep.change_file("src/lib.cairo", "fn hello() -> felt { 11111111111102 }");
+    dep.change_file("src/lib.cairo", "fn hello() -> felt252 { 11111111111102 }");
 
     Scarb::quick_snapbox()
         .arg("build")
@@ -293,7 +293,7 @@ fn change_source() {
     let dep = gitx::new("dep", |t| {
         ProjectBuilder::start()
             .name("dep")
-            .lib_cairo("fn y() -> felt { 1 }")
+            .lib_cairo("fn y() -> felt252 { 1 }")
             .build(&t);
     });
 
@@ -317,7 +317,7 @@ fn change_source() {
         [..]  Finished release target(s) in [..]
         "#});
 
-    dep.change_file("src/lib.cairo", "fn x() -> felt { 0 }");
+    dep.change_file("src/lib.cairo", "fn x() -> felt252 { 0 }");
     dep.tag("v2.0.0");
 
     let manifest = t.child("Scarb.toml");
@@ -342,7 +342,7 @@ fn force_push() {
     let dep = gitx::new("dep", |t| {
         ProjectBuilder::start()
             .name("dep")
-            .lib_cairo("fn hello() -> felt { 42 }")
+            .lib_cairo("fn hello() -> felt252 { 42 }")
             .build(&t)
     });
 
@@ -351,7 +351,7 @@ fn force_push() {
         .name("hello")
         .version("1.0.0")
         .dep("dep", &dep)
-        .lib_cairo("fn world() -> felt { dep::hello() }")
+        .lib_cairo("fn world() -> felt252 { dep::hello() }")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -361,7 +361,7 @@ fn force_push() {
         .success();
 
     dep.child("src/lib.cairo")
-        .write_str("fn hello() -> felt { 43 }")
+        .write_str("fn hello() -> felt252 { 43 }")
         .unwrap();
 
     dep.git(["add", "."]);

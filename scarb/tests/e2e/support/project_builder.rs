@@ -34,7 +34,7 @@ impl ProjectBuilder {
             version: Version::new(1, n, 0),
             src: HashMap::from_iter([(
                 Utf8PathBuf::from("src/lib.cairo"),
-                format!(r#"fn f{n}() -> felt {{ {n} }}"#),
+                format!(r#"fn f{n}() -> felt252 {{ {n} }}"#),
             )]),
             deps: Vec::new(),
             manifest_extra: String::new(),
