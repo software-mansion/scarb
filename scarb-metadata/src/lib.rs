@@ -151,6 +151,9 @@ pub struct WorkspaceMetadata {
     /// Path to the manifest file defining this workspace.
     pub manifest_path: Utf8PathBuf,
 
+    /// Path to the directory containing this workspace.
+    pub root: Utf8PathBuf,
+
     /// List of IDs of all packages that are members of this workspace.
     pub members: Vec<PackageId>,
 }
@@ -175,6 +178,9 @@ pub struct PackageMetadata {
 
     /// Path to the manifest file defining this package.
     pub manifest_path: Utf8PathBuf,
+
+    /// Path to the directory containing this package.
+    pub root: Utf8PathBuf,
 
     /// List of dependencies of this particular package.
     pub dependencies: Vec<DependencyMetadata>,

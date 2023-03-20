@@ -347,6 +347,7 @@ mod tests {
             target_dir: Default::default(),
             workspace: WorkspaceMetadata {
                 manifest_path: Default::default(),
+                root: Default::default(),
                 members: Default::default(),
             },
             packages: Default::default(),
