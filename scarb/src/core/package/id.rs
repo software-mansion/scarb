@@ -33,6 +33,10 @@ impl PackageId {
         Self(CACHE.intern(inner))
     }
 
+    pub fn is_core(&self) -> bool {
+        self.name == PackageName::CORE && self.source_id == SourceId::for_std()
+    }
+
     #[cfg(test)]
     pub(crate) fn from_display_str(string: &str) -> Result<Self> {
         use anyhow::{anyhow, bail, Context};
