@@ -222,7 +222,9 @@ pub struct TargetMetadata {
     pub name: String,
     /// Path to the main source file of the target.
     pub source_path: Utf8PathBuf,
-    /// Unstructured target parameters.
+    /// Unstructured target parameters, excluding default values.
+    ///
+    /// Default values are omitted because they are unknown to Scarb, they are applied by compilers.
     pub params: serde_json::Value,
 }
 
