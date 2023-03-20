@@ -35,7 +35,7 @@ impl Compiler for LibCompiler {
     }
 
     fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-        let props: Props = unit.target.props()?;
+        let props: Props = unit.target().props()?;
         if !props.sierra && !props.casm {
             ws.config().ui().warn(
                 "both Sierra and CASM lib targets have been disabled, \
@@ -60,7 +60,7 @@ impl Compiler for LibCompiler {
 
         if props.sierra {
             let mut file = target_dir.open_rw(
-                format!("{}.sierra", unit.target.name),
+                format!("{}.sierra", unit.target().name),
                 "output file",
                 ws.config(),
             )?;
@@ -86,7 +86,7 @@ impl Compiler for LibCompiler {
             };
 
             let mut file = target_dir.open_rw(
-                format!("{}.casm", unit.target.name),
+                format!("{}.casm", unit.target().name),
                 "output file",
                 ws.config(),
             )?;

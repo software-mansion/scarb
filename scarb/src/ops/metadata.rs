@@ -147,20 +147,33 @@ fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
 fn collect_compilation_unit_metadata(
     compilation_unit: &CompilationUnit,
 ) -> m::CompilationUnitMetadata {
-    let mut components: Vec<m::PackageId> = compilation_unit
+    let mut components: Vec<m::CompilationUnitComponentMetadata> = compilation_unit
         .components
         .iter()
-        .map(|p| wrap_package_id(p.id))
+        .map(|c| {
+            m::CompilationUnitComponentMetadataBuilder::default()
+                .package(wrap_package_id(c.package.id))
+                .name(c.cairo_package_name())
+                .source_path(c.target.source_path.clone())
+                .build()
+                .unwrap()
+        })
         .collect();
-    components.sort();
+    components.sort_by_key(|c| c.package.clone());
 
     let compiler_config = serde_json::to_value(&compilation_unit.compiler_config)
         .expect("Compiler config should always be JSON serializable.");
 
     m::CompilationUnitMetadataBuilder::default()
         .id(compilation_unit.id())
-        .package(wrap_package_id(compilation_unit.package.id))
-        .target(collect_target_metadata(&compilation_unit.target))
+        .package(wrap_package_id(compilation_unit.main_package_id))
+        .target(collect_target_metadata(compilation_unit.target()))
+        .components_legacy(
+            components
+                .iter()
+                .map(|c| c.package.clone())
+                .collect::<Vec<_>>(),
+        )
         .components(components)
         .compiler_config(compiler_config)
         .build()

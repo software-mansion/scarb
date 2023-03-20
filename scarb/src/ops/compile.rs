@@ -26,7 +26,7 @@ pub fn compile(ws: &Workspace<'_>) -> Result<()> {
 }
 
 fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-    let package_name = unit.package.id.name.clone();
+    let package_name = unit.main_package_id.name.clone();
 
     ws.config()
         .ui()

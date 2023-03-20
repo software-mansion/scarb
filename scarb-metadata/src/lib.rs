@@ -246,12 +246,38 @@ pub struct CompilationUnitMetadata {
     /// IDs of all packages to be included in this compilation.
     ///
     /// This is the ID of the main package and all its transitive dependencies.
-    pub components: Vec<PackageId>,
+    #[deprecated(note = "use `components` instead, will be removed in Scarb 0.2")]
+    #[serde(rename = "components")]
+    pub components_legacy: Vec<PackageId>,
 
     /// Cairo compiler config.
     ///
     /// This is unstructured, because this can rapidly change throughout Scarb lifetime.
     pub compiler_config: serde_json::Value,
+
+    // TODO(mkaput): Perhaps rename this back to `components` in Scarb >=0.3?
+    /// List of all components to include in this compilation.
+    #[serde(rename = "components_data")]
+    pub components: Vec<CompilationUnitComponentMetadata>,
+}
+
+/// Information to pass to the Cairo compiler about a package that is a component of a compilation
+/// unit.
+///
+/// List of components can be used to construct the `[crate_roots]` section of `cairo_project.toml`.
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
+pub struct CompilationUnitComponentMetadata {
+    /// Package ID.
+    pub package: PackageId,
+    /// Name of the package to pass to the Cairo compiler.
+    ///
+    /// This may not be equal to Scarb package name in the future.
+    pub name: String,
+    /// Path to the root Cairo source file.
+    pub source_path: Utf8PathBuf,
 }
 
 /// Various metadata fields from package manifest.
@@ -360,6 +386,15 @@ impl PackageMetadata {
 
 impl TargetMetadata {
     /// Path to the main source directory of the target.
+    pub fn source_root(&self) -> &Utf8Path {
+        self.source_path
+            .parent()
+            .expect("Source path is guaranteed to point to a file.")
+    }
+}
+
+impl CompilationUnitComponentMetadata {
+    /// Path to the source directory of the component.
     pub fn source_root(&self) -> &Utf8Path {
         self.source_path
             .parent()
