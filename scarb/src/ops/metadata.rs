@@ -66,6 +66,7 @@ fn collect_workspace_metadata(ws: &Workspace<'_>) -> Result<m::WorkspaceMetadata
 
     Ok(m::WorkspaceMetadataBuilder::default()
         .manifest_path(ws.manifest_path())
+        .root(ws.root())
         .members(members)
         .build()
         .unwrap())
@@ -116,6 +117,7 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
         .version(package.id.version.clone())
         .source(wrap_source_id(package.id.source_id))
         .manifest_path(package.manifest_path())
+        .root(package.root())
         .dependencies(dependencies)
         .targets(targets)
         .manifest_metadata(manifest_metadata)
