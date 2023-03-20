@@ -18,7 +18,7 @@ A package can have only one library target.
 
 The library target accepts following configuration parameters, with default values for the default _release_ profile:
 
-```toml
+```toml copy
 [lib]
 sierra = true  # Enable Sierra codegen.
 casm = false   # Enable CASM codegen.
@@ -47,7 +47,7 @@ If multiple targets of the same kind are defined in the package, they all must s
 All of the `[lib]{:toml}` and `[[target.*]]{:toml}` sections in `Scarb.toml` support configuration options that are not target-specific and control how Scarb manages these targets.
 The following is an overview of the TOML settings for each target, with each field described in detail below.
 
-```toml
+```toml copy
 [lib]
 name = "foo"  # The name of the target.
 ```

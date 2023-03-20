@@ -6,7 +6,7 @@ Your packages can depend on other libraries from Git repositories or subdirector
 
 To depend on a package located in a Git repository, the minimum information needed to specify is the location of the repository with the `git` key:
 
-```toml /git/1
+```toml copy /git/1
 [dependencies]
 quaireaux = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
 ```
@@ -18,7 +18,7 @@ Since no other information has been specified, Scarb assumes that it is intended
 You can combine the `git` key with `branch`, `tag` and `rev` keys to specify something else.
 Here is an example of specifying that you want to use the latest commit on a branch named `next`:
 
-```toml /branch = "next"/
+```toml copy /branch = "next"/
 [dependencies]
 quaireaux = { git = "https://github.com/keep-starknet-strange/quaireaux.git", branch = "next" }
 ```
@@ -32,7 +32,7 @@ What references are available varies by where the repository is hosted; GitHub i
 Scarb supports path dependencies, which are typically sub-packages that live within one repository.
 To depend on a package located in a local directory, you need to specify the path to it, relative to current `Scarb.toml`, with the `path` key:
 
-```toml /path/1
+```toml copy /path/1
 [dependencies]
 hello_utils = { path = "hello_utils" }
 ```
@@ -43,7 +43,7 @@ Scarb does not cache path dependencies, any changes made in them will be reflect
 
 Scarb allows you to specify version requirements of dependencies with the `version` key:
 
-```toml /version = "1.0.0"/
+```toml copy /version = "1.0.0"/
 [dependencies]
 hello_utils = { version = "1.0.0", path = "hello_utils" }
 ```

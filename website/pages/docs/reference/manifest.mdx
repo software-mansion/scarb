@@ -31,7 +31,7 @@ It cannot also start with underscore.
 
 In other words, it must match the following regular expression:
 
-```
+```regexp copy
 ^[a-zA-Z0-9][a-zA-Z0-9_]+$
 ```
 
@@ -52,7 +52,7 @@ This optional field lists the people or organizations that are considered the "a
 The exact meaning is open to interpretation - it may list the original primary authors, current maintainers, or owners of the package.
 An optional email address may be included within angled brackets at the end of each author entry.
 
-```toml
+```toml copy
 [package]
 authors = ["Software Mansion <contact@swmansion.com>", "Starkware"]
 ```
@@ -63,7 +63,7 @@ The description is a short blurb about the package.
 Package registries or indexers may display it with your package, some registries may even require it.
 This should be plain text (not Markdown).
 
-```toml
+```toml copy
 [package]
 description = "A short description of my package."
 ```
@@ -72,7 +72,7 @@ description = "A short description of my package."
 
 This field specifies a URL to a website hosting the crate's documentation.
 
-```toml
+```toml copy
 [package]
 documentation = "https://john.github.io/cairo-package"
 ```
@@ -81,7 +81,7 @@ documentation = "https://john.github.io/cairo-package"
 
 This field should be the path to a file in the package root (relative to this `Scarb.toml`) that contains general information about the package.
 
-```toml
+```toml copy
 [package]
 readme = "README.md
 ```
@@ -90,7 +90,7 @@ readme = "README.md
 
 This field should be a URL to a site that is the home page for your package.
 
-```toml
+```toml copy
 [package]
 homepage = "https://example.com/"
 ```
@@ -99,7 +99,7 @@ homepage = "https://example.com/"
 
 This field should be a URL to the source repository for your package.
 
-```toml
+```toml copy
 [package]
 repository = "https://github.com/software-mansion/scarb"
 ```
@@ -114,7 +114,7 @@ The license name must be a known license from the [SPDX license list](https://sp
 
 SPDX license expressions support AND and OR operators to combine multiple licenses.
 
-```toml
+```toml copy
 [package]
 license = "MIT OR Apache-2.0"
 ```
@@ -130,7 +130,7 @@ Some examples:
 
 If a package is using a nonstandard license, then the `license-file` field may be specified instead of the `license` field.
 
-```toml
+```toml copy
 [package]
 license-file = "LICENSE.txt"
 ```
@@ -140,7 +140,7 @@ license-file = "LICENSE.txt"
 This field is an array of strings that describe your package.
 This can help when searching for the package on a registry, and it is allowed to choose any words that would help someone find this package.
 
-```toml
+```toml copy
 [package]
 keywords = ["account", "wallet", "erc-20"]
 ```
@@ -153,7 +153,7 @@ Additionally, keywords should have at most 20 characters, and single package sho
 This field is a map of additional internet links related to this package.
 Keys are human-readable link names, and values are URLs.
 
-```toml
+```toml copy
 [package.urls]
 "We can help you build your project" = "https://swmansion.com/services/"
 "We're hiring" = "https://swmansion.com/careers/"
@@ -185,7 +185,7 @@ For example, while the Sierra name be `[6]`, with this flag turned on it might b
 - For types: `felt252` or `Box<Box<felt252>>`.
 - For user functions: `test::foo`.
 
-```toml
+```toml copy
 [cairo]
 sierra-replace-ids = true
 ```
