@@ -95,7 +95,7 @@ pub(crate) mod mock {
         fn build_package(package_id: PackageId, dependencies: Vec<ManifestDependency>) -> Package {
             let mut sb = Summary::build(package_id).with_dependencies(dependencies);
 
-            if package_id.name == PackageName::CORE {
+            if package_id.is_core() {
                 sb = sb.no_core(true);
             }
 
