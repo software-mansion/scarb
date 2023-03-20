@@ -18,7 +18,7 @@ As the result of running `scarb new{:shell}`, Scarb has created two files:
 
 Let's take a closer look at `Scarb.toml`:
 
-```toml filename="Scarb.toml"
+```toml copy filename="Scarb.toml"
 [package]
 name = "hello_world"
 version = "0.1.0"
@@ -33,7 +33,7 @@ The `src` directory contains the source code of your package, and the `lib.cairo
 
 Here's what's in `src/lib.cairo`:
 
-```cairo filename="src/lib.cairo"
+```cairo copy filename="src/lib.cairo"
 fn fib(a: felt252, b: felt252, n: felt252) -> felt252 {
     match n {
         0 => a,
