@@ -11,7 +11,7 @@ fn valid_triangle() {
     let culprit = gitx::new("culprit", |t| {
         ProjectBuilder::start()
             .name("culprit")
-            .lib_cairo("fn f1() -> felt { 1 }")
+            .lib_cairo("fn f1() -> felt252 { 1 }")
             .build(&t);
     });
 
@@ -20,7 +20,7 @@ fn valid_triangle() {
     let proxy = gitx::new("proxy", |t| {
         ProjectBuilder::start()
             .name("proxy")
-            .lib_cairo("fn p() -> felt { culprit::f1() }")
+            .lib_cairo("fn p() -> felt252 { culprit::f1() }")
             .dep("culprit", &culprit)
             .build(&t);
     });
@@ -28,7 +28,7 @@ fn valid_triangle() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .lib_cairo("fn hello() -> felt { proxy::p() + culprit::f1() }")
+        .lib_cairo("fn hello() -> felt252 { proxy::p() + culprit::f1() }")
         .dep("culprit", &culprit)
         .dep("proxy", &proxy)
         .build(&t);
@@ -51,19 +51,19 @@ fn two_revs_of_same_dep() {
     let culprit = gitx::new("culprit", |t| {
         ProjectBuilder::start()
             .name("culprit")
-            .lib_cairo("fn f1() -> felt { 1 }")
+            .lib_cairo("fn f1() -> felt252 { 1 }")
             .build(&t);
     });
 
     culprit.checkout_branch("branchy");
-    culprit.change_file("src/lib.cairo", "fn f2() -> felt { 2 }");
+    culprit.change_file("src/lib.cairo", "fn f2() -> felt252 { 2 }");
 
     let t = TempDir::new().unwrap();
 
     let proxy = t.child("vendor/proxy");
     ProjectBuilder::start()
         .name("proxy")
-        .lib_cairo("fn p() -> felt { culprit::f2() }")
+        .lib_cairo("fn p() -> felt252 { culprit::f2() }")
         .dep(
             "culprit",
             formatdoc! {r#"
@@ -76,7 +76,7 @@ fn two_revs_of_same_dep() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .lib_cairo("fn hello() -> felt { proxy::p() + culprit::f1() }")
+        .lib_cairo("fn hello() -> felt252 { proxy::p() + culprit::f1() }")
         .dep("culprit", &culprit)
         .dep("proxy", &proxy)
         .build(&t);
@@ -99,19 +99,19 @@ fn two_revs_of_same_dep_diamond() {
     let culprit = gitx::new("culprit", |t| {
         ProjectBuilder::start()
             .name("culprit")
-            .lib_cairo("fn f1() -> felt { 1 }")
+            .lib_cairo("fn f1() -> felt252 { 1 }")
             .build(&t);
     });
 
     culprit.checkout_branch("branchy");
-    culprit.change_file("src/lib.cairo", "fn f2() -> felt { 2 }");
+    culprit.change_file("src/lib.cairo", "fn f2() -> felt252 { 2 }");
 
     let t = TempDir::new().unwrap();
 
     let dep1 = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
-            .lib_cairo("fn p() -> felt { culprit::f1() }")
+            .lib_cairo("fn p() -> felt252 { culprit::f1() }")
             .dep("culprit", &culprit)
             .build(&t);
     });
@@ -119,7 +119,7 @@ fn two_revs_of_same_dep_diamond() {
     let dep2 = gitx::new("dep2", |t| {
         ProjectBuilder::start()
             .name("dep2")
-            .lib_cairo("fn p() -> felt { culprit::f2() }")
+            .lib_cairo("fn p() -> felt252 { culprit::f2() }")
             .dep(
                 "culprit",
                 formatdoc! {r#"
@@ -133,7 +133,7 @@ fn two_revs_of_same_dep_diamond() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .lib_cairo("fn hello() -> felt { dep1::p() + dep2::p() }")
+        .lib_cairo("fn hello() -> felt252 { dep1::p() + dep2::p() }")
         .dep("dep1", &dep1)
         .dep("dep2", &dep2)
         .build(&t);

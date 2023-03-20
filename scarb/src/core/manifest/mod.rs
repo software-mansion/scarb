@@ -151,8 +151,8 @@ pub struct ManifestCompilerConfig {
     /// For libfuncs and types that would be recursively opening their generic arguments.
     /// For functions, that would be their original name in Cairo.
     /// For example, while the Sierra name be `[6]`, with this flag turned on it might be:
-    /// - For libfuncs: `felt_const<2>` or `unbox<Box<Box<felt>>>`.
-    /// - For types: `felt` or `Box<Box<felt>>`.
+    /// - For libfuncs: `felt252_const<2>` or `unbox<Box<Box<felt252>>>`.
+    /// - For types: `felt252` or `Box<Box<felt252>>`.
     /// - For user functions: `test::foo`.
     pub sierra_replace_ids: bool,
 }

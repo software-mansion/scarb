@@ -86,7 +86,7 @@ fn compile_with_custom_lib_target() {
         )
         .unwrap();
     t.child("src/lib.cairo")
-        .write_str(r#"fn f() -> felt { 42 }"#)
+        .write_str(r#"fn f() -> felt252 { 42 }"#)
         .unwrap();
 
     Scarb::quick_snapbox()
@@ -118,7 +118,7 @@ fn compile_dep_not_a_lib() {
         .name("dep")
         .version("1.0.0")
         .manifest_extra("[[target.starknet-contract]]")
-        .lib_cairo("fn forty_two() -> felt { 42 }")
+        .lib_cairo("fn forty_two() -> felt252 { 42 }")
         .build(&dep);
 
     let hello = t.child("hello");
@@ -126,7 +126,7 @@ fn compile_dep_not_a_lib() {
         .name("hello")
         .version("1.0.0")
         .dep("dep", &dep)
-        .lib_cairo("fn hellp() -> felt { dep::forty_two() }")
+        .lib_cairo("fn hellp() -> felt252 { dep::forty_two() }")
         .build(&hello);
 
     Scarb::quick_snapbox()
@@ -138,9 +138,9 @@ fn compile_dep_not_a_lib() {
             warn: hello v1.0.0 ([..]) ignoring invalid dependency `dep` which is missing a lib target
                Compiling hello v1.0.0 ([..])
             error: Identifier not found.
-             --> lib.cairo:1:22
-            fn hellp() -> felt { dep::forty_two() }
-                                 ^*^
+             --> lib.cairo:1:25
+            fn hellp() -> felt252 { dep::forty_two() }
+                                    ^*^
 
 
             error: could not compile `hello` due to previous error

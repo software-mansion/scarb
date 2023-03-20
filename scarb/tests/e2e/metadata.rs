@@ -106,7 +106,7 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
         .unwrap();
 
     t.child("src/lib.cairo")
-        .write_str(r"fn f() -> felt { y::f() }")
+        .write_str(r"fn f() -> felt252 { y::f() }")
         .unwrap();
 
     t.child("y/Scarb.toml")
@@ -124,7 +124,7 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
         .unwrap();
 
     t.child("y/src/lib.cairo")
-        .write_str(r"fn f() -> felt { z::f() }")
+        .write_str(r"fn f() -> felt252 { z::f() }")
         .unwrap();
 
     t.child("z/Scarb.toml")
@@ -141,7 +141,7 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
         .unwrap();
 
     t.child("z/src/lib.cairo")
-        .write_str(r"fn f() -> felt { q::f() }")
+        .write_str(r"fn f() -> felt252 { q::f() }")
         .unwrap();
 
     t.child("q/Scarb.toml")
@@ -155,7 +155,7 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
         .unwrap();
 
     t.child("q/src/lib.cairo")
-        .write_str(r"fn f() -> felt { 42 }")
+        .write_str(r"fn f() -> felt252 { 42 }")
         .unwrap();
 }
 
