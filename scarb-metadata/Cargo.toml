@@ -1,12 +1,12 @@
 [package]
 name = "scarb-metadata"
-version = "1.0.0"
+version = "1.0.1"
 rust-version.workspace = true
 edition.workspace = true
 
 authors.workspace = true
 categories = ["development-tools"]
-description = "Structured access to the output of `scarb metadata`."
+description = "Structured access to the output of `scarb metadata`"
 homepage.workspace = true
 keywords = ["cairo-lang", "starknet", "scarb"]
 license.workspace = true
