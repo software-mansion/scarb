@@ -46,6 +46,19 @@ fn no_deps() {
         .unwrap();
 }
 
+#[test]
+fn manifest_path() {
+    let t = TempDir::new().unwrap();
+    init_project(&t);
+
+    MetadataCommand::new()
+        .scarb_path(cargo_bin("scarb"))
+        .manifest_path(t.join("Scarb.toml").as_path())
+        .inherit_stderr()
+        .exec()
+        .unwrap();
+}
+
 fn init_project(t: &TempDir) {
     Command::new(cargo_bin("scarb"))
         .args(["init", "--name", "hello"])
