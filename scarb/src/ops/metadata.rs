@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 
 use anyhow::{bail, Result};
 use semver::Version;
+use smol_str::SmolStr;
 
 use scarb_metadata as m;
 
@@ -229,9 +230,9 @@ fn wrap_source_id(id: SourceId) -> m::SourceId {
     }
 }
 
-fn btree_toml_to_json(map: &BTreeMap<String, toml::Value>) -> BTreeMap<String, serde_json::Value> {
+fn btree_toml_to_json(map: &BTreeMap<SmolStr, toml::Value>) -> BTreeMap<String, serde_json::Value> {
     map.iter()
-        .map(|(k, v)| (k.clone(), toml_to_json(v)))
+        .map(|(k, v)| (k.to_string(), toml_to_json(v)))
         .collect()
 }
 

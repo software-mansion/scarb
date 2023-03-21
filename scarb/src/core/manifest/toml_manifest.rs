@@ -32,7 +32,7 @@ pub struct TomlManifest {
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
     pub target: Option<BTreeMap<TomlTargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
     pub cairo: Option<TomlCairo>,
-    pub tool: Option<BTreeMap<String, Value>>,
+    pub tool: Option<BTreeMap<SmolStr, Value>>,
 }
 
 /// Represents the `package` section of a `Scarb.toml`.
