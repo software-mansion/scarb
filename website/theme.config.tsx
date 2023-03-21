@@ -1,10 +1,10 @@
-import { Logo } from "@/components/logo";
+import { HeaderLogo } from "@/components/logo";
 import { SWM } from "@/components/swm";
 import { useRouter } from "next/router";
 import { DocsThemeConfig } from "nextra-theme-docs";
 
 const config: DocsThemeConfig = {
-  logo: <Logo />,
+  logo: <HeaderLogo />,
   primaryHue: { light: 239, dark: 204 },
   // banner: {
   //   key: "scarb-0.1-released",
