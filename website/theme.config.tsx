@@ -19,26 +19,8 @@ const config: DocsThemeConfig = {
   },
   docsRepositoryBase:
     "https://github.com/software-mansion/scarb/tree/main/website",
-  useNextSeoProps() {
-    const { asPath } = useRouter();
-    return {
-      titleTemplate: asPath === "/" ? "%s" : "%s – Scarb",
-      description:
-        "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
-      twitter: {
-        cardType: "summary_large_image",
-        site: "@swmansionxyz",
-        handle: "@jajakobyly",
-      },
-    };
-  },
-  head: (
-    <>
-      <meta httpEquiv="Content-Language" content="en" />
-      <meta name="msapplication-TileColor" content="#fff" />
-      <meta name="apple-mobile-web-app-title" content="Scarb" />
-    </>
-  ),
+  useNextSeoProps,
+  head: Head,
   editLink: {
     text: "Edit this page on GitHub →",
   },
@@ -57,5 +39,38 @@ const config: DocsThemeConfig = {
     ),
   },
 };
+
+function useLinkFn(): (path: string) => string {
+  const { basePath } = useRouter();
+  return (path: string) => `${basePath}${path}`;
+}
+
+function useNextSeoProps() {
+  const { asPath } = useRouter();
+  return {
+    titleTemplate: asPath === "/" ? "%s" : "%s – Scarb",
+    description:
+      "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
+    twitter: {
+      cardType: "summary_large_image",
+      site: "@swmansionxyz",
+      handle: "@jajakobyly",
+    },
+  };
+}
+
+function Head() {
+  const link = useLinkFn();
+  return (
+    <>
+      <meta httpEquiv="Content-Language" content="en" />
+      <link rel="manifest" href={link("/manifest.json")} />
+      <link rel="icon" href={link("/favicon.ico")} sizes="any" />
+      <link rel="icon" href={link("/favicon.svg")} type="image/svg+xml" />
+      <link rel="apple-touch-icon" href={link("/apple-touch-icon.png")} />
+      <meta name="apple-mobile-web-app-title" content="Scarb" />
+    </>
+  );
+}
 
 export default config;
