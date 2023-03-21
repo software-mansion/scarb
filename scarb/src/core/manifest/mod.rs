@@ -6,6 +6,7 @@ use std::sync::Arc;
 use once_cell::sync::Lazy;
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
+use smol_str::SmolStr;
 use toml::Value;
 
 pub use target::*;
@@ -140,7 +141,7 @@ pub struct ManifestMetadata {
     pub readme: Option<String>,
     pub repository: Option<String>,
     #[serde(rename = "tool")]
-    pub tool_metadata: Option<BTreeMap<String, Value>>,
+    pub tool_metadata: Option<BTreeMap<SmolStr, Value>>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, Hash)]
