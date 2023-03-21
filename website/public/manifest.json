@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "Scarb",
+  "short_name": "Scarb",
+  "background_color": "#fff",
+  "description": "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
+  "dir": "auto",
+  "lang": "en",
+  "orientation": "any",
+  "start_url": "/scarb",
+  "theme_color": "#001a72",
+  "categories": ["books"],
+  "icons": [
+    {
+      "src": "/scarb/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "594x594",
+      "purpose": "any"
+    },
+    {
+      "src": "/scarb/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/scarb/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
