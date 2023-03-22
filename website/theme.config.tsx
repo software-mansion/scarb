@@ -1,5 +1,6 @@
 import { Footer } from "@/components/footer";
 import { HeaderLogo } from "@/components/logo";
+import { NextSeoProps } from "next-seo";
 import { useRouter } from "next/router";
 import { DocsThemeConfig } from "nextra-theme-docs";
 
@@ -41,12 +42,24 @@ function useLinkFn(): (path: string) => string {
   return (path: string) => `${basePath}${path}`;
 }
 
-function useNextSeoProps() {
+function useNextSeoProps(): NextSeoProps {
   const { asPath } = useRouter();
   return {
     titleTemplate: asPath === "/" ? "%s" : "%s – Scarb",
     description:
       "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
+    openGraph: {
+      type: "website",
+      images: [
+        {
+          url: "https://docs.swmansion.com/scarb/og-image.png",
+          type: "image/png",
+          width: 1280,
+          height: 640,
+          alt: "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
+        },
+      ],
+    },
     twitter: {
       cardType: "summary_large_image",
       site: "@swmansionxyz",
