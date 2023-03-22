@@ -1,5 +1,6 @@
 use std::fmt;
 
+use crate::compiler::Profile;
 use anyhow::Result;
 use camino::Utf8Path;
 
@@ -55,6 +56,32 @@ impl<'c> Workspace<'c> {
     /// Returns an iterator over all packages in this workspace
     pub fn members(&self) -> impl Iterator<Item = Package> {
         [self.package.clone()].into_iter()
+    }
+
+    pub fn current_profile(&self) -> Result<Profile> {
+        let profile = self.config.profile();
+        if profile.is_custom() && !self.current_package()?.has_profile(&profile) {
+            anyhow::bail!(
+                "package `{}` has no profile `{}`",
+                self.current_package()?,
+                profile
+            );
+        }
+        Ok(profile)
+    }
+
+    pub fn profile_names(&self) -> Result<Vec<String>> {
+        let mut names = self
+            .current_package()?
+            .manifest
+            .profiles
+            .iter()
+            .map(|p| p.to_string())
+            .collect::<Vec<_>>();
+        names.push(Profile::DEV.to_string());
+        names.push(Profile::RELEASE.to_string());
+        names.sort();
+        Ok(names)
     }
 }
 

@@ -45,7 +45,7 @@ impl Compiler for LibCompiler {
             );
         }
 
-        let target_dir = unit.profile.target_dir(ws.config());
+        let target_dir = unit.target_dir(ws.config());
 
         let mut db = RootDatabase::builder()
             .with_project_config(build_project_config(&unit)?)

@@ -8,6 +8,7 @@ use std::ffi::OsString;
 use anyhow::{anyhow, Result};
 use camino::Utf8PathBuf;
 use clap::{CommandFactory, Parser, Subcommand};
+use scarb::compiler::Profile;
 use smol_str::SmolStr;
 use tracing::level_filters::LevelFilter;
 use tracing_log::AsTrace;
@@ -64,6 +65,10 @@ pub struct ScarbArgs {
         hide_short_help = true
     )]
     pub target_dir: Option<Utf8PathBuf>,
+
+    /// Specify the profile to use.
+    #[command(flatten)]
+    pub profile_spec: ProfileSpec,
 
     /// Subcommand and its arguments.
     #[command(subcommand)]
@@ -291,6 +296,35 @@ pub struct GitRefGroup {
     /// This is the catch-all, handling hashes to named references in remote repositories.
     #[arg(long)]
     pub rev: Option<String>,
+}
+
+/// Profile specifier.
+#[derive(Parser, Clone, Debug)]
+#[group(multiple = false)]
+pub struct ProfileSpec {
+    /// Specify profile to use by name.
+    #[arg(short = 'P', long)]
+    pub profile: Option<SmolStr>,
+    /// Use release profile.
+    #[arg(long, hide_short_help = true)]
+    pub release: bool,
+    /// Use dev profile.
+    #[arg(long, hide_short_help = true)]
+    pub dev: bool,
+}
+
+impl ProfileSpec {
+    pub fn determine(&self) -> Result<Profile> {
+        Ok(match &self {
+            Self { release: true, .. } => Profile::RELEASE,
+            Self { dev: true, .. } => Profile::DEV,
+            Self {
+                profile: Some(profile),
+                ..
+            } => Profile::new(profile.clone())?,
+            _ => Profile::default(),
+        })
+    }
 }
 
 #[cfg(test)]

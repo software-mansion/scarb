@@ -60,11 +60,11 @@ fn compile_starknet_contract() {
         "#});
 
     assert_eq!(
-        t.child("target/release").files(),
+        t.child("target/dev").files(),
         vec!["hello_Balance.sierra.json"]
     );
 
-    assert_is_contract_class(&t.child("target/release/hello_Balance.sierra.json"));
+    assert_is_contract_class(&t.child("target/dev/hello_Balance.sierra.json"));
 }
 
 #[test]
@@ -92,11 +92,11 @@ fn compile_starknet_contract_to_casm() {
         "#});
 
     assert_eq!(
-        t.child("target/release").files(),
+        t.child("target/dev").files(),
         vec!["hello_Balance.casm.json"]
     );
 
-    assert_is_casm_contract_class(&t.child("target/release/hello_Balance.casm.json"));
+    assert_is_casm_contract_class(&t.child("target/dev/hello_Balance.casm.json"));
 }
 
 #[test]
@@ -137,7 +137,7 @@ fn compile_many_contracts() {
         "#});
 
     assert_eq!(
-        t.child("target/release").files(),
+        t.child("target/dev").files(),
         vec![
             "a_Balance.sierra.json",
             "a_FortyTwo.sierra.json",
@@ -154,7 +154,7 @@ fn compile_many_contracts() {
         "b_Balance.sierra.json",
         "b_FortyTwo.sierra.json",
     ] {
-        assert_is_contract_class(&t.child("target/release").child(json));
+        assert_is_contract_class(&t.child("target/dev").child(json));
     }
 }
 
@@ -183,7 +183,7 @@ fn casm_add_pythonic_hints() {
         [..]  Finished release target(s) in [..]
         "#});
 
-    assert_is_casm_contract_class(&t.child("target/release/hello_Balance.casm.json"));
+    assert_is_casm_contract_class(&t.child("target/dev/hello_Balance.casm.json"));
 }
 
 fn assert_is_contract_class(child: &ChildPath) {

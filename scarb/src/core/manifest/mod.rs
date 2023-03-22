@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::fmt;
+use std::fmt::Debug;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -9,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use toml::Value;
 
+use crate::compiler::{DefaultForProfile, Profile};
 pub use scripts::*;
 pub use target::*;
 pub use toml_manifest::*;
@@ -31,6 +33,7 @@ pub struct Manifest {
     pub metadata: ManifestMetadata,
     pub compiler_config: ManifestCompilerConfig,
     pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
+    pub profiles: Vec<Profile>,
 }
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
@@ -147,7 +150,7 @@ pub struct ManifestMetadata {
     pub tool_metadata: Option<BTreeMap<SmolStr, Value>>,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, Hash)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
 pub struct ManifestCompilerConfig {
     /// Replace all names in generated Sierra code with dummy counterparts, representing the
     /// expanded information about the named items.
@@ -159,6 +162,22 @@ pub struct ManifestCompilerConfig {
     /// - For types: `felt252` or `Box<Box<felt252>>`.
     /// - For user functions: `test::foo`.
     pub sierra_replace_ids: bool,
+}
+
+impl DefaultForProfile for ManifestCompilerConfig {
+    fn default_for_profile(profile: &Profile) -> Self {
+        Self {
+            sierra_replace_ids: profile.is_dev(),
+        }
+    }
+}
+
+impl From<ManifestCompilerConfig> for TomlCairo {
+    fn from(config: ManifestCompilerConfig) -> Self {
+        Self {
+            sierra_replace_ids: Some(config.sierra_replace_ids),
+        }
+    }
 }
 
 #[derive(Clone, Eq, PartialEq, Hash)]

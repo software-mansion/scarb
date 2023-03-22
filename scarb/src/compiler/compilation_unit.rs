@@ -1,11 +1,11 @@
 use std::fmt::Write;
 use std::hash::{Hash, Hasher};
 
+use crate::compiler::Profile;
 use smol_str::SmolStr;
 
-use crate::compiler::Profile;
-use crate::core::manifest::ManifestCompilerConfig;
-use crate::core::{Package, PackageId, Target};
+use crate::core::{Config, ManifestCompilerConfig, Package, PackageId, Target};
+use crate::flock::Filesystem;
 use crate::internal::stable_hash::StableHasher;
 
 /// An object that has enough information so that Scarb knows how to build it.
@@ -58,6 +58,10 @@ impl CompilationUnit {
         &self.main_component().target
     }
 
+    pub fn target_dir<'c>(&self, config: &'c Config) -> Filesystem<'c> {
+        config.target_dir().child(self.profile.as_str())
+    }
+
     pub fn is_sole_for_package(&self) -> bool {
         self.main_component().package.manifest.targets.len() >= 2
     }
@@ -95,7 +99,7 @@ impl CompilationUnit {
         for component in &self.components {
             component.hash(&mut hasher);
         }
-        self.profile.name.hash(&mut hasher);
+        self.profile.hash(&mut hasher);
         self.compiler_config.hash(&mut hasher);
         hasher.finish_as_short_hash()
     }

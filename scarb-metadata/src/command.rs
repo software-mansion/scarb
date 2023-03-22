@@ -355,6 +355,8 @@ mod tests {
             },
             packages: Default::default(),
             compilation_units: Default::default(),
+            current_profile: "dev".into(),
+            profiles: vec!["dev".into()],
         }
     }
 }

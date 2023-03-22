@@ -99,13 +99,13 @@ fn compile_with_custom_lib_target() {
         [..]  Finished release target(s) in [..]
         "#});
 
-    t.child("target/release/not_hello.casm")
+    t.child("target/dev/not_hello.casm")
         .assert(predicates::str::is_empty().not());
-    t.child("target/release/not_hello.sierra")
+    t.child("target/dev/not_hello.sierra")
         .assert(predicates::path::exists().not());
-    t.child("target/release/hello.sierra")
+    t.child("target/dev/hello.sierra")
         .assert(predicates::path::exists().not());
-    t.child("target/release/hello.casm")
+    t.child("target/dev/hello.casm")
         .assert(predicates::path::exists().not());
 }
 
