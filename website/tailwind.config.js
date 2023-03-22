@@ -6,7 +6,19 @@ module.exports = {
     "./theme.config.tsx",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        humanist: [
+          "Seravek",
+          "'Gill Sans Nova'",
+          "Ubuntu",
+          "Calibri",
+          "'DejaVu Sans'",
+          "source-sans-pro",
+          "sans-serif",
+        ],
+      },
+    },
     colors: {
       inherit: "inherit",
       current: "currentColor",

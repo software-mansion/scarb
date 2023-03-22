@@ -1,5 +1,5 @@
+import { Footer } from "@/components/footer";
 import { HeaderLogo } from "@/components/logo";
-import { SWM } from "@/components/swm";
 import { useRouter } from "next/router";
 import { DocsThemeConfig } from "nextra-theme-docs";
 
@@ -32,11 +32,7 @@ const config: DocsThemeConfig = {
     toggleButton: true,
   },
   footer: {
-    text: (
-      <div style={{ margin: "0 auto" }}>
-        <SWM />
-      </div>
-    ),
+    text: <Footer />,
   },
 };
 
