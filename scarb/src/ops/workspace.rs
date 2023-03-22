@@ -33,7 +33,11 @@ fn read_workspace_impl<'c>(
     source_id: SourceId,
     config: &'c Config,
 ) -> Result<Workspace<'c>> {
-    let manifest = Box::new(ops::read_manifest(manifest_path, source_id)?);
+    let manifest = Box::new(ops::read_manifest(
+        manifest_path,
+        source_id,
+        config.profile(),
+    )?);
 
     let package = Package::new(manifest.summary.package_id, manifest_path.into(), manifest);
 

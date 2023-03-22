@@ -11,7 +11,7 @@ use tokio::runtime::{Builder, Handle, Runtime};
 use tracing::trace;
 use which::which_in;
 
-use crate::compiler::CompilerRepository;
+use crate::compiler::{CompilerRepository, Profile};
 use crate::core::AppDirs;
 #[cfg(doc)]
 use crate::core::Workspace;
@@ -35,6 +35,7 @@ pub struct Config {
     compilers: CompilerRepository,
     tokio_runtime: OnceCell<Runtime>,
     tokio_handle: OnceCell<Handle>,
+    profile: Profile,
 }
 
 impl Config {
@@ -68,6 +69,7 @@ impl Config {
             }));
 
         let compilers = b.compilers.unwrap_or_else(CompilerRepository::std);
+        let profile: Profile = b.profile.unwrap_or_default();
         let tokio_handle: OnceCell<Handle> = OnceCell::new();
         if let Some(handle) = b.tokio_handle {
             tokio_handle.set(handle).unwrap();
@@ -86,6 +88,7 @@ impl Config {
             compilers,
             tokio_runtime: OnceCell::new(),
             tokio_handle,
+            profile,
         })
     }
 
@@ -214,6 +217,10 @@ impl Config {
     pub fn compilers(&self) -> &CompilerRepository {
         &self.compilers
     }
+
+    pub fn profile(&self) -> Profile {
+        self.profile.clone()
+    }
 }
 
 #[derive(Debug)]
@@ -229,6 +236,7 @@ pub struct ConfigBuilder {
     log_filter_directive: Option<OsString>,
     compilers: Option<CompilerRepository>,
     tokio_handle: Option<Handle>,
+    profile: Option<Profile>,
 }
 
 impl ConfigBuilder {
@@ -245,6 +253,7 @@ impl ConfigBuilder {
             log_filter_directive: None,
             compilers: None,
             tokio_handle: None,
+            profile: None,
         }
     }
 
@@ -311,6 +320,11 @@ impl ConfigBuilder {
 
     pub fn tokio_handle(mut self, tokio_handle: Handle) -> Self {
         self.tokio_handle = Some(tokio_handle);
+        self
+    }
+
+    pub fn profile(mut self, profile: Profile) -> Self {
+        self.profile = Some(profile);
         self
     }
 }

@@ -1,5 +1,6 @@
 use std::{env, fs};
 
+use crate::compiler::Profile;
 use anyhow::{Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 
@@ -9,9 +10,13 @@ use crate::internal::fsx::{PathBufUtf8Ext, PathUtf8Ext};
 use crate::MANIFEST_FILE_NAME;
 
 #[tracing::instrument(level = "debug", skip_all)]
-pub fn read_manifest(manifest_path: &Utf8Path, source_id: SourceId) -> Result<Manifest> {
+pub fn read_manifest(
+    manifest_path: &Utf8Path,
+    source_id: SourceId,
+    profile: Profile,
+) -> Result<Manifest> {
     let toml = TomlManifest::read_from_path(manifest_path)?;
-    toml.to_manifest(manifest_path, source_id)
+    toml.to_manifest(manifest_path, source_id, profile)
         .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))
 }
 

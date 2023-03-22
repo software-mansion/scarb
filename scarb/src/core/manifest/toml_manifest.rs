@@ -1,6 +1,8 @@
 use std::collections::{BTreeMap, HashSet};
+use std::default::Default;
 use std::fs;
 
+use crate::compiler::{DefaultForProfile, Profile};
 use anyhow::{bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
@@ -13,12 +15,10 @@ use tracing::trace;
 use url::Url;
 
 use crate::core::manifest::scripts::ScriptDefinition;
-use crate::core::manifest::{
-    ManifestCompilerConfig, ManifestDependency, ManifestMetadata, Summary, Target,
-};
+use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Target};
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
-use crate::core::PackageName;
+use crate::core::{ManifestCompilerConfig, PackageName};
 use crate::internal::fsx;
 use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::to_version::ToVersion;
@@ -37,6 +37,7 @@ pub struct TomlManifest {
     pub cairo: Option<TomlCairo>,
     pub tool: Option<BTreeMap<SmolStr, Value>>,
     pub scripts: Option<BTreeMap<SmolStr, String>>,
+    pub profile: Option<BTreeMap<SmolStr, TomlProfile>>,
 }
 
 /// Represents the `package` section of a `Scarb.toml`.
@@ -133,7 +134,7 @@ pub struct TomlLibTargetParams {
 
 pub type TomlExternalTargetParams = BTreeMap<SmolStr, Value>;
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlCairo {
     /// Replace all names in generated Sierra code with dummy counterparts, representing the
@@ -148,6 +149,22 @@ pub struct TomlCairo {
     ///
     /// Defaults to `false`.
     pub sierra_replace_ids: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub struct TomlProfile {
+    pub inherits: Option<SmolStr>,
+    pub cairo: Option<TomlCairo>,
+}
+
+impl DefaultForProfile for TomlProfile {
+    fn default_for_profile(profile: &Profile) -> Self {
+        let mut result = TomlProfile::default();
+        let default_cairo: TomlCairo = ManifestCompilerConfig::default_for_profile(profile).into();
+        result.cairo = Some(default_cairo);
+        result
+    }
 }
 
 impl TomlManifest {
@@ -177,7 +194,12 @@ impl TomlDependency {
 }
 
 impl TomlManifest {
-    pub fn to_manifest(&self, manifest_path: &Utf8Path, source_id: SourceId) -> Result<Manifest> {
+    pub fn to_manifest(
+        &self,
+        manifest_path: &Utf8Path,
+        source_id: SourceId,
+        profile: Profile,
+    ) -> Result<Manifest> {
         let root = manifest_path
             .parent()
             .expect("manifest path parent must always exist");
@@ -201,8 +223,6 @@ impl TomlManifest {
 
         let targets = self.collect_targets(package.name.to_smol_str(), root)?;
 
-        let compiler_config = self.collect_compiler_config();
-
         let scripts: BTreeMap<SmolStr, ScriptDefinition> = self
             .scripts
             .clone()
@@ -212,6 +232,10 @@ impl TomlManifest {
                 Ok((name, ScriptDefinition::from_str(&script)?))
             })
             .try_collect()?;
+
+        let profile_definition = self.collect_profile_definition(profile.clone())?;
+        let compiler_config = self.collect_compiler_config(&profile, profile_definition)?;
+        let profiles = self.collect_profiles()?;
 
         Ok(Manifest {
             summary: Summary::build(package_id)
@@ -234,6 +258,7 @@ impl TomlManifest {
             },
             compiler_config,
             scripts,
+            profiles,
         })
     }
 
@@ -288,6 +313,84 @@ impl TomlManifest {
         Ok(targets)
     }
 
+    fn collect_profiles(&self) -> Result<Vec<Profile>> {
+        if let Some(toml_profiles) = &self.profile {
+            let mut result = Vec::new();
+            for name in toml_profiles.keys() {
+                let profile = Profile::new(name.clone())?;
+                result.push(profile);
+            }
+            Ok(result)
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    fn collect_profile_definition(&self, profile: Profile) -> Result<TomlProfile> {
+        let toml_cairo = self.cairo.clone().unwrap_or_default();
+
+        let toml_profiles = self.profile.clone();
+        let profile_definition = toml_profiles
+            .clone()
+            .unwrap_or_default()
+            .get(profile.as_str())
+            .cloned();
+
+        let parent_profile = profile_definition
+            .clone()
+            .unwrap_or_default()
+            .inherits
+            .map(Profile::new)
+            .unwrap_or_else(|| {
+                if profile.is_custom() {
+                    Ok(Profile::default())
+                } else {
+                    Ok(profile.clone())
+                }
+            })?;
+
+        if parent_profile.is_custom() {
+            bail!(
+                "profile can inherit from `dev` or `release` only, found `{}`",
+                parent_profile.as_str()
+            );
+        }
+
+        let parent_default = TomlProfile::default_for_profile(&parent_profile);
+        let parent_definition = toml_profiles
+            .unwrap_or_default()
+            .get(parent_profile.as_str())
+            .cloned()
+            .unwrap_or(parent_default.clone());
+
+        let mut parent_definition = toml_merge(&parent_default, &parent_definition)?;
+
+        let parent_cairo = toml_merge(&parent_definition.cairo, &toml_cairo)?;
+        parent_definition.cairo = parent_cairo;
+
+        let profile = if let Some(profile_definition) = profile_definition {
+            toml_merge(&parent_definition, &profile_definition)?
+        } else {
+            parent_definition
+        };
+
+        Ok(profile)
+    }
+
+    fn collect_compiler_config(
+        &self,
+        profile: &Profile,
+        profile_definition: TomlProfile,
+    ) -> Result<ManifestCompilerConfig> {
+        let mut compiler_config = ManifestCompilerConfig::default_for_profile(profile);
+        if let Some(cairo) = profile_definition.cairo {
+            if let Some(sierra_replace_ids) = cairo.sierra_replace_ids {
+                compiler_config.sierra_replace_ids = sierra_replace_ids;
+            }
+        }
+        Ok(compiler_config)
+    }
+
     fn check_unique_targets(targets: &[Target], package_name: &str) -> Result<()> {
         let mut used = HashSet::with_capacity(targets.len());
         for target in targets {
@@ -309,16 +412,6 @@ impl TomlManifest {
             }
         }
         Ok(())
-    }
-
-    fn collect_compiler_config(&self) -> ManifestCompilerConfig {
-        let mut config = ManifestCompilerConfig::default();
-        if let Some(cairo) = &self.cairo {
-            if let Some(sierra_replace_ids) = cairo.sierra_replace_ids {
-                config.sierra_replace_ids = sierra_replace_ids;
-            }
-        }
-        config
     }
 }
 
@@ -401,4 +494,23 @@ impl DetailedTomlDependency {
             source_id,
         })
     }
+}
+
+/// Merge two `toml::Value` serializable structs.
+pub fn toml_merge<'de, T, S>(target: &T, source: &S) -> Result<T>
+where
+    T: Serialize + Deserialize<'de>,
+    S: Serialize + Deserialize<'de>,
+{
+    let mut params = toml::Value::try_from(target)?;
+    let source = toml::Value::try_from(source)?;
+
+    params.as_table_mut().unwrap().extend(
+        source
+            .as_table()
+            .unwrap()
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone())),
+    );
+    Ok(toml::Value::try_into(params)?)
 }

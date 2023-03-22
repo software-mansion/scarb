@@ -65,6 +65,7 @@ fn cli_main(args: ScarbArgs) -> Result<()> {
         .ui_output_format(ui_output_format)
         .offline(args.offline)
         .log_filter_directive(env::var_os("SCARB_LOG"))
+        .profile(args.profile_spec.determine()?)
         .build()?;
 
     commands::run(args.command, &mut config)

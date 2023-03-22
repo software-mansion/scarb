@@ -2,6 +2,7 @@ use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
 
+use crate::core::toml_merge;
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
@@ -83,18 +84,7 @@ impl Target {
     where
         P: Default + Serialize + Deserialize<'de>,
     {
-        let mut params = toml::Value::try_from(P::default())?;
-
-        params.as_table_mut().unwrap().extend(
-            self.params
-                .as_table()
-                .unwrap()
-                .iter()
-                .map(|(k, v)| (k.clone(), v.clone())),
-        );
-
-        let props = toml::Value::try_into(params)?;
-        Ok(props)
+        toml_merge(&P::default(), &self.params)
     }
 }
 

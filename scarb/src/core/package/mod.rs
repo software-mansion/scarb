@@ -6,6 +6,7 @@ use anyhow::{anyhow, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::Deserialize;
 
+use crate::compiler::Profile;
 pub use id::*;
 pub use name::*;
 
@@ -65,6 +66,10 @@ impl Package {
     pub fn fetch_target(&self, kind: &str) -> Result<&Target> {
         self.target(kind)
             .ok_or_else(|| anyhow!("package `{self}` has no target `{kind}`"))
+    }
+
+    pub fn has_profile(&self, profile: &Profile) -> bool {
+        self.manifest.profiles.contains(profile)
     }
 
     pub fn has_tool_metadata(&self, tool_name: &str) -> bool {

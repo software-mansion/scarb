@@ -27,7 +27,9 @@ pub(crate) mod mock {
 
     use crate::core::package::PackageName;
     use crate::core::registry::Registry;
-    use crate::core::{Manifest, ManifestDependency, Package, PackageId, SourceId, Summary};
+    use crate::core::{
+        Manifest, ManifestCompilerConfig, ManifestDependency, Package, PackageId, SourceId, Summary,
+    };
 
     #[derive(Debug, Default)]
     pub struct MockRegistry {
@@ -105,8 +107,9 @@ pub(crate) mod mock {
                 summary,
                 targets: Vec::new(),
                 metadata: Default::default(),
-                compiler_config: Default::default(),
                 scripts: Default::default(),
+                profiles: Default::default(),
+                compiler_config: ManifestCompilerConfig::default_for_profile(&Profile::DEV),
             });
 
             Package::new(package_id, Utf8PathBuf::new(), manifest)
@@ -199,5 +202,6 @@ pub(crate) mod mock {
         );
     }
 
+    use crate::compiler::{DefaultForProfile, Profile};
     pub(crate) use pkgs;
 }

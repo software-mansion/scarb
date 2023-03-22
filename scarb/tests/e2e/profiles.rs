@@ -1,0 +1,507 @@
+use assert_fs::prelude::*;
+use assert_fs::TempDir;
+use indoc::indoc;
+use scarb_metadata::Metadata;
+use snapbox::cmd::Command;
+
+use crate::support::command::Scarb;
+use crate::support::fsx::ChildPathEx;
+use crate::support::project_builder::ProjectBuilder;
+
+trait CommandExt {
+    fn stdout_metadata(self) -> Metadata;
+}
+
+impl CommandExt for Command {
+    fn stdout_metadata(self) -> Metadata {
+        let output = self.output().expect("Failed to spawn command");
+        assert!(
+            output.status.success(),
+            "Command failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        serde_json::de::from_slice(&output.stdout).expect("Failed to deserialize stdout to JSON")
+    }
+}
+
+#[test]
+fn build_defaults_to_dev() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
+    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra"]);
+}
+
+#[test]
+fn can_build_release() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    Scarb::quick_snapbox()
+        .args(["--release", "build"])
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "release"]);
+    assert_eq!(t.child("target/release").files(), vec!["hello.sierra"]);
+}
+
+#[test]
+fn defaults_to_dev() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    let mut all_profiles = metadata.profiles;
+    all_profiles.sort();
+
+    assert_eq!(metadata.current_profile, "dev".to_string());
+    assert_eq!(all_profiles, vec!["dev".to_string(), "release".to_string()]);
+}
+
+#[test]
+fn can_choose_release() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--release", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    let mut all_profiles = metadata.profiles;
+    all_profiles.sort();
+
+    assert_eq!(metadata.current_profile, "release".to_string());
+    assert_eq!(all_profiles, vec!["dev".to_string(), "release".to_string()]);
+}
+
+#[test]
+fn can_choose_dev() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--dev", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    let mut all_profiles = metadata.profiles;
+    all_profiles.sort();
+
+    assert_eq!(metadata.current_profile, "dev".to_string());
+    assert_eq!(all_profiles, vec!["dev".to_string(), "release".to_string()]);
+}
+
+#[test]
+fn cannot_choose_both_dev_and_release() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    Scarb::quick_snapbox()
+        .args(["--dev", "--release","metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stderr_matches(indoc! {r#"
+            error: the argument '--dev' cannot be used with '--release'
+
+            Usage: scarb[..] --dev --global-cache-dir <DIRECTORY> --global-config-dir <DIRECTORY> <COMMAND>
+
+            For more information, try '--help'.
+        "#});
+}
+
+#[test]
+fn can_choose_release_by_name() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--profile", "release", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    let mut all_profiles = metadata.profiles;
+    all_profiles.sort();
+
+    assert_eq!(metadata.current_profile, "release".to_string());
+    assert_eq!(all_profiles, vec!["dev".to_string(), "release".to_string()]);
+}
+
+#[test]
+fn cannot_choose_both_release_and_by_name() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    Scarb::quick_snapbox()
+        .args(["--release", "--profile", "dev","metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stderr_matches(indoc! {r#"
+            error: the argument '--release' cannot be used with '--profile <PROFILE>'
+
+            Usage: scarb[..] --release --global-cache-dir <DIRECTORY> --global-config-dir <DIRECTORY> <COMMAND>
+
+            For more information, try '--help'.
+        "#});
+}
+
+#[test]
+fn can_choose_dev_by_name() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--profile", "dev", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    let mut all_profiles = metadata.profiles;
+    all_profiles.sort();
+
+    assert_eq!(metadata.current_profile, "dev".to_string());
+    assert_eq!(all_profiles, vec!["dev".to_string(), "release".to_string()]);
+}
+
+#[test]
+fn can_choose_dev_by_short_name() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["-P", "dev", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    let mut all_profiles = metadata.profiles;
+    all_profiles.sort();
+
+    assert_eq!(metadata.current_profile, "dev".to_string());
+    assert_eq!(all_profiles, vec!["dev".to_string(), "release".to_string()]);
+}
+
+#[test]
+fn can_choose_custom_profile() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [profile.custom]
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--profile", "custom", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    let mut all_profiles = metadata.profiles;
+    all_profiles.sort();
+
+    assert_eq!(metadata.current_profile, "custom".to_string());
+    assert_eq!(
+        all_profiles,
+        vec![
+            "custom".to_string(),
+            "dev".to_string(),
+            "release".to_string()
+        ]
+    );
+}
+
+#[test]
+fn cannot_choose_not_existing_profile() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    Scarb::quick_snapbox()
+        .args(["--profile", "custom", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches("error: package `[..]` has no profile `custom`\n");
+}
+
+#[test]
+fn sierra_replace_ids_defaults_true_in_dev() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "dev".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert!(compiler_config
+            .get("sierra_replace_ids")
+            .unwrap()
+            .as_bool()
+            .unwrap());
+    }
+}
+
+#[test]
+fn sierra_replace_ids_default_false_in_release() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--profile", "release", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "release".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert!(!compiler_config
+            .get("sierra_replace_ids")
+            .unwrap()
+            .as_bool()
+            .unwrap());
+    }
+}
+
+#[test]
+fn compiler_config_set_for_all_profiles() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(
+            r#"
+            [cairo]
+            sierra-replace-ids = true
+
+            [profile.some-profile]
+            "#,
+        )
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "dev".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert!(compiler_config
+            .get("sierra_replace_ids")
+            .unwrap()
+            .as_bool()
+            .unwrap());
+    }
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--release", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "release".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert!(compiler_config
+            .get("sierra_replace_ids")
+            .unwrap()
+            .as_bool()
+            .unwrap());
+    }
+
+    let metadata = Scarb::quick_snapbox()
+        .args([
+            "--profile",
+            "some-profile",
+            "metadata",
+            "--format-version",
+            "1",
+        ])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "some-profile".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert!(compiler_config
+            .get("sierra_replace_ids")
+            .unwrap()
+            .as_bool()
+            .unwrap());
+    }
+}
+
+#[test]
+fn can_set_replace_ids_in_profile() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [profile.release.cairo]
+            sierra-replace-ids = true
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--release", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "release".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert!(compiler_config
+            .get("sierra_replace_ids")
+            .unwrap()
+            .as_bool()
+            .unwrap());
+    }
+}
+
+#[test]
+fn profile_precedes_compiler_config() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            sierra-replace-ids = false
+
+            [profile.release.cairo]
+            sierra-replace-ids = true
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--release", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "release".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert!(compiler_config
+            .get("sierra_replace_ids")
+            .unwrap()
+            .as_bool()
+            .unwrap());
+    }
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "dev".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert!(!compiler_config
+            .get("sierra_replace_ids")
+            .unwrap()
+            .as_bool()
+            .unwrap());
+    }
+}
+
+#[test]
+fn custom_profiles_inherit_from_dev_by_default() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [profile.custom]
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--profile", "custom", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "custom".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert!(compiler_config
+            .get("sierra_replace_ids")
+            .unwrap()
+            .as_bool()
+            .unwrap());
+    }
+}
+
+#[test]
+fn custom_profiles_can_inherit_by_name() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [profile.custom]
+            inherits = "release"
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--profile", "custom", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "custom".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert!(!compiler_config
+            .get("sierra_replace_ids")
+            .unwrap()
+            .as_bool()
+            .unwrap());
+    }
+}
+
+#[test]
+fn custom_profiles_can_inherit_dev_and_release_only() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [profile.some-profile]
+
+            [profile.custom]
+            inherits = "some-profile"
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .args(["--profile", "custom", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: failed to parse manifest at `[..]`
+
+            Caused by:
+                profile can inherit from `dev` or `release` only, found `some-profile`
+        "#});
+}

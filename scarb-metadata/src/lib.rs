@@ -106,6 +106,13 @@ impl fmt::Display for CompilationUnitId {
     }
 }
 
+fn current_profile_default() -> String {
+    "release".to_string()
+}
+fn profiles_default() -> Vec<String> {
+    vec!["release".to_string()]
+}
+
 /// Top level data structure printed by `scarb metadata`.
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "builder", derive(Builder))]
@@ -140,6 +147,14 @@ pub struct Metadata {
 
     /// List of all Scarb compilation units produced in this workspace.
     pub compilation_units: Vec<CompilationUnitMetadata>,
+
+    /// Name of the currently selected profile
+    #[serde(default = "current_profile_default")]
+    pub current_profile: String,
+
+    /// List of all available profiles names
+    #[serde(default = "profiles_default")]
+    pub profiles: Vec<String>,
 }
 
 /// Current workspace metadata.

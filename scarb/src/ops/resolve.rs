@@ -4,7 +4,7 @@ use anyhow::Result;
 use futures::TryFutureExt;
 use itertools::Itertools;
 
-use crate::compiler::{CompilationUnit, CompilationUnitComponent, Profile};
+use crate::compiler::{CompilationUnit, CompilationUnitComponent};
 use crate::core::package::{Package, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::source_map::SourceMap;
@@ -117,10 +117,7 @@ pub fn generate_compilation_units(
             let unit = CompilationUnit {
                 main_package_id: member.id,
                 components,
-                // TODO(#120): Support defining profiles in manifest.
-                profile: Profile {
-                    name: "release".into(),
-                },
+                profile: ws.current_profile()?,
                 compiler_config: member.manifest.compiler_config.clone(),
             };
             units.push(unit);

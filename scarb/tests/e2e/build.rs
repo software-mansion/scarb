@@ -26,8 +26,8 @@ fn compile_simple() {
         .assert()
         .success();
 
-    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "release"]);
-    assert_eq!(t.child("target/release").files(), vec!["hello.sierra"]);
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
+    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra"]);
 
     cache_dir
         .child("registry/std")
@@ -327,7 +327,7 @@ fn compile_multiple_packages() {
             [..]  Finished release target(s) in [..]
         "#});
 
-    t.child("target/release/fib.sierra")
+    t.child("target/dev/fib.sierra")
         .assert(predicates::str::is_empty().not());
 }
 
@@ -411,7 +411,7 @@ fn compile_with_nested_deps() {
             [..]  Finished release target(s) in [..]
         "#});
 
-    t.child("target/release/x.sierra")
+    t.child("target/dev/x.sierra")
         .assert(predicates::str::is_empty().not());
 }
 
@@ -432,7 +432,7 @@ fn override_target_dir() {
 
     t.child("target").assert(predicates::path::exists().not());
     target_dir
-        .child("release/hello.sierra")
+        .child("dev/hello.sierra")
         .assert(predicates::path::exists());
 }
 
@@ -456,7 +456,7 @@ fn sierra_replace_ids() {
         .assert()
         .success();
 
-    t.child("target/release/hello.sierra")
+    t.child("target/dev/hello.sierra")
         .assert(predicates::str::contains(
             "hello::example@0() -> (felt252);",
         ));

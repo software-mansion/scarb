@@ -24,11 +24,10 @@ fn locking_build_artifacts() {
     let config = Scarb::test_config(manifest);
 
     thread::scope(|s| {
-        let lock =
-            config
-                .target_dir()
-                .child("release")
-                .open_rw("hello.sierra", "artifact", &config);
+        let lock = config
+            .target_dir()
+            .child(config.profile().to_string())
+            .open_rw("hello.sierra", "artifact", &config);
         let barrier = Arc::new(Barrier::new(2));
 
         s.spawn({
