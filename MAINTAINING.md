@@ -132,9 +132,11 @@ Post the same message as posted on the Telegram to the `#scarb` channel on Stark
 
 ### Close GitHub milestone for this release
 
-1. As title says, go to the [milestone], and hit _Close_ button.
-2. The go to the [Scarb project], and _Archive_ all issues assigned to this milestone.
-   Currently, this is tedious manual work.
+```shell
+ci/close-milestone.py X.Y.Z 
+```
+
+This Python 3.11 script requires GitHub CLI to be set up, and the official projects extension to be installed.
 
 [@software-mansion/scarb-maintainers]: https://github.com/orgs/software-mansion/teams/scarb-maintainers
 
