@@ -7,14 +7,14 @@ import { DocsThemeConfig } from "nextra-theme-docs";
 const config: DocsThemeConfig = {
   logo: <HeaderLogo />,
   primaryHue: { light: 239, dark: 204 },
-  // banner: {
-  //   key: "scarb-0.1-released",
-  //   text: (
-  //     <a href="https://github.com/software-mansion/scarb/releases/tag/v0.1.0">
-  //       🎉 Scarb v0.1 is released. Read more →
-  //     </a>
-  //   ),
-  // },
+  banner: {
+    key: "scarb-0.1-released",
+    text: (
+      <a href="https://github.com/software-mansion/scarb/releases/tag/v0.1.0">
+        🎉 Scarb v0.1 is released. Read more →
+      </a>
+    ),
+  },
   project: {
     link: "https://github.com/software-mansion/scarb",
   },
