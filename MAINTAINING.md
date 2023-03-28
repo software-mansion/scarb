@@ -33,6 +33,21 @@ Release branches are allowed to be sources for website deployments,
 and so they will deploy from tags in release branches.
 You might need to swiftly pause the [Website Deploy] workflow to prevent publishing old website version.
 
+#### Publish to crates.io
+
+The [Release] workflow only checks if `scarb` crate properly packages.
+It does not actually publish it, for safety reasons (for example if the workflow is triggered by malicious actor, or by
+mistake).
+While other effects of this workflow are relatively easy to revert, publishing to [crates.io] is not, and the only thing
+we can do is to _yank_ published release, and start release procedure from scratch with new version number.
+To release the crate on [crates.io], simply run following command from your repo (ensure you are on correct commit!):
+
+```shell
+cargo publish -p scarb
+```
+
+You can only publish the `scarb` crate if you are member of the [StarkNet Crates.io Admins] team on GitHub.
+
 ### Write release notes
 
 Upon completion, the [Release] workflow should draft a release on GitHub.
@@ -151,3 +166,7 @@ This Python 3.11 script requires GitHub CLI to be set up, and the official proje
 [milestone]: https://github.com/software-mansion/scarb/milestones
 
 [scarb project]: https://github.com/orgs/software-mansion/projects/4
+
+[crates.io]: https://crates.io
+
+[StarkNet Crates.io Admins]: https://github.com/orgs/software-mansion/teams/starknet-crates-io-admins
