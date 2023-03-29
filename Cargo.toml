@@ -20,12 +20,12 @@ repository = "https://github.com/software-mansion/scarb"
 anyhow = "1.0.70"
 assert_fs = "1.0.9"
 async-trait = "0.1.68"
-cairo-lang-compiler = "1.0.0-alpha.6"
-cairo-lang-filesystem = "1.0.0-alpha.6"
-cairo-lang-formatter = "1.0.0-alpha.6"
-cairo-lang-sierra-to-casm = "1.0.0-alpha.6"
-cairo-lang-starknet = "1.0.0-alpha.6"
-cairo-lang-utils = "1.0.0-alpha.6"
+cairo-lang-compiler = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
+cairo-lang-filesystem = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
+cairo-lang-formatter = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
+cairo-lang-sierra-to-casm = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
+cairo-lang-starknet = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
+cairo-lang-utils = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
 camino = { version = "1.1.4", features = ["serde1"] }
 clap = { version = "4.2.0", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.0"
