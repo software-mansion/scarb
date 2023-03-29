@@ -3,6 +3,7 @@ use std::io::Write;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, MetadataComputationConfig};
+use cairo_lang_starknet::db::StarknetRootDatabaseBuilderEx;
 use serde::{Deserialize, Serialize};
 use tracing::trace_span;
 
@@ -47,6 +48,10 @@ impl Compiler for LibCompiler {
 
         let mut db = RootDatabase::builder()
             .with_project_config(build_project_config(&unit)?)
+            // HACK(mkaput): Temporarily enable Starknet compilation features,
+            //   so that Starknet plugin will be available in [lib] target.
+            // FIXME(#91): Replace this with more generic solution.
+            .with_starknet()
             .build()?;
 
         let compiler_config = build_compiler_config(&unit, ws);
