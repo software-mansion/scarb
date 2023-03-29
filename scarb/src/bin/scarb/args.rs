@@ -276,19 +276,20 @@ impl PackagesFilter {
 
 /// Git reference specification arguments.
 #[derive(Parser, Clone, Debug)]
+#[group(requires = "git", multiple = false)]
 pub struct GitRefGroup {
     /// Git branch to download the package from.
-    #[arg(long, requires = "git", conflicts_with_all = ["tag", "rev"])]
+    #[arg(long)]
     pub branch: Option<String>,
 
     /// Git tag to download the package from.
-    #[arg(long, requires = "git", conflicts_with_all = ["branch", "rev"])]
+    #[arg(long)]
     pub tag: Option<String>,
 
     /// Git reference to download the package from
     ///
     /// This is the catch-all, handling hashes to named references in remote repositories.
-    #[arg(long, requires = "git")]
+    #[arg(long)]
     pub rev: Option<String>,
 }
 
