@@ -27,7 +27,7 @@ cairo-lang-sierra-to-casm = "1.0.0-alpha.6"
 cairo-lang-starknet = "1.0.0-alpha.6"
 cairo-lang-utils = "1.0.0-alpha.6"
 camino = { version = "1.1.4", features = ["serde1"] }
-clap = { version = "4.1", features = ["derive", "env", "string"] }
+clap = { version = "4.2.0", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.0"
 console = "0.15.5"
 data-encoding = "2.3.3"
