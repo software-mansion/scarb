@@ -9,6 +9,35 @@ use crate::support::command::Scarb;
 use crate::support::fsx::ChildPathEx;
 use crate::support::project_builder::ProjectBuilder;
 
+const BALANCE_CONTRACT: &str = indoc! {r#"
+    #[contract]
+    mod Balance {
+        struct Storage {
+            balance: felt252,
+        }
+
+        // Increases the balance by the given amount.
+        #[external]
+        fn increase_balance(amount: felt252) {
+            balance::write(balance::read() + amount);
+        }
+
+        // Returns the current balance.
+        #[view]
+        fn get_balance() -> felt252 {
+            balance::read()
+        }
+    }
+"#};
+
+const FORTY_TWO_CONTRACT: &str = indoc! {r#"
+    #[contract]
+    mod FortyTwo {
+        #[external]
+        fn answer() -> felt252 { 42 }
+    }
+"#};
+
 #[test]
 fn compile_starknet_contract() {
     let t = assert_fs::TempDir::new().unwrap();
@@ -16,26 +45,7 @@ fn compile_starknet_contract() {
         .name("hello")
         .version("0.1.0")
         .manifest_extra("[[target.starknet-contract]]")
-        .lib_cairo(indoc! {r#"
-            #[contract]
-            mod HelloStarknet {
-                struct Storage {
-                    balance: felt252,
-                }
-
-                // Increases the balance by the given amount.
-                #[external]
-                fn increase_balance(amount: felt252) {
-                    balance::write(balance::read() + amount);
-                }
-
-                // Returns the current balance.
-                #[view]
-                fn get_balance() -> felt252 {
-                    balance::read()
-                }
-            }
-        "#})
+        .lib_cairo(BALANCE_CONTRACT)
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -50,10 +60,10 @@ fn compile_starknet_contract() {
 
     assert_eq!(
         t.child("target/release").files(),
-        vec!["hello_HelloStarknet.sierra.json"]
+        vec!["hello_Balance.sierra.json"]
     );
 
-    assert_is_contract_class(&t.child("target/release/hello_HelloStarknet.sierra.json"));
+    assert_is_contract_class(&t.child("target/release/hello_Balance.sierra.json"));
 }
 
 #[test]
@@ -74,42 +84,11 @@ fn compile_many_contracts() {
             name = "b"
         "#})
         .lib_cairo(indoc! {r#"
-            mod hello;
-            mod foo;
+            mod balance;
+            mod forty_two;
         "#})
-        .src(
-            "src/hello.cairo",
-            indoc! {r#"
-                #[contract]
-                mod Hello {
-                    struct Storage {
-                        balance: felt252,
-                    }
-
-                    // Increases the balance by the given amount.
-                    #[external]
-                    fn increase_balance(amount: felt252) {
-                        balance::write(balance::read() + amount);
-                    }
-
-                    // Returns the current balance.
-                    #[view]
-                    fn get_balance() -> felt252 {
-                        balance::read()
-                    }
-                }
-            "#},
-        )
-        .src(
-            "src/foo.cairo",
-            indoc! {r#"
-                #[contract]
-                mod Foo {
-                    #[external]
-                    fn foo() -> felt252 { 42 }
-                }
-            "#},
-        )
+        .src("src/balance.cairo", BALANCE_CONTRACT)
+        .src("src/forty_two.cairo", FORTY_TWO_CONTRACT)
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -127,20 +106,20 @@ fn compile_many_contracts() {
     assert_eq!(
         t.child("target/release").files(),
         vec![
-            "a_Foo.sierra.json",
-            "a_Hello.sierra.json",
-            "b_Foo.sierra.json",
-            "b_Hello.sierra.json",
+            "a_Balance.sierra.json",
+            "a_FortyTwo.sierra.json",
+            "b_Balance.sierra.json",
+            "b_FortyTwo.sierra.json",
             "hello.casm",
             "hello.sierra",
         ]
     );
 
     for json in [
-        "a_Foo.sierra.json",
-        "a_Hello.sierra.json",
-        "b_Foo.sierra.json",
-        "b_Hello.sierra.json",
+        "a_Balance.sierra.json",
+        "a_FortyTwo.sierra.json",
+        "b_Balance.sierra.json",
+        "b_FortyTwo.sierra.json",
     ] {
         assert_is_contract_class(&t.child("target/release").child(json));
     }
