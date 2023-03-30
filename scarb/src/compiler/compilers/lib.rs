@@ -16,6 +16,7 @@ use crate::core::{Target, Workspace};
 pub struct LibCompiler;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 struct Props {
     pub sierra: bool,
     pub casm: bool,
