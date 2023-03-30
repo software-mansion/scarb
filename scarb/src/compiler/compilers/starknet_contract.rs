@@ -22,9 +22,11 @@ use crate::core::Workspace;
 pub struct StarknetContractCompiler;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 struct Props {
     pub sierra: bool,
     pub casm: bool,
+    pub casm_add_pythonic_hints: bool,
 }
 
 impl Default for Props {
@@ -32,6 +34,7 @@ impl Default for Props {
         Self {
             sierra: true,
             casm: false,
+            casm_add_pythonic_hints: false,
         }
     }
 }
@@ -85,10 +88,13 @@ impl Compiler for StarknetContractCompiler {
             zip(&contracts, &classes)
                 .map(|(decl, class)| -> Result<_> {
                     let contract_name = decl.submodule_id.name(db.upcast());
-                    let casm_class = CasmContractClass::from_contract_class(class.clone(), false)
-                        .with_context(|| {
-                            format!("{contract_name}: failed to compile Sierra contract to CASM")
-                        })?;
+                    let casm_class = CasmContractClass::from_contract_class(
+                        class.clone(),
+                        props.casm_add_pythonic_hints,
+                    )
+                    .with_context(|| {
+                        format!("{contract_name}: failed to compile Sierra contract to CASM")
+                    })?;
                     Ok(Some(casm_class))
                 })
                 .try_collect()?

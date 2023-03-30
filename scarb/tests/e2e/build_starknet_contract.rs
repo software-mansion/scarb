@@ -158,6 +158,34 @@ fn compile_many_contracts() {
     }
 }
 
+#[test]
+fn casm_add_pythonic_hints() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+            sierra = false
+            casm = true
+            casm-add-pythonic-hints = true
+        "#})
+        .lib_cairo(BALANCE_CONTRACT)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling hello v0.1.0 ([..])
+        [..]  Finished release target(s) in [..]
+        "#});
+
+    assert_is_casm_contract_class(&t.child("target/release/hello_Balance.casm.json"));
+}
+
 fn assert_is_contract_class(child: &ChildPath) {
     let contract_json = fs::read_to_string(child.path()).unwrap();
     serde_json::from_str::<ContractClass>(&contract_json).unwrap();
