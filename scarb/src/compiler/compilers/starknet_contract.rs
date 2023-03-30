@@ -58,7 +58,7 @@ impl Compiler for StarknetContractCompiler {
             let target_name = &unit.target().name;
             let contract_name = decl.submodule_id.name(db.upcast());
             let mut file = target_dir.open_rw(
-                format!("{target_name}_{contract_name}.json"),
+                format!("{target_name}_{contract_name}.sierra.json"),
                 "output file",
                 ws.config(),
             )?;

@@ -50,10 +50,10 @@ fn compile_starknet_contract() {
 
     assert_eq!(
         t.child("target/release").files(),
-        vec!["hello_HelloStarknet.json"]
+        vec!["hello_HelloStarknet.sierra.json"]
     );
 
-    assert_is_contract_class(&t.child("target/release/hello_HelloStarknet.json"));
+    assert_is_contract_class(&t.child("target/release/hello_HelloStarknet.sierra.json"));
 }
 
 #[test]
@@ -127,16 +127,21 @@ fn compile_many_contracts() {
     assert_eq!(
         t.child("target/release").files(),
         vec![
-            "a_Foo.json",
-            "a_Hello.json",
-            "b_Foo.json",
-            "b_Hello.json",
+            "a_Foo.sierra.json",
+            "a_Hello.sierra.json",
+            "b_Foo.sierra.json",
+            "b_Hello.sierra.json",
             "hello.casm",
             "hello.sierra",
         ]
     );
 
-    for json in ["a_Foo.json", "a_Hello.json", "b_Foo.json", "b_Hello.json"] {
+    for json in [
+        "a_Foo.sierra.json",
+        "a_Hello.sierra.json",
+        "b_Foo.sierra.json",
+        "b_Hello.sierra.json",
+    ] {
         assert_is_contract_class(&t.child("target/release").child(json));
     }
 }
