@@ -2,6 +2,7 @@ use std::fs;
 
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
+use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet::contract_class::ContractClass;
 use indoc::indoc;
 
@@ -67,6 +68,38 @@ fn compile_starknet_contract() {
 }
 
 #[test]
+fn compile_starknet_contract_to_casm() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+            sierra = false
+            casm = true
+        "#})
+        .lib_cairo(BALANCE_CONTRACT)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling hello v0.1.0 ([..])
+        [..]  Finished release target(s) in [..]
+        "#});
+
+    assert_eq!(
+        t.child("target/release").files(),
+        vec!["hello_Balance.casm.json"]
+    );
+
+    assert_is_casm_contract_class(&t.child("target/release/hello_Balance.casm.json"));
+}
+
+#[test]
 fn compile_many_contracts() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -128,4 +161,9 @@ fn compile_many_contracts() {
 fn assert_is_contract_class(child: &ChildPath) {
     let contract_json = fs::read_to_string(child.path()).unwrap();
     serde_json::from_str::<ContractClass>(&contract_json).unwrap();
+}
+
+fn assert_is_casm_contract_class(child: &ChildPath) {
+    let casm_contract_json = fs::read_to_string(child.path()).unwrap();
+    serde_json::from_str::<CasmContractClass>(&casm_contract_json).unwrap();
 }
