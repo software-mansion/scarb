@@ -37,7 +37,7 @@ diffy = "0.3.0"
 directories = "5.0.0"
 dunce = "1.0.3"
 fs4 = "0.6.2"
-futures = { version = "0.3.26", default-features = false, features = ["std", "async-await"] }
+futures = { version = "0.3.28", default-features = false, features = ["std", "async-await"] }
 gix = "0.43.0"
 ignore = "0.4.20"
 include_dir = "0.7.3"
