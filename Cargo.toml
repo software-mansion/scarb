@@ -59,7 +59,7 @@ similar-asserts = { version = "1.4.2", features = ["serde"] }
 smol_str = { version = "0.1.23", features = ["serde"] }
 snapbox = { version = "0.4.10", features = ["cmd", "path"] }
 tempfile = "3.4.0"
-test-case = "3.0.0"
+test-case = "3.1.0"
 thiserror = "1.0.39"
 tokio = { version = "1.26.0", features = ["macros", "io-util", "rt", "rt-multi-thread", "sync"] }
 toml = "0.7.1"
