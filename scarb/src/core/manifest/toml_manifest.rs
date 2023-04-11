@@ -35,10 +35,12 @@ pub struct TomlManifest {
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
     pub target: Option<BTreeMap<TomlTargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
     pub cairo: Option<TomlCairo>,
-    pub tool: Option<BTreeMap<SmolStr, Value>>,
+    pub tool: Option<ToolDefinition>,
     pub scripts: Option<BTreeMap<SmolStr, String>>,
     pub profile: Option<BTreeMap<SmolStr, TomlProfile>>,
 }
+
+type ToolDefinition = BTreeMap<SmolStr, Value>;
 
 /// Represents the `package` section of a `Scarb.toml`.
 #[derive(Debug, Deserialize, Serialize)]
@@ -156,6 +158,7 @@ pub struct TomlCairo {
 pub struct TomlProfile {
     pub inherits: Option<SmolStr>,
     pub cairo: Option<TomlCairo>,
+    pub tool: Option<ToolDefinition>,
 }
 
 impl DefaultForProfile for TomlProfile {
@@ -234,7 +237,8 @@ impl TomlManifest {
             .try_collect()?;
 
         let profile_definition = self.collect_profile_definition(profile.clone())?;
-        let compiler_config = self.collect_compiler_config(&profile, profile_definition)?;
+        let compiler_config = self.collect_compiler_config(&profile, profile_definition.clone())?;
+        let tool = self.collect_tool(profile_definition)?;
         let profiles = self.collect_profiles()?;
 
         Ok(Manifest {
@@ -254,7 +258,7 @@ impl TomlManifest {
                 license_file: package.license_file.clone(),
                 readme: package.readme.clone(),
                 repository: package.repository.clone(),
-                tool_metadata: self.tool.clone(),
+                tool_metadata: tool,
             },
             compiler_config,
             scripts,
@@ -389,6 +393,18 @@ impl TomlManifest {
             }
         }
         Ok(compiler_config)
+    }
+
+    fn collect_tool(&self, profile_definition: TomlProfile) -> Result<Option<ToolDefinition>> {
+        if let Some(tool) = &self.tool {
+            if let Some(profile_tool) = &profile_definition.tool {
+                toml_merge(tool, profile_tool).map(Some)
+            } else {
+                Ok(Some(tool.clone()))
+            }
+        } else {
+            Ok(profile_definition.tool)
+        }
     }
 
     fn check_unique_targets(targets: &[Target], package_name: &str) -> Result<()> {

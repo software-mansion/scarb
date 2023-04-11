@@ -505,3 +505,63 @@ fn custom_profiles_can_inherit_dev_and_release_only() {
                 profile can inherit from `dev` or `release` only, found `some-profile`
         "#});
 }
+
+#[test]
+fn profile_overrides_tool() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [tool.protostar]
+            some-key = "some-value"
+
+            [profile.release.tool.protostar]
+            some-key = "some-other-value"
+        "#})
+        .build(&t);
+    let metadata = Scarb::quick_snapbox()
+        .args(["metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "dev".to_string());
+    assert_eq!(metadata.packages.len(), 2);
+
+    let package = metadata.packages[1].clone();
+    assert_eq!(
+        package
+            .manifest_metadata
+            .tool
+            .unwrap()
+            .get("protostar")
+            .unwrap()
+            .get("some-key")
+            .unwrap()
+            .as_str()
+            .unwrap(),
+        "some-value"
+    );
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--release", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_metadata();
+
+    assert_eq!(metadata.current_profile, "release".to_string());
+    assert_eq!(metadata.packages.len(), 2);
+
+    let package = metadata.packages[1].clone();
+    assert_eq!(
+        package
+            .manifest_metadata
+            .tool
+            .unwrap()
+            .get("protostar")
+            .unwrap()
+            .get("some-key")
+            .unwrap()
+            .as_str()
+            .unwrap(),
+        "some-other-value"
+    );
+}
