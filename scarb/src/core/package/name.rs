@@ -110,6 +110,12 @@ impl AsRef<str> for PackageName {
     }
 }
 
+impl From<PackageName> for SmolStr {
+    fn from(value: PackageName) -> Self {
+        value.0
+    }
+}
+
 impl TryFrom<&str> for PackageName {
     type Error = anyhow::Error;
 
@@ -162,7 +168,7 @@ impl fmt::Display for PackageName {
 
 impl fmt::Debug for PackageName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "PackageName({})", self.0)
+        write!(f, "PackageName({self})")
     }
 }
 
