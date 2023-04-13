@@ -20,12 +20,12 @@ repository = "https://github.com/software-mansion/scarb"
 anyhow = "1.0.70"
 assert_fs = "1.0.9"
 async-trait = "0.1.68"
-cairo-lang-compiler = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
-cairo-lang-filesystem = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
-cairo-lang-formatter = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
-cairo-lang-sierra-to-casm = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
-cairo-lang-starknet = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
-cairo-lang-utils = { version = "1.0.0-alpha.6", git = "https://github.com/starkware-libs/cairo.git" }
+cairo-lang-compiler = { version = "1.0.0-alpha.7" }
+cairo-lang-filesystem = { version = "1.0.0-alpha.7" }
+cairo-lang-formatter = { version = "1.0.0-alpha.7" }
+cairo-lang-sierra-to-casm = { version = "1.0.0-alpha.7" }
+cairo-lang-starknet = { version = "1.0.0-alpha.7" }
+cairo-lang-utils = { version = "1.0.0-alpha.7" }
 camino = { version = "1.1.4", features = ["serde1"] }
 clap = { version = "4.2.1", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.1"
@@ -56,7 +56,7 @@ serde = { version = "1.0.160", features = ["serde_derive"] }
 serde_json = "1.0.95"
 serde_test = "1.0.159"
 similar-asserts = { version = "1.4.2", features = ["serde"] }
-smol_str = { version = "0.1.23", features = ["serde"] }
+smol_str = { version = "0.2.0", features = ["serde"] }
 snapbox = { version = "0.4.10", features = ["cmd", "path"] }
 tempfile = "3.5.0"
 test-case = "3.1.0"
