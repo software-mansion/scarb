@@ -8,10 +8,10 @@ const config: DocsThemeConfig = {
   logo: <HeaderLogo />,
   primaryHue: { light: 239, dark: 204 },
   banner: {
-    key: "scarb-0.1-released",
+    key: "scarb-0.2.0-alpha.0-released",
     text: (
-      <a href="https://github.com/software-mansion/scarb/releases/tag/v0.1.0">
-        🎉 Scarb v0.1 is released. Read more →
+      <a href="https://github.com/software-mansion/scarb/releases/tag/v0.2.0-alpha.0">
+        🎉 The first alpha of Scarb v0.2 is released. Read more →
       </a>
     ),
   },
