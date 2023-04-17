@@ -56,14 +56,14 @@ Add dependency hosted on a Git repository:
 
 ```toml copy
 [dependencies]
-quaireaux = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
+quaireaux_math = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
 ```
 
 Add dependency located in local path:
 
 ```toml copy
 [dependencies]
-quaireaux = { path = "path/to/quaireaux" }
+quaireaux_math = { path = "../path-to-quaireaux-checkout/quaireaux/math" }
 ```
 
 <Callout>
@@ -84,18 +84,18 @@ quaireaux = { path = "path/to/quaireaux" }
 Add dependency hosted on a Git repository:
 
 ```shell copy
-scarb add quaireaux --git https://github.com/keep-starknet-strange/quaireaux.git
+scarb add quaireaux_math --git https://github.com/keep-starknet-strange/quaireaux.git
 ```
 
 Add dependency located in local path:
 
 ```shell copy
-scarb add quaireaux --path path/to/quaireaux
+scarb add quaireaux_math --path ../path-to-quaireaux-checkout/quaireaux/math
 ```
 
 <Callout>
-  You can specify package version like this: `quaireaux@0.1.0`, but see remarks
-  in previous section.
+  You can specify package version like this: `quaireaux_math@0.1.0`, but see
+  remarks in previous section.
 </Callout>
 
 <Callout>`--git` supports `--branch`, `--tag` and `--rev` arguments.</Callout>

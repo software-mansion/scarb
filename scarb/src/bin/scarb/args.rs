@@ -210,8 +210,8 @@ pub struct AddArgs {
     /// Reference to a package to add as a dependency
     ///
     /// You can reference a package by:
-    /// - `<name>`, like `scarb add quaireaux` (the latest version will be used)
-    /// - `<name>@<version-req>`, like `scarb add quaireaux@1` or `scarb add quaireaux@=0.1.0`
+    /// - `<name>`, like `scarb add quaireaux_math` (the latest version will be used)
+    /// - `<name>@<version-req>`, like `scarb add quaireaux_math@1` or `scarb add quaireaux_math@=0.1.0`
     #[arg(value_name = "DEP_ID", verbatim_doc_comment)]
     pub packages: Vec<DepId>,
 
