@@ -274,6 +274,10 @@ pub struct CompilationUnitMetadata {
     /// List of all components to include in this compilation.
     #[serde(rename = "components_data")]
     pub components: Vec<CompilationUnitComponentMetadata>,
+
+    /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this unit.
+    #[serde(default)]
+    pub cfg: Vec<Cfg>,
 }
 
 /// Information to pass to the Cairo compiler about a package that is a component of a compilation
@@ -367,6 +371,16 @@ pub struct CommitInfo {
     pub commit_hash: String,
     /// Commit author date if known.
     pub commit_date: Option<String>,
+}
+
+/// Option for the `#[cfg(...)]` language attribute.
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[serde(untagged)]
+pub enum Cfg {
+    /// `#[cfg(key: value)`]
+    KV(String, String),
+    /// `#[cfg(name)`]
+    Name(String),
 }
 
 impl<'a> Index<&'a PackageId> for Metadata {

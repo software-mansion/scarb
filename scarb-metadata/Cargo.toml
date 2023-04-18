@@ -23,6 +23,7 @@ thiserror = { workspace = true, optional = true }
 
 [dev-dependencies]
 assert_fs.workspace = true
+cairo-lang-filesystem.workspace = true
 snapbox.workspace = true
 
 [features]

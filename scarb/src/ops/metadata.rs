@@ -167,6 +167,16 @@ fn collect_compilation_unit_metadata(
     let compiler_config = serde_json::to_value(&compilation_unit.compiler_config)
         .expect("Compiler config should always be JSON serializable.");
 
+    let cfg = compilation_unit
+        .cfg_set
+        .iter()
+        .map(|cfg| {
+            serde_json::to_value(cfg)
+                .and_then(serde_json::from_value::<m::Cfg>)
+                .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
+        })
+        .collect::<Vec<_>>();
+
     m::CompilationUnitMetadataBuilder::default()
         .id(compilation_unit.id())
         .package(wrap_package_id(compilation_unit.main_package_id))
@@ -179,6 +189,7 @@ fn collect_compilation_unit_metadata(
         )
         .components(components)
         .compiler_config(compiler_config)
+        .cfg(cfg)
         .build()
         .unwrap()
 }

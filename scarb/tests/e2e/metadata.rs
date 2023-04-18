@@ -4,7 +4,7 @@ use assert_fs::prelude::*;
 use serde_json::json;
 use snapbox::cmd::Command;
 
-use scarb_metadata::{ManifestMetadataBuilder, Metadata, PackageMetadata};
+use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
 
 use crate::support::command::Scarb;
 use crate::support::project_builder::ProjectBuilder;
@@ -77,6 +77,9 @@ fn includes_compilation_units() {
     assert!(unit.package.repr.starts_with("hello "));
     assert_eq!(unit.target.name, "hello");
     assert!(!unit.components.is_empty());
+    assert!(unit
+        .cfg
+        .contains(&Cfg::KV("target".into(), unit.target.kind.clone())));
 }
 
 #[test]
