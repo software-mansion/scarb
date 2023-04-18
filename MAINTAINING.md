@@ -145,14 +145,6 @@ Tweet: https://twitter.com/...
 
 Post the same message as posted on the Telegram to the `#scarb` channel on Starknet's Discord.
 
-### Close GitHub milestone for this release
-
-```shell
-ci/close-milestone.py X.Y.Z 
-```
-
-This Python 3.11 script requires GitHub CLI to be set up, and the official projects extension to be installed.
-
 [@software-mansion/scarb-maintainers]: https://github.com/orgs/software-mansion/teams/scarb-maintainers
 
 [@mkaput]: https://github.com/mkaput
@@ -162,8 +154,6 @@ This Python 3.11 script requires GitHub CLI to be set up, and the official proje
 [release]: https://github.com/software-mansion/scarb/actions/workflows/release.yml
 
 [vscode-relnotes]: https://code.visualstudio.com/updates
-
-[milestone]: https://github.com/software-mansion/scarb/milestones
 
 [scarb project]: https://github.com/orgs/software-mansion/projects/4
 
