@@ -57,6 +57,7 @@ impl Compiler for StarknetContractCompiler {
 
         let mut db = RootDatabase::builder()
             .with_project_config(build_project_config(&unit)?)
+            .with_cfg(unit.cfg_set.clone())
             .with_starknet()
             .build()?;
 
