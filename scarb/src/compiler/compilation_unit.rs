@@ -1,9 +1,10 @@
 use std::fmt::Write;
 use std::hash::{Hash, Hasher};
 
-use crate::compiler::Profile;
+use cairo_lang_filesystem::cfg::CfgSet;
 use smol_str::SmolStr;
 
+use crate::compiler::Profile;
 use crate::core::{Config, ManifestCompilerConfig, Package, PackageId, Target};
 use crate::flock::Filesystem;
 use crate::internal::stable_hash::StableHasher;
@@ -27,6 +28,8 @@ pub struct CompilationUnit {
     pub profile: Profile,
     /// Cairo compiler configuration parameters to use in this unit.
     pub compiler_config: ManifestCompilerConfig,
+    /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this unit.
+    pub cfg_set: CfgSet,
 }
 
 /// Information about a single package that is part of a [`CompilationUnit`].

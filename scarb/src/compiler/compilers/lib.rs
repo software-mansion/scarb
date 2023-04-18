@@ -49,6 +49,7 @@ impl Compiler for LibCompiler {
 
         let mut db = RootDatabase::builder()
             .with_project_config(build_project_config(&unit)?)
+            .with_cfg(unit.cfg_set.clone())
             // HACK(mkaput): Temporarily enable Starknet compilation features,
             //   so that Starknet plugin will be available in [lib] target.
             // FIXME(#91): Replace this with more generic solution.

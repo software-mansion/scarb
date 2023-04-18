@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Result;
+use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use itertools::Itertools;
 
@@ -94,6 +95,8 @@ pub fn generate_compilation_units(
         });
 
         for member_target in &member.manifest.targets {
+            let cfg_set = build_cfg_set(member_target);
+
             let components = packages
                 .iter()
                 .cloned()
@@ -119,6 +122,7 @@ pub fn generate_compilation_units(
                 components,
                 profile: ws.current_profile()?,
                 compiler_config: member.manifest.compiler_config.clone(),
+                cfg_set,
             };
             units.push(unit);
         }
@@ -149,4 +153,9 @@ async fn collect_packages_from_resolve_graph(
         packages.insert(package_id, package);
     }
     Ok(packages)
+}
+
+/// Build a set of `cfg` items to enable while building the compilation unit.
+fn build_cfg_set(target: &Target) -> CfgSet {
+    CfgSet::from_iter([Cfg::kv("target", target.kind.clone())])
 }

@@ -4,7 +4,8 @@ use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet::contract_class::ContractClass;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
+use predicates::prelude::*;
 
 use crate::support::command::Scarb;
 use crate::support::fsx::ChildPathEx;
@@ -38,6 +39,16 @@ const FORTY_TWO_CONTRACT: &str = indoc! {r#"
         fn answer() -> felt252 { 42 }
     }
 "#};
+
+fn assert_is_contract_class(child: &ChildPath) {
+    let contract_json = fs::read_to_string(child.path()).unwrap();
+    serde_json::from_str::<ContractClass>(&contract_json).unwrap();
+}
+
+fn assert_is_casm_contract_class(child: &ChildPath) {
+    let casm_contract_json = fs::read_to_string(child.path()).unwrap();
+    serde_json::from_str::<CasmContractClass>(&casm_contract_json).unwrap();
+}
 
 #[test]
 fn compile_starknet_contract() {
@@ -186,12 +197,36 @@ fn casm_add_pythonic_hints() {
     assert_is_casm_contract_class(&t.child("target/dev/hello_Balance.casm.json"));
 }
 
-fn assert_is_contract_class(child: &ChildPath) {
-    let contract_json = fs::read_to_string(child.path()).unwrap();
-    serde_json::from_str::<ContractClass>(&contract_json).unwrap();
-}
+#[test]
+fn compile_starknet_contract_only_with_cfg() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
 
-fn assert_is_casm_contract_class(child: &ChildPath) {
-    let casm_contract_json = fs::read_to_string(child.path()).unwrap();
-    serde_json::from_str::<CasmContractClass>(&casm_contract_json).unwrap();
+            [[target.starknet-contract]]
+        "#})
+        .lib_cairo(formatdoc! {r#"
+            #[cfg(target: 'starknet-contract')]
+            {BALANCE_CONTRACT}
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec!["hello.sierra", "hello_Balance.sierra.json"]
+    );
+
+    t.child("target/dev/hello.sierra")
+        .assert(predicates::str::contains("hello::Balance::balance::read").not());
+
+    assert_is_contract_class(&t.child("target/dev/hello_Balance.sierra.json"));
 }
