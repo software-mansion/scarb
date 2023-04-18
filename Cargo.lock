@@ -3139,6 +3139,7 @@ name = "scarb-metadata"
 version = "1.1.0"
 dependencies = [
  "assert_fs",
+ "cairo-lang-filesystem",
  "camino",
  "derive_builder",
  "semver",
