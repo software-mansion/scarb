@@ -54,7 +54,7 @@ fn locking_build_artifacts() {
         for line in stdout.lines() {
             let line = line.unwrap();
 
-            if line.contains("waiting for file lock on output file") {
+            if line.contains("file lock") {
                 barrier.wait();
             }
         }
@@ -113,7 +113,7 @@ async fn locking_package_cache() {
     for line in stdout.lines() {
         let line = line.unwrap();
 
-        if line.contains("waiting for file lock on package cache") {
+        if line.contains("file lock") {
             barrier.wait();
         }
     }
@@ -123,10 +123,10 @@ async fn locking_package_cache() {
 
     snapbox::assert_matches(
         indoc! {r#"
-            [..]  Blocking waiting for file lock on package cache
-            [..] Compiling hello v0.1.0 ([..])
-            [..]  Finished release target(s) in [..]
-            "#},
+        [..]  Blocking waiting for file lock on package cache
+        [..] Compiling hello v0.1.0 ([..])
+        [..]  Finished release target(s) in [..]
+        "#},
         stdout_acc,
     );
 }
