@@ -1,6 +1,7 @@
 //! Version information about Scarb and Cairo.
 
 use std::fmt;
+use std::fmt::Write;
 
 use serde::{Deserialize, Serialize};
 
@@ -29,7 +30,7 @@ pub struct CommitInfo {
 
 impl VersionInfo {
     pub fn short(&self) -> String {
-        display_version_and_commit_info(&self.version, &self.commit_info)
+        display_version_and_commit_info(&self.version, &self.commit_info, None)
     }
 
     pub fn long(&self) -> String {
@@ -46,14 +47,28 @@ impl VersionInfo {
 
 impl CairoVersionInfo {
     pub fn short(&self) -> String {
-        display_version_and_commit_info(&self.version, &self.commit_info)
+        display_version_and_commit_info(
+            &self.version,
+            &self.commit_info,
+            Some("cairo-lang-compiler"),
+        )
     }
 }
 
-fn display_version_and_commit_info(version: &str, commit_info: &Option<CommitInfo>) -> String {
+fn display_version_and_commit_info(
+    version: &str,
+    commit_info: &Option<CommitInfo>,
+    crate_name: Option<&str>,
+) -> String {
     let mut text = version.to_string();
     if let Some(commit_info) = commit_info {
-        text.push_str(&format!(" ({commit_info})"));
+        write!(&mut text, " ({commit_info})").unwrap();
+    } else if let Some(crate_name) = crate_name {
+        write!(
+            &mut text,
+            " (https://crates.io/crates/{crate_name}/{version})"
+        )
+        .unwrap();
     }
     text
 }
