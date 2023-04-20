@@ -3,5 +3,7 @@
   "working-on-an-existing-package": "",
   "dependencies": "",
   "formatting": "",
-  "defining-custom-scripts": ""
+  "defining-custom-profiles": "",
+  "defining-custom-scripts": "",
+  "using-scarb-in-ci": ""
 }
