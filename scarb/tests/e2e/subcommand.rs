@@ -191,3 +191,36 @@ fn ctrl_c(child: &mut Child) {
 fn ctrl_c(child: &mut Child) {
     child.kill().unwrap();
 }
+
+#[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "This test should write a Rust code, because currently it only assumes Unix."
+)]
+fn can_find_scarb_directory_scripts_without_path() {
+    let t = assert_fs::TempDir::new().unwrap();
+    write_script(
+        "hello",
+        &formatdoc!(
+            r#"
+            #!/usr/bin/env python3
+            import sys
+            print("Hello", *sys.argv[1:])
+            "#
+        ),
+        &t,
+    );
+    // Set scarb path to folder containing hello script
+    let scarb_path = t
+        .path()
+        .to_path_buf()
+        .join("scarb-hello")
+        .to_string_lossy()
+        .to_string();
+    Scarb::quick_snapbox()
+        .env("SCARB", scarb_path)
+        .args(["hello", "beautiful", "world"])
+        .assert()
+        .success()
+        .stdout_eq("Hello beautiful world\n");
+}
