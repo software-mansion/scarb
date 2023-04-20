@@ -29,10 +29,17 @@ pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) 
 
 fn find_external_subcommand(cmd: &str, config: &Config) -> Option<PathBuf> {
     let command_exe = format!("{EXTERNAL_CMD_PREFIX}{cmd}{}", env::consts::EXE_SUFFIX);
-    config
-        .dirs()
-        .path_dirs
-        .iter()
+    let mut dirs = config.dirs().path_dirs.clone();
+
+    // Add directory containing the Scarb executable.
+    if let Ok(path) = config.app_exe() {
+        if let Some(parent) = path.parent() {
+            let path = PathBuf::from(parent);
+            dirs.push(path);
+        }
+    }
+
+    dirs.iter()
         .map(|dir| dir.join(&command_exe))
         .find(|file| is_executable(file))
 }
