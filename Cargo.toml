@@ -27,7 +27,7 @@ cairo-lang-sierra-to-casm = { version = "1.0.0-alpha.7", git = "https://github.c
 cairo-lang-starknet = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "94ea2a31" }
 cairo-lang-utils = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "94ea2a31" }
 camino = { version = "1.1.4", features = ["serde1"] }
-clap = { version = "4.2.2", features = ["derive", "env", "string"] }
+clap = { version = "4.2.4", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.1"
 console = "0.15.5"
 data-encoding = "2.3.3"
