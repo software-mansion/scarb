@@ -1,4 +1,5 @@
 use anyhow::Result;
+use cairo_lang_compiler::db::RootDatabase;
 
 pub use compilation_unit::*;
 pub use profile::*;
@@ -8,6 +9,7 @@ use crate::core::Workspace;
 
 mod compilation_unit;
 mod compilers;
+pub mod db;
 pub mod helpers;
 pub mod plugin;
 mod profile;
@@ -16,5 +18,10 @@ mod repository;
 pub trait Compiler: Sync {
     fn target_kind(&self) -> &str;
 
-    fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()>;
+    fn compile(
+        &self,
+        unit: CompilationUnit,
+        db: &mut RootDatabase,
+        ws: &Workspace<'_>,
+    ) -> Result<()>;
 }
