@@ -30,6 +30,7 @@ pub struct PackageName(SmolStr);
 
 impl PackageName {
     pub const CORE: Self = PackageName(SmolStr::new_inline(CORELIB_CRATE_NAME));
+    pub const STARKNET: Self = PackageName(SmolStr::new_inline("starknet"));
 
     /// Constructs and validates new [`PackageName`].
     ///
