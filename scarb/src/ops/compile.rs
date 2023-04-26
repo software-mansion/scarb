@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use indicatif::HumanDuration;
 
+use crate::compiler::db::build_scarb_root_database;
 use crate::compiler::CompilationUnit;
 use crate::core::workspace::Workspace;
 use crate::ops;
@@ -32,13 +33,18 @@ fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         .ui()
         .print(Status::new("Compiling", &unit.name()));
 
-    ws.config().compilers().compile(unit, ws).map_err(|err| {
-        if !suppress_error(&err) {
-            ws.config().ui().anyhow(&err);
-        }
+    let mut db = build_scarb_root_database(&unit, ws)?;
 
-        anyhow!("could not compile `{package_name}` due to previous error")
-    })?;
+    ws.config()
+        .compilers()
+        .compile(unit, &mut db, ws)
+        .map_err(|err| {
+            if !suppress_error(&err) {
+                ws.config().ui().anyhow(&err);
+            }
+
+            anyhow!("could not compile `{package_name}` due to previous error")
+        })?;
 
     Ok(())
 }

@@ -6,9 +6,7 @@ use cairo_lang_sierra_to_casm::metadata::{calc_metadata, MetadataComputationConf
 use serde::{Deserialize, Serialize};
 use tracing::trace_span;
 
-use crate::compiler::helpers::{
-    build_compiler_config, build_project_config, collect_main_crate_ids,
-};
+use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{Target, Workspace};
 
@@ -35,7 +33,12 @@ impl Compiler for LibCompiler {
         Target::LIB
     }
 
-    fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+    fn compile(
+        &self,
+        unit: CompilationUnit,
+        db: &mut RootDatabase,
+        ws: &Workspace<'_>,
+    ) -> Result<()> {
         let props: Props = unit.target().props()?;
         if !props.sierra && !props.casm {
             ws.config().ui().warn(
@@ -46,30 +49,13 @@ impl Compiler for LibCompiler {
 
         let target_dir = unit.target_dir(ws.config());
 
-        // TODO(#280): Deduplicate.
-        let mut db = {
-            let mut b = RootDatabase::builder();
-            b.with_project_config(build_project_config(&unit)?);
-            b.with_cfg(unit.cfg_set.clone());
-
-            // TODO(mkaput): Pull only plugins that are dependencies of this compilation unit.
-            for plugin in ws.config().compiler_plugins().iter() {
-                let instance = plugin.instantiate()?;
-                for semantic_plugin in instance.semantic_plugins() {
-                    b.with_semantic_plugin(semantic_plugin);
-                }
-            }
-
-            b.build()?
-        };
-
         let compiler_config = build_compiler_config(&unit, ws);
 
-        let main_crate_ids = collect_main_crate_ids(&unit, &db);
+        let main_crate_ids = collect_main_crate_ids(&unit, db);
 
         let sierra_program = {
             let _ = trace_span!("compile_sierra").enter();
-            cairo_lang_compiler::compile_prepared_db(&mut db, main_crate_ids, compiler_config)?
+            cairo_lang_compiler::compile_prepared_db(db, main_crate_ids, compiler_config)?
         };
 
         if props.sierra {

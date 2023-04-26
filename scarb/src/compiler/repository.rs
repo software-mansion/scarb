@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use anyhow::{bail, Result};
+use cairo_lang_compiler::db::RootDatabase;
 use itertools::Itertools;
 use smol_str::SmolStr;
 
@@ -39,12 +40,17 @@ impl CompilerRepository {
         }
     }
 
-    pub fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+    pub fn compile(
+        &self,
+        unit: CompilationUnit,
+        db: &mut RootDatabase,
+        ws: &Workspace<'_>,
+    ) -> Result<()> {
         let target_kind = &unit.target().kind;
         let Some(compiler) = self.compilers.get(target_kind) else {
             bail!("unknown compiler for target `{target_kind}`");
         };
-        compiler.compile(unit, ws)
+        compiler.compile(unit, db, ws)
     }
 }
 

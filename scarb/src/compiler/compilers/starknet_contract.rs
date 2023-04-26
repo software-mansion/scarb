@@ -6,14 +6,12 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet::contract::find_contracts;
 use cairo_lang_starknet::contract_class::compile_prepared_db;
-use cairo_lang_utils::Upcast;
+use cairo_lang_utils::UpcastMut;
 use itertools::{izip, Itertools};
 use serde::{Deserialize, Serialize};
 use tracing::{trace, trace_span};
 
-use crate::compiler::helpers::{
-    build_compiler_config, build_project_config, collect_main_crate_ids,
-};
+use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::Workspace;
 
@@ -43,7 +41,12 @@ impl Compiler for StarknetContractCompiler {
         "starknet-contract"
     }
 
-    fn compile(&self, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+    fn compile(
+        &self,
+        unit: CompilationUnit,
+        db: &mut RootDatabase,
+        ws: &Workspace<'_>,
+    ) -> Result<()> {
         let props: Props = unit.target().props()?;
         if !props.sierra && !props.casm {
             ws.config().ui().warn(
@@ -54,36 +57,19 @@ impl Compiler for StarknetContractCompiler {
 
         let target_dir = unit.target_dir(ws.config());
 
-        // TODO(#280): Deduplicate.
-        let mut db = {
-            let mut b = RootDatabase::builder();
-            b.with_project_config(build_project_config(&unit)?);
-            b.with_cfg(unit.cfg_set.clone());
-
-            // TODO(mkaput): Pull only plugins that are dependencies of this compilation unit.
-            for plugin in ws.config().compiler_plugins().iter() {
-                let instance = plugin.instantiate()?;
-                for semantic_plugin in instance.semantic_plugins() {
-                    b.with_semantic_plugin(semantic_plugin);
-                }
-            }
-
-            b.build()?
-        };
-
         let compiler_config = build_compiler_config(&unit, ws);
 
-        let main_crate_ids = collect_main_crate_ids(&unit, &db);
+        let main_crate_ids = collect_main_crate_ids(&unit, db);
 
         let contracts = {
             let _ = trace_span!("find_contracts").enter();
-            find_contracts(&db, &main_crate_ids)
+            find_contracts(db.upcast_mut(), &main_crate_ids)
         };
 
         trace!(
             contracts = ?contracts
                 .iter()
-                .map(|decl| decl.module_id().full_path(db.upcast()))
+                .map(|decl| decl.module_id().full_path(db.upcast_mut()))
                 .collect::<Vec<_>>()
         );
 
@@ -91,14 +77,14 @@ impl Compiler for StarknetContractCompiler {
 
         let classes = {
             let _ = trace_span!("compile_starknet").enter();
-            compile_prepared_db(&mut db, &contracts, compiler_config)?
+            compile_prepared_db(db, &contracts, compiler_config)?
         };
 
         let casm_classes: Vec<Option<CasmContractClass>> = if props.casm {
             let _ = trace_span!("compile_sierra").enter();
             zip(&contracts, &classes)
                 .map(|(decl, class)| -> Result<_> {
-                    let contract_name = decl.submodule_id.name(db.upcast());
+                    let contract_name = decl.submodule_id.name(db.upcast_mut());
                     let casm_class = CasmContractClass::from_contract_class(
                         class.clone(),
                         props.casm_add_pythonic_hints,
@@ -115,7 +101,7 @@ impl Compiler for StarknetContractCompiler {
 
         for (decl, class, casm_class) in izip!(contracts, classes, casm_classes) {
             let target_name = &unit.target().name;
-            let contract_name = decl.submodule_id.name(db.upcast());
+            let contract_name = decl.submodule_id.name(db.upcast_mut());
             let file_stem = format!("{target_name}_{contract_name}");
 
             if props.sierra {
