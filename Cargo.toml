@@ -21,14 +21,14 @@ repository = "https://github.com/software-mansion/scarb"
 anyhow = "1.0.71"
 assert_fs = "1.0.13"
 async-trait = "0.1.68"
-cairo-lang-compiler = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "94ea2a31" }
-cairo-lang-filesystem = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "94ea2a31" }
-cairo-lang-formatter = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "94ea2a31" }
-cairo-lang-language-server = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "94ea2a31" }
-cairo-lang-semantic = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "94ea2a31" }
-cairo-lang-sierra-to-casm = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "94ea2a31" }
-cairo-lang-starknet = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "94ea2a31" }
-cairo-lang-utils = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "94ea2a31" }
+cairo-lang-compiler = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "ae1bba71" }
+cairo-lang-filesystem = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "ae1bba71" }
+cairo-lang-formatter = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "ae1bba71" }
+cairo-lang-language-server = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "ae1bba71" }
+cairo-lang-semantic = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "ae1bba71" }
+cairo-lang-sierra-to-casm = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "ae1bba71" }
+cairo-lang-starknet = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "ae1bba71" }
+cairo-lang-utils = { version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git", rev = "ae1bba71" }
 camino = { version = "1.1.4", features = ["serde1"] }
 clap = { version = "4.2.5", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.1"
