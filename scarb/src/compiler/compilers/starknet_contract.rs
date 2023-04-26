@@ -6,7 +6,6 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet::contract::find_contracts;
 use cairo_lang_starknet::contract_class::compile_prepared_db;
-use cairo_lang_starknet::db::StarknetRootDatabaseBuilderEx;
 use cairo_lang_utils::Upcast;
 use itertools::{izip, Itertools};
 use serde::{Deserialize, Serialize};
@@ -55,11 +54,22 @@ impl Compiler for StarknetContractCompiler {
 
         let target_dir = unit.target_dir(ws.config());
 
-        let mut db = RootDatabase::builder()
-            .with_project_config(build_project_config(&unit)?)
-            .with_cfg(unit.cfg_set.clone())
-            .with_starknet()
-            .build()?;
+        // TODO(#280): Deduplicate.
+        let mut db = {
+            let mut b = RootDatabase::builder();
+            b.with_project_config(build_project_config(&unit)?);
+            b.with_cfg(unit.cfg_set.clone());
+
+            // TODO(mkaput): Pull only plugins that are dependencies of this compilation unit.
+            for plugin in ws.config().compiler_plugins().iter() {
+                let instance = plugin.instantiate()?;
+                for semantic_plugin in instance.semantic_plugins() {
+                    b.with_semantic_plugin(semantic_plugin);
+                }
+            }
+
+            b.build()?
+        };
 
         let compiler_config = build_compiler_config(&unit, ws);
 

@@ -3,7 +3,6 @@ use std::io::Write;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, MetadataComputationConfig};
-use cairo_lang_starknet::db::StarknetRootDatabaseBuilderEx;
 use serde::{Deserialize, Serialize};
 use tracing::trace_span;
 
@@ -47,14 +46,22 @@ impl Compiler for LibCompiler {
 
         let target_dir = unit.target_dir(ws.config());
 
-        let mut db = RootDatabase::builder()
-            .with_project_config(build_project_config(&unit)?)
-            .with_cfg(unit.cfg_set.clone())
-            // HACK(mkaput): Temporarily enable Starknet compilation features,
-            //   so that Starknet plugin will be available in [lib] target.
-            // FIXME(#91): Replace this with more generic solution.
-            .with_starknet()
-            .build()?;
+        // TODO(#280): Deduplicate.
+        let mut db = {
+            let mut b = RootDatabase::builder();
+            b.with_project_config(build_project_config(&unit)?);
+            b.with_cfg(unit.cfg_set.clone());
+
+            // TODO(mkaput): Pull only plugins that are dependencies of this compilation unit.
+            for plugin in ws.config().compiler_plugins().iter() {
+                let instance = plugin.instantiate()?;
+                for semantic_plugin in instance.semantic_plugins() {
+                    b.with_semantic_plugin(semantic_plugin);
+                }
+            }
+
+            b.build()?
+        };
 
         let compiler_config = build_compiler_config(&unit, ws);
 
