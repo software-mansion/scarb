@@ -9,6 +9,7 @@ use crate::core::Workspace;
 mod compilation_unit;
 mod compilers;
 pub mod helpers;
+pub mod plugin;
 mod profile;
 mod repository;
 

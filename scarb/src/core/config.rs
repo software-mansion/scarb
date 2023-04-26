@@ -11,6 +11,7 @@ use tokio::runtime::{Builder, Handle, Runtime};
 use tracing::trace;
 use which::which_in;
 
+use crate::compiler::plugin::CompilerPluginRepository;
 use crate::compiler::{CompilerRepository, Profile};
 use crate::core::AppDirs;
 #[cfg(doc)]
@@ -28,11 +29,12 @@ pub struct Config {
     ui: Ui,
     creation_time: Instant,
     // HACK: This should be the lifetime of Config itself, but we cannot express that, so we
-    //   put 'static here and transmute in getter function.
+    //   put static lifetime here and transmute in getter function.
     package_cache_lock: OnceCell<AdvisoryLock<'static>>,
     log_filter_directive: OsString,
     offline: bool,
     compilers: CompilerRepository,
+    compiler_plugins: CompilerPluginRepository,
     tokio_runtime: OnceCell<Runtime>,
     tokio_handle: OnceCell<Handle>,
     profile: Profile,
@@ -69,6 +71,9 @@ impl Config {
             }));
 
         let compilers = b.compilers.unwrap_or_else(CompilerRepository::std);
+        let compiler_plugins = b
+            .compiler_plugins
+            .unwrap_or_else(CompilerPluginRepository::std);
         let profile: Profile = b.profile.unwrap_or_default();
         let tokio_handle: OnceCell<Handle> = OnceCell::new();
         if let Some(handle) = b.tokio_handle {
@@ -86,6 +91,7 @@ impl Config {
             log_filter_directive: b.log_filter_directive.unwrap_or_default(),
             offline: b.offline,
             compilers,
+            compiler_plugins,
             tokio_runtime: OnceCell::new(),
             tokio_handle,
             profile,
@@ -218,6 +224,10 @@ impl Config {
         &self.compilers
     }
 
+    pub fn compiler_plugins(&self) -> &CompilerPluginRepository {
+        &self.compiler_plugins
+    }
+
     pub fn profile(&self) -> Profile {
         self.profile.clone()
     }
@@ -235,6 +245,7 @@ pub struct ConfigBuilder {
     offline: bool,
     log_filter_directive: Option<OsString>,
     compilers: Option<CompilerRepository>,
+    compiler_plugins: Option<CompilerPluginRepository>,
     tokio_handle: Option<Handle>,
     profile: Option<Profile>,
 }
@@ -252,6 +263,7 @@ impl ConfigBuilder {
             offline: false,
             log_filter_directive: None,
             compilers: None,
+            compiler_plugins: None,
             tokio_handle: None,
             profile: None,
         }
@@ -315,6 +327,11 @@ impl ConfigBuilder {
 
     pub fn compilers(mut self, compilers: CompilerRepository) -> Self {
         self.compilers = Some(compilers);
+        self
+    }
+
+    pub fn compiler_plugins(mut self, compiler_plugins: CompilerPluginRepository) -> Self {
+        self.compiler_plugins = Some(compiler_plugins);
         self
     }
 
