@@ -65,6 +65,25 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
     )
 }
 
+/// Gather [`Package`] instances from this resolver result, by asking the [`RegistryCache`]
+/// to download resolved packages.
+///
+/// Currently, it is expected that all packages are already downloaded during resolution,
+/// so the `download` calls in this method should be cheap, but this may change the future.
+#[tracing::instrument(level = "trace", skip_all)]
+async fn collect_packages_from_resolve_graph(
+    resolve: &Resolve,
+    registry: &mut RegistryCache<'_>,
+) -> Result<HashMap<PackageId, Package>> {
+    let mut packages = HashMap::with_capacity(resolve.package_ids().size_hint().0);
+    // TODO(#6): Parallelize this loop.
+    for package_id in resolve.package_ids() {
+        let package = registry.download(package_id).await?;
+        packages.insert(package_id, package);
+    }
+    Ok(packages)
+}
+
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
@@ -139,25 +158,6 @@ pub fn generate_compilation_units(
     );
 
     Ok(units)
-}
-
-/// Gather [`Package`] instances from this resolver result, by asking the [`RegistryCache`]
-/// to download resolved packages.
-///
-/// Currently, it is expected that all packages are already downloaded during resolution,
-/// so the `download` calls in this method should be cheap, but this may change the future.
-#[tracing::instrument(level = "trace", skip_all)]
-async fn collect_packages_from_resolve_graph(
-    resolve: &Resolve,
-    registry: &mut RegistryCache<'_>,
-) -> Result<HashMap<PackageId, Package>> {
-    let mut packages = HashMap::with_capacity(resolve.package_ids().size_hint().0);
-    // TODO(#6): Parallelize this loop.
-    for package_id in resolve.package_ids() {
-        let package = registry.download(package_id).await?;
-        packages.insert(package_id, package);
-    }
-    Ok(packages)
 }
 
 /// Build a set of `cfg` items to enable while building the compilation unit.
