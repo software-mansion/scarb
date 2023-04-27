@@ -27,14 +27,12 @@ impl Resolve {
     /// Collect all [`PackageId`]s needed to compile a root package.
     ///
     /// Returns a collection of all [`PackageId`]s of packages needed to provide as _crate roots_
-    /// to the Cairo compiler in order to build a particular package (named _root package_).
+    /// to the Cairo compiler, or to load as _cairo plugins_, in order to build a particular
+    /// package (named _root package_).
     ///
     /// # Safety
     /// * Asserts that `root_package` is a node in this graph.
-    pub fn package_components_of(
-        &self,
-        root_package: PackageId,
-    ) -> impl Iterator<Item = PackageId> + '_ {
+    pub fn solution_of(&self, root_package: PackageId) -> impl Iterator<Item = PackageId> + '_ {
         assert!(&self.graph.contains_node(root_package));
         Dfs::new(&self.graph, root_package)
             .iter(&self.graph)
