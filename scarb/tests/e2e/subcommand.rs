@@ -224,3 +224,34 @@ fn can_find_scarb_directory_scripts_without_path() {
         .success()
         .stdout_eq("Hello beautiful world\n");
 }
+
+#[test]
+fn can_list_scarb_directory_scripts() {
+    let t = assert_fs::TempDir::new().unwrap();
+    write_script(
+        "hello",
+        &formatdoc!(
+            r#"
+            #!/usr/bin/env python3
+            import sys
+            print("Hello", *sys.argv[1:])
+            "#
+        ),
+        &t,
+    );
+    // Set scarb path to folder containing hello script
+    let scarb_path = t
+        .path()
+        .to_path_buf()
+        .join(format!("scarb-hello{}", env::consts::EXE_SUFFIX))
+        .to_string_lossy()
+        .to_string();
+    let cmd = Scarb::quick_snapbox()
+        .env("SCARB", scarb_path)
+        .args(["commands"])
+        .assert()
+        .success();
+    let output = cmd.get_output().stdout.clone();
+    let stdout = String::from_utf8(output).unwrap();
+    assert!(stdout.contains("hello"))
+}

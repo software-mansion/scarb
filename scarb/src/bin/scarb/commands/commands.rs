@@ -49,8 +49,14 @@ fn list_commands(config: &Config, builtins: &BTreeMap<String, Option<String>>) -
     let prefix = EXTERNAL_CMD_PREFIX;
     let suffix = env::consts::EXE_SUFFIX;
 
+    // Directory containing the Scarb executable.
+    let scarb_exe_dir = config
+        .app_exe()
+        .ok()
+        .and_then(|p| p.parent())
+        .map(PathBuf::from);
     let mut commands = BTreeMap::new();
-    for dir in config.dirs().path_dirs.iter() {
+    for dir in config.dirs().path_dirs.iter().chain(scarb_exe_dir.iter()) {
         let Ok(entries) = fs::read_dir(dir) else { continue; };
         for entry in entries.filter_map(|e| e.ok()) {
             let path = entry.path();
@@ -129,7 +135,6 @@ mod tests {
 
         let mut cmd = list_commands(&config, &BTreeMap::new());
 
-        assert_eq!(cmd.commands.len(), 1);
         assert_eq!(
             cmd.commands.remove("hello").unwrap(),
             CommandInfo::External {
