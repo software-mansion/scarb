@@ -11,7 +11,7 @@ use tokio::runtime::{Builder, Handle, Runtime};
 use tracing::trace;
 use which::which_in;
 
-use crate::compiler::plugin::CompilerPluginRepository;
+use crate::compiler::plugin::CairoPluginRepository;
 use crate::compiler::{CompilerRepository, Profile};
 use crate::core::AppDirs;
 #[cfg(doc)]
@@ -34,7 +34,7 @@ pub struct Config {
     log_filter_directive: OsString,
     offline: bool,
     compilers: CompilerRepository,
-    compiler_plugins: CompilerPluginRepository,
+    cairo_plugins: CairoPluginRepository,
     tokio_runtime: OnceCell<Runtime>,
     tokio_handle: OnceCell<Handle>,
     profile: Profile,
@@ -71,9 +71,7 @@ impl Config {
             }));
 
         let compilers = b.compilers.unwrap_or_else(CompilerRepository::std);
-        let compiler_plugins = b
-            .compiler_plugins
-            .unwrap_or_else(CompilerPluginRepository::std);
+        let compiler_plugins = b.cairo_plugins.unwrap_or_else(CairoPluginRepository::std);
         let profile: Profile = b.profile.unwrap_or_default();
         let tokio_handle: OnceCell<Handle> = OnceCell::new();
         if let Some(handle) = b.tokio_handle {
@@ -91,7 +89,7 @@ impl Config {
             log_filter_directive: b.log_filter_directive.unwrap_or_default(),
             offline: b.offline,
             compilers,
-            compiler_plugins,
+            cairo_plugins: compiler_plugins,
             tokio_runtime: OnceCell::new(),
             tokio_handle,
             profile,
@@ -224,8 +222,8 @@ impl Config {
         &self.compilers
     }
 
-    pub fn compiler_plugins(&self) -> &CompilerPluginRepository {
-        &self.compiler_plugins
+    pub fn cairo_plugins(&self) -> &CairoPluginRepository {
+        &self.cairo_plugins
     }
 
     pub fn profile(&self) -> Profile {
@@ -245,7 +243,7 @@ pub struct ConfigBuilder {
     offline: bool,
     log_filter_directive: Option<OsString>,
     compilers: Option<CompilerRepository>,
-    compiler_plugins: Option<CompilerPluginRepository>,
+    cairo_plugins: Option<CairoPluginRepository>,
     tokio_handle: Option<Handle>,
     profile: Option<Profile>,
 }
@@ -263,7 +261,7 @@ impl ConfigBuilder {
             offline: false,
             log_filter_directive: None,
             compilers: None,
-            compiler_plugins: None,
+            cairo_plugins: None,
             tokio_handle: None,
             profile: None,
         }
@@ -330,8 +328,8 @@ impl ConfigBuilder {
         self
     }
 
-    pub fn compiler_plugins(mut self, compiler_plugins: CompilerPluginRepository) -> Self {
-        self.compiler_plugins = Some(compiler_plugins);
+    pub fn cairo_plugins(mut self, compiler_plugins: CairoPluginRepository) -> Self {
+        self.cairo_plugins = Some(compiler_plugins);
         self
     }
 
