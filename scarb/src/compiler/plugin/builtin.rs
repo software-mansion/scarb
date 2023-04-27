@@ -3,15 +3,15 @@ use std::sync::Arc;
 
 use cairo_lang_semantic::plugin::SemanticPlugin;
 
-use crate::compiler::plugin::{CompilerPlugin, CompilerPluginInstance};
+use crate::compiler::plugin::{CairoPlugin, CairoPluginInstance};
 use crate::core::PackageId;
 
-pub struct BuiltinSemanticCompilerPlugin<P> {
+pub struct BuiltinSemanticCairoPlugin<P> {
     id: PackageId,
     phantom: PhantomData<P>,
 }
 
-impl<P> BuiltinSemanticCompilerPlugin<P> {
+impl<P> BuiltinSemanticCairoPlugin<P> {
     pub fn new(id: PackageId) -> Self {
         Self {
             id,
@@ -20,18 +20,18 @@ impl<P> BuiltinSemanticCompilerPlugin<P> {
     }
 }
 
-impl<P: SemanticPlugin + Default + 'static> CompilerPlugin for BuiltinSemanticCompilerPlugin<P> {
+impl<P: SemanticPlugin + Default + 'static> CairoPlugin for BuiltinSemanticCairoPlugin<P> {
     fn id(&self) -> PackageId {
         self.id
     }
 
-    fn instantiate(&self) -> anyhow::Result<Box<dyn CompilerPluginInstance>> {
+    fn instantiate(&self) -> anyhow::Result<Box<dyn CairoPluginInstance>> {
         let instance: Arc<dyn SemanticPlugin> = Arc::new(P::default());
         Ok(Box::new(instance))
     }
 }
 
-impl CompilerPluginInstance for Arc<dyn SemanticPlugin> {
+impl CairoPluginInstance for Arc<dyn SemanticPlugin> {
     fn semantic_plugins(&self) -> Vec<Arc<dyn SemanticPlugin>> {
         Vec::from_iter([self.clone()])
     }

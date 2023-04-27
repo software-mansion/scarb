@@ -8,26 +8,26 @@ use cairo_lang_semantic::plugin::SemanticPlugin;
 use cairo_lang_starknet::plugin::StarkNetPlugin;
 use itertools::Itertools;
 
-use crate::compiler::plugin::builtin::BuiltinSemanticCompilerPlugin;
+use crate::compiler::plugin::builtin::BuiltinSemanticCairoPlugin;
 use crate::core::{PackageId, PackageName, SourceId};
 use crate::internal::to_version::ToVersion;
 
 pub mod builtin;
 
-pub trait CompilerPlugin: Sync {
+pub trait CairoPlugin: Sync {
     fn id(&self) -> PackageId;
-    fn instantiate(&self) -> Result<Box<dyn CompilerPluginInstance>>;
+    fn instantiate(&self) -> Result<Box<dyn CairoPluginInstance>>;
 }
 
-pub trait CompilerPluginInstance {
+pub trait CairoPluginInstance {
     fn semantic_plugins(&self) -> Vec<Arc<dyn SemanticPlugin>>;
 }
 
-pub struct CompilerPluginRepository {
-    plugins: HashMap<PackageId, Box<dyn CompilerPlugin>>,
+pub struct CairoPluginRepository {
+    plugins: HashMap<PackageId, Box<dyn CairoPlugin>>,
 }
 
-impl CompilerPluginRepository {
+impl CairoPluginRepository {
     pub fn empty() -> Self {
         Self {
             plugins: Default::default(),
@@ -46,15 +46,15 @@ impl CompilerPluginRepository {
             version.cairo.version.to_version().unwrap(),
             SourceId::for_std(),
         );
-        repo.add(Box::new(
-            BuiltinSemanticCompilerPlugin::<StarkNetPlugin>::new(starknet_package_id),
-        ))
+        repo.add(Box::new(BuiltinSemanticCairoPlugin::<StarkNetPlugin>::new(
+            starknet_package_id,
+        )))
         .unwrap();
 
         repo
     }
 
-    pub fn add(&mut self, plugin: Box<dyn CompilerPlugin>) -> Result<()> {
+    pub fn add(&mut self, plugin: Box<dyn CairoPlugin>) -> Result<()> {
         match self.plugins.entry(plugin.id()) {
             Entry::Occupied(e) => bail!("found duplicate plugin `{}`", e.key()),
             Entry::Vacant(e) => {
@@ -64,21 +64,21 @@ impl CompilerPluginRepository {
         }
     }
 
-    pub fn get(&self, id: PackageId) -> Option<&dyn CompilerPlugin> {
+    pub fn get(&self, id: PackageId) -> Option<&dyn CairoPlugin> {
         self.plugins.get(&id).map(AsRef::as_ref)
     }
 
-    pub fn fetch(&self, id: PackageId) -> Result<&dyn CompilerPlugin> {
+    pub fn fetch(&self, id: PackageId) -> Result<&dyn CairoPlugin> {
         self.get(id)
             .ok_or_else(|| anyhow!("compiler plugin could not be loaded `{id}`"))
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &dyn CompilerPlugin> {
+    pub fn iter(&self) -> impl Iterator<Item = &dyn CairoPlugin> {
         self.plugins.values().map(AsRef::as_ref)
     }
 }
 
-impl fmt::Debug for CompilerPluginRepository {
+impl fmt::Debug for CairoPluginRepository {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "CompilerPluginRepository ")?;
         f.debug_set().entries(self.plugins.keys().sorted()).finish()
