@@ -15,6 +15,7 @@ use crate::internal::stable_hash::StableHasher;
 pub struct CompilationUnit {
     /// The Scarb [`Package`] to be build.
     pub main_package_id: PackageId,
+
     /// Collection of all [`Package`]s needed to provide as _crate roots_ to
     /// the Cairo compiler in order to build `package`.
     ///
@@ -23,11 +24,18 @@ pub struct CompilationUnit {
     /// For performance purposes, the component describing the main package is always **first**,
     /// and then it is followed by a component describing the `core` package.
     pub components: Vec<CompilationUnitComponent>,
+
+    /// Collection of all [`Package`]s needed to load as _cairo plugins_ in order to build
+    /// `package`.
+    pub cairo_plugins: Vec<CompilationUnitCairoPlugin>,
+
     /// The profile contains information about *how* the build should be run, including debug
     /// level, etc.
     pub profile: Profile,
+
     /// Cairo compiler configuration parameters to use in this unit.
     pub compiler_config: ManifestCompilerConfig,
+
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this unit.
     pub cfg_set: CfgSet,
 }
@@ -40,6 +48,14 @@ pub struct CompilationUnitComponent {
     pub package: Package,
     /// Information about the specific target to build, out of the possible targets in `package`.
     pub target: Target,
+}
+
+/// Information about a single package that is a compiler plugin to load for [`CompilationUnit`].
+#[derive(Clone, Debug)]
+#[non_exhaustive]
+pub struct CompilationUnitCairoPlugin {
+    /// The Scarb plugin [`Package`] to load.
+    pub package: Package,
 }
 
 impl CompilationUnit {

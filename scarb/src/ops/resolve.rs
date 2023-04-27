@@ -5,8 +5,8 @@ use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use itertools::Itertools;
 
-use crate::compiler::{CompilationUnit, CompilationUnitComponent};
-use crate::core::package::{Package, PackageId};
+use crate::compiler::{CompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent};
+use crate::core::package::{Package, PackageClass, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::source_map::SourceMap;
 use crate::core::registry::Registry;
@@ -91,34 +91,78 @@ pub fn generate_compilation_units(
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members() {
-        let mut packages = resolve
-            .solution_of(member.id)
-            .filter(|pkg| {
-                let is_self_or_lib = member.id == pkg.id || pkg.is_lib();
-                // Print a warning if this dependency is not a library.
-                if !is_self_or_lib {
-                    ws.config().ui().warn(format!(
-                        "{} ignoring invalid dependency `{}` which is missing a lib target",
-                        member.id, pkg.id.name
-                    ));
-                }
-                is_self_or_lib
-            })
-            .collect::<Vec<_>>();
-
-        // Ensure the member is first element, and it is followed by `core`, to ensure the order
-        // invariant of the `CompilationUnit::components` field holds.
-        packages.sort_by_key(|package| {
-            if package.id == member.id {
-                0
-            } else if package.id.is_core() {
-                1
-            } else {
-                2
-            }
+        units.extend(if member.is_cairo_plugin() {
+            todo!("Compiling Cairo plugins is not implemented yet.")
+        } else {
+            generate_cairo_compilation_units(&member, resolve, ws)?
         });
+    }
 
-        for member_target in &member.manifest.targets {
+    assert!(
+        units.iter().map(CompilationUnit::id).all_unique(),
+        "All generated compilation units must have unique IDs."
+    );
+
+    Ok(units)
+}
+
+fn generate_cairo_compilation_units(
+    member: &Package,
+    resolve: &WorkspaceResolve,
+    ws: &Workspace<'_>,
+) -> Result<Vec<CompilationUnit>> {
+    let mut classes = resolve.solution_of(member.id).into_group_map_by(|pkg| {
+        if pkg.id == member.id {
+            // Always classify the member as a library (even if it's [PackageClass::Other]),
+            // so that it will end up being a component.
+            assert!(!member.is_cairo_plugin());
+            PackageClass::Library
+        } else {
+            pkg.classify()
+        }
+    });
+
+    let mut packages = classes.remove(&PackageClass::Library).unwrap_or_default();
+    let cairo_plugins = classes
+        .remove(&PackageClass::CairoPlugin)
+        .unwrap_or_default();
+    let other = classes.remove(&PackageClass::Other).unwrap_or_default();
+
+    // Ensure the member is first element, and it is followed by `core`, to ensure the order
+    // invariant of the `CompilationUnit::components` field holds.
+    packages.sort_by_key(|package| {
+        if package.id == member.id {
+            0
+        } else if package.id.is_core() {
+            1
+        } else {
+            2
+        }
+    });
+
+    assert!(!packages.is_empty());
+    assert_eq!(packages[0].id, member.id);
+
+    // Print warnings for dependencies that are not usable.
+    for pkg in other {
+        ws.config().ui().warn(format!(
+            "{} ignoring invalid dependency `{}` which is missing a lib or cairo-plugin target",
+            member.id, pkg.id.name
+        ));
+    }
+
+    let cairo_plugins = cairo_plugins
+        .into_iter()
+        .map(|package| CompilationUnitCairoPlugin { package })
+        .collect::<Vec<_>>();
+
+    let profile = ws.current_profile()?;
+
+    Ok(member
+        .manifest
+        .targets
+        .iter()
+        .map(|member_target| {
             let cfg_set = build_cfg_set(member_target);
 
             let components = packages
@@ -141,23 +185,16 @@ pub fn generate_compilation_units(
                 })
                 .collect();
 
-            let unit = CompilationUnit {
+            CompilationUnit {
                 main_package_id: member.id,
                 components,
-                profile: ws.current_profile()?,
+                cairo_plugins: cairo_plugins.clone(),
+                profile: profile.clone(),
                 compiler_config: member.manifest.compiler_config.clone(),
                 cfg_set,
-            };
-            units.push(unit);
-        }
-    }
-
-    assert!(
-        units.iter().map(CompilationUnit::id).all_unique(),
-        "All generated compilation units must have unique IDs."
-    );
-
-    Ok(units)
+            }
+        })
+        .collect())
 }
 
 /// Build a set of `cfg` items to enable while building the compilation unit.

@@ -135,7 +135,7 @@ fn compile_dep_not_a_lib() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            warn: hello v1.0.0 ([..]) ignoring invalid dependency `dep` which is missing a lib target
+            warn: hello v1.0.0 ([..]) ignoring invalid dependency `dep` which is missing a lib or cairo-plugin target
                Compiling hello v1.0.0 ([..])
             error: Identifier not found.
              --> lib.cairo:1:25
