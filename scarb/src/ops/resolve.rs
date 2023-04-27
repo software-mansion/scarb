@@ -21,13 +21,18 @@ pub struct WorkspaceResolve {
 }
 
 impl WorkspaceResolve {
-    pub fn package_components_of(
-        &self,
-        root_package: PackageId,
-    ) -> impl Iterator<Item = Package> + '_ {
+    /// Collect all [`Package`]s needed to compile a root package.
+    ///
+    /// Returns a collection of all [`Package`]s of packages needed to provide as _crate roots_
+    /// to the Cairo compiler, or to load as _cairo plugins_, in order to build a particular
+    /// package (named _root package_).
+    ///
+    /// # Safety
+    /// * Asserts that `root_package` is a node in this graph.
+    pub fn solution_of(&self, root_package: PackageId) -> impl Iterator<Item = Package> + '_ {
         assert!(self.packages.contains_key(&root_package));
         self.resolve
-            .package_components_of(root_package)
+            .solution_of(root_package)
             .map(|id| self.packages[&id].clone())
     }
 }
@@ -68,7 +73,7 @@ pub fn generate_compilation_units(
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members() {
         let mut packages = resolve
-            .package_components_of(member.id)
+            .solution_of(member.id)
             .filter(|pkg| {
                 let is_self_or_lib = member.id == pkg.id || pkg.is_lib();
                 // Print a warning if this dependency is not a library.
