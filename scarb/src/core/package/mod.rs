@@ -6,10 +6,10 @@ use anyhow::{anyhow, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::Deserialize;
 
-use crate::compiler::Profile;
 pub use id::*;
 pub use name::*;
 
+use crate::compiler::Profile;
 use crate::core::manifest::Manifest;
 use crate::core::Target;
 
@@ -36,6 +36,13 @@ impl Deref for Package {
     }
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum PackageClass {
+    Library,
+    CairoPlugin,
+    Other,
+}
+
 impl Package {
     pub fn new(id: PackageId, manifest_path: Utf8PathBuf, manifest: Box<Manifest>) -> Self {
         Self(Arc::new(PackageInner {
@@ -57,6 +64,20 @@ impl Package {
 
     pub fn is_lib(&self) -> bool {
         self.manifest.targets.iter().any(Target::is_lib)
+    }
+
+    pub fn is_cairo_plugin(&self) -> bool {
+        self.manifest.targets.iter().any(Target::is_cairo_plugin)
+    }
+
+    pub fn classify(&self) -> PackageClass {
+        if self.is_cairo_plugin() {
+            PackageClass::CairoPlugin
+        } else if self.is_lib() {
+            PackageClass::Library
+        } else {
+            PackageClass::Other
+        }
     }
 
     pub fn target(&self, kind: &str) -> Option<&Target> {

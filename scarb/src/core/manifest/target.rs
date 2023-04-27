@@ -2,11 +2,12 @@ use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
 
-use crate::core::toml_merge;
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+
+use crate::core::toml_merge;
 
 /// See [`TargetInner`] for public fields reference.
 #[derive(Clone, Debug, Hash)]
@@ -30,7 +31,8 @@ impl Deref for Target {
 }
 
 impl Target {
-    pub const LIB: &'static str = "lib";
+    pub const LIB: &'_ str = "lib";
+    pub const CAIRO_PLUGIN: &'_ str = "cairo-plugin";
 
     pub fn new(
         kind: impl Into<SmolStr>,
@@ -72,6 +74,10 @@ impl Target {
 
     pub fn is_lib(&self) -> bool {
         self.kind == Self::LIB
+    }
+
+    pub fn is_cairo_plugin(&self) -> bool {
+        self.kind == Self::CAIRO_PLUGIN
     }
 
     pub fn source_root(&self) -> &Utf8Path {
