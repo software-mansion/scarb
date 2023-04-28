@@ -5,6 +5,15 @@ use url::Url;
 
 use crate::internal::stable_hash::short_hash;
 
+/// A newtype wrapper around [`Url`] which represents a _canonical_ version of an original URL.
+///
+/// A _canonical_ url is only intended for internal comparison purposes in Scarb.
+/// It's to help paper over mistakes such as depending on `github.com/foo/bar` vs
+/// `github.com/foo/bar.git`.
+/// This is **only** for internal purposes within Scarb and provides no means to actually read the
+/// underlying string value of the [`Url`] it contains.
+/// This is intentional, because all fetching should still happen within the context of
+/// the original URL.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct CanonicalUrl(Url);
 
