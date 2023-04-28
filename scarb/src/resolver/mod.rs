@@ -22,7 +22,7 @@ use crate::core::{PackageId, Summary};
 ///     It is also advised to implement internal caching, as the resolver may frequently ask
 ///     repetitive queries.
 #[tracing::instrument(level = "trace", skip_all)]
-pub async fn resolve(summaries: &[Summary], registry: &mut dyn Registry) -> Result<Resolve> {
+pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<Resolve> {
     // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::new();
 
@@ -151,7 +151,7 @@ mod tests {
             })
             .collect_vec();
 
-        let resolve = runtime.block_on(super::resolve(&summaries, &mut registry));
+        let resolve = runtime.block_on(super::resolve(&summaries, &registry));
 
         let resolve = resolve
             .map(|r| {
