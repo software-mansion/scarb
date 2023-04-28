@@ -47,7 +47,7 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
     ws.config().tokio_handle().block_on(
         async {
             let source_map = SourceMap::preloaded(ws.members(), ws.config());
-            let registry_cache = RegistryCache::new(source_map);
+            let registry_cache = RegistryCache::new(&source_map);
 
             let members_summaries = ws
                 .members()
@@ -56,8 +56,7 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
 
             let resolve = resolver::resolve(&members_summaries, &registry_cache).await?;
 
-            let packages =
-                collect_packages_from_resolve_graph(&resolve, &registry_cache).await?;
+            let packages = collect_packages_from_resolve_graph(&resolve, &registry_cache).await?;
 
             Ok(WorkspaceResolve { resolve, packages })
         }
