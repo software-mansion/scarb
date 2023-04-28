@@ -501,7 +501,7 @@ impl DetailedTomlDependency {
                 SourceId::for_git(git, &reference)?
             }
 
-            (Some(_), None, None) => SourceId::default_registry(),
+            (Some(_), None, None) => SourceId::default(),
         };
 
         Ok(ManifestDependency {

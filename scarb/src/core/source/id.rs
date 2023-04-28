@@ -248,6 +248,12 @@ impl Deref for SourceId {
     }
 }
 
+impl Default for SourceId {
+    fn default() -> Self {
+        SourceId::default_registry()
+    }
+}
+
 impl fmt::Debug for SourceId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_tuple("SourceId")
