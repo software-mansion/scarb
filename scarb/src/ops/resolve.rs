@@ -47,17 +47,17 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
     ws.config().tokio_handle().block_on(
         async {
             let source_map = SourceMap::preloaded(ws.members(), ws.config());
-            let mut registry_cache = RegistryCache::new(source_map);
+            let registry_cache = RegistryCache::new(source_map);
 
             let members_summaries = ws
                 .members()
                 .map(|pkg| pkg.manifest.summary.clone())
                 .collect::<Vec<_>>();
 
-            let resolve = resolver::resolve(&members_summaries, &mut registry_cache).await?;
+            let resolve = resolver::resolve(&members_summaries, &registry_cache).await?;
 
             let packages =
-                collect_packages_from_resolve_graph(&resolve, &mut registry_cache).await?;
+                collect_packages_from_resolve_graph(&resolve, &registry_cache).await?;
 
             Ok(WorkspaceResolve { resolve, packages })
         }
@@ -73,7 +73,7 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
 #[tracing::instrument(level = "trace", skip_all)]
 async fn collect_packages_from_resolve_graph(
     resolve: &Resolve,
-    registry: &mut RegistryCache<'_>,
+    registry: &RegistryCache<'_>,
 ) -> Result<HashMap<PackageId, Package>> {
     let mut packages = HashMap::with_capacity(resolve.package_ids().size_hint().0);
     // TODO(#6): Parallelize this loop.
