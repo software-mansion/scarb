@@ -16,8 +16,9 @@ pub(crate) fn build_scarb_root_database(
     b.with_project_config(build_project_config(unit)?);
     b.with_cfg(unit.cfg_set.clone());
 
-    // TODO(mkaput): Pull only plugins that are dependencies of this compilation unit.
-    for plugin in ws.config().cairo_plugins().iter() {
+    for plugin_info in &unit.cairo_plugins {
+        let package_id = plugin_info.package.id;
+        let plugin = ws.config().cairo_plugins().fetch(package_id)?;
         let instance = plugin.instantiate()?;
         for semantic_plugin in instance.semantic_plugins() {
             b.with_semantic_plugin(semantic_plugin);
