@@ -1,31 +1,26 @@
-use std::sync::Arc;
-
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::prelude::*;
 
-use crate::core::registry::source_map::SourceMap;
 use crate::core::registry::Registry;
 use crate::core::{ManifestDependency, Package, PackageId, Summary};
 use crate::internal::async_cache::AsyncCache;
 
 /// A caching wrapper over another [`Registry`] which memorizes all queries and downloads.
 pub struct RegistryCache<'a> {
-    queries: AsyncCache<'a, ManifestDependency, Vec<Summary>, Arc<SourceMap<'a>>>,
-    downloads: AsyncCache<'a, PackageId, Package, Arc<SourceMap<'a>>>,
+    queries: AsyncCache<'a, ManifestDependency, Vec<Summary>, &'a dyn Registry>,
+    downloads: AsyncCache<'a, PackageId, Package, &'a dyn Registry>,
 }
 
 impl<'a> RegistryCache<'a> {
-    pub fn new(registry: SourceMap<'a>) -> Self {
-        let registry = Arc::new(registry);
-
+    pub fn new(registry: &'a dyn Registry) -> Self {
         Self {
-            queries: AsyncCache::new(registry.clone(), {
+            queries: AsyncCache::new(registry, {
                 move |dependency, registry| {
                     async move { Ok(registry.query(&dependency).await?) }.boxed_local()
                 }
             }),
-            downloads: AsyncCache::new(registry.clone(), {
+            downloads: AsyncCache::new(registry, {
                 move |package_id, registry| {
                     async move { Ok(registry.download(package_id).await?) }.boxed_local()
                 }
