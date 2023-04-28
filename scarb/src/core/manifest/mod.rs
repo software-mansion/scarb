@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 use std::fmt;
-use std::fmt::Debug;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -10,11 +9,11 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use toml::Value;
 
-use crate::compiler::{DefaultForProfile, Profile};
 pub use scripts::*;
 pub use target::*;
 pub use toml_manifest::*;
 
+use crate::compiler::{DefaultForProfile, Profile};
 use crate::core::package::{PackageId, PackageName};
 use crate::core::source::SourceId;
 
@@ -84,7 +83,7 @@ impl Summary {
             ManifestDependency {
                 name: PackageName::CORE,
                 version_req,
-                source_id: SourceId::for_std(),
+                source_id: SourceId::default(),
             }
         });
 

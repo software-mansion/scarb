@@ -4,15 +4,18 @@ use anyhow::Result;
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use itertools::Itertools;
+use semver::VersionReq;
 
 use crate::compiler::{CompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent};
 use crate::core::package::{Package, PackageClass, PackageId};
 use crate::core::registry::cache::RegistryCache;
+use crate::core::registry::patch_map::PatchMap;
+use crate::core::registry::patcher::RegistryPatcher;
 use crate::core::registry::source_map::SourceMap;
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
-use crate::core::Target;
+use crate::core::{ManifestDependency, PackageName, SourceId, Target};
 use crate::resolver;
 
 pub struct WorkspaceResolve {
@@ -46,17 +49,31 @@ impl WorkspaceResolve {
 pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
     ws.config().tokio_handle().block_on(
         async {
+            let mut patch_map = PatchMap::new();
+
+            let cairo_version = crate::version::get().cairo.version;
+            let version_req = VersionReq::parse(&format!("={cairo_version}")).unwrap();
+            patch_map.insert(
+                SourceId::default().canonical_url.clone(),
+                [ManifestDependency {
+                    name: PackageName::CORE,
+                    version_req,
+                    source_id: SourceId::for_std(),
+                }],
+            );
+
             let source_map = SourceMap::preloaded(ws.members(), ws.config());
-            let registry_cache = RegistryCache::new(&source_map);
+            let cached = RegistryCache::new(&source_map);
+            let patched = RegistryPatcher::new(&cached, &patch_map);
 
             let members_summaries = ws
                 .members()
                 .map(|pkg| pkg.manifest.summary.clone())
                 .collect::<Vec<_>>();
 
-            let resolve = resolver::resolve(&members_summaries, &registry_cache).await?;
+            let resolve = resolver::resolve(&members_summaries, &patched).await?;
 
-            let packages = collect_packages_from_resolve_graph(&resolve, &registry_cache).await?;
+            let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
 
             Ok(WorkspaceResolve { resolve, packages })
         }
@@ -72,7 +89,7 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
 #[tracing::instrument(level = "trace", skip_all)]
 async fn collect_packages_from_resolve_graph(
     resolve: &Resolve,
-    registry: &RegistryCache<'_>,
+    registry: &dyn Registry,
 ) -> Result<HashMap<PackageId, Package>> {
     let mut packages = HashMap::with_capacity(resolve.package_ids().size_hint().0);
     // TODO(#6): Parallelize this loop.
