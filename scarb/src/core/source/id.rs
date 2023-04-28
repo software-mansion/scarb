@@ -13,6 +13,7 @@ use crate::core::source::Source;
 use crate::core::Config;
 use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::static_hash_cache::StaticHashCache;
+use crate::sources::canonical_url::CanonicalUrl;
 
 /// Unique identifier for a source of packages.
 ///
@@ -27,6 +28,8 @@ pub struct SourceIdInner {
     pub url: Url,
     /// The source kind.
     pub kind: SourceKind,
+    /// The canonical URL of this source, used for internal comparison purposes.
+    pub canonical_url: CanonicalUrl,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -61,12 +64,16 @@ pub enum GitReference {
 
 impl SourceId {
     fn new(url: Url, kind: SourceKind) -> Result<Self> {
-        Ok(Self::pure(url, kind))
+        let canonical_url = CanonicalUrl::new(&url)?;
+        Ok(Self::intern(SourceIdInner {
+            url,
+            kind,
+            canonical_url,
+        }))
     }
 
-    fn pure(url: Url, kind: SourceKind) -> Self {
+    fn intern(inner: SourceIdInner) -> Self {
         static CACHE: StaticHashCache<SourceIdInner> = StaticHashCache::new();
-        let inner = SourceIdInner { url, kind };
         Self(CACHE.intern(inner))
     }
 
@@ -90,8 +97,8 @@ impl SourceId {
 
     pub fn for_std() -> Self {
         static CACHE: Lazy<SourceId> = Lazy::new(|| {
-            let url = Url::parse("std:").unwrap();
-            SourceId::pure(url, SourceKind::Std)
+            let url = Url::parse("scarb:/std").unwrap();
+            SourceId::new(url, SourceKind::Std).unwrap()
         });
         *CACHE
     }
@@ -99,7 +106,7 @@ impl SourceId {
     pub fn default_registry() -> Self {
         static CACHE: Lazy<SourceId> = Lazy::new(|| {
             let url = Url::parse("https://there-is-no-default-registry-yet.com").unwrap();
-            SourceId::pure(url, SourceKind::Registry)
+            SourceId::new(url, SourceKind::Registry).unwrap()
         });
         *CACHE
     }
