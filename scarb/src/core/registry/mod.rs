@@ -4,6 +4,8 @@ use async_trait::async_trait;
 use crate::core::{ManifestDependency, Package, PackageId, Summary};
 
 pub mod cache;
+pub mod patch_map;
+pub mod patcher;
 pub mod source_map;
 
 #[async_trait(?Send)]
@@ -25,6 +27,7 @@ pub(crate) mod mock {
     use camino::Utf8PathBuf;
     use itertools::Itertools;
 
+    use crate::compiler::{DefaultForProfile, Profile};
     use crate::core::package::PackageName;
     use crate::core::registry::Registry;
     use crate::core::{
@@ -45,7 +48,7 @@ pub(crate) mod mock {
                 PackageId::new(
                     PackageName::CORE,
                     crate::version::get().cairo.version.parse().unwrap(),
-                    SourceId::for_std(),
+                    SourceId::default(),
                 ),
                 Vec::new(),
             );
@@ -202,6 +205,5 @@ pub(crate) mod mock {
         );
     }
 
-    use crate::compiler::{DefaultForProfile, Profile};
     pub(crate) use pkgs;
 }

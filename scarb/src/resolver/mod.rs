@@ -158,8 +158,7 @@ mod tests {
                 r.graph
                     .nodes()
                     .filter(|id| {
-                        !id.name.as_str().starts_with("ROOT_")
-                            && id.source_id != SourceId::for_std()
+                        !id.name.as_str().starts_with("ROOT_") && id.name != PackageName::CORE
                     })
                     .sorted()
                     .collect_vec()
