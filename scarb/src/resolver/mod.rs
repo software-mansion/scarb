@@ -158,8 +158,8 @@ mod tests {
                 r.graph
                     .nodes()
                     .filter(|id| {
-                        !id.name.as_str().starts_with("ROOT_")
-                            && id.source_id != SourceId::for_std()
+                        let n = id.name.as_str();
+                        !n.starts_with("ROOT_") && n != "core"
                     })
                     .sorted()
                     .collect_vec()
