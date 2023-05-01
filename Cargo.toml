@@ -36,7 +36,7 @@ data-encoding = "2.3.3"
 derive_builder = "0.12.0"
 deno_task_shell = "0.11.0"
 diffy = "0.3.0"
-directories = "5.0.0"
+directories = "5.0.1"
 dunce = "1.0.4"
 fs4 = "0.6.2"
 futures = { version = "0.3.28", default-features = false, features = ["std", "async-await"] }
