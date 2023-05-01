@@ -18,7 +18,7 @@ readme = "README.md"
 repository = "https://github.com/software-mansion/scarb"
 
 [workspace.dependencies]
-anyhow = "1.0.70"
+anyhow = "1.0.71"
 assert_fs = "1.0.13"
 async-trait = "0.1.68"
 cairo-lang-compiler = { rev = "901a9a1758f9fabc14c90c346ececbe1bc042f4e", version = "1.0.0-alpha.7", git = "https://github.com/starkware-libs/cairo.git" }
