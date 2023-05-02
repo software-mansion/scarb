@@ -28,12 +28,7 @@ It is used when listed as a dependency in another package, and as the default na
 
 The name must use only ASCII alphanumeric characters or `_`, and cannot be empty.
 It cannot also start with underscore.
-
-In other words, it must match the following regular expression:
-
-```regexp copy
-^[a-zA-Z0-9][a-zA-Z0-9_]*$
-```
+It also must not be a valid Cairo identifier.
 
 ### `version`
 
