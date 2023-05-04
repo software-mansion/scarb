@@ -20,6 +20,7 @@
     "eslint": "8.35.0",
     "eslint-config-next": "13.2.3",
     "eslint-config-prettier": "8.6.0",
+    "mermaid": "^10.1.0",
     "next": "13.2.3",
     "nextra": "2.2.16",
     "nextra-theme-docs": "2.2.16",
