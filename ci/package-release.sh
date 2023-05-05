@@ -13,7 +13,7 @@ mkdir -p \
   "$STAGING/bin/" \
   "$STAGING/share/doc/scarb/"
 
-for crate in "scarb"; do
+for crate in "scarb" "scarb-cairo-language-server"; do
   cp "target/$TARGET/release/${crate}${bin_ext}" "$STAGING/bin/"
 done
 
