@@ -18,12 +18,7 @@ use crate::core::Package;
 /// * [`Clone`] is `O(1)`.
 /// * Short names (which is common for package names) are stack-allocated.
 ///
-/// # Package naming rules
-/// 1. Only ASCII alphanumerical characters and the underscore are allowed.
-/// 2. Package name may not start with a digit.
-/// 3. Package name may not be empty.
-///
-/// Regular expression: `[a-zA-Z_][0-9a-zA-Z_]*`.
+/// Package naming rules are described in [Scarb docs](https://docs.swmansion.com/scarb/docs/reference/manifest#name).
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
 #[serde(into = "SmolStr", try_from = "SmolStr")]
 pub struct PackageName(SmolStr);
