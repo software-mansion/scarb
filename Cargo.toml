@@ -2,7 +2,7 @@
 members = [
     "scarb",
     "scarb-metadata",
-    "scarb-cairo-language-server",
+    "extensions/scarb-cairo-language-server",
     "utils/create-output-dir"
 ]
 
