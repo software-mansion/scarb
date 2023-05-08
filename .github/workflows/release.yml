@@ -98,7 +98,7 @@ jobs:
           STAGING="scarb-${{ github.ref_name }}-${{ matrix.target }}"
           echo "STAGING=$STAGING" >> $GITHUB_ENV
           
-          ci/package-release.sh "${{ matrix.target }}" "$STAGING"
+          pkg/archive/package.sh "${{ matrix.target }}" "$STAGING"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -139,7 +139,7 @@ jobs:
         shell: bash
         run: |
           archive=$(find target/verify -name 'scarb-*.zip' -o -name 'scarb-*.tar.gz')
-          ci/verify-release.sh "$archive" "${{ github.ref_name }}"
+          pkg/archive/verify.sh "$archive" "${{ github.ref_name }}"
 
   verify-cargo-package:
     name: cargo publish --dry-run
