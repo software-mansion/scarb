@@ -4,6 +4,7 @@ set -euxo pipefail
 TARGET="$1"
 STAGING="$2"
 
+rm -rf "$STAGING"
 mkdir -p "$STAGING"
 
 bin_ext=""
@@ -11,13 +12,13 @@ bin_ext=""
 
 mkdir -p \
   "$STAGING/bin/" \
-  "$STAGING/share/doc/scarb/"
+  "$STAGING/doc/"
 
 for crate in $(pkg/list-binaries.sh); do
   cp "target/$TARGET/release/${crate}${bin_ext}" "$STAGING/bin/"
 done
 
-cp -r README.md LICENSE "$STAGING/share/doc/scarb/"
+cp -r README.md LICENSE "$STAGING/doc/"
 
 if [[ "$TARGET" == *-windows-* ]]; then
   7z a "${STAGING}.zip" "$STAGING"
