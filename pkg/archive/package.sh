@@ -18,7 +18,7 @@ for crate in $(pkg/list-binaries.sh); do
   cp "target/$TARGET/release/${crate}${bin_ext}" "$STAGING/bin/"
 done
 
-cp -r README.md LICENSE "$STAGING/doc/"
+cp -r README.md SECURITY.md LICENSE "$STAGING/doc/"
 
 if [[ "$TARGET" == *-windows-* ]]; then
   7z a "${STAGING}.zip" "$STAGING"
