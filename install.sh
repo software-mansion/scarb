@@ -306,17 +306,9 @@ get_architecture() {
         _cputype="$RUSTUP_CPUTYPE"
       else {
         # 32-bit executable for amd64 = x32
-        if is_host_amd64_elf; then {
-          echo "This host is running an x32 userland; as it stands, x32 support is poor," 1>&2
-          echo "and there isn't a native toolchain -- you will have to install" 1>&2
-          echo "multiarch compatibility with i686 and/or amd64, then select one" 1>&2
-          echo "by re-running this script with the RUSTUP_CPUTYPE environment variable" 1>&2
-          echo "set to i686 or x86_64, respectively." 1>&2
-          echo 1>&2
-          echo "You will be able to add an x32 target after installation by running" 1>&2
-          echo "  rustup target add x86_64-unknown-linux-gnux32" 1>&2
-          exit 1
-        }; else
+        if is_host_amd64_elf; then
+          err "x86_64 linux with x86 userland unsupported"
+        else
           _cputype=i686
         fi
       }; fi
