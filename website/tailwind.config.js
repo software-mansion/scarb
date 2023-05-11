@@ -33,6 +33,8 @@ module.exports = {
         DEFAULT: "#fff",
         20: "#FCFCFF",
         40: "#F8F9FF",
+        60: "#EEF0FF",
+        80: "#C1C6E5",
       },
       blue: {
         20: "#C1C6E5",
