@@ -1,0 +1,81 @@
+import { BigLink } from "../../components/bigLink";
+import { Callout, Tab, Tabs } from "nextra-theme-docs";
+
+# Download and install
+
+Scarb is a native command line application that is available for Linux, macOS and Windows on all common CPU architectures.
+
+Scarb follows a biweekly release schedule.
+Each release may include new features, enhancements, bug fixes, deprecations and breaking changes.
+For detailed information about each release, consult the [release notes](https://github.com/software-mansion/scarb/releases).
+
+## Requirements
+
+To download Git dependencies, Scarb requires a Git executable to be available in the `PATH` environment variable.
+
+## Quick installation
+
+Download and install Scarb quickly.
+Select the tab for your computer's operating system below, then follow its installation instructions.
+
+<Tabs items={["macOS and Linux", "Windows"]}>
+  <Tab>
+    Run the following in your terminal, then follow the onscreen instructions.
+    This will install the latest **stable** release.
+
+    ```shell copy
+    curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh
+    ```
+
+    If you want to install a specific version of Scarb (such as a preview version), run the following with the desired
+    version number.
+
+    ```shell copy /0.2.0-alpha.2/
+    curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v 0.2.0-alpha.2
+    ```
+
+  </Tab>
+
+  <Tab>
+    As for now, Scarb on Windows needs manual installation, but necessary steps are kept to minimum:
+
+    1. [Download the release archive](/download) matching your CPU architecture.
+    2. Extract it to a location where you would like to have Scarb installed.
+       A folder named `scarb` in your [`%LOCALAPPDATA%\Programs`](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid?redirectedfrom=MSDN#FOLDERID_UserProgramFiles) directory will suffice:
+       ```powershell copy
+       %LOCALAPPDATA%\Programs\scarb
+       ```
+    3. Add path to the `scarb\bin` directory to your `PATH` environment variable.
+    4. Verify installation by running the following command in new terminal session, it should print Scarb and Cairo language versions:
+       ```shell copy
+       scarb --version
+       ```
+
+  </Tab>
+</Tabs>
+
+## Scarb as a library
+
+Scarb is a [Rust](https://rust-lang.org) crate which can be used as a library in your applications.
+We publish each release of Scarb to [crates.io](https://crates.io), the official package registry for Rust.
+
+<Callout type="warning">
+  Using Scarb crate has certain caveats, consult [related
+  documentation](/docs/extensions/scarb-crate) for more information before use.
+</Callout>
+
+<BigLink
+  href="https://crates.io/crates/scarb"
+  text="Go to Scarb on crates.io"
+/>
+
+## Source code
+
+Scarb is an open source project developed by [Software Mansion](https://swmansion.com), available under terms of the MIT License.
+We host our Git repository on GitHub.
+We also welcome external contributors!
+
+<BigLink
+  href="https://github.com/software-mansion/scarb"
+  text="Go to Scarb on GitHub"
+/>
