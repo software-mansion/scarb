@@ -70,11 +70,11 @@ const features: FeatureProps[] = [
 
 export function Features(): ReactElement {
   return (
-    <section className="mb-16 grid gap-8 rounded-3xl bg-sea-40 p-12 text-blue-100 shadow-xl shadow-sea-20 dark:bg-black-40 dark:text-darksea-20 dark:shadow-black sm:grid-cols-2 md:grid-cols-3">
+    <>
       {features.map((feature, i) => (
         <Feature key={i} {...feature} />
       ))}
-    </section>
+    </>
   );
 }
 
@@ -86,11 +86,9 @@ interface FeatureProps {
 
 function Feature({ icon, title, desc }: FeatureProps): ReactElement {
   return (
-    <div className="flex flex-col justify-center space-y-4 text-center">
-      <div className="mx-auto w-24">{icon}</div>
-      <p className="mx-auto w-32 rounded-xl bg-sea-20 p-1 text-lg font-bold dark:bg-black-60">
-        {title}
-      </p>
+    <div className="rounded-2xl border border-sea-40 bg-sea-20 p-6 text-blue-100 shadow-md shadow-sea-20 dark:border-black-40 dark:bg-black-80 dark:text-darksea-20 dark:shadow-black">
+      <div className="float-right ml-1 w-24">{icon}</div>
+      <p className="text-lg font-bold">{title}</p>
       <p>{desc}</p>
     </div>
   );

@@ -2,14 +2,18 @@
 title: Scarb, the Cairo and StarkNet development toolchain
 ---
 
+import { Download } from "../components/home/download";
 import { Features } from "../components/home/features";
 import { Jumbo } from "../components/home/jumbo";
 
 <Jumbo />
 
-<Features />
+<section className="grid items-stretch gap-8 md:grid-cols-2 lg:px-32 xl:px-64">
+  <Download />
+  <Features />
+</section>
 
-<div className="lg:px-64">
+<section className="lg:px-32 xl:px-64">
   ## Community
 
 Scarb is created by the same team at [Software Mansion] that is behind [Protostar], the Cairo and Starknet testing
@@ -26,4 +30,4 @@ Feel free to join [discussions on GitHub][gh-discussions] or chat with us on our
 [starknet]: https://www.starknet.io
 [starkware]: https://starkware.co
 
-</div>
+</section>
