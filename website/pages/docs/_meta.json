@@ -1,5 +1,6 @@
 {
   "index": "Introduction",
+  "install": "Installing Scarb",
   "cheatsheet": "Cheat sheet",
   "guides": {
     "title": "Guides"
