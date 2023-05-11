@@ -1,22 +1,23 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-mkdir -p target/verify
-
 SCARB_ARCHIVE="$1"
 EXPECTED_VERSION="$2"
 
 # Trim leading v character if exists.
 EXPECTED_VERSION="${EXPECTED_VERSION//v/}"
 
+INSTALL_DIR=$(mktemp -d)
+mkdir -p "$INSTALL_DIR"
+
 if echo "$SCARB_ARCHIVE" | grep -Fq .tar.gz; then
-  tar -zxvf "$SCARB_ARCHIVE" --strip-components=1 -C target/verify
+  tar -zxvf "$SCARB_ARCHIVE" --strip-components=1 -C "$INSTALL_DIR"
 else
   7z x -y "$SCARB_ARCHIVE" -otarget
-  mv target/"$(basename "$SCARB_ARCHIVE" .zip)"/* target/verify/
+  mv target/"$(basename "$SCARB_ARCHIVE" .zip)"/* "$INSTALL_DIR"
 fi
 
-SCARB=$(find target/verify/bin -name 'scarb' -o -name 'scarb.exe')
+SCARB=$(find "${INSTALL_DIR}/bin" -name 'scarb' -o -name 'scarb.exe')
 
 "$SCARB" --version
 
@@ -24,6 +25,8 @@ SCARB=$(find target/verify/bin -name 'scarb' -o -name 'scarb.exe')
 
 "$SCARB" --help
 
-"$SCARB" new ci_testing
-"$SCARB" --manifest-path=ci_testing/Scarb.toml build
-rm -rf ci_testing
+TEST_DIR=$(mktemp -d)
+mkdir -p "$TEST_DIR"
+
+"$SCARB" new "${TEST_DIR}/ci_testing"
+"$SCARB" --manifest-path="${TEST_DIR}/ci_testing/Scarb.toml" build
