@@ -5,6 +5,20 @@ title: Scarb, the Cairo and StarkNet development toolchain
 import { Download } from "../components/home/download";
 import { Features } from "../components/home/features";
 import { Jumbo } from "../components/home/jumbo";
+import { Releases } from "../data/github";
+
+export async function getStaticProps() {
+  const releases = await Releases.list();
+
+const stable = releases.stable();
+
+return {
+props: {
+stable,
+},
+revalidate: 3600,
+};
+}
 
 <Jumbo />
 
