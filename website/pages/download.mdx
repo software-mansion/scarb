@@ -2,63 +2,78 @@
 title: Download
 ---
 
-import { BigLink } from "../components/bigLink";
-import { Callout } from "nextra-theme-docs";
+import { Releases } from "../data/github";
+import { Link } from "../components/link";
+import { WithRelease, ReleaseVersion, useRelease } from "../components/releaseContext";
+import { Table, Tr, Th, Td, Code } from "nextra/components";
+
+export async function getStaticProps() {
+  const releases = await Releases.list();
+
+const stable = releases.stable();
+const preview = releases.preview();
+
+return {
+props: {
+stable,
+preview,
+},
+revalidate: 3600,
+};
+}
+
+export function AssetsTable() {
+  const release = useRelease();
+  return (
+    <Table className="mt-4 table w-full">
+      <thead className="text-left">
+        <Tr>
+          <Th>File name</Th>
+          <Th>Kind</Th>
+          <Th>OS</Th>
+          <Th>Arch</Th>
+        </Tr>
+      </thead>
+      <tbody>
+        {release.assets.map((asset) => (
+          <Tr key={asset.name}>
+            <Td>
+              <Link href={asset.downloadUrl}>{asset.name}</Link>
+            </Td>
+            <Td>{asset.kind}</Td>
+            <Td>{asset.os}</Td>
+            <Td>{asset.arch}</Td>
+          </Tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+}
 
 # Download Scarb
 
-Scarb is a native command line application that is available for Linux, macOS and Windows on all common CPU architectures.
+After downloading the release file suitable for your system, please follow the [installation instructions](/docs/install).
 
-Currently, we publish release archives on our GitHub releases page, we recommend to download a suitable archive for the latest version and follow installation instructions.
-In the future, we plan to provide a dedicated installer for all platforms.
-We also include change logs for each release on this page.
+If you are running macOS or Linux, the easiest way is to use the [quick installer](/docs/install#quick-installation).
 
-<BigLink
-  href="https://github.com/software-mansion/scarb/releases"
-  text="Go to Scarb releases on GitHub"
-/>
+See the [release notes](https://github.com/software-mansion/scarb/releases) for more information about Scarb releases.
 
-## Requirements
+<WithRelease kind="stable">
+  ## Stable version
 
-To download Git dependencies, Scarb requires a Git executable to be available in the `PATH` environment variable.
+The current stable version of Scarb is: <Code><ReleaseVersion /></Code>.
 
-## Installation
+  <AssetsTable />
+</WithRelease>
 
-As for now, Scarb needs manual installation, but necessary steps are kept to minimum:
+<WithRelease kind="preview">
+  ## Preview version
 
-1. Download the release archive matching your operating system and CPU architecture.
-2. Extract it to a location where you would like to have Scarb installed.
-   A folder named `scarb` in your home directory (so: `~/scarb`) will suffice.
-3. Add path to the `scarb/bin` directory to your `PATH` environment variable.
-4. Verify installation by running the following command in new terminal session, it should print Scarb and Cairo language versions:
-   ```shell copy
-   scarb --version
-   ```
+The current preview version of Scarb is: <Code><ReleaseVersion /></Code>.
 
-_Enjoy!_
+  <AssetsTable />
+</WithRelease>
 
-## Scarb as a library
+## Archived versions
 
-Scarb is a [Rust](https://rust-lang.org) crate which can be used as a library in your applications.
-We publish each release of Scarb to [crates.io](https://crates.io), the official package registry for Rust.
-
-<Callout type="warning">
-  Using Scarb crate has certain caveats, consult [related
-  documentation](/docs/extensions/scarb-crate) for more information before use.
-</Callout>
-
-<BigLink
-  href="https://crates.io/crates/scarb"
-  text="Go to Scarb on crates.io"
-/>
-
-## Source code
-
-Scarb is an open source project developed by [Software Mansion](https://swmansion.com), available under terms of the MIT License.
-We host our Git repository on GitHub.
-We also welcome external contributors!
-
-<BigLink
-  href="https://github.com/software-mansion/scarb"
-  text="Go to Scarb on GitHub"
-/>
+For older releases, go to the [releases](https://github.com/software-mansion/scarb/releases) page in Scarb GitHub repository.

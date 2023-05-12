@@ -11,6 +11,7 @@
   "download": {
     "type": "page",
     "theme": {
+      "layout": "full",
       "typesetting": "article"
     }
   },
