@@ -55,7 +55,7 @@ pathdiff = { version = "0.2.1", features = ["camino"] }
 petgraph = "0.6.2"
 predicates = "3.0.3"
 semver = { version = "1.0.17", features = ["serde"] }
-serde = { version = "1.0.162", features = ["serde_derive"] }
+serde = { version = "1.0.163", features = ["serde_derive"] }
 serde_json = "1.0.95"
 serde_test = "1.0.162"
 similar-asserts = { version = "1.4.2", features = ["serde"] }
