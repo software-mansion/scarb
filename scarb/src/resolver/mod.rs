@@ -367,6 +367,27 @@ mod tests {
     }
 
     #[test]
+    fn sub_dependencies() {
+        check(
+            registry![
+                ("foo v1.0.0", []),
+                ("foo v2.0.0", []),
+                ("top1 v1.0.0", [("foo", "1.0.0")]),
+                ("top2 v1.0.0", [("foo", "2.0.0")]),
+            ],
+            &[deps![("top1", "1"), ("top2", "1")]],
+            Err(indoc! {"
+            Version solving failed:
+            - top2 v1.0.0 cannot use foo v1.0.0, because top2 requires foo ^2.0.0
+
+            Scarb does not have real version solving algorithm yet.
+            Perhaps in the future this conflict could be resolved, but currently,
+            please upgrade your dependencies to use latest versions of their dependencies.
+            "}),
+        )
+    }
+
+    #[test]
     fn missing_dependency() {
         check(
             registry![],
