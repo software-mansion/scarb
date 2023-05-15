@@ -45,36 +45,36 @@ pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<R
             graph.add_node(package_id);
 
             for dep in summaries[&package_id].clone().full_dependencies() {
-                if let Some(existing) = packages.get(&dep.name) {
-                    if existing.source_id != dep.source_id {
-                        bail!(
-                            indoc! {"
-                                found dependencies on the same package `{}` coming from \
-                                incompatible sources:
-                                source 1: {}
-                                source 2: {}
-                            "},
-                            dep.name,
-                            existing.source_id,
-                            dep.source_id
-                        );
-                    } else {
-                        continue;
-                    }
-                }
-
                 let results = registry.query(dep).await?;
 
                 let Some(dep_summary) = results.first() else {
                     bail!("cannot find package {}", dep.name)
                 };
 
-                let dep_package_id = dep_summary.package_id;
+                let dep = dep_summary.package_id;
 
-                graph.add_edge(package_id, dep_package_id, ());
-                packages.insert(dep_package_id.name.clone(), dep_package_id);
-                summaries.insert(dep_package_id, dep_summary.clone());
-                next_queue.push(dep_package_id);
+                if let Some(existing) = packages.get(&dep.name) {
+                    if existing.source_id == dep.source_id {
+                        continue;
+                    }
+
+                    bail!(
+                        indoc! {"
+                            found dependencies on the same package `{}` coming from incompatible \
+                            sources:
+                            source 1: {}
+                            source 2: {}
+                        "},
+                        dep.name,
+                        existing.source_id,
+                        dep.source_id
+                    );
+                }
+
+                graph.add_edge(package_id, dep, ());
+                packages.insert(dep.name.clone(), dep);
+                summaries.insert(dep, dep_summary.clone());
+                next_queue.push(dep);
             }
         }
 
@@ -319,6 +319,8 @@ mod tests {
                 ("foo v2.8.0", [("baz", "~1.7.1")]),
                 ("foo v2.9.0", [("baz", "1.8.0")]),
                 ("bar v1.1.1", [("baz", ">= 1.7.0")]),
+                ("baz v1.7.0", []),
+                ("baz v1.7.1", []),
                 ("baz v1.8.0", []),
                 ("baz v2.1.0", []),
             ],
