@@ -410,7 +410,7 @@ create_symlink() {
 add_local_bin_to_path() {
   local _profile
   local _pref_shell
-  case $SHELL in
+  case ${SHELL:-""} in
   */zsh)
     _profile=$HOME/.zshrc
     _pref_shell=zsh
