@@ -40,9 +40,11 @@ function DownloadUnix() {
         instructions.
       </p>
       <Pre hasCopyCode className="whitespace-normal text-center">
-        {
-          "curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh"
-        }
+        <code>
+          {
+            "curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh"
+          }
+        </code>
       </Pre>
       <span className="text-sm">
         You appear to be running macOS or Linux. This command will install the
