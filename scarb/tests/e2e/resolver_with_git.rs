@@ -88,6 +88,7 @@ fn two_revs_of_same_dep() {
         .failure()
         .stdout_matches(indoc! {r#"
             [..] Updating git repository file://[..]/culprit
+            [..] Updating git repository file://[..]/culprit
             error: found dependencies on the same package `culprit` coming from incompatible sources:
             source 1: git+file://[..]/culprit
             source 2: git+file://[..]/culprit?branch=branchy
@@ -146,6 +147,7 @@ fn two_revs_of_same_dep_diamond() {
         .stdout_matches(indoc! {r#"
             [..] Updating git repository file://[..]/dep1
             [..] Updating git repository file://[..]/dep2
+            [..] Updating git repository file://[..]/culprit
             [..] Updating git repository file://[..]/culprit
             error: found dependencies on the same package `culprit` coming from incompatible sources:
             source 1: git+file://[..]/culprit
