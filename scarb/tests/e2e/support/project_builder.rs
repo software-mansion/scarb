@@ -72,6 +72,13 @@ impl ProjectBuilder {
         self
     }
 
+    pub fn dep_starknet(self) -> Self {
+        self.dep(
+            "starknet",
+            format!(r#"version = "{}""#, scarb::version::get().cairo.version),
+        )
+    }
+
     pub fn manifest_extra(mut self, extra: impl Into<String>) -> Self {
         self.manifest_extra = extra.into();
         self

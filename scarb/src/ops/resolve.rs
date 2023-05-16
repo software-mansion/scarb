@@ -56,11 +56,18 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
             let version_req = VersionReq::parse(&format!("={cairo_version}")).unwrap();
             patch_map.insert(
                 SourceId::default().canonical_url.clone(),
-                [ManifestDependency {
-                    name: PackageName::CORE,
-                    version_req,
-                    source_id: SourceId::for_std(),
-                }],
+                [
+                    ManifestDependency {
+                        name: PackageName::CORE,
+                        version_req: version_req.clone(),
+                        source_id: SourceId::for_std(),
+                    },
+                    ManifestDependency {
+                        name: PackageName::STARKNET,
+                        version_req: version_req.clone(),
+                        source_id: SourceId::for_std(),
+                    },
+                ],
             );
 
             let source_map = SourceMap::preloaded(ws.members(), ws.config());
