@@ -1,0 +1,6 @@
+[package]
+name = "starknet"
+version = "{{ CAIRO_VERSION }}"
+
+[cairo-plugin]
+builtin = "starknet"

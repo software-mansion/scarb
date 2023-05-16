@@ -2,7 +2,8 @@ use std::fmt;
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use include_dir::{include_dir, Dir};
+use camino::Utf8Path;
+use include_dir::{include_dir, Dir, DirEntry};
 use tokio::sync::OnceCell;
 use tracing::trace;
 
@@ -11,6 +12,8 @@ use crate::core::manifest::{ManifestDependency, Summary};
 use crate::core::package::{Package, PackageId};
 use crate::core::source::Source;
 use crate::core::SourceId;
+use crate::internal::fsx;
+use crate::internal::fsx::PathUtf8Ext;
 use crate::sources::PathSource;
 
 /// Serves Cairo standard library packages.
@@ -33,7 +36,8 @@ impl<'c> StandardLibSource<'c> {
 
     #[tracing::instrument(name = "standard_lib_source_load", level = "trace", skip(self))]
     async fn load(&self) -> Result<PathSource<'c>> {
-        static CORE: Dir<'_> = include_dir!("$SCARB_CORE_PATH");
+        static CORELIB: Dir<'_> = include_dir!("$SCARB_CORE_PATH");
+        static SCARBLIB: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/scarblib");
 
         let tag = core_version_tag();
 
@@ -50,9 +54,12 @@ impl<'c> StandardLibSource<'c> {
                 tag_fs.recreate()?;
             }
 
-            let core_fs = tag_fs.child("core");
-            CORE.extract(core_fs.path_existent()?)
-                .context("failed to extract Cairo standard library")?;
+            let base_path = tag_fs.path_existent()?;
+
+            extract_with_templating(&CORELIB, &base_path.join("core"))
+                .context("failed to extract Cairo standard library (corelib)")?;
+            extract_with_templating(&SCARBLIB, base_path)
+                .context("failed to extract Cairo standard library (scarblib)")?;
 
             tag_fs.mark_ok()?;
         }
@@ -93,4 +100,37 @@ fn core_version_tag() -> String {
             commit.short_commit_hash
         })
         .unwrap_or_else(|| format!("v{}", core_version_info.version))
+}
+
+fn extract_with_templating(dir: &Dir<'_>, base_path: &Utf8Path) -> Result<()> {
+    fsx::create_dir_all(base_path)?;
+
+    for entry in dir.entries() {
+        let path = base_path.join(entry.path().try_to_utf8()?);
+
+        match entry {
+            DirEntry::Dir(d) => {
+                fsx::create_dir_all(&path)?;
+                extract_with_templating(d, base_path)?;
+            }
+            DirEntry::File(f) => {
+                let contents = f.contents();
+                if path.file_name() == Some("Scarb.toml") {
+                    let contents = expand_meta_variables(contents);
+                    fsx::write(path, contents)?;
+                } else {
+                    fsx::write(path, contents)?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn expand_meta_variables(contents: &[u8]) -> Vec<u8> {
+    // SAFETY: We control these files, and we know that they are UTF-8.
+    let contents = unsafe { std::str::from_utf8_unchecked(contents) };
+    let contents = contents.replace("{{ CAIRO_VERSION }}", &crate::version::get().cairo.version);
+    contents.into_bytes()
 }

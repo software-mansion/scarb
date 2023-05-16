@@ -72,6 +72,10 @@ impl ProjectBuilder {
         self
     }
 
+    pub fn dep_starknet(self) -> Self {
+        self.dep("starknet", r#"version = ">=1.0.0""#)
+    }
+
     pub fn manifest_extra(mut self, extra: impl Into<String>) -> Self {
         self.manifest_extra = extra.into();
         self

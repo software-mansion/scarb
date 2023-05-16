@@ -57,6 +57,7 @@ fn compile_starknet_contract() {
         .name("hello")
         .version("0.1.0")
         .manifest_extra("[[target.starknet-contract]]")
+        .dep_starknet()
         .lib_cairo(BALANCE_CONTRACT)
         .build(&t);
 
@@ -89,6 +90,7 @@ fn compile_starknet_contract_to_casm() {
             sierra = false
             casm = true
         "#})
+        .dep_starknet()
         .lib_cairo(BALANCE_CONTRACT)
         .build(&t);
 
@@ -127,6 +129,7 @@ fn compile_many_contracts() {
             [[target.starknet-contract]]
             name = "b"
         "#})
+        .dep_starknet()
         .lib_cairo(indoc! {r#"
             mod balance;
             mod forty_two;
@@ -181,6 +184,7 @@ fn casm_add_pythonic_hints() {
             casm = true
             casm-add-pythonic-hints = true
         "#})
+        .dep_starknet()
         .lib_cairo(BALANCE_CONTRACT)
         .build(&t);
 
@@ -208,6 +212,7 @@ fn compile_starknet_contract_only_with_cfg() {
 
             [[target.starknet-contract]]
         "#})
+        .dep_starknet()
         .lib_cairo(formatdoc! {r#"
             #[cfg(target: 'starknet-contract')]
             {BALANCE_CONTRACT}
