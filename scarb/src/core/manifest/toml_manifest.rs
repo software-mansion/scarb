@@ -60,6 +60,7 @@ pub struct TomlPackage {
     pub repository: Option<String>,
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
     pub no_core: Option<bool>,
+    pub cairo_version: Option<VersionReq>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -259,6 +260,7 @@ impl TomlManifest {
                 readme: package.readme.clone(),
                 repository: package.repository.clone(),
                 tool_metadata: tool,
+                cairo_version: package.cairo_version.clone(),
             },
             compiler_config,
             scripts,
