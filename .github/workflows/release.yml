@@ -45,16 +45,19 @@ jobs:
             # Use cross to link oldest GLIBC possible.
             cross: true
 
-          # NOTE: MUSL may not be possible to use in the future when we'll have compiler plugins.
-          #- target: x86_64-unknown-linux-musl
-          #  os: ubuntu-latest
-          #  cross: true
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
 
           #- target: armv7-unknown-linux-gnueabihf
           #  os: ubuntu-latest
           #  cross: true
 
           - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+
+          - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
             cross: true
 
