@@ -2,16 +2,13 @@
   "index": "Introduction",
   "install": "Installing Scarb",
   "cheatsheet": "Cheat sheet",
-  "guides": {
-    "title": "Guides"
+  "guides": "Guides",
+  "reference": "Reference",
+  "starknet": "Starknet",
+  "extensions": "Extensions",
+  "-- Appendices": {
+    "type": "separator",
+    "title": "Appendices"
   },
-  "reference": {
-    "title": "Reference"
-  },
-  "starknet": {
-    "title": "Starknet"
-  },
-  "extensions": {
-    "title": "Extensions"
-  }
+  "scarb-vs-cargo": "Scarb vs Cargo"
 }

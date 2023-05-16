@@ -1,0 +1,43 @@
+# Scarb vs Cargo
+
+The entire Cairo and Starknet developer experience, starting with the [Regenesis](https://medium.com/starkware/starknet-regenesis-the-plan-bd0219843ef4), is taking huge inspiration from the Rust ecosystem.
+As a part of that, the [Cairo](https://cairo-lang.org/docs/v1.0/) language, since 1.0, bases on Rust's syntax and partially semantics.
+Naturally, then, Scarb is designed to be as close as possible to Cargo and mimic its behaviour wherever it makes sense.
+There are some differences, though, and this document outlines them.
+
+## Scope
+
+Scarb aims to be a little more minimal than Cargo,
+and it avoids including big features in main binary that are outside Scarb's scope,
+which is to be a build toolchain and package manager for Cairo.
+
+The primary example of this is testing.
+Cargo comes with a built-in test and benchmark runners, which take a sizeable chunk of Cargo's code base.
+Scarb pushes to externalize such things into Scarb's [_extensions_](#extensibility).
+Scarb's bundled distribution of testing framework, Cairo Language Server and the Cairo Runner are regular extensions.
+Currently, for simplicity these are temporarily included in Scarb's release archives, but this will change in the future.
+
+## Extensibility
+
+Scarb is a bit more open to extensibility.
+Technically, both Scarb and Cargo have very similar mechanisms for writing extensions, but with Scarb exposes this feature in the documentation more prominently.
+The extension interfaces are also a bit easier to work with.
+
+On top of that, Scarb has NPM-style [scripts](/docs/reference/scripts),
+while Cargo has an `[alias]{:toml}` feature that is much more limited and also is hidden in Cargo config (`.cargo/config.toml`),
+rather than `Cargo.toml`/`Scarb.toml` directly.
+
+## Compilation model
+
+Cairo's [compilation model](/docs/reference/compilation-model) is different from Rust's.
+The Cairo compiler takes a flat list of packages to compile together,
+while in Rust, there is an explicit linking phase,
+and it is possible to form trees of linked objects (which Cargo does extensively).
+The consequence of this is that in Rust it is possible to link two semver-incompatible versions of the same package `x` (say, `1.0.0` and `2.0.0`) together,
+while in Cairo, this would generate compilation errors, because only one package can define a global path `x`.
+For those familiar with [Elixir](https://elixir-lang.org/), in this aspect, Cairo is much more similar to Elixir than to Rust.
+
+## Version resolution
+
+In the end, we plan to use a different version resolution algorithm than Cargo.
+Scarb will use [PubGrub](https://nex3.medium.com/pubgrub-2fb6470504f), while Cargo is using a custom backtracking algorithm.
