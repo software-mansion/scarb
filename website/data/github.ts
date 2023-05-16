@@ -1,5 +1,6 @@
 import { Octokit } from "@octokit/core";
 import { components } from "@octokit/openapi-types";
+import semver from "semver";
 
 if (typeof window !== "undefined") {
   throw new Error("@/data/github module is server-side only");
@@ -11,7 +12,7 @@ export type GHRelease = components["schemas"]["release"];
 export type GHAsset = components["schemas"]["release-asset"];
 
 export interface Release {
-  tag: string;
+  version: string;
   assets: Asset[];
 }
 
@@ -33,12 +34,24 @@ export class Releases {
     return new Releases(list);
   }
 
-  public stable(): Release | undefined {
-    return viewRelease(this.list.find((r) => !r.draft && !r.prerelease));
+  public stable(): Release | null {
+    return (
+      viewRelease(this.list.find((r) => !r.draft && !r.prerelease)) ?? null
+    );
   }
 
-  public preview(): Release | undefined {
-    return viewRelease(this.list.find((r) => r.prerelease));
+  public preview(): Release | null {
+    const preview = viewRelease(this.list.find((r) => r.prerelease));
+    if (!preview) {
+      return null;
+    }
+
+    const stable = this.stable();
+    if (!stable || semver.lt(stable.version, preview.version)) {
+      return preview;
+    } else {
+      return null;
+    }
   }
 }
 
@@ -47,8 +60,13 @@ function viewRelease(release: GHRelease | undefined): Release | undefined {
     return release;
   }
 
+  const version = semver.clean(release.tag_name);
+  if (!version) {
+    throw new Error(`release tag is not valid semver: '${release.tag_name}'`);
+  }
+
   return {
-    tag: release.tag_name.replace(/^v/, ""),
+    version,
     assets: collectAssets(release),
   };
 }
