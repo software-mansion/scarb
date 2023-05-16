@@ -114,13 +114,10 @@ fn additional_args_passed() {
     let t = TempDir::new().unwrap();
     write_script(
         "hello",
-        &formatdoc!(
-            r#"
-            #!/usr/bin/env python3
-            import sys
-            print("Hello", *sys.argv[1:])
-            "#
-        ),
+        &formatdoc! {r#"
+            #!/usr/bin/env bash
+            echo "Hello $@"
+        "#},
         &t,
     );
 
@@ -222,13 +219,10 @@ fn additional_args_not_parsed_as_package_filter() {
     let t = TempDir::new().unwrap();
     write_script(
         "hello",
-        &formatdoc!(
-            r#"
-            #!/usr/bin/env python3
-            import sys
-            print("Hello", *sys.argv[1:])
-            "#
-        ),
+        &formatdoc! {r#"
+            #!/usr/bin/env bash
+            echo "Hello $@"
+        "#},
         &t,
     );
 
