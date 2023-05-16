@@ -258,13 +258,6 @@ pub struct CompilationUnitMetadata {
     /// Selected target of the main package.
     pub target: TargetMetadata,
 
-    /// IDs of all packages to be included in this compilation.
-    ///
-    /// This is the ID of the main package and all its transitive dependencies.
-    #[deprecated(note = "use `components` instead, will be removed in Scarb 0.2")]
-    #[serde(rename = "components")]
-    pub components_legacy: Vec<PackageId>,
-
     /// Cairo compiler config.
     ///
     /// This is unstructured, because this can rapidly change throughout Scarb lifetime.
