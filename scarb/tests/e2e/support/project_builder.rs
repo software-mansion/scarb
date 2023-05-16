@@ -18,6 +18,7 @@ mod to_version;
 pub struct ProjectBuilder {
     name: String,
     version: Version,
+    cairo_version: Option<Version>,
     src: HashMap<Utf8PathBuf, String>,
     deps: Vec<(String, Value)>,
     manifest_extra: String,
@@ -32,6 +33,7 @@ impl ProjectBuilder {
         Self {
             name: format!("pkg{n}"),
             version: Version::new(1, n, 0),
+            cairo_version: None,
             src: HashMap::from_iter([(
                 Utf8PathBuf::from("src/lib.cairo"),
                 format!(r#"fn f{n}() -> felt252 {{ {n} }}"#),
@@ -48,6 +50,11 @@ impl ProjectBuilder {
 
     pub fn version(mut self, version: impl ToVersion) -> Self {
         self.version = version.to_version().unwrap();
+        self
+    }
+
+    pub fn cairo_version(mut self, cairo_version: impl ToVersion) -> Self {
+        self.cairo_version = Some(cairo_version.to_version().unwrap());
         self
     }
 
@@ -74,7 +81,9 @@ impl ProjectBuilder {
         let mut doc = Document::new();
         doc["package"]["name"] = Item::Value(Value::from(self.name.clone()));
         doc["package"]["version"] = Item::Value(Value::from(self.version.to_string()));
-
+        if let Some(cairo_version) = self.cairo_version.as_ref() {
+            doc["package"]["cairo-version"] = Item::Value(Value::from(cairo_version.to_string()));
+        }
         for (name, dep) in &self.deps {
             doc["dependencies"][name.clone()] = Item::Value(dep.clone());
         }

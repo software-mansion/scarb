@@ -13,6 +13,7 @@ use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::core::Target;
+use crate::internal::to_version::ToVersion;
 use crate::resolver;
 
 pub struct WorkspaceResolve {
@@ -142,6 +143,8 @@ fn generate_cairo_compilation_units(
     assert!(!packages.is_empty());
     assert_eq!(packages[0].id, member.id);
 
+    check_cairo_version_compatibility(&packages, ws)?;
+
     // Print warnings for dependencies that are not usable.
     for pkg in other {
         ws.config().ui().warn(format!(
@@ -199,4 +202,26 @@ fn generate_cairo_compilation_units(
 /// Build a set of `cfg` items to enable while building the compilation unit.
 fn build_cfg_set(target: &Target) -> CfgSet {
     CfgSet::from_iter([Cfg::kv("target", target.kind.clone())])
+}
+
+fn check_cairo_version_compatibility(packages: &[Package], ws: &Workspace<'_>) -> Result<()> {
+    let current_version = crate::version::get().cairo.version.to_version().unwrap();
+    let matching_version = packages.iter().all(|pkg| {
+        match &pkg.manifest.metadata.cairo_version {
+            Some(package_version) if !package_version.matches(&current_version) => {
+                ws.config().ui().error(format!(
+                    "Package {}. Required Cairo version isn't compatible with current version. Should be: {} is: {}",
+                    pkg.id.name, package_version, current_version
+                ));
+                false
+            }
+            _ => true
+        }
+    });
+    if !matching_version {
+        anyhow::bail!(
+            "For each package, the required Cairo version must match the current Cairo version."
+        );
+    }
+    Ok(())
 }

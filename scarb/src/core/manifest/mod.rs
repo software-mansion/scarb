@@ -148,6 +148,7 @@ pub struct ManifestMetadata {
     pub repository: Option<String>,
     #[serde(rename = "tool")]
     pub tool_metadata: Option<BTreeMap<SmolStr, Value>>,
+    pub cairo_version: Option<VersionReq>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]

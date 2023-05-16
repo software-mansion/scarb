@@ -232,6 +232,77 @@ fn compile_with_invalid_version() {
 }
 
 #[test]
+fn compile_with_invalid_cairo_version() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "foo"
+            version = "0.1.0"
+            cairo-version = "f"
+            "#,
+        )
+        .unwrap();
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .code(1)
+        .stdout_matches(indoc! {r#"
+            error: failed to parse manifest at `[..]/Scarb.toml`
+
+            Caused by:
+                TOML parse error at line 5, column 29
+                  |
+                5 |             cairo-version = "f"
+                  |                             ^^^
+                unexpected character 'f' while parsing major version number
+        "#});
+}
+
+#[test]
+fn compile_with_incompatible_cairo_version() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            cairo-version = "3.0.0"
+            "#,
+        )
+        .unwrap();
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .code(1)
+        .stdout_matches(indoc! {r#"
+            error: Package hello. Required Cairo version isn't compatible with current version. Should be: ^3.0.0 is: [..]
+            error: For each package, the required Cairo version must match the current Cairo version.
+        "#});
+}
+
+#[test]
+fn compile_with_compatible_cairo_version() {
+    let version = env!("SCARB_CAIRO_VERSION").to_string();
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .cairo_version(&version)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .args(["build"])
+        .current_dir(&t)
+        .assert()
+        .success();
+}
+
+#[test]
 fn compile_with_invalid_non_numeric_dep_version() {
     let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
