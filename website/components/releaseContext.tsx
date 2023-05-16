@@ -30,5 +30,5 @@ export function WithRelease({
 
 export function ReleaseVersion() {
   const release = useRelease();
-  return <>{release.tag}</>;
+  return <>{release.version}</>;
 }
