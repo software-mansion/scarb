@@ -11,10 +11,12 @@ You can find an example of the Scarb setup in the following `.github/workflows/b
 name: Build Scarb project
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
-  SCARB_VERSION: v0.1.0
+  SCARB_VERSION: 0.1.0
 
 jobs:
   build:
@@ -25,10 +27,7 @@ jobs:
 
       - name: Setup Scarb
         run: |
-          wget https://github.com/software-mansion/scarb/releases/download/${{ env.SCARB_VERSION }}/scarb-${{ env.SCARB_VERSION }}-x86_64-unknown-linux-gnu.tar.gz
-          tar -xvzf scarb-${{ env.SCARB_VERSION }}-x86_64-unknown-linux-gnu.tar.gz
-          echo "$GITHUB_WORKSPACE/scarb-${{ env.SCARB_VERSION }}-x86_64-unknown-linux-gnu/bin" >> $GITHUB_PATH
-
+          curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v ${{ env.SCARB_VERSION }}
       - run: scarb build
 ```
 
@@ -38,7 +37,7 @@ You can find an example of the Scarb setup in the following GitLab CI configurat
 
 ```yaml copy
 variables:
-  SCARB_VERSION: "v0.1.0"
+  SCARB_VERSION: "0.1.0"
 
 stages:
   - build
@@ -47,8 +46,8 @@ scarb:
   stage: build
   image: ubuntu:jammy
   script:
-    - apt-get update && apt-get install -y wget
-    - wget https://github.com/software-mansion/scarb/releases/download/$SCARB_VERSION/scarb-$SCARB_VERSION-x86_64-unknown-linux-gnu.tar.gz && tar -xvzf scarb-$SCARB_VERSION-x86_64-unknown-linux-gnu.tar.gz && export PATH="$PATH:$CI_BUILDS_DIR/$CI_PROJECT_PATH/scarb-$SCARB_VERSION-x86_64-unknown-linux-gnu/bin"
+    - apt-get update && apt-get install -y curl
+    - export PATH="$HOME/.local/bin:$PATH" && curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v $SCARB_VERSION
     - scarb build
 ```
 
@@ -59,6 +58,11 @@ You can find an example of the Scarb setup in the following `.circleci/config.ym
 ```yaml copy
 version: 2.1
 
+parameters:
+  scarb_version:
+    type: string
+    default: 0.1.0
+
 jobs:
   build:
     docker:
@@ -68,12 +72,10 @@ jobs:
       - run:
           name: Setup Scarb
           command: |
-            wget https://github.com/software-mansion/scarb/releases/download/$SCARB_VERSION/scarb-$SCARB_VERSION-x86_64-unknown-linux-gnu.tar.gz
-            tar -xvzf scarb-$SCARB_VERSION-x86_64-unknown-linux-gnu.tar.gz
-            echo 'export PATH="$PATH:$CIRCLE_WORKING_DIRECTORY/scarb-$SCARB_VERSION-x86_64-unknown-linux-gnu/bin"' >> "$BASH_ENV"
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+            curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v << pipeline.parameters.scarb_version >>
       - run: scarb build
-    environment:
-      SCARB_VERSION: v0.1.0
 
 workflows:
   build:
