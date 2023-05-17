@@ -318,6 +318,29 @@ impl TomlManifest {
         Ok(targets)
     }
 
+    fn check_unique_targets(targets: &[Target], package_name: &str) -> Result<()> {
+        let mut used = HashSet::with_capacity(targets.len());
+        for target in targets {
+            if !used.insert((target.kind.as_str(), target.name.as_str())) {
+                if target.name == package_name {
+                    bail!(
+                        "manifest contains duplicate target definitions `{}`, \
+                        consider explicitly naming targets with the `name` field",
+                        target.kind
+                    )
+                } else {
+                    bail!(
+                        "manifest contains duplicate target definitions `{} ({})`, \
+                        use different target names to resolve the conflict",
+                        target.kind,
+                        target.name
+                    )
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn collect_profiles(&self) -> Result<Vec<Profile>> {
         if let Some(toml_profiles) = &self.profile {
             let mut result = Vec::new();
@@ -406,29 +429,6 @@ impl TomlManifest {
         } else {
             Ok(profile_definition.tool)
         }
-    }
-
-    fn check_unique_targets(targets: &[Target], package_name: &str) -> Result<()> {
-        let mut used = HashSet::with_capacity(targets.len());
-        for target in targets {
-            if !used.insert((target.kind.as_str(), target.name.as_str())) {
-                if target.name == package_name {
-                    bail!(
-                        "manifest contains duplicate target definitions `{}`, \
-                        consider explicitly naming targets with the `name` field",
-                        target.kind
-                    )
-                } else {
-                    bail!(
-                        "manifest contains duplicate target definitions `{} ({})`, \
-                        use different target names to resolve the conflict",
-                        target.kind,
-                        target.name
-                    )
-                }
-            }
-        }
-        Ok(())
     }
 }
 
