@@ -10,7 +10,6 @@ use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::str::FromStr;
-use toml::Value;
 use tracing::trace;
 use url::Url;
 
@@ -40,7 +39,7 @@ pub struct TomlManifest {
     pub profile: Option<BTreeMap<SmolStr, TomlProfile>>,
 }
 
-type ToolDefinition = BTreeMap<SmolStr, Value>;
+type ToolDefinition = BTreeMap<SmolStr, toml::Value>;
 
 /// Represents the `package` section of a `Scarb.toml`.
 #[derive(Debug, Deserialize, Serialize)]
@@ -135,7 +134,7 @@ pub struct TomlLibTargetParams {
     pub casm: Option<bool>,
 }
 
-pub type TomlExternalTargetParams = BTreeMap<SmolStr, Value>;
+pub type TomlExternalTargetParams = BTreeMap<SmolStr, toml::Value>;
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "kebab-case")]
