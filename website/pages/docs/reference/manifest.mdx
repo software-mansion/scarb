@@ -40,6 +40,21 @@ Scarb bakes in the concept of [Semantic Versioning](https://semver.org/), so mak
    Always increment the minor version if you add any new public structs, traits, fields, types, functions, methods, impls or anything else.
 4. Use version numbers with three numeric parts such as 1.0.0 rather than 1.0.
 
+### `cairo-version`
+
+The `cairo-version` field is an optional key that tells Scarb what version of the Cairo language and compiler your package can be compiled with.
+If the currently running version of the Scarb compiler does not match this requirement, Scarb will exit with an error, telling the user what version is required.
+This field takes a [semver version requirement](/docs/reference/specifying-dependencies#version-requirements).
+
+```toml copy
+[package]
+cairo-version = "1.0.0"
+```
+
+Setting the `cairo-version` key in `[package]{:toml}` will affect all targets in the package.
+The value in this field will not affect the version of the compiler run by Scarb.
+Scarb always uses its built-in version of the Cairo compiler.
+
 ### `authors`
 
 This optional field lists the people or organizations that are considered the "authors" of the package.
