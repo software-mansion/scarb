@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use itertools::Itertools;
@@ -219,9 +219,7 @@ fn check_cairo_version_compatibility(packages: &[Package], ws: &Workspace<'_>) -
         }
     });
     if !matching_version {
-        anyhow::bail!(
-            "For each package, the required Cairo version must match the current Cairo version."
-        );
+        bail!("For each package, the required Cairo version must match the current Cairo version.");
     }
     Ok(())
 }
