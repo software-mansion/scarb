@@ -109,7 +109,7 @@ pub fn generate_compilation_units(
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members() {
         units.extend(if member.is_cairo_plugin() {
-            todo!("Compiling Cairo plugins is not implemented yet.")
+            generate_cairo_plugin_compilation_units(&member)?
         } else {
             generate_cairo_compilation_units(&member, resolve, ws)?
         });
@@ -239,4 +239,20 @@ fn check_cairo_version_compatibility(packages: &[Package], ws: &Workspace<'_>) -
         bail!("For each package, the required Cairo version must match the current Cairo version.");
     }
     Ok(())
+}
+
+fn generate_cairo_plugin_compilation_units(member: &Package) -> Result<Vec<CompilationUnit>> {
+    let target = member.fetch_target(Target::CAIRO_PLUGIN)?;
+
+    // If this is a built-in plugin package, then compiling it boils down to doing nothing.
+    if target
+        .params
+        .as_table()
+        .map(|t| t.contains_key("builtin"))
+        .unwrap()
+    {
+        return Ok(vec![]);
+    }
+
+    bail!("compiling Cairo plugin packages is not possible yet")
 }
