@@ -32,6 +32,7 @@ pub struct TomlManifest {
     pub package: Option<Box<TomlPackage>>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
+    pub cairo_plugin: Option<TomlTarget<TomlCairoPluginTargetParams>>,
     pub target: Option<BTreeMap<TomlTargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
     pub cairo: Option<TomlCairo>,
     pub tool: Option<ToolDefinition>,
@@ -132,6 +133,12 @@ pub struct TomlTarget<P> {
 pub struct TomlLibTargetParams {
     pub sierra: Option<bool>,
     pub casm: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TomlCairoPluginTargetParams {
+    pub builtin: Option<PackageName>,
 }
 
 pub type TomlExternalTargetParams = BTreeMap<SmolStr, toml::Value>;
@@ -272,20 +279,19 @@ impl TomlManifest {
 
         let mut targets = Vec::new();
 
-        if let Some(lib_toml) = &self.lib {
-            let name = lib_toml
-                .name
-                .clone()
-                .unwrap_or_else(|| package_name.clone());
+        targets.extend(Self::collect_target(
+            Target::LIB,
+            self.lib.as_ref(),
+            &package_name,
+            &default_source_path,
+        )?);
 
-            let target = Target::try_from_structured_params(
-                Target::LIB,
-                name,
-                default_source_path.clone(),
-                &lib_toml.params,
-            )?;
-            targets.push(target);
-        }
+        targets.extend(Self::collect_target(
+            Target::CAIRO_PLUGIN,
+            self.cairo_plugin.as_ref(),
+            &package_name,
+            &default_source_path,
+        )?);
 
         for (kind_toml, ext_toml) in self
             .target
@@ -293,20 +299,15 @@ impl TomlManifest {
             .flatten()
             .flat_map(|(k, vs)| vs.iter().map(|v| (k.clone(), v)))
         {
-            let name = ext_toml
-                .name
-                .clone()
-                .unwrap_or_else(|| package_name.clone());
-
-            let target = Target::try_from_structured_params(
+            targets.extend(Self::collect_target(
                 kind_toml,
-                name,
-                default_source_path.clone(),
-                &ext_toml.params,
-            )?;
-            targets.push(target);
+                Some(ext_toml),
+                &package_name,
+                &default_source_path,
+            )?);
         }
 
+        Self::check_cairo_plugin_target_is_exclusive(&targets)?;
         Self::check_unique_targets(&targets, &package_name)?;
 
         if targets.is_empty() {
@@ -316,6 +317,39 @@ impl TomlManifest {
         }
 
         Ok(targets)
+    }
+
+    fn collect_target<T: Serialize>(
+        kind: impl Into<SmolStr>,
+        target: Option<&TomlTarget<T>>,
+        default_name: &SmolStr,
+        default_source_path: &Utf8Path,
+    ) -> Result<Option<Target>> {
+        let Some(target) = target else {
+            return Ok(None);
+        };
+
+        let name = target.name.clone().unwrap_or_else(|| default_name.clone());
+
+        let target = Target::try_from_structured_params(
+            kind,
+            name,
+            default_source_path.to_path_buf(),
+            &target.params,
+        )?;
+
+        Ok(Some(target))
+    }
+
+    fn check_cairo_plugin_target_is_exclusive(targets: &[Target]) -> Result<()> {
+        if targets.iter().any(Target::is_cairo_plugin) {
+            ensure!(
+                targets.len() == 1,
+                "target `{}` cannot be mixed with other targets",
+                Target::CAIRO_PLUGIN,
+            );
+        }
+        Ok(())
     }
 
     fn check_unique_targets(targets: &[Target], package_name: &str) -> Result<()> {
