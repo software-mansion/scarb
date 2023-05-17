@@ -5,6 +5,8 @@ on:
     tags:
       - v[0-9]+.*
   release:
+    types:
+      - published
   workflow_dispatch:
 
 permissions:
