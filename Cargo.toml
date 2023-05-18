@@ -34,8 +34,8 @@ clap = { version = "4.2.7", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.1"
 console = "0.15.5"
 data-encoding = "2.3.3"
-derive_builder = "0.12.0"
 deno_task_shell = "0.12.0"
+derive_builder = "0.12.0"
 diffy = "0.3.0"
 directories = "5.0.1"
 dunce = "1.0.4"
@@ -71,6 +71,7 @@ tracing = "0.1.37"
 tracing-futures = "0.2.5"
 tracing-log = "0.1.3"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+typed-builder = "0.14.0"
 url = { version = "2.3.1", features = ["serde"] }
 walkdir = "2.3.2"
 which = "4.4.0"
