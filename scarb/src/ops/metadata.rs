@@ -181,6 +181,12 @@ fn collect_compilation_unit_metadata(
         .id(compilation_unit.id())
         .package(wrap_package_id(compilation_unit.main_package_id))
         .target(collect_target_metadata(compilation_unit.target()))
+        .components_legacy(
+            components
+                .iter()
+                .map(|c| c.package.clone())
+                .collect::<Vec<_>>(),
+        )
         .components(components)
         .compiler_config(compiler_config)
         .cfg(cfg)
