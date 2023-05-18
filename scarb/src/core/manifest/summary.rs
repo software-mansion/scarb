@@ -1,19 +1,28 @@
-use crate::core::{ManifestDependency, PackageId, PackageName, SourceId};
-use once_cell::sync::Lazy;
-use semver::VersionReq;
 use std::ops::Deref;
 use std::sync::Arc;
 
+use once_cell::sync::Lazy;
+use semver::VersionReq;
+use typed_builder::TypedBuilder;
+
+use crate::core::{ManifestDependency, PackageId, PackageName, SourceId};
+
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
 /// See [`SummaryInner`] for public fields reference.
+/// Construct using [`Summary::builder`].
 #[derive(Clone, Debug)]
 pub struct Summary(Arc<SummaryInner>);
 
-#[derive(Debug)]
+#[derive(TypedBuilder, Debug)]
+#[builder(builder_type(name = SummaryBuilder))]
+#[builder(builder_method(vis = ""))]
+#[builder(build_method(into = Summary))]
 #[non_exhaustive]
 pub struct SummaryInner {
     pub package_id: PackageId,
+    #[builder(default)]
     pub dependencies: Vec<ManifestDependency>,
+    #[builder(default = false)]
     pub no_core: bool,
 }
 
@@ -25,19 +34,16 @@ impl Deref for Summary {
     }
 }
 
-impl Summary {
-    pub fn build(package_id: PackageId) -> SummaryBuilder {
-        SummaryBuilder::new(package_id)
-    }
-
-    pub fn minimal(package_id: PackageId, dependencies: Vec<ManifestDependency>) -> Self {
-        Self::build(package_id)
-            .with_dependencies(dependencies)
-            .finish()
-    }
-
-    fn new(data: SummaryInner) -> Self {
+#[doc(hidden)]
+impl From<SummaryInner> for Summary {
+    fn from(data: SummaryInner) -> Self {
         Self(Arc::new(data))
+    }
+}
+
+impl Summary {
+    pub fn builder() -> SummaryBuilder {
+        SummaryInner::builder()
     }
 
     pub fn full_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
@@ -63,40 +69,5 @@ impl Summary {
         }
 
         deps.into_iter()
-    }
-}
-
-#[derive(Debug)]
-pub struct SummaryBuilder {
-    package_id: PackageId,
-    dependencies: Vec<ManifestDependency>,
-    no_core: bool,
-}
-
-impl SummaryBuilder {
-    fn new(package_id: PackageId) -> Self {
-        Self {
-            package_id,
-            dependencies: Vec::new(),
-            no_core: false,
-        }
-    }
-
-    pub fn with_dependencies(mut self, dependencies: Vec<ManifestDependency>) -> Self {
-        self.dependencies = dependencies;
-        self
-    }
-
-    pub fn no_core(mut self, no_core: bool) -> Self {
-        self.no_core = no_core;
-        self
-    }
-
-    pub fn finish(self) -> Summary {
-        Summary::new(SummaryInner {
-            package_id: self.package_id,
-            dependencies: self.dependencies,
-            no_core: self.no_core,
-        })
     }
 }
