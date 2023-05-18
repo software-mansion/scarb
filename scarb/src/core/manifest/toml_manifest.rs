@@ -32,7 +32,7 @@ pub struct TomlManifest {
     pub package: Option<Box<TomlPackage>>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
-    pub cairo_plugin: Option<TomlTarget<TomlCairoPluginTargetParams>>,
+    pub cairo_plugin: Option<TomlTarget<TomlExternalTargetParams>>,
     pub target: Option<BTreeMap<TomlTargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
     pub cairo: Option<TomlCairo>,
     pub tool: Option<ToolDefinition>,
@@ -133,12 +133,6 @@ pub struct TomlTarget<P> {
 pub struct TomlLibTargetParams {
     pub sierra: Option<bool>,
     pub casm: Option<bool>,
-}
-
-#[derive(Debug, Default, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct TomlCairoPluginTargetParams {
-    pub builtin: Option<PackageName>,
 }
 
 pub type TomlExternalTargetParams = BTreeMap<SmolStr, toml::Value>;
