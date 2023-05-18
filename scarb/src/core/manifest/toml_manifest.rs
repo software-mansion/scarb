@@ -1,23 +1,23 @@
 use std::collections::{BTreeMap, HashSet};
 use std::default::Default;
 use std::fs;
+use std::str::FromStr;
 
-use crate::compiler::{DefaultForProfile, Profile};
 use anyhow::{bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
-use std::str::FromStr;
 use tracing::trace;
 use url::Url;
 
+use crate::compiler::{DefaultForProfile, Profile};
 use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Target};
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
-use crate::core::{ManifestCompilerConfig, PackageName};
+use crate::core::{ManifestBuilder, ManifestCompilerConfig, PackageName};
 use crate::internal::fsx;
 use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::to_version::ToVersion;
@@ -231,6 +231,12 @@ impl TomlManifest {
 
         let no_core = package.no_core.unwrap_or(false);
 
+        let summary = Summary::builder()
+            .package_id(package_id)
+            .dependencies(dependencies)
+            .no_core(no_core)
+            .build();
+
         let targets = self.collect_targets(package.name.to_smol_str(), root)?;
 
         let scripts: BTreeMap<SmolStr, ScriptDefinition> = self
@@ -248,31 +254,31 @@ impl TomlManifest {
         let tool = self.collect_tool(profile_definition)?;
         let profiles = self.collect_profiles()?;
 
-        Ok(Manifest {
-            summary: Summary::builder()
-                .package_id(package_id)
-                .dependencies(dependencies)
-                .no_core(no_core)
-                .build(),
-            targets,
-            metadata: ManifestMetadata {
-                authors: package.authors.clone(),
-                urls: package.urls.clone(),
-                description: package.description.clone(),
-                documentation: package.documentation.clone(),
-                homepage: package.homepage.clone(),
-                keywords: package.keywords.clone(),
-                license: package.license.clone(),
-                license_file: package.license_file.clone(),
-                readme: package.readme.clone(),
-                repository: package.repository.clone(),
-                tool_metadata: tool,
-                cairo_version: package.cairo_version.clone(),
-            },
-            compiler_config,
-            scripts,
-            profiles,
-        })
+        let metadata = ManifestMetadata {
+            authors: package.authors.clone(),
+            urls: package.urls.clone(),
+            description: package.description.clone(),
+            documentation: package.documentation.clone(),
+            homepage: package.homepage.clone(),
+            keywords: package.keywords.clone(),
+            license: package.license.clone(),
+            license_file: package.license_file.clone(),
+            readme: package.readme.clone(),
+            repository: package.repository.clone(),
+            tool_metadata: tool,
+            cairo_version: package.cairo_version.clone(),
+        };
+
+        let manifest = ManifestBuilder::default()
+            .summary(summary)
+            .targets(targets)
+            .metadata(metadata)
+            .compiler_config(compiler_config)
+            .scripts(scripts)
+            .profiles(profiles)
+            .build()?;
+
+        Ok(manifest)
     }
 
     fn collect_targets(&self, package_name: SmolStr, root: &Utf8Path) -> Result<Vec<Target>> {

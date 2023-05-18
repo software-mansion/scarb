@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use derive_builder::Builder;
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
@@ -12,6 +13,7 @@ pub use summary::*;
 pub use target::*;
 pub use toml_manifest::*;
 
+use crate::compiler::DefaultForProfile;
 use crate::compiler::Profile;
 
 mod compiler_config;
@@ -22,16 +24,20 @@ mod target;
 mod toml_manifest;
 
 /// Contains all the information about a package, as loaded from the manifest file.
-///
+/// Construct using [`ManifestBuilder`].
 /// This is deserialized using the [`TomlManifest`] type.
-#[derive(Clone, Debug)]
+#[derive(Builder, Clone, Debug)]
 #[non_exhaustive]
 pub struct Manifest {
     pub summary: Summary,
     pub targets: Vec<Target>,
+    #[builder(default)]
     pub metadata: ManifestMetadata,
+    #[builder(default = "ManifestCompilerConfig::default_for_profile(&Profile::DEV)")]
     pub compiler_config: ManifestCompilerConfig,
+    #[builder(default)]
     pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
+    #[builder(default)]
     pub profiles: Vec<Profile>,
 }
 
