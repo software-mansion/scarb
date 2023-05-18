@@ -249,10 +249,11 @@ impl TomlManifest {
         let profiles = self.collect_profiles()?;
 
         Ok(Manifest {
-            summary: Summary::build(package_id)
-                .with_dependencies(dependencies)
+            summary: Summary::builder()
+                .package_id(package_id)
+                .dependencies(dependencies)
                 .no_core(no_core)
-                .finish(),
+                .build(),
             targets,
             metadata: ManifestMetadata {
                 authors: package.authors.clone(),
