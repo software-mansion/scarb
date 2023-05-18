@@ -27,12 +27,9 @@ pub(crate) mod mock {
     use camino::Utf8PathBuf;
     use itertools::Itertools;
 
-    use crate::compiler::{DefaultForProfile, Profile};
     use crate::core::package::PackageName;
     use crate::core::registry::Registry;
-    use crate::core::{
-        Manifest, ManifestCompilerConfig, ManifestDependency, Package, PackageId, SourceId, Summary,
-    };
+    use crate::core::{ManifestBuilder, ManifestDependency, Package, PackageId, SourceId, Summary};
 
     #[derive(Debug, Default)]
     pub struct MockRegistry {
@@ -104,14 +101,13 @@ pub(crate) mod mock {
                 .no_core(package_id.is_core())
                 .build();
 
-            let manifest = Box::new(Manifest {
-                summary,
-                targets: Vec::new(),
-                metadata: Default::default(),
-                scripts: Default::default(),
-                profiles: Default::default(),
-                compiler_config: ManifestCompilerConfig::default_for_profile(&Profile::DEV),
-            });
+            let manifest = Box::new(
+                ManifestBuilder::default()
+                    .summary(summary)
+                    .targets(vec![])
+                    .build()
+                    .unwrap(),
+            );
 
             Package::new(package_id, Utf8PathBuf::new(), manifest)
         }
