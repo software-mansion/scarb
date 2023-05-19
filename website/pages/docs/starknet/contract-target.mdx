@@ -4,12 +4,6 @@ The `starknet-contract` target allows to build the package as a [Starknet Contra
 It searches for all contract classes in the package, and builds a separate compiled JSON file each found class.
 Generated file will be named with following pattern: `[package name]_[contract name].sierra.json`.
 
-To enable it for a package, write a following line in `Scarb.toml`:
-
-```toml copy
-[[target.starknet-contract]]
-```
-
 This target accepts several configuration arguments, beside ones [shared among all targets](../reference/targets#configuring-a-target), with default values for the default _release_ profile:
 
 ```toml
@@ -21,6 +15,22 @@ sierra = true
 casm = false
 # Emit Python-powered hints in order to run compiled CASM class with legacy Cairo VM.
 casm-add-pythonic-hints = false
+```
+
+## Usage
+
+To enable Starknet contract compilation for a package, write a following line in `Scarb.toml`:
+
+```toml copy
+[[target.starknet-contract]]
+```
+
+Then, declare a dependency on the [`starknet` package](/docs/starknet/starknet-package).
+Its version is coupled to Cairo version included in Scarb.
+
+```toml copy
+[dependencies]
+starknet = ">=1.0.0"
 ```
 
 ## Sierra contract class generation
