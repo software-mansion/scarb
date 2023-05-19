@@ -1,7 +1,7 @@
-import { Link } from "@/components/link";
 import { ReleaseVersion, WithRelease } from "@/components/releaseContext";
 import { platform } from "@/data/platform";
 import dynamic from "next/dynamic";
+import { Link } from "nextra-theme-docs";
 import { Pre } from "nextra/components";
 
 export function Download() {
