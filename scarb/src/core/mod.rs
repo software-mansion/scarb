@@ -8,7 +8,7 @@ pub use manifest::*;
 pub use package::{Package, PackageId, PackageIdInner, PackageInner, PackageName};
 pub use resolver::Resolve;
 pub use source::{GitReference, SourceId, SourceIdInner, SourceKind};
-pub use workspace::Workspace;
+pub use workspace::{Utf8PathWorkspaceExt, Workspace};
 
 pub(crate) mod config;
 mod dirs;

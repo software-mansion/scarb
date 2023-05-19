@@ -1,10 +1,11 @@
 use anyhow::{anyhow, Result};
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use indicatif::HumanDuration;
+use indoc::formatdoc;
 
-use crate::compiler::db::build_scarb_root_database;
+use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin};
 use crate::compiler::CompilationUnit;
-use crate::core::workspace::Workspace;
+use crate::core::{Utf8PathWorkspaceExt, Workspace};
 use crate::ops;
 use crate::ui::Status;
 
@@ -34,6 +35,25 @@ fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         .print(Status::new("Compiling", &unit.name()));
 
     let mut db = build_scarb_root_database(&unit, ws)?;
+
+    // NOTE: This is a special case that can be hit frequently by newcomers. Not specifying
+    //   `starknet` dependency will error in 99% real-world Starknet contract projects.
+    //   I think we can get away with emitting false positives for users who write raw contracts
+    //   without using Starknet code generators. Such people shouldn't do what they do 😁
+    if unit.target().kind == "starknet-contract" && !has_starknet_plugin(&db) {
+        ws.config().ui().warn(formatdoc! {
+            r#"
+            package `{package_name}` declares `starknet-contract` target, but does not depend on `starknet` package
+            note: this may cause contract compilation to fail with cryptic errors
+            help: add dependency on `starknet` to package manifest
+             --> {scarb_toml}
+                [dependencies]
+                starknet = ">={cairo_version}"
+            "#,
+            scarb_toml=unit.main_component().package.manifest_path().workspace_relative(ws),
+            cairo_version = crate::version::get().cairo.version,
+        })
+    }
 
     ws.config()
         .compilers()
