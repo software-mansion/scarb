@@ -14,12 +14,12 @@ export function Jumbo(): ReactElement {
         lines={[
           "scarb init --name hello_world",
           <>
-            scarb add quaireaux_math --git{" "}
+            scarb add alexandria_math --git{" "}
             <span style={{ userSelect: "none" }}>
               \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;
             </span>
-            https://github.com/keep-starknet-strange/quaireaux.git
+            https://github.com/keep-starknet-strange/alexandria.git
           </>,
           "scarb build",
         ]}

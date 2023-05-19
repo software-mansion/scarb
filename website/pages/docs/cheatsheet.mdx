@@ -56,14 +56,14 @@ Add dependency hosted on a Git repository:
 
 ```toml copy
 [dependencies]
-quaireaux_math = { git = "https://github.com/keep-starknet-strange/quaireaux.git" }
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 ```
 
 Add dependency located in local path:
 
 ```toml copy
 [dependencies]
-quaireaux_math = { path = "../path-to-quaireaux-checkout/quaireaux/math" }
+alexandria_math = { path = "../path-to-alexandria-checkout/alexandria/math" }
 ```
 
 <Callout>
@@ -84,17 +84,17 @@ quaireaux_math = { path = "../path-to-quaireaux-checkout/quaireaux/math" }
 Add dependency hosted on a Git repository:
 
 ```shell copy
-scarb add quaireaux_math --git https://github.com/keep-starknet-strange/quaireaux.git
+scarb add alexandria_math --git https://github.com/keep-starknet-strange/alexandria.git
 ```
 
 Add dependency located in local path:
 
 ```shell copy
-scarb add quaireaux_math --path ../path-to-quaireaux-checkout/quaireaux/math
+scarb add alexandria_math --path ../path-to-alexandria-checkout/alexandria/math
 ```
 
 <Callout>
-  You can specify package version like this: `quaireaux_math@0.1.0`, but see
+  You can specify package version like this: `alexandria_math@0.1.0`, but see
   remarks in previous section.
 </Callout>
 
