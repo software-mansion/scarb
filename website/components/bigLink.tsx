@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "nextra-theme-docs";
 import { ComponentProps, ReactElement, ReactNode } from "react";
 
 interface BigLinkProps extends ComponentProps<typeof Link> {
@@ -7,15 +7,8 @@ interface BigLinkProps extends ComponentProps<typeof Link> {
 
 export function BigLink({ text, ...linkProps }: BigLinkProps): ReactElement {
   return (
-    <p className="nx-mt-6 nx-leading-7 first:nx-mt-0 text-center text-lg">
-      <Link
-        rel="noreferrer"
-        target="_blank"
-        className="nx-text-primary-600 decoration-from-font [text-underline-position:from-font] hover:underline focus:underline"
-        {...linkProps}
-      >
-        {text} →
-      </Link>
+    <p className="mt-6 text-center text-lg leading-7 first:mt-0">
+      <Link {...linkProps}>{text} →</Link>
     </p>
   );
 }

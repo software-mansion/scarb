@@ -6,7 +6,7 @@ export interface TerminalProps {
 
 export function Terminal({ lines }: TerminalProps): ReactElement {
   return (
-    <div className="h-full overflow-hidden rounded-lg bg-black-40 px-5 pt-4 pb-6 text-left font-mono text-sm leading-normal text-white-40 subpixel-antialiased shadow-xl">
+    <div className="h-full overflow-hidden rounded-lg bg-black-40 px-5 pb-6 pt-4 text-left font-mono text-sm leading-normal text-white-40 subpixel-antialiased shadow-xl">
       <div className="top mb-2 flex gap-2">
         <div className="h-3 w-3 rounded-full bg-red-100" />
         <div className="h-3 w-3 rounded-full bg-yellow-100" />
