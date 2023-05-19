@@ -235,3 +235,42 @@ fn compile_starknet_contract_only_with_cfg() {
 
     assert_is_contract_class(&t.child("target/dev/hello_Balance.sierra.json"));
 }
+
+#[test]
+fn compile_starknet_contract_without_starknet_dep() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra("[[target.starknet-contract]]")
+        .lib_cairo(BALANCE_CONTRACT)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling hello v0.1.0 ([..])
+        warn: package `hello` declares `starknet-contract` target, but does not depend on `starknet` package
+        note: this may cause contract compilation to fail with cryptic errors
+        help: add dependency on `starknet` to package manifest
+         --> Scarb.toml
+            [dependencies]
+            starknet = ">=[..]"
+
+        error: Identifier not found.
+         --> lib.cairo:10:9
+                balance::write(balance::read() + amount);
+                ^*****^
+
+        error: Identifier not found.
+         --> lib.cairo:16:9
+                balance::read()
+                ^*****^
+
+
+        error: could not compile `hello` due to previous error
+        "#});
+}

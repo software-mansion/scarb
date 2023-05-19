@@ -1,9 +1,9 @@
 use std::fmt;
 
-use crate::compiler::Profile;
 use anyhow::Result;
 use camino::Utf8Path;
 
+use crate::compiler::Profile;
 use crate::core::config::Config;
 use crate::core::package::Package;
 use crate::flock::RootFilesystem;
@@ -102,5 +102,15 @@ impl<'c> fmt::Debug for Workspace<'c> {
         f.debug_struct("Workspace")
             .field("package", &self.package)
             .finish_non_exhaustive()
+    }
+}
+
+pub trait Utf8PathWorkspaceExt {
+    fn workspace_relative(&self, ws: &Workspace<'_>) -> &Utf8Path;
+}
+
+impl Utf8PathWorkspaceExt for Utf8Path {
+    fn workspace_relative(&self, ws: &Workspace<'_>) -> &Utf8Path {
+        self.strip_prefix(ws.root()).unwrap_or(self)
     }
 }

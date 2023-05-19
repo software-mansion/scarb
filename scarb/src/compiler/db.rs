@@ -2,6 +2,7 @@ use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_filesystem::ids::Directory;
+use cairo_lang_semantic::db::SemanticGroup;
 use tracing::trace;
 
 use crate::compiler::CompilationUnit;
@@ -56,4 +57,12 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
     trace!(?project_config);
 
     Ok(project_config)
+}
+
+pub(crate) fn has_starknet_plugin(db: &RootDatabase) -> bool {
+    db.semantic_plugins().iter().any(|plugin| {
+        // Can this be done in less "hacky" way? TypeId is not working here, because we deal with
+        // trait objects.
+        format!("{:?}", *plugin).contains("StarkNetPlugin")
+    })
 }
