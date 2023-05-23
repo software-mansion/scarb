@@ -1,4 +1,5 @@
-use std::fs;
+use std::fs::File;
+use std::io::BufReader;
 
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
@@ -6,6 +7,7 @@ use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet::contract_class::ContractClass;
 use indoc::{formatdoc, indoc};
 use predicates::prelude::*;
+use serde::de::DeserializeOwned;
 
 use crate::support::command::Scarb;
 use crate::support::fsx::ChildPathEx;
@@ -40,14 +42,10 @@ const FORTY_TWO_CONTRACT: &str = indoc! {r#"
     }
 "#};
 
-fn assert_is_contract_class(child: &ChildPath) {
-    let contract_json = fs::read_to_string(child.path()).unwrap();
-    serde_json::from_str::<ContractClass>(&contract_json).unwrap();
-}
-
-fn assert_is_casm_contract_class(child: &ChildPath) {
-    let casm_contract_json = fs::read_to_string(child.path()).unwrap();
-    serde_json::from_str::<CasmContractClass>(&casm_contract_json).unwrap();
+fn assert_is_json<T: DeserializeOwned>(child: &ChildPath) -> T {
+    let file = File::open(child.path()).unwrap();
+    let reader = BufReader::new(file);
+    serde_json::from_reader(reader).unwrap()
 }
 
 #[test]
@@ -73,10 +71,10 @@ fn compile_starknet_contract() {
 
     assert_eq!(
         t.child("target/dev").files(),
-        vec!["hello_Balance.sierra.json"]
+        vec!["hello_Balance.sierra.json", "starknet_artifacts.json"]
     );
 
-    assert_is_contract_class(&t.child("target/dev/hello_Balance.sierra.json"));
+    assert_is_json::<ContractClass>(&t.child("target/dev/hello_Balance.sierra.json"));
 }
 
 #[test]
@@ -106,10 +104,10 @@ fn compile_starknet_contract_to_casm() {
 
     assert_eq!(
         t.child("target/dev").files(),
-        vec!["hello_Balance.casm.json"]
+        vec!["hello_Balance.casm.json", "starknet_artifacts.json"]
     );
 
-    assert_is_casm_contract_class(&t.child("target/dev/hello_Balance.casm.json"));
+    assert_is_json::<CasmContractClass>(&t.child("target/dev/hello_Balance.casm.json"));
 }
 
 #[test]
@@ -159,6 +157,7 @@ fn compile_many_contracts() {
             "b_FortyTwo.sierra.json",
             "hello.casm",
             "hello.sierra",
+            "starknet_artifacts.json"
         ]
     );
 
@@ -168,8 +167,10 @@ fn compile_many_contracts() {
         "b_Balance.sierra.json",
         "b_FortyTwo.sierra.json",
     ] {
-        assert_is_contract_class(&t.child("target/dev").child(json));
+        assert_is_json::<ContractClass>(&t.child("target/dev").child(json));
     }
+
+    assert_is_json::<serde_json::Value>(&t.child("target/dev/starknet_artifacts.json"));
 }
 
 #[test]
@@ -198,7 +199,7 @@ fn casm_add_pythonic_hints() {
         [..]  Finished release target(s) in [..]
         "#});
 
-    assert_is_casm_contract_class(&t.child("target/dev/hello_Balance.casm.json"));
+    assert_is_json::<CasmContractClass>(&t.child("target/dev/hello_Balance.casm.json"));
 }
 
 #[test]
@@ -227,13 +228,17 @@ fn compile_starknet_contract_only_with_cfg() {
 
     assert_eq!(
         t.child("target/dev").files(),
-        vec!["hello.sierra", "hello_Balance.sierra.json"]
+        vec![
+            "hello.sierra",
+            "hello_Balance.sierra.json",
+            "starknet_artifacts.json"
+        ]
     );
 
     t.child("target/dev/hello.sierra")
         .assert(predicates::str::contains("hello::Balance::balance::read").not());
 
-    assert_is_contract_class(&t.child("target/dev/hello_Balance.sierra.json"));
+    assert_is_json::<ContractClass>(&t.child("target/dev/hello_Balance.sierra.json"));
 }
 
 #[test]

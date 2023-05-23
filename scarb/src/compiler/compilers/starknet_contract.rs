@@ -13,7 +13,9 @@ use tracing::{trace, trace_span};
 
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CompilationUnit, Compiler};
-use crate::core::Workspace;
+use crate::core::{PackageName, Workspace};
+use crate::flock::Filesystem;
+use crate::internal::stable_hash::short_hash;
 
 // TODO(#111): starknet-contract should be implemented as an extension.
 pub struct StarknetContractCompiler;
@@ -34,6 +36,57 @@ impl Default for Props {
             casm_add_pythonic_hints: false,
         }
     }
+}
+
+#[derive(Debug, Serialize)]
+struct StarknetArtifacts {
+    version: usize,
+    contracts: Vec<ContractArtifacts>,
+}
+
+impl Default for StarknetArtifacts {
+    fn default() -> Self {
+        Self {
+            version: 1,
+            contracts: Vec::new(),
+        }
+    }
+}
+
+impl StarknetArtifacts {
+    fn finish(&mut self) {
+        assert!(
+            self.contracts.iter().map(|it| &it.id).all_unique(),
+            "Artifacts IDs must be unique."
+        );
+
+        self.contracts.sort_unstable_by_key(|it| it.id.clone());
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct ContractArtifacts {
+    id: String,
+    package_name: PackageName,
+    contract_name: String,
+    artifacts: ContractArtifact,
+}
+
+impl ContractArtifacts {
+    fn new(package_name: &PackageName, contract_name: &str) -> Self {
+        Self {
+            id: short_hash((&package_name, &contract_name)),
+            package_name: package_name.clone(),
+            contract_name: contract_name.to_owned(),
+            artifacts: ContractArtifact::default(),
+        }
+    }
+}
+
+#[derive(Debug, Default, Serialize)]
+struct ContractArtifact {
+    sierra: Option<String>,
+    casm: Option<String>,
 }
 
 impl Compiler for StarknetContractCompiler {
@@ -99,27 +152,53 @@ impl Compiler for StarknetContractCompiler {
             classes.iter().map(|_| None).collect()
         };
 
+        let mut artifacts = StarknetArtifacts::default();
+
         for (decl, class, casm_class) in izip!(contracts, classes, casm_classes) {
             let target_name = &unit.target().name;
             let contract_name = decl.submodule_id.name(db.upcast_mut());
             let file_stem = format!("{target_name}_{contract_name}");
 
+            let mut artifact = ContractArtifacts::new(&unit.main_package_id.name, &contract_name);
+
             if props.sierra {
                 let file_name = format!("{file_stem}.sierra.json");
-                let mut file = target_dir.open_rw(&file_name, "output file", ws.config())?;
-                serde_json::to_writer_pretty(file.deref_mut(), &class)
-                    .with_context(|| format!("failed to serialize {file_name}"))?;
+                write_json(&file_name, "output file", &target_dir, ws, &class)?;
+                artifact.artifacts.sierra = Some(file_name);
             }
 
             // if props.casm
             if let Some(casm_class) = casm_class {
                 let file_name = format!("{file_stem}.casm.json");
-                let mut file = target_dir.open_rw(&file_name, "output file", ws.config())?;
-                serde_json::to_writer_pretty(file.deref_mut(), &casm_class)
-                    .with_context(|| format!("failed to serialize {file_name}"))?;
+                write_json(&file_name, "output file", &target_dir, ws, &casm_class)?;
+                artifact.artifacts.casm = Some(file_name);
             }
+
+            artifacts.contracts.push(artifact);
         }
+
+        artifacts.finish();
+
+        write_json(
+            "starknet_artifacts.json",
+            "starknet artifacts file",
+            &target_dir,
+            ws,
+            &artifacts,
+        )?;
 
         Ok(())
     }
+}
+
+fn write_json(
+    file_name: &str,
+    description: &str,
+    target_dir: &Filesystem<'_>,
+    ws: &Workspace<'_>,
+    value: impl Serialize,
+) -> Result<()> {
+    let mut file = target_dir.open_rw(file_name, description, ws.config())?;
+    serde_json::to_writer_pretty(file.deref_mut(), &value)
+        .with_context(|| format!("failed to serialize {file_name}"))
 }
