@@ -33,7 +33,7 @@ impl Hasher for StableHasher {
     }
 }
 
-pub fn short_hash(hashable: &impl Hash) -> String {
+pub fn short_hash(hashable: impl Hash) -> String {
     let mut hasher = StableHasher::new();
     hashable.hash(&mut hasher);
     hasher.finish_as_short_hash()
@@ -45,7 +45,7 @@ mod tests {
 
     #[test]
     fn short_hash_is_stable() {
-        assert_eq!(short_hash(&"abcd"), "LA8VKK9KUOE2M");
-        assert_eq!(short_hash(&123), "8B89NJO1D02MG");
+        assert_eq!(short_hash("abcd"), "LA8VKK9KUOE2M");
+        assert_eq!(short_hash(123), "8B89NJO1D02MG");
     }
 }

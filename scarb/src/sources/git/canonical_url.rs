@@ -56,7 +56,7 @@ impl CanonicalUrl {
     pub fn ident(&self) -> String {
         let base = &self.0;
 
-        let hash = short_hash(&base);
+        let hash = short_hash(base);
 
         let ident = base
             .path_segments()
