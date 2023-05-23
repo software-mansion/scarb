@@ -1,5 +1,4 @@
 use std::iter::zip;
-use std::ops::DerefMut;
 
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
@@ -199,6 +198,6 @@ fn write_json(
     value: impl Serialize,
 ) -> Result<()> {
     let mut file = target_dir.open_rw(file_name, description, ws.config())?;
-    serde_json::to_writer_pretty(file.deref_mut(), &value)
+    serde_json::to_writer(&mut *file, &value)
         .with_context(|| format!("failed to serialize {file_name}"))
 }
