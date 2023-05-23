@@ -1,0 +1,10 @@
+[package]
+name = "starknet_hello_world"
+version = "0.1.0"
+
+# See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest
+
+[dependencies]
+starknet = ">=1.0.0"
+
+[[target.starknet-contract]]

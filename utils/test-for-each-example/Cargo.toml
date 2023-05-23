@@ -1,0 +1,15 @@
+[package]
+name = "test-for-each-example"
+version = "1.0.0"
+rust-version.workspace = true
+edition.workspace = true
+publish = false
+
+[lib]
+proc-macro = true
+
+[dependencies]
+camino.workspace = true
+proc-macro2 = "1.0.58"
+quote = "1.0.27"
+syn = { version = "2.0.16", features = ["full", "extra-traits"] }

@@ -1,7 +1,7 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use camino::Utf8Path;
 use indoc::formatdoc;
 use tracing::trace;
@@ -83,21 +83,29 @@ pub fn find_workspaces_recursive_with_source_id<'c>(
         }
     }
 
-    let mut found = Vec::new();
+    fn inner<'c>(
+        root: &Utf8Path,
+        source_id: SourceId,
+        config: &'c Config,
+    ) -> Result<Vec<Workspace<'c>>> {
+        let mut found = Vec::new();
 
-    let walker = WalkDir::new(root).into_iter().filter_entry(filter_entry);
-    for entry in walker {
-        let path = entry?.into_path();
-        let manifest_path = path.join(MANIFEST_FILE_NAME);
-        trace!(manifest_path=%manifest_path.display());
-        if manifest_path.exists() {
-            let manifest_path = manifest_path.try_into_utf8()?;
-            let ws = read_workspace_with_source_id(&manifest_path, source_id, config)?;
-            found.push(ws);
+        let walker = WalkDir::new(root).into_iter().filter_entry(filter_entry);
+        for entry in walker {
+            let path = entry.context("failed to traverse directory")?.into_path();
+            let manifest_path = path.join(MANIFEST_FILE_NAME);
+            trace!(manifest_path=%manifest_path.display());
+            if manifest_path.exists() {
+                let manifest_path = manifest_path.try_into_utf8()?;
+                let ws = read_workspace_with_source_id(&manifest_path, source_id, config)?;
+                found.push(ws);
+            }
         }
+
+        Ok(found)
     }
 
-    Ok(found)
+    inner(root, source_id, config).with_context(|| format!("failed to find workspaces in: {root}"))
 }
 
 #[tracing::instrument(level = "debug", skip(config))]

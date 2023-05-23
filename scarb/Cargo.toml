@@ -67,6 +67,7 @@ zip.workspace = true
 
 [dev-dependencies]
 assert_fs.workspace = true
+test-for-each-example = { path = "../utils/test-for-each-example" }
 io_tee.workspace = true
 libc.workspace = true
 ntest.workspace = true

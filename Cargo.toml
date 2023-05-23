@@ -3,7 +3,8 @@ members = [
     "scarb",
     "scarb-metadata",
     "extensions/scarb-cairo-language-server",
-    "utils/create-output-dir"
+    "utils/create-output-dir",
+    "utils/test-for-each-example",
 ]
 
 [workspace.package]
