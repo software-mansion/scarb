@@ -3,6 +3,7 @@ name = "scarb-cairo-language-server"
 version.workspace = true
 rust-version.workspace = true
 edition.workspace = true
+publish = false
 
 authors.workspace = true
 categories = ["development-tools"]
