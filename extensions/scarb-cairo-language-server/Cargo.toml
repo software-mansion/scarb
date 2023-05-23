@@ -5,15 +5,6 @@ rust-version.workspace = true
 edition.workspace = true
 publish = false
 
-authors.workspace = true
-categories = ["development-tools"]
-description = "The Cairo Language Server"
-homepage.workspace = true
-keywords = ["cairo-lang", "starknet", "scarb", "cairo-ls", "cairo-language-server"]
-license.workspace = true
-readme = "README.md"
-repository.workspace = true
-
 [dependencies]
 cairo-lang-language-server.workspace = true
 tokio.workspace = true
