@@ -46,22 +46,34 @@ impl<'c> StandardLibSource<'c> {
         let tag_fs = std_fs.child(&tag);
         let tag_path = tag_fs.path_existent()?;
 
+        // The following sequence of if statements & advisory locks implements a file system-based
+        // mutex, that synchronizes extraction logic. The first condition checks if extraction has
+        // happened in the past. If not, then we acquire the advisory lock (which means waiting for
+        // our time slice to do the job). Successful lock acquisition does not mean though that we
+        // still have to perform the extraction! While we waited for our time slice, another process
+        // could just do the extraction! The second condition prevents repeating the work.
+        //
+        // This is actually very important for correctness. The another process that performed
+        // the extraction, will highly probably soon try to read the extracted files. If we recreate
+        // the filesystem now, we will cause that process to crash. That's what happened on Windows
+        // in examples tests, when the second condition was missing.
         if !tag_fs.is_ok() {
-            trace!("extracting Cairo standard library: {tag}");
             let _lock = self.config.package_cache_lock().acquire_async().await?;
+            if !tag_fs.is_ok() {
+                trace!("extracting Cairo standard library: {tag}");
+                unsafe {
+                    tag_fs.recreate()?;
+                }
 
-            unsafe {
-                tag_fs.recreate()?;
+                let base_path = tag_fs.path_existent()?;
+
+                extract_with_templating(&CORELIB, &base_path.join("core"))
+                    .context("failed to extract Cairo standard library (corelib)")?;
+                extract_with_templating(&SCARBLIB, base_path)
+                    .context("failed to extract Cairo standard library (scarblib)")?;
+
+                tag_fs.mark_ok()?;
             }
-
-            let base_path = tag_fs.path_existent()?;
-
-            extract_with_templating(&CORELIB, &base_path.join("core"))
-                .context("failed to extract Cairo standard library (corelib)")?;
-            extract_with_templating(&SCARBLIB, base_path)
-                .context("failed to extract Cairo standard library (scarblib)")?;
-
-            tag_fs.mark_ok()?;
         }
 
         Ok(PathSource::recursive_at(
