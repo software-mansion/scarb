@@ -2,4 +2,4 @@
 set -euo pipefail
 
 echo "scarb"
-ls extensions
+ls -1 extensions
