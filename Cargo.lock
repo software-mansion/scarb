@@ -3108,7 +3108,7 @@ dependencies = [
  "pathdiff",
  "petgraph",
  "predicates",
- "scarb-metadata 1.2.0",
+ "scarb-metadata 1.3.0",
  "semver",
  "serde",
  "serde_json",
