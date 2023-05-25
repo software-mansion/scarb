@@ -10,7 +10,7 @@ members = [
 [workspace.package]
 version = "0.2.1"
 edition = "2021"
-rust-version = "1.67"
+rust-version = "1.69"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
 homepage = "https://docs.swmansion.com/scarb"
