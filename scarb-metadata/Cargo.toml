@@ -27,6 +27,6 @@ cairo-lang-filesystem.workspace = true
 snapbox.workspace = true
 
 [features]
-default = ["builder", "command"]
+default = ["command"]
 builder = ["dep:derive_builder"]
 command = ["dep:thiserror"]
