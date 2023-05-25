@@ -345,18 +345,22 @@ mod tests {
                 cairo: CairoVersionInfo {
                     version: Version::new(1, 0, 0),
                     commit_info: Default::default(),
+                    extra: Default::default(),
                 },
+                extra: Default::default(),
             },
             target_dir: Default::default(),
             workspace: WorkspaceMetadata {
                 manifest_path: Default::default(),
                 root: Default::default(),
                 members: Default::default(),
+                extra: Default::default(),
             },
             packages: Default::default(),
             compilation_units: Default::default(),
             current_profile: "dev".into(),
             profiles: vec!["dev".into()],
+            extra: Default::default(),
         }
     }
 }

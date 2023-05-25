@@ -17,7 +17,7 @@
 //! With the `command` feature (enabled by default), this crate also exposes an ergonomic interface
 //! to collect metadata from Scarb: [`MetadataCommand`].
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::ops::Index;
 use std::path::PathBuf;
@@ -155,6 +155,11 @@ pub struct Metadata {
     /// List of all available profiles names
     #[serde(default = "profiles_default")]
     pub profiles: Vec<String>,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 /// Current workspace metadata.
@@ -171,6 +176,11 @@ pub struct WorkspaceMetadata {
 
     /// List of IDs of all packages that are members of this workspace.
     pub members: Vec<PackageId>,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 /// Metadata of single Scarb package.
@@ -206,6 +216,11 @@ pub struct PackageMetadata {
     /// Various metadata fields from `Scarb.toml`.
     #[serde(flatten)]
     pub manifest_metadata: ManifestMetadata,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 /// Scarb package dependency specification.
@@ -223,6 +238,11 @@ pub struct DependencyMetadata {
     pub version_req: VersionReq,
     /// Package source.
     pub source: SourceId,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 /// Package target information.
@@ -241,6 +261,11 @@ pub struct TargetMetadata {
     ///
     /// Default values are omitted because they are unknown to Scarb, they are applied by compilers.
     pub params: serde_json::Value,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 /// Scarb compilation unit information.
@@ -271,6 +296,11 @@ pub struct CompilationUnitMetadata {
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this unit.
     #[serde(default)]
     pub cfg: Vec<Cfg>,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 /// Information to pass to the Cairo compiler about a package that is a component of a compilation
@@ -290,6 +320,11 @@ pub struct CompilationUnitComponentMetadata {
     pub name: String,
     /// Path to the root Cairo source file.
     pub source_path: Utf8PathBuf,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 /// Various metadata fields from package manifest.
@@ -338,6 +373,11 @@ pub struct VersionInfo {
     pub commit_info: Option<CommitInfo>,
     /// Version of the Cairo compiler bundled in Scarb.
     pub cairo: CairoVersionInfo,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 /// Cairo's version.
@@ -350,6 +390,11 @@ pub struct CairoVersionInfo {
     pub version: Version,
     /// Version about Git commit of Cairo if known.
     pub commit_info: Option<CommitInfo>,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 /// Information about the Git repository where Scarb or Cairo was built from.
