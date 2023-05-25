@@ -376,13 +376,23 @@ pub enum Cfg {
     Name(String),
 }
 
+impl Metadata {
+    /// Returns reference to [`PackageMetadata`] corresponding to the [`PackageId`].
+    pub fn get_package(&self, id: &PackageId) -> Option<&PackageMetadata> {
+        self.packages.iter().find(|p| p.id == *id)
+    }
+
+    /// Returns reference to [`CompilationUnitMetadata`] corresponding to the [`CompilationUnitId`].
+    pub fn get_compilation_unit(&self, id: &CompilationUnitId) -> Option<&CompilationUnitMetadata> {
+        self.compilation_units.iter().find(|p| p.id == *id)
+    }
+}
+
 impl<'a> Index<&'a PackageId> for Metadata {
     type Output = PackageMetadata;
 
     fn index(&self, idx: &'a PackageId) -> &Self::Output {
-        self.packages
-            .iter()
-            .find(|p| p.id == *idx)
+        self.get_package(idx)
             .unwrap_or_else(|| panic!("no package with this ID: {idx}"))
     }
 }
@@ -391,9 +401,7 @@ impl<'a> Index<&'a CompilationUnitId> for Metadata {
     type Output = CompilationUnitMetadata;
 
     fn index(&self, idx: &'a CompilationUnitId) -> &Self::Output {
-        self.compilation_units
-            .iter()
-            .find(|p| p.id == *idx)
+        self.get_compilation_unit(idx)
             .unwrap_or_else(|| panic!("no compilation unit with this ID: {idx}"))
     }
 }
