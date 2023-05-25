@@ -123,7 +123,7 @@ pub struct Metadata {
     /// The metadata format version.
     ///
     /// This struct will not deserialize if version does not match.
-    #[builder(setter(skip))]
+    #[cfg_attr(feature = "builder", builder(setter(skip)))]
     pub version: VersionPin,
 
     /// Path to `scarb` executable.
