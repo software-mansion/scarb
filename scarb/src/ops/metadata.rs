@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use anyhow::{bail, Result};
+use itertools::Itertools;
 use semver::Version;
 use smol_str::SmolStr;
 
@@ -26,7 +27,7 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
         );
     }
 
-    let (mut packages, compilation_units) = if !opts.no_deps {
+    let (mut packages, mut compilation_units) = if !opts.no_deps {
         let resolve = ops::resolve_workspace(ws)?;
         let packages: Vec<m::PackageMetadata> = resolve
             .packages
@@ -34,13 +35,11 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
             .map(collect_package_metadata)
             .collect();
 
-        let mut compilation_units: Vec<m::CompilationUnitMetadata> =
+        let compilation_units: Vec<m::CompilationUnitMetadata> =
             ops::generate_compilation_units(&resolve, ws)?
                 .iter()
                 .map(collect_compilation_unit_metadata)
                 .collect();
-
-        compilation_units.sort_by_key(|c| c.package.clone());
 
         (packages, compilation_units)
     } else {
@@ -49,6 +48,7 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
     };
 
     packages.sort_by_key(|p| p.id.clone());
+    compilation_units.sort_by_key(|c| c.package.clone());
 
     Ok(m::MetadataBuilder::default()
         .app_exe(ws.config().app_exe().ok().map(|p| p.to_path_buf()))
@@ -150,7 +150,7 @@ fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
 fn collect_compilation_unit_metadata(
     compilation_unit: &CompilationUnit,
 ) -> m::CompilationUnitMetadata {
-    let mut components: Vec<m::CompilationUnitComponentMetadata> = compilation_unit
+    let components: Vec<m::CompilationUnitComponentMetadata> = compilation_unit
         .components
         .iter()
         .map(|c| {
@@ -161,8 +161,20 @@ fn collect_compilation_unit_metadata(
                 .build()
                 .unwrap()
         })
+        .sorted_by_key(|c| c.package.clone())
         .collect();
-    components.sort_by_key(|c| c.package.clone());
+
+    let cairo_plugins: Vec<m::CompilationUnitCairoPluginMetadata> = compilation_unit
+        .cairo_plugins
+        .iter()
+        .map(|c| {
+            m::CompilationUnitCairoPluginMetadataBuilder::default()
+                .package(wrap_package_id(c.package.id))
+                .build()
+                .unwrap()
+        })
+        .sorted_by_key(|c| c.package.clone())
+        .collect();
 
     let compiler_config = serde_json::to_value(&compilation_unit.compiler_config)
         .expect("Compiler config should always be JSON serializable.");
@@ -187,6 +199,7 @@ fn collect_compilation_unit_metadata(
         .package(wrap_package_id(compilation_unit.main_package_id))
         .target(collect_target_metadata(compilation_unit.target()))
         .components(components)
+        .cairo_plugins(cairo_plugins)
         .compiler_config(compiler_config)
         .cfg(cfg)
         .extra(HashMap::from([(
