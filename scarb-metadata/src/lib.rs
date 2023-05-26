@@ -299,6 +299,9 @@ pub struct CompilationUnitMetadata {
     #[serde(rename = "components_data")]
     pub components: Vec<CompilationUnitComponentMetadata>,
 
+    /// List of all Cairo compiler plugins to load in this compilation.
+    pub cairo_plugins: Vec<CompilationUnitCairoPluginMetadata>,
+
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this unit.
     #[serde(default)]
     pub cfg: Vec<Cfg>,
@@ -326,6 +329,21 @@ pub struct CompilationUnitComponentMetadata {
     pub name: String,
     /// Path to the root Cairo source file.
     pub source_path: Utf8PathBuf,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
+}
+
+/// Information about compiler plugin to load into the Cairo compiler as part of a compilation unit.
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
+pub struct CompilationUnitCairoPluginMetadata {
+    /// Package ID.
+    pub package: PackageId,
 
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]
