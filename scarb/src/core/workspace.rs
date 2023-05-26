@@ -3,6 +3,8 @@ use std::fmt;
 use anyhow::Result;
 use camino::Utf8Path;
 
+use scarb_metadata::packages_filter::PackagesSource;
+
 use crate::compiler::Profile;
 use crate::core::config::Config;
 use crate::core::package::Package;
@@ -112,5 +114,17 @@ pub trait Utf8PathWorkspaceExt {
 impl Utf8PathWorkspaceExt for Utf8Path {
     fn workspace_relative(&self, ws: &Workspace<'_>) -> &Utf8Path {
         self.strip_prefix(ws.root()).unwrap_or(self)
+    }
+}
+
+impl<'c> PackagesSource for Workspace<'c> {
+    type Package = Package;
+
+    fn package_name_of(package: &Self::Package) -> &str {
+        package.id.name.as_str()
+    }
+
+    fn members(&self) -> Vec<Self::Package> {
+        Workspace::members(self).collect()
     }
 }

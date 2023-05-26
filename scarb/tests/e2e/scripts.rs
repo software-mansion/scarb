@@ -1,10 +1,12 @@
+use std::collections::BTreeMap;
+use std::env;
+
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
-use scarb::process::make_executable;
 use snapbox::cmd::Command;
-use std::collections::BTreeMap;
-use std::env;
+
+use scarb::process::make_executable;
 
 use crate::support::command::Scarb;
 use crate::support::filesystem::{path_with_temp_dir, write_script};
@@ -207,7 +209,9 @@ fn uses_package_filter() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(r#"{"type":"error","message":"package `bar` not found in workspace [..]"#);
+        .stdout_eq(indoc! {r#"
+        {"type":"error","message":"package `bar` not found in workspace"}
+        "#});
 }
 
 #[test]

@@ -15,6 +15,7 @@ repository.workspace = true
 
 [dependencies]
 camino.workspace = true
+clap = { workspace = true, optional = true }
 derive_builder = { workspace = true, optional = true }
 semver.workspace = true
 serde.workspace = true
@@ -30,3 +31,4 @@ snapbox.workspace = true
 default = ["command"]
 builder = ["dep:derive_builder"]
 command = ["dep:thiserror"]
+packages_filter = ["dep:clap", "dep:thiserror"]

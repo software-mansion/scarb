@@ -5,19 +5,20 @@
 use std::collections::BTreeMap;
 use std::ffi::OsString;
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use camino::Utf8PathBuf;
 use clap::{CommandFactory, Parser, Subcommand};
-use scarb::compiler::Profile;
 use smol_str::SmolStr;
 use tracing::level_filters::LevelFilter;
 use tracing_log::AsTrace;
 
-use scarb::core::{Package, PackageName, Workspace};
+use scarb::compiler::Profile;
+use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
 use scarb::ui;
 use scarb::ui::OutputFormat;
 use scarb::version;
+use scarb_metadata::packages_filter::PackagesFilter;
 
 /// The Cairo package manager.
 #[derive(Parser, Clone, Debug)]
@@ -258,25 +259,6 @@ pub struct RemoveArgs {
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
-}
-
-#[derive(Parser, Clone, Debug)]
-pub struct PackagesFilter {
-    /// Specify package to modify.
-    #[arg(short, long, value_name = "SPEC")]
-    package: Option<PackageName>,
-}
-
-impl PackagesFilter {
-    pub fn match_one(&self, ws: &Workspace<'_>) -> Result<Package> {
-        match &self.package {
-            Some(name) => ws
-                .members()
-                .find(|pkg| &pkg.id.name == name)
-                .ok_or_else(|| anyhow!("package `{name}` not found in workspace `{ws}`")),
-            None => ws.current_package().cloned(),
-        }
-    }
 }
 
 /// Git reference specification arguments.
