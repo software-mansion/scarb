@@ -16,6 +16,10 @@
 //!
 //! With the `command` feature (enabled by default), this crate also exposes an ergonomic interface
 //! to collect metadata from Scarb: [`MetadataCommand`].
+//!
+//! With the `packages_filter` feature (disabled by default), this crate provides ready to use
+//! arguments definitions for the `clap` crate that implement Scarb-compatible package selection
+//! (i.e. the `-p/--package` argument).
 
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
@@ -34,6 +38,8 @@ pub use version_pin::*;
 
 #[cfg(feature = "command")]
 mod command;
+#[cfg(feature = "packages_filter")]
+pub mod packages_filter;
 mod version_pin;
 
 /// An "opaque" identifier for a package.

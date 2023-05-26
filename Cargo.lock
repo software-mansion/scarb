@@ -3162,6 +3162,7 @@ dependencies = [
  "assert_fs",
  "cairo-lang-filesystem",
  "camino",
+ "clap",
  "derive_builder",
  "semver",
  "serde",
