@@ -1,0 +1,22 @@
+[package]
+name = "scarb-cairo-test"
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+publish = false
+
+authors.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+cairo-lang-compiler.workspace = true
+cairo-lang-filesystem.workspace = true
+cairo-lang-starknet.workspace = true
+cairo-lang-test-runner.workspace = true
+clap.workspace = true
+scarb-metadata = { path = "../../scarb-metadata", features = ["packages_filter"] }
+serde_json.workspace = true
+
+[dev-dependencies]
+snapbox.workspace = true
+test-for-each-example = { path = "../../utils/test-for-each-example" }
