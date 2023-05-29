@@ -3070,7 +3070,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -3135,7 +3135,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "cairo-lang-language-server",
  "tokio",
