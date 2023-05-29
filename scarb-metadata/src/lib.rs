@@ -300,6 +300,7 @@ pub struct CompilationUnitMetadata {
     pub components: Vec<CompilationUnitComponentMetadata>,
 
     /// List of all Cairo compiler plugins to load in this compilation.
+    #[serde(default)]
     pub cairo_plugins: Vec<CompilationUnitCairoPluginMetadata>,
 
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this unit.
