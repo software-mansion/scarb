@@ -77,5 +77,5 @@ snapbox.workspace = true
 test-case.workspace = true
 
 [build-dependencies]
-toml_edit.workspace = true
+cargo_metadata.workspace = true
 zip.workspace = true
