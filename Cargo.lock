@@ -3108,7 +3108,7 @@ dependencies = [
  "pathdiff",
  "petgraph",
  "predicates",
- "scarb-metadata 1.4.0",
+ "scarb-metadata 1.4.1",
  "semver",
  "serde",
  "serde_json",
@@ -3157,7 +3157,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-metadata"
-version = "1.4.0"
+version = "1.4.1"
 dependencies = [
  "assert_fs",
  "cairo-lang-filesystem",
