@@ -1,9 +1,9 @@
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::str::FromStr;
 use std::{env, fs, io};
 
+use cargo_metadata::MetadataCommand;
 use zip::ZipArchive;
 
 fn main() {
@@ -44,22 +44,41 @@ fn commit_info() {
 fn cairo_version() -> String {
     let cargo_lock = find_cargo_lock();
     println!("cargo:rerun-if-changed={}", cargo_lock.display());
-    let lock = fs::read_to_string(cargo_lock).expect("Failed to read Cargo.lock");
-    let lock = toml_edit::Document::from_str(&lock).expect("Failed to parse Cargo.lock as TOML");
-    let lock = lock["package"].as_array_of_tables().unwrap();
-    let cairo_lock = lock
-        .into_iter()
-        .find(|t| {
-            t["name"]
-                .as_value()
-                .and_then(|v| v.as_str())
-                .unwrap_or_default()
-                == "cairo-lang-compiler"
-        })
-        .expect("Failed to find cairo-lang-compiler package in lock");
-    let version = cairo_lock["version"].as_str().unwrap();
+
+    let metadata = MetadataCommand::new()
+        .manifest_path(Path::new(env!("CARGO_MANIFEST_DIR")).join("Cargo.toml"))
+        .verbose(true)
+        .exec()
+        .expect("Failed to execute cargo metadata");
+
+    let resolve = metadata
+        .resolve
+        .expect("Expected metadata resolve to be present.");
+
+    let root = resolve
+        .root
+        .expect("Expected metadata resolve root to be present.");
+    assert!(
+        root.repr.starts_with("scarb "),
+        "Expected metadata resolve root to be `scarb`."
+    );
+
+    let scarb_node = resolve.nodes.iter().find(|node| node.id == root).unwrap();
+    let compiler_dep = scarb_node
+        .deps
+        .iter()
+        .find(|dep| dep.name == "cairo_lang_compiler")
+        .unwrap();
+    let compiler_package = metadata
+        .packages
+        .iter()
+        .find(|pkg| pkg.id == compiler_dep.pkg)
+        .unwrap();
+
+    let version = compiler_package.version.to_string();
     println!("cargo:rustc-env=SCARB_CAIRO_VERSION={version}");
-    if let Some(source) = cairo_lock["source"].as_str() {
+    if let Some(source) = &compiler_package.source {
+        let source = source.to_string();
         if source.starts_with("git+") {
             if let Some((_, commit)) = source.split_once('#') {
                 println!("cargo:rustc-env=SCARB_CAIRO_COMMIT_HASH={commit}");
