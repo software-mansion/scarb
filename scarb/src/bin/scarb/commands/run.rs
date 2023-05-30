@@ -1,16 +1,17 @@
-use anyhow::{anyhow, Result};
-use indoc::formatdoc;
-use serde::{Serialize, Serializer};
-use smol_str::SmolStr;
 use std::collections::BTreeMap;
 use std::ffi::OsString;
 use std::fmt::Write;
 
-use crate::args::ScriptsRunnerArgs;
-use crate::errors::error_with_exit_code;
+use anyhow::{anyhow, Result};
+use indoc::formatdoc;
+use serde::{Serialize, Serializer};
+use smol_str::SmolStr;
+
 use scarb::core::{Config, Package, Workspace};
 use scarb::ops;
 use scarb::ui::Message;
+
+use crate::args::ScriptsRunnerArgs;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: ScriptsRunnerArgs, config: &Config) -> Result<()> {
@@ -38,12 +39,7 @@ fn run_script(
                 scarb run
             "#})
     })?;
-    let exit_code = ops::execute_script(script_definition, &args, ws, config)?;
-    if exit_code != 0 {
-        error_with_exit_code(exit_code)
-    } else {
-        Ok(())
-    }
+    ops::execute_script(script_definition, &args, ws, config)
 }
 
 fn list_scripts(package: Package, config: &Config) -> Result<()> {

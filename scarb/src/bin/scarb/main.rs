@@ -6,11 +6,13 @@ use tracing::debug;
 use tracing_log::AsTrace;
 use tracing_subscriber::EnvFilter;
 
-use crate::errors::ErrorWithExitCode;
 use args::ScarbArgs;
+use scarb::core::errors::ScriptExecutionError;
 use scarb::core::Config;
 use scarb::ops;
 use scarb::ui::Ui;
+
+use crate::errors::ErrorWithExitCode;
 
 mod args;
 mod commands;
@@ -44,6 +46,10 @@ fn exit_with_error(err: Error, ui: &Ui) {
         if let Some(source_err) = source {
             ui.anyhow(source_err);
         }
+        std::process::exit(*exit_code);
+    } else if let Some(ScriptExecutionError { exit_code }) =
+        err.downcast_ref::<ScriptExecutionError>()
+    {
         std::process::exit(*exit_code);
     } else {
         ui.anyhow(&err);
