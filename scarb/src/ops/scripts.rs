@@ -5,6 +5,7 @@ use std::rc::Rc;
 use anyhow::Result;
 use deno_task_shell::{ExecutableCommand, ShellCommand};
 
+use crate::core::errors::ScriptExecutionError;
 use crate::core::manifest::ScriptDefinition;
 use crate::core::{Config, Workspace};
 use crate::subcommands::get_env_vars;
@@ -15,7 +16,7 @@ pub fn execute_script(
     args: &[OsString],
     ws: &Workspace<'_>,
     config: &Config,
-) -> Result<i32> {
+) -> Result<()> {
     let env_vars = get_env_vars(config)?
         .into_iter()
         .map(|(k, v)| {
@@ -46,5 +47,9 @@ pub fn execute_script(
         custom_commands,
     ));
 
-    Ok(exit_code)
+    if exit_code != 0 {
+        Err(ScriptExecutionError::new(exit_code).into())
+    } else {
+        Ok(())
+    }
 }
