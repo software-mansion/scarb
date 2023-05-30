@@ -1,5 +1,5 @@
 use std::env;
-use std::ffi::OsStr;
+use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -10,7 +10,7 @@ use crate::process::{exec_replace, is_executable};
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX};
 
 #[tracing::instrument(level = "debug", skip(config))]
-pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) -> Result<()> {
+pub fn execute_external_subcommand(cmd: &str, args: &[OsString], config: &Config) -> Result<()> {
     let Some(cmd) = find_external_subcommand(cmd, config) else {
         // TODO(mkaput): Reuse clap's no such command message logic here.
         bail!("no such command: `{cmd}`");
@@ -28,7 +28,7 @@ pub fn execute_external_subcommand(cmd: &str, args: &[&OsStr], config: &Config) 
 }
 
 fn find_external_subcommand(cmd: &str, config: &Config) -> Option<PathBuf> {
-    let command_exe = format!("{EXTERNAL_CMD_PREFIX}{cmd}{}", env::consts::EXE_SUFFIX);
+    let command_exe = format!("{}{}{}", EXTERNAL_CMD_PREFIX, cmd, env::consts::EXE_SUFFIX);
     let mut dirs = config.dirs().path_dirs.clone();
 
     // Add directory containing the Scarb executable.
