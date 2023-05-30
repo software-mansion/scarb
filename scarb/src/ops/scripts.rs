@@ -7,7 +7,7 @@ use deno_task_shell::{ExecutableCommand, ShellCommand};
 
 use crate::core::errors::ScriptExecutionError;
 use crate::core::manifest::ScriptDefinition;
-use crate::core::{Config, Workspace};
+use crate::core::Workspace;
 use crate::subcommands::get_env_vars;
 
 /// Execute user defined script.
@@ -15,9 +15,8 @@ pub fn execute_script(
     script_definition: &ScriptDefinition,
     args: &[OsString],
     ws: &Workspace<'_>,
-    config: &Config,
 ) -> Result<()> {
-    let env_vars = get_env_vars(config)?
+    let env_vars = get_env_vars(ws.config())?
         .into_iter()
         .map(|(k, v)| {
             (
@@ -33,13 +32,13 @@ pub fn execute_script(
         (
             "scarb".to_string(),
             Rc::new(ExecutableCommand::new(
-                config.app_exe()?.display().to_string(),
+                ws.config().app_exe()?.display().to_string(),
             )) as Rc<dyn ShellCommand>,
         ),
     ]);
     let list = script_definition.parse(args)?;
 
-    let runtime = config.tokio_handle();
+    let runtime = ws.config().tokio_handle();
     let exit_code = runtime.block_on(deno_task_shell::execute(
         list,
         env_vars,

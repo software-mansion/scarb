@@ -18,7 +18,7 @@ pub fn run(args: ScriptsRunnerArgs, config: &Config) -> Result<()> {
     let ws = ops::read_workspace(config.manifest_path(), config)?;
     let package = args.packages_filter.match_one(&ws)?;
     if let Some(script) = args.script {
-        run_script(script, args.args, package, &ws, config)
+        run_script(script, args.args, package, &ws)
     } else {
         list_scripts(package, config)
     }
@@ -29,7 +29,6 @@ fn run_script(
     args: Vec<OsString>,
     package: Package,
     ws: &Workspace,
-    config: &Config,
 ) -> Result<()> {
     let script_definition = package.manifest.scripts.get(&script).ok_or_else(|| {
         anyhow!(formatdoc! {r#"
@@ -39,7 +38,7 @@ fn run_script(
                 scarb run
             "#})
     })?;
-    ops::execute_script(script_definition, &args, ws, config)
+    ops::execute_script(script_definition, &args, ws)
 }
 
 fn list_scripts(package: Package, config: &Config) -> Result<()> {
