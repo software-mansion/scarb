@@ -154,9 +154,9 @@ impl<'a> Filesystem<'a> {
     /// Opens exclusive access to a [`File`], returning the locked version of it.
     ///
     /// This function will create a file at `path` if it doesn't already exist (including
-    /// intermediate directories), and then it will acquire an exclusive lock on `path`.
-    /// If the process must block waiting for the lock, the `description` annotated with _blocking_
-    /// status message is printed to [`Config::ui`].
+    /// intermediate directories) else if it does exist, it will be truncated. It will then acquire
+    /// an exclusive lock on `path`. If the process must block waiting for the lock, the
+    /// `description` annotated with _blocking_ status message is printed to [`Config::ui`].
     ///
     /// The returned file can be accessed to look at the path and also has read/write access to
     /// the underlying file.
@@ -168,7 +168,11 @@ impl<'a> Filesystem<'a> {
     ) -> Result<FileLockGuard> {
         self.open(
             path.as_ref(),
-            OpenOptions::new().read(true).write(true).create(true),
+            OpenOptions::new()
+                .read(true)
+                .write(true)
+                .truncate(true)
+                .create(true),
             FileLockKind::Exclusive,
             description,
             config,
