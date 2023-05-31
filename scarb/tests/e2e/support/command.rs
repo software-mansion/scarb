@@ -1,9 +1,10 @@
 use std::ffi::OsString;
-use std::iter;
 use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
+use std::{fs, iter};
 
 use assert_fs::TempDir;
+use once_cell::sync::Lazy;
 use snapbox::cmd::cargo_bin;
 use snapbox::cmd::Command as SnapboxCommand;
 
@@ -16,6 +17,7 @@ pub struct Scarb {
     cache: EnvPath,
     config: EnvPath,
     log: OsString,
+    scarb_bin: &'static Path,
 }
 
 impl Scarb {
@@ -24,6 +26,7 @@ impl Scarb {
             cache: EnvPath::temp_dir(),
             config: EnvPath::temp_dir(),
             log: "scarb=trace".into(),
+            scarb_bin: cargo_bin!("scarb"),
         }
     }
 
@@ -32,6 +35,7 @@ impl Scarb {
             cache: EnvPath::borrow(config.dirs().cache_dir.path_unchecked().as_std_path()),
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
             log: config.log_filter_directive().to_os_string(),
+            scarb_bin: cargo_bin!("scarb"),
         }
     }
 
@@ -44,11 +48,30 @@ impl Scarb {
     }
 
     pub fn std(self) -> StdCommand {
-        let mut cmd = StdCommand::new(cargo_bin!("scarb"));
+        let mut cmd = StdCommand::new(self.scarb_bin);
         cmd.env("SCARB_LOG", self.log);
         cmd.env("SCARB_CACHE", self.cache.path());
         cmd.env("SCARB_CONFIG", self.config.path());
         cmd
+    }
+
+    pub fn isolate_from_extensions(self) -> Self {
+        static ISOLATED_BIN: Lazy<PathBuf> = Lazy::new(|| {
+            let source_bin = cargo_bin!("scarb");
+
+            let output_dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join("isolated_scarb");
+            fs::create_dir_all(&output_dir).unwrap();
+
+            let output_bin = output_dir.join(source_bin.file_name().unwrap());
+            fs::copy(source_bin, &output_bin).unwrap();
+
+            output_bin
+        });
+
+        Self {
+            scarb_bin: &*ISOLATED_BIN,
+            ..self
+        }
     }
 
     pub fn test_config(manifest: impl AssertFsUtf8Ext) -> Config {

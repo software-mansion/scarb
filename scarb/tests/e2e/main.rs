@@ -17,3 +17,4 @@ mod resolver_with_git;
 mod scripts;
 mod subcommand;
 pub(crate) mod support;
+mod test;

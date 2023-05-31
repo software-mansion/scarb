@@ -139,6 +139,14 @@ pub enum Command {
     New(NewArgs),
     /// Run arbitrary package scripts.
     Run(ScriptsRunnerArgs),
+    /// Execute all unit and integration tests of a local package.
+    #[command(after_help = "\
+        By default, this command delegates to `scarb cairo-test`. This behaviour can be changed by \
+        defining a script named `test` in workspace Scarb.toml file.\
+        \n\
+        Run `scarb test -- --help` for test program options.
+    ")]
+    Test(TestArgs),
 
     /// External command (`scarb-*` executable).
     #[command(external_subcommand)]
@@ -259,6 +267,14 @@ pub struct RemoveArgs {
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+}
+
+/// Arguments accepted by the `test` command.
+#[derive(Parser, Clone, Debug)]
+pub struct TestArgs {
+    /// Arguments for the test program.
+    #[clap(allow_hyphen_values = true)]
+    pub args: Vec<OsString>,
 }
 
 /// Git reference specification arguments.
