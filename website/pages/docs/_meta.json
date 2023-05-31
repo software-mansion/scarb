@@ -7,18 +7,18 @@
   "install": "Installing Scarb",
   "cheatsheet": "Cheat sheet",
   "guides": "Guides",
+  "-- Core extensions": {
+    "type": "separator",
+    "title": "Core extensions"
+  },
+  "testing": "Testing",
+  "starknet": "Starknet",
   "-- Advanced": {
     "type": "separator",
     "title": "Advanced"
   },
   "reference": "Reference",
   "extensions": "Writing Extensions",
-  "-- Extensions": {
-    "type": "separator",
-    "title": "Extensions"
-  },
-  "testing": "Testing",
-  "starknet": "Starknet",
   "-- Appendices": {
     "type": "separator",
     "title": "Appendices"
