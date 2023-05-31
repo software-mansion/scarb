@@ -17,6 +17,7 @@
     "type": "separator",
     "title": "Extensions"
   },
+  "testing": "Testing",
   "starknet": "Starknet",
   "-- Appendices": {
     "type": "separator",
