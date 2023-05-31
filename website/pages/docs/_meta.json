@@ -1,11 +1,23 @@
 {
+  "-- Get started": {
+    "type": "separator",
+    "title": "Get started"
+  },
   "index": "Introduction",
   "install": "Installing Scarb",
   "cheatsheet": "Cheat sheet",
   "guides": "Guides",
+  "-- Advanced": {
+    "type": "separator",
+    "title": "Advanced"
+  },
   "reference": "Reference",
+  "extensions": "Writing Extensions",
+  "-- Extensions": {
+    "type": "separator",
+    "title": "Extensions"
+  },
   "starknet": "Starknet",
-  "extensions": "Extensions",
   "-- Appendices": {
     "type": "separator",
     "title": "Appendices"
