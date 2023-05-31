@@ -4,8 +4,10 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use anyhow::{bail, Result};
+use tracing::debug;
 
 use crate::core::Config;
+use crate::ops;
 use crate::process::{exec_replace, is_executable};
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX};
 
@@ -25,6 +27,22 @@ pub fn execute_external_subcommand(cmd: &str, args: &[OsString], config: &Config
     cmd.envs(get_env_vars(config)?);
 
     exec_replace(&mut cmd)
+}
+
+#[tracing::instrument(level = "debug", skip(config))]
+pub fn execute_test_subcommand(args: &[OsString], config: &Config) -> Result<()> {
+    let ws = ops::read_workspace(config.manifest_path(), config)?;
+
+    // FIXME(mkaput): This is probably bad, we should try to pull scripts from the workspace if
+    //   we do not know the current package.
+    let package = ws.current_package()?;
+    if let Some(script_definition) = package.manifest.scripts.get("test") {
+        debug!("using `test` script: {script_definition}");
+        ops::execute_script(script_definition, args, &ws)
+    } else {
+        debug!("no explicit `test` script found, delegating to scarb-cairo-test");
+        execute_external_subcommand("cairo-test", args, config)
+    }
 }
 
 fn find_external_subcommand(cmd: &str, config: &Config) -> Option<PathBuf> {
