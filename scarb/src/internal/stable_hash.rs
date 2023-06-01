@@ -1,25 +1,22 @@
-#[allow(deprecated)]
-use std::hash::SipHasher;
 use std::hash::{Hash, Hasher};
 
-use data_encoding::BASE32HEX_NOPAD;
+use data_encoding::BASE32_DNSSEC;
+use xxhash_rust::xxh3::Xxh3;
 
 /// Implementation of a hasher that produces the same values across Scarb releases.
 ///
 /// The hasher should be fast and have a low chance of collisions (but is not sufficient for
 /// cryptographic purposes).
-#[allow(deprecated)]
-pub struct StableHasher(SipHasher);
+pub struct StableHasher(Xxh3);
 
 impl StableHasher {
     pub fn new() -> Self {
-        #[allow(deprecated)]
-        Self(SipHasher::new())
+        Self(Default::default())
     }
 
     pub fn finish_as_short_hash(&self) -> String {
         let hash = self.finish();
-        BASE32HEX_NOPAD.encode(&hash.to_le_bytes())
+        BASE32_DNSSEC.encode(&hash.to_le_bytes())
     }
 }
 
@@ -45,7 +42,7 @@ mod tests {
 
     #[test]
     fn short_hash_is_stable() {
-        assert_eq!(short_hash("abcd"), "LA8VKK9KUOE2M");
-        assert_eq!(short_hash(123), "8B89NJO1D02MG");
+        assert_eq!(short_hash("abcd"), "e1p6jp2ak1nmk");
+        assert_eq!(short_hash(123), "8fupdqgl2ulsq");
     }
 }
