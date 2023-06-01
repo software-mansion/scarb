@@ -40,7 +40,7 @@ derive_builder = "0.12.0"
 diffy = "0.3.0"
 directories = "5.0.1"
 dunce = "1.0.4"
-fs4 = "0.6.4"
+fs4 = "0.6.5"
 futures = { version = "0.3.28", default-features = false, features = ["std", "async-await"] }
 gix = "0.44.1"
 ignore = "0.4.20"
