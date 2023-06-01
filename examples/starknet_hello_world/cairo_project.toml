@@ -1,0 +1,3 @@
+[crate_roots]
+starknet_hello_world = "/Users/mk/Developer/swmansion/scarb/examples/starknet_hello_world/src"
+
