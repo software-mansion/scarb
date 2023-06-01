@@ -96,16 +96,16 @@ mod tests {
 
     use super::CanonicalUrl;
 
-    #[test_case("https://github.com/software-mansion/scarb" => "scarb-GCE35FP3R857O"; "canonical")]
-    #[test_case("https://github.com/starkware-libs/cairo" => "cairo-U23CFPMK1656G"; "another canonical")]
-    #[test_case("https://github.com/software-mansion/scarb/" => "scarb-GCE35FP3R857O"; "trailing slash")]
-    #[test_case("https://github.com/SOFTWARE-MANSION/SCARB/" => "scarb-GCE35FP3R857O"; "case insensitive")]
-    #[test_case("https://github.com/software-mansion/scarb.git" => "scarb-GCE35FP3R857O"; "dot git")]
-    #[test_case("http://github.com/software-mansion/scarb" => "scarb-GCE35FP3R857O"; "http protocol")]
-    #[test_case("git://github.com/software-mansion/scarb" => "scarb-GCE35FP3R857O"; "another protocol")]
-    #[test_case("https://example.com/baz" => "baz-DN1CBALNAHV78"; "non github")]
-    #[test_case("https://example.com/baz.git" => "baz-DN1CBALNAHV78"; "non github with dot git")]
-    #[test_case("https://github.com" => "RFH0UAN5K26I4"; "non canonical")]
+    #[test_case("https://github.com/software-mansion/scarb" => "scarb-a9s51nrums4ek"; "canonical")]
+    #[test_case("https://github.com/starkware-libs/cairo" => "cairo-e2bjoqgsorrus"; "another canonical")]
+    #[test_case("https://github.com/software-mansion/scarb/" => "scarb-a9s51nrums4ek"; "trailing slash")]
+    #[test_case("https://github.com/SOFTWARE-MANSION/SCARB/" => "scarb-a9s51nrums4ek"; "case insensitive")]
+    #[test_case("https://github.com/software-mansion/scarb.git" => "scarb-a9s51nrums4ek"; "dot git")]
+    #[test_case("http://github.com/software-mansion/scarb" => "scarb-a9s51nrums4ek"; "http protocol")]
+    #[test_case("git://github.com/software-mansion/scarb" => "scarb-a9s51nrums4ek"; "another protocol")]
+    #[test_case("https://example.com/baz" => "baz-utlh7e554lgva"; "non github")]
+    #[test_case("https://example.com/baz.git" => "baz-utlh7e554lgva"; "non github with dot git")]
+    #[test_case("https://github.com" => "1oafv0hk6042c"; "non canonical")]
     fn canonicalize_and_ident(s: &str) -> String {
         let url = Url::parse(s).unwrap();
         CanonicalUrl::new(&url).unwrap().ident()

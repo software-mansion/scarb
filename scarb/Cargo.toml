@@ -62,6 +62,7 @@ typed-builder.workspace = true
 url.workspace = true
 walkdir.workspace = true
 which.workspace = true
+xxhash-rust.workspace = true
 zip.workspace = true
 
 [dev-dependencies]
