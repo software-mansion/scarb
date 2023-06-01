@@ -68,7 +68,7 @@ snapbox = { version = "0.4.11", features = ["cmd", "path"] }
 tempfile = "3.5.0"
 test-case = "3.1.0"
 thiserror = "1.0.40"
-tokio = { version = "1.28.1", features = ["macros", "io-util", "rt", "rt-multi-thread", "sync"] }
+tokio = { version = "1.28.2", features = ["macros", "io-util", "rt", "rt-multi-thread", "sync"] }
 toml = "0.7.4"
 toml_edit = { version = "0.19.9", features = ["serde"] }
 tracing = "0.1.37"
