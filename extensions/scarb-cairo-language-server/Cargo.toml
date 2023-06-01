@@ -7,4 +7,6 @@ publish = false
 
 [dependencies]
 cairo-lang-language-server.workspace = true
+cairo-lang-utils.workspace = true
+log.workspace = true
 tokio.workspace = true
