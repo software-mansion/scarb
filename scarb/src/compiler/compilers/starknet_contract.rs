@@ -179,7 +179,7 @@ impl Compiler for StarknetContractCompiler {
         artifacts.finish();
 
         write_json(
-            "starknet_artifacts.json",
+            &format!("{}.starknet_artifacts.json", unit.main_package_id.name),
             "starknet artifacts file",
             &target_dir,
             ws,
