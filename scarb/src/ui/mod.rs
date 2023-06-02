@@ -24,17 +24,12 @@ mod widget;
 ///
 /// # Ordering
 /// [`Verbosity::Quiet`] < [`Verbosity::Normal`] < [`Verbosity::Verbose`]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Verbosity {
     Quiet,
+    #[default]
     Normal,
     Verbose,
-}
-
-impl Default for Verbosity {
-    fn default() -> Self {
-        Self::Normal
-    }
 }
 
 impl Display for Verbosity {
@@ -69,16 +64,11 @@ impl Verbosity {
 }
 
 /// The requested format of output (either textual or JSON).
-#[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, ValueEnum)]
 pub enum OutputFormat {
+    #[default]
     Text,
     Json,
-}
-
-impl Default for OutputFormat {
-    fn default() -> Self {
-        Self::Text
-    }
 }
 
 /// An abstraction around console output which stores preferences for output format (human vs JSON),
