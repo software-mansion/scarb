@@ -1,18 +1,25 @@
+use std::fmt::Write;
 use std::iter::zip;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_starknet::allowed_libfuncs::{
+    validate_compatible_sierra_version, AllowedLibfuncsError, ListSelector,
+    DEFAULT_EXPERIMENTAL_LIBFUNCS_LIST,
+};
 use cairo_lang_starknet::casm_contract_class::CasmContractClass;
-use cairo_lang_starknet::contract::find_contracts;
-use cairo_lang_starknet::contract_class::compile_prepared_db;
-use cairo_lang_utils::UpcastMut;
+use cairo_lang_starknet::contract::{find_contracts, ContractDeclaration};
+use cairo_lang_starknet::contract_class::{compile_prepared_db, ContractClass};
+use cairo_lang_utils::{Upcast, UpcastMut};
+use camino::Utf8PathBuf;
+use indoc::{formatdoc, writedoc};
 use itertools::{izip, Itertools};
 use serde::{Deserialize, Serialize};
-use tracing::{trace, trace_span};
+use tracing::{debug, trace, trace_span};
 
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CompilationUnit, Compiler};
-use crate::core::{PackageName, Workspace};
+use crate::core::{PackageName, Utf8PathWorkspaceExt, Workspace};
 use crate::flock::Filesystem;
 use crate::internal::stable_hash::short_hash;
 
@@ -25,6 +32,9 @@ struct Props {
     pub sierra: bool,
     pub casm: bool,
     pub casm_add_pythonic_hints: bool,
+    pub allowed_libfuncs: bool,
+    pub allowed_libfuncs_deny: bool,
+    pub allowed_libfuncs_list: Option<SerdeListSelector>,
 }
 
 impl Default for Props {
@@ -33,6 +43,26 @@ impl Default for Props {
             sierra: true,
             casm: false,
             casm_add_pythonic_hints: false,
+            allowed_libfuncs: true,
+            allowed_libfuncs_deny: false,
+            allowed_libfuncs_list: None,
+        }
+    }
+}
+
+// FIXME(#401): Make allowed-libfuncs-list.path relative to current Scarb.toml rather than PWD.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged, rename_all = "kebab-case")]
+pub enum SerdeListSelector {
+    Name { name: String },
+    Path { path: Utf8PathBuf },
+}
+
+impl SerdeListSelector {
+    fn to_list_selector(&self) -> ListSelector {
+        match self {
+            SerdeListSelector::Name { name } => ListSelector::ListName(name.clone()),
+            SerdeListSelector::Path { path } => ListSelector::ListFile(path.to_string()),
         }
     }
 }
@@ -132,6 +162,8 @@ impl Compiler for StarknetContractCompiler {
             compile_prepared_db(db, &contracts, compiler_config)?
         };
 
+        check_allowed_libfuncs(&props, &contracts, &classes, db, &unit, ws)?;
+
         let casm_classes: Vec<Option<CasmContractClass>> = if props.casm {
             let _ = trace_span!("compile_sierra").enter();
             zip(&contracts, &classes)
@@ -188,6 +220,90 @@ impl Compiler for StarknetContractCompiler {
 
         Ok(())
     }
+}
+
+fn check_allowed_libfuncs(
+    props: &Props,
+    contracts: &[&ContractDeclaration],
+    classes: &[ContractClass],
+    db: &RootDatabase,
+    unit: &CompilationUnit,
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    if !props.allowed_libfuncs {
+        debug!("allowed libfuncs checking disabled by target props");
+        return Ok(());
+    }
+
+    let list_selector: ListSelector = props
+        .allowed_libfuncs_list
+        .as_ref()
+        .map(SerdeListSelector::to_list_selector)
+        .unwrap_or_default();
+
+    let mut found_disallowed = false;
+    for (decl, class) in zip(contracts, classes) {
+        match validate_compatible_sierra_version(class, list_selector.clone()) {
+            Ok(()) => {}
+
+            Err(AllowedLibfuncsError::UnsupportedLibfunc {
+                invalid_libfunc,
+                allowed_libfuncs_list_name,
+            }) => {
+                found_disallowed = true;
+
+                let contract_name = decl.submodule_id.name(db.upcast());
+                let mut diagnostic = formatdoc! {r#"
+                    libfunc `{invalid_libfunc}` is not allowed in the libfuncs list `{allowed_libfuncs_list_name}`
+                     --> contract: {contract_name}
+                "#};
+
+                // If user did not explicitly specify the allowlist, show a help message
+                // instructing how to do this. Otherwise, we know that user knows what they
+                // do, so we do not clutter compiler output.
+                if list_selector == Default::default() {
+                    let experimental = DEFAULT_EXPERIMENTAL_LIBFUNCS_LIST;
+
+                    let scarb_toml = unit
+                        .main_component()
+                        .package
+                        .manifest_path()
+                        .workspace_relative(ws);
+
+                    let _ = writedoc!(
+                        &mut diagnostic,
+                        r#"
+                            help: try compiling with the `{experimental}` list
+                             --> {scarb_toml}
+                                [[target.starknet-contract]]
+                                allowed-libfuncs-list.name = "{experimental}"
+                        "#
+                    );
+                }
+
+                if props.allowed_libfuncs_deny {
+                    ws.config().ui().error(diagnostic);
+                } else {
+                    ws.config().ui().warn(diagnostic);
+                }
+            }
+
+            Err(e) => {
+                return Err(e).with_context(|| {
+                    format!(
+                        "failed to check allowed libfuncs for contract: {contract_name}",
+                        contract_name = decl.submodule_id.name(db.upcast())
+                    )
+                })
+            }
+        }
+    }
+
+    if found_disallowed && props.allowed_libfuncs_deny {
+        bail!("aborting compilation, because contracts use disallowed Sierra libfuncs");
+    }
+
+    Ok(())
 }
 
 fn write_json(

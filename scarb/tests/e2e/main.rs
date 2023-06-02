@@ -2,6 +2,7 @@ mod add;
 mod build;
 mod build_cairo_plugin;
 mod build_starknet_contract;
+mod build_starknet_contract_allowed_libfuncs;
 mod build_targets;
 mod clean;
 mod flock;
