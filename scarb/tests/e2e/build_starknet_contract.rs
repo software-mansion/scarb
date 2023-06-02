@@ -71,7 +71,7 @@ fn compile_starknet_contract() {
 
     assert_eq!(
         t.child("target/dev").files(),
-        vec!["hello_Balance.sierra.json", "starknet_artifacts.json"]
+        vec!["hello.starknet_artifacts.json", "hello_Balance.sierra.json"]
     );
 
     assert_is_json::<ContractClass>(&t.child("target/dev/hello_Balance.sierra.json"));
@@ -104,7 +104,7 @@ fn compile_starknet_contract_to_casm() {
 
     assert_eq!(
         t.child("target/dev").files(),
-        vec!["hello_Balance.casm.json", "starknet_artifacts.json"]
+        vec!["hello.starknet_artifacts.json", "hello_Balance.casm.json"]
     );
 
     assert_is_json::<CasmContractClass>(&t.child("target/dev/hello_Balance.casm.json"));
@@ -157,7 +157,7 @@ fn compile_many_contracts() {
             "b_FortyTwo.sierra.json",
             "hello.casm",
             "hello.sierra",
-            "starknet_artifacts.json"
+            "hello.starknet_artifacts.json"
         ]
     );
 
@@ -170,7 +170,7 @@ fn compile_many_contracts() {
         assert_is_json::<ContractClass>(&t.child("target/dev").child(json));
     }
 
-    assert_is_json::<serde_json::Value>(&t.child("target/dev/starknet_artifacts.json"));
+    assert_is_json::<serde_json::Value>(&t.child("target/dev/hello.starknet_artifacts.json"));
 }
 
 #[test]
@@ -230,8 +230,8 @@ fn compile_starknet_contract_only_with_cfg() {
         t.child("target/dev").files(),
         vec![
             "hello.sierra",
-            "hello_Balance.sierra.json",
-            "starknet_artifacts.json"
+            "hello.starknet_artifacts.json",
+            "hello_Balance.sierra.json"
         ]
     );
 
