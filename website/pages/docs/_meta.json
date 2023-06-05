@@ -13,6 +13,7 @@
   },
   "testing": "Testing",
   "starknet": "Starknet",
+  "cairo-language-server": "Language Server",
   "-- Advanced": {
     "type": "separator",
     "title": "Advanced"
