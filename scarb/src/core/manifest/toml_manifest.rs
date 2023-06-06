@@ -4,7 +4,7 @@ use std::fs;
 use std::str::FromStr;
 
 use anyhow::{bail, ensure, Context, Result};
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8Path;
 use itertools::Itertools;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
@@ -18,9 +18,7 @@ use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Targe
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{ManifestBuilder, ManifestCompilerConfig, PackageName};
-use crate::internal::fsx;
-use crate::internal::fsx::PathUtf8Ext;
-use crate::internal::serdex::toml_merge;
+use crate::internal::serdex::{toml_merge, RelativeUtf8PathBuf};
 use crate::internal::to_version::ToVersion;
 use crate::DEFAULT_SOURCE_PATH;
 
@@ -79,7 +77,7 @@ pub struct DetailedTomlDependency {
     pub version: Option<VersionReq>,
 
     /// Relative to the file it appears in.
-    pub path: Option<Utf8PathBuf>,
+    pub path: Option<RelativeUtf8PathBuf>,
 
     pub git: Option<Url>,
     pub branch: Option<String>,
@@ -478,13 +476,8 @@ impl DetailedTomlDependency {
             ),
 
             (_, None, Some(path)) => {
-                let root = manifest_path
-                    .parent()
-                    .expect("manifest path must always have parent");
-                let path = root.join(path);
-                let path = fsx::canonicalize(path)?;
-                let path = path.try_as_utf8()?;
-                SourceId::for_path(path)?
+                let path = path.relative_to_file(manifest_path)?;
+                SourceId::for_path(&path)?
             }
 
             (_, Some(git), None) => {

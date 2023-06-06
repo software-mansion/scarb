@@ -220,7 +220,7 @@ fn list_path() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        warn: libfunc `revoke_ap_tracking` is not allowed in the libfuncs list `testing_list.json`
+        warn: libfunc `revoke_ap_tracking` is not allowed in the libfuncs list `[..]testing_list.json`
          --> contract: ExperimentalLibfunc
 
         [..]  Finished release target(s) in [..]
@@ -248,10 +248,10 @@ fn list_path_does_not_exist() {
         .failure()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        error: failed to check allowed libfuncs for contract: ExperimentalLibfunc
+        error: failed to get absolute path of `[..]does_not_exist.json`
 
         Caused by:
-            The allowed libfuncs file 'does_not_exist.json' was not found.
+            [..]
         error: could not compile `hello` due to previous error
         "#});
 }

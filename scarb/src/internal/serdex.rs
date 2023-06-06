@@ -1,4 +1,9 @@
+use anyhow::Result;
+use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
+
+use crate::internal::fsx;
+use crate::internal::fsx::PathUtf8Ext;
 
 /// Merge two `toml::Value` serializable structs.
 pub fn toml_merge<'de, T, S>(target: &T, source: &S) -> anyhow::Result<T>
@@ -17,4 +22,21 @@ where
             .map(|(k, v)| (k.clone(), v.clone())),
     );
     Ok(toml::Value::try_into(params)?)
+}
+
+/// Type representing a path for use in `Scarb.toml` where all paths are expected to be relative to
+/// it.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct RelativeUtf8PathBuf(Utf8PathBuf);
+
+impl RelativeUtf8PathBuf {
+    pub fn relative_to_directory(&self, root: &Utf8Path) -> Result<Utf8PathBuf> {
+        fsx::canonicalize(root.join(&self.0))?.try_to_utf8()
+    }
+
+    pub fn relative_to_file(&self, file: &Utf8Path) -> Result<Utf8PathBuf> {
+        let root = file.parent().expect("Expected file path to not be `/`.");
+        self.relative_to_directory(root)
+    }
 }
