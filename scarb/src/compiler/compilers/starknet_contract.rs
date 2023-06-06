@@ -11,7 +11,6 @@ use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet::contract::{find_contracts, ContractDeclaration};
 use cairo_lang_starknet::contract_class::{compile_prepared_db, ContractClass};
 use cairo_lang_utils::{Upcast, UpcastMut};
-use camino::Utf8PathBuf;
 use indoc::{formatdoc, writedoc};
 use itertools::{izip, Itertools};
 use serde::{Deserialize, Serialize};
@@ -21,6 +20,7 @@ use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{PackageName, Utf8PathWorkspaceExt, Workspace};
 use crate::flock::Filesystem;
+use crate::internal::serdex::RelativeUtf8PathBuf;
 use crate::internal::stable_hash::short_hash;
 
 // TODO(#111): starknet-contract should be implemented as an extension.
@@ -55,16 +55,7 @@ impl Default for Props {
 #[serde(untagged, rename_all = "kebab-case")]
 pub enum SerdeListSelector {
     Name { name: String },
-    Path { path: Utf8PathBuf },
-}
-
-impl SerdeListSelector {
-    fn to_list_selector(&self) -> ListSelector {
-        match self {
-            SerdeListSelector::Name { name } => ListSelector::ListName(name.clone()),
-            SerdeListSelector::Path { path } => ListSelector::ListFile(path.to_string()),
-        }
-    }
+    Path { path: RelativeUtf8PathBuf },
 }
 
 #[derive(Debug, Serialize)]
@@ -235,11 +226,14 @@ fn check_allowed_libfuncs(
         return Ok(());
     }
 
-    let list_selector: ListSelector = props
-        .allowed_libfuncs_list
-        .as_ref()
-        .map(SerdeListSelector::to_list_selector)
-        .unwrap_or_default();
+    let list_selector = match &props.allowed_libfuncs_list {
+        Some(SerdeListSelector::Name { name }) => ListSelector::ListName(name.clone()),
+        Some(SerdeListSelector::Path { path }) => {
+            let path = path.relative_to_file(unit.main_component().package.manifest_path())?;
+            ListSelector::ListFile(path.into_string())
+        }
+        None => Default::default(),
+    };
 
     let mut found_disallowed = false;
     for (decl, class) in zip(contracts, classes) {
