@@ -64,10 +64,10 @@ The off by default `casm-add-pythonic-hints{:toml}` property enables Scarb to ad
 ## Allowed libfuncs validation
 
 Not all Sierra libfuncs emitted by the Cairo compiler can be deployed to Starknet, as some are not audited yet,
-or others are meant for development use and would be unsafe when run in contracts context.
+or others are meant for development use and would be unsafe when run in contract context.
 Therefore, the Starknet contract target runs a pass after compilation that checks if every emitted libfunc is present
 in a provided _allowed libfuncs list_.
-By default, this pass emits compilation warnings it spots unexpected libfuncs.
+By default, this pass emits compilation warnings when it spots unexpected libfuncs.
 
 This validation pass can be disabled entirely by writing `allowed-libfuncs = false{:toml}` in target configuration.
 On the other hand, its severity can be elevated to compilation errors, by writing `allowed-libfuncs-deny = true{:toml}`.
