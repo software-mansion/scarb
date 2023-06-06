@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 rust-version = "1.70"
 
@@ -31,7 +31,7 @@ cairo-lang-semantic = { version = "1.1.0", git = "https://github.com/starkware-l
 cairo-lang-sierra-to-casm = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
 cairo-lang-starknet = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
 cairo-lang-test-runner = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
-cairo-lang-utils = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560", features = ["env_logger"]}
+cairo-lang-utils = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560", features = ["env_logger"] }
 camino = { version = "1.1.4", features = ["serde1"] }
 cargo_metadata = "0.15.4"
 clap = { version = "4.3.0", features = ["derive", "env", "string"] }
