@@ -7,7 +7,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
-use crate::core::toml_merge;
+use crate::internal::serdex::toml_merge;
 
 /// See [`TargetInner`] for public fields reference.
 #[derive(Clone, Debug, Hash)]
