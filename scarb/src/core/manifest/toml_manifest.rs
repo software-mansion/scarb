@@ -20,6 +20,7 @@ use crate::core::source::{GitReference, SourceId};
 use crate::core::{ManifestBuilder, ManifestCompilerConfig, PackageName};
 use crate::internal::fsx;
 use crate::internal::fsx::PathUtf8Ext;
+use crate::internal::serdex::toml_merge;
 use crate::internal::to_version::ToVersion;
 use crate::DEFAULT_SOURCE_PATH;
 
@@ -509,23 +510,4 @@ impl DetailedTomlDependency {
             source_id,
         })
     }
-}
-
-/// Merge two `toml::Value` serializable structs.
-pub fn toml_merge<'de, T, S>(target: &T, source: &S) -> Result<T>
-where
-    T: Serialize + Deserialize<'de>,
-    S: Serialize + Deserialize<'de>,
-{
-    let mut params = toml::Value::try_from(target)?;
-    let source = toml::Value::try_from(source)?;
-
-    params.as_table_mut().unwrap().extend(
-        source
-            .as_table()
-            .unwrap()
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone())),
-    );
-    Ok(toml::Value::try_into(params)?)
 }
