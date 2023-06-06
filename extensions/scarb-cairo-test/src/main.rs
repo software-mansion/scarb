@@ -1,8 +1,9 @@
 use std::iter;
 use std::sync::Arc;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::FilesGroup;
@@ -65,7 +66,11 @@ fn main() -> Result<()> {
 
         let db = build_root_database(unit, starknet)?;
 
-        let main_crate_ids = vec![db.intern_crate(CrateLongId(package.name.into()))];
+        let main_crate_ids = vec![db.intern_crate(CrateLongId(package.name.clone().into()))];
+
+        if DiagnosticsReporter::stderr().check(&db) {
+            bail!("could not compile `{}` due to previous error", package.name);
+        }
 
         let runner = TestRunner {
             db,
