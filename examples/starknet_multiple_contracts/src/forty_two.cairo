@@ -1,5 +1,10 @@
-#[contract]
+#[starknet::contract]
 mod FortyTwo {
-    #[external]
-    fn answer() -> felt252 { 42 }
+    #[storage]
+    struct Storage {}
+
+    #[external(v0)]
+    fn answer(ref self: ContractState) -> felt252 {
+        42
+    }
 }

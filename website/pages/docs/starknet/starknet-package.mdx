@@ -3,7 +3,7 @@
 The `starknet` package provides APIs for writing Starknet contracts code.
 This includes:
 
-- A Cairo compiler plugin which expands contract-specific attributes (`#[contract]`).
+- A Cairo compiler plugin which expands contract-specific attributes (`#[starknet::contract]`).
 
 The version of this package is coupled to Cairo version included in Scarb.
 
@@ -15,7 +15,7 @@ By using the `>=` operator, you will not have to manually update this value on e
 
 ```toml copy
 [dependencies]
-starknet = ">=1.0.0"
+starknet = ">=2.0.0-rc0"
 ```
 
 ## Future work

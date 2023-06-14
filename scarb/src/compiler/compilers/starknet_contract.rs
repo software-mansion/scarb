@@ -5,7 +5,7 @@ use anyhow::{bail, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_starknet::allowed_libfuncs::{
     validate_compatible_sierra_version, AllowedLibfuncsError, ListSelector,
-    DEFAULT_EXPERIMENTAL_LIBFUNCS_LIST,
+    BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST,
 };
 use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet::contract::{find_contracts, ContractDeclaration};
@@ -256,7 +256,7 @@ fn check_allowed_libfuncs(
                 // instructing how to do this. Otherwise, we know that user knows what they
                 // do, so we do not clutter compiler output.
                 if list_selector == Default::default() {
-                    let experimental = DEFAULT_EXPERIMENTAL_LIBFUNCS_LIST;
+                    let experimental = BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST;
 
                     let scarb_toml = unit
                         .main_component()
