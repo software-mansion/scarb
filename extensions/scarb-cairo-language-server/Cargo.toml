@@ -1,7 +1,6 @@
 [package]
 name = "scarb-cairo-language-server"
 version.workspace = true
-rust-version.workspace = true
 edition.workspace = true
 publish = false
 
