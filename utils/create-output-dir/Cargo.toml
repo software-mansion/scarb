@@ -3,7 +3,6 @@ name = "create-output-dir"
 version = "1.0.0"
 description = "Create an excluded from cache directory atomically"
 edition.workspace = true
-rust-version.workspace = true
 repository.workspace = true
 readme = "README.md"
 license.workspace = true
