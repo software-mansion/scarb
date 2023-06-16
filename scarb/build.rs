@@ -90,6 +90,7 @@ fn cairo_version() -> String {
 }
 
 fn download_core(rev: &str) {
+    println!("cargo:rerun-if-env-changed=CAIRO_ARCHIVE");
     let out_dir = env::var("OUT_DIR").unwrap();
     if is_docs_rs() {
         eprintln!("Docs.rs build detected. Skipping corelib download.");
@@ -104,18 +105,26 @@ fn download_core(rev: &str) {
 
     let core_path = PathBuf::from_iter([&out_dir, &format!("core-{}", ident(rev))]);
     if !core_path.is_dir() {
-        let url = format!("https://github.com/starkware-libs/cairo/archive/{rev}.zip");
         let cairo_zip = PathBuf::from_iter([&out_dir, "cairo.zip"]);
 
-        let mut curl = Command::new("curl");
-        curl.args(["--proto", "=https", "--tlsv1.2", "-fL"]);
-        curl.arg("-o");
-        curl.arg(&cairo_zip);
-        curl.arg(&url);
-        eprintln!("{curl:?}");
-        let curl_exit = curl.status().expect("Failed to start curl");
-        if !curl_exit.success() {
-            panic!("Failed to download {url} with curl")
+        if let Ok(cairo_archive) = std::env::var("CAIRO_ARCHIVE") {
+            // Copy archive to `cairo_zip`, without keeping file attributes.
+            eprintln!("Copying Cairo archive from `CAIRO_ARCHIVE={cairo_archive}`.");
+            let mut src = File::open(&cairo_archive).unwrap();
+            let mut dst = File::create(&cairo_zip).unwrap();
+            io::copy(&mut src, &mut dst).unwrap();
+        } else {
+            let url = format!("https://github.com/starkware-libs/cairo/archive/{rev}.zip");
+            let mut curl = Command::new("curl");
+            curl.args(["--proto", "=https", "--tlsv1.2", "-fL"]);
+            curl.arg("-o");
+            curl.arg(&cairo_zip);
+            curl.arg(&url);
+            eprintln!("{curl:?}");
+            let curl_exit = curl.status().expect("Failed to start curl");
+            if !curl_exit.success() {
+                panic!("Failed to download {url} with curl")
+            }
         }
 
         fs::create_dir_all(&core_path).unwrap();
