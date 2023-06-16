@@ -1,7 +1,6 @@
 [package]
 name = "test-for-each-example"
 version = "1.0.0"
-rust-version.workspace = true
 edition.workspace = true
 publish = false
 
