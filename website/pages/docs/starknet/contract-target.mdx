@@ -82,7 +82,7 @@ For example, to use the `experimental` allowlist, type the following:
 
 ```toml
 [[target.starknet-contract]]
-allowed-libfuncs-list.name = "experimental"
+allowed-libfuncs-list = { name = "experimental" }
 ```
 
 All built-in lists can be located in the [Cairo repository](https://github.com/starkware-libs/cairo/tree/main/crates/cairo-lang-starknet/src/allowed_libfuncs_lists).
@@ -93,7 +93,7 @@ It is also possible to use a user-provided allowlist, via the `allowed-libfuncs-
 
 ```toml
 [[target.starknet-contract]]
-allowed-libfuncs-list.path = "path/to/list.json"
+allowed-libfuncs-list = { path = "path/to/list.json" }
 ```
 
 User-provided lists should follow the same format as built-in ones.

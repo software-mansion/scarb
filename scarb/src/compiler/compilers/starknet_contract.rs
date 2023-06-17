@@ -270,7 +270,7 @@ fn check_allowed_libfuncs(
                             help: try compiling with the `{experimental}` list
                              --> {scarb_toml}
                                 [[target.starknet-contract]]
-                                allowed-libfuncs-list.name = "{experimental}"
+                                allowed-libfuncs-list = { name = "experimental" }
                         "#
                     );
                 }

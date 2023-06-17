@@ -49,7 +49,7 @@ fn default_behaviour() {
         help: try compiling with the `experimental` list
          --> Scarb.toml
             [[target.starknet-contract]]
-            allowed-libfuncs-list.name = "experimental"
+            allowed-libfuncs-list = { name = "experimental" }
 
         [..]  Finished release target(s) in [..]
         "#});
@@ -81,7 +81,7 @@ fn check_true() {
         help: try compiling with the `experimental` list
          --> Scarb.toml
             [[target.starknet-contract]]
-            allowed-libfuncs-list.name = "experimental"
+            allowed-libfuncs-list = { name = "experimental" }
 
         [..]  Finished release target(s) in [..]
         "#});
@@ -138,7 +138,7 @@ fn deny_true() {
         help: try compiling with the `experimental` list
          --> Scarb.toml
             [[target.starknet-contract]]
-            allowed-libfuncs-list.name = "experimental"
+            allowed-libfuncs-list = { name = "experimental" }
 
         error: aborting compilation, because contracts use disallowed Sierra libfuncs
         error: could not compile `hello` due to previous error
@@ -153,7 +153,7 @@ fn pass_named_list() {
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
-            allowed-libfuncs-list.name = "experimental"
+            allowed-libfuncs-list = { name = "experimental" }
         "#})
         .dep_starknet()
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
@@ -178,7 +178,7 @@ fn unknown_list_name() {
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
-            allowed-libfuncs-list.name = "definitely does not exist"
+            allowed-libfuncs-list = { name = "definitely does not exist" }
         "#})
         .dep_starknet()
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
@@ -207,7 +207,7 @@ fn list_path() {
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
-            allowed-libfuncs-list.path = "testing_list.json"
+            allowed-libfuncs-list = { path = "testing_list.json" }
         "#})
         .dep_starknet()
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
@@ -243,7 +243,7 @@ fn list_path_does_not_exist() {
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
-            allowed-libfuncs-list.path = "does_not_exist.json"
+            allowed-libfuncs-list = { path = "does_not_exist.json" }
         "#})
         .dep_starknet()
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
