@@ -3,6 +3,7 @@ use std::io::BufReader;
 
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
+use assert_fs::TempDir;
 use cairo_lang_starknet::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet::contract_class::ContractClass;
 use indoc::{formatdoc, indoc};
@@ -55,14 +56,40 @@ static BALANCE_CONTRACT: Lazy<String> =
     Lazy::new(|| format!("{BALANCE_CONTRACT_INTERFACE}\n{BALANCE_CONTRACT_IMPLEMENTATION}"));
 
 const FORTY_TWO_CONTRACT: &str = indoc! {r#"
+    #[starknet::interface]
+    trait IFortyTwo<T> {
+        fn answer(ref self: T) -> felt252;
+    }
+
     #[starknet::contract]
     mod FortyTwo {
         #[storage]
         struct Storage {}
 
         #[external(v0)]
-        fn answer(ref self: ContractState) -> felt252 { 42 }
+        impl FortyTwo of super::IFortyTwo<ContractState> {
+            fn answer(ref self: ContractState) -> felt252 { 42 }
+        }
     }
+"#};
+
+const HELLO_CONTRACT: &str = indoc! {r#"
+    #[starknet::interface]
+    trait IHelloContract<T> {
+        fn answer(ref self: T) -> felt252;
+    }
+
+    #[starknet::contract]
+    mod HelloContract {
+        #[storage]
+        struct Storage {}
+
+        #[external(v0)]
+        impl HelloContract of super::IHelloContract<ContractState> {
+            fn answer(ref self: ContractState) -> felt252 { 'hello' }
+        }
+    }
+
 "#};
 
 fn assert_is_json<T: DeserializeOwned>(child: &ChildPath) -> T {
@@ -329,4 +356,99 @@ fn compile_starknet_contract_without_starknet_dep() {
 
         error: could not compile `hello` due to previous error
         "#});
+}
+
+fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, lib_extra: &str) {
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(format!("{}\n{}", BALANCE_CONTRACT.as_str(), HELLO_CONTRACT))
+        .build(hello);
+
+    ProjectBuilder::start()
+        .name("world")
+        .version("0.1.0")
+        .dep("hello", r#" path = "../hello" "#)
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(formatdoc! {r#"
+            {lib_extra}
+            {FORTY_TWO_CONTRACT}
+        "#})
+        .build(world);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(world)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling world v0.1.0 ([..]/Scarb.toml)
+            [..]  Finished release target(s) in [..] seconds
+        "#});
+}
+
+#[test]
+fn do_not_compile_dep_contracts() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+    compile_dep_test_case(&hello, &world, "");
+
+    assert_eq!(
+        world.child("target/dev").files(),
+        vec![
+            "world.starknet_artifacts.json",
+            "world_FortyTwo.sierra.json"
+        ]
+    );
+    assert_is_json::<ContractClass>(&world.child("target/dev/world_FortyTwo.sierra.json"));
+}
+
+#[test]
+fn compile_imported_contracts() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+    compile_dep_test_case(&hello, &world, "use hello::Balance;");
+
+    assert_eq!(
+        world.child("target/dev").files(),
+        vec![
+            "world.starknet_artifacts.json",
+            "world_Balance.sierra.json",
+            "world_FortyTwo.sierra.json"
+        ]
+    );
+    assert_is_json::<ContractClass>(&world.child("target/dev/world_Balance.sierra.json"));
+    assert_is_json::<ContractClass>(&world.child("target/dev/world_FortyTwo.sierra.json"));
+}
+
+#[test]
+fn compile_multiple_imported_contracts() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+    compile_dep_test_case(&hello, &world, "use hello::{Balance, HelloContract};");
+
+    assert_eq!(
+        world.child("target/dev").files(),
+        vec![
+            "world.starknet_artifacts.json",
+            "world_Balance.sierra.json",
+            "world_FortyTwo.sierra.json",
+            "world_HelloContract.sierra.json"
+        ]
+    );
+    assert_is_json::<ContractClass>(&world.child("target/dev/world_Balance.sierra.json"));
+    assert_is_json::<ContractClass>(&world.child("target/dev/world_FortyTwo.sierra.json"));
+    assert_is_json::<ContractClass>(&world.child("target/dev/world_HelloContract.sierra.json"));
 }
