@@ -1,7 +1,6 @@
 [package]
 name = "scarb-metadata"
 version = "1.4.2"
-rust-version.workspace = true
 edition.workspace = true
 
 authors.workspace = true

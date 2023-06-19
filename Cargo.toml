@@ -9,9 +9,8 @@ members = [
 ]
 
 [workspace.package]
-version = "0.5.0-alpha.0"
+version = "0.5.0-alpha.1"
 edition = "2021"
-rust-version = "1.70"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
 homepage = "https://docs.swmansion.com/scarb"
@@ -23,15 +22,15 @@ repository = "https://github.com/software-mansion/scarb"
 anyhow = "1.0.71"
 assert_fs = "1.0.13"
 async-trait = "0.1.68"
-cairo-lang-compiler = "2.0.0-rc2"
-cairo-lang-filesystem = "2.0.0-rc2"
-cairo-lang-formatter = "2.0.0-rc2"
-cairo-lang-language-server = "2.0.0-rc2"
-cairo-lang-semantic = "2.0.0-rc2"
-cairo-lang-sierra-to-casm = "2.0.0-rc2"
-cairo-lang-starknet = "2.0.0-rc2"
-cairo-lang-test-runner = "2.0.0-rc2"
-cairo-lang-utils = { version = "2.0.0-rc2", features = ["env_logger"] }
+cairo-lang-compiler = "2.0.0-rc3"
+cairo-lang-filesystem = "2.0.0-rc3"
+cairo-lang-formatter = "2.0.0-rc3"
+cairo-lang-language-server = "2.0.0-rc3"
+cairo-lang-semantic = "2.0.0-rc3"
+cairo-lang-sierra-to-casm = "2.0.0-rc3"
+cairo-lang-starknet = "2.0.0-rc3"
+cairo-lang-test-runner = "2.0.0-rc3"
+cairo-lang-utils = { version = "2.0.0-rc3", features = ["env_logger"] }
 camino = { version = "1.1.4", features = ["serde1"] }
 cargo_metadata = "0.15.4"
 clap = { version = "4.3.0", features = ["derive", "env", "string"] }
