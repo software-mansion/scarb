@@ -1,0 +1,20 @@
+[package]
+name = "scarb-cairo-run"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+authors.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+cairo-lang-runner.workspace = true
+cairo-lang-sierra.workspace = true
+camino.workspace = true
+clap.workspace = true
+scarb-metadata = { path = "../../scarb-metadata", features = ["packages_filter"] }
+serde_json.workspace = true
+indoc.workspace = true
+
+[dev-dependencies]
+snapbox.workspace = true
