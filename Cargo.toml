@@ -3,6 +3,7 @@ members = [
     "scarb",
     "scarb-metadata",
     "extensions/scarb-cairo-language-server",
+    "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
     "utils/create-output-dir",
     "utils/test-for-each-example",
@@ -27,8 +28,10 @@ cairo-lang-filesystem = "2.0.0-rc3"
 cairo-lang-formatter = "2.0.0-rc3"
 cairo-lang-language-server = "2.0.0-rc3"
 cairo-lang-semantic = "2.0.0-rc3"
+cairo-lang-sierra = "2.0.0-rc3"
 cairo-lang-sierra-to-casm = "2.0.0-rc3"
 cairo-lang-starknet = "2.0.0-rc3"
+cairo-lang-runner = "2.0.0-rc3"
 cairo-lang-test-runner = "2.0.0-rc3"
 cairo-lang-utils = { version = "2.0.0-rc3", features = ["env_logger"] }
 camino = { version = "1.1.4", features = ["serde1"] }

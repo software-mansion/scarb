@@ -3665,6 +3665,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "scarb-cairo-run"
+version = "0.5.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "cairo-lang-runner",
+ "cairo-lang-sierra",
+ "camino",
+ "clap",
+ "indoc",
+ "scarb-metadata 1.4.2",
+ "serde_json",
+ "snapbox",
+]
+
+[[package]]
 name = "scarb-cairo-test"
 version = "0.5.0-alpha.1"
 dependencies = [
