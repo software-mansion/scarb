@@ -26,8 +26,9 @@ The installer for Scarb
 Usage: install.sh [OPTIONS]
 
 Options:
-    -v        Specify Scarb _requested_version to install
-    -h        Print help information
+    -h | --help             Print help information
+    -p | --no-modify-path   Skip PATH variable modification
+    -v | --version          Specify Scarb _requested_version to install
 
 For more information, check out https://docs.swmansion.com/scarb/download.
 EOF
@@ -44,10 +45,25 @@ main() {
   need_cmd tar
   need_cmd uname
 
+  # Transform long options to short ones.
+  for arg in "$@"; do
+    shift
+    case "$arg" in
+      '--help')           set -- "$@" '-h'   ;;
+      '--no-modify-path') set -- "$@" '-p'   ;;
+      '--version')        set -- "$@" '-v'   ;;
+      *)                  set -- "$@" "$arg" ;;
+    esac
+  done
+
   local _requested_ref="latest"
   local _requested_version="latest"
-  while getopts ":hv:" opt; do
+  local _do_modify_path=1
+  while getopts ":hpv:" opt; do
     case $opt in
+    p)
+      _do_modify_path=0
+      ;;
     h)
       usage
       exit 0
@@ -97,8 +113,12 @@ main() {
     echo "Scarb has been successfully installed and should be already available in your PATH."
     echo "Run 'scarb --version' to verify your installation. Happy coding!"
   else
-    add_local_bin_to_path
-    _retval=$?
+    if [ $_do_modify_path -eq 1 ]; then
+      add_local_bin_to_path
+      _retval=$?
+    else
+      echo "Skipping PATH modification, please manually add '${LOCAL_BIN_ESCAPED}' to your PATH."
+    fi
 
     echo "Then, run 'scarb --version' to verify your installation. Happy coding!"
   fi
