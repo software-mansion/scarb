@@ -3,6 +3,7 @@ members = [
     "scarb",
     "scarb-metadata",
     "extensions/scarb-cairo-language-server",
+    "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
     "utils/create-output-dir",
     "utils/test-for-each-example",
@@ -26,7 +27,9 @@ cairo-lang-compiler = { version = "1.1.0", git = "https://github.com/starkware-l
 cairo-lang-filesystem = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
 cairo-lang-formatter = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
 cairo-lang-language-server = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
+cairo-lang-runner = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
 cairo-lang-semantic = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
+cairo-lang-sierra = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
 cairo-lang-sierra-to-casm = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
 cairo-lang-starknet = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
 cairo-lang-test-runner = { version = "1.1.0", git = "https://github.com/starkware-libs/cairo.git", rev = "43b83560" }
