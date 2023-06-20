@@ -23,6 +23,7 @@ pub fn get_env_vars(config: &Config) -> anyhow::Result<HashMap<OsString, OsStrin
             "SCARB_TARGET_DIR".into(),
             config.target_dir().path_unchecked().into(),
         ),
+        ("SCARB_PROFILE".into(), config.profile().as_str().into()),
         (
             "SCARB_UI_VERBOSITY".into(),
             config.ui().verbosity().to_string().into(),
