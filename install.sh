@@ -26,9 +26,9 @@ The installer for Scarb
 Usage: install.sh [OPTIONS]
 
 Options:
-    -h | --help             Print help information
-    -p | --no-modify-path   Skip PATH variable modification
-    -v | --version          Specify Scarb _requested_version to install
+  -p, --no-modify-path   Skip PATH variable modification
+  -h, --help             Print help
+  -v, --version          Specify Scarb version to install
 
 For more information, check out https://docs.swmansion.com/scarb/download.
 EOF
