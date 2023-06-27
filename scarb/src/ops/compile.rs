@@ -1,3 +1,5 @@
+use std::thread;
+
 use anyhow::{anyhow, Result};
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use indicatif::HumanDuration;
@@ -15,7 +17,7 @@ pub fn compile(ws: &Workspace<'_>) -> Result<()> {
     let compilation_units = ops::generate_compilation_units(&resolve, ws)?;
 
     for unit in compilation_units {
-        compile_unit(unit, ws)?;
+        compile_unit_isolated(unit, ws)?;
     }
 
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
@@ -25,6 +27,25 @@ pub fn compile(ws: &Workspace<'_>) -> Result<()> {
     ));
 
     Ok(())
+}
+
+// FIXME(mkaput): Remove this when Cairo will fix their issue upstream.
+// NOTE: This is untested! Compiling such large Cairo files takes horribly long time.
+/// Run compiler in a new thread which has significantly increased stack size.
+/// The Cairo compiler tends to consume too much stack space in some specific cases:
+/// https://github.com/starkware-libs/cairo/issues/3530.
+/// It does not seem to consume infinite amounts though, so we try to confine it in arbitrarily
+/// chosen big memory chunk.
+fn compile_unit_isolated(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+    thread::scope(|s| {
+        thread::Builder::new()
+            .name(format!("scarb compile {}", unit.id()))
+            .stack_size(128 * 1024 * 1024)
+            .spawn_scoped(s, || compile_unit(unit, ws))
+            .expect("Failed to spawn compiler thread.")
+            .join()
+            .expect("Compiler thread has panicked.")
+    })
 }
 
 fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
