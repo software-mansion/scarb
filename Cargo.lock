@@ -122,7 +122,7 @@ dependencies = [
  "ark-std 0.4.0",
  "derivative",
  "hashbrown 0.13.2",
- "itertools",
+ "itertools 0.10.5",
  "num-traits 0.2.15",
  "zeroize",
 ]
@@ -139,7 +139,7 @@ dependencies = [
  "ark-std 0.4.0",
  "derivative",
  "digest",
- "itertools",
+ "itertools 0.10.5",
  "num-bigint",
  "num-traits 0.2.15",
  "paste",
@@ -520,7 +520,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "indexmap",
- "itertools",
+ "itertools 0.10.5",
  "salsa",
  "smol_str",
 ]
@@ -533,7 +533,7 @@ checksum = "c275e9d4a84ea1509dcb84452ed3b45ad824bc7730cda18bc09512f891016d5e"
 dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-utils",
- "itertools",
+ "itertools 0.10.5",
  "salsa",
 ]
 
@@ -546,7 +546,7 @@ dependencies = [
  "cairo-lang-utils",
  "good_lp",
  "indexmap",
- "itertools",
+ "itertools 0.10.5",
 ]
 
 [[package]]
@@ -578,7 +578,7 @@ dependencies = [
  "colored",
  "diffy",
  "ignore",
- "itertools",
+ "itertools 0.10.5",
  "log",
  "salsa",
  "smol_str",
@@ -634,7 +634,7 @@ dependencies = [
  "cairo-lang-utils",
  "id-arena",
  "indexmap",
- "itertools",
+ "itertools 0.10.5",
  "log",
  "num-bigint",
  "num-traits 0.2.15",
@@ -654,7 +654,7 @@ dependencies = [
  "cairo-lang-syntax-codegen",
  "cairo-lang-utils",
  "colored",
- "itertools",
+ "itertools 0.10.5",
  "log",
  "num-bigint",
  "num-traits 0.2.15",
@@ -677,7 +677,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "indoc",
- "itertools",
+ "itertools 0.10.5",
  "salsa",
  "smol_str",
 ]
@@ -734,7 +734,7 @@ dependencies = [
  "cairo-lang-starknet",
  "cairo-lang-utils",
  "cairo-vm",
- "itertools",
+ "itertools 0.10.5",
  "keccak",
  "num-bigint",
  "num-integer",
@@ -758,7 +758,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "id-arena",
- "itertools",
+ "itertools 0.10.5",
  "log",
  "num-bigint",
  "num-traits 0.2.15",
@@ -776,7 +776,7 @@ dependencies = [
  "const-fnv1a-hash",
  "convert_case",
  "derivative",
- "itertools",
+ "itertools 0.10.5",
  "lalrpop",
  "lalrpop-util",
  "num-bigint",
@@ -798,7 +798,7 @@ dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
  "cairo-lang-utils",
- "itertools",
+ "itertools 0.10.5",
  "thiserror",
 ]
 
@@ -811,7 +811,7 @@ dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
  "cairo-lang-utils",
- "itertools",
+ "itertools 0.10.5",
  "thiserror",
 ]
 
@@ -835,7 +835,7 @@ dependencies = [
  "cairo-lang-utils",
  "id-arena",
  "indexmap",
- "itertools",
+ "itertools 0.10.5",
  "num-bigint",
  "salsa",
  "smol_str",
@@ -855,7 +855,7 @@ dependencies = [
  "cairo-lang-sierra-gas",
  "cairo-lang-utils",
  "indoc",
- "itertools",
+ "itertools 0.10.5",
  "log",
  "num-bigint",
  "num-traits 0.2.15",
@@ -889,7 +889,7 @@ dependencies = [
  "convert_case",
  "genco",
  "indoc",
- "itertools",
+ "itertools 0.10.5",
  "log",
  "num-bigint",
  "num-integer",
@@ -956,7 +956,7 @@ dependencies = [
  "cairo-lang-utils",
  "cairo-vm",
  "colored",
- "itertools",
+ "itertools 0.10.5",
  "num-bigint",
  "num-traits 0.2.15",
  "rayon",
@@ -972,7 +972,7 @@ checksum = "c37b39cd79b11421f6682dfd1bbc9982e186e0925f081dbed33bd79160bfcd8f"
 dependencies = [
  "env_logger",
  "indexmap",
- "itertools",
+ "itertools 0.10.5",
  "log",
  "num-bigint",
  "num-integer",
@@ -2711,6 +2711,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2764,7 +2773,7 @@ dependencies = [
  "diff",
  "ena",
  "is-terminal",
- "itertools",
+ "itertools 0.10.5",
  "lalrpop-util",
  "petgraph",
  "regex",
@@ -3348,7 +3357,7 @@ dependencies = [
  "anstyle",
  "difflib",
  "float-cmp",
- "itertools",
+ "itertools 0.10.5",
  "normalize-line-endings",
  "predicates-core",
  "regex",
@@ -3686,7 +3695,7 @@ dependencies = [
  "indicatif",
  "indoc",
  "io_tee",
- "itertools",
+ "itertools 0.11.0",
  "libc",
  "ntest",
  "once_cell",
