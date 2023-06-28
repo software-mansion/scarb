@@ -5,22 +5,23 @@ use crate::support::command::Scarb;
 use crate::support::project_builder::ProjectBuilder;
 
 const EXPERIMENTAL_LIBFUNC: &str = indoc! {r#"
+    extern fn redeposit_gas() implicits(GasBuiltin) nopanic;
+
     #[starknet::contract]
     mod ExperimentalLibfunc {
-        use array::ArrayTrait;
-        use array::SpanTrait;
-
         #[storage]
         struct Storage {}
 
         #[external(v0)]
         fn experiment(self: @ContractState) {
-            let mut arr = ArrayTrait::new();
-            arr.append(0);
-            arr.append(1);
-            arr.append(2);
-            let sliced_array = arr.span().slice(0, 1);
+            super::redeposit_gas();
         }
+    }
+"#};
+
+const TESTING_LIST: &str = indoc! {r#"
+    {
+        "allowed_libfuncs": []
     }
 "#};
 
@@ -44,7 +45,7 @@ fn default_behaviour() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        warn: libfunc `array_slice` is not allowed in the libfuncs list `Default libfunc list`
+        warn: libfunc `redeposit_gas` is not allowed in the libfuncs list `Default libfunc list`
          --> contract: ExperimentalLibfunc
         help: try compiling with the `experimental` list
          --> Scarb.toml
@@ -76,7 +77,7 @@ fn check_true() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        warn: libfunc `array_slice` is not allowed in the libfuncs list `Default libfunc list`
+        warn: libfunc `redeposit_gas` is not allowed in the libfuncs list `Default libfunc list`
          --> contract: ExperimentalLibfunc
         help: try compiling with the `experimental` list
          --> Scarb.toml
@@ -115,12 +116,18 @@ fn check_false() {
 #[test]
 fn deny_true() {
     let t = assert_fs::TempDir::new().unwrap();
+
+    t.child("testing_list.json")
+        .write_str(TESTING_LIST)
+        .unwrap();
+
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
             allowed-libfuncs-deny = true
+            allowed-libfuncs-list.path = "testing_list.json"
         "#})
         .dep_starknet()
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
@@ -133,12 +140,8 @@ fn deny_true() {
         .failure()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        error: libfunc `array_slice` is not allowed in the libfuncs list `Default libfunc list`
+        error: libfunc `revoke_ap_tracking` is not allowed in the libfuncs list `[..]testing_list.json`
          --> contract: ExperimentalLibfunc
-        help: try compiling with the `experimental` list
-         --> Scarb.toml
-            [[target.starknet-contract]]
-            allowed-libfuncs-list.name = "experimental"
 
         error: aborting compilation, because contracts use disallowed Sierra libfuncs
         error: could not compile `hello` due to previous error
@@ -202,6 +205,11 @@ fn unknown_list_name() {
 #[test]
 fn list_path() {
     let t = assert_fs::TempDir::new().unwrap();
+
+    t.child("testing_list.json")
+        .write_str(TESTING_LIST)
+        .unwrap();
+
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -212,14 +220,6 @@ fn list_path() {
         .dep_starknet()
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
         .build(&t);
-
-    t.child("testing_list.json")
-        .write_str(indoc! {r#"
-            {
-                "allowed_libfuncs": []
-            }
-        "#})
-        .unwrap();
 
     Scarb::quick_snapbox()
         .arg("build")
