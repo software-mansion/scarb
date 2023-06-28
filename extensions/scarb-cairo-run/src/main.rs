@@ -1,7 +1,7 @@
 use std::env;
 use std::fs;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use cairo_lang_runner::short_string::as_cairo_short_string;
 use cairo_lang_runner::{SierraCasmRunner, StarknetState};
 use cairo_lang_sierra::extensions::gas::{
@@ -52,11 +52,13 @@ fn main() -> Result<()> {
         "#});
     }
 
-    let Ok(sierra_program) = cairo_lang_sierra::ProgramParser::new()
-        .parse(&fs::read_to_string(path.clone()).with_context(|| format!("failed to read Sierra file: {path}"))?)
-        else {
-            bail!("failed to parse sierra program: {path}")
-    };
+    let sierra_program = cairo_lang_sierra::ProgramParser::new()
+        .parse(
+            &fs::read_to_string(path.clone())
+                .with_context(|| format!("failed to read Sierra file: {path}"))?,
+        )
+        .map_err(|e| anyhow!("{e}"))
+        .with_context(|| format!("failed to parse sierra program: {path}"))?;
 
     if args.available_gas.is_none()
         && sierra_program.type_declarations.iter().any(|decl| {
