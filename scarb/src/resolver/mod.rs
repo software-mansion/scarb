@@ -53,27 +53,30 @@ pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<R
 
                 let dep = dep_summary.package_id;
 
-                if let Some(existing) = packages.get(&dep.name) {
-                    if existing.source_id == dep.source_id {
-                        continue;
-                    }
-
-                    bail!(
-                        indoc! {"
+                if let Some(existing) = packages.get(dep.name.as_ref()) {
+                    if existing.source_id != dep.source_id {
+                        bail!(
+                            indoc! {"
                             found dependencies on the same package `{}` coming from incompatible \
                             sources:
                             source 1: {}
                             source 2: {}
-                        "},
-                        dep.name,
-                        existing.source_id,
-                        dep.source_id
-                    );
+                            "},
+                            dep.name,
+                            existing.source_id,
+                            dep.source_id
+                        );
+                    }
                 }
 
                 graph.add_edge(package_id, dep, ());
-                packages.insert(dep.name.clone(), dep);
                 summaries.insert(dep, dep_summary.clone());
+
+                if packages.contains_key(dep.name.as_ref()) {
+                    continue;
+                }
+
+                packages.insert(dep.name.clone(), dep);
                 next_queue.push(dep);
             }
         }
