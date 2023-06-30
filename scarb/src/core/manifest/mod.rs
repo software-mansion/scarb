@@ -19,6 +19,7 @@ use crate::compiler::Profile;
 
 mod compiler_config;
 mod dependency;
+mod maybe_workspace;
 mod scripts;
 mod summary;
 mod target;

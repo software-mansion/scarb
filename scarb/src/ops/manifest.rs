@@ -15,8 +15,9 @@ pub fn read_manifest(
     source_id: SourceId,
     profile: Profile,
 ) -> Result<Manifest> {
-    let toml = TomlManifest::read_from_path(manifest_path)?;
-    toml.to_manifest(manifest_path, source_id, profile)
+    let toml_manifest = TomlManifest::read_from_path(manifest_path)?;
+    toml_manifest
+        .to_manifest(manifest_path, source_id, profile, None)
         .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))
 }
 
