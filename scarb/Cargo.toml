@@ -36,6 +36,7 @@ dunce.workspace = true
 fs4.workspace = true
 futures.workspace = true
 gix.workspace = true
+glob.workspace = true
 ignore.workspace = true
 include_dir.workspace = true
 indicatif.workspace = true
@@ -47,6 +48,7 @@ petgraph.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 scarb-metadata = { version = "1.4.0", path = "../scarb-metadata", default-features = false, features = ["builder", "packages_filter"] }
 semver.workspace = true
+serde-value.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 smol_str.workspace = true

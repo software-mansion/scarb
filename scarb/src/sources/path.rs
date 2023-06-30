@@ -11,7 +11,6 @@ use crate::core::manifest::{ManifestDependency, Summary};
 use crate::core::package::{Package, PackageId};
 use crate::core::source::{Source, SourceId};
 use crate::ops;
-use crate::MANIFEST_FILE_NAME;
 
 /// This source will only return the package at precisely the `path` specified,
 /// and it will be an error if there is not a package at `path`.
@@ -23,10 +22,7 @@ pub struct PathSource<'c> {
 
 impl<'c> PathSource<'c> {
     pub fn new(source_id: SourceId, config: &'c Config) -> Self {
-        let root = source_id
-            .to_path()
-            .expect("path sources cannot be remote")
-            .join(MANIFEST_FILE_NAME);
+        let root = source_id.to_path().expect("path sources cannot be remote");
 
         Self {
             source_id,

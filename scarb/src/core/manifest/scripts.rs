@@ -1,10 +1,10 @@
 use anyhow::Result;
 use deno_task_shell::parser::SequentialList;
+use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::fmt;
-use std::str::FromStr;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ScriptDefinition(String);
 
 impl ScriptDefinition {
@@ -33,14 +33,6 @@ impl ScriptDefinition {
         let full_script = format!("{manifest_script} {additional_args}");
         let script = full_script.trim().to_owned();
         deno_task_shell::parser::parse(&script)
-    }
-}
-
-impl FromStr for ScriptDefinition {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> anyhow::Result<Self, Self::Err> {
-        Ok(Self(s.to_string()))
     }
 }
 

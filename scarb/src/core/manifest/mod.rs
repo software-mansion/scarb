@@ -19,6 +19,7 @@ use crate::compiler::Profile;
 
 mod compiler_config;
 mod dependency;
+mod maybe_workspace;
 mod scripts;
 mod summary;
 mod target;
@@ -39,8 +40,6 @@ pub struct Manifest {
     pub compiler_config: ManifestCompilerConfig,
     #[builder(default)]
     pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
-    #[builder(default)]
-    pub profiles: Vec<Profile>,
 }
 
 /// Subset of a [`Manifest`] that contains package metadata.
