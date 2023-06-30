@@ -79,3 +79,28 @@ fn simple_format() {
     let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
     assert_eq!(content, SIMPLE_FORMATTED);
 }
+
+#[test]
+fn simple_format_with_filter() {
+    let t = build_temp_dir(SIMPLE_ORIGINAL);
+    Scarb::quick_snapbox()
+        .args(["fmt", "--package", "world"])
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq("error: package `world` not found in workspace\n");
+
+    assert!(t.child("src/lib.cairo").is_file());
+    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_ORIGINAL);
+
+    Scarb::quick_snapbox()
+        .args(["fmt", "--package", "hell*"])
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert!(t.child("src/lib.cairo").is_file());
+    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_FORMATTED);
+}

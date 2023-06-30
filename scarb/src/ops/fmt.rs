@@ -13,19 +13,21 @@ use crate::core::{Package, PackageName};
 #[derive(Debug)]
 pub struct FmtOptions {
     pub check: bool,
-    pub pkg_name: Option<PackageName>,
+    pub packages: Vec<PackageName>,
     pub color: bool,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
     console::set_colors_enabled(opts.color);
-    if let Some(pkg_name) = opts.pkg_name.clone() {
-        // Format single package by name.
-        format_package_by_cond(ws, &opts, &|pkg: &Package| pkg.id.name == pkg_name)
-    } else {
+    if opts.packages.is_empty() {
         // Format project members.
         format_package_by_cond(ws, &opts, &|_pkg: &Package| true)
+    } else {
+        // Format single package by name.
+        format_package_by_cond(ws, &opts, &|pkg: &Package| {
+            opts.packages.contains(&pkg.id.name)
+        })
     }
 }
 

@@ -8,10 +8,16 @@ use scarb::ops;
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: FmtArgs, config: &Config) -> Result<()> {
     let ws = ops::read_workspace(config.manifest_path(), config)?;
+    let packages = args
+        .packages_filter
+        .match_many(&ws)?
+        .iter()
+        .map(|p| p.id.name.clone())
+        .collect::<Vec<_>>();
     if ops::format(
         ops::FmtOptions {
+            packages,
             check: args.check,
-            pkg_name: args.package,
             color: !args.no_color,
         },
         &ws,
