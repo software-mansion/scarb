@@ -1,0 +1,24 @@
+[workspace]
+members = [
+    "crates/**",
+]
+
+[workspace.scripts]
+test = "snforge"
+
+[workspace.dependencies]
+starknet = ">=2.1.0-rc0"
+
+[package]
+name = "hello_workspaces"
+version = "0.1.0"
+
+[scripts]
+test.workspace = true
+
+[dependencies]
+starknet.workspace = true
+fibonacci = { path = "crates/fibonacci" }
+addition = { path = "crates/addition" }
+
+[[target.starknet-contract]]
