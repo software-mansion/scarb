@@ -1,0 +1,22 @@
+[workspace]
+members = [
+    "crates/**",
+]
+
+[workspace.scripts]
+test = "protostar --version"
+
+[workspace.dependencies]
+starknet = ">=2.1.0-rc0"
+
+[workspace.tool]
+protostar = { some_important = "config_value" }
+
+[package]
+name = "starknet_hello_world"
+version = "0.1.0"
+
+[dependencies]
+starknet.workspace = true
+
+[[target.starknet-contract]]
