@@ -216,7 +216,7 @@ fn cannot_choose_not_existing_profile() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches("error: package `[..]` has no profile `custom`\n");
+        .stdout_matches("error: workspace `[..]` has no profile `custom`\n");
 }
 
 #[test]

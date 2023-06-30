@@ -49,6 +49,7 @@ dunce = "1.0.4"
 fs4 = "0.6.5"
 futures = { version = "0.3.28", default-features = false, features = ["std", "async-await"] }
 gix = "0.47.0"
+glob = "0.3.1"
 ignore = "0.4.20"
 include_dir = "0.7.3"
 indicatif = "0.17.3"
@@ -64,6 +65,7 @@ petgraph = "0.6.3"
 predicates = "3.0.3"
 semver = { version = "1.0.17", features = ["serde"] }
 serde = { version = "1.0.163", features = ["serde_derive"] }
+serde-value = "0.7.0"
 serde_json = "1.0.96"
 serde_test = "1.0.163"
 similar-asserts = { version = "1.4.2", features = ["serde"] }
