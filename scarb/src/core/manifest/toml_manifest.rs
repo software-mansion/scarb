@@ -1,9 +1,8 @@
 use std::collections::BTreeMap;
 use std::default::Default;
 use std::fs;
-use std::str::FromStr;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use camino::Utf8Path;
 use itertools::Itertools;
 use semver::{Version, VersionReq};
@@ -13,6 +12,7 @@ use tracing::trace;
 use url::Url;
 
 use crate::compiler::{DefaultForProfile, Profile};
+use crate::core::manifest::maybe_workspace::{MaybeWorkspace, WorkspaceInherit};
 use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Target};
 use crate::core::package::PackageId;
@@ -20,7 +20,7 @@ use crate::core::source::{GitReference, SourceId};
 use crate::core::{ManifestBuilder, ManifestCompilerConfig, PackageName};
 use crate::internal::serdex::{toml_merge, RelativeUtf8PathBuf};
 use crate::internal::to_version::ToVersion;
-use crate::DEFAULT_SOURCE_PATH;
+use crate::{DEFAULT_SOURCE_PATH, MANIFEST_FILE_NAME};
 
 use super::Manifest;
 
@@ -29,20 +29,67 @@ use super::Manifest;
 #[serde(rename_all = "kebab-case")]
 pub struct TomlManifest {
     pub package: Option<Box<TomlPackage>>,
-    pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
+    pub workspace: Option<TomlWorkspace>,
+    pub dependencies: Option<BTreeMap<PackageName, MaybeTomlWorkspaceDependency>>,
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
     pub cairo_plugin: Option<TomlTarget<TomlExternalTargetParams>>,
     pub target: Option<BTreeMap<TomlTargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
     pub cairo: Option<TomlCairo>,
-    pub tool: Option<ToolDefinition>,
-    pub scripts: Option<BTreeMap<SmolStr, String>>,
-    pub profile: Option<BTreeMap<SmolStr, TomlProfile>>,
+    pub profile: Option<TomlProfilesDefinition>,
+    pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
+    pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
 }
 
-type ToolDefinition = BTreeMap<SmolStr, toml::Value>;
+type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, WorkspaceScriptDefinition>;
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct WorkspaceScriptDefinition {
+    pub workspace: bool,
+}
+
+impl WorkspaceInherit for WorkspaceScriptDefinition {
+    fn inherit_toml_table(&self) -> &str {
+        "scripts"
+    }
+
+    fn workspace(&self) -> bool {
+        self.workspace
+    }
+}
+
+type TomlProfilesDefinition = BTreeMap<SmolStr, TomlProfile>;
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct TomlWorkspaceTool {
+    pub workspace: bool,
+}
+
+impl WorkspaceInherit for TomlWorkspaceTool {
+    fn inherit_toml_table(&self) -> &str {
+        "tool"
+    }
+
+    fn workspace(&self) -> bool {
+        self.workspace
+    }
+}
+
+type MaybeWorkspaceTomlTool = MaybeWorkspace<toml::Value, TomlWorkspaceTool>;
+type TomlToolsDefinition = BTreeMap<SmolStr, toml::Value>;
+
+/// Represents the workspace root definition.
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TomlWorkspace {
+    pub members: Option<Vec<String>>,
+    pub package: Option<TomlPackage>,
+    pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
+    pub scripts: Option<BTreeMap<SmolStr, ScriptDefinition>>,
+    pub tool: Option<TomlToolsDefinition>,
+}
 
 /// Represents the `package` section of a `Scarb.toml`.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct TomlPackage {
     pub name: PackageName,
@@ -62,7 +109,24 @@ pub struct TomlPackage {
     pub cairo_version: Option<VersionReq>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct TomlWorkspaceDependency {
+    pub workspace: bool,
+}
+
+impl WorkspaceInherit for TomlWorkspaceDependency {
+    fn inherit_toml_table(&self) -> &str {
+        "dependencies"
+    }
+
+    fn workspace(&self) -> bool {
+        self.workspace
+    }
+}
+
+type MaybeTomlWorkspaceDependency = MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>;
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum TomlDependency {
     /// [`VersionReq`] specified as a string, eg. `package = "<version>"`.
@@ -158,7 +222,7 @@ pub struct TomlCairo {
 pub struct TomlProfile {
     pub inherits: Option<SmolStr>,
     pub cairo: Option<TomlCairo>,
-    pub tool: Option<ToolDefinition>,
+    pub tool: Option<TomlToolsDefinition>,
 }
 
 impl DefaultForProfile for TomlProfile {
@@ -197,11 +261,29 @@ impl TomlDependency {
 }
 
 impl TomlManifest {
+    pub fn is_package(&self) -> bool {
+        self.package.is_some()
+    }
+
+    pub fn is_workspace(&self) -> bool {
+        self.workspace.is_some()
+    }
+
+    pub fn get_workspace(&self) -> Option<TomlWorkspace> {
+        self.workspace.as_ref().cloned()
+    }
+
+    pub fn fetch_workspace(&self) -> Result<TomlWorkspace> {
+        self.get_workspace()
+            .ok_or_else(|| anyhow!("manifest is not a workspace"))
+    }
+
     pub fn to_manifest(
         &self,
         manifest_path: &Utf8Path,
         source_id: SourceId,
         profile: Profile,
+        workspace_manifest: Option<&TomlManifest>,
     ) -> Result<Manifest> {
         let root = manifest_path
             .parent()
@@ -211,14 +293,44 @@ impl TomlManifest {
             bail!("no `package` section found");
         };
 
+        let toml_workspace = workspace_manifest.and_then(|m| m.workspace.clone());
+        // For root package, no need to fetch workspace separately.
+        let workspace = self
+            .workspace
+            .as_ref()
+            .cloned()
+            .or(toml_workspace)
+            .unwrap_or_default();
+
+        // Apply package defaults from workspace.
+        let package = if let Some(workspace_package) = workspace.package {
+            toml_merge(&workspace_package, package)?
+        } else {
+            package.clone()
+        };
+
         let package_id = {
             let name = package.name.clone();
             let version = package.version.clone().to_version()?;
+            // Override path dependencies with manifest path.
+            let source_id = source_id
+                .to_path()
+                .map(|_| SourceId::for_path(manifest_path))
+                .unwrap_or(Ok(source_id))?;
             PackageId::new(name, version, source_id)
         };
 
         let mut dependencies = Vec::new();
         for (name, toml_dep) in self.dependencies.iter().flatten() {
+            let inherit_ws = || {
+                workspace
+                    .dependencies
+                    .as_ref()
+                    .and_then(|deps| deps.get(name.as_str()))
+                    .cloned()
+                    .ok_or_else(|| anyhow!("dependency `{}` not found in workspace", name.clone()))
+            };
+            let toml_dep = toml_dep.clone().resolve(name.as_str(), inherit_ws)?;
             dependencies.push(toml_dep.to_dependency(name.clone(), manifest_path)?);
         }
 
@@ -232,20 +344,29 @@ impl TomlManifest {
 
         let targets = self.collect_targets(package.name.to_smol_str(), root)?;
 
-        let scripts: BTreeMap<SmolStr, ScriptDefinition> = self
-            .scripts
-            .clone()
-            .unwrap_or_default()
+        let scripts = self.scripts.clone().unwrap_or_default();
+
+        let scripts: BTreeMap<SmolStr, ScriptDefinition> = scripts
             .into_iter()
             .map(|(name, script)| -> Result<(SmolStr, ScriptDefinition)> {
-                Ok((name, ScriptDefinition::from_str(&script)?))
+                let inherit_ws = || {
+                    workspace
+                        .scripts
+                        .clone()
+                        .and_then(|scripts| scripts.get(&name).cloned())
+                        .ok_or_else(|| anyhow!("script `{}` not found in workspace", name.clone()))
+                };
+                Ok((name.clone(), script.resolve(name.as_str(), inherit_ws)?))
             })
             .try_collect()?;
 
-        let profile_definition = self.collect_profile_definition(profile.clone())?;
+        // Following Cargo convention, pull profile config from workspace root only.
+        let profile_source = workspace_manifest.unwrap_or(self);
+        let profile_definition = profile_source.collect_profile_definition(profile.clone())?;
+
         let compiler_config = self.collect_compiler_config(&profile, profile_definition.clone())?;
-        let tool = self.collect_tool(profile_definition)?;
-        let profiles = self.collect_profiles()?;
+        let workspace_tool = workspace.tool.clone();
+        let tool = self.collect_tool(profile_definition, workspace_tool)?;
 
         let metadata = ManifestMetadata {
             authors: package.authors.clone(),
@@ -259,7 +380,7 @@ impl TomlManifest {
             readme: package.readme.clone(),
             repository: package.repository.clone(),
             tool_metadata: tool,
-            cairo_version: package.cairo_version.clone(),
+            cairo_version: package.cairo_version,
         };
 
         let manifest = ManifestBuilder::default()
@@ -268,7 +389,6 @@ impl TomlManifest {
             .metadata(metadata)
             .compiler_config(compiler_config)
             .scripts(scripts)
-            .profiles(profiles)
             .build()?;
 
         Ok(manifest)
@@ -338,23 +458,22 @@ impl TomlManifest {
         Ok(Some(target))
     }
 
-    fn collect_profiles(&self) -> Result<Vec<Profile>> {
-        if let Some(toml_profiles) = &self.profile {
-            let mut result = Vec::new();
-            for name in toml_profiles.keys() {
-                let profile = Profile::new(name.clone())?;
-                result.push(profile);
-            }
-            Ok(result)
-        } else {
-            Ok(vec![])
-        }
+    pub fn collect_profiles(&self) -> Result<Vec<Profile>> {
+        self.profile
+            .as_ref()
+            .map(|toml_profiles| {
+                toml_profiles
+                    .keys()
+                    .map(|name| Profile::new(name.clone()))
+                    .try_collect()
+            })
+            .unwrap_or(Ok(vec![]))
     }
 
     fn collect_profile_definition(&self, profile: Profile) -> Result<TomlProfile> {
         let toml_cairo = self.cairo.clone().unwrap_or_default();
-
         let toml_profiles = self.profile.clone();
+
         let profile_definition = toml_profiles
             .clone()
             .unwrap_or_default()
@@ -416,16 +535,38 @@ impl TomlManifest {
         Ok(compiler_config)
     }
 
-    fn collect_tool(&self, profile_definition: TomlProfile) -> Result<Option<ToolDefinition>> {
-        if let Some(tool) = &self.tool {
-            if let Some(profile_tool) = &profile_definition.tool {
-                toml_merge(tool, profile_tool).map(Some)
-            } else {
-                Ok(Some(tool.clone()))
-            }
-        } else {
-            Ok(profile_definition.tool)
-        }
+    fn collect_tool(
+        &self,
+        profile_definition: TomlProfile,
+        workspace_tool: Option<TomlToolsDefinition>,
+    ) -> Result<Option<TomlToolsDefinition>> {
+        self.tool
+            .clone()
+            .map(|tool| {
+                tool.iter()
+                    .map(|(name, tool)| {
+                        let inherit_ws = || {
+                            workspace_tool
+                                .clone()
+                                .and_then(|tools| tools.get(name).cloned())
+                                .ok_or_else(|| {
+                                    anyhow!("tool `{}` not found in workspace tools", name.clone())
+                                })
+                        };
+                        let value = tool.clone().resolve(name, inherit_ws)?;
+                        Ok((name.clone(), value))
+                    })
+                    .collect::<Result<BTreeMap<SmolStr, toml::Value>>>()
+            })
+            .map_or(Ok(None), |v| v.map(Some))?
+            .map(|tool| {
+                if let Some(profile_tool) = &profile_definition.tool {
+                    toml_merge(&tool, profile_tool)
+                } else {
+                    Ok(tool)
+                }
+            })
+            .map_or(Ok(None), |v| v.map(Some))
     }
 }
 
@@ -463,7 +604,6 @@ impl DetailedTomlDependency {
                 only one of `branch`, `tag` or `rev` is allowed"
             );
         }
-
         let source_id = match (self.version.as_ref(), self.git.as_ref(), self.path.as_ref()) {
             (None, None, None) => bail!(
                 "dependency ({name}) must be specified providing a local path, Git repository, \
@@ -476,7 +616,9 @@ impl DetailedTomlDependency {
             ),
 
             (_, None, Some(path)) => {
-                let path = path.relative_to_file(manifest_path)?;
+                let path = path
+                    .relative_to_file(manifest_path)?
+                    .join(MANIFEST_FILE_NAME);
                 SourceId::for_path(&path)?
             }
 

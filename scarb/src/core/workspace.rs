@@ -1,31 +1,65 @@
+use std::collections::BTreeMap;
 use std::fmt;
 
-use anyhow::Result;
-use camino::Utf8Path;
+use anyhow::{anyhow, bail, Result};
+use camino::{Utf8Path, Utf8PathBuf};
 
 use scarb_metadata::packages_filter::PackagesSource;
 
 use crate::compiler::Profile;
 use crate::core::config::Config;
 use crate::core::package::Package;
+use crate::core::PackageId;
 use crate::flock::RootFilesystem;
 use crate::MANIFEST_FILE_NAME;
 
-// TODO(#12): Support real workspaces.
 /// The core abstraction for working with a workspace of packages.
-///
-/// **Note:** Currently only single-package workspaces are supported.
 ///
 /// A workspace is often created very early on and then threaded through all other functions.
 /// It's typically through this object that the current package is loaded and/or learned about.
 pub struct Workspace<'c> {
     config: &'c Config,
-    package: Package,
+    members: BTreeMap<PackageId, Package>,
+    root_package: Option<PackageId>,
+    manifest_path: Utf8PathBuf,
+    profiles: Vec<Profile>,
 }
 
 impl<'c> Workspace<'c> {
-    pub(crate) fn from_single_package(package: Package, config: &'c Config) -> Result<Self> {
-        Ok(Self { config, package })
+    pub(crate) fn new(
+        manifest_path: Utf8PathBuf,
+        packages: &[Package],
+        root_package: Option<PackageId>,
+        config: &'c Config,
+        profiles: Vec<Profile>,
+    ) -> Result<Self> {
+        let packages = packages
+            .iter()
+            .map(|p| (p.id, p.clone()))
+            .collect::<BTreeMap<_, _>>();
+        Ok(Self {
+            config,
+            manifest_path,
+            root_package,
+            profiles,
+            members: packages,
+        })
+    }
+
+    pub(crate) fn from_single_package(
+        package: Package,
+        config: &'c Config,
+        profiles: Vec<Profile>,
+    ) -> Result<Self> {
+        let manifest_path = package.manifest_path().to_path_buf();
+        let root_package = Some(package.id);
+        Self::new(
+            manifest_path,
+            vec![package].as_ref(),
+            root_package,
+            config,
+            profiles,
+        )
     }
 
     /// Returns the [`Config`] this workspace is associated with.
@@ -34,11 +68,13 @@ impl<'c> Workspace<'c> {
     }
 
     pub fn root(&self) -> &Utf8Path {
-        self.package.root()
+        self.manifest_path
+            .parent()
+            .expect("manifest path parent must always exist")
     }
 
     pub fn manifest_path(&self) -> &Utf8Path {
-        self.package.manifest_path()
+        &self.manifest_path
     }
 
     pub fn target_dir(&self) -> &RootFilesystem {
@@ -52,30 +88,57 @@ impl<'c> Workspace<'c> {
     /// In this case an error is returned indicating that the operation
     /// must be performed on specific package.
     pub fn current_package(&self) -> Result<&Package> {
-        Ok(&self.package)
+        self.members
+            .values()
+            .find(|p| p.manifest_path() == self.config.manifest_path())
+            .ok_or_else(|| {
+                anyhow!("could not determine which package to use, please specify a package with the `--package` option")
+            })
+    }
+
+    /// Returns the root package of this workspace.
+    ///
+    /// Root package is defined by `[package]` section in workspace manifest file.
+    /// If workspace manifest file does not contain `[package]` section,
+    /// that is there is no Scarb manifest with both `[package]` and `[workspace]` sections,
+    /// then there is no root package.
+    pub fn root_package(&self) -> Option<Package> {
+        self.root_package.and_then(|id| self.package(&id)).cloned()
+    }
+
+    pub fn package(&self, id: &PackageId) -> Option<&Package> {
+        self.members.get(id)
+    }
+
+    pub fn fetch_package(&self, id: &PackageId) -> Result<&Package> {
+        self.package(id)
+            .ok_or_else(|| anyhow!("package `{}` is not a member of this workspace", id))
     }
 
     /// Returns an iterator over all packages in this workspace
-    pub fn members(&self) -> impl Iterator<Item = Package> {
-        [self.package.clone()].into_iter()
+    pub fn members(&self) -> impl Iterator<Item = Package> + '_ {
+        self.members.values().cloned()
+    }
+
+    /// Return members count
+    pub fn members_count(&self) -> usize {
+        self.members.len()
+    }
+
+    pub fn has_profile(&self, profile: &Profile) -> bool {
+        self.profiles.contains(profile)
     }
 
     pub fn current_profile(&self) -> Result<Profile> {
         let profile = self.config.profile();
-        if profile.is_custom() && !self.current_package()?.has_profile(&profile) {
-            anyhow::bail!(
-                "package `{}` has no profile `{}`",
-                self.current_package()?,
-                profile
-            );
+        if profile.is_custom() && !self.has_profile(&profile) {
+            bail!("workspace `{self}` has no profile `{profile}`",);
         }
         Ok(profile)
     }
 
     pub fn profile_names(&self) -> Result<Vec<String>> {
         let mut names = self
-            .current_package()?
-            .manifest
             .profiles
             .iter()
             .map(|p| p.to_string())
@@ -102,7 +165,7 @@ impl<'c> fmt::Display for Workspace<'c> {
 impl<'c> fmt::Debug for Workspace<'c> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Workspace")
-            .field("package", &self.package)
+            .field("members", &self.members)
             .finish_non_exhaustive()
     }
 }

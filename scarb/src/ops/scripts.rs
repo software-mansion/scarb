@@ -25,8 +25,11 @@ pub fn execute_script(
             )
         })
         .collect();
-    let current_package = ws.current_package()?;
-    let cwd = current_package.root();
+    let cwd = if let Ok(current_package) = ws.current_package() {
+        current_package.root()
+    } else {
+        ws.root()
+    };
     let custom_commands = HashMap::from([
         // Used to ensure deno_task_shell scripts use the current scarb executable.
         (
