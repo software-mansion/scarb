@@ -9,6 +9,7 @@ use scarb_build_metadata::CAIRO_VERSION;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 #[test]
 fn compile_simple() {
@@ -531,4 +532,95 @@ fn sierra_replace_ids() {
         .assert(predicates::str::contains(
             "hello::example@0() -> (felt252);",
         ));
+}
+
+#[test]
+fn workspace_as_dep() {
+    let t = TempDir::new().unwrap();
+
+    let first_t = t.child("first_workspace");
+    let pkg1 = first_t.child("first");
+    ProjectBuilder::start().name("first").build(&pkg1);
+    let pkg2 = first_t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep("first", r#"path = "../first""#)
+        .lib_cairo(indoc! {r#"
+        fn fib(a: felt252, b: felt252, n: felt252) -> felt252 {
+            match n {
+                0 => a,
+                _ => fib(b, a + b, n - 1),
+            }
+        }
+
+        #[cfg(test)]
+        mod tests {
+            use super::fib;
+
+            #[test]
+            #[available_gas(100000)]
+            fn it_works() {
+                assert(fib(0, 1, 16) == 987, 'it works!');
+            }
+        }
+        "#})
+        .build(&pkg2);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&first_t);
+
+    let second_t = t.child("second_workspace");
+    let pkg1 = second_t.child("third");
+    ProjectBuilder::start()
+        .name("third")
+        .dep("first", r#"path = "../../first_workspace""#)
+        .dep("second", r#"path = "../../first_workspace""#)
+        .lib_cairo(indoc! {r#"
+            use second::fib;
+            fn example() -> felt252 { 42 }
+
+            fn hello() -> felt252 {
+                fib(0, 1, 16)
+            }
+        "#})
+        .build(&pkg1);
+    let pkg2 = second_t.child("fourth");
+    ProjectBuilder::start()
+        .name("fourth")
+        .dep("third", r#"path = "../third""#)
+        .build(&pkg2);
+    WorkspaceBuilder::start()
+        .add_member("third")
+        .add_member("fourth")
+        .manifest_extra(
+            r#"
+            [cairo]
+            sierra-replace-ids = true
+            "#,
+        )
+        .build(&second_t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&second_t)
+        .assert()
+        .success();
+
+    assert_eq!(
+        second_t.child("target").files(),
+        vec!["CACHEDIR.TAG", "dev"]
+    );
+    assert_eq!(
+        second_t.child("target/dev").files(),
+        vec!["fourth.sierra", "third.sierra"]
+    );
+    second_t
+        .child("target/dev/third.sierra")
+        .assert(predicates::str::contains(
+            "third::example@0() -> (felt252);",
+        ));
+    second_t.child("target/dev/third.sierra").assert(predicates::str::contains(
+        "third::hello@3([0]: RangeCheck, [1]: GasBuiltin) -> (RangeCheck, GasBuiltin, core::panics::PanicResult::<(core::felt252,)>);",
+    ));
 }
