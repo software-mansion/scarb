@@ -1,0 +1,9 @@
+[package]
+name = "fibonacci"
+version = "0.1.0"
+
+[scripts]
+test.workspace = true
+
+[dependencies]
+addition = { path = "../addition" }
