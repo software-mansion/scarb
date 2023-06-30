@@ -1,6 +1,7 @@
 //! [`clap`] arguments implementing Scarb-compatible package selection (`-p` flag etc.)
 
 use crate::{Metadata, PackageMetadata};
+use std::fmt::Display;
 
 /// [`clap`] structured arguments that provide package selection.
 ///
@@ -18,7 +19,13 @@ use crate::{Metadata, PackageMetadata};
 pub struct PackagesFilter {
     /// Packages to run this command on, can be a concrete package name (`foobar`) or
     /// a prefix glob (`foo*`).
-    #[arg(short, long, value_name = "SPEC", default_value = "*")]
+    #[arg(
+        short,
+        long,
+        value_name = "SPEC",
+        env = "SCARB_PACKAGES_FILTER",
+        default_value = "*"
+    )]
     package: String,
 }
 
@@ -117,6 +124,12 @@ impl PackagesFilter {
         }
 
         Ok(matches)
+    }
+}
+
+impl Display for PackagesFilter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "`{}`", self.package)
     }
 }
 

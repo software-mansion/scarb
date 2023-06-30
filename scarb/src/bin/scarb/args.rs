@@ -275,6 +275,8 @@ pub struct TestArgs {
     /// Arguments for the test program.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
 }
 
 /// Git reference specification arguments.

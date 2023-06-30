@@ -5,8 +5,10 @@ use std::ffi::OsString;
 
 pub const EXTERNAL_CMD_PREFIX: &str = "scarb-";
 
+pub type EnvVars = HashMap<OsString, OsString>;
+
 /// Defines env vars passed to external subcommands.
-pub fn get_env_vars(config: &Config) -> anyhow::Result<HashMap<OsString, OsString>> {
+pub fn get_env_vars(config: &Config) -> anyhow::Result<EnvVars> {
     Ok(HashMap::from_iter([
         ("PATH".into(), config.dirs().path_env()),
         (

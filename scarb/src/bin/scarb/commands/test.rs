@@ -7,5 +7,5 @@ use crate::args::TestArgs;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: TestArgs, config: &Config) -> Result<()> {
-    ops::execute_test_subcommand(&args.args, config)
+    ops::execute_test_subcommand(&args.args, args.packages_filter.to_string(), config)
 }

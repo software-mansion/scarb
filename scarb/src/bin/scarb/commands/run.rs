@@ -38,7 +38,7 @@ fn run_script(
                 scarb run
             "#})
     })?;
-    ops::execute_script(script_definition, &args, ws)
+    ops::execute_script(script_definition, &args, None, ws)
 }
 
 fn list_scripts(package: Package, config: &Config) -> Result<()> {

@@ -15,5 +15,5 @@ pub fn run(args: Vec<OsString>, config: &Config) -> Result<()> {
         .to_str()
         .ok_or_else(|| anyhow!("command name must be valid UTF-8"))?;
 
-    execute_external_subcommand(cmd, args, config)
+    execute_external_subcommand(cmd, args, None, config)
 }

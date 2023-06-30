@@ -8,16 +8,18 @@ use deno_task_shell::{ExecutableCommand, ShellCommand};
 use crate::core::errors::ScriptExecutionError;
 use crate::core::manifest::ScriptDefinition;
 use crate::core::Workspace;
-use crate::subcommands::get_env_vars;
+use crate::subcommands::{get_env_vars, EnvVars};
 
 /// Execute user defined script.
 pub fn execute_script(
     script_definition: &ScriptDefinition,
     args: &[OsString],
+    env_vars: Option<EnvVars>,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let env_vars = get_env_vars(ws.config())?
         .into_iter()
+        .chain(env_vars.unwrap_or_default().into_iter())
         .map(|(k, v)| {
             (
                 k.to_string_lossy().to_string(),
