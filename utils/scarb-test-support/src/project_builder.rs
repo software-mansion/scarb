@@ -82,7 +82,7 @@ impl ProjectBuilder {
         self
     }
 
-    pub fn just_manifest(&self, t: &impl PathChild) {
+    pub fn render_manifest(&self) -> String {
         let mut doc = Document::new();
         doc["package"]["name"] = Item::Value(Value::from(self.name.clone()));
         doc["package"]["version"] = Item::Value(Value::from(self.version.to_string()));
@@ -92,14 +92,17 @@ impl ProjectBuilder {
         for (name, dep) in &self.deps {
             doc["dependencies"][name.clone()] = Item::Value(dep.clone());
         }
-
         let mut manifest = doc.to_string();
 
         if !self.manifest_extra.is_empty() {
             manifest.push('\n');
             manifest.push_str(&self.manifest_extra);
         }
+        manifest
+    }
 
+    pub fn just_manifest(&self, t: &impl PathChild) {
+        let manifest = self.render_manifest();
         t.child("Scarb.toml").write_str(&manifest).unwrap();
     }
 

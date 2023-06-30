@@ -6,6 +6,7 @@ use serde_json::json;
 use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 fn packages_by_name(meta: Metadata) -> BTreeMap<String, PackageMetadata> {
     meta.packages
@@ -350,4 +351,161 @@ fn json_output_is_not_pretty() {
         .stdout_matches("{\"version\":1,[..]}\n");
 }
 
-// TODO(#12): Add tests with workspaces
+#[test]
+fn workspace_simple() {
+    let t = assert_fs::TempDir::new().unwrap().child("test_workspace");
+    let pkg1 = t.child("first");
+    ProjectBuilder::start().name("first").build(&pkg1);
+    let pkg2 = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep("first", r#"path = "../first""#)
+        .build(&pkg2);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["metadata", "--format-version=1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_and_deps(metadata),
+        BTreeMap::from_iter([
+            ("core".to_string(), vec![]),
+            ("first".to_string(), vec!["core".to_string()]),
+            (
+                "second".to_string(),
+                vec!["core".to_string(), "first".to_string()]
+            ),
+        ])
+    )
+}
+
+#[test]
+fn workspace_with_root() {
+    let t = assert_fs::TempDir::new().unwrap().child("test_workspace");
+    let pkg1 = t.child("first");
+    ProjectBuilder::start().name("first").build(&pkg1);
+    let pkg2 = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep("first", r#"path = "../first""#)
+        .build(&pkg2);
+    let root = ProjectBuilder::start()
+        .name("some_root")
+        .dep("first", r#"path = "./first""#)
+        .dep("second", r#"path = "./second""#);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .package(root)
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["metadata", "--format-version=1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_and_deps(metadata),
+        BTreeMap::from_iter([
+            ("core".to_string(), vec![]),
+            (
+                "some_root".to_string(),
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "second".to_string()
+                ]
+            ),
+            ("first".to_string(), vec!["core".to_string()]),
+            (
+                "second".to_string(),
+                vec!["core".to_string(), "first".to_string()]
+            ),
+        ])
+    )
+}
+
+#[test]
+fn workspace_as_dep() {
+    let t = assert_fs::TempDir::new().unwrap();
+    let first_t = t.child("first_workspace");
+    let pkg1 = first_t.child("first");
+    ProjectBuilder::start().name("first").build(&pkg1);
+    let pkg2 = first_t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep("first", r#"path = "../first""#)
+        .build(&pkg2);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&first_t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["metadata", "--format-version=1"])
+        .current_dir(&first_t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_and_deps(metadata),
+        BTreeMap::from_iter([
+            ("core".to_string(), vec![]),
+            ("first".to_string(), vec!["core".to_string()]),
+            (
+                "second".to_string(),
+                vec!["core".to_string(), "first".to_string()]
+            ),
+        ])
+    );
+
+    let second_t = t.child("second_workspace");
+    let pkg1 = second_t.child("third");
+    ProjectBuilder::start()
+        .name("third")
+        .dep("first", r#"path = "../../first_workspace""#)
+        .dep("second", r#"path = "../../first_workspace""#)
+        .build(&pkg1);
+    let pkg2 = second_t.child("fourth");
+    ProjectBuilder::start()
+        .name("fourth")
+        .dep("third", r#"path = "../third""#)
+        .build(&pkg2);
+    WorkspaceBuilder::start()
+        .add_member("third")
+        .add_member("fourth")
+        .build(&second_t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["metadata", "--format-version=1"])
+        .current_dir(&second_t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_and_deps(metadata),
+        BTreeMap::from_iter([
+            ("core".to_string(), vec![]),
+            ("first".to_string(), vec!["core".to_string()]),
+            (
+                "second".to_string(),
+                vec!["core".to_string(), "first".to_string()]
+            ),
+            (
+                "third".to_string(),
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "second".to_string()
+                ]
+            ),
+            (
+                "fourth".to_string(),
+                vec!["core".to_string(), "third".to_string()]
+            ),
+        ])
+    );
+}
