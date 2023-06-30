@@ -1,0 +1,11 @@
+[package]
+name = "starknet_multiple_contracts"
+version = "0.1.0"
+
+[dependencies]
+starknet.workspace = true
+
+[tool]
+protostar.workspace = true
+
+[[target.starknet-contract]]
