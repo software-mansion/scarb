@@ -208,9 +208,9 @@ pub struct FmtArgs {
     /// Do not color output.
     #[arg(long, default_value_t = false)]
     pub no_color: bool,
-    /// Specify package to format.
-    #[arg(short, long)]
-    pub package: Option<PackageName>,
+    /// Specify package(s) to format.
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
 }
 
 /// Arguments accepted by the `add` command.
