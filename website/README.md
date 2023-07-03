@@ -5,7 +5,13 @@ with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/
 
 ## Getting Started
 
-First, run the development server:
+First, install required dependencies:
+
+```bash
+npm i
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
