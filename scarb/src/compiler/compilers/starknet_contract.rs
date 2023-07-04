@@ -176,8 +176,8 @@ impl Compiler for StarknetContractCompiler {
 
         let mut artifacts = StarknetArtifacts::default();
 
+        let target_name = &unit.target().name;
         for (decl, class, casm_class) in izip!(contracts, classes, casm_classes) {
-            let target_name = &unit.target().name;
             let contract_name = decl.submodule_id.name(db.upcast_mut());
             let file_stem = format!("{target_name}_{contract_name}");
 
@@ -202,7 +202,7 @@ impl Compiler for StarknetContractCompiler {
         artifacts.finish();
 
         write_json(
-            &format!("{}.starknet_artifacts.json", unit.main_package_id.name),
+            &format!("{}.starknet_artifacts.json", target_name),
             "starknet artifacts file",
             &target_dir,
             ws,
