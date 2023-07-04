@@ -1,8 +1,11 @@
+use std::collections::HashSet;
 use std::fmt::Write;
 use std::iter::zip;
 
 use anyhow::{bail, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_starknet::allowed_libfuncs::{
     validate_compatible_sierra_version, AllowedLibfuncsError, ListSelector,
     BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST,
@@ -14,6 +17,7 @@ use cairo_lang_utils::{Upcast, UpcastMut};
 use indoc::{formatdoc, writedoc};
 use itertools::{izip, Itertools};
 use serde::{Deserialize, Serialize};
+use smol_str::SmolStr;
 use tracing::{debug, trace, trace_span};
 
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
@@ -22,6 +26,8 @@ use crate::core::{PackageName, Utf8PathWorkspaceExt, Workspace};
 use crate::flock::Filesystem;
 use crate::internal::serdex::RelativeUtf8PathBuf;
 use crate::internal::stable_hash::short_hash;
+
+const CAIRO_PATH_SEPARATOR: &str = "::";
 
 // TODO(#111): starknet-contract should be implemented as an extension.
 pub struct StarknetContractCompiler;
@@ -35,6 +41,7 @@ struct Props {
     pub allowed_libfuncs: bool,
     pub allowed_libfuncs_deny: bool,
     pub allowed_libfuncs_list: Option<SerdeListSelector>,
+    pub build_external_contracts: Option<Vec<ContractSelector>>,
 }
 
 impl Default for Props {
@@ -46,6 +53,7 @@ impl Default for Props {
             allowed_libfuncs: true,
             allowed_libfuncs_deny: false,
             allowed_libfuncs_list: None,
+            build_external_contracts: None,
         }
     }
 }
@@ -56,6 +64,59 @@ impl Default for Props {
 pub enum SerdeListSelector {
     Name { name: String },
     Path { path: RelativeUtf8PathBuf },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+struct ContractSelector(String);
+
+impl ContractSelector {
+    pub fn package(&self) -> PackageName {
+        let parts = self
+            .0
+            .split_once(CAIRO_PATH_SEPARATOR)
+            .unwrap_or((self.0.as_str(), ""));
+        PackageName::new(parts.0)
+    }
+    pub fn contract(&self) -> String {
+        let parts = self
+            .0
+            .rsplit_once(CAIRO_PATH_SEPARATOR)
+            .unwrap_or((self.0.as_str(), ""));
+        parts.1.to_string()
+    }
+    pub fn full_path(&self) -> String {
+        self.0.clone()
+    }
+}
+
+struct ContractFileStemCalculator(HashSet<String>);
+
+impl ContractFileStemCalculator {
+    pub fn new(contract_paths: Vec<String>) -> Self {
+        let mut seen = HashSet::new();
+        let contract_name_duplicates = contract_paths
+            .iter()
+            .map(|it| ContractSelector(it.clone()).contract())
+            .filter(|contract_name| {
+                // insert returns false for duplicate values
+                !seen.insert(contract_name.clone())
+            })
+            .collect::<HashSet<String>>();
+        Self(contract_name_duplicates)
+    }
+
+    pub fn get_stem(&mut self, full_path: String) -> String {
+        let contract_selector = ContractSelector(full_path);
+        let contract_name = contract_selector.contract();
+
+        if self.0.contains(&contract_name) {
+            contract_selector
+                .full_path()
+                .replace(CAIRO_PATH_SEPARATOR, "_")
+        } else {
+            contract_name
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -93,9 +154,9 @@ struct ContractArtifacts {
 }
 
 impl ContractArtifacts {
-    fn new(package_name: &PackageName, contract_name: &str) -> Self {
+    fn new(package_name: &PackageName, contract_name: &str, contract_path: &str) -> Self {
         Self {
-            id: short_hash((&package_name, &contract_name)),
+            id: short_hash((&package_name, &contract_path)),
             package_name: package_name.clone(),
             contract_name: contract_name.to_owned(),
             artifacts: ContractArtifact::default(),
@@ -134,17 +195,17 @@ impl Compiler for StarknetContractCompiler {
 
         let main_crate_ids = collect_main_crate_ids(&unit, db);
 
-        let contracts = {
-            let _ = trace_span!("find_contracts").enter();
-            find_contracts(db.upcast_mut(), &main_crate_ids)
-        };
+        let contracts = find_project_contracts(
+            db.upcast_mut(),
+            main_crate_ids,
+            props.build_external_contracts.clone(),
+        )?;
 
-        trace!(
-            contracts = ?contracts
-                .iter()
-                .map(|decl| decl.module_id().full_path(db.upcast_mut()))
-                .collect::<Vec<_>>()
-        );
+        let contract_paths = contracts
+            .iter()
+            .map(|decl| decl.module_id().full_path(db.upcast_mut()))
+            .collect::<Vec<_>>();
+        trace!(contracts = ?contract_paths);
 
         let contracts = contracts.iter().collect::<Vec<_>>();
 
@@ -175,13 +236,24 @@ impl Compiler for StarknetContractCompiler {
         };
 
         let mut artifacts = StarknetArtifacts::default();
+        let mut file_stem_calculator = ContractFileStemCalculator::new(contract_paths);
 
         let target_name = &unit.target().name;
         for (decl, class, casm_class) in izip!(contracts, classes, casm_classes) {
             let contract_name = decl.submodule_id.name(db.upcast_mut());
-            let file_stem = format!("{target_name}_{contract_name}");
+            let contract_path = decl.module_id().full_path(db.upcast_mut());
 
-            let mut artifact = ContractArtifacts::new(&unit.main_package_id.name, &contract_name);
+            let contract_selector = ContractSelector(contract_path);
+            let package_name = contract_selector.package();
+            let contract_stem = file_stem_calculator.get_stem(contract_selector.full_path());
+
+            let file_stem = format!("{target_name}_{contract_stem}");
+
+            let mut artifact = ContractArtifacts::new(
+                &package_name,
+                &contract_name,
+                contract_selector.full_path().as_str(),
+            );
 
             if props.sierra {
                 let file_name = format!("{file_stem}.sierra.json");
@@ -211,6 +283,46 @@ impl Compiler for StarknetContractCompiler {
 
         Ok(())
     }
+}
+
+fn find_project_contracts(
+    mut db: &dyn SemanticGroup,
+    main_crate_ids: Vec<CrateId>,
+    external_contracts: Option<Vec<ContractSelector>>,
+) -> Result<Vec<ContractDeclaration>> {
+    let external_contracts = if let Some(external_contracts) = external_contracts {
+        let _ = trace_span!("find_external_contracts").enter();
+        debug!("external contracts selectors: {:?}", external_contracts);
+
+        let crate_ids = external_contracts
+            .iter()
+            .map(|selector| selector.package().into())
+            .unique()
+            .map(|package_name: SmolStr| db.upcast_mut().intern_crate(CrateLongId(package_name)))
+            .collect::<Vec<_>>();
+        find_contracts(db, crate_ids.as_ref())
+            .into_iter()
+            .filter(|decl| {
+                external_contracts.iter().any(|selector| {
+                    let contract_path = decl.module_id().full_path(db.upcast());
+                    contract_path == selector.full_path()
+                })
+            })
+            .collect::<Vec<ContractDeclaration>>()
+    } else {
+        debug!("no external contracts selected");
+        Vec::new()
+    };
+
+    let internal_contracts = {
+        let _ = trace_span!("find_internal_contracts").enter();
+        find_contracts(db, &main_crate_ids)
+    };
+
+    Ok(internal_contracts
+        .into_iter()
+        .chain(external_contracts.into_iter())
+        .collect())
 }
 
 fn check_allowed_libfuncs(
