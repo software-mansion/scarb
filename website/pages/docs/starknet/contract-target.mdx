@@ -2,7 +2,7 @@
 
 The `starknet-contract` target allows to build the package as a [Starknet Contract](https://docs.starknet.io/documentation/getting_started/intro/).
 It searches for all contract classes in the package, and builds a separate compiled JSON file each found class.
-Generated file will be named with following pattern: `[package name]_[contract name].sierra.json`.
+Generated file will be named with following pattern: `[target name]_[contract name].sierra.json`.
 
 This target accepts several configuration arguments, beside ones [shared among all targets](../reference/targets#configuring-a-target), with default values for the default profile:
 
@@ -63,7 +63,7 @@ The off by default `casm-add-pythonic-hints{:toml}` property enables Scarb to ad
 
 ## Starknet Artifacts
 
-As part of building Starknet contracts, contract target generates a `<package_name>.starknet_artifacts.json` file
+As part of building Starknet contracts, contract target generates a `[target_name].starknet_artifacts.json` file
 containing a machine-readable data about built artifacts.
 
 Version 1 of this file has a structure like this:

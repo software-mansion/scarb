@@ -174,13 +174,14 @@ fn compile_many_contracts() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
+            "a.starknet_artifacts.json",
             "a_Balance.sierra.json",
             "a_FortyTwo.sierra.json",
+            "b.starknet_artifacts.json",
             "b_Balance.sierra.json",
             "b_FortyTwo.sierra.json",
             "hello.casm",
             "hello.sierra",
-            "hello.starknet_artifacts.json"
         ]
     );
 
@@ -193,7 +194,8 @@ fn compile_many_contracts() {
         assert_is_json::<ContractClass>(&t.child("target/dev").child(json));
     }
 
-    assert_is_json::<serde_json::Value>(&t.child("target/dev/hello.starknet_artifacts.json"));
+    assert_is_json::<serde_json::Value>(&t.child("target/dev/a.starknet_artifacts.json"));
+    assert_is_json::<serde_json::Value>(&t.child("target/dev/b.starknet_artifacts.json"));
 }
 
 #[test]
