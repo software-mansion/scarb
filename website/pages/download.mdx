@@ -1,9 +1,6 @@
----
-title: Download
----
-
 import { Releases } from "../data/github";
-import { Link } from "nextra-theme-docs";
+import { Callout, Link, Tab, Tabs } from "nextra-theme-docs";
+import { BigLink } from "../components/bigLink";
 import { WithRelease, ReleaseVersion, useRelease } from "../components/releaseContext";
 import { Table, Tr, Th, Td, Code } from "nextra/components";
 
@@ -50,16 +47,141 @@ export function AssetsTable() {
   );
 }
 
-# Download Scarb
+# Download and install
 
-After downloading the release file suitable for your system, please follow the [installation instructions](/docs/install).
+Scarb is a native command line application that is available for Linux, macOS and Windows on all common CPU architectures.
 
-If you are running macOS or Linux, the easiest way is to use the [quick installer](/docs/install#install-via-installation-script).
+Scarb follows a biweekly release schedule.
+Each release may include new features, enhancements, bug fixes, deprecations and breaking changes.
+For detailed information about each release, consult the [release notes](https://github.com/software-mansion/scarb/releases).
 
-See the [release notes](https://github.com/software-mansion/scarb/releases) for more information about Scarb releases.
+## Requirements
+
+To download Git dependencies, Scarb requires a Git executable to be available in the `PATH` environment variable.
+
+## Install via installation script
+
+Download and install Scarb quickly.
+Select the tab for your computer's operating system below, then follow its installation instructions.
+
+<Tabs items={["macOS and Linux", "Windows"]}>
+  <Tab>
+    Run the following in your terminal, then follow the onscreen instructions.
+    This will install the latest **stable** release.
+
+    ```shell copy
+    curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh
+    ```
+
+    If you want to install a specific version of Scarb (such as a preview version), run the following with the desired
+    version number.
+
+    ```shell copy /0.5.0-alpha.1/
+    curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v 0.5.0-alpha.1
+    ```
+
+  </Tab>
+
+  <Tab>
+    As for now, Scarb on Windows needs manual installation, but necessary steps are kept to minimum:
+
+    1. [Download the release archive](/download) matching your CPU architecture.
+    2. Extract it to a location where you would like to have Scarb installed.ba
+    A folder named `scarb` in your
+    [`%LOCALAPPDATA%\Programs`](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid?redirectedfrom=MSDN#FOLDERID_UserProgramFiles)
+    directory will suffice:
+    ```powershell copy
+    %LOCALAPPDATA%\Programs\scarb
+    ```
+    3. Add path to the `scarb\bin` directory to your `PATH` environment variable.
+    4. Verify installation by running the following command in new terminal session, it should print Scarb and Cairo
+    language versions:
+    ```shell copy
+    scarb --version
+    ```
+
+  </Tab>
+</Tabs>
+
+### Uninstall
+
+<Tabs items={["macOS and Linux", "Windows"]}>
+  <Tab>
+    The installation script does not have uninstalling logic built-in.
+    It tries to minimize changes performed to the system, though, to keep the number of manual steps to remove Scarb
+    low.
+    1. Remove the `$XDG_DATA_HOME/scarb-install` directory, usually this is `~/.local/share/scarb-install`.
+    2. Remove `~/.local/bin/scarb` symbolic link.
+
+    The installation script might have added path to `~/.local/bin` to `$PATH`, by adding appropriate lines to
+    `.bashrc`, `.zshrc` or others, depending on the shell running in the system.
+    If you wish, you can remove these lines, but often this is not desirable.
+
+  </Tab>
+
+  <Tab>
+    Simply undo steps done to manually install Scarb:
+    1. Remove extracted archive files.
+    2. Remove the path to the `scarb\bin` directory from `PATH`.
+
+  </Tab>
+</Tabs>
+
+On top of that, Scarb creates several files (like data files or caches) in standard system paths.
+These have to be removed manually.
+The list of all global paths written to by Scarb is listed in [here](/docs/reference/global-directories).
+
+## Install via asdf
+
+asdf is a CLI tool that can manage multiple language runtime versions on a per-project basis.
+Scarb team maintains an [official plugin](https://github.com/software-mansion/asdf-scarb) for asdf which manages
+multiple Scarb installations.
+This plugin needs `bash`, `curl`, `tar` and other generic POSIX utilities.
+Everything should be included by default on your system.
+
+When you have asdf already [installed](https://asdf-vm.com/guide/getting-started.html),
+run the following command to add the `scarb` plugin:
+
+```shell copy
+asdf plugin add scarb
+```
+
+or
+
+```shell copy
+asdf plugin add scarb https://github.com/software-mansion/asdf-scarb.git
+```
+
+Show all installable versions:
+
+```shell copy
+asdf list-all scarb
+```
+
+Install latest version:
+
+```shell copy
+asdf install scarb latest
+```
+
+Install specific version:
+
+```shell copy
+asdf install scarb 0.5.0
+```
+
+Set a version globally (in your `~/.tool-versions` file):
+
+```shell copy
+asdf global scarb latest
+```
+
+Check [asdf guide](https://asdf-vm.com/guide/getting-started.html) for more instructions on how to install & manage versions.
+
+## Precompiled archives
 
 <WithRelease kind="stable">
-  ## Stable version
+  ### Stable version
 
 The current stable version of Scarb is: <Code><ReleaseVersion /></Code>.
 
@@ -67,13 +189,56 @@ The current stable version of Scarb is: <Code><ReleaseVersion /></Code>.
 </WithRelease>
 
 <WithRelease kind="preview">
-  ## Preview version
+  ### Preview version
 
 The current preview version of Scarb is: <Code><ReleaseVersion /></Code>.
 
   <AssetsTable />
 </WithRelease>
 
-## Archived versions
+### Archived versions
 
 For older releases, go to the [releases](https://github.com/software-mansion/scarb/releases) page in Scarb GitHub repository.
+
+## Platform support
+
+Scarb is officially supported on the following platforms:
+
+- `aarch64-apple-darwin`
+- `aarch64-unknown-linux-gnu`
+- `x86_64-apple-darwin`
+- `x86_64-pc-windows-msvc`
+- `x86_64-unknown-linux-gnu`
+
+The builds for following platforms builds are experimental and are not supported by Scarb team.
+These builds may stop being published in the future.
+Use at your own risk:
+
+- `aarch64-unknown-linux-musl`
+- `x86_64-unknown-linux-musl`
+
+## Scarb as a library
+
+Scarb is a [Rust](https://rust-lang.org) crate which can be used as a library in your applications.
+We publish each release of Scarb to [crates.io](https://crates.io), the official package registry for Rust.
+
+<Callout type="warning">
+  Using Scarb crate has certain caveats, consult [related
+  documentation](/docs/extensions/scarb-crate) for more information before use.
+</Callout>
+
+<BigLink
+  href="https://crates.io/crates/scarb"
+  text="Go to Scarb on crates.io"
+/>
+
+## Source code
+
+Scarb is an open source project developed by [Software Mansion](https://swmansion.com), available under terms of the MIT License.
+We host our Git repository on GitHub.
+We also welcome external contributors!
+
+<BigLink
+  href="https://github.com/software-mansion/scarb"
+  text="Go to Scarb on GitHub"
+/>

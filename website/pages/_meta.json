@@ -10,8 +10,8 @@
   },
   "download": {
     "type": "page",
+    "title": "Download",
     "theme": {
-      "layout": "full",
       "typesetting": "article"
     }
   },
