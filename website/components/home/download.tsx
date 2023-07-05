@@ -59,9 +59,8 @@ function RestOfLinks({ all = false }: { all?: boolean }) {
   return (
     <>
       For {all ? "all" : "other"} Scarb versions, platforms or installation
-      methods, go to the <Link href="./download">download page</Link>. Need
-      help? Follow <Link href="./docs/install">installation instructions</Link>{" "}
-      in the documentation.
+      methods or general help, go to the{" "}
+      <Link href="./download">download page</Link>.
     </>
   );
 }

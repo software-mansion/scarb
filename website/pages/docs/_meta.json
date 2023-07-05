@@ -4,7 +4,6 @@
     "title": "Get started"
   },
   "index": "Introduction",
-  "install": "Installing Scarb",
   "cheatsheet": "Cheat sheet",
   "guides": "Guides",
   "-- Core extensions": {
