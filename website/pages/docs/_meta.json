@@ -1,9 +1,9 @@
 {
+  "index": "Introduction",
   "-- Get started": {
     "type": "separator",
     "title": "Get started"
   },
-  "index": "Introduction",
   "cheatsheet": "Cheat sheet",
   "guides": "Guides",
   "-- Core extensions": {
