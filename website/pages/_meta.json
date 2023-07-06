@@ -10,10 +10,7 @@
   },
   "download": {
     "type": "page",
-    "title": "Download",
-    "theme": {
-      "typesetting": "article"
-    }
+    "title": "Download"
   },
   "docs": {
     "type": "page",
