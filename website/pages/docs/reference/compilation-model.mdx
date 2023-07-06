@@ -1,5 +1,3 @@
-import Mermaid from "../../../components/mermaid";
-
 # Compilation Model
 
 Scarb handles project compilation, using the Cairo compiler internally, producing the compilation targets requested in
@@ -50,7 +48,7 @@ The _compilation unit_ is constructed from the described attributes.
 
 Following diagram describes the process:
 
-<Mermaid chart={`
+```mermaid
 flowchart TB
     workspace([Workspace])
     resolve["Resolve workspace"]
@@ -92,5 +90,4 @@ flowchart TB
 
     allunits([Collect all units])
     member-->allunits
-
-`}/>
+```
