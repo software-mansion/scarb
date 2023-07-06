@@ -1,8 +1,8 @@
-import { Releases } from "../data/github";
-import { Callout, Link, Tab, Tabs } from "nextra-theme-docs";
-import { BigLink } from "../components/bigLink";
-import { WithRelease, ReleaseVersion, useRelease } from "../components/releaseContext";
-import { Table, Tr, Th, Td, Code } from "nextra/components";
+import { Releases } from "../../data/github";
+import { Link, Tab, Tabs } from "nextra-theme-docs";
+import { BigLink } from "../../components/bigLink";
+import { WithRelease, ReleaseVersion, useRelease } from "../../components/releaseContext";
+import { Callout, Table, Tr, Th, Td, Code } from "nextra/components";
 
 export async function getStaticProps() {
   const releases = await Releases.list();
@@ -178,20 +178,20 @@ asdf global scarb latest
 
 Check [asdf guide](https://asdf-vm.com/guide/getting-started.html) for more instructions on how to install & manage versions.
 
-## Precompiled archives
+## Precompiled packages
+
+### Stable version
 
 <WithRelease kind="stable">
-  ### Stable version
-
-The current stable version of Scarb is: <Code><ReleaseVersion /></Code>.
+  The current stable version of Scarb is: <Code><ReleaseVersion /></Code>.
 
   <AssetsTable />
 </WithRelease>
 
-<WithRelease kind="preview">
-  ### Preview version
+### Preview version
 
-The current preview version of Scarb is: <Code><ReleaseVersion /></Code>.
+<WithRelease kind="preview">
+  The current preview version of Scarb is: <Code><ReleaseVersion /></Code>.
 
   <AssetsTable />
 </WithRelease>

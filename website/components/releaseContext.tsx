@@ -24,7 +24,11 @@ export function WithRelease({
       </ReleaseContext.Provider>
     );
   } else {
-    return null;
+    return (
+      <p className="nx-mt-6 nx-leading-7 first:nx-mt-0">
+        There is no current {kind} release at this moment.
+      </p>
+    );
   }
 }
 
