@@ -61,9 +61,14 @@ fn cli_main(args: ScarbArgs) -> Result<()> {
     let ui_verbosity = args.ui_verbosity();
     let ui_output_format = args.output_format();
 
-    let manifest_path = ops::find_manifest_path(args.manifest_path.as_deref())?;
+    let pkg_manifest_path = ops::find_manifest_path(args.manifest_path.as_deref())?;
+    let ws_manifest_path = ops::find_workspace_manifest_path(pkg_manifest_path.clone())
+        .ok()
+        .flatten()
+        .unwrap_or(pkg_manifest_path.clone());
 
-    let mut config = Config::builder(manifest_path)
+    let mut config = Config::builder(ws_manifest_path)
+        .package_manifest_path(pkg_manifest_path)
         .global_cache_dir_override(args.global_cache_dir)
         .global_config_dir_override(args.global_config_dir)
         .target_dir_override(args.target_dir)

@@ -23,6 +23,7 @@ use crate::SCARB_ENV;
 
 pub struct Config {
     manifest_path: Utf8PathBuf,
+    package_manifest_path: Utf8PathBuf,
     dirs: Arc<AppDirs>,
     target_dir: RootFilesystem,
     app_exe: OnceCell<PathBuf>,
@@ -79,7 +80,8 @@ impl Config {
         }
 
         Ok(Self {
-            manifest_path: b.manifest_path,
+            manifest_path: b.manifest_path.clone(),
+            package_manifest_path: b.package_manifest_path.unwrap_or(b.manifest_path),
             dirs,
             target_dir,
             app_exe: OnceCell::new(),
@@ -98,6 +100,10 @@ impl Config {
 
     pub fn manifest_path(&self) -> &Utf8Path {
         &self.manifest_path
+    }
+
+    pub fn package_manifest_path(&self) -> &Utf8Path {
+        &self.package_manifest_path
     }
 
     pub fn root(&self) -> &Utf8Path {
@@ -234,6 +240,7 @@ impl Config {
 #[derive(Debug)]
 pub struct ConfigBuilder {
     manifest_path: Utf8PathBuf,
+    package_manifest_path: Option<Utf8PathBuf>,
     global_config_dir_override: Option<Utf8PathBuf>,
     global_cache_dir_override: Option<Utf8PathBuf>,
     path_env_override: Option<Vec<PathBuf>>,
@@ -252,6 +259,7 @@ impl ConfigBuilder {
     fn new(manifest_path: Utf8PathBuf) -> Self {
         Self {
             manifest_path,
+            package_manifest_path: None,
             global_config_dir_override: None,
             global_cache_dir_override: None,
             path_env_override: None,
@@ -269,6 +277,11 @@ impl ConfigBuilder {
 
     pub fn build(self) -> Result<Config> {
         Config::build(self)
+    }
+
+    pub fn package_manifest_path(mut self, package_manifest_path: Utf8PathBuf) -> Self {
+        self.package_manifest_path = Some(package_manifest_path);
+        self
     }
 
     pub fn global_config_dir_override(

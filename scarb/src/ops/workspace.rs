@@ -14,6 +14,7 @@ use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
 use crate::core::TomlManifest;
 use crate::internal::fsx::PathBufUtf8Ext;
+use crate::ops::find_workspace_manifest_path;
 use crate::process::is_hidden;
 use crate::MANIFEST_FILE_NAME;
 
@@ -33,6 +34,16 @@ pub fn read_workspace_with_source_id<'c>(
 }
 
 fn read_workspace_impl<'c>(
+    manifest_path: &Utf8Path,
+    source_id: SourceId,
+    config: &'c Config,
+) -> Result<Workspace<'c>> {
+    let manifest_path =
+        find_workspace_manifest_path(manifest_path.into())?.unwrap_or(manifest_path.into());
+    read_workspace_root(&manifest_path, source_id, config)
+}
+
+fn read_workspace_root<'c>(
     manifest_path: &Utf8Path,
     source_id: SourceId,
     config: &'c Config,

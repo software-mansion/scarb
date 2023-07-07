@@ -75,7 +75,10 @@ impl<'c> Workspace<'c> {
     /// In this case an error is returned indicating that the operation
     /// must be performed on specific package.
     pub fn current_package(&self) -> Result<&Package> {
-        Ok(self.members.values().next().unwrap())
+        self.members
+            .values()
+            .find(|p| p.manifest_path() == self.config.package_manifest_path())
+            .ok_or_else(|| anyhow::anyhow!("no current package selected"))
     }
 
     /// Returns the root package of this workspace.
