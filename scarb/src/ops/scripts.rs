@@ -3,6 +3,7 @@ use std::ffi::OsString;
 use std::rc::Rc;
 
 use anyhow::Result;
+use camino::Utf8Path;
 use deno_task_shell::{ExecutableCommand, ShellCommand};
 
 use crate::core::errors::ScriptExecutionError;
@@ -15,6 +16,8 @@ pub fn execute_script(
     script_definition: &ScriptDefinition,
     args: &[OsString],
     ws: &Workspace<'_>,
+    cwd: &Utf8Path,
+    custom_env: Option<HashMap<OsString, OsString>>,
 ) -> Result<()> {
     let env_vars = get_env_vars(ws.config())?
         .into_iter()
@@ -24,12 +27,13 @@ pub fn execute_script(
                 v.to_string_lossy().to_string(),
             )
         })
+        .chain(custom_env.unwrap_or_default().into_iter().map(|(k, v)| {
+            (
+                k.to_string_lossy().to_string(),
+                v.to_string_lossy().to_string(),
+            )
+        }))
         .collect();
-    let cwd = if let Ok(current_package) = ws.current_package() {
-        current_package.root()
-    } else {
-        ws.root()
-    };
     let custom_commands = HashMap::from([
         // Used to ensure deno_task_shell scripts use the current scarb executable.
         (

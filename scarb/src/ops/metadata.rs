@@ -6,6 +6,7 @@ use semver::Version;
 use smol_str::SmolStr;
 
 use scarb_metadata as m;
+use scarb_metadata::packages_filter::PackagesSource;
 
 use crate::compiler::CompilationUnit;
 use crate::core::{ManifestDependency, Package, PackageId, SourceId, Target, Workspace};
@@ -54,6 +55,7 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
         .app_exe(ws.config().app_exe().ok().map(|p| p.to_path_buf()))
         .app_version_info(collect_app_version_metadata())
         .target_dir(Some(ws.target_dir().path_unchecked().to_path_buf()))
+        .runtime_manifest(ws.runtime_manifest().clone())
         .workspace(collect_workspace_metadata(ws)?)
         .packages(packages)
         .compilation_units(compilation_units)
