@@ -283,7 +283,7 @@ impl TomlManifest {
         manifest_path: &Utf8Path,
         source_id: SourceId,
         profile: Profile,
-        toml_workspace: Option<TomlWorkspace>,
+        workspace_manifest: Option<&TomlManifest>,
     ) -> Result<Manifest> {
         let root = manifest_path
             .parent()
@@ -293,6 +293,7 @@ impl TomlManifest {
             bail!("no `package` section found");
         };
 
+        let toml_workspace = workspace_manifest.and_then(|m| m.workspace.clone());
         // For root package, no need to fetch workspace separately.
         let workspace = self
             .workspace
@@ -354,11 +355,13 @@ impl TomlManifest {
             })
             .try_collect()?;
 
-        let profile_definition = self.collect_profile_definition(profile.clone())?;
+        // Following Cargo convention, pull profile config from workspace root only.
+        let profile_source = workspace_manifest.unwrap_or(self);
+        let profile_definition = profile_source.collect_profile_definition(profile.clone())?;
+
         let compiler_config = self.collect_compiler_config(&profile, profile_definition.clone())?;
         let workspace_tool = workspace.tool.clone();
         let tool = self.collect_tool(profile_definition, workspace_tool)?;
-        let profiles = self.collect_profiles()?;
 
         let metadata = ManifestMetadata {
             authors: package.authors.clone(),
@@ -381,7 +384,6 @@ impl TomlManifest {
             .metadata(metadata)
             .compiler_config(compiler_config)
             .scripts(scripts)
-            .profiles(profiles)
             .build()?;
 
         Ok(manifest)
@@ -451,17 +453,16 @@ impl TomlManifest {
         Ok(Some(target))
     }
 
-    fn collect_profiles(&self) -> Result<Vec<Profile>> {
-        if let Some(toml_profiles) = &self.profile {
-            let mut result = Vec::new();
-            for name in toml_profiles.keys() {
-                let profile = Profile::new(name.clone())?;
-                result.push(profile);
-            }
-            Ok(result)
-        } else {
-            Ok(vec![])
-        }
+    pub fn collect_profiles(&self) -> Result<Vec<Profile>> {
+        self.profile
+            .as_ref()
+            .map(|toml_profiles| {
+                toml_profiles
+                    .keys()
+                    .map(|name| Profile::new(name.clone()))
+                    .try_collect()
+            })
+            .unwrap_or(Ok(vec![]))
     }
 
     fn collect_profile_definition(&self, profile: Profile) -> Result<TomlProfile> {

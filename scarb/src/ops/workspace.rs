@@ -43,6 +43,17 @@ fn read_workspace_impl<'c>(
     read_workspace_root(&manifest_path, source_id, config)
 }
 
+fn validate_virtual_manifest(manifest_path: &Utf8Path, manifest: &TomlManifest) -> Result<()> {
+    if manifest.dependencies.is_some() {
+        Err(anyhow!(
+            "this virtual manifest specifies a [dependencies] section, which is not allowed"
+        ))
+        .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))
+    } else {
+        Ok(())
+    }
+}
+
 fn read_workspace_root<'c>(
     manifest_path: &Utf8Path,
     source_id: SourceId,
@@ -50,6 +61,7 @@ fn read_workspace_root<'c>(
 ) -> Result<Workspace<'c>> {
     let toml_manifest = TomlManifest::read_from_path(manifest_path)?;
     let toml_workspace = toml_manifest.get_workspace();
+    let profiles = toml_manifest.collect_profiles()?;
 
     let root_package = if toml_manifest.is_package() {
         let manifest = toml_manifest
@@ -57,13 +69,14 @@ fn read_workspace_root<'c>(
                 manifest_path,
                 source_id,
                 config.profile(),
-                toml_workspace.clone(),
+                Some(&toml_manifest),
             )
             .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))?;
         let manifest = Box::new(manifest);
         let package = Package::new(manifest.summary.package_id, manifest_path.into(), manifest);
         Some(package)
     } else {
+        validate_virtual_manifest(manifest_path, &toml_manifest)?;
         None
     };
 
@@ -87,7 +100,7 @@ fn read_workspace_root<'c>(
                         package_path,
                         source_id,
                         config.profile(),
-                        Some(workspace.clone()),
+                        Some(&toml_manifest),
                     )
                     .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))?;
                 let manifest = Box::new(manifest);
@@ -106,11 +119,12 @@ fn read_workspace_root<'c>(
             packages.as_ref(),
             root_package,
             config,
+            profiles,
         )
     } else {
         // Read single package workspace
         let package = root_package.ok_or_else(|| anyhow!("the [package] section is missing"))?;
-        Workspace::from_single_package(package, config)
+        Workspace::from_single_package(package, config, profiles)
     }
 }
 

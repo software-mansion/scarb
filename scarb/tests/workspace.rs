@@ -2,23 +2,11 @@ use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use itertools::Itertools;
 use scarb_metadata::Metadata;
-use snapbox::cmd::Command;
 
-use scarb_test_support::command::Scarb;
+use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
-
-trait CommandExt {
-    fn stdout_json(self) -> Metadata;
-}
-
-impl CommandExt for Command {
-    fn stdout_json(self) -> Metadata {
-        let output = self.output().expect("Failed to spawn command");
-        serde_json::de::from_slice(&output.stdout).expect("Failed to deserialize stdout to JSON")
-    }
-}
 
 #[test]
 fn read_no_root() {
@@ -35,7 +23,7 @@ fn read_no_root() {
     let metadata = Scarb::quick_snapbox()
         .args(["metadata", "--format-version=1"])
         .current_dir(&t)
-        .stdout_json();
+        .stdout_json::<Metadata>();
 
     let packages = metadata
         .packages
@@ -68,7 +56,7 @@ fn read_with_root() {
     let metadata = Scarb::quick_snapbox()
         .args(["metadata", "--format-version=1"])
         .current_dir(&t)
-        .stdout_json();
+        .stdout_json::<Metadata>();
 
     let packages = metadata
         .packages

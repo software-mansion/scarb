@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 
 use scarb_metadata::packages_filter::PackagesSource;
@@ -22,6 +22,7 @@ pub struct Workspace<'c> {
     members: BTreeMap<PackageId, Package>,
     root_package: Option<PackageId>,
     manifest_path: Utf8PathBuf,
+    profiles: Vec<Profile>,
 }
 
 impl<'c> Workspace<'c> {
@@ -30,6 +31,7 @@ impl<'c> Workspace<'c> {
         packages: &[Package],
         root_package: Option<PackageId>,
         config: &'c Config,
+        profiles: Vec<Profile>,
     ) -> Result<Self> {
         let packages = packages
             .iter()
@@ -39,14 +41,25 @@ impl<'c> Workspace<'c> {
             config,
             manifest_path,
             root_package,
+            profiles,
             members: packages,
         })
     }
 
-    pub(crate) fn from_single_package(package: Package, config: &'c Config) -> Result<Self> {
+    pub(crate) fn from_single_package(
+        package: Package,
+        config: &'c Config,
+        profiles: Vec<Profile>,
+    ) -> Result<Self> {
         let manifest_path = package.manifest_path().to_path_buf();
         let root_package = Some(package.id);
-        Self::new(manifest_path, vec![package].as_ref(), root_package, config)
+        Self::new(
+            manifest_path,
+            vec![package].as_ref(),
+            root_package,
+            config,
+            profiles,
+        )
     }
 
     /// Returns the [`Config`] this workspace is associated with.
@@ -110,22 +123,20 @@ impl<'c> Workspace<'c> {
         self.members.len()
     }
 
+    pub fn has_profile(&self, profile: &Profile) -> bool {
+        self.profiles.contains(profile)
+    }
+
     pub fn current_profile(&self) -> Result<Profile> {
         let profile = self.config.profile();
-        if profile.is_custom() && !self.current_package()?.has_profile(&profile) {
-            anyhow::bail!(
-                "package `{}` has no profile `{}`",
-                self.current_package()?,
-                profile
-            );
+        if profile.is_custom() && !self.has_profile(&profile) {
+            bail!("workspace `{self}` has no profile `{profile}`",);
         }
         Ok(profile)
     }
 
     pub fn profile_names(&self) -> Result<Vec<String>> {
         let mut names = self
-            .current_package()?
-            .manifest
             .profiles
             .iter()
             .map(|p| p.to_string())

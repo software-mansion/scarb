@@ -40,8 +40,6 @@ pub struct Manifest {
     pub compiler_config: ManifestCompilerConfig,
     #[builder(default)]
     pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
-    #[builder(default)]
-    pub profiles: Vec<Profile>,
 }
 
 /// Subset of a [`Manifest`] that contains package metadata.
