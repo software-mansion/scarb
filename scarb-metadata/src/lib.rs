@@ -32,6 +32,7 @@ use derive_builder::Builder;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
+use crate::packages_filter::WithManifestPath;
 #[cfg(feature = "command")]
 pub use command::*;
 pub use version_pin::*;
@@ -141,6 +142,9 @@ pub struct Metadata {
     /// Path to the _target_ (_build_) directory if known by Scarb at the moment of generating
     /// metadata.
     pub target_dir: Option<Utf8PathBuf>,
+
+    /// Path to the manifest of package or workspace that Scarb has been run from.
+    pub runtime_manifest: Utf8PathBuf,
 
     /// Current workspace metadata.
     pub workspace: WorkspaceMetadata,
@@ -481,6 +485,12 @@ impl PackageMetadata {
     /// including any transformations applied by Scarb.
     pub fn tool_metadata(&self, tool_name: &str) -> Option<&serde_json::Value> {
         self.manifest_metadata.tool.as_ref()?.get(tool_name)
+    }
+}
+
+impl WithManifestPath for PackageMetadata {
+    fn manifest_path(&self) -> &Utf8Path {
+        &self.manifest_path
     }
 }
 

@@ -1,6 +1,7 @@
 //! [`clap`] arguments implementing Scarb-compatible package selection (`-p` flag etc.)
 
 use crate::{Metadata, PackageMetadata};
+use camino::{Utf8Path, Utf8PathBuf};
 
 /// [`clap`] structured arguments that provide package selection.
 ///
@@ -20,6 +21,9 @@ pub struct PackagesFilter {
     /// a prefix glob (`foo*`).
     #[arg(short, long, value_name = "SPEC", default_value = "*")]
     package: String,
+    /// Run for all packages in the workspace.
+    #[arg(short, long, conflicts_with = "package")]
+    workspace: bool,
 }
 
 /// Error type returned from [`PackagesFilter::match_one`] and [`PackagesFilter::match_many`]
@@ -70,14 +74,22 @@ impl PackagesFilter {
     ///
     /// Returns an error if no or more than one packages were found.
     pub fn match_one<S: PackagesSource>(&self, source: &S) -> Result<S::Package, Error> {
-        let members = source.members();
         let spec = Spec::parse(&self.package)?;
 
-        if matches!(spec, Spec::All) && members.len() > 1 {
+        // Check for current package.
+        // If none (in case of virtual workspace), run for all members.
+        if self.current_selected(&spec) {
+            if let Some(pkg) = self.current_package(source)? {
+                return Ok(pkg);
+            }
+        }
+
+        let members = source.members();
+        if (self.workspace || matches!(spec, Spec::All)) && members.len() > 1 {
             return Err(InnerError::CouldNotDeterminePackageToWorkOn.into());
         }
 
-        let found = Self::do_match::<S>(&spec, members.into_iter())?;
+        let found = Self::do_match::<S>(&spec, self.workspace, members.into_iter())?;
 
         if found.len() > 1 {
             return Err(InnerError::FoundMultiple {
@@ -93,13 +105,35 @@ impl PackagesFilter {
     ///
     /// Returns an error if no packages were found.
     pub fn match_many<S: PackagesSource>(&self, source: &S) -> Result<Vec<S::Package>, Error> {
-        let members = source.members();
         let spec = Spec::parse(&self.package)?;
-        Self::do_match::<S>(&spec, members.into_iter())
+
+        // Check for current package.
+        // If none (in case of virtual workspace), run for all members.
+        if self.current_selected(&spec) {
+            if let Some(pkg) = self.current_package(source)? {
+                return Ok(vec![pkg]);
+            }
+        }
+
+        let members = source.members();
+        Self::do_match::<S>(&spec, self.workspace, members.into_iter())
+    }
+
+    fn current_package<S: PackagesSource>(&self, source: &S) -> Result<Option<S::Package>, Error> {
+        Ok(source
+            .members()
+            .iter()
+            .find(|m| m.manifest_path() == source.runtime_manifest())
+            .cloned())
+    }
+
+    fn current_selected(&self, spec: &Spec<'_>) -> bool {
+        !self.workspace && matches!(spec, Spec::All)
     }
 
     fn do_match<S: PackagesSource>(
         spec: &Spec<'_>,
+        workspace: bool,
         members: impl Iterator<Item = S::Package>,
     ) -> Result<Vec<S::Package>, Error> {
         let mut members = members.peekable();
@@ -108,9 +142,13 @@ impl PackagesFilter {
             return Err(InnerError::WorkspaceHasNoMembers.into());
         }
 
-        let matches = members
-            .filter(|pkg| spec.matches(S::package_name_of(pkg)))
-            .collect::<Vec<_>>();
+        let matches = if workspace {
+            members.collect::<Vec<_>>()
+        } else {
+            members
+                .filter(|pkg| spec.matches(S::package_name_of(pkg)))
+                .collect::<Vec<_>>()
+        };
 
         if matches.is_empty() {
             return Err(InnerError::not_found(spec).into());
@@ -170,6 +208,14 @@ impl<'a> ToString for Spec<'a> {
     }
 }
 
+/// Generic interface used by [`PackagesSource`] to pull information from.
+///
+/// This trait is Scarb's internal implementation detail, **do not implement for your own types**.
+pub trait WithManifestPath {
+    #[doc(hidden)]
+    fn manifest_path(&self) -> &Utf8Path;
+}
+
 /// Generic interface used by [`PackagesFilter`] to pull information from.
 ///
 /// This trait is Scarb's internal implementation detail, **do not implement for your own types**.
@@ -177,13 +223,16 @@ impl<'a> ToString for Spec<'a> {
 /// [`PackagesFilter`] logic.
 pub trait PackagesSource {
     /// Type which represents a Scarb package in this source.
-    type Package;
+    type Package: Clone + WithManifestPath;
 
     #[doc(hidden)]
     fn package_name_of(package: &Self::Package) -> &str;
 
     #[doc(hidden)]
     fn members(&self) -> Vec<Self::Package>;
+
+    #[doc(hidden)]
+    fn runtime_manifest(&self) -> Utf8PathBuf;
 }
 
 impl PackagesSource for Metadata {
@@ -201,5 +250,9 @@ impl PackagesSource for Metadata {
             .filter(|pkg| self.workspace.members.contains(&pkg.id))
             .cloned()
             .collect()
+    }
+
+    fn runtime_manifest(&self) -> Utf8PathBuf {
+        self.runtime_manifest.clone()
     }
 }

@@ -272,6 +272,9 @@ pub struct RemoveArgs {
 /// Arguments accepted by the `test` command.
 #[derive(Parser, Clone, Debug)]
 pub struct TestArgs {
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
+
     /// Arguments for the test program.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,

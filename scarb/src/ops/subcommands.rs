@@ -6,10 +6,11 @@ use std::process::Command;
 use anyhow::{bail, Result};
 use tracing::debug;
 
-use crate::core::Config;
+use crate::core::{Config, Package, Workspace};
 use crate::ops;
 use crate::process::{exec_replace, is_executable};
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX};
+use crate::ui::Status;
 
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn execute_external_subcommand(cmd: &str, args: &[OsString], config: &Config) -> Result<()> {
@@ -30,18 +31,23 @@ pub fn execute_external_subcommand(cmd: &str, args: &[OsString], config: &Config
 }
 
 #[tracing::instrument(level = "debug", skip(config))]
-pub fn execute_test_subcommand(args: &[OsString], config: &Config) -> Result<()> {
-    let ws = ops::read_workspace(config.manifest_path(), config)?;
-
-    // FIXME(mkaput): This is probably bad, we should try to pull scripts from the workspace if
-    //   we do not know the current package.
-    let package = ws.current_package()?;
+pub fn execute_test_subcommand(
+    package: &Package,
+    args: &[OsString],
+    config: &Config,
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    config.ui().print(Status::new(
+        "Running tests",
+        format!("for package: {}", package.id.name).as_str(),
+    ));
     if let Some(script_definition) = package.manifest.scripts.get("test") {
         debug!("using `test` script: {script_definition}");
-        ops::execute_script(script_definition, args, &ws)
+        ops::execute_script(script_definition, args, package.root(), ws)
     } else {
         debug!("no explicit `test` script found, delegating to scarb-cairo-test");
-        execute_external_subcommand("cairo-test", args, config)
+        let args = args.iter().map(OsString::from).collect::<Vec<_>>();
+        execute_external_subcommand("cairo-test", args.as_ref(), config)
     }
 }
 

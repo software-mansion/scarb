@@ -8,6 +8,7 @@ use serde::Deserialize;
 
 pub use id::*;
 pub use name::*;
+use scarb_metadata::packages_filter::WithManifestPath;
 
 use crate::core::manifest::Manifest;
 use crate::core::Target;
@@ -109,6 +110,12 @@ impl Package {
         let toml_value = self.fetch_tool_metadata(tool_name)?;
         let structured = toml_value.clone().try_into()?;
         Ok(structured)
+    }
+}
+
+impl WithManifestPath for Package {
+    fn manifest_path(&self) -> &Utf8Path {
+        &self.manifest_path
     }
 }
 
