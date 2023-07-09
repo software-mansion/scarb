@@ -350,6 +350,7 @@ mod tests {
                 extra: Default::default(),
             },
             target_dir: Default::default(),
+            runtime_manifest: Default::default(),
             workspace: WorkspaceMetadata {
                 manifest_path: Default::default(),
                 root: Default::default(),

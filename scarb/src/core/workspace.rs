@@ -190,4 +190,8 @@ impl<'c> PackagesSource for Workspace<'c> {
     fn members(&self) -> Vec<Self::Package> {
         Workspace::members(self).collect()
     }
+
+    fn runtime_manifest(&self) -> Utf8PathBuf {
+        self.config.manifest_path().to_path_buf()
+    }
 }

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
 use std::path::PathBuf;
@@ -6,13 +7,19 @@ use std::process::Command;
 use anyhow::{bail, Result};
 use tracing::debug;
 
-use crate::core::Config;
+use crate::core::{Config, Package, Workspace};
 use crate::ops;
 use crate::process::{exec_replace, is_executable};
-use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX};
+use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV};
+use crate::ui::Status;
 
 #[tracing::instrument(level = "debug", skip(config))]
-pub fn execute_external_subcommand(cmd: &str, args: &[OsString], config: &Config) -> Result<()> {
+pub fn execute_external_subcommand(
+    cmd: &str,
+    args: &[OsString],
+    config: &Config,
+    custom_env: Option<HashMap<OsString, OsString>>,
+) -> Result<()> {
     let Some(cmd) = find_external_subcommand(cmd, config) else {
         // TODO(mkaput): Reuse clap's no such command message logic here.
         bail!("no such command: `{cmd}`");
@@ -25,23 +32,34 @@ pub fn execute_external_subcommand(cmd: &str, args: &[OsString], config: &Config
     let mut cmd = Command::new(cmd);
     cmd.args(args);
     cmd.envs(get_env_vars(config)?);
+    if let Some(env) = custom_env {
+        cmd.envs(env);
+    }
 
     exec_replace(&mut cmd)
 }
 
-#[tracing::instrument(level = "debug", skip(config))]
-pub fn execute_test_subcommand(args: &[OsString], config: &Config) -> Result<()> {
-    let ws = ops::read_workspace(config.manifest_path(), config)?;
-
-    // FIXME(mkaput): This is probably bad, we should try to pull scripts from the workspace if
-    //   we do not know the current package.
-    let package = ws.current_package()?;
+#[tracing::instrument(level = "debug", skip(ws))]
+pub fn execute_test_subcommand(
+    package: &Package,
+    args: &[OsString],
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    ws.config().ui().print(Status::new(
+        "Running tests",
+        format!("for package: {}", package.id.name).as_str(),
+    ));
+    let env = Some(HashMap::from_iter([(
+        SCARB_MANIFEST_PATH_ENV.into(),
+        package.manifest_path().into(),
+    )]));
     if let Some(script_definition) = package.manifest.scripts.get("test") {
         debug!("using `test` script: {script_definition}");
-        ops::execute_script(script_definition, args, &ws)
+        ops::execute_script(script_definition, args, ws, package.root(), env)
     } else {
         debug!("no explicit `test` script found, delegating to scarb-cairo-test");
-        execute_external_subcommand("cairo-test", args, config)
+        let args = args.iter().map(OsString::from).collect::<Vec<_>>();
+        execute_external_subcommand("cairo-test", args.as_ref(), ws.config(), env)
     }
 }
 
