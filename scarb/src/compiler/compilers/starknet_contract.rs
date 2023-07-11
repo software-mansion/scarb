@@ -70,21 +70,23 @@ pub enum SerdeListSelector {
 struct ContractSelector(String);
 
 impl ContractSelector {
-    pub fn package(&self) -> PackageName {
+    fn package(&self) -> PackageName {
         let parts = self
             .0
             .split_once(CAIRO_PATH_SEPARATOR)
             .unwrap_or((self.0.as_str(), ""));
         PackageName::new(parts.0)
     }
-    pub fn contract(&self) -> String {
+
+    fn contract(&self) -> String {
         let parts = self
             .0
             .rsplit_once(CAIRO_PATH_SEPARATOR)
             .unwrap_or((self.0.as_str(), ""));
         parts.1.to_string()
     }
-    pub fn full_path(&self) -> String {
+
+    fn full_path(&self) -> String {
         self.0.clone()
     }
 }
@@ -92,7 +94,7 @@ impl ContractSelector {
 struct ContractFileStemCalculator(HashSet<String>);
 
 impl ContractFileStemCalculator {
-    pub fn new(contract_paths: Vec<String>) -> Self {
+    fn new(contract_paths: Vec<String>) -> Self {
         let mut seen = HashSet::new();
         let contract_name_duplicates = contract_paths
             .iter()
@@ -105,7 +107,7 @@ impl ContractFileStemCalculator {
         Self(contract_name_duplicates)
     }
 
-    pub fn get_stem(&mut self, full_path: String) -> String {
+    fn get_stem(&mut self, full_path: String) -> String {
         let contract_selector = ContractSelector(full_path);
         let contract_name = contract_selector.contract();
 
@@ -290,6 +292,11 @@ fn find_project_contracts(
     main_crate_ids: Vec<CrateId>,
     external_contracts: Option<Vec<ContractSelector>>,
 ) -> Result<Vec<ContractDeclaration>> {
+    let internal_contracts = {
+        let _ = trace_span!("find_internal_contracts").enter();
+        find_contracts(db, &main_crate_ids)
+    };
+
     let external_contracts = if let Some(external_contracts) = external_contracts {
         let _ = trace_span!("find_external_contracts").enter();
         debug!("external contracts selectors: {:?}", external_contracts);
@@ -312,11 +319,6 @@ fn find_project_contracts(
     } else {
         debug!("no external contracts selected");
         Vec::new()
-    };
-
-    let internal_contracts = {
-        let _ = trace_span!("find_internal_contracts").enter();
-        find_contracts(db, &main_crate_ids)
     };
 
     Ok(internal_contracts
