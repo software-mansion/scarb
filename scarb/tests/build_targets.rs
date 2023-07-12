@@ -3,8 +3,8 @@ use assert_fs::TempDir;
 use indoc::indoc;
 use predicates::prelude::*;
 
-use crate::support::command::Scarb;
-use crate::support::project_builder::ProjectBuilder;
+use scarb_test_support::command::Scarb;
+use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
 fn compile_with_duplicate_targets_1() {

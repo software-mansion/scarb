@@ -3769,6 +3769,7 @@ dependencies = [
  "petgraph",
  "predicates",
  "scarb-metadata 1.4.2",
+ "scarb-test-support",
  "semver",
  "serde",
  "serde_json",
@@ -3862,6 +3863,25 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "scarb-test-support"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "assert_fs",
+ "camino",
+ "indoc",
+ "itertools 0.11.0",
+ "once_cell",
+ "scarb",
+ "semver",
+ "serde",
+ "serde_json",
+ "snapbox",
+ "toml_edit",
+ "url",
 ]
 
 [[package]]

@@ -5,14 +5,13 @@ use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use camino::Utf8PathBuf;
 use semver::Version;
+use to_version::ToVersion;
 use toml_edit::{Document, Item, Table, Value};
 
-use to_version::ToVersion;
+use crate::fsx::PathUtf8Ext;
+use crate::gitx::GitProject;
 
-use crate::support::fsx::PathUtf8Ext;
-use crate::support::gitx::GitProject;
-
-#[path = "../../../src/internal/to_version.rs"]
+#[path = "../../../scarb/src/internal/to_version.rs"]
 mod to_version;
 
 pub struct ProjectBuilder {

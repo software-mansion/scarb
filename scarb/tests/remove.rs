@@ -1,6 +1,6 @@
 use indoc::indoc;
 
-use crate::support::manifest_edit::ManifestEditHarness;
+use scarb_test_support::manifest_edit::ManifestEditHarness;
 
 #[test]
 fn remove_one() {

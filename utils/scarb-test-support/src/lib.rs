@@ -1,4 +1,5 @@
 pub mod command;
+pub mod contracts;
 pub mod filesystem;
 pub mod fsx;
 pub mod gitx;

@@ -6,6 +6,7 @@ members = [
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
     "utils/create-output-dir",
+    "utils/scarb-test-support",
     "utils/test-for-each-example",
 ]
 

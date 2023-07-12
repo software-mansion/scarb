@@ -6,9 +6,8 @@ use predicates::prelude::*;
 use toml::{Table, Value};
 
 use scarb::core::TomlManifest;
-
-use crate::support::command::Scarb;
-use crate::support::fsx::AssertFsUtf8Ext;
+use scarb_test_support::command::Scarb;
+use scarb_test_support::fsx::AssertFsUtf8Ext;
 
 #[test]
 fn new_simple() {

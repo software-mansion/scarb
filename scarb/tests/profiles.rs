@@ -3,10 +3,9 @@ use assert_fs::TempDir;
 use indoc::indoc;
 
 use scarb_metadata::Metadata;
-
-use crate::support::command::{CommandExt, Scarb};
-use crate::support::fsx::ChildPathEx;
-use crate::support::project_builder::ProjectBuilder;
+use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::fsx::ChildPathEx;
+use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
 fn build_defaults_to_dev() {
