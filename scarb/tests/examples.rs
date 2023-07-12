@@ -2,19 +2,20 @@ use std::path::Path;
 
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
-use snapbox::cmd::{cargo_bin, Command};
+use snapbox::cmd::Command;
 
+use scarb_test_support::cargo::cargo_bin;
 use test_for_each_example::test_for_each_example;
 
 #[test_for_each_example]
 fn build(example: &Path) {
-    Command::new(cargo_bin!("scarb"))
+    Command::new(cargo_bin("scarb"))
         .arg("clean")
         .current_dir(example)
         .assert()
         .success();
 
-    Command::new(cargo_bin!("scarb"))
+    Command::new(cargo_bin("scarb"))
         .arg("build")
         .current_dir(example)
         .assert()

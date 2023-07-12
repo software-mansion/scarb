@@ -7,9 +7,9 @@ use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use once_cell::sync::Lazy;
 use serde::de::DeserializeOwned;
-use snapbox::cmd::cargo_bin;
 use snapbox::cmd::Command as SnapboxCommand;
 
+use crate::cargo::cargo_bin;
 use scarb::core::Config;
 use scarb::ui::Verbosity;
 

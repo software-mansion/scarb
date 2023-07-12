@@ -1,11 +1,10 @@
 use std::io::Read;
 use std::net::TcpListener;
 use std::process::{Child, Stdio};
-use std::{env, io, process};
+use std::{env, io};
 
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
-use snapbox::cmd::cargo_bin;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::filesystem::{path_with_temp_dir, write_script};
@@ -163,7 +162,8 @@ fn ctrl_c_kills_everyone() {
         &t,
     );
 
-    let mut child = process::Command::new(cargo_bin!("scarb"))
+    let mut child = Scarb::new()
+        .std()
         .arg("hang-on-tcp")
         .env("PATH", path_with_temp_dir(&t))
         .stdin(Stdio::piped())

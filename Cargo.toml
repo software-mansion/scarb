@@ -88,3 +88,7 @@ zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
 
 [profile.release]
 lto = true
+
+[profile.ci]
+inherits = "test"
+strip = "debuginfo"

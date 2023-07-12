@@ -1,3 +1,4 @@
+pub mod cargo;
 pub mod command;
 pub mod contracts;
 pub mod filesystem;

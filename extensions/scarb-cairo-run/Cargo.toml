@@ -17,4 +17,5 @@ serde_json.workspace = true
 indoc.workspace = true
 
 [dev-dependencies]
+scarb-test-support = { path = "../../utils/scarb-test-support" }
 snapbox.workspace = true
