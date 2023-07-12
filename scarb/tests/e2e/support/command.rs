@@ -5,6 +5,7 @@ use std::{fs, iter};
 
 use assert_fs::TempDir;
 use once_cell::sync::Lazy;
+use serde::de::DeserializeOwned;
 use snapbox::cmd::cargo_bin;
 use snapbox::cmd::Command as SnapboxCommand;
 
@@ -108,5 +109,21 @@ impl EnvPath {
             EnvPath::Managed(t) => t.path(),
             EnvPath::Unmanaged(p) => p,
         }
+    }
+}
+
+pub trait CommandExt {
+    fn stdout_json<T: DeserializeOwned>(self) -> T;
+}
+
+impl CommandExt for SnapboxCommand {
+    fn stdout_json<T: DeserializeOwned>(self) -> T {
+        let output = self.output().expect("Failed to spawn command");
+        assert!(
+            output.status.success(),
+            "Command failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        serde_json::de::from_slice(&output.stdout).expect("Failed to deserialize stdout to JSON")
     }
 }

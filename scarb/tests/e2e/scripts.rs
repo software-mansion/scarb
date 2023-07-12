@@ -4,29 +4,12 @@ use std::env;
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
-use snapbox::cmd::Command;
 
 use scarb::process::make_executable;
 
-use crate::support::command::Scarb;
+use crate::support::command::{CommandExt, Scarb};
 use crate::support::filesystem::{path_with_temp_dir, write_script};
 use crate::support::project_builder::ProjectBuilder;
-
-trait CommandExt {
-    fn stdout_json(self) -> BTreeMap<String, String>;
-}
-
-impl CommandExt for Command {
-    fn stdout_json(self) -> BTreeMap<String, String> {
-        let output = self.output().expect("Failed to spawn command");
-        assert!(
-            output.status.success(),
-            "Command failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        serde_json::de::from_slice(&output.stdout).expect("Failed to deserialize stdout to JSON")
-    }
-}
 
 #[test]
 fn run_simple_script() {
@@ -80,7 +63,7 @@ fn list_scripts() {
         "#})
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    let output: BTreeMap<String, String> = Scarb::quick_snapbox()
         .args(["--json", "run"])
         .current_dir(&t)
         .stdout_json();
@@ -99,7 +82,7 @@ fn list_empty_scripts() {
         "#})
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    let output: BTreeMap<String, String> = Scarb::quick_snapbox()
         .args(["--json", "run"])
         .current_dir(&t)
         .stdout_json();
