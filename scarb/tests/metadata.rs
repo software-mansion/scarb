@@ -4,9 +4,8 @@ use assert_fs::prelude::*;
 use serde_json::json;
 
 use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
-
-use crate::support::command::{CommandExt, Scarb};
-use crate::support::project_builder::ProjectBuilder;
+use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::project_builder::ProjectBuilder;
 
 fn packages_by_name(meta: Metadata) -> BTreeMap<String, PackageMetadata> {
     meta.packages

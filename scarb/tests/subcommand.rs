@@ -7,8 +7,8 @@ use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 use snapbox::cmd::cargo_bin;
 
-use crate::support::command::Scarb;
-use crate::support::filesystem::{path_with_temp_dir, write_script};
+use scarb_test_support::command::Scarb;
+use scarb_test_support::filesystem::{path_with_temp_dir, write_script};
 
 #[test]
 #[cfg_attr(

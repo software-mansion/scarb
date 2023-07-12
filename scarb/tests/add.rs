@@ -3,8 +3,8 @@ use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 use test_case::test_case;
 
-use crate::support::manifest_edit::ManifestEditHarness;
-use crate::support::project_builder::ProjectBuilder;
+use scarb_test_support::manifest_edit::ManifestEditHarness;
+use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
 fn registry_with_version() {

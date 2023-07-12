@@ -5,10 +5,10 @@ use assert_fs::TempDir;
 use gix::refs::transaction::PreviousValue;
 use indoc::{formatdoc, indoc};
 
-use crate::support::command::Scarb;
-use crate::support::fsx::ChildPathEx;
-use crate::support::gitx;
-use crate::support::project_builder::ProjectBuilder;
+use scarb_test_support::command::Scarb;
+use scarb_test_support::fsx::ChildPathEx;
+use scarb_test_support::gitx;
+use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
 fn compile_simple_git_dep() {

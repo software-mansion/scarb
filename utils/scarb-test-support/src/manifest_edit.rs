@@ -7,7 +7,7 @@ use assert_fs::TempDir;
 use once_cell::sync::Lazy;
 use snapbox::cmd::Command;
 
-use crate::support::command::Scarb;
+use crate::command::Scarb;
 
 pub struct ManifestEditHarness {
     cmd: Command,
@@ -94,5 +94,11 @@ impl ManifestEditHarness {
     pub fn stdout_matches(mut self, stdout_matches: impl ToString) -> Self {
         self.stdout_matches = stdout_matches.to_string();
         self
+    }
+}
+
+impl Default for ManifestEditHarness {
+    fn default() -> Self {
+        Self::new()
     }
 }

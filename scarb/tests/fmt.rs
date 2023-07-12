@@ -1,9 +1,10 @@
+use std::fs;
+
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::indoc;
-use std::fs;
 
-use crate::support::command::Scarb;
+use scarb_test_support::command::Scarb;
 
 const SIMPLE_ORIGINAL: &str = r"fn main()    ->    felt252      {      42      }";
 const SIMPLE_FORMATTED: &str = indoc! {r#"

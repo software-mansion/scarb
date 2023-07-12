@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::{fs, iter};
 
+use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use once_cell::sync::Lazy;
 use serde::de::DeserializeOwned;
@@ -12,13 +13,13 @@ use snapbox::cmd::Command as SnapboxCommand;
 use scarb::core::Config;
 use scarb::ui::Verbosity;
 
-use crate::support::fsx::{AssertFsUtf8Ext, PathUtf8Ext};
+use crate::fsx::{AssertFsUtf8Ext, PathUtf8Ext};
 
 pub struct Scarb {
     cache: EnvPath,
     config: EnvPath,
     log: OsString,
-    scarb_bin: &'static Path,
+    scarb_bin: PathBuf,
 }
 
 impl Scarb {
@@ -27,7 +28,7 @@ impl Scarb {
             cache: EnvPath::temp_dir(),
             config: EnvPath::temp_dir(),
             log: "scarb=trace".into(),
-            scarb_bin: cargo_bin!("scarb"),
+            scarb_bin: cargo_bin("scarb"),
         }
     }
 
@@ -36,7 +37,7 @@ impl Scarb {
             cache: EnvPath::borrow(config.dirs().cache_dir.path_unchecked().as_std_path()),
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
             log: config.log_filter_directive().to_os_string(),
-            scarb_bin: cargo_bin!("scarb"),
+            scarb_bin: cargo_bin("scarb"),
         }
     }
 
@@ -57,20 +58,17 @@ impl Scarb {
     }
 
     pub fn isolate_from_extensions(self) -> Self {
-        static ISOLATED_BIN: Lazy<PathBuf> = Lazy::new(|| {
-            let source_bin = cargo_bin!("scarb");
-
-            let output_dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join("isolated_scarb");
-            fs::create_dir_all(&output_dir).unwrap();
-
-            let output_bin = output_dir.join(source_bin.file_name().unwrap());
+        // NOTE: We keep TempDir instance in static, so that it'll be dropped when program ends.
+        static ISOLATE: Lazy<(PathBuf, TempDir)> = Lazy::new(|| {
+            let t = TempDir::new().unwrap();
+            let source_bin = cargo_bin("scarb");
+            let output_bin = t.child(source_bin.file_name().unwrap()).to_path_buf();
             fs::copy(source_bin, &output_bin).unwrap();
-
-            output_bin
+            (output_bin, t)
         });
 
         Self {
-            scarb_bin: &*ISOLATED_BIN,
+            scarb_bin: ISOLATE.0.clone(),
             ..self
         }
     }
@@ -87,6 +85,12 @@ impl Scarb {
             .log_filter_directive(Some("scarb=trace"))
             .build()
             .unwrap()
+    }
+}
+
+impl Default for Scarb {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

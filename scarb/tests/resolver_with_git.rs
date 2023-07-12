@@ -2,9 +2,9 @@ use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 
-use crate::support::command::Scarb;
-use crate::support::gitx;
-use crate::support::project_builder::ProjectBuilder;
+use scarb_test_support::command::Scarb;
+use scarb_test_support::gitx;
+use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
 fn valid_triangle() {

@@ -6,10 +6,9 @@ use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 
 use scarb::process::make_executable;
-
-use crate::support::command::{CommandExt, Scarb};
-use crate::support::filesystem::{path_with_temp_dir, write_script};
-use crate::support::project_builder::ProjectBuilder;
+use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::filesystem::{path_with_temp_dir, write_script};
+use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
 fn run_simple_script() {

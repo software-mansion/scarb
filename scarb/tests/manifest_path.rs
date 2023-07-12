@@ -1,6 +1,6 @@
 use assert_fs::prelude::*;
 
-use crate::support::command::Scarb;
+use scarb_test_support::command::Scarb;
 
 #[test]
 fn with_manifest() {

@@ -1,8 +1,8 @@
 use assert_fs::TempDir;
 use indoc::indoc;
 
-use crate::support::command::Scarb;
-use crate::support::project_builder::ProjectBuilder;
+use scarb_test_support::command::Scarb;
+use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
 fn compile_cairo_plugin() {

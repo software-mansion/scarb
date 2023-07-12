@@ -66,15 +66,16 @@ zip.workspace = true
 
 [dev-dependencies]
 assert_fs.workspace = true
-test-for-each-example = { path = "../utils/test-for-each-example" }
 io_tee.workspace = true
 libc.workspace = true
 ntest.workspace = true
 predicates.workspace = true
+scarb-test-support = { path = "../utils/scarb-test-support" }
 serde_test.workspace = true
 similar-asserts.workspace = true
 snapbox.workspace = true
 test-case.workspace = true
+test-for-each-example = { path = "../utils/test-for-each-example" }
 
 [build-dependencies]
 cargo_metadata.workspace = true
