@@ -1,11 +1,11 @@
-use std::path::Path;
-
 use indoc::indoc;
 use snapbox::cmd::{cargo_bin, Command};
 
+use scarb_test_support::cargo::manifest_dir;
+
 #[test]
 fn cairo_test_success() {
-    let example = Path::new(env!("CARGO_MANIFEST_DIR"))
+    let example = manifest_dir()
         .parent()
         .unwrap()
         .parent()
@@ -33,7 +33,7 @@ fn cairo_test_success() {
 
 #[test]
 fn cairo_test_package_not_built() {
-    let example = Path::new(env!("CARGO_MANIFEST_DIR"))
+    let example = manifest_dir()
         .parent()
         .unwrap()
         .parent()

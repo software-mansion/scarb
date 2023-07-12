@@ -3816,6 +3816,7 @@ dependencies = [
  "clap",
  "indoc",
  "scarb-metadata 1.4.2",
+ "scarb-test-support",
  "serde_json",
  "snapbox",
 ]
