@@ -1,28 +1,12 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_metadata::Metadata;
-use snapbox::cmd::Command;
 
-use crate::support::command::Scarb;
+use scarb_metadata::Metadata;
+
+use crate::support::command::{CommandExt, Scarb};
 use crate::support::fsx::ChildPathEx;
 use crate::support::project_builder::ProjectBuilder;
-
-trait CommandExt {
-    fn stdout_metadata(self) -> Metadata;
-}
-
-impl CommandExt for Command {
-    fn stdout_metadata(self) -> Metadata {
-        let output = self.output().expect("Failed to spawn command");
-        assert!(
-            output.status.success(),
-            "Command failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        serde_json::de::from_slice(&output.stdout).expect("Failed to deserialize stdout to JSON")
-    }
-}
 
 #[test]
 fn build_defaults_to_dev() {
@@ -62,7 +46,7 @@ fn defaults_to_dev() {
     let metadata = Scarb::quick_snapbox()
         .args(["metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     let mut all_profiles = metadata.profiles;
     all_profiles.sort();
@@ -79,7 +63,7 @@ fn can_choose_release() {
     let metadata = Scarb::quick_snapbox()
         .args(["--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     let mut all_profiles = metadata.profiles;
     all_profiles.sort();
@@ -96,7 +80,7 @@ fn can_choose_dev() {
     let metadata = Scarb::quick_snapbox()
         .args(["--dev", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     let mut all_profiles = metadata.profiles;
     all_profiles.sort();
@@ -132,7 +116,7 @@ fn can_choose_release_by_name() {
     let metadata = Scarb::quick_snapbox()
         .args(["--profile", "release", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     let mut all_profiles = metadata.profiles;
     all_profiles.sort();
@@ -168,7 +152,7 @@ fn can_choose_dev_by_name() {
     let metadata = Scarb::quick_snapbox()
         .args(["--profile", "dev", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     let mut all_profiles = metadata.profiles;
     all_profiles.sort();
@@ -185,7 +169,7 @@ fn can_choose_dev_by_short_name() {
     let metadata = Scarb::quick_snapbox()
         .args(["-P", "dev", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     let mut all_profiles = metadata.profiles;
     all_profiles.sort();
@@ -207,7 +191,7 @@ fn can_choose_custom_profile() {
     let metadata = Scarb::quick_snapbox()
         .args(["--profile", "custom", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     let mut all_profiles = metadata.profiles;
     all_profiles.sort();
@@ -244,7 +228,7 @@ fn sierra_replace_ids_defaults_true_in_dev() {
     let metadata = Scarb::quick_snapbox()
         .args(["metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "dev".to_string());
     assert!(!metadata.compilation_units.is_empty());
@@ -266,7 +250,7 @@ fn sierra_replace_ids_default_false_in_release() {
     let metadata = Scarb::quick_snapbox()
         .args(["--profile", "release", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "release".to_string());
     assert!(!metadata.compilation_units.is_empty());
@@ -298,7 +282,7 @@ fn compiler_config_set_for_all_profiles() {
     let metadata = Scarb::quick_snapbox()
         .args(["metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "dev".to_string());
     assert!(!metadata.compilation_units.is_empty());
@@ -314,7 +298,7 @@ fn compiler_config_set_for_all_profiles() {
     let metadata = Scarb::quick_snapbox()
         .args(["--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "release".to_string());
     assert!(!metadata.compilation_units.is_empty());
@@ -336,7 +320,7 @@ fn compiler_config_set_for_all_profiles() {
             "1",
         ])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "some-profile".to_string());
     assert!(!metadata.compilation_units.is_empty());
@@ -364,7 +348,7 @@ fn can_set_replace_ids_in_profile() {
     let metadata = Scarb::quick_snapbox()
         .args(["--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "release".to_string());
     assert!(!metadata.compilation_units.is_empty());
@@ -395,7 +379,7 @@ fn profile_precedes_compiler_config() {
     let metadata = Scarb::quick_snapbox()
         .args(["--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "release".to_string());
     assert!(!metadata.compilation_units.is_empty());
@@ -411,7 +395,7 @@ fn profile_precedes_compiler_config() {
     let metadata = Scarb::quick_snapbox()
         .args(["metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "dev".to_string());
     assert!(!metadata.compilation_units.is_empty());
@@ -438,7 +422,7 @@ fn custom_profiles_inherit_from_dev_by_default() {
     let metadata = Scarb::quick_snapbox()
         .args(["--profile", "custom", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "custom".to_string());
     assert!(!metadata.compilation_units.is_empty());
@@ -466,7 +450,7 @@ fn custom_profiles_can_inherit_by_name() {
     let metadata = Scarb::quick_snapbox()
         .args(["--profile", "custom", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "custom".to_string());
     assert!(!metadata.compilation_units.is_empty());
@@ -522,7 +506,7 @@ fn profile_overrides_tool() {
     let metadata = Scarb::quick_snapbox()
         .args(["metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "dev".to_string());
     assert_eq!(metadata.packages.len(), 2);
@@ -545,7 +529,7 @@ fn profile_overrides_tool() {
     let metadata = Scarb::quick_snapbox()
         .args(["--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
-        .stdout_metadata();
+        .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "release".to_string());
     assert_eq!(metadata.packages.len(), 2);

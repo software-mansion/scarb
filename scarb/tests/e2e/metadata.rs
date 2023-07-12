@@ -2,23 +2,11 @@ use std::collections::BTreeMap;
 
 use assert_fs::prelude::*;
 use serde_json::json;
-use snapbox::cmd::Command;
 
 use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
 
-use crate::support::command::Scarb;
+use crate::support::command::{CommandExt, Scarb};
 use crate::support::project_builder::ProjectBuilder;
-
-trait CommandExt {
-    fn stdout_json(self) -> Metadata;
-}
-
-impl CommandExt for Command {
-    fn stdout_json(self) -> Metadata {
-        let output = self.output().expect("Failed to spawn command");
-        serde_json::de::from_slice(&output.stdout).expect("Failed to deserialize stdout to JSON")
-    }
-}
 
 fn packages_by_name(meta: Metadata) -> BTreeMap<String, PackageMetadata> {
     meta.packages
@@ -54,7 +42,7 @@ fn simple() {
         .arg("--format-version")
         .arg("1")
         .current_dir(&t)
-        .stdout_json();
+        .stdout_json::<Metadata>();
 }
 
 #[test]
@@ -70,7 +58,7 @@ fn includes_compilation_units() {
         .arg("--format-version")
         .arg("1")
         .current_dir(&t)
-        .stdout_json();
+        .stdout_json::<Metadata>();
 
     assert!(!output.compilation_units.is_empty());
     let unit = &output.compilation_units[0];
@@ -171,7 +159,7 @@ fn local_dependencies() {
         .arg("--format-version")
         .arg("1")
         .current_dir(&t)
-        .stdout_json();
+        .stdout_json::<Metadata>();
     assert_eq!(
         packages_and_deps(meta),
         BTreeMap::from_iter([
@@ -197,7 +185,7 @@ fn no_dep() {
         .arg("1")
         .arg("--no-deps")
         .current_dir(&t)
-        .stdout_json();
+        .stdout_json::<Metadata>();
 
     assert_eq!(
         packages_and_deps(meta),
@@ -262,7 +250,7 @@ fn manifest_targets_and_metadata() {
         .arg("--format-version")
         .arg("1")
         .current_dir(&t)
-        .stdout_json();
+        .stdout_json::<Metadata>();
 
     assert_eq!(
         meta.packages
@@ -322,7 +310,7 @@ fn tool_metadata_is_packaged_contained() {
         .arg("--format-version")
         .arg("1")
         .current_dir(&t)
-        .stdout_json();
+        .stdout_json::<Metadata>();
     assert_eq!(
         packages_by_name(meta)
             .into_iter()
