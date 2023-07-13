@@ -24,7 +24,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
-        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file nextest-archive.tar.zst
+        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file nextest-archive.tar.zst --zstd-level 12
       - uses: actions/upload-artifact@v3
         with:
           name: nextest-archive
