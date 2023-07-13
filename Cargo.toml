@@ -8,6 +8,7 @@ members = [
     "utils/create-output-dir",
     "utils/scarb-test-support",
     "utils/test-for-each-example",
+    "xtask",
 ]
 
 [workspace.package]
@@ -83,6 +84,7 @@ typed-builder = "0.14.0"
 url = { version = "2.3.1", features = ["serde"] }
 walkdir = "2.3.3"
 which = "4.4.0"
+xshell = "0.2.5"
 xxhash-rust = { version = "0.8.6", features = ["xxh3"] }
 zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
 
