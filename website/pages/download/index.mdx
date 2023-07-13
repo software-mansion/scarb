@@ -1,8 +1,8 @@
 import { Releases } from "../../data/github";
-import { Link, Tab, Tabs } from "nextra-theme-docs";
+import { Link } from "nextra-theme-docs";
 import { BigLink } from "../../components/bigLink";
-import { WithRelease, ReleaseVersion, useRelease } from "../../components/releaseContext";
-import { Callout, Table, Tr, Th, Td, Code } from "nextra/components";
+import { ReleaseVersion, useRelease, WithRelease } from "../../components/releaseContext";
+import { Callout, Code, Tab, Table, Tabs, Td, Th, Tr } from "nextra/components";
 
 export async function getStaticProps() {
   const releases = await Releases.list();
