@@ -46,6 +46,19 @@ function DownloadUnix() {
           }
         </code>
       </Pre>
+      <p className="mt-8 text-xl">
+        Or, install via <Link href="https://asdf-vm.com/">asdf</Link> version
+        manager.
+      </p>
+      <Pre hasCopyCode className="text-left">
+        <code>
+          {
+            "asdf plugin add scarb https://github.com/software-mansion/asdf-scarb.git\n"
+          }
+          {"asdf install scarb latest\n"}
+          {"asdf global scarb latest\n"}
+        </code>
+      </Pre>
       <span className="text-sm">
         You appear to be running macOS or Linux. This command will install the
         latest stable version of Scarb:&nbsp;
