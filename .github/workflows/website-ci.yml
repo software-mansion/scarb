@@ -28,3 +28,15 @@ jobs:
       - run: npm ci
       - run: npm run fmt:check
       - run: npm run lint
+
+  # Ensure everything required is passing for branch protection.
+  all-good:
+    if: always()
+    needs:
+      - fmt-and-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@v1.2.2
+        with:
+          jobs: ${{ toJSON(needs) }}

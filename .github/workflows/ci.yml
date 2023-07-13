@@ -77,3 +77,18 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo doc --all-features --no-deps
+
+  # Ensure everything required is passing for branch protection.
+  all-good:
+    if: always()
+    needs:
+      - test
+      - rustfmt
+      - clippy
+      - rustdoc
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@v1.2.2
+        with:
+          jobs: ${{ toJSON(needs) }}
