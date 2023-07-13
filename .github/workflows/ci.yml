@@ -12,44 +12,27 @@ env:
 
 jobs:
   build-test:
-    name: build test ${{ matrix.platform.name }}
-    runs-on: ${{ matrix.platform.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          # - name: macos x86-64
-          #   os: macos-latest
-          - name: windows x86-64
-            os: windows-latest
+    name: build test linux x86-64
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
-        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file nextest-archive.tar.zst
       - uses: actions/upload-artifact@v3
         with:
-          name: nextest-archive-${{ matrix.platform.os }}
-          path: nextest-archive-${{ matrix.platform.os }}.tar.zst
+          name: nextest-archive
+          path: nextest-archive.tar.zst
 
   test:
-    name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/4
-    runs-on: ${{ matrix.platform.os }}
+    name: test linux x86-64 ${{ matrix.partition }}/4
+    runs-on: ubuntu-latest
     needs: build-test
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          # - name: macos x86-64
-          #   os: macos-latest
-          - name: windows x86-64
-            os: windows-latest
         partition: [ 1, 2, 3, 4 ]
     steps:
       - uses: actions/checkout@v3
@@ -57,9 +40,9 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - uses: actions/download-artifact@v3
         with:
-          name: nextest-archive-${{ matrix.platform.os }}
+          name: nextest-archive
       - name: nextest partition ${{ matrix.partition }}/4
-        run: cargo nextest run --partition 'count:${{ matrix.partition }}/4' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+        run: cargo nextest run --partition 'count:${{ matrix.partition }}/4' --archive-file nextest-archive.tar.zst
 
   rustfmt:
     runs-on: ubuntu-latest
