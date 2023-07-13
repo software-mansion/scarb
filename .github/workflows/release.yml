@@ -93,20 +93,16 @@ jobs:
         run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }}
 
       - name: Package
-        shell: bash
-        run: |
-          set -euxo pipefail
-          
-          STAGING="scarb-${{ github.ref_name }}-${{ matrix.target }}"
-          echo "STAGING=$STAGING" >> $GITHUB_ENV
-          
-          pkg/archive/package.sh "${{ matrix.target }}" "$STAGING"
+        run: cargo xtask create-archive
+        env:
+          STAGING: scarb-${{ github.ref_name }}-${{ matrix.target }}
+          TARGET: ${{ matrix.target }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: build-${{ matrix.target }}
-          path: ${{ env.STAGING }}.*
+          path: scarb-${{ github.ref_name }}-${{ matrix.target }}.*
 
   verify:
     name: verify ${{ matrix.os }} ${{ matrix.target }}
