@@ -5,66 +5,63 @@ containing Scarb binary to your PATH variable.
 
 ## GitHub Actions
 
-You can find an example of the Scarb setup in the following `.github/workflows/build.yml` file.
+The officially supported [`software-mansion/setup-scarb`](https://github.com/software-mansion/setup-scarb) GitHub action
+installs Scarb on the job runner and prepares environment for optimal use.
+You can find an example of the Scarb setup in the following workflow file:
 
-```yaml copy
-name: Build Scarb project
-
+```yaml copy filename=".github/workflows/ci.yml"
+name: CI
 on:
   push:
-    branches:
-      - main
-
-env:
-  SCARB_VERSION: 0.1.0
-
+  merge_group:
+  pull_request:
 jobs:
-  build:
-    name: build
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Setup Scarb
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v ${{ env.SCARB_VERSION }}
-      - run: scarb build
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "0.5.1"
+      - run: scarb fmt --check
+      - run: scarb test
 ```
 
 ## GitLab CI
 
 You can find an example of the Scarb setup in the following GitLab CI configuration.
 
-```yaml copy
+```yaml copy filename=".gitlab-ci.yml"
 variables:
-  SCARB_VERSION: "0.1.0"
+  SCARB_VERSION: "0.5.1"
 
 stages:
-  - build
+  - check
 
 scarb:
-  stage: build
+  stage: check
   image: ubuntu:jammy
   script:
     - apt-get update && apt-get install -y curl
     - export PATH="$HOME/.local/bin:$PATH" && curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v $SCARB_VERSION
+    - scarb fmt --check
     - scarb build
 ```
 
 ## CircleCI
 
-You can find an example of the Scarb setup in the following `.circleci/config.yml` file.
+You can find an example of the Scarb setup in the following workflow file.
 
-```yaml copy
+```yaml copy filename=".circleci/config.yml"
 version: 2.1
 
 parameters:
   scarb_version:
     type: string
-    default: 0.1.0
+    default: "0.5.1"
 
 jobs:
-  build:
+  check:
     docker:
       - image: cimg/base:2023.03
     steps:
@@ -75,10 +72,11 @@ jobs:
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
             curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v << pipeline.parameters.scarb_version >>
+      - run: scarb fmt --check
       - run: scarb build
 
 workflows:
-  build:
+  ci:
     jobs:
-      - build
+      - check
 ```
