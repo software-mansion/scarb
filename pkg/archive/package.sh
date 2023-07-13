@@ -14,7 +14,7 @@ mkdir -p \
   "$STAGING/bin/" \
   "$STAGING/doc/"
 
-for crate in $(pkg/list-binaries.sh); do
+for crate in $(cargo xtask list-binaries); do
   cp "target/$TARGET/release/${crate}${bin_ext}" "$STAGING/bin/"
 done
 
