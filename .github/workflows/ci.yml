@@ -16,11 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: rui314/setup-mold@v1
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
         run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file nextest-archive.tar.zst
+        env:
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: "clang"
+          RUSTFLAGS: "-C link-arg=-fuse-ld=/usr/local/bin/mold"
       - uses: actions/upload-artifact@v3
         with:
           name: nextest-archive
