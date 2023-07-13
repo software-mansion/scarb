@@ -5098,6 +5098,7 @@ name = "xtask"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "camino",
  "clap",
  "xshell",
 ]

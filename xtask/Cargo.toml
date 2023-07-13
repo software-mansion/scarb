@@ -6,5 +6,6 @@ publish = false
 
 [dependencies]
 anyhow.workspace = true
+camino.workspace = true
 clap.workspace = true
 xshell.workspace = true
