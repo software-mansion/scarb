@@ -92,3 +92,6 @@ lto = true
 [profile.ci]
 inherits = "test"
 strip = "debuginfo"
+
+[profile.ci.package."*"]
+opt-level = 2
