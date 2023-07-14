@@ -1,3 +1,5 @@
+#![allow(clippy::items_after_test_module)]
+
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
