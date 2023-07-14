@@ -8,7 +8,7 @@ To depend on a package located in a Git repository, the minimum information need
 
 ```toml copy /git/1
 [dependencies]
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+alexandria = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 ```
 
 Scarb will fetch the `git` repository at this location and then look for a `Scarb.toml` for the requested package anywhere inside the Git repository
@@ -20,7 +20,7 @@ Here is an example of specifying that you want to use the latest commit on a bra
 
 ```toml copy /branch = "next"/
 [dependencies]
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", branch = "next" }
+alexandria = { git = "https://github.com/keep-starknet-strange/alexandria.git", branch = "next" }
 ```
 
 Anything that is not a branch or tag falls under `rev`.

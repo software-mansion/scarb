@@ -59,14 +59,14 @@ Add dependency hosted on a Git repository:
 
 ```toml copy
 [dependencies]
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+alexandria = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 ```
 
 Add dependency located in local path:
 
 ```toml copy
 [dependencies]
-alexandria_math = { path = "../path-to-alexandria-checkout/alexandria/math" }
+alexandria = { path = "../path-to-alexandria-checkout/alexandria" }
 ```
 
 <Callout>
@@ -87,23 +87,23 @@ alexandria_math = { path = "../path-to-alexandria-checkout/alexandria/math" }
 Add dependency hosted on a Git repository:
 
 ```shell copy
-scarb add alexandria_math --git https://github.com/keep-starknet-strange/alexandria.git
+scarb add alexandria --git https://github.com/keep-starknet-strange/alexandria.git
 ```
 
 Add dependency located in local path:
 
 ```shell copy
-scarb add alexandria_math --path ../path-to-alexandria-checkout/alexandria/math
+scarb add alexandria --path ../path-to-alexandria-checkout/alexandria
 ```
 
 <Callout>
-  You can specify package version like this: `alexandria_math@0.1.0`, but see
-  remarks in previous section.
+  You can specify package version like this: `alexandria@0.1.0`, but see remarks
+  in previous section.
 </Callout>
 
 <Callout>`--git` supports `--branch`, `--tag` and `--rev` arguments.</Callout>
 
-<Callout>`scarb rm{:shell}` removes a dependency.</Callout>
+<Callout>`scarb rm` removes a dependency.</Callout>
 
 ## Formatting
 
