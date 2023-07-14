@@ -14,7 +14,7 @@ export function Jumbo(): ReactElement {
         lines={[
           "scarb init --name hello_world",
           <>
-            scarb add alexandria_math --git{" "}
+            scarb add alexandria --git{" "}
             <span style={{ userSelect: "none" }}>
               \<br />
               &nbsp;&nbsp;&nbsp;&nbsp;

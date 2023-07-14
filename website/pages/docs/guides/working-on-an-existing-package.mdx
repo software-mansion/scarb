@@ -3,12 +3,12 @@
 If you download an existing package that uses Scarb, it's really easy to get going.
 
 First, get the package from somewhere.
-For example, the [`alexandria_math`](https://github.com/keep-starknet-strange/alexandria) package is hosted on GitHub, and we 'll clone its repository using Git.
+For example, the [`alexandria`](https://github.com/keep-starknet-strange/alexandria) package is hosted on GitHub, and we 'll clone its repository using Git.
 Note that Alexandria is a collection of multiple packages, and we will use math as an example in this guide.
 
 ```shell copy
 git clone https://github.com/keep-starknet-strange/alexandria
-cd alexandria/alexandria/math
+cd alexandria
 cat Scarb.toml
 ```
 
@@ -19,7 +19,7 @@ scarb build
 ```
 
 ```text filename="Output"
-   Compiling alexandria_math v0.1.0 (/path/to/package/alexandria/math/Scarb.toml)
+   Compiling alexandria v0.1.0 (/path/to/package/alexandria/math/Scarb.toml)
     Finished release target(s) in 4 seconds
 ```
 
