@@ -137,7 +137,7 @@ jobs:
         shell: bash
         run: |
           archive=$(find target/verify -name 'scarb-*.zip' -o -name 'scarb-*.tar.gz')
-          pkg/archive/verify.sh "$archive" "${{ github.ref_name }}"
+          cargo xtask verify-archive --archive "$archive" --expected-version "${{ github.ref_name }}"
 
   verify-cargo-package:
     name: cargo publish --dry-run

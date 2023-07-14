@@ -5100,6 +5100,7 @@ dependencies = [
  "anyhow",
  "camino",
  "clap",
+ "walkdir",
  "xshell",
 ]
 

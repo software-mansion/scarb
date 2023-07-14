@@ -8,4 +8,5 @@ publish = false
 anyhow.workspace = true
 camino.workspace = true
 clap.workspace = true
+walkdir.workspace = true
 xshell.workspace = true
