@@ -60,7 +60,7 @@ impl CanonicalUrl {
 
         let ident = base
             .path_segments()
-            .and_then(|s| s.rev().next())
+            .and_then(|mut s| s.next_back())
             .unwrap_or_default();
 
         if ident.is_empty() {
