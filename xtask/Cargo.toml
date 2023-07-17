@@ -1,12 +1,14 @@
 [package]
 name = "xtask"
-version = "1.0.0"
+# Do not diverge this from Scarb's version. For simplicity we assume that both have same version in several commands.
+version.workspace = true
 edition.workspace = true
 publish = false
 
 [dependencies]
 anyhow.workspace = true
 camino.workspace = true
+chrono.workspace = true
 clap.workspace = true
 semver.workspace = true
 serde.workspace = true
