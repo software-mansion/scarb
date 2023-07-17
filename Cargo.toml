@@ -29,11 +29,11 @@ cairo-lang-compiler = "2.1.0-rc1"
 cairo-lang-filesystem = "2.1.0-rc1"
 cairo-lang-formatter = "2.1.0-rc1"
 cairo-lang-language-server = "2.1.0-rc1"
+cairo-lang-runner = "2.1.0-rc1"
 cairo-lang-semantic = "2.1.0-rc1"
 cairo-lang-sierra = "2.1.0-rc1"
 cairo-lang-sierra-to-casm = "2.1.0-rc1"
 cairo-lang-starknet = "2.1.0-rc1"
-cairo-lang-runner = "2.1.0-rc1"
 cairo-lang-test-runner = "2.1.0-rc1"
 cairo-lang-utils = { version = "2.1.0-rc1", features = ["env_logger"] }
 camino = { version = "1.1.4", features = ["serde1"] }
