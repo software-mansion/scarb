@@ -23,6 +23,7 @@ macro_rules! command {
 
 command!(Command(
     create_archive,
+    get_nightly_version,
     list_binaries,
     set_cairo_version,
     verify_archive,
