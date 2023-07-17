@@ -3747,7 +3747,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "0.5.2"
+version = "0.6.0-alpha.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -3815,7 +3815,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "0.5.2"
+version = "0.6.0-alpha.0"
 dependencies = [
  "cairo-lang-language-server",
  "cairo-lang-utils",
@@ -3825,7 +3825,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-run"
-version = "0.5.2"
+version = "0.6.0-alpha.0"
 dependencies = [
  "anyhow",
  "cairo-lang-runner",
@@ -3841,7 +3841,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "0.5.2"
+version = "0.6.0-alpha.0"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
