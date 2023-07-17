@@ -5100,6 +5100,9 @@ dependencies = [
  "anyhow",
  "camino",
  "clap",
+ "semver",
+ "serde",
+ "toml_edit",
  "walkdir",
  "xshell",
 ]

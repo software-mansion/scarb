@@ -24,6 +24,7 @@ macro_rules! command {
 command!(Command(
     create_archive,
     list_binaries,
+    set_cairo_version,
     verify_archive,
 ));
 
