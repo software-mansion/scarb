@@ -8,11 +8,10 @@ use cairo_lang_sierra::extensions::gas::{
     BuiltinCostWithdrawGasLibfunc, RedepositGasLibfunc, WithdrawGasLibfunc,
 };
 use cairo_lang_sierra::extensions::NamedLibfunc;
-
 use camino::Utf8PathBuf;
 use clap::Parser;
-
 use indoc::formatdoc;
+
 use scarb_metadata::packages_filter::PackagesFilter;
 use scarb_metadata::MetadataCommand;
 
@@ -70,7 +69,7 @@ fn main() -> Result<()> {
             )
         })
     {
-        bail!("Program requires gas counter, please provide `--available-gas` argument.");
+        bail!("program requires gas counter, please provide `--available-gas` argument");
     }
 
     let runner = SierraCasmRunner::new(
@@ -83,12 +82,14 @@ fn main() -> Result<()> {
         Default::default(),
     )?;
 
-    let result = runner.run_function(
-        runner.find_function("::main")?,
-        &[],
-        args.available_gas,
-        StarknetState::default(),
-    )?;
+    let result = runner
+        .run_function_with_starknet_context(
+            runner.find_function("::main")?,
+            &[],
+            args.available_gas,
+            StarknetState::default(),
+        )
+        .context("failed to run the function")?;
 
     match result.value {
         cairo_lang_runner::RunResultValue::Success(values) => {
