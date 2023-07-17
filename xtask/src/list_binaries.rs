@@ -1,8 +1,12 @@
 use std::fs;
 
 use anyhow::Result;
+use clap::Parser;
 
-pub fn main() -> Result<()> {
+#[derive(Parser)]
+pub struct Args;
+
+pub fn main(_: Args) -> Result<()> {
     for bin in list_binaries()? {
         println!("{bin}");
     }
