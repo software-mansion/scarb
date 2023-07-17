@@ -1,9 +1,31 @@
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::Parser;
 
-mod create_archive;
-mod list_binaries;
-mod verify_archive;
+macro_rules! command {
+    ($enum_name:ident ( $($module:ident,)+ )) => {
+        $(mod $module;)+
+
+        #[derive(::clap::Subcommand)]
+        #[allow(non_camel_case_types)]
+        enum $enum_name {
+            $($module(crate::$module::Args),)+
+        }
+
+        impl $enum_name {
+            fn main(self) -> ::anyhow::Result<()> {
+                match self {
+                    $(Self::$module(args) => crate::$module::main(args),)+
+                }
+            }
+        }
+    }
+}
+
+command!(Command(
+    create_archive,
+    list_binaries,
+    verify_archive,
+));
 
 #[derive(Parser)]
 struct Args {
@@ -11,18 +33,6 @@ struct Args {
     command: Command,
 }
 
-#[derive(Subcommand)]
-enum Command {
-    CreateArchive(create_archive::Args),
-    ListBinaries,
-    VerifyArchive(verify_archive::Args),
-}
-
 fn main() -> Result<()> {
-    let args = Args::parse();
-    match args.command {
-        Command::CreateArchive(args) => create_archive::main(args),
-        Command::ListBinaries => list_binaries::main(),
-        Command::VerifyArchive(args) => verify_archive::main(args),
-    }
+    Args::parse().command.main()
 }
