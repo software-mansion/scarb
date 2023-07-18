@@ -24,7 +24,7 @@ use scarb_metadata::packages_filter::PackagesFilter;
 #[derive(Parser, Clone, Debug)]
 #[command(author, version = version::get().short(), long_version = version::get().long())]
 pub struct ScarbArgs {
-    /// Override path to a directory containing a Scarb.toml file.
+    /// Path to Scarb.toml.
     #[arg(long, env = "SCARB_MANIFEST_PATH", hide_short_help = true)]
     pub manifest_path: Option<Utf8PathBuf>,
 
