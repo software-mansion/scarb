@@ -12,7 +12,6 @@ jobs:
   test:
     name: test ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     strategy:
       matrix:
         include:
@@ -30,7 +29,6 @@ jobs:
   build:
     name: build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
 
     env:
       # Cross-compiled targets will override this to `cross`.
