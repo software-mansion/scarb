@@ -44,6 +44,7 @@ itertools.workspace = true
 once_cell.workspace = true
 pathdiff.workspace = true
 petgraph.workspace = true
+scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 scarb-metadata = { version = "1.4.0", path = "../scarb-metadata", default-features = false, features = ["builder", "packages_filter"] }
 semver.workspace = true
 serde.workspace = true
@@ -78,5 +79,5 @@ test-case.workspace = true
 test-for-each-example = { path = "../utils/test-for-each-example" }
 
 [build-dependencies]
-cargo_metadata.workspace = true
+scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 zip.workspace = true

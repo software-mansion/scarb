@@ -242,7 +242,7 @@ fn wrap_commit_info(ci: CommitInfo) -> m::CommitInfo {
     m::CommitInfoBuilder::default()
         .short_commit_hash(ci.short_commit_hash)
         .commit_hash(ci.commit_hash)
-        .commit_date(ci.commit_date)
+        .commit_date(ci.commit_date.map(Into::into))
         .build()
         .unwrap()
 }

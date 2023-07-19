@@ -3813,7 +3813,6 @@ dependencies = [
  "cairo-lang-starknet",
  "cairo-lang-utils",
  "camino",
- "cargo_metadata",
  "clap",
  "clap-verbosity-flag",
  "console",
@@ -3839,6 +3838,7 @@ dependencies = [
  "pathdiff",
  "petgraph",
  "predicates",
+ "scarb-build-metadata",
  "scarb-metadata 1.4.2",
  "scarb-test-support",
  "semver",
@@ -3864,6 +3864,13 @@ dependencies = [
  "which",
  "xxhash-rust",
  "zip",
+]
+
+[[package]]
+name = "scarb-build-metadata"
+version = "0.6.0-alpha.0"
+dependencies = [
+ "cargo_metadata",
 ]
 
 [[package]]
@@ -3948,6 +3955,7 @@ dependencies = [
  "itertools 0.11.0",
  "once_cell",
  "scarb",
+ "scarb-build-metadata",
  "semver",
  "serde",
  "serde_json",

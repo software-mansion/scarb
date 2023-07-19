@@ -1,0 +1,9 @@
+[package]
+name = "scarb-build-metadata"
+# Do not diverge this from Scarb's version, we're exposing this value as Scarb version.
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[build-dependencies]
+cargo_metadata.workspace = true

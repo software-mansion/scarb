@@ -5,10 +5,15 @@ use std::fmt::Write;
 
 use serde::{Deserialize, Serialize};
 
+use scarb_build_metadata::{
+    CommitHash, CAIRO_COMMIT_HASH, CAIRO_VERSION, SCARB_COMMIT_DATE, SCARB_COMMIT_HASH,
+    SCARB_VERSION,
+};
+
 /// Scarb's version.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VersionInfo {
-    pub version: String,
+    pub version: &'static str,
     pub commit_info: Option<CommitInfo>,
     pub cairo: CairoVersionInfo,
 }
@@ -16,21 +21,34 @@ pub struct VersionInfo {
 /// Cairo's version.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CairoVersionInfo {
-    pub version: String,
+    pub version: &'static str,
     pub commit_info: Option<CommitInfo>,
 }
 
 /// Information about the Git repository where the crate was built from.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CommitInfo {
-    pub short_commit_hash: String,
-    pub commit_hash: String,
-    pub commit_date: Option<String>,
+    pub short_commit_hash: &'static str,
+    pub commit_hash: &'static str,
+    pub commit_date: Option<&'static str>,
+}
+
+impl CommitInfo {
+    fn from_commit_hash(
+        commit_hash: Option<CommitHash>,
+        commit_date: Option<&'static str>,
+    ) -> Option<Self> {
+        commit_hash.map(|h| Self {
+            short_commit_hash: h.short,
+            commit_hash: h.full,
+            commit_date,
+        })
+    }
 }
 
 impl VersionInfo {
     pub fn short(&self) -> String {
-        display_version_and_commit_info(&self.version, &self.commit_info, None)
+        display_version_and_commit_info(self.version, &self.commit_info, None)
     }
 
     pub fn long(&self) -> String {
@@ -48,7 +66,7 @@ impl VersionInfo {
 impl CairoVersionInfo {
     pub fn short(&self) -> String {
         display_version_and_commit_info(
-            &self.version,
+            self.version,
             &self.commit_info,
             Some("cairo-lang-compiler"),
         )
@@ -87,42 +105,17 @@ impl fmt::Display for CommitInfo {
 
 /// Get information about Scarb's version.
 pub fn get() -> VersionInfo {
-    macro_rules! option_env_str {
-        ($name:expr) => {
-            option_env!($name).map(|s| s.to_string())
-        };
-    }
-
-    let version = env!("CARGO_PKG_VERSION").to_string();
-
-    let commit_info = option_env_str!("SCARB_COMMIT_HASH").map(|commit_hash| CommitInfo {
-        short_commit_hash: option_env_str!("SCARB_COMMIT_SHORT_HASH").unwrap(),
-        commit_hash,
-        commit_date: option_env_str!("SCARB_COMMIT_DATE"),
-    });
+    let commit_info = CommitInfo::from_commit_hash(SCARB_COMMIT_HASH, SCARB_COMMIT_DATE);
 
     let cairo = {
-        let version = env!("SCARB_CAIRO_VERSION").to_string();
-
-        let commit_info = option_env_str!("SCARB_CAIRO_COMMIT_HASH").map(|commit_hash| {
-            let mut short_commit_hash = commit_hash.clone();
-            short_commit_hash.truncate(9);
-
-            CommitInfo {
-                short_commit_hash,
-                commit_hash,
-                commit_date: None,
-            }
-        });
-
         CairoVersionInfo {
-            version,
-            commit_info,
+            version: CAIRO_VERSION,
+            commit_info: CommitInfo::from_commit_hash(CAIRO_COMMIT_HASH, None),
         }
     };
 
     VersionInfo {
-        version,
+        version: SCARB_VERSION,
         commit_info,
         cairo,
     }
