@@ -1,0 +1,88 @@
+name: Nightly
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 3,6'
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      nightly_tag: ${{ steps.version.outputs.nightly_tag }}
+      nightly_version: ${{ steps.version.outputs.nightly_version }}
+      nightly_branch: ${{ steps.version.outputs.nightly_branch }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Configure Git for committing
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Build xtasks
+        run: cargo build -p xtask
+
+      - name: Determine nightly version
+        id: version
+        shell: bash
+        run: |
+          NIGHTLY_TAG=$(cargo xtask get-nightly-version --tag)
+          NIGHTLY_VERSION=$(cargo xtask get-nightly-version)
+          NIGHTLY_BRANCH="nightly/tmp/$NIGHTLY_TAG"
+          
+          echo "NIGHTLY_TAG=$NIGHTLY_TAG" >> $GITHUB_ENV
+          echo "NIGHTLY_VERSION=$NIGHTLY_VERSION" >> $GITHUB_ENV
+          echo "NIGHTLY_BRANCH=$NIGHTLY_BRANCH" >> $GITHUB_ENV
+          
+          echo "nightly_tag=$NIGHTLY_TAG" >> $GITHUB_OUTPUT
+          echo "nightly_version=$NIGHTLY_VERSION" >> $GITHUB_OUTPUT
+          echo "nightly_branch=$NIGHTLY_BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Upgrade Cairo to latest main commit
+        run: cargo xtask set-cairo-version --branch main
+
+      - name: Set Scarb version
+        run: cargo xtask set-scarb-version ${{ env.NIGHTLY_VERSION }}
+
+      - name: Commit patches
+        run: |
+          git checkout -b ${{ env.NIGHTLY_BRANCH }} 
+          git add .
+          git commit -m ${{ env.NIGHTLY_TAG }}
+
+      # NOTE: This must be the last operation done in this job in order for cleanup job to work properly.
+      - name: Push patches to the repository
+        run: git push origin ${{ env.NIGHTLY_BRANCH }}
+
+  check:
+    uses: ./.github/workflows/_check-release.yml
+    needs: prepare
+    with:
+      ref: ${{ needs.prepare.outputs.nightly_branch }}
+      fail-fast: false
+
+  release:
+    uses: ./.github/workflows/_build-release.yml
+    needs: prepare
+    with:
+      scarb-tag: v${{ needs.prepare.outputs.nightly_version }}
+      ref: ${{ needs.prepare.outputs.nightly_branch }}
+
+  cleanup:
+    runs-on: ubuntu-latest
+    if: always() && needs.prepare.result == 'success'
+    needs: [ prepare, release ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Delete nightly branch
+        run: |
+          git push origin -d ${{ needs.prepare.outputs.nightly_branch }}
