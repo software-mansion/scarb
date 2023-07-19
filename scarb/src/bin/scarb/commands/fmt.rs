@@ -11,8 +11,8 @@ pub fn run(args: FmtArgs, config: &Config) -> Result<()> {
     let packages = args
         .packages_filter
         .match_many(&ws)?
-        .iter()
-        .map(|p| p.id.name.clone())
+        .into_iter()
+        .map(|p| p.id)
         .collect::<Vec<_>>();
     if ops::format(
         ops::FmtOptions {

@@ -5,6 +5,8 @@ use assert_fs::TempDir;
 use indoc::indoc;
 
 use scarb_test_support::command::Scarb;
+use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 const SIMPLE_ORIGINAL: &str = r"fn main()    ->    felt252      {      42      }";
 const SIMPLE_FORMATTED: &str = indoc! {r#"
@@ -103,5 +105,57 @@ fn simple_format_with_filter() {
 
     assert!(t.child("src/lib.cairo").is_file());
     let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_FORMATTED);
+}
+
+#[test]
+fn workspace_with_root() {
+    let t = TempDir::new().unwrap().child("test_workspace");
+    let pkg1 = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .lib_cairo(SIMPLE_ORIGINAL)
+        .build(&pkg1);
+    let pkg2 = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .lib_cairo(SIMPLE_ORIGINAL)
+        .dep("first", r#"path = "../first""#)
+        .build(&pkg2);
+    let root = ProjectBuilder::start()
+        .name("some_root")
+        .lib_cairo(SIMPLE_ORIGINAL)
+        .dep("first", r#"path = "./first""#)
+        .dep("second", r#"path = "./second""#);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .package(root)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fmt")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_FORMATTED);
+    let content = fs::read_to_string(t.child("first/src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_ORIGINAL);
+    let content = fs::read_to_string(t.child("second/src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_ORIGINAL);
+
+    Scarb::quick_snapbox()
+        .args(["fmt", "--workspace"])
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_FORMATTED);
+    let content = fs::read_to_string(t.child("first/src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_FORMATTED);
+    let content = fs::read_to_string(t.child("second/src/lib.cairo")).unwrap();
     assert_eq!(content, SIMPLE_FORMATTED);
 }
