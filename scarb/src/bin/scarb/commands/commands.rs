@@ -35,7 +35,7 @@ impl Message for CommandsList {
     fn text(self) -> String {
         let mut text = String::from("Installed Commands:\n");
         for (name, info) in self.commands {
-            text.push_str(&format!("{:<20}: {}\n", name, info));
+            text.push_str(&format!("{:<22}: {}\n", name, info));
         }
         text
     }
