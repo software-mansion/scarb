@@ -21,6 +21,7 @@ pub fn main(args: Args) -> Result<()> {
 }
 
 pub fn nightly_version() -> Version {
+    // NOTE: We are not using scarb-build-metadata here to reduce compilation times of xtask crate.
     let mut version = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
     version.pre = Prerelease::EMPTY;
     version.build = BuildMetadata::new(&nightly_tag()).unwrap();

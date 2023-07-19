@@ -109,7 +109,7 @@ fn core_version_tag() -> String {
         .commit_info
         .map(|commit| {
             assert!(!commit.short_commit_hash.starts_with('v'));
-            commit.short_commit_hash
+            commit.short_commit_hash.to_string()
         })
         .unwrap_or_else(|| format!("v{}", core_version_info.version))
 }
@@ -143,6 +143,6 @@ fn extract_with_templating(dir: &Dir<'_>, base_path: &Utf8Path) -> Result<()> {
 fn expand_meta_variables(contents: &[u8]) -> Vec<u8> {
     // SAFETY: We control these files, and we know that they are UTF-8.
     let contents = unsafe { std::str::from_utf8_unchecked(contents) };
-    let contents = contents.replace("{{ CAIRO_VERSION }}", &crate::version::get().cairo.version);
+    let contents = contents.replace("{{ CAIRO_VERSION }}", crate::version::get().cairo.version);
     contents.into_bytes()
 }

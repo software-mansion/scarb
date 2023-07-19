@@ -5,6 +5,7 @@ use assert_fs::TempDir;
 use indoc::indoc;
 use predicates::prelude::*;
 
+use scarb_build_metadata::CAIRO_VERSION;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -287,12 +288,11 @@ fn compile_with_incompatible_cairo_version() {
 
 #[test]
 fn compile_with_compatible_cairo_version() {
-    let version = env!("SCARB_CAIRO_VERSION").to_string();
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
-        .cairo_version(&version)
+        .cairo_version(CAIRO_VERSION)
         .build(&t);
 
     Scarb::quick_snapbox()

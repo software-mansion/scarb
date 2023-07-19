@@ -5,8 +5,10 @@ use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use camino::Utf8PathBuf;
 use semver::Version;
-use to_version::ToVersion;
 use toml_edit::{Document, Item, Table, Value};
+
+use scarb_build_metadata::CAIRO_VERSION;
+use to_version::ToVersion;
 
 use crate::fsx::PathUtf8Ext;
 use crate::gitx::GitProject;
@@ -72,7 +74,7 @@ impl ProjectBuilder {
     }
 
     pub fn dep_starknet(self) -> Self {
-        self.dep("starknet", r#"version = ">=2.1.0-rc0""#)
+        self.dep("starknet", format!(r#"version = ">={}""#, CAIRO_VERSION))
     }
 
     pub fn manifest_extra(mut self, extra: impl Into<String>) -> Self {
