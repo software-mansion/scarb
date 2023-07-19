@@ -121,7 +121,7 @@ pub enum Command {
     #[command(alias = "rm")]
     Remove(RemoveArgs),
     /// Compile current project.
-    Build,
+    Build(BuildArgs),
     /// Remove generated artifacts.
     Clean,
     /// List installed commands.
@@ -151,6 +151,13 @@ pub enum Command {
     /// External command (`scarb-*` executable).
     #[command(external_subcommand)]
     External(Vec<OsString>),
+}
+
+/// Arguments accepted by the `build` command.
+#[derive(Parser, Clone, Debug)]
+pub struct BuildArgs {
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
 }
 
 /// Arguments accepted by the `run` command.
