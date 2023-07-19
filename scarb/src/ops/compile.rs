@@ -7,14 +7,17 @@ use indoc::formatdoc;
 
 use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin};
 use crate::compiler::CompilationUnit;
-use crate::core::{Utf8PathWorkspaceExt, Workspace};
+use crate::core::{PackageId, Utf8PathWorkspaceExt, Workspace};
 use crate::ops;
 use crate::ui::Status;
 
 #[tracing::instrument(skip_all, level = "debug")]
-pub fn compile(ws: &Workspace<'_>) -> Result<()> {
+pub fn compile(packages: Vec<PackageId>, ws: &Workspace<'_>) -> Result<()> {
     let resolve = ops::resolve_workspace(ws)?;
-    let compilation_units = ops::generate_compilation_units(&resolve, ws)?;
+    let compilation_units = ops::generate_compilation_units(&resolve, ws)?
+        .into_iter()
+        .filter(|cu| packages.contains(&cu.main_package_id))
+        .collect::<Vec<_>>();
 
     for unit in compilation_units {
         compile_unit_isolated(unit, ws)?;
