@@ -1,34 +1,50 @@
 use anyhow::Result;
 use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
-use ignore::WalkState::Continue;
+use ignore::WalkState::{Continue, Skip};
 use ignore::{DirEntry, Error, ParallelVisitor, ParallelVisitorBuilder, WalkState};
 use std::fmt::Display;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use tracing::{info, warn};
 
 use crate::core::workspace::Workspace;
-use crate::core::{Package, PackageName};
+use crate::core::PackageId;
 
 #[derive(Debug)]
 pub struct FmtOptions {
     pub check: bool,
-    pub packages: Vec<PackageName>,
+    pub packages: Vec<PackageId>,
     pub color: bool,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
     console::set_colors_enabled(opts.color);
-    if opts.packages.is_empty() {
-        // Format project members.
-        format_package_by_cond(ws, &opts, &|_pkg: &Package| true)
-    } else {
-        // Format single package by name.
-        format_package_by_cond(ws, &opts, &|pkg: &Package| {
-            opts.packages.contains(&pkg.id.name)
-        })
+    let config = FormatterConfig::default();
+    let fmt = CairoFormatter::new(config);
+    let packages = ws
+        .members()
+        .filter(|pkg| opts.packages.contains(&pkg.id))
+        .collect::<Vec<_>>();
+    let Some((first_package, packages)) = packages.split_first() else {
+        return Ok(true);
+    };
+    let mut walk = fmt.walk(first_package.root().as_std_path());
+    for package in packages {
+        walk.add(package.root().as_std_path());
     }
+    let all_correct = AtomicBool::new(true);
+    let mut builder = PathFormatterBuilder {
+        ws,
+        fmt: &fmt,
+        opts: &opts,
+        all_correct: &all_correct,
+        selected_packages: opts.packages.clone(),
+    };
+    walk.build_parallel().visit(&mut builder);
+    let result = builder.all_correct.load(Ordering::Acquire);
+
+    Ok(result)
 }
 
 struct PathFormatter<'t> {
@@ -36,9 +52,11 @@ struct PathFormatter<'t> {
     opts: &'t FmtOptions,
     fmt: &'t CairoFormatter,
     ws: &'t Workspace<'t>,
+    skip: Vec<PathBuf>,
 }
 
 struct PathFormatterBuilder<'t> {
+    selected_packages: Vec<PackageId>,
     all_correct: &'t AtomicBool,
     opts: &'t FmtOptions,
     fmt: &'t CairoFormatter,
@@ -50,11 +68,18 @@ where
     't: 's,
 {
     fn build(&mut self) -> Box<dyn ParallelVisitor + 's> {
+        let skip = self
+            .ws
+            .members()
+            .filter(|pkg| !self.selected_packages.contains(&pkg.id))
+            .map(|pkg| pkg.root().as_std_path().to_path_buf())
+            .collect::<Vec<_>>();
         Box::new(PathFormatter {
             all_correct: self.all_correct,
             opts: self.opts,
             fmt: self.fmt,
             ws: self.ws,
+            skip,
         })
     }
 }
@@ -130,11 +155,17 @@ impl<'t> ParallelVisitor for PathFormatter<'t> {
             return Continue;
         };
 
+        let path = dir_entry.path();
+
+        if file_type.is_dir() && self.skip.contains(&path.to_path_buf()) {
+            // Ignore workspace members that are not selected with package filter.
+            return Skip;
+        }
+
         if !file_type.is_file() {
             return Continue;
         }
 
-        let path = dir_entry.path();
         info!("Formatting file: {}.", path.display());
 
         let success = if self.opts.check {
@@ -149,39 +180,4 @@ impl<'t> ParallelVisitor for PathFormatter<'t> {
 
         Continue
     }
-}
-
-fn format_package(opts: &FmtOptions, pkg: &Package, ws: &Workspace<'_>) -> Result<bool> {
-    let config = FormatterConfig::default();
-    let fmt = CairoFormatter::new(config);
-
-    let base_path = Path::new(pkg.manifest_path().parent().unwrap());
-    let walk = fmt.walk(base_path);
-    let all_correct = AtomicBool::new(true);
-    let mut builder = PathFormatterBuilder {
-        ws,
-        opts,
-        fmt: &fmt,
-        all_correct: &all_correct,
-    };
-    walk.build_parallel().visit(&mut builder);
-    let result = builder.all_correct.load(Ordering::Acquire);
-
-    Ok(result)
-}
-
-fn format_package_by_cond(
-    ws: &Workspace<'_>,
-    opts: &FmtOptions,
-    cond: &dyn Fn(&Package) -> bool,
-) -> Result<bool> {
-    let mut result = true;
-
-    for pkg in ws.members() {
-        if cond(&pkg) {
-            result &= format_package(opts, &pkg, ws)?;
-        }
-    }
-
-    Ok(result)
 }
