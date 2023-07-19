@@ -1,0 +1,159 @@
+name: Release Build
+
+on:
+  workflow_call:
+    inputs:
+      # Must start with 'v'
+      scarb-tag:
+        required: true
+        type: string
+      ref:
+        required: false
+        type: string
+
+jobs:
+  build:
+    name: build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+
+    env:
+      # Cross-compiled targets will override this to `cross`.
+      CARGO: cargo
+
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            # Use cross to link oldest GLIBC possible.
+            cross: true
+
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+
+          #- target: armv7-unknown-linux-gnueabihf
+          #  os: ubuntu-latest
+          #  cross: true
+
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+
+          - target: x86_64-apple-darwin
+            os: macos-latest
+
+          - target: aarch64-apple-darwin
+            os: macos-latest
+
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+
+          #- target: aarch64-pc-windows-msvc
+          #  os: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Install cross
+        if: matrix.cross
+        uses: taiki-e/install-action@cross
+
+      - name: Enable cross-compilation
+        if: matrix.cross
+        shell: bash
+        run: echo "CARGO=cross" >> $GITHUB_ENV
+
+      - name: Build
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }}
+
+      - name: Create archive
+        run: cargo xtask create-archive
+        env:
+          STAGING: scarb-${{ inputs.scarb-tag }}-${{ matrix.target }}
+          TARGET: ${{ matrix.target }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-${{ matrix.target }}
+          path: scarb-${{ inputs.scarb-tag }}-${{ matrix.target }}.*
+
+  verify:
+    name: verify ${{ matrix.os }} ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    needs: build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-20.04
+
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-22.04
+
+          - target: x86_64-apple-darwin
+            os: macos-12
+
+          - target: x86_64-pc-windows-msvc
+            os: windows-2019
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build xtasks
+        run: cargo build -p xtask
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: build-${{ matrix.target }}
+          path: target/verify
+
+      - name: Verify archive
+        shell: bash
+        run: |
+          archive=$(find target/verify -name 'scarb-*.zip' -o -name 'scarb-*.tar.gz')
+          cargo xtask verify-archive --archive "$archive"
+        env:
+          EXPECTED_VERSION: ${{ inputs.scarb-tag }}
+
+  checksums:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts-dl
+
+      - name: Unpack artifacts to staging directory
+        run: |
+          mkdir -p artifacts
+          mv artifacts-dl/build-*/scarb-* artifacts/
+
+      - name: Compute checksums
+        working-directory: artifacts
+        run: sha256sum -b scarb-* > checksums.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: checksums
+          path: artifacts/checksums.*

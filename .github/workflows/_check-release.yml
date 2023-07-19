@@ -1,0 +1,33 @@
+name: Release Check
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: false
+        type: string
+      fail-fast:
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  test:
+    name: test ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: ${{ inputs.fail-fast }}
+      matrix:
+        include:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: macos x86-64
+            os: macos-latest
+          - name: windows x86-64
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
