@@ -150,7 +150,9 @@ jobs:
 
       - name: Compute checksums
         working-directory: artifacts
-        run: sha256sum -b scarb-* > checksums.sha256
+        run: |
+          sha256sum -b scarb-* > checksums.sha256
+          cat checksums.sha256
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
