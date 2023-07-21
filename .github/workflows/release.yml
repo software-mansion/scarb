@@ -9,138 +9,18 @@ permissions:
   contents: write
 
 jobs:
-  test:
-    name: test ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - name: linux x86-64
-            os: ubuntu-latest
-          - name: macos x86-64
-            os: macos-latest
-          - name: windows x86-64
-            os: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test
+  check:
+    uses: ./.github/workflows/_check-release.yml
 
-  build:
-    name: build ${{ matrix.target }}
-    runs-on: ${{ matrix.os }}
+  release:
+    uses: ./.github/workflows/_build-release.yml
+    with:
+      scarb-tag: ${{ github.ref_name }}
 
-    env:
-      # Cross-compiled targets will override this to `cross`.
-      CARGO: cargo
-
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            # Use cross to link oldest GLIBC possible.
-            cross: true
-
-          - target: x86_64-unknown-linux-musl
-            os: ubuntu-latest
-            cross: true
-
-          #- target: armv7-unknown-linux-gnueabihf
-          #  os: ubuntu-latest
-          #  cross: true
-
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
-            cross: true
-
-          - target: aarch64-unknown-linux-musl
-            os: ubuntu-latest
-            cross: true
-
-          - target: x86_64-apple-darwin
-            os: macos-latest
-
-          - target: aarch64-apple-darwin
-            os: macos-latest
-
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-
-          #- target: aarch64-pc-windows-msvc
-          #  os: windows-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          target: ${{ matrix.target }}
-
-      - name: Install cross
-        if: matrix.cross
-        uses: taiki-e/install-action@cross
-
-      - name: Enable cross-compilation
-        if: matrix.cross
-        shell: bash
-        run: |
-          echo "CARGO=cross" >> $GITHUB_ENV
-
-      - name: Build
-        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }}
-
-      - name: Package
-        run: cargo xtask create-archive
-        env:
-          STAGING: scarb-${{ github.ref_name }}-${{ matrix.target }}
-          TARGET: ${{ matrix.target }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-${{ matrix.target }}
-          path: scarb-${{ github.ref_name }}-${{ matrix.target }}.*
-
-  verify:
-    name: verify ${{ matrix.os }} ${{ matrix.target }}
-    runs-on: ${{ matrix.os }}
-    needs: build
-
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-20.04
-
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-22.04
-
-          - target: x86_64-apple-darwin
-            os: macos-12
-
-          - target: x86_64-pc-windows-msvc
-            os: windows-2019
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Download artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: build-${{ matrix.target }}
-          path: target/verify
-
-      - name: Run verification script
-        shell: bash
-        run: |
-          archive=$(find target/verify -name 'scarb-*.zip' -o -name 'scarb-*.tar.gz')
-          cargo xtask verify-archive --archive "$archive" --expected-version "${{ github.ref_name }}"
-
-  create-release:
+  draft:
     name: draft release
     runs-on: ubuntu-latest
-    needs: [ test, verify ]
+    needs: [ check, release ]
     steps:
       - uses: actions/checkout@v3
 
@@ -153,10 +33,8 @@ jobs:
         run: |
           mkdir -p artifacts
           mv artifacts-dl/build-*/scarb-* artifacts/
-
-      - name: Compute checksums
-        working-directory: artifacts
-        run: sha256sum -b scarb-* > checksums.sha256
+          mv artifacts-dl/checksums/* artifacts/
+          ls -lh artifacts/
 
       - name: Draft GitHub release
         id: draft-release
