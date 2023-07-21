@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "crates/**",
+    "crates/*",
 ]
 
 [workspace.scripts]

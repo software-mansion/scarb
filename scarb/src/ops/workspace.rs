@@ -44,9 +44,10 @@ fn read_workspace_impl<'c>(
         find_workspace_manifest_path(package_manifest.into())?.unwrap_or(package_manifest.into());
     let workspace_candidate = read_workspace_root(&workspace_manifest, source_id, config)?;
     // Check if the package is a member of the workspace candidate.
-    if workspace_candidate
-        .members()
-        .any(|p| p.manifest_path() == package_manifest)
+    if workspace_manifest == package_manifest
+        || workspace_candidate
+            .members()
+            .any(|p| p.manifest_path() == package_manifest)
     {
         // If so, we found the package workspace.
         Ok(workspace_candidate)
@@ -101,7 +102,7 @@ fn read_workspace_root<'c>(
         // Read workspace members.
         let mut packages = workspace
             .members
-            .map(|m| find_member_paths(workspace_root, m))
+            .map(|m| find_member_paths(workspace_root, m, config))
             .unwrap_or_else(|| Ok(Vec::new()))?
             .iter()
             .map(AsRef::as_ref)
@@ -141,7 +142,11 @@ fn read_workspace_root<'c>(
     }
 }
 
-fn find_member_paths(root: &Utf8Path, globs: Vec<String>) -> Result<Vec<Utf8PathBuf>> {
+fn find_member_paths(
+    root: &Utf8Path,
+    globs: Vec<String>,
+    config: &Config,
+) -> Result<Vec<Utf8PathBuf>> {
     let mut paths = Vec::with_capacity(globs.len());
     for pattern in globs {
         for path in glob(root.join(&pattern).as_str())
@@ -157,6 +162,12 @@ fn find_member_paths(root: &Utf8Path, globs: Vec<String>) -> Result<Vec<Utf8Path
                 let path = path.try_into_utf8()?;
 
                 paths.push(path)
+            } else {
+                config.ui().warn(format!(
+                    "workspace members definition matched path `{}`, \
+                    which misses a manifest file",
+                    path.display()
+                ));
             }
         }
     }
