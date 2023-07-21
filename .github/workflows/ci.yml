@@ -71,4 +71,3 @@ jobs:
           cache-dependency-path: website/package-lock.json
       - run: npm ci
       - run: npm run fmt:check
-      - run: npm run lint

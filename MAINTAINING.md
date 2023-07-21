@@ -91,12 +91,6 @@ This version of Scarb comes with Cairo [`vX.Y.Z`](https://github.com/starkware-l
 **Full Changelog**: https://github.com/software-mansion/scarb/compare/...
 ```
 
-#### Banner on Scarb website
-
-If this is a significant release, you might consider showing a banner on the website.
-To do this, take a look at the [`theme.config.tsx`](./website/theme.config.tsx) file, do necessary changes,
-commit and trigger manually the [Website Deploy] workflow.
-
 ### Announce release on social media
 
 #### Twitter

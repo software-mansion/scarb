@@ -1,36 +1,60 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+*.lcov
+*.log
+*.pid
+*.pid.lock
+*.seed
+*.tgz
+*.tsbuildinfo
+.cache
+.cache/
+.docusaurus
+.dynamodb/
+.env
+.env.development.local
+.env.local
+.env.production.local
+.env.test.local
+.eslintcache
+.fusebox/
+.grunt
+.lock-wscript
+.next
+.node_repl_history
+.npm
+.nuxt
+.nyc_output
+.parcel-cache
+.pnp.*
+.pnpm-debug.log*
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.serverless/
+.stylelintcache
+.temp
+.tern-port
+.vitepress/cache
+.vscode-test
+.vuepress/dist
+.yarn-integrity
+.yarn/build-state.yml
+.yarn/cache
+.yarn/install-state.gz
+.yarn/unplugged
+bower_components
+build/Release
+coverage
+dist
+jspm_packages/
+lerna-debug.log*
+lib-cov
+logs
+node_modules/
 npm-debug.log*
+out
+pids
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+web_modules/
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
-
-# local env files
-.env*.local
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
