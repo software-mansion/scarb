@@ -9,6 +9,7 @@ use scarb::process::make_executable;
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::filesystem::{path_with_temp_dir, write_script};
 use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 #[test]
 fn run_simple_script() {
@@ -44,10 +45,40 @@ fn run_missing_script() {
         .assert()
         .failure()
         .stdout_eq(indoc! {r#"
-            error: missing script `some_other_script`
+            error: missing script `some_other_script` for package: pkg0
 
             To see a list of scripts, run:
                 scarb run
+        "#});
+}
+
+#[test]
+fn run_missing_script_in_workspace() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+        [scripts]
+        some_script = "echo 'Hello, world!'"
+        "#})
+        .build(&t.child("first"));
+    ProjectBuilder::start()
+        .name("second")
+        .build(&t.child("second"));
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+    Scarb::quick_snapbox()
+        .args(["run", "-p", "first", "some_other_script"])
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: missing script `some_other_script` for package: first
+
+            To see a list of scripts, run:
+                scarb run -p first
         "#});
 }
 
@@ -70,6 +101,59 @@ fn list_scripts() {
     assert_eq!(output["some_script"], "echo 'Hello'");
     assert_eq!(output["some_other_script"], "echo 'world!'");
     assert_eq!(output.len(), 2);
+
+    Scarb::quick_snapbox()
+        .arg("run")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            Scripts available via `scarb run`:
+            some_other_script     : echo 'world!'
+            some_script           : echo 'Hello'
+
+        "#});
+}
+
+#[test]
+fn list_scripts_in_workspace() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+        [scripts]
+        some_script = "echo 'Hello'"
+        some_other_script = "echo 'world!'"
+        "#})
+        .build(&t.child("first"));
+    ProjectBuilder::start()
+        .name("second")
+        .build(&t.child("second"));
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+
+    let output: BTreeMap<String, String> = Scarb::quick_snapbox()
+        .args(["--json", "run", "-p", "first"])
+        .current_dir(&t)
+        .stdout_json();
+
+    assert_eq!(output["some_script"], "echo 'Hello'");
+    assert_eq!(output["some_other_script"], "echo 'world!'");
+    assert_eq!(output.len(), 2);
+
+    Scarb::quick_snapbox()
+        .args(["run", "-p", "first"])
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            Scripts available via `scarb run` for package `first`:
+            some_other_script     : echo 'world!'
+            some_script           : echo 'Hello'
+
+        "#});
 }
 
 #[test]
