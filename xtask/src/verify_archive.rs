@@ -2,7 +2,6 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, ensure, Result};
-use camino::Utf8PathBuf;
 use clap::Parser;
 use walkdir::WalkDir;
 use xshell::{cmd, Shell};
@@ -10,7 +9,7 @@ use xshell::{cmd, Shell};
 #[derive(Parser)]
 pub struct Args {
     #[arg(short, long, env = "SCARB_ARCHIVE")]
-    archive: Utf8PathBuf,
+    archive: PathBuf,
     #[arg(short, long, env = "EXPECTED_VERSION")]
     expected_version: String,
 }
@@ -21,7 +20,7 @@ pub fn main(args: Args) -> Result<()> {
     let expected_version = args.expected_version.trim_start_matches('v');
 
     let install_dir = sh.create_temp_dir()?;
-    if args.archive.file_name().unwrap().ends_with(".tar.gz") {
+    if args.archive.file_name().unwrap().to_string_lossy().ends_with(".tar.gz") {
         let archive = &args.archive;
         let install_dir = install_dir.path();
         cmd!(sh, "tar -zxvf {archive} -C {install_dir}").run()?;

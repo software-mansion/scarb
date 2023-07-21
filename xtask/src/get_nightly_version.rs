@@ -1,7 +1,7 @@
 use anyhow::Result;
-use chrono::Utc;
 use clap::Parser;
 use semver::{BuildMetadata, Prerelease, Version};
+use time::OffsetDateTime;
 
 #[derive(Parser)]
 pub struct Args {
@@ -29,6 +29,6 @@ pub fn nightly_version() -> Version {
 }
 
 pub fn nightly_tag() -> String {
-    let dt = Utc::now();
-    format!("nightly-{}", dt.format("%Y-%m-%d"))
+    let dt = OffsetDateTime::now_utc();
+    format!("nightly-{}-{:0>2}-{:0>2}", dt.year(), u8::from(dt.month()), dt.day())
 }
