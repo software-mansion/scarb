@@ -1,0 +1,101 @@
+/**
+ * Customize default theme styling by overriding CSS variables:
+ * https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
+ */
+
+:root {
+  --swm-c-blue-100: #38acdd;
+  --swm-c-blue-120: #126893;
+  --swm-c-blue-140: #1b4865;
+  --swm-c-blue-20: #e1f3fa;
+  --swm-c-blue-40: #b5e1f1;
+  --swm-c-blue-60: #87cce8;
+  --swm-c-blue-80: #5bb9e0;
+  --swm-c-green-100: #57b495;
+  --swm-c-green-120: #31775d;
+  --swm-c-green-140: #2a4f4a;
+  --swm-c-green-20: #ebfcf7;
+  --swm-c-green-40: #dff2ec;
+  --swm-c-green-60: #b1dfd0;
+  --swm-c-green-80: #82cab2;
+  --swm-c-navy-100: #001a72;
+  --swm-c-navy-20: #c1c6e5;
+  --swm-c-navy-40: #919fcf;
+  --swm-c-navy-60: #6676aa;
+  --swm-c-navy-80: #33488e;
+  --swm-c-purple-100: #782aeb;
+  --swm-c-purple-120: #6a539a;
+  --swm-c-purple-140: #473d68;
+  --swm-c-purple-20: #f5eeff;
+  --swm-c-purple-40: #e8dafc;
+  --swm-c-purple-60: #d1bbf3;
+  --swm-c-purple-80: #b58df1;
+  --swm-c-red-100: #ff6259;
+  --swm-c-red-120: #914f55;
+  --swm-c-red-140: #5a3b46;
+  --swm-c-red-20: #ffedf0;
+  --swm-c-red-40: #ffd2d7;
+  --swm-c-red-60: #ffa3a1;
+  --swm-c-red-80: #fa7f7c;
+  --swm-c-yellow-100: #ffd61e;
+  --swm-c-yellow-120: #91823d;
+  --swm-c-yellow-140: #5a553a;
+  --swm-c-yellow-20: #fffae1;
+  --swm-c-yellow-40: #fff1b2;
+  --swm-c-yellow-60: #ffe780;
+  --swm-c-yellow-80: #ffe04b;
+}
+
+.dark {
+  --swm-c-blue-100: #00a9f0;
+  --swm-c-blue-40: #d7f0fa;
+  --swm-c-blue-60: #a8dbf0;
+  --swm-c-blue-80: #6fcef5;
+  --swm-c-green-100: #3fc684;
+  --swm-c-green-40: #d3f5e4;
+  --swm-c-green-60: #a0dfc0;
+  --swm-c-green-80: #7adead;
+  --swm-c-navy-100: #001a72;
+  --swm-c-navy-120: #122154;
+  --swm-c-navy-140: #1b2445;
+  --swm-c-navy-40: #abbcf5;
+  --swm-c-navy-60: #7485bd;
+  --swm-c-navy-80: #0a2688;
+  --swm-c-purple-100: #b07eff;
+  --swm-c-purple-40: #e9dbff;
+  --swm-c-purple-60: #d0b2ff;
+  --swm-c-purple-80: #c49ffe;
+  --swm-c-red-100: #ff7774;
+  --swm-c-red-40: #ffdcdb;
+  --swm-c-red-60: #ffb4b2;
+  --swm-c-red-80: #ff8b88;
+  --swm-c-yellow-100: #fd4;
+  --swm-c-yellow-40: #fff9db;
+  --swm-c-yellow-60: #fff1b2;
+  --swm-c-yellow-80: #ffe678;
+}
+
+:root {
+  --swm-font-family-geometric-humanist: Avenir, Montserrat, Corbel, "URW Gothic",
+    source-sans-pro, sans-serif;
+}
+
+:root {
+  --vp-c-brand: var(--swm-c-navy-80);
+  --vp-c-brand-dark: var(--swm-c-navy-100);
+  --vp-c-brand-darker: var(--swm-c-navy-120);
+  --vp-c-brand-light: var(--swm-c-navy-40);
+  --vp-c-brand-lighter: var(--swm-c-navy-20);
+}
+
+.dark {
+  --vp-c-brand: var(--swm-c-navy-60);
+  --vp-c-brand-dark: var(--swm-c-navy-80);
+  --vp-c-brand-darker: var(--swm-c-navy-100);
+  --vp-c-brand-light: var(--swm-c-navy-40);
+  --vp-c-brand-lighter: var(--swm-c-navy-20);
+}
+
+:root {
+  --vp-nav-logo-height: 40px;
+}

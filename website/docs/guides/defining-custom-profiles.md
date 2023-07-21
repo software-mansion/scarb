@@ -1,0 +1,55 @@
+# Defining custom profiles
+
+Profiles provide a way to alter the compiler settings.
+
+When running Scarb commands, like `scarb build`, you can specify a profile to use with the `--profile` (`-P`) flag.
+
+For example:
+
+```shell
+scarb --profile release build
+```
+
+For the two built-in profiles (`dev` and `release`), shortcuts are provided.
+
+For example:
+
+```shell
+scarb --release build
+```
+
+The `dev` profile is the default profile used when no profile is specified.
+
+Default settings of a profile can be overridden by specifying a profile with the same name in your codebase's
+`Scarb.toml` file.
+
+For example:
+
+```toml
+[profile.dev.cairo]
+sierra-replace-ids = false
+```
+
+You can also define your own profiles with custom names.
+
+For example:
+
+```toml
+[profile.custom-profile.cairo]
+sierra-replace-ids = false
+```
+
+Custom profiles inherit properties from one of the built-in profiles.
+You can specify a profile to inherit from with the `inherits` property.
+
+For example:
+
+```toml
+[profile.custom-profile]
+inherits = "release"
+
+[profile.custom-profile.cairo]
+sierra-replace-ids = true
+```
+
+If you do not specify an `inherits` property, the `dev` profile is used.

@@ -1,0 +1,24 @@
+# Starknet Package
+
+The `starknet` package provides APIs for writing Starknet contracts code.
+This includes:
+
+- A Cairo compiler plugin which expands contract-specific attributes (`#[starknet::contract]`).
+
+The version of this package is coupled to Cairo version included in Scarb.
+
+## Installation
+
+This package is specially treated by Scarb.
+To use it, simply declare a dependency on it in your package.
+By using the `>=` operator, you will not have to manually update this value on each stable Cairo upgrade.
+
+```toml
+[dependencies]
+starknet = ">=2.1.0"
+```
+
+## Future work
+
+As for now, the `starknet` package's only purpose is to inform Scarb to enable the Starknet compiler plugin.
+In the future it is planned to move the `starknet` module from `core` to this package.

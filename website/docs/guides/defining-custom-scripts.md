@@ -1,0 +1,32 @@
+# Defining custom scripts
+
+`scarb run <script>` provides a cross-platform way to define and execute custom commands specific to a codebase.
+
+To get started, define your scripts in your codebase's `Scarb.toml` file under a "scripts" key.
+
+For example:
+
+```toml
+[scripts]
+foo = "echo 'Hello, world!'"
+```
+
+You can use `scarb run` without name argument to list all defined scripts.
+For example:
+
+```shell
+$ scarb run
+Scripts available via `scarb run`:
+foo                 : echo 'Hello, world!'
+```
+
+To pass additional arguments to the script, use `--` separator after the name.
+
+For example:
+
+```bash
+scarb run foo -- hello world
+```
+
+Your scripts can use `scarb` as a command, which will reference the scarb binary used to execute the script,
+regardless of your system configuration (namely, we will not search the `PATH` variable).
