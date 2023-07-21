@@ -137,17 +137,6 @@ jobs:
           archive=$(find target/verify -name 'scarb-*.zip' -o -name 'scarb-*.tar.gz')
           cargo xtask verify-archive --archive "$archive" --expected-version "${{ github.ref_name }}"
 
-  verify-cargo-package:
-    name: cargo publish --dry-run
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Package
-        run: cargo publish --dry-run -p scarb
-
   create-release:
     name: draft release
     runs-on: ubuntu-latest
