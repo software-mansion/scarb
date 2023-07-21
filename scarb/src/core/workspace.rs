@@ -125,6 +125,11 @@ impl<'c> Workspace<'c> {
         self.members.len()
     }
 
+    /// Return whether the workspace has exactly one package
+    pub fn is_single_package(&self) -> bool {
+        self.members_count() == 1
+    }
+
     pub fn has_profile(&self, profile: &Profile) -> bool {
         self.profiles.contains(profile)
     }
