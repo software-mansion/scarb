@@ -1,5 +1,6 @@
-use crate::project_builder::ProjectBuilder;
+use crate::project_builder::{ProjectBuilder, ToDep};
 use assert_fs::prelude::*;
+use scarb::MANIFEST_FILE_NAME;
 use toml_edit::{Array, Document, Item, Value};
 
 #[derive(Default)]
@@ -7,6 +8,7 @@ pub struct WorkspaceBuilder {
     members: Vec<String>,
     package: Option<ProjectBuilder>,
     manifest_extra: String,
+    deps: Vec<(String, Value)>,
 }
 
 impl WorkspaceBuilder {
@@ -29,11 +31,19 @@ impl WorkspaceBuilder {
         self
     }
 
+    pub fn dep(mut self, name: impl Into<String>, dep: impl ToDep) -> Self {
+        self.deps.push((name.into(), dep.to_dep()));
+        self
+    }
+
     pub fn build(&self, t: &impl PathChild) {
         let mut doc = Document::new();
         doc["workspace"]["members"] = Item::Value(Value::from(Array::from_iter(
             self.members.clone().into_iter(),
         )));
+        for (name, dep) in &self.deps {
+            doc["workspace"]["dependencies"][name.clone()] = Item::Value(dep.clone());
+        }
         let mut manifest = doc.to_string();
 
         if let Some(package) = self.package.as_ref() {
@@ -48,6 +58,6 @@ impl WorkspaceBuilder {
             manifest.push_str(&self.manifest_extra);
         }
 
-        t.child("Scarb.toml").write_str(&manifest).unwrap();
+        t.child(MANIFEST_FILE_NAME).write_str(&manifest).unwrap();
     }
 }

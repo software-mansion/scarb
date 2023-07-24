@@ -17,7 +17,7 @@ const SIMPLE_FORMATTED: &str = indoc! {r#"
 };
 
 fn build_temp_dir(data: &str) -> TempDir {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
             r#"

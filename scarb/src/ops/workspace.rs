@@ -81,6 +81,7 @@ fn read_workspace_root<'c>(
         let manifest = toml_manifest
             .to_manifest(
                 manifest_path,
+                manifest_path,
                 source_id,
                 config.profile(),
                 Some(&toml_manifest),
@@ -112,6 +113,7 @@ fn read_workspace_root<'c>(
                 let manifest = package_manifest
                     .to_manifest(
                         package_path,
+                        manifest_path,
                         source_id,
                         config.profile(),
                         Some(&toml_manifest),

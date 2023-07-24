@@ -82,20 +82,17 @@ type TomlToolsDefinition = BTreeMap<SmolStr, toml::Value>;
 #[serde(rename_all = "kebab-case")]
 pub struct TomlWorkspace {
     pub members: Option<Vec<String>>,
-    pub package: Option<TomlPackage>,
+    pub package: Option<PackageInheritableFields>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub scripts: Option<BTreeMap<SmolStr, ScriptDefinition>>,
     pub tool: Option<TomlToolsDefinition>,
 }
 
-/// Represents the `package` section of a `Scarb.toml`.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct TomlPackage {
-    pub name: PackageName,
-    pub version: Version,
+pub struct PackageInheritableFields {
+    pub version: Option<Version>,
     pub authors: Option<Vec<String>>,
-    pub urls: Option<BTreeMap<String, String>>,
     pub description: Option<String>,
     pub documentation: Option<String>,
     pub homepage: Option<String>,
@@ -104,9 +101,73 @@ pub struct TomlPackage {
     pub license_file: Option<String>,
     pub readme: Option<String>,
     pub repository: Option<String>,
+    pub cairo_version: Option<VersionReq>,
+}
+
+macro_rules! get_field {
+    ($name:ident, $type:ty) => {
+        pub fn $name(&self) -> Result<$type> {
+            self.$name.clone().ok_or_else(|| {
+                anyhow!(
+                    "no `{}` field found in workspace definition",
+                    stringify!($name)
+                )
+            })
+        }
+    };
+}
+type VecOfStrings = Vec<String>;
+
+impl PackageInheritableFields {
+    get_field!(version, Version);
+    get_field!(authors, VecOfStrings);
+    get_field!(keywords, VecOfStrings);
+    get_field!(cairo_version, VersionReq);
+    get_field!(description, String);
+    get_field!(documentation, String);
+    get_field!(homepage, String);
+    get_field!(license, String);
+    get_field!(license_file, String);
+    get_field!(readme, String);
+    get_field!(repository, String);
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TomlWorkspaceField {
+    workspace: bool,
+}
+
+impl WorkspaceInherit for TomlWorkspaceField {
+    fn inherit_toml_table(&self) -> &str {
+        "package"
+    }
+
+    fn workspace(&self) -> bool {
+        self.workspace
+    }
+}
+
+type MaybeWorkspaceField<T> = MaybeWorkspace<T, TomlWorkspaceField>;
+
+/// Represents the `package` section of a `Scarb.toml`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TomlPackage {
+    pub name: PackageName,
+    pub version: MaybeWorkspaceField<Version>,
+    pub authors: Option<MaybeWorkspaceField<Vec<String>>>,
+    pub urls: Option<BTreeMap<String, String>>,
+    pub description: Option<MaybeWorkspaceField<String>>,
+    pub documentation: Option<MaybeWorkspaceField<String>>,
+    pub homepage: Option<MaybeWorkspaceField<String>>,
+    pub keywords: Option<MaybeWorkspaceField<Vec<String>>>,
+    pub license: Option<MaybeWorkspaceField<String>>,
+    pub license_file: Option<MaybeWorkspaceField<String>>,
+    pub readme: Option<MaybeWorkspaceField<String>>,
+    pub repository: Option<MaybeWorkspaceField<String>>,
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
     pub no_core: Option<bool>,
-    pub cairo_version: Option<VersionReq>,
+    pub cairo_version: Option<MaybeWorkspaceField<VersionReq>>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -281,6 +342,7 @@ impl TomlManifest {
     pub fn to_manifest(
         &self,
         manifest_path: &Utf8Path,
+        workspace_manifest_path: &Utf8Path,
         source_id: SourceId,
         profile: Profile,
         workspace_manifest: Option<&TomlManifest>,
@@ -302,16 +364,15 @@ impl TomlManifest {
             .or(toml_workspace)
             .unwrap_or_default();
 
-        // Apply package defaults from workspace.
-        let package = if let Some(workspace_package) = workspace.package {
-            toml_merge(&workspace_package, package)?
-        } else {
-            package.clone()
-        };
+        let inheritable_package = workspace.package.clone().unwrap_or_default();
 
         let package_id = {
             let name = package.name.clone();
-            let version = package.version.clone().to_version()?;
+            let version = package
+                .version
+                .clone()
+                .resolve("version", || inheritable_package.version())?
+                .to_version()?;
             // Override path dependencies with manifest path.
             let source_id = source_id
                 .to_path()
@@ -328,10 +389,14 @@ impl TomlManifest {
                     .as_ref()
                     .and_then(|deps| deps.get(name.as_str()))
                     .cloned()
-                    .ok_or_else(|| anyhow!("dependency `{}` not found in workspace", name.clone()))
+                    .ok_or_else(|| anyhow!("dependency `{}` not found in workspace", name.clone()))?
+                    .to_dependency(name.clone(), workspace_manifest_path)
             };
-            let toml_dep = toml_dep.clone().resolve(name.as_str(), inherit_ws)?;
-            dependencies.push(toml_dep.to_dependency(name.clone(), manifest_path)?);
+            let toml_dep = toml_dep
+                .clone()
+                .map(|dep| dep.to_dependency(name.clone(), manifest_path))?
+                .resolve(name.as_str(), inherit_ws)?;
+            dependencies.push(toml_dep);
         }
 
         let no_core = package.no_core.unwrap_or(false);
@@ -369,18 +434,58 @@ impl TomlManifest {
         let tool = self.collect_tool(profile_definition, workspace_tool)?;
 
         let metadata = ManifestMetadata {
-            authors: package.authors.clone(),
             urls: package.urls.clone(),
-            description: package.description.clone(),
-            documentation: package.documentation.clone(),
-            homepage: package.homepage.clone(),
-            keywords: package.keywords.clone(),
-            license: package.license.clone(),
-            license_file: package.license_file.clone(),
-            readme: package.readme.clone(),
-            repository: package.repository.clone(),
             tool_metadata: tool,
-            cairo_version: package.cairo_version,
+            authors: package
+                .authors
+                .clone()
+                .map(|mw| mw.resolve("authors", || inheritable_package.authors()))
+                .transpose()?,
+            description: package
+                .description
+                .clone()
+                .map(|mw| mw.resolve("description", || inheritable_package.description()))
+                .transpose()?,
+            documentation: package
+                .documentation
+                .clone()
+                .map(|mw| mw.resolve("documentation", || inheritable_package.documentation()))
+                .transpose()?,
+            homepage: package
+                .homepage
+                .clone()
+                .map(|mw| mw.resolve("homepage", || inheritable_package.homepage()))
+                .transpose()?,
+            keywords: package
+                .keywords
+                .clone()
+                .map(|mw| mw.resolve("keywords", || inheritable_package.keywords()))
+                .transpose()?,
+            license: package
+                .license
+                .clone()
+                .map(|mw| mw.resolve("license", || inheritable_package.license()))
+                .transpose()?,
+            license_file: package
+                .license_file
+                .clone()
+                .map(|mw| mw.resolve("license_file", || inheritable_package.license_file()))
+                .transpose()?,
+            readme: package
+                .readme
+                .clone()
+                .map(|mw| mw.resolve("readme", || inheritable_package.readme()))
+                .transpose()?,
+            repository: package
+                .repository
+                .clone()
+                .map(|mw| mw.resolve("repository", || inheritable_package.repository()))
+                .transpose()?,
+            cairo_version: package
+                .cairo_version
+                .clone()
+                .map(|mw| mw.resolve("cairo_version", || inheritable_package.cairo_version()))
+                .transpose()?,
         };
 
         let manifest = ManifestBuilder::default()
@@ -558,7 +663,7 @@ impl TomlManifest {
                     })
                     .collect::<Result<BTreeMap<SmolStr, toml::Value>>>()
             })
-            .map_or(Ok(None), |v| v.map(Some))?
+            .transpose()?
             .map(|tool| {
                 if let Some(profile_tool) = &profile_definition.tool {
                     toml_merge(&tool, profile_tool)
@@ -566,7 +671,7 @@ impl TomlManifest {
                     Ok(tool)
                 }
             })
-            .map_or(Ok(None), |v| v.map(Some))
+            .transpose()
     }
 }
 
