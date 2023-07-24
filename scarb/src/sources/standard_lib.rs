@@ -1,6 +1,6 @@
 use std::fmt;
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use async_trait::async_trait;
 use camino::Utf8Path;
 use include_dir::{include_dir, Dir, DirEntry};
@@ -155,6 +155,9 @@ fn check_corelib_version(core_scarb_toml: &Utf8Path) -> Result<()> {
         .package
         .ok_or_else(|| anyhow!("could not get package section from `core` Scarb.toml"))?
         .version
+        .resolve("version", || {
+            bail!("the `core` package cannot inherit version from workspace")
+        })?
         .to_string();
     ensure!(
         comp_ver == core_ver,

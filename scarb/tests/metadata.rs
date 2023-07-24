@@ -515,3 +515,53 @@ fn workspace_as_dep() {
         ])
     );
 }
+
+#[test]
+fn workspace_package_key_inheritance() {
+    let t = assert_fs::TempDir::new().unwrap();
+
+    let some_dep = t.child("some_dep");
+    ProjectBuilder::start()
+        .name("some_dep")
+        .version("0.1.0")
+        .build(&some_dep);
+
+    let some_workspace = t.child("some_workspace");
+    let pkg1 = some_workspace.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .workspace_dep("some_dep")
+        .build(&pkg1);
+    let pkg2 = some_workspace.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep("first", r#"path = "../first""#)
+        .build(&pkg2);
+
+    WorkspaceBuilder::start()
+        .dep("some_dep", r#"path = "../some_dep""#)
+        .add_member("first")
+        .add_member("second")
+        .build(&some_workspace);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version=1"])
+        .current_dir(&some_workspace)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_and_deps(metadata),
+        BTreeMap::from_iter([
+            ("core".to_string(), vec![]),
+            (
+                "first".to_string(),
+                vec!["core".to_string(), "some_dep".to_string()]
+            ),
+            (
+                "second".to_string(),
+                vec!["core".to_string(), "first".to_string()]
+            ),
+            ("some_dep".to_string(), vec!["core".to_string()])
+        ])
+    )
+}

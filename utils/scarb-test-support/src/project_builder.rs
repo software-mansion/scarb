@@ -73,6 +73,10 @@ impl ProjectBuilder {
         self
     }
 
+    pub fn workspace_dep(self, name: impl Into<String>) -> Self {
+        self.dep(name, WorkspaceDep)
+    }
+
     pub fn dep_starknet(self) -> Self {
         self.dep("starknet", format!(r#"version = ">={}""#, CAIRO_VERSION))
     }
@@ -120,6 +124,16 @@ impl ProjectBuilder {
 
 pub trait ToDep {
     fn to_dep(&self) -> Value;
+}
+
+pub struct WorkspaceDep;
+
+impl ToDep for WorkspaceDep {
+    fn to_dep(&self) -> Value {
+        let mut table = toml_edit::table();
+        table["workspace"] = Item::Value(Value::from(true));
+        table.into_value().unwrap()
+    }
 }
 
 impl ToDep for Table {

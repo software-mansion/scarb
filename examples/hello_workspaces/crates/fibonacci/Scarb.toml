@@ -1,9 +1,12 @@
 [package]
 name = "fibonacci"
-version = "0.1.0"
+version.workspace = true
 
 [scripts]
 test.workspace = true
+
+[tool]
+snforge.workspace = true
 
 [dependencies]
 addition = { path = "../addition" }

@@ -54,6 +54,13 @@ impl<'de, T: Deserialize<'de>, W: WorkspaceInherit + de::Deserialize<'de>> de::D
 }
 
 impl<T, W: WorkspaceInherit> MaybeWorkspace<T, W> {
+    pub fn map<Y>(self, f: impl FnOnce(T) -> Result<Y>) -> Result<MaybeWorkspace<Y, W>> {
+        Ok(match self {
+            MaybeWorkspace::Defined(value) => MaybeWorkspace::Defined(f(value)?),
+            MaybeWorkspace::Workspace(w) => MaybeWorkspace::Workspace(w),
+        })
+    }
+
     pub fn resolve(self, label: &str, get_ws_inheritable: impl FnOnce() -> Result<T>) -> Result<T> {
         match self {
             MaybeWorkspace::Defined(value) => Ok(value),
