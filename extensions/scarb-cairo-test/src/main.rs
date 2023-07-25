@@ -41,6 +41,8 @@ fn main() -> Result<()> {
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
+    check_scarb_version(&metadata);
+
     let starknet_package_id = metadata
         .packages
         .iter()
@@ -141,4 +143,21 @@ fn build_root_database(unit: &CompilationUnitMetadata, starknet: bool) -> Result
     }
 
     b.build()
+}
+
+fn check_scarb_version(metadata: &Metadata) {
+    let app_version = env!("CARGO_PKG_VERSION").to_string();
+    let scarb_version = metadata
+        .app_version_info
+        .clone()
+        .version
+        .clone()
+        .to_string();
+    if app_version != scarb_version {
+        println!(
+            "warn: the version of cairo-test does not match the version of scarb.\
+         cairo-test: `{}`, scarb: `{}`",
+            app_version, scarb_version
+        );
+    }
 }
