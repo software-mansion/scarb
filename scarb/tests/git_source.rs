@@ -1,11 +1,13 @@
+use std::collections::HashMap;
 use std::fs;
 
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use gix::refs::transaction::PreviousValue;
 use indoc::{formatdoc, indoc};
+use scarb_metadata::Metadata;
 
-use scarb_test_support::command::Scarb;
+use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::gitx;
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -377,4 +379,46 @@ fn force_push() {
         [..] Compiling hello v1.0.0 ([..])
         [..]  Finished release target(s) in [..]
         "#});
+}
+
+#[test]
+fn transitive_path_dep() {
+    let git_dep = gitx::new("dep1", |t| {
+        ProjectBuilder::start()
+            .name("dep0")
+            .lib_cairo("fn hello() -> felt252 { 42 }")
+            .build(&t.child("zero"));
+        ProjectBuilder::start()
+            .name("dep1")
+            .lib_cairo("fn hello() -> felt252 { dep0::hello() }")
+            .dep("dep0", r#" path = "../zero" "#)
+            .build(&t.child("one"));
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep0", &git_dep)
+        .dep("dep1", &git_dep)
+        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(metadata.packages.len(), 4);
+
+    let pkgs = metadata
+        .packages
+        .iter()
+        .map(|pkg| (pkg.name.clone(), pkg.source.to_string()))
+        .collect::<HashMap<String, _>>();
+
+    assert_eq!(pkgs["core"], "std");
+    assert!(pkgs["hello"].starts_with("path+"));
+    assert!(pkgs["dep0"].starts_with("git+"));
+    assert!(pkgs["dep1"].starts_with("git+"));
 }
