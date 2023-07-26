@@ -52,9 +52,7 @@ function DownloadUnix() {
       </p>
       <Pre hasCopyCode className="text-left">
         <code>
-          {
-            "asdf plugin add scarb https://github.com/software-mansion/asdf-scarb.git\n"
-          }
+          {"asdf plugin add scarb\n"}
           {"asdf install scarb latest\n"}
           {"asdf global scarb latest\n"}
         </code>
