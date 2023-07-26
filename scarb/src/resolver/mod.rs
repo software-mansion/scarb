@@ -6,7 +6,7 @@ use petgraph::graphmap::DiGraphMap;
 
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
-use crate::core::{PackageId, Summary};
+use crate::core::{ManifestDependency, PackageId, Summary};
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -24,6 +24,7 @@ use crate::core::{PackageId, Summary};
 #[tracing::instrument(level = "trace", skip_all)]
 pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<Resolve> {
     // TODO(#2): This is very bad, use PubGrub here.
+
     let mut graph = DiGraphMap::new();
 
     let mut packages: HashMap<_, _> = HashMap::from_iter(
@@ -45,7 +46,9 @@ pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<R
             graph.add_node(package_id);
 
             for dep in summaries[&package_id].clone().full_dependencies() {
-                let results = registry.query(dep).await?;
+                let dep = rewrite_dependency_source_id(registry, &package_id, dep).await?;
+
+                let results = registry.query(&dep).await?;
 
                 let Some(dep_summary) = results.first() else {
                     bail!("cannot find package {}", dep.name)
@@ -113,6 +116,29 @@ pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<R
     }
 
     Ok(Resolve { graph })
+}
+
+async fn rewrite_dependency_source_id(
+    registry: &dyn Registry,
+    package_id: &PackageId,
+    dependency: &ManifestDependency,
+) -> Result<ManifestDependency> {
+    // Rewrite path dependencies for git sources.
+    if package_id.source_id.is_git() && dependency.source_id.is_path() {
+        let rewritten_dep = ManifestDependency {
+            name: dependency.name.clone(),
+            version_req: dependency.version_req.clone(),
+            source_id: package_id.source_id,
+        };
+        // Check if this dependency can be queried from git source.
+        // E.g. packages below other package's manifest will not be accessible.
+        if !registry.query(&rewritten_dep).await?.is_empty() {
+            // If it is, return rewritten dependency.
+            return Ok(rewritten_dep);
+        }
+    };
+
+    Ok(dependency.clone())
 }
 
 #[cfg(test)]
