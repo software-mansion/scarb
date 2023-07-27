@@ -64,7 +64,7 @@ const features: FeatureProps[] = [
       </svg>
     ),
     title: "Develop",
-    desc: "Great support in the rest of Cairo ecosystem. Out of the box works with Cairo Language Server and Protostar.",
+    desc: "Great support in the rest of Cairo ecosystem. Out of the box works with Cairo Language Server and Starknet Foundry.",
   },
 ];
 
