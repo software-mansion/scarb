@@ -495,10 +495,10 @@ fn profile_overrides_tool() {
     ProjectBuilder::start()
         .name("hello")
         .manifest_extra(indoc! {r#"
-            [tool.protostar]
+            [tool.snforge]
             some-key = "some-value"
 
-            [profile.release.tool.protostar]
+            [profile.release.tool.snforge]
             some-key = "some-other-value"
         "#})
         .build(&t);
@@ -516,7 +516,7 @@ fn profile_overrides_tool() {
             .manifest_metadata
             .tool
             .unwrap()
-            .get("protostar")
+            .get("snforge")
             .unwrap()
             .get("some-key")
             .unwrap()
@@ -539,7 +539,7 @@ fn profile_overrides_tool() {
             .manifest_metadata
             .tool
             .unwrap()
-            .get("protostar")
+            .get("snforge")
             .unwrap()
             .get("some-key")
             .unwrap()

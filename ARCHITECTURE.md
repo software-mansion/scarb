@@ -27,8 +27,7 @@ flowchart TD
     subgraph EXT_CMDS ["External subcommands system"]
         direction LR
         CAIRO_LS["Cairo Language Server"]
-        PROTOSTAR["scarb test\n(will be built from Protostar)"]
-        STARKNET["scarb starknet\n(will be built from Protostar)"]
+        SNFORGE["scarb test\n(can redirect to either snforge,\ncairo-test or other runner)"]
     end
 ```
 
@@ -232,7 +231,7 @@ When building a project, Scarb retrieves appropriate compiler implementation fro
 The compiler will later be used to compile the project into the target output.
 
 ### Compilation units
-Please see [scarb documentation](https://docs.swmansion.com/docs/reference/compilation-model) for more information.
+Please see [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/compilation-model) for more information.
 
 ### CairoPluginRepository
 
@@ -262,7 +261,7 @@ Cairo compiler relies on the `RootDatabase` for management of the compilation st
 When compiling a single compilation unit, Scarb creates and configures the database, and passes it to the Cairo compiler. 
 The compilation of each unit uses a separate database instance, which is then dropped after the compilation is finished.
 The database is initialized with Cairo project configuration, obtained from the Scarb compilation unit, conditional 
-compilation parameters (see [scarb documentation](https://docs.swmansion.com/docs/reference/conditional-compilation) 
+compilation parameters (see [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/conditional-compilation) 
 for more information) and active Cairo plugins.
 
 ### Profiles implementation
