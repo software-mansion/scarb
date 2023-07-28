@@ -7,7 +7,6 @@ use std::{fmt, thread};
 
 use anyhow::{anyhow, bail, Context, Result};
 use tracing::{debug, debug_span, warn, Span};
-use walkdir::DirEntry;
 
 use crate::core::Config;
 use crate::ui::{Spinner, Status};
@@ -166,15 +165,15 @@ pub fn make_executable(path: &Path) {
 pub fn make_executable(_path: &Path) {}
 
 #[cfg(unix)]
-pub fn is_hidden(entry: &DirEntry) -> bool {
+pub fn is_hidden(entry: impl AsRef<Path>) -> bool {
     is_hidden_by_dot(entry)
 }
 
 #[cfg(windows)]
-pub fn is_hidden(entry: &DirEntry) -> bool {
+pub fn is_hidden(entry: impl AsRef<Path>) -> bool {
     use std::os::windows::prelude::*;
 
-    let is_hidden = std::fs::metadata(entry.path())
+    let is_hidden = std::fs::metadata(entry.as_ref())
         .ok()
         .map(|metadata| metadata.file_attributes())
         .map(|attributes| (attributes & 0x2) > 0)
@@ -183,10 +182,11 @@ pub fn is_hidden(entry: &DirEntry) -> bool {
     is_hidden || is_hidden_by_dot(entry)
 }
 
-fn is_hidden_by_dot(entry: &DirEntry) -> bool {
+fn is_hidden_by_dot(entry: impl AsRef<Path>) -> bool {
     entry
-        .file_name()
-        .to_str()
+        .as_ref()
+        .file_stem()
+        .and_then(|s| s.to_str())
         .map(|s| s.starts_with('.'))
         .unwrap_or(false)
 }
