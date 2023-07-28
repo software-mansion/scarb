@@ -156,7 +156,10 @@ fn find_member_paths(
         {
             let path =
                 path.with_context(|| format!("unable to match path to pattern: {pattern}"))?;
-
+            // Skip hidden directories.
+            if is_hidden(path.clone()) {
+                continue;
+            }
             // Look for manifest file, continuing if it does not exist.
             let path = path.join(MANIFEST_FILE_NAME);
             if path.is_file() {
@@ -190,7 +193,7 @@ pub fn find_all_workspaces_recursive_with_source_id<'c>(
             entry.file_name() == MANIFEST_FILE_NAME
         } else if entry.file_type().is_dir() {
             // Do not walk into hidden directories.
-            let is_hidden = is_hidden(entry);
+            let is_hidden = is_hidden(entry.path());
             // Do not traverse package directories.
             let is_package = entry
                 .path()
