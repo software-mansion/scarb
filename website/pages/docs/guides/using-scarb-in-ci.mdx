@@ -1,3 +1,5 @@
+import { BigLink } from "@/components/bigLink";
+
 # Using Scarb in CI
 
 To use Scarb in your CI workflow, you need to download the Scarb binary, unpack the archive, and add the directory
@@ -6,7 +8,7 @@ containing Scarb binary to your PATH variable.
 ## GitHub Actions
 
 The officially supported [`software-mansion/setup-scarb`](https://github.com/software-mansion/setup-scarb) GitHub action
-installs Scarb on the job runner and prepares environment for optimal use.
+installs Scarb on the job runner and prepares environment for optimal use with dependency caching out of the box.
 You can find an example of the Scarb setup in the following workflow file:
 
 ```yaml copy filename=".github/workflows/ci.yml"
@@ -26,6 +28,16 @@ jobs:
       - run: scarb fmt --check
       - run: scarb test
 ```
+
+You can use `scarb-version` to specify which Scarb version will be used.
+When it is not present, the action will resolve the version from `.tool-versions` file that's created when using [`asdf`](https://asdf-vm.com/guide/introduction.html).
+In case there is no such file, the latest Scarb version will be installed.
+You can find more information in action's repository.
+
+<BigLink
+  href="https://github.com/software-mansion/setup-scarb"
+  text="Go to setup-scarb repository on GitHub"
+/>
 
 ## GitLab CI
 
