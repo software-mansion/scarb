@@ -59,7 +59,7 @@ classDiagram
         +Url
     }
     class TomlManifest {
-        Serialization of Scrab.toml
+        Serialization of Scarb.toml
     }
     class Config~'c~ {
         - manifest path
