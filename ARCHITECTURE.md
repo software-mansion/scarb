@@ -58,9 +58,6 @@ classDiagram
         +SourceKind
         +Url
     }
-    class TomlManifest {
-        Serialization of Scarb.toml
-    }
     class Config~'c~ {
         - manifest path
         - app exe path
@@ -75,6 +72,9 @@ classDiagram
     }
     class CodegenRepository {
         - compilers
+    }
+    class CairoPluginRepository {
+        - compiler semantic plugins
     }
     class StarknetContractCompiler {
     }
@@ -94,6 +94,9 @@ classDiagram
         + profile definitions
         + scripts
         + not important metadata
+    }
+    class TomlManifest {
+       Serialization of Scarb.toml
     }
     class Summary {
         + PackageID
@@ -126,6 +129,7 @@ classDiagram
     Workspace~'c~ *-- Config~'c~
     Workspace~'c~ o-- * Package
     Config~'c~ *-- CodegenRepository
+    Config~'c~ *-- CairoPluginRepository
     Package -- Manifest
     Manifest -- Summary
     Manifest o-- * Target
@@ -143,6 +147,27 @@ classDiagram
 ```
 
 ### Sources and the internal registry
+
+```mermaid
+classDiagram
+    direction BT
+    class Source {
+       <<Trait>>
+       + query(&ManifestDependency) Vec~Summary~
+       + download(PackageId) Package
+    }
+    class PathSource
+    class GitSource
+    class StandardLibSource
+    class RegistrySource {
+        <<Future>>
+    }
+
+    PathSource ..|> Source
+    GitSource ..|> Source
+    StandardLibSource ..|> Source
+    RegistrySource ..|> Source
+```
 
 A _source_ is an object that finds and downloads remote packages based on names and versions.
 The interface of sources is contained within the `Source` trait.
