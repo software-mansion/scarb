@@ -82,4 +82,5 @@ test-for-each-example = { path = "../utils/test-for-each-example" }
 
 [build-dependencies]
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
+toml.workspace = true
 zip.workspace = true
