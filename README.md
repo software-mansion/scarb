@@ -11,11 +11,36 @@ All information about Scarb is available on project's [website](https://docs.swm
 * [Cheat sheet](https://docs.swmansion.com/scarb/docs/cheatsheet)
 * [Documentation](https://docs.swmansion.com/scarb/docs)
 
-## Changelog and roadmap
+## Changelog
 
 All notable changes to this project are documented on the [GitHub releases] page.
 
-We track project roadmap [here](https://github.com/orgs/software-mansion/projects/4/views/1).
+## Roadmap
+
+Scarb is under active development! Expect a lot of new features to appear soon! 🔥
+
+- [x] Building Cairo packages
+- [x] Pulling dependencies from local filesystem
+- [x] Pulling dependencies from Git
+- [x] Machine-readable workspace metadata generation
+- [x] Built-in Cairo compiler plugins as packages (the `starknet` package)
+- [x] Feature parity with Cairo compiler CLIs
+- [x] Scarb installer
+- [x] ASDF plugin
+- [x] GitHub action
+- [ ] Nightlies
+- [ ] Workspaces
+- [ ] Standardized `test` target
+- [ ] `scarb check`
+- [ ] `scarb init` templates or `scarb create-starknet-contract` command
+- [ ] `Scarb.lock`
+- [ ] PubGrub implementation for version resolution
+- [ ] `scarb update`
+- [ ] Package registry
+- [ ] Dynamic loading of custom Cairo compiler plugins as Scarb packages
+- [ ] Dynamic loading of custom targets aka code generators
+- [ ] Dependency overrides
+- [ ] Signing & notarization of Windows & macOS binaries
 
 ## Credits
 
