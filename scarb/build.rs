@@ -5,7 +5,7 @@ use std::{env, fs, io};
 
 use zip::ZipArchive;
 
-use scarb_build_metadata::CAIRO_COMMIT_REV;
+use scarb_build_metadata::{CAIRO_COMMIT_REV, CAIRO_VERSION};
 
 fn main() {
     download_core(CAIRO_COMMIT_REV);
@@ -81,6 +81,7 @@ fn download_core(rev: &str) {
         }
     }
 
+    check_corelib_version(core_path.join("Scarb.toml"));
     println!("cargo:rustc-env=SCARB_CORE_PATH={}", core_path.display());
 }
 
@@ -90,4 +91,22 @@ fn ident(id: &str) -> String {
         ident.push(if ch.is_ascii_alphanumeric() { ch } else { '_' })
     }
     ident
+}
+
+fn check_corelib_version(core_scarb_toml: PathBuf) {
+    let core_toml: toml::Value = toml::from_str(
+        &fs::read_to_string(core_scarb_toml).expect("Could not read `core` Scarb.toml."),
+    )
+    .expect("Could not convert `core` Scarb.toml to toml.");
+    let core_ver = core_toml
+        .get("package")
+        .expect("Could not get package section from `core` Scarb.toml.")
+        .get("version")
+        .expect("Could not get version field from `core` Scarb.toml.")
+        .as_str()
+        .unwrap();
+    assert_eq!(
+        core_ver, CAIRO_VERSION,
+        "`core` version does not match Cairo compiler version."
+    );
 }
