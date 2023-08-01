@@ -37,7 +37,7 @@ cairo-lang-sierra-to-casm = "2.1.0-rc2"
 cairo-lang-starknet = "2.1.0-rc2"
 cairo-lang-test-runner = "2.1.0-rc2"
 cairo-lang-utils = { version = "2.1.0-rc2", features = ["env_logger"] }
-camino = { version = "1.1.4", features = ["serde1"] }
+camino = { version = "1.1.6", features = ["serde1"] }
 cargo_metadata = "0.15.4"
 clap = { version = "4.3.19", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.1"
