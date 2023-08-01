@@ -42,7 +42,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
-            [..]  Finished release target(s) in [..] seconds
+            [..]  Finished release target(s) in [..]
         "#});
 }
 
@@ -221,7 +221,7 @@ fn build_external_full_path() {
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
-            [..]  Finished release target(s) in [..] seconds
+            [..]  Finished release target(s) in [..]
         "#});
     assert_eq!(
         world.child("target/dev").files(),
