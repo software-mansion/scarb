@@ -1,6 +1,6 @@
 use std::fmt;
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use async_trait::async_trait;
 use camino::Utf8Path;
 use include_dir::{include_dir, Dir, DirEntry};
@@ -8,7 +8,7 @@ use tokio::sync::OnceCell;
 use tracing::trace;
 
 use crate::core::config::Config;
-use crate::core::manifest::{ManifestDependency, Summary};
+use crate::core::manifest::{ManifestDependency, Summary, TomlManifest};
 use crate::core::package::{Package, PackageId};
 use crate::core::source::Source;
 use crate::core::SourceId;
@@ -75,6 +75,8 @@ impl<'c> StandardLibSource<'c> {
                 tag_fs.mark_ok()?;
             }
         }
+
+        check_corelib_version(&tag_fs.path_existent()?.join("core").join("Scarb.toml"))?;
 
         Ok(PathSource::recursive_at(
             tag_path,
@@ -145,4 +147,18 @@ fn expand_meta_variables(contents: &[u8]) -> Vec<u8> {
     let contents = unsafe { std::str::from_utf8_unchecked(contents) };
     let contents = contents.replace("{{ CAIRO_VERSION }}", crate::version::get().cairo.version);
     contents.into_bytes()
+}
+
+fn check_corelib_version(core_scarb_toml: &Utf8Path) -> Result<()> {
+    let comp_ver = crate::version::get().cairo.version;
+    let core_ver = TomlManifest::read_from_path(core_scarb_toml)?
+        .package
+        .ok_or_else(|| anyhow!("could not get package section from `core` Scarb.toml"))?
+        .version
+        .to_string();
+    ensure!(
+        comp_ver == core_ver,
+        "`core` version does not match Cairo compiler version"
+    );
+    Ok(())
 }
