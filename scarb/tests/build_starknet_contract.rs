@@ -42,7 +42,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
-            [..]  Finished release target(s) in [..] seconds
+            [..]  Finished release target(s) in [..]
         "#});
 }
 
