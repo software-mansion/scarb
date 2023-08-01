@@ -43,7 +43,7 @@ fn defaults_to_dev() {
     ProjectBuilder::start().name("hello").build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["metadata", "--format-version", "1"])
+        .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -60,7 +60,7 @@ fn can_choose_release() {
     ProjectBuilder::start().name("hello").build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--release", "metadata", "--format-version", "1"])
+        .args(["--json", "--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -77,7 +77,7 @@ fn can_choose_dev() {
     ProjectBuilder::start().name("hello").build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--dev", "metadata", "--format-version", "1"])
+        .args(["--json", "--dev", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -113,7 +113,14 @@ fn can_choose_release_by_name() {
     ProjectBuilder::start().name("hello").build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--profile", "release", "metadata", "--format-version", "1"])
+        .args([
+            "--json",
+            "--profile",
+            "release",
+            "metadata",
+            "--format-version",
+            "1",
+        ])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -149,7 +156,14 @@ fn can_choose_dev_by_name() {
     ProjectBuilder::start().name("hello").build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--profile", "dev", "metadata", "--format-version", "1"])
+        .args([
+            "--json",
+            "--profile",
+            "dev",
+            "metadata",
+            "--format-version",
+            "1",
+        ])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -166,7 +180,7 @@ fn can_choose_dev_by_short_name() {
     ProjectBuilder::start().name("hello").build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["-P", "dev", "metadata", "--format-version", "1"])
+        .args(["--json", "-P", "dev", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -188,7 +202,14 @@ fn can_choose_custom_profile() {
         .build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--profile", "custom", "metadata", "--format-version", "1"])
+        .args([
+            "--json",
+            "--profile",
+            "custom",
+            "metadata",
+            "--format-version",
+            "1",
+        ])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -225,7 +246,7 @@ fn sierra_replace_ids_defaults_true_in_dev() {
     ProjectBuilder::start().name("hello").build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["metadata", "--format-version", "1"])
+        .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -247,7 +268,14 @@ fn sierra_replace_ids_default_false_in_release() {
     ProjectBuilder::start().name("hello").build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--profile", "release", "metadata", "--format-version", "1"])
+        .args([
+            "--json",
+            "--profile",
+            "release",
+            "metadata",
+            "--format-version",
+            "1",
+        ])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -279,7 +307,7 @@ fn compiler_config_set_for_all_profiles() {
         .build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["metadata", "--format-version", "1"])
+        .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -295,7 +323,7 @@ fn compiler_config_set_for_all_profiles() {
     }
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--release", "metadata", "--format-version", "1"])
+        .args(["--json", "--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -312,6 +340,7 @@ fn compiler_config_set_for_all_profiles() {
 
     let metadata = Scarb::quick_snapbox()
         .args([
+            "--json",
             "--profile",
             "some-profile",
             "metadata",
@@ -345,7 +374,7 @@ fn can_set_replace_ids_in_profile() {
         .build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--release", "metadata", "--format-version", "1"])
+        .args(["--json", "--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -376,7 +405,7 @@ fn profile_precedes_compiler_config() {
         .build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--release", "metadata", "--format-version", "1"])
+        .args(["--json", "--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -392,7 +421,7 @@ fn profile_precedes_compiler_config() {
     }
 
     let metadata = Scarb::quick_snapbox()
-        .args(["metadata", "--format-version", "1"])
+        .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -419,7 +448,14 @@ fn custom_profiles_inherit_from_dev_by_default() {
         .build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--profile", "custom", "metadata", "--format-version", "1"])
+        .args([
+            "--json",
+            "--profile",
+            "custom",
+            "metadata",
+            "--format-version",
+            "1",
+        ])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -447,7 +483,14 @@ fn custom_profiles_can_inherit_by_name() {
         .build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--profile", "custom", "metadata", "--format-version", "1"])
+        .args([
+            "--json",
+            "--profile",
+            "custom",
+            "metadata",
+            "--format-version",
+            "1",
+        ])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -503,7 +546,7 @@ fn profile_overrides_tool() {
         "#})
         .build(&t);
     let metadata = Scarb::quick_snapbox()
-        .args(["metadata", "--format-version", "1"])
+        .args(["--json", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -526,7 +569,7 @@ fn profile_overrides_tool() {
     );
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--release", "metadata", "--format-version", "1"])
+        .args(["--json", "--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 

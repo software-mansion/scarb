@@ -38,6 +38,7 @@ fn simple() {
         .build(&t);
 
     Scarb::quick_snapbox()
+        .arg("--json")
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -54,6 +55,7 @@ fn includes_compilation_units() {
         .build(&t);
 
     let output = Scarb::quick_snapbox()
+        .arg("--json")
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -155,6 +157,7 @@ fn local_dependencies() {
     let t = assert_fs::TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
     let meta = Scarb::quick_snapbox()
+        .arg("--json")
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -180,6 +183,7 @@ fn no_dep() {
     let t = assert_fs::TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
     let meta = Scarb::quick_snapbox()
+        .arg("--json")
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -246,6 +250,7 @@ fn manifest_targets_and_metadata() {
         .unwrap();
 
     let meta = Scarb::quick_snapbox()
+        .arg("--json")
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -306,6 +311,7 @@ fn tool_metadata_is_packaged_contained() {
         )
         .unwrap();
     let meta = Scarb::quick_snapbox()
+        .arg("--json")
         .arg("metadata")
         .arg("--format-version")
         .arg("1")
@@ -367,7 +373,7 @@ fn workspace_simple() {
         .build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["metadata", "--format-version=1"])
+        .args(["--json", "metadata", "--format-version=1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -405,7 +411,7 @@ fn workspace_with_root() {
         .build(&t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["metadata", "--format-version=1"])
+        .args(["--json", "metadata", "--format-version=1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
@@ -447,7 +453,7 @@ fn workspace_as_dep() {
         .build(&first_t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["metadata", "--format-version=1"])
+        .args(["--json", "metadata", "--format-version=1"])
         .current_dir(&first_t)
         .stdout_json::<Metadata>();
 
@@ -481,7 +487,7 @@ fn workspace_as_dep() {
         .build(&second_t);
 
     let metadata = Scarb::quick_snapbox()
-        .args(["metadata", "--format-version=1"])
+        .args(["--json", "metadata", "--format-version=1"])
         .current_dir(&second_t)
         .stdout_json::<Metadata>();
 

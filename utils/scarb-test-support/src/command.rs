@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::{fs, iter};
@@ -128,6 +129,13 @@ impl CommandExt for SnapboxCommand {
             "Command failed: {}",
             String::from_utf8_lossy(&output.stderr)
         );
-        serde_json::de::from_slice(&output.stdout).expect("Failed to deserialize stdout to JSON")
+        for line in BufRead::split(output.stdout.as_slice(), b'\n') {
+            let line = line.expect("Failed to read line from stdout");
+            match serde_json::de::from_slice::<T>(&line) {
+                Ok(t) => return t,
+                Err(_) => continue,
+            }
+        }
+        panic!("Failed to deserialize stdout to JSON");
     }
 }
