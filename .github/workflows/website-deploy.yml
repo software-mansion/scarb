@@ -36,7 +36,7 @@ jobs:
       - run: npm run build
       - run: npm run export
       - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v2
         with:
           path: website/out
 
