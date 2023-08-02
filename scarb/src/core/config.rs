@@ -17,6 +17,7 @@ use crate::core::AppDirs;
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::flock::{AdvisoryLock, RootFilesystem};
+use crate::internal::fsx;
 use crate::ui::{OutputFormat, Ui, Verbosity};
 use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
@@ -126,11 +127,11 @@ impl Config {
                     // This allows commands that use Scarb as a library to inherit
                     // (via `scarb <subcommand>`) or set (by setting `$SCARB`) a correct path
                     // to `scarb` when the current exe is not actually scarb (e.g. `scarb-*` binaries).
-                    env::var_os(SCARB_ENV)
+                    let path = env::var_os(SCARB_ENV)
                         .map(PathBuf::from)
-                        .ok_or_else(|| anyhow!("${SCARB_ENV} not set"))?
-                        .canonicalize()
-                        .map_err(Into::into)
+                        .ok_or_else(|| anyhow!("${SCARB_ENV} not set"))?;
+                    let path = fsx::canonicalize(path)?;
+                    Ok(path)
                 };
 
                 let from_current_exe = || -> Result<PathBuf> {
@@ -138,7 +139,9 @@ impl Config {
                     // The method varies per operating system and might fail; in particular,
                     // it depends on `/proc` being mounted on Linux, and some environments
                     // (like containers or chroots) may not have that available.
-                    env::current_exe()?.canonicalize().map_err(Into::into)
+                    let path = env::current_exe()?;
+                    let path = fsx::canonicalize(path)?;
+                    Ok(path)
                 };
 
                 let from_argv = || -> Result<PathBuf> {
@@ -148,7 +151,7 @@ impl Config {
                     // Otherwise, it has multiple components and is either:
                     // - a relative path (e.g., `./scarb`, `target/debug/scarb`), or
                     // - an absolute path (e.g., `/usr/local/bin/scarb`).
-                    // In either case, [`Path::canonicalize`] will return the full absolute path
+                    // In either case, [`fsx::canonicalize`] will return the full absolute path
                     // to the target if it exists.
                     let argv0 = env::args_os()
                         .map(PathBuf::from)

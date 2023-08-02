@@ -1,16 +1,17 @@
-use std::{env, fs};
+use std::env;
 
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 
 use crate::core::manifest::TomlManifest;
+use crate::internal::fsx;
 use crate::internal::fsx::{PathBufUtf8Ext, PathUtf8Ext};
 use crate::MANIFEST_FILE_NAME;
 
 #[tracing::instrument(level = "debug")]
 pub fn find_manifest_path(user_override: Option<&Utf8Path>) -> Result<Utf8PathBuf> {
     match user_override {
-        Some(user_override) => Ok(fs::canonicalize(user_override)
+        Some(user_override) => Ok(fsx::canonicalize(user_override)
             .unwrap_or_else(|_| user_override.into())
             .try_into_utf8()?),
         None => {
