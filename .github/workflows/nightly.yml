@@ -53,6 +53,9 @@ jobs:
       - name: Set Scarb version
         run: cargo xtask set-scarb-version ${{ env.NIGHTLY_VERSION }}
 
+      - name: Compose release notes
+        run: cargo xtask nightly-release-notes > NIGHTLY_RELEASE_NOTES.md
+
       - name: Commit patches
         run: |
           git checkout -b ${{ env.NIGHTLY_BRANCH }} 
@@ -77,10 +80,61 @@ jobs:
       scarb-tag: v${{ needs.prepare.outputs.nightly_version }}
       ref: ${{ needs.prepare.outputs.nightly_branch }}
 
+  upload:
+    runs-on: ubuntu-latest
+    needs: [ prepare, release ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.prepare.outputs.nightly_branch }}
+
+      - name: Create source code archives
+        run: |
+          git archive "--prefix=scarb-${{ needs.prepare.outputs.nightly_tag }}/" -o "scarb-${{ needs.prepare.outputs.nightly_tag }}.zip" HEAD
+          git archive "--prefix=scarb-${{ needs.prepare.outputs.nightly_tag }}/" -o "scarb-${{ needs.prepare.outputs.nightly_tag }}.tar.gz" HEAD
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts-dl
+
+      - name: Unpack artifacts to staging directory
+        run: |
+          mkdir -p artifacts
+          mv artifacts-dl/build-*/scarb-* artifacts/
+          mv artifacts-dl/checksums/* artifacts/
+          ls -lh artifacts/
+
+      - name: Create GitHub release
+        run: |
+          gh release create \
+            "${{ needs.prepare.outputs.nightly_tag }}" \
+            --repo software-mansion/scarb-nightlies \
+            --latest \
+            --title "${{ needs.prepare.outputs.nightly_tag }}" \
+            --notes-file NIGHTLY_RELEASE_NOTES.md
+        env:
+          GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+
+      - name: Upload release assets
+        run: |
+          for file in \
+            ./artifacts/* \
+            "scarb-${{ needs.prepare.outputs.nightly_tag }}.zip#Scarb source code (zip)" \
+            "scarb-${{ needs.prepare.outputs.nightly_tag }}.tar.gz#Scarb source code (tar.gz)"
+          do
+            gh release upload \
+              "${{ needs.prepare.outputs.nightly_tag }}" \
+              "$file" \
+              --repo software-mansion/scarb-nightlies
+          done
+        env:
+          GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+
   cleanup:
     runs-on: ubuntu-latest
     if: always() && needs.prepare.result == 'success'
-    needs: [ prepare, release ]
+    needs: [ prepare, upload ]
     steps:
       - uses: actions/checkout@v3
       - name: Delete nightly branch
