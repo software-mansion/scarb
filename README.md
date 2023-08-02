@@ -31,14 +31,14 @@ Scarb is under active development! Expect a lot of new features to appear soon! 
 - [ ] Nightlies
 - [ ] Workspaces
 - [ ] Standardized `test` target
-- [ ] `scarb check`
 - [ ] `scarb init` templates or `scarb create-starknet-contract` command
 - [ ] `Scarb.lock`
+- [ ] Package registry
 - [ ] PubGrub implementation for version resolution
 - [ ] `scarb update`
-- [ ] Package registry
 - [ ] Dynamic loading of custom Cairo compiler plugins as Scarb packages
 - [ ] Dynamic loading of custom targets aka code generators
+- [ ] `scarb check`
 - [ ] Dependency overrides
 - [ ] Signing & notarization of Windows & macOS binaries
 
