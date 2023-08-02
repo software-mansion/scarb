@@ -5130,6 +5130,7 @@ dependencies = [
  "clap",
  "semver",
  "serde",
+ "serde_json",
  "time",
  "toml_edit",
  "walkdir",
