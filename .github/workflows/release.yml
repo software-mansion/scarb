@@ -37,16 +37,13 @@ jobs:
           ls -lh artifacts/
 
       - name: Draft GitHub release
-        id: draft-release
-        uses: taiki-e/create-gh-release-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: $version
-          draft: true
-
-      - name: Upload artifacts to the release
-        working-directory: artifacts
-        run: gh release upload "$TAG" *
+        run: |
+          gh release create \
+            '${{ github.ref_name }}' \
+            ./artifacts/* \
+            --draft \
+            --title '${{ github.ref_name }}' \
+            --generate-notes \
+            --verify-tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.draft-release.outputs.computed-prefix }}${{ steps.draft-release.outputs.version }}
