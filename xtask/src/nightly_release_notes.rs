@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use xshell::{cmd, Shell};
 
-use crate::get_nightly_version::{nightly_tag, nightly_version};
+use crate::get_nightly_version::nightly_version;
 
 #[derive(Parser)]
 pub struct Args;
@@ -12,7 +12,6 @@ pub fn main(_: Args) -> Result<()> {
 
     let sh = Shell::new()?;
 
-    let tag = nightly_tag();
     let version = nightly_version();
 
     let scarb_commit = cmd!(sh, "git log -1 --date=short --format=%H").read()?;
@@ -59,27 +58,27 @@ pub fn main(_: Args) -> Result<()> {
     let cairo_version = cairo_package.get("version").unwrap().as_str().unwrap();
     let cairo_commit = commit_from_source(cairo_package.get("source").unwrap().as_str().unwrap());
 
-    let scarb_sourced_from = sourced_from("software-mansion/scarb", Some(&scarb_commit));
-    let cairo_sourced_from = sourced_from("starkware-libs/cairo", cairo_commit);
+    let scarb_source_commit = source_commit("software-mansion/scarb", Some(&scarb_commit));
+    let cairo_source_commit = source_commit("starkware-libs/cairo", cairo_commit);
 
     println!(
         "\
-# Scarb {tag}
-
-* Scarb `{version}`{scarb_sourced_from}
-* Cairo `{cairo_version}`{cairo_sourced_from}
+| Component | Version           | Source commit         |
+|-----------|-------------------|-----------------------|
+| Scarb     | `{version}`       | {scarb_source_commit} |
+| Cairo     | `{cairo_version}` | {cairo_source_commit} |
 "
     );
 
     Ok(())
 }
 
-fn sourced_from(repo: &str, hash: Option<&str>) -> String {
+fn source_commit(repo: &str, hash: Option<&str>) -> String {
     let Some(hash) = hash else {
         return String::new();
     };
     let short = shorten(hash);
-    format!(" sourced from [`{short}`](https://github.com/{repo}/commit/{hash})")
+    format!("[`{short}`](https://github.com/{repo}/commit/{hash})")
 }
 
 fn shorten(hash: &str) -> String {
