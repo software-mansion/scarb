@@ -12,7 +12,7 @@ pub fn canonicalize(p: impl AsRef<Path>) -> Result<PathBuf> {
     return inner(p.as_ref());
 
     fn inner(p: &Path) -> Result<PathBuf> {
-        fs::canonicalize(p)
+        dunce::canonicalize(p)
             .with_context(|| format!("failed to get absolute path of `{}`", p.display()))
     }
 }
