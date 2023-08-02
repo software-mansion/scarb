@@ -126,6 +126,8 @@ pub enum Command {
     Clean,
     /// List installed commands.
     Commands,
+    // Fetch dependencies of packages from the network.
+    Fetch,
     /// Format project files.
     Fmt(FmtArgs),
     /// Create a new Scarb package in existing directory.
