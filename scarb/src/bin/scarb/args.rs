@@ -110,6 +110,13 @@ impl ScarbArgs {
     }
 }
 
+/// Cache subcommand and its arguments.
+#[derive(Subcommand, Clone, Debug)]
+pub enum CacheSubcommand {
+    /// Remove all cached dependencies.
+    Clean,
+}
+
 /// Subcommand and its arguments.
 #[derive(Subcommand, Clone, Debug)]
 pub enum Command {
@@ -122,6 +129,9 @@ pub enum Command {
     Remove(RemoveArgs),
     /// Compile current project.
     Build(BuildArgs),
+    /// Manipulate packages cache.
+    #[clap(subcommand)]
+    Cache(CacheSubcommand),
     /// Remove generated artifacts.
     Clean,
     /// List installed commands.
