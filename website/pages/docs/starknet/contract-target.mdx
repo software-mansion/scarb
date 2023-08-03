@@ -79,8 +79,8 @@ For example, to build `Account` contract defined in `openzeppelin` package, add 
 
 ```toml
 [dependencies]
-starknet = ">=2.1.0-rc2"
-openzeppelin = { path = "../openzeppelin" }
+starknet = ">=2.1.0-rc4"
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", branch = "cairo-2" }
 
 [[target.starknet-contract]]
 build-external-contracts = ["openzeppelin::account::account::Account"]
