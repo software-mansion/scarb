@@ -15,7 +15,7 @@ pub fn find_manifest_path(user_override: Option<&Utf8Path>) -> Result<Utf8PathBu
             .unwrap_or_else(|_| user_override.into())
             .try_into_utf8()?),
         None => {
-            let pwd = env::current_dir()?.try_to_utf8()?;
+            let pwd = fsx::canonicalize(env::current_dir()?)?.try_to_utf8()?;
             let accept_all = |_| Ok(true);
             let manifest_path = try_find_manifest_of_pwd(pwd.clone(), accept_all)?
                 .unwrap_or_else(|| pwd.join(MANIFEST_FILE_NAME));
