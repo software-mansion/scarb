@@ -4,10 +4,11 @@ use anyhow::Result;
 
 use scarb::core::Config;
 
-use crate::args::Command;
+use crate::args::{CacheSubcommand, Command};
 
 pub mod add;
 pub mod build;
+pub mod cache_clean;
 pub mod clean;
 pub mod commands;
 pub mod external;
@@ -28,6 +29,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         // Keep these sorted alphabetically.
         Add(args) => add::run(args, config),
         Build(args) => build::run(args, config),
+        Cache(CacheSubcommand::Clean) => cache_clean::run(config),
         Clean => clean::run(config),
         Commands => commands::run(config),
         External(args) => external::run(args, config),
