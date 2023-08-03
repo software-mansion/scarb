@@ -2,6 +2,7 @@
 //!
 //! For datastructures describing the state, see [`crate::core`] module.
 
+pub use cache::*;
 pub use clean::*;
 pub use compile::*;
 pub use fmt::*;
@@ -13,6 +14,7 @@ pub use scripts::*;
 pub use subcommands::*;
 pub use workspace::*;
 
+mod cache;
 mod clean;
 mod compile;
 mod fmt;
