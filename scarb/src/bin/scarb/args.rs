@@ -126,7 +126,7 @@ pub enum Command {
     Clean,
     /// List installed commands.
     Commands,
-    // Fetch dependencies of packages from the network.
+    /// Fetch dependencies of packages from the network.
     Fetch,
     /// Format project files.
     Fmt(FmtArgs),
