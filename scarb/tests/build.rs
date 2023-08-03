@@ -535,10 +535,6 @@ fn sierra_replace_ids() {
 }
 
 #[test]
-#[cfg_attr(
-    target_family = "windows",
-    ignore = "This test temporarily fails on Windows."
-)]
 fn workspace_as_dep() {
     let t = TempDir::new().unwrap();
 
