@@ -1,6 +1,5 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::path::PathBuf;
 
 use anyhow::{anyhow, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
@@ -13,6 +12,7 @@ use crate::core::package::Package;
 use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
 use crate::core::TomlManifest;
+use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
 use crate::ops::find_workspace_manifest_path;
 use crate::process::is_hidden;
@@ -142,28 +142,25 @@ fn read_workspace_root<'c>(
 }
 
 fn find_member_paths(root: &Utf8Path, globs: Vec<String>) -> Result<Vec<Utf8PathBuf>> {
-    globs
-        .iter()
-        .map(|path| {
-            // Expand globs from workspace root.
-            glob(root.join(path).to_string().as_str())
-                .with_context(|| format!("could not parse pattern `{}`", &path))?
-                .map(|p| p.with_context(|| format!("unable to match path to pattern `{}`", &path)))
-                .map(|p| {
-                    // Return manifest path.
-                    p.map(|p| p.join(MANIFEST_FILE_NAME))
-                        .map(PathBuf::try_into_utf8)
-                })
-                .collect::<Result<Result<Vec<_>, _>>>()?
-        })
-        .collect::<Result<Vec<_>>>()
-        .map(|v| {
-            v.into_iter()
-                .flatten()
-                // Make sure all manifest files exist.
-                .filter(|p| p.is_file())
-                .collect::<Vec<_>>()
-        })
+    let mut paths = Vec::with_capacity(globs.len());
+    for pattern in globs {
+        for path in glob(root.join(&pattern).as_str())
+            .with_context(|| format!("could not parse pattern: {pattern}"))?
+        {
+            let path =
+                path.with_context(|| format!("unable to match path to pattern: {pattern}"))?;
+
+            // Look for manifest file, continuing if it does not exist.
+            let path = path.join(MANIFEST_FILE_NAME);
+            if path.is_file() {
+                let path = fsx::canonicalize(path)?;
+                let path = path.try_into_utf8()?;
+
+                paths.push(path)
+            }
+        }
+    }
+    Ok(paths)
 }
 
 #[tracing::instrument(level = "debug", skip(config))]
