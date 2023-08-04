@@ -37,17 +37,14 @@ alexandria = { git = "https://github.com/keep-starknet-strange/alexandria.git", 
 
 Note, that if you want to add more dependencies, you do not have to add `[dependencies]{:toml}` for each package separately.
 
-Now, run `scarb build{:shell}`, and Scarb will fetch new dependencies and all of their dependencies.
-Then it will compile your package with all of these packages included:
+Now, run `scarb fetch{:shell}`, and Scarb will fetch new dependencies and all of their dependencies.
 
 ```shell copy
-scarb build
+scarb fetch
 ```
 
 ```text filename="Output"
     Updating git repository https://github.com/keep-starknet-strange/alexandria
-   Compiling hello_world v0.1.0 (/path/to/package/hello_world/Scarb.toml)
-    Finished release target(s) in 4 seconds
 ```
 
 You can now use the `alexandria` library in `lib.cairo`:
@@ -57,6 +54,18 @@ use alexandria::math::fibonacci;
 fn main() -> felt252 {
     fibonacci::fib(0, 1, 10)
 }
+```
+
+Then you can compile your package with all of the packages included:
+
+```shell copy
+scarb build
+```
+
+```text filename="Output"
+    Updating git repository https://github.com/keep-starknet-strange/alexandria
+   Compiling hello_world v0.1.0 (/path/to/package/hello_world/Scarb.toml)
+    Finished release target(s) in 4 seconds
 ```
 
 ## Adding a dependency via `scarb add`
