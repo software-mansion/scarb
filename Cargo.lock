@@ -3756,7 +3756,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "0.6.0-alpha.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -3826,14 +3826,14 @@ dependencies = [
 
 [[package]]
 name = "scarb-build-metadata"
-version = "0.6.0-alpha.4"
+version = "0.6.0"
 dependencies = [
  "cargo_metadata",
 ]
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "0.6.0-alpha.4"
+version = "0.6.0"
 dependencies = [
  "cairo-lang-language-server",
  "cairo-lang-utils",
@@ -3843,7 +3843,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-run"
-version = "0.6.0-alpha.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "cairo-lang-runner",
@@ -3859,7 +3859,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "0.6.0-alpha.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -5125,7 +5125,7 @@ checksum = "7e2c411759b501fb9501aac2b1b2d287a6e93e5bdcf13c25306b23e1b716dd0e"
 
 [[package]]
 name = "xtask"
-version = "0.6.0-alpha.4"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
