@@ -1,11 +1,12 @@
 import { Octokit } from "@octokit/core";
 import semver from "semver";
+import { cached } from "./.vitepress/data/cache";
 
 const octokit = new Octokit();
 
 export default {
   async load() {
-    const all = await listReleasesFromRecent();
+    const all = await cached("scarb-github-releases", listReleasesFromRecent);
     const stable = findStableRelease(all);
     const preview = findPreviewRelease(all);
     return {
