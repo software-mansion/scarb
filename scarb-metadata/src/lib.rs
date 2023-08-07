@@ -32,10 +32,12 @@ use derive_builder::Builder;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-use crate::packages_filter::WithManifestPath;
 #[cfg(feature = "command")]
 pub use command::*;
 pub use version_pin::*;
+
+#[cfg(feature = "packages_filter")]
+use crate::packages_filter::WithManifestPath;
 
 #[cfg(feature = "command")]
 mod command;
@@ -488,6 +490,7 @@ impl PackageMetadata {
     }
 }
 
+#[cfg(feature = "packages_filter")]
 impl WithManifestPath for PackageMetadata {
     fn manifest_path(&self) -> &Utf8Path {
         &self.manifest_path
