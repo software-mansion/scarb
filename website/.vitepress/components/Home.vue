@@ -54,7 +54,11 @@ const Download = defineClientComponent(() => import("./home/Download.vue"));
         target="_blank"
         >discussions on GitHub</a
       >
-      or chat with us on our channel on Starknet's
+      or chat with us on our channel on
+      <a href="https://t.me/+G_YxIv-XTFlhNWU0" rel="noreferrer" target="_blank"
+        >Telegram</a
+      >
+      or Starknet's
       <a href="https://discord.gg/KZWaFtPZJf" rel="noreferrer" target="_blank"
         >Discord</a
       >!
