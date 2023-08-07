@@ -1,3 +1,7 @@
+<script setup>
+import { data as rel } from "../../../github.data";
+</script>
+
 # Starknet Contract Target
 
 The `starknet-contract` target allows to build the package as a [Starknet Contract](https://docs.starknet.io/documentation/getting_started/intro/).
@@ -40,9 +44,9 @@ To enable Starknet contract compilation for a package, write a following line in
 Then, declare a dependency on the [`starknet` package](./starknet-package).
 Its version is coupled to Cairo version included in Scarb.
 
-```toml copy
+```toml-vue
 [dependencies]
-starknet = "2.1.0"
+starknet = "{{ rel.stable.starknetPackageVersionReq }}"
 ```
 
 ## Sierra contract class generation
@@ -77,9 +81,9 @@ In case there is a contract name collision , those colliding contract names will
 
 For example, to build `Account` contract defined in `openzeppelin` package, add following definitions to the `Scarb.toml`:
 
-```toml
+```toml-vue
 [dependencies]
-starknet = "2.1.0"
+starknet = "{{ rel.stable.starknetPackageVersionReq }}"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", branch = "cairo-2" }
 
 [[target.starknet-contract]]
