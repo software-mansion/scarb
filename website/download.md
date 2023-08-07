@@ -201,20 +201,6 @@ Use at your own risk:
 - `aarch64-unknown-linux-musl`
 - `x86_64-unknown-linux-musl`
 
-## Scarb as a library <Badge type="warning" text="deprecated" />
-
-Scarb is a [Rust](https://rust-lang.org) crate which can be used as a library in your applications.
-We publish each release of Scarb to [crates.io](https://crates.io), the official package registry for Rust.
-
-::: warning
-Using Scarb crate has certain caveats, consult [related documentation](./docs/writing-extensions/scarb-crate) for more
-information before use.
-:::
-
-<BigLink href="https://crates.io/crates/scarb">
-   Go to Scarb on crates.io
-</BigLink>
-
 ## Source code
 
 Scarb is an open source project developed by [Software Mansion](https://swmansion.com), available under terms of the MIT
