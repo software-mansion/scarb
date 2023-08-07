@@ -56,9 +56,9 @@ const sidebar = {
       text: "Writing extensions",
       items: [
         p("JSON output", "/docs/writing-extensions/json-output"),
-        p("Scarb crate", "/docs/writing-extensions/scarb-crate"),
         p("Scarb metadata", "/docs/writing-extensions/scarb-metadata"),
         p("Subcommands", "/docs/writing-extensions/subcommands"),
+        p("Scarb crate", "/docs/writing-extensions/scarb-crate"),
       ],
     },
     {
