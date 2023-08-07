@@ -43,7 +43,7 @@ clap = { version = "4.3.19", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.1"
 console = "0.15.7"
 data-encoding = "2.4.0"
-deno_task_shell = "0.12.0"
+deno_task_shell = "0.13.1"
 derive_builder = "0.12.0"
 diffy = "0.3.0"
 directories = "5.0.1"
