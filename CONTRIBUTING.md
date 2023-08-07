@@ -4,7 +4,7 @@ Scarb is actively developed and open for contributions!
 Want to get started?
 Grab any unassigned issue labeled with [`good-first-issue`](https://github.com/orgs/software-mansion/projects/4/views/9)!
 Need some guidance?
-Reach out to other developers on [Telegram](https://t.me/+d8ULaPxeRqlhMDNk) or open a [discussion](https://github.com/software-mansion/scarb/discussions) on GitHub!
+Reach out to other developers on [Telegram](https://t.me/+G_YxIv-XTFlhNWU0) or open a [discussion](https://github.com/software-mansion/scarb/discussions) on GitHub!
 
 ## Environment setup
 
