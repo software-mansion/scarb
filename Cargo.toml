@@ -38,7 +38,7 @@ cairo-lang-starknet = "2.1.0-rc4"
 cairo-lang-test-runner = "2.1.0-rc4"
 cairo-lang-utils = { version = "2.1.0-rc4", features = ["env_logger"] }
 camino = { version = "1.1.6", features = ["serde1"] }
-cargo_metadata = "0.15.4"
+cargo_metadata = "0.17.0"
 clap = { version = "4.3.19", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2.0.1"
 console = "0.15.7"
