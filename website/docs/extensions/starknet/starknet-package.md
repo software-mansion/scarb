@@ -1,3 +1,7 @@
+<script setup>
+import { data as rel } from "../../../github.data";
+</script>
+
 # Starknet Package
 
 The `starknet` package provides APIs for writing Starknet contracts code.
@@ -13,9 +17,9 @@ This package is specially treated by Scarb.
 To use it, simply declare a dependency on it in your package.
 By using the `>=` operator, you will not have to manually update this value on each stable Cairo upgrade.
 
-```toml
+```toml-vue
 [dependencies]
-starknet = ">=2.1.0"
+starknet = "{{ rel.stable.starknetPackageVersionReq }}"
 ```
 
 ## Future work

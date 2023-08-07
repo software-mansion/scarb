@@ -1,3 +1,7 @@
+<script setup>
+import { data as rel } from "../github.data";
+</script>
+
 # Cheat sheet
 
 Get started with Scarb by following a cheatsheet of the most important commands.
@@ -43,9 +47,9 @@ sierra = false
 
 Add following to `Scarb.toml`:
 
-```toml
+```toml-vue
 [dependencies]
-starknet = "2.1.0"
+starknet = "{{ rel.stable.starknetPackageVersionReq }}"
 
 [[target.starknet-contract]]
 ```

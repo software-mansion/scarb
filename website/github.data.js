@@ -9,8 +9,15 @@ export default {
     const all = await cached("scarb-github-releases", listReleasesFromRecent);
     const stable = findStableRelease(all);
     const preview = findPreviewRelease(all);
+
+    const stableFull = viewFullRelease(
+      await cached("scarb-github-release-stable-full", () =>
+        getRelease(stable.id),
+      ),
+    );
+
     return {
-      stable,
+      stable: { ...stable, ...stableFull },
       preview,
       latestVersion: stable?.version,
       sampleVersion: preview?.version ?? stable?.version,
@@ -47,6 +54,7 @@ function viewRelease(release) {
   }
 
   return {
+    id: release.id,
     version,
     assets: collectAssets(release),
   };
@@ -154,6 +162,33 @@ function assetSortKey(asset) {
   return `${kind}-${asset.os}-${asset.name}`;
 }
 
+function viewFullRelease(release) {
+  if (!release) {
+    return release;
+  }
+
+  const cairoVersion = extractCairoVersionFromReleaseNotes(release.body);
+
+  return {
+    cairoVersion,
+    starknetPackageVersionReq: `>=${cairoVersion}`,
+  };
+}
+
+function extractCairoVersionFromReleaseNotes(body) {
+  const match = body.match(
+    /\[`v.+`]\(https:\/\/github.com\/starkware-libs\/cairo\/releases\/tag\/v([0-9a-zA-Z.-]+)\)/,
+  );
+
+  if (!match) {
+    throw new Error(
+      `Failed to extract Cairo version from release notes:\n\n${body}`,
+    );
+  }
+
+  return match[1];
+}
+
 async function listReleasesFromRecent() {
   const response = await octokit.request("GET /repos/{owner}/{repo}/releases", {
     owner: "software-mansion",
@@ -162,5 +197,20 @@ async function listReleasesFromRecent() {
       "X-GitHub-Api-Version": "2022-11-28",
     },
   });
+  return response.data;
+}
+
+async function getRelease(releaseId) {
+  const response = await octokit.request(
+    "GET /repos/{owner}/{repo}/releases/{release_id}",
+    {
+      owner: "software-mansion",
+      repo: "scarb",
+      release_id: releaseId,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    },
+  );
   return response.data;
 }
