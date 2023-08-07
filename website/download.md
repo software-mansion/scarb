@@ -143,7 +143,7 @@ nix shell github:cairo-nix/cairo-nix
 ```
 
 <BigLink href="https://github.com/cairo-nix/cairo-nix">
-   Go to cairo-nix/cairo-nix on GitHub
+   Go to cairo-nix on GitHub
 </BigLink>
 
 ## Precompiled packages
@@ -168,6 +168,21 @@ The current stable version of Scarb is <code>{{ rel.stable.version }}</code>.
 
 For older releases, go to the [releases](https://github.com/software-mansion/scarb/releases) page in Scarb GitHub
 repository.
+
+## Nightly builds
+
+Scarb team publishes nightly builds of Scarb several times a week in separate GitHub repository.
+These builds are built on top of Scarb's and Cairo compiler's latest `main` branches.
+Consult release notes for exact commit hashes and more information.
+Each build is identified by calendar day it was produced, and are tagged in the following
+pattern: `nightly-YYYY-MM-DD`, for example: `nightly-2023-08-03`.
+
+These builds are created automatically, unattended.
+**Use at your own risk.**
+
+<BigLink href="https://github.com/software-mansion/scarb-nightlies/releases">
+   Go to Scarb nightly releases on GitHub
+</BigLink>
 
 ## Platform support
 
