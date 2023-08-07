@@ -7,7 +7,7 @@ The key points of workspaces are:
 - Common commands can run across all workspace members, like `scarb build --workspace`.
 - All packages share a common output directory, which defaults to a directory named target in the _workspace root_.
 - Sharing package metadata, like with _workspace.package_.
-- The [profile.*] section in manifest file is only recognized in the root manifest, and ignored in member manifests.
+- The `[profile.*]` section in the manifest file is only recognized in the root manifest, and ignored in member manifests.
 
 In a manifest file, the `[workspace]` table supports the following sections:
 
@@ -218,8 +218,3 @@ See [Tool](./manifest#tool) page for more information.
 In a workspace context, only profiles defined in the root manifest are applied.
 
 See [Profiles](./profiles) page for more information.
-
-## Acknowledgements
-
-This functionality is based on [Cargo workspaces](https://doc.rust-lang.org/cargo/reference/workspaces.html)
-and both the design and implementation has been heavily influenced by the approach suggested by the Cargo team.
