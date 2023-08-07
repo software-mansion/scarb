@@ -50,7 +50,7 @@ directories = "5.0.1"
 dunce = "1.0.4"
 fs4 = "0.6.5"
 futures = { version = "0.3.28", default-features = false, features = ["std", "async-await"] }
-gix = "0.47.0"
+gix = "0.50.1"
 glob = "0.3.1"
 ignore = "0.4.20"
 include_dir = "0.7.3"
