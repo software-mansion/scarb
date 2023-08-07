@@ -46,7 +46,7 @@ once_cell.workspace = true
 pathdiff.workspace = true
 petgraph.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
-scarb-metadata = { version = "1.4.0", path = "../scarb-metadata", default-features = false, features = ["builder", "packages_filter"] }
+scarb-metadata = { version = "1.5.0", path = "../scarb-metadata", default-features = false, features = ["builder", "packages_filter"] }
 semver.workspace = true
 serde-value.workspace = true
 serde.workspace = true

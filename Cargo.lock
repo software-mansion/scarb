@@ -630,7 +630,7 @@ dependencies = [
  "log",
  "lsp-types",
  "salsa",
- "scarb-metadata 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "scarb-metadata 1.4.2",
  "serde",
  "serde_json",
  "smol_str",
@@ -3918,7 +3918,7 @@ dependencies = [
  "petgraph",
  "predicates",
  "scarb-build-metadata",
- "scarb-metadata 1.4.2",
+ "scarb-metadata 1.5.0",
  "scarb-test-support",
  "semver",
  "serde",
@@ -3973,7 +3973,7 @@ dependencies = [
  "camino",
  "clap",
  "indoc",
- "scarb-metadata 1.4.2",
+ "scarb-metadata 1.5.0",
  "scarb-test-support",
  "serde_json",
  "snapbox",
@@ -3989,26 +3989,10 @@ dependencies = [
  "cairo-lang-starknet",
  "cairo-lang-test-runner",
  "clap",
- "scarb-metadata 1.4.2",
+ "scarb-metadata 1.5.0",
  "serde_json",
  "snapbox",
  "test-for-each-example",
-]
-
-[[package]]
-name = "scarb-metadata"
-version = "1.4.2"
-dependencies = [
- "assert_fs",
- "cairo-lang-filesystem",
- "camino",
- "clap",
- "derive_builder",
- "semver",
- "serde",
- "serde_json",
- "snapbox",
- "thiserror",
 ]
 
 [[package]]
@@ -4021,6 +4005,22 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "scarb-metadata"
+version = "1.5.0"
+dependencies = [
+ "assert_fs",
+ "cairo-lang-filesystem",
+ "camino",
+ "clap",
+ "derive_builder",
+ "semver",
+ "serde",
+ "serde_json",
+ "snapbox",
  "thiserror",
 ]
 
