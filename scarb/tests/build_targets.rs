@@ -146,3 +146,59 @@ fn compile_dep_not_a_lib() {
             error: could not compile `hello` due to previous error
         "#});
 }
+
+#[test]
+fn target_with_source_path() {
+    let t = TempDir::new().unwrap();
+    t.child("tests/x.cairo")
+        .write_str(r#"fn f() -> felt252 { 42 }"#)
+        .unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            [[target.test]]
+            source-path = "tests/x.cairo"
+
+            "#,
+        )
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+}
+
+#[test]
+fn target_source_path_disallowed() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            [lib]
+            source-path = "src/example.cairo"
+            "#,
+        )
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: failed to parse manifest at: [..]/Scarb.toml
+
+            Caused by:
+                `lib` target cannot specify custom `source-path`
+        "#});
+}
