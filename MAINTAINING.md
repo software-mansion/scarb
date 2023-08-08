@@ -34,7 +34,7 @@ and so they will deploy from tags in release branches.
 You might need to swiftly pause the [Website Deploy] workflow to prevent publishing old website version.
 
 > [!IMPORTANT]
-> Make sure `scarb-metadata` crate is released and published to [crates.io].
+> Make sure `scarb-metadata` crate is [released and published](#scarb-metadata-release-procedure) to [crates.io].
 > Only [StarkNet Crates.io Admins] can do this.
 
 ### Write release notes
@@ -132,6 +132,22 @@ Tweet: https://twitter.com/...
 #### Starknet Discord
 
 Post the same message as posted on the Telegram to the `#scarb` channel on Starknet's Discord.
+
+## `scarb-metadata` release procedure
+
+Releasing `scarb-metadata` crate is also a semi-automated process.
+
+1. Make sure correct version is present in:
+    1. `scarb-metadata/Cargo.toml`
+    2. `Cargo.lock`
+    3. `scarb/Cargo.toml` (depends on `scarb-metadata`)
+
+   You will probably have to commit changes and then tag newly created commit.
+2. Make sure you create it on a green commit (CI is passing), this is not verified!
+3. Run `cargo publish -p scarb-metadata --dry-run` to verify that everything is fine.
+4. Create a tag on `main` named `scarb-metadata/vX.Y.Z`.
+5. Push it.
+6. Run `cargo publish -p scarb-metadata`.
 
 [@software-mansion/scarb-maintainers]: https://github.com/orgs/software-mansion/teams/scarb-maintainers
 
