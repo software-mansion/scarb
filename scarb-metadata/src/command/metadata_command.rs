@@ -1,12 +1,12 @@
-use std::collections::HashMap;
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
+use std::io;
 use std::io::BufRead;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
-use std::{env, io};
+use std::process::Command;
 
 use thiserror::Error;
 
+use crate::command::internal_command::InternalScarbCommandBuilder;
 use crate::{Metadata, VersionPin};
 
 /// Error thrown while trying to read `scarb metadata`.
@@ -51,13 +51,8 @@ impl MetadataCommandError {
 /// matches metadata version understandable by this crate version.
 #[derive(Clone, Debug, Default)]
 pub struct MetadataCommand {
-    scarb_path: Option<PathBuf>,
-    manifest_path: Option<PathBuf>,
-    current_dir: Option<PathBuf>,
+    inner: InternalScarbCommandBuilder,
     no_deps: bool,
-    env: HashMap<OsString, Option<OsString>>,
-    env_clear: bool,
-    inherit_stderr: bool,
 }
 
 impl MetadataCommand {
@@ -72,7 +67,7 @@ impl MetadataCommand {
     /// If not set, this will use the `$SCARB` environment variable, and if that is not set, it
     /// will simply be `scarb` and the system will look it up in `$PATH`.
     pub fn scarb_path(&mut self, path: impl Into<PathBuf>) -> &mut Self {
-        self.scarb_path = Some(path.into());
+        self.inner.scarb_path(path);
         self
     }
 
@@ -80,13 +75,13 @@ impl MetadataCommand {
     ///
     /// If not set, this will look for `Scarb.toml` in the current directory or its ancestors.
     pub fn manifest_path(&mut self, path: impl Into<PathBuf>) -> &mut Self {
-        self.manifest_path = Some(path.into());
+        self.inner.manifest_path(path);
         self
     }
 
     /// Current directory of the `scarb metadata` process.
     pub fn current_dir(&mut self, path: impl Into<PathBuf>) -> &mut Self {
-        self.current_dir = Some(path.into());
+        self.inner.current_dir(path);
         self
     }
 
@@ -98,10 +93,7 @@ impl MetadataCommand {
 
     /// Inserts or updates an environment variable mapping.
     pub fn env(&mut self, key: impl AsRef<OsStr>, val: impl AsRef<OsStr>) -> &mut Self {
-        self.env.insert(
-            key.as_ref().to_os_string(),
-            Some(val.as_ref().to_os_string()),
-        );
+        self.inner.env(key, val);
         self
     }
 
@@ -112,34 +104,37 @@ impl MetadataCommand {
         K: AsRef<OsStr>,
         V: AsRef<OsStr>,
     {
-        for (ref key, ref val) in vars {
-            self.env(key, val);
-        }
+        self.inner.envs(vars);
         self
     }
 
     /// Removes an environment variable mapping.
-    pub fn env_remove<K>(&mut self, key: impl AsRef<OsStr>) -> &mut Self {
-        let key = key.as_ref();
-        if self.env_clear {
-            self.env.remove(key);
-        } else {
-            self.env.insert(key.to_os_string(), None);
-        }
+    pub fn env_remove(&mut self, key: impl AsRef<OsStr>) -> &mut Self {
+        self.inner.env_remove(key);
         self
     }
 
     /// Clears the entire environment map for the child process.
     pub fn env_clear(&mut self) -> &mut Self {
-        self.env.clear();
-        self.env_clear = true;
+        self.inner.env_clear();
         self
     }
 
     /// Inherit standard error, i.e. show Scarb errors in this process's standard error.
     pub fn inherit_stderr(&mut self) -> &mut Self {
-        self.inherit_stderr = true;
+        self.inner.inherit_stderr();
         self
+    }
+
+    fn scarb_command(&self) -> Command {
+        let mut builder = self.inner.clone();
+        builder.json();
+        builder.args(["metadata", "--format-version"]);
+        builder.arg(VersionPin.numeric().to_string());
+        if self.no_deps {
+            builder.arg("--no-deps");
+        }
+        builder.command()
     }
 
     /// Runs configured `scarb metadata` and returns parsed `Metadata`.
@@ -153,53 +148,6 @@ impl MetadataCommand {
             });
         }
         parse_stream(output.stdout.as_slice())
-    }
-
-    fn scarb_command(&self) -> Command {
-        let scarb = self
-            .scarb_path
-            .clone()
-            .or_else(|| env::var("SCARB").map(PathBuf::from).ok())
-            .unwrap_or_else(|| PathBuf::from("scarb"));
-
-        let mut cmd = Command::new(scarb);
-
-        cmd.arg("--json");
-
-        if let Some(manifest_path) = &self.manifest_path {
-            cmd.arg("--manifest-path").arg(manifest_path);
-        }
-
-        cmd.arg("metadata");
-
-        cmd.arg("--format-version");
-        cmd.arg(VersionPin.numeric().to_string());
-
-        if self.no_deps {
-            cmd.arg("--no-deps");
-        }
-
-        if let Some(path) = &self.current_dir {
-            cmd.current_dir(path);
-        }
-
-        for (key, val) in &self.env {
-            if let Some(val) = val {
-                cmd.env(key, val);
-            } else {
-                cmd.env_remove(key);
-            }
-        }
-
-        if self.env_clear {
-            cmd.env_clear();
-        }
-
-        if self.inherit_stderr {
-            cmd.stderr(Stdio::inherit());
-        }
-
-        cmd
     }
 }
 
@@ -243,7 +191,7 @@ mod tests {
 
     macro_rules! check_parse_stream {
         ($input:expr, $expected:pat) => {{
-            let actual = crate::command::parse_stream(
+            let actual = crate::command::metadata_command::parse_stream(
                 $input
                     .to_string()
                     .replace("{meta}", &minimal_metadata_json())
