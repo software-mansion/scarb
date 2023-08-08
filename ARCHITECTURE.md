@@ -256,7 +256,7 @@ When building a project, Scarb retrieves appropriate compiler implementation fro
 The compiler will later be used to compile the project into the target output.
 
 ### Compilation units
-Please see [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/compilation-model) for more information.
+Please see [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/compilation-model.html) for more information.
 
 ### CairoPluginRepository
 
@@ -286,13 +286,13 @@ Cairo compiler relies on the `RootDatabase` for management of the compilation st
 When compiling a single compilation unit, Scarb creates and configures the database, and passes it to the Cairo compiler. 
 The compilation of each unit uses a separate database instance, which is then dropped after the compilation is finished.
 The database is initialized with Cairo project configuration, obtained from the Scarb compilation unit, conditional 
-compilation parameters (see [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/conditional-compilation) 
+compilation parameters (see [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/conditional-compilation.html) 
 for more information) and active Cairo plugins.
 
 ### Profiles implementation
 
 Profiles provide a way to alter the compiler settings from the Scarb manifest file. 
-Please see the [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/profiles) for general information 
+Please see the [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/profiles.html) for general information 
 about profile use cases and syntax. 
 
 Overrides imposed by profile definition are applied towards the appropriate settings while converting `TomlManifest` 

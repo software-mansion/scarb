@@ -7,9 +7,9 @@ Scarb manages your dependencies, compiles your projects and works as an extensib
 
 All information about Scarb is available on project's [website](https://docs.swmansion.com/scarb/).
 
-* [Installation](https://docs.swmansion.com/scarb/download)
-* [Cheat sheet](https://docs.swmansion.com/scarb/docs/cheatsheet)
-* [Documentation](https://docs.swmansion.com/scarb/docs)
+* [Installation](https://docs.swmansion.com/scarb/download.html)
+* [Cheat sheet](https://docs.swmansion.com/scarb/docs/cheatsheet.html)
+* [Documentation](https://docs.swmansion.com/scarb/docs.html)
 
 ## Changelog
 

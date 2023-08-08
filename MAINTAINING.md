@@ -106,7 +106,7 @@ Happy to announce that Scarb vX.Y.Z is live!
 🔥 blahblah
 🚀 even more blahblah
 
-Go check it out: https://docs.swmansion.com/scarb/download
+Go check it out: https://docs.swmansion.com/scarb/download.html
 Release notes: https://github.com/software-mansion/scarb/releases/tag/vX.Y.Z
 
 @swmansionxyz @StarkWareLtd
@@ -130,7 +130,7 @@ Announcing Scarb vX.Y.Z!
 🔥 blahblah
 🚀 even more blahblah
 
-Download: https://docs.swmansion.com/scarb/download
+Download: https://docs.swmansion.com/scarb/download.html
 Release notes: https://github.com/software-mansion/scarb/releases/tag/vX.Y.Z
 Tweet: https://twitter.com/...
 ```

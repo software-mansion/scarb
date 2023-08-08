@@ -119,7 +119,7 @@ fn mk(
             name = "{name}"
             version = "0.1.0"
 
-            # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest
+            # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
             [dependencies]
             # foo = {{ path = "vendor/foo" }}
