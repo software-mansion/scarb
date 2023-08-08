@@ -3,7 +3,7 @@
 This crate provides structured access to the output of `scarb metadata` command.
 [Scarb](https://docs.swmansion.com/scarb) is a build toolchain and package manager for
 the [Cairo language](https://www.cairo-lang.org/).
-See the [Scarb documentation](https://docs.swmansion.com/scarb/docs) for details on
+See the [Scarb documentation](https://docs.swmansion.com/scarb/docs.html) for details on
 Scarb itself.
 
 With the `command` feature (enabled by default), it also exposes an ergonomic interface to collect metadata from Scarb.

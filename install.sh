@@ -30,7 +30,7 @@ Options:
   -h, --help             Print help
   -v, --version          Specify Scarb version to install
 
-For more information, check out https://docs.swmansion.com/scarb/download.
+For more information, check out https://docs.swmansion.com/scarb/download.html.
 EOF
 }
 
