@@ -32,12 +32,11 @@ use derive_builder::Builder;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "packages_filter")]
+use crate::packages_filter::WithManifestPath;
 #[cfg(feature = "command")]
 pub use command::*;
 pub use version_pin::*;
-
-#[cfg(feature = "packages_filter")]
-use crate::packages_filter::WithManifestPath;
 
 #[cfg(feature = "command")]
 mod command;
