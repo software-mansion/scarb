@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::default::Default;
 use std::fs;
+use std::path::PathBuf;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use camino::Utf8Path;
@@ -18,6 +19,8 @@ use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Targe
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName};
+use crate::internal::fsx;
+use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::serdex::{toml_merge, RelativeUtf8PathBuf};
 use crate::internal::to_version::ToVersion;
 use crate::{DEFAULT_SOURCE_PATH, MANIFEST_FILE_NAME};
@@ -247,6 +250,7 @@ impl TryFrom<SmolStr> for TomlTargetKind {
 #[serde(rename_all = "kebab-case")]
 pub struct TomlTarget<P> {
     pub name: Option<SmolStr>,
+    pub source_path: Option<PathBuf>,
 
     #[serde(flatten)]
     pub params: P,
@@ -500,22 +504,20 @@ impl TomlManifest {
     }
 
     fn collect_targets(&self, package_name: SmolStr, root: &Utf8Path) -> Result<Vec<Target>> {
-        let default_source_path = root.join(DEFAULT_SOURCE_PATH);
-
         let mut targets = Vec::new();
 
         targets.extend(Self::collect_target(
             Target::LIB,
             self.lib.as_ref(),
             &package_name,
-            &default_source_path,
+            root,
         )?);
 
         targets.extend(Self::collect_target(
             Target::CAIRO_PLUGIN,
             self.cairo_plugin.as_ref(),
             &package_name,
-            &default_source_path,
+            root,
         )?);
 
         for (kind_toml, ext_toml) in self
@@ -528,12 +530,13 @@ impl TomlManifest {
                 kind_toml,
                 Some(ext_toml),
                 &package_name,
-                &default_source_path,
+                root,
             )?);
         }
 
         if targets.is_empty() {
             trace!("manifest has no targets, assuming default `lib` target");
+            let default_source_path = root.join(DEFAULT_SOURCE_PATH);
             let target = Target::without_params(Target::LIB, package_name, default_source_path);
             targets.push(target);
         }
@@ -545,20 +548,33 @@ impl TomlManifest {
         kind: impl Into<SmolStr>,
         target: Option<&TomlTarget<T>>,
         default_name: &SmolStr,
-        default_source_path: &Utf8Path,
+        root: &Utf8Path,
     ) -> Result<Option<Target>> {
+        let default_source_path = root.join(DEFAULT_SOURCE_PATH);
         let Some(target) = target else {
             return Ok(None);
         };
 
-        let name = target.name.clone().unwrap_or_else(|| default_name.clone());
+        let kind: SmolStr = kind.into();
+        if let Some(source_path) = &target.source_path {
+            ensure!(
+                kind == Target::TEST || source_path.to_str().unwrap_or("") == DEFAULT_SOURCE_PATH,
+                "`{kind}` target cannot specify custom `source-path`"
+            );
+        }
 
-        let target = Target::try_from_structured_params(
-            kind,
-            name,
-            default_source_path.to_path_buf(),
-            &target.params,
-        )?;
+        let name = target.name.clone().unwrap_or_else(|| default_name.clone());
+        let source_path = target
+            .source_path
+            .clone()
+            .map(|p| root.as_std_path().to_path_buf().join(p))
+            .map(fsx::canonicalize)
+            .transpose()?
+            .map(|p| p.try_into_utf8())
+            .transpose()?
+            .unwrap_or(default_source_path.to_path_buf());
+
+        let target = Target::try_from_structured_params(kind, name, source_path, &target.params)?;
 
         Ok(Some(target))
     }

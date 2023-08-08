@@ -31,8 +31,9 @@ impl Deref for Target {
 }
 
 impl Target {
-    pub const LIB: &'_ str = "lib";
     pub const CAIRO_PLUGIN: &'_ str = "cairo-plugin";
+    pub const LIB: &'_ str = "lib";
+    pub const TEST: &'_ str = "test";
 
     pub fn new(
         kind: impl Into<SmolStr>,
