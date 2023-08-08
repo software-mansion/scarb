@@ -2,6 +2,7 @@
 import { data as rel } from "../../../github.data";
 import { computed } from "vue";
 import Snippet from "../Snippet.vue";
+import { withBase } from "vitepress";
 
 const platform = computed(() => {
   const platform = window.navigator?.platform;
@@ -52,7 +53,8 @@ asdf global scarb latest
         latest stable version of Scarb:
         <code>{{ rel.latestVersion }}</code
         >. For other Scarb versions, platforms or installation methods or
-        general help, go to the <a href="/download">download page</a>.
+        general help, go to the
+        <a :href="withBase('./download')">download page</a>.
       </p>
     </div>
   </template>
@@ -60,7 +62,7 @@ asdf global scarb latest
     <div class="vp-doc download download-other">
       For all Scarb versions, platforms or installation methods or general help,
       go to the
-      <a href="/download">download page</a>.
+      <a :href="withBase('./download')">download page</a>.
     </div>
   </template>
 </template>
