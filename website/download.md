@@ -46,7 +46,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh
 
 As for now, Scarb on Windows needs manual installation, but necessary steps are kept to minimum:
 
-1. [Download the release archive](/download) matching your CPU architecture.
+1. [Download the release archive](/download#precompiled-packages) matching your CPU architecture.
 2. Extract it to a location where you would like to have Scarb installed.
    A folder named `scarb` in
    your [`%LOCALAPPDATA%\Programs`](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid?redirectedfrom=MSDN#FOLDERID_UserProgramFiles)
