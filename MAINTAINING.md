@@ -33,20 +33,9 @@ Release branches are allowed to be sources for website deployments,
 and so they will deploy from tags in release branches.
 You might need to swiftly pause the [Website Deploy] workflow to prevent publishing old website version.
 
-#### Publish to crates.io
-
-The [Release] workflow only checks if `scarb` crate properly packages.
-It does not actually publish it, for safety reasons (for example if the workflow is triggered by malicious actor, or by
-mistake).
-While other effects of this workflow are relatively easy to revert, publishing to [crates.io] is not, and the only thing
-we can do is to _yank_ published release, and start release procedure from scratch with new version number.
-To release the crate on [crates.io], simply run following command from your repo (ensure you are on correct commit!):
-
-```shell
-cargo publish -p scarb
-```
-
-You can only publish the `scarb` crate if you are member of the [StarkNet Crates.io Admins] team on GitHub.
+> [!IMPORTANT]
+> Make sure `scarb-metadata` crate is released and published to [crates.io].
+> Only [StarkNet Crates.io Admins] can do this.
 
 ### Write release notes
 
@@ -75,21 +64,26 @@ This release is all about blahblah
 * **Even more blah blah** - Everything is awesome.
     * **Sometimes some sub-blah is cool** - Yeah.
 
-## Highlight point title
+## Highlight Point Title
 
 Elaborate what this is about, what has changed, etc.
 Be as descriptive as you can.
 
-## Cairo version
+## Cairo Version
 
 This version of Scarb comes with Cairo [`vX.Y.Z`](https://github.com/starkware-libs/cairo/releases/tag/vX.Y.Z).
 
-## Pull requests
+## What's Changed
 
-<!-- Here goes output from `Generate release notes` button, without header. -->
+<!-- Here goes output from `Generate release notes` button. -->
 
 **Full Changelog**: https://github.com/software-mansion/scarb/compare/...
 ```
+
+> [!IMPORTANT]  
+> The _Cairo version_ section is very important.
+> Scarb website is parsing this sentence (the link to release notes, to be precise) to infer what version of Cairo is
+> used in this release.
 
 ### Announce release on social media
 
