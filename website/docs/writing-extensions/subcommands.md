@@ -31,9 +31,6 @@ Additionally, Scarb passes more contextual information via environment variables
 ## Implementation recommendations
 
 Custom subcommands may use the `SCARB` environment variable to call back to Scarb.
-Alternatively, they can link to the [`scarb` crate](./scarb-crate) as a library, but this approach has drawbacks,
-described in the linked page.
-Instead, it is encouraged to use the CLI interface to drive Scarb.
 The [`scarb metadata`](./scarb-metadata) command can be used to obtain information about the current project,
 whereas the [`--json`](./json-output) flag make Scarb output machine-readable messages on standard output.
 If you are using Rust, the [`scarb-metadata` crate](https://crates.io/crates/scarb-metadata) can be used to parse the
