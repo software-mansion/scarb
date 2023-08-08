@@ -1,4 +1,3 @@
-import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid"; // https://vitepress.dev/reference/site-config
 
 const base = "/scarb/";
@@ -85,109 +84,101 @@ const telegramIcon = `
   </svg>
 `;
 
-export default withMermaid(
-  defineConfig({
-    title: "Scarb",
-    description:
-      "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
-    lang,
-    base,
+export default withMermaid({
+  title: "Scarb",
+  description:
+    "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
+  lang,
+  base,
 
-    head: [
-      ["meta", { httpEquiv: "Content-Language", content: lang }],
-      ["link", { rel: "manifest", href: `${base}manifest.json` }],
-      ["link", { rel: "icon", href: `${base}favicon.ico`, sizes: "any" }],
-      [
-        "link",
-        { rel: "icon", href: `${base}favicon.svg`, type: "image/svg+xml" },
-      ],
-      [
-        "link",
-        { rel: "apple-touch-icon", href: `${base}apple-touch-icon.png` },
-      ],
-      ["meta", { name: "apple-mobile-web-app-title", content: "Scarb" }],
-      ["meta", { name: "twitter:card", content: "summary_large_image" }],
-      ["meta", { name: "twitter:site", content: "@swmansionxyz" }],
-      ["meta", { name: "twitter:creator", content: "@jajakobyly" }],
-      [
-        "meta",
-        {
-          property: "og:title",
-          content: "Scarb, the Cairo and StarkNet development toolchain",
-        },
-      ],
-      [
-        "meta",
-        {
-          property: "og:description",
-          content:
-            "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
-        },
-      ],
-      ["meta", { property: "og:type", content: "website" }],
-      [
-        "meta",
-        { property: "og:image", content: `${absoluteBase}og-image.png` },
-      ],
-      [
-        "meta",
-        {
-          property: "og:image:alt",
-          content:
-            "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
-        },
-      ],
-      ["meta", { property: "og:image:type", content: "image/png" }],
-      ["meta", { property: "og:image:width", content: "1280" }],
-      ["meta", { property: "og:image:height", content: "640" }],
+  head: [
+    ["meta", { httpEquiv: "Content-Language", content: lang }],
+    ["link", { rel: "manifest", href: `${base}manifest.json` }],
+    ["link", { rel: "icon", href: `${base}favicon.ico`, sizes: "any" }],
+    [
+      "link",
+      { rel: "icon", href: `${base}favicon.svg`, type: "image/svg+xml" },
+    ],
+    ["link", { rel: "apple-touch-icon", href: `${base}apple-touch-icon.png` }],
+    ["meta", { name: "apple-mobile-web-app-title", content: "Scarb" }],
+    ["meta", { name: "twitter:card", content: "summary_large_image" }],
+    ["meta", { name: "twitter:site", content: "@swmansionxyz" }],
+    ["meta", { name: "twitter:creator", content: "@jajakobyly" }],
+    [
+      "meta",
+      {
+        property: "og:title",
+        content: "Scarb, the Cairo and StarkNet development toolchain",
+      },
+    ],
+    [
+      "meta",
+      {
+        property: "og:description",
+        content:
+          "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
+      },
+    ],
+    ["meta", { property: "og:type", content: "website" }],
+    ["meta", { property: "og:image", content: `${absoluteBase}og-image.png` }],
+    [
+      "meta",
+      {
+        property: "og:image:alt",
+        content:
+          "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
+      },
+    ],
+    ["meta", { property: "og:image:type", content: "image/png" }],
+    ["meta", { property: "og:image:width", content: "1280" }],
+    ["meta", { property: "og:image:height", content: "640" }],
+  ],
+
+  lastUpdated: true,
+
+  themeConfig: {
+    logo: {
+      light: "logo-light.svg",
+      dark: "logo-dark.svg",
+      alt: "Scarb",
+    },
+    siteTitle: false,
+
+    nav: [
+      { text: "Download", link: "/download" },
+      { text: "Documentation", link: "/docs" },
     ],
 
-    lastUpdated: true,
+    sidebar,
 
-    themeConfig: {
-      logo: {
-        light: "logo-light.svg",
-        dark: "logo-dark.svg",
-        alt: "Scarb",
-      },
-      siteTitle: false,
-
-      nav: [
-        { text: "Download", link: "/download" },
-        { text: "Documentation", link: "/docs" },
-      ],
-
-      sidebar,
-
-      socialLinks: [
-        { icon: "github", link: "https://github.com/software-mansion/scarb" },
-        { icon: "twitter", link: "https://twitter.com/swmansionxyz" },
-        {
-          icon: {
-            svg: telegramIcon,
-          },
-          ariaLabel: "Telegram",
-          link: "https://t.me/+G_YxIv-XTFlhNWU0",
+    socialLinks: [
+      { icon: "github", link: "https://github.com/software-mansion/scarb" },
+      { icon: "twitter", link: "https://twitter.com/swmansionxyz" },
+      {
+        icon: {
+          svg: telegramIcon,
         },
-        { icon: "discord", link: "https://discord.gg/KZWaFtPZJf" },
-      ],
-
-      editLink: {
-        pattern:
-          "https://github.com/software-mansion/scarb/tree/main/website/:path",
-        text: "Edit this page on GitHub",
+        ariaLabel: "Telegram",
+        link: "https://t.me/+G_YxIv-XTFlhNWU0",
       },
+      { icon: "discord", link: "https://discord.gg/KZWaFtPZJf" },
+    ],
 
-      search: {
-        provider: "local",
-      },
+    editLink: {
+      pattern:
+        "https://github.com/software-mansion/scarb/tree/main/website/:path",
+      text: "Edit this page on GitHub",
     },
 
-    sitemap: {
-      hostname: absoluteBase,
+    search: {
+      provider: "local",
     },
-  }),
-);
+  },
+
+  sitemap: {
+    hostname: absoluteBase,
+  },
+});
 
 function p(text, link) {
   return { text, link };
