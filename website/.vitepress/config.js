@@ -1,6 +1,10 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid"; // https://vitepress.dev/reference/site-config
 
+const base = "/scarb/";
+const absoluteBase = `https://docs.swmansion.com${base}`;
+const lang = "en-US";
+
 // https://vitepress.dev/reference/site-config
 const sidebar = {
   "/docs": [
@@ -86,10 +90,22 @@ export default withMermaid(
     title: "Scarb",
     description:
       "Scarb is a build toolchain and package manager for Cairo and Starknet ecosystems.",
-    lang: "en-US",
-    base: "/scarb/",
+    lang,
+    base,
 
     head: [
+      ["meta", { httpEquiv: "Content-Language", content: lang }],
+      ["link", { rel: "manifest", href: `${base}manifest.json` }],
+      ["link", { rel: "icon", href: `${base}favicon.ico`, sizes: "any" }],
+      [
+        "link",
+        { rel: "icon", href: `${base}favicon.svg`, type: "image/svg+xml" },
+      ],
+      [
+        "link",
+        { rel: "apple-touch-icon", href: `${base}apple-touch-icon.png` },
+      ],
+      ["meta", { name: "apple-mobile-web-app-title", content: "Scarb" }],
       ["meta", { name: "twitter:card", content: "summary_large_image" }],
       ["meta", { name: "twitter:site", content: "@swmansionxyz" }],
       ["meta", { name: "twitter:creator", content: "@jajakobyly" }],
@@ -111,10 +127,7 @@ export default withMermaid(
       ["meta", { property: "og:type", content: "website" }],
       [
         "meta",
-        {
-          property: "og:image",
-          content: "https://docs.swmansion.com/scarb/og-image.png",
-        },
+        { property: "og:image", content: `${absoluteBase}og-image.png` },
       ],
       [
         "meta",
@@ -171,7 +184,7 @@ export default withMermaid(
     },
 
     sitemap: {
-      hostname: "https://docs.swmansion.com/scarb/",
+      hostname: absoluteBase,
     },
   }),
 );
