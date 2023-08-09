@@ -142,7 +142,7 @@ fn new_existing() {
         .failure()
         .stdout_eq(indoc! {r#"
             error: destination `hello` already exists
-            Use `scarb init` to initialize the directory.
+            help: use `scarb init` to initialize the directory
         "#});
 }
 
