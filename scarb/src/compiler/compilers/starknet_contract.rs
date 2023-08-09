@@ -305,7 +305,10 @@ fn find_project_contracts(
             .iter()
             .map(|selector| selector.package().into())
             .unique()
-            .map(|package_name: SmolStr| db.upcast_mut().intern_crate(CrateLongId(package_name)))
+            .map(|package_name: SmolStr| {
+                db.upcast_mut()
+                    .intern_crate(CrateLongId::Real(package_name))
+            })
             .collect::<Vec<_>>();
         find_contracts(db, crate_ids.as_ref())
             .into_iter()

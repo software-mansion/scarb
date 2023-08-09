@@ -74,7 +74,7 @@ classDiagram
         - compilers
     }
     class CairoPluginRepository {
-        - compiler semantic plugins
+        - compiler macro plugins
     }
     class StarknetContractCompiler {
     }
@@ -261,7 +261,7 @@ Please see [scarb documentation](https://docs.swmansion.com/scarb/docs/reference
 ### CairoPluginRepository
 
 Thanks to the Cairo compiler architecture, the compilation process can be altered in certain ways by use of 
-the Semantic Plugins interface.
+the `MacroPlugin` interface.
 Within Scarb, this functionality is exposed to users as Cairo plugins.  
 Cairo plugin is a special Scarb package that defines a cairo-plugin target and provides additional interface for 
 instantiating compiler Semantic plugins. 

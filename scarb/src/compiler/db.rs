@@ -1,8 +1,8 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
+use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_filesystem::ids::Directory;
-use cairo_lang_semantic::db::SemanticGroup;
 use tracing::trace;
 
 use crate::compiler::CompilationUnit;
@@ -21,8 +21,8 @@ pub(crate) fn build_scarb_root_database(
         let package_id = plugin_info.package.id;
         let plugin = ws.config().cairo_plugins().fetch(package_id)?;
         let instance = plugin.instantiate()?;
-        for semantic_plugin in instance.semantic_plugins() {
-            b.with_semantic_plugin(semantic_plugin);
+        for macro_plugin in instance.macro_plugins() {
+            b.with_macro_plugin(macro_plugin);
         }
     }
 
@@ -42,7 +42,7 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         })
         .collect();
 
-    let corelib = Some(Directory(
+    let corelib = Some(Directory::Real(
         unit.core_package_component().target.source_root().into(),
     ));
 
@@ -60,7 +60,7 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
 }
 
 pub(crate) fn has_starknet_plugin(db: &RootDatabase) -> bool {
-    db.semantic_plugins().iter().any(|plugin| {
+    db.macro_plugins().iter().any(|plugin| {
         // Can this be done in less "hacky" way? TypeId is not working here, because we deal with
         // trait objects.
         format!("{:?}", *plugin).contains("StarkNetPlugin")
