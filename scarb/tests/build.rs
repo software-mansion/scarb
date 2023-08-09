@@ -118,7 +118,7 @@ fn compile_without_manifest() {
         .code(1)
         .stdout_matches(format!(
             "\
-error: failed to read manifest at `[..]/Scarb.toml`
+error: failed to read manifest at: [..]/Scarb.toml
 
 Caused by:
     {cause}
@@ -147,7 +147,7 @@ fn compile_with_lowercase_scarb_toml() {
         .code(1)
         .stdout_matches(format!(
             "\
-error: failed to read manifest at `[..]/Scarb.toml`
+error: failed to read manifest at: [..]/Scarb.toml
 
 Caused by:
     {cause}
@@ -167,7 +167,7 @@ fn compile_with_manifest_not_a_file() {
         .code(1)
         .stdout_matches(format!(
             "\
-error: failed to read manifest at `[..]/Scarb.toml`
+error: failed to read manifest at: [..]/Scarb.toml
 
 Caused by:
     {cause}
@@ -193,7 +193,7 @@ fn compile_with_invalid_empty_name() {
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-            error: failed to parse manifest at `[..]/Scarb.toml`
+            error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
                 TOML parse error at line 3, column 20
@@ -222,7 +222,7 @@ fn compile_with_invalid_version() {
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-            error: failed to parse manifest at `[..]/Scarb.toml`
+            error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
                 TOML parse error at line 4, column 23
@@ -252,7 +252,7 @@ fn compile_with_invalid_cairo_version() {
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-            error: failed to parse manifest at `[..]/Scarb.toml`
+            error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
                 TOML parse error at line 5, column 29
@@ -324,7 +324,7 @@ fn compile_with_invalid_non_numeric_dep_version() {
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-            error: failed to parse manifest at `[..]/Scarb.toml`
+            error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
                 TOML parse error at line 7, column 19

@@ -44,7 +44,7 @@ pub fn edit(
 
     let original_raw_manifest = fsx::read_to_string(&manifest_path)?;
     let mut doc = Document::from_str(&original_raw_manifest)
-        .with_context(|| format!("failed to read manifest at `{manifest_path}`"))?;
+        .with_context(|| format!("failed to read manifest at: {manifest_path}"))?;
 
     for op in ops {
         op.apply_to(

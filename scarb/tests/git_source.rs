@@ -211,7 +211,7 @@ fn compile_with_short_ssh_git() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: failed to parse manifest at `[..]`
+            error: failed to parse manifest at: [..]
 
             Caused by:
                 TOML parse error at line 2, column 24

@@ -29,7 +29,7 @@ fn compile_with_duplicate_targets_1() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: failed to parse manifest at `[..]/Scarb.toml`
+        error: failed to parse manifest at: [..]/Scarb.toml
 
         Caused by:
             manifest contains duplicate target definitions `example`, consider explicitly naming targets with the `name` field
@@ -61,7 +61,7 @@ fn compile_with_duplicate_targets_2() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: failed to parse manifest at `[..]/Scarb.toml`
+        error: failed to parse manifest at: [..]/Scarb.toml
 
         Caused by:
             manifest contains duplicate target definitions `example (x)`, use different target names to resolve the conflict

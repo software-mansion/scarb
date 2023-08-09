@@ -525,7 +525,7 @@ fn custom_profiles_can_inherit_dev_and_release_only() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: failed to parse manifest at `[..]`
+            error: failed to parse manifest at: [..]
 
             Caused by:
                 profile can inherit from `dev` or `release` only, found `some-profile`
