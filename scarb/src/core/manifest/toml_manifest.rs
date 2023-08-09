@@ -36,6 +36,7 @@ pub struct TomlManifest {
     pub dependencies: Option<BTreeMap<PackageName, MaybeTomlWorkspaceDependency>>,
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
     pub cairo_plugin: Option<TomlTarget<TomlExternalTargetParams>>,
+    pub test: Option<Vec<TomlTarget<TomlExternalTargetParams>>>,
     pub target: Option<BTreeMap<TomlTargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
     pub cairo: Option<TomlCairo>,
     pub profile: Option<TomlProfilesDefinition>,
@@ -519,6 +520,17 @@ impl TomlManifest {
             &package_name,
             root,
         )?);
+
+        if let Some(test) = self.test.as_ref() {
+            for test_toml in test {
+                targets.extend(Self::collect_target(
+                    Target::TEST,
+                    Some(test_toml),
+                    &package_name,
+                    root,
+                )?);
+            }
+        }
 
         for (kind_toml, ext_toml) in self
             .target

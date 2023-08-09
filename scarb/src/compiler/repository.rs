@@ -7,7 +7,7 @@ use cairo_lang_compiler::db::RootDatabase;
 use itertools::Itertools;
 use smol_str::SmolStr;
 
-use crate::compiler::compilers::{LibCompiler, StarknetContractCompiler};
+use crate::compiler::compilers::{LibCompiler, StarknetContractCompiler, TestCompiler};
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::Workspace;
 
@@ -26,6 +26,7 @@ impl CompilerRepository {
         let mut repo = Self::empty();
         repo.add(Box::new(LibCompiler)).unwrap();
         repo.add(Box::new(StarknetContractCompiler)).unwrap();
+        repo.add(Box::new(TestCompiler)).unwrap();
         repo
     }
 
