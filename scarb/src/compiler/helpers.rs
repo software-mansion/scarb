@@ -26,5 +26,7 @@ pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> 
 }
 
 pub fn collect_main_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
-    vec![db.intern_crate(CrateLongId(unit.main_component().cairo_package_name()))]
+    vec![db.intern_crate(CrateLongId::Real(
+        unit.main_component().cairo_package_name(),
+    ))]
 }

@@ -68,7 +68,7 @@ fn main() -> Result<()> {
 
         let db = build_root_database(unit, starknet)?;
 
-        let main_crate_ids = vec![db.intern_crate(CrateLongId(package.name.clone().into()))];
+        let main_crate_ids = vec![db.intern_crate(CrateLongId::Real(package.name.clone().into()))];
 
         if DiagnosticsReporter::stderr().check(&db) {
             bail!("could not compile `{}` due to previous error", package.name);
@@ -113,7 +113,7 @@ fn build_root_database(unit: &CompilationUnitMetadata, starknet: bool) -> Result
             .components
             .iter()
             .find(|c| c.name == "core")
-            .map(|c| Directory(c.source_root().into())),
+            .map(|c| Directory::Real(c.source_root().into())),
         content: ProjectConfigContent {
             crate_roots: unit
                 .components
@@ -136,10 +136,10 @@ fn build_root_database(unit: &CompilationUnitMetadata, starknet: bool) -> Result
             .collect::<CfgSet>(),
     );
 
-    b.with_semantic_plugin(Arc::new(TestPlugin::default()));
+    b.with_macro_plugin(Arc::new(TestPlugin::default()));
 
     if starknet {
-        b.with_semantic_plugin(Arc::new(StarkNetPlugin::default()));
+        b.with_macro_plugin(Arc::new(StarkNetPlugin::default()));
     }
 
     b.build()

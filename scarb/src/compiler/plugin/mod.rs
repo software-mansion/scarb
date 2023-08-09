@@ -4,11 +4,11 @@ use std::fmt;
 use std::sync::Arc;
 
 use anyhow::{anyhow, bail, Result};
-use cairo_lang_semantic::plugin::SemanticPlugin;
+use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_starknet::plugin::StarkNetPlugin;
 use itertools::Itertools;
 
-use crate::compiler::plugin::builtin::BuiltinSemanticCairoPlugin;
+use crate::compiler::plugin::builtin::BuiltinMacroCairoPlugin;
 use crate::core::{PackageId, PackageName, SourceId};
 use crate::internal::to_version::ToVersion;
 
@@ -20,7 +20,7 @@ pub trait CairoPlugin: Sync {
 }
 
 pub trait CairoPluginInstance {
-    fn semantic_plugins(&self) -> Vec<Arc<dyn SemanticPlugin>>;
+    fn macro_plugins(&self) -> Vec<Arc<dyn MacroPlugin>>;
 }
 
 pub struct CairoPluginRepository {
@@ -46,7 +46,7 @@ impl CairoPluginRepository {
             version.cairo.version.to_version().unwrap(),
             SourceId::for_std(),
         );
-        repo.add(Box::new(BuiltinSemanticCairoPlugin::<StarkNetPlugin>::new(
+        repo.add(Box::new(BuiltinMacroCairoPlugin::<StarkNetPlugin>::new(
             starknet_package_id,
         )))
         .unwrap();
