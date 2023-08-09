@@ -1,0 +1,41 @@
+[package]
+name = "scarb-test-collector"
+version.workspace = true
+edition.workspace = true
+publish = false
+authors.workspace = true
+
+[lib]
+
+[dependencies]
+rayon.workspace = true
+cairo-lang-casm.workspace = true
+cairo-lang-compiler.workspace = true
+cairo-lang-debug.workspace = true
+cairo-lang-defs.workspace = true
+cairo-lang-diagnostics.workspace = true
+cairo-lang-filesystem.workspace = true
+cairo-lang-lowering.workspace = true
+cairo-lang-test-runner.workspace = true
+cairo-lang-plugins.workspace = true
+cairo-lang-project.workspace = true
+cairo-lang-sierra-ap-change.workspace = true
+cairo-lang-sierra-gas.workspace = true
+cairo-lang-runner.workspace = true
+cairo-lang-semantic.workspace = true
+cairo-lang-sierra.workspace = true
+cairo-lang-sierra-generator.workspace = true
+cairo-lang-sierra-to-casm.workspace = true
+cairo-lang-starknet.workspace = true
+cairo-lang-syntax.workspace = true
+cairo-lang-utils.workspace = true
+anyhow.workspace = true
+smol_str.workspace = true
+itertools.workspace = true
+serde = {workspace = true, features = ["derive"]}
+serde_json.workspace = true
+thiserror.workspace = true
+cairo-felt.workspace = true
+num-bigint.workspace = true
+num-integer.workspace = true
+num-traits.workspace = true

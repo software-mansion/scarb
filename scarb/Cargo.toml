@@ -69,6 +69,8 @@ which.workspace = true
 xxhash-rust.workspace = true
 zip.workspace = true
 
+scarb-test-collector = { path = "../utils/scarb-test-collector" }
+
 [dev-dependencies]
 assert_fs.workspace = true
 io_tee.workspace = true

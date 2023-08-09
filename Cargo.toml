@@ -7,6 +7,7 @@ members = [
     "extensions/scarb-cairo-test",
     "utils/create-output-dir",
     "utils/scarb-build-metadata",
+    "utils/scarb-test-collector",
     "utils/scarb-test-support",
     "utils/test-for-each-example",
     "xtask",
@@ -92,6 +93,22 @@ which = "4.4.0"
 xshell = "0.2.5"
 xxhash-rust = { version = "0.8.6", features = ["xxh3"] }
 zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
+
+cairo-felt = "0.8.2"
+cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
+cairo-lang-debug = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
+cairo-lang-diagnostics = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
+cairo-lang-lowering = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
+cairo-lang-plugins = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
+cairo-lang-project = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
+cairo-lang-sierra-ap-change = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
+cairo-lang-sierra-gas = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
+cairo-lang-sierra-generator = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
+cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
+rayon = "1.7.0"
+num-bigint = "0.4"
+num-integer = "0.1"
+num-traits = "0.2"
 
 [profile.release]
 lto = true
