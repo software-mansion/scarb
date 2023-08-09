@@ -15,7 +15,7 @@
     "mermaid": "10.2.4",
     "prettier": "3.0.0",
     "semver": "7.5.4",
-    "vitepress": "1.0.0-rc.1",
+    "vitepress": "1.0.0-rc.4",
     "vitepress-plugin-mermaid": "2.0.13",
     "vue": "3.3.4"
   }
