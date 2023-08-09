@@ -13,7 +13,7 @@ use clap::Parser;
 use indoc::formatdoc;
 
 use scarb_metadata::packages_filter::PackagesFilter;
-use scarb_metadata::MetadataCommand;
+use scarb_metadata::{MetadataCommand, ScarbCommand};
 
 /// Execute the main function of a package.
 #[derive(Parser, Clone, Debug)]
@@ -38,6 +38,8 @@ fn main() -> Result<()> {
 
     let package = args.packages_filter.match_one(&metadata)?;
     println!("running {} ...", package.name);
+
+    build_project()?;
 
     let filename = format!("{}.sierra", package.name);
     let path = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?)
@@ -123,4 +125,8 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn build_project() -> Result<()> {
+    Ok(ScarbCommand::new().arg("build").run()?)
 }
