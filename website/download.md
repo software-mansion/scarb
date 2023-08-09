@@ -23,10 +23,8 @@ To download Git dependencies, Scarb requires a Git executable to be available in
 
 ## Install via installation script
 
-Download and install Scarb quickly.
-Select the tab for your computer's operating system below, then follow its installation instructions.
-
-### macOS and Linux
+Installing via installation script is the fastest way to get Scarb up and running.
+This method only works on macOS and Linux.
 
 Run the following in your terminal, then follow the onscreen instructions.
 This will install the latest **stable** release.
@@ -42,28 +40,7 @@ version number.
 curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v {{ rel.sampleVersion }}
 ```
 
-### Windows
-
-As for now, Scarb on Windows needs manual installation, but necessary steps are kept to minimum:
-
-1. [Download the release archive](/download#precompiled-packages) matching your CPU architecture.
-2. Extract it to a location where you would like to have Scarb installed.
-   A folder named `scarb` in
-   your [`%LOCALAPPDATA%\Programs`](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid?redirectedfrom=MSDN#FOLDERID_UserProgramFiles)
-   directory will suffice:
-   ```batch
-   %LOCALAPPDATA%\Programs\scarb
-   ```
-3. Add path to the `scarb\bin` directory to your `PATH` environment variable.
-4. Verify installation by running the following command in new terminal session, it should print Scarb and Cairo
-   language versions:
-   ```shell
-   scarb --version
-   ```
-
 ### Uninstall
-
-#### macOS and Linux
 
 The installation script does not have uninstalling logic built-in.
 It tries to minimize changes performed to the system, though, to keep the number of manual steps to remove Scarb low.
@@ -75,15 +52,6 @@ The installation script might have added path to `~/.local/bin` to `$PATH`, by a
 to `.bashrc`, `.zshrc` or others, depending on the shell running in the system.
 If you wish, you can remove these lines, but often this is not desirable.
 
-#### Windows
-
-Simply undo steps done to manually install Scarb:
-
-1. Remove extracted archive files.
-2. Remove the path to the `scarb\bin` directory from `PATH`.
-
----
-
 On top of that, Scarb creates several files (like data files or caches) in standard system paths.
 These have to be removed manually.
 The list of all global paths written to by Scarb is listed in [here](./docs/reference/global-directories).
@@ -93,6 +61,7 @@ The list of all global paths written to by Scarb is listed in [here](./docs/refe
 asdf is a CLI tool that can manage multiple language runtime versions on a per-project basis.
 Scarb team maintains an [official plugin](https://github.com/software-mansion/asdf-scarb) for asdf which manages
 multiple Scarb installations.
+Mind that asdf works on macOS and Linux only.
 This plugin needs `bash`, `curl`, `tar` and other generic POSIX utilities.
 Everything should be included by default on your system.
 
@@ -133,6 +102,36 @@ versions.
 ## By operating system
 
 Choose your operating system and tool.
+
+### Windows
+
+As for now, Scarb on Windows needs manual installation, but necessary steps are kept to minimum:
+
+1. [Download the release archive](/download#precompiled-packages) matching your CPU architecture.
+2. Extract it to a location where you would like to have Scarb installed.
+   A folder named `scarb` in
+   your [`%LOCALAPPDATA%\Programs`](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid?redirectedfrom=MSDN#FOLDERID_UserProgramFiles)
+   directory will suffice:
+   ```batch
+   %LOCALAPPDATA%\Programs\scarb
+   ```
+3. Add path to the `scarb\bin` directory to your `PATH` environment variable.
+4. Verify installation by running the following command in new terminal session, it should print Scarb and Cairo
+   language versions:
+   ```shell
+   scarb --version
+   ```
+
+#### Uninstall
+
+Simply undo steps done to manually install Scarb:
+
+1. Remove extracted archive files.
+2. Remove the path to the `scarb\bin` directory from `PATH`.
+
+On top of that, Scarb creates several files (like data files or caches) in standard system paths.
+These have to be removed manually.
+The list of all global paths written to by Scarb is listed in [here](./docs/reference/global-directories).
 
 ### NixOS
 
