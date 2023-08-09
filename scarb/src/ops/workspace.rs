@@ -5,6 +5,7 @@ use anyhow::{anyhow, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use glob::glob;
 use indoc::formatdoc;
+use indoc::indoc;
 use tracing::trace;
 
 use crate::core::config::Config;
@@ -59,9 +60,10 @@ fn read_workspace_impl<'c>(
 
 fn validate_virtual_manifest(manifest_path: &Utf8Path, manifest: &TomlManifest) -> Result<()> {
     if manifest.dependencies.is_some() {
-        Err(anyhow!(
-            "this virtual manifest specifies a [dependencies] section, which is not allowed"
-        ))
+        Err(anyhow!(indoc! {r#"
+            this virtual manifest specifies a [dependencies] section, which is not allowed
+            help: use [workspace.dependencies] instead
+        "#}))
         .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))
     } else {
         Ok(())
