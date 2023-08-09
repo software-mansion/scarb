@@ -29,8 +29,13 @@ pub struct NewResult {
 pub fn new_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
     ensure!(
         !opts.path.exists(),
-        "destination `{}` already exists\nUse `scarb init` to initialize the directory.",
-        opts.path
+        formatdoc!(
+            r#"
+                destination `{}` already exists
+                help: use `scarb init` to initialize the directory
+            "#,
+            opts.path
+        )
     );
 
     let name = infer_name(opts.name, &opts.path)?;
@@ -74,10 +79,10 @@ fn infer_name(name: Option<PackageName>, path: &Utf8Path) -> Result<PackageName>
         Ok(name)
     } else {
         let Some(file_name) = path.file_name() else {
-            bail!(
-                "cannot infer package name from path {:?}\nUse --name to override.",
-                path.as_os_str()
-            );
+            bail!(formatdoc! {r#"
+                cannot infer package name from path: {path}
+                help: use --name to override
+            "#});
         };
 
         PackageName::try_new(file_name)
