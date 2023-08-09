@@ -26,6 +26,8 @@ fn cairo_test_success() {
         .success()
         .stdout_matches(indoc! {r#"
             running cairo_run_example ...
+               Compiling cairo_run_example v0.1.0 ([..]/Scarb.toml)
+                Finished release target(s) in [..]
             Run completed successfully, returning [2]
             Remaining gas: 1971340
         "#});
@@ -51,10 +53,12 @@ fn cairo_test_package_not_built() {
         .arg("2000000")
         .current_dir(example)
         .assert()
-        .failure()
-        .stderr_matches(indoc! {r#"
-            Error: package has not been compiled, file does not exist: cairo_run_example.sierra
-            help: run `scarb build` to compile the package
-
+        .success()
+        .stdout_matches(indoc! {r#"
+            running cairo_run_example ...
+               Compiling cairo_run_example v0.1.0 ([..]/Scarb.toml)
+                Finished release target(s) in [..]
+            Run completed successfully, returning [2]
+            Remaining gas: 1971340
         "#});
 }
