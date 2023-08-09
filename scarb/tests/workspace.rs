@@ -44,7 +44,7 @@ fn error_on_virtual_manifest_with_dependencies() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: failed to parse manifest at `[..]`
+            error: failed to parse manifest at: [..]
 
             Caused by:
                 this virtual manifest specifies a [dependencies] section, which is not allowed

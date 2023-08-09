@@ -43,7 +43,7 @@ pub fn new_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
         },
         config,
     )
-    .with_context(|| format!("failed to create package `{name}` at `{}`", opts.path))?;
+    .with_context(|| format!("failed to create package `{name}` at: {}", opts.path))?;
 
     Ok(NewResult { name })
 }
@@ -64,7 +64,7 @@ pub fn init_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
         },
         config,
     )
-    .with_context(|| format!("failed to create package `{name}`",))?;
+    .with_context(|| format!("failed to create package: {name}"))?;
 
     Ok(NewResult { name })
 }

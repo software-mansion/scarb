@@ -41,7 +41,7 @@ fn compile_cairo_plugin_with_lib_target() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: failed to parse manifest at `[..]/Scarb.toml`
+        error: failed to parse manifest at: [..]/Scarb.toml
 
         Caused by:
             target `cairo-plugin` cannot be mixed with other targets
@@ -66,7 +66,7 @@ fn compile_cairo_plugin_with_other_target() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: failed to parse manifest at `[..]/Scarb.toml`
+        error: failed to parse manifest at: [..]/Scarb.toml
 
         Caused by:
             target `cairo-plugin` cannot be mixed with other targets

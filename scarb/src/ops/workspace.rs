@@ -64,7 +64,7 @@ fn validate_virtual_manifest(manifest_path: &Utf8Path, manifest: &TomlManifest) 
             this virtual manifest specifies a [dependencies] section, which is not allowed
             help: use [workspace.dependencies] instead
         "#}))
-        .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))
+        .with_context(|| format!("failed to parse manifest at: {manifest_path}"))
     } else {
         Ok(())
     }
@@ -88,7 +88,7 @@ fn read_workspace_root<'c>(
                 config.profile(),
                 Some(&toml_manifest),
             )
-            .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))?;
+            .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;
         let manifest = Box::new(manifest);
         let package = Package::new(manifest.summary.package_id, manifest_path.into(), manifest);
         Some(package)
@@ -120,7 +120,7 @@ fn read_workspace_root<'c>(
                         config.profile(),
                         Some(&toml_manifest),
                     )
-                    .with_context(|| format!("failed to parse manifest at `{manifest_path}`"))?;
+                    .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;
                 let manifest = Box::new(manifest);
                 let package =
                     Package::new(manifest.summary.package_id, package_path.into(), manifest);
