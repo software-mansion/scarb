@@ -8,10 +8,17 @@ const { Layout } = DefaultTheme;
 <template>
   <Layout>
     <template #doc-bottom>
-      <Footer />
+      <Footer class="footer-doc" />
     </template>
     <template #page-bottom>
       <Footer />
     </template>
   </Layout>
 </template>
+
+<style scoped>
+.footer-doc {
+  padding-left: 0;
+  padding-right: 0;
+}
+</style>
