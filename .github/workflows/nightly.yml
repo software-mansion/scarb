@@ -123,6 +123,20 @@ jobs:
             "scarb-${{ needs.prepare.outputs.nightly_tag }}.zip#Scarb source code (zip)" \
             "scarb-${{ needs.prepare.outputs.nightly_tag }}.tar.gz#Scarb source code (tar.gz)"
           do
+            # If there isn't # in name, it means that it is a build artifact
+            # and we need to remove version tag from the name, so it can be
+            # easily accessed in asdf and Scarb installation scripts
+            #
+            # for example:
+            #   scarb-v0.6.0+nightly-2023-08-09-aarch64-apple-darwin.tar.gz
+            # becomes
+            #   scarb-nightly-2023-08-09-aarch64-apple-darwin.tar.gz
+            if ! [[ $(grep "#" <<< $file) ]]; then
+              label=$(echo $file | sed -E "s/v[^+]*\+//" | sed -E "s/.\/artifacts\///")
+              cp "$file" "$label"
+              file="$label"
+            fi
+
             gh release upload \
               "${{ needs.prepare.outputs.nightly_tag }}" \
               "$file" \
