@@ -62,14 +62,14 @@ Add dependency hosted on a Git repository:
 
 ```toml
 [dependencies]
-alexandria = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 ```
 
 Add dependency located in local path:
 
 ```toml
 [dependencies]
-alexandria = { path = "../path-to-alexandria-checkout/alexandria" }
+alexandria_math = { path = "../path-to-alexandria-checkout/alexandria" }
 ```
 
 ::: info
@@ -89,17 +89,17 @@ You can use `ssh://` URLs, Scarb uses local `git` installation for all network o
 Add dependency hosted on a Git repository:
 
 ```shell
-scarb add alexandria --git https://github.com/keep-starknet-strange/alexandria.git
+scarb add alexandria_math --git https://github.com/keep-starknet-strange/alexandria.git
 ```
 
 Add dependency located in local path:
 
 ```shell
-scarb add alexandria --path ../path-to-alexandria-checkout/alexandria
+scarb add alexandria_math --path ../path-to-alexandria-checkout/alexandria
 ```
 
 ::: info
-You can specify package version like this: `alexandria@0.1.0`, but see remarks in previous section.
+You can specify package version like this: `alexandria_math@0.1.0`, but see remarks in previous section.
 :::
 
 ::: info

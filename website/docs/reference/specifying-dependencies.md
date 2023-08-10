@@ -9,7 +9,7 @@ repository with the `git` key:
 
 ```toml
 [dependencies]
-alexandria = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 ```
 
 Scarb will fetch the `git` repository at this location and then look for a `Scarb.toml` for the requested package
@@ -23,7 +23,7 @@ Here is an example of specifying that you want to use the latest commit on a bra
 
 ```toml
 [dependencies]
-alexandria = { git = "https://github.com/keep-starknet-strange/alexandria.git", branch = "next" }
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", branch = "next" }
 ```
 
 Anything that is not a branch or tag falls under `rev`.
