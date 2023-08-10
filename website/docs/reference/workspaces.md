@@ -145,7 +145,7 @@ Example:
 members = ["foo", "bar"]
 
 [workspace.dependencies]
-alexandria = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", branch = "cairo-2" }
 ```
 
@@ -155,7 +155,7 @@ name = "foo"
 version = "0.2.0"
 
 [dependencies]
-alexandria.workspace = true
+alexandria_math.workspace = true
 ```
 
 ```toml [bar/Scarb.toml]

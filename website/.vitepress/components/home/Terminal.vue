@@ -7,7 +7,7 @@
     </div>
     <p>scarb init --name hello_world</p>
     <p>
-      scarb add alexandria --git
+      scarb add alexandria_math --git
       <span class="br">
         \<br />
         &nbsp;&nbsp;&nbsp;&nbsp;
