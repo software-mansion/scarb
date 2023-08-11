@@ -5,9 +5,11 @@ use cairo_lang_filesystem::cfg::CfgSet;
 use smol_str::SmolStr;
 
 use crate::compiler::Profile;
-use crate::core::{Config, ManifestCompilerConfig, Package, PackageId, Target};
+use crate::core::{Config, ManifestCompilerConfig, Package, PackageId, PackageName, Target};
 use crate::flock::Filesystem;
 use crate::internal::stable_hash::StableHasher;
+
+pub const TEST_COMPONENT_PREFIX: &str = "__test_pkg_";
 
 /// An object that has enough information so that Scarb knows how to build it.
 #[derive(Clone, Debug)]
@@ -133,4 +135,17 @@ impl CompilationUnitComponent {
         self.package.id.hash(hasher);
         self.target.hash(hasher);
     }
+}
+
+pub fn create_test_package_id(package_id: &PackageId) -> PackageId {
+    let package_name = PackageName::new(format!(
+        "{}{}",
+        TEST_COMPONENT_PREFIX,
+        package_id.name.clone()
+    ));
+    PackageId::new(
+        package_name,
+        package_id.version.clone(),
+        package_id.source_id,
+    )
 }

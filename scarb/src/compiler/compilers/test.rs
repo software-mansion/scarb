@@ -13,10 +13,16 @@ impl Compiler for TestCompiler {
 
     fn compile(
         &self,
-        _unit: CompilationUnit,
+        unit: CompilationUnit,
         _db: &mut RootDatabase,
-        _ws: &Workspace<'_>,
+        ws: &Workspace<'_>,
     ) -> Result<()> {
+        let _target_dir = unit.target_dir(ws.config());
+
+        let source_path = unit.target().source_path.clone();
+        let input_path = unit.main_component().package.root();
+        let _input_path = input_path.join(source_path);
+
         Ok(())
     }
 }
