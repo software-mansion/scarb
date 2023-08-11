@@ -8,9 +8,18 @@ updates:
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
-      interval: "monthly"
-    ignore:
-      - dependency-name: "cairo-lang-*"
+      interval: "weekly"
+    groups:
+      cairo-lang:
+        patterns:
+          - "cairo-lang-*"
+      minor-dependencies:
+        exclude-patterns:
+          - "cairo-lang-*"
+          - "deno_task_shell"
+          - "gix"
+          - "semver"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
