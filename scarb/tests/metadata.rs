@@ -167,13 +167,36 @@ fn local_dependencies() {
         packages_and_deps(meta),
         BTreeMap::from_iter([
             ("core".to_string(), vec![]),
-            ("q".to_string(), vec!["core".to_string()]),
-            ("x".to_string(), vec!["core".to_string(), "y".to_string()]),
+            ("testplugin".to_string(), vec![]),
+            (
+                "q".to_string(),
+                vec!["core".to_string(), "testplugin".to_string()]
+            ),
+            (
+                "x".to_string(),
+                vec![
+                    "core".to_string(),
+                    "testplugin".to_string(),
+                    "y".to_string()
+                ]
+            ),
             (
                 "y".to_string(),
-                vec!["core".to_string(), "q".to_string(), "z".to_string()]
+                vec![
+                    "core".to_string(),
+                    "q".to_string(),
+                    "testplugin".to_string(),
+                    "z".to_string()
+                ]
             ),
-            ("z".to_string(), vec!["core".to_string(), "q".to_string()]),
+            (
+                "z".to_string(),
+                vec![
+                    "core".to_string(),
+                    "q".to_string(),
+                    "testplugin".to_string()
+                ]
+            ),
         ])
     )
 }
@@ -193,7 +216,14 @@ fn no_dep() {
 
     assert_eq!(
         packages_and_deps(meta),
-        BTreeMap::from_iter([("x".to_string(), vec!["core".to_string(), "y".to_string()])])
+        BTreeMap::from_iter([(
+            "x".to_string(),
+            vec![
+                "core".to_string(),
+                "testplugin".to_string(),
+                "y".to_string()
+            ]
+        )])
     );
 }
 
@@ -324,6 +354,7 @@ fn tool_metadata_is_packaged_contained() {
             .collect::<BTreeMap<_, _>>(),
         BTreeMap::from_iter([
             ("core".to_string(), None),
+            ("testplugin".to_string(), None),
             (
                 "q".to_string(),
                 Some(BTreeMap::from_iter([(
@@ -381,10 +412,18 @@ fn workspace_simple() {
         packages_and_deps(metadata),
         BTreeMap::from_iter([
             ("core".to_string(), vec![]),
-            ("first".to_string(), vec!["core".to_string()]),
+            ("testplugin".to_string(), vec![]),
+            (
+                "first".to_string(),
+                vec!["core".to_string(), "testplugin".to_string()]
+            ),
             (
                 "second".to_string(),
-                vec!["core".to_string(), "first".to_string()]
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "testplugin".to_string()
+                ]
             ),
         ])
     )
@@ -419,18 +458,27 @@ fn workspace_with_root() {
         packages_and_deps(metadata),
         BTreeMap::from_iter([
             ("core".to_string(), vec![]),
+            ("testplugin".to_string(), vec![]),
             (
                 "some_root".to_string(),
                 vec![
                     "core".to_string(),
                     "first".to_string(),
-                    "second".to_string()
+                    "second".to_string(),
+                    "testplugin".to_string(),
                 ]
             ),
-            ("first".to_string(), vec!["core".to_string()]),
+            (
+                "first".to_string(),
+                vec!["core".to_string(), "testplugin".to_string()]
+            ),
             (
                 "second".to_string(),
-                vec!["core".to_string(), "first".to_string()]
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "testplugin".to_string()
+                ]
             ),
         ])
     )
@@ -460,11 +508,19 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
+            ("testplugin".to_string(), vec![]),
             ("core".to_string(), vec![]),
-            ("first".to_string(), vec!["core".to_string()]),
+            (
+                "first".to_string(),
+                vec!["core".to_string(), "testplugin".to_string()]
+            ),
             (
                 "second".to_string(),
-                vec!["core".to_string(), "first".to_string()]
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "testplugin".to_string()
+                ]
             ),
         ])
     );
@@ -495,22 +551,35 @@ fn workspace_as_dep() {
         packages_and_deps(metadata),
         BTreeMap::from_iter([
             ("core".to_string(), vec![]),
-            ("first".to_string(), vec!["core".to_string()]),
+            ("testplugin".to_string(), vec![]),
+            (
+                "first".to_string(),
+                vec!["core".to_string(), "testplugin".to_string()]
+            ),
             (
                 "second".to_string(),
-                vec!["core".to_string(), "first".to_string()]
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "testplugin".to_string()
+                ]
             ),
             (
                 "third".to_string(),
                 vec![
                     "core".to_string(),
                     "first".to_string(),
-                    "second".to_string()
+                    "second".to_string(),
+                    "testplugin".to_string()
                 ]
             ),
             (
                 "fourth".to_string(),
-                vec!["core".to_string(), "third".to_string()]
+                vec![
+                    "core".to_string(),
+                    "testplugin".to_string(),
+                    "third".to_string()
+                ]
             ),
         ])
     );
@@ -553,15 +622,27 @@ fn workspace_package_key_inheritance() {
         packages_and_deps(metadata),
         BTreeMap::from_iter([
             ("core".to_string(), vec![]),
+            ("testplugin".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["core".to_string(), "some_dep".to_string()]
+                vec![
+                    "core".to_string(),
+                    "some_dep".to_string(),
+                    "testplugin".to_string()
+                ]
             ),
             (
                 "second".to_string(),
-                vec!["core".to_string(), "first".to_string()]
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "testplugin".to_string()
+                ]
             ),
-            ("some_dep".to_string(), vec!["core".to_string()])
+            (
+                "some_dep".to_string(),
+                vec!["core".to_string(), "testplugin".to_string()]
+            )
         ])
     )
 }

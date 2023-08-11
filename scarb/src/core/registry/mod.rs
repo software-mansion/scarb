@@ -49,6 +49,14 @@ pub(crate) mod mock {
                 ),
                 Vec::new(),
             );
+            reg.put(
+                PackageId::new(
+                    PackageName::TEST_PLUGIN,
+                    crate::version::get().cairo.version.parse().unwrap(),
+                    SourceId::default(),
+                ),
+                Vec::new(),
+            );
             reg
         }
 
@@ -212,18 +220,10 @@ pub(crate) mod mock {
     macro_rules! pkgs {
         [$($x:expr),* $(,)?] => (
             &[
-                $($crate::core::registry::mock::pkg!($x)),*
+                $($crate::core::PackageId::from_display_str($x).unwrap()),*
             ]
         );
     }
 
     pub(crate) use pkgs;
-
-    macro_rules! pkg {
-        ($x:expr) => {
-            $crate::core::PackageId::from_display_str($x).unwrap()
-        };
-    }
-
-    pub(crate) use pkg;
 }

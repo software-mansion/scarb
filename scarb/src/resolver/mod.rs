@@ -163,7 +163,7 @@ mod tests {
     use tokio::runtime::Builder;
 
     use crate::core::package::PackageName;
-    use crate::core::registry::mock::{deps, pkg, pkgs, registry, MockRegistry};
+    use crate::core::registry::mock::{deps, pkgs, registry, MockRegistry};
     use crate::core::{ManifestDependency, PackageId, Resolve, SourceId};
 
     fn check(
@@ -186,7 +186,9 @@ mod tests {
                 r.graph
                     .nodes()
                     .filter(|id| {
-                        !id.name.as_str().starts_with("root_") && id.name != PackageName::CORE
+                        !id.name.as_str().starts_with("root_")
+                            && id.name != PackageName::CORE
+                            && id.name != PackageName::TEST_PLUGIN
                     })
                     .sorted()
                     .collect_vec()
@@ -559,12 +561,26 @@ mod tests {
         .unwrap();
 
         let mut test_solution = resolve.solution_with_target_kind(root, "test".into());
+        test_solution.sort();
+        assert_eq!(test_solution.len(), 5);
+        assert_eq!(
+            test_solution
+                .iter()
+                .map(|p| p.name.clone().to_string())
+                .collect_vec(),
+            vec!["bar", "boo", "core", "foo", "testplugin"],
+        );
+
         let mut lib_solution = resolve.solution_with_target_kind(root, "lib".into());
-        assert_eq!(test_solution.len(), 4);
-        assert_eq!(test_solution.pop(), Some(pkg!("foo v1.0.0")));
-        assert_eq!(test_solution.pop(), Some(pkg!("boo v1.0.0")));
+        lib_solution.sort();
         assert_eq!(lib_solution.len(), 3);
-        assert_eq!(lib_solution.pop(), Some(pkg!("boo v1.0.0")));
+        assert_eq!(
+            lib_solution
+                .into_iter()
+                .map(|p| p.name.clone().to_string())
+                .collect_vec(),
+            vec!["bar", "boo", "core"],
+        );
     }
 
     #[test]

@@ -9,6 +9,7 @@ use crate::core::source::SourceId;
 use crate::core::PackageName;
 use crate::internal::static_hash_cache::StaticHashCache;
 use crate::internal::to_version::ToVersion;
+const TEST_PACKAGE_PREFIX: &str = "___test_package_prefix___";
 
 /// See [`PackageIdInner`] for public fields reference.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -31,6 +32,11 @@ impl PackageId {
             source_id,
         };
         Self(CACHE.intern(inner))
+    }
+
+    pub fn test_package_id(&self) -> Self {
+        let package_name = PackageName::new(format!("{TEST_PACKAGE_PREFIX}{}", self.name.clone()));
+        Self::new(package_name, self.version.clone(), self.source_id)
     }
 
     pub fn is_core(&self) -> bool {
@@ -136,7 +142,8 @@ impl<'de> Deserialize<'de> for PackageId {
 
 impl fmt::Display for PackageId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} v{}", self.name, self.version)?;
+        let name = self.name.to_string().replace(TEST_PACKAGE_PREFIX, "");
+        write!(f, "{} v{}", name, self.version)?;
 
         if !self.source_id.is_default_registry() {
             write!(f, " ({})", self.source_id)?;

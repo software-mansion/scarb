@@ -3866,6 +3866,7 @@ dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-sierra-to-casm",
  "cairo-lang-starknet",
+ "cairo-lang-test-runner",
  "cairo-lang-utils",
  "camino",
  "clap",
