@@ -83,6 +83,10 @@ impl Target {
         self.kind == Self::CAIRO_PLUGIN
     }
 
+    pub fn is_test(&self) -> bool {
+        self.kind == Self::TEST
+    }
+
     pub fn source_root(&self) -> &Utf8Path {
         self.source_path
             .parent()
