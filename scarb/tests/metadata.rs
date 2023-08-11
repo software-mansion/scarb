@@ -94,6 +94,8 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
             name = "x"
             version = "1.0.0"
 
+            [[test]]
+
             [dependencies]
             y = { path = "y" }
             "#,
@@ -110,6 +112,8 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
             [package]
             name = "y"
             version = "1.0.0"
+
+            [[test]]
 
             [dependencies]
             q = { path = "../q" }
@@ -129,6 +133,8 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
             name = "z"
             version = "1.0.0"
 
+            [[test]]
+
             [dependencies]
             q = { path = "../q" }
             "#,
@@ -145,6 +151,8 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
             [package]
             name = "q"
             version = "1.0.0"
+
+            [[test]]
             "#,
         )
         .unwrap();
@@ -169,13 +177,36 @@ fn local_dependencies() {
         packages_and_deps(meta),
         BTreeMap::from_iter([
             ("core".to_string(), vec![]),
-            ("q".to_string(), vec!["core".to_string()]),
-            ("x".to_string(), vec!["core".to_string(), "y".to_string()]),
+            ("test_plugin".to_string(), vec![]),
+            (
+                "q".to_string(),
+                vec!["core".to_string(), "test_plugin".to_string()]
+            ),
+            (
+                "x".to_string(),
+                vec![
+                    "core".to_string(),
+                    "test_plugin".to_string(),
+                    "y".to_string()
+                ]
+            ),
             (
                 "y".to_string(),
-                vec!["core".to_string(), "q".to_string(), "z".to_string()]
+                vec![
+                    "core".to_string(),
+                    "q".to_string(),
+                    "test_plugin".to_string(),
+                    "z".to_string()
+                ]
             ),
-            ("z".to_string(), vec!["core".to_string(), "q".to_string()]),
+            (
+                "z".to_string(),
+                vec![
+                    "core".to_string(),
+                    "q".to_string(),
+                    "test_plugin".to_string()
+                ]
+            ),
         ])
     )
 }
@@ -195,7 +226,14 @@ fn no_dep() {
 
     assert_eq!(
         packages_and_deps(meta),
-        BTreeMap::from_iter([("x".to_string(), vec!["core".to_string(), "y".to_string()])])
+        BTreeMap::from_iter([(
+            "x".to_string(),
+            vec![
+                "core".to_string(),
+                "test_plugin".to_string(),
+                "y".to_string()
+            ]
+        )])
     );
 }
 
@@ -331,6 +369,7 @@ fn tool_metadata_is_packaged_contained() {
             .collect::<BTreeMap<_, _>>(),
         BTreeMap::from_iter([
             ("core".to_string(), None),
+            ("test_plugin".to_string(), None),
             (
                 "q".to_string(),
                 Some(BTreeMap::from_iter([(
@@ -368,10 +407,14 @@ fn json_output_is_not_pretty() {
 fn workspace_simple() {
     let t = assert_fs::TempDir::new().unwrap().child("test_workspace");
     let pkg1 = t.child("first");
-    ProjectBuilder::start().name("first").build(&pkg1);
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra("[[test]]")
+        .build(&pkg1);
     let pkg2 = t.child("second");
     ProjectBuilder::start()
         .name("second")
+        .manifest_extra("[[test]]")
         .dep("first", r#"path = "../first""#)
         .build(&pkg2);
     WorkspaceBuilder::start()
@@ -388,10 +431,18 @@ fn workspace_simple() {
         packages_and_deps(metadata),
         BTreeMap::from_iter([
             ("core".to_string(), vec![]),
-            ("first".to_string(), vec!["core".to_string()]),
+            ("test_plugin".to_string(), vec![]),
+            (
+                "first".to_string(),
+                vec!["core".to_string(), "test_plugin".to_string()]
+            ),
             (
                 "second".to_string(),
-                vec!["core".to_string(), "first".to_string()]
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "test_plugin".to_string()
+                ]
             ),
         ])
     )
@@ -431,13 +482,13 @@ fn workspace_with_root() {
                 vec![
                     "core".to_string(),
                     "first".to_string(),
-                    "second".to_string()
+                    "second".to_string(),
                 ]
             ),
             ("first".to_string(), vec!["core".to_string()]),
             (
                 "second".to_string(),
-                vec!["core".to_string(), "first".to_string()]
+                vec!["core".to_string(), "first".to_string(),]
             ),
         ])
     )
@@ -448,10 +499,14 @@ fn workspace_as_dep() {
     let t = assert_fs::TempDir::new().unwrap();
     let first_t = t.child("first_workspace");
     let pkg1 = first_t.child("first");
-    ProjectBuilder::start().name("first").build(&pkg1);
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra("[[test]]")
+        .build(&pkg1);
     let pkg2 = first_t.child("second");
     ProjectBuilder::start()
         .name("second")
+        .manifest_extra("[[test]]")
         .dep("first", r#"path = "../first""#)
         .build(&pkg2);
     WorkspaceBuilder::start()
@@ -467,11 +522,19 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
+            ("test_plugin".to_string(), vec![]),
             ("core".to_string(), vec![]),
-            ("first".to_string(), vec!["core".to_string()]),
+            (
+                "first".to_string(),
+                vec!["core".to_string(), "test_plugin".to_string()]
+            ),
             (
                 "second".to_string(),
-                vec!["core".to_string(), "first".to_string()]
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "test_plugin".to_string()
+                ]
             ),
         ])
     );
@@ -480,12 +543,14 @@ fn workspace_as_dep() {
     let pkg1 = second_t.child("third");
     ProjectBuilder::start()
         .name("third")
+        .manifest_extra("[[test]]")
         .dep("first", r#"path = "../../first_workspace""#)
         .dep("second", r#"path = "../../first_workspace""#)
         .build(&pkg1);
     let pkg2 = second_t.child("fourth");
     ProjectBuilder::start()
         .name("fourth")
+        .manifest_extra("[[test]]")
         .dep("third", r#"path = "../third""#)
         .build(&pkg2);
     WorkspaceBuilder::start()
@@ -502,22 +567,35 @@ fn workspace_as_dep() {
         packages_and_deps(metadata),
         BTreeMap::from_iter([
             ("core".to_string(), vec![]),
-            ("first".to_string(), vec!["core".to_string()]),
+            ("test_plugin".to_string(), vec![]),
+            (
+                "first".to_string(),
+                vec!["core".to_string(), "test_plugin".to_string()]
+            ),
             (
                 "second".to_string(),
-                vec!["core".to_string(), "first".to_string()]
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "test_plugin".to_string()
+                ]
             ),
             (
                 "third".to_string(),
                 vec![
                     "core".to_string(),
                     "first".to_string(),
-                    "second".to_string()
+                    "second".to_string(),
+                    "test_plugin".to_string()
                 ]
             ),
             (
                 "fourth".to_string(),
-                vec!["core".to_string(), "third".to_string()]
+                vec![
+                    "core".to_string(),
+                    "test_plugin".to_string(),
+                    "third".to_string()
+                ]
             ),
         ])
     );
@@ -530,6 +608,7 @@ fn workspace_package_key_inheritance() {
     let some_dep = t.child("some_dep");
     ProjectBuilder::start()
         .name("some_dep")
+        .manifest_extra("[[test]]")
         .version("0.1.0")
         .build(&some_dep);
 
@@ -537,11 +616,13 @@ fn workspace_package_key_inheritance() {
     let pkg1 = some_workspace.child("first");
     ProjectBuilder::start()
         .name("first")
+        .manifest_extra("[[test]]")
         .workspace_dep("some_dep")
         .build(&pkg1);
     let pkg2 = some_workspace.child("second");
     ProjectBuilder::start()
         .name("second")
+        .manifest_extra("[[test]]")
         .dep("first", r#"path = "../first""#)
         .build(&pkg2);
 
@@ -560,15 +641,27 @@ fn workspace_package_key_inheritance() {
         packages_and_deps(metadata),
         BTreeMap::from_iter([
             ("core".to_string(), vec![]),
+            ("test_plugin".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["core".to_string(), "some_dep".to_string()]
+                vec![
+                    "core".to_string(),
+                    "some_dep".to_string(),
+                    "test_plugin".to_string()
+                ]
             ),
             (
                 "second".to_string(),
-                vec!["core".to_string(), "first".to_string()]
+                vec![
+                    "core".to_string(),
+                    "first".to_string(),
+                    "test_plugin".to_string()
+                ]
             ),
-            ("some_dep".to_string(), vec!["core".to_string()])
+            (
+                "some_dep".to_string(),
+                vec!["core".to_string(), "test_plugin".to_string()]
+            )
         ])
     )
 }

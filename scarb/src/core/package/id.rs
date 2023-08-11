@@ -4,6 +4,7 @@ use std::ops::Deref;
 use anyhow::Result;
 use semver::Version;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use smol_str::SmolStr;
 
 use crate::core::source::SourceId;
 use crate::core::PackageName;
@@ -31,6 +32,14 @@ impl PackageId {
             source_id,
         };
         Self(CACHE.intern(inner))
+    }
+
+    pub fn for_test_target(&self, target_name: SmolStr) -> Self {
+        Self::new(
+            PackageName::new(target_name),
+            self.version.clone(),
+            self.source_id,
+        )
     }
 
     pub fn is_core(&self) -> bool {
