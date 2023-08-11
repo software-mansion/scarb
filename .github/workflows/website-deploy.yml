@@ -1,9 +1,6 @@
 name: Website Deploy
 
 on:
-  push:
-    tags:
-      - v[0-9]+.*
   release:
     types:
       - published
