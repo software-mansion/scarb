@@ -2,6 +2,7 @@
 name = "scarb"
 version.workspace = true
 edition.workspace = true
+publish = false
 
 authors.workspace = true
 categories = ["command-line-utilities", "development-tools"]
@@ -27,7 +28,7 @@ camino.workspace = true
 clap-verbosity-flag.workspace = true
 clap.workspace = true
 console.workspace = true
-create-output-dir = { version = "1.0.0", path = "../utils/create-output-dir" }
+create-output-dir = { path = "../utils/create-output-dir" }
 data-encoding.workspace = true
 deno_task_shell.workspace = true
 derive_builder.workspace = true
@@ -47,7 +48,7 @@ once_cell.workspace = true
 pathdiff.workspace = true
 petgraph.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
-scarb-metadata = { version = "1.5.0", path = "../scarb-metadata", default-features = false, features = ["builder", "packages_filter"] }
+scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder", "packages_filter"] }
 semver.workspace = true
 serde-value.workspace = true
 serde.workspace = true
