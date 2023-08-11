@@ -3915,7 +3915,7 @@ dependencies = [
  "petgraph",
  "predicates",
  "scarb-build-metadata",
- "scarb-metadata 1.5.0",
+ "scarb-metadata 1.6.0",
  "scarb-test-support",
  "semver",
  "serde",
@@ -3970,7 +3970,7 @@ dependencies = [
  "camino",
  "clap",
  "indoc",
- "scarb-metadata 1.5.0",
+ "scarb-metadata 1.6.0",
  "scarb-test-support",
  "serde_json",
  "snapbox",
@@ -3986,7 +3986,7 @@ dependencies = [
  "cairo-lang-starknet",
  "cairo-lang-test-runner",
  "clap",
- "scarb-metadata 1.5.0",
+ "scarb-metadata 1.6.0",
  "serde_json",
  "snapbox",
  "test-for-each-example",
@@ -4007,7 +4007,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-metadata"
-version = "1.5.0"
+version = "1.6.0"
 dependencies = [
  "assert_fs",
  "cairo-lang-filesystem",
