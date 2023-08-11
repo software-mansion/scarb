@@ -6,7 +6,9 @@ use futures::TryFutureExt;
 use itertools::Itertools;
 use semver::VersionReq;
 
-use crate::compiler::{CompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent};
+use crate::compiler::{
+    create_test_package_id, CompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent,
+};
 use crate::core::package::{Package, PackageClass, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::patch_map::PatchMap;
@@ -17,7 +19,7 @@ use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::core::{ManifestDependency, PackageName, SourceId, Target};
 use crate::internal::to_version::ToVersion;
-use crate::resolver;
+use crate::{resolver, DEFAULT_SOURCE_PATH};
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -191,7 +193,11 @@ fn generate_cairo_compilation_units(
         .map(|member_target| {
             let cfg_set = build_cfg_set(member_target);
 
-            let components = packages
+            let member_lib_target = member.fetch_target(Target::LIB).ok().cloned();
+            let is_integration_test = is_integration_test(member_target, member_lib_target);
+            let test_package_id = create_test_package_id(&member.id);
+
+            let mut components: Vec<CompilationUnitComponent> = packages
                 .iter()
                 .cloned()
                 .map(|package| {
@@ -207,12 +213,64 @@ fn generate_cairo_compilation_units(
                     };
                     let target = target.clone();
 
+                    // For integration tests target, rewrite package with prefixed name.
+                    // This allows integration test code to reference main package as dependency.
+                    let package = if package.id == member.id && is_integration_test {
+                        let new_package = Package::new(
+                            test_package_id,
+                            package.manifest_path().to_path_buf(),
+                            package.manifest.clone(),
+                        );
+                        new_package
+                    } else {
+                        package
+                    };
+
                     CompilationUnitComponent { package, target }
                 })
                 .collect();
 
+            // Apply overrides for integration test.
+            let main_package_id = if is_integration_test {
+                // Try pulling from targets.
+                let target = member
+                    .fetch_target(Target::LIB)
+                    .cloned()
+                    .unwrap_or_else(|_| {
+                        // If not defined, create a dummy `lib` target.
+                        Target::without_params(
+                            Target::LIB,
+                            member_target.name.clone(),
+                            DEFAULT_SOURCE_PATH,
+                        )
+                    });
+
+                // Add `lib` target for tested package, to be available as dependency.
+                components.push(CompilationUnitComponent {
+                    package: member.clone(),
+                    target,
+                });
+
+                // Sort components list to ensure the invariant from above for integration tests.
+                components.sort_by_key(|cu| {
+                    let cu_package_id = cu.package.id;
+                    if cu_package_id == test_package_id {
+                        0
+                    } else if cu_package_id.is_core() {
+                        1
+                    } else {
+                        2
+                    }
+                });
+
+                // Set test package as main package for this compilation unit.
+                test_package_id
+            } else {
+                member.id
+            };
+
             CompilationUnit {
-                main_package_id: member.id,
+                main_package_id,
                 components,
                 cairo_plugins: cairo_plugins.clone(),
                 profile: profile.clone(),
@@ -221,6 +279,13 @@ fn generate_cairo_compilation_units(
             }
         })
         .collect())
+}
+
+fn is_integration_test(target: &Target, lib_target: Option<Target>) -> bool {
+    let lib_target_source_path = lib_target
+        .map(|target| target.source_path.to_string())
+        .unwrap_or(DEFAULT_SOURCE_PATH.to_string());
+    target.kind == Target::TEST && !target.source_path.ends_with(lib_target_source_path)
 }
 
 /// Build a set of `cfg` items to enable while building the compilation unit.
