@@ -10,10 +10,10 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      cairo-lang:
+      cairo:
         patterns:
           - "cairo-lang-*"
-      other:
+      non critical:
         patterns:
           - "*"
         exclude-patterns:
