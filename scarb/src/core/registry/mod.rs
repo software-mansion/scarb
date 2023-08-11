@@ -49,6 +49,14 @@ pub(crate) mod mock {
                 ),
                 Vec::new(),
             );
+            reg.put(
+                PackageId::new(
+                    PackageName::TEST_PLUGIN,
+                    crate::version::get().cairo.version.parse().unwrap(),
+                    SourceId::default(),
+                ),
+                Vec::new(),
+            );
             reg
         }
 
