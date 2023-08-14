@@ -25,7 +25,7 @@ repository = "https://github.com/software-mansion/scarb"
 [workspace.dependencies]
 anyhow = "1.0.72"
 assert_fs = "1.0.13"
-async-trait = "0.1.72"
+async-trait = "0.1.73"
 cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
 cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
 cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo", rev = "84f933b" }
@@ -67,7 +67,7 @@ pathdiff = { version = "0.2.1", features = ["camino"] }
 petgraph = "0.6.3"
 predicates = "3.0.3"
 semver = { version = "1.0.18", features = ["serde"] }
-serde = { version = "1.0.179", features = ["serde_derive"] }
+serde = { version = "1.0.183", features = ["serde_derive"] }
 serde-value = "0.7.0"
 serde_json = "1.0.104"
 serde_test = "1.0.176"
@@ -78,7 +78,7 @@ tempfile = "3.7.1"
 test-case = "3.1.0"
 thiserror = "1.0.44"
 time = "0.3.25"
-tokio = { version = "1.30.0", features = ["macros", "io-util", "rt", "rt-multi-thread", "sync"] }
+tokio = { version = "1.31.0", features = ["macros", "io-util", "rt", "rt-multi-thread", "sync"] }
 toml = "0.7.5"
 toml_edit = { version = "0.19.9", features = ["serde"] }
 tracing = "0.1.37"
