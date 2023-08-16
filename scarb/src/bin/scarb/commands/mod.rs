@@ -9,6 +9,7 @@ use crate::args::{CacheSubcommand, Command};
 pub mod add;
 pub mod build;
 pub mod cache_clean;
+pub mod cache_path;
 pub mod clean;
 pub mod commands;
 pub mod external;
@@ -30,6 +31,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         Add(args) => add::run(args, config),
         Build(args) => build::run(args, config),
         Cache(CacheSubcommand::Clean) => cache_clean::run(config),
+        Cache(CacheSubcommand::Path) => cache_path::run(config),
         Clean => clean::run(config),
         Commands => commands::run(config),
         External(args) => external::run(args, config),
