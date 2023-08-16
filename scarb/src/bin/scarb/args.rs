@@ -115,6 +115,8 @@ impl ScarbArgs {
 pub enum CacheSubcommand {
     /// Remove all cached dependencies.
     Clean,
+    /// Print the path of the cache directory.
+    Path,
 }
 
 /// Subcommand and its arguments.
