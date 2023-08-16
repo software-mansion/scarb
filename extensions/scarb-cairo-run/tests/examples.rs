@@ -4,14 +4,14 @@ use snapbox::cmd::{cargo_bin, Command};
 use scarb_test_support::cargo::manifest_dir;
 
 #[test]
-fn cairo_test_success() {
+fn hello_world() {
     let example = manifest_dir()
         .parent()
         .unwrap()
         .parent()
         .unwrap()
         .join("examples")
-        .join("cairo_run_example");
+        .join("hello_world");
     Command::new(cargo_bin("scarb"))
         .arg("build")
         .current_dir(example.clone())
@@ -25,23 +25,23 @@ fn cairo_test_success() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            running cairo_run_example ...
-               Compiling cairo_run_example v0.1.0 ([..]/Scarb.toml)
+            running hello_world ...
+               Compiling hello_world v0.1.0 ([..]/Scarb.toml)
                 Finished release target(s) in [..]
-            Run completed successfully, returning [2]
-            Remaining gas: 1971340
+            Run completed successfully, returning [987]
+            Remaining gas: 1953640
         "#});
 }
 
 #[test]
-fn cairo_test_package_not_built() {
+fn package_not_built() {
     let example = manifest_dir()
         .parent()
         .unwrap()
         .parent()
         .unwrap()
         .join("examples")
-        .join("cairo_run_example");
+        .join("hello_world");
     Command::new(cargo_bin("scarb"))
         .arg("clean")
         .current_dir(example.clone())
@@ -55,10 +55,10 @@ fn cairo_test_package_not_built() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            running cairo_run_example ...
-               Compiling cairo_run_example v0.1.0 ([..]/Scarb.toml)
+            running hello_world ...
+               Compiling hello_world v0.1.0 ([..]/Scarb.toml)
                 Finished release target(s) in [..]
-            Run completed successfully, returning [2]
-            Remaining gas: 1971340
+            Run completed successfully, returning [987]
+            Remaining gas: 1953640
         "#});
 }
