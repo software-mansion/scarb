@@ -47,16 +47,14 @@ mod tests {
     #[test]
     #[available_gas(30000000)]
     fn test_flow() {
-        let mut calldata = Default::default();
-        calldata.append(100);
+        let calldata = array![100];
         let (address0, _) = deploy_syscall(
             Balance::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
         )
             .unwrap();
         let mut contract0 = IBalanceDispatcher { contract_address: address0 };
 
-        let mut calldata = Default::default();
-        calldata.append(200);
+        let calldata = array![200];
         let (address1, _) = deploy_syscall(
             Balance::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
         )
