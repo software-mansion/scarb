@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use scarb::core::Config;
 use scarb::ops;
-use scarb::ui::MachineMessage;
+use scarb_ui::MachineMessage;
 
 use crate::args::MetadataArgs;
 

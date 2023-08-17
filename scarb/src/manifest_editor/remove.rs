@@ -1,8 +1,9 @@
 use anyhow::{anyhow, Result};
 use toml_edit::Document;
 
+use scarb_ui::Status;
+
 use crate::core::PackageName;
-use crate::ui::Status;
 
 use super::tomlx::get_table_mut;
 use super::{Op, OpCtx};

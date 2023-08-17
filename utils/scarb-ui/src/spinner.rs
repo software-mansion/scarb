@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::ui::Widget;
+use crate::Widget;
 
 pub struct Spinner {
     message: String,

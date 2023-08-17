@@ -3,7 +3,7 @@ use std::fmt::Display;
 use serde::{Serialize, Serializer};
 use serde_json::json;
 
-use crate::ui::Message;
+use crate::Message;
 
 pub struct ValueMessage<'a, T> {
     name: &'a str,

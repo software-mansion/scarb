@@ -1,6 +1,6 @@
 use serde::{Serialize, Serializer};
 
-use crate::ui::Message;
+use crate::Message;
 
 #[derive(Serialize)]
 pub struct MachineMessage<T>(pub T);

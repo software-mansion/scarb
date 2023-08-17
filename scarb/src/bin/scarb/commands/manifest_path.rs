@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use scarb::core::Config;
-use scarb::ui::ValueMessage;
+use scarb_ui::ValueMessage;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(config: &Config) -> Result<()> {

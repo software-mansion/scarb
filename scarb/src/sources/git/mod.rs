@@ -8,13 +8,13 @@ use url::Url;
 
 use canonical_url::CanonicalUrl;
 use client::{GitRemote, Rev};
+use scarb_ui::Status;
 
 use crate::core::source::Source;
 use crate::core::{
     Config, GitReference, ManifestDependency, Package, PackageId, SourceId, Summary,
 };
 use crate::sources::git::client::GitDatabase;
-use crate::ui::Status;
 
 use super::PathSource;
 

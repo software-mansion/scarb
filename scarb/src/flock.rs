@@ -8,10 +8,11 @@ use camino::{Utf8Path, Utf8PathBuf};
 use fs4::{lock_contended_error, FileExt};
 use tokio::sync::Mutex;
 
+use scarb_ui::Status;
+
 use crate::core::Config;
 use crate::internal::fsx;
 use crate::internal::lazy_directory_creator::LazyDirectoryCreator;
-use crate::ui::Status;
 
 const OK_FILE: &str = ".scarb-ok";
 

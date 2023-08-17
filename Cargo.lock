@@ -3869,7 +3869,6 @@ dependencies = [
  "camino",
  "clap",
  "clap-verbosity-flag",
- "console",
  "create-output-dir",
  "data-encoding",
  "deno_task_shell",
@@ -3883,7 +3882,6 @@ dependencies = [
  "glob",
  "ignore",
  "include_dir",
- "indicatif",
  "indoc",
  "io_tee",
  "itertools 0.11.0",
@@ -3896,6 +3894,7 @@ dependencies = [
  "scarb-build-metadata",
  "scarb-metadata 1.6.0",
  "scarb-test-support",
+ "scarb-ui",
  "semver",
  "serde",
  "serde-value",
@@ -4012,12 +4011,25 @@ dependencies = [
  "once_cell",
  "scarb",
  "scarb-build-metadata",
+ "scarb-ui",
  "semver",
  "serde",
  "serde_json",
  "snapbox",
  "toml_edit",
  "url",
+]
+
+[[package]]
+name = "scarb-ui"
+version = "0.6.2"
+dependencies = [
+ "anyhow",
+ "clap",
+ "console",
+ "indicatif",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

@@ -11,6 +11,8 @@ use tokio::runtime::{Builder, Handle, Runtime};
 use tracing::trace;
 use which::which_in;
 
+use scarb_ui::{OutputFormat, Ui, Verbosity};
+
 use crate::compiler::plugin::CairoPluginRepository;
 use crate::compiler::{CompilerRepository, Profile};
 use crate::core::AppDirs;
@@ -18,7 +20,6 @@ use crate::core::AppDirs;
 use crate::core::Workspace;
 use crate::flock::{AdvisoryLock, RootFilesystem};
 use crate::internal::fsx;
-use crate::ui::{OutputFormat, Ui, Verbosity};
 use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
 

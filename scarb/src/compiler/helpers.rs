@@ -6,9 +6,10 @@ use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 
+use scarb_ui::TypedMessage;
+
 use crate::compiler::CompilationUnit;
 use crate::core::Workspace;
-use crate::ui::TypedMessage;
 
 pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> CompilerConfig<'c> {
     CompilerConfig {

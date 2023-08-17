@@ -13,10 +13,11 @@ use std::process::Command;
 use anyhow::{anyhow, bail, Context, Result};
 use camino::Utf8PathBuf;
 
+use scarb_ui::Verbosity;
+
 use crate::core::{Config, GitReference};
 use crate::flock::Filesystem;
 use crate::process::exec;
-use crate::ui::Verbosity;
 
 use super::canonical_url::CanonicalUrl;
 

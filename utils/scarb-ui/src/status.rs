@@ -1,7 +1,7 @@
 use console::{pad_str, Alignment, Style};
 use serde::{Serialize, Serializer};
 
-use crate::ui::Message;
+use crate::Message;
 
 #[derive(Serialize)]
 pub struct Status<'a> {

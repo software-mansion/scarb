@@ -1,14 +1,16 @@
-use anyhow::Result;
-use serde::{Serialize, Serializer};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::{env, fmt, fs};
 
-use crate::args::ScarbArgs;
+use anyhow::Result;
+use serde::{Serialize, Serializer};
+
 use scarb::core::Config;
 use scarb::process::is_executable;
-use scarb::ui::Message;
 use scarb::EXTERNAL_CMD_PREFIX;
+use scarb_ui::Message;
+
+use crate::args::ScarbArgs;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Serialize)]
 enum CommandInfo {
@@ -100,15 +102,18 @@ pub fn run(config: &Config) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{list_commands, CommandInfo};
-    use assert_fs::prelude::*;
-    use assert_fs::TempDir;
-    use camino::Utf8Path;
-    use scarb::core::Config;
-    use scarb::process::make_executable;
     use std::collections::BTreeMap;
     use std::env;
     use std::path::PathBuf;
+
+    use assert_fs::prelude::*;
+    use assert_fs::TempDir;
+    use camino::Utf8Path;
+
+    use scarb::core::Config;
+    use scarb::process::make_executable;
+
+    use super::{list_commands, CommandInfo};
 
     #[test]
     fn cmd_list() {

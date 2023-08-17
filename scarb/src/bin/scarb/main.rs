@@ -10,7 +10,7 @@ use args::ScarbArgs;
 use scarb::core::errors::ScriptExecutionError;
 use scarb::core::Config;
 use scarb::ops;
-use scarb::ui::Ui;
+use scarb_ui::Ui;
 
 use crate::errors::ErrorWithExitCode;
 
