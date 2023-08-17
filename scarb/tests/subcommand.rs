@@ -7,7 +7,7 @@ use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 
 use scarb_test_support::command::Scarb;
-use scarb_test_support::filesystem::{path_with_temp_dir, write_script};
+use scarb_test_support::filesystem::{path_with_temp_dir, write_script, write_simple_hello_script};
 
 #[test]
 #[cfg_attr(
@@ -16,17 +16,7 @@ use scarb_test_support::filesystem::{path_with_temp_dir, write_script};
 )]
 fn subcommand() {
     let t = assert_fs::TempDir::new().unwrap();
-    write_script(
-        "hello",
-        &formatdoc!(
-            r#"
-            #!/usr/bin/env python3
-            import sys
-            print("Hello", *sys.argv[1:])
-            "#
-        ),
-        &t,
-    );
+    write_simple_hello_script("hello", &t);
 
     Scarb::quick_snapbox()
         .args(["hello", "beautiful", "world"])
@@ -43,17 +33,7 @@ fn subcommand() {
 )]
 fn list_commands_e2e() {
     let t = TempDir::new().unwrap();
-    write_script(
-        "hello",
-        &formatdoc!(
-            r#"
-            #!/usr/bin/env python3
-            import sys
-            print("Hello", *sys.argv[1:])
-            "#
-        ),
-        &t,
-    );
+    write_simple_hello_script("hello", &t);
 
     let cmd = Scarb::quick_snapbox()
         .args(["commands"])
@@ -200,17 +180,8 @@ fn ctrl_c(child: &mut Child) {
 )]
 fn can_find_scarb_directory_scripts_without_path() {
     let t = assert_fs::TempDir::new().unwrap();
-    write_script(
-        "hello",
-        &formatdoc!(
-            r#"
-            #!/usr/bin/env python3
-            import sys
-            print("Hello", *sys.argv[1:])
-            "#
-        ),
-        &t,
-    );
+    write_simple_hello_script("hello", &t);
+
     // Set scarb path to folder containing hello script
     let scarb_path = t
         .path()
@@ -229,17 +200,8 @@ fn can_find_scarb_directory_scripts_without_path() {
 #[test]
 fn can_list_scarb_directory_scripts() {
     let t = assert_fs::TempDir::new().unwrap();
-    write_script(
-        "hello",
-        &formatdoc!(
-            r#"
-            #!/usr/bin/env python3
-            import sys
-            print("Hello", *sys.argv[1:])
-            "#
-        ),
-        &t,
-    );
+    write_simple_hello_script("hello", &t);
+
     // Set scarb path to folder containing hello script
     let scarb_path = t
         .path()

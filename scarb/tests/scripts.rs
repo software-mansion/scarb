@@ -7,7 +7,7 @@ use indoc::{formatdoc, indoc};
 
 use scarb::process::make_executable;
 use scarb_test_support::command::{CommandExt, Scarb};
-use scarb_test_support::filesystem::{path_with_temp_dir, write_script};
+use scarb_test_support::filesystem::{path_with_temp_dir, write_simple_hello_script};
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
@@ -180,14 +180,7 @@ fn list_empty_scripts() {
 )]
 fn additional_args_passed() {
     let t = TempDir::new().unwrap();
-    write_script(
-        "hello",
-        &formatdoc! {r#"
-            #!/usr/bin/env bash
-            echo "Hello $@"
-        "#},
-        &t,
-    );
+    write_simple_hello_script("hello", &t);
 
     ProjectBuilder::start()
         .manifest_extra(indoc! {r#"
@@ -287,14 +280,7 @@ fn uses_package_filter() {
 )]
 fn additional_args_not_parsed_as_package_filter() {
     let t = TempDir::new().unwrap();
-    write_script(
-        "hello",
-        &formatdoc! {r#"
-            #!/usr/bin/env bash
-            echo "Hello $@"
-        "#},
-        &t,
-    );
+    write_simple_hello_script("hello", &t);
 
     ProjectBuilder::start()
         .manifest_extra(indoc! {r#"
