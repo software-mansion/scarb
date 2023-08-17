@@ -3,6 +3,8 @@
 use std::fmt;
 use std::fmt::Write;
 
+use indoc::formatdoc;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 use scarb_build_metadata::{
@@ -16,6 +18,7 @@ pub struct VersionInfo {
     pub version: &'static str,
     pub commit_info: Option<CommitInfo>,
     pub cairo: CairoVersionInfo,
+    pub sierra: SierraVersionInfo,
 }
 
 /// Cairo's version.
@@ -23,6 +26,12 @@ pub struct VersionInfo {
 pub struct CairoVersionInfo {
     pub version: &'static str,
     pub commit_info: Option<CommitInfo>,
+}
+
+/// Sierra version.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SierraVersionInfo {
+    pub version: &'static str,
 }
 
 /// Information about the Git repository where the crate was built from.
@@ -52,13 +61,15 @@ impl VersionInfo {
     }
 
     pub fn long(&self) -> String {
-        format!(
-            "\
-                {short}\n\
-                cairo: {cairo}\
-            ",
+        formatdoc!(
+            r#"
+                {short}
+                cairo: {cairo}
+                sierra: {sierra}
+            "#,
             short = self.short(),
-            cairo = self.cairo.short()
+            cairo = self.cairo.short(),
+            sierra = self.sierra.short(),
         )
     }
 }
@@ -70,6 +81,12 @@ impl CairoVersionInfo {
             &self.commit_info,
             Some("cairo-lang-compiler"),
         )
+    }
+}
+
+impl SierraVersionInfo {
+    pub fn short(&self) -> &str {
+        self.version
     }
 }
 
@@ -114,9 +131,18 @@ pub fn get() -> VersionInfo {
         }
     };
 
+    static SIERRA_VERSION: Lazy<String> = Lazy::new(|| {
+        cairo_lang_starknet::compiler_version::current_sierra_version_id().to_string()
+    });
+
+    let sierra = SierraVersionInfo {
+        version: &SIERRA_VERSION,
+    };
+
     VersionInfo {
         version: SCARB_VERSION,
         commit_info,
         cairo,
+        sierra,
     }
 }
