@@ -14,6 +14,7 @@
 set -u
 
 SCARB_REPO="https://github.com/software-mansion/scarb"
+SCARB_NIGHTLIES_REPO="https://github.com/software-mansion/scarb-nightlies"
 XDG_DATA_HOME="${XDG_DATA_HOME:-"${HOME}/.local/share"}"
 INSTALL_ROOT="${XDG_DATA_HOME}/scarb-install"
 LOCAL_BIN="${HOME}/.local/bin"
@@ -56,7 +57,6 @@ main() {
     esac
   done
 
-  local _requested_ref="latest"
   local _requested_version="latest"
   local _do_modify_path=1
   while getopts ":hpv:" opt; do
@@ -69,7 +69,6 @@ main() {
       exit 0
       ;;
     v)
-      _requested_ref="tag/v${OPTARG}"
       _requested_version="$OPTARG"
       ;;
     \?)
@@ -81,7 +80,7 @@ main() {
     esac
   done
 
-  resolve_version "$_requested_version" "$_requested_ref" || return 1
+  resolve_version "$_requested_version" || return 1
   local _resolved_version=$RETVAL
   assert_nz "$_resolved_version" "resolved_version"
 
@@ -400,17 +399,45 @@ get_architecture() {
 
 resolve_version() {
   local _requested_version=$1
-  local _requested_ref=$2
+  
+  local _ref
+  local _repo
+
+  if echo "$_requested_version" | grep -q "nightly"; then 
+    if [ "$_requested_version" = "nightly" ]; then
+      _requested_version="$(get_latest_nightly)"
+    fi
+    _repo="$SCARB_NIGHTLIES_REPO"
+    _ref="tag/${_requested_version}"
+  else
+    _repo="$SCARB_REPO"
+    if [ "$_requested_version" = "latest" ]; then
+      _ref="latest"
+    else
+      _ref="tag/v${_requested_version}"
+    fi
+  fi
 
   local _response
 
-  say "retrieving $_requested_version version from ${SCARB_REPO}..."
-  _response=$(ensure curl -Ls -H 'Accept: application/json' "${SCARB_REPO}/releases/${_requested_ref}")
+  say "retrieving $_requested_version version from ${_repo}..."
+  _response=$(ensure curl -Ls -H 'Accept: application/json' "${_repo}/releases/${_ref}")
   if [ "{\"error\":\"Not Found\"}" = "$_response" ]; then
     err "version $_requested_version not found"
   fi
 
   RETVAL=$(echo "$_response" | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+}
+
+sort_versions() {
+	sed 'h; s/[+-]/./g; s/.p\([[:digit:]]\)/.z\1/; s/$/.z/; G; s/\n/ /' |
+		LC_ALL=C sort -t. -k 1,1 -k 2,2n -k 3,3n -k 4,4n -k 5,5n | awk '{print $2}'
+}
+
+get_latest_nightly() {
+  git ls-remote --tags --refs "$SCARB_NIGHTLIES_REPO" |
+		grep -o 'refs/tags/.*' | cut -d/ -f3- |
+		sort_versions | tail -n1 | xargs echo
 }
 
 create_install_dir() {
@@ -434,8 +461,16 @@ download() {
   local _installdir=$3
   local _tempdir=$4
 
+  local _repo
+
+  if echo "$_requested_version" | grep -q "nightly"; then 
+    _repo="$SCARB_NIGHTLIES_REPO"
+  else
+    _repo="$SCARB_REPO"
+  fi
+
   local _tarball="scarb-${_resolved_version}-${_arch}.tar.gz"
-  local _url="${SCARB_REPO}/releases/download/${_resolved_version}/${_tarball}"
+  local _url="${_repo}/releases/download/${_resolved_version}/${_tarball}"
   local _dl="$_tempdir/scarb.tar.gz"
 
   say "downloading ${_tarball}..."

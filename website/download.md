@@ -33,7 +33,13 @@ This will install the latest **stable** release.
 curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh
 ```
 
-If you want to install a specific version of Scarb (such as a preview version), run the following with the desired
+Run following command if you want to install the latest **nightly** release.
+
+```shell
+curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v nightly
+```
+
+If you want to install a specific version of Scarb (such as a preview or nightly version), run the following with the desired
 version number.
 
 ```shell-vue
