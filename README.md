@@ -29,7 +29,7 @@ Scarb is under active development! Expect a lot of new features to appear soon! 
 - [x] ASDF plugin
 - [x] GitHub action
 - [x] Workspaces
-- [ ] Nightlies
+- [x] Nightlies
 - [ ] Standardized `test` target
 - [ ] `scarb init` templates or `scarb create-starknet-contract` command
 - [ ] `Scarb.lock`
