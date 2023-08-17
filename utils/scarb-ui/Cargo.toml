@@ -1,0 +1,13 @@
+[package]
+name = "scarb-ui"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+console.workspace = true
+indicatif.workspace = true
+serde.workspace = true
+serde_json.workspace = true

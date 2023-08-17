@@ -8,8 +8,9 @@ use std::{fmt, thread};
 use anyhow::{anyhow, bail, Context, Result};
 use tracing::{debug, debug_span, warn, Span};
 
+use scarb_ui::{Spinner, Status};
+
 use crate::core::Config;
-use crate::ui::{Spinner, Status};
 
 // TODO(#125): Do what is documented here, take a look at what cargo-util does.
 /// Replaces the current process with the target process.

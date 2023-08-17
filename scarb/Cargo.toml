@@ -27,7 +27,6 @@ cairo-lang-utils.workspace = true
 camino.workspace = true
 clap-verbosity-flag.workspace = true
 clap.workspace = true
-console.workspace = true
 create-output-dir = { path = "../utils/create-output-dir" }
 data-encoding.workspace = true
 deno_task_shell.workspace = true
@@ -41,7 +40,6 @@ gix.workspace = true
 glob.workspace = true
 ignore.workspace = true
 include_dir.workspace = true
-indicatif.workspace = true
 indoc.workspace = true
 itertools.workspace = true
 once_cell.workspace = true
@@ -49,6 +47,7 @@ pathdiff.workspace = true
 petgraph.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder", "packages_filter"] }
+scarb-ui = { path = "../utils/scarb-ui" }
 semver.workspace = true
 serde-value.workspace = true
 serde.workspace = true

@@ -7,11 +7,12 @@ use std::process::Command;
 use anyhow::{bail, Result};
 use tracing::debug;
 
+use scarb_ui::Status;
+
 use crate::core::{Config, Package, Workspace};
 use crate::ops;
 use crate::process::{exec_replace, is_executable};
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV};
-use crate::ui::Status;
 
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn execute_external_subcommand(

@@ -1,13 +1,14 @@
 use anyhow::{anyhow, Result};
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
-use indicatif::HumanDuration;
 use indoc::formatdoc;
+
+use scarb_ui::HumanDuration;
+use scarb_ui::Status;
 
 use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin};
 use crate::compiler::CompilationUnit;
 use crate::core::{PackageId, Utf8PathWorkspaceExt, Workspace};
 use crate::ops;
-use crate::ui::Status;
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn compile(packages: Vec<PackageId>, ws: &Workspace<'_>) -> Result<()> {

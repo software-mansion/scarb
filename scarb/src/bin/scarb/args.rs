@@ -15,10 +15,9 @@ use tracing_log::AsTrace;
 use scarb::compiler::Profile;
 use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
-use scarb::ui;
-use scarb::ui::OutputFormat;
 use scarb::version;
 use scarb_metadata::packages_filter::PackagesFilter;
+use scarb_ui::OutputFormat;
 
 /// The Cairo package manager.
 #[derive(Parser, Clone, Debug)]
@@ -86,15 +85,15 @@ impl ScarbArgs {
         }
     }
 
-    /// Get [`ui::Verbosity`] out of this arguments.
-    pub fn ui_verbosity(&self) -> ui::Verbosity {
+    /// Get [`ui::Verbosity`] out of these arguments.
+    pub fn ui_verbosity(&self) -> scarb_ui::Verbosity {
         let filter = self.verbose.log_level_filter().as_trace();
         if filter >= LevelFilter::WARN {
-            ui::Verbosity::Verbose
+            scarb_ui::Verbosity::Verbose
         } else if filter > LevelFilter::OFF {
-            ui::Verbosity::Normal
+            scarb_ui::Verbosity::Normal
         } else {
-            ui::Verbosity::Quiet
+            scarb_ui::Verbosity::Quiet
         }
     }
 

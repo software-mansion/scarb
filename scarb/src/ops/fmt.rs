@@ -1,10 +1,11 @@
+use std::fmt::Display;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use anyhow::Result;
 use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
 use ignore::WalkState::{Continue, Skip};
 use ignore::{DirEntry, Error, ParallelVisitor, ParallelVisitorBuilder, WalkState};
-use std::fmt::Display;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use tracing::{info, warn};
 
 use crate::core::workspace::Workspace;
@@ -19,7 +20,7 @@ pub struct FmtOptions {
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
-    console::set_colors_enabled(opts.color);
+    ws.config().ui().force_colors_enabled(opts.color);
     let config = FormatterConfig::default();
     let fmt = CairoFormatter::new(config);
     let packages = ws

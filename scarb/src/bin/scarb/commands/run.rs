@@ -10,7 +10,7 @@ use smol_str::SmolStr;
 use scarb::core::errors::ScriptExecutionError;
 use scarb::core::{Config, Package, Workspace};
 use scarb::ops;
-use scarb::ui::Message;
+use scarb_ui::Message;
 
 use crate::args::ScriptsRunnerArgs;
 use crate::errors::ErrorWithExitCode;

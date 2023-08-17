@@ -12,7 +12,7 @@ use snapbox::cmd::Command as SnapboxCommand;
 
 use crate::cargo::cargo_bin;
 use scarb::core::Config;
-use scarb::ui::Verbosity;
+use scarb_ui::Verbosity;
 
 use crate::fsx::{AssertFsUtf8Ext, PathUtf8Ext};
 

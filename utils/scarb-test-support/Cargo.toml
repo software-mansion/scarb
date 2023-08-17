@@ -14,6 +14,7 @@ itertools.workspace = true
 once_cell.workspace = true
 scarb = { path = "../../scarb" }
 scarb-build-metadata = { path = "../scarb-build-metadata" }
+scarb-ui = { path = "../scarb-ui" }
 semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
