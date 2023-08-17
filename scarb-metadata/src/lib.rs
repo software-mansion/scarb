@@ -16,10 +16,6 @@
 //!
 //! With the `command` feature (enabled by default), this crate also exposes an ergonomic interface
 //! to collect metadata from Scarb: [`MetadataCommand`].
-//!
-//! With the `packages_filter` feature (disabled by default), this crate provides ready to use
-//! arguments definitions for the `clap` crate that implement Scarb-compatible package selection
-//! (i.e. the `-p/--package` argument).
 
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
@@ -33,6 +29,7 @@ use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "packages_filter")]
+#[allow(deprecated)]
 use crate::packages_filter::WithManifestPath;
 #[cfg(feature = "command")]
 pub use command::*;
@@ -490,6 +487,7 @@ impl PackageMetadata {
 }
 
 #[cfg(feature = "packages_filter")]
+#[allow(deprecated)]
 impl WithManifestPath for PackageMetadata {
     fn manifest_path(&self) -> &Utf8Path {
         &self.manifest_path
