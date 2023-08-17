@@ -1,7 +1,14 @@
 //! [`clap`] arguments implementing Scarb-compatible package selection (`-p` flag etc.)
 
-use crate::{Metadata, PackageMetadata};
+#![deprecated(
+    since = "1.7.0",
+    note = "This module has been moved to `scarb-ui` crate hosted in Scarb repository. \
+    Removal from `scarb-metadata` is planned in when no usage will be present in open source projects."
+)]
+
 use camino::{Utf8Path, Utf8PathBuf};
+
+use crate::{Metadata, PackageMetadata};
 
 /// [`clap`] structured arguments that provide package selection.
 ///

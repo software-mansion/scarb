@@ -31,6 +31,3 @@ default = ["command"]
 builder = ["dep:derive_builder"]
 command = ["dep:thiserror"]
 packages_filter = ["dep:clap", "dep:thiserror"]
-
-[package.metadata.docs.rs]
-features = ["command", "packages_filter"]
