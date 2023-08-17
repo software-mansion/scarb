@@ -70,6 +70,8 @@ fn main() -> Result<()> {
 
         let main_crate_ids = vec![db.intern_crate(CrateLongId::Real(package.name.clone().into()))];
 
+        let test_crate_ids = main_crate_ids.clone();
+
         if DiagnosticsReporter::stderr().check(&db) {
             bail!("could not compile `{}` due to previous error", package.name);
         }
@@ -77,6 +79,7 @@ fn main() -> Result<()> {
         let runner = TestRunner {
             db,
             main_crate_ids,
+            test_crate_ids,
             filter: args.filter.clone(),
             include_ignored: args.include_ignored,
             ignored: args.ignored,
