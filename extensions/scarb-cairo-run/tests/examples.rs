@@ -25,9 +25,9 @@ fn hello_world() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            running hello_world ...
                Compiling hello_world v0.1.0 ([..]/Scarb.toml)
                 Finished release target(s) in [..]
+                 Running hello_world
             Run completed successfully, returning [987]
             Remaining gas: 1953640
         "#});
@@ -55,9 +55,9 @@ fn package_not_built() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            running hello_world ...
                Compiling hello_world v0.1.0 ([..]/Scarb.toml)
                 Finished release target(s) in [..]
+                 Running hello_world
             Run completed successfully, returning [987]
             Remaining gas: 1953640
         "#});

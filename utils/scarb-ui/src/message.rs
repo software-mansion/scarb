@@ -5,6 +5,8 @@ use super::Ui;
 
 const JSON_SKIP_MESSAGE: &str = "UI_INTERNAL_SKIP";
 
+// NOTE: The `print_*` low-level methods functions are doc hidden,
+//   because they are not considered stable.
 pub trait Message {
     /// Return textual representation of this message.
     ///
@@ -14,6 +16,17 @@ pub trait Message {
         Self: Sized,
     {
         String::new()
+    }
+
+    #[doc(hidden)]
+    fn print_text(self)
+    where
+        Self: Sized,
+    {
+        let text = self.text();
+        if !text.is_empty() {
+            println!("{text}");
+        }
     }
 
     /// Serialize this structured message to a serializer which is routed to [`Ui`] output stream.
@@ -28,20 +41,6 @@ pub trait Message {
         // so that it will not be populated by editors.
         let _ = ser;
         Err(serde::ser::Error::custom(JSON_SKIP_MESSAGE))
-    }
-
-    // NOTE: These two most low-level functions are doc hidden,
-    //   because they are not considered stable.
-
-    #[doc(hidden)]
-    fn print_text(self)
-    where
-        Self: Sized,
-    {
-        let text = self.text();
-        if !text.is_empty() {
-            println!("{text}");
-        }
     }
 
     #[doc(hidden)]
