@@ -46,19 +46,24 @@ pub fn execute_test_subcommand(
     args: &[OsString],
     ws: &Workspace<'_>,
 ) -> Result<()> {
-    ws.config().ui().print(Status::new(
-        "Running tests",
-        format!("for package: {}", package.id.name).as_str(),
-    ));
+    let package_name = &package.id.name;
     let env = Some(HashMap::from_iter([(
         SCARB_MANIFEST_PATH_ENV.into(),
         package.manifest_path().into(),
     )]));
     if let Some(script_definition) = package.manifest.scripts.get("test") {
         debug!("using `test` script: {script_definition}");
+        ws.config().ui().print(Status::new(
+            "Running",
+            &format!("test {package_name} ({script_definition})"),
+        ));
         ops::execute_script(script_definition, args, ws, package.root(), env)
     } else {
         debug!("no explicit `test` script found, delegating to scarb-cairo-test");
+        ws.config().ui().print(Status::new(
+            "Running",
+            &format!("cairo-test {package_name}"),
+        ));
         let args = args.iter().map(OsString::from).collect::<Vec<_>>();
         execute_external_subcommand("cairo-test", args.as_ref(), ws.config(), env)
     }

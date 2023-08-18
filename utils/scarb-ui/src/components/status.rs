@@ -3,6 +3,8 @@ use serde::{Serialize, Serializer};
 
 use crate::Message;
 
+/// Notes:
+/// - `status` should always be a single verb, for example _Compiling_, _Running_.
 #[derive(Serialize)]
 pub struct Status<'a> {
     status: &'a str,
