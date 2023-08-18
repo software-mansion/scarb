@@ -23,7 +23,7 @@ fn delegates_to_cairo_test() {
         .assert()
         .success()
         .stdout_eq(indoc! {r#"
-        Running tests for package: pkg0
+             Running cairo-test pkg0
         Hello beautiful world
         "#});
 }
@@ -44,7 +44,7 @@ fn prefers_test_script() {
         .assert()
         .success()
         .stdout_eq(indoc! {r#"
-        Running tests for package: pkg0
+             Running test pkg0 (echo 'Hello from script')
         Hello from script beautiful world
         "#});
 }
@@ -67,7 +67,7 @@ fn errors_when_missing_script_and_cairo_test() {
         .assert()
         .failure()
         .stdout_eq(indoc! {r#"
-        Running tests for package: pkg0
+             Running cairo-test pkg0
         error: no such command: `cairo-test`
         "#});
 }
