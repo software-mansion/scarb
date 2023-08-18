@@ -1,9 +1,9 @@
 use std::env;
 use std::fs;
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use cairo_lang_runner::short_string::as_cairo_short_string;
-use cairo_lang_runner::{SierraCasmRunner, StarknetState};
+use cairo_lang_runner::{RunResultStarknet, RunResultValue, SierraCasmRunner, StarknetState};
 use cairo_lang_sierra::extensions::gas::{
     BuiltinCostWithdrawGasLibfunc, RedepositGasLibfunc, WithdrawGasLibfunc,
 };
@@ -11,9 +11,12 @@ use cairo_lang_sierra::extensions::NamedLibfunc;
 use camino::Utf8PathBuf;
 use clap::Parser;
 use indoc::formatdoc;
+use serde::Serializer;
 
 use scarb_metadata::{MetadataCommand, ScarbCommand};
 use scarb_ui::args::PackagesFilter;
+use scarb_ui::components::Status;
+use scarb_ui::{Message, OutputFormat, Ui, Verbosity};
 
 /// Execute the main function of a package.
 #[derive(Parser, Clone, Debug)]
@@ -34,24 +37,29 @@ struct Args {
 
 fn main() -> Result<()> {
     let args: Args = Args::parse();
+
+    let ui = Ui::new(Verbosity::default(), OutputFormat::Text);
+
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
     let package = args.packages_filter.match_one(&metadata)?;
-    println!("running {} ...", package.name);
 
-    build_project()?;
+    ScarbCommand::new().arg("build").run()?;
 
     let filename = format!("{}.sierra", package.name);
     let path = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?)
         .join(env::var("SCARB_PROFILE")?)
         .join(filename.clone());
 
-    if !path.exists() {
-        bail!(formatdoc! {r#"
+    ensure!(
+        path.exists(),
+        formatdoc! {r#"
             package has not been compiled, file does not exist: {filename}
             help: run `scarb build` to compile the package
-        "#});
-    }
+        "#}
+    );
+
+    ui.print(Status::new("Running", &package.name));
 
     let sierra_program = cairo_lang_sierra::ProgramParser::new()
         .parse(
@@ -93,40 +101,60 @@ fn main() -> Result<()> {
         )
         .context("failed to run the function")?;
 
-    match result.value {
-        cairo_lang_runner::RunResultValue::Success(values) => {
-            println!("Run completed successfully, returning {values:?}")
-        }
-        cairo_lang_runner::RunResultValue::Panic(values) => {
-            print!("Run panicked with [");
-            for value in &values {
-                match as_cairo_short_string(value) {
-                    Some(as_string) => print!("{value} ('{as_string}'), "),
-                    None => print!("{value}, "),
-                }
-            }
-            println!("].")
-        }
-    }
-
-    if let Some(gas) = result.gas_counter {
-        println!("Remaining gas: {gas}");
-    }
-
-    if args.print_full_memory {
-        print!("Full memory: [");
-        for cell in &result.memory {
-            match cell {
-                None => print!("_, "),
-                Some(value) => print!("{value}, "),
-            }
-        }
-        println!("]");
-    }
+    ui.print(Summary {
+        result,
+        print_full_memory: args.print_full_memory,
+    });
 
     Ok(())
 }
 
-fn build_project() -> Result<()> {
-    Ok(ScarbCommand::new().arg("build").run()?)
+struct Summary {
+    result: RunResultStarknet,
+    print_full_memory: bool,
+}
+
+impl Message for Summary {
+    fn print_text(self)
+    where
+        Self: Sized,
+    {
+        match self.result.value {
+            RunResultValue::Success(values) => {
+                println!("Run completed successfully, returning {values:?}")
+            }
+            RunResultValue::Panic(values) => {
+                print!("Run panicked with [");
+                for value in &values {
+                    match as_cairo_short_string(value) {
+                        Some(as_string) => print!("{value} ('{as_string}'), "),
+                        None => print!("{value}, "),
+                    }
+                }
+                println!("].")
+            }
+        }
+
+        if let Some(gas) = self.result.gas_counter {
+            println!("Remaining gas: {gas}");
+        }
+
+        if self.print_full_memory {
+            print!("Full memory: [");
+            for cell in &self.result.memory {
+                match cell {
+                    None => print!("_, "),
+                    Some(value) => print!("{value}, "),
+                }
+            }
+            println!("]");
+        }
+    }
+
+    fn structured<S: Serializer>(self, _ser: S) -> Result<S::Ok, S::Error>
+    where
+        Self: Sized,
+    {
+        todo!("JSON output is not implemented yet for this command")
+    }
 }

@@ -3950,6 +3950,7 @@ dependencies = [
  "scarb-metadata 1.6.0",
  "scarb-test-support",
  "scarb-ui",
+ "serde",
  "serde_json",
  "snapbox",
 ]
