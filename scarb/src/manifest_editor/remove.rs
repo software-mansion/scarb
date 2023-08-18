@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use toml_edit::Document;
 
-use scarb_ui::Status;
+use scarb_ui::components::Status;
 
 use crate::core::PackageName;
 

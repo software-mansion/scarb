@@ -7,7 +7,7 @@ use std::process::Command;
 use anyhow::{bail, Result};
 use tracing::debug;
 
-use scarb_ui::Status;
+use scarb_ui::components::Status;
 
 use crate::core::{Config, Package, Workspace};
 use crate::ops;

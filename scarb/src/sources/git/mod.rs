@@ -8,7 +8,7 @@ use url::Url;
 
 use canonical_url::CanonicalUrl;
 use client::{GitRemote, Rev};
-use scarb_ui::Status;
+use scarb_ui::components::Status;
 
 use crate::core::source::Source;
 use crate::core::{

@@ -8,7 +8,7 @@ use std::{fmt, thread};
 use anyhow::{anyhow, bail, Context, Result};
 use tracing::{debug, debug_span, warn, Span};
 
-use scarb_ui::{Spinner, Status};
+use scarb_ui::components::{Spinner, Status};
 
 use crate::core::Config;
 

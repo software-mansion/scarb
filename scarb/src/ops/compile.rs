@@ -2,8 +2,8 @@ use anyhow::{anyhow, Result};
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use indoc::formatdoc;
 
+use scarb_ui::components::Status;
 use scarb_ui::HumanDuration;
-use scarb_ui::Status;
 
 use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin};
 use crate::compiler::CompilationUnit;

@@ -6,7 +6,7 @@ use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 
-use scarb_ui::TypedMessage;
+use scarb_ui::components::TypedMessage;
 
 use crate::compiler::CompilationUnit;
 use crate::core::Workspace;
