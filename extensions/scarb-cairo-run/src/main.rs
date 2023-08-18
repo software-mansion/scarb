@@ -12,8 +12,8 @@ use camino::Utf8PathBuf;
 use clap::Parser;
 use indoc::formatdoc;
 
-use scarb_metadata::packages_filter::PackagesFilter;
 use scarb_metadata::{MetadataCommand, ScarbCommand};
+use scarb_ui::args::PackagesFilter;
 
 /// Execute the main function of a package.
 #[derive(Parser, Clone, Debug)]

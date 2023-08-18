@@ -13,8 +13,8 @@ use cairo_lang_test_runner::plugin::TestPlugin;
 use cairo_lang_test_runner::TestRunner;
 use clap::Parser;
 
-use scarb_metadata::packages_filter::PackagesFilter;
 use scarb_metadata::{CompilationUnitMetadata, Metadata, MetadataCommand, PackageId};
+use scarb_ui::args::PackagesFilter;
 
 /// Execute all unit tests of a local package.
 #[derive(Parser, Clone, Debug)]
