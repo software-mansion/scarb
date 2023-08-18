@@ -33,7 +33,7 @@ impl<'a> Message for Status<'a> {
                 self.status,
                 12,
                 Alignment::Right,
-                None
+                None,
             )),
             self.message
         )

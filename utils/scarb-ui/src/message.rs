@@ -3,6 +3,8 @@ use serde::Serializer;
 #[cfg(doc)]
 use super::Ui;
 
+const JSON_SKIP_MESSAGE: &str = "UI_INTERNAL_SKIP";
+
 pub trait Message {
     /// Return textual representation of this message.
     ///
@@ -25,7 +27,7 @@ pub trait Message {
         // Silence unused warning without using underscore in variable name,
         // so that it will not be populated by editors.
         let _ = ser;
-        Err(serde::ser::Error::custom("UI_INTERNAL_SKIP"))
+        Err(serde::ser::Error::custom(JSON_SKIP_MESSAGE))
     }
 
     // NOTE: These two most low-level functions are doc hidden,
@@ -58,7 +60,7 @@ pub trait Message {
                 println!("{string}");
             }
             Err(err) => {
-                if err.to_string() != "UI_INTERNAL_SKIP" {
+                if err.to_string() != JSON_SKIP_MESSAGE {
                     panic!("JSON serialization of UI message must not fail: {err}")
                 }
             }

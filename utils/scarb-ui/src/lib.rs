@@ -4,21 +4,14 @@ pub use indicatif::{
     HumanFloatCount,
 };
 
-pub use machine::*;
 pub use message::*;
-pub use spinner::*;
-pub use status::*;
-pub use typed::*;
-pub use value::*;
 pub use verbosity::*;
 pub use widget::*;
 
-mod machine;
+use crate::components::TypedMessage;
+
+pub mod components;
 mod message;
-mod spinner;
-mod status;
-mod typed;
-mod value;
 mod verbosity;
 mod widget;
 

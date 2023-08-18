@@ -8,7 +8,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use fs4::{lock_contended_error, FileExt};
 use tokio::sync::Mutex;
 
-use scarb_ui::Status;
+use scarb_ui::components::Status;
 
 use crate::core::Config;
 use crate::internal::fsx;
