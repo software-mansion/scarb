@@ -13,7 +13,8 @@ cairo-lang-filesystem.workspace = true
 cairo-lang-starknet.workspace = true
 cairo-lang-test-runner.workspace = true
 clap.workspace = true
-scarb-metadata = { path = "../../scarb-metadata", features = ["packages_filter"] }
+scarb-metadata = { path = "../../scarb-metadata" }
+scarb-ui = { path = "../../utils/scarb-ui" }
 serde_json.workspace = true
 
 [dev-dependencies]

@@ -6,7 +6,7 @@ use semver::Version;
 use smol_str::SmolStr;
 
 use scarb_metadata as m;
-use scarb_metadata::packages_filter::PackagesSource;
+use scarb_ui::args::PackagesSource;
 
 use crate::compiler::CompilationUnit;
 use crate::core::{ManifestDependency, Package, PackageId, SourceId, Target, Workspace};

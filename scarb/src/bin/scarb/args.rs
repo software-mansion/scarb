@@ -16,7 +16,7 @@ use scarb::compiler::Profile;
 use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
 use scarb::version;
-use scarb_metadata::packages_filter::PackagesFilter;
+use scarb_ui::args::PackagesFilter;
 use scarb_ui::OutputFormat;
 
 /// The Cairo package manager.

@@ -6,8 +6,11 @@ publish = false
 
 [dependencies]
 anyhow.workspace = true
+camino.workspace = true
 clap.workspace = true
 console.workspace = true
 indicatif.workspace = true
+indoc.workspace = true
+scarb-metadata = { version = "*", path = "../../scarb-metadata" }
 serde.workspace = true
 serde_json.workspace = true

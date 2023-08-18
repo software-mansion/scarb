@@ -3,8 +3,7 @@ use std::fmt;
 
 use anyhow::{anyhow, bail, Result};
 use camino::{Utf8Path, Utf8PathBuf};
-
-use scarb_metadata::packages_filter::PackagesSource;
+use scarb_ui::args::PackagesSource;
 
 use crate::compiler::Profile;
 use crate::core::config::Config;
