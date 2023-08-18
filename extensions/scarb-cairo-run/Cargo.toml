@@ -12,9 +12,10 @@ cairo-lang-runner.workspace = true
 cairo-lang-sierra.workspace = true
 camino.workspace = true
 clap.workspace = true
-scarb-metadata = { path = "../../scarb-metadata", features = ["packages_filter"] }
-serde_json.workspace = true
 indoc.workspace = true
+scarb-metadata = { path = "../../scarb-metadata" }
+scarb-ui = { path = "../../utils/scarb-ui" }
+serde_json.workspace = true
 
 [dev-dependencies]
 scarb-test-support = { path = "../../utils/scarb-test-support" }

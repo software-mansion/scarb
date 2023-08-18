@@ -3949,6 +3949,7 @@ dependencies = [
  "indoc",
  "scarb-metadata 1.6.0",
  "scarb-test-support",
+ "scarb-ui",
  "serde_json",
  "snapbox",
 ]
@@ -3964,6 +3965,7 @@ dependencies = [
  "cairo-lang-test-runner",
  "clap",
  "scarb-metadata 1.6.0",
+ "scarb-ui",
  "serde_json",
  "snapbox",
  "test-for-each-example",
@@ -4025,9 +4027,12 @@ name = "scarb-ui"
 version = "0.6.2"
 dependencies = [
  "anyhow",
+ "camino",
  "clap",
  "console",
  "indicatif",
+ "indoc",
+ "scarb-metadata 1.6.0",
  "serde",
  "serde_json",
 ]

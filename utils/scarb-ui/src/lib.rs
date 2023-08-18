@@ -10,6 +10,7 @@ pub use widget::*;
 
 use crate::components::TypedMessage;
 
+pub mod args;
 pub mod components;
 mod message;
 mod verbosity;

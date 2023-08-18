@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 pub use id::*;
 pub use name::*;
-use scarb_metadata::packages_filter::WithManifestPath;
+use scarb_ui::args::WithManifestPath;
 
 use crate::core::manifest::Manifest;
 use crate::core::Target;
