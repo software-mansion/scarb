@@ -68,9 +68,13 @@ fn main() -> Result<()> {
 
         let db = build_root_database(unit, starknet)?;
 
-        let main_crate_ids = vec![db.intern_crate(CrateLongId::Real(package.name.clone().into()))];
+        let main_crate_ids = unit
+            .components
+            .iter()
+            .map(|component| db.intern_crate(CrateLongId::Real(component.name.clone().into())))
+            .collect();
 
-        let test_crate_ids = main_crate_ids.clone();
+        let test_crate_ids = vec![db.intern_crate(CrateLongId::Real(package.name.clone().into()))];
 
         if DiagnosticsReporter::stderr().check(&db) {
             bail!("could not compile `{}` due to previous error", package.name);
