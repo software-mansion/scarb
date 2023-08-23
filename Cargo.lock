@@ -631,7 +631,7 @@ dependencies = [
  "log",
  "lsp-types",
  "salsa",
- "scarb-metadata 1.4.2",
+ "scarb-metadata 1.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_json",
  "smol_str",
@@ -4001,19 +4001,6 @@ dependencies = [
 
 [[package]]
 name = "scarb-metadata"
-version = "1.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26ba10c59bd4ebde82de954e3a3d6d503eb17bd634106ef144af1356b28b8f0f"
-dependencies = [
- "camino",
- "semver",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "scarb-metadata"
 version = "1.7.0"
 dependencies = [
  "assert_fs",
@@ -4025,6 +4012,19 @@ dependencies = [
  "serde",
  "serde_json",
  "snapbox",
+ "thiserror",
+]
+
+[[package]]
+name = "scarb-metadata"
+version = "1.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e1bb385b852343276fdfc1aad0e4c48e0c01106c209a602481f36c9b50c5f59"
+dependencies = [
+ "camino",
+ "semver",
+ "serde",
+ "serde_json",
  "thiserror",
 ]
 
