@@ -1,8 +1,12 @@
+use std::sync::Arc;
+
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::ids::Directory;
+use cairo_lang_starknet::inline_macros::selector::SelectorMacro;
 use tracing::trace;
 
 use crate::compiler::CompilationUnit;
@@ -22,6 +26,11 @@ pub(crate) fn build_scarb_root_database(
         let plugin = ws.config().cairo_plugins().fetch(package_id)?;
         let instance = plugin.instantiate()?;
         for macro_plugin in instance.macro_plugins() {
+            // HACK(mkaput): Remove this when #575 will be done.
+            if is_starknet_plugin(&*macro_plugin) {
+                b.with_inline_macro_plugin(SelectorMacro::NAME, Arc::new(SelectorMacro));
+            }
+
             b.with_macro_plugin(macro_plugin);
         }
     }
@@ -60,9 +69,13 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
 }
 
 pub(crate) fn has_starknet_plugin(db: &RootDatabase) -> bool {
-    db.macro_plugins().iter().any(|plugin| {
-        // Can this be done in less "hacky" way? TypeId is not working here, because we deal with
-        // trait objects.
-        format!("{:?}", *plugin).contains("StarkNetPlugin")
-    })
+    db.macro_plugins()
+        .iter()
+        .any(|plugin| is_starknet_plugin(&**plugin))
+}
+
+fn is_starknet_plugin(plugin: &dyn MacroPlugin) -> bool {
+    // Can this be done in less "hacky" way? TypeId is not working here, because we deal with
+    // trait objects.
+    format!("{:?}", plugin).contains("StarkNetPlugin")
 }

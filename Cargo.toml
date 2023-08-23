@@ -27,18 +27,18 @@ repository = "https://github.com/software-mansion/scarb"
 anyhow = "1.0.75"
 assert_fs = "1.0.13"
 async-trait = "0.1.73"
-cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-formatter = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-language-server = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-runner = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-semantic = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-sierra = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7" }
-cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "ad9dbb7", features = ["env_logger"] }
+cairo-lang-compiler = "2.2.0"
+cairo-lang-defs = "2.2.0"
+cairo-lang-filesystem = "2.2.0"
+cairo-lang-formatter = "2.2.0"
+cairo-lang-language-server = "2.2.0"
+cairo-lang-runner = "2.2.0"
+cairo-lang-semantic = "2.2.0"
+cairo-lang-sierra = "2.2.0"
+cairo-lang-sierra-to-casm = "2.2.0"
+cairo-lang-starknet = "2.2.0"
+cairo-lang-test-runner = "2.2.0"
+cairo-lang-utils = { version = "2.2.0", features = ["env_logger"] }
 camino = { version = "1.1.6", features = ["serde1"] }
 cargo_metadata = "0.17.0"
 clap = { version = "4.3.23", features = ["derive", "env", "string"] }
