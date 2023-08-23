@@ -8,6 +8,7 @@ use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
+use cairo_lang_starknet::inline_macros::selector::SelectorMacro;
 use cairo_lang_starknet::plugin::StarkNetPlugin;
 use cairo_lang_test_runner::plugin::TestPlugin;
 use cairo_lang_test_runner::TestRunner;
@@ -147,6 +148,7 @@ fn build_root_database(unit: &CompilationUnitMetadata, starknet: bool) -> Result
 
     if starknet {
         b.with_macro_plugin(Arc::new(StarkNetPlugin::default()));
+        b.with_inline_macro_plugin(SelectorMacro::NAME, Arc::new(SelectorMacro));
     }
 
     b.build()
