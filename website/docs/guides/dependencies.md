@@ -28,7 +28,7 @@ Actually this is how the OpenZeppelin Contracts for Cairo library is released, s
 
 ```toml
 [dependencies]
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc.0" }
 ```
 
 ::: info
@@ -41,7 +41,7 @@ Note, that if you want to add more dependencies, you do not have to add `[depend
 ```toml
 [dependencies]
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc.0" }
 ```
 
 Now, run `scarb build`, and Scarb will fetch new dependencies and all of their dependencies.
@@ -50,6 +50,7 @@ Then it will compile your package with all of these packages included:
 ```shell
 $ scarb build
     Updating git repository https://github.com/keep-starknet-strange/alexandria
+    Updating git repository https://github.com/OpenZeppelin/cairo-contracts
    Compiling hello_world v0.1.0 (/path/to/package/hello_world/Scarb.toml)
     Finished release target(s) in 4 seconds
 ```
