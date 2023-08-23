@@ -2,12 +2,11 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 use once_cell::sync::Lazy;
-use semver::VersionReq;
 use typed_builder::TypedBuilder;
 
 #[cfg(doc)]
 use crate::core::Manifest;
-use crate::core::{ManifestDependency, PackageId, PackageName, SourceId};
+use crate::core::{DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId};
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
 /// See [`SummaryInner`] for public fields reference.
@@ -55,8 +54,8 @@ impl Summary {
     pub fn implicit_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
         static CORE_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| {
             // NOTE: Pin `core` to exact version, because we know that's the only one we have.
-            let cairo_version = crate::version::get().cairo.version;
-            let version_req = VersionReq::parse(&format!("={cairo_version}")).unwrap();
+            let cairo_version = crate::version::get().cairo.version.parse().unwrap();
+            let version_req = DependencyVersionReq::exact(&cairo_version);
             ManifestDependency {
                 name: PackageName::CORE,
                 version_req,

@@ -2,14 +2,16 @@ use std::collections::{BTreeMap, HashMap};
 
 use anyhow::{bail, Result};
 use itertools::Itertools;
-use semver::Version;
+use semver::{Version, VersionReq};
 use smol_str::SmolStr;
 
 use scarb_metadata as m;
 use scarb_ui::args::PackagesSource;
 
 use crate::compiler::CompilationUnit;
-use crate::core::{ManifestDependency, Package, PackageId, SourceId, Target, Workspace};
+use crate::core::{
+    DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId, Target, Workspace,
+};
 use crate::ops;
 use crate::version::CommitInfo;
 
@@ -131,9 +133,15 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
 }
 
 fn collect_dependency_metadata(dependency: &ManifestDependency) -> m::DependencyMetadata {
+    let version_req = match &dependency.version_req {
+        DependencyVersionReq::Any => VersionReq::STAR,
+        DependencyVersionReq::Req(req) => req.clone(),
+        DependencyVersionReq::Locked { req, .. } => req.clone(),
+    };
+
     m::DependencyMetadataBuilder::default()
         .name(dependency.name.to_string())
-        .version_req(dependency.version_req.clone())
+        .version_req(version_req)
         .source(wrap_source_id(dependency.source_id))
         .build()
         .unwrap()

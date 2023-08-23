@@ -175,7 +175,7 @@ pub(crate) mod mock {
         (($n:literal, $v:literal)) => {
             $crate::core::ManifestDependency {
                 name: $crate::core::PackageName::new($n),
-                version_req: ::semver::VersionReq::parse($v).unwrap(),
+                version_req: ::semver::VersionReq::parse($v).unwrap().into(),
                 source_id: $crate::core::SourceId::default_registry(),
             }
         };
@@ -183,7 +183,7 @@ pub(crate) mod mock {
         (($n:literal, $v:literal, $s:literal)) => {
             $crate::core::ManifestDependency {
                 name: $crate::core::PackageName::new($n),
-                version_req: ::semver::VersionReq::parse($v).unwrap(),
+                version_req: ::semver::VersionReq::parse($v).unwrap().into(),
                 source_id: $crate::core::SourceId::from_display_str($s).unwrap(),
             }
         };

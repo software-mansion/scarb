@@ -4,7 +4,6 @@ use anyhow::{bail, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use itertools::Itertools;
-use semver::VersionReq;
 
 use crate::compiler::{CompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent};
 use crate::core::package::{Package, PackageClass, PackageId};
@@ -15,7 +14,7 @@ use crate::core::registry::source_map::SourceMap;
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
-use crate::core::{ManifestDependency, PackageName, SourceId, Target};
+use crate::core::{DependencyVersionReq, ManifestDependency, PackageName, SourceId, Target};
 use crate::internal::to_version::ToVersion;
 use crate::resolver;
 
@@ -52,8 +51,8 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
         async {
             let mut patch_map = PatchMap::new();
 
-            let cairo_version = crate::version::get().cairo.version;
-            let version_req = VersionReq::parse(&format!("={cairo_version}")).unwrap();
+            let cairo_version = crate::version::get().cairo.version.parse().unwrap();
+            let version_req = DependencyVersionReq::exact(&cairo_version);
             patch_map.insert(
                 SourceId::default().canonical_url.clone(),
                 [

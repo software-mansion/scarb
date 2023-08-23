@@ -17,7 +17,7 @@ use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Target};
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
-use crate::core::{ManifestBuilder, ManifestCompilerConfig, PackageName};
+use crate::core::{DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName};
 use crate::internal::serdex::{toml_merge, RelativeUtf8PathBuf};
 use crate::internal::to_version::ToVersion;
 use crate::{DEFAULT_SOURCE_PATH, MANIFEST_FILE_NAME};
@@ -691,7 +691,11 @@ impl DetailedTomlDependency {
         name: PackageName,
         manifest_path: &Utf8Path,
     ) -> Result<ManifestDependency> {
-        let version_req = self.version.to_owned().unwrap_or(VersionReq::STAR);
+        let version_req = self
+            .version
+            .to_owned()
+            .map(DependencyVersionReq::from)
+            .unwrap_or_default();
 
         if self.branch.is_some() || self.tag.is_some() || self.rev.is_some() {
             ensure!(
