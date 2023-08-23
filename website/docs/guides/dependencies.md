@@ -23,19 +23,26 @@ alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.g
 In fact, it is always good to pin Git dependencies to concrete commits, otherwise Scarb would try to update this
 dependency each time it is executed.
 You can achieve this using one of the following extra fields that you can pass along `git`: `branch`, `tag` and `rev`.
-For example, in this guide we will pin to a concrete commit hash:
+
+Actually this is how the OpenZeppelin Contracts for Cairo library is released, since the `main` branch is not stable.
 
 ```toml
 [dependencies]
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "27fbf5b" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc.0" }
 ```
 
 ::: info
-In the future this paragraph will be irrelevant, because Scarb will maintain a lockfile.
+In the future commit pinning will not be needed because Scarb will maintain a lockfile.
 We track this feature in this issue: [#126](https://github.com/software-mansion/scarb/issues/126).
 :::
 
-Note, that if you want to add more dependencies, you do not have to add `[dependencies]` for each package separately.
+Note, that if you want to add more dependencies, you do not have to add `[dependencies]` for each package separately. For example:
+
+```toml
+[dependencies]
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc.0" }
+```
 
 Now, run `scarb build`, and Scarb will fetch new dependencies and all of their dependencies.
 Then it will compile your package with all of these packages included:
@@ -43,6 +50,7 @@ Then it will compile your package with all of these packages included:
 ```shell
 $ scarb build
     Updating git repository https://github.com/keep-starknet-strange/alexandria
+    Updating git repository https://github.com/OpenZeppelin/cairo-contracts
    Compiling hello_world v0.1.0 (/path/to/package/hello_world/Scarb.toml)
     Finished release target(s) in 4 seconds
 ```
