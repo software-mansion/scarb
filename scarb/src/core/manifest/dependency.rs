@@ -1,13 +1,11 @@
 use std::fmt;
 
-use semver::VersionReq;
-
-use crate::core::{PackageId, PackageName, SourceId, Summary};
+use crate::core::{DependencyVersionReq, PackageId, PackageName, SourceId, Summary};
 
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct ManifestDependency {
     pub name: PackageName,
-    pub version_req: VersionReq,
+    pub version_req: DependencyVersionReq,
     pub source_id: SourceId,
 }
 

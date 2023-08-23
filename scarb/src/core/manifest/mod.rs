@@ -13,6 +13,7 @@ pub use scripts::*;
 pub use summary::*;
 pub use target::*;
 pub use toml_manifest::*;
+pub use version_req::*;
 
 use crate::compiler::DefaultForProfile;
 use crate::compiler::Profile;
@@ -24,6 +25,7 @@ mod scripts;
 mod summary;
 mod target;
 mod toml_manifest;
+mod version_req;
 
 /// Contains all the information about a package, as loaded from the manifest file.
 /// Construct using [`ManifestBuilder`].
