@@ -28,17 +28,12 @@ use derive_builder::Builder;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "packages_filter")]
-#[allow(deprecated)]
-use crate::packages_filter::WithManifestPath;
 #[cfg(feature = "command")]
 pub use command::*;
 pub use version_pin::*;
 
 #[cfg(feature = "command")]
 mod command;
-#[cfg(feature = "packages_filter")]
-pub mod packages_filter;
 mod version_pin;
 
 /// An "opaque" identifier for a package.
@@ -483,14 +478,6 @@ impl PackageMetadata {
     /// including any transformations applied by Scarb.
     pub fn tool_metadata(&self, tool_name: &str) -> Option<&serde_json::Value> {
         self.manifest_metadata.tool.as_ref()?.get(tool_name)
-    }
-}
-
-#[cfg(feature = "packages_filter")]
-#[allow(deprecated)]
-impl WithManifestPath for PackageMetadata {
-    fn manifest_path(&self) -> &Utf8Path {
-        &self.manifest_path
     }
 }
 
