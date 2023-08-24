@@ -59,10 +59,14 @@ fn list_commands(config: &Config, builtins: &BTreeMap<String, Option<String>>) -
         .map(PathBuf::from);
     let mut commands = BTreeMap::new();
     for dir in config.dirs().path_dirs.iter().chain(scarb_exe_dir.iter()) {
-        let Ok(entries) = fs::read_dir(dir) else { continue; };
+        let Ok(entries) = fs::read_dir(dir) else {
+            continue;
+        };
         for entry in entries.filter_map(|e| e.ok()) {
             let path = entry.path();
-            let Some(filename) =  path.file_name().and_then(|s| s.to_str()) else{ continue; };
+            let Some(filename) = path.file_name().and_then(|s| s.to_str()) else {
+                continue;
+            };
             if !filename.starts_with(prefix) || !filename.ends_with(suffix) {
                 continue;
             }

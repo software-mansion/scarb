@@ -76,9 +76,6 @@ mod tests {
         env::set_var("SOME_ENV_VAR", "verbose");
         assert_eq!(Verbosity::from_env_var("SOME_ENV_VAR").unwrap(), Verbose);
 
-        assert!(matches!(
-            Verbosity::from_env_var("SOME_ENV_VAR_THAT_DOESNT_EXIST"),
-            Err(_)
-        ));
+        assert!(Verbosity::from_env_var("SOME_ENV_VAR_THAT_DOESNT_EXIST").is_err());
     }
 }

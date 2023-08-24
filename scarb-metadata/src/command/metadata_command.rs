@@ -191,6 +191,7 @@ mod tests {
 
     macro_rules! check_parse_stream {
         ($input:expr, $expected:pat) => {{
+            #![allow(clippy::redundant_pattern_matching)]
             let actual = crate::command::metadata_command::parse_stream(
                 $input
                     .to_string()
