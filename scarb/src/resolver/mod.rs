@@ -560,7 +560,7 @@ mod tests {
         )
         .unwrap();
 
-        let mut test_solution = resolve.solution_with_target_kind(root, "test".into());
+        let mut test_solution = resolve.solution_of(root, "test".into());
         test_solution.sort();
         assert_eq!(test_solution.len(), 4);
         assert_eq!(
@@ -571,7 +571,7 @@ mod tests {
             vec!["bar", "boo", "core", "foo"],
         );
 
-        let mut lib_solution = resolve.solution_with_target_kind(root, "lib".into());
+        let mut lib_solution = resolve.solution_of(root, "lib".into());
         lib_solution.sort();
         assert_eq!(lib_solution.len(), 3);
         assert_eq!(

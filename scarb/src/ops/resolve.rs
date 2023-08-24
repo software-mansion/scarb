@@ -15,7 +15,7 @@ use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::core::{
-    DepKind, DependencyVersionReq, ManifestDependency, PackageName, SourceId, Target,
+    DepKind, DependencyVersionReq, ManifestDependency, PackageName, SourceId, Target, TargetKind,
 };
 use crate::internal::to_version::ToVersion;
 use crate::{resolver, DEFAULT_SOURCE_PATH};
@@ -34,11 +34,13 @@ impl WorkspaceResolve {
     ///
     /// # Safety
     /// * Asserts that `root_package` is a node in this graph.
-    pub fn solution_of(&self, root_package: PackageId) -> impl Iterator<Item = Package> + '_ {
+    pub fn solution_of(&self, root_package: PackageId, target_kind: TargetKind) -> Vec<Package> {
         assert!(self.packages.contains_key(&root_package));
         self.resolve
-            .solution_of(root_package)
-            .map(|id| self.packages[&id].clone())
+            .solution_of(root_package, target_kind)
+            .iter()
+            .map(|id| self.packages[id].clone())
+            .collect_vec()
     }
 }
 
@@ -142,60 +144,18 @@ fn generate_cairo_compilation_units(
     resolve: &WorkspaceResolve,
     ws: &Workspace<'_>,
 ) -> Result<Vec<CompilationUnit>> {
-    let mut classes = resolve.solution_of(member.id).into_group_map_by(|pkg| {
-        if pkg.id == member.id {
-            // Always classify the member as a library (even if it's [PackageClass::Other]),
-            // so that it will end up being a component.
-            assert!(!member.is_cairo_plugin());
-            PackageClass::Library
-        } else {
-            pkg.classify()
-        }
-    });
-
-    let mut packages = classes.remove(&PackageClass::Library).unwrap_or_default();
-    let cairo_plugins = classes
-        .remove(&PackageClass::CairoPlugin)
-        .unwrap_or_default();
-    let other = classes.remove(&PackageClass::Other).unwrap_or_default();
-
-    // Ensure the member is first element, and it is followed by `core`, to ensure the order
-    // invariant of the `CompilationUnit::components` field holds.
-    packages.sort_by_key(|package| {
-        if package.id == member.id {
-            0
-        } else if package.id.is_core() {
-            1
-        } else {
-            2
-        }
-    });
-
-    assert!(!packages.is_empty());
-    assert_eq!(packages[0].id, member.id);
-
-    check_cairo_version_compatibility(&packages, ws)?;
-
-    // Print warnings for dependencies that are not usable.
-    for pkg in other {
-        ws.config().ui().warn(format!(
-            "{} ignoring invalid dependency `{}` which is missing a lib or cairo-plugin target",
-            member.id, pkg.id.name
-        ));
-    }
-
-    let cairo_plugins = cairo_plugins
-        .into_iter()
-        .map(|package| CompilationUnitCairoPlugin { package })
-        .collect::<Vec<_>>();
-
     let profile = ws.current_profile()?;
-
-    Ok(member
+    let mut solution = PackageSolutionCollector::new(member, resolve, ws);
+    member
         .manifest
         .targets
         .iter()
+        .sorted_by_key(|target| target.kind.clone())
         .map(|member_target| {
+            solution.collect(member_target.kind.clone())?;
+            let packages = solution.packages.as_ref().unwrap();
+            let cairo_plugins = solution.cairo_plugins.as_ref().unwrap();
+
             let cfg_set = build_cfg_set(member_target);
 
             let member_lib_target = member.target(Target::LIB).cloned();
@@ -261,18 +221,113 @@ fn generate_cairo_compilation_units(
                 member.id
             };
 
-            CompilationUnit {
+            Ok(CompilationUnit {
                 main_package_id,
                 components,
                 cairo_plugins: cairo_plugins.clone(),
                 profile: profile.clone(),
                 compiler_config: member.manifest.compiler_config.clone(),
                 cfg_set,
-            }
+            })
         })
-        .collect())
+        .collect::<Result<Vec<CompilationUnit>>>()
 }
 
+pub struct PackageSolutionCollector<'a> {
+    member: &'a Package,
+    resolve: &'a WorkspaceResolve,
+    ws: &'a Workspace<'a>,
+    packages: Option<Vec<Package>>,
+    cairo_plugins: Option<Vec<CompilationUnitCairoPlugin>>,
+    target_kind: Option<TargetKind>,
+}
+
+impl<'a> PackageSolutionCollector<'a> {
+    pub fn new(member: &'a Package, resolve: &'a WorkspaceResolve, ws: &'a Workspace<'a>) -> Self {
+        Self {
+            member,
+            resolve,
+            ws,
+            packages: None,
+            cairo_plugins: None,
+            target_kind: None,
+        }
+    }
+
+    pub fn collect(&mut self, target_kind: TargetKind) -> Result<()> {
+        // Do not traverse graph for each target of the same kind.
+        if !self
+            .target_kind
+            .as_ref()
+            .map(|tk| tk.clone() == target_kind)
+            .unwrap_or(false)
+        {
+            let (p, c) = self.pull_from_graph(target_kind.clone())?;
+            self.packages = Some(p.clone());
+            self.cairo_plugins = Some(c.clone());
+            self.target_kind = Some(target_kind);
+        }
+        Ok(())
+    }
+
+    fn pull_from_graph(
+        &self,
+        target_kind: TargetKind,
+    ) -> Result<(Vec<Package>, Vec<CompilationUnitCairoPlugin>)> {
+        let mut classes = self
+            .resolve
+            .solution_of(self.member.id, target_kind)
+            .into_iter()
+            .into_group_map_by(|pkg| {
+                if pkg.id == self.member.id {
+                    // Always classify the member as a library (even if it's [PackageClass::Other]),
+                    // so that it will end up being a component.
+                    assert!(!self.member.is_cairo_plugin());
+                    PackageClass::Library
+                } else {
+                    pkg.classify()
+                }
+            });
+
+        let mut packages = classes.remove(&PackageClass::Library).unwrap_or_default();
+        let cairo_plugins = classes
+            .remove(&PackageClass::CairoPlugin)
+            .unwrap_or_default();
+        let other = classes.remove(&PackageClass::Other).unwrap_or_default();
+
+        // Ensure the member is first element, and it is followed by `core`, to ensure the order
+        // invariant of the `CompilationUnit::components` field holds.
+        packages.sort_by_key(|package| {
+            if package.id == self.member.id {
+                0
+            } else if package.id.is_core() {
+                1
+            } else {
+                2
+            }
+        });
+
+        assert!(!packages.is_empty());
+        assert_eq!(packages[0].id, self.member.id);
+
+        check_cairo_version_compatibility(&packages, self.ws)?;
+
+        // Print warnings for dependencies that are not usable.
+        for pkg in other {
+            self.ws.config().ui().warn(format!(
+                "{} ignoring invalid dependency `{}` which is missing a lib or cairo-plugin target",
+                self.member.id, pkg.id.name
+            ));
+        }
+
+        let cairo_plugins = cairo_plugins
+            .into_iter()
+            .map(|package| CompilationUnitCairoPlugin { package })
+            .collect::<Vec<_>>();
+
+        Ok((packages, cairo_plugins))
+    }
+}
 fn is_integration_test(target: &Target, lib_target: Option<Target>) -> bool {
     let lib_target_source_path = lib_target
         .map(|target| target.source_path.to_string())
