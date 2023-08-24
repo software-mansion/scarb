@@ -326,7 +326,7 @@ fn find_project_contracts(
 
     Ok(internal_contracts
         .into_iter()
-        .chain(external_contracts.into_iter())
+        .chain(external_contracts)
         .collect())
 }
 
