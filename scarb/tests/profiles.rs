@@ -19,7 +19,7 @@ fn build_defaults_to_dev() {
         .success();
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
-    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra"]);
+    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra.json"]);
 }
 
 #[test]
@@ -34,7 +34,7 @@ fn can_build_release() {
         .success();
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "release"]);
-    assert_eq!(t.child("target/release").files(), vec!["hello.sierra"]);
+    assert_eq!(t.child("target/release").files(), vec!["hello.sierra.json"]);
 }
 
 #[test]

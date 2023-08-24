@@ -101,9 +101,9 @@ fn compile_with_custom_lib_target() {
 
     t.child("target/dev/not_hello.casm")
         .assert(predicates::str::is_empty().not());
-    t.child("target/dev/not_hello.sierra")
+    t.child("target/dev/not_hello.sierra.json")
         .assert(predicates::path::exists().not());
-    t.child("target/dev/hello.sierra")
+    t.child("target/dev/hello.sierra.json")
         .assert(predicates::path::exists().not());
     t.child("target/dev/hello.casm")
         .assert(predicates::path::exists().not());

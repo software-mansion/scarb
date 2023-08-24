@@ -29,7 +29,7 @@ fn compile_simple() {
         .success();
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
-    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra"]);
+    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra.json"]);
 
     cache_dir
         .child("registry/std")
@@ -399,7 +399,7 @@ fn compile_multiple_packages() {
             [..]  Finished release target(s) in [..]
         "#});
 
-    t.child("target/dev/fib.sierra")
+    t.child("target/dev/fib.sierra.json")
         .assert(predicates::str::is_empty().not());
 }
 
@@ -483,7 +483,7 @@ fn compile_with_nested_deps() {
             [..]  Finished release target(s) in [..]
         "#});
 
-    t.child("target/dev/x.sierra")
+    t.child("target/dev/x.sierra.json")
         .assert(predicates::str::is_empty().not());
 }
 
@@ -504,7 +504,7 @@ fn override_target_dir() {
 
     t.child("target").assert(predicates::path::exists().not());
     target_dir
-        .child("dev/hello.sierra")
+        .child("dev/hello.sierra.json")
         .assert(predicates::path::exists());
 }
 
@@ -528,10 +528,16 @@ fn sierra_replace_ids() {
         .assert()
         .success();
 
-    t.child("target/dev/hello.sierra")
-        .assert(predicates::str::contains(
-            "hello::example@0() -> (felt252);",
-        ));
+    t.child("target/dev/hello.sierra.json").assert(
+        predicates::str::contains(r#""debug_name":"hello::example""#)
+            .and(predicates::str::contains(
+                r#""debug_name":"felt252_const<42>""#,
+            ))
+            .and(predicates::str::contains(
+                r#""debug_name":"store_temp<felt252>""#,
+            ))
+            .and(predicates::str::contains(r#""debug_name":null"#)),
+    );
 }
 
 #[test]
@@ -613,14 +619,20 @@ fn workspace_as_dep() {
     );
     assert_eq!(
         second_t.child("target/dev").files(),
-        vec!["fourth.sierra", "third.sierra"]
+        vec!["fourth.sierra.json", "third.sierra.json"]
     );
-    second_t
-        .child("target/dev/third.sierra")
-        .assert(predicates::str::contains(
-            "third::example@0() -> (felt252);",
-        ));
-    second_t.child("target/dev/third.sierra").assert(predicates::str::contains(
-        "third::hello@3([0]: RangeCheck, [1]: GasBuiltin) -> (RangeCheck, GasBuiltin, core::panics::PanicResult::<(core::felt252,)>);",
-    ));
+    second_t.child("target/dev/third.sierra.json").assert(
+        predicates::str::contains(r#""debug_name":"third::example""#)
+            .and(predicates::str::contains(r#""debug_name":"third::hello""#))
+            .and(predicates::str::contains(
+                r#""debug_name":"withdraw_gas_all""#,
+            )),
+    );
+    second_t.child("target/dev/third.sierra.json").assert(
+        predicates::str::contains(r#""debug_name":"second::fib""#)
+            .and(predicates::str::contains(r#""debug_name":"jump""#))
+            .and(predicates::str::contains(
+                r#""debug_name":"get_builtin_costs""#,
+            )),
+    );
 }

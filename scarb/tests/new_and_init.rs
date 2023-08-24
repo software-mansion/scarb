@@ -36,7 +36,7 @@ fn new_simple() {
         .assert()
         .success();
 
-    t.child("target/dev/hello.sierra")
+    t.child("target/dev/hello.sierra.json")
         .assert(predicates::str::is_empty().not());
 }
 
@@ -87,7 +87,7 @@ fn init_simple() {
         .assert()
         .success();
 
-    t.child("target/dev/hello.sierra")
+    t.child("target/dev/hello.sierra.json")
         .assert(predicates::str::is_empty().not());
 }
 

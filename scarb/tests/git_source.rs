@@ -40,7 +40,7 @@ fn compile_simple_git_dep() {
         [..]  Finished release target(s) in [..]
         "#});
 
-    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra"]);
+    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra.json"]);
 }
 
 #[test]
@@ -247,7 +247,7 @@ fn stale_cached_version() {
         [..]  Finished release target(s) in [..]
         "#});
 
-    t.child("target/dev/hello.sierra")
+    t.child("target/dev/hello.sierra.json")
         .assert(predicates::str::contains("11111111111101"));
 
     // TODO(#126): Lockfile should prevent updating.
@@ -262,7 +262,7 @@ fn stale_cached_version() {
     //     [..]  Finished release target(s) in [..]
     //     "#});
     //
-    // t.child("target/release/hello.sierra")
+    // t.child("target/release/hello.sierra.json")
     //     .assert(predicates::str::contains("11111111111101"));
     //
     // remove lockfile here
@@ -280,7 +280,7 @@ fn stale_cached_version() {
         [..]  Finished release target(s) in [..]
         "#});
 
-    t.child("target/dev/hello.sierra")
+    t.child("target/dev/hello.sierra.json")
         .assert(predicates::str::contains("11111111111102"));
 }
 

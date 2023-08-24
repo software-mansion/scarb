@@ -2,6 +2,7 @@ use std::io::Write;
 
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, MetadataComputationConfig};
 use serde::{Deserialize, Serialize};
 use tracing::trace_span;
@@ -60,11 +61,17 @@ impl Compiler for LibCompiler {
 
         if props.sierra {
             let mut file = target_dir.open_rw(
-                format!("{}.sierra", unit.target().name),
+                format!("{}.sierra.json", unit.target().name),
                 "output file",
                 ws.config(),
             )?;
-            file.write_all(sierra_program.to_string().as_bytes())?;
+            serde_json::to_writer(
+                &mut *file,
+                &VersionedProgram::from((*sierra_program).clone()),
+            )
+            .with_context(|| {
+                format!("failed to serialize Sierra program {}", unit.target().name)
+            })?;
         }
 
         if props.casm {
