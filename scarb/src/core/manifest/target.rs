@@ -16,11 +16,13 @@ pub struct Target(Arc<TargetInner>);
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct TargetInner {
-    pub kind: SmolStr,
+    pub kind: TargetKind,
     pub name: SmolStr,
     pub source_path: Utf8PathBuf,
     pub params: toml::Value,
 }
+
+pub type TargetKind = SmolStr;
 
 impl Deref for Target {
     type Target = TargetInner;
