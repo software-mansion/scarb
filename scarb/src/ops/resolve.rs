@@ -56,16 +56,16 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
             patch_map.insert(
                 SourceId::default().canonical_url.clone(),
                 [
-                    ManifestDependency {
-                        name: PackageName::CORE,
-                        version_req: version_req.clone(),
-                        source_id: SourceId::for_std(),
-                    },
-                    ManifestDependency {
-                        name: PackageName::STARKNET,
-                        version_req: version_req.clone(),
-                        source_id: SourceId::for_std(),
-                    },
+                    ManifestDependency::for_all_targets(
+                        PackageName::CORE,
+                        version_req.clone(),
+                        SourceId::for_std(),
+                    ),
+                    ManifestDependency::for_all_targets(
+                        PackageName::STARKNET,
+                        version_req.clone(),
+                        SourceId::for_std(),
+                    ),
                 ],
             );
 

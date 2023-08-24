@@ -173,19 +173,37 @@ pub(crate) mod mock {
 
     macro_rules! dep {
         (($n:literal, $v:literal)) => {
-            $crate::core::ManifestDependency {
-                name: $crate::core::PackageName::new($n),
-                version_req: ::semver::VersionReq::parse($v).unwrap().into(),
-                source_id: $crate::core::SourceId::default_registry(),
-            }
+            $crate::core::ManifestDependency::for_all_targets(
+                $crate::core::PackageName::new($n),
+                ::semver::VersionReq::parse($v).unwrap().into(),
+                $crate::core::SourceId::default_registry(),
+            )
         };
 
         (($n:literal, $v:literal, $s:literal)) => {
-            $crate::core::ManifestDependency {
-                name: $crate::core::PackageName::new($n),
-                version_req: ::semver::VersionReq::parse($v).unwrap().into(),
-                source_id: $crate::core::SourceId::from_display_str($s).unwrap(),
-            }
+            $crate::core::ManifestDependency::for_all_targets(
+                $crate::core::PackageName::new($n),
+                ::semver::VersionReq::parse($v).unwrap().into(),
+                $crate::core::SourceId::from_display_str($s).unwrap(),
+            )
+        };
+
+        (($n:literal, $v:literal, (), $t:literal)) => {
+            $crate::core::ManifestDependency::for_target_kind(
+                $crate::core::PackageName::new($n),
+                ::semver::VersionReq::parse($v).unwrap().into(),
+                $crate::core::SourceId::default_registry(),
+                $t.into(),
+            )
+        };
+
+        (($n:literal, $v:literal, $s:literal, $t:literal)) => {
+            $crate::core::ManifestDependency::for_target_kind(
+                $crate::core::PackageName::new($n),
+                ::semver::VersionReq::parse($v).unwrap().into(),
+                $crate::core::SourceId::from_display_str($s).unwrap(),
+                $t.into(),
+            )
         };
     }
 

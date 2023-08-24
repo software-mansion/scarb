@@ -56,11 +56,7 @@ impl Summary {
             // NOTE: Pin `core` to exact version, because we know that's the only one we have.
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
             let version_req = DependencyVersionReq::exact(&cairo_version);
-            ManifestDependency {
-                name: PackageName::CORE,
-                version_req,
-                source_id: SourceId::default(),
-            }
+            ManifestDependency::for_all_targets(PackageName::CORE, version_req, SourceId::default())
         });
 
         let mut deps: Vec<&ManifestDependency> = Vec::new();

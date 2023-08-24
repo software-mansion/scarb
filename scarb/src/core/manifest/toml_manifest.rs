@@ -776,10 +776,10 @@ impl DetailedTomlDependency {
             (Some(_), None, None) => SourceId::default(),
         };
 
-        Ok(ManifestDependency {
+        Ok(ManifestDependency::for_all_targets(
             name,
             version_req,
             source_id,
-        })
+        ))
     }
 }
