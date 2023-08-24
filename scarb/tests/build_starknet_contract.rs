@@ -69,10 +69,13 @@ fn compile_starknet_contract() {
 
     assert_eq!(
         t.child("target/dev").files(),
-        vec!["hello.starknet_artifacts.json", "hello_Balance.sierra.json"]
+        vec![
+            "hello.starknet_artifacts.json",
+            "hello_Balance.contract_class.json"
+        ]
     );
 
-    t.child("target/dev/hello_Balance.sierra.json")
+    t.child("target/dev/hello_Balance.contract_class.json")
         .assert_is_json::<ContractClass>();
 }
 
@@ -103,10 +106,13 @@ fn compile_starknet_contract_to_casm() {
 
     assert_eq!(
         t.child("target/dev").files(),
-        vec!["hello.starknet_artifacts.json", "hello_Balance.casm.json"]
+        vec![
+            "hello.starknet_artifacts.json",
+            "hello_Balance.compiled_contract_class.json"
+        ]
     );
 
-    t.child("target/dev/hello_Balance.casm.json")
+    t.child("target/dev/hello_Balance.compiled_contract_class.json")
         .assert_is_json::<CasmContractClass>();
 }
 
@@ -152,21 +158,21 @@ fn compile_many_contracts() {
         t.child("target/dev").files(),
         vec![
             "a.starknet_artifacts.json",
-            "a_Balance.sierra.json",
-            "a_FortyTwo.sierra.json",
+            "a_Balance.contract_class.json",
+            "a_FortyTwo.contract_class.json",
             "b.starknet_artifacts.json",
-            "b_Balance.sierra.json",
-            "b_FortyTwo.sierra.json",
+            "b_Balance.contract_class.json",
+            "b_FortyTwo.contract_class.json",
             "hello.casm",
-            "hello.sierra",
+            "hello.sierra.json",
         ]
     );
 
     for json in [
-        "a_Balance.sierra.json",
-        "a_FortyTwo.sierra.json",
-        "b_Balance.sierra.json",
-        "b_FortyTwo.sierra.json",
+        "a_Balance.contract_class.json",
+        "a_FortyTwo.contract_class.json",
+        "b_Balance.contract_class.json",
+        "b_FortyTwo.contract_class.json",
     ] {
         t.child("target/dev")
             .child(json)
@@ -211,16 +217,16 @@ fn compile_same_name_contracts() {
         t.child("target/dev").files(),
         vec![
             "hello.starknet_artifacts.json",
-            "hello_hello_forty_two_FortyTwo.sierra.json",
-            "hello_hello_world_FortyTwo.sierra.json",
+            "hello_hello_forty_two_FortyTwo.contract_class.json",
+            "hello_hello_world_FortyTwo.contract_class.json",
         ]
     );
 
     t.child("target/dev/hello.starknet_artifacts.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/dev/hello_hello_forty_two_FortyTwo.sierra.json")
+    t.child("target/dev/hello_hello_forty_two_FortyTwo.contract_class.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/dev/hello_hello_world_FortyTwo.sierra.json")
+    t.child("target/dev/hello_hello_world_FortyTwo.contract_class.json")
         .assert_is_json::<serde_json::Value>();
 }
 
@@ -250,7 +256,7 @@ fn casm_add_pythonic_hints() {
         [..]  Finished release target(s) in [..]
         "#});
 
-    t.child("target/dev/hello_Balance.casm.json")
+    t.child("target/dev/hello_Balance.compiled_contract_class.json")
         .assert_is_json::<CasmContractClass>();
 }
 
@@ -313,16 +319,16 @@ fn compile_starknet_contract_only_with_cfg() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            "hello.sierra",
+            "hello.sierra.json",
             "hello.starknet_artifacts.json",
-            "hello_Balance.sierra.json"
+            "hello_Balance.contract_class.json"
         ]
     );
 
-    t.child("target/dev/hello.sierra")
+    t.child("target/dev/hello.sierra.json")
         .assert(predicates::str::contains("hello::Balance::balance::read").not());
 
-    t.child("target/dev/hello_Balance.sierra.json")
+    t.child("target/dev/hello_Balance.contract_class.json")
         .assert_is_json::<ContractClass>();
 }
 
@@ -406,14 +412,14 @@ fn do_not_compile_dep_contracts() {
             .collect::<Vec<&String>>(),
         vec![
             "world.starknet_artifacts.json",
-            "world_FortyTwo.sierra.json",
-            "world_HelloContract.sierra.json",
+            "world_FortyTwo.contract_class.json",
+            "world_HelloContract.contract_class.json",
         ]
     );
     world
-        .child("target/dev/world_FortyTwo.sierra.json")
+        .child("target/dev/world_FortyTwo.contract_class.json")
         .assert_is_json::<ContractClass>();
     world
-        .child("target/dev/world_HelloContract.sierra.json")
+        .child("target/dev/world_HelloContract.contract_class.json")
         .assert_is_json::<ContractClass>();
 }

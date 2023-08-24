@@ -65,19 +65,19 @@ fn compile_imported_contracts() {
         world.child("target/dev").files(),
         vec![
             "world.starknet_artifacts.json",
-            "world_Balance.sierra.json",
-            "world_FortyTwo.sierra.json",
-            "world_HelloContract.sierra.json",
+            "world_Balance.contract_class.json",
+            "world_FortyTwo.contract_class.json",
+            "world_HelloContract.contract_class.json",
         ]
     );
     world
-        .child("target/dev/world_Balance.sierra.json")
+        .child("target/dev/world_Balance.contract_class.json")
         .assert_is_json::<ContractClass>();
     world
-        .child("target/dev/world_FortyTwo.sierra.json")
+        .child("target/dev/world_FortyTwo.contract_class.json")
         .assert_is_json::<ContractClass>();
     world
-        .child("target/dev/world_HelloContract.sierra.json")
+        .child("target/dev/world_HelloContract.contract_class.json")
         .assert_is_json::<ContractClass>();
 }
 
@@ -101,23 +101,23 @@ fn compile_multiple_imported_contracts() {
         world.child("target/dev").files(),
         vec![
             "world.starknet_artifacts.json",
-            "world_Balance.sierra.json",
-            "world_FortyTwo.sierra.json",
-            "world_hello_HelloContract.sierra.json",
-            "world_world_HelloContract.sierra.json",
+            "world_Balance.contract_class.json",
+            "world_FortyTwo.contract_class.json",
+            "world_hello_HelloContract.contract_class.json",
+            "world_world_HelloContract.contract_class.json",
         ]
     );
     world
-        .child("target/dev/world_Balance.sierra.json")
+        .child("target/dev/world_Balance.contract_class.json")
         .assert_is_json::<ContractClass>();
     world
-        .child("target/dev/world_hello_HelloContract.sierra.json")
+        .child("target/dev/world_hello_HelloContract.contract_class.json")
         .assert_is_json::<ContractClass>();
     world
-        .child("target/dev/world_FortyTwo.sierra.json")
+        .child("target/dev/world_FortyTwo.contract_class.json")
         .assert_is_json::<ContractClass>();
     world
-        .child("target/dev/world_hello_HelloContract.sierra.json")
+        .child("target/dev/world_hello_HelloContract.contract_class.json")
         .assert_is_json::<ContractClass>();
 
     // Check starknet artifacts content
@@ -154,17 +154,17 @@ fn compile_multiple_imported_contracts() {
             .sorted()
             .collect::<Vec<_>>(),
         vec![
-            ("hello", "Balance", "world_Balance.sierra.json"),
+            ("hello", "Balance", "world_Balance.contract_class.json"),
             (
                 "hello",
                 "HelloContract",
-                "world_hello_HelloContract.sierra.json"
+                "world_hello_HelloContract.contract_class.json"
             ),
-            ("world", "FortyTwo", "world_FortyTwo.sierra.json"),
+            ("world", "FortyTwo", "world_FortyTwo.contract_class.json"),
             (
                 "world",
                 "HelloContract",
-                "world_world_HelloContract.sierra.json"
+                "world_world_HelloContract.contract_class.json"
             ),
         ]
     );
@@ -227,10 +227,10 @@ fn build_external_full_path() {
         world.child("target/dev").files(),
         vec![
             "world.starknet_artifacts.json",
-            "world_Balance.sierra.json",
-            "world_FortyTwo.sierra.json",
-            "world_hello_lorem_ipsum_HelloContract.sierra.json",
-            "world_world_HelloContract.sierra.json",
+            "world_Balance.contract_class.json",
+            "world_FortyTwo.contract_class.json",
+            "world_hello_lorem_ipsum_HelloContract.contract_class.json",
+            "world_world_HelloContract.contract_class.json",
         ]
     );
 }

@@ -27,7 +27,7 @@ fn locking_build_artifacts() {
         let lock = config
             .target_dir()
             .child(config.profile().to_string())
-            .open_rw("hello.sierra", "artifact", &config);
+            .open_rw("hello.sierra.json", "artifact", &config);
         let barrier = Arc::new(Barrier::new(2));
 
         s.spawn({

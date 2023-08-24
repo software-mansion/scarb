@@ -258,14 +258,14 @@ impl Compiler for StarknetContractCompiler {
             );
 
             if props.sierra {
-                let file_name = format!("{file_stem}.sierra.json");
+                let file_name = format!("{file_stem}.contract_class.json");
                 write_json(&file_name, "output file", &target_dir, ws, &class)?;
                 artifact.artifacts.sierra = Some(file_name);
             }
 
             // if props.casm
             if let Some(casm_class) = casm_class {
-                let file_name = format!("{file_stem}.casm.json");
+                let file_name = format!("{file_stem}.compiled_contract_class.json");
                 write_json(&file_name, "output file", &target_dir, ws, &casm_class)?;
                 artifact.artifacts.casm = Some(file_name);
             }

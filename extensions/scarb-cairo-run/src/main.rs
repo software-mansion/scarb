@@ -1,13 +1,14 @@
 use std::env;
 use std::fs;
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use cairo_lang_runner::short_string::as_cairo_short_string;
 use cairo_lang_runner::{RunResultStarknet, RunResultValue, SierraCasmRunner, StarknetState};
 use cairo_lang_sierra::extensions::gas::{
     BuiltinCostWithdrawGasLibfunc, RedepositGasLibfunc, WithdrawGasLibfunc,
 };
 use cairo_lang_sierra::extensions::NamedLibfunc;
+use cairo_lang_sierra::program::VersionedProgram;
 use camino::Utf8PathBuf;
 use clap::Parser;
 use indoc::formatdoc;
@@ -46,7 +47,7 @@ fn main() -> Result<()> {
 
     ScarbCommand::new().arg("build").run()?;
 
-    let filename = format!("{}.sierra", package.name);
+    let filename = format!("{}.sierra.json", package.name);
     let path = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?)
         .join(env::var("SCARB_PROFILE")?)
         .join(filename.clone());
@@ -61,13 +62,13 @@ fn main() -> Result<()> {
 
     ui.print(Status::new("Running", &package.name));
 
-    let sierra_program = cairo_lang_sierra::ProgramParser::new()
-        .parse(
-            &fs::read_to_string(path.clone())
-                .with_context(|| format!("failed to read Sierra file: {path}"))?,
-        )
-        .map_err(|e| anyhow!("{e}"))
-        .with_context(|| format!("failed to parse sierra program: {path}"))?;
+    let sierra_program = serde_json::from_str::<VersionedProgram>(
+        &fs::read_to_string(path.clone())
+            .with_context(|| format!("failed to read Sierra file: {path}"))?,
+    )
+    .with_context(|| format!("failed to deserialize Sierra program: {path}"))?
+    .into_v1()
+    .with_context(|| format!("failed to load Sierra program: {path}"))?;
 
     if args.available_gas.is_none()
         && sierra_program.libfunc_declarations.iter().any(|decl| {

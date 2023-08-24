@@ -52,4 +52,4 @@ $ scarb build
     Finished release target(s) in 2 seconds
 ```
 
-This will create a Sierra code of your program in `target/release/hello_world.sierra`.
+This will create a Sierra code of your program in `target/release/hello_world.sierra.json`.
