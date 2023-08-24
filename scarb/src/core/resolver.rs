@@ -1,8 +1,9 @@
 use itertools::Itertools;
 use petgraph::graphmap::DiGraphMap;
-use petgraph::visit::{Dfs, Walker};
+use petgraph::visit::{Dfs, EdgeFiltered, Walker};
+use smallvec::SmallVec;
 
-use crate::core::PackageId;
+use crate::core::{PackageId, TargetKind};
 
 // TODO(#126): Produce lockfile out of this.
 /// Represents a fully-resolved package dependency graph.
@@ -13,7 +14,7 @@ pub struct Resolve {
     /// Directional graph representing package dependencies.
     ///
     /// If package `a` depends on package `b`, then this graph will contain an edge from `a` to `b`.
-    pub graph: DiGraphMap<PackageId, ()>,
+    pub graph: DiGraphMap<PackageId, DependencyEdge>,
 }
 
 impl Resolve {
@@ -37,5 +38,58 @@ impl Resolve {
         Dfs::new(&self.graph, root_package)
             .iter(&self.graph)
             .unique()
+    }
+
+    pub fn solution_with_target_kind(
+        &self,
+        root_package: PackageId,
+        target_kind: TargetKind,
+    ) -> Vec<PackageId> {
+        assert!(&self.graph.contains_node(root_package));
+        let filtered_graph = EdgeFiltered::from_fn(&self.graph, move |(_node_a, _node_b, edge)| {
+            edge.accepts_target_kind(target_kind.clone())
+        });
+        Dfs::new(&filtered_graph, root_package)
+            .iter(&filtered_graph)
+            .unique()
+            .collect_vec()
+    }
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct DependencyEdge(SmallVec<[TargetKind; 4]>);
+
+impl DependencyEdge {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn accepts_target_kind(&self, target_kind: TargetKind) -> bool {
+        // Empty target lists accepts all target kinds.
+        // Represents `[dependencies]` table from manifest file.
+        self.0.is_empty() || self.0.iter().any(|name| target_kind == *name)
+    }
+
+    pub fn extend(self, target_kind: Option<TargetKind>) -> Self {
+        if let Some(target_kind) = target_kind {
+            let mut edge = self.0;
+            edge.push(target_kind);
+            Self(edge)
+        } else {
+            // For None, create empty vector to accept all targets.
+            Self::default()
+        }
+    }
+}
+
+impl From<Vec<TargetKind>> for DependencyEdge {
+    fn from(target_kinds: Vec<TargetKind>) -> Self {
+        Self(target_kinds.into())
+    }
+}
+
+impl From<TargetKind> for DependencyEdge {
+    fn from(target_kind: TargetKind) -> Self {
+        Self(vec![target_kind].into())
     }
 }
