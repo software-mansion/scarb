@@ -212,10 +212,18 @@ pub(crate) mod mock {
     macro_rules! pkgs {
         [$($x:expr),* $(,)?] => (
             &[
-                $($crate::core::PackageId::from_display_str($x).unwrap()),*
+                $($crate::core::registry::mock::pkg!($x)),*
             ]
         );
     }
 
     pub(crate) use pkgs;
+
+    macro_rules! pkg {
+        ($x:expr) => {
+            $crate::core::PackageId::from_display_str($x).unwrap()
+        };
+    }
+
+    pub(crate) use pkg;
 }

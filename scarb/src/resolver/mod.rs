@@ -5,8 +5,8 @@ use indoc::{formatdoc, indoc};
 use petgraph::graphmap::DiGraphMap;
 
 use crate::core::registry::Registry;
-use crate::core::resolver::Resolve;
-use crate::core::{ManifestDependency, PackageId, Summary};
+use crate::core::resolver::{DependencyEdge, Resolve};
+use crate::core::{DepKind, ManifestDependency, PackageId, Summary, TargetKind};
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -24,8 +24,7 @@ use crate::core::{ManifestDependency, PackageId, Summary};
 #[tracing::instrument(level = "trace", skip_all)]
 pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<Resolve> {
     // TODO(#2): This is very bad, use PubGrub here.
-
-    let mut graph = DiGraphMap::new();
+    let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
 
     let mut packages: HashMap<_, _> = HashMap::from_iter(
         summaries
@@ -54,6 +53,10 @@ pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<R
                     bail!("cannot find package {}", dep.name)
                 };
 
+                let dep_target_kind: Option<TargetKind> = match dep.kind.clone() {
+                    DepKind::Normal => None,
+                    DepKind::Target(target_kind) => Some(target_kind),
+                };
                 let dep = dep_summary.package_id;
 
                 if let Some(existing) = packages.get(dep.name.as_ref()) {
@@ -72,7 +75,12 @@ pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<R
                     }
                 }
 
-                graph.add_edge(package_id, dep, ());
+                let weight = graph
+                    .edge_weight(package_id, dep)
+                    .cloned()
+                    .unwrap_or_default();
+                let weight = weight.extend(dep_target_kind);
+                graph.add_edge(package_id, dep, weight);
                 summaries.insert(dep, dep_summary.clone());
 
                 if packages.contains_key(dep.name.as_ref()) {
@@ -155,33 +163,23 @@ mod tests {
     use tokio::runtime::Builder;
 
     use crate::core::package::PackageName;
-    use crate::core::registry::mock::{deps, pkgs, registry, MockRegistry};
-    use crate::core::{ManifestDependency, PackageId, SourceId};
+    use crate::core::registry::mock::{deps, pkg, pkgs, registry, MockRegistry};
+    use crate::core::{ManifestDependency, PackageId, Resolve, SourceId};
 
     fn check(
-        mut registry: MockRegistry,
+        registry: MockRegistry,
         roots: &[&[ManifestDependency]],
         expected: Result<&[PackageId], &str>,
     ) {
-        let runtime = Builder::new_multi_thread().build().unwrap();
-        let root_names = (1..).map(|n| PackageName::new(format!("root_{n}")));
+        let root_ids = (1..).map(|n| package_id(format!("root_{n}")));
 
-        let summaries = roots
+        let roots = roots
             .iter()
-            .zip(root_names)
-            .map(|(&deps, name)| {
-                let package_id = PackageId::new(name, Version::new(1, 0, 0), SourceId::mock_path());
-                registry.put(package_id, deps.to_vec());
-                registry
-                    .get_package(package_id)
-                    .unwrap()
-                    .manifest
-                    .summary
-                    .clone()
-            })
+            .zip(root_ids)
+            .map(|(&deps, pid)| (deps, pid))
             .collect_vec();
 
-        let resolve = runtime.block_on(super::resolve(&summaries, &registry));
+        let resolve = resolve(registry, roots);
 
         let resolve = resolve
             .map(|r| {
@@ -201,6 +199,33 @@ mod tests {
         };
 
         assert_serde_eq!(expected, resolve);
+    }
+
+    fn resolve(
+        mut registry: MockRegistry,
+        roots: Vec<(&[ManifestDependency], PackageId)>,
+    ) -> anyhow::Result<Resolve> {
+        let runtime = Builder::new_multi_thread().build().unwrap();
+
+        let summaries = roots
+            .iter()
+            .map(|(deps, package_id)| {
+                registry.put(*package_id, deps.to_vec());
+                registry
+                    .get_package(*package_id)
+                    .unwrap()
+                    .manifest
+                    .summary
+                    .clone()
+            })
+            .collect_vec();
+
+        runtime.block_on(super::resolve(&summaries, &registry))
+    }
+
+    fn package_id<S: AsRef<str>>(name: S) -> PackageId {
+        let name = PackageName::new(name.as_ref());
+        PackageId::new(name, Version::new(1, 0, 0), SourceId::mock_path())
     }
 
     #[test]
@@ -502,6 +527,44 @@ mod tests {
             &[deps![("e", "~1.0"), ("a", "~3.7"), ("b", "~3.7")]],
             Err(r#"cannot find package e"#),
         )
+    }
+
+    #[test]
+    fn can_add_target_kind_dep() {
+        check(
+            registry![("foo v1.0.0", []), ("boo v1.0.0", [])],
+            &[deps![
+                ("foo", "1.0.0", (), "test"),
+                ("foo", "1.0.0", (), "dojo"),
+                ("boo", "1.0.0")
+            ]],
+            Ok(pkgs!["boo v1.0.0", "foo v1.0.0"]),
+        );
+    }
+
+    #[test]
+    fn can_resolve_target_kind_dep() {
+        let root = package_id("bar");
+        let resolve = resolve(
+            registry![("foo v1.0.0", []), ("boo v1.0.0", [])],
+            vec![(
+                deps![
+                    ("foo", "1.0.0", (), "test"),
+                    ("foo", "1.0.0", (), "dojo"),
+                    ("boo", "1.0.0")
+                ],
+                root,
+            )],
+        )
+        .unwrap();
+
+        let mut test_solution = resolve.solution_with_target_kind(root, "test".into());
+        let mut lib_solution = resolve.solution_with_target_kind(root, "lib".into());
+        assert_eq!(test_solution.len(), 4);
+        assert_eq!(test_solution.pop(), Some(pkg!("foo v1.0.0")));
+        assert_eq!(test_solution.pop(), Some(pkg!("boo v1.0.0")));
+        assert_eq!(lib_solution.len(), 3);
+        assert_eq!(lib_solution.pop(), Some(pkg!("boo v1.0.0")));
     }
 
     #[test]
