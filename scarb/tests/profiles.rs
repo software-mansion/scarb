@@ -551,7 +551,7 @@ fn profile_overrides_tool() {
         .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "dev".to_string());
-    assert_eq!(metadata.packages.len(), 2);
+    assert_eq!(metadata.packages.len(), 3);
 
     let package = metadata.packages[1].clone();
     assert_eq!(
@@ -574,7 +574,7 @@ fn profile_overrides_tool() {
         .stdout_json::<Metadata>();
 
     assert_eq!(metadata.current_profile, "release".to_string());
-    assert_eq!(metadata.packages.len(), 2);
+    assert_eq!(metadata.packages.len(), 3);
 
     let package = metadata.packages[1].clone();
     assert_eq!(

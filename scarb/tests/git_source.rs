@@ -397,7 +397,7 @@ fn transitive_path_dep() {
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
-    assert_eq!(metadata.packages.len(), 4);
+    assert_eq!(metadata.packages.len(), 5);
 
     let pkgs = metadata
         .packages
@@ -406,6 +406,7 @@ fn transitive_path_dep() {
         .collect::<HashMap<String, _>>();
 
     assert_eq!(pkgs["core"], "std");
+    assert_eq!(pkgs["testplugin"], "std");
     assert!(pkgs["hello"].starts_with("path+"));
     assert!(pkgs["dep0"].starts_with("git+"));
     assert!(pkgs["dep1"].starts_with("git+"));

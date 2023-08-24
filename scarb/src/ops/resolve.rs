@@ -66,6 +66,12 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
                         version_req.clone(),
                         SourceId::for_std(),
                     ),
+                    ManifestDependency::for_target_kind(
+                        PackageName::TEST_PLUGIN,
+                        version_req.clone(),
+                        SourceId::for_std(),
+                        Target::TEST.into(),
+                    ),
                 ],
             );
 

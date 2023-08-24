@@ -9,7 +9,7 @@ use itertools::Itertools;
 
 use crate::core::PackageId;
 
-use self::builtin::BuiltinStarkNetPlugin;
+use self::builtin::{BuiltinStarkNetPlugin, BuiltinTestPlugin};
 
 pub mod builtin;
 
@@ -41,7 +41,7 @@ impl CairoPluginRepository {
         //   `starknet` package which makes it a dependency. This way we can deliver Starknet Cairo
         //   library code to users etc.
         repo.add(Box::new(BuiltinStarkNetPlugin)).unwrap();
-
+        repo.add(Box::new(BuiltinTestPlugin)).unwrap();
         repo
     }
 
