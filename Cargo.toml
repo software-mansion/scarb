@@ -12,6 +12,7 @@ members = [
     "utils/test-for-each-example",
     "xtask",
 ]
+"resolver" = "2"
 
 [workspace.package]
 version = "0.7.0"
