@@ -44,7 +44,7 @@ fn compile_simple_git_dep() {
 }
 
 #[test]
-fn compile_git_dep_branch() {
+fn fetch_git_dep_branch() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
@@ -70,19 +70,17 @@ fn compile_git_dep_branch() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
-        [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
         "#});
 }
 
 #[test]
-fn compile_git_dep_tag() {
+fn fetch_git_dep_tag() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
@@ -108,19 +106,17 @@ fn compile_git_dep_tag() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
-        [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
         "#});
 }
 
 #[test]
-fn compile_git_dep_pull_request() {
+fn fetch_git_dep_pull_request() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
@@ -152,19 +148,17 @@ fn compile_git_dep_pull_request() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
-        [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
         "#});
 }
 
 #[test]
-fn compile_with_nested_paths() {
+fn fetch_with_nested_paths() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
@@ -187,7 +181,7 @@ fn compile_with_nested_paths() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success();
@@ -196,7 +190,7 @@ fn compile_with_nested_paths() {
 // TODO(#130): Redo TomlDependency deserializer to stick parsing particular variant
 //   if specific keyword appears.
 #[test]
-fn compile_with_short_ssh_git() {
+fn fetch_with_short_ssh_git() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
@@ -206,7 +200,7 @@ fn compile_with_short_ssh_git() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .failure()
@@ -309,14 +303,12 @@ fn change_source() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
-        [..] Compiling hello v0.0.1 ([..])
-        [..]  Finished release target(s) in [..]
         "#});
 
     dep.change_file("src/lib.cairo", "fn x() -> felt252 { 0 }");
@@ -328,14 +320,12 @@ fn change_source() {
     manifest.write_str(&manifest_toml).unwrap();
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
-        [..] Compiling hello v0.0.1 ([..])
-        [..]  Finished release target(s) in [..]
         "#});
 }
 
@@ -357,7 +347,7 @@ fn force_push() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success();
@@ -370,14 +360,12 @@ fn force_push() {
     dep.git(["commit", "--amend", "-m", "amended"]);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
-        [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
         "#});
 }
 

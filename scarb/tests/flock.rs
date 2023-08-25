@@ -99,7 +99,7 @@ async fn locking_package_cache() {
 
     let mut proc = Scarb::from_config(&config)
         .std()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -124,8 +124,6 @@ async fn locking_package_cache() {
     snapbox::assert_matches(
         indoc! {r#"
         [..]  Blocking waiting for file lock on package cache
-        [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
         "#},
         stdout_acc,
     );
