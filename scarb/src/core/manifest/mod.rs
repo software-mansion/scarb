@@ -70,7 +70,9 @@ impl ManifestBuilder {
     }
 
     fn check_cairo_plugin_target_is_exclusive(&self) -> Result<()> {
-        let Some(targets) = &self.targets else { return Ok(()); };
+        let Some(targets) = &self.targets else {
+            return Ok(());
+        };
 
         if targets.iter().any(Target::is_cairo_plugin) {
             ensure!(
@@ -83,8 +85,12 @@ impl ManifestBuilder {
     }
 
     fn check_unique_targets(&self) -> Result<()> {
-        let Some(summary) = &self.summary else { return Ok(()); };
-        let Some(targets) = &self.targets else { return Ok(()); };
+        let Some(summary) = &self.summary else {
+            return Ok(());
+        };
+        let Some(targets) = &self.targets else {
+            return Ok(());
+        };
 
         let mut used = HashSet::with_capacity(targets.len());
         for target in targets {

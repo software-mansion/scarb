@@ -31,10 +31,14 @@ impl FromStr for DepId {
         }
 
         let mut s = s.split('@');
-        let Some(name) = s.next() else { return Ok(dep); };
+        let Some(name) = s.next() else {
+            return Ok(dep);
+        };
         dep.name = Some(name.parse()?);
 
-        let Some(version_req) = s.next() else { return Ok(dep); };
+        let Some(version_req) = s.next() else {
+            return Ok(dep);
+        };
         dep.version_req = Some(version_req.parse()?);
 
         Ok(dep)
