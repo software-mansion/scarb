@@ -130,7 +130,7 @@ fn compile_dep_not_a_lib() {
         .build(&hello);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&hello)
         .assert()
         .failure()

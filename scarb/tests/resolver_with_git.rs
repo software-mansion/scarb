@@ -34,15 +34,13 @@ fn valid_triangle() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/culprit
         [..]  Updating git repository file://[..]/proxy
-        [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
         "#});
 }
 
@@ -82,7 +80,7 @@ fn two_revs_of_same_dep() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .failure()
@@ -140,7 +138,7 @@ fn two_revs_of_same_dep_diamond() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("fetch")
         .current_dir(&t)
         .assert()
         .failure()

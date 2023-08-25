@@ -14,7 +14,7 @@ fn compile_cairo_plugin() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .failure()

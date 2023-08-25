@@ -34,7 +34,7 @@ fn https_something_happens() {
             .build(&t);
 
         Scarb::quick_snapbox()
-            .arg("build")
+            .arg("fetch")
             .current_dir(&t)
             .assert()
             .failure()
@@ -71,7 +71,7 @@ fn ssh_something_happens() {
             .build(&t);
 
         Scarb::quick_snapbox()
-            .arg("build")
+            .arg("fetch")
             .current_dir(&t)
             .assert()
             .failure()

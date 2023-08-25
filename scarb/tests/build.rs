@@ -69,7 +69,7 @@ fn compile_with_syntax_error() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .code(1)
@@ -96,7 +96,7 @@ fn compile_with_syntax_error_json() {
 
     Scarb::quick_snapbox()
         .arg("--json")
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test, if --json is available for check.
         .current_dir(&t)
         .assert()
         .code(1)
@@ -277,7 +277,7 @@ fn compile_with_incompatible_cairo_version() {
         )
         .unwrap();
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .code(1)

@@ -36,7 +36,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .build(world);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(world)
         .assert()
         .success()
@@ -337,7 +337,7 @@ fn compile_starknet_contract_without_starknet_dep() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .failure()
