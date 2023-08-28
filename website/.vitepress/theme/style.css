@@ -81,19 +81,17 @@
 }
 
 :root {
-  --vp-c-brand: var(--swm-c-navy-80);
-  --vp-c-brand-dark: var(--swm-c-navy-100);
-  --vp-c-brand-darker: var(--swm-c-navy-120);
-  --vp-c-brand-light: var(--swm-c-navy-40);
-  --vp-c-brand-lighter: var(--swm-c-navy-20);
+  --vp-c-brand-1: var(--swm-c-navy-80);
+  --vp-c-brand-2: var(--swm-c-navy-60);
+  --vp-c-brand-3: var(--swm-c-navy-100);
+  --vp-c-brand-soft: var(--swm-c-navy-20);
 }
 
 .dark {
-  --vp-c-brand: var(--swm-c-navy-60);
-  --vp-c-brand-dark: var(--swm-c-navy-80);
-  --vp-c-brand-darker: var(--swm-c-navy-100);
-  --vp-c-brand-light: var(--swm-c-navy-40);
-  --vp-c-brand-lighter: var(--swm-c-navy-20);
+  --vp-c-brand-1: var(--swm-c-navy-60);
+  --vp-c-brand-2: var(--swm-c-navy-40);
+  --vp-c-brand-3: var(--swm-c-navy-80);
+  --vp-c-brand-soft: var(--swm-c-navy-120);
 }
 
 :root {

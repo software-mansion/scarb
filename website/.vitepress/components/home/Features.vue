@@ -108,11 +108,10 @@
 }
 
 .feature > .icon .fill {
-  fill: var(--vp-c-brand);
-  opacity: 20%;
+  fill: var(--vp-c-brand-soft);
 }
 
 .feature > .icon .stroke {
-  stroke: var(--vp-c-brand);
+  stroke: var(--vp-c-brand-1);
 }
 </style>
