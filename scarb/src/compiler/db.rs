@@ -1,12 +1,9 @@
-use std::sync::Arc;
-
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::ids::Directory;
-use cairo_lang_starknet::inline_macros::selector::SelectorMacro;
 use tracing::trace;
 
 use crate::compiler::CompilationUnit;
@@ -26,12 +23,10 @@ pub(crate) fn build_scarb_root_database(
         let plugin = ws.config().cairo_plugins().fetch(package_id)?;
         let instance = plugin.instantiate()?;
         for macro_plugin in instance.macro_plugins() {
-            // HACK(mkaput): Remove this when #575 will be done.
-            if is_starknet_plugin(&*macro_plugin) {
-                b.with_inline_macro_plugin(SelectorMacro::NAME, Arc::new(SelectorMacro));
-            }
-
             b.with_macro_plugin(macro_plugin);
+        }
+        for (name, inline_macro_plugin) in instance.inline_macro_plugins() {
+            b.with_inline_macro_plugin(&name, inline_macro_plugin);
         }
     }
 
