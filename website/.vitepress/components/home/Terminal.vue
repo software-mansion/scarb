@@ -1,5 +1,5 @@
 <template>
-  <div class="window">
+  <div class="dark window">
     <div class="traffic-lights">
       <div class="traffic-light red" />
       <div class="traffic-light yellow" />
@@ -22,10 +22,10 @@
 
 <style scoped>
 .window {
-  background-color: var(--vp-code-block-bg);
+  background-color: var(--vp-c-bg-alt);
   border-radius: 0.5rem;
   box-shadow: var(--vp-shadow-5);
-  color: var(--vp-code-block-color);
+  color: var(--vp-c-text-1);
   font-family: var(--vp-font-family-mono);
   font-size: var(--vp-code-font-size);
   -webkit-font-smoothing: auto;

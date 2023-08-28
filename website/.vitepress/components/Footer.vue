@@ -68,10 +68,10 @@ footer {
 }
 
 .copy {
-  color: var(--vp-c-brand);
+  color: var(--vp-c-brand-1);
 }
 
 .logo-path {
-  fill: var(--vp-c-brand);
+  fill: var(--vp-c-brand-1);
 }
 </style>

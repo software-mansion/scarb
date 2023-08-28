@@ -12,8 +12,12 @@ defineProps({
     <!-- NOTE: Whitespace is important here. -->
     <pre
       class="shiki"
-    ><code v-for="line in $props.src.split('\n')"><span class="line">{{ line }}</span></code></pre>
+    ><code v-for="line in $props.src.split('\n')"><span :class="`line ${$style.text}`">{{ line }}</span></code></pre>
   </div>
 </template>
 
-<style module></style>
+<style module>
+.text {
+  color: var(--vp-c-text-1);
+}
+</style>

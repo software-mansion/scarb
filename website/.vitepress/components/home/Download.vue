@@ -35,7 +35,7 @@ asdf global scarb latest
       <div class="split">
         <div class="left">
           <h3>Install via quick installation script</h3>
-          <Snippet :src="QUICK" class="snippet" lang="shell" />
+          <Snippet :src="QUICK" lang="shell" />
         </div>
         <div class="right">
           <h3>
@@ -45,7 +45,7 @@ asdf global scarb latest
             >
             version manager
           </h3>
-          <Snippet :src="ASDF" class="snippet" lang="shell" />
+          <Snippet :src="ASDF" lang="shell" />
         </div>
       </div>
       <p class="notes">
@@ -107,9 +107,5 @@ h3 {
   .split {
     grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   }
-}
-
-.snippet {
-  box-shadow: var(--vp-shadow-2);
 }
 </style>
