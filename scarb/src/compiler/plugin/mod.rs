@@ -4,13 +4,12 @@ use std::fmt;
 use std::sync::Arc;
 
 use anyhow::{anyhow, bail, Result};
-use cairo_lang_defs::plugin::MacroPlugin;
-use cairo_lang_starknet::plugin::StarkNetPlugin;
+use cairo_lang_defs::plugin::{InlineMacroExprPlugin, MacroPlugin};
 use itertools::Itertools;
 
-use crate::compiler::plugin::builtin::BuiltinMacroCairoPlugin;
-use crate::core::{PackageId, PackageName, SourceId};
-use crate::internal::to_version::ToVersion;
+use crate::core::PackageId;
+
+use self::builtin::BuiltinStarkNetPlugin;
 
 pub mod builtin;
 
@@ -21,6 +20,7 @@ pub trait CairoPlugin: Sync {
 
 pub trait CairoPluginInstance {
     fn macro_plugins(&self) -> Vec<Arc<dyn MacroPlugin>>;
+    fn inline_macro_plugins(&self) -> Vec<(String, Arc<dyn InlineMacroExprPlugin>)>;
 }
 
 pub struct CairoPluginRepository {
@@ -35,21 +35,12 @@ impl CairoPluginRepository {
     }
 
     pub fn std() -> Self {
-        let version = crate::version::get();
         let mut repo = Self::empty();
 
         // TODO(mkaput): Provide the plugin as `starknet_plugin` package and create regular
         //   `starknet` package which makes it a dependency. This way we can deliver Starknet Cairo
         //   library code to users etc.
-        let starknet_package_id = PackageId::new(
-            PackageName::STARKNET,
-            version.cairo.version.to_version().unwrap(),
-            SourceId::for_std(),
-        );
-        repo.add(Box::new(BuiltinMacroCairoPlugin::<StarkNetPlugin>::new(
-            starknet_package_id,
-        )))
-        .unwrap();
+        repo.add(Box::new(BuiltinStarkNetPlugin)).unwrap();
 
         repo
     }
