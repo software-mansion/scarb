@@ -6,3 +6,12 @@ version = "0.1.0"
 
 [dependencies]
 # foo = { path = "vendor/foo" }
+
+[lib]
+
+[[test]]
+name = "test_lib"
+
+[[test]]
+name = "test_dir"
+source-path = "tests/fib_test.cairo"

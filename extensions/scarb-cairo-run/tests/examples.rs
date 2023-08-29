@@ -25,7 +25,9 @@ fn hello_world() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-               Compiling hello_world v0.1.0 ([..]/Scarb.toml)
+               Compiling lib(hello_world) hello_world v0.1.0 ([..]/Scarb.toml)
+               Compiling test(test_lib) hello_world v0.1.0 ([..]/Scarb.toml)
+               Compiling test(test_dir) hello_world v0.1.0 ([..]/Scarb.toml)
                 Finished release target(s) in [..]
                  Running hello_world
             Run completed successfully, returning [987]
@@ -55,7 +57,9 @@ fn package_not_built() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-               Compiling hello_world v0.1.0 ([..]/Scarb.toml)
+               Compiling lib(hello_world) hello_world v0.1.0 ([..]/Scarb.toml)
+               Compiling test(test_lib) hello_world v0.1.0 ([..]/Scarb.toml)
+               Compiling test(test_dir) hello_world v0.1.0 ([..]/Scarb.toml)
                 Finished release target(s) in [..]
                  Running hello_world
             Run completed successfully, returning [987]
