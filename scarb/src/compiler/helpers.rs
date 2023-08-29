@@ -1,15 +1,18 @@
 //! Various utility functions helpful for interacting with Cairo compiler.
 
+use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use serde::Serialize;
 
 use scarb_ui::components::TypedMessage;
 
 use crate::compiler::CompilationUnit;
 use crate::core::Workspace;
+use crate::flock::Filesystem;
 
 pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> CompilerConfig<'c> {
     CompilerConfig {
@@ -30,4 +33,23 @@ pub fn collect_main_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<
     vec![db.intern_crate(CrateLongId::Real(
         unit.main_component().cairo_package_name(),
     ))]
+}
+
+pub fn collect_all_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
+    unit.components
+        .iter()
+        .map(|component| db.intern_crate(CrateLongId::Real(component.cairo_package_name())))
+        .collect()
+}
+
+pub fn write_json(
+    file_name: &str,
+    description: &str,
+    target_dir: &Filesystem<'_>,
+    ws: &Workspace<'_>,
+    value: impl Serialize,
+) -> Result<()> {
+    let mut file = target_dir.open_rw(file_name, description, ws.config())?;
+    serde_json::to_writer(&mut *file, &value)
+        .with_context(|| format!("failed to serialize {file_name}"))
 }

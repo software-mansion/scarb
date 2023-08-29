@@ -1,13 +1,17 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
-use cairo_lang_filesystem::ids::Directory;
+use cairo_lang_filesystem::db::{AsFilesGroupMut, FilesGroup, FilesGroupEx};
+use cairo_lang_filesystem::ids::{CrateLongId, Directory};
+use std::sync::Arc;
 use tracing::trace;
 
-use crate::compiler::CompilationUnit;
+use crate::compiler::{CompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
+use crate::DEFAULT_MODULE_MAIN_FILE;
 
 // TODO(mkaput): ScarbDatabase?
 pub(crate) fn build_scarb_root_database(
@@ -30,7 +34,49 @@ pub(crate) fn build_scarb_root_database(
         }
     }
 
-    b.build()
+    let mut db = b.build()?;
+    inject_virtual_wrapper_lib(&mut db, unit)?;
+    Ok(db)
+}
+
+/// Generates a wrapper lib file for appropriate compilation units.
+///
+/// This approach allows compiling crates that do not define `lib.cairo` file.
+/// For example, single file crates can be created this way.
+/// The actual single file module is defined as `mod` item in created lib file.
+fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CompilationUnit) -> Result<()> {
+    let components: Vec<&CompilationUnitComponent> = unit
+        .components
+        .iter()
+        .filter(|component| !component.package.id.is_core())
+        // Skip components defining the default source path, as they already define lib.cairo files.
+        .filter(|component| {
+            component
+                .target
+                .source_path
+                .file_name()
+                .map(|file_name| file_name != DEFAULT_MODULE_MAIN_FILE)
+                .unwrap_or(false)
+        })
+        .collect();
+
+    for component in components {
+        let crate_name = component.cairo_package_name();
+        let crate_id = db.intern_crate(CrateLongId::Real(crate_name));
+        let file_stem = component.target.source_path.file_stem().ok_or_else(|| {
+            anyhow!(
+                "failed to get file stem for component {}",
+                component.target.source_path
+            )
+        })?;
+        let module_id = ModuleId::CrateRoot(crate_id);
+        let file_id = db.module_main_file(module_id).unwrap();
+        // Inject virtual lib file wrapper.
+        db.as_files_group_mut()
+            .override_file_content(file_id, Some(Arc::new(format!("mod {file_stem};"))));
+    }
+
+    Ok(())
 }
 
 fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
