@@ -39,7 +39,7 @@ pub fn compile(packages: Vec<PackageId>, ws: &Workspace<'_>) -> Result<()> {
 }
 
 fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-    let package_name = unit.main_package_id.name.clone();
+    let package_name = unit.main_package_id.name.to_string();
 
     ws.config()
         .ui()

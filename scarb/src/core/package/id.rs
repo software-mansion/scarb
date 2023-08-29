@@ -5,11 +5,11 @@ use anyhow::Result;
 use semver::Version;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+use crate::core::package::TEST_PACKAGE_PREFIX;
 use crate::core::source::SourceId;
 use crate::core::PackageName;
 use crate::internal::static_hash_cache::StaticHashCache;
 use crate::internal::to_version::ToVersion;
-const TEST_PACKAGE_PREFIX: &str = "___test_package_prefix___";
 
 /// See [`PackageIdInner`] for public fields reference.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -142,8 +142,7 @@ impl<'de> Deserialize<'de> for PackageId {
 
 impl fmt::Display for PackageId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let name = self.name.to_string().replace(TEST_PACKAGE_PREFIX, "");
-        write!(f, "{} v{}", name, self.version)?;
+        write!(f, "{} v{}", self.name, self.version)?;
 
         if !self.source_id.is_default_registry() {
             write!(f, " ({})", self.source_id)?;
