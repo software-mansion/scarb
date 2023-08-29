@@ -12,6 +12,8 @@ use crate::internal::restricted_names;
 #[cfg(doc)]
 use crate::core::Package;
 
+pub const TEST_PACKAGE_PREFIX: &str = "___test_package_prefix___";
+
 /// A [`String`]-like type representing [`Package`] name.
 ///
 /// * Instances of this type are validated upon construction to comply with the
@@ -179,7 +181,7 @@ impl From<PackageName> for String {
 
 impl fmt::Display for PackageName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.0, f)
+        write!(f, "{}", self.0.to_string().replace(TEST_PACKAGE_PREFIX, ""))
     }
 }
 
