@@ -348,7 +348,11 @@ fn is_integration_test(target: &Target, lib_target: Option<Target>) -> bool {
 
 /// Build a set of `cfg` items to enable while building the compilation unit.
 fn build_cfg_set(target: &Target) -> CfgSet {
-    CfgSet::from_iter([Cfg::kv("target", target.kind.clone())])
+    let mut cfg = vec![Cfg::kv("target", target.kind.clone())];
+    if target.is_test() {
+        cfg.push(Cfg::name("test"));
+    }
+    CfgSet::from_iter(cfg)
 }
 
 fn check_cairo_version_compatibility(packages: &[Package], ws: &Workspace<'_>) -> Result<()> {

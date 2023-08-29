@@ -20,10 +20,9 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use tracing::{debug, trace, trace_span};
 
-use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
+use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{PackageName, Utf8PathWorkspaceExt, Workspace};
-use crate::flock::Filesystem;
 use crate::internal::serdex::RelativeUtf8PathBuf;
 use crate::internal::stable_hash::short_hash;
 
@@ -415,16 +414,4 @@ fn check_allowed_libfuncs(
     }
 
     Ok(())
-}
-
-fn write_json(
-    file_name: &str,
-    description: &str,
-    target_dir: &Filesystem<'_>,
-    ws: &Workspace<'_>,
-    value: impl Serialize,
-) -> Result<()> {
-    let mut file = target_dir.open_rw(file_name, description, ws.config())?;
-    serde_json::to_writer(&mut *file, &value)
-        .with_context(|| format!("failed to serialize {file_name}"))
 }
