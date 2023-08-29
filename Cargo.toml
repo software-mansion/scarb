@@ -28,18 +28,18 @@ repository = "https://github.com/software-mansion/scarb"
 anyhow = "1.0.75"
 assert_fs = "1.0.13"
 async-trait = "0.1.73"
-cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-formatter = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-language-server = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-runner = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-semantic = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-sierra = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", branch = "main", features = ["env_logger"] }
+cairo-lang-compiler = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-defs = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-filesystem = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-formatter = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-language-server = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-runner = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-semantic = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-sierra = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-sierra-to-casm = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-starknet = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-test-runner = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab" }
+cairo-lang-utils = { git = "https://github.com/maciektr/cairo.git", rev = "d5a43e83bb1b423d9a09e2942338424dfb7074ab", features = ["env_logger"] }
 camino = { version = "1.1.6", features = ["serde1"] }
 cargo_metadata = "0.17.0"
 clap = { version = "4.4.2", features = ["derive", "env", "string"] }

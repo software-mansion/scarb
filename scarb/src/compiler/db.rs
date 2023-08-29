@@ -4,6 +4,7 @@ use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::ids::Directory;
+use std::path::PathBuf;
 use tracing::trace;
 
 use crate::compiler::CompilationUnit;
@@ -39,10 +40,8 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         .iter()
         .filter(|component| !component.package.id.is_core())
         .map(|component| {
-            (
-                component.cairo_package_name(),
-                component.target.source_root().into(),
-            )
+            let path: PathBuf = component.target.source_root().into();
+            (component.cairo_package_name(), path.into())
         })
         .collect();
 
