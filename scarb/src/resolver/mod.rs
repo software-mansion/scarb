@@ -162,7 +162,7 @@ mod tests {
         expected: Result<&[PackageId], &str>,
     ) {
         let runtime = Builder::new_multi_thread().build().unwrap();
-        let root_names = (1..).map(|n| PackageName::new(format!("ROOT_{n}")));
+        let root_names = (1..).map(|n| PackageName::new(format!("root_{n}")));
 
         let summaries = roots
             .iter()
@@ -186,7 +186,7 @@ mod tests {
                 r.graph
                     .nodes()
                     .filter(|id| {
-                        !id.name.as_str().starts_with("ROOT_") && id.name != PackageName::CORE
+                        !id.name.as_str().starts_with("root_") && id.name != PackageName::CORE
                     })
                     .sorted()
                     .collect_vec()

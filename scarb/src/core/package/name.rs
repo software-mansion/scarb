@@ -49,6 +49,15 @@ impl PackageName {
             bail!("underscore cannot be used as package name");
         }
 
+        if !name.eq(&name.to_ascii_lowercase()) {
+            bail!(
+                "invalid package name: `{name}`\n\
+                note: usage of ASCII uppercase letters in the package name has been deprecated\n\
+                help: change the name of the package to `{}`",
+                name.to_ascii_lowercase()
+            )
+        }
+
         let mut chars = name.chars();
 
         // Validate first letter.
@@ -64,7 +73,7 @@ impl PackageName {
             if !(ch.is_ascii_alphabetic() || ch == '_') {
                 bail!(
                     "invalid character `{ch}` in package name: `{name}`, \
-                    the first character must be an ASCII letter or underscore"
+                    the first character must be an ASCII lowercase letter or underscore"
                 )
             }
         }
@@ -74,7 +83,7 @@ impl PackageName {
             if !(ch.is_ascii_alphanumeric() || ch == '_') {
                 bail!(
                     "invalid character `{ch}` in package name: `{name}`, \
-                    characters must be ASCII letter, ASCII numbers or underscore"
+                    characters must be ASCII lowercase letters, ASCII numbers or underscore"
                 )
             }
         }
@@ -186,7 +195,8 @@ mod tests {
     #[test_case("1" => "the name `1` cannot be used as a package name, names cannot start with a digit")]
     #[test_case("123" => "the name `123` cannot be used as a package name, names cannot start with a digit")]
     #[test_case("0foo" => "the name `0foo` cannot be used as a package name, names cannot start with a digit")]
-    #[test_case("fo-o" => "invalid character `-` in package name: `fo-o`, characters must be ASCII letter, ASCII numbers or underscore")]
+    #[test_case("fo-o" => "invalid character `-` in package name: `fo-o`, characters must be ASCII lowercase letters, ASCII numbers or underscore")]
+    #[test_case("baR" => "invalid package name: `baR`\nnote: usage of ASCII uppercase letters in the package name has been deprecated\nhelp: change the name of the package to `bar`")]
     fn validate_incorrect_package_name(name: &str) -> String {
         PackageName::try_new(name).unwrap_err().to_string()
     }

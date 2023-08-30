@@ -184,7 +184,18 @@ fn invalid_package_name() {
         .assert()
         .failure()
         .stdout_eq(indoc! {r#"
-            error: invalid character `-` in package name: `a-b`, characters must be ASCII letter, ASCII numbers or underscore
+            error: invalid character `-` in package name: `a-b`, characters must be ASCII lowercase letters, ASCII numbers or underscore
+        "#});
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("a_B")
+        .current_dir(&pt)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: invalid package name: `a_B`
+            note: usage of ASCII uppercase letters in the package name has been deprecated
+            help: change the name of the package to `a_b`
         "#});
 }
 
@@ -263,4 +274,22 @@ fn init_does_not_overwrite_gitignore() {
         &fs::read_to_string(t.child(".gitignore").path()).unwrap(),
         "examples\n"
     );
+}
+
+#[test]
+fn init_incorrect_name() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    let t = pt.child("a_B");
+    t.create_dir_all().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("init")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: invalid package name: `a_B`
+            note: usage of ASCII uppercase letters in the package name has been deprecated
+            help: change the name of the package to `a_b`
+        "#});
 }
