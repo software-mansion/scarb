@@ -26,7 +26,7 @@ The only required fields are [`name`](#name) and [`version`](#version).
 The package name is a valid Cairo identifier used to refer to the package.
 It is used when listed as a dependency in another package, and as the default name of targets.
 
-The name must use only ASCII alphanumeric characters or `_`, and cannot be empty.
+The name must use only ASCII lowercase alphanumeric characters or `_`, and cannot be empty.
 It also must not be a valid Cairo keyword or a wildcard pattern (`_`).
 
 ### `version`
