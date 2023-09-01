@@ -7,6 +7,8 @@ use cairo_lang_filesystem::db::CORELIB_CRATE_NAME;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
+use crate::internal::restricted_names;
+
 #[cfg(doc)]
 use crate::core::Package;
 
@@ -49,7 +51,7 @@ impl PackageName {
             bail!("underscore cannot be used as package name");
         }
 
-        if !name.eq(&name.to_ascii_lowercase()) {
+        if name != name.to_ascii_lowercase() {
             bail!(
                 "invalid package name: `{name}`\n\
                 note: usage of ASCII uppercase letters in the package name has been disallowed\n\
@@ -86,6 +88,14 @@ impl PackageName {
                     characters must be ASCII lowercase letters, ASCII numbers or underscore"
                 )
             }
+        }
+
+        if restricted_names::is_keyword(name.as_str()) {
+            bail!(
+                "the name `{name}` cannot be used as a package name, \
+                names cannot use Cairo keywords see the full list at \
+                https://docs.cairo-lang.org/language_constructs/keywords.html"
+            )
         }
 
         Ok(Self(name))
@@ -197,6 +207,8 @@ mod tests {
     #[test_case("0foo" => "the name `0foo` cannot be used as a package name, names cannot start with a digit")]
     #[test_case("fo-o" => "invalid character `-` in package name: `fo-o`, characters must be ASCII lowercase letters, ASCII numbers or underscore")]
     #[test_case("baR" => "invalid package name: `baR`\nnote: usage of ASCII uppercase letters in the package name has been disallowed\nhelp: change package name to: bar")]
+    #[test_case("loop" => "the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://docs.cairo-lang.org/language_constructs/keywords.html")]
+    #[test_case("as" => "the name `as` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://docs.cairo-lang.org/language_constructs/keywords.html")]
     fn validate_incorrect_package_name(name: &str) -> String {
         PackageName::try_new(name).unwrap_err().to_string()
     }

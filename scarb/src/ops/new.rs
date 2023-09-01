@@ -6,6 +6,7 @@ use itertools::Itertools;
 use crate::core::{Config, PackageName};
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
+use crate::internal::restricted_names;
 use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -38,7 +39,7 @@ pub fn new_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
         )
     );
 
-    let name = infer_name(opts.name, &opts.path)?;
+    let name = infer_name(opts.name, &opts.path, config)?;
 
     mk(
         MkOpts {
@@ -59,7 +60,7 @@ pub fn init_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
         "`scarb init` cannot be run on existing Scarb packages"
     );
 
-    let name = infer_name(opts.name, &opts.path)?;
+    let name = infer_name(opts.name, &opts.path, config)?;
 
     mk(
         MkOpts {
@@ -74,9 +75,9 @@ pub fn init_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
     Ok(NewResult { name })
 }
 
-fn infer_name(name: Option<PackageName>, path: &Utf8Path) -> Result<PackageName> {
-    if let Some(name) = name {
-        Ok(name)
+fn infer_name(name: Option<PackageName>, path: &Utf8Path, config: &Config) -> Result<PackageName> {
+    let name = if let Some(name) = name {
+        name
     } else {
         let Some(file_name) = path.file_name() else {
             bail!(formatdoc! {r#"
@@ -84,9 +85,28 @@ fn infer_name(name: Option<PackageName>, path: &Utf8Path) -> Result<PackageName>
                 help: use --name to override
             "#});
         };
+        PackageName::try_new(file_name)?
+    };
 
-        PackageName::try_new(file_name)
+    if restricted_names::is_internal(name.as_str()) {
+        config.ui().warn(formatdoc! {r#"
+            the name `{name}` is a Scarb internal package, \
+            it is recommended to use a different name to avoid problems
+        "#});
     }
+
+    if restricted_names::is_windows_restricted(name.as_str()) {
+        if cfg!(windows) {
+            bail!("cannot use name `{name}`, it is a Windows reserved filename");
+        } else {
+            config.ui().warn(formatdoc! {r#"
+                the name `{name}` is a Windows reserved filename, \
+                this package will not work on Windows platforms
+            "#})
+        }
+    }
+
+    Ok(name)
 }
 
 struct MkOpts {
