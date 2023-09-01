@@ -262,6 +262,7 @@ pub struct TomlTarget<P> {
 pub struct TomlLibTargetParams {
     pub sierra: Option<bool>,
     pub casm: Option<bool>,
+    pub sierra_text: Option<bool>,
 }
 
 pub type TomlExternalTargetParams = BTreeMap<SmolStr, toml::Value>;

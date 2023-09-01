@@ -82,6 +82,7 @@ fn compile_with_custom_lib_target() {
             name = "not_hello"
             sierra = false
             casm = true
+            sierra-text = true
             "#,
         )
         .unwrap();
@@ -101,11 +102,58 @@ fn compile_with_custom_lib_target() {
 
     t.child("target/dev/not_hello.casm")
         .assert(predicates::str::is_empty().not());
+    t.child("target/dev/not_hello.sierra")
+        .assert(predicates::str::is_empty().not());
     t.child("target/dev/not_hello.sierra.json")
         .assert(predicates::path::exists().not());
     t.child("target/dev/hello.sierra.json")
         .assert(predicates::path::exists().not());
     t.child("target/dev/hello.casm")
+        .assert(predicates::path::exists().not());
+    t.child("target/dev/hello.sierra")
+        .assert(predicates::path::exists().not());
+}
+
+#[test]
+fn compile_with_named_default_lib_target() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            [lib]
+            name = "not_hello"
+            "#,
+        )
+        .unwrap();
+    t.child("src/lib.cairo")
+        .write_str(r#"fn f() -> felt252 { 42 }"#)
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling hello v0.1.0 ([..])
+        [..]  Finished release target(s) in [..]
+        "#});
+
+    t.child("target/dev/not_hello.sierra.json")
+        .assert(predicates::str::is_empty().not());
+    t.child("target/dev/not_hello.sierra")
+        .assert(predicates::path::exists().not());
+    t.child("target/dev/not_hello.casm")
+        .assert(predicates::path::exists().not());
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::path::exists().not());
+    t.child("target/dev/hello.casm")
+        .assert(predicates::path::exists().not());
+    t.child("target/dev/hello.sierra")
         .assert(predicates::path::exists().not());
 }
 
