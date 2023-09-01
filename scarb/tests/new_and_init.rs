@@ -199,8 +199,70 @@ fn invalid_package_name() {
         "#});
 }
 
-// TODO(#131): Test keyword as name.
-// TODO(#131): Test core as name.
+#[test]
+fn keyword_name() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("as")
+        .current_dir(&pt)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: the name `as` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://docs.cairo-lang.org/language_constructs/keywords.html
+        "#});
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("loop")
+        .current_dir(&pt)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://docs.cairo-lang.org/language_constructs/keywords.html
+        "#});
+}
+
+#[test]
+fn internal_name() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("core")
+        .current_dir(&pt)
+        .assert()
+        .success();
+}
+
+#[cfg(unix)]
+#[test]
+fn windows_test() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("con")
+        .current_dir(&pt)
+        .assert()
+        .success();
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_test() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("con")
+        .current_dir(&pt)
+        .assert()
+        .failure()
+        .stderr_eq(
+            "error: the name `con` cannot be used on Windows, it is a Windows reserved filename",
+        );
+}
 
 #[test]
 fn new_explicit_project_name() {
@@ -292,4 +354,33 @@ fn init_incorrect_name() {
             note: usage of ASCII uppercase letters in the package name has been disallowed
             help: change package name to: a_b
         "#});
+}
+
+#[test]
+fn init_keyword_name() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    let t = pt.child("loop");
+    t.create_dir_all().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("init")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://docs.cairo-lang.org/language_constructs/keywords.html
+        "#});
+}
+
+#[test]
+fn init_core_name() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    let t = pt.child("starknet");
+    t.create_dir_all().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("init")
+        .current_dir(&t)
+        .assert()
+        .success();
 }
