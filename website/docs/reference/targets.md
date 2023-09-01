@@ -21,12 +21,14 @@ The library target accepts following configuration parameters, with default valu
 
 ```toml
 [lib]
-sierra = true  # Enable Sierra codegen.
-casm = false   # Enable CASM codegen.
+sierra = true        # Enable Sierra codegen.
+casm = false         # Enable CASM codegen.
+sierra-text = false  # Enable textual Sierra codegen.
 ```
 
-By default, the library target builds unprocessed Sierra code in textual form for the package.
-When the `casm` option is enabled, Scarb can also automatically compile this Sierra code down to CASM.
+By default, the library target builds unprocessed Sierra code in JSON form for the package.
+When either the `casm` or `sierra-text` option is enabled, Scarb can automatically compile the Sierra code down to CASM or textual Sierra, respectively.
+While textual Sierra may be practical for debugging or similar tasks, relying on it in a production environment could lead to unexpected behavior.
 
 ## External targets
 

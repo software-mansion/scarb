@@ -126,6 +126,7 @@ fn compile_many_contracts() {
             [lib]
             sierra = true
             casm = true
+            sierra-text = true
 
             [[target.starknet-contract]]
             name = "a"
@@ -164,6 +165,7 @@ fn compile_many_contracts() {
             "b_Balance.contract_class.json",
             "b_FortyTwo.contract_class.json",
             "hello.casm",
+            "hello.sierra",
             "hello.sierra.json",
         ]
     );

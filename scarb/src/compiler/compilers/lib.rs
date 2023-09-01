@@ -18,6 +18,7 @@ pub struct LibCompiler;
 struct Props {
     pub sierra: bool,
     pub casm: bool,
+    pub sierra_text: bool,
 }
 
 impl Default for Props {
@@ -25,6 +26,7 @@ impl Default for Props {
         Self {
             sierra: true,
             casm: false,
+            sierra_text: false,
         }
     }
 }
@@ -41,9 +43,9 @@ impl Compiler for LibCompiler {
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.target().props()?;
-        if !props.sierra && !props.casm {
+        if !props.sierra && !props.casm && !props.sierra_text {
             ws.config().ui().warn(
-                "both Sierra and CASM lib targets have been disabled, \
+                "Sierra, textual Sierra and CASM lib targets have been disabled, \
                 Scarb will not produce anything",
             );
         }
@@ -72,6 +74,15 @@ impl Compiler for LibCompiler {
             .with_context(|| {
                 format!("failed to serialize Sierra program {}", unit.target().name)
             })?;
+        }
+
+        if props.sierra_text {
+            let mut file = target_dir.open_rw(
+                format!("{}.sierra", unit.target().name),
+                "output file",
+                ws.config(),
+            )?;
+            file.write_all(sierra_program.to_string().as_bytes())?;
         }
 
         if props.casm {
