@@ -31,7 +31,7 @@ Scarb is under active development! Expect a lot of new features to appear soon! 
 - [x] Workspaces
 - [x] Nightlies
 - [ ] Standardized `test` target
-- [ ] `scarb init` templates or `scarb create-starknet-contract` command
+- [ ] ~`scarb init` templates or `scarb create-starknet-contract` command~ ➡️ Use `snforge init`
 - [ ] `Scarb.lock`
 - [ ] Package registry
 - [ ] PubGrub implementation for version resolution
