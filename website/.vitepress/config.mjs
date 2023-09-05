@@ -146,8 +146,8 @@ export default withMermaid(
 
     themeConfig: {
       logo: {
-        light: "logo-light.svg",
-        dark: "logo-dark.svg",
+        light: "/logo-light.svg",
+        dark: "/logo-dark.svg",
         alt: "Scarb",
       },
       siteTitle: false,
