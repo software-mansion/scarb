@@ -4,10 +4,12 @@ use std::fs;
 use std::path::PathBuf;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
+use pathdiff::diff_utf8_paths;
 use semver::{Version, VersionReq};
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
+use serde_untagged::UntaggedEnumVisitor;
 use smol_str::SmolStr;
 use tracing::trace;
 use url::Url;
@@ -103,7 +105,7 @@ pub struct PackageInheritableFields {
     pub keywords: Option<Vec<String>>,
     pub license: Option<String>,
     pub license_file: Option<String>,
-    pub readme: Option<String>,
+    pub readme: Option<PathOrBool>,
     pub repository: Option<String>,
     pub cairo_version: Option<VersionReq>,
 }
@@ -132,8 +134,19 @@ impl PackageInheritableFields {
     get_field!(homepage, String);
     get_field!(license, String);
     get_field!(license_file, String);
-    get_field!(readme, String);
     get_field!(repository, String);
+
+    pub fn readme(&self, workspace_root: &Utf8Path, package_root: &Utf8Path) -> Result<PathOrBool> {
+        let Ok(Some(readme)) = readme_for_package(workspace_root, self.readme.as_ref()) else {
+            bail!("`workspace.package.readme` was not defined");
+        };
+        diff_utf8_paths(
+            workspace_root.parent().unwrap().join(readme),
+            package_root.parent().unwrap(),
+        )
+        .map(PathOrBool::Path)
+        .context("failed to create relative path to workspace readme")
+    }
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -167,11 +180,30 @@ pub struct TomlPackage {
     pub keywords: Option<MaybeWorkspaceField<Vec<String>>>,
     pub license: Option<MaybeWorkspaceField<String>>,
     pub license_file: Option<MaybeWorkspaceField<String>>,
-    pub readme: Option<MaybeWorkspaceField<String>>,
+    pub readme: Option<MaybeWorkspaceField<PathOrBool>>,
     pub repository: Option<MaybeWorkspaceField<String>>,
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
     pub no_core: Option<bool>,
     pub cairo_version: Option<MaybeWorkspaceField<VersionReq>>,
+}
+
+#[derive(Clone, Debug, Serialize, Eq, PartialEq)]
+#[serde(untagged)]
+pub enum PathOrBool {
+    Path(Utf8PathBuf),
+    Bool(bool),
+}
+
+impl<'de> Deserialize<'de> for PathOrBool {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        UntaggedEnumVisitor::new()
+            .bool(|b| Ok(PathOrBool::Bool(b)))
+            .string(|s| Ok(PathOrBool::Path(s.into())))
+            .deserialize(deserializer)
+    }
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -477,11 +509,19 @@ impl TomlManifest {
                 .clone()
                 .map(|mw| mw.resolve("license_file", || inheritable_package.license_file()))
                 .transpose()?,
-            readme: package
-                .readme
-                .clone()
-                .map(|mw| mw.resolve("readme", || inheritable_package.readme()))
-                .transpose()?,
+            readme: readme_for_package(
+                manifest_path,
+                package
+                    .readme
+                    .clone()
+                    .map(|mw| {
+                        mw.resolve("readme", || {
+                            inheritable_package.readme(workspace_manifest_path, manifest_path)
+                        })
+                    })
+                    .transpose()?
+                    .as_ref(),
+            )?,
             repository: package
                 .repository
                 .clone()
@@ -702,6 +742,56 @@ impl TomlManifest {
             })
             .transpose()
     }
+}
+
+/// Returns the absolute canonical path of the README file for a [`TomlPackage`].
+pub fn readme_for_package(
+    package_root: &Utf8Path,
+    readme: Option<&PathOrBool>,
+) -> Result<Option<Utf8PathBuf>> {
+    let file_name = match readme {
+        None => default_readme_from_package_root(package_root.parent().unwrap()),
+        Some(PathOrBool::Path(p)) => Some(p.as_path()),
+        Some(PathOrBool::Bool(true)) => {
+            default_readme_from_package_root(package_root.parent().unwrap())
+                .or_else(|| Some("README.md".into()))
+        }
+        Some(PathOrBool::Bool(false)) => None,
+    };
+
+    abs_canonical_path(package_root, file_name)
+}
+
+/// Creates the absolute canonical path of the README file and checks if it exists
+fn abs_canonical_path(prefix: &Utf8Path, readme: Option<&Utf8Path>) -> Result<Option<Utf8PathBuf>> {
+    match readme {
+        None => Ok(None),
+        Some(readme) => prefix
+            .parent()
+            .unwrap()
+            .join(readme)
+            .canonicalize_utf8()
+            .map(Some)
+            .with_context(|| {
+                format!(
+                    "failed to find the readme at {}",
+                    prefix.parent().unwrap().join(readme)
+                )
+            }),
+    }
+}
+
+const DEFAULT_README_FILES: &[&str] = &["README.md", "README.txt", "README"];
+
+/// Checks if a file with any of the default README file names exists in the package root.
+/// If so, returns a `Utf8Path` with that name.
+fn default_readme_from_package_root(package_root: &Utf8Path) -> Option<&Utf8Path> {
+    for &readme_filename in DEFAULT_README_FILES {
+        if package_root.join(readme_filename).is_file() {
+            return Some(readme_filename.into());
+        }
+    }
+    None
 }
 
 impl TomlDependency {

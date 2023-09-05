@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
 use assert_fs::prelude::*;
+use camino::Utf8PathBuf;
+use indoc::formatdoc;
 use serde_json::json;
 
 use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
@@ -217,7 +219,7 @@ fn manifest_targets_and_metadata() {
 
             license = "MIT License"
             license-file = "./license.md"
-            readme = "./readme.md"
+            readme = "./README.md"
 
             [package.urls]
             hello = "https://world.com/"
@@ -248,6 +250,7 @@ fn manifest_targets_and_metadata() {
             "#,
         )
         .unwrap();
+    t.child("README.md").touch().unwrap();
 
     let meta = Scarb::quick_snapbox()
         .arg("--json")
@@ -282,7 +285,7 @@ fn manifest_targets_and_metadata() {
             ]))
             .license(Some("MIT License".to_string()))
             .license_file(Some("./license.md".to_string()))
-            .readme(Some("./readme.md".to_string()))
+            .readme(Utf8PathBuf::from_path_buf(t.join("README.md").canonicalize().unwrap()).ok())
             .repository(Some("https://github.com/johndoe/repo".to_string()))
             .tool(Some(BTreeMap::from_iter([
                 ("meta".to_string(), json!("data")),
@@ -564,4 +567,407 @@ fn workspace_package_key_inheritance() {
             ("some_dep".to_string(), vec!["core".to_string()])
         ])
     )
+}
+
+#[test]
+fn infer_readme_simple() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_by_name(meta)
+            .get("hello")
+            .unwrap()
+            .manifest_metadata
+            .readme,
+        None
+    );
+
+    t.child("README").touch().unwrap();
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_by_name(meta)
+            .get("hello")
+            .unwrap()
+            .manifest_metadata
+            .readme,
+        Utf8PathBuf::from_path_buf(t.join("README").canonicalize().unwrap()).ok()
+    );
+
+    t.child("README.txt").touch().unwrap();
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_by_name(meta)
+            .get("hello")
+            .unwrap()
+            .manifest_metadata
+            .readme,
+        Utf8PathBuf::from_path_buf(t.join("README.txt").canonicalize().unwrap()).ok()
+    );
+
+    t.child("README.md").touch().unwrap();
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_by_name(meta)
+            .get("hello")
+            .unwrap()
+            .manifest_metadata
+            .readme,
+        Utf8PathBuf::from_path_buf(t.join("README.md").canonicalize().unwrap()).ok()
+    );
+
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+            readme = "a/b/c/MEREAD.md"
+            "#,
+        )
+        .unwrap();
+    t.child("a").child("b").child("c").create_dir_all().unwrap();
+    t.child("a")
+        .child("b")
+        .child("c")
+        .child("MEREAD.md")
+        .touch()
+        .unwrap();
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_by_name(meta)
+            .get("hello")
+            .unwrap()
+            .manifest_metadata
+            .readme,
+        Utf8PathBuf::from_path_buf(t.join("a/b/c/MEREAD.md").canonicalize().unwrap()).ok()
+    );
+}
+
+#[test]
+fn infer_readme_simple_bool() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
+
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+            readme = false
+            "#,
+        )
+        .unwrap();
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_by_name(meta)
+            .get("hello")
+            .unwrap()
+            .manifest_metadata
+            .readme,
+        None
+    );
+
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+            readme = true
+            "#,
+        )
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(formatdoc!(
+            r#"
+            {{"type":"error","message":"failed to parse manifest at: {path}/Scarb.toml\n\nCaused by:\n    0: failed to find the readme at {path}/README.md\n    1: No such file or directory (os error 2)"}}
+            "#,
+            path=t.path().canonicalize().unwrap().to_str().unwrap()));
+
+    t.child("README.md").touch().unwrap();
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        packages_by_name(meta)
+            .get("hello")
+            .unwrap()
+            .manifest_metadata
+            .readme,
+        Utf8PathBuf::from_path_buf(t.join("README.md").canonicalize().unwrap()).ok()
+    );
+}
+
+#[test]
+fn infer_readme_workspace() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
+    let ws = ["t1", "t2", "t3", "t4", "t5", "t6"].iter().zip(
+        [
+            Some("MEREAD.md"),
+            Some("README.md"),
+            Some("README.txt"),
+            Some("TEST.txt"),
+            None,
+            None,
+        ]
+        .iter(),
+    );
+    for (pack_name, readme_name) in ws {
+        Scarb::quick_snapbox()
+            .arg("new")
+            .arg(pack_name)
+            .current_dir(&t);
+        if let Some(name) = readme_name {
+            t.child(pack_name).child(name).touch().unwrap();
+        }
+    }
+    t.child("MEREAD.md").touch().unwrap();
+    t.child("tmp1").create_dir_all().unwrap();
+    t.child("tmp1").child("tmp2").create_dir_all().unwrap();
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("t7")
+        .current_dir(t.child("tmp1").child("tmp2"));
+    t.child("tmp1")
+        .child("tmp2")
+        .child("t7")
+        .child("MEREAD.md")
+        .touch()
+        .unwrap();
+    t.child("tmp1")
+        .child("tmp2")
+        .child("t7")
+        .child("Scarb.toml")
+        .write_str(
+            r#"
+        [package]
+        name = "t7"
+        version.workspace = true
+        edition = "2021"
+        readme.workspace = true
+    "#,
+        )
+        .unwrap();
+
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [workspace]
+            members = [
+                "t1",
+                "t2",
+                "t3",
+                "t4",
+                "t5",
+                "t6",
+                "tmp1/tmp2/t7",
+            ]
+
+            [workspace.package]
+            version = "0.1.0"
+            edition = "2021"
+            readme = "MEREAD.md"
+
+            [package]
+            name = "hello"
+            version.workspace = true
+            readme.workspace = true
+        "#,
+        )
+        .unwrap();
+
+    t.child("t1")
+        .child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "t1"
+            version.workspace = true
+            edition = "2021"
+            readme.workspace = true
+    "#,
+        )
+        .unwrap();
+    t.child("t2")
+        .child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "t2"
+            version.workspace = true
+            edition = "2021"
+            readme = true
+    "#,
+        )
+        .unwrap();
+    t.child("t3")
+        .child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "t3"
+            version.workspace = true
+            edition = "2021"
+    "#,
+        )
+        .unwrap();
+    t.child("t4")
+        .child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "t4"
+            version.workspace = true
+            edition = "2021"
+            readme = "TEST.txt"
+    "#,
+        )
+        .unwrap();
+    t.child("t5")
+        .child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "t5"
+            version.workspace = true
+            edition = "2021"
+            readme = false
+    "#,
+        )
+        .unwrap();
+    t.child("t6")
+        .child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "t6"
+            version.workspace = true
+            edition = "2021"
+    "#,
+        )
+        .unwrap();
+    t.child("tmp1")
+        .child("tmp2")
+        .child("t7")
+        .child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "t7"
+            version.workspace = true
+            edition = "2021"
+            readme.workspace = true
+    "#,
+        )
+        .unwrap();
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let packages = packages_by_name(meta);
+    assert_eq!(
+        packages.get("hello").unwrap().manifest_metadata.readme,
+        Utf8PathBuf::from_path_buf(t.join("MEREAD.md").canonicalize().unwrap()).ok()
+    );
+    assert_eq!(
+        packages.get("t7").unwrap().manifest_metadata.readme,
+        Utf8PathBuf::from_path_buf(t.join("MEREAD.md").canonicalize().unwrap()).ok()
+    );
+    assert_eq!(
+        packages.get("t1").unwrap().manifest_metadata.readme,
+        Utf8PathBuf::from_path_buf(t.join("MEREAD.md").canonicalize().unwrap()).ok()
+    );
+    assert_eq!(
+        packages.get("t2").unwrap().manifest_metadata.readme,
+        Utf8PathBuf::from_path_buf(t.child("t2").join("README.md").canonicalize().unwrap()).ok()
+    );
+    assert_eq!(
+        packages.get("t3").unwrap().manifest_metadata.readme,
+        Utf8PathBuf::from_path_buf(t.child("t3").join("README.txt").canonicalize().unwrap()).ok()
+    );
+    assert_eq!(
+        packages.get("t4").unwrap().manifest_metadata.readme,
+        Utf8PathBuf::from_path_buf(t.child("t4").join("TEST.txt").canonicalize().unwrap()).ok()
+    );
+    assert_eq!(packages.get("t5").unwrap().manifest_metadata.readme, None);
+    assert_eq!(packages.get("t6").unwrap().manifest_metadata.readme, None);
 }

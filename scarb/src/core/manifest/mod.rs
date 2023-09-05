@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 
 use anyhow::{bail, ensure, Result};
+use camino::Utf8PathBuf;
 use derive_builder::Builder;
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
@@ -55,7 +56,7 @@ pub struct ManifestMetadata {
     pub keywords: Option<Vec<String>>,
     pub license: Option<String>,
     pub license_file: Option<String>,
-    pub readme: Option<String>,
+    pub readme: Option<Utf8PathBuf>,
     pub repository: Option<String>,
     #[serde(rename = "tool")]
     pub tool_metadata: Option<BTreeMap<SmolStr, Value>>,
