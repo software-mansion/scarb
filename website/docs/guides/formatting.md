@@ -13,6 +13,32 @@ properly formatted:
 scarb fmt --check
 ```
 
+## Formatting options
+
+You can add `[tool.fmt]` section inside `Scarb.toml` to override the default formatter configuration.
+
+```toml
+[tool.fmt]
+sort-module-level-items = true
+```
+
+### Available configuration option
+
+- `sort_module_level_items`
+
+  Reorder import statements alphabetically in groups (a group is separated by a newline).\
+  **Default:** `false`
+
+- `max_line_length`
+
+  Maximum width of each line.\
+  **Default:** `100`
+
+- `tab_size`
+
+  Number of spaces per tab.\
+  **Default:** `4`
+
 ## Ignoring files
 
 By default, Scarb will format all files with a `.cairo` extension from the directory containing the manifest file
