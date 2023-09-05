@@ -75,7 +75,7 @@ fn compile_with_syntax_error() {
         .code(1)
         .stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]Scarb.toml)
-            error: Skipped tokens. Expected: Const/Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum/TypeAlias or an attribute.
+            error: Skipped tokens. Expected: Const/Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum/TypeAlias/InlineMacro.
              --> lib.cairo:1:1
             not_a_keyword
             ^***********^
@@ -102,7 +102,7 @@ fn compile_with_syntax_error_json() {
         .code(1)
         .stdout_matches(indoc! {r#"
             {"status":"compiling","message":"hello v0.1.0 ([..]Scarb.toml)"}
-            {"type":"diagnostic","message":"error: Skipped tokens. Expected: Const/Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum/TypeAlias or an attribute./n --> lib.cairo:1:1/nnot_a_keyword/n^***********^/n/n"}
+            {"type":"diagnostic","message":"error: Skipped tokens. Expected: Const/Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum/TypeAlias/InlineMacro./n --> lib.cairo:1:1/nnot_a_keyword/n^***********^/n/n"}
             {"type":"error","message":"could not compile `hello` due to previous error"}
         "#});
 }

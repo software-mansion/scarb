@@ -10,6 +10,7 @@ use tracing::{info, warn};
 
 use crate::core::workspace::Workspace;
 use crate::core::PackageId;
+use crate::internal::serdex::toml_merge;
 
 #[derive(Debug)]
 pub struct FmtOptions {
@@ -21,30 +22,30 @@ pub struct FmtOptions {
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
     ws.config().ui().force_colors_enabled(opts.color);
-    let config = FormatterConfig::default();
-    let fmt = CairoFormatter::new(config);
-    let packages = ws
-        .members()
-        .filter(|pkg| opts.packages.contains(&pkg.id))
-        .collect::<Vec<_>>();
-    let Some((first_package, packages)) = packages.split_first() else {
-        return Ok(true);
-    };
-    let mut walk = fmt.walk(first_package.root().as_std_path());
-    for package in packages {
-        walk.add(package.root().as_std_path());
-    }
-    let all_correct = AtomicBool::new(true);
-    let mut builder = PathFormatterBuilder {
-        ws,
-        fmt: &fmt,
-        opts: &opts,
-        all_correct: &all_correct,
-        selected_packages: opts.packages.clone(),
-    };
-    walk.build_parallel().visit(&mut builder);
-    let result = builder.all_correct.load(Ordering::Acquire);
 
+    let all_correct = AtomicBool::new(true);
+
+    for package_id in opts.packages.iter() {
+        let package = ws.fetch_package(package_id)?;
+
+        let mut config = FormatterConfig::default();
+        if let Some(overrides) = package.tool_metadata("fmt") {
+            config = toml_merge(&config, overrides)?;
+        }
+        let fmt = CairoFormatter::new(config);
+
+        let walk = fmt.walk(package.root().as_std_path());
+        let mut builder = PathFormatterBuilder {
+            ws,
+            fmt: &fmt,
+            opts: &opts,
+            all_correct: &all_correct,
+            selected_packages: vec![package.id],
+        };
+        walk.build_parallel().visit(&mut builder);
+    }
+
+    let result = all_correct.load(Ordering::Acquire);
     Ok(result)
 }
 

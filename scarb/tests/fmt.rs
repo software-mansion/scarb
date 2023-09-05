@@ -109,6 +109,117 @@ fn simple_format_with_filter() {
 }
 
 #[test]
+fn format_with_import_sorting() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            [tool.fmt]
+            sort-module-level-items = true
+            "#,
+        )
+        .unwrap();
+    t.child("src/lib.cairo")
+        .write_str(indoc! {"\
+            use openzeppelin::introspection::interface;
+            use openzeppelin::introspection::first;
+            
+            #[starknet::contract]
+            mod SRC5 {
+                use openzeppelin::introspection::interface;
+                use openzeppelin::introspection::{interface, AB};
+            
+                #[storage]
+                struct Storage {
+                    supported_interfaces: LegacyMap<felt252, bool>
+                }
+            
+                use openzeppelin::introspection::first;
+            
+                mod A {}
+                mod G;
+                mod F;
+            
+                #[external(v0)]
+                impl SRC5Impl of interface::ISRC5<ContractState> {
+                    fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
+                        true
+                    }
+                }
+            
+                use A;
+                use starknet::ArrayTrait;
+            
+                mod Inner {
+                    use C;
+                    use B;
+                }
+            }
+            "
+        })
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .args(["fmt", "--check", "--no-color"])
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {"\
+        Diff in [..]/src/lib.cairo:
+        --- original
+       +++ modified
+       @@ -1,10 +1,17 @@
+       +use openzeppelin::introspection::first;
+        use openzeppelin::introspection::interface;
+       -use openzeppelin::introspection::first;
+       
+        #[starknet::contract]
+        mod SRC5 {
+       +    mod F;
+       +    mod G;
+       +
+       +    use A;
+       +
+       +    use openzeppelin::introspection::first;
+            use openzeppelin::introspection::interface;
+            use openzeppelin::introspection::{interface, AB};
+       +    use starknet::ArrayTrait;
+       
+            #[storage]
+            struct Storage {
+       @@ -11,11 +18,7 @@
+                supported_interfaces: LegacyMap<felt252, bool>
+            }
+       
+       -    use openzeppelin::introspection::first;
+       -
+            mod A {}
+       -    mod G;
+       -    mod F;
+       
+            #[external(v0)]
+            impl SRC5Impl of interface::ISRC5<ContractState> {
+       @@ -24,11 +27,8 @@
+                }
+            }
+       
+       -    use A;
+       -    use starknet::ArrayTrait;
+       -
+            mod Inner {
+       +        use B;
+                use C;
+       -        use B;
+            }
+        }
+       
+       "});
+}
+
+#[test]
 fn workspace_with_root() {
     let t = TempDir::new().unwrap().child("test_workspace");
     let pkg1 = t.child("first");
