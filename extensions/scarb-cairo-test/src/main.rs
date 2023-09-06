@@ -48,6 +48,7 @@ fn main() -> Result<()> {
 
         ScarbCommand::new()
             .arg("build")
+            .arg("--test")
             .arg("-p")
             .arg(package.name)
             .run()?;
