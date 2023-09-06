@@ -171,6 +171,11 @@ pub enum Command {
 pub struct BuildArgs {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+
+    /// Run compilation of test targets.
+    /// By default test targets are excluded.
+    #[arg(short, long, default_value_t = false)]
+    pub test: bool,
 }
 
 /// Arguments accepted by the `run` command.

@@ -30,7 +30,7 @@ struct Args {
 fn main() -> Result<()> {
     let args: Args = Args::parse();
 
-    ScarbCommand::new().arg("build").run()?;
+    ScarbCommand::new().arg("build").arg("--test").run()?;
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 

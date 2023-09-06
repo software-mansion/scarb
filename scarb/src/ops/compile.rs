@@ -7,11 +7,15 @@ use scarb_ui::HumanDuration;
 
 use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin};
 use crate::compiler::CompilationUnit;
-use crate::core::{PackageId, Utf8PathWorkspaceExt, Workspace};
+use crate::core::{PackageId, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::ops;
 
 #[tracing::instrument(skip_all, level = "debug")]
-pub fn compile(packages: Vec<PackageId>, ws: &Workspace<'_>) -> Result<()> {
+pub fn compile(
+    packages: Vec<PackageId>,
+    exclude_targets: Vec<TargetKind>,
+    ws: &Workspace<'_>,
+) -> Result<()> {
     let resolve = ops::resolve_workspace(ws)?;
 
     // Add test compilation units to build
@@ -22,6 +26,7 @@ pub fn compile(packages: Vec<PackageId>, ws: &Workspace<'_>) -> Result<()> {
 
     let compilation_units = ops::generate_compilation_units(&resolve, ws)?
         .into_iter()
+        .filter(|cu| !exclude_targets.contains(&cu.target().kind))
         .filter(|cu| packages.contains(&cu.main_package_id))
         .collect::<Vec<_>>();
 

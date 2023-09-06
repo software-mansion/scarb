@@ -4,6 +4,7 @@ use indoc::indoc;
 use predicates::prelude::*;
 
 use scarb_test_support::command::Scarb;
+use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
@@ -249,4 +250,51 @@ fn target_source_path_disallowed() {
             Caused by:
                 `lib` target cannot specify custom `source-path`
         "#});
+}
+
+#[test]
+fn test_target_skipped_without_flag() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[test]]
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
+    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra.json"]);
+}
+
+#[test]
+fn compile_test_target() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[test]]
+            name = "hello_test"
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec!["hello.sierra.json", "hello_test.test.json"]
+    );
 }
