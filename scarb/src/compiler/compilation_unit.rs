@@ -81,10 +81,6 @@ impl CompilationUnit {
         config.target_dir().child(self.profile.as_str())
     }
 
-    pub fn is_sole_for_package(&self) -> bool {
-        self.main_component().package.manifest.targets.len() >= 2
-    }
-
     pub fn has_custom_name(&self) -> bool {
         self.main_component().target.kind != self.main_package_id.name.as_str()
     }
@@ -93,11 +89,11 @@ impl CompilationUnit {
         format!("{}-{}", self.main_package_id.name, self.digest())
     }
 
-    pub fn name(&self) -> String {
+    pub fn name(&self, is_sole_for_package: bool) -> String {
         let mut string = String::new();
 
         let main_component = self.main_component();
-        if self.is_sole_for_package() {
+        if is_sole_for_package {
             write!(&mut string, "{}", main_component.target.kind).unwrap();
 
             if self.has_custom_name() {

@@ -29,9 +29,10 @@ pub fn compile(
         .filter(|cu| !exclude_targets.contains(&cu.target().kind))
         .filter(|cu| packages.contains(&cu.main_package_id))
         .collect::<Vec<_>>();
+    let is_sole_for_package = compilation_units.len() > 1;
 
     for unit in compilation_units {
-        compile_unit(unit, ws)?;
+        compile_unit(unit, is_sole_for_package, ws)?;
     }
 
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
@@ -43,12 +44,16 @@ pub fn compile(
     Ok(())
 }
 
-fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+fn compile_unit(
+    unit: CompilationUnit,
+    is_sole_for_package: bool,
+    ws: &Workspace<'_>,
+) -> Result<()> {
     let package_name = unit.main_package_id.name.to_string();
 
     ws.config()
         .ui()
-        .print(Status::new("Compiling", &unit.name()));
+        .print(Status::new("Compiling", &unit.name(is_sole_for_package)));
 
     let mut db = build_scarb_root_database(&unit, ws)?;
 
