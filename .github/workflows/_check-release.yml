@@ -1,6 +1,15 @@
 name: Release Check
 
 on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        required: false
+        type: string
+      fail-fast:
+        required: false
+        type: boolean
+        default: true
   workflow_call:
     inputs:
       ref:

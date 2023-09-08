@@ -1,3 +1,4 @@
+use assert_fs::TempDir;
 use indoc::indoc;
 use snapbox::cmd::{cargo_bin, Command};
 
@@ -12,12 +13,17 @@ fn hello_world() {
         .unwrap()
         .join("examples")
         .join("hello_world");
+
+    let t = TempDir::new().unwrap();
+
     Command::new(cargo_bin("scarb"))
+        .env("SCARB_TARGET_DIR", t.path())
         .arg("build")
         .current_dir(example.clone())
         .assert()
         .success();
     Command::new(cargo_bin("scarb"))
+        .env("SCARB_TARGET_DIR", t.path())
         .arg("cairo-run")
         .arg("--available-gas")
         .arg("2000000")
@@ -42,12 +48,11 @@ fn package_not_built() {
         .unwrap()
         .join("examples")
         .join("hello_world");
+
+    let t = TempDir::new().unwrap();
+
     Command::new(cargo_bin("scarb"))
-        .arg("clean")
-        .current_dir(example.clone())
-        .assert()
-        .success();
-    Command::new(cargo_bin("scarb"))
+        .env("SCARB_TARGET_DIR", t.path())
         .arg("cairo-run")
         .arg("--available-gas")
         .arg("2000000")

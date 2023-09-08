@@ -8,6 +8,7 @@ authors.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+assert_fs.workspace = true
 cairo-lang-runner.workspace = true
 cairo-lang-sierra.workspace = true
 camino.workspace = true

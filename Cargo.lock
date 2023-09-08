@@ -3943,6 +3943,7 @@ name = "scarb-cairo-run"
 version = "0.7.0"
 dependencies = [
  "anyhow",
+ "assert_fs",
  "cairo-lang-runner",
  "cairo-lang-sierra",
  "camino",
