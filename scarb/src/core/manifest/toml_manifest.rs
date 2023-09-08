@@ -439,13 +439,14 @@ impl TomlManifest {
 
         let no_core = package.no_core.unwrap_or(false);
 
+        let targets = self.collect_targets(package.name.to_smol_str(), root)?;
+
         let summary = Summary::builder()
+            .target_kinds(targets.iter().map(|t| t.kind.clone()).collect())
             .package_id(package_id)
             .dependencies(dependencies)
             .no_core(no_core)
             .build();
-
-        let targets = self.collect_targets(package.name.to_smol_str(), root)?;
 
         let scripts = self.scripts.clone().unwrap_or_default();
 
