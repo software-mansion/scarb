@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -6,7 +7,7 @@ use typed_builder::TypedBuilder;
 
 #[cfg(doc)]
 use crate::core::Manifest;
-use crate::core::{DependencyVersionReq, ManifestDependency, PackageId, PackageName};
+use crate::core::{DependencyVersionReq, ManifestDependency, PackageId, PackageName, TargetKind};
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
 /// See [`SummaryInner`] for public fields reference.
@@ -23,6 +24,7 @@ pub struct SummaryInner {
     pub package_id: PackageId,
     #[builder(default)]
     pub dependencies: Vec<ManifestDependency>,
+    pub target_kinds: HashSet<TargetKind>,
     #[builder(default = false)]
     pub no_core: bool,
 }

@@ -96,6 +96,7 @@ pub(crate) mod mock {
 
         fn build_package(package_id: PackageId, dependencies: Vec<ManifestDependency>) -> Package {
             let summary = Summary::builder()
+                .target_kinds(HashSet::new())
                 .package_id(package_id)
                 .dependencies(dependencies)
                 .no_core(package_id.is_core())
