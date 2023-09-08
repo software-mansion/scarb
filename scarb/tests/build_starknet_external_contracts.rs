@@ -2,6 +2,7 @@ use assert_fs::fixture::ChildPath;
 use std::fs;
 
 use assert_fs::prelude::*;
+use assert_fs::TempDir;
 use cairo_lang_starknet::contract_class::ContractClass;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
@@ -233,4 +234,232 @@ fn build_external_full_path() {
             "world_world_HelloContract.contract_class.json",
         ]
     );
+}
+
+#[test]
+fn compile_multiple_with_glob_path() {
+    let t = assert_fs::TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+    compile_dep_test_case(
+        &hello,
+        &world,
+        indoc! {r#"
+        build-external-contracts = [
+            "hello::*",
+        ]
+    "#},
+    );
+
+    assert_eq!(
+        world.child("target/dev").files(),
+        vec![
+            "world.starknet_artifacts.json",
+            "world_Balance.contract_class.json",
+            "world_FortyTwo.contract_class.json",
+            "world_hello_HelloContract.contract_class.json",
+            "world_world_HelloContract.contract_class.json"
+        ]
+    );
+    world
+        .child("target/dev/world_Balance.contract_class.json")
+        .assert_is_json::<ContractClass>();
+    world
+        .child("target/dev/world_hello_HelloContract.contract_class.json")
+        .assert_is_json::<ContractClass>();
+    world
+        .child("target/dev/world_FortyTwo.contract_class.json")
+        .assert_is_json::<ContractClass>();
+    world
+        .child("target/dev/world_world_HelloContract.contract_class.json")
+        .assert_is_json::<ContractClass>();
+
+    // Check starknet artifacts content
+    let starknet_artifacts = world.child("target/dev/world.starknet_artifacts.json");
+    starknet_artifacts.assert_is_json::<serde_json::Value>();
+    let content = fs::read_to_string(&starknet_artifacts).unwrap();
+    let json: serde_json::Value = serde_json::from_str(content.as_ref()).unwrap();
+    let contracts = json
+        .as_object()
+        .unwrap()
+        .get("contracts")
+        .unwrap()
+        .as_array()
+        .unwrap();
+    assert_eq!(contracts.len(), 4);
+    assert_eq!(
+        contracts
+            .iter()
+            .map(|c| {
+                let c = c.as_object().unwrap();
+                let pkg = c.get("package_name").unwrap().as_str().unwrap();
+                let name = c.get("contract_name").unwrap().as_str().unwrap();
+                let sierra = c
+                    .get("artifacts")
+                    .unwrap()
+                    .as_object()
+                    .unwrap()
+                    .get("sierra")
+                    .unwrap()
+                    .as_str()
+                    .unwrap();
+                (pkg, name, sierra)
+            })
+            .sorted()
+            .collect::<Vec<_>>(),
+        vec![
+            ("hello", "Balance", "world_Balance.contract_class.json"),
+            (
+                "hello",
+                "HelloContract",
+                "world_hello_HelloContract.contract_class.json"
+            ),
+            ("world", "FortyTwo", "world_FortyTwo.contract_class.json"),
+            (
+                "world",
+                "HelloContract",
+                "world_world_HelloContract.contract_class.json"
+            )
+        ]
+    );
+}
+
+#[test]
+fn compile_multiple_with_glob_subpath() {
+    let t = TempDir::new().unwrap();
+
+    t.child("x/Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "x"
+            version = "1.0.0"
+
+            [dependencies]
+            starknet = ">=2.1.0"
+            y = { path = "../y" }
+
+            [[target.starknet-contract]]
+            build-external-contracts = ["y::subfolder::*"]
+            "#,
+        )
+        .unwrap();
+
+    t.child("x/src/lib.cairo")
+        .write_str(
+            r#"
+            #[starknet::contract]
+            mod A {
+                use y::subfolder::b::B;
+                use y::subfolder::c::C;
+
+                #[storage]
+                struct Storage {}
+            }
+            "#,
+        )
+        .unwrap();
+
+    t.child("y/Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "y"
+            version = "1.0.0"
+
+            "#,
+        )
+        .unwrap();
+
+    t.child("y/src/lib.cairo")
+        .write_str(
+            r#"
+            mod subfolder;
+            "#,
+        )
+        .unwrap();
+
+    t.child("y/src/subfolder.cairo")
+        .write_str(
+            r#"
+            mod b;
+            mod c;
+            "#,
+        )
+        .unwrap();
+
+    t.child("y/src/subfolder/b.cairo")
+        .write_str(
+            r#"
+            #[starknet::contract]
+            mod B {
+            #[storage]
+            struct Storage {}
+            }
+            "#,
+        )
+        .unwrap();
+
+    t.child("y/src/subfolder/c.cairo")
+        .write_str(
+            r#"
+            #[starknet::contract]
+            mod C {
+                #[storage]
+                struct Storage {}
+            }
+            "#,
+        )
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(t.child("x"))
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling x v1.0.0 ([..]Scarb.toml)
+            [..]  Finished release target(s) in [..]
+        "#});
+}
+
+#[test]
+fn compile_with_bad_glob_path() {
+    let t = assert_fs::TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(format!("{}\n{}", BALANCE_CONTRACT, HELLO_CONTRACT))
+        .build(&hello);
+
+    ProjectBuilder::start()
+        .name("world")
+        .version("0.1.0")
+        .dep("hello", r#" path = "../hello" "#)
+        .manifest_extra(formatdoc! {r#"
+            [[target.starknet-contract]]
+            build-external-contracts = ["hello::**",]
+        "#})
+        .dep_starknet()
+        .lib_cairo(format!("{}\n{}", FORTY_TWO_CONTRACT, HELLO_CONTRACT))
+        .build(&world);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(t.child("world"))
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling world v0.1.0 ([..]/Scarb.toml)
+        error: external contract path hello::** has multiple global path selectors, only one '*' selector is allowed
+        error: could not compile `world` due to previous error
+        "#});
 }
