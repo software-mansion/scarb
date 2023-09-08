@@ -142,6 +142,13 @@ pub struct Metadata {
     pub target_dir: Option<Utf8PathBuf>,
 
     /// Path to the manifest of package or workspace that Scarb has been run from.
+    ///
+    /// ## Compatibility
+    ///
+    /// With very old Scarb versions (`<0.5.0`), this field may end up being empty path upon
+    /// deserializing from `scarb metadata` call.
+    /// In this case, fall back to [`WorkspaceMetadata.manifest`][WorkspaceMetadata] field value.
+    #[serde(default)]
     pub runtime_manifest: Utf8PathBuf,
 
     /// Current workspace metadata.
