@@ -6,7 +6,7 @@ use typed_builder::TypedBuilder;
 
 #[cfg(doc)]
 use crate::core::Manifest;
-use crate::core::{DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId};
+use crate::core::{DependencyVersionReq, ManifestDependency, PackageId, PackageName};
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
 /// See [`SummaryInner`] for public fields reference.
@@ -55,12 +55,10 @@ impl Summary {
         static CORE_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| {
             // NOTE: Pin `core` to exact version, because we know that's the only one we have.
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
-            let version_req = DependencyVersionReq::exact(&cairo_version);
-            ManifestDependency {
-                name: PackageName::CORE,
-                version_req,
-                source_id: SourceId::default(),
-            }
+            ManifestDependency::builder()
+                .name(PackageName::CORE)
+                .version_req(DependencyVersionReq::exact(&cairo_version))
+                .build()
         });
 
         let mut deps: Vec<&ManifestDependency> = Vec::new();

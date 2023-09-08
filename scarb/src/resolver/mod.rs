@@ -125,10 +125,12 @@ async fn rewrite_dependency_source_id(
 ) -> Result<ManifestDependency> {
     // Rewrite path dependencies for git sources.
     if package_id.source_id.is_git() && dependency.source_id.is_path() {
-        let rewritten_dep = ManifestDependency {
-            source_id: package_id.source_id,
-            ..dependency.clone()
-        };
+        let rewritten_dep = ManifestDependency::builder()
+            .kind(dependency.kind.clone())
+            .name(dependency.name.clone())
+            .source_id(package_id.source_id)
+            .version_req(dependency.version_req.clone())
+            .build();
         // Check if this dependency can be queried from git source.
         // E.g. packages below other package's manifest will not be accessible.
         if !registry.query(&rewritten_dep).await?.is_empty() {

@@ -173,19 +173,37 @@ pub(crate) mod mock {
 
     macro_rules! dep {
         (($n:literal, $v:literal)) => {
-            $crate::core::ManifestDependency {
-                name: $crate::core::PackageName::new($n),
-                version_req: ::semver::VersionReq::parse($v).unwrap().into(),
-                source_id: $crate::core::SourceId::default_registry(),
-            }
+            $crate::core::ManifestDependency::builder()
+                .name($crate::core::PackageName::new($n))
+                .version_req(::semver::VersionReq::parse($v).unwrap().into())
+                .source_id($crate::core::SourceId::default_registry())
+                .build()
         };
 
         (($n:literal, $v:literal, $s:literal)) => {
-            $crate::core::ManifestDependency {
-                name: $crate::core::PackageName::new($n),
-                version_req: ::semver::VersionReq::parse($v).unwrap().into(),
-                source_id: $crate::core::SourceId::from_display_str($s).unwrap(),
-            }
+            $crate::core::ManifestDependency::builder()
+                .name($crate::core::PackageName::new($n))
+                .version_req(::semver::VersionReq::parse($v).unwrap().into())
+                .source_id($crate::core::SourceId::from_display_str($s).unwrap())
+                .build()
+        };
+
+        (($n:literal, $v:literal, (), $t:literal)) => {
+            $crate::core::ManifestDependency::builder()
+                .name($crate::core::PackageName::new($n))
+                .version_req(::semver::VersionReq::parse($v).unwrap().into())
+                .source_id($crate::core::SourceId::default_registry())
+                .kind($crate::core::DepKind::Target($t.into()))
+                .build()
+        };
+
+        (($n:literal, $v:literal, $s:literal, $t:literal)) => {
+            $crate::core::ManifestDependency::builder()
+                .name($crate::core::PackageName::new($n))
+                .version_req(::semver::VersionReq::parse($v).unwrap().into())
+                .source_id($crate::core::SourceId::from_display_str($s).unwrap())
+                .kind($crate::core::DepKind::Target($t.into()))
+                .build()
         };
     }
 
