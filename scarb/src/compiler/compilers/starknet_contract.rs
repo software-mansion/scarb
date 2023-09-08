@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::fmt::Write;
 use std::iter::zip;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use cairo_lang_semantic::db::SemanticGroup;
@@ -28,6 +28,7 @@ use crate::internal::serdex::RelativeUtf8PathBuf;
 use crate::internal::stable_hash::short_hash;
 
 const CAIRO_PATH_SEPARATOR: &str = "::";
+const GLOB_PATH_SELECTOR: &str = "*";
 
 // TODO(#111): starknet-contract should be implemented as an extension.
 pub struct StarknetContractCompiler;
@@ -84,6 +85,18 @@ impl ContractSelector {
             .rsplit_once(CAIRO_PATH_SEPARATOR)
             .unwrap_or((self.0.as_str(), ""));
         parts.1.to_string()
+    }
+
+    fn is_wildcard(&self) -> bool {
+        self.0.ends_with(GLOB_PATH_SELECTOR)
+    }
+
+    fn partial_path(&self) -> String {
+        let parts = self
+            .0
+            .split_once(GLOB_PATH_SELECTOR)
+            .unwrap_or((self.0.as_str(), ""));
+        parts.0.to_string()
     }
 
     fn full_path(&self) -> String {
@@ -203,6 +216,12 @@ impl Compiler for StarknetContractCompiler {
             props.build_external_contracts.clone(),
         )?;
 
+        if let Some(external_contracts) = props.build_external_contracts.clone() {
+            for path in external_contracts.iter() {
+                ensure!(path.0.matches(GLOB_PATH_SELECTOR).count() <= 1, format!("external contract path {} has multiple global path selectors, only one '*' selector is allowed", path.0));
+            }
+        }
+
         let contract_paths = contracts
             .iter()
             .map(|decl| decl.module_id().full_path(db.upcast_mut()))
@@ -297,32 +316,40 @@ fn find_project_contracts(
         find_contracts(db, &main_crate_ids)
     };
 
-    let external_contracts = if let Some(external_contracts) = external_contracts {
-        let _ = trace_span!("find_external_contracts").enter();
-        debug!("external contracts selectors: {:?}", external_contracts);
+    let external_contracts: Vec<ContractDeclaration> =
+        if let Some(external_contracts) = external_contracts {
+            let _ = trace_span!("find_external_contracts").enter();
+            debug!("external contracts selectors: {:?}", external_contracts);
 
-        let crate_ids = external_contracts
-            .iter()
-            .map(|selector| selector.package().into())
-            .unique()
-            .map(|package_name: SmolStr| {
-                db.upcast_mut()
-                    .intern_crate(CrateLongId::Real(package_name))
-            })
-            .collect::<Vec<_>>();
-        find_contracts(db, crate_ids.as_ref())
-            .into_iter()
-            .filter(|decl| {
-                external_contracts.iter().any(|selector| {
-                    let contract_path = decl.module_id().full_path(db.upcast());
-                    contract_path == selector.full_path()
+            let crate_ids = external_contracts
+                .iter()
+                .map(|selector| selector.package().into())
+                .unique()
+                .map(|package_name: SmolStr| {
+                    db.upcast_mut()
+                        .intern_crate(CrateLongId::Real(package_name))
                 })
-            })
-            .collect::<Vec<ContractDeclaration>>()
-    } else {
-        debug!("no external contracts selected");
-        Vec::new()
-    };
+                .collect::<Vec<_>>();
+            let contracts = find_contracts(db, crate_ids.as_ref());
+            let filtered_contracts: Vec<ContractDeclaration> = contracts
+                .into_iter()
+                .filter(|decl| {
+                    let contract_path = decl.module_id().full_path(db.upcast());
+                    external_contracts.iter().any(|selector| {
+                        if selector.is_wildcard() {
+                            contract_path.starts_with(&selector.partial_path())
+                        } else {
+                            contract_path == selector.full_path()
+                        }
+                    })
+                })
+                .collect();
+
+            filtered_contracts
+        } else {
+            debug!("no external contracts selected");
+            Vec::new()
+        };
 
     Ok(internal_contracts
         .into_iter()
