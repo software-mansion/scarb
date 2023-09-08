@@ -88,7 +88,7 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
                 .map(|pkg| pkg.manifest.summary.clone())
                 .collect::<Vec<_>>();
 
-            let resolve = resolver::resolve(&members_summaries, &patched).await?;
+            let resolve = resolver::resolve(&members_summaries, &patched, ws.config().ui()).await?;
 
             let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
 
@@ -293,7 +293,6 @@ impl<'a> PackageSolutionCollector<'a> {
         let cairo_plugins = classes
             .remove(&PackageClass::CairoPlugin)
             .unwrap_or_default();
-        let other = classes.remove(&PackageClass::Other).unwrap_or_default();
 
         // Ensure the member is first element, and it is followed by `core`, to ensure the order
         // invariant of the `CompilationUnit::components` field holds.
@@ -311,14 +310,6 @@ impl<'a> PackageSolutionCollector<'a> {
         assert_eq!(packages[0].id, self.member.id);
 
         check_cairo_version_compatibility(&packages, self.ws)?;
-
-        // Print warnings for dependencies that are not usable.
-        for pkg in other {
-            self.ws.config().ui().warn(format!(
-                "{} ignoring invalid dependency `{}` which is missing a lib or cairo-plugin target",
-                self.member.id, pkg.id.name
-            ));
-        }
 
         let cairo_plugins = cairo_plugins
             .into_iter()

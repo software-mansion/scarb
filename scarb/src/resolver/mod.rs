@@ -3,10 +3,11 @@ use std::collections::HashMap;
 use anyhow::{bail, Result};
 use indoc::{formatdoc, indoc};
 use petgraph::graphmap::DiGraphMap;
+use scarb_ui::Ui;
 
 use crate::core::registry::Registry;
 use crate::core::resolver::{DependencyEdge, Resolve};
-use crate::core::{DepKind, ManifestDependency, PackageId, Summary, TargetKind};
+use crate::core::{DepKind, ManifestDependency, PackageId, Summary, Target, TargetKind};
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -22,7 +23,7 @@ use crate::core::{DepKind, ManifestDependency, PackageId, Summary, TargetKind};
 ///     It is also advised to implement internal caching, as the resolver may frequently ask
 ///     repetitive queries.
 #[tracing::instrument(level = "trace", skip_all)]
-pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<Resolve> {
+pub async fn resolve(summaries: &[Summary], registry: &dyn Registry, ui: &Ui) -> Result<Resolve> {
     // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
 
@@ -58,6 +59,15 @@ pub async fn resolve(summaries: &[Summary], registry: &dyn Registry) -> Result<R
                     DepKind::Target(target_kind) => Some(target_kind),
                 };
                 let dep = dep_summary.package_id;
+
+                if !(dep_summary.target_kinds.contains(Target::CAIRO_PLUGIN)
+                    || dep_summary.target_kinds.contains(Target::LIB))
+                {
+                    ui.warn(format!(
+                        "{} ignoring invalid dependency `{}` which is missing a lib or cairo-plugin target",
+                        package_id, dep.name
+                    ));
+                }
 
                 if let Some(existing) = packages.get(dep.name.as_ref()) {
                     if existing.source_id != dep.source_id {
@@ -158,6 +168,8 @@ mod tests {
 
     use indoc::indoc;
     use itertools::Itertools;
+    use scarb_ui::Verbosity::Verbose;
+    use scarb_ui::{OutputFormat, Ui};
     use semver::Version;
     use similar_asserts::assert_serde_eq;
     use tokio::runtime::Builder;
@@ -222,7 +234,8 @@ mod tests {
             })
             .collect_vec();
 
-        runtime.block_on(super::resolve(&summaries, &registry))
+        let ui = Ui::new(Verbose, OutputFormat::Text);
+        runtime.block_on(super::resolve(&summaries, &registry, &ui))
     }
 
     fn package_id<S: AsRef<str>>(name: S) -> PackageId {
