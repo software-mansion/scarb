@@ -259,9 +259,7 @@ fn windows_test() {
         .current_dir(&pt)
         .assert()
         .failure()
-        .stderr_eq(
-            "error: the name `con` cannot be used on Windows, it is a Windows reserved filename",
-        );
+        .stderr_eq("error: cannot use name `con`, it is a Windows reserved filename");
 }
 
 #[test]
