@@ -1,10 +1,12 @@
 use std::io::Read;
 use std::net::TcpListener;
-use std::process::{Child, Stdio};
+use std::process::{Child, Command};
 use std::{env, io};
 
 use assert_fs::TempDir;
-use indoc::{formatdoc, indoc};
+#[cfg(unix)]
+use indoc::indoc;
+use scarb_test_support::cargo::cargo_bin;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::filesystem::{path_with_temp_dir, write_script, write_simple_hello_script};
@@ -128,38 +130,15 @@ fn env_scarb_log_is_passed_verbatim() {
         .success();
 }
 
-// TODO(#129): Fix this test.
 #[test]
-#[ignore] // something doesn't work here
 fn ctrl_c_kills_everyone() {
-    let t = assert_fs::TempDir::new().unwrap();
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap().to_string();
 
-    write_script(
-        "hang-on-tcp",
-        &{
-            let addr = listener.local_addr().unwrap();
-            let ip = addr.ip();
-            let port = addr.port();
-            formatdoc!(
-                r#"
-                #!/usr/bin/env python3
-                import socket
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.connect(("{ip}", {port}))
-                sock.recv(10)
-                raise Exception("recv should never return")
-                "#
-            )
-        },
-        &t,
-    );
-
-    let mut child = Scarb::new()
-        .std()
+    let mut child = Command::new(cargo_bin("scarb-test-support"))
         .arg("hang-on-tcp")
-        .env("PATH", path_with_temp_dir(&t))
-        .stdin(Stdio::piped())
+        .arg("--address")
+        .arg(addr)
         .spawn()
         .unwrap();
 

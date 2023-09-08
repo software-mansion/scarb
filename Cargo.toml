@@ -93,6 +93,7 @@ typed-builder = "0.15.1"
 url = { version = "2.4.1", features = ["serde"] }
 walkdir = "2.4.0"
 which = "4.4.0"
+windows-sys = "0.48.0"
 xshell = "0.2.5"
 xxhash-rust = { version = "0.8.7", features = ["xxh3"] }
 zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
