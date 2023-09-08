@@ -226,6 +226,11 @@ impl PackagesSource for Metadata {
     }
 
     fn runtime_manifest(&self) -> Utf8PathBuf {
-        self.runtime_manifest.clone()
+        let path = self.runtime_manifest.clone();
+        if !path.as_str().is_empty() {
+            path
+        } else {
+            self.workspace.manifest_path.clone()
+        }
     }
 }
