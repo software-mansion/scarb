@@ -18,7 +18,7 @@ impl ScriptDefinition {
         let additional_args = args
             .iter()
             // surround all the additional arguments in double quotes
-            // and santize any command substition
+            // and sanitize any command substitution
             .map(|a| {
                 format!(
                     "\"{}\"",
