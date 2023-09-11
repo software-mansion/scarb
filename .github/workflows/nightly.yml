@@ -48,7 +48,7 @@ jobs:
           echo "nightly_branch=$NIGHTLY_BRANCH" >> $GITHUB_OUTPUT
 
       - name: Upgrade Cairo to latest main commit
-        run: cargo xtask set-cairo-version --branch main
+        run: cargo xtask set-cairo-version --rev $(git ls-remote --refs "https://github.com/starkware-libs/cairo" main | awk '{print $1}')
 
       - name: Set Scarb version
         run: cargo xtask set-scarb-version ${{ env.NIGHTLY_VERSION }}
