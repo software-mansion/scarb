@@ -1,4 +1,4 @@
-use crate::core::Config;
+use crate::core::Workspace;
 use crate::SCARB_ENV;
 use std::collections::HashMap;
 use std::ffi::OsString;
@@ -7,7 +7,8 @@ pub const EXTERNAL_CMD_PREFIX: &str = "scarb-";
 pub const SCARB_MANIFEST_PATH_ENV: &str = "SCARB_MANIFEST_PATH";
 
 /// Defines env vars passed to external subcommands.
-pub fn get_env_vars(config: &Config) -> anyhow::Result<HashMap<OsString, OsString>> {
+pub fn get_env_vars(ws: &Workspace<'_>) -> anyhow::Result<HashMap<OsString, OsString>> {
+    let config = ws.config();
     Ok(HashMap::from_iter([
         ("PATH".into(), config.dirs().path_env()),
         (
@@ -25,7 +26,7 @@ pub fn get_env_vars(config: &Config) -> anyhow::Result<HashMap<OsString, OsStrin
         ),
         (
             "SCARB_TARGET_DIR".into(),
-            config.target_dir().path_unchecked().into(),
+            ws.target_dir().path_unchecked().into(),
         ),
         ("SCARB_PROFILE".into(), config.profile().as_str().into()),
         (

@@ -5,7 +5,7 @@ use cairo_lang_filesystem::cfg::CfgSet;
 use smol_str::SmolStr;
 
 use crate::compiler::Profile;
-use crate::core::{Config, ManifestCompilerConfig, Package, PackageId, Target};
+use crate::core::{ManifestCompilerConfig, Package, PackageId, Target, Workspace};
 use crate::flock::Filesystem;
 use crate::internal::stable_hash::StableHasher;
 
@@ -77,8 +77,8 @@ impl CompilationUnit {
         &self.main_component().target
     }
 
-    pub fn target_dir<'c>(&self, config: &'c Config) -> Filesystem<'c> {
-        config.target_dir().child(self.profile.as_str())
+    pub fn target_dir<'c>(&self, ws: &'c Workspace<'_>) -> Filesystem<'c> {
+        ws.target_dir().child(self.profile.as_str())
     }
 
     pub fn is_sole_for_package(&self) -> bool {

@@ -204,7 +204,7 @@ impl Compiler for StarknetContractCompiler {
             );
         }
 
-        let target_dir = unit.target_dir(ws.config());
+        let target_dir = unit.target_dir(ws);
 
         let compiler_config = build_compiler_config(&unit, ws);
 
