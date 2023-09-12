@@ -13,9 +13,9 @@
   "dependencies": {
     "@octokit/core": "5.0.0",
     "mermaid": "10.4.0",
-    "prettier": "3.0.2",
+    "prettier": "3.0.3",
     "semver": "7.5.4",
-    "vitepress": "1.0.0-rc.10",
+    "vitepress": "1.0.0-rc.12",
     "vitepress-plugin-mermaid": "2.0.14",
     "vue": "3.3.4"
   }
