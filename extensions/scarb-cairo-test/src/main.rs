@@ -11,7 +11,7 @@ use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_starknet::inline_macros::selector::SelectorMacro;
 use cairo_lang_starknet::plugin::StarkNetPlugin;
 use cairo_lang_test_runner::plugin::TestPlugin;
-use cairo_lang_test_runner::TestRunner;
+use cairo_lang_test_runner::{CompiledTestRunner, TestCompiler, TestRunConfig};
 use clap::Parser;
 
 use scarb_metadata::{CompilationUnitMetadata, Metadata, MetadataCommand, PackageId};
@@ -50,6 +50,12 @@ fn main() -> Result<()> {
         .find(|p| p.name == "starknet" && p.source.repr == "std")
         .map(|p| p.id.clone());
 
+    let config = TestRunConfig {
+        filter: args.filter,
+        ignored: args.ignored,
+        include_ignored: args.include_ignored,
+    };
+
     for package in args.packages_filter.match_many(&metadata)? {
         println!("testing {} ...", package.name);
 
@@ -81,15 +87,13 @@ fn main() -> Result<()> {
             bail!("could not compile `{}` due to previous error", package.name);
         }
 
-        let runner = TestRunner {
+        let compiler = TestCompiler {
             db,
             main_crate_ids,
             test_crate_ids,
-            filter: args.filter.clone(),
-            include_ignored: args.include_ignored,
-            ignored: args.ignored,
             starknet,
         };
+        let runner = CompiledTestRunner::new(compiler.build()?, config.clone());
         runner.run()?;
 
         println!();
