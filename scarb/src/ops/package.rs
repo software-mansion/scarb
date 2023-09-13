@@ -1,12 +1,16 @@
 use std::collections::BTreeMap;
+use std::fs::File;
+use std::io::{Seek, SeekFrom};
 
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 use camino::Utf8PathBuf;
 
 use scarb_ui::components::Status;
+use scarb_ui::{HumanBytes, HumanCount};
 
 use crate::core::{Package, PackageId, PackageName, Workspace};
 use crate::flock::FileLockGuard;
+use crate::internal::fsx;
 use crate::{ops, DEFAULT_SOURCE_PATH, MANIFEST_FILE_NAME};
 
 const VERSION: u8 = 1;
@@ -98,13 +102,53 @@ fn package_one_impl(
 ) -> Result<FileLockGuard> {
     let pkg = ws.fetch_package(&pkg_id)?;
 
+    ws.config()
+        .ui()
+        .print(Status::new("Packaging", &pkg_id.to_string()));
+
     // TODO(mkaput): Check metadata
 
     // TODO(#643): Check dirty in VCS (but do not do it when listing!).
 
-    let _recipe = prepare_archive_recipe(pkg, ws)?;
+    let recipe = prepare_archive_recipe(pkg, ws)?;
+    let num_files = recipe.len();
 
-    todo!("Actual packaging is not implemented yet.")
+    // Package up and test a temporary tarball and only move it to the final location if it actually
+    // passes all verification checks. Any previously existing tarball can be assumed as corrupt
+    // or invalid, so we can overwrite it if it exists.
+    let filename = pkg_id.tarball_name();
+    let target_dir = ws.target_dir().child("package");
+
+    let mut dst =
+        target_dir.open_rw(format!(".{filename}"), "package scratch space", ws.config())?;
+
+    dst.set_len(0)
+        .with_context(|| format!("failed to truncate: {filename}"))?;
+
+    let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
+
+    // TODO(mkaput): Verify.
+
+    dst.seek(SeekFrom::Start(0))?;
+
+    fsx::rename(dst.path(), dst.path().with_file_name(filename))?;
+
+    let dst_metadata = dst
+        .metadata()
+        .with_context(|| format!("failed to stat: {}", dst.path()))?;
+    let compressed_size = dst_metadata.len();
+
+    ws.config().ui().print(Status::new(
+        "Packaged",
+        &format!(
+            "{} files, {:.1} ({:.1} compressed)",
+            HumanCount(num_files as u64),
+            HumanBytes(uncompressed_size),
+            HumanBytes(compressed_size),
+        ),
+    ));
+
+    Ok(dst)
 }
 
 fn list_one_impl(
@@ -191,4 +235,73 @@ fn check_no_reserved_files(recipe: &ArchiveRecipe<'_>) -> Result<()> {
 fn normalize_manifest(_pkg: &Package, _ws: &Workspace<'_>) -> Result<Vec<u8>> {
     // TODO(mkaput): Implement this properly.
     Ok("[package]".to_string().into_bytes())
+}
+
+/// Compress and package the recipe, and write it into the given file.
+///
+/// Returns the uncompressed size of the contents of the archive.
+fn tar(
+    pkg_id: PackageId,
+    recipe: ArchiveRecipe<'_>,
+    dst: &mut File,
+    ws: &Workspace<'_>,
+) -> Result<u64> {
+    const COMPRESSION_LEVEL: i32 = 22;
+    let encoder = zstd::stream::Encoder::new(dst, COMPRESSION_LEVEL)?;
+    let mut ar = tar::Builder::new(encoder);
+
+    let base_path = Utf8PathBuf::from(pkg_id.tarball_basename());
+
+    let mut uncompressed_size = 0;
+    for ArchiveFile { path, contents } in recipe {
+        ws.config()
+            .ui()
+            .verbose(Status::new("Archiving", path.as_str()));
+
+        let archive_path = base_path.join(&path);
+        let mut header = tar::Header::new_gnu();
+        match contents {
+            ArchiveFileContents::OnDisk(disk_path) => {
+                let mut file = File::open(&disk_path)
+                    .with_context(|| format!("failed to open for archiving: {disk_path}"))?;
+
+                let metadata = file
+                    .metadata()
+                    .with_context(|| format!("failed to stat: {disk_path}"))?;
+
+                header.set_metadata_in_mode(&metadata, tar::HeaderMode::Deterministic);
+                header.set_cksum();
+
+                ar.append_data(&mut header, &archive_path, &mut file)
+                    .with_context(|| format!("could not archive source file: {disk_path}"))?;
+
+                uncompressed_size += metadata.len();
+            }
+
+            ArchiveFileContents::Generated(generator) => {
+                let contents = generator()?;
+
+                header.set_entry_type(tar::EntryType::file());
+                header.set_mode(0o644);
+                header.set_size(contents.len() as u64);
+
+                // From `set_metadata_in_mode` implementation in `tar` crate:
+                // We could in theory set the mtime to zero here, but not all
+                // tools seem to behave well when ingesting files with a 0
+                // timestamp.
+                header.set_mtime(1);
+
+                header.set_cksum();
+
+                ar.append_data(&mut header, &archive_path, contents.as_slice())
+                    .with_context(|| format!("could not archive source file: {path}"))?;
+
+                uncompressed_size += contents.len() as u64;
+            }
+        }
+    }
+
+    let encoder = ar.into_inner()?;
+    encoder.finish()?;
+    Ok(uncompressed_size)
 }
