@@ -10,7 +10,7 @@ use crate::core::config::Config;
 use crate::core::package::Package;
 use crate::core::PackageId;
 use crate::flock::RootFilesystem;
-use crate::MANIFEST_FILE_NAME;
+use crate::{DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
 
 /// The core abstraction for working with a workspace of packages.
 ///
@@ -19,9 +19,10 @@ use crate::MANIFEST_FILE_NAME;
 pub struct Workspace<'c> {
     config: &'c Config,
     members: BTreeMap<PackageId, Package>,
-    root_package: Option<PackageId>,
     manifest_path: Utf8PathBuf,
     profiles: Vec<Profile>,
+    root_package: Option<PackageId>,
+    target_dir: RootFilesystem,
 }
 
 impl<'c> Workspace<'c> {
@@ -36,11 +37,19 @@ impl<'c> Workspace<'c> {
             .iter()
             .map(|p| (p.id, p.clone()))
             .collect::<BTreeMap<_, _>>();
+        let target_dir = config.target_dir_override().cloned().unwrap_or_else(|| {
+            manifest_path
+                .parent()
+                .expect("parent of manifest path must always exist")
+                .join(DEFAULT_TARGET_DIR_NAME)
+        });
+        let target_dir = RootFilesystem::new_output_dir(target_dir);
         Ok(Self {
             config,
             manifest_path,
-            root_package,
             profiles,
+            root_package,
+            target_dir,
             members: packages,
         })
     }
@@ -52,6 +61,7 @@ impl<'c> Workspace<'c> {
     ) -> Result<Self> {
         let manifest_path = package.manifest_path().to_path_buf();
         let root_package = Some(package.id);
+
         Self::new(
             manifest_path,
             vec![package].as_ref(),
@@ -77,7 +87,7 @@ impl<'c> Workspace<'c> {
     }
 
     pub fn target_dir(&self) -> &RootFilesystem {
-        self.config.target_dir()
+        &self.target_dir
     }
 
     /// Returns the current package of this workspace.

@@ -8,6 +8,7 @@ use indoc::{formatdoc, indoc};
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::filesystem::{path_with_temp_dir, write_script, write_simple_hello_script};
+use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
 #[cfg_attr(
@@ -15,10 +16,14 @@ use scarb_test_support::filesystem::{path_with_temp_dir, write_script, write_sim
     ignore = "This test should write a Rust code, because currently it only assumes Unix."
 )]
 fn subcommand() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     write_simple_hello_script("hello", &t);
 
+    let p = TempDir::new().unwrap();
+    ProjectBuilder::start().build(&p);
+
     Scarb::quick_snapbox()
+        .current_dir(&p)
         .args(["hello", "beautiful", "world"])
         .env("PATH", path_with_temp_dir(&t))
         .assert()
@@ -76,8 +81,12 @@ fn env_variables_are_passed() {
         &t,
     );
 
+    let p = TempDir::new().unwrap();
+    ProjectBuilder::start().build(&p);
+
     Scarb::quick_snapbox()
-        .args(["env"])
+        .current_dir(&p)
+        .arg("env")
         .env("PATH", path_with_temp_dir(&t))
         .assert()
         .success();
@@ -107,7 +116,11 @@ fn env_scarb_log_is_passed_verbatim() {
         &t,
     );
 
+    let p = TempDir::new().unwrap();
+    ProjectBuilder::start().build(&p);
+
     Scarb::quick_snapbox()
+        .current_dir(&p)
         .args(["-vvvv", "env"])
         .env("PATH", path_with_temp_dir(&t))
         .env("SCARB_LOG", "test=filter")
@@ -179,7 +192,7 @@ fn ctrl_c(child: &mut Child) {
     ignore = "This test should write a Rust code, because currently it only assumes Unix."
 )]
 fn can_find_scarb_directory_scripts_without_path() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     write_simple_hello_script("hello", &t);
 
     // Set scarb path to folder containing hello script
@@ -189,7 +202,12 @@ fn can_find_scarb_directory_scripts_without_path() {
         .join("scarb-hello")
         .to_string_lossy()
         .to_string();
+
+    let p = TempDir::new().unwrap();
+    ProjectBuilder::start().build(&p);
+
     Scarb::quick_snapbox()
+        .current_dir(&p)
         .env("SCARB", scarb_path)
         .args(["hello", "beautiful", "world"])
         .assert()

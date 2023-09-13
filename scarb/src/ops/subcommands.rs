@@ -14,14 +14,14 @@ use crate::ops;
 use crate::process::{exec_replace, is_executable};
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV};
 
-#[tracing::instrument(level = "debug", skip(config))]
+#[tracing::instrument(level = "debug", skip(ws))]
 pub fn execute_external_subcommand(
     cmd: &str,
     args: &[OsString],
-    config: &Config,
     custom_env: Option<HashMap<OsString, OsString>>,
+    ws: &Workspace<'_>,
 ) -> Result<()> {
-    let Some(cmd) = find_external_subcommand(cmd, config) else {
+    let Some(cmd) = find_external_subcommand(cmd, ws.config()) else {
         // TODO(mkaput): Reuse clap's no such command message logic here.
         bail!("no such command: `{cmd}`");
     };
@@ -32,7 +32,7 @@ pub fn execute_external_subcommand(
 
     let mut cmd = Command::new(cmd);
     cmd.args(args);
-    cmd.envs(get_env_vars(config)?);
+    cmd.envs(get_env_vars(ws)?);
     if let Some(env) = custom_env {
         cmd.envs(env);
     }
@@ -65,7 +65,7 @@ pub fn execute_test_subcommand(
             &format!("cairo-test {package_name}"),
         ));
         let args = args.iter().map(OsString::from).collect::<Vec<_>>();
-        execute_external_subcommand("cairo-test", args.as_ref(), ws.config(), env)
+        execute_external_subcommand("cairo-test", args.as_ref(), env, ws)
     }
 }
 

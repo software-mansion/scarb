@@ -19,7 +19,7 @@ pub fn execute_script(
     cwd: &Utf8Path,
     custom_env: Option<HashMap<OsString, OsString>>,
 ) -> Result<()> {
-    let env_vars = get_env_vars(ws.config())?
+    let env_vars = get_env_vars(ws)?
         .into_iter()
         .map(|(k, v)| {
             (

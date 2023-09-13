@@ -18,15 +18,14 @@ use crate::compiler::{CompilerRepository, Profile};
 use crate::core::AppDirs;
 #[cfg(doc)]
 use crate::core::Workspace;
-use crate::flock::{AdvisoryLock, RootFilesystem};
+use crate::flock::AdvisoryLock;
 use crate::internal::fsx;
-use crate::DEFAULT_TARGET_DIR_NAME;
 use crate::SCARB_ENV;
 
 pub struct Config {
     manifest_path: Utf8PathBuf,
     dirs: Arc<AppDirs>,
-    target_dir: RootFilesystem,
+    target_dir_override: Option<Utf8PathBuf>,
     app_exe: OnceCell<PathBuf>,
     ui: Ui,
     creation_time: Instant,
@@ -64,14 +63,6 @@ impl Config {
             }
         }
 
-        let target_dir =
-            RootFilesystem::new_output_dir(b.target_dir_override.unwrap_or_else(|| {
-                b.manifest_path
-                    .parent()
-                    .expect("parent of manifest path must always exist")
-                    .join(DEFAULT_TARGET_DIR_NAME)
-            }));
-
         let compilers = b.compilers.unwrap_or_else(CompilerRepository::std);
         let compiler_plugins = b.cairo_plugins.unwrap_or_else(CairoPluginRepository::std);
         let profile: Profile = b.profile.unwrap_or_default();
@@ -83,7 +74,7 @@ impl Config {
         Ok(Self {
             manifest_path: b.manifest_path,
             dirs,
-            target_dir,
+            target_dir_override: b.target_dir_override,
             app_exe: OnceCell::new(),
             ui,
             creation_time,
@@ -116,8 +107,8 @@ impl Config {
         &self.dirs
     }
 
-    pub fn target_dir(&self) -> &RootFilesystem {
-        &self.target_dir
+    pub fn target_dir_override(&self) -> Option<&Utf8PathBuf> {
+        self.target_dir_override.as_ref()
     }
 
     pub fn app_exe(&self) -> Result<&Path> {
