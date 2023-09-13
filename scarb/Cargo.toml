@@ -50,6 +50,7 @@ scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }
 scarb-ui = { path = "../utils/scarb-ui" }
 semver.workspace = true
+serde-untagged.workspace = true
 serde-value.workspace = true
 serde.workspace = true
 serde_json.workspace = true
