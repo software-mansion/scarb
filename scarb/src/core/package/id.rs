@@ -90,6 +90,18 @@ impl PackageId {
             self.source_id.to_pretty_url(),
         )
     }
+
+    /// Basename of the tarball that would be created for this package, e.g. `foo-1.2.3`.
+    pub fn tarball_basename(&self) -> String {
+        format!("{}-{}", self.name, self.version)
+    }
+
+    /// Filename of the tarball that would be created for this package, e.g. `foo-1.2.3.tar.zst`.
+    pub fn tarball_name(&self) -> String {
+        let mut base = self.tarball_basename();
+        base.push_str(".tar.zst");
+        base
+    }
 }
 
 impl Deref for PackageId {
@@ -210,5 +222,14 @@ mod tests {
         let source_id = SourceId::mock_path();
         let pkg_id = PackageId::new(name, version, source_id);
         assert_eq!(format!("foo v1.0.0 ({source_id})"), pkg_id.to_string());
+    }
+
+    #[test]
+    fn tarball_name() {
+        let name = PackageName::new("foo");
+        let version = Version::new(1, 0, 0);
+        let source_id = SourceId::mock_path();
+        let pkg_id = PackageId::new(name, version, source_id);
+        assert_eq!("foo-1.0.0.tar.zst", pkg_id.tarball_name());
     }
 }
