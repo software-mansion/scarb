@@ -324,7 +324,7 @@ pub struct GitRefGroup {
 #[group(multiple = false)]
 pub struct ProfileSpec {
     /// Specify profile to use by name.
-    #[arg(short = 'P', long)]
+    #[arg(short = 'P', long, env = "SCARB_PROFILE")]
     pub profile: Option<SmolStr>,
     /// Use release profile.
     #[arg(long, hide_short_help = true)]
