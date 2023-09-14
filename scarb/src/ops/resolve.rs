@@ -16,6 +16,7 @@ use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::core::{
     DepKind, DependencyVersionReq, ManifestDependency, PackageName, SourceId, Target, TargetKind,
+    TestTargetProps, TestTargetType,
 };
 use crate::internal::to_version::ToVersion;
 use crate::{resolver, DEFAULT_SOURCE_PATH};
@@ -158,8 +159,8 @@ fn generate_cairo_compilation_units(
 
             let cfg_set = build_cfg_set(member_target);
 
-            let member_lib_target = member.target(Target::LIB).cloned();
-            let is_integration_test = is_integration_test(member_target, member_lib_target);
+            let props: TestTargetProps = member_target.props()?;
+            let is_integration_test = props.test_type == TestTargetType::Integration;
             let test_package_id = member.id.for_test_target(member_target.name.clone());
 
             let mut components: Vec<CompilationUnitComponent> = packages
@@ -318,12 +319,6 @@ impl<'a> PackageSolutionCollector<'a> {
 
         Ok((packages, cairo_plugins))
     }
-}
-fn is_integration_test(target: &Target, lib_target: Option<Target>) -> bool {
-    let lib_target_source_path = lib_target
-        .map(|target| target.source_path.to_string())
-        .unwrap_or(DEFAULT_SOURCE_PATH.to_string());
-    target.is_test() && !target.source_path.ends_with(lib_target_source_path)
 }
 
 /// Build a set of `cfg` items to enable while building the compilation unit.

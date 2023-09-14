@@ -2,6 +2,7 @@ use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
 
+use crate::core::TomlExternalTargetParams;
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
@@ -107,5 +108,33 @@ impl Hash for TargetInner {
         self.name.hash(state);
         self.source_path.hash(state);
         self.params.to_string().hash(state);
+    }
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TestTargetProps {
+    pub test_type: TestTargetType,
+}
+
+impl TestTargetProps {
+    pub fn new(test_type: TestTargetType) -> Self {
+        Self { test_type }
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum TestTargetType {
+    #[default]
+    Unit,
+    Integration,
+}
+
+impl TryInto<TomlExternalTargetParams> for TestTargetProps {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> Result<TomlExternalTargetParams, Self::Error> {
+        Ok(toml::Value::try_into(toml::Value::try_from(self)?)?)
     }
 }

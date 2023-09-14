@@ -20,7 +20,10 @@ use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Target};
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
-use crate::core::{DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName};
+use crate::core::{
+    DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName, TestTargetProps,
+    TestTargetType,
+};
 use crate::internal::fsx;
 use crate::internal::serdex::{toml_merge, RelativeUtf8PathBuf};
 use crate::internal::to_version::ToVersion;
@@ -615,7 +618,7 @@ impl TomlManifest {
             let target_config = TomlTarget::<TomlExternalTargetParams> {
                 name: Some(target_name),
                 source_path,
-                params: TomlExternalTargetParams::default(),
+                params: TestTargetProps::default().try_into()?,
             };
             targets.extend(Self::collect_target::<TomlExternalTargetParams>(
                 Target::TEST,
@@ -639,7 +642,7 @@ impl TomlManifest {
                     let target_config = TomlTarget::<TomlExternalTargetParams> {
                         name: Some(file_stem.into()),
                         source_path: Some(source_path),
-                        params: TomlExternalTargetParams::default(),
+                        params: TestTargetProps::new(TestTargetType::Integration).try_into()?,
                     };
                     targets.extend(Self::collect_target(
                         Target::TEST,
