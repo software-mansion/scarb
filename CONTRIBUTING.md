@@ -2,7 +2,7 @@
 
 Scarb is actively developed and open for contributions!
 Want to get started?
-Grab any unassigned issue labeled with [`good-first-issue`](https://github.com/orgs/software-mansion/projects/4/views/9)!
+Grab any unassigned issue labeled with [`good-first-issue`](https://github.com/software-mansion/scarb/labels/good%20first%20issue)!
 Need some guidance?
 Reach out to other developers on [Telegram](https://t.me/+G_YxIv-XTFlhNWU0) or open a [discussion](https://github.com/software-mansion/scarb/discussions) on GitHub!
 
@@ -46,12 +46,13 @@ Otherwise, it won't be possible to merge your contribution.
 ### Git
 
 Try to make small PRs, that could be squashed into a single commit.
-For larger for, try to make your commits small, self-contained and well described.
+For larger work, try to make your commits small, self-contained and well described.
 Each commit should pass lints and tests.
-We are using rebase for merging pull requests, and thus we do not allow merge commits.
+Then, set up a stack of pull requests, separate PR for each commit, and pointing to the previous one.
 
-While your PR is being reviewed on, you can push merge commits and use [`git commit --fixup`](https://git-scm.com/docs/git-commit/2.32.0#Documentation/git-commit.txt---fixupamendrewordltcommitgt) to push further changes to your commits.
-Then, when your PR will be accepted, you can autosquash your fixups with [`git rebase --autosquash`](https://git-scm.com/docs/git-rebase#Documentation/git-rebase.txt---autosquash).
+While your PR is being reviewed on, you can push merge commits and
+use [`git commit --fixup`](https://git-scm.com/docs/git-commit/2.32.0#Documentation/git-commit.txt---fixupamendrewordltcommitgt)
+to push further changes to your commits.
 
 ---
 
