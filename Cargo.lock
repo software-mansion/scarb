@@ -3865,6 +3865,7 @@ dependencies = [
  "serde_json",
  "serde_test",
  "similar-asserts",
+ "smallvec",
  "smol_str",
  "snapbox",
  "test-case",
