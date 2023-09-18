@@ -1,7 +1,6 @@
 [package]
 name = "xtask"
-# Do not diverge this from Scarb's version. For simplicity we assume that both have same version in several commands.
-version.workspace = true
+version = "1.0.0"
 edition.workspace = true
 publish = false
 
