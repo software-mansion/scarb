@@ -38,6 +38,7 @@ cairo-lang-semantic = { git = "https://github.com/starkware-libs/cairo", branch 
 cairo-lang-sierra = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
 cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
 cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
+cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
 cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", branch = "main", features = ["env_logger"] }
 camino = { version = "1.1.6", features = ["serde1"] }

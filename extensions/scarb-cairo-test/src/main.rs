@@ -10,7 +10,7 @@ use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_starknet::inline_macros::selector::SelectorMacro;
 use cairo_lang_starknet::plugin::StarkNetPlugin;
-use cairo_lang_test_runner::plugin::TestPlugin;
+use cairo_lang_test_plugin::TestPlugin;
 use cairo_lang_test_runner::{CompiledTestRunner, TestCompiler, TestRunConfig};
 use clap::Parser;
 
