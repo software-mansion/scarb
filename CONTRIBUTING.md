@@ -1,9 +1,14 @@
 # Contribution Guideline
 
 Scarb is actively developed and open for contributions!
-Want to get started?
-Grab any unassigned issue labeled with [`good-first-issue`](https://github.com/software-mansion/scarb/labels/good%20first%20issue)!
-Need some guidance?
+
+*Want to get started?*
+Grab any unassigned issue labeled with [`help-wanted`](https://github.com/software-mansion/scarb/labels/help%20wanted)!
+
+*Looking for some easy warmup tasks?*
+Check out issues labeled with [`good-first-issue`](https://github.com/software-mansion/scarb/labels/good%20first%20issue)!
+
+*Need some guidance?*
 Reach out to other developers on [Telegram](https://t.me/+G_YxIv-XTFlhNWU0) or open a [discussion](https://github.com/software-mansion/scarb/discussions) on GitHub!
 
 ## Environment setup
