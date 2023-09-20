@@ -7,3 +7,6 @@ publish = false
 
 [build-dependencies]
 cargo_metadata.workspace = true
+
+[dev-dependencies]
+semver.workspace = true

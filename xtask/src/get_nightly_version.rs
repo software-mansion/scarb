@@ -3,6 +3,8 @@ use clap::Parser;
 use semver::{BuildMetadata, Prerelease, Version};
 use time::OffsetDateTime;
 
+use crate::set_scarb_version::expected_scarb_version;
+
 #[derive(Parser)]
 pub struct Args {
     #[arg(short, long)]
@@ -14,18 +16,17 @@ pub fn main(args: Args) -> Result<()> {
     if args.tag {
         println!("{tag}");
     } else {
-        let version = nightly_version();
+        let version = nightly_version()?;
         println!("{version}");
     }
     Ok(())
 }
 
-pub fn nightly_version() -> Version {
-    // NOTE: We are not using scarb-build-metadata here to reduce compilation times of xtask crate.
-    let mut version = Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
+pub fn nightly_version() -> Result<Version> {
+    let mut version = expected_scarb_version()?;
     version.pre = Prerelease::EMPTY;
     version.build = BuildMetadata::new(&nightly_tag()).unwrap();
-    version
+    Ok(version)
 }
 
 pub fn nightly_tag() -> String {

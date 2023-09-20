@@ -4,6 +4,8 @@ use semver::Version;
 use toml_edit::{Document, InlineTable, Value};
 use xshell::{cmd, Shell};
 
+use crate::set_scarb_version;
+
 #[derive(Parser)]
 pub struct Args {
     #[command(flatten)]
@@ -87,6 +89,9 @@ pub fn main(args: Args) -> Result<()> {
         sh.write_file("Cargo.toml", cargo_toml.to_string())?;
 
         cmd!(sh, "cargo fetch").run()?;
+
+        eprintln!("$ cargo xtask set-scarb-version");
+        set_scarb_version::main(Default::default())?;
     }
 
     Ok(())

@@ -12,7 +12,7 @@ pub fn main(_: Args) -> Result<()> {
 
     let sh = Shell::new()?;
 
-    let version = nightly_version();
+    let version = nightly_version()?;
 
     let scarb_commit = cmd!(sh, "git log -1 --date=short --format=%H").read()?;
 

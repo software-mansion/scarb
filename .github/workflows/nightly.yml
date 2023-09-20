@@ -31,6 +31,12 @@ jobs:
       - name: Build xtasks
         run: cargo build -p xtask
 
+      - name: Upgrade Cairo to latest main commit
+        run: cargo xtask set-cairo-version --rev $(git ls-remote --refs "https://github.com/starkware-libs/cairo" main | awk '{print $1}')
+
+      - name: Rebuild xtasks after Cargo.toml changes
+        run: cargo build -p xtask
+
       - name: Determine nightly version
         id: version
         shell: bash
@@ -47,11 +53,11 @@ jobs:
           echo "nightly_version=$NIGHTLY_VERSION" >> $GITHUB_OUTPUT
           echo "nightly_branch=$NIGHTLY_BRANCH" >> $GITHUB_OUTPUT
 
-      - name: Upgrade Cairo to latest main commit
-        run: cargo xtask set-cairo-version --rev $(git ls-remote --refs "https://github.com/starkware-libs/cairo" main | awk '{print $1}')
+      - name: Set Scarb version build metadata
+        run: cargo xtask set-scarb-version --build ${{ env.NIGHTLY_TAG }}
 
-      - name: Set Scarb version
-        run: cargo xtask set-scarb-version ${{ env.NIGHTLY_VERSION }}
+      - name: Rebuild xtasks after Cargo.toml changes
+        run: cargo build -p xtask
 
       - name: Compose release notes
         run: cargo xtask nightly-release-notes > NIGHTLY_RELEASE_NOTES.md

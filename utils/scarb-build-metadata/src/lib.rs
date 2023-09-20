@@ -26,3 +26,23 @@ pub const CAIRO_COMMIT_HASH: Option<CommitHash> = match (
     _ => panic!("Either SCARB_CAIRO_COMMIT_HASH or SCARB_CAIRO_SHORT_COMMIT_HASH is missing."),
 };
 pub const CAIRO_COMMIT_REV: &str = env!("SCARB_CAIRO_COMMIT_REV");
+
+#[cfg(test)]
+mod tests {
+    use semver::{BuildMetadata, Version};
+
+    /// Checks that package version in [`Scarb.toml`] is exactly the same as the version of Cairo,
+    /// because this project is tightly coupled with it.
+    #[test]
+    fn scarb_version_is_bound_to_cairo_version() {
+        let normalize = |v| {
+            let mut v = Version::parse(v).unwrap();
+            v.build = BuildMetadata::EMPTY;
+            v.to_string()
+        };
+
+        let scarb_version = normalize(crate::SCARB_VERSION);
+        let cairo_version = normalize(crate::CAIRO_VERSION);
+        assert_eq!(scarb_version, cairo_version);
+    }
+}
