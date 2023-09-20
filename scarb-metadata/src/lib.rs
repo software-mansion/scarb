@@ -381,7 +381,7 @@ pub struct ManifestMetadata {
     pub license_file: Option<String>,
     /// A path to a file in the package root (relative to its `Scarb.toml`) that contains general
     /// information about the package.
-    pub readme: Option<Utf8PathBuf>,
+    pub readme: Option<String>,
     /// A URL to the source repository for this package.
     pub repository: Option<String>,
     /// A map of additional internet links related to this package.
