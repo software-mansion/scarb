@@ -12,7 +12,6 @@ pub use remove::RemoveDependency;
 
 use crate::core::Config;
 use crate::internal::fsx;
-use crate::internal::fsx::PathBufUtf8Ext;
 
 mod add;
 mod dep_id;
@@ -40,7 +39,7 @@ pub fn edit(
     ops: Vec<Box<dyn Op>>,
     opts: EditManifestOptions<'_>,
 ) -> Result<()> {
-    let manifest_path = fsx::canonicalize(manifest_path)?.try_into_utf8()?;
+    let manifest_path = fsx::canonicalize_utf8(manifest_path)?;
 
     let original_raw_manifest = fsx::read_to_string(&manifest_path)?;
     let mut doc = Document::from_str(&original_raw_manifest)

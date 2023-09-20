@@ -7,7 +7,7 @@ use camino::Utf8Path;
 use itertools::Itertools;
 use serde::de::DeserializeOwned;
 
-pub use internal_fsx::{PathBufUtf8Ext, PathUtf8Ext};
+pub use internal_fsx::{canonicalize, canonicalize_utf8, PathBufUtf8Ext, PathUtf8Ext};
 
 #[allow(unused)]
 #[path = "../../../scarb/src/internal/fsx.rs"]

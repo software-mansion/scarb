@@ -1,0 +1,8 @@
+disallowed-methods = [
+    { path = "std::fs::canonicalize", reason = "use fsx::canonicalize or fsx::canonicalize_utf8" },
+    { path = "std::path::Path::canonicalize", reason = "use fsx::canonicalize or fsx::canonicalize_utf8" },
+    { path = "camino::Utf8Path::canonicalize", reason = "use fsx::canonicalize or fsx::canonicalize_utf8" },
+    { path = "camino::Utf8Path::canonicalize_utf8", reason = "use fsx::canonicalize or fsx::canonicalize_utf8" },
+    { path = "camino::Utf8PathBuf::canonicalize", reason = "use fsx::canonicalize or fsx::canonicalize_utf8" },
+    { path = "camino::Utf8PathBuf::canonicalize_utf8", reason = "use fsx::canonicalize or fsx::canonicalize_utf8" },
+]

@@ -1,9 +1,10 @@
 use assert_fs::fixture::{PathChild, PathCreateDir};
 use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_metadata::Metadata;
 
+use scarb_metadata::Metadata;
 use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::fsx;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
@@ -79,11 +80,14 @@ fn unify_target_dir() {
 
     assert_eq!(root_metadata.target_dir, pkg_metadata.target_dir);
     assert_eq!(
-        root_metadata
-            .target_dir
-            .unwrap()
-            .to_owned()
-            .into_std_path_buf(),
-        t.child("target").canonicalize().unwrap()
+        fsx::canonicalize(
+            root_metadata
+                .target_dir
+                .unwrap()
+                .to_owned()
+                .into_std_path_buf()
+        )
+        .unwrap(),
+        fsx::canonicalize(t.child("target")).unwrap()
     );
 }
