@@ -22,7 +22,6 @@ use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName};
 use crate::internal::fsx;
-use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::serdex::{toml_merge, RelativeUtf8PathBuf};
 use crate::internal::to_version::ToVersion;
 use crate::{DEFAULT_SOURCE_PATH, MANIFEST_FILE_NAME};
@@ -621,10 +620,8 @@ impl TomlManifest {
         let source_path = target
             .source_path
             .clone()
-            .map(|p| root.as_std_path().to_path_buf().join(p))
-            .map(fsx::canonicalize)
-            .transpose()?
-            .map(|p| p.try_into_utf8())
+            .map(|p| root.join_os(p))
+            .map(fsx::canonicalize_utf8)
             .transpose()?
             .unwrap_or(default_source_path.to_path_buf());
 
@@ -767,18 +764,12 @@ pub fn readme_for_package(
 fn abs_canonical_path(prefix: &Utf8Path, readme: Option<&Utf8Path>) -> Result<Option<Utf8PathBuf>> {
     match readme {
         None => Ok(None),
-        Some(readme) => prefix
-            .parent()
-            .unwrap()
-            .join(readme)
-            .canonicalize_utf8()
-            .map(Some)
-            .with_context(|| {
-                format!(
-                    "failed to find the readme at {}",
-                    prefix.parent().unwrap().join(readme)
-                )
-            }),
+        Some(readme) => {
+            let path = prefix.parent().unwrap().join(readme);
+            let path = fsx::canonicalize_utf8(&path)
+                .with_context(|| format!("failed to find the readme at {path}"))?;
+            Ok(Some(path))
+        }
     }
 }
 

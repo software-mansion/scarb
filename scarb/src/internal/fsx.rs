@@ -8,6 +8,8 @@ use anyhow::{anyhow, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 
 /// Equivalent to [`fs::canonicalize`] with better error messages.
+///
+/// Uses [`dunce`] to generate more familiar paths on Windows.
 pub fn canonicalize(p: impl AsRef<Path>) -> Result<PathBuf> {
     return inner(p.as_ref());
 
@@ -15,6 +17,11 @@ pub fn canonicalize(p: impl AsRef<Path>) -> Result<PathBuf> {
         dunce::canonicalize(p)
             .with_context(|| format!("failed to get absolute path of `{}`", p.display()))
     }
+}
+
+/// Equivalent to [`fs::canonicalize`], but for Utf-8 paths, with better error messages.
+pub fn canonicalize_utf8(p: impl AsRef<Path>) -> Result<Utf8PathBuf> {
+    canonicalize(p)?.try_into_utf8()
 }
 
 /// Equivalent to [`fs::create_dir_all`] with better error messages.

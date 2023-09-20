@@ -5,7 +5,6 @@ use itertools::Itertools;
 
 use crate::core::{Config, PackageName};
 use crate::internal::fsx;
-use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::restricted_names;
 use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
 
@@ -126,11 +125,7 @@ fn mk(
     // Create project directory in case we are called from `new` op.
     fsx::create_dir_all(&path)?;
 
-    let canonical_path = if let Ok(canonicalize_path) = fsx::canonicalize(&path) {
-        canonicalize_path.try_into_utf8()?
-    } else {
-        path
-    };
+    let canonical_path = fsx::canonicalize_utf8(&path).unwrap_or(path);
 
     init_vcs(&canonical_path, version_control)?;
     write_vcs_ignore(&canonical_path, config, version_control)?;

@@ -165,9 +165,7 @@ fn find_member_paths(
             // Look for manifest file, continuing if it does not exist.
             let path = path.join(MANIFEST_FILE_NAME);
             if path.is_file() {
-                let path = fsx::canonicalize(path)?;
-                let path = path.try_into_utf8()?;
-
+                let path = fsx::canonicalize_utf8(path)?;
                 paths.push(path)
             } else {
                 config.ui().warn(format!(

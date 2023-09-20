@@ -2,12 +2,13 @@ use std::collections::BTreeMap;
 
 use assert_fs::prelude::*;
 use indoc::indoc;
+use serde_json::json;
+
 use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
 use scarb_test_support::command::{CommandExt, Scarb};
-use scarb_test_support::fsx::PathBufUtf8Ext;
+use scarb_test_support::fsx;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
-use serde_json::json;
 
 fn packages_by_name(meta: Metadata) -> BTreeMap<String, PackageMetadata> {
     meta.packages
@@ -285,10 +286,7 @@ fn manifest_targets_and_metadata() {
             .license(Some("MIT License".to_string()))
             .license_file(Some("./license.md".to_string()))
             .readme(
-                t.join("README.md")
-                    .canonicalize()
-                    .unwrap()
-                    .try_into_utf8()
+                fsx::canonicalize_utf8(t.join("README.md"))
                     .unwrap()
                     .into_string()
             )
@@ -617,10 +615,7 @@ fn infer_readme_simple() {
             .manifest_metadata
             .readme,
         Some(
-            t.join("README")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.join("README"))
                 .unwrap()
                 .into_string()
         )
@@ -643,10 +638,7 @@ fn infer_readme_simple() {
             .manifest_metadata
             .readme,
         Some(
-            t.join("README.txt")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.join("README.txt"))
                 .unwrap()
                 .into_string()
         )
@@ -669,10 +661,7 @@ fn infer_readme_simple() {
             .manifest_metadata
             .readme,
         Some(
-            t.join("README.md")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.join("README.md"))
                 .unwrap()
                 .into_string()
         )
@@ -711,10 +700,7 @@ fn infer_readme_simple() {
             .manifest_metadata
             .readme,
         Some(
-            t.join("a/b/c/MEREAD.md")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.join("a/b/c/MEREAD.md"))
                 .unwrap()
                 .into_string()
         )
@@ -797,10 +783,7 @@ fn infer_readme_simple_bool() {
             .manifest_metadata
             .readme,
         Some(
-            t.join("README.md")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.join("README.md"))
                 .unwrap()
                 .into_string()
         )
@@ -986,10 +969,7 @@ fn infer_readme_workspace() {
     assert_eq!(
         packages.get("hello").unwrap().manifest_metadata.readme,
         Some(
-            t.join("MEREAD.md")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.join("MEREAD.md"))
                 .unwrap()
                 .into_string()
         )
@@ -997,10 +977,7 @@ fn infer_readme_workspace() {
     assert_eq!(
         packages.get("t7").unwrap().manifest_metadata.readme,
         Some(
-            t.join("MEREAD.md")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.join("MEREAD.md"))
                 .unwrap()
                 .into_string()
         )
@@ -1008,10 +985,7 @@ fn infer_readme_workspace() {
     assert_eq!(
         packages.get("t1").unwrap().manifest_metadata.readme,
         Some(
-            t.join("MEREAD.md")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.join("MEREAD.md"))
                 .unwrap()
                 .into_string()
         )
@@ -1019,11 +993,7 @@ fn infer_readme_workspace() {
     assert_eq!(
         packages.get("t2").unwrap().manifest_metadata.readme,
         Some(
-            t.child("t2")
-                .join("README.md")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.child("t2").join("README.md"))
                 .unwrap()
                 .into_string()
         )
@@ -1031,11 +1001,7 @@ fn infer_readme_workspace() {
     assert_eq!(
         packages.get("t3").unwrap().manifest_metadata.readme,
         Some(
-            t.child("t3")
-                .join("README.txt")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.child("t3").join("README.txt"))
                 .unwrap()
                 .into_string()
         )
@@ -1043,11 +1009,7 @@ fn infer_readme_workspace() {
     assert_eq!(
         packages.get("t4").unwrap().manifest_metadata.readme,
         Some(
-            t.child("t4")
-                .join("TEST.txt")
-                .canonicalize()
-                .unwrap()
-                .try_into_utf8()
+            fsx::canonicalize_utf8(t.child("t4").join("TEST.txt"))
                 .unwrap()
                 .into_string()
         )

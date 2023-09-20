@@ -7,7 +7,6 @@ use url::Url;
 
 use crate::core::{GitReference, PackageName};
 use crate::internal::fsx;
-use crate::internal::fsx::PathBufUtf8Ext;
 use crate::sources::canonical_url::CanonicalUrl;
 
 use super::tomlx::get_table_mut;
@@ -115,7 +114,7 @@ impl Dep {
         });
 
         let source: Box<dyn Source> = if let Some(path) = op.path {
-            let path = fsx::canonicalize(path)?.try_into_utf8()?;
+            let path = fsx::canonicalize_utf8(path)?;
             let path = path_value(ctx.manifest_path, &path);
 
             Box::new(PathSource { version, path })
