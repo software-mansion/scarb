@@ -19,7 +19,8 @@ pub fn execute_script(
     cwd: &Utf8Path,
     custom_env: Option<HashMap<OsString, OsString>>,
 ) -> Result<()> {
-    let env_vars = get_env_vars(ws)?
+    let target_dir = Some(ws.target_dir().path_unchecked().to_owned());
+    let env_vars = get_env_vars(ws.config(), target_dir)?
         .into_iter()
         .map(|(k, v)| {
             (
