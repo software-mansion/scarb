@@ -154,3 +154,18 @@ jobs:
       - name: Delete nightly branch
         run: |
           git push origin -d ${{ needs.prepare.outputs.nightly_branch }}
+
+  notify_failed:
+    runs-on: ubuntu-latest
+    if: always() && contains(needs.*.result, 'failure')
+    needs: [ cleanup, upload, release, check, prepare ]
+    steps:
+      - name: Notifying about Nightly fail!
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_FAILURE_WEBHOOK_URL }}
+        with:
+          payload: |
+            {
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
