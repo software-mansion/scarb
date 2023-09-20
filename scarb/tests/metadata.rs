@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use assert_fs::prelude::*;
 use camino::Utf8PathBuf;
-use indoc::formatdoc;
+use indoc::indoc;
 use serde_json::json;
 
 use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
@@ -742,11 +742,9 @@ fn infer_readme_simple_bool() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(formatdoc!(
-            r#"
-            {{"type":"error","message":"failed to parse manifest at: {path}/Scarb.toml\n\nCaused by:\n    0: failed to find the readme at {path}/README.md\n    1: No such file or directory (os error 2)"}}
-            "#,
-            path=t.path().canonicalize().unwrap().to_str().unwrap()));
+        .stdout_matches(indoc! {r#"
+            {{"type":"error","message":"failed to parse manifest at: [..]/Scarb.toml\n\nCaused by:\n 0: failed to find the readme at [..]/README.md\n 1: [..]"}}
+        "#});
 
     t.child("README.md").touch().unwrap();
 

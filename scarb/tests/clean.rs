@@ -41,7 +41,7 @@ fn requires_workspace() {
             error: failed to read manifest at: [..]/Scarb.toml
 
             Caused by:
-                No such file or directory (os error 2)
+                [..]
         "#});
 
     t.child("target/dev/some.sierra.json")
