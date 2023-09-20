@@ -104,7 +104,14 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
         .keywords(package.manifest.metadata.keywords.clone())
         .license(package.manifest.metadata.license.clone())
         .license_file(package.manifest.metadata.license_file.clone())
-        .readme(package.manifest.metadata.readme.clone())
+        .readme(
+            package
+                .manifest
+                .metadata
+                .readme
+                .as_ref()
+                .map(ToString::to_string),
+        )
         .repository(package.manifest.metadata.repository.clone())
         .urls(package.manifest.metadata.urls.clone())
         .tool(

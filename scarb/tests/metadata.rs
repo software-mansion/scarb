@@ -1,14 +1,13 @@
 use std::collections::BTreeMap;
 
 use assert_fs::prelude::*;
-use camino::Utf8PathBuf;
 use indoc::indoc;
-use serde_json::json;
-
 use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
 use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::fsx::PathBufUtf8Ext;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use serde_json::json;
 
 fn packages_by_name(meta: Metadata) -> BTreeMap<String, PackageMetadata> {
     meta.packages
@@ -285,7 +284,14 @@ fn manifest_targets_and_metadata() {
             ]))
             .license(Some("MIT License".to_string()))
             .license_file(Some("./license.md".to_string()))
-            .readme(Utf8PathBuf::from_path_buf(t.join("README.md").canonicalize().unwrap()).ok())
+            .readme(
+                t.join("README.md")
+                    .canonicalize()
+                    .unwrap()
+                    .try_into_utf8()
+                    .unwrap()
+                    .into_string()
+            )
             .repository(Some("https://github.com/johndoe/repo".to_string()))
             .tool(Some(BTreeMap::from_iter([
                 ("meta".to_string(), json!("data")),
@@ -610,7 +616,14 @@ fn infer_readme_simple() {
             .unwrap()
             .manifest_metadata
             .readme,
-        Utf8PathBuf::from_path_buf(t.join("README").canonicalize().unwrap()).ok()
+        Some(
+            t.join("README")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
 
     t.child("README.txt").touch().unwrap();
@@ -629,7 +642,14 @@ fn infer_readme_simple() {
             .unwrap()
             .manifest_metadata
             .readme,
-        Utf8PathBuf::from_path_buf(t.join("README.txt").canonicalize().unwrap()).ok()
+        Some(
+            t.join("README.txt")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
 
     t.child("README.md").touch().unwrap();
@@ -648,7 +668,14 @@ fn infer_readme_simple() {
             .unwrap()
             .manifest_metadata
             .readme,
-        Utf8PathBuf::from_path_buf(t.join("README.md").canonicalize().unwrap()).ok()
+        Some(
+            t.join("README.md")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
 
     t.child("Scarb.toml")
@@ -683,7 +710,14 @@ fn infer_readme_simple() {
             .unwrap()
             .manifest_metadata
             .readme,
-        Utf8PathBuf::from_path_buf(t.join("a/b/c/MEREAD.md").canonicalize().unwrap()).ok()
+        Some(
+            t.join("a/b/c/MEREAD.md")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
 }
 
@@ -762,7 +796,14 @@ fn infer_readme_simple_bool() {
             .unwrap()
             .manifest_metadata
             .readme,
-        Utf8PathBuf::from_path_buf(t.join("README.md").canonicalize().unwrap()).ok()
+        Some(
+            t.join("README.md")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
 }
 
@@ -944,27 +985,72 @@ fn infer_readme_workspace() {
     let packages = packages_by_name(meta);
     assert_eq!(
         packages.get("hello").unwrap().manifest_metadata.readme,
-        Utf8PathBuf::from_path_buf(t.join("MEREAD.md").canonicalize().unwrap()).ok()
+        Some(
+            t.join("MEREAD.md")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
     assert_eq!(
         packages.get("t7").unwrap().manifest_metadata.readme,
-        Utf8PathBuf::from_path_buf(t.join("MEREAD.md").canonicalize().unwrap()).ok()
+        Some(
+            t.join("MEREAD.md")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
     assert_eq!(
         packages.get("t1").unwrap().manifest_metadata.readme,
-        Utf8PathBuf::from_path_buf(t.join("MEREAD.md").canonicalize().unwrap()).ok()
+        Some(
+            t.join("MEREAD.md")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
     assert_eq!(
         packages.get("t2").unwrap().manifest_metadata.readme,
-        Utf8PathBuf::from_path_buf(t.child("t2").join("README.md").canonicalize().unwrap()).ok()
+        Some(
+            t.child("t2")
+                .join("README.md")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
     assert_eq!(
         packages.get("t3").unwrap().manifest_metadata.readme,
-        Utf8PathBuf::from_path_buf(t.child("t3").join("README.txt").canonicalize().unwrap()).ok()
+        Some(
+            t.child("t3")
+                .join("README.txt")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
     assert_eq!(
         packages.get("t4").unwrap().manifest_metadata.readme,
-        Utf8PathBuf::from_path_buf(t.child("t4").join("TEST.txt").canonicalize().unwrap()).ok()
+        Some(
+            t.child("t4")
+                .join("TEST.txt")
+                .canonicalize()
+                .unwrap()
+                .try_into_utf8()
+                .unwrap()
+                .into_string()
+        )
     );
     assert_eq!(packages.get("t5").unwrap().manifest_metadata.readme, None);
     assert_eq!(packages.get("t6").unwrap().manifest_metadata.readme, None);
