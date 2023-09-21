@@ -19,3 +19,4 @@ pub(crate) mod registry;
 pub(crate) mod resolver;
 pub(crate) mod source;
 pub(crate) mod workspace;
+pub(crate) mod lockfile;

@@ -205,6 +205,7 @@ fn generate_cairo_compilation_units(
                         package.fetch_target(Target::LIB).unwrap()
                     };
                     let target = target.clone();
+                    println!("{:?}", target);
 
                     CompilationUnitComponent { package, target }
                 })
