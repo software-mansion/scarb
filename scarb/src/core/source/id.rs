@@ -162,11 +162,15 @@ impl SourceId {
         self.kind == SourceKind::Registry
     }
 
+    pub fn empty_path() -> Self {
+        Self::new(Url::parse("file:///empty").unwrap(), SourceKind::Path).unwrap()
+    }
+
     pub fn is_default_registry(self) -> bool {
         self == Self::default_registry()
     }
 
-    pub fn is_path(self) -> bool {
+    pub fn is_path(&self) -> bool {
         self.kind == SourceKind::Path
     }
 
