@@ -13,6 +13,7 @@ pub use workspace::{Utf8PathWorkspaceExt, Workspace};
 pub(crate) mod config;
 mod dirs;
 pub mod errors;
+pub(crate) mod lockfile;
 pub(crate) mod manifest;
 pub(crate) mod package;
 pub(crate) mod registry;
