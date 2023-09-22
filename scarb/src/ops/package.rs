@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
 use indoc::writedoc;
 
@@ -13,7 +13,7 @@ use crate::core::publishing::manifest_normalization::prepare_manifest_for_publis
 use crate::core::publishing::source::list_source_files;
 use crate::core::{Package, PackageId, PackageName, Workspace};
 use crate::flock::FileLockGuard;
-use crate::internal::fsx;
+use crate::internal::{fsx, restricted_names};
 use crate::{ops, MANIFEST_FILE_NAME};
 
 const VERSION: u8 = 1;
@@ -147,6 +147,7 @@ fn list_one_impl(
 fn prepare_archive_recipe(pkg: &Package) -> Result<ArchiveRecipe> {
     let mut recipe = source_files(pkg)?;
 
+    check_filenames(&recipe)?;
     check_no_reserved_files(&recipe)?;
 
     // Add normalized manifest file.
@@ -216,6 +217,23 @@ fn check_no_reserved_files(recipe: &ArchiveRecipe) -> Result<()> {
         "invalid inclusion of reserved files in package: {}",
         found.join(", ")
     );
+    Ok(())
+}
+
+fn check_filenames(recipe: &ArchiveRecipe) -> Result<()> {
+    for ArchiveFile { path, .. } in recipe {
+        const BAD_CHARS: &[char] = &['/', '\\', '<', '>', ':', '"', '|', '?', '*'];
+        for component in path.components() {
+            let name = component.as_str();
+            if let Some(c) = BAD_CHARS.iter().find(|&&c| name.contains(c)) {
+                bail!("cannot package a filename with a special character `{c}`: {path}");
+            }
+        }
+
+        if restricted_names::is_windows_restricted_path(path.as_std_path()) {
+            bail!("cannot package file `{path}`, it is a Windows reserved filename");
+        }
+    }
     Ok(())
 }
 

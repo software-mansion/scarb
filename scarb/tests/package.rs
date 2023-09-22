@@ -542,7 +542,49 @@ fn list_ignore_nested() {
 }
 
 // TODO(mkaput): Invalid readme/license path
-// TODO(mkaput): Restricted Windows files
+
+#[test]
+#[cfg_attr(
+    target_family = "windows",
+    ignore = "Windows doesn't allow these characters in filenames."
+)]
+fn weird_characters_in_filenames() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().src("src/:foo", "").build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging [..]
+        error: cannot package a filename with a special character `:`: src/:foo
+        "#});
+}
+
+#[test]
+#[cfg_attr(
+    target_family = "windows",
+    ignore = "We do not want to create invalid files on Windows."
+)]
+fn windows_restricted_filenames() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .lib_cairo("mod aux;")
+        .src("src/aux.cairo", "")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging [..]
+        error: cannot package file `src/aux.cairo`, it is a Windows reserved filename
+        "#});
+}
 
 #[test]
 fn package_symlink() {
