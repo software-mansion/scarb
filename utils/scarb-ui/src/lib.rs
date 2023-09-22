@@ -97,4 +97,8 @@ impl Ui {
     pub fn force_colors_enabled(&self, enable: bool) {
         console::set_colors_enabled(enable);
     }
+
+    pub fn has_colors_enabled(&self) -> bool {
+        console::colors_enabled()
+    }
 }
