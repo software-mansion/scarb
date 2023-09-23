@@ -67,6 +67,7 @@ typed-builder.workspace = true
 url.workspace = true
 walkdir.workspace = true
 which.workspace = true
+windows-sys.workspace = true
 xxhash-rust.workspace = true
 zip.workspace = true
 

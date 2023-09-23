@@ -12,7 +12,6 @@ use scarb_ui::components::{Spinner, Status};
 
 use crate::core::Config;
 
-// TODO(#125): Do what is documented here, take a look at what cargo-util does.
 /// Replaces the current process with the target process.
 ///
 /// On Unix, this executes the process using the Unix syscall `execvp`, which will block this
@@ -30,21 +29,58 @@ use crate::core::Config;
 /// itself later exits.
 #[tracing::instrument(level = "debug")]
 pub fn exec_replace(cmd: &mut Command) -> Result<()> {
-    let exit_status = cmd
-        .spawn()
-        .with_context(|| format!("failed to spawn: {}", cmd.get_program().to_string_lossy()))?
-        .wait()
-        .with_context(|| {
-            format!(
-                "failed to wait for process to finish: {}",
-                cmd.get_program().to_string_lossy()
-            )
-        })?;
+    imp::exec_replace(cmd)
+}
 
-    if exit_status.success() {
-        Ok(())
-    } else {
-        bail!("process did not exit successfully: {exit_status}");
+#[cfg(unix)]
+mod imp {
+    use anyhow::{bail, Result};
+    use std::os::unix::process::CommandExt;
+    use std::process::Command;
+
+    pub fn exec_replace(cmd: &mut Command) -> Result<()> {
+        let err = cmd.exec();
+        bail!("process did not exit successfully: {err}")
+    }
+}
+
+#[cfg(windows)]
+mod imp {
+    use anyhow::{bail, Context, Result};
+    use std::process::Command;
+    use windows_sys::Win32::Foundation::{BOOL, FALSE, TRUE};
+    use windows_sys::Win32::System::Console::SetConsoleCtrlHandler;
+
+    unsafe extern "system" fn ctrlc_handler(_: u32) -> BOOL {
+        // Do nothing; let the child process handle it.
+        TRUE
+    }
+
+    pub fn exec_replace(cmd: &mut Command) -> Result<()> {
+        unsafe {
+            if SetConsoleCtrlHandler(Some(ctrlc_handler), TRUE) == FALSE {
+                panic!("Could not set Ctrl-C handler.");
+            }
+        }
+
+        // Just execute the process as normal.
+
+        let exit_status = cmd
+            .spawn()
+            .with_context(|| format!("failed to spawn: {}", cmd.get_program().to_string_lossy()))?
+            .wait()
+            .with_context(|| {
+                format!(
+                    "failed to wait for process to finish: {}",
+                    cmd.get_program().to_string_lossy()
+                )
+            })?;
+
+        if exit_status.success() {
+            Ok(())
+        } else {
+            bail!("process did not exit successfully: {exit_status}");
+        }
     }
 }
 

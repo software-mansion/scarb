@@ -29,8 +29,6 @@ pub fn execute_external_subcommand(
     };
 
     // TODO(mkaput): Jobserver.
-    // TODO(#129): Write a test that CTRL+C kills everything, like Cargo's death,
-    //   but perhaps use an external bash script? Use Job Objects or smth else to fix it.
 
     let mut cmd = Command::new(cmd);
     cmd.args(args);

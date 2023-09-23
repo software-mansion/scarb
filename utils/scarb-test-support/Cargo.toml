@@ -8,6 +8,7 @@ publish = false
 anyhow.workspace = true
 assert_fs.workspace = true
 camino.workspace = true
+clap.workspace = true
 dunce.workspace = true
 indoc.workspace = true
 itertools.workspace = true
