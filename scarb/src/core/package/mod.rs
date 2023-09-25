@@ -11,7 +11,7 @@ pub use name::*;
 use scarb_ui::args::WithManifestPath;
 
 use crate::core::manifest::Manifest;
-use crate::core::Target;
+use crate::core::{Target, TargetKind};
 
 mod id;
 mod name;
@@ -80,11 +80,11 @@ impl Package {
         }
     }
 
-    pub fn target(&self, kind: &str) -> Option<&Target> {
-        self.manifest.targets.iter().find(|t| t.kind == kind)
+    pub fn target(&self, kind: &TargetKind) -> Option<&Target> {
+        self.manifest.targets.iter().find(|t| t.kind == *kind)
     }
 
-    pub fn fetch_target(&self, kind: &str) -> Result<&Target> {
+    pub fn fetch_target(&self, kind: &TargetKind) -> Result<&Target> {
         self.target(kind)
             .ok_or_else(|| anyhow!("package `{self}` has no target `{kind}`"))
     }

@@ -22,7 +22,7 @@ use tracing::{debug, trace, trace_span};
 
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
 use crate::compiler::{CompilationUnit, Compiler};
-use crate::core::{PackageName, Utf8PathWorkspaceExt, Workspace};
+use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::serdex::RelativeUtf8PathBuf;
 use crate::internal::stable_hash::short_hash;
 
@@ -185,8 +185,8 @@ struct ContractArtifact {
 }
 
 impl Compiler for StarknetContractCompiler {
-    fn target_kind(&self) -> &str {
-        "starknet-contract"
+    fn target_kind(&self) -> TargetKind {
+        TargetKind::STARKNET_CONTRACT.clone()
     }
 
     fn compile(

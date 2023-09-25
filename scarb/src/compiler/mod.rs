@@ -5,7 +5,7 @@ pub use compilation_unit::*;
 pub use profile::*;
 pub use repository::*;
 
-use crate::core::Workspace;
+use crate::core::{TargetKind, Workspace};
 
 mod compilation_unit;
 mod compilers;
@@ -16,7 +16,7 @@ mod profile;
 mod repository;
 
 pub trait Compiler: Sync {
-    fn target_kind(&self) -> &str;
+    fn target_kind(&self) -> TargetKind;
 
     fn compile(
         &self,

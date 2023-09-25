@@ -163,6 +163,40 @@ fn compile_with_named_default_lib_target() {
 }
 
 #[test]
+fn compile_with_lib_target_in_target_array() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            [[target.lib]]
+            name = "not_hello"
+            sierra = true
+            "#,
+        )
+        .unwrap();
+    t.child("src/lib.cairo")
+        .write_str(r#"fn f() -> felt252 { 42 }"#)
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling hello v0.1.0 ([..])
+        [..]  Finished release target(s) in [..]
+        "#});
+
+    t.child("target/dev/not_hello.sierra.json")
+        .assert(predicates::str::is_empty().not());
+}
+
+#[test]
 fn compile_dep_not_a_lib() {
     let t = TempDir::new().unwrap();
 

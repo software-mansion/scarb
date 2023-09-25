@@ -48,7 +48,7 @@ impl CompilerRepository {
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_kind = &unit.target().kind;
-        let Some(compiler) = self.compilers.get(target_kind) else {
+        let Some(compiler) = self.compilers.get(target_kind.as_str()) else {
             bail!("unknown compiler for target `{target_kind}`");
         };
         compiler.compile(unit, db, ws)

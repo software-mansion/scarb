@@ -2,12 +2,12 @@ use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
 
-use crate::core::TomlExternalTargetParams;
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
+use crate::core::{TargetKind, TomlExternalTargetParams};
 use crate::internal::serdex::toml_merge;
 
 /// See [`TargetInner`] for public fields reference.
@@ -23,8 +23,6 @@ pub struct TargetInner {
     pub params: toml::Value,
 }
 
-pub type TargetKind = SmolStr;
-
 impl Deref for Target {
     type Target = TargetInner;
 
@@ -34,19 +32,15 @@ impl Deref for Target {
 }
 
 impl Target {
-    pub const CAIRO_PLUGIN: &'_ str = "cairo-plugin";
-    pub const LIB: &'_ str = "lib";
-    pub const TEST: &'_ str = "test";
-
     pub fn new(
-        kind: impl Into<SmolStr>,
+        kind: TargetKind,
         name: impl Into<SmolStr>,
         source_path: impl Into<Utf8PathBuf>,
         params: toml::Value,
     ) -> Self {
         assert!(params.is_table(), "params must be a TOML table");
         Self(Arc::new(TargetInner {
-            kind: kind.into(),
+            kind,
             name: name.into(),
             source_path: source_path.into(),
             params,
@@ -54,7 +48,7 @@ impl Target {
     }
 
     pub fn without_params(
-        kind: impl Into<SmolStr>,
+        kind: TargetKind,
         name: impl Into<SmolStr>,
         source_path: impl Into<Utf8PathBuf>,
     ) -> Self {
@@ -67,7 +61,7 @@ impl Target {
     }
 
     pub fn try_from_structured_params(
-        kind: impl Into<SmolStr>,
+        kind: TargetKind,
         name: impl Into<SmolStr>,
         source_path: impl Into<Utf8PathBuf>,
         params: impl Serialize,
@@ -77,15 +71,15 @@ impl Target {
     }
 
     pub fn is_lib(&self) -> bool {
-        self.kind == Self::LIB
+        self.kind == TargetKind::LIB
     }
 
     pub fn is_cairo_plugin(&self) -> bool {
-        self.kind == Self::CAIRO_PLUGIN
+        self.kind == TargetKind::CAIRO_PLUGIN
     }
 
     pub fn is_test(&self) -> bool {
-        self.kind == Self::TEST
+        self.kind == TargetKind::TEST
     }
 
     pub fn source_root(&self) -> &Utf8Path {

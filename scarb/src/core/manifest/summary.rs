@@ -8,8 +8,7 @@ use typed_builder::TypedBuilder;
 #[cfg(doc)]
 use crate::core::Manifest;
 use crate::core::{
-    DepKind, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId, Target,
-    TargetKind,
+    DepKind, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId, TargetKind,
 };
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
@@ -70,7 +69,7 @@ impl Summary {
             // NOTE: Pin test plugin to exact version, because we know that's the only one we have.
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
             ManifestDependency::builder()
-                .kind(DepKind::Target(Target::TEST.into()))
+                .kind(DepKind::Target(TargetKind::TEST))
                 .name(PackageName::TEST_PLUGIN)
                 .source_id(SourceId::default())
                 .version_req(DependencyVersionReq::exact(&cairo_version))
@@ -81,7 +80,7 @@ impl Summary {
 
         if !self.no_core {
             deps.push(&CORE_DEPENDENCY);
-            if self.target_kinds.contains(&TargetKind::from(Target::TEST)) {
+            if self.target_kinds.contains(&TargetKind::TEST) {
                 deps.push(&TEST_PLUGIN_DEPENDENCY);
             }
         }

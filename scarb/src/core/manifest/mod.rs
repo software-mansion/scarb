@@ -13,6 +13,7 @@ pub use dependency::*;
 pub use scripts::*;
 pub use summary::*;
 pub use target::*;
+pub use target_kind::*;
 pub use toml_manifest::*;
 pub use version_req::*;
 
@@ -25,6 +26,7 @@ mod maybe_workspace;
 mod scripts;
 mod summary;
 mod target;
+mod target_kind;
 mod toml_manifest;
 mod version_req;
 
@@ -79,7 +81,7 @@ impl ManifestBuilder {
             ensure!(
                 targets.len() == 1,
                 "target `{}` cannot be mixed with other targets",
-                Target::CAIRO_PLUGIN,
+                TargetKind::CAIRO_PLUGIN,
             );
         }
         Ok(())

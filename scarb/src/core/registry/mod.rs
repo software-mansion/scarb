@@ -30,7 +30,7 @@ pub(crate) mod mock {
     use crate::core::package::PackageName;
     use crate::core::registry::Registry;
     use crate::core::{
-        ManifestBuilder, ManifestDependency, Package, PackageId, SourceId, Summary, Target,
+        ManifestBuilder, ManifestDependency, Package, PackageId, SourceId, Summary, TargetKind,
     };
 
     #[derive(Debug, Default)]
@@ -106,7 +106,7 @@ pub(crate) mod mock {
 
         fn build_package(package_id: PackageId, dependencies: Vec<ManifestDependency>) -> Package {
             let summary = Summary::builder()
-                .target_kinds(HashSet::from_iter(vec![Target::LIB.into()]))
+                .target_kinds(HashSet::from_iter(vec![TargetKind::LIB]))
                 .package_id(package_id)
                 .dependencies(dependencies)
                 .no_core(package_id.is_core())
@@ -204,7 +204,7 @@ pub(crate) mod mock {
                 .name($crate::core::PackageName::new($n))
                 .version_req(::semver::VersionReq::parse($v).unwrap().into())
                 .source_id($crate::core::SourceId::default_registry())
-                .kind($crate::core::DepKind::Target($t.into()))
+                .kind($crate::core::DepKind::Target($t.parse().unwrap()))
                 .build()
         };
 
@@ -213,7 +213,7 @@ pub(crate) mod mock {
                 .name($crate::core::PackageName::new($n))
                 .version_req(::semver::VersionReq::parse($v).unwrap().into())
                 .source_id($crate::core::SourceId::from_display_str($s).unwrap())
-                .kind($crate::core::DepKind::Target($t.into()))
+                .kind($crate::core::DepKind::Target($t.parse().unwrap()))
                 .build()
         };
     }

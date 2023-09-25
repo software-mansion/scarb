@@ -2,17 +2,18 @@ use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_test_plugin::compile_test_prepared_db;
+
 use scarb_ui::components::TypedMessage;
 
 use crate::compiler::helpers::{collect_all_crate_ids, collect_main_crate_ids, write_json};
 use crate::compiler::{CompilationUnit, Compiler};
-use crate::core::{PackageName, SourceId, Target, Workspace};
+use crate::core::{PackageName, SourceId, TargetKind, Workspace};
 
 pub struct TestCompiler;
 
 impl Compiler for TestCompiler {
-    fn target_kind(&self) -> &str {
-        Target::TEST
+    fn target_kind(&self) -> TargetKind {
+        TargetKind::TEST.clone()
     }
 
     fn compile(

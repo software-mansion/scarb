@@ -9,7 +9,7 @@ use tracing::trace_span;
 
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CompilationUnit, Compiler};
-use crate::core::{Target, Workspace};
+use crate::core::{TargetKind, Workspace};
 
 pub struct LibCompiler;
 
@@ -32,8 +32,8 @@ impl Default for Props {
 }
 
 impl Compiler for LibCompiler {
-    fn target_kind(&self) -> &str {
-        Target::LIB
+    fn target_kind(&self) -> TargetKind {
+        TargetKind::LIB.clone()
     }
 
     fn compile(
