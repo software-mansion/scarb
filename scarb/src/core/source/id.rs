@@ -192,6 +192,10 @@ impl SourceId {
         }
     }
 
+    pub fn is_std(self) -> bool {
+        self.kind == SourceKind::Std
+    }
+
     pub fn to_pretty_url(self) -> String {
         match &self.kind {
             SourceKind::Path => format!("{PATH_SOURCE_PROTOCOL}+{}", self.url),
@@ -355,6 +359,17 @@ impl<'de> Deserialize<'de> for SourceId {
         use serde::de::Error;
         let string = String::deserialize(d)?;
         SourceId::from_pretty_url(&string).map_err(Error::custom)
+    }
+}
+
+impl SourceKind {
+    pub fn primary_field(&self) -> &str {
+        match self {
+            SourceKind::Path => "path",
+            SourceKind::Git(_) => "git",
+            SourceKind::Registry => "registry",
+            SourceKind::Std => "std",
+        }
     }
 }
 

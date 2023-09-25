@@ -210,6 +210,18 @@ impl<'de> Deserialize<'de> for PathOrBool {
     }
 }
 
+impl From<Utf8PathBuf> for PathOrBool {
+    fn from(p: Utf8PathBuf) -> Self {
+        Self::Path(p)
+    }
+}
+
+impl From<bool> for PathOrBool {
+    fn from(b: bool) -> Self {
+        Self::Bool(b)
+    }
+}
+
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct TomlWorkspaceDependency {
     pub workspace: bool,

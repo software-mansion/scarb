@@ -190,10 +190,10 @@ fn fetch_with_short_ssh_git() {
             error: failed to parse manifest at: [..]
 
             Caused by:
-                TOML parse error at line 2, column 24
+                TOML parse error at line 6, column 7
                   |
-                2 | dependencies = { dep = { git = "git@github.com:a/dep" } }
-                  |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                6 | dep = { git = "git@github.com:a/dep" }
+                  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
                 data did not match any variant of untagged enum TomlDependency
         "#});
 }

@@ -84,11 +84,13 @@ impl ProjectBuilder {
 
     pub fn render_manifest(&self) -> String {
         let mut doc = Document::new();
+        doc["package"] = toml_edit::table();
         doc["package"]["name"] = Item::Value(Value::from(self.name.clone()));
         doc["package"]["version"] = Item::Value(Value::from(self.version.to_string()));
         if let Some(cairo_version) = self.cairo_version.as_ref() {
             doc["package"]["cairo-version"] = Item::Value(Value::from(cairo_version.to_string()));
         }
+        doc["dependencies"] = toml_edit::table();
         for (name, dep) in &self.deps {
             doc["dependencies"][name.clone()] = Item::Value(dep.clone());
         }
