@@ -7,7 +7,10 @@ use typed_builder::TypedBuilder;
 
 #[cfg(doc)]
 use crate::core::Manifest;
-use crate::core::{DependencyVersionReq, ManifestDependency, PackageId, PackageName, TargetKind};
+use crate::core::{
+    DepKind, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId, Target,
+    TargetKind,
+};
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
 /// See [`SummaryInner`] for public fields reference.
@@ -63,10 +66,24 @@ impl Summary {
                 .build()
         });
 
+        static TEST_PLUGIN_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| {
+            // NOTE: Pin test plugin to exact version, because we know that's the only one we have.
+            let cairo_version = crate::version::get().cairo.version.parse().unwrap();
+            ManifestDependency::builder()
+                .kind(DepKind::Target(Target::TEST.into()))
+                .name(PackageName::TEST_PLUGIN)
+                .source_id(SourceId::default())
+                .version_req(DependencyVersionReq::exact(&cairo_version))
+                .build()
+        });
+
         let mut deps: Vec<&ManifestDependency> = Vec::new();
 
         if !self.no_core {
             deps.push(&CORE_DEPENDENCY);
+            if self.target_kinds.contains(&TargetKind::from(Target::TEST)) {
+                deps.push(&TEST_PLUGIN_DEPENDENCY);
+            }
         }
 
         deps.into_iter()

@@ -186,7 +186,9 @@ mod tests {
                 r.graph
                     .nodes()
                     .filter(|id| {
-                        !id.name.as_str().starts_with("root_") && id.name != PackageName::CORE
+                        !id.name.as_str().starts_with("root_")
+                            && id.name != PackageName::CORE
+                            && id.name != PackageName::TEST_PLUGIN
                     })
                     .sorted()
                     .collect_vec()

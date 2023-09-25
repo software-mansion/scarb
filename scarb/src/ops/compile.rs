@@ -13,6 +13,23 @@ use crate::ops;
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn compile(packages: Vec<PackageId>, ws: &Workspace<'_>) -> Result<()> {
     let resolve = ops::resolve_workspace(ws)?;
+
+    // Add test compilation units to build
+    let packages = packages
+        .into_iter()
+        .flat_map(|package_id| {
+            let package = ws.members().find(|p| p.id == package_id).unwrap();
+            let mut result: Vec<PackageId> = package
+                .manifest
+                .targets
+                .iter()
+                .map(|t| package.id.for_test_target(t.name.clone()))
+                .collect();
+            result.push(package_id);
+            result
+        })
+        .collect::<Vec<PackageId>>();
+
     let compilation_units = ops::generate_compilation_units(&resolve, ws)?
         .into_iter()
         .filter(|cu| packages.contains(&cu.main_package_id))
