@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 use std::default::Default;
 use std::fs;
-use std::path::PathBuf;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
@@ -25,6 +24,7 @@ use crate::core::{
     TestTargetType,
 };
 use crate::internal::fsx;
+use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::serdex::{toml_merge, RelativeUtf8PathBuf};
 use crate::internal::to_version::ToVersion;
 use crate::{
@@ -230,9 +230,9 @@ type MaybeTomlWorkspaceDependency = MaybeWorkspace<TomlDependency, TomlWorkspace
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum TomlDependency {
-    /// [`VersionReq`] specified as a string, eg. `package = "<version>"`.
+    /// [`VersionReq`] specified as a string, e.g. `package = "<version>"`.
     Simple(VersionReq),
-    /// Detailed specification as a table, eg. `package = { version = "<version>" }`.
+    /// Detailed specification as a table, e.g. `package = { version = "<version>" }`.
     Detailed(DetailedTomlDependency),
 }
 
@@ -287,7 +287,7 @@ impl TryFrom<SmolStr> for TomlTargetKind {
 #[serde(rename_all = "kebab-case")]
 pub struct TomlTarget<P> {
     pub name: Option<SmolStr>,
-    pub source_path: Option<PathBuf>,
+    pub source_path: Option<Utf8PathBuf>,
 
     #[serde(flatten)]
     pub params: P,
@@ -633,9 +633,7 @@ impl TomlManifest {
             if tests_path.join(DEFAULT_MODULE_MAIN_FILE).exists() {
                 // Tests directory contains `lib.cairo` file.
                 // Treat whole tests directory as single module.
-                let source_path = tests_path
-                    .join(DEFAULT_MODULE_MAIN_FILE)
-                    .into_std_path_buf();
+                let source_path = tests_path.join(DEFAULT_MODULE_MAIN_FILE);
                 let target_name: SmolStr = DEFAULT_TESTS_PATH.into();
                 let target_config = TomlTarget::<TomlExternalTargetParams> {
                     name: Some(target_name),
@@ -656,12 +654,8 @@ impl TomlManifest {
                         if !entry.file_type()?.is_file() {
                             continue;
                         }
-                        let source_path = entry.path();
-                        let file_stem = source_path
-                            .file_stem()
-                            .unwrap()
-                            .to_string_lossy()
-                            .to_string();
+                        let source_path = entry.path().try_into_utf8()?;
+                        let file_stem = source_path.file_stem().unwrap().to_string();
                         let target_config = TomlTarget::<TomlExternalTargetParams> {
                             name: Some(file_stem.into()),
                             source_path: Some(source_path),
@@ -694,7 +688,7 @@ impl TomlManifest {
         let kind: SmolStr = kind.into();
         if let Some(source_path) = &target.source_path {
             ensure!(
-                kind == Target::TEST || source_path.to_str().unwrap_or("") == DEFAULT_SOURCE_PATH,
+                kind == Target::TEST || source_path == DEFAULT_SOURCE_PATH,
                 "`{kind}` target cannot specify custom `source-path`"
             );
         }
