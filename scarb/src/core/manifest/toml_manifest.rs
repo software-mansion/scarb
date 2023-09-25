@@ -256,7 +256,9 @@ pub struct TomlTargetKind(SmolStr);
 
 impl TomlTargetKind {
     pub fn try_new(name: SmolStr) -> Result<Self> {
-        ensure!(name != Target::LIB, "target kind `{name}` is reserved");
+        PackageName::try_new(&name).with_context(|| {
+            format!("invalid target name `{name}`, because it cannot be used as a package name")
+        })?;
         Ok(Self(name))
     }
 
