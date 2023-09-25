@@ -358,6 +358,27 @@ fn compile_starknet_contract_without_starknet_dep() {
             [dependencies]
             starknet = ">=[..]"
 
+        error: Plugin diagnostic: Unsupported attribute.
+         --> [..]/lib.cairo:9:1
+        #[starknet::contract]
+        ^*******************^
+
+
+        error: Plugin diagnostic: Unsupported attribute.
+         --> [..]/lib.cairo:13:5
+            #[storage]
+            ^********^
+
+        error: Plugin diagnostic: Unsupported attribute.
+         --> [..]/lib.cairo:18:5
+            #[constructor]
+            ^************^
+
+        error: Plugin diagnostic: Unsupported attribute.
+         --> [..]/lib.cairo:23:5
+            #[external(v0)]
+            ^*************^
+
         error: Type not found.
          --> [..]/lib.cairo:19:30
             fn constructor(ref self: ContractState, value_: u128) {
