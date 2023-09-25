@@ -1,9 +1,13 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::indoc;
+use itertools::Itertools;
 use predicates::prelude::*;
+use scarb_metadata::Metadata;
+use std::path::PathBuf;
 
-use scarb_test_support::command::Scarb;
+use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::fsx;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
 
@@ -270,7 +274,24 @@ fn test_target_skipped_without_flag() {
 #[test]
 fn compile_test_target() {
     let t = TempDir::new().unwrap();
-    ProjectBuilder::start().name("hello").build(&t);
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
+        .build(&t);
+    t.child("tests").create_dir_all().unwrap();
+    t.child("tests/test1.cairo")
+        .write_str(indoc! {r#"
+        #[cfg(test)]
+        mod tests {
+            use hello::f;
+            #[test]
+            #[available_gas(100000)]
+            fn it_works() {
+                assert(f() == 42, 'it works!');
+            }
+        }
+         "#})
+        .unwrap();
 
     Scarb::quick_snapbox()
         .arg("build")
@@ -282,6 +303,113 @@ fn compile_test_target() {
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
     assert_eq!(
         t.child("target/dev").files(),
-        vec!["hello.sierra.json", "hello_unittest.test.json"]
+        vec![
+            "hello.sierra.json",
+            "hello_unittest.test.json",
+            "test1.test.json"
+        ]
+    );
+}
+
+#[test]
+fn detect_single_file_test_targets() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+    t.child("tests/test2").create_dir_all().unwrap();
+    t.child("tests/test1.cairo").write_str("").unwrap();
+    t.child("tests/test2.cairo").write_str("").unwrap();
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let test_cu: Vec<(PathBuf, String)> = metadata
+        .compilation_units
+        .iter()
+        .filter(|cu| cu.target.kind == "test")
+        .map(|cu| {
+            (
+                cu.target.source_path.clone().into_std_path_buf(),
+                cu.target
+                    .params
+                    .as_object()
+                    .unwrap()
+                    .get("test-type")
+                    .unwrap()
+                    .to_string(),
+            )
+        })
+        .sorted()
+        .collect();
+
+    assert_eq!(
+        test_cu,
+        vec![
+            (
+                fsx::canonicalize(t.child("src/lib.cairo")).unwrap(),
+                r#""unit""#.into()
+            ),
+            (
+                fsx::canonicalize(t.child("tests/test1.cairo")).unwrap(),
+                r#""integration""#.into()
+            ),
+            (
+                fsx::canonicalize(t.child("tests/test2.cairo")).unwrap(),
+                r#""integration""#.into()
+            ),
+        ]
+    );
+}
+
+#[test]
+fn detect_lib_test_target() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+    t.child("tests/test2").create_dir_all().unwrap();
+    t.child("tests/test1.cairo").write_str("").unwrap();
+    t.child("tests/test2.cairo").write_str("").unwrap();
+    t.child("tests/lib.cairo").write_str("").unwrap();
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let test_cu: Vec<(PathBuf, String)> = metadata
+        .compilation_units
+        .iter()
+        .filter(|cu| cu.target.kind == "test")
+        .map(|cu| {
+            (
+                cu.target.source_path.clone().into_std_path_buf(),
+                cu.target
+                    .params
+                    .as_object()
+                    .unwrap()
+                    .get("test-type")
+                    .unwrap()
+                    .to_string(),
+            )
+        })
+        .sorted()
+        .collect();
+
+    assert_eq!(
+        test_cu,
+        vec![
+            (
+                fsx::canonicalize(t.child("src/lib.cairo")).unwrap(),
+                r#""unit""#.into()
+            ),
+            (
+                fsx::canonicalize(t.child("tests/lib.cairo")).unwrap(),
+                r#""integration""#.into()
+            ),
+        ]
     );
 }
