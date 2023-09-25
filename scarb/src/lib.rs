@@ -25,4 +25,5 @@ pub const SCARB_ENV: &str = "SCARB";
 pub const MANIFEST_FILE_NAME: &str = "Scarb.toml";
 pub const DEFAULT_SOURCE_PATH: &str = "src/lib.cairo";
 pub const DEFAULT_MODULE_MAIN_FILE: &str = "lib.cairo";
+pub const DEFAULT_TESTS_PATH: &str = "tests";
 pub const DEFAULT_TARGET_DIR_NAME: &str = "target";

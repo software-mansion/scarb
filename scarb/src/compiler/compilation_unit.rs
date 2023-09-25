@@ -82,7 +82,14 @@ impl CompilationUnit {
     }
 
     pub fn is_sole_for_package(&self) -> bool {
-        self.main_component().package.manifest.targets.len() >= 2
+        self.main_component()
+            .package
+            .manifest
+            .targets
+            .iter()
+            .filter(|t| !t.is_test())
+            .count()
+            >= 2
     }
 
     pub fn has_custom_name(&self) -> bool {
@@ -97,7 +104,7 @@ impl CompilationUnit {
         let mut string = String::new();
 
         let main_component = self.main_component();
-        if self.is_sole_for_package() {
+        if self.is_sole_for_package() || self.target().is_test() {
             write!(&mut string, "{}", main_component.target.kind).unwrap();
 
             if self.has_custom_name() {

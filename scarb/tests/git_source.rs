@@ -397,7 +397,7 @@ fn transitive_path_dep() {
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
-    assert_eq!(metadata.packages.len(), 4);
+    assert_eq!(metadata.packages.len(), 5);
 
     let pkgs = metadata
         .packages

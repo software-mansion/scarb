@@ -255,13 +255,7 @@ fn target_source_path_disallowed() {
 #[test]
 fn test_target_skipped_without_flag() {
     let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .manifest_extra(indoc! {r#"
-            [lib]
-            [[test]]
-        "#})
-        .build(&t);
+    ProjectBuilder::start().name("hello").build(&t);
 
     Scarb::quick_snapbox()
         .arg("build")
@@ -276,14 +270,7 @@ fn test_target_skipped_without_flag() {
 #[test]
 fn compile_test_target() {
     let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .manifest_extra(indoc! {r#"
-            [lib]
-            [[test]]
-            name = "hello_unittest"
-        "#})
-        .build(&t);
+    ProjectBuilder::start().name("hello").build(&t);
 
     Scarb::quick_snapbox()
         .arg("build")

@@ -24,7 +24,7 @@ use crate::core::{DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig,
 use crate::internal::fsx;
 use crate::internal::serdex::{toml_merge, RelativeUtf8PathBuf};
 use crate::internal::to_version::ToVersion;
-use crate::{DEFAULT_SOURCE_PATH, MANIFEST_FILE_NAME};
+use crate::{DEFAULT_SOURCE_PATH, DEFAULT_TESTS_PATH, MANIFEST_FILE_NAME};
 
 use super::Manifest;
 
@@ -562,17 +562,6 @@ impl TomlManifest {
             root,
         )?);
 
-        if let Some(test) = self.test.as_ref() {
-            for test_toml in test {
-                targets.extend(Self::collect_target(
-                    Target::TEST,
-                    Some(test_toml),
-                    &package_name,
-                    root,
-                )?);
-            }
-        }
-
         for (kind_toml, ext_toml) in self
             .target
             .iter()
@@ -590,10 +579,77 @@ impl TomlManifest {
         if targets.is_empty() {
             trace!("manifest has no targets, assuming default `lib` target");
             let default_source_path = root.join(DEFAULT_SOURCE_PATH);
-            let target = Target::without_params(Target::LIB, package_name, default_source_path);
+            let target =
+                Target::without_params(Target::LIB, package_name.clone(), default_source_path);
             targets.push(target);
         }
 
+        // Skip autodetect for cairo plugins.
+        let auto_detect = !targets.iter().any(Target::is_cairo_plugin);
+        targets.extend(self.collect_test_targets(package_name.clone(), root, auto_detect)?);
+
+        Ok(targets)
+    }
+
+    fn collect_test_targets(
+        &self,
+        package_name: SmolStr,
+        root: &Utf8Path,
+        auto_detect: bool,
+    ) -> Result<Vec<Target>> {
+        let mut targets = Vec::new();
+        if let Some(test) = self.test.as_ref() {
+            // Read test targets from manifest file.
+            for test_toml in test {
+                targets.extend(Self::collect_target(
+                    Target::TEST,
+                    Some(test_toml),
+                    &package_name,
+                    root,
+                )?);
+            }
+        } else if auto_detect {
+            // Auto-detect test target.
+            let source_path = self.lib.as_ref().and_then(|l| l.source_path.clone());
+            let target_name: SmolStr = format!("{package_name}_unittest").into();
+            let target_config = TomlTarget::<TomlExternalTargetParams> {
+                name: Some(target_name),
+                source_path,
+                params: TomlExternalTargetParams::default(),
+            };
+            targets.extend(Self::collect_target::<TomlExternalTargetParams>(
+                Target::TEST,
+                Some(&target_config),
+                &package_name,
+                root,
+            )?);
+            // Auto-detect test targets from `tests` directory.
+            let tests_path = root.join(DEFAULT_TESTS_PATH);
+            if let Ok(entries) = fs::read_dir(tests_path) {
+                for entry in entries.flatten() {
+                    if !entry.file_type()?.is_file() {
+                        continue;
+                    }
+                    let source_path = entry.path();
+                    let file_stem = source_path
+                        .file_stem()
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string();
+                    let target_config = TomlTarget::<TomlExternalTargetParams> {
+                        name: Some(file_stem.into()),
+                        source_path: Some(source_path),
+                        params: TomlExternalTargetParams::default(),
+                    };
+                    targets.extend(Self::collect_target(
+                        Target::TEST,
+                        Some(&target_config),
+                        &package_name,
+                        root,
+                    )?);
+                }
+            }
+        };
         Ok(targets)
     }
 
