@@ -1,5 +1,6 @@
 //! Helpers for validating and checking names.
 
+use crate::DEFAULT_TESTS_PATH;
 use cairo_lang_filesystem::db::CORELIB_CRATE_NAME;
 
 /// Checks if name is a Cairo keyword
@@ -66,5 +67,11 @@ pub fn is_windows_restricted(name: &str) -> bool {
 
 /// Checks if name equals `core` or `starknet`
 pub fn is_internal(name: &str) -> bool {
-    [CORELIB_CRATE_NAME, "starknet"].contains(&name)
+    [
+        CORELIB_CRATE_NAME,
+        DEFAULT_TESTS_PATH,
+        "test_plugin",
+        "starknet",
+    ]
+    .contains(&name)
 }
