@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+
+## 1.8.0 (2023-09-25)
 - **Removed** `packages_filter` feature from `scarb-metadata`. This change is technically breaking, but we did not detect any usage of this feature in the wild.
 
 ## 1.7.1 (2023-09-18)
