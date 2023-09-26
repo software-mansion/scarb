@@ -10,11 +10,14 @@ use tracing::debug;
 
 use scarb_ui::components::Status;
 
-use crate::core::{Config, Package, Workspace};
+use crate::core::{Config, Package, ScriptDefinition, Workspace};
 use crate::ops;
 use crate::process::{exec_replace, is_executable};
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV};
 
+/// Prepare environment and execute an external subcommand.
+///
+/// NOTE: This may replace the current process.
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn execute_external_subcommand(
     cmd: &str,
@@ -65,8 +68,8 @@ pub fn execute_test_subcommand(
             &format!("cairo-test {package_name}"),
         ));
         let args = args.iter().map(OsString::from).collect::<Vec<_>>();
-        let target_dir = Some(ws.target_dir().path_unchecked().to_owned());
-        execute_external_subcommand("cairo-test", args.as_ref(), env, ws.config(), target_dir)
+        let script_definition = ScriptDefinition::new("scarb cairo-test".into());
+        ops::execute_script(&script_definition, args.as_ref(), ws, package.root(), env)
     }
 }
 
