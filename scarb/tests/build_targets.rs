@@ -305,8 +305,8 @@ fn compile_test_target() {
         t.child("target/dev").files(),
         vec![
             "hello.sierra.json",
+            "hello_test1.test.json",
             "hello_unittest.test.json",
-            "test1.test.json"
         ]
     );
 }
