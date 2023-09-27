@@ -601,7 +601,7 @@ impl TomlManifest {
                 // Tests directory contains `lib.cairo` file.
                 // Treat whole tests directory as single module.
                 let source_path = tests_path.join(DEFAULT_MODULE_MAIN_FILE);
-                let target_name: SmolStr = DEFAULT_TESTS_PATH.into();
+                let target_name: SmolStr = format!("{package_name}_{DEFAULT_TESTS_PATH}").into();
                 let target_config = TomlTarget::<TomlExternalTargetParams> {
                     name: Some(target_name),
                     source_path: Some(source_path),
@@ -623,8 +623,9 @@ impl TomlManifest {
                         }
                         let source_path = entry.path().try_into_utf8()?;
                         let file_stem = source_path.file_stem().unwrap().to_string();
+                        let target_name: SmolStr = format!("{package_name}_{file_stem}").into();
                         let target_config = TomlTarget::<TomlExternalTargetParams> {
-                            name: Some(file_stem.into()),
+                            name: Some(target_name),
                             source_path: Some(source_path),
                             params: TestTargetProps::new(TestTargetType::Integration).try_into()?,
                         };
