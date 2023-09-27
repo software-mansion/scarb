@@ -336,20 +336,26 @@ fn compile_multiple_with_glob_subpath() {
         .dep_starknet()
         .lib_cairo(r#"mod subfolder;"#)
         .src("src/subfolder.cairo", r#"mod b; mod c;"#)
-        .src("src/subfolder/b.cairo", indoc! {r#"
+        .src(
+            "src/subfolder/b.cairo",
+            indoc! {r#"
             #[starknet::contract]
             mod B {
                 #[storage]
                 struct Storage {}
             }
-        "#})
-        .src("src/subfolder/c.cairo", indoc! {r#"
+        "#},
+        )
+        .src(
+            "src/subfolder/c.cairo",
+            indoc! {r#"
             #[starknet::contract]
             mod C {
                 #[storage]
                 struct Storage {}
             }
-        "#})
+        "#},
+        )
         .build(&y);
 
     ProjectBuilder::start()
