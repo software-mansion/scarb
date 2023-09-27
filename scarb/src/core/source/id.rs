@@ -214,6 +214,10 @@ impl SourceId {
         }
     }
 
+    pub fn empty_path() -> Self {
+        Self::new(Url::parse("file:///empty").unwrap(), SourceKind::Path).unwrap()
+    }
+
     #[cfg(test)]
     pub(crate) fn from_display_str(string: &str) -> Result<Self> {
         Self::for_path(&Utf8PathBuf::from(string)).or_else(|_| Self::from_pretty_url(string))

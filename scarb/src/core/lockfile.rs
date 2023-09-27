@@ -6,10 +6,10 @@ use std::collections::BTreeSet;
 use std::io::Write;
 use toml_edit::{Array, Document, Item, Value};
 
-use crate::core::{Config, PackageName, SourceId};
+use crate::core::{Config, PackageId, PackageName, Resolve, SourceId};
 
 #[derive(Default, PartialEq, Eq, Clone, Copy, Debug, PartialOrd, Ord, Serialize, Deserialize)]
-enum LockVersion {
+pub enum LockVersion {
     #[serde(rename = "1")]
     #[default]
     V1 = 1,
@@ -17,7 +17,7 @@ enum LockVersion {
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-struct Lockfile {
+pub struct Lockfile {
     pub version: LockVersion,
     #[serde(rename = "package")]
     #[serde(default = "BTreeSet::new")]
@@ -27,16 +27,42 @@ struct Lockfile {
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-struct PackageLock {
+pub struct PackageLock {
     pub name: PackageName,
     pub version: Version,
+    #[serde(default = "SourceId::empty_path")]
+    #[serde(skip_serializing_if = "is_path")]
     pub source: SourceId,
     #[serde(default = "BTreeSet::new")]
     #[serde(skip_serializing_if = "BTreeSet::is_empty")]
     pub dependencies: BTreeSet<PackageName>,
 }
 
+fn is_path(src: &SourceId) -> bool {
+    src.is_path()
+}
+
 impl Lockfile {
+    pub fn new(resolve: &Resolve) -> Self {
+        let mut lock = Self {
+            version: Default::default(),
+            packages: Default::default(),
+        };
+        for package in resolve.graph.nodes() {
+            let mut plock = PackageLock::new(&package);
+            for dependency in resolve
+                .graph
+                .neighbors_directed(package, petgraph::Direction::Outgoing)
+            {
+                plock
+                    .add_dependency(dependency.name.clone())
+                    .unwrap_or_else(|_| todo!());
+            }
+            lock.add_package(plock).unwrap_or_else(|_| todo!());
+        }
+        lock
+    }
+
     pub fn add_package(&mut self, pack: PackageLock) -> Result<()> {
         if self.packages.insert(pack) {
             Ok(())
@@ -77,7 +103,7 @@ impl Lockfile {
         Ok(res)
     }
 
-    pub fn _generate_lockfile(&self, config: &Config) -> Result<()> {
+    pub fn generate_lockfile(&self, config: &Config) -> Result<()> {
         let lock_str = self.generate_lock_string()?;
         let lockfile = config
             .manifest_path()
@@ -104,6 +130,15 @@ impl TryFrom<String> for Lockfile {
 }
 
 impl PackageLock {
+    pub fn new(package: &PackageId) -> Self {
+        Self {
+            name: package.name.clone(),
+            version: package.version.clone(),
+            source: package.source_id,
+            dependencies: Default::default(),
+        }
+    }
+
     pub fn add_dependency(&mut self, dep: PackageName) -> Result<()> {
         if self.dependencies.insert(dep) {
             Ok(())
@@ -138,7 +173,7 @@ mod tests {
         let mut packa = PackageLock {
             name: PackageName::STARKNET,
             version: Version::parse("1.0.0").unwrap(),
-            source: SourceId::mock_path(),
+            source: SourceId::empty_path(),
             dependencies: Default::default(),
         };
         packa.add_dependency(PackageName::CORE).unwrap();
@@ -182,7 +217,6 @@ version = "4.2.0"
 
 [[package]]
 name = "starknet"
-source = "path+file:///var/folders/sw/x5f1qrh94jnc33rwl6qbf8t80000gn/T/"
 version = "1.0.0"
 dependencies = [
  "core",

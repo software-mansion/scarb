@@ -6,6 +6,7 @@ use futures::TryFutureExt;
 use itertools::Itertools;
 
 use crate::compiler::{CompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent};
+use crate::core::lockfile::Lockfile;
 use crate::core::package::{Package, PackageClass, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::patch_map::PatchMap;
@@ -90,6 +91,8 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
                 .collect::<Vec<_>>();
 
             let resolve = resolver::resolve(&members_summaries, &patched, ws.config().ui()).await?;
+
+            let _lock = Lockfile::new(&resolve).generate_lockfile(ws.config());
 
             let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
 
