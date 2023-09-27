@@ -8,6 +8,10 @@ use std::fmt;
 pub struct ScriptDefinition(String);
 
 impl ScriptDefinition {
+    pub fn new(script: String) -> Self {
+        Self(script)
+    }
+
     pub fn parse(&self, args: &[OsString]) -> Result<SequentialList> {
         // The following implementation has been copied from the `deno_task_shell` crate
         // with slight modifications only.
