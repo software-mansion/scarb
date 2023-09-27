@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::ffi::OsString;
 use std::fmt;
 
 use anyhow::{bail, ensure, Result};
@@ -6,6 +7,8 @@ use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
 
 use scarb_metadata::{Metadata, PackageMetadata};
+
+const PACKAGES_FILTER_DELIMITER: char = ',';
 
 /// [`clap`] structured arguments that provide package selection.
 ///
@@ -27,7 +30,7 @@ pub struct PackagesFilter {
         short,
         long,
         default_value = "*",
-        value_delimiter = ',',
+        value_delimiter = PACKAGES_FILTER_DELIMITER,
         value_name = "SPEC",
         env = "SCARB_PACKAGES_FILTER"
     )]
@@ -67,7 +70,7 @@ impl PackagesFilter {
             .iter()
             .map(|s| s.to_string())
             .collect::<Vec<_>>()
-            .join(",");
+            .join(PACKAGES_FILTER_DELIMITER.to_string().as_str());
         let found = Self::do_match_all::<S>(specs, self.workspace, members)?;
 
         ensure!(
@@ -97,6 +100,34 @@ impl PackagesFilter {
 
         let members = source.members();
         Self::do_match_all::<S>(specs, self.workspace, members)
+    }
+
+    /// Generate a new [`PackagesFilter`] for the given slice  of packages.
+    ///
+    /// This is useful when you want to build an env filter from matched packages.
+    /// See [`PackagesFilter::to_env`] for more details.
+    pub fn generate_for<'a, S: PackagesSource>(
+        packages: impl Iterator<Item = &'a S::Package>,
+    ) -> Self
+    where
+        S::Package: 'a,
+    {
+        let names: Vec<String> = packages
+            .map(|p| S::package_name_of(p).to_string())
+            .collect();
+        Self {
+            package: names,
+            workspace: false,
+        }
+    }
+
+    /// Get the packages filter as an [`OsString`].
+    ///
+    /// This value can be passed as `SCARB_PACKAGES_FILTER` variable to child processes.
+    pub fn to_env(self) -> OsString {
+        self.package
+            .join(PACKAGES_FILTER_DELIMITER.to_string().as_str())
+            .into()
     }
 
     fn package_specs(&self) -> Result<Vec<Spec>> {
@@ -278,5 +309,78 @@ impl PackagesSource for Metadata {
         } else {
             self.workspace.manifest_path.clone()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::args::{PackagesFilter, PackagesSource, WithManifestPath};
+    use camino::{Utf8Path, Utf8PathBuf};
+
+    #[derive(Clone)]
+    struct MockPackage {
+        pub name: String,
+        pub manifest_path: Utf8PathBuf,
+    }
+
+    impl WithManifestPath for MockPackage {
+        fn manifest_path(&self) -> &Utf8Path {
+            &self.manifest_path
+        }
+    }
+
+    struct MockSource {
+        pub members: Vec<MockPackage>,
+    }
+
+    impl PackagesSource for MockSource {
+        type Package = MockPackage;
+
+        fn package_name_of(package: &Self::Package) -> &str {
+            package.name.as_str()
+        }
+
+        fn members(&self) -> Vec<Self::Package> {
+            self.members.clone()
+        }
+
+        fn runtime_manifest(&self) -> Utf8PathBuf {
+            Utf8PathBuf::from("runtime")
+        }
+    }
+
+    fn mock_package(name: &str) -> MockPackage {
+        MockPackage {
+            name: name.into(),
+            manifest_path: Utf8PathBuf::from(format!("package/{}", name)),
+        }
+    }
+
+    fn mock_packages(names: Vec<&str>) -> Vec<MockPackage> {
+        names.into_iter().map(mock_package).collect()
+    }
+
+    #[test]
+    fn can_build_packages_filter() {
+        let mock = MockSource {
+            members: mock_packages(vec!["first", "second"]),
+        };
+        let filter = PackagesFilter {
+            package: vec!["first".into()],
+            workspace: false,
+        };
+        let packages = filter.match_many(&mock).unwrap();
+        let filter = PackagesFilter::generate_for::<MockSource>(packages.iter());
+        let filter = filter.to_env();
+        assert_eq!(filter, "first");
+
+        let filter = PackagesFilter {
+            package: vec!["*".into()],
+            workspace: false,
+        };
+        let packages = filter.match_many(&mock).unwrap();
+        let filter = PackagesFilter::generate_for::<MockSource>(packages.iter());
+        let filter = filter.to_env();
+        assert_eq!(filter, "first,second");
     }
 }
