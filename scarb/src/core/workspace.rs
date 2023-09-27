@@ -7,10 +7,12 @@ use scarb_ui::args::PackagesSource;
 
 use crate::compiler::Profile;
 use crate::core::config::Config;
+use crate::core::lockfile::Lockfile;
 use crate::core::package::Package;
 use crate::core::PackageId;
 use crate::flock::RootFilesystem;
-use crate::{DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
+use crate::internal::fsx;
+use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME};
 
 /// The core abstraction for working with a workspace of packages.
 ///
@@ -84,6 +86,10 @@ impl<'c> Workspace<'c> {
 
     pub fn manifest_path(&self) -> &Utf8Path {
         &self.manifest_path
+    }
+
+    pub fn lockfile_path(&self) -> Utf8PathBuf {
+        self.root().join(LOCK_FILE_NAME)
     }
 
     pub fn target_dir(&self) -> &RootFilesystem {
@@ -161,6 +167,16 @@ impl<'c> Workspace<'c> {
         names.push(Profile::RELEASE.to_string());
         names.sort();
         Ok(names)
+    }
+
+    pub fn read_lockfile(&self) -> Result<Lockfile> {
+        Lockfile::from_path(self.lockfile_path())
+    }
+
+    pub fn write_lockfile(&self, lockfile: Lockfile) -> Result<()> {
+        let path = self.lockfile_path();
+        fsx::write(path, lockfile.render()?.as_bytes())?;
+        Ok(())
     }
 }
 

@@ -1,10 +1,12 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
+use camino::Utf8Path;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use toml_edit::{Array, Document, Item, Value};
 
 use crate::core::{PackageId, PackageName, Resolve};
+use crate::internal::fsx;
 
 #[derive(Default, PartialEq, Eq, Clone, Copy, Debug, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum LockVersion {
@@ -13,7 +15,7 @@ pub enum LockVersion {
     V1 = 1,
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct Lockfile {
     pub version: LockVersion,
@@ -86,6 +88,22 @@ impl Lockfile {
             PackageLock::new(&package, deps)
         });
         Self::new(packages)
+    }
+
+    pub fn from_path(path: impl AsRef<Utf8Path>) -> Result<Self> {
+        if path.as_ref().is_file() {
+            let content = fsx::read_to_string(path.as_ref())
+                .with_context(|| format!("Failed to read lockfile at {}", path.as_ref()))?;
+            if content.is_empty() {
+                Ok(Self::default())
+            } else {
+                content
+                    .try_into()
+                    .with_context(|| format!("Failed to parse lockfile at {}", path.as_ref()))
+            }
+        } else {
+            Ok(Self::default())
+        }
     }
 
     fn header(&self) -> String {
