@@ -19,6 +19,7 @@ mod cache;
 mod clean;
 mod compile;
 mod fmt;
+mod lockfile;
 mod manifest;
 mod metadata;
 mod new;

@@ -5,6 +5,7 @@ use indoc::{formatdoc, indoc};
 use petgraph::graphmap::DiGraphMap;
 use scarb_ui::Ui;
 
+use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::resolver::{DependencyEdge, Resolve};
 use crate::core::{DepKind, ManifestDependency, PackageId, Summary, TargetKind};
@@ -23,7 +24,12 @@ use crate::core::{DepKind, ManifestDependency, PackageId, Summary, TargetKind};
 ///     It is also advised to implement internal caching, as the resolver may frequently ask
 ///     repetitive queries.
 #[tracing::instrument(level = "trace", skip_all)]
-pub async fn resolve(summaries: &[Summary], registry: &dyn Registry, ui: &Ui) -> Result<Resolve> {
+pub async fn resolve(
+    summaries: &[Summary],
+    registry: &dyn Registry,
+    _lockfile: Lockfile,
+    ui: &Ui,
+) -> Result<Resolve> {
     // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
 
@@ -174,6 +180,7 @@ mod tests {
     use similar_asserts::assert_serde_eq;
     use tokio::runtime::Builder;
 
+    use crate::core::lockfile::Lockfile;
     use crate::core::package::PackageName;
     use crate::core::registry::mock::{deps, pkgs, registry, MockRegistry};
     use crate::core::{ManifestDependency, PackageId, Resolve, SourceId, TargetKind};
@@ -234,8 +241,9 @@ mod tests {
             })
             .collect_vec();
 
+        let lockfile = Lockfile::new([]);
         let ui = Ui::new(Verbose, OutputFormat::Text);
-        runtime.block_on(super::resolve(&summaries, &registry, &ui))
+        runtime.block_on(super::resolve(&summaries, &registry, lockfile, &ui))
     }
 
     fn package_id<S: AsRef<str>>(name: S) -> PackageId {
