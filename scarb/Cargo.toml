@@ -33,7 +33,6 @@ create-output-dir = { path = "../utils/create-output-dir" }
 data-encoding.workspace = true
 deno_task_shell.workspace = true
 derive_builder.workspace = true
-diffy.workspace = true
 directories.workspace = true
 dunce.workspace = true
 fs4.workspace = true

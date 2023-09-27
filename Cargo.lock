@@ -3926,7 +3926,6 @@ dependencies = [
  "data-encoding",
  "deno_task_shell",
  "derive_builder",
- "diffy",
  "directories",
  "dunce",
  "fs4",
