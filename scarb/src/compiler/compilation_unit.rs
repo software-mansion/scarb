@@ -93,7 +93,7 @@ impl CompilationUnit {
     }
 
     pub fn has_custom_name(&self) -> bool {
-        self.main_component().target.kind != self.main_package_id.name.as_str()
+        self.main_component().target.kind.as_str() != self.main_package_id.name.as_str()
     }
 
     pub fn id(&self) -> String {

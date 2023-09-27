@@ -20,8 +20,8 @@ use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Targe
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{
-    DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName, TestTargetProps,
-    TestTargetType,
+    DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName, TargetKind,
+    TestTargetProps, TestTargetType,
 };
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
@@ -43,7 +43,7 @@ pub struct TomlManifest {
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
     pub cairo_plugin: Option<TomlTarget<TomlExternalTargetParams>>,
     pub test: Option<Vec<TomlTarget<TomlExternalTargetParams>>>,
-    pub target: Option<BTreeMap<TomlTargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
+    pub target: Option<BTreeMap<TargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
     pub cairo: Option<TomlCairo>,
     pub profile: Option<TomlProfilesDefinition>,
     pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
@@ -248,39 +248,6 @@ pub struct DetailedTomlDependency {
     pub branch: Option<String>,
     pub tag: Option<String>,
     pub rev: Option<String>,
-}
-
-#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
-#[serde(into = "SmolStr", try_from = "SmolStr")]
-pub struct TomlTargetKind(SmolStr);
-
-impl TomlTargetKind {
-    pub fn try_new(name: SmolStr) -> Result<Self> {
-        ensure!(name != Target::LIB, "target kind `{name}` is reserved");
-        Ok(Self(name))
-    }
-
-    pub fn to_smol_str(&self) -> SmolStr {
-        self.0.clone()
-    }
-
-    pub fn into_smol_str(self) -> SmolStr {
-        self.0
-    }
-}
-
-impl From<TomlTargetKind> for SmolStr {
-    fn from(value: TomlTargetKind) -> Self {
-        value.into_smol_str()
-    }
-}
-
-impl TryFrom<SmolStr> for TomlTargetKind {
-    type Error = anyhow::Error;
-
-    fn try_from(value: SmolStr) -> Result<Self> {
-        TomlTargetKind::try_new(value)
-    }
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -554,27 +521,27 @@ impl TomlManifest {
         let mut targets = Vec::new();
 
         targets.extend(Self::collect_target(
-            Target::LIB,
+            TargetKind::LIB,
             self.lib.as_ref(),
             &package_name,
             root,
         )?);
 
         targets.extend(Self::collect_target(
-            Target::CAIRO_PLUGIN,
+            TargetKind::CAIRO_PLUGIN,
             self.cairo_plugin.as_ref(),
             &package_name,
             root,
         )?);
 
-        for (kind_toml, ext_toml) in self
+        for (kind, ext_toml) in self
             .target
             .iter()
             .flatten()
             .flat_map(|(k, vs)| vs.iter().map(|v| (k.clone(), v)))
         {
             targets.extend(Self::collect_target(
-                kind_toml,
+                kind,
                 Some(ext_toml),
                 &package_name,
                 root,
@@ -585,7 +552,7 @@ impl TomlManifest {
             trace!("manifest has no targets, assuming default `lib` target");
             let default_source_path = root.join(DEFAULT_SOURCE_PATH);
             let target =
-                Target::without_params(Target::LIB, package_name.clone(), default_source_path);
+                Target::without_params(TargetKind::LIB, package_name.clone(), default_source_path);
             targets.push(target);
         }
 
@@ -607,7 +574,7 @@ impl TomlManifest {
             // Read test targets from manifest file.
             for test_toml in test {
                 targets.extend(Self::collect_target(
-                    Target::TEST,
+                    TargetKind::TEST,
                     Some(test_toml),
                     &package_name,
                     root,
@@ -623,7 +590,7 @@ impl TomlManifest {
                 params: TestTargetProps::default().try_into()?,
             };
             targets.extend(Self::collect_target::<TomlExternalTargetParams>(
-                Target::TEST,
+                TargetKind::TEST,
                 Some(&target_config),
                 &package_name,
                 root,
@@ -641,7 +608,7 @@ impl TomlManifest {
                     params: TestTargetProps::new(TestTargetType::Integration).try_into()?,
                 };
                 targets.extend(Self::collect_target::<TomlExternalTargetParams>(
-                    Target::TEST,
+                    TargetKind::TEST,
                     Some(&target_config),
                     &package_name,
                     root,
@@ -662,7 +629,7 @@ impl TomlManifest {
                             params: TestTargetProps::new(TestTargetType::Integration).try_into()?,
                         };
                         targets.extend(Self::collect_target(
-                            Target::TEST,
+                            TargetKind::TEST,
                             Some(&target_config),
                             &package_name,
                             root,
@@ -675,7 +642,7 @@ impl TomlManifest {
     }
 
     fn collect_target<T: Serialize>(
-        kind: impl Into<SmolStr>,
+        kind: TargetKind,
         target: Option<&TomlTarget<T>>,
         default_name: &SmolStr,
         root: &Utf8Path,
@@ -685,10 +652,9 @@ impl TomlManifest {
             return Ok(None);
         };
 
-        let kind: SmolStr = kind.into();
         if let Some(source_path) = &target.source_path {
             ensure!(
-                kind == Target::TEST || source_path == DEFAULT_SOURCE_PATH,
+                kind == TargetKind::TEST || source_path == DEFAULT_SOURCE_PATH,
                 "`{kind}` target cannot specify custom `source-path`"
             );
         }

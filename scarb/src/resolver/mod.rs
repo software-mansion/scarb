@@ -7,7 +7,7 @@ use scarb_ui::Ui;
 
 use crate::core::registry::Registry;
 use crate::core::resolver::{DependencyEdge, Resolve};
-use crate::core::{DepKind, ManifestDependency, PackageId, Summary, Target, TargetKind};
+use crate::core::{DepKind, ManifestDependency, PackageId, Summary, TargetKind};
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -60,8 +60,8 @@ pub async fn resolve(summaries: &[Summary], registry: &dyn Registry, ui: &Ui) ->
                 };
                 let dep = dep_summary.package_id;
 
-                if !(dep_summary.target_kinds.contains(Target::CAIRO_PLUGIN)
-                    || dep_summary.target_kinds.contains(Target::LIB))
+                if !(dep_summary.target_kinds.contains(&TargetKind::CAIRO_PLUGIN)
+                    || dep_summary.target_kinds.contains(&TargetKind::LIB))
                 {
                     ui.warn(format!(
                         "{} ignoring invalid dependency `{}` which is missing a lib or cairo-plugin target",
@@ -176,7 +176,7 @@ mod tests {
 
     use crate::core::package::PackageName;
     use crate::core::registry::mock::{deps, pkgs, registry, MockRegistry};
-    use crate::core::{ManifestDependency, PackageId, Resolve, SourceId};
+    use crate::core::{ManifestDependency, PackageId, Resolve, SourceId, TargetKind};
 
     fn check(
         registry: MockRegistry,
@@ -573,7 +573,7 @@ mod tests {
         )
         .unwrap();
 
-        let mut test_solution = resolve.solution_of(root, "test".into());
+        let mut test_solution = resolve.solution_of(root, &TargetKind::TEST);
         test_solution.sort();
         assert_eq!(test_solution.len(), 4);
         assert_eq!(
@@ -584,7 +584,7 @@ mod tests {
             vec!["bar", "boo", "core", "foo"],
         );
 
-        let mut lib_solution = resolve.solution_of(root, "lib".into());
+        let mut lib_solution = resolve.solution_of(root, &TargetKind::LIB);
         lib_solution.sort();
         assert_eq!(lib_solution.len(), 3);
         assert_eq!(

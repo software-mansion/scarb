@@ -67,7 +67,7 @@ fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     //   `starknet` dependency will error in 99% real-world Starknet contract projects.
     //   I think we can get away with emitting false positives for users who write raw contracts
     //   without using Starknet code generators. Such people shouldn't do what they do 😁
-    if unit.target().kind == "starknet-contract" && !has_starknet_plugin(&db) {
+    if unit.target().kind == TargetKind::STARKNET_CONTRACT && !has_starknet_plugin(&db) {
         ws.config().ui().warn(formatdoc! {
             r#"
             package `{package_name}` declares `starknet-contract` target, but does not depend on `starknet` package

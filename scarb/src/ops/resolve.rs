@@ -35,7 +35,7 @@ impl WorkspaceResolve {
     ///
     /// # Safety
     /// * Asserts that `root_package` is a node in this graph.
-    pub fn solution_of(&self, root_package: PackageId, target_kind: TargetKind) -> Vec<Package> {
+    pub fn solution_of(&self, root_package: PackageId, target_kind: &TargetKind) -> Vec<Package> {
         assert!(self.packages.contains_key(&root_package));
         self.resolve
             .solution_of(root_package, target_kind)
@@ -72,7 +72,7 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
                         .source_id(SourceId::for_std())
                         .build(),
                     ManifestDependency::builder()
-                        .kind(DepKind::Target(Target::TEST.into()))
+                        .kind(DepKind::Target(TargetKind::TEST))
                         .name(PackageName::TEST_PLUGIN)
                         .version_req(version_req.clone())
                         .source_id(SourceId::for_std())
@@ -153,7 +153,7 @@ fn generate_cairo_compilation_units(
         .iter()
         .sorted_by_key(|target| target.kind.clone())
         .map(|member_target| {
-            solution.collect(member_target.kind.clone())?;
+            solution.collect(&member_target.kind)?;
             let packages = solution.packages.as_ref().unwrap();
             let cairo_plugins = solution.cairo_plugins.as_ref().unwrap();
 
@@ -175,7 +175,7 @@ fn generate_cairo_compilation_units(
                     } else {
                         // We can safely unwrap here, because compilation unit generator ensures
                         // that all dependencies have library target.
-                        package.fetch_target(Target::LIB).unwrap()
+                        package.fetch_target(&TargetKind::LIB).unwrap()
                     };
                     let target = target.clone();
 
@@ -199,12 +199,12 @@ fn generate_cairo_compilation_units(
             let main_package_id = if is_integration_test {
                 // Try pulling from targets.
                 let target = member
-                    .fetch_target(Target::LIB)
+                    .fetch_target(&TargetKind::LIB)
                     .cloned()
                     .unwrap_or_else(|_| {
                         // If not defined, create a dummy `lib` target.
                         Target::without_params(
-                            Target::LIB,
+                            TargetKind::LIB,
                             member.id.name.clone(),
                             member.root().join(DEFAULT_SOURCE_PATH),
                         )
@@ -255,25 +255,25 @@ impl<'a> PackageSolutionCollector<'a> {
         }
     }
 
-    pub fn collect(&mut self, target_kind: TargetKind) -> Result<()> {
+    pub fn collect(&mut self, target_kind: &TargetKind) -> Result<()> {
         // Do not traverse graph for each target of the same kind.
         if !self
             .target_kind
             .as_ref()
-            .map(|tk| tk.clone() == target_kind)
+            .map(|tk| tk == target_kind)
             .unwrap_or(false)
         {
-            let (p, c) = self.pull_from_graph(target_kind.clone())?;
+            let (p, c) = self.pull_from_graph(target_kind)?;
             self.packages = Some(p.clone());
             self.cairo_plugins = Some(c.clone());
-            self.target_kind = Some(target_kind);
+            self.target_kind = Some(target_kind.clone());
         }
         Ok(())
     }
 
     fn pull_from_graph(
         &self,
-        target_kind: TargetKind,
+        target_kind: &TargetKind,
     ) -> Result<(Vec<Package>, Vec<CompilationUnitCairoPlugin>)> {
         let mut classes = self
             .resolve

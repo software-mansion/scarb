@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::args::BuildArgs;
-use scarb::core::{Config, Target, TargetKind};
+use scarb::core::{Config, TargetKind};
 use scarb::ops;
 use scarb::ops::CompileOpts;
 
@@ -17,7 +17,7 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     let exclude_targets: Vec<TargetKind> = if args.test {
         Vec::new()
     } else {
-        vec![Target::TEST.into()]
+        vec![TargetKind::TEST.clone()]
     };
     let opts = CompileOpts { exclude_targets };
     ops::compile(packages, opts, &ws)
