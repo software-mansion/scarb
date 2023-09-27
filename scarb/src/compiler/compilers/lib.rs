@@ -3,7 +3,7 @@ use std::io::Write;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra::program::VersionedProgram;
-use cairo_lang_sierra_to_casm::metadata::{calc_metadata, MetadataComputationConfig};
+use cairo_lang_sierra_to_casm::metadata::calc_metadata;
 use serde::{Deserialize, Serialize};
 use tracing::trace_span;
 
@@ -90,7 +90,7 @@ impl Compiler for LibCompiler {
 
             let metadata = {
                 let _ = trace_span!("casm_calc_metadata");
-                calc_metadata(&sierra_program, MetadataComputationConfig::default())
+                calc_metadata(&sierra_program, Default::default(), false)
                     .context("failed calculating Sierra variables")?
             };
 

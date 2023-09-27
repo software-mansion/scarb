@@ -1,6 +1,6 @@
-use assert_fs::fixture::ChildPath;
 use std::fs;
 
+use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use cairo_lang_starknet::contract_class::ContractClass;
@@ -49,17 +49,17 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
 
 #[test]
 fn compile_imported_contracts() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     let hello = t.child("hello");
     let world = t.child("world");
     compile_dep_test_case(
         &hello,
         &world,
         indoc! {r#"
-        build-external-contracts = [
-            "hello::Balance",
-        ]
-    "#},
+            build-external-contracts = [
+                "hello::Balance",
+            ]
+        "#},
     );
 
     assert_eq!(
@@ -84,18 +84,18 @@ fn compile_imported_contracts() {
 
 #[test]
 fn compile_multiple_imported_contracts() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     let hello = t.child("hello");
     let world = t.child("world");
     compile_dep_test_case(
         &hello,
         &world,
         indoc! {r#"
-        build-external-contracts = [
-            "hello::Balance",
-            "hello::HelloContract",
-        ]
-    "#},
+            build-external-contracts = [
+                "hello::Balance",
+                "hello::HelloContract",
+            ]
+        "#},
     );
 
     assert_eq!(
@@ -173,7 +173,7 @@ fn compile_multiple_imported_contracts() {
 
 #[test]
 fn build_external_full_path() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     let hello = t.child("hello");
     let world = t.child("world");
 
@@ -204,7 +204,7 @@ fn build_external_full_path() {
         .name("world")
         .version("0.1.0")
         .dep("hello", r#" path = "../hello" "#)
-        .manifest_extra(formatdoc! {r#"
+        .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
             build-external-contracts = [
                 "hello::lorem::ipsum::Balance",
@@ -238,17 +238,17 @@ fn build_external_full_path() {
 
 #[test]
 fn compile_multiple_with_glob_path() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     let hello = t.child("hello");
     let world = t.child("world");
     compile_dep_test_case(
         &hello,
         &world,
         indoc! {r#"
-        build-external-contracts = [
-            "hello::*",
-        ]
-    "#},
+            build-external-contracts = [
+                "hello::*",
+            ]
+        "#},
     );
 
     assert_eq!(
@@ -327,27 +327,41 @@ fn compile_multiple_with_glob_path() {
 #[test]
 fn compile_multiple_with_glob_subpath() {
     let t = TempDir::new().unwrap();
+    let x = t.child("x");
+    let y = t.child("y");
 
-    t.child("x/Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "x"
-            version = "1.0.0"
+    ProjectBuilder::start()
+        .name("y")
+        .version("1.0.0")
+        .dep_starknet()
+        .lib_cairo(r#"mod subfolder;"#)
+        .src("src/subfolder.cairo", r#"mod b; mod c;"#)
+        .src("src/subfolder/b.cairo", indoc! {r#"
+            #[starknet::contract]
+            mod B {
+                #[storage]
+                struct Storage {}
+            }
+        "#})
+        .src("src/subfolder/c.cairo", indoc! {r#"
+            #[starknet::contract]
+            mod C {
+                #[storage]
+                struct Storage {}
+            }
+        "#})
+        .build(&y);
 
-            [dependencies]
-            starknet = ">=2.1.0"
-            y = { path = "../y" }
-
+    ProjectBuilder::start()
+        .name("x")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("y", &y)
+        .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
             build-external-contracts = ["y::subfolder::*"]
-            "#,
-        )
-        .unwrap();
-
-    t.child("x/src/lib.cairo")
-        .write_str(
-            r#"
+        "#})
+        .lib_cairo(indoc! {r#"
             #[starknet::contract]
             mod A {
                 use y::subfolder::b::B;
@@ -356,65 +370,12 @@ fn compile_multiple_with_glob_subpath() {
                 #[storage]
                 struct Storage {}
             }
-            "#,
-        )
-        .unwrap();
-
-    t.child("y/Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "y"
-            version = "1.0.0"
-
-            "#,
-        )
-        .unwrap();
-
-    t.child("y/src/lib.cairo")
-        .write_str(
-            r#"
-            mod subfolder;
-            "#,
-        )
-        .unwrap();
-
-    t.child("y/src/subfolder.cairo")
-        .write_str(
-            r#"
-            mod b;
-            mod c;
-            "#,
-        )
-        .unwrap();
-
-    t.child("y/src/subfolder/b.cairo")
-        .write_str(
-            r#"
-            #[starknet::contract]
-            mod B {
-            #[storage]
-            struct Storage {}
-            }
-            "#,
-        )
-        .unwrap();
-
-    t.child("y/src/subfolder/c.cairo")
-        .write_str(
-            r#"
-            #[starknet::contract]
-            mod C {
-                #[storage]
-                struct Storage {}
-            }
-            "#,
-        )
-        .unwrap();
+        "#})
+        .build(&x);
 
     Scarb::quick_snapbox()
         .arg("build")
-        .current_dir(t.child("x"))
+        .current_dir(&x)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
@@ -425,7 +386,7 @@ fn compile_multiple_with_glob_subpath() {
 
 #[test]
 fn compile_with_bad_glob_path() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     let hello = t.child("hello");
     let world = t.child("world");
 

@@ -15,7 +15,7 @@ members = [
 "resolver" = "2"
 
 [workspace.package]
-version = "2.2.0"
+version = "2.3.0-rc0"
 edition = "2021"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
@@ -28,19 +28,19 @@ repository = "https://github.com/software-mansion/scarb"
 anyhow = "1"
 assert_fs = "1"
 async-trait = "0.1"
-cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-formatter = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-language-server = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-runner = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-semantic = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-sierra = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52" }
-cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "00448c02fc474021575217b9b7e871c728552d52", features = ["env_logger"] }
+cairo-lang-compiler = "2.3.0-rc0"
+cairo-lang-defs = "2.3.0-rc0"
+cairo-lang-filesystem = "2.3.0-rc0"
+cairo-lang-formatter = "2.3.0-rc0"
+cairo-lang-language-server = "2.3.0-rc0"
+cairo-lang-runner = "2.3.0-rc0"
+cairo-lang-semantic = "2.3.0-rc0"
+cairo-lang-sierra = "2.3.0-rc0"
+cairo-lang-sierra-to-casm = "2.3.0-rc0"
+cairo-lang-starknet = "2.3.0-rc0"
+cairo-lang-test-plugin = "2.3.0-rc0"
+cairo-lang-test-runner = "2.3.0-rc0"
+cairo-lang-utils = { version = "2.3.0-rc0", features = ["env_logger"] }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = "0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
