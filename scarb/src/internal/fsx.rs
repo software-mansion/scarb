@@ -73,6 +73,15 @@ pub fn read_to_string(path: impl AsRef<Path>) -> Result<String> {
     }
 }
 
+/// Equivalent to [`fs::rename`] with better error messages.
+pub fn rename(from: impl AsRef<Path>, to: impl AsRef<Path>) -> Result<()> {
+    return inner(from.as_ref(), to.as_ref());
+
+    fn inner(from: &Path, to: &Path) -> Result<()> {
+        fs::rename(from, to).with_context(|| format!("failed to rename file: {}", from.display()))
+    }
+}
+
 pub trait PathUtf8Ext {
     fn try_as_utf8(&'_ self) -> Result<&'_ Utf8Path>;
 
