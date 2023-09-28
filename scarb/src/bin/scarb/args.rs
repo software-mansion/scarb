@@ -150,6 +150,12 @@ pub enum Command {
     Metadata(MetadataArgs),
     /// Create a new Scarb package at <PATH>.
     New(NewArgs),
+    /// Assemble the local package into a distributable tarball.
+    #[command(after_help = "\
+        This command will create distributable, compressed `.tar.zst` archives containing source \
+        codes of selected packages. Resulting files will be placed in `target/package` directory.
+    ")]
+    Package(PackageArgs),
     /// Run arbitrary package scripts.
     Run(ScriptsRunnerArgs),
     /// Execute all unit and integration tests of a local package.
@@ -302,6 +308,17 @@ pub struct TestArgs {
     /// Arguments for the test program.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,
+}
+
+/// Arguments accepted by the `package` command.
+#[derive(Parser, Clone, Debug)]
+pub struct PackageArgs {
+    /// Print files included in a package without making one.
+    #[arg(short, long)]
+    pub list: bool,
+
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
 }
 
 /// Git reference specification arguments.
