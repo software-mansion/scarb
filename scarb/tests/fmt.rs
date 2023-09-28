@@ -231,13 +231,13 @@ fn workspace_with_root() {
     ProjectBuilder::start()
         .name("second")
         .lib_cairo(SIMPLE_ORIGINAL)
-        .dep("first", r#"path = "../first""#)
+        .dep("first", &pkg1)
         .build(&pkg2);
     let root = ProjectBuilder::start()
         .name("some_root")
         .lib_cairo(SIMPLE_ORIGINAL)
-        .dep("first", r#"path = "./first""#)
-        .dep("second", r#"path = "./second""#);
+        .dep("first", &pkg1)
+        .dep("second", &pkg2);
     WorkspaceBuilder::start()
         .add_member("first")
         .add_member("second")

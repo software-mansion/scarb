@@ -26,7 +26,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
     ProjectBuilder::start()
         .name("world")
         .version("0.1.0")
-        .dep("hello", r#" path = "../hello" "#)
+        .dep("hello", hello)
         .manifest_extra(formatdoc! {r#"
             [[target.starknet-contract]]
             {target_extra}

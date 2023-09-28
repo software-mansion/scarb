@@ -1,4 +1,4 @@
-use crate::project_builder::{ProjectBuilder, ToDep};
+use crate::project_builder::{DepBuilder, ProjectBuilder};
 use assert_fs::prelude::*;
 use scarb::MANIFEST_FILE_NAME;
 use toml_edit::{Array, Document, Item, Value};
@@ -31,8 +31,8 @@ impl WorkspaceBuilder {
         self
     }
 
-    pub fn dep(mut self, name: impl Into<String>, dep: impl ToDep) -> Self {
-        self.deps.push((name.into(), dep.to_dep()));
+    pub fn dep(mut self, name: impl Into<String>, dep: impl DepBuilder) -> Self {
+        self.deps.push((name.into(), dep.build()));
         self
     }
 

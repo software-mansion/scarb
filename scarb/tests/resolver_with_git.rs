@@ -1,10 +1,10 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
-use indoc::{formatdoc, indoc};
+use indoc::indoc;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::gitx;
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{DepBuilder, ProjectBuilder};
 
 #[test]
 fn valid_triangle() {
@@ -62,13 +62,7 @@ fn two_revs_of_same_dep() {
     ProjectBuilder::start()
         .name("proxy")
         .lib_cairo("fn p() -> felt252 { culprit::f2() }")
-        .dep(
-            "culprit",
-            formatdoc! {r#"
-                git = "{culprit}"
-                branch = "branchy"
-            "#},
-        )
+        .dep("culprit", culprit.with("branch", "branchy"))
         .build(&proxy);
 
     ProjectBuilder::start()
@@ -119,13 +113,7 @@ fn two_revs_of_same_dep_diamond() {
         ProjectBuilder::start()
             .name("dep2")
             .lib_cairo("fn p() -> felt252 { culprit::f2() }")
-            .dep(
-                "culprit",
-                formatdoc! {r#"
-                    git = "{culprit}"
-                    branch = "branchy"
-                "#},
-            )
+            .dep("culprit", culprit.with("branch", "branchy"))
             .build(&t);
     });
 
