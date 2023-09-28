@@ -316,6 +316,7 @@ impl PackagesSource for Metadata {
 mod tests {
     use crate::args::{PackagesFilter, PackagesSource, WithManifestPath};
     use camino::{Utf8Path, Utf8PathBuf};
+    use std::collections::HashSet;
 
     #[derive(Clone)]
     struct MockPackage {
@@ -331,6 +332,21 @@ mod tests {
 
     struct MockSource {
         pub members: Vec<MockPackage>,
+        pub runtime_manifest: Utf8PathBuf,
+    }
+
+    impl MockSource {
+        fn new(members: Vec<MockPackage>) -> Self {
+            Self {
+                members,
+                runtime_manifest: Utf8PathBuf::from("runtime/manifest"),
+            }
+        }
+
+        fn with_runtime_manifest(mut self, path: Utf8PathBuf) -> Self {
+            self.runtime_manifest = path;
+            self
+        }
     }
 
     impl PackagesSource for MockSource {
@@ -345,7 +361,7 @@ mod tests {
         }
 
         fn runtime_manifest(&self) -> Utf8PathBuf {
-            Utf8PathBuf::from("runtime")
+            self.runtime_manifest.clone()
         }
     }
 
@@ -360,11 +376,17 @@ mod tests {
         names.into_iter().map(mock_package).collect()
     }
 
+    fn cmp_no_order(names: Vec<impl ToString>, found: Vec<impl ToString>) {
+        let names: HashSet<String> = HashSet::from_iter(names.into_iter().map(|s| s.to_string()));
+        let found: Vec<String> = found.into_iter().map(|p| p.to_string()).collect();
+        let found: HashSet<String> = HashSet::from_iter(found);
+        assert_eq!(found, names);
+    }
+
     #[test]
     fn can_build_packages_filter() {
-        let mock = MockSource {
-            members: mock_packages(vec!["first", "second"]),
-        };
+        let mock = MockSource::new(mock_packages(vec!["first", "second"]));
+
         let filter = PackagesFilter {
             package: vec!["first".into()],
             workspace: false,
@@ -382,5 +404,111 @@ mod tests {
         let filter = PackagesFilter::generate_for::<MockSource>(packages.iter());
         let filter = filter.to_env();
         assert_eq!(filter, "first,second");
+    }
+
+    #[test]
+    fn can_match_single_package() {
+        let mock = MockSource::new(mock_packages(vec!["first", "second"]));
+
+        let filter = PackagesFilter {
+            package: vec!["second".into()],
+            workspace: false,
+        };
+        let packages = filter.match_many(&mock).unwrap();
+        assert_eq!(packages.len(), 1);
+        assert_eq!(packages[0].name, "second");
+
+        let package = filter.match_one(&mock).unwrap();
+        assert_eq!(package.name, "second");
+    }
+
+    #[test]
+    fn can_match_multiple_packages() {
+        let names = vec!["first", "second"];
+        let mock = MockSource::new(mock_packages(names.clone()));
+        let filter = PackagesFilter {
+            package: vec!["first".into(), "second".into()],
+            workspace: false,
+        };
+        let packages = filter.match_many(&mock).unwrap();
+        assert_eq!(packages.len(), 2);
+        cmp_no_order(
+            names.clone(),
+            packages.into_iter().map(|p| p.name).collect(),
+        );
+    }
+
+    #[test]
+    fn can_match_with_glob() {
+        let names = vec!["package_1", "package_2"];
+        let mock = MockSource::new(mock_packages(names.clone()));
+        let filter = PackagesFilter {
+            package: vec!["pack*".into()],
+            workspace: false,
+        };
+        let packages = filter.match_many(&mock).unwrap();
+        assert_eq!(packages.len(), 2);
+        cmp_no_order(
+            names.clone(),
+            packages.into_iter().map(|p| p.name).collect(),
+        );
+    }
+
+    #[test]
+    fn can_match_with_glob_and_package() {
+        let names = vec!["package_1", "second", "package_2"];
+        let mock = MockSource::new(mock_packages(names.clone()));
+        let filter = PackagesFilter {
+            package: vec!["pack*".into(), "second".into()],
+            workspace: false,
+        };
+        let packages = filter.match_many(&mock).unwrap();
+        assert_eq!(packages.len(), 3);
+        cmp_no_order(
+            names.clone(),
+            packages.into_iter().map(|p| p.name).collect(),
+        );
+    }
+
+    #[test]
+    fn match_one_ensures_single_package() {
+        let mock = MockSource::new(mock_packages(vec!["package_1", "package_2"]));
+        let filter = PackagesFilter {
+            package: vec!["pack*".into()],
+            workspace: false,
+        };
+        let package = filter.match_one(&mock);
+        assert!(package.is_err());
+    }
+
+    #[test]
+    fn can_select_current_package() {
+        let packages = mock_packages(vec!["package_1", "package_2"]);
+        let mock = MockSource::new(packages.clone());
+        let mock = mock.with_runtime_manifest(packages[0].manifest_path.clone());
+        let filter = PackagesFilter {
+            package: vec!["*".into()],
+            workspace: false,
+        };
+        let package = filter.match_one(&mock).unwrap();
+        assert_eq!(package.name, "package_1");
+    }
+
+    #[test]
+    fn can_match_whole_workspace() {
+        let names = vec!["package_1", "package_2"];
+        let packages = mock_packages(names.clone());
+        let mock = MockSource::new(packages.clone());
+        let mock = mock.with_runtime_manifest(packages[0].manifest_path.clone());
+        let filter = PackagesFilter {
+            package: vec!["*".into()],
+            workspace: true,
+        };
+        let packages = filter.match_many(&mock).unwrap();
+        assert_eq!(packages.len(), 2);
+        cmp_no_order(
+            names.clone(),
+            packages.into_iter().map(|p| p.name).collect(),
+        );
     }
 }
