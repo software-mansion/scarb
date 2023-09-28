@@ -8,7 +8,7 @@ use predicates::prelude::*;
 use scarb_build_metadata::CAIRO_VERSION;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 #[test]
@@ -550,7 +550,7 @@ fn workspace_as_dep() {
     let pkg2 = first_t.child("second");
     ProjectBuilder::start()
         .name("second")
-        .dep("first", r#"path = "../first""#)
+        .dep("first", Dep.path("../first"))
         .lib_cairo(indoc! {r#"
         fn fib(a: felt252, b: felt252, n: felt252) -> felt252 {
             match n {
@@ -580,8 +580,8 @@ fn workspace_as_dep() {
     let pkg1 = second_t.child("third");
     ProjectBuilder::start()
         .name("third")
-        .dep("first", r#"path = "../../first_workspace""#)
-        .dep("second", r#"path = "../../first_workspace""#)
+        .dep("first", Dep.path("../../first_workspace"))
+        .dep("second", Dep.path("../../first_workspace"))
         .lib_cairo(indoc! {r#"
             use second::fib;
             fn example() -> felt252 { 42 }
@@ -594,7 +594,7 @@ fn workspace_as_dep() {
     let pkg2 = second_t.child("fourth");
     ProjectBuilder::start()
         .name("fourth")
-        .dep("third", r#"path = "../third""#)
+        .dep("third", Dep.path("../third"))
         .build(&pkg2);
     WorkspaceBuilder::start()
         .add_member("third")

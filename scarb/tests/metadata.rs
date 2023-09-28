@@ -7,7 +7,7 @@ use serde_json::json;
 use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx;
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 fn packages_by_name(meta: Metadata) -> BTreeMap<String, PackageMetadata> {
@@ -407,7 +407,8 @@ fn workspace_simple() {
     ProjectBuilder::start()
         .name("second")
         .manifest_extra("[[test]]")
-        .dep("first", r#"path = "../first""#)
+        // Check paths are relative to manifest file.
+        .dep("first", Dep.path("../first"))
         .build(&pkg2);
     WorkspaceBuilder::start()
         .add_member("first")
@@ -448,12 +449,12 @@ fn workspace_with_root() {
     let pkg2 = t.child("second");
     ProjectBuilder::start()
         .name("second")
-        .dep("first", r#"path = "../first""#)
+        .dep("first", Dep.path("../first"))
         .build(&pkg2);
     let root = ProjectBuilder::start()
         .name("some_root")
-        .dep("first", r#"path = "./first""#)
-        .dep("second", r#"path = "./second""#);
+        .dep("first", Dep.path("./first"))
+        .dep("second", Dep.path("./second"));
     WorkspaceBuilder::start()
         .add_member("first")
         .add_member("second")
@@ -508,7 +509,7 @@ fn workspace_as_dep() {
     ProjectBuilder::start()
         .name("second")
         .manifest_extra("[[test]]")
-        .dep("first", r#"path = "../first""#)
+        .dep("first", Dep.path("../first"))
         .build(&pkg2);
     WorkspaceBuilder::start()
         .add_member("first")
@@ -545,14 +546,14 @@ fn workspace_as_dep() {
     ProjectBuilder::start()
         .name("third")
         .manifest_extra("[[test]]")
-        .dep("first", r#"path = "../../first_workspace""#)
-        .dep("second", r#"path = "../../first_workspace""#)
+        .dep("first", Dep.path("../../first_workspace"))
+        .dep("second", Dep.path("../../first_workspace"))
         .build(&pkg1);
     let pkg2 = second_t.child("fourth");
     ProjectBuilder::start()
         .name("fourth")
         .manifest_extra("[[test]]")
-        .dep("third", r#"path = "../third""#)
+        .dep("third", Dep.path("../third"))
         .build(&pkg2);
     WorkspaceBuilder::start()
         .add_member("third")
@@ -618,17 +619,17 @@ fn workspace_package_key_inheritance() {
     ProjectBuilder::start()
         .name("first")
         .manifest_extra("[[test]]")
-        .workspace_dep("some_dep")
+        .dep("some_dep", Dep.workspace())
         .build(&pkg1);
     let pkg2 = some_workspace.child("second");
     ProjectBuilder::start()
         .name("second")
         .manifest_extra("[[test]]")
-        .dep("first", r#"path = "../first""#)
+        .dep("first", Dep.path("../first"))
         .build(&pkg2);
 
     WorkspaceBuilder::start()
-        .dep("some_dep", r#"path = "../some_dep""#)
+        .dep("some_dep", Dep.path("../some_dep"))
         .add_member("first")
         .add_member("second")
         .build(&some_workspace);

@@ -5,7 +5,7 @@ use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use camino::Utf8PathBuf;
 use semver::Version;
-use toml_edit::{Document, Item, Table, Value};
+use toml_edit::{Document, Item, Value};
 
 use scarb_build_metadata::CAIRO_VERSION;
 use to_version::ToVersion;
@@ -44,8 +44,8 @@ impl ProjectBuilder {
         }
     }
 
-    pub fn name(mut self, name: impl Into<String>) -> Self {
-        self.name = name.into();
+    pub fn name(mut self, name: impl ToString) -> Self {
+        self.name = name.to_string();
         self
     }
 
@@ -59,30 +59,26 @@ impl ProjectBuilder {
         self
     }
 
-    pub fn src(mut self, path: impl Into<Utf8PathBuf>, source: impl Into<String>) -> Self {
-        self.src.insert(path.into(), source.into());
+    pub fn src(mut self, path: impl Into<Utf8PathBuf>, source: impl ToString) -> Self {
+        self.src.insert(path.into(), source.to_string());
         self
     }
 
-    pub fn lib_cairo(self, source: impl Into<String>) -> Self {
-        self.src("src/lib.cairo", source.into())
+    pub fn lib_cairo(self, source: impl ToString) -> Self {
+        self.src("src/lib.cairo", source.to_string())
     }
 
-    pub fn dep(mut self, name: impl Into<String>, dep: impl ToDep) -> Self {
-        self.deps.push((name.into(), dep.to_dep()));
+    pub fn dep(mut self, name: impl ToString, dep: impl DepBuilder) -> Self {
+        self.deps.push((name.to_string(), dep.build()));
         self
-    }
-
-    pub fn workspace_dep(self, name: impl Into<String>) -> Self {
-        self.dep(name, WorkspaceDep)
     }
 
     pub fn dep_starknet(self) -> Self {
-        self.dep("starknet", format!(r#"version = ">={}""#, CAIRO_VERSION))
+        self.dep("starknet", Dep.version(CAIRO_VERSION))
     }
 
-    pub fn manifest_extra(mut self, extra: impl Into<String>) -> Self {
-        self.manifest_extra = extra.into();
+    pub fn manifest_extra(mut self, extra: impl ToString) -> Self {
+        self.manifest_extra = extra.to_string();
         self
     }
 
@@ -122,52 +118,79 @@ impl ProjectBuilder {
     }
 }
 
-pub trait ToDep {
-    fn to_dep(&self) -> Value;
-}
+pub trait DepBuilder {
+    fn build(&self) -> Value;
 
-pub struct WorkspaceDep;
+    fn with(&self, key: impl ToString, value: impl Into<Value>) -> DepWith<'_, Self> {
+        DepWith {
+            dep: self,
+            key: key.to_string(),
+            value: value.into(),
+        }
+    }
 
-impl ToDep for WorkspaceDep {
-    fn to_dep(&self) -> Value {
-        let mut table = toml_edit::table();
-        table["workspace"] = Item::Value(Value::from(true));
-        table.into_value().unwrap()
+    fn version(&self, version: impl ToString) -> DepWith<'_, Self> {
+        self.with("version", version.to_string())
+    }
+
+    fn workspace(&self) -> DepWith<'_, Self> {
+        self.with("workspace", true)
+    }
+
+    fn path(&self, path: impl ToString) -> DepWith<'_, Self> {
+        self.with("path", path.to_string())
     }
 }
 
-impl ToDep for Table {
-    fn to_dep(&self) -> Value {
-        self.clone().into_inline_table().into()
+pub struct Dep;
+
+impl DepBuilder for Dep {
+    fn build(&self) -> Value {
+        toml_edit::table().into_value().unwrap()
     }
 }
 
-impl ToDep for &str {
-    fn to_dep(&self) -> Value {
-        let doc = self.parse::<Document>().unwrap();
-        let tab = doc.as_table().clone().into_inline_table();
-        Value::InlineTable(tab)
+impl DepBuilder for &ChildPath {
+    fn build(&self) -> Value {
+        Dep.with(
+            "path",
+            ChildPath::path(self).try_to_utf8().unwrap().to_string(),
+        )
+        .build()
     }
 }
 
-impl ToDep for String {
-    fn to_dep(&self) -> Value {
-        self.as_str().to_dep()
+impl DepBuilder for ChildPath {
+    fn build(&self) -> Value {
+        (&self).build()
     }
 }
 
-impl ToDep for &ChildPath {
-    fn to_dep(&self) -> Value {
-        let mut table = toml_edit::table();
-        table["path"] = Item::Value(Value::from(self.path().try_to_utf8().unwrap().to_string()));
-        table.into_value().unwrap()
+impl DepBuilder for &GitProject {
+    fn build(&self) -> Value {
+        Dep.with("git", self.url()).build()
     }
 }
 
-impl ToDep for &GitProject {
-    fn to_dep(&self) -> Value {
-        let mut table = toml_edit::table();
-        table["git"] = Item::Value(Value::from(self.url()));
-        table.into_value().unwrap()
+impl DepBuilder for GitProject {
+    fn build(&self) -> Value {
+        (&self).build()
+    }
+}
+
+pub struct DepWith<'a, T: DepBuilder + ?Sized> {
+    dep: &'a T,
+    key: String,
+    value: Value,
+}
+
+impl<'a, T: DepBuilder + ?Sized> DepBuilder for DepWith<'a, T> {
+    fn build(&self) -> Value {
+        let mut table = self.dep.build();
+        table
+            .as_inline_table_mut()
+            .unwrap()
+            .insert(self.key.clone(), self.value.clone());
+        table
     }
 }

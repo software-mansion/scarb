@@ -3,10 +3,10 @@ use std::net::TcpListener;
 use std::thread;
 
 use assert_fs::TempDir;
-use indoc::{formatdoc, indoc};
+use indoc::indoc;
 
 use scarb_test_support::command::Scarb;
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 
 #[test]
 fn https_something_happens() {
@@ -27,9 +27,7 @@ fn https_something_happens() {
             .version("1.0.0")
             .dep(
                 "dep",
-                formatdoc! {r#"
-                    git = "https://127.0.0.1:{port}/foo/bar"
-                "#},
+                Dep.with("git", format!("https://127.0.0.1:{port}/foo/bar")),
             )
             .build(&t);
 
@@ -64,9 +62,7 @@ fn ssh_something_happens() {
             .version("1.0.0")
             .dep(
                 "dep",
-                formatdoc! {r#"
-                    git = "ssh://127.0.0.1:{port}/foo/bar"
-                "#},
+                Dep.with("git", format!("ssh://127.0.0.1:{port}/foo/bar")),
             )
             .build(&t);
 

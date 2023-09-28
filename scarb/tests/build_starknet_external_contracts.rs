@@ -27,7 +27,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
     ProjectBuilder::start()
         .name("world")
         .version("0.1.0")
-        .dep("hello", r#" path = "../hello" "#)
+        .dep("hello", hello)
         .manifest_extra(formatdoc! {r#"
             [[target.starknet-contract]]
             {target_extra}
@@ -203,7 +203,7 @@ fn build_external_full_path() {
     ProjectBuilder::start()
         .name("world")
         .version("0.1.0")
-        .dep("hello", r#" path = "../hello" "#)
+        .dep("hello", &hello)
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
             build-external-contracts = [
@@ -410,7 +410,7 @@ fn compile_with_bad_glob_path() {
     ProjectBuilder::start()
         .name("world")
         .version("0.1.0")
-        .dep("hello", r#" path = "../hello" "#)
+        .dep("hello", &hello)
         .manifest_extra(formatdoc! {r#"
             [[target.starknet-contract]]
             build-external-contracts = ["hello::**",]

@@ -4,13 +4,13 @@ use std::fs;
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use gix::refs::transaction::PreviousValue;
-use indoc::{formatdoc, indoc};
+use indoc::indoc;
 use scarb_metadata::Metadata;
 
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::gitx;
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 
 #[test]
 fn compile_simple_git_dep() {
@@ -59,13 +59,7 @@ fn fetch_git_dep_branch() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .dep(
-            "dep1",
-            formatdoc! {r#"
-                git = "{git_dep}"
-                branch = "foo"
-            "#},
-        )
+        .dep("dep1", git_dep.with("branch", "foo"))
         .lib_cairo("fn world() -> felt252 { dep1::branched() }")
         .build(&t);
 
@@ -95,13 +89,7 @@ fn fetch_git_dep_tag() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .dep(
-            "dep1",
-            formatdoc! {r#"
-                git = "{git_dep}"
-                tag = "v1.4.0"
-            "#},
-        )
+        .dep("dep1", git_dep.with("tag", "v1.4.0"))
         .lib_cairo("fn world() -> felt252 { dep1::tagged() }")
         .build(&t);
 
@@ -137,13 +125,7 @@ fn fetch_git_dep_pull_request() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .dep(
-            "dep1",
-            formatdoc! {r#"
-                git = "{git_dep}"
-                rev = "refs/pull/330/head"
-            "#},
-        )
+        .dep("dep1", git_dep.with("rev", "refs/pull/330/head"))
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
@@ -163,7 +145,7 @@ fn fetch_with_nested_paths() {
         ProjectBuilder::start()
             .name("dep1")
             .lib_cairo("fn hello() -> felt252 { dep2::hello() }")
-            .dep("dep2", r#" path = "vendor/dep2" "#)
+            .dep("dep2", Dep.path("vendor/dep2"))
             .build(&t);
 
         ProjectBuilder::start()
@@ -195,7 +177,7 @@ fn fetch_with_short_ssh_git() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .dep("dep", r#" git = "git@github.com:a/dep" "#)
+        .dep("dep", Dep.with("git", "git@github.com:a/dep"))
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);
 
@@ -379,7 +361,7 @@ fn transitive_path_dep() {
         ProjectBuilder::start()
             .name("dep1")
             .lib_cairo("fn hello() -> felt252 { dep0::hello() }")
-            .dep("dep0", r#" path = "../zero" "#)
+            .dep("dep0", Dep.path("../zero"))
             .build(&t.child("one"));
     });
 
