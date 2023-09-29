@@ -90,6 +90,34 @@ openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", br
 build-external-contracts = ["openzeppelin::account::account::Account"]
 ```
 
+## Wildcard support in build-external-contracts
+
+The ```[build-external-contracts]``` property explained above allows asking Scarb to build contracts from package dependencies as part of proper package build, for example for use in tests. This release adds a possibility to request building many contracts from a module tree at once. For example, the following snippet:
+
+```toml-vue
+[[target.starknet-contract]]
+build-external-contracts = [
+    "dojo_erc::erc721::components::Balance",
+    "dojo_erc::erc721::components::OperatorApproval",
+    "dojo_erc::erc721::components::Owner",
+    "dojo_erc::erc721::components::TokenApproval",
+    "dojo_erc::erc721::erc721::ERC721",
+    "dojo_erc::erc721::systems::erc721_approve",
+    "dojo_erc::erc721::systems::erc721_burn",
+    "dojo_erc::erc721::systems::erc721_mint",
+    "dojo_erc::erc721::systems::erc721_set_approval_for_all",
+    "dojo_erc::erc721::systems::erc721_transfer_from",
+]
+```
+can now be written as:
+
+```toml-vue
+[[target.dojo]]
+build-external-contracts = [
+    "dojo_erc::erc721::*",
+]
+```
+
 ## Starknet Artifacts
 
 As part of building Starknet contracts, contract target generates a `[target_name].starknet_artifacts.json` file
