@@ -31,15 +31,11 @@ pub struct PackageLock {
     pub name: PackageName,
     pub version: Version,
     #[serde(default = "SourceId::empty_path")]
-    #[serde(skip_serializing_if = "is_path")]
+    #[serde(skip_serializing_if = "SourceId::is_path")]
     pub source: SourceId,
     #[serde(default = "BTreeSet::new")]
     #[serde(skip_serializing_if = "BTreeSet::is_empty")]
     pub dependencies: BTreeSet<PackageName>,
-}
-
-fn is_path(src: &SourceId) -> bool {
-    src.is_path()
 }
 
 impl Lockfile {

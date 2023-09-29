@@ -115,7 +115,7 @@ impl SourceId {
         self == Self::default_registry()
     }
 
-    pub fn is_path(self) -> bool {
+    pub fn is_path(&self) -> bool {
         self.kind == SourceKind::Path
     }
 
