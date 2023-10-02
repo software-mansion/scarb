@@ -35,6 +35,14 @@ fn main() -> Result<()> {
 
     check_scarb_version(&metadata);
 
+    let matched = args.packages_filter.match_many(&metadata)?;
+    let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
+    ScarbCommand::new()
+        .arg("build")
+        .arg("--test")
+        .env("SCARB_PACKAGES_FILTER", filter.to_env())
+        .run()?;
+
     let profile = env::var("SCARB_PROFILE").unwrap_or("dev".into());
     let default_target_dir = metadata.runtime_manifest.join("target");
     let target_dir = metadata
@@ -43,15 +51,8 @@ fn main() -> Result<()> {
         .unwrap_or(default_target_dir)
         .join(profile);
 
-    for package in args.packages_filter.match_many(&metadata)? {
+    for package in matched {
         println!("testing {} ...", package.name);
-
-        ScarbCommand::new()
-            .arg("build")
-            .arg("--test")
-            .arg("-p")
-            .arg(package.name)
-            .run()?;
 
         for target in find_testable_targets(&metadata, &package.id) {
             let file_path = target_dir.join(format!("{}.test.json", target.name.clone()));
