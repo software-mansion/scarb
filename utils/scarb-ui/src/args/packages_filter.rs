@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fmt;
 
 use anyhow::{bail, ensure, Result};
@@ -22,8 +23,15 @@ use scarb_metadata::{Metadata, PackageMetadata};
 pub struct PackagesFilter {
     /// Packages to run this command on, can be a concrete package name (`foobar`) or
     /// a prefix glob (`foo*`).
-    #[arg(short, long, value_name = "SPEC", default_value = "*")]
-    package: String,
+    #[arg(
+        short,
+        long,
+        default_value = "*",
+        value_delimiter = ',',
+        value_name = "SPEC",
+        env = "SCARB_PACKAGES_FILTER"
+    )]
+    package: Vec<String>,
     /// Run for all packages in the workspace.
     #[arg(short, long, conflicts_with = "package")]
     workspace: bool,
@@ -34,11 +42,11 @@ impl PackagesFilter {
     ///
     /// Returns an error if no or more than one packages were found.
     pub fn match_one<S: PackagesSource>(&self, source: &S) -> Result<S::Package> {
-        let spec = Spec::parse(&self.package)?;
+        let specs = self.package_specs()?;
 
         // Check for current package.
         // If none (in case of virtual workspace), run for all members.
-        if self.current_selected(&spec) {
+        if self.current_selected(&specs) {
             if let Some(pkg) = self.current_package(source)? {
                 return Ok(pkg);
             }
@@ -46,19 +54,26 @@ impl PackagesFilter {
 
         let members = source.members();
 
-        if (self.workspace || matches!(spec, Spec::All)) && members.len() > 1 {
+        if (self.workspace || specs.iter().any(|spec| matches!(spec, Spec::All)))
+            && members.len() > 1
+        {
             bail!(indoc! {r#"
                 could not determine which package to work on
                 help: use the `--package` option to specify the package
             "#});
         }
 
-        let found = Self::do_match::<S>(&spec, self.workspace, members.into_iter())?;
+        let specs_filter: String = specs
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        let found = Self::do_match_all::<S>(specs, self.workspace, members)?;
 
         ensure!(
             found.len() <= 1,
             formatdoc! {r#"
-                workspace has multiple members matching `{spec}`
+                workspace has multiple members matching `{specs_filter}`
                 help: use the `--package` option to specify single package
             "#}
         );
@@ -70,18 +85,31 @@ impl PackagesFilter {
     ///
     /// Returns an error if no packages were found.
     pub fn match_many<S: PackagesSource>(&self, source: &S) -> Result<Vec<S::Package>> {
-        let spec = Spec::parse(&self.package)?;
+        let specs = self.package_specs()?;
 
         // Check for current package.
         // If none (in case of virtual workspace), run for all members.
-        if self.current_selected(&spec) {
+        if self.current_selected(&specs) {
             if let Some(pkg) = self.current_package(source)? {
                 return Ok(vec![pkg]);
             }
         }
 
         let members = source.members();
-        Self::do_match::<S>(&spec, self.workspace, members.into_iter())
+        Self::do_match_all::<S>(specs, self.workspace, members)
+    }
+
+    fn package_specs(&self) -> Result<Vec<Spec>> {
+        let specs = self
+            .package
+            .iter()
+            .map(|s| Spec::parse(s))
+            .collect::<Result<HashSet<Spec>>>()?;
+        if specs.iter().any(|s| matches!(s, Spec::All)) {
+            Ok(vec![Spec::All])
+        } else {
+            Ok(specs.into_iter().collect())
+        }
     }
 
     fn current_package<S: PackagesSource>(&self, source: &S) -> Result<Option<S::Package>> {
@@ -92,8 +120,25 @@ impl PackagesFilter {
             .cloned())
     }
 
-    fn current_selected(&self, spec: &Spec<'_>) -> bool {
-        !self.workspace && matches!(spec, Spec::All)
+    fn current_selected(&self, specs: &[Spec<'_>]) -> bool {
+        !self.workspace && specs.iter().any(|spec| matches!(spec, Spec::All))
+    }
+
+    fn do_match_all<S: PackagesSource>(
+        specs: Vec<Spec>,
+        workspace: bool,
+        members: Vec<S::Package>,
+    ) -> Result<Vec<S::Package>> {
+        let mut packages = Vec::new();
+        for spec in specs {
+            packages.extend(Self::do_match::<S>(
+                &spec,
+                workspace,
+                members.clone().into_iter(),
+            )?);
+        }
+        packages.dedup_by_key(|p| S::package_name_of(p).to_string());
+        Ok(packages)
     }
 
     fn do_match<S: PackagesSource>(
@@ -124,6 +169,7 @@ impl PackagesFilter {
     }
 }
 
+#[derive(PartialEq, Eq, Hash)]
 enum Spec<'a> {
     All,
     One(&'a str),
