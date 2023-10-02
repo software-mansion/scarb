@@ -248,20 +248,34 @@ fn scripts_shell_uses_current_scarb() {
 #[test]
 fn uses_package_filter() {
     let t = TempDir::new().unwrap();
+
+    let first = t.child("first");
     ProjectBuilder::start()
-        .name("foo")
+        .name("first")
         .manifest_extra(indoc! {r#"
         [scripts]
-        some_script = "echo 'Hello, world!'"
+        some_script = "echo 'Hello first package!'"
         "#})
+        .build(&first);
+    let second = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .manifest_extra(indoc! {r#"
+        [scripts]
+        some_script = "echo 'Hello second package!'"
+        "#})
+        .build(&second);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
         .build(&t);
 
     Scarb::quick_snapbox()
-        .args(["run", "-p", "foo", "some_script"])
+        .args(["run", "-p", "first", "some_script"])
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq("Hello, world!\n");
+        .stdout_eq("Hello first package!\n");
 
     Scarb::quick_snapbox()
         .args(["--json", "run", "-p", "bar", "some_script"])
@@ -271,6 +285,60 @@ fn uses_package_filter() {
         .stdout_eq(indoc! {r#"
         {"type":"error","message":"package `bar` not found in workspace"}
         "#});
+}
+
+#[test]
+fn package_filter_from_env() {
+    let t = TempDir::new().unwrap();
+
+    let first = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+        [scripts]
+        some_script = "echo 'Hello first package!'"
+        "#})
+        .build(&first);
+    let second = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .manifest_extra(indoc! {r#"
+        [scripts]
+        some_script = "echo 'Broke!'"
+        "#})
+        .build(&second);
+    let second = t.child("third");
+    ProjectBuilder::start()
+        .name("third")
+        .manifest_extra(indoc! {r#"
+        [scripts]
+        some_script = "echo 'Hello third package!'"
+        "#})
+        .build(&second);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .add_member("third")
+        .build(&t);
+
+    let output = Scarb::quick_snapbox()
+        .env("SCARB_PACKAGES_FILTER", "first,third")
+        .args(["run", "some_script"])
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "Command failed! {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.eq("Hello first package!\nHello third package!\n")
+            || stdout.eq("Hello third package!\nHello first package!\n")
+    )
 }
 
 #[test]
