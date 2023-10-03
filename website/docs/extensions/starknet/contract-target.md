@@ -72,8 +72,10 @@ The off by default `casm-add-pythonic-hints` property enables Scarb to add it to
 
 While compiling the Scarb project, by default no artifacts are emitted for contracts defined in dependencies.
 To override this behaviour for certain contracts from other packages, you can use `build-external-contracts` property.
+
 It accepts a list of strings, each of which is a reference to a contract defined in a dependency.
 The package that implements this contracts need to be declared as a dependency of the project in `[dependencies]` section.
+
 The reference to a contract is a full cairo path to the contract module.
 External contracts will be built in the same way as the contracts defined in the project.
 The artifacts will be emitted under `[target name]_[contract name].[sierra|casm].json` names.
@@ -110,14 +112,16 @@ build-external-contracts = [
 ]
 ```
 
-can now be written as:
+can be written as:
 
 ```toml-vue
-[[target.dojo]]
+[[target.starknet-contract]]
 build-external-contracts = [
     "dojo_erc::erc721::*",
 ]
 ```
+
+When using a wildcard in the build-external-contracts property, Scarb will match the contract path before the wildcard and look for all contracts whose paths start with that prefix. The wildcard can only be used as the last character in the contract path, and each external contract path can have at most one wildcard.
 
 ## Starknet Artifacts
 
