@@ -82,8 +82,8 @@ fn two_revs_of_same_dep() {
             [..] Updating git repository file://[..]/culprit
             [..] Updating git repository file://[..]/culprit
             error: found dependencies on the same package `culprit` coming from incompatible sources:
-            source 1: git+file://[..]/culprit
-            source 2: git+file://[..]/culprit?branch=branchy
+            source 1: git+file://[..]/culprit#[..]
+            source 2: git+file://[..]/culprit?branch=branchy#[..]
         "#});
 }
 
@@ -136,7 +136,7 @@ fn two_revs_of_same_dep_diamond() {
             [..] Updating git repository file://[..]/culprit
             [..] Updating git repository file://[..]/culprit
             error: found dependencies on the same package `culprit` coming from incompatible sources:
-            source 1: git+file://[..]/culprit
-            source 2: git+file://[..]/culprit?branch=branchy
+            source 1: git+file://[..]/culprit#[..]
+            source 2: git+file://[..]/culprit?branch=branchy#[..]
         "#});
 }
