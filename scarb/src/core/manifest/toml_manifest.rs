@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::default::Default;
 use std::fs;
@@ -245,7 +246,7 @@ pub enum TomlDependency {
     /// [`VersionReq`] specified as a string, e.g. `package = "<version>"`.
     Simple(VersionReq),
     /// Detailed specification as a table, e.g. `package = { version = "<version>" }`.
-    Detailed(DetailedTomlDependency),
+    Detailed(Box<DetailedTomlDependency>),
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -331,13 +332,13 @@ impl TomlManifest {
 }
 
 impl TomlDependency {
-    fn resolve(&self) -> DetailedTomlDependency {
+    fn resolve(&self) -> Cow<'_, DetailedTomlDependency> {
         match self {
-            TomlDependency::Simple(version) => DetailedTomlDependency {
+            TomlDependency::Simple(version) => Cow::Owned(DetailedTomlDependency {
                 version: Some(version.clone()),
                 ..Default::default()
-            },
-            TomlDependency::Detailed(detailed) => detailed.clone(),
+            }),
+            TomlDependency::Detailed(detailed) => Cow::Borrowed(detailed),
         }
     }
 }
