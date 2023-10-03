@@ -1,3 +1,5 @@
+#![allow(clippy::items_after_test_module)]
+
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufReader, Read};
@@ -741,9 +743,11 @@ fn clean_tar_headers() {
 #[test_case("../.gitignore", false, false; "gitignore outside")]
 #[test_case("../.gitignore", true, false; "gitignore outside with git")]
 #[test_case("../.ignore", false, false; "ignore outside")]
+#[test_case("../.scarbignore", false, false; "scarbignore outside")]
 #[test_case(".gitignore", false, false; "gitignore inside")]
 #[test_case(".gitignore", true, true; "gitignore inside with git")]
 #[test_case(".ignore", false, true; "ignore inside")]
+#[test_case(".scarbignore", false, true; "scarbignore inside")]
 fn ignore_file(ignore_path: &str, setup_git: bool, expect_ignore_to_work: bool) {
     let g = gitx::new_conditional(setup_git, "package", |t| {
         ProjectBuilder::start()
@@ -779,4 +783,42 @@ fn ignore_file(ignore_path: &str, setup_git: bool, expect_ignore_to_work: bool) 
         .assert()
         .success()
         .stdout_eq(expected.join("\n"));
+}
+
+#[test]
+fn ignore_whitelist_pattern() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .src("ignore.txt", "")
+        .src("noignore.txt", "")
+        .src("src/ignore.txt", "")
+        .build(&t);
+
+    t.child(".scarbignore")
+        .write_str(indoc! {r#"
+            *
+            !*/
+            !Scarb.toml
+            !src/
+            !src/*
+            src/ignore.*
+            !noignore.txt
+        "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--list")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            VERSION
+            Scarb.orig.toml
+            Scarb.toml
+            noignore.txt
+            src/lib.cairo
+        "#});
 }

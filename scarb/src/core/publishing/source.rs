@@ -4,14 +4,14 @@ use ignore::{DirEntry, WalkBuilder};
 
 use crate::core::Package;
 use crate::internal::fsx::PathBufUtf8Ext;
-use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME};
+use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME, SCARB_IGNORE_FILE_NAME};
 
 /// List all files relevant to building this package inside this source.
 ///
 /// The basic assumption is that all files in the package directory are relevant for building this
 /// package, provided that they potentially can be committed to the source directory. The following
 /// rules hold:
-/// * Look for any `.gitignore` or `.ignore`-like files, using the [`ignore`] crate.
+/// * Look for any `.scarbignore`, `.gitignore` or `.ignore`-like files, using the [`ignore`] crate.
 /// * Skip `.git` directory.
 /// * Skip any subdirectories containing `Scarb.toml`.
 /// * Skip `<root>/target` directory.
@@ -63,6 +63,7 @@ fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> 
         .parents(false)
         .require_git(true)
         .same_file_system(true)
+        .add_custom_ignore_filename(SCARB_IGNORE_FILE_NAME)
         .filter_entry(filter)
         .build()
         .try_for_each(|entry| {
