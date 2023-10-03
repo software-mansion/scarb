@@ -90,7 +90,7 @@ openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", br
 build-external-contracts = ["openzeppelin::account::account::Account"]
 ```
 
-## Wildcard support in build-external-contracts
+### Wildcard support
 
 It is possible to request building many contracts from a module tree at once. For example, the following snippet:
 
