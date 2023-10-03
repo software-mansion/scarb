@@ -8,6 +8,7 @@ use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
+use test_case::test_case;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::gitx;
@@ -130,15 +131,38 @@ impl PackageChecker {
     }
 }
 
-#[test]
-fn simple() {
-    let t = TempDir::new().unwrap();
+fn simple_project() -> ProjectBuilder {
     ProjectBuilder::start()
         .name("foo")
         .version("1.0.0")
         .lib_cairo("mod foo;")
         .src("src/foo.cairo", "fn foo() {}")
-        .build(&t);
+        // Test that files we want not to be included are indeed not included.
+        .src("target/dev/evil.txt", "")
+}
+
+fn symlink_dir<P: AsRef<Path>, Q: AsRef<Path>>(original: P, link: Q) {
+    #[cfg(unix)]
+    use std::os::unix::fs::symlink as symlink_dir;
+    #[cfg(windows)]
+    use std::os::windows::fs::symlink_dir;
+
+    let original = original.as_ref();
+    let link = link.as_ref();
+    symlink_dir(original, link).unwrap_or_else(|e| {
+        panic!(
+            "failed to create symlink from {} to {}: {}",
+            original.display(),
+            link.display(),
+            e
+        )
+    });
+}
+
+#[test]
+fn simple() {
+    let t = TempDir::new().unwrap();
+    simple_project().build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
@@ -147,15 +171,22 @@ fn simple() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
-        [..]  Packaged 4 files, [..] ([..] compressed)
+        [..]  Packaged [..] files, [..] ([..] compressed)
         "#});
 
     PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
         .name_and_version("foo", "1.0.0")
-        .contents(&["VERSION", "Scarb.orig.toml", "Scarb.toml", "src/lib.cairo"])
+        .contents(&[
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+            "src/lib.cairo",
+            "src/foo.cairo",
+        ])
         .file_eq("VERSION", "1")
         .file_eq_path("Scarb.orig.toml", t.child("Scarb.toml"))
         .file_eq_path("src/lib.cairo", t.child("src/lib.cairo"))
+        .file_eq_path("src/foo.cairo", t.child("src/foo.cairo"))
         .file_eq_nl(
             "Scarb.toml",
             indoc! {r#"
@@ -182,10 +213,7 @@ fn simple() {
 #[test]
 fn list_simple() {
     let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("foo")
-        .version("1.0.0")
-        .build(&t);
+    simple_project().build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
@@ -197,6 +225,7 @@ fn list_simple() {
             VERSION
             Scarb.orig.toml
             Scarb.toml
+            src/foo.cairo
             src/lib.cairo
         "#});
 }
@@ -486,10 +515,160 @@ fn git_dependency_no_version() {
         "#});
 }
 
-// TODO(mkaput): Symlinks and other FS shenanigans
-// TODO(mkaput): Gitignore
+#[test]
+fn list_ignore_nested() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .build(&t);
+    ProjectBuilder::start()
+        .name("child")
+        .version("1.0.0")
+        .build(&t.child("child"));
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--list")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            VERSION
+            Scarb.orig.toml
+            Scarb.toml
+            src/lib.cairo
+        "#});
+}
+
 // TODO(mkaput): Invalid readme/license path
 // TODO(mkaput): Restricted Windows files
+
+#[test]
+fn package_symlink() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .build(&t);
+
+    symlink_dir(t.child("src"), t.child("dup"));
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
+        .name_and_version("foo", "1.0.0")
+        .contents(&[
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+            "src/lib.cairo",
+            "dup/lib.cairo",
+        ])
+        .file_eq_path("src/lib.cairo", t.child("src/lib.cairo"))
+        .file_eq_path("dup/lib.cairo", t.child("src/lib.cairo"));
+}
+
+#[test]
+fn broken_symlink() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .build(&t);
+
+    symlink_dir("nowhere", t.child("src/foo.cairo"));
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging [..]
+        error: failed to list source files in: [..]
+
+        Caused by:
+            [..]
+        "#});
+}
+
+#[test]
+fn broken_but_excluded_symlink() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .build(&t);
+
+    symlink_dir("nowhere", t.child("target"));
+
+    // FIXME(mkaput): Technically, we can just ignore such symlinks.
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging [..]
+        error: failed to list source files in: [..]
+
+        Caused by:
+            [..]
+        "#});
+}
+
+#[test]
+fn filesystem_loop() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .build(&t);
+
+    symlink_dir(t.child("src/symlink/foo/bar/baz"), t.child("src/symlink"));
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging [..]
+        error: failed to list source files in: [..]
+
+        Caused by:
+            [..]
+        "#});
+}
+
+#[test]
+fn exclude_dot_files_and_directories_by_default() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .src(".dotfile", "")
+        .src(".dotdir/file", "")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--list")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            VERSION
+            Scarb.orig.toml
+            Scarb.toml
+            src/lib.cairo
+        "#});
+}
 
 #[test]
 fn clean_tar_headers() {
@@ -497,8 +676,6 @@ fn clean_tar_headers() {
     ProjectBuilder::start()
         .name("foo")
         .version("1.0.0")
-        .lib_cairo("mod foo;")
-        .src("src/foo.cairo", "fn foo() {}")
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -516,4 +693,47 @@ fn clean_tar_headers() {
         assert_eq!(header.username().unwrap().unwrap(), "");
         assert_eq!(header.groupname().unwrap().unwrap(), "");
     }
+}
+
+#[test_case("../.gitignore", false, false; "gitignore outside")]
+#[test_case("../.gitignore", true, false; "gitignore outside with git")]
+#[test_case("../.ignore", false, false; "ignore outside")]
+#[test_case(".gitignore", false, false; "gitignore inside")]
+#[test_case(".gitignore", true, true; "gitignore inside with git")]
+#[test_case(".ignore", false, true; "ignore inside")]
+fn ignore_file(ignore_path: &str, setup_git: bool, expect_ignore_to_work: bool) {
+    let g = gitx::new_conditional(setup_git, "package", |t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("1.0.0")
+            .src("ignore.txt", "")
+            .src("noignore.txt", "")
+            .build(&t);
+
+        t.child(ignore_path)
+            .write_str(indoc! {r#"
+                *.txt
+                !noignore.txt
+            "#})
+            .unwrap();
+    });
+
+    let mut expected = Vec::new();
+    expected.push("VERSION");
+    expected.push("Scarb.orig.toml");
+    expected.push("Scarb.toml");
+    if !expect_ignore_to_work {
+        expected.push("ignore.txt");
+    }
+    expected.push("noignore.txt");
+    expected.push("src/lib.cairo");
+    expected.push(""); // Ensure there's trailing \n
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--list")
+        .current_dir(g.p)
+        .assert()
+        .success()
+        .stdout_eq(expected.join("\n"));
 }
