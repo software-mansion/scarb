@@ -92,7 +92,7 @@ build-external-contracts = ["openzeppelin::account::account::Account"]
 
 ## Wildcard support in build-external-contracts
 
-The `[build-external-contracts]` property explained above allows asking Scarb to build contracts from package dependencies as part of proper package build, for example for use in tests. This release adds a possibility to request building many contracts from a module tree at once. For example, the following snippet:
+It is possible to request building many contracts from a module tree at once. For example, the following snippet:
 
 ```toml-vue
 [[target.starknet-contract]]
