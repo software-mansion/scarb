@@ -32,7 +32,6 @@ pub struct GitSource<'c> {
 
 struct InnerState<'c> {
     path_source: PathSource<'c>,
-    // TODO(#126): Update rev lock in the lockfile with this value.
     actual_rev: Rev,
 }
 
@@ -53,14 +52,18 @@ impl<'c> GitSource<'c> {
         config: &'c Config,
     ) -> Result<Self> {
         let canonical_url = CanonicalUrl::new(repo_url)?;
-
+        let locked_rev: Option<Rev> = source_id
+            .kind
+            .as_git_source_spec()
+            .and_then(|spec| spec.precise.clone().map(|p| p.try_into()))
+            .transpose()?;
         Ok(Self {
             source_id,
             config,
             remote: GitRemote::new(canonical_url),
             requested_reference,
             // TODO(#126): Pull this somehow from the lockfile.
-            locked_rev: None,
+            locked_rev,
             inner: OnceCell::new(),
         })
     }
@@ -134,6 +137,7 @@ impl<'c> GitSource<'c> {
             let db_checkouts_fs = all_checkouts_fs.child(&remote_ident);
             let checkout_fs = db_checkouts_fs.child(db.short_id_of(actual_rev)?);
             let checkout = db.copy_to(&checkout_fs, actual_rev, config)?;
+            let source_id = source_id.with_precise(actual_rev.to_string())?;
 
             let path_source = PathSource::recursive_at(&checkout.location, source_id, config);
 
