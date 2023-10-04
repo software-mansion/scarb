@@ -228,7 +228,7 @@ impl SourceId {
             return Ok(Self::for_std());
         }
 
-        let (kind, url) = {
+        let (kind, url_part) = {
             let mut parts = pretty_url.splitn(2, '+');
             (
                 parts.next().expect("at least one part must be here"),
@@ -238,11 +238,21 @@ impl SourceId {
             )
         };
 
-        let mut url =
-            Url::parse(url).with_context(|| format!("cannot parse source URL: {pretty_url}"))?;
+        let parse_url = |value: &str| {
+            Url::parse(value).with_context(|| format!("cannot parse source URL: {pretty_url}"))
+        };
+
+        let url = || parse_url(url_part);
 
         match kind {
             GIT_SOURCE_PROTOCOL => {
+                let (mut url, precise) = url_part
+                    .rsplit_once('#')
+                    .map(|(url, precise)| -> Result<(_, _)> {
+                        Ok((parse_url(url)?, Some(precise.to_string())))
+                    })
+                    .unwrap_or_else(|| Ok((url()?, None)))?;
+
                 let mut reference = GitReference::DefaultBranch;
                 for (k, v) in url.query_pairs() {
                     match &k[..] {
@@ -254,12 +264,14 @@ impl SourceId {
                 }
 
                 url.set_query(None);
-                SourceId::for_git(&url, &reference)
+
+                let sid = SourceId::for_git(&url, &reference)?;
+                precise.map(|p| sid.with_precise(p)).unwrap_or(Ok(sid))
             }
 
-            PATH_SOURCE_PROTOCOL => SourceId::new(url, SourceKind::Path),
+            PATH_SOURCE_PROTOCOL => SourceId::new(url()?, SourceKind::Path),
 
-            REGISTRY_SOURCE_PROTOCOL => SourceId::for_registry(&url),
+            REGISTRY_SOURCE_PROTOCOL => SourceId::for_registry(&(url()?)),
 
             kind => bail!("unsupported source protocol: {kind}"),
         }
@@ -371,5 +383,15 @@ mod tests {
         assert!(!original.contains('#'));
         let sid = sid.with_precise("some_rev".into()).unwrap();
         assert_eq!(sid.to_pretty_url(), format!("{original}#some_rev"));
+    }
+
+    #[test]
+    fn parses_precise() {
+        let sid = SourceId::mock_git();
+        let sid = sid.with_precise("some_rev".into()).unwrap();
+        assert_eq!(
+            SourceId::from_pretty_url(&sid.to_pretty_url()).unwrap(),
+            sid
+        );
     }
 }
