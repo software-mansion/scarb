@@ -127,12 +127,12 @@ impl PackagesFilter {
             .into()
     }
 
-    fn package_specs(&self) -> Result<Vec<Spec>> {
+    fn package_specs(&self) -> Result<Vec<Spec<'_>>> {
         let specs = self
             .package
             .iter()
             .map(|s| Spec::parse(s))
-            .collect::<Result<HashSet<Spec>>>()?;
+            .collect::<Result<HashSet<Spec<'_>>>>()?;
         if specs.iter().any(|s| matches!(s, Spec::All)) {
             Ok(vec![Spec::All])
         } else {
@@ -153,7 +153,7 @@ impl PackagesFilter {
     }
 
     fn do_match_all<S: PackagesSource>(
-        specs: Vec<Spec>,
+        specs: Vec<Spec<'_>>,
         workspace: bool,
         members: Vec<S::Package>,
     ) -> Result<Vec<S::Package>> {
