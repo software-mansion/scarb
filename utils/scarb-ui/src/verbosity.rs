@@ -2,7 +2,7 @@ use std::env;
 use std::fmt::Display;
 use std::str::FromStr;
 
-use anyhow::bail;
+use anyhow::{bail, Result};
 
 /// The requested verbosity of output.
 ///
@@ -10,9 +10,18 @@ use anyhow::bail;
 /// [`Verbosity::Quiet`] < [`Verbosity::Normal`] < [`Verbosity::Verbose`]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Verbosity {
+    /// Avoid printing anything to standard output.
+    ///
+    /// String representation: `quiet`.
     Quiet,
+    /// Default verbosity level.
+    ///
+    /// String representation: `normal`.
     #[default]
     Normal,
+    /// Print extra information to standard output.
+    ///
+    /// String representation: `verbose`.
     Verbose,
 }
 
@@ -29,7 +38,7 @@ impl Display for Verbosity {
 impl FromStr for Verbosity {
     type Err = anyhow::Error;
 
-    fn from_str(s: &str) -> anyhow::Result<Self> {
+    fn from_str(s: &str) -> Result<Self> {
         match s {
             "quiet" => Ok(Verbosity::Quiet),
             "normal" => Ok(Verbosity::Normal),
@@ -41,7 +50,11 @@ impl FromStr for Verbosity {
 }
 
 impl Verbosity {
-    pub fn from_env_var(env_var_name: &str) -> anyhow::Result<Self> {
+    /// Get the verbosity level from the given environment variable.
+    ///
+    /// Environment variable value is decoding using [`Verbosity::from_str`].
+    /// See [`Verbosity`] variants documentation for valid values.
+    pub fn from_env_var(env_var_name: &str) -> Result<Self> {
         let env_var = env::var(env_var_name)?;
         Self::from_str(env_var.as_str())
     }

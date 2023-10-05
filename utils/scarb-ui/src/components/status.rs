@@ -3,8 +3,14 @@ use serde::{Serialize, Serializer};
 
 use crate::Message;
 
-/// Notes:
-/// - `status` should always be a single verb, for example _Compiling_, _Running_.
+/// Indication of starting or finishing of a significant process in the application.
+///
+/// The `status` part categorizes the process, and should always be a single verb, for example:
+/// _Compiling_, _Running_.
+/// In text mode, status messages are coloured and right-padded for better aesthetics.
+/// Padding is hardcoded to **12** characters, therefore avoid using words longer than
+/// **11** characters.
+/// The `message` part is a free-form text describing the details of what's going on.
 #[derive(Serialize)]
 pub struct Status<'a> {
     status: &'a str,
@@ -14,10 +20,12 @@ pub struct Status<'a> {
 }
 
 impl<'a> Status<'a> {
+    /// Create a new [`Status`] with default color (green).
     pub fn new(status: &'a str, message: &'a str) -> Self {
         Self::with_color(status, "green", message)
     }
 
+    /// Create a new [`Status`] with the given color.
     pub fn with_color(status: &'a str, color: &'a str, message: &'a str) -> Self {
         Self {
             status,
