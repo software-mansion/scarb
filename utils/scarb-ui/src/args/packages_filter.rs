@@ -4,7 +4,6 @@ use std::fmt;
 
 use anyhow::{bail, ensure, Result};
 use camino::{Utf8Path, Utf8PathBuf};
-use indoc::{formatdoc, indoc};
 
 use scarb_metadata::{Metadata, PackageMetadata};
 
@@ -60,10 +59,10 @@ impl PackagesFilter {
         if (self.workspace || specs.iter().any(|spec| matches!(spec, Spec::All)))
             && members.len() > 1
         {
-            bail!(indoc! {r#"
-                could not determine which package to work on
-                help: use the `--package` option to specify the package
-            "#});
+            bail!(
+                "could not determine which package to work on\n\
+                help: use the `--package` option to specify the package"
+            );
         }
 
         let specs_filter: String = specs
@@ -75,10 +74,8 @@ impl PackagesFilter {
 
         ensure!(
             found.len() <= 1,
-            formatdoc! {r#"
-                workspace has multiple members matching `{specs_filter}`
-                help: use the `--package` option to specify single package
-            "#}
+            "workspace has multiple members matching `{specs_filter}`\n\
+            help: use the `--package` option to specify single package"
         );
 
         Ok(found.into_iter().next().unwrap())
@@ -314,9 +311,11 @@ impl PackagesSource for Metadata {
 
 #[cfg(test)]
 mod tests {
-    use crate::args::{PackagesFilter, PackagesSource, WithManifestPath};
-    use camino::{Utf8Path, Utf8PathBuf};
     use std::collections::HashSet;
+
+    use camino::{Utf8Path, Utf8PathBuf};
+
+    use crate::args::{PackagesFilter, PackagesSource, WithManifestPath};
 
     #[derive(Clone)]
     struct MockPackage {
