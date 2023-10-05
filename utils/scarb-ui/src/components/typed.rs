@@ -15,15 +15,6 @@ pub struct TypedMessage<'a> {
 }
 
 impl<'a> TypedMessage<'a> {
-    pub fn plain(ty: &'a str, message: &'a str) -> Self {
-        Self {
-            r#type: ty,
-            message,
-            type_style: None,
-            skip_type_for_text: false,
-        }
-    }
-
     pub fn styled(ty: &'a str, type_style: &'a str, message: &'a str) -> Self {
         Self {
             r#type: ty,
