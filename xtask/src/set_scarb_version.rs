@@ -1,6 +1,6 @@
 use anyhow::{ensure, Result};
 use clap::Parser;
-use semver::Version;
+use semver::{Prerelease, Version};
 use toml_edit::{value, Document};
 use xshell::{cmd, Shell};
 
@@ -34,6 +34,8 @@ pub struct Args {
     pub build: Option<String>,
     #[arg(long, default_value_t = false)]
     pub dry_run: bool,
+    #[arg(long, default_value_t = false)]
+    pub no_pre_release: bool,
 }
 
 pub fn main(args: Args) -> Result<()> {
@@ -46,6 +48,9 @@ pub fn main(args: Args) -> Result<()> {
 
     if let Some(build) = args.build {
         version.build = build.parse()?;
+    }
+    if args.no_pre_release {
+        version.pre = Prerelease::EMPTY;
     }
 
     package["version"] = value(version.to_string());

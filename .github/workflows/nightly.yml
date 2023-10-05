@@ -54,7 +54,7 @@ jobs:
           echo "nightly_branch=$NIGHTLY_BRANCH" >> $GITHUB_OUTPUT
 
       - name: Set Scarb version build metadata
-        run: cargo xtask set-scarb-version --build ${{ env.NIGHTLY_TAG }}
+        run: cargo xtask set-scarb-version --build ${{ env.NIGHTLY_TAG }} --no-pre-release
 
       - name: Rebuild xtasks after Cargo.toml changes
         run: cargo build -p xtask
