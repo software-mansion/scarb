@@ -1,3 +1,6 @@
+//! This module provides various ready to use message types and widgets for use with
+//! a [`Ui`][crate::Ui].
+
 pub use machine::*;
 pub use spinner::*;
 pub use status::*;

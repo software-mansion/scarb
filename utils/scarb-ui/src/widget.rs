@@ -4,5 +4,6 @@ pub trait Widget {
     /// be cleared.
     type Handle;
 
+    /// Display the widget on the standard output, and return a handle for further interaction.
     fn text(self) -> Self::Handle;
 }
