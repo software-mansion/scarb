@@ -4130,7 +4130,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-ui"
-version = "2.3.0-rc0"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "camino",

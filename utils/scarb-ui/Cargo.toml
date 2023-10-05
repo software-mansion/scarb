@@ -1,8 +1,16 @@
 [package]
 name = "scarb-ui"
-version.workspace = true
+version = "0.1.0"
 edition.workspace = true
-publish = false
+
+authors.workspace = true
+categories = ["development-tools"]
+description = "Terminal user interface primitives used by Scarb and its extensions"
+homepage.workspace = true
+keywords = ["scarb"]
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
