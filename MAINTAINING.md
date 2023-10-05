@@ -140,7 +140,6 @@ Releasing `scarb-metadata` crate is also a semi-automated process.
 1. Make sure correct version is present in:
     1. `scarb-metadata/Cargo.toml`
     2. `Cargo.lock`
-    3. `scarb/Cargo.toml` (depends on `scarb-metadata`)
 
    You will probably have to commit changes and then tag newly created commit.
 2. Make sure you create it on a green commit (CI is passing), this is not verified!
@@ -148,6 +147,21 @@ Releasing `scarb-metadata` crate is also a semi-automated process.
 4. Create a tag on `main` named `scarb-metadata/vX.Y.Z`.
 5. Push it.
 6. Run `cargo publish -p scarb-metadata`.
+
+## `scarb-ui` release procedure
+
+Releasing `scarb-ui` crate is also a semi-automated process.
+
+1. Make sure correct version is present in:
+   1. `scarb-ui/Cargo.toml`
+   2. `Cargo.lock`
+
+   You will probably have to commit changes and then tag newly created commit.
+2. Make sure you create it on a green commit (CI is passing), this is not verified!
+3. Run `cargo publish -p scarb-ui --dry-run` to verify that everything is fine.
+4. Create a tag on `main` named `scarb-ui/vX.Y.Z`.
+5. Push it.
+6. Run `cargo publish -p scarb-ui`.
 
 [@software-mansion/scarb-maintainers]: https://github.com/orgs/software-mansion/teams/scarb-maintainers
 
