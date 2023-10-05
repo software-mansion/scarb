@@ -4137,7 +4137,6 @@ dependencies = [
  "clap",
  "console",
  "indicatif",
- "indoc",
  "scarb-metadata 1.8.0",
  "serde",
  "serde_json",
