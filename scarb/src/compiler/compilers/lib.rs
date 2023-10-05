@@ -88,13 +88,13 @@ impl Compiler for LibCompiler {
             let gas_usage_check = true;
 
             let metadata = {
-                let _ = trace_span!("casm_calc_metadata");
+                let _ = trace_span!("casm_calc_metadata").enter();
                 calc_metadata(&sierra_program, Default::default(), false)
                     .context("failed calculating Sierra variables")?
             };
 
             let cairo_program = {
-                let _ = trace_span!("compile_casm");
+                let _ = trace_span!("compile_casm").enter();
                 cairo_lang_sierra_to_casm::compiler::compile(
                     &sierra_program,
                     &metadata,
