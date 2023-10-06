@@ -138,6 +138,7 @@ fn simple_project() -> ProjectBuilder {
         .lib_cairo("mod foo;")
         .src("src/foo.cairo", "fn foo() {}")
         // Test that files we want not to be included are indeed not included.
+        .lock("")
         .src("target/dev/evil.txt", "")
 }
 

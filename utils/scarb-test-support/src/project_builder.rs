@@ -68,6 +68,10 @@ impl ProjectBuilder {
         self.src("src/lib.cairo", source.to_string())
     }
 
+    pub fn lock(self, source: impl ToString) -> Self {
+        self.src("Scarb.lock", source.to_string())
+    }
+
     pub fn dep(mut self, name: impl ToString, dep: impl DepBuilder) -> Self {
         self.deps.push((name.to_string(), dep.build()));
         self
