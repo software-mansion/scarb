@@ -10,6 +10,7 @@ use toml::Value;
 
 pub use compiler_config::*;
 pub use dependency::*;
+pub use maybe_workspace::*;
 pub use scripts::*;
 pub use summary::*;
 pub use target::*;

@@ -38,8 +38,10 @@ impl WorkspaceBuilder {
 
     pub fn build(&self, t: &impl PathChild) {
         let mut doc = Document::new();
+        doc["workspace"] = toml_edit::table();
         doc["workspace"]["members"] =
             Item::Value(Value::from(Array::from_iter(self.members.clone())));
+        doc["workspace"]["dependencies"] = toml_edit::table();
         for (name, dep) in &self.deps {
             doc["workspace"]["dependencies"][name.clone()] = Item::Value(dep.clone());
         }
