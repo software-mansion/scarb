@@ -3,6 +3,10 @@ use serde::{Serialize, Serializer};
 
 use crate::Message;
 
+/// Generic textual message with _type_ prefix.
+///
+/// Use this message type to display any kinds of warnings, errors etc.
+/// The type prefix can be stylized in text mode.
 #[derive(Serialize)]
 pub struct TypedMessage<'a> {
     r#type: &'a str,
@@ -15,15 +19,7 @@ pub struct TypedMessage<'a> {
 }
 
 impl<'a> TypedMessage<'a> {
-    pub fn plain(ty: &'a str, message: &'a str) -> Self {
-        Self {
-            r#type: ty,
-            message,
-            type_style: None,
-            skip_type_for_text: false,
-        }
-    }
-
+    /// Create a message with the given type, its style and the message text proper.
     pub fn styled(ty: &'a str, type_style: &'a str, message: &'a str) -> Self {
         Self {
             r#type: ty,
@@ -33,6 +29,14 @@ impl<'a> TypedMessage<'a> {
         }
     }
 
+    /// Create a message that does not print type prefix in text mode.
+    ///
+    /// ## Example
+    /// Scarb uses this for emitting Cairo compiler diagnostics.
+    /// In text mode it prints the diagnostic as-is, while in JSON mode it wraps it as:
+    /// ```json
+    /// {"type":"diagnostic","message":"<diagnostic>"}
+    /// ```
     pub fn naked_text(ty: &'a str, message: &'a str) -> Self {
         Self {
             r#type: ty,
@@ -52,7 +56,7 @@ impl<'a> Message for TypedMessage<'a> {
                 "{}: {}",
                 self.type_style
                     .map(Style::from_dotted_str)
-                    .unwrap_or_else(Style::new)
+                    .unwrap_or_default()
                     .apply_to(self.r#type),
                 self.message
             )

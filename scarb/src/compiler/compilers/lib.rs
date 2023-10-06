@@ -1,5 +1,3 @@
-use std::io::Write;
-
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra::program::VersionedProgram;
@@ -7,7 +5,9 @@ use cairo_lang_sierra_to_casm::metadata::calc_metadata;
 use serde::{Deserialize, Serialize};
 use tracing::trace_span;
 
-use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
+use crate::compiler::helpers::{
+    build_compiler_config, collect_main_crate_ids, write_json, write_string,
+};
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{TargetKind, Workspace};
 
@@ -62,13 +62,11 @@ impl Compiler for LibCompiler {
         };
 
         if props.sierra {
-            let mut file = target_dir.open_rw(
-                format!("{}.sierra.json", unit.target().name),
+            write_json(
+                format!("{}.sierra.json", unit.target().name).as_str(),
                 "output file",
-                ws.config(),
-            )?;
-            serde_json::to_writer(
-                &mut *file,
+                &target_dir,
+                ws,
                 &VersionedProgram::from((*sierra_program).clone()),
             )
             .with_context(|| {
@@ -77,25 +75,26 @@ impl Compiler for LibCompiler {
         }
 
         if props.sierra_text {
-            let mut file = target_dir.open_rw(
-                format!("{}.sierra", unit.target().name),
+            write_string(
+                format!("{}.sierra", unit.target().name).as_str(),
                 "output file",
-                ws.config(),
+                &target_dir,
+                ws,
+                sierra_program.as_ref(),
             )?;
-            file.write_all(sierra_program.to_string().as_bytes())?;
         }
 
         if props.casm {
             let gas_usage_check = true;
 
             let metadata = {
-                let _ = trace_span!("casm_calc_metadata");
+                let _ = trace_span!("casm_calc_metadata").enter();
                 calc_metadata(&sierra_program, Default::default(), false)
                     .context("failed calculating Sierra variables")?
             };
 
             let cairo_program = {
-                let _ = trace_span!("compile_casm");
+                let _ = trace_span!("compile_casm").enter();
                 cairo_lang_sierra_to_casm::compiler::compile(
                     &sierra_program,
                     &metadata,
@@ -103,12 +102,13 @@ impl Compiler for LibCompiler {
                 )?
             };
 
-            let mut file = target_dir.open_rw(
-                format!("{}.casm", unit.target().name),
+            write_string(
+                format!("{}.casm", unit.target().name).as_str(),
                 "output file",
-                ws.config(),
+                &target_dir,
+                ws,
+                cairo_program,
             )?;
-            file.write_all(cairo_program.to_string().as_bytes())?;
         }
 
         Ok(())

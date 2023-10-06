@@ -21,7 +21,7 @@ use crate::sources::canonical_url::CanonicalUrl;
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct SourceId(&'static SourceIdInner);
 
-#[derive(Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[non_exhaustive]
 pub struct SourceIdInner {
     /// The source URL.
@@ -37,17 +37,48 @@ pub enum SourceKind {
     /// A local path.
     Path,
     /// A git repository.
-    Git(GitReference),
+    Git(GitSourceSpec),
     /// A remote registry.
     Registry,
     /// The Cairo standard library.
     Std,
 }
 
+impl SourceKind {
+    pub fn as_git_source_spec(&self) -> Option<&GitSourceSpec> {
+        match self {
+            SourceKind::Git(r) => Some(r),
+            _ => None,
+        }
+    }
+}
+
 const PATH_SOURCE_PROTOCOL: &str = "path";
 const GIT_SOURCE_PROTOCOL: &str = "git";
 const REGISTRY_SOURCE_PROTOCOL: &str = "registry";
 const STD_SOURCE_PROTOCOL: &str = "std";
+
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct GitSourceSpec {
+    pub reference: GitReference,
+    pub precise: Option<String>,
+}
+
+impl GitSourceSpec {
+    pub fn new(reference: GitReference) -> Self {
+        Self {
+            reference,
+            precise: None,
+        }
+    }
+
+    pub fn with_precise(self, precise: String) -> Self {
+        Self {
+            precise: Some(precise),
+            ..self
+        }
+    }
+}
 
 /// Information to find a specific commit in a Git repository.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -72,6 +103,21 @@ impl SourceId {
         }))
     }
 
+    /// Creates a new `SourceId` from this source with the given `precise`.
+    pub fn with_precise(self, v: String) -> Result<SourceId> {
+        let kind = self
+            .kind
+            .as_git_source_spec()
+            .map(|spec| spec.clone().with_precise(v.clone()))
+            .map(SourceKind::Git)
+            .ok_or_else(|| anyhow!("cannot set precise version for non-git source: {self}"))?;
+
+        Ok(Self::intern(SourceIdInner {
+            kind,
+            ..(*self).clone()
+        }))
+    }
+
     fn intern(inner: SourceIdInner) -> Self {
         static CACHE: StaticHashCache<SourceIdInner> = StaticHashCache::new();
         Self(CACHE.intern(inner))
@@ -88,7 +134,8 @@ impl SourceId {
     }
 
     pub fn for_git(url: &Url, reference: &GitReference) -> Result<Self> {
-        Self::new(url.clone(), SourceKind::Git(reference.clone()))
+        let reference = GitSourceSpec::new(reference.clone());
+        Self::new(url.clone(), SourceKind::Git(reference))
     }
 
     pub fn for_registry(url: &Url) -> Result<Self> {
@@ -140,16 +187,20 @@ impl SourceId {
     /// Gets the [`GitReference`] if this is a [`SourceKind::Git`] source, otherwise `None`.
     pub fn git_reference(self) -> Option<GitReference> {
         match &self.kind {
-            SourceKind::Git(reference) => Some(reference.clone()),
+            SourceKind::Git(GitSourceSpec { reference, .. }) => Some(reference.clone()),
             _ => None,
         }
+    }
+
+    pub fn is_std(self) -> bool {
+        self.kind == SourceKind::Std
     }
 
     pub fn to_pretty_url(self) -> String {
         match &self.kind {
             SourceKind::Path => format!("{PATH_SOURCE_PROTOCOL}+{}", self.url),
 
-            SourceKind::Git(reference) => {
+            SourceKind::Git(GitSourceSpec { reference, precise }) => {
                 let mut url = self.url.clone();
                 match reference {
                     GitReference::Tag(tag) => {
@@ -163,7 +214,11 @@ impl SourceId {
                     }
                     GitReference::DefaultBranch => {}
                 }
-                format!("{GIT_SOURCE_PROTOCOL}+{url}")
+                let precise = precise
+                    .as_ref()
+                    .map(|p| format!("#{p}"))
+                    .unwrap_or_default();
+                format!("{GIT_SOURCE_PROTOCOL}+{url}{precise}")
             }
 
             SourceKind::Registry => format!("{REGISTRY_SOURCE_PROTOCOL}+{}", self.url),
@@ -177,7 +232,7 @@ impl SourceId {
             return Ok(Self::for_std());
         }
 
-        let (kind, url) = {
+        let (kind, url_part) = {
             let mut parts = pretty_url.splitn(2, '+');
             (
                 parts.next().expect("at least one part must be here"),
@@ -187,11 +242,21 @@ impl SourceId {
             )
         };
 
-        let mut url =
-            Url::parse(url).with_context(|| format!("cannot parse source URL: {pretty_url}"))?;
+        let parse_url = |value: &str| {
+            Url::parse(value).with_context(|| format!("cannot parse source URL: {pretty_url}"))
+        };
+
+        let url = || parse_url(url_part);
 
         match kind {
             GIT_SOURCE_PROTOCOL => {
+                let (mut url, precise) = url_part
+                    .rsplit_once('#')
+                    .map(|(url, precise)| -> Result<(_, _)> {
+                        Ok((parse_url(url)?, Some(precise.to_string())))
+                    })
+                    .unwrap_or_else(|| Ok((url()?, None)))?;
+
                 let mut reference = GitReference::DefaultBranch;
                 for (k, v) in url.query_pairs() {
                     match &k[..] {
@@ -203,12 +268,14 @@ impl SourceId {
                 }
 
                 url.set_query(None);
-                SourceId::for_git(&url, &reference)
+
+                let sid = SourceId::for_git(&url, &reference)?;
+                precise.map(|p| sid.with_precise(p)).unwrap_or(Ok(sid))
             }
 
-            PATH_SOURCE_PROTOCOL => SourceId::new(url, SourceKind::Path),
+            PATH_SOURCE_PROTOCOL => SourceId::new(url()?, SourceKind::Path),
 
-            REGISTRY_SOURCE_PROTOCOL => SourceId::for_registry(&url),
+            REGISTRY_SOURCE_PROTOCOL => SourceId::for_registry(&(url()?)),
 
             kind => bail!("unsupported source protocol: {kind}"),
         }
@@ -295,6 +362,17 @@ impl<'de> Deserialize<'de> for SourceId {
     }
 }
 
+impl SourceKind {
+    pub fn primary_field(&self) -> &str {
+        match self {
+            SourceKind::Path => "path",
+            SourceKind::Git(_) => "git",
+            SourceKind::Registry => "registry",
+            SourceKind::Std => "std",
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use test_case::test_case;
@@ -309,6 +387,26 @@ mod tests {
         assert_eq!(
             SourceId::from_pretty_url(&source_id.to_pretty_url()).unwrap(),
             source_id
+        );
+    }
+
+    #[test]
+    fn includes_precise() {
+        let sid = SourceId::mock_git();
+        let original = sid.to_pretty_url();
+        assert!(!original.contains("some_rev"));
+        assert!(!original.contains('#'));
+        let sid = sid.with_precise("some_rev".into()).unwrap();
+        assert_eq!(sid.to_pretty_url(), format!("{original}#some_rev"));
+    }
+
+    #[test]
+    fn parses_precise() {
+        let sid = SourceId::mock_git();
+        let sid = sid.with_precise("some_rev".into()).unwrap();
+        assert_eq!(
+            SourceId::from_pretty_url(&sid.to_pretty_url()).unwrap(),
+            sid
         );
     }
 }

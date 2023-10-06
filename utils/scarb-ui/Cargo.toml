@@ -1,8 +1,16 @@
 [package]
 name = "scarb-ui"
-version.workspace = true
+version = "0.1.0"
 edition.workspace = true
-publish = false
+
+authors.workspace = true
+categories = ["development-tools"]
+description = "Terminal user interface primitives used by Scarb and its extensions"
+homepage.workspace = true
+keywords = ["scarb"]
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
@@ -10,7 +18,6 @@ camino.workspace = true
 clap.workspace = true
 console.workspace = true
 indicatif.workspace = true
-indoc.workspace = true
-scarb-metadata = { version = "*", path = "../../scarb-metadata" }
+scarb-metadata = { version = "1", path = "../../scarb-metadata" }
 serde.workspace = true
 serde_json.workspace = true

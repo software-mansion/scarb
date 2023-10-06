@@ -337,11 +337,7 @@ fn compile_test_target() {
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
     assert_eq!(
         t.child("target/dev").files(),
-        vec![
-            "hello.sierra.json",
-            "hello_test1.test.json",
-            "hello_unittest.test.json",
-        ]
+        vec!["hello_test1.test.json", "hello_unittest.test.json",]
     );
 }
 

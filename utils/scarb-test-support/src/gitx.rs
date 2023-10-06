@@ -51,13 +51,29 @@ impl fmt::Display for GitProject {
 }
 
 pub fn new(name: impl Into<String>, f: impl FnOnce(ChildPath)) -> GitProject {
+    new_conditional(true, name, f)
+}
+
+/// Use in tests, where the behaviour is conditionally checked whether the same project is used
+/// with or without Git.
+///
+/// Note, that all operations from this module will likely crash if the project has no Git set up.
+pub fn new_conditional(
+    really_create_git: bool,
+    name: impl Into<String>,
+    f: impl FnOnce(ChildPath),
+) -> GitProject {
     let name = name.into();
     let t = TempDir::new().unwrap();
     let child = t.child(&name);
-    init(child.path());
+    if really_create_git {
+        init(child.path());
+    }
     f(child);
     let p = t.child(&name);
-    commit(p.path());
+    if really_create_git {
+        commit(p.path());
+    }
     GitProject { name, t, p }
 }
 

@@ -82,6 +82,15 @@ impl fmt::Debug for Rev {
     }
 }
 
+impl TryFrom<String> for Rev {
+    type Error = anyhow::Error;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        let oid = gix::ObjectId::from_hex(s.as_bytes())?;
+        Ok(Self::from(oid))
+    }
+}
+
 impl From<gix::ObjectId> for Rev {
     fn from(oid: gix::ObjectId) -> Self {
         Self { oid }
@@ -203,7 +212,14 @@ impl GitDatabase {
     }
 
     pub fn contains(&self, rev: Rev) -> bool {
-        self.repo.rev_parse_single(rev.oid.as_bytes()).is_ok()
+        use gix::revision::spec::parse::single::Error;
+        let rev = rev.to_string();
+        let rev = rev.as_bytes();
+        match self.repo.rev_parse_single(rev) {
+            Ok(_) => true,
+            Err(Error::RangedRev { .. }) => false,
+            Err(err) => unreachable!("{err:?}"),
+        }
     }
 
     #[tracing::instrument(level = "trace")]

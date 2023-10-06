@@ -12,6 +12,7 @@ use crate::ops;
 
 #[derive(Debug)]
 pub struct CompileOpts {
+    pub include_targets: Vec<TargetKind>,
     pub exclude_targets: Vec<TargetKind>,
 }
 
@@ -38,6 +39,9 @@ pub fn compile(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) 
     let compilation_units = ops::generate_compilation_units(&resolve, ws)?
         .into_iter()
         .filter(|cu| !opts.exclude_targets.contains(&cu.target().kind))
+        .filter(|cu| {
+            opts.include_targets.is_empty() || opts.include_targets.contains(&cu.target().kind)
+        })
         .filter(|cu| packages.contains(&cu.main_package_id))
         .collect::<Vec<_>>();
 

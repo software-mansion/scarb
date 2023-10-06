@@ -4,11 +4,13 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::Widget;
 
+/// Spinner widget informing about an ongoing process.
 pub struct Spinner {
     message: String,
 }
 
 impl Spinner {
+    /// Create a new [`Spinner`] with the given message.
     pub fn new(message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
@@ -20,6 +22,7 @@ impl Spinner {
     }
 }
 
+/// Finishes the associated [`Spinner`] when dropped.
 pub struct SpinnerHandle {
     pb: ProgressBar,
 }

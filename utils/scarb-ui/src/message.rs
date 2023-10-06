@@ -5,9 +5,14 @@ use super::Ui;
 
 const JSON_SKIP_MESSAGE: &str = "UI_INTERNAL_SKIP";
 
-// NOTE: The `print_*` low-level methods functions are doc hidden,
-//   because they are not considered stable.
+/// A typed object that can be either printed as a human-readable message or serialized as JSON.
+///
+/// The [`TypedMessage`][crate::components::TypedMessage] and [`Status`][crate::components::Status]
+/// structs are the most frequently used kinds of messages.
 pub trait Message {
+    // NOTE: The `print_*` low-level methods functions are doc hidden,
+    //   because they are not considered stable.
+
     /// Return textual representation of this message.
     ///
     /// Default implementation returns empty string, making [`Ui`] skip printing this message.

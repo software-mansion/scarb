@@ -2,6 +2,9 @@ use serde::{Serialize, Serializer};
 
 use crate::Message;
 
+/// Print a machine-oriented object as JSON.
+///
+/// In text mode, the value will be pretty-printed.
 #[derive(Serialize)]
 pub struct MachineMessage<T>(pub T);
 
