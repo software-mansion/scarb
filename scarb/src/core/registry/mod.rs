@@ -4,9 +4,12 @@ use async_trait::async_trait;
 use crate::core::{ManifestDependency, Package, PackageId, Summary};
 
 pub mod cache;
+pub mod index;
 pub mod patch_map;
 pub mod patcher;
 pub mod source_map;
+
+pub const DEFAULT_REGISTRY_INDEX: &str = "https://there-is-no-default-registry-yet.com";
 
 #[async_trait(?Send)]
 pub trait Registry {

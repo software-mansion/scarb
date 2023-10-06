@@ -9,6 +9,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smol_str::SmolStr;
 use url::Url;
 
+use crate::core::registry::DEFAULT_REGISTRY_INDEX;
 use crate::core::source::Source;
 use crate::core::Config;
 use crate::internal::fsx::PathBufUtf8Ext;
@@ -152,7 +153,7 @@ impl SourceId {
 
     pub fn default_registry() -> Self {
         static CACHE: Lazy<SourceId> = Lazy::new(|| {
-            let url = Url::parse("https://there-is-no-default-registry-yet.com").unwrap();
+            let url = Url::parse(DEFAULT_REGISTRY_INDEX).unwrap();
             SourceId::new(url, SourceKind::Registry).unwrap()
         });
         *CACHE
