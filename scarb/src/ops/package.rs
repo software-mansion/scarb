@@ -10,10 +10,11 @@ use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
 
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
+use crate::core::publishing::source::list_source_files;
 use crate::core::{Package, PackageId, PackageName, Workspace};
 use crate::flock::FileLockGuard;
 use crate::internal::fsx;
-use crate::{ops, DEFAULT_SOURCE_PATH, MANIFEST_FILE_NAME};
+use crate::{ops, MANIFEST_FILE_NAME};
 
 const VERSION: u8 = 1;
 const VERSION_FILE_NAME: &str = "VERSION";
@@ -175,28 +176,32 @@ fn prepare_archive_recipe(pkg: &Package) -> Result<ArchiveRecipe> {
         (priority, f.path.clone())
     });
 
+    // Assert there are no duplicates. We make use of the fact, that recipe is now sorted.
+    assert!(
+        recipe.windows(2).all(|w| w[0].path != w[1].path),
+        "duplicate files in package recipe: {duplicates}",
+        duplicates = recipe
+            .windows(2)
+            .filter(|w| w[0].path == w[1].path)
+            .map(|w| w[0].path.as_str())
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+
     Ok(recipe)
 }
 
 fn source_files(pkg: &Package) -> Result<ArchiveRecipe> {
-    // TODO(mkaput): Implement this properly.
-    let mut recipe = vec![ArchiveFile {
-        path: DEFAULT_SOURCE_PATH.into(),
-        contents: ArchiveFileContents::OnDisk(pkg.root().join(DEFAULT_SOURCE_PATH)),
-    }];
-
-    // Add reserved files if they exist in source. They will be rejected later on.
-    for &file in RESERVED_FILES {
-        let path = pkg.root().join(file);
-        if path.exists() {
-            recipe.push(ArchiveFile {
-                path: file.into(),
-                contents: ArchiveFileContents::OnDisk(path),
-            });
-        }
-    }
-
-    Ok(recipe)
+    list_source_files(pkg)?
+        .into_iter()
+        .map(|on_disk| {
+            let path = on_disk.strip_prefix(pkg.root())?.to_owned();
+            Ok(ArchiveFile {
+                path,
+                contents: ArchiveFileContents::OnDisk(on_disk),
+            })
+        })
+        .collect()
 }
 
 fn check_no_reserved_files(recipe: &ArchiveRecipe) -> Result<()> {
