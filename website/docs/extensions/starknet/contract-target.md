@@ -119,7 +119,7 @@ build-external-contracts = [
 ]
 ```
 
-When using a wildcard in the build-external-contracts property, Scarb will match the contract path before the wildcard and look for all contracts whose paths start with that prefix. The wildcard can only be used as the last character in the contract path, and each external contract path can have at most one wildcard.
+When using a wildcard in the `build-external-contracts` property, Scarb will match the contract path before the wildcard and look for all contracts whose paths start with that prefix. The wildcard can only be used as the last character in the contract path, and each external contract path can have at most one wildcard.
 
 ## Starknet Artifacts
 
