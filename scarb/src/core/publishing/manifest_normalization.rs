@@ -110,14 +110,14 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
         }
     });
 
-    Ok(TomlDependency::Detailed(DetailedTomlDependency {
+    Ok(TomlDependency::Detailed(Box::new(DetailedTomlDependency {
         version,
         path: None,
         git: None,
         branch: None,
         tag: None,
         rev: None,
-    }))
+    })))
 }
 
 fn map_metadata_file_path<T>(
