@@ -117,6 +117,8 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
         branch: None,
         tag: None,
         rev: None,
+        // TODO(mkaput): What to do if package is mixing dependencies from different registries?
+        registry: None,
     })))
 }
 

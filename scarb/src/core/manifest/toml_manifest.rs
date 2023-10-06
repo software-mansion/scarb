@@ -261,6 +261,8 @@ pub struct DetailedTomlDependency {
     pub branch: Option<String>,
     pub tag: Option<String>,
     pub rev: Option<String>,
+
+    pub registry: Option<Url>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -881,25 +883,35 @@ impl DetailedTomlDependency {
                 only one of `branch`, `tag` or `rev` is allowed"
             );
         }
-        let source_id = match (self.version.as_ref(), self.git.as_ref(), self.path.as_ref()) {
-            (None, None, None) => bail!(
+        let source_id = match (
+            self.version.as_ref(),
+            self.git.as_ref(),
+            self.path.as_ref(),
+            self.registry.as_ref(),
+        ) {
+            (None, None, None, _) => bail!(
                 "dependency ({name}) must be specified providing a local path, Git repository, \
                 or version to use"
             ),
 
-            (_, Some(_), Some(_)) => bail!(
+            (_, Some(_), Some(_), _) => bail!(
                 "dependency ({name}) specification is ambiguous, \
                 only one of `git` or `path` is allowed"
             ),
 
-            (_, None, Some(path)) => {
+            (_, Some(_), _, Some(_)) => bail!(
+                "dependency ({name}) specification is ambiguous, \
+                only one of `git` or `registry` is allowed"
+            ),
+
+            (_, None, Some(path), _) => {
                 let path = path
                     .relative_to_file(manifest_path)?
                     .join(MANIFEST_FILE_NAME);
                 SourceId::for_path(&path)?
             }
 
-            (_, Some(git), None) => {
+            (_, Some(git), None, None) => {
                 let reference = if let Some(branch) = &self.branch {
                     GitReference::Branch(branch.into())
                 } else if let Some(tag) = &self.tag {
@@ -913,7 +925,8 @@ impl DetailedTomlDependency {
                 SourceId::for_git(git, &reference)?
             }
 
-            (Some(_), None, None) => SourceId::default(),
+            (Some(_), None, None, Some(url)) => SourceId::for_registry(url)?,
+            (Some(_), None, None, None) => SourceId::default(),
         };
 
         Ok(ManifestDependency::builder()
