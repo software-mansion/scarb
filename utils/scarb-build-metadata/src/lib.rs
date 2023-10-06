@@ -29,15 +29,20 @@ pub const CAIRO_COMMIT_REV: &str = env!("SCARB_CAIRO_COMMIT_REV");
 
 #[cfg(test)]
 mod tests {
-    use semver::{BuildMetadata, Version};
+    use semver::{BuildMetadata, Prerelease, Version};
 
     /// Checks that package version in [`Scarb.toml`] is exactly the same as the version of Cairo,
     /// because this project is tightly coupled with it.
     #[test]
     fn scarb_version_is_bound_to_cairo_version() {
+        let nightly_build = crate::SCARB_VERSION.contains("nightly");
+
         let normalize = |v| {
             let mut v = Version::parse(v).unwrap();
             v.build = BuildMetadata::EMPTY;
+            if nightly_build {
+                v.pre = Prerelease::EMPTY;
+            }
             v.to_string()
         };
 
