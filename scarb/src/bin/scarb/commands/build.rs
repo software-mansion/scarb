@@ -14,11 +14,14 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         .into_iter()
         .map(|p| p.id)
         .collect::<Vec<_>>();
-    let exclude_targets: Vec<TargetKind> = if args.test {
-        Vec::new()
+    let (include_targets, exclude_targets): (Vec<TargetKind>, Vec<TargetKind>) = if args.test {
+        (vec![TargetKind::TEST.clone()], Vec::new())
     } else {
-        vec![TargetKind::TEST.clone()]
+        (Vec::new(), vec![TargetKind::TEST.clone()])
     };
-    let opts = CompileOpts { exclude_targets };
+    let opts = CompileOpts {
+        include_targets,
+        exclude_targets,
+    };
     ops::compile(packages, opts, &ws)
 }
