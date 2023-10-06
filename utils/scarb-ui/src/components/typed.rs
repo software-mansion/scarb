@@ -56,7 +56,7 @@ impl<'a> Message for TypedMessage<'a> {
                 "{}: {}",
                 self.type_style
                     .map(Style::from_dotted_str)
-                    .unwrap_or_else(Style::new)
+                    .unwrap_or_default()
                     .apply_to(self.r#type),
                 self.message
             )
