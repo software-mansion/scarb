@@ -30,9 +30,9 @@ Scarb is under active development! Expect a lot of new features to appear soon! 
 - [x] GitHub action
 - [x] Workspaces
 - [x] Nightlies
-- [ ] Standardized `test` target
-- [ ] `Scarb.lock`
-- [ ] Package registry
+- [ ] Standardized `test` target 🏗️
+- [ ] `Scarb.lock` 🏗️
+- [ ] Package registry 🏗️
 - [ ] PubGrub implementation for version resolution
 - [ ] `scarb update`
 - [ ] Dynamic loading of custom Cairo compiler plugins as Scarb packages
