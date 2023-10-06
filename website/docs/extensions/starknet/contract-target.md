@@ -90,6 +90,37 @@ openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", br
 build-external-contracts = ["openzeppelin::account::account::Account"]
 ```
 
+### Wildcard support
+
+It is possible to request building many contracts from a module tree at once. For example, the following snippet:
+
+```toml-vue
+[[target.starknet-contract]]
+build-external-contracts = [
+    "dojo_erc::erc721::components::Balance",
+    "dojo_erc::erc721::components::OperatorApproval",
+    "dojo_erc::erc721::components::Owner",
+    "dojo_erc::erc721::components::TokenApproval",
+    "dojo_erc::erc721::erc721::ERC721",
+    "dojo_erc::erc721::systems::erc721_approve",
+    "dojo_erc::erc721::systems::erc721_burn",
+    "dojo_erc::erc721::systems::erc721_mint",
+    "dojo_erc::erc721::systems::erc721_set_approval_for_all",
+    "dojo_erc::erc721::systems::erc721_transfer_from",
+]
+```
+
+can be written as:
+
+```toml-vue
+[[target.starknet-contract]]
+build-external-contracts = [
+    "dojo_erc::erc721::*",
+]
+```
+
+When using a wildcard in the `build-external-contracts` property, Scarb will match the contract path before the wildcard and look for all contracts whose paths start with that prefix. The wildcard can only be used as the last character in the contract path, and each external contract path can have at most one wildcard.
+
 ## Starknet Artifacts
 
 As part of building Starknet contracts, contract target generates a `[target_name].starknet_artifacts.json` file
