@@ -13,6 +13,7 @@ use itertools::Itertools;
 use test_case::test_case;
 
 use scarb_test_support::command::Scarb;
+use scarb_test_support::fsx::unix_paths_to_os_lossy;
 use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
@@ -224,13 +225,13 @@ fn list_simple() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
             VERSION
             Scarb.orig.toml
             Scarb.toml
             src/foo.cairo
             src/lib.cairo
-        "#});
+        "#}));
 }
 
 #[test]
@@ -254,7 +255,7 @@ fn list_workspace() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
             first:
             VERSION
             Scarb.orig.toml
@@ -266,7 +267,7 @@ fn list_workspace() {
             Scarb.orig.toml
             Scarb.toml
             src/lib.cairo
-        "#});
+        "#}));
 }
 
 #[test]
@@ -536,12 +537,12 @@ fn list_ignore_nested() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
             VERSION
             Scarb.orig.toml
             Scarb.toml
             src/lib.cairo
-        "#});
+        "#}));
 }
 
 // TODO(mkaput): Invalid readme/license path
@@ -707,12 +708,12 @@ fn exclude_dot_files_and_directories_by_default() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
             VERSION
             Scarb.orig.toml
             Scarb.toml
             src/lib.cairo
-        "#});
+        "#}));
 }
 
 #[test]
@@ -776,13 +777,15 @@ fn ignore_file(ignore_path: &str, setup_git: bool, expect_ignore_to_work: bool) 
     expected.push("src/lib.cairo");
     expected.push(""); // Ensure there's trailing \n
 
+    let expected = unix_paths_to_os_lossy(&expected.join("\n"));
+
     Scarb::quick_snapbox()
         .arg("package")
         .arg("--list")
         .current_dir(g.p)
         .assert()
         .success()
-        .stdout_eq(expected.join("\n"));
+        .stdout_eq(expected);
 }
 
 #[test]
@@ -814,11 +817,11 @@ fn ignore_whitelist_pattern() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_eq(indoc! {r#"
+        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
             VERSION
             Scarb.orig.toml
             Scarb.toml
             noignore.txt
             src/lib.cairo
-        "#});
+        "#}));
 }
