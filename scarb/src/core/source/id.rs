@@ -158,6 +158,10 @@ impl SourceId {
         *CACHE
     }
 
+    pub fn is_registry(self) -> bool {
+        self.kind == SourceKind::Registry
+    }
+
     pub fn is_default_registry(self) -> bool {
         self == Self::default_registry()
     }

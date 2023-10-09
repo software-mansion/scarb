@@ -6,8 +6,8 @@ use indoc::formatdoc;
 
 use crate::core::{
     DepKind, DependencyVersionReq, DetailedTomlDependency, ManifestDependency, MaybeWorkspace,
-    Package, PackageName, TomlDependency, TomlManifest, TomlPackage, TomlWorkspaceDependency,
-    TomlWorkspaceField,
+    Package, PackageName, TargetKind, TomlDependency, TomlManifest, TomlPackage,
+    TomlWorkspaceDependency, TomlWorkspaceField,
 };
 
 pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
@@ -26,13 +26,17 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
             .collect()
     });
 
+    let cairo_plugin = match pkg.target(&TargetKind::CAIRO_PLUGIN) {
+        None => None,
+        Some(_) => todo!("Packaging Cairo plugins is not implemented yet."),
+    };
+
     Ok(TomlManifest {
         package,
         workspace: None,
         dependencies,
         lib: None,
-        // TODO(mkaput): Allow packaging Cairo plugins.
-        cairo_plugin: None,
+        cairo_plugin,
         test: None,
         target: None,
         cairo: None,
@@ -55,8 +59,10 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
         homepage: metadata.homepage.clone().map(MaybeWorkspace::Defined),
         keywords: metadata.keywords.clone().map(MaybeWorkspace::Defined),
         license: metadata.license.clone().map(MaybeWorkspace::Defined),
-        // TODO(mkaput): Normalize this the same way as readme is.
-        license_file: metadata.license_file.clone().map(MaybeWorkspace::Defined),
+        license_file: metadata
+            .license_file
+            .as_ref()
+            .map(|_| todo!("Packaging packages with a license file is not implemented yet.")),
         readme: metadata
             .readme
             .as_ref()
@@ -117,8 +123,11 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
         branch: None,
         tag: None,
         rev: None,
-        // TODO(mkaput): What to do if package is mixing dependencies from different registries?
-        registry: None,
+        registry: if dep.source_id.is_registry() && !dep.source_id.is_default_registry() {
+            todo!("Packaging packages with dependencies from non-default registries is not implemented yet.")
+        } else {
+            None
+        },
     })))
 }
 
