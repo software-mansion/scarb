@@ -35,19 +35,25 @@ mod tests {
     /// because this project is tightly coupled with it.
     #[test]
     fn scarb_version_is_bound_to_cairo_version() {
-        let nightly_build = crate::SCARB_VERSION.contains("nightly");
+        let mut scarb = Version::parse(crate::SCARB_VERSION).unwrap();
+        let mut cairo = Version::parse(crate::CAIRO_VERSION).unwrap();
 
-        let normalize = |v| {
-            let mut v = Version::parse(v).unwrap();
-            v.build = BuildMetadata::EMPTY;
-            if nightly_build {
-                v.pre = Prerelease::EMPTY;
-            }
-            v.to_string()
-        };
+        scarb.build = BuildMetadata::EMPTY;
+        cairo.build = BuildMetadata::EMPTY;
 
-        let scarb_version = normalize(crate::SCARB_VERSION);
-        let cairo_version = normalize(crate::CAIRO_VERSION);
-        assert_eq!(scarb_version, cairo_version);
+        if scarb.pre.contains("nightly") {
+            scarb.pre = Prerelease::EMPTY;
+            cairo.pre = Prerelease::EMPTY;
+        }
+
+        assert_eq!(
+            (scarb.major, scarb.minor, scarb.patch),
+            (cairo.major, cairo.minor, cairo.patch),
+            "versions not in sync:\nscarb {scarb}\ncairo {cairo}"
+        );
+        assert!(
+            scarb.pre >= cairo.pre,
+            "versions not in sync:\nscarb {scarb}\ncairo {cairo}"
+        );
     }
 }
