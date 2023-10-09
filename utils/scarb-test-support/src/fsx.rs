@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::BufReader;
+use std::path::MAIN_SEPARATOR_STR;
 
 use assert_fs::fixture::ChildPath;
 use assert_fs::TempDir;
@@ -59,5 +60,17 @@ impl ChildPathEx for ChildPath {
         let file = File::open(self.path()).unwrap();
         let reader = BufReader::new(file);
         serde_json::from_reader(reader).unwrap()
+    }
+}
+
+/// Convert all UNIX-style paths in a string to platform native.
+///
+/// This method is doing dump pattern search & replace, it might replace unexpected parts of the
+/// input string. Use with caution.
+pub fn unix_paths_to_os_lossy(text: &str) -> String {
+    if cfg!(unix) {
+        text.to_string()
+    } else {
+        text.replace('/', MAIN_SEPARATOR_STR)
     }
 }

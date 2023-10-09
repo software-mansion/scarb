@@ -147,6 +147,9 @@ fn list_one_impl(
 fn prepare_archive_recipe(pkg: &Package) -> Result<ArchiveRecipe> {
     let mut recipe = source_files(pkg)?;
 
+    // Sort the recipe before any checks, to ensure generated errors are reproducible.
+    sort_recipe(&mut recipe);
+
     check_filenames(&recipe)?;
     check_no_reserved_files(&recipe)?;
 
@@ -171,11 +174,8 @@ fn prepare_archive_recipe(pkg: &Package) -> Result<ArchiveRecipe> {
         contents: ArchiveFileContents::Generated(Box::new(|| Ok(VERSION.to_string().into_bytes()))),
     });
 
-    // Sort archive files alphabetically, putting the version file first.
-    recipe.sort_unstable_by_key(|f| {
-        let priority = if f.path == VERSION_FILE_NAME { 0 } else { 1 };
-        (priority, f.path.clone())
-    });
+    // Put generated files in right order within the recipe.
+    sort_recipe(&mut recipe);
 
     // Assert there are no duplicates. We make use of the fact, that recipe is now sorted.
     assert!(
@@ -235,6 +235,14 @@ fn check_filenames(recipe: &ArchiveRecipe) -> Result<()> {
         }
     }
     Ok(())
+}
+
+/// Sort archive files alphabetically, putting the version file first.
+fn sort_recipe(recipe: &mut ArchiveRecipe) {
+    recipe.sort_unstable_by_key(|f| {
+        let priority = if f.path == VERSION_FILE_NAME { 0 } else { 1 };
+        (priority, f.path.clone())
+    });
 }
 
 fn normalize_manifest(pkg: Package) -> Result<Vec<u8>> {
