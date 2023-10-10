@@ -145,8 +145,8 @@ impl GitRemote {
         db.fetch(self.url.as_str(), reference, config)
             .with_context(|| format!("failed to clone into: {fs}"))?;
         let rev = match locked_rev {
-            Some(rev) => rev,
-            None => db.resolve(reference)?,
+            Some(rev) if db.contains(rev) => rev,
+            _ => db.resolve(reference)?,
         };
         Ok((db, rev))
     }
