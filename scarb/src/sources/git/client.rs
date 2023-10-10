@@ -212,14 +212,9 @@ impl GitDatabase {
     }
 
     pub fn contains(&self, rev: Rev) -> bool {
-        use gix::revision::spec::parse::single::Error;
         let rev = rev.to_string();
         let rev = rev.as_bytes();
-        match self.repo.rev_parse_single(rev) {
-            Ok(_) => true,
-            Err(Error::RangedRev { .. }) => false,
-            Err(err) => unreachable!("{err:?}"),
-        }
+        self.repo.rev_parse_single(rev).is_ok()
     }
 
     #[tracing::instrument(level = "trace")]
