@@ -196,6 +196,7 @@ mod tests {
 
     // TODO(mkaput): Remove explicit path source IDs, when we will support default registry.
 
+    use anyhow::Result;
     use indoc::indoc;
     use itertools::Itertools;
     use scarb_ui::Verbosity::Verbose;
@@ -204,14 +205,23 @@ mod tests {
     use similar_asserts::assert_serde_eq;
     use tokio::runtime::Builder;
 
-    use crate::core::lockfile::Lockfile;
+    use crate::core::lockfile::{Lockfile, PackageLock};
     use crate::core::package::PackageName;
-    use crate::core::registry::mock::{deps, pkgs, registry, MockRegistry};
+    use crate::core::registry::mock::{deps, locks, pkgs, registry, MockRegistry};
     use crate::core::{ManifestDependency, PackageId, Resolve, SourceId, TargetKind};
 
     fn check(
         registry: MockRegistry,
         roots: &[&[ManifestDependency]],
+        expected: Result<&[PackageId], &str>,
+    ) {
+        check_with_lock(registry, roots, &[], expected)
+    }
+
+    fn check_with_lock(
+        registry: MockRegistry,
+        roots: &[&[ManifestDependency]],
+        locks: &[PackageLock],
         expected: Result<&[PackageId], &str>,
     ) {
         let root_ids = (1..).map(|n| package_id(format!("root_{n}")));
@@ -222,7 +232,7 @@ mod tests {
             .map(|(&deps, pid)| (deps, pid))
             .collect_vec();
 
-        let resolve = resolve(registry, roots);
+        let resolve = resolve_with_lock(registry, roots, locks);
 
         let resolve = resolve
             .map(|r| {
@@ -247,9 +257,17 @@ mod tests {
     }
 
     fn resolve(
+        registry: MockRegistry,
+        roots: Vec<(&[ManifestDependency], PackageId)>,
+    ) -> Result<Resolve> {
+        resolve_with_lock(registry, roots, &[])
+    }
+
+    fn resolve_with_lock(
         mut registry: MockRegistry,
         roots: Vec<(&[ManifestDependency], PackageId)>,
-    ) -> anyhow::Result<Resolve> {
+        locks: &[PackageLock],
+    ) -> Result<Resolve> {
         let runtime = Builder::new_multi_thread().build().unwrap();
 
         let summaries = roots
@@ -265,7 +283,7 @@ mod tests {
             })
             .collect_vec();
 
-        let lockfile = Lockfile::new([]);
+        let lockfile = Lockfile::new(locks.iter().cloned());
         let ui = Ui::new(Verbose, OutputFormat::Text);
         runtime.block_on(super::resolve(&summaries, &registry, lockfile, &ui))
     }
@@ -629,45 +647,77 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "locks are not implemented yet"]
     fn lock_dependency() {
-        //     Registry.put("foo", "1.0.0", [])
-        //
-        //     assert run([{"foo", "1.0.0"}], [{"foo", "1.0.0"}]) == %{"foo" => "1.0.0"}
+        check_with_lock(
+            registry![("foo v1.0.0", []), ("foo v1.0.1", []), ("boo v1.0.0", [])],
+            &[deps![
+                ("foo", ">=1.0.1", (), "test"),
+                ("foo", ">=1.0.1", (), "dojo"),
+                ("boo", "1.0.0")
+            ]],
+            locks![("foo v1.0.1", ["bar"])],
+            Ok(pkgs!["boo v1.0.0", "foo v1.0.1"]),
+        );
     }
 
     #[test]
-    #[ignore = "locks are not implemented yet"]
+    fn lock_dependency_with_git() {
+        check_with_lock(
+            registry![
+                (
+                    "foo v1.0.0",
+                    [("baz", "1.0.0", "git+https://example.com/baz.git")]
+                ),
+                (
+                    "bar v1.0.0",
+                    [("baz", "1.0.0", "git+https://example.com/baz.git")]
+                ),
+                ("baz v1.0.0 (git+https://example.com/baz.git)", []),
+                ("baz v1.0.0 (git+https://example.com/baz.git#some_rev)", []),
+            ],
+            &[deps![("foo", "1.0.0"), ("bar", "1.0.0")]],
+            locks![("baz v1.0.0 (git+https://example.com/baz.git#some_rev)", [])],
+            Ok(pkgs![
+                "bar v1.0.0",
+                "baz v1.0.0 (git+https://example.com/baz.git#some_rev)",
+                "foo v1.0.0"
+            ]),
+        )
+    }
+
+    #[test]
     fn lock_conflict_1() {
-        //     Registry.put("foo", "1.0.0", [])
-        //
-        //     assert {:conflict, incompatibility, _} = run([{"foo", "1.0.0"}], [{"foo", "2.0.0"}])
-        //     assert [term] = incompatibility.terms
-        //     assert term.package_range.name == "foo"
-        //     assert term.package_range.constraint == Version.parse!("2.0.0")
-        //     assert {:conflict, _, _} = incompatibility.cause
+        check_with_lock(
+            registry![("foo v1.0.0", []),],
+            &[deps![("foo", "2.0.0"),]],
+            locks![("foo v1.0.0", [])],
+            Err("cannot find package foo"),
+        );
     }
 
     #[test]
-    #[ignore = "locks are not implemented yet"]
     fn lock_conflict_2() {
-        //     Registry.put("foo", "1.0.0", [])
-        //
-        //     assert {:conflict, incompatibility, _} = run([{"foo", "2.0.0"}], [{"foo", "1.0.0"}])
-        //     assert [term] = incompatibility.terms
-        //     assert term.package_range.name == "foo"
-        //     assert term.package_range.constraint == Version.parse!("2.0.0")
-        //     assert incompatibility.cause == :no_versions
+        check_with_lock(
+            registry![("foo v1.0.0", []),],
+            &[deps![("foo", "1.0.0"),]],
+            locks![("foo v2.0.0", [])],
+            Ok(pkgs!["foo v1.0.0"]),
+        );
     }
 
     #[test]
-    #[ignore = "locks are not implemented yet"]
     fn lock_downgrade() {
-        //     Registry.put("foo", "1.0.0", [])
-        //     Registry.put("foo", "1.1.0", [])
-        //     Registry.put("foo", "1.2.0", [])
-        //
-        //     assert run([{"foo", "~1.0"}], [{"foo", "1.1.0"}]) == %{"foo" => "1.1.0"}
+        check_with_lock(
+            registry![
+                ("foo v1.0.0", []),
+                ("foo v1.1.0", []),
+                ("foo v1.2.0", []),
+                ("boo v1.0.0", [])
+            ],
+            &[deps![("boo", "1.0.0"), ("foo", "~1"),]],
+            locks![("foo v1.1.0", [])],
+            Ok(pkgs!["boo v1.0.0", "foo v1.1.0"]),
+        );
     }
 
     #[test]

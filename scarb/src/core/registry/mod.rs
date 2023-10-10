@@ -232,4 +232,36 @@ pub(crate) mod mock {
     }
 
     pub(crate) use pkgs;
+
+    macro_rules! pkg_names {
+        [$($x:tt),* $(,)?] => (
+            &[
+                $($crate::core::PackageName::new($x)),*
+            ]
+        );
+    }
+
+    pub(crate) use pkg_names;
+
+    macro_rules! lock_entry {
+        (($p:literal, [ $($d:tt),* $(,)? ] $(,)?)) => {{
+            #[allow(unused_imports)]
+            use $crate::core::registry::mock;
+            let package_id = $crate::core::PackageId::from_display_str($p).unwrap();
+            let dependencies: Vec<$crate::core::PackageName> = mock::pkg_names![$($d),*].iter().cloned().collect();
+            $crate::core::lockfile::PackageLock::new(&package_id, dependencies.into_iter())
+        }};
+    }
+
+    pub(crate) use lock_entry;
+
+    macro_rules! locks {
+        [$($x:tt),* $(,)?] => (
+            &[
+                $($crate::core::registry::mock::lock_entry!($x)),*
+            ]
+        );
+    }
+
+    pub(crate) use locks;
 }
