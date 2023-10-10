@@ -98,11 +98,12 @@ impl<'c> GitSource<'c> {
         ) -> Result<InnerState<'_>> {
             let remote_ident = remote.ident();
 
-            let registry_fs = config.dirs().registry_dir();
-            let git_fs = registry_fs.child("git");
-            let all_db_fs = git_fs.child("db");
+            let git_fs = config.dirs().registry_dir().into_child("git");
 
-            let db_fs = all_db_fs.child(&format!("{remote_ident}.git"));
+            let db_fs = git_fs
+                .child("db")
+                .into_child(&format!("{remote_ident}.git"));
+
             let db = GitDatabase::open(&remote, &db_fs).ok();
             let (db, actual_rev) = match (db, locked_rev) {
                 // If we have a locked revision, and we have a preexisting database
@@ -133,9 +134,11 @@ impl<'c> GitSource<'c> {
                 }
             };
 
-            let all_checkouts_fs = git_fs.child("checkouts");
-            let db_checkouts_fs = all_checkouts_fs.child(&remote_ident);
-            let checkout_fs = db_checkouts_fs.child(db.short_id_of(actual_rev)?);
+            let checkout_fs = git_fs
+                .child("checkouts")
+                .into_child(&remote_ident)
+                .into_child(db.short_id_of(actual_rev)?);
+
             let checkout = db.copy_to(&checkout_fs, actual_rev, config)?;
             let source_id = source_id.with_precise(actual_rev.to_string())?;
 
