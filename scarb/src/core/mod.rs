@@ -2,6 +2,7 @@
 //!
 //! For read operations and workspace mutations, see [`crate::ops`] module.
 
+pub use checksum::*;
 pub use config::Config;
 pub use dirs::AppDirs;
 pub use manifest::*;
@@ -10,6 +11,7 @@ pub use resolver::Resolve;
 pub use source::{GitReference, SourceId, SourceIdInner, SourceKind};
 pub use workspace::{Utf8PathWorkspaceExt, Workspace};
 
+mod checksum;
 pub(crate) mod config;
 mod dirs;
 pub mod errors;

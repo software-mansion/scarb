@@ -1,7 +1,7 @@
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-use crate::core::PackageName;
+use crate::core::{Checksum, PackageName};
 
 pub type IndexRecords = Vec<IndexRecord>;
 
@@ -12,7 +12,7 @@ pub struct IndexRecord {
     #[serde(rename = "deps")]
     pub dependencies: IndexDependencies,
     #[serde(rename = "cksum")]
-    pub checksum: String,
+    pub checksum: Checksum,
     #[serde(default = "default_false", skip_serializing_if = "is_false")]
     pub no_core: bool,
 }
