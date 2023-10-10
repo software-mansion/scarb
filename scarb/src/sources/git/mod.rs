@@ -62,7 +62,6 @@ impl<'c> GitSource<'c> {
             config,
             remote: GitRemote::new(canonical_url),
             requested_reference,
-            // TODO(#126): Pull this somehow from the lockfile.
             locked_rev,
             inner: OnceCell::new(),
         })

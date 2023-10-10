@@ -1,3 +1,4 @@
+use semver::Version;
 use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -54,7 +55,11 @@ impl ManifestDependency {
     }
 
     pub fn matches_package_id(&self, package_id: PackageId) -> bool {
-        package_id.name == self.name && self.version_req.matches(&package_id.version)
+        self.matches_name_and_version(&package_id.name, &package_id.version)
+    }
+
+    pub fn matches_name_and_version(&self, name: &PackageName, version: &Version) -> bool {
+        *name == self.name && self.version_req.matches(version)
     }
 }
 
