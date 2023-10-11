@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra::program::VersionedProgram;
@@ -58,7 +60,9 @@ impl Compiler for LibCompiler {
 
         let sierra_program = {
             let _ = trace_span!("compile_sierra").enter();
-            cairo_lang_compiler::compile_prepared_db(db, main_crate_ids, compiler_config)?
+            let program =
+                cairo_lang_compiler::compile_prepared_db(db, main_crate_ids, compiler_config)?;
+            arc_unwrap_or_clone_inner(program).into_artifact()
         };
 
         if props.sierra {
@@ -67,7 +71,7 @@ impl Compiler for LibCompiler {
                 "output file",
                 &target_dir,
                 ws,
-                &VersionedProgram::from((*sierra_program).clone()),
+                &sierra_program,
             )
             .with_context(|| {
                 format!("failed to serialize Sierra program {}", unit.target().name)
@@ -80,26 +84,26 @@ impl Compiler for LibCompiler {
                 "output file",
                 &target_dir,
                 ws,
-                sierra_program.as_ref(),
+                &sierra_program,
             )?;
         }
 
         if props.casm {
+            let program = match &sierra_program {
+                VersionedProgram::V1(p) => &p.program,
+            };
+
             let gas_usage_check = true;
 
             let metadata = {
                 let _ = trace_span!("casm_calc_metadata").enter();
-                calc_metadata(&sierra_program, Default::default(), false)
+                calc_metadata(program, Default::default(), false)
                     .context("failed calculating Sierra variables")?
             };
 
             let cairo_program = {
                 let _ = trace_span!("compile_casm").enter();
-                cairo_lang_sierra_to_casm::compiler::compile(
-                    &sierra_program,
-                    &metadata,
-                    gas_usage_check,
-                )?
+                cairo_lang_sierra_to_casm::compiler::compile(program, &metadata, gas_usage_check)?
             };
 
             write_string(
@@ -113,4 +117,10 @@ impl Compiler for LibCompiler {
 
         Ok(())
     }
+}
+
+/// Workaround for the fact that the compiler is producing an `Arc<SierraProgram>`,
+/// while we need inner value directly.
+fn arc_unwrap_or_clone_inner<T: Clone>(arc: Arc<T>) -> T {
+    Arc::try_unwrap(arc).unwrap_or_else(|arc| (*arc).clone())
 }
