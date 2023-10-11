@@ -319,6 +319,33 @@ impl<'a> fmt::Debug for Filesystem<'a> {
     }
 }
 
+/// The following sequence of if statements & advisory locks implements a file system-based
+/// mutex, that synchronizes extraction logic. The first condition checks if extraction has
+/// happened in the past. If not, then we acquire the advisory lock (which means waiting for
+/// our time slice to do the job). Successful lock acquisition does not mean though that we
+/// still have to perform the extraction! While we waited for our time slice, another process
+/// could just do the extraction! The second condition prevents repeating the work.
+///
+/// This is actually very important for correctness. The another process that performed
+/// the extraction, will highly probably soon try to read the extracted files. If we recreate
+/// the filesystem now, we will cause that process to crash. That's what happened on Windows
+/// in examples tests, when the second condition was missing.
+macro_rules! protected_run_if_not_ok {
+    ($fs:expr, $lock:expr, $body:block) => {{
+        let fs: &$crate::flock::Filesystem<'_> = $fs;
+        let lock: &$crate::flock::AdvisoryLock<'_> = $lock;
+        if !fs.is_ok() {
+            let _lock = lock.acquire_async().await?;
+            if !fs.is_ok() {
+                $body
+                fs.mark_ok()?;
+            }
+        }
+    }};
+}
+
+pub(crate) use protected_run_if_not_ok;
+
 fn acquire(
     file: &File,
     path: &Utf8Path,
