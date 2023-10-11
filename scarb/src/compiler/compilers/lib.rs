@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra::program::VersionedProgram;
@@ -60,9 +58,8 @@ impl Compiler for LibCompiler {
 
         let sierra_program = {
             let _ = trace_span!("compile_sierra").enter();
-            let program =
-                cairo_lang_compiler::compile_prepared_db(db, main_crate_ids, compiler_config)?;
-            arc_unwrap_or_clone_inner(program).into_artifact()
+            cairo_lang_compiler::compile_prepared_db(db, main_crate_ids, compiler_config)?
+                .into_artifact()
         };
 
         if props.sierra {
@@ -117,10 +114,4 @@ impl Compiler for LibCompiler {
 
         Ok(())
     }
-}
-
-/// Workaround for the fact that the compiler is producing an `Arc<SierraProgram>`,
-/// while we need inner value directly.
-fn arc_unwrap_or_clone_inner<T: Clone>(arc: Arc<T>) -> T {
-    Arc::try_unwrap(arc).unwrap_or_else(|arc| (*arc).clone())
 }
