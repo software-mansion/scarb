@@ -4,7 +4,9 @@ use async_trait::async_trait;
 use crate::core::{ManifestDependency, Package, PackageId, Summary};
 
 pub mod cache;
+pub mod client;
 pub mod index;
+pub mod package_source_store;
 pub mod patch_map;
 pub mod patcher;
 pub mod source_map;

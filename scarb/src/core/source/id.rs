@@ -297,7 +297,7 @@ impl SourceId {
         match self.kind {
             SourceKind::Path => Ok(Arc::new(PathSource::new(self, config))),
             SourceKind::Git(_) => Ok(Arc::new(GitSource::new(self, config)?)),
-            SourceKind::Registry => todo!("Registry sources are not implemented yet."),
+            SourceKind::Registry => Ok(Arc::new(RegistrySource::new(self, config)?)),
             SourceKind::Std => Ok(Arc::new(StandardLibSource::new(config))),
         }
     }
