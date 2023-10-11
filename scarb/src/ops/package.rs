@@ -49,6 +49,7 @@ enum ArchiveFileContents {
     Generated(Box<dyn FnOnce() -> Result<Vec<u8>>>),
 }
 
+#[tracing::instrument(level = "debug", skip(opts, ws))]
 pub fn package(
     packages: &[PackageId],
     opts: &PackageOpts,
@@ -62,6 +63,7 @@ pub fn package(
         .collect()
 }
 
+#[tracing::instrument(level = "debug", skip(opts, ws))]
 pub fn package_list(
     packages: &[PackageId],
     opts: &PackageOpts,
@@ -78,6 +80,7 @@ fn before_package(ws: &Workspace<'_>) -> Result<()> {
     Ok(())
 }
 
+#[tracing::instrument(level = "trace", skip(_opts, ws))]
 fn package_one_impl(
     pkg_id: PackageId,
     _opts: &PackageOpts,
@@ -192,6 +195,7 @@ fn prepare_archive_recipe(pkg: &Package) -> Result<ArchiveRecipe> {
     Ok(recipe)
 }
 
+#[tracing::instrument(level = "trace", skip_all)]
 fn source_files(pkg: &Package) -> Result<ArchiveRecipe> {
     list_source_files(pkg)?
         .into_iter()
@@ -245,6 +249,7 @@ fn sort_recipe(recipe: &mut ArchiveRecipe) {
     });
 }
 
+#[tracing::instrument(level = "trace", skip_all)]
 fn normalize_manifest(pkg: Package) -> Result<Vec<u8>> {
     let mut buf = Vec::new();
 
@@ -278,6 +283,7 @@ fn normalize_manifest(pkg: Package) -> Result<Vec<u8>> {
 /// Compress and package the recipe, and write it into the given file.
 ///
 /// Returns the uncompressed size of the contents of the archive.
+#[tracing::instrument(level = "trace", skip_all)]
 fn tar(
     pkg_id: PackageId,
     recipe: ArchiveRecipe,
