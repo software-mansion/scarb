@@ -142,6 +142,15 @@ impl<'a> Filesystem<'a> {
         }
     }
 
+    /// Like [`Utf8Path::join`], creates a new [`Filesystem`] rooted at a subdirectory of this one.
+    ///
+    /// Unlike [`Filesystem::child`], this method consumes the current [`Filesystem`].
+    pub fn into_child(self, path: impl AsRef<Utf8Path>) -> Filesystem<'a> {
+        Filesystem {
+            root: self.root.into_child(path),
+        }
+    }
+
     /// Get path to this [`Filesystem`] root without ensuring the path exists.
     pub fn path_unchecked(&self) -> &Utf8Path {
         self.root.as_unchecked()

@@ -1,5 +1,7 @@
+use std::ops::Deref;
 use std::{fmt, path};
 
+use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use once_cell::sync::OnceCell;
 use tracing::trace;
@@ -9,7 +11,7 @@ use crate::internal::fsx;
 pub struct LazyDirectoryCreator<'p> {
     path: Utf8PathBuf,
     creation_lock: OnceCell<()>,
-    parent: Option<&'p LazyDirectoryCreator<'p>>,
+    parent: Option<Calf<'p, LazyDirectoryCreator<'p>>>,
     is_output_dir: bool,
 }
 
@@ -34,7 +36,16 @@ impl<'p> LazyDirectoryCreator<'p> {
         Self {
             path: self.path.join(path),
             creation_lock: OnceCell::new(),
-            parent: Some(self),
+            parent: Some(Calf::Borrowed(self)),
+            is_output_dir: false,
+        }
+    }
+
+    pub fn into_child(self, path: impl AsRef<Utf8Path>) -> Self {
+        Self {
+            path: self.path.join(path),
+            creation_lock: OnceCell::new(),
+            parent: Some(Calf::Owned(Box::new(self))),
             is_output_dir: false,
         }
     }
@@ -43,7 +54,7 @@ impl<'p> LazyDirectoryCreator<'p> {
         &self.path
     }
 
-    pub fn as_existent(&self) -> anyhow::Result<&Utf8Path> {
+    pub fn as_existent(&self) -> Result<&Utf8Path> {
         self.ensure_created()?;
         Ok(&self.path)
     }
@@ -52,8 +63,8 @@ impl<'p> LazyDirectoryCreator<'p> {
         self.is_output_dir
     }
 
-    fn ensure_created(&self) -> anyhow::Result<()> {
-        if let Some(parent) = self.parent {
+    fn ensure_created(&self) -> Result<()> {
+        if let Some(parent) = &self.parent {
             parent.ensure_created()?;
         }
 
@@ -85,13 +96,14 @@ impl<'p> fmt::Debug for LazyDirectoryCreator<'p> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let base = self
             .parent
+            .as_deref()
             .map(|p| p.path.as_path())
             .unwrap_or_else(|| Utf8Path::new(""));
         if let Ok(stem) = self.path.strip_prefix(base) {
             write!(f, "<{base}>{}{stem}", path::MAIN_SEPARATOR)?;
         } else {
             write!(f, "{}", self.path)?;
-            if let Some(parent) = self.parent {
+            if let Some(parent) = &self.parent {
                 write!(f, r#", parent: "{}""#, parent.path)?;
             }
         }
@@ -105,5 +117,21 @@ impl<'p> fmt::Debug for LazyDirectoryCreator<'p> {
         }
 
         Ok(())
+    }
+}
+
+enum Calf<'a, T> {
+    Borrowed(&'a T),
+    Owned(Box<T>),
+}
+
+impl<'a, T: 'a> Deref for Calf<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Calf::Borrowed(t) => t,
+            Calf::Owned(t) => t,
+        }
     }
 }

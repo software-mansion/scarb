@@ -41,9 +41,13 @@ impl<'c> StandardLibSource<'c> {
 
         let tag = core_version_tag();
 
-        let registry_fs = self.config.dirs().registry_dir();
-        let std_fs = registry_fs.child("std");
-        let tag_fs = std_fs.child(&tag);
+        let tag_fs = self
+            .config
+            .dirs()
+            .registry_dir()
+            .into_child("std")
+            .into_child(&tag);
+
         let tag_path = tag_fs.path_existent()?;
 
         // The following sequence of if statements & advisory locks implements a file system-based
