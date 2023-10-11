@@ -13,6 +13,7 @@ use crate::core::registry::DEFAULT_REGISTRY_INDEX;
 use crate::core::source::Source;
 use crate::core::Config;
 use crate::internal::fsx::PathBufUtf8Ext;
+use crate::internal::stable_hash::short_hash;
 use crate::internal::static_hash_cache::StaticHashCache;
 use crate::sources::canonical_url::CanonicalUrl;
 
@@ -263,6 +264,15 @@ impl SourceId {
         self.kind == SourceKind::Std
     }
 
+    pub fn ident(self) -> String {
+        let ident = self
+            .url
+            .host_str()
+            .unwrap_or_else(|| self.kind.primary_field());
+        let hash = short_hash(self);
+        format!("{ident}-{hash}")
+    }
+
     pub fn to_pretty_url(self) -> String {
         match &self.kind {
             SourceKind::Path => format!("{PATH_SOURCE_PROTOCOL}+{}", self.url),
@@ -359,7 +369,7 @@ impl SourceId {
         match self.kind {
             SourceKind::Path => Ok(Arc::new(PathSource::new(self, config))),
             SourceKind::Git(_) => Ok(Arc::new(GitSource::new(self, config)?)),
-            SourceKind::Registry => todo!("Registry sources are not implemented yet."),
+            SourceKind::Registry => Ok(Arc::new(RegistrySource::new(self, config)?)),
             SourceKind::Std => Ok(Arc::new(StandardLibSource::new(config))),
         }
     }
@@ -475,5 +485,14 @@ mod tests {
             SourceId::from_pretty_url(&sid.to_pretty_url()).unwrap(),
             sid
         );
+    }
+
+    // NOTE: Path sources are deliberately not tested here, because paths have different form
+    //   depending on running OS. We simply trust that this code works in that case.
+    #[test_case(SourceId::mock_git() => "github.com-atgougv2hpl3e")]
+    #[test_case(SourceId::default_registry() => "there-is-no-default-registry-yet.com-3ldkk58276fs8")]
+    #[test_case(SourceId::for_std() => "std-ggl5uom4dskj8")]
+    fn ident(source_id: SourceId) -> String {
+        source_id.ident()
     }
 }
