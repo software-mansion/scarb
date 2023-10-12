@@ -20,6 +20,7 @@ pub mod manifest_path;
 pub mod metadata;
 pub mod new;
 pub mod package;
+pub mod publish;
 pub mod remove;
 pub mod run;
 pub mod test;
@@ -44,6 +45,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         Metadata(args) => metadata::run(args, config),
         New(args) => new::run(args, config),
         Package(args) => package::run(args, config),
+        Publish(args) => publish::run(args, config),
         Remove(args) => remove::run(args, config),
         Run(args) => run::run(args, config),
         Test(args) => test::run(args, config),
