@@ -38,7 +38,7 @@ pub struct Config {
     offline: bool,
     compilers: CompilerRepository,
     cairo_plugins: CairoPluginRepository,
-    custom_source_patches: Vec<ManifestDependency>,
+    custom_source_patches: Option<Vec<ManifestDependency>>,
     tokio_runtime: OnceCell<Runtime>,
     tokio_handle: OnceCell<Handle>,
     profile: Profile,
@@ -68,7 +68,6 @@ impl Config {
 
         let compilers = b.compilers.unwrap_or_else(CompilerRepository::std);
         let compiler_plugins = b.cairo_plugins.unwrap_or_else(CairoPluginRepository::std);
-        let custom_source_patches = b.custom_source_patches.unwrap_or_default();
         let profile: Profile = b.profile.unwrap_or_default();
         let tokio_handle: OnceCell<Handle> = OnceCell::new();
         if let Some(handle) = b.tokio_handle {
@@ -87,7 +86,7 @@ impl Config {
             offline: b.offline,
             compilers,
             cairo_plugins: compiler_plugins,
-            custom_source_patches,
+            custom_source_patches: b.custom_source_patches,
             tokio_runtime: OnceCell::new(),
             tokio_handle,
             profile,
@@ -226,7 +225,7 @@ impl Config {
         &self.cairo_plugins
     }
 
-    pub fn custom_source_patches(&self) -> &Vec<ManifestDependency> {
+    pub fn custom_source_patches(&self) -> &Option<Vec<ManifestDependency>> {
         &self.custom_source_patches
     }
 
