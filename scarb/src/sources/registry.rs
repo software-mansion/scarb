@@ -27,12 +27,7 @@ pub struct RegistrySource<'c> {
 
 impl<'c> RegistrySource<'c> {
     pub fn new(source_id: SourceId, config: &'c Config) -> Result<Self> {
-        let client = if let Ok(path) = source_id.url.to_file_path() {
-            Box::new(LocalRegistryClient::new(&path)?)
-        } else {
-            // TODO(mkaput): Implement pipelining HTTP client.
-            bail!("unsupported registry protocol: {source_id}")
-        };
+        let client = Self::create_base_client(source_id, config)?;
 
         // TODO(mkaput): Wrap remote clients in a disk caching layer.
         // TODO(mkaput): Wrap all clients in an in-memory caching layer.
@@ -45,6 +40,18 @@ impl<'c> RegistrySource<'c> {
             client,
             package_sources,
         })
+    }
+
+    pub fn create_base_client(
+        source_id: SourceId,
+        _config: &'c Config,
+    ) -> Result<Box<dyn RegistryClient + 'c>> {
+        if let Ok(path) = source_id.url.to_file_path() {
+            Ok(Box::new(LocalRegistryClient::new(&path)?))
+        } else {
+            // TODO(mkaput): Implement pipelining HTTP client.
+            bail!("unsupported registry protocol: {source_id}")
+        }
     }
 }
 

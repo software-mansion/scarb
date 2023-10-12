@@ -5,7 +5,8 @@ use anyhow::Result;
 use async_trait::async_trait;
 
 use crate::core::registry::index::IndexRecords;
-use crate::core::{PackageId, PackageName};
+use crate::core::{Package, PackageId, PackageName};
+use crate::flock::FileLockGuard;
 
 pub mod local;
 
@@ -43,4 +44,26 @@ pub trait RegistryClient: Send + Sync {
     /// it should write downloaded files to Scarb cache directory. If the file has already been
     /// downloaded, it should avoid downloading it again, and read it from this cache instead.
     async fn download(&self, package: PackageId) -> Result<PathBuf>;
+
+    /// State whether packages can be published to this registry.
+    ///
+    /// This method is permitted to do network lookups, for example to fetch registry config.
+    async fn supports_publish(&self) -> Result<bool> {
+        Ok(false)
+    }
+
+    /// Publish a package to this registry.
+    ///
+    /// This function can only be called if [`RegistryClient::supports_publish`] returns `true`.
+    /// Default implementation panics with [`unreachable!`].
+    ///
+    /// The `package` argument must correspond to just packaged `tarball` file.
+    /// The client is free to use information within `package` to send to the registry.
+    /// Package source is not required to match the registry the package is published to.
+    async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<()> {
+        // Silence clippy warnings without using _ in argument names.
+        let _ = package;
+        let _ = tarball;
+        unreachable!("This registry does not support publishing.")
+    }
 }

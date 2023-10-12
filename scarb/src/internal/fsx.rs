@@ -100,6 +100,16 @@ pub fn rename(from: impl AsRef<Path>, to: impl AsRef<Path>) -> Result<()> {
     }
 }
 
+/// Equivalent to [`fs::copy`] with better error messages.
+pub fn copy(from: impl AsRef<Path>, to: impl AsRef<Path>) -> Result<u64> {
+    return inner(from.as_ref(), to.as_ref());
+
+    fn inner(from: &Path, to: &Path) -> Result<u64> {
+        fs::copy(from, to)
+            .with_context(|| format!("failed to copy file {} to {}", from.display(), to.display()))
+    }
+}
+
 pub trait PathUtf8Ext {
     fn try_as_utf8(&'_ self) -> Result<&'_ Utf8Path>;
 

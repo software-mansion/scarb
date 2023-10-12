@@ -87,4 +87,12 @@ impl Summary {
 
         deps.into_iter()
     }
+
+    /// Returns an iterator over dependencies that should be included in registry index record
+    /// for this package.
+    pub fn publish_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
+        self.dependencies
+            .iter()
+            .filter(|dep| dep.kind == DepKind::Normal)
+    }
 }

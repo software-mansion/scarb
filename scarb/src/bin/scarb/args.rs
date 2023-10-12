@@ -11,6 +11,7 @@ use clap::{CommandFactory, Parser, Subcommand};
 use smol_str::SmolStr;
 use tracing::level_filters::LevelFilter;
 use tracing_log::AsTrace;
+use url::Url;
 
 use scarb::compiler::Profile;
 use scarb::core::PackageName;
@@ -156,6 +157,13 @@ pub enum Command {
         codes of selected packages. Resulting files will be placed in `target/package` directory.
     ")]
     Package(PackageArgs),
+    /// Upload a package to the registry.
+    #[command(after_help = "\
+        This command will create distributable, compressed `.tar.zst` archive containing source \
+        code of the package in `target/package` directory (using `scarb package`) and upload it \
+        to a registry.
+    ")]
+    Publish(PublishArgs),
     /// Run arbitrary package scripts.
     Run(ScriptsRunnerArgs),
     /// Execute all unit and integration tests of a local package.
@@ -316,6 +324,17 @@ pub struct PackageArgs {
     /// Print files included in a package without making one.
     #[arg(short, long)]
     pub list: bool,
+
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
+}
+
+/// Arguments accepted by the `publish` command.
+#[derive(Parser, Clone, Debug)]
+pub struct PublishArgs {
+    /// Registry index URL to upload the package to.
+    #[arg(long, value_name = "URL")]
+    pub index: Url,
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,

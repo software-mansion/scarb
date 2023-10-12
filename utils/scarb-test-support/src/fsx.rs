@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::BufReader;
-use std::path::MAIN_SEPARATOR_STR;
+use std::path::{PathBuf, MAIN_SEPARATOR_STR};
 
 use assert_fs::fixture::ChildPath;
 use assert_fs::TempDir;
@@ -44,6 +44,7 @@ impl AssertFsUtf8Ext for &ChildPath {
 
 pub trait ChildPathEx {
     fn files(&self) -> Vec<String>;
+    fn tree(&self) -> String;
     fn assert_is_json<T: DeserializeOwned>(&self) -> T;
 }
 
@@ -54,6 +55,42 @@ impl ChildPathEx for ChildPath {
             .map(|entry| entry.unwrap().file_name().to_string_lossy().into())
             .sorted()
             .collect()
+    }
+
+    fn tree(&self) -> String {
+        fn visit(path: &ChildPath, paths: &mut Vec<PathBuf>) {
+            paths.push(path.path().to_owned());
+            if path.is_dir() {
+                for entry in path.read_dir().unwrap() {
+                    let entry = entry.unwrap();
+                    let entry = ChildPath::new(entry.path());
+                    visit(&entry, paths);
+                }
+            }
+        }
+
+        let mut paths = Vec::with_capacity(32);
+        visit(self, &mut paths);
+        paths.sort();
+
+        let mut out = String::with_capacity(paths.len() * 32);
+        for path in paths {
+            let is_dir = path.is_dir();
+            let path = path.strip_prefix(self).unwrap();
+            let mut components = path.components();
+            let Some(file_name) = components.next_back() else {
+                continue;
+            };
+            for _ in components {
+                out += ". ";
+            }
+            out += file_name.as_os_str().to_string_lossy().as_ref();
+            if is_dir {
+                out += "/";
+            }
+            out += "\n";
+        }
+        out
     }
 
     fn assert_is_json<T: DeserializeOwned>(&self) -> T {
