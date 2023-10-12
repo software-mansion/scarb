@@ -22,6 +22,8 @@ use crate::flock::AdvisoryLock;
 use crate::internal::fsx;
 use crate::SCARB_ENV;
 
+use super::ManifestDependency;
+
 pub struct Config {
     manifest_path: Utf8PathBuf,
     dirs: Arc<AppDirs>,
@@ -36,6 +38,7 @@ pub struct Config {
     offline: bool,
     compilers: CompilerRepository,
     cairo_plugins: CairoPluginRepository,
+    custom_source_patches: Vec<ManifestDependency>,
     tokio_runtime: OnceCell<Runtime>,
     tokio_handle: OnceCell<Handle>,
     profile: Profile,
@@ -65,6 +68,7 @@ impl Config {
 
         let compilers = b.compilers.unwrap_or_else(CompilerRepository::std);
         let compiler_plugins = b.cairo_plugins.unwrap_or_else(CairoPluginRepository::std);
+        let custom_source_patches = b.custom_source_patches.unwrap_or_default();
         let profile: Profile = b.profile.unwrap_or_default();
         let tokio_handle: OnceCell<Handle> = OnceCell::new();
         if let Some(handle) = b.tokio_handle {
@@ -83,6 +87,7 @@ impl Config {
             offline: b.offline,
             compilers,
             cairo_plugins: compiler_plugins,
+            custom_source_patches,
             tokio_runtime: OnceCell::new(),
             tokio_handle,
             profile,
@@ -221,6 +226,10 @@ impl Config {
         &self.cairo_plugins
     }
 
+    pub fn custom_source_patches(&self) -> &Vec<ManifestDependency> {
+        &self.custom_source_patches
+    }
+
     pub fn profile(&self) -> Profile {
         self.profile.clone()
     }
@@ -239,6 +248,7 @@ pub struct ConfigBuilder {
     log_filter_directive: Option<OsString>,
     compilers: Option<CompilerRepository>,
     cairo_plugins: Option<CairoPluginRepository>,
+    custom_source_patches: Option<Vec<ManifestDependency>>,
     tokio_handle: Option<Handle>,
     profile: Option<Profile>,
 }
@@ -257,6 +267,7 @@ impl ConfigBuilder {
             log_filter_directive: None,
             compilers: None,
             cairo_plugins: None,
+            custom_source_patches: None,
             tokio_handle: None,
             profile: None,
         }
@@ -325,6 +336,11 @@ impl ConfigBuilder {
 
     pub fn cairo_plugins(mut self, compiler_plugins: CairoPluginRepository) -> Self {
         self.cairo_plugins = Some(compiler_plugins);
+        self
+    }
+
+    pub fn custom_source_patches(mut self, custom_self_patches: Vec<ManifestDependency>) -> Self {
+        self.custom_source_patches = Some(custom_self_patches);
         self
     }
 
