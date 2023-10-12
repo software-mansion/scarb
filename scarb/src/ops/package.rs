@@ -13,7 +13,7 @@ use crate::core::publishing::manifest_normalization::prepare_manifest_for_publis
 use crate::core::publishing::source::list_source_files;
 use crate::core::{Package, PackageId, PackageName, Workspace};
 use crate::flock::FileLockGuard;
-use crate::internal::{fsx, restricted_names};
+use crate::internal::restricted_names;
 use crate::{ops, MANIFEST_FILE_NAME};
 
 const VERSION: u8 = 1;
@@ -117,7 +117,7 @@ fn package_one_impl(
 
     dst.seek(SeekFrom::Start(0))?;
 
-    fsx::rename(dst.path(), dst.path().with_file_name(filename))?;
+    dst.rename(dst.path().with_file_name(filename))?;
 
     let dst_metadata = dst
         .metadata()

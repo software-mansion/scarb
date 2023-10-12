@@ -1,9 +1,10 @@
 use std::fs::{File, OpenOptions};
 use std::ops::{Deref, DerefMut};
+use std::path::Path;
 use std::sync::{Arc, Weak};
 use std::{fmt, io};
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use fs4::{lock_contended_error, FileExt};
 use tokio::sync::Mutex;
@@ -12,6 +13,7 @@ use scarb_ui::components::Status;
 
 use crate::core::Config;
 use crate::internal::fsx;
+use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::lazy_directory_creator::LazyDirectoryCreator;
 
 const OK_FILE: &str = ".scarb-ok";
@@ -36,6 +38,18 @@ impl FileLockGuard {
 
     pub fn lock_kind(&self) -> FileLockKind {
         self.lock_kind
+    }
+
+    pub fn rename(&mut self, to: impl AsRef<Path>) -> Result<&mut Self> {
+        ensure!(
+            self.lock_kind == FileLockKind::Exclusive,
+            "cannot rename shared file: {}",
+            self.path,
+        );
+        let to = to.as_ref().try_to_utf8()?;
+        fsx::rename(&self.path, &to)?;
+        self.path = to;
+        Ok(self)
     }
 }
 
