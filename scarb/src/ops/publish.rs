@@ -4,6 +4,7 @@ use url::Url;
 use scarb_ui::components::Status;
 
 use crate::core::{PackageId, SourceId, Workspace};
+use crate::internal::asyncx::block_on;
 use crate::ops;
 use crate::sources::RegistrySource;
 
@@ -17,10 +18,7 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
     let source_id = SourceId::for_registry(&opts.index_url)?;
     let registry_client = RegistrySource::create_base_client(source_id, ws.config())?;
 
-    let supports_publish = ws
-        .config()
-        .tokio_handle()
-        .block_on(registry_client.supports_publish())
+    let supports_publish = block_on(ws, registry_client.supports_publish())
         .with_context(|| format!("failed to check if registry supports publishing: {source_id}"))?;
     ensure!(
         supports_publish,
@@ -36,7 +34,7 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
         .ui()
         .print(Status::new("Uploading", &dest_package_id.to_string()));
 
-    ws.config().tokio_handle().block_on(async {
+    block_on(ws, async {
         registry_client.publish(package, tarball).await
 
         // TODO(mkaput): Wait for publish here.

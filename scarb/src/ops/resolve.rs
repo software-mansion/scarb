@@ -18,6 +18,7 @@ use crate::core::{
     DepKind, DependencyVersionReq, ManifestDependency, PackageName, SourceId, Target, TargetKind,
     TestTargetProps, TestTargetType,
 };
+use crate::internal::asyncx::block_on;
 use crate::internal::to_version::ToVersion;
 use crate::{resolver, DEFAULT_SOURCE_PATH};
 
@@ -52,7 +53,8 @@ impl WorkspaceResolve {
     fields(root = ws.root().to_string())
 )]
 pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
-    ws.config().tokio_handle().block_on(
+    block_on(
+        ws,
         async {
             let mut patch_map = PatchMap::new();
 

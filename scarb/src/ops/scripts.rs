@@ -10,6 +10,7 @@ use deno_task_shell::{parser, ExecutableCommand, ShellCommand};
 use crate::core::errors::ScriptExecutionError;
 use crate::core::manifest::ScriptDefinition;
 use crate::core::Workspace;
+use crate::internal::asyncx::block_on;
 use crate::subcommands::get_env_vars;
 
 /// Execute user defined script.
@@ -62,13 +63,10 @@ pub fn execute_script(
         );
     }
 
-    let runtime = ws.config().tokio_handle();
-    let exit_code = runtime.block_on(deno_task_shell::execute(
-        list,
-        env_vars,
-        (&cwd).as_ref(),
-        custom_commands,
-    ));
+    let exit_code = block_on(
+        ws,
+        deno_task_shell::execute(list, env_vars, (&cwd).as_ref(), custom_commands),
+    );
 
     if exit_code != 0 {
         Err(ScriptExecutionError::new(exit_code).into())

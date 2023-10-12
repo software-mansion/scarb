@@ -6,7 +6,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use scarb_ui::args::PackagesSource;
 
 use crate::compiler::Profile;
-use crate::core::config::Config;
+use crate::core::config::{Config, GetConfig};
 use crate::core::package::Package;
 use crate::core::PackageId;
 use crate::flock::RootFilesystem;
@@ -207,5 +207,11 @@ impl<'c> PackagesSource for Workspace<'c> {
 
     fn runtime_manifest(&self) -> Utf8PathBuf {
         self.config.manifest_path().to_path_buf()
+    }
+}
+
+impl<'c> GetConfig for Workspace<'c> {
+    fn config(&self) -> &Config {
+        self.config()
     }
 }

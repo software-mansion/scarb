@@ -338,3 +338,21 @@ impl ConfigBuilder {
         self
     }
 }
+
+pub trait GetConfig {
+    // Hide this method, so that IDEs will not be tempted to auto suggest it.
+    #[doc(hidden)]
+    fn config(&self) -> &Config;
+}
+
+impl GetConfig for Config {
+    fn config(&self) -> &Config {
+        self
+    }
+}
+
+impl<T: GetConfig> GetConfig for &T {
+    fn config(&self) -> &Config {
+        (*self).config()
+    }
+}
