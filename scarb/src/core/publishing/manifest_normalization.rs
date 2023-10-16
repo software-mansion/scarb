@@ -118,13 +118,21 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
 
     Ok(TomlDependency::Detailed(Box::new(DetailedTomlDependency {
         version,
+
+        // Erase path information, effectively making the dependency default registry-based.
         path: None,
+
+        // Same for Git specification.
         git: None,
         branch: None,
         tag: None,
         rev: None,
+
+        // Unless it is default registry, expand registry specification to registry URL.
+        //
+        // NOTE: Default registry will reject packages with dependencies from other registries.
         registry: if dep.source_id.is_registry() && !dep.source_id.is_default_registry() {
-            todo!("Packaging packages with dependencies from non-default registries is not implemented yet.")
+            Some(dep.source_id.url.clone())
         } else {
             None
         },

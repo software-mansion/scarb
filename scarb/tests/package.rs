@@ -16,6 +16,7 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::unix_paths_to_os_lossy;
 use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use scarb_test_support::registry::local::LocalRegistry;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 struct PackageChecker {
@@ -308,11 +309,18 @@ fn generated_manifest() {
             .build(&t);
     });
 
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("registry_dep")
+            .version("1.0.0")
+            .build(t);
+    });
+
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        // TODO(mkaput): Uncomment this when registry source will be implemented.
-        // .dep("registry_dep", Dep.version("1.0.0"))
+        .dep("registry_dep", Dep.version("1.0.0").registry(&registry))
         .dep("path_dep", path_dep.version("0.1.0"))
         .dep("git_dep", git_dep.version("0.2.0"))
         .dep_starknet()
@@ -354,6 +362,10 @@ fn generated_manifest() {
 
             [dependencies.path_dep]
             version = "^0.1.0"
+
+            [dependencies.registry_dep]
+            version = "^1.0.0"
+            registry = "file://[..]"
 
             [dependencies.starknet]
             version = "[..]"
