@@ -6,4 +6,5 @@ pub mod fsx;
 pub mod gitx;
 pub mod manifest_edit;
 pub mod project_builder;
+pub mod registry;
 pub mod workspace_builder;
