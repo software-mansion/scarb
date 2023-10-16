@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::metadata::calc_metadata;
 use serde::{Deserialize, Serialize};
 use tracing::trace_span;
@@ -86,21 +85,19 @@ impl Compiler for LibCompiler {
         }
 
         if props.casm {
-            let program = match &sierra_program {
-                VersionedProgram::V1(p) => &p.program,
-            };
+            let program = sierra_program.into_v1().unwrap().program;
 
             let gas_usage_check = true;
 
             let metadata = {
                 let _ = trace_span!("casm_calc_metadata").enter();
-                calc_metadata(program, Default::default(), false)
+                calc_metadata(&program, Default::default(), false)
                     .context("failed calculating Sierra variables")?
             };
 
             let cairo_program = {
                 let _ = trace_span!("compile_casm").enter();
-                cairo_lang_sierra_to_casm::compiler::compile(program, &metadata, gas_usage_check)?
+                cairo_lang_sierra_to_casm::compiler::compile(&program, &metadata, gas_usage_check)?
             };
 
             write_string(
