@@ -38,6 +38,7 @@ pub struct Config {
     offline: bool,
     compilers: CompilerRepository,
     cairo_plugins: CairoPluginRepository,
+    // This is a Dojo-specific feature that will be removed once Dojo is decoupled from Scarb as a library.
     custom_source_patches: Option<Vec<ManifestDependency>>,
     tokio_runtime: OnceCell<Runtime>,
     tokio_handle: OnceCell<Handle>,
