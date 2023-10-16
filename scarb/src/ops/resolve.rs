@@ -79,6 +79,12 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
                         .build(),
                 ],
             );
+            if let Some(custom_source_patches) = ws.config().custom_source_patches() {
+                patch_map.insert(
+                    SourceId::default().canonical_url.clone(),
+                    custom_source_patches.clone(),
+                );
+            }
 
             let source_map = SourceMap::preloaded(ws.members(), ws.config());
             let cached = RegistryCache::new(&source_map);
