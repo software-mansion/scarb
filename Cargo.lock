@@ -3972,6 +3972,7 @@ dependencies = [
  "serde-value",
  "serde_json",
  "serde_test",
+ "sha2",
  "similar-asserts",
  "smallvec",
  "smol_str",
