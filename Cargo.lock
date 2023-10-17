@@ -3980,6 +3980,7 @@ dependencies = [
  "serde-untagged",
  "serde-value",
  "serde_json",
+ "serde_repr",
  "serde_test",
  "sha2",
  "similar-asserts",

@@ -15,6 +15,7 @@ mod checksum;
 pub(crate) mod config;
 mod dirs;
 pub mod errors;
+pub(crate) mod lockfile;
 pub(crate) mod manifest;
 pub(crate) mod package;
 pub(crate) mod publishing;

@@ -43,6 +43,15 @@ impl Resolve {
             .unique()
             .collect_vec()
     }
+
+    /// Collect [`PackageId`]s of all directed dependencies of the package.
+    pub fn package_dependencies(
+        &self,
+        package_id: PackageId,
+    ) -> impl Iterator<Item = PackageId> + '_ {
+        self.graph
+            .neighbors_directed(package_id, petgraph::Direction::Outgoing)
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
