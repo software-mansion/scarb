@@ -8,7 +8,9 @@ use scarb_ui::Ui;
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::resolver::{DependencyEdge, Resolve};
-use crate::core::{DepKind, ManifestDependency, PackageId, Summary, TargetKind};
+use crate::core::{
+    DepKind, DependencyVersionReq, ManifestDependency, PackageId, Summary, TargetKind,
+};
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -27,7 +29,7 @@ use crate::core::{DepKind, ManifestDependency, PackageId, Summary, TargetKind};
 pub async fn resolve(
     summaries: &[Summary],
     registry: &dyn Registry,
-    _lockfile: Lockfile,
+    lockfile: Lockfile,
     ui: &Ui,
 ) -> Result<Resolve> {
     // TODO(#2): This is very bad, use PubGrub here.
@@ -53,6 +55,13 @@ pub async fn resolve(
 
             for dep in summaries[&package_id].clone().full_dependencies() {
                 let dep = rewrite_dependency_source_id(registry, &package_id, dep).await?;
+
+                let locked_package_id = lockfile.packages_matching(dep.clone());
+                let dep = if let Some(locked_package_id) = locked_package_id {
+                    rewrite_locked_dependency(dep.clone(), locked_package_id?)
+                } else {
+                    dep
+                };
 
                 let results = registry.query(&dep).await?;
 
@@ -140,6 +149,21 @@ pub async fn resolve(
     }
 
     Ok(Resolve { graph })
+}
+
+fn rewrite_locked_dependency(
+    dependency: ManifestDependency,
+    locked_package_id: PackageId,
+) -> ManifestDependency {
+    ManifestDependency::builder()
+        .kind(dependency.kind.clone())
+        .name(dependency.name.clone())
+        .source_id(locked_package_id.source_id)
+        .version_req(DependencyVersionReq::Locked {
+            exact: locked_package_id.version.clone(),
+            req: dependency.version_req.clone().into(),
+        })
+        .build()
 }
 
 async fn rewrite_dependency_source_id(

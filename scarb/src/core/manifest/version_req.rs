@@ -48,6 +48,16 @@ impl From<VersionReq> for DependencyVersionReq {
     }
 }
 
+impl From<DependencyVersionReq> for VersionReq {
+    fn from(req: DependencyVersionReq) -> Self {
+        match req {
+            DependencyVersionReq::Any => VersionReq::STAR,
+            DependencyVersionReq::Req(req) => req,
+            DependencyVersionReq::Locked { req, .. } => req,
+        }
+    }
+}
+
 impl fmt::Display for DependencyVersionReq {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

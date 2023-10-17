@@ -210,6 +210,9 @@ fn stale_cached_version() {
             .build(&t)
     });
 
+    // Use the same cache dir to prevent downloading git dep second time for the locked rev.
+    let cache_dir = TempDir::new().unwrap();
+
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
@@ -220,6 +223,7 @@ fn stale_cached_version() {
 
     Scarb::quick_snapbox()
         .arg("build")
+        .env("SCARB_CACHE", cache_dir.path())
         .current_dir(&t)
         .assert()
         .success()
@@ -232,27 +236,32 @@ fn stale_cached_version() {
     t.child("target/dev/hello.sierra.json")
         .assert(predicates::str::contains("11111111111101"));
 
-    // TODO(#126): Lockfile should prevent updating.
-    //   When lockfile will be implemented, uncomment this and implement missing parts.
-    // Scarb::quick_snapbox()
-    //     .arg("build")
-    //     .current_dir(&t)
-    //     .assert()
-    //     .success()
-    //     .stdout_matches(indoc! {r#"
-    //     [..] Compiling hello v1.0.0 ([..])
-    //     [..]  Finished release target(s) in [..]
-    //     "#});
-    //
-    // t.child("target/release/hello.sierra.json")
-    //     .assert(predicates::str::contains("11111111111101"));
-    //
-    // remove lockfile here
+    Scarb::quick_snapbox()
+        .arg("build")
+        .env("SCARB_CACHE", cache_dir.path())
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling hello v1.0.0 ([..])
+        [..]  Finished release target(s) in [..]
+        "#});
+
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::str::contains("11111111111101"));
+
+    // Remove lockfile.
+    let lockfile = t.child("Scarb.lock");
+    if lockfile.exists() {
+        fs::remove_file(&lockfile)
+            .unwrap_or_else(|_| panic!("failed to remove {}", lockfile.to_str().unwrap()));
+    }
 
     dep.change_file("src/lib.cairo", "fn hello() -> felt252 { 11111111111102 }");
 
     Scarb::quick_snapbox()
         .arg("build")
+        .env("SCARB_CACHE", cache_dir.path())
         .current_dir(&t)
         .assert()
         .success()

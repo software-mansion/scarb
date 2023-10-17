@@ -52,6 +52,45 @@ impl SourceKind {
             _ => None,
         }
     }
+
+    pub fn can_lock_source_kind(&self, other: &Self) -> bool {
+        if self == other {
+            return true;
+        }
+
+        match self {
+            // We can reject specs without precise,
+            // as they would need to be identical anyway.
+            SourceKind::Git(spec) if spec.precise.is_none() => false,
+            SourceKind::Git(spec) => {
+                let other_precise = other
+                    .as_git_source_spec()
+                    .and_then(|other_spec| other_spec.precise.clone());
+
+                // If the other source kind has a precise revision locked,
+                // and the other source kind does not equal self,
+                // then self cannot lock the other source kind.
+                if other_precise.is_some() {
+                    return false;
+                }
+
+                spec.precise
+                    .clone()
+                    .and_then(|precise| {
+                        // Compare other attributes apart from precise revision.
+                        // Note that `other` with different source kind defaults to false on unwrap.
+                        other
+                            .as_git_source_spec()
+                            // Overwrite precise in other.
+                            .map(|p| p.clone().with_precise(precise))
+                            .map(|s| s == *spec)
+                    })
+                    .unwrap_or(false)
+            }
+            // Reject rest as handled by equality check.
+            _ => false,
+        }
+    }
 }
 
 const PATH_SOURCE_PROTOCOL: &str = "path";
@@ -117,6 +156,29 @@ impl SourceId {
             kind,
             ..(*self).clone()
         }))
+    }
+
+    pub fn can_lock_source_id(self, other: Self) -> bool {
+        if self == other {
+            return true;
+        }
+
+        let can_lock = self.kind.can_lock_source_kind(&other.kind);
+
+        // Check if other attributes apart from kind are equal.
+        can_lock && self.equals_ignoring_kind(other)
+    }
+
+    fn equals_ignoring_kind(self, other: Self) -> bool {
+        let first = SourceIdInner {
+            kind: SourceKind::Std,
+            ..(self.0).clone()
+        };
+        let second = SourceIdInner {
+            kind: SourceKind::Std,
+            ..(other.0).clone()
+        };
+        first == second
     }
 
     fn intern(inner: SourceIdInner) -> Self {

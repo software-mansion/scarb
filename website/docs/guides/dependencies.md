@@ -31,11 +31,6 @@ Actually this is how the OpenZeppelin Contracts for Cairo library is released, s
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc.0" }
 ```
 
-::: info
-In the future commit pinning will not be needed because Scarb will maintain a lockfile.
-We track this feature in this issue: [#126](https://github.com/software-mansion/scarb/issues/126).
-:::
-
 Note, that if you want to add more dependencies, you do not have to add `[dependencies]` for each package separately. For example:
 
 ```toml
