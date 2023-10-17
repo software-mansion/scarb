@@ -6,6 +6,7 @@ use futures::TryFutureExt;
 use itertools::Itertools;
 
 use crate::compiler::{CompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent};
+use crate::core::lockfile::Lockfile;
 use crate::core::package::{Package, PackageClass, PackageId};
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::patch_map::PatchMap;
@@ -19,6 +20,7 @@ use crate::core::{
     TestTargetProps, TestTargetType,
 };
 use crate::internal::to_version::ToVersion;
+use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::{resolver, DEFAULT_SOURCE_PATH};
 
 pub struct WorkspaceResolve {
@@ -47,9 +49,9 @@ impl WorkspaceResolve {
 
 /// Resolves workspace dependencies and downloads missing packages.
 #[tracing::instrument(
-    level = "debug",
-    skip_all,
-    fields(root = ws.root().to_string())
+level = "debug",
+skip_all,
+fields(root = ws.root().to_string())
 )]
 pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
     ws.config().tokio_handle().block_on(
@@ -95,7 +97,12 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
                 .map(|pkg| pkg.manifest.summary.clone())
                 .collect::<Vec<_>>();
 
-            let resolve = resolver::resolve(&members_summaries, &patched, ws.config().ui()).await?;
+            let lockfile: Lockfile = read_lockfile(ws)?;
+
+            let resolve =
+                resolver::resolve(&members_summaries, &patched, lockfile, ws.config().ui()).await?;
+
+            write_lockfile(Lockfile::from_resolve(&resolve), ws)?;
 
             let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
 
