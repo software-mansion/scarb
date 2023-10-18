@@ -8,6 +8,7 @@ use crate::core::registry::index::IndexRecords;
 use crate::core::{Package, PackageId, PackageName};
 use crate::flock::FileLockGuard;
 
+pub mod http;
 pub mod local;
 
 #[async_trait]
