@@ -53,7 +53,7 @@ pub enum OutputFormat {
 /// colour, etc.
 ///
 /// All human-oriented messaging (basically all writes to `stdout`) must go through this object.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Ui {
     verbosity: Verbosity,
     output_format: OutputFormat,
