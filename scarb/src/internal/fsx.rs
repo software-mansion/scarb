@@ -35,6 +35,16 @@ pub fn create_dir_all(p: impl AsRef<Path>) -> Result<()> {
     }
 }
 
+/// Equivalent to [`fs::remove_file`] with better error messages.
+pub fn remove_file(p: impl AsRef<Path>) -> Result<()> {
+    return inner(p.as_ref());
+
+    fn inner(p: &Path) -> Result<()> {
+        fs::remove_file(p).with_context(|| format!("failed to remove file `{}`", p.display()))?;
+        Ok(())
+    }
+}
+
 /// Equivalent to [`fs::remove_dir_all`] with better error messages.
 pub fn remove_dir_all(p: impl AsRef<Path>) -> Result<()> {
     return inner(p.as_ref());

@@ -78,7 +78,11 @@ impl<'c> HttpRegistryClient<'c> {
 
 #[async_trait]
 impl<'c> RegistryClient for HttpRegistryClient<'c> {
-    async fn get_records(&self, package: PackageName) -> Result<RegistryResource<IndexRecords>> {
+    async fn get_records(
+        &self,
+        package: PackageName,
+        _cache_key: Option<&str>,
+    ) -> Result<RegistryResource<IndexRecords>> {
         let index_config = self.index_config().await?;
         let records_url = index_config.index.expand(package.into())?;
 
