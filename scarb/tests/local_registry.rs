@@ -34,9 +34,7 @@ fn usage() {
         .current_dir(&t)
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
-        [..] Unpacking bar v1.0.0 ([..])
-        "#});
+        .stdout_eq("");
 }
 
 #[test]
@@ -65,7 +63,10 @@ fn not_found() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: package not found in registry: baz ^1 (registry+file://[..])
+        error: failed to lookup for `baz ^1 (registry+file://[..])` in registry: registry+file://[..]
+
+        Caused by:
+            package not found in registry: baz ^1 (registry+file://[..])
         "#});
 }
 
@@ -89,7 +90,10 @@ fn empty_registry() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: package not found in registry: baz ^1 (registry+file://[..])
+        error: failed to lookup for `baz ^1 (registry+file://[..])` in registry: registry+file://[..]
+
+        Caused by:
+            package not found in registry: baz ^1 (registry+file://[..])
         "#});
 }
 

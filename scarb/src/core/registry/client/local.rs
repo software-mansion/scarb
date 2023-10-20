@@ -3,15 +3,15 @@ use std::io;
 use std::io::{BufReader, BufWriter, Seek, SeekFrom};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use anyhow::{ensure, Context, Error, Result};
 use async_trait::async_trait;
 use fs4::FileExt;
 use tokio::task::spawn_blocking;
+use tracing::trace;
 use url::Url;
 
-use crate::core::registry::client::RegistryClient;
+use crate::core::registry::client::{RegistryClient, RegistryResource};
 use crate::core::registry::index::{IndexDependency, IndexRecord, IndexRecords, TemplateUrl};
 use crate::core::{Checksum, Digest, Package, PackageId, PackageName, Summary};
 use crate::flock::FileLockGuard;
@@ -93,12 +93,10 @@ impl LocalRegistryClient {
 
 #[async_trait]
 impl RegistryClient for LocalRegistryClient {
-    fn is_offline(&self) -> bool {
-        true
-    }
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn get_records(&self, package: PackageName) -> Result<RegistryResource<IndexRecords>> {
+        trace!(?package);
 
-    #[tracing::instrument(level = "trace", skip(self))]
-    async fn get_records(&self, package: PackageName) -> Result<Option<Arc<IndexRecords>>> {
         let records_path = self.records_path(&package);
 
         spawn_blocking(move || {
@@ -107,22 +105,24 @@ impl RegistryClient for LocalRegistryClient {
                     if e.downcast_ref::<io::Error>()
                         .map_or(false, |ioe| ioe.kind() == io::ErrorKind::NotFound) =>
                 {
-                    return Ok(None);
+                    return Ok(RegistryResource::NotFound);
                 }
                 r => r?,
             };
             let records = serde_json::from_slice(&records)?;
-            Ok(Some(Arc::new(records)))
+            Ok(RegistryResource::Download {
+                resource: records,
+                cache_key: None,
+            })
         })
         .await?
     }
 
-    async fn is_downloaded(&self, _package: PackageId) -> bool {
-        true
-    }
-
-    async fn download(&self, package: PackageId) -> Result<PathBuf> {
-        Ok(self.dl_path(package))
+    async fn download(&self, package: PackageId) -> Result<RegistryResource<PathBuf>> {
+        Ok(RegistryResource::Download {
+            resource: self.dl_path(package),
+            cache_key: None,
+        })
     }
 
     async fn supports_publish(&self) -> Result<bool> {
