@@ -48,11 +48,7 @@ impl WorkspaceResolve {
 }
 
 /// Resolves workspace dependencies and downloads missing packages.
-#[tracing::instrument(
-level = "debug",
-skip_all,
-fields(root = ws.root().to_string())
-)]
+#[tracing::instrument(level = "debug", skip_all, fields(root = ws.root().to_string()))]
 pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
     ws.config().tokio_handle().block_on(
         async {
