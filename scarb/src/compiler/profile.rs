@@ -62,28 +62,6 @@ impl fmt::Display for Profile {
     }
 }
 
-impl<'a> TryFrom<&'a str> for Profile {
-    type Error = anyhow::Error;
-
-    fn try_from(name: &'a str) -> Result<Self> {
-        Self::new(SmolStr::new(name))
-    }
-}
-
-impl TryFrom<String> for Profile {
-    type Error = anyhow::Error;
-
-    fn try_from(name: String) -> Result<Self> {
-        Self::new(SmolStr::new(name))
-    }
-}
-
-impl From<SmolStr> for Profile {
-    fn from(name: SmolStr) -> Self {
-        Self::new(name).unwrap()
-    }
-}
-
 impl From<Profile> for SmolStr {
     fn from(profile: Profile) -> Self {
         profile.0

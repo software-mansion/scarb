@@ -695,7 +695,8 @@ impl TomlManifest {
             .map(|toml_profiles| {
                 toml_profiles
                     .keys()
-                    .map(|name| Profile::new(name.clone()))
+                    .cloned()
+                    .map(Profile::new)
                     .try_collect()
             })
             .unwrap_or(Ok(vec![]))

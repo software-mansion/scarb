@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use fs4::FileExt;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
+use std::str::FromStr;
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn read_lockfile(ws: &Workspace<'_>) -> Result<Lockfile> {
@@ -20,7 +21,7 @@ pub fn read_lockfile(ws: &Workspace<'_>) -> Result<Lockfile> {
     let mut content = String::new();
     file.read_to_string(&mut content)?;
 
-    content.try_into()
+    Lockfile::from_str(&content)
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
