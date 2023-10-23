@@ -23,7 +23,7 @@ It usually takes about half an hour.
 
 Sometimes `main` could be ahead with some commits that you might not want to include in this release.
 It's totally fine to start a release branch in such scenarios.
-The branch must be named `release/vX.Y.Z`, there's branch protection rule set up for this.
+The branch must be named `release/X.Y`, there's branch protection rule set up for this.
 Then, cherry-pick commits that you might want to include.
 After all is done, push the branch and a `vX.Y.Z` tag as usual!
 
