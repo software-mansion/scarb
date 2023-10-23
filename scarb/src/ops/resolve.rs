@@ -47,9 +47,23 @@ impl WorkspaceResolve {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct ResolveOpts {
+    /// Do not use lockfile when resolving.
+    pub update: bool,
+}
+
+pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
+    let opts: ResolveOpts = Default::default();
+    resolve_workspace_with_opts(ws, &opts)
+}
+
 /// Resolves workspace dependencies and downloads missing packages.
 #[tracing::instrument(level = "debug", skip_all, fields(root = ws.root().to_string()))]
-pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
+pub fn resolve_workspace_with_opts(
+    ws: &Workspace<'_>,
+    opts: &ResolveOpts,
+) -> Result<WorkspaceResolve> {
     ws.config().tokio_handle().block_on(
         async {
             let mut patch_map = PatchMap::new();
@@ -93,7 +107,11 @@ pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
                 .map(|pkg| pkg.manifest.summary.clone())
                 .collect::<Vec<_>>();
 
-            let lockfile: Lockfile = read_lockfile(ws)?;
+            let lockfile: Lockfile = if opts.update {
+                Lockfile::new([])
+            } else {
+                read_lockfile(ws)?
+            };
 
             let resolve =
                 resolver::resolve(&members_summaries, &patched, lockfile, ws.config().ui()).await?;

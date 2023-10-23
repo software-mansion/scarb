@@ -23,6 +23,7 @@ pub mod package;
 pub mod remove;
 pub mod run;
 pub mod test;
+mod update;
 
 pub fn run(command: Command, config: &mut Config) -> Result<()> {
     use Command::*;
@@ -46,5 +47,6 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         Remove(args) => remove::run(args, config),
         Run(args) => run::run(args, config),
         Test(args) => test::run(args, config),
+        Update => update::run(config),
     }
 }

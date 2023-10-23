@@ -166,7 +166,8 @@ pub enum Command {
         Run `scarb test -- --help` for test program options.
     ")]
     Test(TestArgs),
-
+    /// Update dependencies.
+    Update,
     /// External command (`scarb-*` executable).
     #[command(external_subcommand)]
     External(Vec<OsString>),
