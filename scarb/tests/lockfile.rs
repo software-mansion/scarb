@@ -1,17 +1,29 @@
 use std::fs;
 use std::path::Path;
 
-use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
+use assert_fs::TempDir;
 use indoc::indoc;
 use snapbox::cmd::Command;
 
+use fs_extra::dir::{copy, CopyOptions};
 use scarb_test_support::cargo::cargo_bin;
 use test_for_each_example::test_for_each_example;
 
 #[test_for_each_example]
 fn create_lockfile_simple(example: &Path) {
-    let lockfile = ChildPath::new(example.join("Scarb.lock"));
+    let t = TempDir::new().unwrap();
+
+    // Copy example to temp dir.
+    let copy_opts = CopyOptions {
+        content_only: true,
+        ..Default::default()
+    };
+    copy(example, &t, &copy_opts).unwrap();
+
+    let lockfile = t.child("Scarb.lock");
+
+    // Remove the original lockfile if it existed.
     if lockfile.exists() {
         fs::remove_file(&lockfile)
             .unwrap_or_else(|_| panic!("failed to remove {}", lockfile.to_str().unwrap()));
@@ -21,7 +33,7 @@ fn create_lockfile_simple(example: &Path) {
 
     Command::new(cargo_bin("scarb"))
         .arg("fetch")
-        .current_dir(example)
+        .current_dir(&t)
         .assert()
         .success();
 
