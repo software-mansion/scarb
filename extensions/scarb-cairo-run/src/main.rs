@@ -4,10 +4,6 @@ use std::fs;
 use anyhow::{bail, ensure, Context, Result};
 use cairo_lang_runner::short_string::as_cairo_short_string;
 use cairo_lang_runner::{RunResultStarknet, RunResultValue, SierraCasmRunner, StarknetState};
-use cairo_lang_sierra::extensions::gas::{
-    BuiltinCostWithdrawGasLibfunc, RedepositGasLibfunc, WithdrawGasLibfunc,
-};
-use cairo_lang_sierra::extensions::NamedLibfunc;
 use cairo_lang_sierra::program::VersionedProgram;
 use camino::Utf8PathBuf;
 use clap::Parser;
@@ -70,20 +66,7 @@ fn main() -> Result<()> {
     .into_v1()
     .with_context(|| format!("failed to load Sierra program: {path}"))?;
 
-    if args.available_gas.is_none()
-        && sierra_program
-            .program
-            .libfunc_declarations
-            .iter()
-            .any(|decl| {
-                matches!(
-                    decl.long_id.generic_id.0.as_str(),
-                    WithdrawGasLibfunc::STR_ID
-                        | BuiltinCostWithdrawGasLibfunc::STR_ID
-                        | RedepositGasLibfunc::STR_ID
-                )
-            })
-    {
+    if args.available_gas.is_none() && sierra_program.program.requires_gas_counter() {
         bail!("program requires gas counter, please provide `--available-gas` argument");
     }
 
