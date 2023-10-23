@@ -15,7 +15,7 @@ members = [
 "resolver" = "2"
 
 [workspace.package]
-version = "2.3.0-rc1"
+version = "2.3.0"
 edition = "2021"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
