@@ -71,24 +71,20 @@ fn main() -> Result<()> {
     .with_context(|| format!("failed to load Sierra program: {path}"))?;
 
     if args.available_gas.is_none()
-        && sierra_program
-            .program
-            .libfunc_declarations
-            .iter()
-            .any(|decl| {
-                matches!(
-                    decl.long_id.generic_id.0.as_str(),
-                    WithdrawGasLibfunc::STR_ID
-                        | BuiltinCostWithdrawGasLibfunc::STR_ID
-                        | RedepositGasLibfunc::STR_ID
-                )
-            })
+        && sierra_program.libfunc_declarations.iter().any(|decl| {
+            matches!(
+                decl.long_id.generic_id.0.as_str(),
+                WithdrawGasLibfunc::STR_ID
+                    | BuiltinCostWithdrawGasLibfunc::STR_ID
+                    | RedepositGasLibfunc::STR_ID
+            )
+        })
     {
         bail!("program requires gas counter, please provide `--available-gas` argument");
     }
 
     let runner = SierraCasmRunner::new(
-        sierra_program.program,
+        sierra_program,
         if args.available_gas.is_some() {
             Some(Default::default())
         } else {

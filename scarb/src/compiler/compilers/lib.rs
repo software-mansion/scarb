@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::metadata::calc_metadata;
 use serde::{Deserialize, Serialize};
 use tracing::trace_span;
@@ -58,7 +59,6 @@ impl Compiler for LibCompiler {
         let sierra_program = {
             let _ = trace_span!("compile_sierra").enter();
             cairo_lang_compiler::compile_prepared_db(db, main_crate_ids, compiler_config)?
-                .into_artifact()
         };
 
         if props.sierra {
@@ -67,7 +67,7 @@ impl Compiler for LibCompiler {
                 "output file",
                 &target_dir,
                 ws,
-                &sierra_program,
+                &VersionedProgram::from((*sierra_program).clone()),
             )
             .with_context(|| {
                 format!("failed to serialize Sierra program {}", unit.target().name)
@@ -85,19 +85,21 @@ impl Compiler for LibCompiler {
         }
 
         if props.casm {
-            let program = sierra_program.into_v1().unwrap().program;
-
             let gas_usage_check = true;
 
             let metadata = {
                 let _ = trace_span!("casm_calc_metadata").enter();
-                calc_metadata(&program, Default::default(), false)
+                calc_metadata(&sierra_program, Default::default(), false)
                     .context("failed calculating Sierra variables")?
             };
 
             let cairo_program = {
                 let _ = trace_span!("compile_casm").enter();
-                cairo_lang_sierra_to_casm::compiler::compile(&program, &metadata, gas_usage_check)?
+                cairo_lang_sierra_to_casm::compiler::compile(
+                    &sierra_program,
+                    &metadata,
+                    gas_usage_check,
+                )?
             };
 
             write_string(
