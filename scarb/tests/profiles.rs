@@ -241,6 +241,33 @@ fn cannot_choose_not_existing_profile() {
 }
 
 #[test]
+fn can_use_short_profile_args_in_scripts() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(
+            r#"
+            [scripts]
+            build-dev = "scarb --dev build"
+            build-release = "scarb --release build"
+            "#,
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .args(["run", "build-dev"])
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    Scarb::quick_snapbox()
+        .args(["run", "build-release"])
+        .current_dir(&t)
+        .assert()
+        .success();
+}
+
+#[test]
 fn sierra_replace_ids_defaults_true_in_dev() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);

@@ -3,6 +3,7 @@
 //! CLI arguments datastructures.
 
 use std::collections::BTreeMap;
+use std::env;
 use std::ffi::OsString;
 
 use anyhow::Result;
@@ -346,7 +347,7 @@ pub struct GitRefGroup {
 #[group(multiple = false)]
 pub struct ProfileSpec {
     /// Specify profile to use by name.
-    #[arg(short = 'P', long, env = "SCARB_PROFILE")]
+    #[arg(short = 'P', long)]
     pub profile: Option<SmolStr>,
     /// Use release profile.
     #[arg(long, hide_short_help = true)]
@@ -365,7 +366,10 @@ impl ProfileSpec {
                 profile: Some(profile),
                 ..
             } => Profile::new(profile.clone())?,
-            _ => Profile::default(),
+            _ => match env::var_os("SCARB_PROFILE") {
+                Some(profile) => Profile::new(profile.to_string_lossy().into())?,
+                None => Profile::default(),
+            },
         })
     }
 }
