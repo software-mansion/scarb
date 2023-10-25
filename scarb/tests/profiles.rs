@@ -132,19 +132,19 @@ fn can_choose_release_by_name() {
 }
 
 #[test]
-fn cannot_choose_both_release_and_by_name() {
+fn cannot_choose_both_release_and_dev() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
     Scarb::quick_snapbox()
-        .args(["--release", "--profile", "dev","metadata", "--format-version", "1"])
+        .args(["--release", "--dev", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .assert()
         .failure()
         .stderr_matches(indoc! {r#"
-            error: the argument '--release' cannot be used with '--profile <PROFILE>'
+            error: the argument '--release' cannot be used with '--dev'
 
-            Usage: scarb[..] --release --global-cache-dir <DIRECTORY> --global-config-dir <DIRECTORY> <COMMAND>
+            Usage: scarb --release [..] <COMMAND>
 
             For more information, try '--help'.
         "#});
@@ -238,6 +238,74 @@ fn cannot_choose_not_existing_profile() {
         .assert()
         .failure()
         .stdout_matches("error: workspace `[..]` has no profile `custom`\n");
+}
+
+#[test]
+fn shortcuts_precede_profile_arg() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args([
+            "--json",
+            "--release",
+            "--profile",
+            "dev",
+            "metadata",
+            "--format-version",
+            "1",
+        ])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(metadata.current_profile, "release".to_string());
+}
+
+#[test]
+fn shortcuts_precede_profile_env() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .env("SCARB_PROFILE", "release")
+        .args(["--json", "--dev", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(metadata.current_profile, "dev".to_string());
+}
+
+#[test]
+fn can_use_shortcuts_in_scripts() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(
+            r#"
+            [scripts]
+            script-release = "scarb --json --release metadata --format-version 1"
+            script = "scarb --json metadata --format-version 1"
+
+            [profile.custom]
+            "#,
+        )
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .env("SCARB_PROFILE", "custom")
+        .args(["run", "script-release"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(metadata.current_profile, "release".to_string());
+
+    let metadata = Scarb::quick_snapbox()
+        .env("SCARB_PROFILE", "custom")
+        .args(["run", "script"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(metadata.current_profile, "custom".to_string());
 }
 
 #[test]
