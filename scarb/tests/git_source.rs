@@ -199,7 +199,6 @@ fn fetch_with_short_ssh_git() {
 }
 
 // TODO(#133): Add tests with submodules.
-// TODO(#132): Add tests with `scarb update`.
 
 #[test]
 fn stale_cached_version() {
@@ -236,6 +235,8 @@ fn stale_cached_version() {
     t.child("target/dev/hello.sierra.json")
         .assert(predicates::str::contains("11111111111101"));
 
+    dep.change_file("src/lib.cairo", "fn hello() -> felt252 { 11111111111102 }");
+
     Scarb::quick_snapbox()
         .arg("build")
         .env("SCARB_CACHE", cache_dir.path())
@@ -257,8 +258,6 @@ fn stale_cached_version() {
             .unwrap_or_else(|_| panic!("failed to remove {}", lockfile.to_str().unwrap()));
     }
 
-    dep.change_file("src/lib.cairo", "fn hello() -> felt252 { 11111111111102 }");
-
     Scarb::quick_snapbox()
         .arg("build")
         .env("SCARB_CACHE", cache_dir.path())
@@ -273,6 +272,65 @@ fn stale_cached_version() {
 
     t.child("target/dev/hello.sierra.json")
         .assert(predicates::str::contains("11111111111102"));
+}
+
+#[test]
+fn stale_cached_version_update() {
+    let dep = gitx::new("dep", |t| {
+        ProjectBuilder::start()
+            .name("dep")
+            .lib_cairo("fn hello() -> felt252 { 11111111111101 }")
+            .build(&t)
+    });
+
+    // Use the same cache dir to prevent downloading git dep second time for the locked rev.
+    let cache_dir = TempDir::new().unwrap();
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep", &dep)
+        .lib_cairo("fn world() -> felt252 { dep::hello() }")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .env("SCARB_CACHE", cache_dir.path())
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]  Updating git repository file://[..]/dep
+        "#});
+
+    dep.change_file("src/lib.cairo", "fn hello() -> felt252 { 11111111111102 }");
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .env("SCARB_CACHE", cache_dir.path())
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches("");
+
+    Scarb::quick_snapbox()
+        .arg("update")
+        .env("SCARB_CACHE", cache_dir.path())
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]  Updating git repository file://[..]/dep
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .env("SCARB_CACHE", cache_dir.path())
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches("");
 }
 
 #[test]
