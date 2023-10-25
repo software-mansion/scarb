@@ -10,8 +10,8 @@ use syn::{parse_macro_input, parse_quote, ItemFn};
 
 #[derive(Debug, FromMeta)]
 struct TestForEachArgs {
-    #[darling(default)]
     /// Comma-separated list of example project dir names to ignore.
+    #[darling(default)]
     ignore: Option<String>,
 }
 
