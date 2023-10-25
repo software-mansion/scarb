@@ -146,6 +146,10 @@ pub trait DepBuilder {
     fn path(&self, path: impl ToString) -> DepWith<'_, Self> {
         self.with("path", path.to_string())
     }
+
+    fn registry(&self, registry: impl ToString) -> DepWith<'_, Self> {
+        self.with("registry", registry.to_string())
+    }
 }
 
 pub struct Dep;

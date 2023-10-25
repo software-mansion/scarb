@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use itertools::Itertools;
 use tokio::sync::RwLock;
@@ -47,7 +47,9 @@ impl<'c> SourceMap<'c> {
             Ok(source)
         } else {
             trace!("loading source: {source_id}");
-            let source = source_id.load(self.config)?;
+            let source = source_id
+                .load(self.config)
+                .with_context(|| format!("failed to load source: {source_id}"))?;
             self.sources.write().await.insert(source_id, source.clone());
             Ok(source)
         }

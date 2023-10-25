@@ -16,7 +16,7 @@ use crate::internal::fsx;
 use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::lazy_directory_creator::LazyDirectoryCreator;
 
-const OK_FILE: &str = ".scarb-ok";
+pub const OK_FILE: &str = ".scarb-ok";
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum FileLockKind {
