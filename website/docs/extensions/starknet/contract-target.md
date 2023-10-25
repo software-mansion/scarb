@@ -61,7 +61,7 @@ The novelty of Cairo 1.0 is the introduction of Sierra, an intermediate layer be
 
 When executing a contract on Starknet, the Sequencer downloads a [Contract Class] which contains Sierra bytecode.
 It is a role of the Sequencer to compile it to CASM, which is a language that you can physically execute and generate proof of such execution.
-If for any reason, there is a need to compile Sierra contract to CASM locally, Scarb can do that by turning the off by default property `casm`.
+If for any reason, there is a need to compile Sierra contract to CASM locally, it can be done by turning on the `casm` property, which by default is set to false.
 If enabled, Scarb will emit the CASM Contract Class file in the target directory to a file named with following pattern: `[package name]_[contract name].compiled_contract_class.json`.
 
 Historically, Cairo used to use Python as the language powering the [Hints](https://www.cairo-lang.org/docs/how_cairo_works/hints.html).
