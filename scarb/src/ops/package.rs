@@ -63,6 +63,14 @@ pub fn package(
         .collect()
 }
 
+pub fn package_one(
+    package_id: PackageId,
+    opts: &PackageOpts,
+    ws: &Workspace<'_>,
+) -> Result<FileLockGuard> {
+    package(&[package_id], opts, ws).map(|mut v| v.pop().unwrap())
+}
+
 #[tracing::instrument(level = "debug", skip(opts, ws))]
 pub fn package_list(
     packages: &[PackageId],

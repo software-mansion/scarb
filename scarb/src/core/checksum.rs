@@ -1,5 +1,6 @@
 use std::fmt;
 use std::fmt::Write;
+use std::io::Read;
 use std::str;
 use std::str::FromStr;
 
@@ -118,6 +119,17 @@ impl Digest {
     pub fn update(&mut self, bytes: &[u8]) -> &mut Self {
         self.0.update(bytes);
         self
+    }
+
+    pub fn update_read(&mut self, mut input: impl Read) -> Result<&mut Self> {
+        let mut buf = [0; 64 * 1024];
+        loop {
+            let n = input.read(&mut buf)?;
+            if n == 0 {
+                break Ok(self);
+            }
+            self.update(&buf[..n]);
+        }
     }
 
     pub fn finish(&mut self) -> Checksum {

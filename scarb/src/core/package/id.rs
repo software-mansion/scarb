@@ -34,12 +34,16 @@ impl PackageId {
         Self(CACHE.intern(inner))
     }
 
-    pub fn for_test_target(&self, target_name: SmolStr) -> Self {
+    pub fn for_test_target(self, target_name: SmolStr) -> Self {
         Self::new(
             PackageName::new(target_name),
             self.version.clone(),
             self.source_id,
         )
+    }
+
+    pub fn with_source_id(self, source_id: SourceId) -> Self {
+        Self::new(self.name.clone(), self.version.clone(), source_id)
     }
 
     pub fn is_core(&self) -> bool {
