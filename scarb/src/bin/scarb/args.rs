@@ -342,16 +342,16 @@ pub struct GitRefGroup {
 
 /// Profile specifier.
 #[derive(Parser, Clone, Debug)]
-#[group(multiple = false)]
+#[group(multiple = true)]
 pub struct ProfileSpec {
     /// Specify profile to use by name.
     #[arg(short = 'P', long, env = "SCARB_PROFILE")]
     pub profile: Option<SmolStr>,
     /// Use release profile.
-    #[arg(long, hide_short_help = true)]
+    #[arg(long, hide_short_help = true, group = "ProfileShortcuts")]
     pub release: bool,
     /// Use dev profile.
-    #[arg(long, hide_short_help = true)]
+    #[arg(long, hide_short_help = true, group = "ProfileShortcuts")]
     pub dev: bool,
 }
 
