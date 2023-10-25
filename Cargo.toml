@@ -46,6 +46,7 @@ cargo_metadata = "0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2"
 console = "0.15"
+darling = "0.20.3"
 data-encoding = "2"
 deno_task_shell = "0.13"
 derive_builder = "0.12"
