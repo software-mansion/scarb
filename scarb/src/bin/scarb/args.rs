@@ -326,6 +326,10 @@ pub struct PackageArgs {
     #[arg(short, long)]
     pub list: bool,
 
+    /// Allow working directories with uncommitted VCS changes to be packaged.
+    #[arg(long)]
+    pub allow_dirty: bool,
+
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 }
@@ -336,6 +340,10 @@ pub struct PublishArgs {
     /// Registry index URL to upload the package to.
     #[arg(long, value_name = "URL")]
     pub index: Url,
+
+    /// Allow working directories with uncommitted VCS changes to be packaged.
+    #[arg(long)]
+    pub allow_dirty: bool,
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,

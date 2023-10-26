@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
+use std::process::Command;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
@@ -8,21 +9,28 @@ use indoc::writedoc;
 
 use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
+use serde::Serialize;
 
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
 use crate::core::{Package, PackageId, PackageName, Workspace};
 use crate::flock::FileLockGuard;
 use crate::internal::restricted_names;
-use crate::{ops, MANIFEST_FILE_NAME};
+use crate::{ops, MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME};
 
 const VERSION: u8 = 1;
 const VERSION_FILE_NAME: &str = "VERSION";
 const ORIGINAL_MANIFEST_FILE_NAME: &str = "Scarb.orig.toml";
 
-const RESERVED_FILES: &[&str] = &[VERSION_FILE_NAME, ORIGINAL_MANIFEST_FILE_NAME];
+const RESERVED_FILES: &[&str] = &[
+    VERSION_FILE_NAME,
+    ORIGINAL_MANIFEST_FILE_NAME,
+    VCS_INFO_FILE_NAME,
+];
 
-pub struct PackageOpts;
+pub struct PackageOpts {
+    pub allow_dirty: bool,
+}
 
 /// A listing of files to include in the archive, without actually building it yet.
 ///
@@ -88,10 +96,47 @@ fn before_package(ws: &Workspace<'_>) -> Result<()> {
     Ok(())
 }
 
-#[tracing::instrument(level = "trace", skip(_opts, ws))]
+#[derive(Serialize)]
+struct VcsInfo {
+    sha1: String,
+    path_in_vcs: String,
+}
+
+#[allow(clippy::dbg_macro)]
+fn extract_vcs_info(pkg: &Package, opts: &PackageOpts) -> Result<Option<VcsInfo>> {
+    if let Ok(repo) = gix::discover(pkg.root()) {
+        // There is nothing to parse if repository is empty, so HEAD reference needs to exist.
+        if let Ok(sha1) = repo.rev_parse_single("HEAD") {
+            // `git status -s` output is empty only if there are no changes at all, but always returns success.
+            // `git diff-index --quiet HEAD` returns status code correctly, but doesn't take untracked files into account.
+            let output = Command::new("git")
+                .current_dir(pkg.root())
+                .arg("status")
+                .arg("-s")
+                .output()?;
+
+            if !opts.allow_dirty && !output.stdout.is_empty() {
+                bail!("cannot package a repository containing uncommited changes. Use `--allow-dirty` to ignore this check.")
+            }
+
+            return Ok(Some(VcsInfo {
+                sha1: sha1.to_string(),
+                // Relative path from the repository root to the package root is calculated.
+                path_in_vcs: pkg
+                    .root()
+                    .strip_prefix(repo.work_dir().unwrap())?
+                    .to_string(),
+            }));
+        }
+    }
+
+    Ok(None)
+}
+
+#[tracing::instrument(level = "trace", skip(opts, ws))]
 fn package_one_impl(
     pkg_id: PackageId,
-    _opts: &PackageOpts,
+    opts: &PackageOpts,
     ws: &Workspace<'_>,
 ) -> Result<FileLockGuard> {
     let pkg = ws.fetch_package(&pkg_id)?;
@@ -102,9 +147,9 @@ fn package_one_impl(
 
     // TODO(mkaput): Check metadata
 
-    // TODO(#643): Check dirty in VCS (but do not do it when listing!).
+    let vcs_info = extract_vcs_info(pkg, opts)?;
 
-    let recipe = prepare_archive_recipe(pkg)?;
+    let recipe = prepare_archive_recipe(pkg, vcs_info)?;
     let num_files = recipe.len();
 
     // Package up and test a temporary tarball and only move it to the final location if it actually
@@ -147,15 +192,16 @@ fn package_one_impl(
 
 fn list_one_impl(
     pkg_id: PackageId,
-    _opts: &PackageOpts,
+    opts: &PackageOpts,
     ws: &Workspace<'_>,
 ) -> Result<Vec<Utf8PathBuf>> {
     let pkg = ws.fetch_package(&pkg_id)?;
-    let recipe = prepare_archive_recipe(pkg)?;
+    let vcs_info = extract_vcs_info(pkg, opts)?;
+    let recipe = prepare_archive_recipe(pkg, vcs_info)?;
     Ok(recipe.into_iter().map(|f| f.path).collect())
 }
 
-fn prepare_archive_recipe(pkg: &Package) -> Result<ArchiveRecipe> {
+fn prepare_archive_recipe(pkg: &Package, vcs_info: Option<VcsInfo>) -> Result<ArchiveRecipe> {
     let mut recipe = source_files(pkg)?;
 
     // Sort the recipe before any checks, to ensure generated errors are reproducible.
@@ -184,6 +230,16 @@ fn prepare_archive_recipe(pkg: &Package) -> Result<ArchiveRecipe> {
         path: VERSION_FILE_NAME.into(),
         contents: ArchiveFileContents::Generated(Box::new(|| Ok(VERSION.to_string().into_bytes()))),
     });
+
+    // Add VCS info file.
+    if let Some(vcs_info) = vcs_info {
+        let contents = serde_json::to_string(&vcs_info)?.into_bytes();
+
+        recipe.push(ArchiveFile {
+            path: VCS_INFO_FILE_NAME.into(),
+            contents: ArchiveFileContents::Generated(Box::new(|| Ok(contents))),
+        })
+    }
 
     // Put generated files in right order within the recipe.
     sort_recipe(&mut recipe);
