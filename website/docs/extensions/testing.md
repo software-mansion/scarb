@@ -19,7 +19,7 @@ The behaviour of the `scarb test` command can be changed by developers.
 To do so, provide a script named explicitly `test` in the current workspace `Scarb.toml`.
 If such script is found, Scarb will execute it instead of running the default test runner.
 
-For example, in order to tell `scarb test` to use [Starknet Forge](https://foundry-rs.github.io/starknet-foundry) for testing in
+For example, in order to tell `scarb test` to use [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry) for testing in
 your project, type the following:
 
 ```toml filename="Scarb.toml"
@@ -27,7 +27,7 @@ your project, type the following:
 test = "snforge test"
 ```
 
-Do not forget to properly set up Starknet Forge in your project beforehand.
+Do not forget to properly set up Starknet Foundry in your project beforehand.
 
 ## Using multiple test runners
 
@@ -48,7 +48,7 @@ test = "scarb cairo-test && pytest"
 It is also possible to run multiple Cairo test runners, if there is a sensible use case for this.
 Mind, that you will probably want to conditionally disable tests depending on the running test runner, so that tests
 will not be executed multiple times.
-For example, to make `scarb test` run `scarb cairo-test` and then Starknet Forge in a sequence, type the following:
+For example, to make `scarb test` run `scarb cairo-test` and then Starknet Foundry in a sequence, type the following:
 
 ```toml
 [scripts]
