@@ -19,12 +19,12 @@ The behaviour of the `scarb test` command can be changed by developers.
 To do so, provide a script named explicitly `test` in the current workspace `Scarb.toml`.
 If such script is found, Scarb will execute it instead of running the default test runner.
 
-For example, in order to tell `scarb test` to use [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry) for testing in
-your project, type the following:
+Scarb can be configured to use any tool in place of the default `cairo-test`, simply by changing
+this configuration:
 
 ```toml filename="Scarb.toml"
 [scripts]
-test = "snforge test"
+test = "my-custom-command"
 ```
 
 Do not forget to properly set up Starknet Foundry in your project beforehand.
