@@ -27,6 +27,18 @@ this configuration:
 test = "my-custom-command"
 ```
 
+## Using Starknet Foundry
+
+[Starknet Foundry](https://foundry-rs.github.io/starknet-foundry) is another project developed by Software Mansion team.
+It enables advanced testing of Starknet contracts, including fuzz testing, forking the network state and many more.
+
+In order to tell `scarb test` to use Starknet Foundry testing in your project, type the following:
+
+```toml filename="Scarb.toml"
+[scripts]
+test = "snforge test"
+```
+
 Do not forget to properly set up Starknet Foundry in your project beforehand.
 
 ## Using multiple test runners
