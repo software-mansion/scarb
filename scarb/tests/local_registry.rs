@@ -6,7 +6,122 @@ use url::Url;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use scarb_test_support::registry::local::LocalRegistry;
+
+#[test]
+fn usage() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("bar")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("0.1.0")
+        .dep("bar", Dep.version("1").registry(&registry))
+        .lib_cairo(r#"fn f() -> felt252 { bar::f() }"#)
+        .build(&t);
+
+    // FIXME(mkaput): Why are verbose statuses not appearing here?
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Unpacking bar v1.0.0 ([..])
+        "#});
+}
+
+#[test]
+fn not_found() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        // Publish a package so that the directory hierarchy is created.
+        // Note, however, that we declare a dependency on baZ.
+        ProjectBuilder::start()
+            .name("bar")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("0.1.0")
+        .dep("baz", Dep.version("1").registry(&registry))
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        error: package not found in registry: baz ^1 (registry+file://[..])
+        "#});
+}
+
+// TODO(mkaput): Test interdependencies.
+// TODO(mkaput): Test path dependencies overrides.
+
+#[test]
+fn empty_registry() {
+    let registry = LocalRegistry::create();
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("0.1.0")
+        .dep("baz", Dep.version("1").registry(&registry))
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        error: package not found in registry: baz ^1 (registry+file://[..])
+        "#});
+}
+
+#[test]
+fn url_pointing_to_file() {
+    let registry_t = TempDir::new().unwrap();
+    let registry = registry_t.child("r");
+    registry.write_str("").unwrap();
+    let registry = Url::from_directory_path(&registry).unwrap().to_string();
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("0.1.0")
+        .dep("baz", Dep.version("1").registry(&registry))
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        error: failed to load source: registry+file://[..]
+
+        Caused by:
+            local registry path is not a directory: [..]
+        "#});
+
+    // Prevent the temp directory from being deleted until this point.
+    drop(registry_t);
+}
 
 #[test]
 fn publish() {
@@ -149,4 +264,6 @@ fn publish_overwrites_existing() {
     );
 }
 
+// TODO(mkaput): Test errors properly when package is in index, but tarball is missing.
 // TODO(mkaput): Test publishing with target-specific dependencies.
+// TODO(mkaput): Test offline mode.
