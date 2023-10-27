@@ -2,6 +2,9 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, MacroPlugin};
+use cairo_lang_starknet::inline_macros::get_dep_component::{
+    GetDepComponentMacro, GetDepComponentMutMacro,
+};
 use cairo_lang_starknet::inline_macros::selector::SelectorMacro;
 use cairo_lang_starknet::plugin::StarkNetPlugin;
 use cairo_lang_test_plugin::TestPlugin;
@@ -42,7 +45,17 @@ impl CairoPluginInstance for BuiltinStarkNetPluginInstance {
     }
 
     fn inline_macro_plugins(&self) -> Vec<(String, Arc<dyn InlineMacroExprPlugin>)> {
-        vec![(SelectorMacro::NAME.into(), Arc::new(SelectorMacro))]
+        vec![
+            (SelectorMacro::NAME.into(), Arc::new(SelectorMacro)),
+            (
+                GetDepComponentMacro::NAME.into(),
+                Arc::new(GetDepComponentMacro),
+            ),
+            (
+                GetDepComponentMutMacro::NAME.into(),
+                Arc::new(GetDepComponentMutMacro),
+            ),
+        ]
     }
 }
 
