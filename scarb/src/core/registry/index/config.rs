@@ -43,6 +43,10 @@ pub struct IndexConfig {
     pub index: TemplateUrl,
 }
 
+impl IndexConfig {
+    pub const WELL_KNOWN_PATH: &'_ str = "config.json";
+}
+
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(into = "u8", try_from = "u8")]
 pub struct IndexVersion;
