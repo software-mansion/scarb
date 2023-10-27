@@ -79,7 +79,6 @@ version = "0.1.0"
 [dependencies]
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 alexandria_data_structures = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
-
 ```
 
 The resulting lockfile will look like this:
@@ -109,3 +108,10 @@ dependencies = [
  "alexandria_math",
 ]
 ```
+
+## Updating locked versions
+
+To update all versions locked by the lockfile, run `scarb update` command.
+This will perform project resolution ignoring the existing lockfile, then write out a new `Scarb.lock`
+with the new version information.
+Note that the `Scarb.toml` manifest file will not be changed, and all version requirements from it will be preserved.
