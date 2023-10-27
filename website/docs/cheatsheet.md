@@ -123,3 +123,9 @@ Check formatting in CI:
 ```shell
 scarb fmt -c
 ```
+
+## Updating locked dependencies
+
+```shell
+scarb update
+```
