@@ -5,7 +5,7 @@ use std::process::Command;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
-use indoc::writedoc;
+use indoc::{indoc, writedoc};
 
 use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
@@ -115,9 +115,15 @@ fn extract_vcs_info(pkg: &Package, opts: &PackageOpts) -> Result<Option<VcsInfo>
                 .arg("-s")
                 .output()?;
 
-            if !opts.allow_dirty && !output.stdout.is_empty() {
-                bail!("cannot package a repository containing uncommited changes. Use `--allow-dirty` to ignore this check.")
-            }
+            ensure!(
+                opts.allow_dirty || output.stdout.is_empty(),
+                indoc!(
+                    r#"
+                        cannot package a repository containing uncommited changes
+                        help: `--allow-dirty` to ignore this check
+                    "#
+                )
+            );
 
             return Ok(Some(VcsInfo {
                 sha1: sha1.to_string(),

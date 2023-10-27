@@ -512,8 +512,9 @@ fn dirty_repo() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        [..] Packaging foo v1.0.0 [..]
-        error: cannot package a repository containing uncommited changes. Use `--allow-dirty` to ignore this check.
+            [..] Packaging foo v1.0.0 [..]
+            error: cannot package a repository containing uncommited changes
+            help: `--allow-dirty` to ignore this check
         "#});
 }
 
