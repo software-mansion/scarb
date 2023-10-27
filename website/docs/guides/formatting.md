@@ -24,17 +24,17 @@ sort-module-level-items = true
 
 ### Available configuration option
 
-- `sort_module_level_items`
+- `sort-module-level-items`
 
   Reorder import statements alphabetically in groups (a group is separated by a newline).\
   **Default:** `false`
 
-- `max_line_length`
+- `max-line-length`
 
   Maximum width of each line.\
   **Default:** `100`
 
-- `tab_size`
+- `tab-size`
 
   Number of spaces per tab.\
   **Default:** `4`
