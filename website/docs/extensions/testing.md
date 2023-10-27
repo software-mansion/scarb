@@ -24,7 +24,7 @@ your project, type the following:
 
 ```toml filename="Scarb.toml"
 [scripts]
-test = "snforge"
+test = "snforge test"
 ```
 
 Do not forget to properly set up Starknet Forge in your project beforehand.
@@ -52,5 +52,5 @@ For example, to make `scarb test` run `scarb cairo-test` and then Starknet Forge
 
 ```toml
 [scripts]
-test = "scarb cairo-test && snforge"
+test = "scarb cairo-test && snforge test"
 ```
