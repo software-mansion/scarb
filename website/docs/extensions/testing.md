@@ -32,7 +32,8 @@ test = "command-to-run-tests"
 [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry) is another project developed by Software Mansion team.
 It enables advanced testing of Starknet contracts, including fuzz testing, forking the network state and many more.
 
-In order to tell `scarb test` to use Starknet Foundry testing in your project, type the following:
+In order to tell `scarb test` to use Starknet Foundry as the test runner testing in your project, define the following
+script:
 
 ```toml filename="Scarb.toml"
 [scripts]
