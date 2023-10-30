@@ -12,7 +12,6 @@ mod tests {
     use starknet_hello_world::{Balance, IBalance, IBalanceDispatcher, IBalanceDispatcherTrait};
 
     #[test]
-    #[available_gas(30000000)]
     fn test_flow() {
         let calldata = array![100];
         let (address0, _) = deploy_syscall(
