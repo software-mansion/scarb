@@ -110,7 +110,7 @@ impl GitRemote {
     #[tracing::instrument(level = "trace", skip(config))]
     pub fn checkout(
         &self,
-        fs: &Filesystem<'_>,
+        fs: &Filesystem,
         db: Option<GitDatabase>,
         reference: &GitReference,
         locked_rev: Option<Rev>,
@@ -155,7 +155,7 @@ impl GitRemote {
 
 impl GitDatabase {
     #[tracing::instrument(level = "trace")]
-    pub fn open(remote: &GitRemote, fs: &Filesystem<'_>) -> Result<Self> {
+    pub fn open(remote: &GitRemote, fs: &Filesystem) -> Result<Self> {
         let path = fs.path_existent()?;
         let opts = gix::open::Options::default().open_path_as_is(true);
         let repo = gix::open_opts(path, opts)?;
@@ -167,7 +167,7 @@ impl GitDatabase {
     }
 
     #[tracing::instrument(level = "trace")]
-    pub fn init_bare(remote: &GitRemote, fs: &Filesystem<'_>) -> Result<Self> {
+    pub fn init_bare(remote: &GitRemote, fs: &Filesystem) -> Result<Self> {
         let path = fs.path_existent()?;
         let repo = gix::init_bare(path)?;
         Ok(Self {
@@ -201,12 +201,7 @@ impl GitDatabase {
         exec(&mut cmd, config)
     }
 
-    pub fn copy_to(
-        &self,
-        fs: &Filesystem<'_>,
-        rev: Rev,
-        config: &Config,
-    ) -> Result<GitCheckout<'_>> {
+    pub fn copy_to(&self, fs: &Filesystem, rev: Rev, config: &Config) -> Result<GitCheckout<'_>> {
         let checkout = GitCheckout::clone(self, fs, rev, config)?;
         checkout.reset(config)?;
         Ok(checkout)
@@ -264,7 +259,7 @@ impl GitDatabase {
 
 impl<'d> GitCheckout<'d> {
     #[tracing::instrument(level = "trace", skip(config))]
-    fn clone(db: &'d GitDatabase, fs: &Filesystem<'_>, rev: Rev, config: &Config) -> Result<Self> {
+    fn clone(db: &'d GitDatabase, fs: &Filesystem, rev: Rev, config: &Config) -> Result<Self> {
         unsafe {
             fs.recreate()?;
         }

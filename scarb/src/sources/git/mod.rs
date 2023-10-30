@@ -99,9 +99,7 @@ impl<'c> GitSource<'c> {
 
             let git_fs = config.dirs().registry_dir().into_child("git");
 
-            let db_fs = git_fs
-                .child("db")
-                .into_child(&format!("{remote_ident}.git"));
+            let db_fs = git_fs.child("db").into_child(format!("{remote_ident}.git"));
 
             let db = GitDatabase::open(&remote, &db_fs).ok();
             let (db, actual_rev) = match (db, locked_rev) {

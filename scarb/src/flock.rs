@@ -144,7 +144,7 @@ pub struct AdvisoryLock<'f> {
         // (only guards do).
         Weak<FileLockGuard>,
     >,
-    filesystem: &'f Filesystem<'f>,
+    filesystem: &'f Filesystem,
     config: &'f Config,
 }
 
@@ -176,9 +176,6 @@ impl<'f> AdvisoryLock<'f> {
     }
 }
 
-/// A [`Filesystem`] that does not have a parent.
-pub type RootFilesystem = Filesystem<'static>;
-
 /// A [`Filesystem`] is intended to be a globally shared, hence locked, resource in Scarb.
 ///
 /// The [`Utf8Path`] of a file system cannot be learned unless it's done in a locked fashion,
@@ -186,15 +183,16 @@ pub type RootFilesystem = Filesystem<'static>;
 /// multiple instances of Scarb and its extensions.
 ///
 /// All paths within a [`Filesystem`] must be UTF-8 encoded.
-pub struct Filesystem<'a> {
-    root: LazyDirectoryCreator<'a>,
+#[derive(Clone)]
+pub struct Filesystem {
+    root: Arc<LazyDirectoryCreator>,
 }
 
-impl<'a> Filesystem<'a> {
+impl Filesystem {
     /// Creates a new [`Filesystem`] to be rooted at the given path.
     pub fn new(root: Utf8PathBuf) -> Self {
         Self {
-            root: LazyDirectoryCreator::new(root),
+            root: LazyDirectoryCreator::new(root, false),
         }
     }
 
@@ -204,12 +202,12 @@ impl<'a> Filesystem<'a> {
     /// directory.
     pub fn new_output_dir(root: Utf8PathBuf) -> Self {
         Self {
-            root: LazyDirectoryCreator::new_output_dir(root),
+            root: LazyDirectoryCreator::new(root, true),
         }
     }
 
     /// Like [`Utf8Path::join`], creates a new [`Filesystem`] rooted at a subdirectory of this one.
-    pub fn child(&self, path: impl AsRef<Utf8Path>) -> Filesystem<'_> {
+    pub fn child(&self, path: impl AsRef<Utf8Path>) -> Filesystem {
         Filesystem {
             root: self.root.child(path),
         }
@@ -218,7 +216,7 @@ impl<'a> Filesystem<'a> {
     /// Like [`Utf8Path::join`], creates a new [`Filesystem`] rooted at a subdirectory of this one.
     ///
     /// Unlike [`Filesystem::child`], this method consumes the current [`Filesystem`].
-    pub fn into_child(self, path: impl AsRef<Utf8Path>) -> Filesystem<'a> {
+    pub fn into_child(self, path: impl AsRef<Utf8Path>) -> Filesystem {
         Filesystem {
             root: self.root.into_child(path),
         }
@@ -332,7 +330,7 @@ impl<'a> Filesystem<'a> {
     }
 
     /// Construct an [`AdvisoryLock`] within this file system.
-    pub fn advisory_lock(
+    pub fn advisory_lock<'a>(
         &'a self,
         path: impl AsRef<Utf8Path>,
         description: impl ToString,
@@ -380,15 +378,17 @@ impl<'a> Filesystem<'a> {
     }
 }
 
-impl<'a> fmt::Display for Filesystem<'a> {
+impl fmt::Display for Filesystem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.root)
     }
 }
 
-impl<'a> fmt::Debug for Filesystem<'a> {
+impl fmt::Debug for Filesystem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_tuple("Filesystem").field(&self.root).finish()
+        f.debug_tuple("Filesystem")
+            .field(self.root.deref())
+            .finish()
     }
 }
 
@@ -405,7 +405,7 @@ impl<'a> fmt::Debug for Filesystem<'a> {
 /// in examples tests, when the second condition was missing.
 macro_rules! protected_run_if_not_ok {
     ($fs:expr, $lock:expr, $body:block) => {{
-        let fs: &$crate::flock::Filesystem<'_> = $fs;
+        let fs: &$crate::flock::Filesystem = $fs;
         let lock: &$crate::flock::AdvisoryLock<'_> = $lock;
         if !fs.is_ok() {
             let _lock = lock.acquire_async().await?;

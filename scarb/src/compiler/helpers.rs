@@ -46,7 +46,7 @@ pub fn collect_all_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<C
 pub fn write_json(
     file_name: &str,
     description: &str,
-    target_dir: &Filesystem<'_>,
+    target_dir: &Filesystem,
     ws: &Workspace<'_>,
     value: impl Serialize,
 ) -> Result<()> {
@@ -60,7 +60,7 @@ pub fn write_json(
 pub fn write_string(
     file_name: &str,
     description: &str,
-    target_dir: &Filesystem<'_>,
+    target_dir: &Filesystem,
     ws: &Workspace<'_>,
     value: impl ToString,
 ) -> Result<()> {

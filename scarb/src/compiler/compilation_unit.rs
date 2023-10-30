@@ -77,7 +77,7 @@ impl CompilationUnit {
         &self.main_component().target
     }
 
-    pub fn target_dir<'c>(&self, ws: &'c Workspace<'_>) -> Filesystem<'c> {
+    pub fn target_dir(&self, ws: &Workspace<'_>) -> Filesystem {
         ws.target_dir().child(self.profile.as_str())
     }
 

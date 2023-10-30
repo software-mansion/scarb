@@ -7,13 +7,13 @@ use anyhow::{anyhow, Result};
 use camino::Utf8PathBuf;
 use directories::ProjectDirs;
 
-use crate::flock::{Filesystem, RootFilesystem};
+use crate::flock::Filesystem;
 use crate::internal::fsx::PathUtf8Ext;
 
 #[derive(Debug)]
 pub struct AppDirs {
-    pub cache_dir: RootFilesystem,
-    pub config_dir: RootFilesystem,
+    pub cache_dir: Filesystem,
+    pub config_dir: Filesystem,
     pub path_dirs: Vec<PathBuf>,
 }
 
@@ -57,8 +57,8 @@ impl AppDirs {
         };
 
         Ok(Self {
-            cache_dir: RootFilesystem::new_output_dir(cache_dir),
-            config_dir: RootFilesystem::new(config_dir),
+            cache_dir: Filesystem::new_output_dir(cache_dir),
+            config_dir: Filesystem::new(config_dir),
             path_dirs,
         })
     }
@@ -67,7 +67,7 @@ impl AppDirs {
         env::join_paths(self.path_dirs.iter()).unwrap()
     }
 
-    pub fn registry_dir(&self) -> Filesystem<'_> {
+    pub fn registry_dir(&self) -> Filesystem {
         self.cache_dir.child("registry")
     }
 }

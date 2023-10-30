@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::sync::Arc;
 use std::{fmt, path};
 
 use anyhow::Result;
@@ -8,46 +8,39 @@ use tracing::trace;
 
 use crate::internal::fsx;
 
-pub struct LazyDirectoryCreator<'p> {
+pub struct LazyDirectoryCreator {
     path: Utf8PathBuf,
     creation_lock: OnceCell<()>,
-    parent: Option<Calf<'p, LazyDirectoryCreator<'p>>>,
+    parent: Option<Arc<LazyDirectoryCreator>>,
     is_output_dir: bool,
 }
 
-impl<'p> LazyDirectoryCreator<'p> {
-    pub fn new(path: impl Into<Utf8PathBuf>) -> Self {
-        Self {
+impl LazyDirectoryCreator {
+    pub fn new(path: impl Into<Utf8PathBuf>, is_output_dir: bool) -> Arc<Self> {
+        Arc::new(Self {
             path: path.into(),
             creation_lock: OnceCell::new(),
             parent: None,
-            is_output_dir: false,
-        }
+            is_output_dir,
+        })
     }
 
-    pub fn new_output_dir(path: impl Into<Utf8PathBuf>) -> Self {
-        Self {
-            is_output_dir: true,
-            ..Self::new(path)
-        }
-    }
-
-    pub fn child(&'p self, path: impl AsRef<Utf8Path>) -> Self {
-        Self {
+    pub fn child(self: &Arc<Self>, path: impl AsRef<Utf8Path>) -> Arc<Self> {
+        Arc::new(Self {
             path: self.path.join(path),
             creation_lock: OnceCell::new(),
-            parent: Some(Calf::Borrowed(self)),
+            parent: Some(self.clone()),
             is_output_dir: false,
-        }
+        })
     }
 
-    pub fn into_child(self, path: impl AsRef<Utf8Path>) -> Self {
-        Self {
+    pub fn into_child(self: Arc<Self>, path: impl AsRef<Utf8Path>) -> Arc<Self> {
+        Arc::new(Self {
             path: self.path.join(path),
             creation_lock: OnceCell::new(),
-            parent: Some(Calf::Owned(Box::new(self))),
+            parent: Some(self),
             is_output_dir: false,
-        }
+        })
     }
 
     pub fn as_unchecked(&self) -> &Utf8Path {
@@ -86,13 +79,13 @@ impl<'p> LazyDirectoryCreator<'p> {
     }
 }
 
-impl<'p> fmt::Display for LazyDirectoryCreator<'p> {
+impl fmt::Display for LazyDirectoryCreator {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_unchecked())
     }
 }
 
-impl<'p> fmt::Debug for LazyDirectoryCreator<'p> {
+impl fmt::Debug for LazyDirectoryCreator {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let base = self
             .parent
@@ -117,21 +110,5 @@ impl<'p> fmt::Debug for LazyDirectoryCreator<'p> {
         }
 
         Ok(())
-    }
-}
-
-enum Calf<'a, T> {
-    Borrowed(&'a T),
-    Owned(Box<T>),
-}
-
-impl<'a, T: 'a> Deref for Calf<'a, T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        match self {
-            Calf::Borrowed(t) => t,
-            Calf::Owned(t) => t,
-        }
     }
 }
