@@ -34,8 +34,7 @@ by [Software Mansion](https://swmansion.com/) team.
 It enables advanced testing of [Starknet](https://www.starknet.io/) contracts, including fuzz testing, forking the
 network state, setting-up a specific contract state in your tests, and many more.
 
-In order to tell `scarb test` to use Starknet Foundry as the test runner testing in your project, define the following
-script:
+In order to tell `scarb test` to use Starknet Foundry as the test runner testing in your project, define the following:
 
 ```toml filename="Scarb.toml"
 [scripts]
