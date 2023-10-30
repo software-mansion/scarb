@@ -6,6 +6,7 @@ use std::{fmt, io};
 
 use anyhow::{ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
+use fs4::tokio::AsyncFileExt;
 use fs4::{lock_contended_error, FileExt};
 use tokio::sync::Mutex;
 
@@ -51,6 +52,14 @@ impl FileLockGuard {
         self.path = to;
         Ok(self)
     }
+
+    pub fn into_async(mut self) -> AsyncFileLockGuard {
+        AsyncFileLockGuard {
+            file: self.file.take().map(tokio::fs::File::from_std),
+            path: std::mem::take(&mut self.path),
+            lock_kind: self.lock_kind,
+        }
+    }
 }
 
 impl Deref for FileLockGuard {
@@ -68,6 +77,56 @@ impl DerefMut for FileLockGuard {
 }
 
 impl Drop for FileLockGuard {
+    fn drop(&mut self) {
+        if let Some(file) = self.file.take() {
+            let _ = file.unlock();
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct AsyncFileLockGuard {
+    file: Option<tokio::fs::File>,
+    path: Utf8PathBuf,
+    lock_kind: FileLockKind,
+}
+
+impl AsyncFileLockGuard {
+    pub fn path(&self) -> &Utf8Path {
+        self.path.as_path()
+    }
+
+    pub fn lock_kind(&self) -> FileLockKind {
+        self.lock_kind
+    }
+
+    pub async fn into_sync(mut self) -> FileLockGuard {
+        FileLockGuard {
+            file: match self.file.take() {
+                None => None,
+                Some(file) => Some(file.into_std().await),
+            },
+            path: std::mem::take(&mut self.path),
+            lock_kind: self.lock_kind,
+        }
+    }
+}
+
+impl Deref for AsyncFileLockGuard {
+    type Target = tokio::fs::File;
+
+    fn deref(&self) -> &Self::Target {
+        self.file.as_ref().unwrap()
+    }
+}
+
+impl DerefMut for AsyncFileLockGuard {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.file.as_mut().unwrap()
+    }
+}
+
+impl Drop for AsyncFileLockGuard {
     fn drop(&mut self) {
         if let Some(file) = self.file.take() {
             let _ = file.unlock();
