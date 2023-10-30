@@ -39,7 +39,9 @@ In order to tell `scarb test` to use Starknet Foundry testing in your project, t
 test = "snforge test"
 ```
 
-Do not forget to properly set up Starknet Foundry in your project beforehand.
+Do not forget to
+properly [set up Starknet Foundry in your project](https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects)
+beforehand.
 
 ## Using multiple test runners
 
