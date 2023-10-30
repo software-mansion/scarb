@@ -65,15 +65,6 @@ pub fn write(path: impl AsRef<Path>, contents: impl AsRef<[u8]>) -> Result<()> {
     }
 }
 
-/// Equivalent to [`File::open`] with better error messages.
-pub fn open(path: impl AsRef<Path>) -> Result<File> {
-    return inner(path.as_ref());
-
-    fn inner(path: &Path) -> Result<File> {
-        File::open(path).with_context(|| format!("failed to open `{}`", path.display()))
-    }
-}
-
 /// Equivalent to [`File::create`] with better error messages.
 pub fn create(path: impl AsRef<Path>) -> Result<File> {
     return inner(path.as_ref());

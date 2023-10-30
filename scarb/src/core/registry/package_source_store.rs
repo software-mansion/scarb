@@ -1,12 +1,13 @@
+use std::io::{Seek, SeekFrom};
+use std::ops::DerefMut;
+
 use anyhow::{ensure, Context, Result};
 use camino::Utf8PathBuf;
-use std::path::PathBuf;
 use tokio::task::spawn_blocking;
 use tracing::{debug, trace};
 
 use crate::core::{Config, PackageId, SourceId};
-use crate::flock::{protected_run_if_not_ok, Filesystem, OK_FILE};
-use crate::internal::fsx;
+use crate::flock::{protected_run_if_not_ok, FileLockGuard, Filesystem, OK_FILE};
 use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::restricted_names::is_windows_restricted_path;
 
@@ -28,16 +29,22 @@ impl<'a> PackageSourceStore<'a> {
     /// Extract a downloaded package archive into a location where it is ready to be compiled.
     ///
     /// No action is taken if the source looks like it's already unpacked.
+    ///
+    /// This function takes the archive by ownership for implementation simplicity.
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn extract(&self, pkg: PackageId, archive: PathBuf) -> Result<Utf8PathBuf> {
+    pub async fn extract(&self, pkg: PackageId, archive: FileLockGuard) -> Result<Utf8PathBuf> {
         trace!("attempting to extract `{pkg}`");
-        trace!(archive = ?archive.display());
+        trace!(archive = ?archive.path());
         self.extract_impl(pkg, archive)
             .await
             .with_context(|| format!("failed to extract: {pkg}"))
     }
 
-    async fn extract_impl(&self, pkg: PackageId, archive: PathBuf) -> Result<Utf8PathBuf> {
+    async fn extract_impl(
+        &self,
+        pkg: PackageId,
+        mut archive: FileLockGuard,
+    ) -> Result<Utf8PathBuf> {
         let prefix = pkg.tarball_basename();
         let fs = self.fs.child(&prefix);
         let parent_path = self.fs.path_existent()?.to_owned();
@@ -58,8 +65,8 @@ impl<'a> PackageSourceStore<'a> {
                 // FIXME(mkaput): Verify VERSION is 1.
 
                 let mut tar = {
-                    let file = fsx::open(archive)?;
-                    let zst = zstd::Decoder::new(file)?;
+                    archive.seek(SeekFrom::Start(0))?;
+                    let zst = zstd::Decoder::new(archive.deref_mut())?;
                     // FIXME(mkaput): Protect against zip bomb attacks (https://github.com/rust-lang/cargo/pull/11337).
                     // FIXME(mkaput): Protect against CVE-2023-38497 (https://github.com/rust-lang/cargo/pull/12443).
                     tar::Archive::new(zst)

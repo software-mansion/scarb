@@ -11,11 +11,14 @@ use tokio::task::spawn_blocking;
 use tracing::trace;
 use url::Url;
 
-use crate::core::registry::client::{RegistryClient, RegistryResource};
+use crate::core::registry::client::{
+    CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
+};
 use crate::core::registry::index::{IndexDependency, IndexRecord, IndexRecords, TemplateUrl};
-use crate::core::{Checksum, Digest, Package, PackageId, PackageName, Summary};
-use crate::flock::FileLockGuard;
+use crate::core::{Checksum, Config, Digest, Package, PackageId, PackageName, Summary};
+use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::fsx;
+use crate::internal::fsx::PathBufUtf8Ext;
 
 /// Local registry that lives on the filesystem as a set of `.tar.zst` files with an `index`
 /// directory in the standard registry index format.
@@ -42,13 +45,14 @@ use crate::internal::fsx;
 /// ├── cairo_lib-0.2.0.tar.zst
 /// └── open_zeppelin-0.7.0.tar.zst
 /// ```
-pub struct LocalRegistryClient {
+pub struct LocalRegistryClient<'c> {
     index_template_url: TemplateUrl,
     dl_template_url: TemplateUrl,
+    config: &'c Config,
 }
 
-impl LocalRegistryClient {
-    pub fn new(root: &Path) -> Result<Self> {
+impl<'c> LocalRegistryClient<'c> {
+    pub fn new(root: &Path, config: &'c Config) -> Result<Self> {
         // NOTE: If we'd put this check after canonicalization, the latter would fail with IO error
         // on Linux, making this logic non-deterministic from tests point of view.
         ensure!(
@@ -71,6 +75,7 @@ impl LocalRegistryClient {
         Ok(Self {
             index_template_url,
             dl_template_url,
+            config,
         })
     }
 
@@ -92,7 +97,7 @@ impl LocalRegistryClient {
 }
 
 #[async_trait]
-impl RegistryClient for LocalRegistryClient {
+impl RegistryClient for LocalRegistryClient<'_> {
     #[tracing::instrument(level = "trace", skip_all)]
     async fn get_records(
         &self,
@@ -124,11 +129,22 @@ impl RegistryClient for LocalRegistryClient {
         .await?
     }
 
-    async fn download(&self, package: PackageId) -> Result<RegistryResource<PathBuf>> {
-        Ok(RegistryResource::Download {
-            resource: self.dl_path(package),
-            cache_key: None,
-        })
+    async fn download(
+        &self,
+        package: PackageId,
+        _: CreateScratchFileCallback,
+    ) -> Result<RegistryDownload<FileLockGuard>> {
+        let dl_path = self.dl_path(package).try_into_utf8()?;
+        let base_path = dl_path
+            .parent()
+            .expect("Parent directory should always exist.")
+            .to_owned();
+        let file_name = dl_path.file_name().expect("File name should always exist.");
+
+        let fs = Filesystem::new(base_path);
+        let file = fs.open_ro(file_name, file_name, self.config)?;
+
+        Ok(RegistryDownload::Download(file))
     }
 
     async fn supports_publish(&self) -> Result<bool> {

@@ -1,10 +1,8 @@
-use std::path::PathBuf;
-
 use anyhow::Result;
 use async_trait::async_trait;
 
 use crate::core::registry::index::IndexRecords;
-use crate::core::{Package, PackageId, PackageName};
+use crate::core::{Config, Package, PackageId, PackageName};
 use crate::flock::FileLockGuard;
 
 pub mod cache;
@@ -27,6 +25,16 @@ pub enum RegistryResource<T> {
     },
 }
 
+/// Result from downloading files from a registry.
+pub enum RegistryDownload<T> {
+    /// The requested file was not found.
+    NotFound,
+    /// The file was downloaded.
+    Download(T),
+}
+
+pub type CreateScratchFileCallback = Box<dyn FnOnce(&Config) -> Result<FileLockGuard> + Send>;
+
 #[async_trait]
 pub trait RegistryClient: Send + Sync {
     /// Get the index record for a specific named package from this index.
@@ -45,13 +53,25 @@ pub trait RegistryClient: Send + Sync {
 
     /// Download the package `.tar.zst` file.
     ///
-    /// Returns a [`PathBuf`] to the downloaded `.tar.zst` file.
+    /// Returns a [`FileLockGuard`] to the downloaded `.tar.zst` file.
+    ///
+    /// ## Callbacks
+    ///
+    /// For the `create_scratch_file` callback, refer to the _Caching_ section.
     ///
     /// ## Caching
     ///
-    /// This method is not expected to internally cache the result, but it is not prohibited either.
-    /// Scarb applies specialized caching layers on top of clients.
-    async fn download(&self, package: PackageId) -> Result<RegistryResource<PathBuf>>;
+    /// Scarb caching layers manage caching downloaded archives entirely. This method is guaranteed
+    /// to only be called, when the archive is not present in the cache.
+    ///
+    /// The `create_scratch_file` callback provided from higher caching layers or Scarb provide
+    /// a possibility to create an output file in a cache directory, in way that is understandable
+    /// by these caching machineries.
+    async fn download(
+        &self,
+        package: PackageId,
+        create_scratch_file: CreateScratchFileCallback,
+    ) -> Result<RegistryDownload<FileLockGuard>>;
 
     /// State whether packages can be published to this registry.
     ///

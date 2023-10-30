@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use anyhow::{bail, Context, Result};
 use camino::Utf8Path;
 use redb::{MultimapTableDefinition, ReadableMultimapTable, ReadableTable, TableDefinition};
@@ -10,12 +8,14 @@ use tracing::trace;
 
 use scarb_ui::Ui;
 
-use crate::core::registry::client::{RegistryClient, RegistryResource};
+use crate::core::registry::client::{
+    CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
+};
 use crate::core::registry::index::{IndexRecord, IndexRecords};
 use crate::core::{Config, ManifestDependency, PackageId, SourceId};
+use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::fsx;
 
-// TODO(mkaput): Implement cache downloading.
 // FIXME(mkaput): Avoid creating database if inner client does not trigger cache writes.
 // FIXME(mkaput): We probably have to call db.compact() after all write txs we run in Scarb run.
 
@@ -68,6 +68,7 @@ pub struct RegistryClientCache<'c> {
     client: Box<dyn RegistryClient + 'c>,
     db_cell: OnceCell<CacheDatabase>,
     config: &'c Config,
+    dl_fs: Filesystem,
 }
 
 impl<'c> RegistryClientCache<'c> {
@@ -76,11 +77,18 @@ impl<'c> RegistryClientCache<'c> {
         client: Box<dyn RegistryClient + 'c>,
         config: &'c Config,
     ) -> Result<Self> {
+        let dl_fs = config
+            .dirs()
+            .registry_dir()
+            .into_child("dl")
+            .into_child(source_id.ident());
+
         Ok(Self {
             source_id,
             client,
             db_cell: OnceCell::new(),
             config,
+            dl_fs,
         })
     }
 
@@ -124,19 +132,32 @@ impl<'c> RegistryClientCache<'c> {
 
     /// Layer over [`RegistryClient::download`] that caches the result.
     #[tracing::instrument(level = "trace", skip_all)]
-    pub async fn download_with_cache(&self, package: PackageId) -> Result<PathBuf> {
-        match self.client.download(package).await? {
-            RegistryResource::NotFound => {
-                trace!("archive not found in registry, pruning cache");
+    pub async fn download_with_cache(&self, package: PackageId) -> Result<FileLockGuard> {
+        // Skip downloading if the package already has been.
+        if self.is_package_downloaded(package).await {
+            trace!("found cached archive which is not empty, skipping download");
+            let tarball_name = package.tarball_name();
+            return self
+                .dl_fs
+                .open_rw(&tarball_name, &tarball_name, self.config);
+        }
+
+        let create_scratch_file: CreateScratchFileCallback = Box::new({
+            let dl_fs = self.dl_fs.clone();
+            move |config: &Config| {
+                let tarball_name = package.tarball_name();
+                dl_fs.open_rw(&tarball_name, &tarball_name, config)
+            }
+        });
+
+        match self.client.download(package, create_scratch_file).await? {
+            RegistryDownload::NotFound => {
+                trace!("package archive file not found in registry");
                 bail!("could not find downloadable archive for package indexed in registry: {package}")
             }
-            RegistryResource::InCache => {
-                trace!("using cached archive");
-                todo!()
-            }
-            RegistryResource::Download { resource, .. } => {
-                trace!("got new archive, invalidating cache");
-                Ok(resource)
+            RegistryDownload::Download(file) => {
+                trace!("package archive file downloaded successfully");
+                Ok(file)
             }
         }
     }
@@ -153,6 +174,28 @@ impl<'c> RegistryClientCache<'c> {
                 CacheDatabase::create(&db_path, ui)
             })
             .await
+    }
+
+    /// Check whether the tarball has already been downloaded in the _dl_ directory.
+    /// If user modifies downloaded archive, it's their problem.
+    /// In case of IO errors, we treat the file as non-existent, and will attempt re-downloading.
+    async fn is_package_downloaded(&self, package: PackageId) -> bool {
+        let fs = &self.dl_fs;
+        let tarball_name = package.tarball_name();
+
+        // Avoid unnecessarily creating dl directory (for example in case of local registries).
+        if !fs.exists() {
+            return false;
+        }
+
+        let Ok(file) = fs.open_ro(&tarball_name, &tarball_name, self.config) else {
+            return false;
+        };
+        let file = file.into_async();
+        let Ok(metadata) = file.metadata().await else {
+            return false;
+        };
+        metadata.len() > 0
     }
 }
 
