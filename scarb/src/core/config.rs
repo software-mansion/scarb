@@ -170,8 +170,8 @@ impl Config {
             .map(AsRef::as_ref)
     }
 
-    pub fn ui(&self) -> &Ui {
-        &self.ui
+    pub fn ui(&self) -> Ui {
+        self.ui.clone()
     }
 
     pub fn elapsed_time(&self) -> Duration {
