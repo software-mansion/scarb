@@ -59,13 +59,3 @@ combination, type the following:
 [scripts]
 test = "scarb cairo-test && pytest"
 ```
-
-It is also possible to run multiple Cairo test runners, if there is a sensible use case for this.
-Mind, that you will probably want to conditionally disable tests depending on the running test runner, so that tests
-will not be executed multiple times.
-For example, to make `scarb test` run `scarb cairo-test` and then Starknet Foundry in a sequence, type the following:
-
-```toml
-[scripts]
-test = "scarb cairo-test && snforge test"
-```
