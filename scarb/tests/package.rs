@@ -493,7 +493,7 @@ fn clean_repo() {
             "src/foo.cairo",
             "src/bar.cairo",
         ])
-        .file_matches("VCS.json", r#"{"sha1":"[..]","path_in_vcs":""}"#);
+        .file_matches("VCS.json", r#"{"git":{"sha1":"[..]"},"path_in_vcs":""}"#);
 }
 
 #[test]
@@ -514,7 +514,7 @@ fn dirty_repo() {
         .stdout_matches(indoc! {r#"
             [..] Packaging foo v1.0.0 [..]
             error: cannot package a repository containing uncommited changes
-            help: `--allow-dirty` to ignore this check
+            help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
         "#});
 }
 
@@ -546,7 +546,7 @@ fn dirty_repo_allow_dirty() {
             "src/foo.cairo",
             "src/bar.cairo",
         ])
-        .file_matches("VCS.json", r#"{"sha1":"[..]","path_in_vcs":""}"#);
+        .file_matches("VCS.json", r#"{"git":{"sha1":"[..]"},"path_in_vcs":""}"#);
 }
 
 #[test]
@@ -639,7 +639,10 @@ fn nested_package_vcs_path() {
             "Scarb.toml",
             "src/lib.cairo",
         ])
-        .file_matches("VCS.json", r#"{"sha1":"[..]","path_in_vcs":"foo/bar"}"#);
+        .file_matches(
+            "VCS.json",
+            r#"{"git":{"sha1":"[..]"},"path_in_vcs":"foo/bar"}"#,
+        );
 }
 
 #[test]

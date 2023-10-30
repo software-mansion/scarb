@@ -97,12 +97,16 @@ fn before_package(ws: &Workspace<'_>) -> Result<()> {
 }
 
 #[derive(Serialize)]
-struct VcsInfo {
+struct GitVcsInfo {
     sha1: String,
+}
+
+#[derive(Serialize)]
+struct VcsInfo {
+    git: GitVcsInfo,
     path_in_vcs: String,
 }
 
-#[allow(clippy::dbg_macro)]
 fn extract_vcs_info(pkg: &Package, opts: &PackageOpts) -> Result<Option<VcsInfo>> {
     if let Ok(repo) = gix::discover(pkg.root()) {
         // There is nothing to parse if repository is empty, so HEAD reference needs to exist.
@@ -120,13 +124,15 @@ fn extract_vcs_info(pkg: &Package, opts: &PackageOpts) -> Result<Option<VcsInfo>
                 indoc!(
                     r#"
                         cannot package a repository containing uncommited changes
-                        help: `--allow-dirty` to ignore this check
+                        help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
                     "#
                 )
             );
 
             return Ok(Some(VcsInfo {
-                sha1: sha1.to_string(),
+                git: GitVcsInfo {
+                    sha1: sha1.to_string(),
+                },
                 // Relative path from the repository root to the package root is calculated.
                 path_in_vcs: pkg
                     .root()
@@ -153,9 +159,7 @@ fn package_one_impl(
 
     // TODO(mkaput): Check metadata
 
-    let vcs_info = extract_vcs_info(pkg, opts)?;
-
-    let recipe = prepare_archive_recipe(pkg, vcs_info)?;
+    let recipe = prepare_archive_recipe(pkg, opts)?;
     let num_files = recipe.len();
 
     // Package up and test a temporary tarball and only move it to the final location if it actually
@@ -202,13 +206,13 @@ fn list_one_impl(
     ws: &Workspace<'_>,
 ) -> Result<Vec<Utf8PathBuf>> {
     let pkg = ws.fetch_package(&pkg_id)?;
-    let vcs_info = extract_vcs_info(pkg, opts)?;
-    let recipe = prepare_archive_recipe(pkg, vcs_info)?;
+    let recipe = prepare_archive_recipe(pkg, opts)?;
     Ok(recipe.into_iter().map(|f| f.path).collect())
 }
 
-fn prepare_archive_recipe(pkg: &Package, vcs_info: Option<VcsInfo>) -> Result<ArchiveRecipe> {
+fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRecipe> {
     let mut recipe = source_files(pkg)?;
+    let vcs_info = extract_vcs_info(pkg, opts)?;
 
     // Sort the recipe before any checks, to ensure generated errors are reproducible.
     sort_recipe(&mut recipe);
