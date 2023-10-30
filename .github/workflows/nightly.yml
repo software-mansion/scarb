@@ -97,66 +97,67 @@ jobs:
     # Do not run on dry_run
     if: ${{ !(inputs.dry_run) }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.prepare.outputs.nightly_branch }}
-
-      - name: Create source code archives
-        run: |
-          git archive "--prefix=scarb-${{ needs.prepare.outputs.nightly_tag }}/" -o "scarb-${{ needs.prepare.outputs.nightly_tag }}.zip" HEAD
-          git archive "--prefix=scarb-${{ needs.prepare.outputs.nightly_tag }}/" -o "scarb-${{ needs.prepare.outputs.nightly_tag }}.tar.gz" HEAD
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: artifacts-dl
-
-      - name: Unpack artifacts to staging directory
-        run: |
-          mkdir -p artifacts
-          mv artifacts-dl/build-*/scarb-* artifacts/
-          mv artifacts-dl/checksums/* artifacts/
-          ls -lh artifacts/
-
-      - name: Create GitHub release
-        run: |
-          gh release create \
-            "${{ needs.prepare.outputs.nightly_tag }}" \
-            --repo software-mansion/scarb-nightlies \
-            --latest \
-            --title "${{ needs.prepare.outputs.nightly_tag }}" \
-            --notes-file NIGHTLY_RELEASE_NOTES.md
-        env:
-          GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
-
-      - name: Upload release assets
-        run: |
-          for file in \
-            ./artifacts/* \
-            "scarb-${{ needs.prepare.outputs.nightly_tag }}.zip#Scarb source code (zip)" \
-            "scarb-${{ needs.prepare.outputs.nightly_tag }}.tar.gz#Scarb source code (tar.gz)"
-          do
-            # If there isn't # in name, it means that it is a build artifact
-            # and we need to remove version tag from the name, so it can be
-            # easily accessed in asdf and Scarb installation scripts
-            #
-            # for example:
-            #   scarb-v0.6.0+nightly-2023-08-09-aarch64-apple-darwin.tar.gz
-            # becomes
-            #   scarb-nightly-2023-08-09-aarch64-apple-darwin.tar.gz
-            if ! [[ $(grep "#" <<< $file) ]]; then
-              label=$(echo $file | sed -E "s/v[^+]*\+//" | sed -E "s/.\/artifacts\///")
-              cp "$file" "$label"
-              file="$label"
-            fi
-
-            gh release upload \
-              "${{ needs.prepare.outputs.nightly_tag }}" \
-              "$file" \
-              --repo software-mansion/scarb-nightlies
-          done
-        env:
-          GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+      - run: echo "upload"
+#      - uses: actions/checkout@v4
+#        with:
+#          ref: ${{ needs.prepare.outputs.nightly_branch }}
+#
+#      - name: Create source code archives
+#        run: |
+#          git archive "--prefix=scarb-${{ needs.prepare.outputs.nightly_tag }}/" -o "scarb-${{ needs.prepare.outputs.nightly_tag }}.zip" HEAD
+#          git archive "--prefix=scarb-${{ needs.prepare.outputs.nightly_tag }}/" -o "scarb-${{ needs.prepare.outputs.nightly_tag }}.tar.gz" HEAD
+#
+#      - name: Download artifacts
+#        uses: actions/download-artifact@v3
+#        with:
+#          path: artifacts-dl
+#
+#      - name: Unpack artifacts to staging directory
+#        run: |
+#          mkdir -p artifacts
+#          mv artifacts-dl/build-*/scarb-* artifacts/
+#          mv artifacts-dl/checksums/* artifacts/
+#          ls -lh artifacts/
+#
+#      - name: Create GitHub release
+#        run: |
+#          gh release create \
+#            "${{ needs.prepare.outputs.nightly_tag }}" \
+#            --repo software-mansion/scarb-nightlies \
+#            --latest \
+#            --title "${{ needs.prepare.outputs.nightly_tag }}" \
+#            --notes-file NIGHTLY_RELEASE_NOTES.md
+#        env:
+#          GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
+#
+#      - name: Upload release assets
+#        run: |
+#          for file in \
+#            ./artifacts/* \
+#            "scarb-${{ needs.prepare.outputs.nightly_tag }}.zip#Scarb source code (zip)" \
+#            "scarb-${{ needs.prepare.outputs.nightly_tag }}.tar.gz#Scarb source code (tar.gz)"
+#          do
+#            # If there isn't # in name, it means that it is a build artifact
+#            # and we need to remove version tag from the name, so it can be
+#            # easily accessed in asdf and Scarb installation scripts
+#            #
+#            # for example:
+#            #   scarb-v0.6.0+nightly-2023-08-09-aarch64-apple-darwin.tar.gz
+#            # becomes
+#            #   scarb-nightly-2023-08-09-aarch64-apple-darwin.tar.gz
+#            if ! [[ $(grep "#" <<< $file) ]]; then
+#              label=$(echo $file | sed -E "s/v[^+]*\+//" | sed -E "s/.\/artifacts\///")
+#              cp "$file" "$label"
+#              file="$label"
+#            fi
+#
+#            gh release upload \
+#              "${{ needs.prepare.outputs.nightly_tag }}" \
+#              "$file" \
+#              --repo software-mansion/scarb-nightlies
+#          done
+#        env:
+#          GH_TOKEN: ${{ secrets.SCARB_NIGHTLIES_CONTENTS_WRITE }}
 
   cleanup:
     runs-on: ubuntu-latest
@@ -174,12 +175,13 @@ jobs:
     if: ${{ !(inputs.dry_run) }} && contains(needs.*.result, 'failure')
     needs: [ cleanup, upload, release, check, prepare ]
     steps:
-      - name: Notifying about Nightly fail!
-        uses: slackapi/slack-github-action@v1.24.0
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_FAILURE_WEBHOOK_URL }}
-        with:
-          payload: |
-            {
-              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }
+      - run: echo "notify"
+#      - name: Notifying about Nightly fail!
+#        uses: slackapi/slack-github-action@v1.24.0
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_FAILURE_WEBHOOK_URL }}
+#        with:
+#          payload: |
+#            {
+#              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+#            }
