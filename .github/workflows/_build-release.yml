@@ -117,6 +117,12 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Linux setup
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libssl-dev libssl1.1
+
       - name: Build xtasks
         run: cargo build -p xtask
 
