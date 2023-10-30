@@ -24,7 +24,7 @@ this configuration:
 
 ```toml filename="Scarb.toml"
 [scripts]
-test = "my-custom-command"
+test = "command-to-run-tests"
 ```
 
 ## Using Starknet Foundry
