@@ -2,6 +2,11 @@ name: Nightly
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run"
+        type: boolean
+        default: true
   schedule:
     - cron: '0 0 * * 3,6'
 
@@ -44,11 +49,11 @@ jobs:
           NIGHTLY_TAG=$(cargo xtask get-nightly-version --tag)
           NIGHTLY_VERSION=$(cargo xtask get-nightly-version)
           NIGHTLY_BRANCH="nightly/tmp/$NIGHTLY_TAG"
-          
+
           echo "NIGHTLY_TAG=$NIGHTLY_TAG" >> $GITHUB_ENV
           echo "NIGHTLY_VERSION=$NIGHTLY_VERSION" >> $GITHUB_ENV
           echo "NIGHTLY_BRANCH=$NIGHTLY_BRANCH" >> $GITHUB_ENV
-          
+
           echo "nightly_tag=$NIGHTLY_TAG" >> $GITHUB_OUTPUT
           echo "nightly_version=$NIGHTLY_VERSION" >> $GITHUB_OUTPUT
           echo "nightly_branch=$NIGHTLY_BRANCH" >> $GITHUB_OUTPUT
@@ -64,7 +69,7 @@ jobs:
 
       - name: Commit patches
         run: |
-          git checkout -b ${{ env.NIGHTLY_BRANCH }} 
+          git checkout -b ${{ env.NIGHTLY_BRANCH }}
           git add .
           git commit -m ${{ env.NIGHTLY_TAG }}
 
@@ -89,6 +94,8 @@ jobs:
   upload:
     runs-on: ubuntu-latest
     needs: [ prepare, release ]
+    # Do not run on dry_run
+    if: ${{ !(inputs.dry_run) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -163,7 +170,8 @@ jobs:
 
   notify_failed:
     runs-on: ubuntu-latest
-    if: always() && contains(needs.*.result, 'failure')
+    # Do not run on dry_run or success
+    if: always() && ${{ !(inputs.dry_run) }} && contains(needs.*.result, 'failure')
     needs: [ cleanup, upload, release, check, prepare ]
     steps:
       - name: Notifying about Nightly fail!
