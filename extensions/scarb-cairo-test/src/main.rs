@@ -5,7 +5,7 @@ use cairo_lang_test_plugin::TestCompilation;
 use cairo_lang_test_runner::{CompiledTestRunner, TestRunConfig};
 use clap::Parser;
 
-use scarb_metadata::{Metadata, MetadataCommand, PackageId, ScarbCommand, TargetMetadata};
+use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
 use scarb_ui::args::PackagesFilter;
 
 /// Execute all unit tests of a local package.
@@ -54,7 +54,7 @@ fn main() -> Result<()> {
     for package in matched {
         println!("testing {} ...", package.name);
 
-        for target in find_testable_targets(&metadata, &package.id) {
+        for target in find_testable_targets(&package) {
             let file_path = target_dir.join(format!("{}.test.json", target.name.clone()));
             let test_compilation = serde_json::from_str::<TestCompilation>(
                 &fs::read_to_string(file_path.clone())
@@ -76,12 +76,10 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn find_testable_targets(metadata: &Metadata, package_id: &PackageId) -> Vec<TargetMetadata> {
-    metadata
-        .packages
+fn find_testable_targets(package: &PackageMetadata) -> Vec<&TargetMetadata> {
+    package
+        .targets
         .iter()
-        .filter(|package| package.id == *package_id)
-        .flat_map(|package| package.targets.clone())
         .filter(|target| target.kind == "test")
         .collect()
 }
