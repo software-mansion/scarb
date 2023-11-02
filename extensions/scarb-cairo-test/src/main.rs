@@ -5,9 +5,7 @@ use cairo_lang_test_plugin::TestCompilation;
 use cairo_lang_test_runner::{CompiledTestRunner, TestRunConfig};
 use clap::Parser;
 
-use scarb_metadata::{
-    Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
-};
+use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
 use scarb_ui::args::PackagesFilter;
 
 /// Execute all unit tests of a local package.
