@@ -19,15 +19,31 @@ The behaviour of the `scarb test` command can be changed by developers.
 To do so, provide a script named explicitly `test` in the current workspace `Scarb.toml`.
 If such script is found, Scarb will execute it instead of running the default test runner.
 
-For example, in order to tell `scarb test` to use [Starknet Forge](https://foundry-rs.github.io/starknet-foundry) for testing in
-your project, type the following:
+Scarb can be configured to use any tool in place of the default `cairo-test`, simply by providing
+a custom script named `test`:
 
 ```toml filename="Scarb.toml"
 [scripts]
-test = "snforge"
+test = "command-to-run-tests"
 ```
 
-Do not forget to properly set up Starknet Forge in your project beforehand.
+## Using Starknet Foundry
+
+[Starknet Foundry](https://foundry-rs.github.io/starknet-foundry), like Scarb, is a project developed
+by [Software Mansion](https://swmansion.com/) team.
+It enables advanced testing of [Starknet](https://www.starknet.io/) contracts, including fuzz testing, forking the
+network state, setting-up a specific contract state in your tests, and many more.
+
+In order to tell `scarb test` to use Starknet Foundry as the test runner testing in your project, define the following:
+
+```toml filename="Scarb.toml"
+[scripts]
+test = "snforge test"
+```
+
+Do not forget to
+properly [set up Starknet Foundry in your project](https://foundry-rs.github.io/starknet-foundry/getting-started/first-steps.html#using-snforge-with-existing-scarb-projects)
+beforehand.
 
 ## Using multiple test runners
 
@@ -43,14 +59,4 @@ combination, type the following:
 ```toml
 [scripts]
 test = "scarb cairo-test && pytest"
-```
-
-It is also possible to run multiple Cairo test runners, if there is a sensible use case for this.
-Mind, that you will probably want to conditionally disable tests depending on the running test runner, so that tests
-will not be executed multiple times.
-For example, to make `scarb test` run `scarb cairo-test` and then Starknet Forge in a sequence, type the following:
-
-```toml
-[scripts]
-test = "scarb cairo-test && snforge"
 ```
