@@ -10,6 +10,7 @@ use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
+use scarb::DEFAULT_TARGET_DIR_NAME;
 use test_case::test_case;
 
 use scarb_test_support::command::Scarb;
@@ -463,6 +464,9 @@ fn clean_repo() {
     let t = TempDir::new().unwrap();
 
     simple_project().build(&t);
+    t.child(".gitignore")
+        .write_str(DEFAULT_TARGET_DIR_NAME)
+        .unwrap();
     gitx::init(&t);
 
     // Fetch is run to make sure that Scarb.lock is created before the repo init.
@@ -609,6 +613,9 @@ fn nested_package_vcs_path() {
         // Trick to test if packages are sorted alphabetically by name in the output.
         .add_member("foo/bar")
         .build(&t);
+    t.child(".gitignore")
+        .write_str(DEFAULT_TARGET_DIR_NAME)
+        .unwrap();
 
     gitx::init(&t);
 

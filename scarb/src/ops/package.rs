@@ -28,6 +28,7 @@ const RESERVED_FILES: &[&str] = &[
     VCS_INFO_FILE_NAME,
 ];
 
+#[derive(Clone)]
 pub struct PackageOpts {
     pub allow_dirty: bool,
 }
@@ -105,6 +106,10 @@ struct GitVcsInfo {
 struct VcsInfo {
     git: GitVcsInfo,
     path_in_vcs: String,
+}
+
+fn has_vcs(pkg: &Package) -> bool {
+    gix::discover(pkg.root().to_path_buf()).is_ok()
 }
 
 fn extract_vcs_info(pkg: &Package, opts: &PackageOpts) -> Result<Option<VcsInfo>> {
@@ -212,7 +217,6 @@ fn list_one_impl(
 
 fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRecipe> {
     let mut recipe = source_files(pkg)?;
-    let vcs_info = extract_vcs_info(pkg, opts)?;
 
     // Sort the recipe before any checks, to ensure generated errors are reproducible.
     sort_recipe(&mut recipe);
@@ -242,14 +246,19 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     });
 
     // Add VCS info file.
-    if let Some(vcs_info) = vcs_info {
-        let contents = serde_json::to_string(&vcs_info)?.into_bytes();
-
+    if has_vcs(pkg) {
         recipe.push(ArchiveFile {
             path: VCS_INFO_FILE_NAME.into(),
-            contents: ArchiveFileContents::Generated(Box::new(|| Ok(contents))),
-        })
-    }
+            contents: ArchiveFileContents::Generated({
+                let pkg = pkg.clone();
+                let opts = opts.clone();
+                Box::new(move || {
+                    let vcs_info = extract_vcs_info(&pkg, &opts)?;
+                    Ok(serde_json::to_string(&vcs_info)?.into_bytes())
+                })
+            }),
+        });
+    };
 
     // Put generated files in right order within the recipe.
     sort_recipe(&mut recipe);
