@@ -5,6 +5,10 @@ It is not a test runner by itself, but rather delegates work to a testing soluti
 Scarb comes with preinstalled `scarb cairo-test` extension, which bundles Cairo's native test runner.
 It is the default test runner used by `scarb test`.
 
+The `scarb cairo-test` extension calls `scarb build --test` to build actual executable test files,
+using the [test targets](../reference/targets#test-targets) mechanism.
+The extension itself only relies on produced artifacts to actually run the tests.
+
 As for how to write Cairo tests, we recommend reading the "Testing Cairo Programs" chapter in the
 [Cairo Programming Language](https://cairo-book.github.io/) book.
 
@@ -12,6 +16,20 @@ As for how to write Cairo tests, we recommend reading the "Testing Cairo Program
 
 `scarb cairo-test` automatically enables Starknet-related testing features if the package depends on the
 [`starknet`](./starknet/starknet-package) package.
+
+## Tests organization
+
+Scarb supports two types of tests: unit and integration.
+Unit tests are defined in the main package file, while integration tests are defined in separate files in
+directory called `tests` besides the manifest file.
+From integration tests, you can only reference the main package by package name (as if you would add it as dependency).
+The integration tests can be either a single module with a `lib.cairo` file in `tests` directory,
+or multiple files with `cairo` extension, each defining a separate test module.
+
+::: info
+Note: For now, the compilation of integration tests with `lib.cairo` file in the `tests` directory will be faster than
+compilation of integration tests defined in separate files.
+:::
 
 ## Using third-party test runners
 
