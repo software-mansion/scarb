@@ -1,11 +1,12 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
-use std::process::Command;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
 use indoc::{indoc, writedoc};
+
+use crate::sources::client::PackageRepository;
 
 use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
@@ -113,38 +114,23 @@ fn has_vcs(pkg: &Package) -> bool {
 }
 
 fn extract_vcs_info(pkg: &Package, opts: &PackageOpts) -> Result<Option<VcsInfo>> {
-    if let Ok(repo) = gix::discover(pkg.root()) {
-        // There is nothing to parse if repository is empty, so HEAD reference needs to exist.
-        if let Ok(sha1) = repo.rev_parse_single("HEAD") {
-            // `git status -s` output is empty only if there are no changes at all, but always returns success.
-            // `git diff-index --quiet HEAD` returns status code correctly, but doesn't take untracked files into account.
-            let output = Command::new("git")
-                .current_dir(pkg.root())
-                .arg("status")
-                .arg("-s")
-                .output()?;
+    if let Ok(repo) = PackageRepository::open(pkg) {
+        ensure!(
+            opts.allow_dirty || repo.is_clean()?,
+            indoc!(
+                r#"
+                cannot package a repository containing uncommited changes
+                help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
+                "#
+            )
+        );
 
-            ensure!(
-                opts.allow_dirty || output.stdout.is_empty(),
-                indoc!(
-                    r#"
-                        cannot package a repository containing uncommited changes
-                        help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
-                    "#
-                )
-            );
-
-            return Ok(Some(VcsInfo {
-                git: GitVcsInfo {
-                    sha1: sha1.to_string(),
-                },
-                // Relative path from the repository root to the package root is calculated.
-                path_in_vcs: pkg
-                    .root()
-                    .strip_prefix(repo.work_dir().unwrap())?
-                    .to_string(),
-            }));
-        }
+        return Ok(Some(VcsInfo {
+            path_in_vcs: repo.path_in_vcs()?,
+            git: GitVcsInfo {
+                sha1: repo.head_rev_hash()?,
+            },
+        }));
     }
 
     Ok(None)
