@@ -29,7 +29,7 @@ test = "command-to-run-tests"
 
 ## Using Starknet Foundry
 
-[Starknet Foundry](https://foundry-rs.github.io/starknet-foundry) is another project developed
+[Starknet Foundry](https://foundry-rs.github.io/starknet-foundry), like Scarb, is a project developed
 by [Software Mansion](https://swmansion.com/) team.
 It enables advanced testing of [Starknet](https://www.starknet.io/) contracts, including fuzz testing, forking the
 network state, setting-up a
