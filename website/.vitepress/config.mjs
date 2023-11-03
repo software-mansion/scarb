@@ -49,6 +49,7 @@ const sidebar = {
         p("Conditional compilation", "/docs/reference/conditional-compilation"),
         p("Global directories", "/docs/reference/global-directories"),
         p("Manifest", "/docs/reference/manifest"),
+        p("Lockfile", "/docs/reference/lockfile"),
         p("Workspaces", "/docs/reference/workspaces"),
         p("Profiles", "/docs/reference/profiles"),
         p("Scripts", "/docs/reference/scripts"),

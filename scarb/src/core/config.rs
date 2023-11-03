@@ -24,6 +24,8 @@ use crate::SCARB_ENV;
 
 use super::ManifestDependency;
 
+const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
+
 pub struct Config {
     manifest_path: Utf8PathBuf,
     dirs: Arc<AppDirs>,
@@ -43,6 +45,7 @@ pub struct Config {
     tokio_runtime: OnceCell<Runtime>,
     tokio_handle: OnceCell<Handle>,
     profile: Profile,
+    http_client: OnceCell<reqwest::Client>,
 }
 
 impl Config {
@@ -91,6 +94,7 @@ impl Config {
             tokio_runtime: OnceCell::new(),
             tokio_handle,
             profile,
+            http_client: OnceCell::new(),
         })
     }
 
@@ -166,8 +170,8 @@ impl Config {
             .map(AsRef::as_ref)
     }
 
-    pub fn ui(&self) -> &Ui {
-        &self.ui
+    pub fn ui(&self) -> Ui {
+        self.ui.clone()
     }
 
     pub fn elapsed_time(&self) -> Duration {
@@ -232,6 +236,23 @@ impl Config {
 
     pub fn profile(&self) -> Profile {
         self.profile.clone()
+    }
+
+    /// Returns handle to global HTTP client.
+    ///
+    /// The global client maintains an internal connection pool, and is preconfigured with known
+    /// user agent etc.
+    ///
+    /// It is fine to clone the returned instance, because it contains [`Arc`] inside.
+    pub fn http(&self) -> Result<reqwest::Client> {
+        self.http_client
+            .get_or_try_init(|| {
+                reqwest::Client::builder()
+                    .user_agent(USER_AGENT)
+                    .build()
+                    .context("failed to create HTTP client")
+            })
+            .cloned()
     }
 }
 

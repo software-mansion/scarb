@@ -319,7 +319,6 @@ fn compile_test_target() {
         mod tests {
             use hello::f;
             #[test]
-            #[available_gas(100000)]
             fn it_works() {
                 assert(f() == 42, 'it works!');
             }

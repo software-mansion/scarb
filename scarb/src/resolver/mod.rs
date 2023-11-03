@@ -30,7 +30,7 @@ pub async fn resolve(
     summaries: &[Summary],
     registry: &dyn Registry,
     lockfile: Lockfile,
-    ui: &Ui,
+    ui: Ui,
 ) -> Result<Resolve> {
     // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
@@ -285,7 +285,7 @@ mod tests {
 
         let lockfile = Lockfile::new(locks.iter().cloned());
         let ui = Ui::new(Verbose, OutputFormat::Text);
-        runtime.block_on(super::resolve(&summaries, &registry, lockfile, &ui))
+        runtime.block_on(super::resolve(&summaries, &registry, lockfile, ui))
     }
 
     fn package_id<S: AsRef<str>>(name: S) -> PackageId {

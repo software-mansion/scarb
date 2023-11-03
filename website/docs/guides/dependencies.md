@@ -20,9 +20,8 @@ that Alexandria is a collection of multiple packages, and we will use `alexandri
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 ```
 
-In fact, it is always good to pin Git dependencies to concrete commits, otherwise Scarb would try to update this
-dependency each time it is executed.
-You can achieve this using one of the following extra fields that you can pass along `git`: `branch`, `tag` and `rev`.
+You can pin a Git dependency to concrete commit, branch or a tag using one of the following extra fields that can be
+passed along `git`: `branch`, `tag` and `rev`.
 
 Actually this is how the OpenZeppelin Contracts for Cairo library is released, since the `main` branch is not stable.
 

@@ -2,12 +2,13 @@ use std::collections::HashSet;
 use std::fmt;
 use std::path::PathBuf;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use async_trait::async_trait;
 use tracing::trace;
 
 use scarb_ui::components::Status;
 
+use crate::core::registry::client::http::HttpRegistryClient;
 use crate::core::registry::client::local::LocalRegistryClient;
 use crate::core::registry::client::RegistryClient;
 use crate::core::registry::index::IndexRecord;
@@ -45,14 +46,25 @@ impl<'c> RegistrySource<'c> {
 
     pub fn create_client(
         source_id: SourceId,
-        _config: &'c Config,
+        config: &'c Config,
     ) -> Result<Box<dyn RegistryClient + 'c>> {
-        if let Ok(path) = source_id.url.to_file_path() {
-            trace!("creating local registry client for: {source_id}");
-            Ok(Box::new(LocalRegistryClient::new(&path)?))
-        } else {
-            // TODO(mkaput): Implement pipelining HTTP client.
-            bail!("unsupported registry protocol: {source_id}")
+        assert!(source_id.is_registry());
+        match source_id.url.scheme() {
+            "file" => {
+                trace!("creating local registry client for: {source_id}");
+                let path = source_id
+                    .url
+                    .to_file_path()
+                    .map_err(|_| anyhow!("url is not a valid path: {}", source_id.url))?;
+                Ok(Box::new(LocalRegistryClient::new(&path)?))
+            }
+            "http" | "https" => {
+                trace!("creating http registry client for: {source_id}");
+                Ok(Box::new(HttpRegistryClient::new(source_id, config)?))
+            }
+            _ => {
+                bail!("unsupported registry protocol: {source_id}")
+            }
         }
     }
 }
