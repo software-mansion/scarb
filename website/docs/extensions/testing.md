@@ -19,8 +19,8 @@ The behaviour of the `scarb test` command can be changed by developers.
 To do so, provide a script named explicitly `test` in the current workspace `Scarb.toml`.
 If such script is found, Scarb will execute it instead of running the default test runner.
 
-Scarb can be configured to use any tool in place of the default `cairo-test`, simply by changing
-this configuration:
+Scarb can be configured to use any tool in place of the default `cairo-test`, simply by providing
+a custom script named `test`:
 
 ```toml filename="Scarb.toml"
 [scripts]
@@ -32,11 +32,9 @@ test = "command-to-run-tests"
 [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry), like Scarb, is a project developed
 by [Software Mansion](https://swmansion.com/) team.
 It enables advanced testing of [Starknet](https://www.starknet.io/) contracts, including fuzz testing, forking the
-network state, setting-up a
-specific contract state in your tests, and many more.
+network state, setting-up a specific contract state in your tests, and many more.
 
-In order to tell `scarb test` to use Starknet Foundry as the test runner testing in your project, define the following
-script:
+In order to tell `scarb test` to use Starknet Foundry as the test runner testing in your project, define the following:
 
 ```toml filename="Scarb.toml"
 [scripts]
