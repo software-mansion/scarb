@@ -96,7 +96,10 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         unit.core_package_component().target.source_root().into(),
     ));
 
-    let content = ProjectConfigContent { crate_roots };
+    let content = ProjectConfigContent {
+        crate_roots,
+        crates_config: Default::default(),
+    };
 
     let project_config = ProjectConfig {
         base_path: unit.main_component().package.root().into(),
