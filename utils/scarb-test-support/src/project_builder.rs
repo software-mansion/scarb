@@ -19,6 +19,7 @@ mod to_version;
 pub struct ProjectBuilder {
     name: String,
     version: Version,
+    edition: Option<String>,
     cairo_version: Option<Version>,
     src: HashMap<Utf8PathBuf, String>,
     deps: Vec<(String, Value)>,
@@ -34,6 +35,7 @@ impl ProjectBuilder {
         Self {
             name: format!("pkg{n}"),
             version: Version::new(1, n, 0),
+            edition: None,
             cairo_version: None,
             src: HashMap::from_iter([(
                 Utf8PathBuf::from("src/lib.cairo"),
@@ -51,6 +53,11 @@ impl ProjectBuilder {
 
     pub fn version(mut self, version: impl ToVersion) -> Self {
         self.version = version.to_version().unwrap();
+        self
+    }
+
+    pub fn edition(mut self, edition: impl ToString) -> Self {
+        self.edition = Some(edition.to_string());
         self
     }
 
@@ -91,6 +98,9 @@ impl ProjectBuilder {
         doc["package"] = toml_edit::table();
         doc["package"]["name"] = Item::Value(Value::from(self.name.clone()));
         doc["package"]["version"] = Item::Value(Value::from(self.version.to_string()));
+        if let Some(edition) = self.edition.as_ref() {
+            doc["package"]["edition"] = Item::Value(Value::from(edition.to_string()));
+        }
         if let Some(cairo_version) = self.cairo_version.as_ref() {
             doc["package"]["cairo-version"] = Item::Value(Value::from(cairo_version.to_string()));
         }

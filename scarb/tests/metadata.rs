@@ -934,7 +934,7 @@ fn infer_readme_workspace() {
         [package]
         name = "t7"
         version.workspace = true
-        edition = "2021"
+        edition = "2023_10"
         readme.workspace = true
     "#,
         )
@@ -956,7 +956,7 @@ fn infer_readme_workspace() {
 
             [workspace.package]
             version = "0.1.0"
-            edition = "2021"
+            edition = "2023_10"
             readme = "MEREAD.md"
 
             [package]
@@ -974,7 +974,7 @@ fn infer_readme_workspace() {
             [package]
             name = "t1"
             version.workspace = true
-            edition = "2021"
+            edition = "2023_10"
             readme.workspace = true
     "#,
         )
@@ -986,7 +986,7 @@ fn infer_readme_workspace() {
             [package]
             name = "t2"
             version.workspace = true
-            edition = "2021"
+            edition = "2023_10"
             readme = true
     "#,
         )
@@ -998,7 +998,7 @@ fn infer_readme_workspace() {
             [package]
             name = "t3"
             version.workspace = true
-            edition = "2021"
+            edition = "2023_10"
     "#,
         )
         .unwrap();
@@ -1009,7 +1009,7 @@ fn infer_readme_workspace() {
             [package]
             name = "t4"
             version.workspace = true
-            edition = "2021"
+            edition = "2023_10"
             readme = "TEST.txt"
     "#,
         )
@@ -1021,7 +1021,7 @@ fn infer_readme_workspace() {
             [package]
             name = "t5"
             version.workspace = true
-            edition = "2021"
+            edition = "2023_10"
             readme = false
     "#,
         )
@@ -1033,7 +1033,7 @@ fn infer_readme_workspace() {
             [package]
             name = "t6"
             version.workspace = true
-            edition = "2021"
+            edition = "2023_10"
     "#,
         )
         .unwrap();
@@ -1046,7 +1046,7 @@ fn infer_readme_workspace() {
             [package]
             name = "t7"
             version.workspace = true
-            edition = "2021"
+            edition = "2023_10"
             readme.workspace = true
     "#,
         )
