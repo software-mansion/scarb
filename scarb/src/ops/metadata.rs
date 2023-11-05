@@ -125,10 +125,16 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
         .build()
         .unwrap();
 
+    let edition = serde_json::to_value(package.manifest.edition).unwrap();
+    let serde_json::Value::String(edition) = edition else {
+        panic!("Edition should always be a string.")
+    };
+
     m::PackageMetadataBuilder::default()
         .id(wrap_package_id(package.id))
         .name(package.id.name.clone())
         .version(package.id.version.clone())
+        .edition(Some(edition.to_string()))
         .source(wrap_source_id(package.id.source_id))
         .manifest_path(package.manifest_path())
         .root(package.root())

@@ -1112,3 +1112,29 @@ fn infer_readme_workspace() {
     assert_eq!(packages.get("t5").unwrap().manifest_metadata.readme, None);
     assert_eq!(packages.get("t6").unwrap().manifest_metadata.readme, None);
 }
+
+#[test]
+fn includes_edition() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .edition("2023_10")
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    for package in metadata.packages {
+        if package.name == "hello" {
+            assert_eq!(package.edition, Some("2023_10".to_string()));
+            return;
+        }
+    }
+    panic!("Package not found in metadata!");
+}

@@ -208,6 +208,10 @@ pub struct PackageMetadata {
     /// Package version as given in `Scarb.toml`.
     pub version: Version,
 
+    /// Package edition as given in `Scarb.toml`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub edition: Option<String>,
+
     /// The source of the package.
     pub source: SourceId,
 
