@@ -3,10 +3,21 @@ use anyhow::Result;
 use crate::args::FmtArgs;
 use crate::errors::error_with_exit_code;
 use scarb::core::Config;
-use scarb::ops;
+use scarb::ops::{self, FmtAction};
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: FmtArgs, config: &Config) -> Result<()> {
+    // The action the formatted should perform,
+    // e.g. check formatting, format in place, or emit formatted file to stdout.
+    let action = if args.check {
+        // adding the `--check` flag will shortcircuit the ability to emit the formatted file
+        FmtAction::Check
+    } else if let Some(emit_target) = args.emit {
+        FmtAction::Emit(emit_target)
+    } else {
+        // Format in place is the default option
+        FmtAction::Fix
+    };
     let ws = ops::read_workspace(config.manifest_path(), config)?;
     let packages = args
         .packages_filter
@@ -17,7 +28,7 @@ pub fn run(args: FmtArgs, config: &Config) -> Result<()> {
     if ops::format(
         ops::FmtOptions {
             packages,
-            check: args.check,
+            action,
             color: !args.no_color,
         },
         &ws,

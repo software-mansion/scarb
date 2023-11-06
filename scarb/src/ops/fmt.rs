@@ -4,6 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use anyhow::Result;
 use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
+use clap::ValueEnum;
 use ignore::WalkState::{Continue, Skip};
 use ignore::{DirEntry, Error, ParallelVisitor, ParallelVisitorBuilder, WalkState};
 use tracing::{info, warn};
@@ -12,9 +13,24 @@ use crate::core::workspace::Workspace;
 use crate::core::PackageId;
 use crate::internal::serdex::toml_merge;
 
+#[derive(Debug, Clone, ValueEnum)]
+pub enum EmitTarget {
+    Stdout,
+}
+
+/// Format option to display the output formatted file
+/// Example: scarb fmt --emit stdout
+#[derive(Debug, Default, Clone)]
+pub enum FmtAction {
+    #[default]
+    Fix,
+    Check,
+    Emit(EmitTarget),
+}
+
 #[derive(Debug)]
 pub struct FmtOptions {
-    pub check: bool,
+    pub action: FmtAction,
     pub packages: Vec<PackageId>,
     pub color: bool,
 }
@@ -92,6 +108,10 @@ fn print_diff(ws: &Workspace<'_>, path: &Path, diff: impl Display) {
         .print(format!("Diff in file {}:\n {}", path.display(), diff));
 }
 
+fn print_formatted_file(ws: &Workspace<'_>, path: &Path, file: impl Display) {
+    ws.config().ui().print(format!("{file}"));
+}
+
 fn print_error(ws: &Workspace<'_>, path: &Path, error: anyhow::Error) {
     let error_msg = error.to_string();
     ws.config().ui().error(format!(
@@ -118,6 +138,27 @@ fn check_file_formatting(
                 print_diff(ws, path, diff);
             }
 
+            false
+        }
+        Err(parsing_error) => {
+            print_error(ws, path, parsing_error);
+            false
+        }
+    }
+}
+
+fn emit_formatted_file(
+    fmt: &CairoFormatter,
+    target: &EmitTarget,
+    ws: &Workspace<'_>,
+    path: &Path,
+) -> bool {
+    match fmt.format_to_string(&path) {
+        Ok(FormatOutcome::Identical(_)) => true,
+        Ok(FormatOutcome::DiffFound(diff)) => {
+            match target {
+                EmitTarget::Stdout => print_formatted_file(ws, path, diff.formatted),
+            };
             false
         }
         Err(parsing_error) => {
@@ -170,10 +211,10 @@ impl<'t> ParallelVisitor for PathFormatter<'t> {
 
         info!("Formatting file: {}.", path.display());
 
-        let success = if self.opts.check {
-            check_file_formatting(self.fmt, self.opts, self.ws, path)
-        } else {
-            format_file_in_place(self.fmt, self.opts, self.ws, path)
+        let success = match &self.opts.action {
+            FmtAction::Fix => format_file_in_place(self.fmt, self.opts, self.ws, path),
+            FmtAction::Check => check_file_formatting(self.fmt, self.opts, self.ws, path),
+            FmtAction::Emit(target) => emit_formatted_file(self.fmt, target, self.ws, path),
         };
 
         if !success {

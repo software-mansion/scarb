@@ -8,6 +8,7 @@ use std::ffi::OsString;
 use anyhow::Result;
 use camino::Utf8PathBuf;
 use clap::{CommandFactory, Parser, Subcommand};
+use scarb::ops::EmitTarget;
 use smol_str::SmolStr;
 use tracing::level_filters::LevelFilter;
 use tracing_log::AsTrace;
@@ -244,6 +245,9 @@ pub struct FmtArgs {
     /// Only check if files are formatted, do not write the changes to disk.
     #[arg(short, long, default_value_t = false)]
     pub check: bool,
+    /// Emit the formatted file to stdout
+    #[arg(short, long)]
+    pub emit: Option<EmitTarget>,
     /// Do not color output.
     #[arg(long, default_value_t = false)]
     pub no_color: bool,
