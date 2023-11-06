@@ -1,10 +1,9 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fmt;
-use std::sync::Arc;
 
 use anyhow::{anyhow, bail, Result};
-use cairo_lang_defs::plugin::{InlineMacroExprPlugin, MacroPlugin};
+use cairo_lang_defs::plugin::PluginSuite;
 use itertools::Itertools;
 
 use crate::core::PackageId;
@@ -19,8 +18,7 @@ pub trait CairoPlugin: Sync {
 }
 
 pub trait CairoPluginInstance {
-    fn macro_plugins(&self) -> Vec<Arc<dyn MacroPlugin>>;
-    fn inline_macro_plugins(&self) -> Vec<(String, Arc<dyn InlineMacroExprPlugin>)>;
+    fn plugin_suite(&self) -> PluginSuite;
 }
 
 pub struct CairoPluginRepository {
