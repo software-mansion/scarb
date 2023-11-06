@@ -1,27 +1,11 @@
-use std::sync::Arc;
-
 use anyhow::Result;
-use cairo_lang_defs::plugin::{InlineMacroExprPlugin, MacroPlugin};
-use cairo_lang_starknet::inline_macros::get_dep_component::{
-    GetDepComponentMacro, GetDepComponentMutMacro,
-};
-use cairo_lang_starknet::inline_macros::selector::SelectorMacro;
-use cairo_lang_starknet::plugin::StarkNetPlugin;
-use cairo_lang_test_plugin::TestPlugin;
+use cairo_lang_defs::plugin::PluginSuite;
+use cairo_lang_starknet::starknet_plugin_suite;
+use cairo_lang_test_plugin::test_plugin_suite;
 
 use crate::compiler::plugin::{CairoPlugin, CairoPluginInstance};
 use crate::core::{PackageId, PackageName, SourceId};
 use crate::internal::to_version::ToVersion;
-
-impl CairoPluginInstance for Arc<dyn MacroPlugin> {
-    fn macro_plugins(&self) -> Vec<Arc<dyn MacroPlugin>> {
-        Vec::from_iter([self.clone()])
-    }
-
-    fn inline_macro_plugins(&self) -> Vec<(String, Arc<dyn InlineMacroExprPlugin>)> {
-        Vec::new()
-    }
-}
 
 pub struct BuiltinStarkNetPlugin;
 impl CairoPlugin for BuiltinStarkNetPlugin {
@@ -40,22 +24,8 @@ impl CairoPlugin for BuiltinStarkNetPlugin {
 
 struct BuiltinStarkNetPluginInstance;
 impl CairoPluginInstance for BuiltinStarkNetPluginInstance {
-    fn macro_plugins(&self) -> Vec<Arc<dyn MacroPlugin>> {
-        vec![Arc::new(StarkNetPlugin::default())]
-    }
-
-    fn inline_macro_plugins(&self) -> Vec<(String, Arc<dyn InlineMacroExprPlugin>)> {
-        vec![
-            (SelectorMacro::NAME.into(), Arc::new(SelectorMacro)),
-            (
-                GetDepComponentMacro::NAME.into(),
-                Arc::new(GetDepComponentMacro),
-            ),
-            (
-                GetDepComponentMutMacro::NAME.into(),
-                Arc::new(GetDepComponentMutMacro),
-            ),
-        ]
+    fn plugin_suite(&self) -> PluginSuite {
+        starknet_plugin_suite()
     }
 }
 
@@ -78,11 +48,7 @@ impl CairoPlugin for BuiltinTestPlugin {
 struct BuiltinTestPluginInstance;
 
 impl CairoPluginInstance for BuiltinTestPluginInstance {
-    fn macro_plugins(&self) -> Vec<Arc<dyn MacroPlugin>> {
-        vec![Arc::new(TestPlugin::default())]
-    }
-
-    fn inline_macro_plugins(&self) -> Vec<(String, Arc<dyn InlineMacroExprPlugin>)> {
-        Vec::new()
+    fn plugin_suite(&self) -> PluginSuite {
+        test_plugin_suite()
     }
 }

@@ -26,12 +26,7 @@ pub(crate) fn build_scarb_root_database(
         let package_id = plugin_info.package.id;
         let plugin = ws.config().cairo_plugins().fetch(package_id)?;
         let instance = plugin.instantiate()?;
-        for macro_plugin in instance.macro_plugins() {
-            b.with_macro_plugin(macro_plugin);
-        }
-        for (name, inline_macro_plugin) in instance.inline_macro_plugins() {
-            b.with_inline_macro_plugin(&name, inline_macro_plugin);
-        }
+        b.with_plugin_suite(instance.plugin_suite());
     }
 
     let mut db = b.build()?;
