@@ -76,10 +76,10 @@ xxhash-rust.workspace = true
 zip.workspace = true
 zstd.workspace = true
 
-[target.'cfg(not(unix))'.dependencies]
+[target.'cfg(not(linux))'.dependencies]
 reqwest = { workspace = true, default-features = true}
 
-[target.'cfg(unix)'.dependencies]
+[target.'cfg(linux)'.dependencies]
 reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
 
 [dev-dependencies]
