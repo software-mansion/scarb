@@ -179,7 +179,7 @@ fn publish() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:13973a8c7a6d86430ad569fd2c2d5cad282ba67ee587820a4b597f7b0a66a8dd",
+                "cksum": "sha256:d891504afc86fc0a7a9f38533a66ef2763990a1ff4be3eb9d5836d32a9bd9ad3",
             }
         ])
     );
@@ -192,12 +192,12 @@ fn publish() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:032b626571a86bb18d93d6e67376d5c9b5a14efd76871bb5e3de4b1ded3c6c64",
+                "cksum": "sha256:d05d4c524aa0136e42df6138f8e97f8b2b7fc946911cef8ae40baf38acf87ef6",
             },
             {
                 "v": "1.1.0",
                 "deps": [],
-                "cksum": "sha256:0b9c792212d383b00b3b059461caa1bea64b1528890d54f95ea678d2956ec613",
+                "cksum": "sha256:ec55410dac39c63ea1372f44f05b74bcf14ec6305749d80bd607be0603271ef1",
             }
         ])
     );
@@ -230,7 +230,7 @@ fn publish_overwrites_existing() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:d3356ff99d397d9963f88318b4c0019b61037255a9a632cc1fe24b9aa876a607",
+                "cksum": "sha256:49bb7566594c89da4603578aebe812d750d1fefa1fccc532461963d813093b11",
             }
         ])
     );
@@ -258,7 +258,7 @@ fn publish_overwrites_existing() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:207317e685713fcda79fa2172b5d3ca8d138efc7cee3c6c0960a17ba980738bd",
+                "cksum": "sha256:f6555b5b27327d40196578005de811158a3ac7401c36c13ee02b27afe7aab00f",
             }
         ])
     );

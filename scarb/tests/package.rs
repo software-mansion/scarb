@@ -209,6 +209,7 @@ fn simple() {
                 [package]
                 name = "foo"
                 version = "1.0.0"
+                edition = "2023_01"
 
                 [dependencies]
             "#},
@@ -356,6 +357,7 @@ fn generated_manifest() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies.git_dep]
             version = "^0.2.0"
@@ -454,6 +456,7 @@ fn workspace() {
                 [package]
                 name = "hello"
                 version = "1.0.0"
+                edition = "2023_01"
 
                 [dependencies.path_dep]
                 version = "^1.0.0"
