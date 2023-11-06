@@ -30,6 +30,41 @@ By default, the library target builds unprocessed Sierra code in JSON form for t
 When either the `casm` or `sierra-text` option is enabled, Scarb can automatically compile the Sierra code down to CASM or textual Sierra, respectively.
 While textual Sierra may be practical for debugging or similar tasks, relying on it in a production environment could lead to unexpected behavior.
 
+## Test targets
+
+The test target produces artifacts that can be used by the `scarb cairo-test` to run tests.
+Each package can define multiple test targets, each of which will produce a separate test runner artifact.
+The test runner relies on test target definitions to find runnable tests.
+The test target can define two custom properties: `source-path` and `test-type`.
+The `source-path` property is a path from package root, to the main Cairo file of the test module.
+The `test-type` property accepts either `unit` or `integration` as a value, as described in
+[tests organization](../extensions/testing#tests-organization).
+
+Example test target definition:
+
+```tomls
+[[test]]
+test-type = "unit"
+```
+
+Unlike other targets, test targets are not built by default.
+To build test targets (and only test targets), use the `scarb build --test` command.
+
+### Auto-detection of test targets
+
+If your manifest file does not define any `[[test]]` sections, test targets will be automatically detected
+from source files.
+The following rules are used to detect test targets:
+
+- A test target of `unit` type is added, with source path pointing to the main file of the package.
+  The test target is named `{package_name}_unittest`.
+- If there is a directory called `tests` in the package, besides a manifest file, it is searched for `integration`
+  type test targets.
+  - If the directory defines a `lib.cairo` file, a single test target with `source-path` pointing to it is created.
+    The target will be named `{package_name}_tests`.
+  - If the directory does not define a `lib.cairo` file, but contains other `.cairo` files, a test target is created
+    for each of these files. The test targets will be named `{package_name}_{file_name}`.
+
 ## External targets
 
 Scarb supports registering targets that are handled by Scarb extensions.
@@ -47,7 +82,7 @@ If multiple targets of the same kind are defined in the package, they all must s
 
 ## Configuring a target
 
-All of the `[lib]` and `[[target.*]]` sections in `Scarb.toml` support configuration options that are not
+All of the `[lib]`, `[test]` and `[[target.*]]` sections in `Scarb.toml` support configuration options that are not
 target-specific and control how Scarb manages these targets.
 The following is an overview of the TOML settings for each target, with each field described in detail below.
 
