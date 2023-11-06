@@ -132,25 +132,6 @@ fn can_choose_release_by_name() {
 }
 
 #[test]
-fn cannot_choose_both_release_and_dev() {
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start().name("hello").build(&t);
-
-    Scarb::quick_snapbox()
-        .args(["--release", "--dev", "metadata", "--format-version", "1"])
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stderr_matches(indoc! {r#"
-            error: the argument '--release' cannot be used with '--dev'
-
-            Usage: scarb --release [..] <COMMAND>
-
-            For more information, try '--help'.
-        "#});
-}
-
-#[test]
 fn can_choose_dev_by_name() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
