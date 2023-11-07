@@ -677,7 +677,7 @@ fn edition_must_exist() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-             error: failed to parse manifest at: /[..]/Scarb.toml
+             error: failed to parse manifest at: [..]/Scarb.toml
 
              Caused by:
                  TOML parse error at line 4, column 11
