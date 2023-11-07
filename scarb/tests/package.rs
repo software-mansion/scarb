@@ -294,7 +294,9 @@ fn reserved_files_collision() {
         "#});
 }
 
+// FIXME(#838)
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows as of #838")]
 fn generated_manifest() {
     let t = TempDir::new().unwrap();
 

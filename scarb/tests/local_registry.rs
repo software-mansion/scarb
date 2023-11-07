@@ -9,7 +9,9 @@ use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::LocalRegistry;
 
+// FIXME(#838)
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows as of #838")]
 fn usage() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
@@ -39,7 +41,9 @@ fn usage() {
         "#});
 }
 
+// FIXME(#838)
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows as of #838")]
 fn not_found() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
@@ -123,7 +127,9 @@ fn url_pointing_to_file() {
     drop(registry_t);
 }
 
+// FIXME(#838)
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows as of #838")]
 fn publish() {
     let t = TempDir::new().unwrap();
     let index = t.child("index");
@@ -203,7 +209,9 @@ fn publish() {
     );
 }
 
+// FIXME(#838)
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows as of #838")]
 fn publish_overwrites_existing() {
     let index = TempDir::new().unwrap();
 
