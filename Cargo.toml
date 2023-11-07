@@ -43,20 +43,20 @@ cairo-lang-test-plugin = "2.4.0-rc0"
 cairo-lang-test-runner = "2.4.0-rc0"
 cairo-lang-utils = { version = "2.4.0-rc0", features = ["env_logger"] }
 camino = { version = "1", features = ["serde1"] }
-cargo_metadata = "0.18"
+cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
 clap-verbosity-flag = "2"
 console = "0.15"
-darling = "0.20.3"
+darling = "0.20"
 data-encoding = "2"
-deno_task_shell = "0.13"
-derive_builder = "0.12"
+deno_task_shell = ">=0.13"
+derive_builder = ">=0.12"
 directories = "5"
 dunce = "1"
 fs4 = { version = "0.7", features = ["tokio"] }
-fs_extra = "1.3.0"
+fs_extra = "1"
 futures = { version = "0.3", default-features = false, features = ["std", "async-await"] }
-gix = "0.55"
+gix = ">=0.55"
 glob = "0.3"
 hyper = "0.14"
 ignore = "0.4"
@@ -100,7 +100,7 @@ tower-http = { version = "0.4", features = ["fs"] }
 tracing = "0.1"
 tracing-log = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-typed-builder = "0.17"
+typed-builder = ">=0.17"
 url = { version = "2", features = ["serde"] }
 walkdir = "2"
 which = "5"
