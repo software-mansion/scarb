@@ -13,6 +13,7 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
 
     let ops = PublishOpts {
         index_url: args.index,
+        allow_dirty: args.allow_dirty,
     };
 
     ops::publish(package.id, &ops, &ws)

@@ -19,7 +19,7 @@ use crate::sources::git::client::GitDatabase;
 use super::PathSource;
 
 pub mod canonical_url;
-mod client;
+pub mod client;
 
 pub struct GitSource<'c> {
     source_id: SourceId,
