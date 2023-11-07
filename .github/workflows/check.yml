@@ -2,6 +2,11 @@ name: Scheduled tests
 
 on:
   workflow_dispatch:
+    inputs:
+      silent:
+        description: "Silence Slack notifications"
+        type: boolean
+        default: false
   schedule:
     - cron: '0 5 * * *'
 
@@ -18,7 +23,7 @@ jobs:
   notify-failed:
     runs-on: ubuntu-latest
     # Do not run on success
-    if: always() && contains(needs.*.result, 'failure')
+    if: always() && !(inputs.silent) && contains(needs.*.result, 'failure')
     needs: [ check ]
     steps:
       - name: Notifying about failed tests!
