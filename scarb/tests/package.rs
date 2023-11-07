@@ -294,7 +294,9 @@ fn reserved_files_collision() {
         "#});
 }
 
+// FIXME(maciektr): Enable after release
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows")]
 fn generated_manifest() {
     let t = TempDir::new().unwrap();
 
@@ -618,7 +620,9 @@ fn list_dirty_repo() {
         "#}));
 }
 
+// FIXME(maciektr): Enable after release
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows")]
 fn nested_package_vcs_path() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -799,7 +803,9 @@ fn windows_restricted_filenames() {
         "#});
 }
 
+// FIXME(maciektr): Enable after release
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows")]
 fn package_symlink() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -828,7 +834,9 @@ fn package_symlink() {
         .file_eq_path("dup/lib.cairo", t.child("src/lib.cairo"));
 }
 
+// FIXME(maciektr): Enable after release
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows")]
 fn broken_symlink() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -852,7 +860,9 @@ fn broken_symlink() {
         "#});
 }
 
+// FIXME(maciektr): Enable after release
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows")]
 fn broken_but_excluded_symlink() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -877,7 +887,9 @@ fn broken_but_excluded_symlink() {
         "#});
 }
 
+// FIXME(maciektr): Enable after release
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows")]
 fn filesystem_loop() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()

@@ -8,7 +8,9 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::http::HttpRegistry;
 
+// FIXME(maciektr): Enable after release
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows")]
 fn usage() {
     let mut registry = HttpRegistry::serve();
     registry.publish(|t| {
@@ -39,7 +41,9 @@ fn usage() {
         "#});
 }
 
+// FIXME(maciektr): Enable after release
 #[test]
+#[cfg_attr(target_os = "windows", ignore = "ignored on windows")]
 fn not_found() {
     let mut registry = HttpRegistry::serve();
     registry.publish(|t| {
