@@ -109,31 +109,21 @@ struct VcsInfo {
     path_in_vcs: String,
 }
 
-fn has_vcs(pkg: &Package) -> bool {
-    gix::discover(pkg.root().to_path_buf()).is_ok()
-}
+fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Option<VcsInfo>> {
+    ensure!(
+        opts.allow_dirty || repo.is_clean()?,
+        indoc! {r#"
+            cannot package a repository containing uncommited changes
+            help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
+        "#}
+    );
 
-fn extract_vcs_info(pkg: &Package, opts: &PackageOpts) -> Result<Option<VcsInfo>> {
-    if let Ok(repo) = PackageRepository::open(pkg) {
-        ensure!(
-            opts.allow_dirty || repo.is_clean()?,
-            indoc!(
-                r#"
-                cannot package a repository containing uncommited changes
-                help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
-                "#
-            )
-        );
-
-        return Ok(Some(VcsInfo {
-            path_in_vcs: repo.path_in_vcs()?,
-            git: GitVcsInfo {
-                sha1: repo.head_rev_hash()?,
-            },
-        }));
-    }
-
-    Ok(None)
+    Ok(Some(VcsInfo {
+        path_in_vcs: repo.path_in_vcs()?.to_string(),
+        git: GitVcsInfo {
+            sha1: repo.head_rev_hash()?,
+        },
+    }))
 }
 
 #[tracing::instrument(level = "trace", skip(opts, ws))]
@@ -232,14 +222,13 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     });
 
     // Add VCS info file.
-    if has_vcs(pkg) {
+    if let Ok(repo) = PackageRepository::open(pkg) {
         recipe.push(ArchiveFile {
             path: VCS_INFO_FILE_NAME.into(),
             contents: ArchiveFileContents::Generated({
-                let pkg = pkg.clone();
                 let opts = opts.clone();
                 Box::new(move || {
-                    let vcs_info = extract_vcs_info(&pkg, &opts)?;
+                    let vcs_info = extract_vcs_info(repo, &opts)?;
                     Ok(serde_json::to_string(&vcs_info)?.into_bytes())
                 })
             }),

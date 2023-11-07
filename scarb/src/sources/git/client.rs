@@ -332,15 +332,18 @@ fn collect_refspecs(reference: &GitReference) -> (Vec<String>, bool) {
 }
 
 /// A wrapper over [`scarb::core::Package`] that provides functionality used to gather VCS info.
-pub struct PackageRepository<'a> {
-    pkg: &'a Package,
+pub struct PackageRepository {
+    pkg: Package,
     repo: gix::Repository,
 }
 
-impl<'a> PackageRepository<'a> {
-    pub fn open(pkg: &'a Package) -> Result<Self> {
+impl PackageRepository {
+    pub fn open(pkg: &Package) -> Result<Self> {
         let repo = gix::discover(pkg.root().to_path_buf())?;
-        Ok(Self { repo, pkg })
+        Ok(Self {
+            repo,
+            pkg: pkg.clone(),
+        })
     }
 
     fn work_dir(&self) -> Result<&Path> {
@@ -366,13 +369,13 @@ impl<'a> PackageRepository<'a> {
     }
 
     /// Calculate relative path from the repository root to the package root.
-    pub fn path_in_vcs(&self) -> Result<String> {
+    pub fn path_in_vcs(&self) -> Result<Utf8PathBuf> {
         Ok(self
             .pkg
             .root()
             .to_path_buf()
             .strip_prefix(self.work_dir()?)?
-            .to_string())
+            .to_path_buf())
     }
 }
 
