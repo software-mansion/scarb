@@ -799,6 +799,8 @@ fn windows_restricted_filenames() {
         "#});
 }
 
+/// This test requires you to be able to make symlinks.
+/// For windows, this may require you to enable developer mode.
 #[test]
 fn package_symlink() {
     let t = TempDir::new().unwrap();
