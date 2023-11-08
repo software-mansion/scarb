@@ -577,7 +577,7 @@ impl TomlManifest {
 
         if targets.is_empty() {
             trace!("manifest has no targets, assuming default `lib` target");
-            let default_source_path = root.join(DEFAULT_SOURCE_PATH);
+            let default_source_path = root.join(DEFAULT_SOURCE_PATH.as_path());
             let target =
                 Target::without_params(TargetKind::LIB, package_name.clone(), default_source_path);
             targets.push(target);
@@ -675,14 +675,14 @@ impl TomlManifest {
         default_name: &SmolStr,
         root: &Utf8Path,
     ) -> Result<Option<Target>> {
-        let default_source_path = root.join(DEFAULT_SOURCE_PATH);
+        let default_source_path = root.join(DEFAULT_SOURCE_PATH.as_path());
         let Some(target) = target else {
             return Ok(None);
         };
 
         if let Some(source_path) = &target.source_path {
             ensure!(
-                kind == TargetKind::TEST || source_path == DEFAULT_SOURCE_PATH,
+                kind == TargetKind::TEST || source_path == DEFAULT_SOURCE_PATH.as_path(),
                 "`{kind}` target cannot specify custom `source-path`"
             );
         }

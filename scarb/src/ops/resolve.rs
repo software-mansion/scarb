@@ -233,7 +233,7 @@ fn generate_cairo_compilation_units(
                         Target::without_params(
                             TargetKind::LIB,
                             member.id.name.clone(),
-                            member.root().join(DEFAULT_SOURCE_PATH),
+                            member.root().join(DEFAULT_SOURCE_PATH.as_path()),
                         )
                     });
 
