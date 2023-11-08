@@ -121,3 +121,11 @@ impl ManifestBuilder {
         Ok(())
     }
 }
+
+pub fn edition_variant(edition: Edition) -> String {
+    let edition = serde_json::to_value(edition).unwrap();
+    let serde_json::Value::String(edition) = edition else {
+        panic!("Edition should always be a string.")
+    };
+    edition
+}
