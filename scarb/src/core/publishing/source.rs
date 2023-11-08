@@ -53,6 +53,19 @@ fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> 
                 return false;
             }
 
+            // Skip README and LICENSE files
+            if path == pkg.manifest.metadata.clone().readme.unwrap_or_default()
+                || entry.file_name().to_string_lossy()
+                    == pkg
+                        .manifest
+                        .metadata
+                        .clone()
+                        .license_file
+                        .unwrap_or_default()
+            {
+                return false;
+            }
+
             true
         }
     };

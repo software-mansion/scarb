@@ -1,13 +1,16 @@
 use std::collections::BTreeMap;
 
 use anyhow::{bail, Result};
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8PathBuf;
 use indoc::formatdoc;
 
-use crate::core::{
-    DepKind, DependencyVersionReq, DetailedTomlDependency, ManifestDependency, MaybeWorkspace,
-    Package, PackageName, TargetKind, TomlDependency, TomlManifest, TomlPackage,
-    TomlWorkspaceDependency, TomlWorkspaceField,
+use crate::{
+    core::{
+        DepKind, DependencyVersionReq, DetailedTomlDependency, ManifestDependency, MaybeWorkspace,
+        Package, PackageName, PathOrBool, TargetKind, TomlDependency, TomlManifest, TomlPackage,
+        TomlWorkspaceDependency,
+    },
+    DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
 };
 
 pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
@@ -62,12 +65,13 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
         license: metadata.license.clone().map(MaybeWorkspace::Defined),
         license_file: metadata
             .license_file
-            .as_ref()
-            .map(|_| todo!("Packaging packages with a license file is not implemented yet.")),
-        readme: metadata
-            .readme
-            .as_ref()
-            .map(|p| map_metadata_file_path(p, pkg)),
+            .clone()
+            .map(|_| MaybeWorkspace::Defined(DEFAULT_LICENSE_FILE_NAME.into())),
+        readme: metadata.readme.clone().map(|_| {
+            MaybeWorkspace::Defined(PathOrBool::Path(Utf8PathBuf::from(
+                DEFAULT_README_FILE_NAME,
+            )))
+        }),
         repository: metadata.repository.clone().map(MaybeWorkspace::Defined),
         no_core: summary.no_core.then_some(true),
         cairo_version: metadata.cairo_version.clone().map(MaybeWorkspace::Defined),
@@ -138,29 +142,4 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
             None
         },
     })))
-}
-
-fn map_metadata_file_path<T>(
-    path: &Utf8Path,
-    pkg: &Package,
-) -> MaybeWorkspace<T, TomlWorkspaceField>
-where
-    T: From<Utf8PathBuf>,
-{
-    assert!(
-        path.is_absolute(),
-        "Manifest parser is expected to canonicalize paths for README/LICENSE files."
-    );
-
-    let path = if let Ok(relative_path) = path.strip_prefix(pkg.root()) {
-        relative_path.to_owned()
-    } else {
-        // This path points outside the package root. `scarb package` will copy it
-        // into the root, so we have to adjust the path to this location.
-        path.file_name()
-            .expect("README/LICENSE path must have a file name.")
-            .into()
-    };
-
-    MaybeWorkspace::Defined(T::from(path))
 }

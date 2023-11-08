@@ -32,6 +32,7 @@ pub const DEFAULT_MODULE_MAIN_FILE: &str = "lib.cairo";
 pub const DEFAULT_TESTS_PATH: &str = "tests";
 pub const DEFAULT_TARGET_DIR_NAME: &str = "target";
 pub const SCARB_IGNORE_FILE_NAME: &str = ".scarbignore";
-
 pub static DEFAULT_SOURCE_PATH: Lazy<Utf8PathBuf> =
     Lazy::new(|| ["src", "lib.cairo"].iter().collect());
+pub const DEFAULT_README_FILE_NAME: &str = "README.md";
+pub const DEFAULT_LICENSE_FILE_NAME: &str = "LICENSE";
