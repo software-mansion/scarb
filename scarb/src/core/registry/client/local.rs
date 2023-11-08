@@ -146,9 +146,12 @@ fn publish_impl(
     records_path: PathBuf,
     dl_path: PathBuf,
 ) -> Result<(), Error> {
-    fsx::copy(tarball.path(), dl_path)?;
-
     let checksum = Digest::recommended().update_read(tarball.deref())?.finish();
+    let tarball_path = tarball.path().to_owned();
+
+    // Drop the FileLockGuard to release the tarball file RW lock, otherwise the package cannot be copied to local registry on Windows.
+    drop(tarball);
+    fsx::copy(tarball_path, dl_path)?;
 
     let record = build_record(summary, checksum);
 
