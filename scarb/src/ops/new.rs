@@ -149,7 +149,7 @@ fn mk(
     )?;
 
     // Create hello world source files (with respective parent directories) if none exist.
-    let source_path = canonical_path.join(DEFAULT_SOURCE_PATH);
+    let source_path = canonical_path.join(DEFAULT_SOURCE_PATH.as_path());
     if !source_path.exists() {
         fsx::create_dir_all(source_path.parent().unwrap())?;
 

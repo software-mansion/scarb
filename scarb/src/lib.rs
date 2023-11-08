@@ -8,6 +8,8 @@
 #![deny(rustdoc::private_intra_doc_links)]
 #![warn(rust_2018_idioms)]
 
+use camino::Utf8PathBuf;
+use once_cell::sync::Lazy;
 pub use subcommands::EXTERNAL_CMD_PREFIX;
 
 pub mod compiler;
@@ -26,8 +28,10 @@ pub const SCARB_ENV: &str = "SCARB";
 pub const MANIFEST_FILE_NAME: &str = "Scarb.toml";
 pub const VCS_INFO_FILE_NAME: &str = "VCS.json";
 pub const LOCK_FILE_NAME: &str = "Scarb.lock";
-pub const DEFAULT_SOURCE_PATH: &str = "src/lib.cairo";
 pub const DEFAULT_MODULE_MAIN_FILE: &str = "lib.cairo";
 pub const DEFAULT_TESTS_PATH: &str = "tests";
 pub const DEFAULT_TARGET_DIR_NAME: &str = "target";
 pub const SCARB_IGNORE_FILE_NAME: &str = ".scarbignore";
+
+pub static DEFAULT_SOURCE_PATH: Lazy<Utf8PathBuf> =
+    Lazy::new(|| ["src", "lib.cairo"].iter().collect());
