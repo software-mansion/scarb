@@ -41,6 +41,20 @@ Scarb bakes in the concept of [Semantic Versioning](https://semver.org/), so mak
    impls or anything else.
 4. Use version numbers with three numeric parts such as 1.0.0 rather than 1.0.
 
+### `edition`
+
+The edition key is an optional key that affects which Cairo edition your package is compiled with.
+The editions allow newer Cairo compiler versions to introduce opt-in features that may break existing code.
+Setting the edition key in `[package]` will affect all targets in the package, including test suites etc.
+
+```toml
+[package]
+edition = '2023_01'
+```
+
+Most manifests have the edition field filled in automatically by `scarb new` with the default edition.
+If the edition field is not present in Scarb.toml, then the default edition is assumed.
+
 ### `cairo-version`
 
 The `cairo-version` field is an optional key that tells Scarb what version of the Cairo language and compiler your
