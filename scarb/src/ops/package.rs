@@ -119,7 +119,7 @@ fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Optio
     );
 
     Ok(Some(VcsInfo {
-        path_in_vcs: repo.path_in_vcs()?.to_string(),
+        path_in_vcs: repo.path_in_vcs()?,
         git: GitVcsInfo {
             sha1: repo.head_rev_hash()?,
         },

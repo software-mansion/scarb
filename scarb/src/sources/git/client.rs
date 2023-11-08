@@ -369,13 +369,16 @@ impl PackageRepository {
     }
 
     /// Calculate relative path from the repository root to the package root.
-    pub fn path_in_vcs(&self) -> Result<Utf8PathBuf> {
+    pub fn path_in_vcs(&self) -> Result<String> {
         Ok(self
             .pkg
             .root()
             .to_path_buf()
             .strip_prefix(self.work_dir()?)?
-            .to_path_buf())
+            .to_path_buf()
+            .to_string()
+            // Unify paths on windows and unix based systems
+            .replace('\\', "/"))
     }
 }
 
