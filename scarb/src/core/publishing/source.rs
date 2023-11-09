@@ -16,6 +16,7 @@ use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME, SCARB_I
 /// * Skip any subdirectories containing `Scarb.toml`.
 /// * Skip `<root>/target` directory.
 /// * Skip `Scarb.lock` file.
+/// * Skip README and LICENSE files.
 /// * **Skip `Scarb.toml` file, as users of this function may want to generate it themselves.**
 /// * Symlinks within the package directory are followed, while symlinks outside are just skipped.
 /// * Avoid crossing file system boundaries, because it can complicate our lives.
@@ -29,6 +30,10 @@ pub fn list_source_files(pkg: &Package) -> Result<Vec<Utf8PathBuf>> {
 fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> {
     let filter = {
         let pkg = pkg.clone();
+        let metadata = pkg.manifest.metadata.clone();
+        let readme = metadata.readme.unwrap_or_default();
+        let license_file = metadata.license_file.unwrap_or_default();
+
         move |entry: &DirEntry| -> bool {
             let path = entry.path();
             let is_root = entry.depth() == 0;
@@ -54,15 +59,7 @@ fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> 
             }
 
             // Skip README and LICENSE files
-            if path == pkg.manifest.metadata.clone().readme.unwrap_or_default()
-                || entry.file_name().to_string_lossy()
-                    == pkg
-                        .manifest
-                        .metadata
-                        .clone()
-                        .license_file
-                        .unwrap_or_default()
-            {
+            if path == readme || path == license_file {
                 return false;
             }
 

@@ -111,7 +111,7 @@ pub struct PackageInheritableFields {
     pub homepage: Option<String>,
     pub keywords: Option<Vec<String>>,
     pub license: Option<String>,
-    pub license_file: Option<String>,
+    pub license_file: Option<Utf8PathBuf>,
     pub readme: Option<PathOrBool>,
     pub repository: Option<String>,
     pub cairo_version: Option<VersionReq>,
@@ -140,9 +140,25 @@ impl PackageInheritableFields {
     get_field!(documentation, String);
     get_field!(homepage, String);
     get_field!(license, String);
-    get_field!(license_file, String);
     get_field!(repository, String);
     get_field!(edition, Edition);
+
+    pub fn license_file(
+        &self,
+        workspace_root: &Utf8Path,
+        package_root: &Utf8Path,
+    ) -> Result<Utf8PathBuf> {
+        let Some(license_file) = license_for_package(workspace_root, self.license_file.as_ref())?
+        else {
+            bail!("no `license_file` found in workspace definition");
+        };
+
+        diff_utf8_paths(
+            workspace_root.parent().unwrap().join(license_file),
+            package_root.parent().unwrap(),
+        )
+        .context("failed to create relative path to workspace license file")
+    }
 
     pub fn readme(&self, workspace_root: &Utf8Path, package_root: &Utf8Path) -> Result<PathOrBool> {
         let Ok(Some(readme)) = readme_for_package(workspace_root, self.readme.as_ref()) else {
@@ -188,7 +204,7 @@ pub struct TomlPackage {
     pub homepage: Option<MaybeWorkspaceField<String>>,
     pub keywords: Option<MaybeWorkspaceField<Vec<String>>>,
     pub license: Option<MaybeWorkspaceField<String>>,
-    pub license_file: Option<MaybeWorkspaceField<String>>,
+    pub license_file: Option<MaybeWorkspaceField<Utf8PathBuf>>,
     pub readme: Option<MaybeWorkspaceField<PathOrBool>>,
     pub repository: Option<MaybeWorkspaceField<String>>,
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
@@ -495,11 +511,19 @@ impl TomlManifest {
                 .clone()
                 .map(|mw| mw.resolve("license", || inheritable_package.license()))
                 .transpose()?,
-            license_file: package
-                .license_file
-                .clone()
-                .map(|mw| mw.resolve("license_file", || inheritable_package.license_file()))
-                .transpose()?,
+            license_file: license_for_package(
+                manifest_path,
+                package
+                    .license_file
+                    .clone()
+                    .map(|mw| {
+                        mw.resolve("license_file", || {
+                            inheritable_package.license_file(workspace_manifest_path, manifest_path)
+                        })
+                    })
+                    .transpose()?
+                    .as_ref(),
+            )?,
             readme: readme_for_package(
                 manifest_path,
                 package
@@ -814,6 +838,18 @@ impl TomlManifest {
     }
 }
 
+/// Returns the absolute canonical path of the LICENSE file for a [`TomlPackage`].
+pub fn license_for_package(
+    package_root: &Utf8Path,
+    license_file: Option<&Utf8PathBuf>,
+) -> Result<Option<Utf8PathBuf>> {
+    if let Some(p) = license_file {
+        Ok(abs_canonical_path(package_root, Some(p.as_path()))?)
+    } else {
+        Ok(None)
+    }
+}
+
 /// Returns the absolute canonical path of the README file for a [`TomlPackage`].
 pub fn readme_for_package(
     package_root: &Utf8Path,
@@ -832,14 +868,14 @@ pub fn readme_for_package(
     abs_canonical_path(package_root, file_name)
 }
 
-/// Creates the absolute canonical path of the README file and checks if it exists
-fn abs_canonical_path(prefix: &Utf8Path, readme: Option<&Utf8Path>) -> Result<Option<Utf8PathBuf>> {
-    match readme {
+/// Creates the absolute canonical path of the file and checks if it exists
+fn abs_canonical_path(prefix: &Utf8Path, path: Option<&Utf8Path>) -> Result<Option<Utf8PathBuf>> {
+    match path {
         None => Ok(None),
         Some(readme) => {
             let path = prefix.parent().unwrap().join(readme);
             let path = fsx::canonicalize_utf8(&path)
-                .with_context(|| format!("failed to find the readme at {path}"))?;
+                .with_context(|| format!("failed to find the file at {path}"))?;
             Ok(Some(path))
         }
     }

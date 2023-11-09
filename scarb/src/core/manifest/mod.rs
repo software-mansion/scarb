@@ -61,7 +61,7 @@ pub struct ManifestMetadata {
     pub homepage: Option<String>,
     pub keywords: Option<Vec<String>>,
     pub license: Option<String>,
-    pub license_file: Option<String>,
+    pub license_file: Option<Utf8PathBuf>,
     pub readme: Option<Utf8PathBuf>,
     pub repository: Option<String>,
     #[serde(rename = "tool")]

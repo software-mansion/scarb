@@ -7,7 +7,7 @@ use indoc::formatdoc;
 use crate::{
     core::{
         DepKind, DependencyVersionReq, DetailedTomlDependency, ManifestDependency, MaybeWorkspace,
-        Package, PackageName, PathOrBool, TargetKind, TomlDependency, TomlManifest, TomlPackage,
+        Package, PackageName, TargetKind, TomlDependency, TomlManifest, TomlPackage,
         TomlWorkspaceDependency,
     },
     DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
@@ -66,12 +66,11 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
         license_file: metadata
             .license_file
             .clone()
-            .map(|_| MaybeWorkspace::Defined(DEFAULT_LICENSE_FILE_NAME.into())),
-        readme: metadata.readme.clone().map(|_| {
-            MaybeWorkspace::Defined(PathOrBool::Path(Utf8PathBuf::from(
-                DEFAULT_README_FILE_NAME,
-            )))
-        }),
+            .map(|_| MaybeWorkspace::Defined(Utf8PathBuf::from(DEFAULT_LICENSE_FILE_NAME))),
+        readme: metadata
+            .readme
+            .clone()
+            .map(|_| MaybeWorkspace::Defined((Utf8PathBuf::from(DEFAULT_README_FILE_NAME)).into())),
         repository: metadata.repository.clone().map(MaybeWorkspace::Defined),
         no_core: summary.no_core.then_some(true),
         cairo_version: metadata.cairo_version.clone().map(MaybeWorkspace::Defined),

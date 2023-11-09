@@ -243,7 +243,7 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     if let Some(license) = &pkg.manifest.metadata.license_file {
         recipe.push(ArchiveFile {
             path: DEFAULT_LICENSE_FILE_NAME.into(),
-            contents: ArchiveFileContents::OnDisk(pkg.root().join(license)),
+            contents: ArchiveFileContents::OnDisk(license.clone()),
         })
     }
 
