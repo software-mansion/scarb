@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 1.9.0 (2023-11-09)
+- Added `edition` field to `PackageMetadata`.
+
 ## 1.8.0 (2023-09-25)
 - **Removed** `packages_filter` feature from `scarb-metadata`. This change is technically breaking, but we did not detect any usage of this feature in the wild.
 
