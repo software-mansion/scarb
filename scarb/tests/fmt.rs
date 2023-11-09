@@ -59,6 +59,39 @@ fn simple_check_invalid() {
 }
 
 #[test]
+fn simple_emit_invalid() {
+    let t = build_temp_dir(SIMPLE_ORIGINAL);
+    Scarb::quick_snapbox()
+        .arg("fmt")
+        .arg("--emit")
+        .arg("stdout")
+        .arg("--no-color")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {"\
+            fn main() -> felt252 {
+                42
+            }
+
+        "});
+    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_ORIGINAL);
+}
+
+#[test]
+fn simple_emit_valid() {
+    let t = build_temp_dir(SIMPLE_FORMATTED);
+    Scarb::quick_snapbox()
+        .arg("fmt")
+        .arg("--emit")
+        .arg("stdout")
+        .current_dir(&t)
+        .assert()
+        .success();
+}
+
+#[test]
 fn simple_check_valid() {
     let t = build_temp_dir(SIMPLE_FORMATTED);
     Scarb::quick_snapbox()
@@ -269,4 +302,78 @@ fn workspace_with_root() {
     assert_eq!(content, SIMPLE_FORMATTED);
     let content = fs::read_to_string(t.child("second/src/lib.cairo")).unwrap();
     assert_eq!(content, SIMPLE_FORMATTED);
+}
+
+#[test]
+fn workspace_emit_with_root() {
+    let t = TempDir::new().unwrap().child("test_workspace");
+    let pkg1 = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .lib_cairo(SIMPLE_ORIGINAL)
+        .build(&pkg1);
+    let pkg2 = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .lib_cairo(SIMPLE_ORIGINAL)
+        .dep("first", &pkg1)
+        .build(&pkg2);
+    let root = ProjectBuilder::start()
+        .name("some_root")
+        .lib_cairo(SIMPLE_ORIGINAL)
+        .dep("first", &pkg1)
+        .dep("second", &pkg2);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .package(root)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fmt")
+        .arg("--emit")
+        .arg("stdout")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {"\
+            fn main() -> felt252 {
+                42
+            }
+
+        "});
+
+    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_ORIGINAL);
+    let content = fs::read_to_string(t.child("first/src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_ORIGINAL);
+    let content = fs::read_to_string(t.child("second/src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_ORIGINAL);
+
+    Scarb::quick_snapbox()
+        .args(["fmt", "--workspace", "--emit", "stdout"])
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {"\
+            fn main() -> felt252 {
+                42
+            }
+
+            fn main() -> felt252 {
+                42
+            }
+
+            fn main() -> felt252 {
+                42
+            }
+
+        "});
+
+    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_ORIGINAL);
+    let content = fs::read_to_string(t.child("first/src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_ORIGINAL);
+    let content = fs::read_to_string(t.child("second/src/lib.cairo")).unwrap();
+    assert_eq!(content, SIMPLE_ORIGINAL);
 }
