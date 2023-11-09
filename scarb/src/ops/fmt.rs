@@ -108,10 +108,6 @@ fn print_diff(ws: &Workspace<'_>, path: &Path, diff: impl Display) {
         .print(format!("Diff in file {}:\n {}", path.display(), diff));
 }
 
-fn print_formatted_file(ws: &Workspace<'_>, path: &Path, file: impl Display) {
-    ws.config().ui().print(format!("{file}"));
-}
-
 fn print_error(ws: &Workspace<'_>, path: &Path, error: anyhow::Error) {
     let error_msg = error.to_string();
     ws.config().ui().error(format!(
@@ -147,18 +143,28 @@ fn check_file_formatting(
     }
 }
 
+pub trait Emittable {
+    fn emit(&self, ws: &Workspace<'_>, formatted: &str);
+}
+
+impl Emittable for EmitTarget {
+    fn emit(&self, ws: &Workspace<'_>, formatted: &str) {
+        match self {
+            Self::Stdout => ws.config().ui().print(formatted),
+        }
+    }
+}
+
 fn emit_formatted_file(
     fmt: &CairoFormatter,
-    target: &EmitTarget,
+    target: &dyn Emittable,
     ws: &Workspace<'_>,
     path: &Path,
 ) -> bool {
     match fmt.format_to_string(&path) {
         Ok(FormatOutcome::Identical(_)) => true,
         Ok(FormatOutcome::DiffFound(diff)) => {
-            match target {
-                EmitTarget::Stdout => print_formatted_file(ws, path, diff.formatted),
-            };
+            target.emit(ws, &diff.formatted);
             false
         }
         Err(parsing_error) => {

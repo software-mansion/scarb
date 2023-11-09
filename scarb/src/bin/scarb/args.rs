@@ -243,7 +243,7 @@ pub struct NewArgs {
 #[derive(Parser, Clone, Debug)]
 pub struct FmtArgs {
     /// Only check if files are formatted, do not write the changes to disk.
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long, default_value_t = false, conflicts_with = "emit")]
     pub check: bool,
     /// Emit the formatted file to stdout
     #[arg(short, long)]

@@ -10,7 +10,6 @@ pub fn run(args: FmtArgs, config: &Config) -> Result<()> {
     // The action the formatted should perform,
     // e.g. check formatting, format in place, or emit formatted file to stdout.
     let action = if args.check {
-        // adding the `--check` flag will shortcircuit the ability to emit the formatted file
         FmtAction::Check
     } else if let Some(emit_target) = args.emit {
         FmtAction::Emit(emit_target)
