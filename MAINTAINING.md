@@ -54,7 +54,6 @@ We take an inspiration from the awesome release notes that [Visual Studio Code][
 #### Template
 
 ```markdown
-# Scarb X.Y.Z
 [Cairo release notes ➡️](https://github.com/starkware-libs/cairo/releases/tag/vX.Y.Z)
 
 Welcome to the release notes for Scarb vX.Y.Z!
