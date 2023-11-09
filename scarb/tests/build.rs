@@ -635,3 +635,55 @@ fn workspace_as_dep() {
             )),
     );
 }
+
+#[test]
+fn can_define_edition() {
+    let code = indoc! {r#"
+        fn example() -> Nullable<felt252> { null() }
+    "#};
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .lib_cairo(code)
+        .edition("2023_01")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .lib_cairo(code)
+        .edition("2023_10")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure();
+}
+
+#[test]
+fn edition_must_exist() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().edition("2021").build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+             error: failed to parse manifest at: [..]/Scarb.toml
+
+             Caused by:
+                 TOML parse error at line 4, column 11
+                   |
+                 4 | edition = "2021"
+                   |           ^^^^^^
+                 unknown variant `2021`, expected `2023_01` or `2023_10`
+        "#});
+}

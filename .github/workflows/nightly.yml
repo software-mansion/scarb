@@ -171,13 +171,30 @@ jobs:
   notify_failed:
     runs-on: ubuntu-latest
     # Do not run on dry_run or success
-    if: always() && ${{ !(inputs.dry_run) }} && contains(needs.*.result, 'failure')
-    needs: [ cleanup, upload, release, check, prepare ]
+    if: always() && !(inputs.dry_run) && contains(needs.*.result, 'failure')
+    needs: [ cleanup, upload, release, prepare ]
     steps:
       - name: Notifying about Nightly fail!
         uses: slackapi/slack-github-action@v1.24.0
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_FAILURE_WEBHOOK_URL }}
+        with:
+          payload: |
+            {
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+            
+
+  notify_failed_check:
+    runs-on: ubuntu-latest
+    # Do not run on dry_run, check success or if we have already notified
+    if: always() && !(inputs.dry_run) && needs.check.result == 'failure'  && needs.notify_failed.result == 'skipped'
+    needs: [ check, notify_failed ]
+    steps:
+      - name: Notifying about check fail!
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_CHECK_FAILURE_WEBHOOK_URL }}
         with:
           payload: |
             {

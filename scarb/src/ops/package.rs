@@ -4,25 +4,35 @@ use std::io::{Seek, SeekFrom, Write};
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
-use indoc::writedoc;
+use indoc::{formatdoc, indoc, writedoc};
+
+use crate::sources::client::PackageRepository;
 
 use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
+use serde::Serialize;
 
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
 use crate::core::{Package, PackageId, PackageName, Workspace};
 use crate::flock::FileLockGuard;
 use crate::internal::restricted_names;
-use crate::{ops, MANIFEST_FILE_NAME};
+use crate::{ops, MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME};
 
 const VERSION: u8 = 1;
 const VERSION_FILE_NAME: &str = "VERSION";
 const ORIGINAL_MANIFEST_FILE_NAME: &str = "Scarb.orig.toml";
 
-const RESERVED_FILES: &[&str] = &[VERSION_FILE_NAME, ORIGINAL_MANIFEST_FILE_NAME];
+const RESERVED_FILES: &[&str] = &[
+    VERSION_FILE_NAME,
+    ORIGINAL_MANIFEST_FILE_NAME,
+    VCS_INFO_FILE_NAME,
+];
 
-pub struct PackageOpts;
+#[derive(Clone)]
+pub struct PackageOpts {
+    pub allow_dirty: bool,
+}
 
 /// A listing of files to include in the archive, without actually building it yet.
 ///
@@ -88,10 +98,38 @@ fn before_package(ws: &Workspace<'_>) -> Result<()> {
     Ok(())
 }
 
-#[tracing::instrument(level = "trace", skip(_opts, ws))]
+#[derive(Serialize)]
+struct GitVcsInfo {
+    sha1: String,
+}
+
+#[derive(Serialize)]
+struct VcsInfo {
+    git: GitVcsInfo,
+    path_in_vcs: String,
+}
+
+fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Option<VcsInfo>> {
+    ensure!(
+        opts.allow_dirty || repo.is_clean()?,
+        indoc! {r#"
+            cannot package a repository containing uncommited changes
+            help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
+        "#}
+    );
+
+    Ok(Some(VcsInfo {
+        path_in_vcs: repo.path_in_vcs()?,
+        git: GitVcsInfo {
+            sha1: repo.head_rev_hash()?,
+        },
+    }))
+}
+
+#[tracing::instrument(level = "trace", skip(opts, ws))]
 fn package_one_impl(
     pkg_id: PackageId,
-    _opts: &PackageOpts,
+    opts: &PackageOpts,
     ws: &Workspace<'_>,
 ) -> Result<FileLockGuard> {
     let pkg = ws.fetch_package(&pkg_id)?;
@@ -102,9 +140,7 @@ fn package_one_impl(
 
     // TODO(mkaput): Check metadata
 
-    // TODO(#643): Check dirty in VCS (but do not do it when listing!).
-
-    let recipe = prepare_archive_recipe(pkg)?;
+    let recipe = prepare_archive_recipe(pkg, opts)?;
     let num_files = recipe.len();
 
     // Package up and test a temporary tarball and only move it to the final location if it actually
@@ -147,15 +183,28 @@ fn package_one_impl(
 
 fn list_one_impl(
     pkg_id: PackageId,
-    _opts: &PackageOpts,
+    opts: &PackageOpts,
     ws: &Workspace<'_>,
 ) -> Result<Vec<Utf8PathBuf>> {
     let pkg = ws.fetch_package(&pkg_id)?;
-    let recipe = prepare_archive_recipe(pkg)?;
+    let recipe = prepare_archive_recipe(pkg, opts)?;
     Ok(recipe.into_iter().map(|f| f.path).collect())
 }
 
-fn prepare_archive_recipe(pkg: &Package) -> Result<ArchiveRecipe> {
+fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRecipe> {
+    ensure!(
+        pkg.manifest.targets.iter().any(|x| x.is_lib()),
+        formatdoc!(
+            r#"
+            cannot archive package `{package_name}` without a `lib` target
+            help: add `[lib]` section to package manifest
+             --> Scarb.toml
+            +   [lib]
+            "#,
+            package_name = pkg.id.name,
+        )
+    );
+
     let mut recipe = source_files(pkg)?;
 
     // Sort the recipe before any checks, to ensure generated errors are reproducible.
@@ -184,6 +233,20 @@ fn prepare_archive_recipe(pkg: &Package) -> Result<ArchiveRecipe> {
         path: VERSION_FILE_NAME.into(),
         contents: ArchiveFileContents::Generated(Box::new(|| Ok(VERSION.to_string().into_bytes()))),
     });
+
+    // Add VCS info file.
+    if let Ok(repo) = PackageRepository::open(pkg) {
+        recipe.push(ArchiveFile {
+            path: VCS_INFO_FILE_NAME.into(),
+            contents: ArchiveFileContents::Generated({
+                let opts = opts.clone();
+                Box::new(move || {
+                    let vcs_info = extract_vcs_info(repo, &opts)?;
+                    Ok(serde_json::to_string(&vcs_info)?.into_bytes())
+                })
+            }),
+        });
+    };
 
     // Put generated files in right order within the recipe.
     sort_recipe(&mut recipe);

@@ -1,0 +1,37 @@
+name: Scheduled tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      silent:
+        description: "Silence Slack notifications"
+        type: boolean
+        default: false
+  schedule:
+    - cron: '0 5 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    uses: ./.github/workflows/_check-release.yml
+    with:
+      fail-fast: false
+
+  notify-failed:
+    runs-on: ubuntu-latest
+    # Do not run on success
+    if: always() && !(inputs.silent) && contains(needs.*.result, 'failure')
+    needs: [ check ]
+    steps:
+      - name: Notifying about failed tests!
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_SCHEDULED_TESTS_FAILURE_WEBHOOK_URL }}
+        with:
+          payload: |
+            {
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }

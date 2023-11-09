@@ -8,6 +8,7 @@
 //!    repositories as source of super important information.
 
 use std::fmt;
+use std::path::Path;
 use std::process::Command;
 
 use anyhow::{anyhow, bail, Context, Result};
@@ -15,7 +16,7 @@ use camino::Utf8PathBuf;
 
 use scarb_ui::Verbosity;
 
-use crate::core::{Config, GitReference};
+use crate::core::{Config, GitReference, Package};
 use crate::flock::Filesystem;
 use crate::process::exec;
 
@@ -327,6 +328,57 @@ fn collect_refspecs(reference: &GitReference) -> (Vec<String>, bool) {
             ],
             true,
         ),
+    }
+}
+
+/// A wrapper over [`scarb::core::Package`] that provides functionality used to gather VCS info.
+pub struct PackageRepository {
+    pkg: Package,
+    repo: gix::Repository,
+}
+
+impl PackageRepository {
+    pub fn open(pkg: &Package) -> Result<Self> {
+        let repo = gix::discover(pkg.root().to_path_buf())?;
+        Ok(Self {
+            repo,
+            pkg: pkg.clone(),
+        })
+    }
+
+    fn work_dir(&self) -> Result<&Path> {
+        self.repo
+            .work_dir()
+            .context("cannot get repository working directory")
+    }
+
+    pub fn is_clean(&self) -> Result<bool> {
+        // `git status -s` output is empty only if there are no changes at all, but always returns success.
+        // `git diff-index --quiet HEAD` returns status code correctly, but doesn't take untracked files into account.
+        let output = git_command()
+            .current_dir(self.work_dir()?)
+            .arg("status")
+            .arg("-s")
+            .output()?;
+
+        Ok(output.stdout.is_empty())
+    }
+
+    pub fn head_rev_hash(&self) -> Result<String> {
+        Ok(self.repo.rev_parse_single("HEAD")?.to_string())
+    }
+
+    /// Calculate relative path from the repository root to the package root.
+    pub fn path_in_vcs(&self) -> Result<String> {
+        Ok(self
+            .pkg
+            .root()
+            .to_path_buf()
+            .strip_prefix(self.work_dir()?)?
+            .to_path_buf()
+            .to_string()
+            // Unify paths on windows and unix based systems
+            .replace('\\', "/"))
     }
 }
 

@@ -10,6 +10,7 @@ use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
+use scarb::DEFAULT_TARGET_DIR_NAME;
 use test_case::test_case;
 
 use scarb_test_support::command::Scarb;
@@ -209,6 +210,7 @@ fn simple() {
                 [package]
                 name = "foo"
                 version = "1.0.0"
+                edition = "2023_01"
 
                 [dependencies]
             "#},
@@ -356,6 +358,7 @@ fn generated_manifest() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies.git_dep]
             version = "^0.2.0"
@@ -454,6 +457,7 @@ fn workspace() {
                 [package]
                 name = "hello"
                 version = "1.0.0"
+                edition = "2023_01"
 
                 [dependencies.path_dep]
                 version = "^1.0.0"
@@ -468,6 +472,199 @@ fn workspace() {
 
     PackageChecker::assert(&t.child("target/package/workspace_dep-1.0.0.tar.zst"))
         .name_and_version("workspace_dep", "1.0.0");
+}
+
+#[test]
+fn clean_repo() {
+    let t = TempDir::new().unwrap();
+
+    simple_project().build(&t);
+    t.child(".gitignore")
+        .write_str(DEFAULT_TARGET_DIR_NAME)
+        .unwrap();
+    gitx::init(&t);
+
+    // Fetch is run to make sure that Scarb.lock is created before the repo init.
+    // Otherwise random changes preventing packaging the project might occur.
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("fetch")
+        .assert()
+        .success();
+
+    t.child("src/bar.cairo").write_str("fn bar() {}").unwrap();
+    gitx::commit(&t);
+
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("package")
+        .assert()
+        .success();
+
+    PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
+        .name_and_version("foo", "1.0.0")
+        .contents(&[
+            "VERSION",
+            "VCS.json",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+            "src/lib.cairo",
+            "src/foo.cairo",
+            "src/bar.cairo",
+        ])
+        .file_matches("VCS.json", r#"{"git":{"sha1":"[..]"},"path_in_vcs":""}"#);
+}
+
+#[test]
+fn dirty_repo() {
+    let t = TempDir::new().unwrap();
+
+    simple_project().build(&t);
+    gitx::init(&t);
+    gitx::commit(&t);
+
+    t.child("src/bar.cairo").write_str("fn bar() {}").unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Packaging foo v1.0.0 [..]
+            error: cannot package a repository containing uncommited changes
+            help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
+        "#});
+}
+
+#[test]
+fn dirty_repo_allow_dirty() {
+    let t = TempDir::new().unwrap();
+
+    simple_project().build(&t);
+    gitx::init(&t);
+    gitx::commit(&t);
+
+    t.child("src/bar.cairo").write_str("fn bar() {}").unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--allow-dirty")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
+        .name_and_version("foo", "1.0.0")
+        .contents(&[
+            "VERSION",
+            "VCS.json",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+            "src/lib.cairo",
+            "src/foo.cairo",
+            "src/bar.cairo",
+        ])
+        .file_matches("VCS.json", r#"{"git":{"sha1":"[..]"},"path_in_vcs":""}"#);
+}
+
+#[test]
+fn list_clean_repo() {
+    let t = TempDir::new().unwrap();
+
+    simple_project().build(&t);
+    gitx::init(&t);
+    gitx::commit(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--list")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
+            VERSION
+            Scarb.orig.toml
+            Scarb.toml
+            VCS.json
+            src/foo.cairo
+            src/lib.cairo
+        "#}));
+}
+
+#[test]
+fn list_dirty_repo() {
+    let t = TempDir::new().unwrap();
+
+    simple_project().build(&t);
+    gitx::init(&t);
+    gitx::commit(&t);
+    t.child("src/bar.cairo").write_str("fn bar() {}").unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--list")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(unix_paths_to_os_lossy(indoc! {r#"
+            VERSION
+            Scarb.orig.toml
+            Scarb.toml
+            VCS.json
+            src/bar.cairo
+            src/foo.cairo
+            src/lib.cairo
+        "#}));
+}
+
+#[test]
+fn nested_package_vcs_path() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("bar")
+        .build(&t.child("foo/bar"));
+    WorkspaceBuilder::start()
+        // Trick to test if packages are sorted alphabetically by name in the output.
+        .add_member("foo/bar")
+        .build(&t);
+    t.child(".gitignore")
+        .write_str(DEFAULT_TARGET_DIR_NAME)
+        .unwrap();
+
+    gitx::init(&t);
+
+    // Fetch is run to make sure that Scarb.lock is created before the repo init.
+    // Otherwise random changes preventing packaging the project might occur.
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("fetch")
+        .assert()
+        .success();
+
+    gitx::commit(&t);
+
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("package")
+        .arg("-p")
+        .arg("bar")
+        .assert()
+        .success();
+
+    PackageChecker::assert(&t.child("target/package/bar-1.0.0.tar.zst"))
+        .name_and_version("bar", "1.0.0")
+        .contents(&[
+            "VERSION",
+            "VCS.json",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+            "src/lib.cairo",
+        ])
+        .file_matches(
+            "VCS.json",
+            r#"{"git":{"sha1":"[..]"},"path_in_vcs":"foo/bar"}"#,
+        );
 }
 
 #[test]
@@ -602,6 +799,8 @@ fn windows_restricted_filenames() {
         "#});
 }
 
+/// This test requires you to be able to make symlinks.
+/// For windows, this may require you to enable developer mode.
 #[test]
 fn package_symlink() {
     let t = TempDir::new().unwrap();
@@ -782,6 +981,9 @@ fn ignore_file(ignore_path: &str, setup_git: bool, expect_ignore_to_work: bool) 
     expected.push("VERSION");
     expected.push("Scarb.orig.toml");
     expected.push("Scarb.toml");
+    if setup_git {
+        expected.push("VCS.json");
+    }
     if !expect_ignore_to_work {
         expected.push("ignore.txt");
     }
@@ -836,4 +1038,29 @@ fn ignore_whitelist_pattern() {
             noignore.txt
             src/lib.cairo
         "#}));
+}
+
+#[test]
+fn no_lib_target() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .manifest_extra(indoc! {r#"
+        [[target.starknet-contract]]
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging foo v1.0.0 [..]
+        error: cannot archive package `foo` without a `lib` target
+        help: add `[lib]` section to package manifest
+         --> Scarb.toml
+        +   [lib]
+        "#});
 }

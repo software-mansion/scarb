@@ -10,7 +10,8 @@ use scarb_ui::args::PackagesSource;
 
 use crate::compiler::CompilationUnit;
 use crate::core::{
-    DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId, Target, Workspace,
+    edition_variant, DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId,
+    Target, Workspace,
 };
 use crate::ops;
 use crate::version::CommitInfo;
@@ -125,10 +126,13 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
         .build()
         .unwrap();
 
+    let edition = edition_variant(package.manifest.edition);
+
     m::PackageMetadataBuilder::default()
         .id(wrap_package_id(package.id))
         .name(package.id.name.clone())
         .version(package.id.version.clone())
+        .edition(Some(edition.to_string()))
         .source(wrap_source_id(package.id.source_id))
         .manifest_path(package.manifest_path())
         .root(package.root())

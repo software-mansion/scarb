@@ -91,7 +91,7 @@ impl Compiler for LibCompiler {
 
             let metadata = {
                 let _ = trace_span!("casm_calc_metadata").enter();
-                calc_metadata(&program, Default::default(), false)
+                calc_metadata(&program, Default::default())
                     .context("failed calculating Sierra variables")?
             };
 

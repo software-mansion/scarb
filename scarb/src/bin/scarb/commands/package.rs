@@ -21,7 +21,10 @@ pub fn run(args: PackageArgs, config: &Config) -> Result<()> {
         .map(|p| p.id)
         .collect::<Vec<_>>();
 
-    let opts = PackageOpts;
+    let opts = PackageOpts {
+        /// Disable dirty repository checks when printing package files.
+        allow_dirty: args.list || args.allow_dirty,
+    };
 
     if args.list {
         let result = ops::package_list(&packages, &opts, &ws)?;

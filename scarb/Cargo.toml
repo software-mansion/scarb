@@ -55,8 +55,8 @@ serde-untagged.workspace = true
 serde-value.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-sha2.workspace = true
 serde_repr.workspace = true
+sha2.workspace = true
 smallvec.workspace = true
 smol_str.workspace = true
 tar.workspace = true
@@ -76,10 +76,10 @@ xxhash-rust.workspace = true
 zip.workspace = true
 zstd.workspace = true
 
-[target.'cfg(not(linux))'.dependencies]
+[target.'cfg(not(target_os = "linux"))'.dependencies]
 reqwest = { workspace = true, default-features = true}
 
-[target.'cfg(linux)'.dependencies]
+[target.'cfg(target_os = "linux")'.dependencies]
 reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
 
 [dev-dependencies]

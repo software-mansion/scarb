@@ -52,6 +52,7 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
     Box::new(TomlPackage {
         name: summary.package_id.name.clone(),
         version: MaybeWorkspace::Defined(summary.package_id.version.clone()),
+        edition: Some(MaybeWorkspace::Defined(pkg.manifest.edition)),
         authors: metadata.authors.clone().map(MaybeWorkspace::Defined),
         urls: metadata.urls.clone(),
         description: metadata.description.clone().map(MaybeWorkspace::Defined),

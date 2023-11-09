@@ -1,11 +1,15 @@
 use anyhow::{anyhow, Result};
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_compiler::project::{ProjectConfig, ProjectConfigContent};
+use cairo_lang_compiler::project::{
+    AllCratesConfig, ProjectConfig, ProjectConfigContent, SingleCrateConfig,
+};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{AsFilesGroupMut, FilesGroup, FilesGroupEx};
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
+use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
+use smol_str::SmolStr;
 use std::sync::Arc;
 use tracing::trace;
 
@@ -87,13 +91,31 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         })
         .collect();
 
+    let crates_config: OrderedHashMap<SmolStr, SingleCrateConfig> = unit
+        .components
+        .iter()
+        .map(|component| {
+            (
+                component.cairo_package_name(),
+                SingleCrateConfig {
+                    edition: component.package.manifest.edition,
+                },
+            )
+        })
+        .collect();
+
+    let crates_config = AllCratesConfig {
+        override_map: crates_config,
+        ..Default::default()
+    };
+
     let corelib = Some(Directory::Real(
         unit.core_package_component().target.source_root().into(),
     ));
 
     let content = ProjectConfigContent {
         crate_roots,
-        crates_config: Default::default(),
+        crates_config,
     };
 
     let project_config = ProjectConfig {

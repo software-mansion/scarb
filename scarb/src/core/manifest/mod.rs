@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 
 use anyhow::{bail, ensure, Result};
+use cairo_lang_filesystem::db::Edition;
 use camino::Utf8PathBuf;
 use derive_builder::Builder;
 use semver::VersionReq;
@@ -40,6 +41,8 @@ mod version_req;
 pub struct Manifest {
     pub summary: Summary,
     pub targets: Vec<Target>,
+    #[builder(default)]
+    pub edition: Edition,
     #[builder(default)]
     pub metadata: ManifestMetadata,
     #[builder(default = "ManifestCompilerConfig::default_for_profile(&Profile::DEV)")]
@@ -117,4 +120,12 @@ impl ManifestBuilder {
         }
         Ok(())
     }
+}
+
+pub fn edition_variant(edition: Edition) -> String {
+    let edition = serde_json::to_value(edition).unwrap();
+    let serde_json::Value::String(edition) = edition else {
+        panic!("Edition should always be a string.")
+    };
+    edition
 }

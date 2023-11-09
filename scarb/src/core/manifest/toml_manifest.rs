@@ -4,6 +4,7 @@ use std::default::Default;
 use std::fs;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
+use cairo_lang_filesystem::db::Edition;
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
 use pathdiff::diff_utf8_paths;
@@ -103,6 +104,7 @@ pub struct TomlWorkspace {
 #[serde(rename_all = "kebab-case")]
 pub struct PackageInheritableFields {
     pub version: Option<Version>,
+    pub edition: Option<Edition>,
     pub authors: Option<Vec<String>>,
     pub description: Option<String>,
     pub documentation: Option<String>,
@@ -140,6 +142,7 @@ impl PackageInheritableFields {
     get_field!(license, String);
     get_field!(license_file, String);
     get_field!(repository, String);
+    get_field!(edition, Edition);
 
     pub fn readme(&self, workspace_root: &Utf8Path, package_root: &Utf8Path) -> Result<PathOrBool> {
         let Ok(Some(readme)) = readme_for_package(workspace_root, self.readme.as_ref()) else {
@@ -177,6 +180,7 @@ type MaybeWorkspaceField<T> = MaybeWorkspace<T, TomlWorkspaceField>;
 pub struct TomlPackage {
     pub name: PackageName,
     pub version: MaybeWorkspaceField<Version>,
+    pub edition: Option<MaybeWorkspaceField<Edition>>,
     pub authors: Option<MaybeWorkspaceField<Vec<String>>>,
     pub urls: Option<BTreeMap<String, String>>,
     pub description: Option<MaybeWorkspaceField<String>>,
@@ -521,9 +525,17 @@ impl TomlManifest {
                 .transpose()?,
         };
 
+        let edition = package
+            .edition
+            .clone()
+            .map(|edition| edition.resolve("edition", || inheritable_package.edition()))
+            .transpose()?
+            .unwrap_or_default();
+
         let manifest = ManifestBuilder::default()
             .summary(summary)
             .targets(targets)
+            .edition(edition)
             .metadata(metadata)
             .compiler_config(compiler_config)
             .scripts(scripts)
@@ -565,7 +577,7 @@ impl TomlManifest {
 
         if targets.is_empty() {
             trace!("manifest has no targets, assuming default `lib` target");
-            let default_source_path = root.join(DEFAULT_SOURCE_PATH);
+            let default_source_path = root.join(DEFAULT_SOURCE_PATH.as_path());
             let target =
                 Target::without_params(TargetKind::LIB, package_name.clone(), default_source_path);
             targets.push(target);
@@ -663,14 +675,14 @@ impl TomlManifest {
         default_name: &SmolStr,
         root: &Utf8Path,
     ) -> Result<Option<Target>> {
-        let default_source_path = root.join(DEFAULT_SOURCE_PATH);
+        let default_source_path = root.join(DEFAULT_SOURCE_PATH.as_path());
         let Some(target) = target else {
             return Ok(None);
         };
 
         if let Some(source_path) = &target.source_path {
             ensure!(
-                kind == TargetKind::TEST || source_path == DEFAULT_SOURCE_PATH,
+                kind == TargetKind::TEST || source_path == DEFAULT_SOURCE_PATH.as_path(),
                 "`{kind}` target cannot specify custom `source-path`"
             );
         }

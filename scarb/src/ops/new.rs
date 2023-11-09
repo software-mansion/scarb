@@ -1,9 +1,10 @@
 use anyhow::{bail, ensure, Context, Result};
+use cairo_lang_filesystem::db::Edition;
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
 
-use crate::core::{Config, PackageName};
+use crate::core::{edition_variant, Config, PackageName};
 use crate::internal::fsx;
 use crate::internal::restricted_names;
 use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
@@ -132,12 +133,14 @@ fn mk(
 
     // Create the `Scarb.toml` file.
     let manifest_path = canonical_path.join(MANIFEST_FILE_NAME);
+    let edition = edition_variant(Edition::V2023_10);
     fsx::write(
         &manifest_path,
         formatdoc! {r#"
             [package]
             name = "{name}"
             version = "0.1.0"
+            edition = "{edition}"
 
             # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
@@ -146,7 +149,7 @@ fn mk(
     )?;
 
     // Create hello world source files (with respective parent directories) if none exist.
-    let source_path = canonical_path.join(DEFAULT_SOURCE_PATH);
+    let source_path = canonical_path.join(DEFAULT_SOURCE_PATH.as_path());
     if !source_path.exists() {
         fsx::create_dir_all(source_path.parent().unwrap())?;
 
