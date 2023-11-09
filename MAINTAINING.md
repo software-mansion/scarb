@@ -48,14 +48,14 @@ We take an inspiration from the awesome release notes that [Visual Studio Code][
 3. Leave release title intact.
 4. If this is applicable, _✅ Set as a pre-release_.
 5. If this is applicable, _✅ Set as the latest release_.
-6. _✅ Create a discussion for this release_.
-7. Use the **[template](#template)**.
-8. Don't forget to _Save draft_ frequently!
+6. Use the **[template](#template)**.
+7. Don't forget to _Save draft_ frequently!
 
 #### Template
 
 ```markdown
 # Scarb X.Y.Z
+[Cairo release notes ➡️](https://github.com/starkware-libs/cairo/releases/tag/vX.Y.Z)
 
 Welcome to the release notes for Scarb vX.Y.Z!
 This release is all about blahblah
