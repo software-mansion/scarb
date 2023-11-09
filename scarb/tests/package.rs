@@ -1039,3 +1039,28 @@ fn ignore_whitelist_pattern() {
             src/lib.cairo
         "#}));
 }
+
+#[test]
+fn no_lib_target() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .manifest_extra(indoc! {r#"
+        [[target.starknet-contract]]
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging foo v1.0.0 [..]
+        error: cannot archive package `foo` without a `lib` target
+        help: add `[lib]` section to package manifest
+         --> Scarb.toml
+        +   [lib]
+        "#});
+}

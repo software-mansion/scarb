@@ -4,7 +4,7 @@ use std::io::{Seek, SeekFrom, Write};
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
-use indoc::{indoc, writedoc};
+use indoc::{formatdoc, indoc, writedoc};
 
 use crate::sources::client::PackageRepository;
 
@@ -192,6 +192,19 @@ fn list_one_impl(
 }
 
 fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRecipe> {
+    ensure!(
+        pkg.manifest.targets.iter().any(|x| x.is_lib()),
+        formatdoc!(
+            r#"
+            cannot archive package `{package_name}` without a `lib` target
+            help: add `[lib]` section to package manifest
+             --> Scarb.toml
+            +   [lib]
+            "#,
+            package_name = pkg.id.name,
+        )
+    );
+
     let mut recipe = source_files(pkg)?;
 
     // Sort the recipe before any checks, to ensure generated errors are reproducible.
