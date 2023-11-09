@@ -22,6 +22,7 @@ Let's take a closer look at `Scarb.toml`:
 [package]
 name = "hello_world"
 version = "0.1.0"
+edition = "2023_10"
 
 [dependencies]
 ```

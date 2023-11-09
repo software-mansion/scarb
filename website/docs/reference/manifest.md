@@ -52,7 +52,7 @@ Setting the edition key in `[package]` will affect all targets in the package, i
 edition = '2023_01'
 ```
 
-Most manifests have the edition field filled in automatically by `scarb new` with the default edition.
+Most manifests have the edition field filled in automatically by `scarb new` with the latest available edition.
 If the edition field is not present in Scarb.toml, then the default edition is assumed.
 
 ### `cairo-version`
