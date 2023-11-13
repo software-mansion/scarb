@@ -85,6 +85,7 @@ reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
 
 [dev-dependencies]
 assert_fs.workspace = true
+expect-test.workspace = true
 fs_extra.workspace = true
 io_tee.workspace = true
 libc.workspace = true

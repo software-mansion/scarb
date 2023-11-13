@@ -1,8 +1,10 @@
-use assert_fs::prelude::*;
-use assert_fs::TempDir;
-use indoc::indoc;
 use std::fs;
 use std::time::Duration;
+
+use assert_fs::prelude::*;
+use assert_fs::TempDir;
+use expect_test::expect;
+use indoc::indoc;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
@@ -37,6 +39,52 @@ fn usage() {
         .stdout_matches(indoc! {r#"
         [..] Downloading bar v1.0.0 ([..])
         "#});
+
+    let expected = expect![["
+        GET /config.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        user-agent: ...
+
+        200 OK
+        accept-ranges: bytes
+        content-length: ...
+        content-type: application/json
+        etag: ...
+        last-modified: ...
+
+        ###
+
+        GET /index/3/b/bar.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        user-agent: ...
+
+        200 OK
+        accept-ranges: bytes
+        content-length: ...
+        content-type: application/json
+        etag: ...
+        last-modified: ...
+
+        ###
+
+        GET /bar-1.0.0.tar.zst
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        user-agent: ...
+
+        200 OK
+        accept-ranges: bytes
+        content-length: ...
+        content-type: application/octet-stream
+        etag: ...
+        last-modified: ...
+    "]];
+    expected.assert_eq(&registry.logs());
 }
 
 #[test]
@@ -71,6 +119,34 @@ fn not_found() {
         Caused by:
             package not found in registry: baz ^1 (registry+http://[..])
         "#});
+
+    let expected = expect![["
+        GET /config.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        user-agent: ...
+
+        200 OK
+        accept-ranges: bytes
+        content-length: ...
+        content-type: application/json
+        etag: ...
+        last-modified: ...
+
+        ###
+
+        GET /index/3/b/baz.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        user-agent: ...
+
+        404 Not Found
+        content-length: 0
+        etag: ...
+    "]];
+    expected.assert_eq(&registry.logs());
 }
 
 #[test]
@@ -98,8 +174,21 @@ fn missing_config_json() {
             0: failed to fetch registry config
             1: HTTP status client error (404 Not Found) for url (http://[..]/config.json)
         "#});
+
+    let expected = expect![["
+        GET /config.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        user-agent: ...
+
+        404 Not Found
+        content-length: 0
+        etag: ...
+    "]];
+    expected.assert_eq(&registry.logs());
 }
 
 // TODO(mkaput): Test errors properly when package is in index, but tarball is missing.
 // TODO(mkaput): Test interdependencies.
-// TODO(mkaput): Test offline mode.
+// TODO(mkaput): Test offline mode, including with some cache prepopulated.

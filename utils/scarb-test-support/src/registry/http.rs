@@ -1,8 +1,8 @@
-use assert_fs::fixture::ChildPath;
-use assert_fs::prelude::*;
 use std::fmt;
 use std::path::Path;
 
+use assert_fs::fixture::ChildPath;
+use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use once_cell::sync::Lazy;
 use serde_json::json;
@@ -10,6 +10,16 @@ use tokio::runtime;
 
 use crate::registry::local::LocalRegistry;
 use crate::simple_http_server::SimpleHttpServer;
+
+// Keep a global multi-threading runtime to contain all running servers in one shared
+// thread pool, while maintaining synchronous nature of tests.
+static RUNTIME: Lazy<runtime::Runtime> = Lazy::new(|| {
+    runtime::Builder::new_multi_thread()
+        .worker_threads(1)
+        .enable_all()
+        .build()
+        .unwrap()
+});
 
 pub struct HttpRegistry {
     local: LocalRegistry,
@@ -21,16 +31,6 @@ pub struct HttpRegistry {
 
 impl HttpRegistry {
     pub fn serve() -> Self {
-        // Keep a global multi-threading runtime to contain all running servers in one shared
-        // thread pool, while maintaining synchronous nature of tests.
-        static RUNTIME: Lazy<runtime::Runtime> = Lazy::new(|| {
-            runtime::Builder::new_multi_thread()
-                .worker_threads(1)
-                .enable_all()
-                .build()
-                .unwrap()
-        });
-
         let local = LocalRegistry::create();
         let server = {
             let _guard = RUNTIME.enter();
@@ -58,8 +58,13 @@ impl HttpRegistry {
     }
 
     /// Enable this when writing tests to see what requests are being made in the test.
-    pub fn debug_log_requests(&self) {
-        self.server.log_requests(true);
+    pub fn print_logs(&self) {
+        self.server.print_logs(true);
+    }
+
+    pub fn logs(&self) -> String {
+        let _guard = RUNTIME.enter();
+        RUNTIME.block_on(async { self.server.logs_to_string().await })
     }
 }
 
