@@ -127,9 +127,7 @@ fn url_pointing_to_file() {
     drop(registry_t);
 }
 
-// FIXME(#883): Unignore these tests.
 #[test]
-#[cfg_attr(target_os = "windows", ignore = "ignored on windows as of #883")]
 fn publish() {
     let t = TempDir::new().unwrap();
     let index = t.child("index");
@@ -185,7 +183,7 @@ fn publish() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:d891504afc86fc0a7a9f38533a66ef2763990a1ff4be3eb9d5836d32a9bd9ad3",
+                "cksum": "sha256:3771f51595f7df697a822823989714b3c9a83764a67fa517ac6d8df3cfc642bf",
             }
         ])
     );
@@ -198,20 +196,18 @@ fn publish() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:d05d4c524aa0136e42df6138f8e97f8b2b7fc946911cef8ae40baf38acf87ef6",
+                "cksum": "sha256:07db55042bb0be41eb957d649960cd16764426ce9df1cd0729d408acdf3c63cb",
             },
             {
                 "v": "1.1.0",
                 "deps": [],
-                "cksum": "sha256:ec55410dac39c63ea1372f44f05b74bcf14ec6305749d80bd607be0603271ef1",
+                "cksum": "sha256:bd36828fa2134ec3ce9599511404f85958d8ed091fc3b03a3f3d8426d0a0f720",
             }
         ])
     );
 }
 
-// FIXME(#883): Unignore these tests.
 #[test]
-#[cfg_attr(target_os = "windows", ignore = "ignored on windows as of #883")]
 fn publish_overwrites_existing() {
     let index = TempDir::new().unwrap();
 
@@ -238,7 +234,7 @@ fn publish_overwrites_existing() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:49bb7566594c89da4603578aebe812d750d1fefa1fccc532461963d813093b11",
+                "cksum": "sha256:b34e1202407e1a9b743f261cdc27723d0344619a6dc3058bdacd9b17f6106027",
             }
         ])
     );
@@ -266,7 +262,7 @@ fn publish_overwrites_existing() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:f6555b5b27327d40196578005de811158a3ac7401c36c13ee02b27afe7aab00f",
+                "cksum": "sha256:4682a7645acf0b342556778a0544e2871ae910efc609d89ab3bedf9491219ab5",
             }
         ])
     );
