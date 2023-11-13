@@ -133,7 +133,7 @@ fn mk(
 
     // Create the `Scarb.toml` file.
     let manifest_path = canonical_path.join(MANIFEST_FILE_NAME);
-    let edition = edition_variant(Edition::V2023_10);
+    let edition = edition_variant(Edition::latest());
     fsx::write(
         &manifest_path,
         formatdoc! {r#"
