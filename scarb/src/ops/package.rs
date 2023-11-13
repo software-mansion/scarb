@@ -385,6 +385,19 @@ fn tar(
                     .with_context(|| format!("failed to stat: {disk_path}"))?;
 
                 header.set_metadata_in_mode(&metadata, tar::HeaderMode::Deterministic);
+
+                // Although the `set_metadata_in_mode` call above should set `mtime` to a
+                // deterministic value, it fails to do so due to
+                // https://github.com/alexcrichton/tar-rs/issues/341.
+                // Also, the constant value used there is funky and I do not feel convinced about
+                // its stability. Therefore, we use our own `mtime` value explicitly here.
+                //
+                // From `set_metadata_in_mode` implementation in `tar` crate:
+                // > We could in theory set the mtime to zero here, but not all
+                // > tools seem to behave well when ingesting files with a 0
+                // > timestamp.
+                header.set_mtime(1);
+
                 header.set_cksum();
 
                 ar.append_data(&mut header, &archive_path, &mut file)
@@ -400,10 +413,7 @@ fn tar(
                 header.set_mode(0o644);
                 header.set_size(contents.len() as u64);
 
-                // From `set_metadata_in_mode` implementation in `tar` crate:
-                // We could in theory set the mtime to zero here, but not all
-                // tools seem to behave well when ingesting files with a 0
-                // timestamp.
+                // Same as above.
                 header.set_mtime(1);
 
                 header.set_cksum();
