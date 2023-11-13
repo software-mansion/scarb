@@ -91,3 +91,38 @@ fn unify_target_dir() {
         fsx::canonicalize(t.child("target")).unwrap()
     );
 }
+
+#[test]
+fn target_name_duplicate() {
+    let t = TempDir::new().unwrap();
+    let pkg1 = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+        [[target.starknet-contract]]
+        name = "hello"
+        "#})
+        .build(&pkg1);
+    let pkg2 = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .manifest_extra(indoc! {r#"
+        [[target.starknet-contract]]
+        name = "hello"
+        "#})
+        .build(&pkg2);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: workspace contains duplicate target definitions `starknet-contract (hello)`
+            help: use different target names to resolve the conflict
+        "#});
+}
