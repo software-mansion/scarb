@@ -122,6 +122,14 @@ impl Ui {
         self.error(format!("{error:?}").trim())
     }
 
+    /// Nicely format an [`anyhow::Error`] for display to the user, and print it with [`Ui::warn`].
+    pub fn warn_anyhow(&self, error: &anyhow::Error) {
+        // NOTE: Some errors, particularly ones from `toml_edit` like to add trailing newlines.
+        //   This isn't a big problem for users, but it's causing issues in tests, where trailing
+        //   whitespace collides with `indoc`.
+        self.warn(format!("{error:?}").trim())
+    }
+
     fn do_print<T: Message>(&self, message: T) {
         match self.output_format {
             OutputFormat::Text => message.print_text(),

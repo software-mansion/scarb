@@ -38,7 +38,11 @@ pub trait RegistryClient: Send + Sync {
     ///
     /// This method is not expected to internally cache the result, but it is not prohibited either.
     /// Scarb applies specialized caching layers on top of clients.
-    async fn get_records(&self, package: PackageName) -> Result<RegistryResource<IndexRecords>>;
+    async fn get_records(
+        &self,
+        package: PackageName,
+        cache_key: Option<&str>,
+    ) -> Result<RegistryResource<IndexRecords>>;
 
     /// Download the package `.tar.zst` file.
     ///

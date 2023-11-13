@@ -94,8 +94,14 @@ impl LocalRegistryClient {
 #[async_trait]
 impl RegistryClient for LocalRegistryClient {
     #[tracing::instrument(level = "trace", skip_all)]
-    async fn get_records(&self, package: PackageName) -> Result<RegistryResource<IndexRecords>> {
+    async fn get_records(
+        &self,
+        package: PackageName,
+        cache_key: Option<&str>,
+    ) -> Result<RegistryResource<IndexRecords>> {
         trace!(?package);
+
+        assert!(cache_key.is_none());
 
         let records_path = self.records_path(&package);
 

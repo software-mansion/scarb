@@ -46,6 +46,7 @@ itertools.workspace = true
 once_cell.workspace = true
 pathdiff.workspace = true
 petgraph.workspace = true
+redb.workspace = true
 reqwest.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }

@@ -31,7 +31,7 @@ pub struct RegistrySource<'c> {
 impl<'c> RegistrySource<'c> {
     pub fn new(source_id: SourceId, config: &'c Config) -> Result<Self> {
         let client = Self::create_client(source_id, config)?;
-        let client = RegistryClientCache::new(client, config)?;
+        let client = RegistryClientCache::new(source_id, client, config)?;
 
         let package_sources = PackageSourceStore::new(source_id, config);
 
