@@ -66,7 +66,10 @@ fn not_found() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: package not found in registry: baz ^1 (registry+http://[..])
+        error: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
+
+        Caused by:
+            package not found in registry: baz ^1 (registry+http://[..])
         "#});
 }
 

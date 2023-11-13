@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{env, mem};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use once_cell::sync::OnceCell;
 use tokio::runtime::{Builder, Handle, Runtime};
@@ -216,8 +216,8 @@ impl Config {
         self.offline
     }
 
-    /// If `false`, Scarb should never access the network, but otherwise it should continue operating
-    /// if possible.
+    /// If `false`, Scarb should never access the network, but otherwise it should continue
+    /// operating if possible.
     pub const fn network_allowed(&self) -> bool {
         !self.offline()
     }
@@ -238,12 +238,19 @@ impl Config {
         self.profile.clone()
     }
 
-    /// Returns handle to global HTTP client.
+    /// Returns handle to the global HTTP client.
     ///
     /// The global client maintains an internal connection pool, and is preconfigured with known
     /// user agent etc.
     ///
     /// It is fine to clone the returned instance, because it contains [`Arc`] inside.
+    ///
+    /// ## Offline mode
+    ///
+    /// The HTTP client is usually needed to interact with the internet. Scarb has support for the
+    /// offline mode, that, when turned on, should prevent Scarb from accessing the internet.
+    /// Therefore, it is recommended to prefer using the [`Self::online_http`] method returns
+    /// an HTTP client just like this method, but failing if Scarb is running in offline mode.
     pub fn http(&self) -> Result<reqwest::Client> {
         self.http_client
             .get_or_try_init(|| {
@@ -253,6 +260,30 @@ impl Config {
                     .context("failed to create HTTP client")
             })
             .cloned()
+    }
+
+    /// Returns handle to the global HTTP client, failing if Scarb is running in the offline mode.
+    ///
+    /// In offline mode, this method returns a generic error stating that Scarb is running in the
+    /// offline mode. It is recommended to chain calls to this method with
+    /// [`with_context`][`anyhow::Context::with_context`] to provide more context to the user,
+    /// for example:
+    ///
+    /// ```no_run
+    /// # use anyhow::Context;
+    /// # let config: scarb::core::Config = todo!();
+    /// # let source_id = "";
+    /// let _ = config.online_http()
+    ///     .with_context(|| "failed to query remote registry: {source_id}");
+    /// ```
+    ///
+    /// See [`Self::http`] for more information about returned object.
+    pub fn online_http(&self) -> Result<reqwest::Client> {
+        ensure!(
+            self.network_allowed(),
+            "cannot access the network in offline mode"
+        );
+        self.http()
     }
 }
 

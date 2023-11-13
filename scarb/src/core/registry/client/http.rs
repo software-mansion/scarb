@@ -1,18 +1,18 @@
 use std::path::PathBuf;
-use std::sync::Arc;
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use fs4::tokio::AsyncFileExt;
 use futures::StreamExt;
 use reqwest::StatusCode;
+use scarb_ui::components::Status;
 use tokio::fs::OpenOptions;
 use tokio::io;
 use tokio::io::BufWriter;
 use tokio::sync::OnceCell;
-use tracing::{debug, trace};
+use tracing::{debug, error, trace};
 
-use crate::core::registry::client::RegistryClient;
+use crate::core::registry::client::{RegistryClient, RegistryResource};
 use crate::core::registry::index::{IndexConfig, IndexRecords};
 use crate::core::{Config, Package, PackageId, PackageName, SourceId};
 use crate::flock::{FileLockGuard, Filesystem};
@@ -56,7 +56,7 @@ impl<'c> HttpRegistryClient<'c> {
             debug!("fetching registry config: {index_config_url}");
 
             let index_config = config
-                .http()?
+                .online_http()?
                 .get(index_config_url)
                 .send()
                 .await?
@@ -78,17 +78,13 @@ impl<'c> HttpRegistryClient<'c> {
 
 #[async_trait]
 impl<'c> RegistryClient for HttpRegistryClient<'c> {
-    fn is_offline(&self) -> bool {
-        false
-    }
-
-    async fn get_records(&self, package: PackageName) -> Result<Option<Arc<IndexRecords>>> {
+    async fn get_records(&self, package: PackageName) -> Result<RegistryResource<IndexRecords>> {
         let index_config = self.index_config().await?;
         let records_url = index_config.index.expand(package.into())?;
 
         let response = self
             .config
-            .http()?
+            .online_http()?
             .get(records_url)
             .send()
             .await?
@@ -97,7 +93,7 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
         if let Err(err) = &response {
             if let Some(status) = err.status() {
                 if status == StatusCode::NOT_FOUND {
-                    return Ok(None);
+                    return Ok(RegistryResource::NotFound);
                 }
             }
         }
@@ -107,24 +103,37 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
             .await
             .context("failed to deserialize index records")?;
 
-        Ok(Some(Arc::new(records)))
+        Ok(RegistryResource::Download {
+            resource: records,
+            cache_key: None,
+        })
     }
 
-    async fn is_downloaded(&self, _package: PackageId) -> bool {
-        // TODO(mkaput): Cache downloaded packages.
-        false
-    }
-
-    async fn download(&self, package: PackageId) -> Result<PathBuf> {
+    async fn download(&self, package: PackageId) -> Result<RegistryResource<PathBuf>> {
         let dl_url = self.index_config().await?.dl.expand(package.into())?;
+
+        self.config
+            .ui()
+            .print(Status::new("Downloading", &package.to_string()));
 
         let response = self
             .config
-            .http()?
+            .online_http()?
             .get(dl_url)
             .send()
             .await?
-            .error_for_status()?;
+            .error_for_status();
+
+        if let Err(err) = &response {
+            if let Some(status) = err.status() {
+                if status == StatusCode::NOT_FOUND {
+                    error!("package `{package}` not found in registry: {err:?}");
+                    return Ok(RegistryResource::NotFound);
+                }
+            }
+        }
+
+        let response = response?;
 
         let output_path = self.dl_fs.path_existent()?.join(package.tarball_name());
         let output_file = OpenOptions::new()
@@ -149,7 +158,10 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
                 .context("failed to save response chunk on disk")?;
         }
 
-        Ok(output_path.into_std_path_buf())
+        Ok(RegistryResource::Download {
+            resource: output_path.into_std_path_buf(),
+            cache_key: None,
+        })
     }
 
     async fn supports_publish(&self) -> Result<bool> {
