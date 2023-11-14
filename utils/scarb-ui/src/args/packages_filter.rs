@@ -39,6 +39,36 @@ pub struct PackagesFilter {
     workspace: bool,
 }
 
+/// [`clap`] structured arguments that provide package selection.
+/// Contrary to [`PackagesFilter`], this struct uses long names for its arguments only.
+///
+/// ## Usage
+///
+/// ```no_run
+/// # use scarb_ui::args::PackagesFilterLong;
+/// #[derive(clap::Parser)]
+/// struct Args {
+///     #[command(flatten)]
+///     packages_filter: PackagesFilterLong,
+/// }
+/// ```
+#[derive(clap::Parser, Clone, Debug)]
+pub struct PackagesFilterLong {
+    /// Packages to run this command on, can be a concrete package name (`foobar`) or
+    /// a prefix glob (`foo*`).
+    #[arg(
+        long,
+        default_value = "*",
+        value_delimiter = PACKAGES_FILTER_DELIMITER,
+        value_name = "SPEC",
+        env = "SCARB_PACKAGES_FILTER"
+    )]
+    package: Vec<String>,
+    /// Run for all packages in the workspace.
+    #[arg(long, conflicts_with = "package")]
+    workspace: bool,
+}
+
 impl PackagesFilter {
     /// Find *exactly one* package matching the filter.
     ///
@@ -197,6 +227,22 @@ impl PackagesFilter {
     }
 }
 
+impl PackagesFilterLong {
+    /// Convert this struct to [`PackagesFilter`].
+    pub fn into_packages_filter(self) -> PackagesFilter {
+        PackagesFilter {
+            package: self.package,
+            workspace: self.workspace,
+        }
+    }
+}
+
+impl From<PackagesFilterLong> for PackagesFilter {
+    fn from(long: PackagesFilterLong) -> Self {
+        long.into_packages_filter()
+    }
+}
+
 #[derive(PartialEq, Eq, Hash)]
 enum Spec<'a> {
     All,
@@ -315,7 +361,7 @@ mod tests {
 
     use camino::{Utf8Path, Utf8PathBuf};
 
-    use crate::args::{PackagesFilter, PackagesSource, WithManifestPath};
+    use crate::args::{PackagesFilter, PackagesFilterLong, PackagesSource, WithManifestPath};
 
     #[derive(Clone)]
     struct MockPackage {
@@ -509,5 +555,19 @@ mod tests {
             names.clone(),
             packages.into_iter().map(|p| p.name).collect(),
         );
+    }
+
+    #[test]
+    fn can_convert_long_filter() {
+        let mock = MockSource::new(mock_packages(vec!["first", "second"]));
+
+        let filter = PackagesFilterLong {
+            package: vec!["second".into()],
+            workspace: false,
+        };
+        let filter: PackagesFilter = filter.into();
+
+        let package = filter.match_one(&mock).unwrap();
+        assert_eq!(package.name, "second");
     }
 }
