@@ -30,9 +30,13 @@ pub fn list_source_files(pkg: &Package) -> Result<Vec<Utf8PathBuf>> {
 fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> {
     let filter = {
         let pkg = pkg.clone();
-        let metadata = pkg.manifest.metadata.clone();
-        let readme = metadata.readme.unwrap_or_default();
-        let license_file = metadata.license_file.unwrap_or_default();
+        let readme = pkg.manifest.metadata.readme.clone().unwrap_or_default();
+        let license_file = pkg
+            .manifest
+            .metadata
+            .license_file
+            .clone()
+            .unwrap_or_default();
 
         move |entry: &DirEntry| -> bool {
             let path = entry.path();

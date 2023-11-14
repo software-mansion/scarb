@@ -766,6 +766,7 @@ fn include_readme_and_license() {
             license-file = "LICENSE.txt"
         "# })
         .unwrap();
+    t.child("README").write_str("README file").unwrap();
     t.child("LICENSE.txt")
         .write_str("This is LICENSE file")
         .unwrap();
@@ -779,8 +780,15 @@ fn include_readme_and_license() {
 
     PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
         .name_and_version("foo", "1.0.0")
-        .contents(&["LICENSE", "VERSION", "Scarb.orig.toml", "Scarb.toml"])
-        .file_matches("LICENSE", "This is LICENSE file");
+        .contents(&[
+            "LICENSE",
+            "README.md",
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+        ])
+        .file_matches("LICENSE", "This is LICENSE file")
+        .file_matches("README.md", "README file");
 }
 
 #[test]
@@ -849,7 +857,6 @@ fn include_readme_and_license_from_workspace() {
             license-file = "LICENSE.md"
             readme = "MY_README"
         "#})
-        // Trick to test if packages are sorted alphabetically by name in the output.
         .add_member("foo")
         .build(&t);
 
