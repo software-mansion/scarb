@@ -1,14 +1,15 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fmt;
 
 use anyhow::{anyhow, bail, Result};
 use camino::{Utf8Path, Utf8PathBuf};
+use itertools::Itertools;
 use scarb_ui::args::PackagesSource;
 
 use crate::compiler::Profile;
 use crate::core::config::Config;
 use crate::core::package::Package;
-use crate::core::PackageId;
+use crate::core::{PackageId, Target};
 use crate::flock::RootFilesystem;
 use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME};
 
@@ -33,6 +34,12 @@ impl<'c> Workspace<'c> {
         config: &'c Config,
         profiles: Vec<Profile>,
     ) -> Result<Self> {
+        let targets = packages
+            .iter()
+            .flat_map(|p| p.manifest.targets.iter())
+            .collect_vec();
+        check_unique_targets(&targets)?;
+
         let packages = packages
             .iter()
             .map(|p| (p.id, p.clone()))
@@ -166,6 +173,21 @@ impl<'c> Workspace<'c> {
         names.sort();
         Ok(names)
     }
+}
+
+fn check_unique_targets(targets: &Vec<&Target>) -> Result<()> {
+    let mut used = HashSet::with_capacity(targets.len());
+    for target in targets {
+        if !used.insert((target.kind.as_str(), target.name.as_str())) {
+            bail!(
+                "workspace contains duplicate target definitions `{} ({})`\n\
+                 help: use different target names to resolve the conflict",
+                target.kind,
+                target.name
+            )
+        }
+    }
+    Ok(())
 }
 
 impl<'c> fmt::Display for Workspace<'c> {
