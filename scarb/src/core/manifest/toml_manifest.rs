@@ -498,16 +498,17 @@ impl TomlManifest {
             license_file: package
                 .license_file
                 .clone()
-                .map(|mw| {
-                    fsx::canonicalize_utf8(match mw {
-                        MaybeWorkspace::Defined(relative_path) => root.join(relative_path),
-                        MaybeWorkspace::Workspace(_) => mw.resolve("license_file", || {
-                            Ok(workspace_manifest_path
-                                .parent()
-                                .with_context(|| "failed to get workspace root directory")?
-                                .join(inheritable_package.license_file()?))
-                        })?,
-                    })
+                .map(|mw| match mw {
+                    MaybeWorkspace::Defined(license_rel_path) => {
+                        abs_canonical_path("license", manifest_path, &license_rel_path)
+                    }
+                    MaybeWorkspace::Workspace(_) => mw.resolve("license_file", || {
+                        abs_canonical_path(
+                            "license",
+                            workspace_manifest_path,
+                            &inheritable_package.license_file()?,
+                        )
+                    }),
                 })
                 .transpose()?,
             readme: readme_for_package(
@@ -839,20 +840,17 @@ pub fn readme_for_package(
         Some(PathOrBool::Bool(false)) => None,
     };
 
-    abs_canonical_path(package_root, file_name)
+    file_name
+        .map(|file_name| abs_canonical_path("readme", package_root, file_name))
+        .transpose()
 }
 
 /// Creates the absolute canonical path of the file and checks if it exists
-fn abs_canonical_path(prefix: &Utf8Path, path: Option<&Utf8Path>) -> Result<Option<Utf8PathBuf>> {
-    match path {
-        None => Ok(None),
-        Some(path) => {
-            let path = prefix.parent().unwrap().join(path);
-            let path = fsx::canonicalize_utf8(&path)
-                .with_context(|| format!("failed to find the file at {path}"))?;
-            Ok(Some(path))
-        }
-    }
+fn abs_canonical_path(file_label: &str, prefix: &Utf8Path, path: &Utf8Path) -> Result<Utf8PathBuf> {
+    let path = prefix.parent().unwrap().join(path);
+    let path = fsx::canonicalize_utf8(&path)
+        .with_context(|| format!("failed to find {file_label} at {path}"))?;
+    Ok(path)
 }
 
 const DEFAULT_README_FILES: &[&str] = &["README.md", "README.txt", "README"];

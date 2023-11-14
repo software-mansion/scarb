@@ -863,7 +863,7 @@ fn infer_readme_simple_bool() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            {"type":"error","message":"failed to parse manifest at: [..]/Scarb.toml[..]Caused by:[..]failed to find the file at [..]/README.md[..]"}
+            {"type":"error","message":"failed to parse manifest at: [..]/Scarb.toml[..]Caused by:[..]failed to find readme at [..]/README.md[..]"}
         "#});
 
     t.child("README.md").touch().unwrap();
