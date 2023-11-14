@@ -1,7 +1,10 @@
-use anyhow::{bail, Context, Result};
+use std::io::SeekFrom;
+
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use camino::Utf8Path;
 use redb::{MultimapTableDefinition, ReadableMultimapTable, ReadableTable, TableDefinition};
 use semver::Version;
+use tokio::io::AsyncSeekExt;
 use tokio::sync::OnceCell;
 use tokio::task::block_in_place;
 use tracing::trace;
@@ -12,7 +15,7 @@ use crate::core::registry::client::{
     CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
 };
 use crate::core::registry::index::{IndexRecord, IndexRecords};
-use crate::core::{Config, ManifestDependency, PackageId, SourceId};
+use crate::core::{Checksum, Config, ManifestDependency, PackageId, SourceId};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::fsx;
 
@@ -130,9 +133,13 @@ impl<'c> RegistryClientCache<'c> {
         }
     }
 
-    /// Layer over [`RegistryClient::download`] that caches the result.
+    /// Layer over [`RegistryClient::download`] that caches the result and may perform checksum
+    /// verification.
     #[tracing::instrument(level = "trace", skip_all)]
-    pub async fn download_with_cache(&self, package: PackageId) -> Result<FileLockGuard> {
+    pub async fn download_and_verify_with_cache(
+        &self,
+        package: PackageId,
+    ) -> Result<FileLockGuard> {
         // Skip downloading if the package already has been.
         if self.is_package_downloaded(package).await {
             trace!("found cached archive which is not empty, skipping download");
@@ -156,7 +163,10 @@ impl<'c> RegistryClientCache<'c> {
                 bail!("could not find downloadable archive for package indexed in registry: {package}")
             }
             RegistryDownload::Download(file) => {
-                trace!("package archive file downloaded successfully");
+                trace!("package archive file downloaded successfully, verifying checksum");
+                let checksum = self.get_record_maybe_uncached(package).await?.checksum;
+                let file = self.verify_checksum(package, &checksum, file).await?;
+                trace!("package archive file has valid checksum: {checksum}");
                 Ok(file)
             }
         }
@@ -196,6 +206,50 @@ impl<'c> RegistryClientCache<'c> {
             return false;
         };
         metadata.len() > 0
+    }
+
+    async fn verify_checksum(
+        &self,
+        package: PackageId,
+        checksum: &Checksum,
+        file: FileLockGuard,
+    ) -> Result<FileLockGuard> {
+        let mut file = file.into_async();
+
+        file.seek(SeekFrom::Start(0)).await?;
+        let actual = checksum
+            .digest()
+            .update_read_async(&mut *file)
+            .await
+            .with_context(|| format!("failed to calculate checksum of: {package}"))?
+            .finish();
+
+        ensure!(
+            actual == *checksum,
+            "failed to verify the checksum of downloaded archive"
+        );
+
+        let file = file.into_sync().await;
+        Ok(file)
+    }
+
+    async fn get_record_maybe_uncached(&self, package: PackageId) -> Result<IndexRecord> {
+        let db = self.db().await?;
+
+        if let Some(record) = db.get_record(package).await? {
+            Ok(record)
+        } else {
+            // NOTE: This branch is unlikely to happen, because we probably have run
+            //   `get_records_with_cache` in `RegistrySource` before, which puts checksums
+            //   into the cache.
+            let records = self
+                .get_records_with_cache(&ManifestDependency::exact_for_package(package))
+                .await?;
+            records
+                .into_iter()
+                .find(|r| r.version == package.version)
+                .ok_or_else(|| anyhow!("package not found in registry: {package}"))
+        }
     }
 }
 
@@ -282,6 +336,34 @@ impl CacheDatabase {
             }
             trace!("records read successfully");
             Ok(records)
+        })
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn get_record(&self, package_id: PackageId) -> Result<Option<IndexRecord>> {
+        trace!("getting one record from cache");
+        block_in_place(|| -> Result<_> {
+            let tx = self.db.begin_read()?;
+            let table = tx.open_multimap_table(RECORDS)?;
+
+            for g in table.get(package_id.name.as_str())? {
+                let g = g?;
+                let (raw_version, raw_record) = g.value();
+
+                let version = Version::parse(raw_version)
+                    .with_context(|| db_fatal("failed to parse version from cache"))?;
+                if version != package_id.version {
+                    continue;
+                }
+
+                let record = serde_json::from_slice::<IndexRecord>(raw_record)
+                    .with_context(|| db_fatal("failed to deserialize index record from cache"))?;
+
+                trace!("record found and read successfully");
+                return Ok(Some(record));
+            }
+            trace!("record not found");
+            Ok(None)
         })
     }
 

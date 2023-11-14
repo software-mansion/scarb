@@ -50,6 +50,14 @@ impl ManifestDependency {
         ManifestDependencyInner::builder()
     }
 
+    pub fn exact_for_package(package_id: PackageId) -> Self {
+        Self::builder()
+            .name(package_id.name.clone())
+            .version_req(DependencyVersionReq::exact(&package_id.version))
+            .source_id(package_id.source_id)
+            .build()
+    }
+
     pub fn matches_summary(&self, summary: &Summary) -> bool {
         self.matches_package_id(summary.package_id)
     }
