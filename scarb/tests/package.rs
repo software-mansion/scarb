@@ -177,6 +177,9 @@ fn simple() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
+        [..] Verifying foo-1.0.0.tar.zst
+        [..] Compiling foo v1.0.0 ([..])
+        [..]  Finished release target(s) in [..]
         [..]  Packaged [..] files, [..] ([..] compressed)
         "#});
 
@@ -337,6 +340,7 @@ fn generated_manifest() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-verify")
         .current_dir(&t)
         .assert()
         .success();
@@ -424,6 +428,7 @@ fn workspace() {
     Scarb::quick_snapbox()
         .arg("package")
         .arg("--workspace")
+        .arg("--no-verify")
         .current_dir(&t)
         .assert()
         .success()
@@ -766,6 +771,7 @@ fn include_readme_and_license() {
             license-file = "LICENSE.txt"
         "# })
         .unwrap();
+    t.child("src/lib.cairo").write_str("fn foo() {}").unwrap();
     t.child("README").write_str("README file").unwrap();
     t.child("LICENSE.txt")
         .write_str("This is LICENSE file")
@@ -786,6 +792,7 @@ fn include_readme_and_license() {
             "VERSION",
             "Scarb.orig.toml",
             "Scarb.toml",
+            "src/lib.cairo",
         ])
         .file_matches("LICENSE", "This is LICENSE file")
         .file_matches("README.md", "README file");
@@ -809,6 +816,9 @@ fn include_readme_and_license_from_outside() {
             readme = "../README"
         "# })
         .unwrap();
+    t.child("foo/src/lib.cairo")
+        .write_str("fn foo() {}")
+        .unwrap();
 
     Scarb::quick_snapbox()
         .current_dir(t.child("foo"))
@@ -825,6 +835,7 @@ fn include_readme_and_license_from_outside() {
             "VERSION",
             "Scarb.orig.toml",
             "Scarb.toml",
+            "src/lib.cairo",
         ])
         .file_matches("LICENSE", "This is LICENSE file")
         .file_matches("README.md", "This is README file");
@@ -849,6 +860,9 @@ fn include_readme_and_license_from_workspace() {
             license-file.workspace = true
             readme.workspace = true
         "# })
+        .unwrap();
+    t.child("foo/src/lib.cairo")
+        .write_str("fn foo() {}")
         .unwrap();
 
     WorkspaceBuilder::start()
@@ -877,6 +891,7 @@ fn include_readme_and_license_from_workspace() {
             "VERSION",
             "Scarb.orig.toml",
             "Scarb.toml",
+            "src/lib.cairo",
         ])
         .file_matches("LICENSE", "This is LICENSE file")
         .file_matches("README.md", "This is README file");
@@ -1188,5 +1203,54 @@ fn no_lib_target() {
         help: add `[lib]` section to package manifest
          --> Scarb.toml
         +   [lib]
+        "#});
+}
+
+#[test]
+fn error_on_verification() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .src("src/lib.cairo", ".")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging foo v1.0.0 [..]
+        [..] Verifying foo-1.0.0.tar.zst
+        [..] Compiling foo v1.0.0 ([..])
+        error: Skipped tokens. Expected: [..]
+         --> [..]
+        .
+        ^
+
+
+        error: could not compile `foo` due to previous error
+        "#});
+}
+
+#[test]
+fn package_without_verification() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .src("src/lib.cairo", "fn foo().")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--no-verify")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging foo v1.0.0 [..]
+        [..]  Packaged [..]
         "#});
 }
