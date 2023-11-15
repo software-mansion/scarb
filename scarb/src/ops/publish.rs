@@ -10,6 +10,7 @@ use crate::sources::RegistrySource;
 pub struct PublishOpts {
     pub index_url: Url,
     pub allow_dirty: bool,
+    pub verify: bool,
 }
 
 #[tracing::instrument(level = "debug", skip(opts, ws))]
@@ -31,6 +32,7 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
 
     let package_opts = ops::PackageOpts {
         allow_dirty: opts.allow_dirty,
+        verify: opts.verify,
     };
     let tarball = ops::package_one(package_id, &package_opts, ws)?;
 

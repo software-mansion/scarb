@@ -1,11 +1,13 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
+use std::ops::Deref;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc, writedoc};
 
+use crate::internal::fsx::remove_dir_all;
 use crate::sources::client::PackageRepository;
 
 use scarb_ui::components::Status;
@@ -14,7 +16,7 @@ use serde::Serialize;
 
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{Package, PackageId, PackageName, Workspace};
+use crate::core::{Package, PackageId, PackageName, TargetKind, Workspace};
 use crate::flock::FileLockGuard;
 use crate::internal::restricted_names;
 use crate::{
@@ -35,6 +37,7 @@ const RESERVED_FILES: &[&str] = &[
 #[derive(Clone)]
 pub struct PackageOpts {
     pub allow_dirty: bool,
+    pub verify: bool,
 }
 
 /// A listing of files to include in the archive, without actually building it yet.
@@ -160,7 +163,10 @@ fn package_one_impl(
 
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
-    // TODO(mkaput): Verify.
+    if opts.verify {
+        dst.seek(SeekFrom::Start(0))?;
+        run_verify(ws, pkg, &dst)?;
+    }
 
     dst.seek(SeekFrom::Start(0))?;
 
@@ -283,6 +289,39 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     );
 
     Ok(recipe)
+}
+
+fn run_verify(ws: &Workspace<'_>, pkg: &Package, tar: &FileLockGuard) -> Result<()> {
+    ws.config()
+        .ui()
+        .print(Status::new("Verifying", &pkg.id.tarball_name()));
+
+    let decoder: zstd::Decoder<'_, _> = zstd::stream::Decoder::new(tar.deref())?;
+    let mut ar = tar::Archive::new(decoder);
+    let dst = tar.path().parent().unwrap().join(pkg.id.tarball_basename());
+
+    if dst.exists() {
+        remove_dir_all(&dst)?;
+    }
+
+    // From Cargo:
+    // We don't need to set the Modified Time, as it's not relevant to verification
+    // and it errors on filesystems that don't support setting a modified timestamp
+    ar.set_preserve_mtime(false);
+    ar.unpack(dst.parent().unwrap())?;
+
+    let ws = ops::read_workspace(&dst.join(MANIFEST_FILE_NAME), ws.config())?;
+
+    ops::compile(
+        ws.members().map(|p| p.id).collect(),
+        ops::CompileOpts {
+            include_targets: Vec::new(),
+            exclude_targets: vec![TargetKind::TEST.clone()],
+        },
+        &ws,
+    )?;
+
+    Ok(())
 }
 
 #[tracing::instrument(level = "trace", skip_all)]

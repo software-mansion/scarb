@@ -24,6 +24,7 @@ pub fn run(args: PackageArgs, config: &Config) -> Result<()> {
     let opts = PackageOpts {
         // Disable dirty repository checks when printing package files.
         allow_dirty: args.list || args.allow_dirty,
+        verify: !args.no_verify,
     };
 
     if args.list {

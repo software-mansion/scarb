@@ -330,6 +330,10 @@ pub struct PackageArgs {
     #[arg(long)]
     pub allow_dirty: bool,
 
+    /// Don't verify the contents by building them
+    #[arg(long)]
+    pub no_verify: bool,
+
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 }
@@ -344,6 +348,10 @@ pub struct PublishArgs {
     /// Allow working directories with uncommitted VCS changes to be packaged.
     #[arg(long)]
     pub allow_dirty: bool,
+
+    /// Don't verify the contents by building them
+    #[arg(long)]
+    pub no_verify: bool,
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
