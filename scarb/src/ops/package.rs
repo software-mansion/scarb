@@ -165,7 +165,7 @@ fn package_one_impl(
 
     if opts.verify {
         dst.seek(SeekFrom::Start(0))?;
-        run_verify(ws, pkg, &dst)?;
+        run_verify(ws, pkg, &dst).with_context(|| "failed to verify package tarball")?;
     }
 
     dst.seek(SeekFrom::Start(0))?;
