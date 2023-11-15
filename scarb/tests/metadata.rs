@@ -281,6 +281,7 @@ fn manifest_targets_and_metadata() {
         )
         .unwrap();
     t.child("README.md").touch().unwrap();
+    t.child("license.md").touch().unwrap();
 
     let meta = Scarb::quick_snapbox()
         .arg("--json")
@@ -314,7 +315,11 @@ fn manifest_targets_and_metadata() {
                 "keywords".to_string(),
             ]))
             .license(Some("MIT License".to_string()))
-            .license_file(Some("./license.md".to_string()))
+            .license_file(
+                fsx::canonicalize_utf8(t.join("license.md"))
+                    .unwrap()
+                    .into_string()
+            )
             .readme(
                 fsx::canonicalize_utf8(t.join("README.md"))
                     .unwrap()
@@ -858,7 +863,7 @@ fn infer_readme_simple_bool() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            {"type":"error","message":"failed to parse manifest at: [..]/Scarb.toml[..]Caused by:[..]failed to find the readme at [..]/README.md[..]"}
+            {"type":"error","message":"failed to parse manifest at: [..]/Scarb.toml[..]Caused by:[..]failed to find readme at [..]/README.md[..]"}
         "#});
 
     t.child("README.md").touch().unwrap();

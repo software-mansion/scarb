@@ -17,7 +17,10 @@ use crate::core::publishing::source::list_source_files;
 use crate::core::{Package, PackageId, PackageName, Workspace};
 use crate::flock::FileLockGuard;
 use crate::internal::restricted_names;
-use crate::{ops, MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME};
+use crate::{
+    ops, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME,
+    VCS_INFO_FILE_NAME,
+};
 
 const VERSION: u8 = 1;
 const VERSION_FILE_NAME: &str = "VERSION";
@@ -227,6 +230,22 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
         path: ORIGINAL_MANIFEST_FILE_NAME.into(),
         contents: ArchiveFileContents::OnDisk(pkg.manifest_path().to_owned()),
     });
+
+    // Add README file
+    if let Some(readme) = &pkg.manifest.metadata.readme {
+        recipe.push(ArchiveFile {
+            path: DEFAULT_README_FILE_NAME.into(),
+            contents: ArchiveFileContents::OnDisk(readme.clone()),
+        })
+    }
+
+    // Add LICENSE file
+    if let Some(license) = &pkg.manifest.metadata.license_file {
+        recipe.push(ArchiveFile {
+            path: DEFAULT_LICENSE_FILE_NAME.into(),
+            contents: ArchiveFileContents::OnDisk(license.clone()),
+        })
+    }
 
     // Add archive version file.
     recipe.push(ArchiveFile {

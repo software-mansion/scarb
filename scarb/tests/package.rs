@@ -754,7 +754,133 @@ fn list_ignore_nested() {
         "#}));
 }
 
-// TODO(mkaput): Invalid readme/license path
+#[test]
+fn include_readme_and_license() {
+    let t = TempDir::new().unwrap();
+
+    t.child("Scarb.toml")
+        .write_str(indoc! { r#"
+            [package]
+            name = "foo"
+            version = "1.0.0"
+            license-file = "LICENSE.txt"
+        "# })
+        .unwrap();
+    t.child("README").write_str("README file").unwrap();
+    t.child("LICENSE.txt")
+        .write_str("This is LICENSE file")
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("package")
+        .arg("--allow-dirty")
+        .assert()
+        .success();
+
+    PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
+        .name_and_version("foo", "1.0.0")
+        .contents(&[
+            "LICENSE",
+            "README.md",
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+        ])
+        .file_matches("LICENSE", "This is LICENSE file")
+        .file_matches("README.md", "README file");
+}
+
+#[test]
+fn include_readme_and_license_from_outside() {
+    let t = TempDir::new().unwrap();
+
+    t.child("README").write_str("This is README file").unwrap();
+    t.child("LICENSE.txt")
+        .write_str("This is LICENSE file")
+        .unwrap();
+
+    t.child("foo/Scarb.toml")
+        .write_str(indoc! { r#"
+            [package]
+            name = "foo"
+            version = "1.0.0"
+            license-file = "../LICENSE.txt"
+            readme = "../README"
+        "# })
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .current_dir(t.child("foo"))
+        .arg("package")
+        .arg("--allow-dirty")
+        .assert()
+        .success();
+
+    PackageChecker::assert(&t.child("foo/target/package/foo-1.0.0.tar.zst"))
+        .name_and_version("foo", "1.0.0")
+        .contents(&[
+            "LICENSE",
+            "README.md",
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+        ])
+        .file_matches("LICENSE", "This is LICENSE file")
+        .file_matches("README.md", "This is README file");
+}
+
+#[test]
+fn include_readme_and_license_from_workspace() {
+    let t = TempDir::new().unwrap();
+
+    t.child("LICENSE.md")
+        .write_str("This is LICENSE file")
+        .unwrap();
+    t.child("MY_README")
+        .write_str("This is README file")
+        .unwrap();
+
+    t.child("foo/Scarb.toml")
+        .write_str(indoc! { r#"
+            [package]
+            name = "foo"
+            version = "1.0.0"
+            license-file.workspace = true
+            readme.workspace = true
+        "# })
+        .unwrap();
+
+    WorkspaceBuilder::start()
+        .manifest_extra(indoc! {r#"
+            [workspace.package]
+            license-file = "LICENSE.md"
+            readme = "MY_README"
+        "#})
+        .add_member("foo")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("package")
+        .arg("-p")
+        .arg("foo")
+        .arg("--allow-dirty")
+        .assert()
+        .success();
+
+    PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
+        .name_and_version("foo", "1.0.0")
+        .contents(&[
+            "LICENSE",
+            "README.md",
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+        ])
+        .file_matches("LICENSE", "This is LICENSE file")
+        .file_matches("README.md", "This is README file");
+}
 
 #[test]
 #[cfg_attr(

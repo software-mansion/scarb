@@ -16,6 +16,7 @@ use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME, SCARB_I
 /// * Skip any subdirectories containing `Scarb.toml`.
 /// * Skip `<root>/target` directory.
 /// * Skip `Scarb.lock` file.
+/// * Skip README and LICENSE files.
 /// * **Skip `Scarb.toml` file, as users of this function may want to generate it themselves.**
 /// * Symlinks within the package directory are followed, while symlinks outside are just skipped.
 /// * Avoid crossing file system boundaries, because it can complicate our lives.
@@ -29,6 +30,14 @@ pub fn list_source_files(pkg: &Package) -> Result<Vec<Utf8PathBuf>> {
 fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> {
     let filter = {
         let pkg = pkg.clone();
+        let readme = pkg.manifest.metadata.readme.clone().unwrap_or_default();
+        let license_file = pkg
+            .manifest
+            .metadata
+            .license_file
+            .clone()
+            .unwrap_or_default();
+
         move |entry: &DirEntry| -> bool {
             let path = entry.path();
             let is_root = entry.depth() == 0;
@@ -50,6 +59,11 @@ fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> 
                     f == MANIFEST_FILE_NAME || f == LOCK_FILE_NAME || f == DEFAULT_TARGET_DIR_NAME
                 })
             {
+                return false;
+            }
+
+            // Skip README and LICENSE files
+            if path == readme || path == license_file {
                 return false;
             }
 

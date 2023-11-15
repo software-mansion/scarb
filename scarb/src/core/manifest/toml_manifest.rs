@@ -111,7 +111,7 @@ pub struct PackageInheritableFields {
     pub homepage: Option<String>,
     pub keywords: Option<Vec<String>>,
     pub license: Option<String>,
-    pub license_file: Option<String>,
+    pub license_file: Option<Utf8PathBuf>,
     pub readme: Option<PathOrBool>,
     pub repository: Option<String>,
     pub cairo_version: Option<VersionReq>,
@@ -140,7 +140,7 @@ impl PackageInheritableFields {
     get_field!(documentation, String);
     get_field!(homepage, String);
     get_field!(license, String);
-    get_field!(license_file, String);
+    get_field!(license_file, Utf8PathBuf);
     get_field!(repository, String);
     get_field!(edition, Edition);
 
@@ -188,7 +188,7 @@ pub struct TomlPackage {
     pub homepage: Option<MaybeWorkspaceField<String>>,
     pub keywords: Option<MaybeWorkspaceField<Vec<String>>>,
     pub license: Option<MaybeWorkspaceField<String>>,
-    pub license_file: Option<MaybeWorkspaceField<String>>,
+    pub license_file: Option<MaybeWorkspaceField<Utf8PathBuf>>,
     pub readme: Option<MaybeWorkspaceField<PathOrBool>>,
     pub repository: Option<MaybeWorkspaceField<String>>,
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
@@ -498,7 +498,18 @@ impl TomlManifest {
             license_file: package
                 .license_file
                 .clone()
-                .map(|mw| mw.resolve("license_file", || inheritable_package.license_file()))
+                .map(|mw| match mw {
+                    MaybeWorkspace::Defined(license_rel_path) => {
+                        abs_canonical_path("license", manifest_path, &license_rel_path)
+                    }
+                    MaybeWorkspace::Workspace(_) => mw.resolve("license_file", || {
+                        abs_canonical_path(
+                            "license",
+                            workspace_manifest_path,
+                            &inheritable_package.license_file()?,
+                        )
+                    }),
+                })
                 .transpose()?,
             readme: readme_for_package(
                 manifest_path,
@@ -829,20 +840,17 @@ pub fn readme_for_package(
         Some(PathOrBool::Bool(false)) => None,
     };
 
-    abs_canonical_path(package_root, file_name)
+    file_name
+        .map(|file_name| abs_canonical_path("readme", package_root, file_name))
+        .transpose()
 }
 
-/// Creates the absolute canonical path of the README file and checks if it exists
-fn abs_canonical_path(prefix: &Utf8Path, readme: Option<&Utf8Path>) -> Result<Option<Utf8PathBuf>> {
-    match readme {
-        None => Ok(None),
-        Some(readme) => {
-            let path = prefix.parent().unwrap().join(readme);
-            let path = fsx::canonicalize_utf8(&path)
-                .with_context(|| format!("failed to find the readme at {path}"))?;
-            Ok(Some(path))
-        }
-    }
+/// Creates the absolute canonical path of the file and checks if it exists
+fn abs_canonical_path(file_label: &str, prefix: &Utf8Path, path: &Utf8Path) -> Result<Utf8PathBuf> {
+    let path = prefix.parent().unwrap().join(path);
+    let path = fsx::canonicalize_utf8(&path)
+        .with_context(|| format!("failed to find {file_label} at {path}"))?;
+    Ok(path)
 }
 
 const DEFAULT_README_FILES: &[&str] = &["README.md", "README.txt", "README"];
