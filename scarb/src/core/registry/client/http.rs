@@ -7,27 +7,27 @@ use reqwest::header::{
     HeaderMap, HeaderName, HeaderValue, ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED,
 };
 use reqwest::{Response, StatusCode};
-use scarb_ui::components::Status;
 use tokio::io;
-use tokio::io::BufWriter;
+use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::sync::OnceCell;
 use tracing::{debug, trace, warn};
+
+use scarb_ui::components::Status;
 
 use crate::core::registry::client::{
     CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
 };
 use crate::core::registry::index::{IndexConfig, IndexRecords};
 use crate::core::{Config, Package, PackageId, PackageName, SourceId};
-use crate::flock::FileLockGuard;
+use crate::flock::{FileLockGuard, Filesystem};
 
 // TODO(mkaput): Progressbar.
 // TODO(mkaput): Request timeout.
 
 /// Remote registry served by the HTTP-based registry API.
 pub struct HttpRegistryClient<'c> {
-    source_id: SourceId,
     config: &'c Config,
-    cached_index_config: OnceCell<IndexConfig>,
+    index_config: IndexConfigManager<'c>,
 }
 
 enum HttpCacheKey {
@@ -36,43 +36,20 @@ enum HttpCacheKey {
     None,
 }
 
+struct IndexConfigManager<'c> {
+    source_id: SourceId,
+    config: &'c Config,
+    cache_file_name: String,
+    cache_fs: Filesystem,
+    cell: OnceCell<IndexConfig>,
+}
+
 impl<'c> HttpRegistryClient<'c> {
     pub fn new(source_id: SourceId, config: &'c Config) -> Result<Self> {
         Ok(Self {
-            source_id,
             config,
-            cached_index_config: Default::default(),
+            index_config: IndexConfigManager::new(source_id, config),
         })
-    }
-
-    async fn index_config(&self) -> Result<&IndexConfig> {
-        // TODO(mkaput): Cache config locally, honouring ETag and Last-Modified headers.
-
-        async fn load(source_id: SourceId, config: &Config) -> Result<IndexConfig> {
-            let index_config_url = source_id
-                .url
-                .join(IndexConfig::WELL_KNOWN_PATH)
-                .expect("Registry config URL should always be valid.");
-            debug!("fetching registry config: {index_config_url}");
-
-            let index_config = config
-                .online_http()?
-                .get(index_config_url)
-                .send()
-                .await?
-                .error_for_status()?
-                .json::<IndexConfig>()
-                .await?;
-
-            trace!(index_config = %serde_json::to_string(&index_config).unwrap());
-
-            Ok(index_config)
-        }
-
-        self.cached_index_config
-            .get_or_try_init(|| load(self.source_id, self.config))
-            .await
-            .context("failed to fetch registry config")
     }
 }
 
@@ -90,7 +67,7 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
             return Ok(RegistryResource::InCache);
         }
 
-        let index_config = self.index_config().await?;
+        let index_config = self.index_config.load().await?;
         let records_url = index_config.index.expand(package.into())?;
 
         let response = self
@@ -133,7 +110,7 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
         package: PackageId,
         create_scratch_file: CreateScratchFileCallback,
     ) -> Result<RegistryDownload<FileLockGuard>> {
-        let index_config = self.index_config().await?;
+        let index_config = self.index_config.load().await?;
         let dl_url = index_config.dl.expand(package.into())?;
 
         self.config
@@ -248,5 +225,110 @@ impl HttpCacheKey {
 
     fn is_none(&self) -> bool {
         matches!(self, Self::None)
+    }
+}
+
+impl<'c> IndexConfigManager<'c> {
+    fn new(source_id: SourceId, config: &'c Config) -> Self {
+        let cache_file_name = format!("{}.json", source_id.ident());
+        let cache_fs = config
+            .dirs()
+            .registry_dir()
+            .into_child("configs")
+            .into_child("http");
+
+        Self {
+            source_id,
+            config,
+            cache_file_name,
+            cache_fs,
+            cell: OnceCell::new(),
+        }
+    }
+
+    async fn load(&self) -> Result<&IndexConfig> {
+        self.cell
+            .get_or_try_init(|| self.load_impl_with_log())
+            .await
+            .context("failed to fetch registry config")
+    }
+
+    async fn load_impl_with_log(&self) -> Result<IndexConfig> {
+        let index_config = self.fetch().await?;
+        trace!(index_config = %serde_json::to_string(&index_config).unwrap());
+        Ok(index_config)
+    }
+
+    async fn fetch(&self) -> Result<IndexConfig> {
+        match self.fetch_from_cache().await {
+            Ok(Some(index_config)) => {
+                debug!("using cached config");
+                return Ok(index_config);
+            }
+            Ok(None) => {}
+            Err(err) => {
+                warn!("failed to fetch cached config: {err:?}");
+            }
+        }
+
+        let index_config = self.fetch_from_origin().await?;
+
+        if let Err(err) = self.save_in_cache(&index_config).await {
+            warn!("failed to save config in cache: {err:?}");
+        }
+
+        Ok(index_config)
+    }
+
+    fn may_be_cached(&self) -> bool {
+        self.cache_fs
+            .path_unchecked()
+            .join(&self.cache_file_name)
+            .exists()
+    }
+
+    async fn fetch_from_cache(&self) -> Result<Option<IndexConfig>> {
+        if !self.may_be_cached() {
+            return Ok(None);
+        }
+        let mut file = self
+            .cache_fs
+            .open_ro(&self.cache_file_name, &self.cache_file_name, self.config)?
+            .into_async();
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer).await?;
+        let index_config = serde_json::from_slice(&buffer)?;
+        Ok(Some(index_config))
+    }
+
+    async fn save_in_cache(&self, index_config: &IndexConfig) -> Result<()> {
+        let mut file = self
+            .cache_fs
+            .open_rw(&self.cache_file_name, &self.cache_file_name, self.config)?
+            .into_async();
+        let json = serde_json::to_vec(index_config)?;
+        file.write_all(&json).await?;
+        Ok(())
+    }
+
+    async fn fetch_from_origin(&self) -> Result<IndexConfig> {
+        let index_config_url = self
+            .source_id
+            .url
+            .join(IndexConfig::WELL_KNOWN_PATH)
+            .expect("Registry config URL should always be valid.");
+        debug!("fetching registry config: {index_config_url}");
+
+        let index_config = self
+            .config
+            .online_http()?
+            .get(index_config_url)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<IndexConfig>()
+            .await?;
+
+        Ok(index_config)
     }
 }

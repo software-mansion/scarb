@@ -278,21 +278,6 @@ fn caching() {
 
         ###
 
-        GET /config.json
-        accept: */*
-        accept-encoding: gzip, br, deflate
-        host: ...
-        user-agent: ...
-
-        200 OK
-        accept-ranges: bytes
-        content-length: ...
-        content-type: application/json
-        etag: ...
-        last-modified: ...
-
-        ###
-
         GET /index/3/b/bar.json
         accept: */*
         accept-encoding: gzip, br, deflate
