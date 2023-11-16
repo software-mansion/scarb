@@ -1,25 +1,24 @@
-use std::path::PathBuf;
 use std::str::FromStr;
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use async_trait::async_trait;
-use fs4::tokio::AsyncFileExt;
 use futures::StreamExt;
 use reqwest::header::{
     HeaderMap, HeaderName, HeaderValue, ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED,
 };
 use reqwest::{Response, StatusCode};
 use scarb_ui::components::Status;
-use tokio::fs::OpenOptions;
 use tokio::io;
 use tokio::io::BufWriter;
 use tokio::sync::OnceCell;
-use tracing::{debug, error, trace, warn};
+use tracing::{debug, trace, warn};
 
-use crate::core::registry::client::{RegistryClient, RegistryResource};
+use crate::core::registry::client::{
+    CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
+};
 use crate::core::registry::index::{IndexConfig, IndexRecords};
 use crate::core::{Config, Package, PackageId, PackageName, SourceId};
-use crate::flock::{FileLockGuard, Filesystem};
+use crate::flock::FileLockGuard;
 
 // TODO(mkaput): Progressbar.
 // TODO(mkaput): Request timeout.
@@ -29,7 +28,6 @@ pub struct HttpRegistryClient<'c> {
     source_id: SourceId,
     config: &'c Config,
     cached_index_config: OnceCell<IndexConfig>,
-    dl_fs: Filesystem,
 }
 
 enum HttpCacheKey {
@@ -40,17 +38,10 @@ enum HttpCacheKey {
 
 impl<'c> HttpRegistryClient<'c> {
     pub fn new(source_id: SourceId, config: &'c Config) -> Result<Self> {
-        let dl_fs = config
-            .dirs()
-            .registry_dir()
-            .into_child("dl")
-            .into_child(source_id.ident());
-
         Ok(Self {
             source_id,
             config,
             cached_index_config: Default::default(),
-            dl_fs,
         })
     }
 
@@ -137,48 +128,34 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
         })
     }
 
-    async fn download(&self, package: PackageId) -> Result<RegistryResource<PathBuf>> {
-        let dl_url = self.index_config().await?.dl.expand(package.into())?;
+    async fn download(
+        &self,
+        package: PackageId,
+        create_scratch_file: CreateScratchFileCallback,
+    ) -> Result<RegistryDownload<FileLockGuard>> {
+        let index_config = self.index_config().await?;
+        let dl_url = index_config.dl.expand(package.into())?;
 
         self.config
             .ui()
             .print(Status::new("Downloading", &package.to_string()));
 
-        let response = self
-            .config
-            .online_http()?
-            .get(dl_url)
-            .send()
-            .await?
-            .error_for_status();
+        let response = self.config.online_http()?.get(dl_url).send().await?;
 
-        if let Err(err) = &response {
-            if let Some(status) = err.status() {
-                if status == StatusCode::NOT_FOUND {
-                    error!("package `{package}` not found in registry: {err:?}");
-                    return Ok(RegistryResource::NotFound);
-                }
+        let response = match response.status() {
+            StatusCode::NOT_MODIFIED => {
+                bail!("packages archive server is not allowed to say not modified (HTTP 304)")
             }
-        }
+            StatusCode::NOT_FOUND => {
+                return Ok(RegistryDownload::NotFound);
+            }
+            _ => response.error_for_status()?,
+        };
 
-        let response = response?;
-
-        let output_path = self.dl_fs.path_existent()?.join(package.tarball_name());
-        let output_file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .truncate(true)
-            .create(true)
-            .open(&output_path)
-            .await
-            .with_context(|| format!("failed to open: {output_path}"))?;
-
-        output_file
-            .lock_exclusive()
-            .with_context(|| format!("failed to lock file: {output_path}"))?;
+        let mut output_file = create_scratch_file(self.config)?.into_async();
 
         let mut stream = response.bytes_stream();
-        let mut writer = BufWriter::new(output_file);
+        let mut writer = BufWriter::new(&mut *output_file);
         while let Some(chunk) = stream.next().await {
             let chunk = chunk.context("failed to read response chunk")?;
             io::copy_buf(&mut &*chunk, &mut writer)
@@ -186,10 +163,9 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
                 .context("failed to save response chunk on disk")?;
         }
 
-        Ok(RegistryResource::Download {
-            resource: output_path.into_std_path_buf(),
-            cache_key: None,
-        })
+        let output_file = output_file.into_sync().await;
+
+        Ok(RegistryDownload::Download(output_file))
     }
 
     async fn supports_publish(&self) -> Result<bool> {

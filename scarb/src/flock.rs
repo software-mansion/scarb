@@ -232,6 +232,11 @@ impl Filesystem {
         self.root.as_existent()
     }
 
+    /// Returns `true` if this [`Filesystem`] already exists on the disk.
+    pub fn exists(&self) -> bool {
+        self.path_unchecked().exists()
+    }
+
     /// Opens exclusive access to a [`File`], returning the locked version of it.
     ///
     /// This function will create a file at `path` if it doesn't already exist (including

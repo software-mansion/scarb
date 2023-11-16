@@ -230,11 +230,9 @@ fn caching() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout_matches(indoc! {r#"
-        [..] Downloading bar v1.0.0 ([..])
-        "#});
+        .stdout_eq("");
 
-    let expected = expect![["
+    let expected = expect![[r#"
         GET /config.json
         accept: */*
         accept-encoding: gzip, br, deflate
@@ -305,22 +303,7 @@ fn caching() {
         304 Not Modified
         content-length: 0
         etag: ...
-
-        ###
-
-        GET /bar-1.0.0.tar.zst
-        accept: */*
-        accept-encoding: gzip, br, deflate
-        host: ...
-        user-agent: ...
-
-        200 OK
-        accept-ranges: bytes
-        content-length: ...
-        content-type: application/octet-stream
-        etag: ...
-        last-modified: ...
-    "]];
+    "#]];
     expected.assert_eq(&registry.logs());
 }
 

@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 use std::fmt;
-use std::path::PathBuf;
 
 use anyhow::{anyhow, bail, Context, Result};
 use async_trait::async_trait;
@@ -19,6 +18,7 @@ use crate::core::{
     Config, DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId, Summary,
     TargetKind,
 };
+use crate::flock::FileLockGuard;
 use crate::sources::PathSource;
 
 pub struct RegistrySource<'c> {
@@ -55,7 +55,7 @@ impl<'c> RegistrySource<'c> {
                     .url
                     .to_file_path()
                     .map_err(|_| anyhow!("url is not a valid path: {}", source_id.url))?;
-                Ok(Box::new(LocalRegistryClient::new(&path)?))
+                Ok(Box::new(LocalRegistryClient::new(&path, config)?))
             }
             "http" | "https" => {
                 trace!("creating http registry client for: {source_id}");
@@ -131,13 +131,13 @@ impl<'c> Source for RegistrySource<'c> {
             .await
             .with_context(|| format!("failed to download package: {id}"))?;
 
-        self.verify_checksum(id, archive.clone()).await?;
+        self.verify_checksum(id, &archive).await?;
         self.load_package(id, archive).await
     }
 }
 
 impl<'c> RegistrySource<'c> {
-    async fn verify_checksum(&self, id: PackageId, _archive: PathBuf) -> Result<()> {
+    async fn verify_checksum(&self, id: PackageId, _archive: &FileLockGuard) -> Result<()> {
         self.config
             .ui()
             .verbose(Status::new("Verifying", &id.to_string()));
@@ -151,12 +151,14 @@ impl<'c> RegistrySource<'c> {
     ///
     /// This method extracts the tarball into cache directory, and then loads it using
     /// suitably configured [`PathSource`].
-    async fn load_package(&self, id: PackageId, archive: PathBuf) -> Result<Package> {
+    async fn load_package(&self, id: PackageId, archive: FileLockGuard) -> Result<Package> {
         self.config
             .ui()
             .verbose(Status::new("Unpacking", &id.to_string()));
 
+        // `extract` drops the archive internally and thus handles file unlocking.
         let path = self.package_sources.extract(id, archive).await?;
+
         let path_source = PathSource::recursive_at(&path, self.source_id, self.config);
         path_source.download(id).await
     }
