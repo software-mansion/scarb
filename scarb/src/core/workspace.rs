@@ -10,7 +10,7 @@ use crate::compiler::Profile;
 use crate::core::config::Config;
 use crate::core::package::Package;
 use crate::core::{PackageId, Target};
-use crate::flock::RootFilesystem;
+use crate::flock::Filesystem;
 use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME};
 
 /// The core abstraction for working with a workspace of packages.
@@ -23,7 +23,7 @@ pub struct Workspace<'c> {
     manifest_path: Utf8PathBuf,
     profiles: Vec<Profile>,
     root_package: Option<PackageId>,
-    target_dir: RootFilesystem,
+    target_dir: Filesystem,
 }
 
 impl<'c> Workspace<'c> {
@@ -50,7 +50,7 @@ impl<'c> Workspace<'c> {
                 .expect("parent of manifest path must always exist")
                 .join(DEFAULT_TARGET_DIR_NAME)
         });
-        let target_dir = RootFilesystem::new_output_dir(target_dir);
+        let target_dir = Filesystem::new_output_dir(target_dir);
         Ok(Self {
             config,
             manifest_path,
@@ -97,7 +97,7 @@ impl<'c> Workspace<'c> {
         self.root().join(LOCK_FILE_NAME)
     }
 
-    pub fn target_dir(&self) -> &RootFilesystem {
+    pub fn target_dir(&self) -> &Filesystem {
         &self.target_dir
     }
 

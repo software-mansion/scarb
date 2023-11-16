@@ -29,7 +29,7 @@ pub struct HttpRegistryClient<'c> {
     source_id: SourceId,
     config: &'c Config,
     cached_index_config: OnceCell<IndexConfig>,
-    dl_fs: Filesystem<'c>,
+    dl_fs: Filesystem,
 }
 
 enum HttpCacheKey {

@@ -11,7 +11,7 @@ use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::restricted_names::is_windows_restricted_path;
 
 pub struct PackageSourceStore<'a> {
-    fs: Filesystem<'a>,
+    fs: Filesystem,
     config: &'a Config,
 }
 
