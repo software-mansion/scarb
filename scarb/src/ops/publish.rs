@@ -7,10 +7,11 @@ use crate::core::{PackageId, SourceId, Workspace};
 use crate::ops;
 use crate::sources::RegistrySource;
 
+use super::PackageOpts;
+
 pub struct PublishOpts {
     pub index_url: Url,
-    pub allow_dirty: bool,
-    pub verify: bool,
+    pub package_opts: PackageOpts,
 }
 
 #[tracing::instrument(level = "debug", skip(opts, ws))]
@@ -30,11 +31,7 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
         "publishing packages is not supported by registry: {source_id}"
     );
 
-    let package_opts = ops::PackageOpts {
-        allow_dirty: opts.allow_dirty,
-        verify: opts.verify,
-    };
-    let tarball = ops::package_one(package_id, &package_opts, ws)?;
+    let tarball = ops::package_one(package_id, &opts.package_opts, ws)?;
 
     let dest_package_id = package_id.with_source_id(source_id);
 
