@@ -16,7 +16,6 @@ pub enum RegistryResource<T> {
     /// The requested resource was not found.
     NotFound,
     /// The cache is valid and the cached data should be used.
-    #[allow(dead_code)]
     InCache,
     /// The cache is out of date, new data was downloaded and should be used from now on.
     Download {

@@ -7,11 +7,11 @@ use std::sync::Arc;
 
 use axum::body::Body;
 use axum::extract::State;
-use axum::http::header::ETAG;
-use axum::http::HeaderMap;
+use axum::http::header::{ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH};
 use axum::http::Method;
 use axum::http::Request;
 use axum::http::StatusCode;
+use axum::http::{HeaderMap, HeaderValue};
 use axum::middleware;
 use axum::middleware::Next;
 use axum::response::Response;
@@ -53,7 +53,7 @@ impl SimpleHttpServer {
 
         let app = Router::new()
             .fallback_service(ServeDir::new(dir))
-            .layer(middleware::map_response(set_etag))
+            .layer(middleware::from_fn(set_etag))
             .layer(middleware::from_fn_with_state(
                 (logs.clone(), print_logs.clone()),
                 logger,
@@ -159,7 +159,15 @@ async fn logger<B>(
     response
 }
 
-async fn set_etag(res: Response) -> Response<Body> {
+async fn set_etag<B>(request: Request<B>, next: Next<B>) -> Response<Body> {
+    let if_none_match = request.headers().get(IF_NONE_MATCH).cloned();
+
+    if if_none_match.is_none() && request.headers().contains_key(IF_MODIFIED_SINCE) {
+        todo!("This server does not support If-Modified-Since header.")
+    }
+
+    let res = next.run(request).await;
+
     let (mut parts, body) = res.into_parts();
     let bytes = hyper::body::to_bytes(body).await.unwrap();
 
@@ -167,9 +175,17 @@ async fn set_etag(res: Response) -> Response<Body> {
     digest.update(&bytes);
     let digest: [u8; 32] = digest.finalize_fixed().into();
     let digest = HEXLOWER.encode(&digest);
+    let digest = HeaderValue::from_str(&digest).unwrap();
 
-    parts.headers.insert(ETAG, digest.parse().unwrap());
+    if let Some(if_none_match) = if_none_match {
+        if digest == if_none_match {
+            parts.status = StatusCode::NOT_MODIFIED;
+            parts.headers = HeaderMap::from_iter([(ETAG, digest)]);
+            return Response::from_parts(parts, Body::empty());
+        }
+    }
 
+    parts.headers.insert(ETAG, digest);
     Response::from_parts(parts, Body::from(bytes))
 }
 
