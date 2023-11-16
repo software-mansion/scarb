@@ -15,8 +15,8 @@ use crate::core::registry::index::IndexRecord;
 use crate::core::registry::package_source_store::PackageSourceStore;
 use crate::core::source::Source;
 use crate::core::{
-    Config, DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId, Summary,
-    TargetKind,
+    Checksum, Config, DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId,
+    Summary, TargetKind,
 };
 use crate::flock::FileLockGuard;
 use crate::sources::PathSource;
@@ -107,6 +107,7 @@ impl<'c> Source for RegistrySource<'c> {
                 .dependencies(dependencies)
                 .target_kinds(HashSet::from_iter([TargetKind::LIB]))
                 .no_core(record.no_core)
+                .checksum(Some(record.checksum.clone()))
                 .build()
         };
 
@@ -123,13 +124,13 @@ impl<'c> Source for RegistrySource<'c> {
 
     #[tracing::instrument(level = "trace", skip(self))]
     async fn download(&self, id: PackageId) -> Result<Package> {
-        let archive = self
+        let (archive, checksum) = self
             .client
             .download_and_verify_with_cache(id)
             .await
             .with_context(|| format!("failed to download package: {id}"))?;
 
-        self.load_package(id, archive).await
+        self.load_package(id, archive, checksum).await
     }
 }
 
@@ -138,7 +139,12 @@ impl<'c> RegistrySource<'c> {
     ///
     /// This method extracts the tarball into cache directory, and then loads it using
     /// suitably configured [`PathSource`].
-    async fn load_package(&self, id: PackageId, archive: FileLockGuard) -> Result<Package> {
+    async fn load_package(
+        &self,
+        id: PackageId,
+        archive: FileLockGuard,
+        checksum: Checksum,
+    ) -> Result<Package> {
         self.config
             .ui()
             .verbose(Status::new("Unpacking", &id.to_string()));
@@ -147,7 +153,11 @@ impl<'c> RegistrySource<'c> {
         let path = self.package_sources.extract(id, archive).await?;
 
         let path_source = PathSource::recursive_at(&path, self.source_id, self.config);
-        path_source.download(id).await
+        let mut package = path_source.download(id).await?;
+
+        package.manifest_mut().summary.set_checksum(checksum);
+
+        Ok(package)
     }
 }
 
