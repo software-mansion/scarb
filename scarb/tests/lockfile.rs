@@ -1,13 +1,18 @@
+#![allow(clippy::items_after_test_module)]
+
 use std::fs;
 use std::path::Path;
 
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use fs_extra::dir::{copy, CopyOptions};
 use indoc::indoc;
 use snapbox::cmd::Command;
 
-use fs_extra::dir::{copy, CopyOptions};
 use scarb_test_support::cargo::cargo_bin;
+use scarb_test_support::command::Scarb;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use scarb_test_support::registry::local::LocalRegistry;
 use test_for_each_example::test_for_each_example;
 
 #[test_for_each_example]
@@ -44,4 +49,33 @@ fn create_lockfile_simple(example: &Path) {
 
         [[package]]
     "#}));
+}
+
+#[test]
+fn store_checksum_for_registry_dependencies() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("bar")
+            .version("1.0.0")
+            .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("0.1.0")
+        .dep("bar", Dep.version("1").registry(&registry))
+        .lib_cairo(r#"fn f() -> felt252 { bar::f() }"#)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("Scarb.lock")
+        .assert(predicates::str::contains(r#"checksum = ""#));
 }

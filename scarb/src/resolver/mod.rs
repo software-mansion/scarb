@@ -148,7 +148,7 @@ pub async fn resolve(
         "});
     }
 
-    Ok(Resolve { graph })
+    Ok(Resolve { graph, summaries })
 }
 
 fn rewrite_locked_dependency(

@@ -74,9 +74,13 @@ impl Lockfile {
                     .filter(include_package)
                     .map(|dep| dep.name.clone())
                     .collect::<BTreeSet<_>>();
+
+                let summary = resolve.summary(package);
+
                 PackageLock::builder()
                     .use_package_id(package)
                     .dependencies(deps)
+                    .checksum(summary.checksum.clone())
                     .build()
             });
         Self::new(packages)

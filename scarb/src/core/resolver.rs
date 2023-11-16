@@ -2,8 +2,9 @@ use itertools::Itertools;
 use petgraph::graphmap::DiGraphMap;
 use petgraph::visit::{Dfs, EdgeFiltered, Walker};
 use smallvec::SmallVec;
+use std::collections::HashMap;
 
-use crate::core::{PackageId, TargetKind};
+use crate::core::{PackageId, Summary, TargetKind};
 
 /// Represents a fully-resolved package dependency graph.
 ///
@@ -14,6 +15,7 @@ pub struct Resolve {
     ///
     /// If package `a` depends on package `b`, then this graph will contain an edge from `a` to `b`.
     pub graph: DiGraphMap<PackageId, DependencyEdge>,
+    pub summaries: HashMap<PackageId, Summary>,
 }
 
 impl Resolve {
@@ -50,6 +52,10 @@ impl Resolve {
     ) -> impl Iterator<Item = PackageId> + '_ {
         self.graph
             .neighbors_directed(package_id, petgraph::Direction::Outgoing)
+    }
+
+    pub fn summary(&self, package_id: PackageId) -> &Summary {
+        &self.summaries[&package_id]
     }
 }
 
