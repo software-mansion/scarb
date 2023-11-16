@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
-use std::ops::Deref;
+use std::ops::DerefMut;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
@@ -164,8 +164,7 @@ fn package_one_impl(
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
     if opts.verify {
-        dst.seek(SeekFrom::Start(0))?;
-        run_verify(ws, pkg, &dst).with_context(|| "failed to verify package tarball")?;
+        run_verify(pkg, &mut dst, ws).context("failed to verify package tarball")?;
     }
 
     dst.seek(SeekFrom::Start(0))?;
@@ -291,14 +290,16 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     Ok(recipe)
 }
 
-fn run_verify(ws: &Workspace<'_>, pkg: &Package, tar: &FileLockGuard) -> Result<()> {
+fn run_verify(pkg: &Package, tar: &mut FileLockGuard, ws: &Workspace<'_>) -> Result<()> {
     ws.config()
         .ui()
         .print(Status::new("Verifying", &pkg.id.tarball_name()));
 
-    let decoder: zstd::Decoder<'_, _> = zstd::stream::Decoder::new(tar.deref())?;
-    let mut ar = tar::Archive::new(decoder);
+    tar.seek(SeekFrom::Start(0))?;
+
     let dst = tar.path().parent().unwrap().join(pkg.id.tarball_basename());
+    let decoder: zstd::Decoder<'_, _> = zstd::stream::Decoder::new(tar.deref_mut())?;
+    let mut ar = tar::Archive::new(decoder);
 
     if dst.exists() {
         remove_dir_all(&dst)?;
