@@ -194,8 +194,6 @@ async fn rewrite_dependency_source_id(
 mod tests {
     //! These tests largely come from Elixir's `hex_solver` test suite.
 
-    // TODO(mkaput): Remove explicit path source IDs, when we will support default registry.
-
     use anyhow::Result;
     use indoc::indoc;
     use itertools::Itertools;
