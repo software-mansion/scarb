@@ -22,7 +22,7 @@ pub fn run(args: PackageArgs, config: &Config) -> Result<()> {
         .collect::<Vec<_>>();
 
     let opts = PackageOpts {
-        /// Disable dirty repository checks when printing package files.
+        // Disable dirty repository checks when printing package files.
         allow_dirty: args.list || args.allow_dirty,
     };
 

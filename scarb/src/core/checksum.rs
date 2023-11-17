@@ -14,7 +14,7 @@ use sha2::Digest as _;
 pub struct Checksum([u8; 32]);
 
 impl Checksum {
-    const HASH_FUNC_TYPE: &'_ str = "sha256";
+    const HASH_FUNC_TYPE: &'static str = "sha256";
     const ENCODING: Encoding = HEXLOWER_PERMISSIVE;
 
     pub fn parse(s: &str) -> Result<Self> {
