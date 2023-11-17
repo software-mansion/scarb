@@ -1,12 +1,12 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
-use std::ops::DerefMut;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc, writedoc};
 
+use crate::core::registry::package_source_store::PackageSourceStore;
 use crate::internal::fsx::remove_dir_all;
 use crate::sources::client::PackageRepository;
 
@@ -17,7 +17,7 @@ use serde::Serialize;
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
 use crate::core::{Package, PackageId, PackageName, TargetKind, Workspace};
-use crate::flock::FileLockGuard;
+use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
     ops, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME,
@@ -163,9 +163,11 @@ fn package_one_impl(
 
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
-    if opts.verify {
-        run_verify(pkg, &mut dst, ws).context("failed to verify package tarball")?;
-    }
+    let mut dst = if opts.verify {
+        run_verify(pkg, dst, ws).context("failed to verify package tarball")?
+    } else {
+        dst
+    };
 
     dst.seek(SeekFrom::Start(0))?;
 
@@ -290,26 +292,21 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     Ok(recipe)
 }
 
-fn run_verify(pkg: &Package, tar: &mut FileLockGuard, ws: &Workspace<'_>) -> Result<()> {
+fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<FileLockGuard> {
     ws.config()
         .ui()
         .print(Status::new("Verifying", &pkg.id.tarball_name()));
 
-    tar.seek(SeekFrom::Start(0))?;
-
     let dst = tar.path().parent().unwrap().join(pkg.id.tarball_basename());
-    let decoder: zstd::Decoder<'_, _> = zstd::stream::Decoder::new(tar.deref_mut())?;
-    let mut ar = tar::Archive::new(decoder);
-
     if dst.exists() {
         remove_dir_all(&dst)?;
     }
 
-    // From Cargo:
-    // We don't need to set the Modified Time, as it's not relevant to verification
-    // and it errors on filesystems that don't support setting a modified timestamp
-    ar.set_preserve_mtime(false);
-    ar.unpack(dst.parent().unwrap())?;
+    let fs = Filesystem::new(tar.path().parent().unwrap().into());
+    let lock = ws
+        .config()
+        .tokio_handle()
+        .block_on(async { PackageSourceStore::extract_to(pkg.id, tar, &fs, ws.config()).await })?;
 
     let ws = ops::read_workspace(&dst.join(MANIFEST_FILE_NAME), ws.config())?;
 
@@ -322,7 +319,7 @@ fn run_verify(pkg: &Package, tar: &mut FileLockGuard, ws: &Workspace<'_>) -> Res
         &ws,
     )?;
 
-    Ok(())
+    Ok(lock)
 }
 
 #[tracing::instrument(level = "trace", skip_all)]

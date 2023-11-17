@@ -424,6 +424,32 @@ macro_rules! protected_run_if_not_ok {
 
 pub(crate) use protected_run_if_not_ok;
 
+/// This macro has the same use-case as `protected_run_if_not_ok` with the only difference
+/// that it uses two code blocks which can be used to return a value from the macro.
+///
+/// Example of such use case is `PackageSourceStore::extract_to` that uses a file lock
+/// and returns it at the end to not consume it, which would result in the lock being released.
+macro_rules! protected_run_if_not_ok_returning_value {
+    ($fs:expr, $lock:expr, $body:block, $else_body:block) => {{
+        let fs: &$crate::flock::Filesystem = $fs;
+        let lock: &$crate::flock::AdvisoryLock<'_> = $lock;
+        if !fs.is_ok() {
+            let _lock = lock.acquire_async().await?;
+            if !fs.is_ok() {
+                let output = $body;
+                fs.mark_ok()?;
+                output
+            } else {
+                $else_body
+            }
+        } else {
+            $else_body
+        }
+    }};
+}
+
+pub(crate) use protected_run_if_not_ok_returning_value;
+
 fn acquire(
     file: &File,
     path: &Utf8Path,

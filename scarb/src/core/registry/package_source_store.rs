@@ -7,7 +7,7 @@ use tokio::task::spawn_blocking;
 use tracing::{debug, trace};
 
 use crate::core::{Config, PackageId, SourceId};
-use crate::flock::{protected_run_if_not_ok, FileLockGuard, Filesystem, OK_FILE};
+use crate::flock::{protected_run_if_not_ok_returning_value, FileLockGuard, Filesystem, OK_FILE};
 use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::restricted_names::is_windows_restricted_path;
 
@@ -35,78 +35,108 @@ impl<'a> PackageSourceStore<'a> {
     pub async fn extract(&self, pkg: PackageId, archive: FileLockGuard) -> Result<Utf8PathBuf> {
         trace!("attempting to extract `{pkg}`");
         trace!(archive = ?archive.path());
-        self.extract_impl(pkg, archive)
+
+        let (path, _) = Self::extract_impl(pkg.tarball_basename(), archive, &self.fs, self.config)
             .await
-            .with_context(|| format!("failed to extract: {pkg}"))
+            .with_context(|| format!("failed to extract: {pkg}"))?;
+
+        Ok(path)
+    }
+
+    /// Extract a package archive into a location specified by `fs` Filesystem.
+    ///
+    /// No action is taken if the source looks like it's already unpacked.
+    ///
+    /// The `archive` file guard taken as an argument is returned to prevent releasing it.
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn extract_to(
+        pkg: PackageId,
+        archive: FileLockGuard,
+        fs: &Filesystem,
+        config: &Config,
+    ) -> Result<FileLockGuard> {
+        trace!("attempting to extract `{pkg}`");
+        trace!(archive = ?archive.path());
+
+        let (_, lock) = Self::extract_impl(pkg.tarball_basename(), archive, fs, config)
+            .await
+            .with_context(|| format!("failed to extract: {pkg}"))?;
+
+        Ok(lock)
     }
 
     async fn extract_impl(
-        &self,
-        pkg: PackageId,
+        prefix: String,
         mut archive: FileLockGuard,
-    ) -> Result<Utf8PathBuf> {
-        let prefix = pkg.tarball_basename();
-        let fs = self.fs.child(&prefix);
-        let parent_path = self.fs.path_existent()?.to_owned();
+        fs: &Filesystem,
+        config: &Config,
+    ) -> Result<(Utf8PathBuf, FileLockGuard)> {
+        let parent_path = fs.path_existent()?.to_owned();
+        let fs = fs.child(&prefix);
         let output_path = fs.path_existent()?.to_owned();
         trace!(?output_path);
 
         assert_eq!(parent_path.join(&prefix), output_path);
 
-        protected_run_if_not_ok!(&fs, &self.config.package_cache_lock(), {
-            debug!("starting extraction");
+        let archive = protected_run_if_not_ok_returning_value!(
+            &fs,
+            config.package_cache_lock(),
+            {
+                debug!("starting extraction");
 
-            // Wipe anything already extracted.
-            unsafe {
-                fs.recreate()?;
-            }
-
-            spawn_blocking(move || -> Result<()> {
-                // FIXME(mkaput): Verify VERSION is 1.
-
-                let mut tar = {
-                    archive.seek(SeekFrom::Start(0))?;
-                    let zst = zstd::Decoder::new(archive.deref_mut())?;
-                    // FIXME(mkaput): Protect against zip bomb attacks (https://github.com/rust-lang/cargo/pull/11337).
-                    // FIXME(mkaput): Protect against CVE-2023-38497 (https://github.com/rust-lang/cargo/pull/12443).
-                    tar::Archive::new(zst)
-                };
-
-                for entry in tar.entries()? {
-                    let mut entry = entry.with_context(|| "failed to iterate over archive")?;
-                    let entry_path = entry
-                        .path()
-                        .with_context(|| "failed to read entry path")?
-                        .try_to_utf8()?;
-
-                    // Ensure extracting will not accidentally or maliciously overwrite files
-                    // outside extraction directory.
-                    ensure!(
-                        entry_path.starts_with(&prefix),
-                        "invalid package tarball, contains a file {entry_path} \
-                        which is not under {prefix}"
-                    );
-
-                    // Prevent unpacking OK-file.
-                    if entry_path.file_name().unwrap_or_default() == OK_FILE {
-                        continue;
-                    }
-
-                    let mut r = entry.unpack_in(&parent_path).map_err(anyhow::Error::from);
-
-                    if cfg!(windows) && is_windows_restricted_path(entry_path.as_std_path()) {
-                        r = r.context("path contains Windows restricted file name");
-                    }
-
-                    r.with_context(|| format!("failed to extract: {entry_path}"))?;
+                // Wipe anything already extracted.
+                unsafe {
+                    fs.recreate()?;
                 }
 
-                Ok(())
-            })
-            .await??;
-        });
+                spawn_blocking(move || -> Result<FileLockGuard> {
+                    // FIXME(mkaput): Verify VERSION is 1.
+
+                    let mut tar = {
+                        archive.seek(SeekFrom::Start(0))?;
+                        let zst = zstd::Decoder::new(archive.deref_mut())?;
+                        // FIXME(mkaput): Protect against zip bomb attacks (https://github.com/rust-lang/cargo/pull/11337).
+                        // FIXME(mkaput): Protect against CVE-2023-38497 (https://github.com/rust-lang/cargo/pull/12443).
+                        tar::Archive::new(zst)
+                    };
+
+                    for entry in tar.entries()? {
+                        let mut entry = entry.with_context(|| "failed to iterate over archive")?;
+                        let entry_path = entry
+                            .path()
+                            .with_context(|| "failed to read entry path")?
+                            .try_to_utf8()?;
+
+                        // Ensure extracting will not accidentally or maliciously overwrite files
+                        // outside extraction directory.
+                        ensure!(
+                            entry_path.starts_with(&prefix),
+                            "invalid package tarball, contains a file {entry_path} \
+                        which is not under {prefix}"
+                        );
+
+                        // Prevent unpacking OK-file.
+                        if entry_path.file_name().unwrap_or_default() == OK_FILE {
+                            continue;
+                        }
+
+                        let mut r = entry.unpack_in(&parent_path).map_err(anyhow::Error::from);
+
+                        if cfg!(windows) && is_windows_restricted_path(entry_path.as_std_path()) {
+                            r = r.context("path contains Windows restricted file name");
+                        }
+
+                        r.with_context(|| format!("failed to extract: {entry_path}"))?;
+                    }
+
+                    Ok(archive)
+                })
+                .await??
+            },
+            { archive }
+        );
 
         trace!("extraction succeeded");
-        Ok(output_path)
+        Ok((output_path, archive))
     }
 }
