@@ -203,6 +203,14 @@ impl Compiler for StarknetContractCompiler {
             );
         }
 
+        if let Some(external_contracts) = props.build_external_contracts.clone() {
+            for path in external_contracts.iter() {
+                ensure!(path.0.matches(GLOB_PATH_SELECTOR).count() <= 1,
+                    "external contract path {} has multiple global path selectors, only one '*' selector is allowed",
+                    path.0);
+            }
+        }
+
         let target_dir = unit.target_dir(ws);
 
         let compiler_config = build_compiler_config(&unit, ws);
@@ -214,12 +222,6 @@ impl Compiler for StarknetContractCompiler {
             main_crate_ids,
             props.build_external_contracts.clone(),
         )?;
-
-        if let Some(external_contracts) = props.build_external_contracts.clone() {
-            for path in external_contracts.iter() {
-                ensure!(path.0.matches(GLOB_PATH_SELECTOR).count() <= 1, format!("external contract path {} has multiple global path selectors, only one '*' selector is allowed", path.0));
-            }
-        }
 
         let contract_paths = contracts
             .iter()
