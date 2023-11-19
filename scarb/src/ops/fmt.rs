@@ -144,13 +144,16 @@ fn check_file_formatting(
 }
 
 pub trait Emittable {
-    fn emit(&self, ws: &Workspace<'_>, formatted: &str);
+    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str);
 }
 
 impl Emittable for EmitTarget {
-    fn emit(&self, ws: &Workspace<'_>, formatted: &str) {
+    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str) {
         match self {
-            Self::Stdout => ws.config().ui().print(formatted),
+            Self::Stdout => ws
+                .config()
+                .ui()
+                .print(format!("{}:\n{}", path.display(), formatted)),
         }
     }
 }
@@ -164,7 +167,7 @@ fn emit_formatted_file(
     match fmt.format_to_string(&path) {
         Ok(FormatOutcome::Identical(_)) => true,
         Ok(FormatOutcome::DiffFound(diff)) => {
-            target.emit(ws, &diff.formatted);
+            target.emit(ws, path, &diff.formatted);
             false
         }
         Err(parsing_error) => {

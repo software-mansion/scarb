@@ -69,12 +69,13 @@ fn simple_emit_invalid() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {"\
-            fn main() -> felt252 {
-                42
-            }
-
-        "});
+        .stdout_matches(format!(
+            "{}:\n{}\n",
+            fs::canonicalize(t.child("src/lib.cairo"))
+                .unwrap()
+                .display(),
+            SIMPLE_FORMATTED
+        ));
     let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
     assert_eq!(content, SIMPLE_ORIGINAL);
 }
@@ -336,12 +337,13 @@ fn workspace_emit_with_root() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {"\
-            fn main() -> felt252 {
-                42
-            }
-
-        "});
+        .stdout_matches(format!(
+            "{}:\n{}\n",
+            fs::canonicalize(t.child("src/lib.cairo"))
+                .unwrap()
+                .display(),
+            SIMPLE_FORMATTED
+        ));
 
     let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
     assert_eq!(content, SIMPLE_ORIGINAL);
@@ -355,20 +357,21 @@ fn workspace_emit_with_root() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {"\
-            fn main() -> felt252 {
-                42
-            }
-
-            fn main() -> felt252 {
-                42
-            }
-
-            fn main() -> felt252 {
-                42
-            }
-
-        "});
+        .stdout_matches(format!(
+            "{}:\n{}\n{}:\n{}\n{}:\n{}\n",
+            fs::canonicalize(t.child("first/src/lib.cairo"))
+                .unwrap()
+                .display(),
+            SIMPLE_FORMATTED,
+            fs::canonicalize(t.child("second/src/lib.cairo"))
+                .unwrap()
+                .display(),
+            SIMPLE_FORMATTED,
+            fs::canonicalize(t.child("src/lib.cairo"))
+                .unwrap()
+                .display(),
+            SIMPLE_FORMATTED,
+        ));
 
     let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
     assert_eq!(content, SIMPLE_ORIGINAL);
