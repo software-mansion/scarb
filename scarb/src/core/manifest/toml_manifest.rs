@@ -22,8 +22,8 @@ use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Targe
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{
-    DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName, TargetKind,
-    TestTargetProps, TestTargetType,
+    DepKind, DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName,
+    TargetKind, TestTargetProps, TestTargetType,
 };
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
@@ -42,6 +42,7 @@ pub struct TomlManifest {
     pub package: Option<Box<TomlPackage>>,
     pub workspace: Option<TomlWorkspace>,
     pub dependencies: Option<BTreeMap<PackageName, MaybeTomlWorkspaceDependency>>,
+    pub dev_dependencies: Option<BTreeMap<PackageName, MaybeTomlWorkspaceDependency>>,
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
     pub cairo_plugin: Option<TomlTarget<TomlExternalTargetParams>>,
     pub test: Option<Vec<TomlTarget<TomlExternalTargetParams>>>,
@@ -96,6 +97,7 @@ pub struct TomlWorkspace {
     pub members: Option<Vec<String>>,
     pub package: Option<PackageInheritableFields>,
     pub dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
+    pub dev_dependencies: Option<BTreeMap<PackageName, TomlDependency>>,
     pub scripts: Option<BTreeMap<SmolStr, ScriptDefinition>>,
     pub tool: Option<TomlToolsDefinition>,
 }
@@ -418,14 +420,44 @@ impl TomlManifest {
                     .and_then(|deps| deps.get(name.as_str()))
                     .cloned()
                     .ok_or_else(|| anyhow!("dependency `{}` not found in workspace", name.clone()))?
-                    .to_dependency(name.clone(), workspace_manifest_path)
+                    .to_dependency(name.clone(), workspace_manifest_path, DepKind::Normal)
             };
             let toml_dep = toml_dep
                 .clone()
-                .map(|dep| dep.to_dependency(name.clone(), manifest_path))?
+                .map(|dep| dep.to_dependency(name.clone(), manifest_path, DepKind::Normal))?
                 .resolve(name.as_str(), inherit_ws)?;
             dependencies.push(toml_dep);
         }
+
+        let mut dev_dependencies = Vec::new();
+        for (name, toml_dep) in self.dev_dependencies.iter().flatten() {
+            let inherit_ws = || {
+                workspace
+                    .dependencies
+                    .as_ref()
+                    .and_then(|deps| deps.get(name.as_str()))
+                    .cloned()
+                    .ok_or_else(|| anyhow!("dependency `{}` not found in workspace", name.clone()))?
+                    .to_dependency(
+                        name.clone(),
+                        workspace_manifest_path,
+                        DepKind::Target(TargetKind::TEST),
+                    )
+            };
+            let toml_dep = toml_dep
+                .clone()
+                .map(|dep| {
+                    dep.to_dependency(
+                        name.clone(),
+                        manifest_path,
+                        DepKind::Target(TargetKind::TEST),
+                    )
+                })?
+                .resolve(name.as_str(), inherit_ws)?;
+            dev_dependencies.push(toml_dep);
+        }
+
+        dependencies.extend(dev_dependencies);
 
         let no_core = package.no_core.unwrap_or(false);
 
@@ -871,8 +903,9 @@ impl TomlDependency {
         &self,
         name: PackageName,
         manifest_path: &Utf8Path,
+        dep_kind: DepKind,
     ) -> Result<ManifestDependency> {
-        self.resolve().to_dependency(name, manifest_path)
+        self.resolve().to_dependency(name, manifest_path, dep_kind)
     }
 }
 
@@ -881,6 +914,7 @@ impl DetailedTomlDependency {
         &self,
         name: PackageName,
         manifest_path: &Utf8Path,
+        dep_kind: DepKind,
     ) -> Result<ManifestDependency> {
         let version_req = self
             .version
@@ -954,6 +988,7 @@ impl DetailedTomlDependency {
             .name(name)
             .source_id(source_id)
             .version_req(version_req)
+            .kind(dep_kind)
             .build())
     }
 }
