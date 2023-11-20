@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use sha2::Digest as _;
 use tokio::io::{AsyncRead, AsyncReadExt};
 
-#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
 pub struct Checksum([u8; 32]);
 

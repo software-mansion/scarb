@@ -250,8 +250,13 @@ pub(crate) mod mock {
             #[allow(unused_imports)]
             use $crate::core::registry::mock;
             let package_id = $crate::core::PackageId::from_display_str($p).unwrap();
-            let dependencies: Vec<$crate::core::PackageName> = mock::pkg_names![$($d),*].iter().cloned().collect();
-            $crate::core::lockfile::PackageLock::new(&package_id, dependencies.into_iter())
+            let dependencies: ::std::collections::BTreeSet<$crate::core::PackageName> = (
+                mock::pkg_names![$($d),*].iter().cloned().collect()
+            );
+            $crate::core::lockfile::PackageLock::builder()
+                .use_package_id(package_id)
+                .dependencies(dependencies)
+                .build()
         }};
     }
 
