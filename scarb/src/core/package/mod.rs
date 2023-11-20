@@ -20,7 +20,7 @@ mod name;
 #[derive(Clone, Debug)]
 pub struct Package(Arc<PackageInner>);
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct PackageInner {
     pub id: PackageId,
@@ -110,6 +110,10 @@ impl Package {
         let toml_value = self.fetch_tool_metadata(tool_name)?;
         let structured = toml_value.clone().try_into()?;
         Ok(structured)
+    }
+
+    pub fn manifest_mut(&mut self) -> &mut Manifest {
+        &mut Arc::make_mut(&mut self.0).manifest
     }
 }
 

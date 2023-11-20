@@ -139,14 +139,16 @@ impl<'c> RegistryClientCache<'c> {
     pub async fn download_and_verify_with_cache(
         &self,
         package: PackageId,
-    ) -> Result<FileLockGuard> {
+    ) -> Result<(FileLockGuard, Checksum)> {
         // Skip downloading if the package already has been.
         if self.is_package_downloaded(package).await {
             trace!("found cached archive which is not empty, skipping download");
             let tarball_name = package.tarball_name();
-            return self
+            let file = self
                 .dl_fs
-                .open_rw(&tarball_name, &tarball_name, self.config);
+                .open_rw(&tarball_name, &tarball_name, self.config)?;
+            let checksum = self.get_record_maybe_uncached(package).await?.checksum;
+            return Ok((file, checksum));
         }
 
         let create_scratch_file: CreateScratchFileCallback = Box::new({
@@ -167,7 +169,7 @@ impl<'c> RegistryClientCache<'c> {
                 let checksum = self.get_record_maybe_uncached(package).await?.checksum;
                 let file = self.verify_checksum(package, &checksum, file).await?;
                 trace!("package archive file has valid checksum: {checksum}");
-                Ok(file)
+                Ok((file, checksum))
             }
         }
     }

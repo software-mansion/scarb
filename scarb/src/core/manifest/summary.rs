@@ -8,7 +8,8 @@ use typed_builder::TypedBuilder;
 #[cfg(doc)]
 use crate::core::Manifest;
 use crate::core::{
-    DepKind, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId, TargetKind,
+    Checksum, DepKind, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId,
+    TargetKind,
 };
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
@@ -17,7 +18,7 @@ use crate::core::{
 #[derive(Clone, Debug)]
 pub struct Summary(Arc<SummaryInner>);
 
-#[derive(TypedBuilder, Debug)]
+#[derive(TypedBuilder, Clone, Debug)]
 #[builder(builder_type(name = SummaryBuilder))]
 #[builder(builder_method(vis = ""))]
 #[builder(build_method(into = Summary))]
@@ -29,6 +30,8 @@ pub struct SummaryInner {
     pub target_kinds: HashSet<TargetKind>,
     #[builder(default = false)]
     pub no_core: bool,
+    #[builder(default)]
+    pub checksum: Option<Checksum>,
 }
 
 impl Deref for Summary {
@@ -49,6 +52,10 @@ impl From<SummaryInner> for Summary {
 impl Summary {
     pub fn builder() -> SummaryBuilder {
         SummaryInner::builder()
+    }
+
+    pub fn set_checksum(&mut self, cksum: Checksum) {
+        Arc::make_mut(&mut self.0).checksum = Some(cksum);
     }
 
     pub fn full_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
