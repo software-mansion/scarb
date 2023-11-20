@@ -384,7 +384,7 @@ fn compile_starknet_contract_without_starknet_dep() {
             fn constructor(ref self: ContractState, value_: u128) {
                                      ^***********^
 
-        error: Method `write` not found on type `<missing>`. Did you import the correct trait and impl?
+        error: Method `write` not found on type "<missing>". Did you import the correct trait and impl?
          --> [..]/lib.cairo:20:20
                 self.value.write(value_);
                            ^***^
@@ -399,7 +399,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                 fn get(self: @ContractState) -> u128 {
                               ^***********^
 
-        error: Method `read` not found on type `<missing>`. Did you import the correct trait and impl?
+        error: Method `read` not found on type "<missing>". Did you import the correct trait and impl?
          --> [..]/lib.cairo:26:24
                     self.value.read()
                                ^**^
@@ -409,7 +409,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                 fn increase(ref self: ContractState, a: u128)  {
                                       ^***********^
 
-        error: Method `write` not found on type `<missing>`. Did you import the correct trait and impl?
+        error: Method `write` not found on type "<missing>". Did you import the correct trait and impl?
          --> [..]/lib.cairo:29:24
                     self.value.write( self.value.read() + a );
                                ^***^
