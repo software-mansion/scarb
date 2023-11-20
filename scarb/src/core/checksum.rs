@@ -8,6 +8,7 @@ use anyhow::{bail, ensure, Context, Result};
 use data_encoding::{Encoding, HEXLOWER_PERMISSIVE};
 use serde::{Deserialize, Serialize};
 use sha2::Digest as _;
+use tokio::io::{AsyncRead, AsyncReadExt};
 
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
@@ -132,6 +133,20 @@ impl Digest {
         }
     }
 
+    pub async fn update_read_async(
+        &mut self,
+        mut input: impl AsyncRead + Unpin,
+    ) -> Result<&mut Self> {
+        let mut buf = [0; 64 * 1024];
+        loop {
+            let n = input.read(&mut buf).await?;
+            if n == 0 {
+                break Ok(self);
+            }
+            self.update(&buf[..n]);
+        }
+    }
+
     pub fn finish(&mut self) -> Checksum {
         Checksum(self.0.finalize_reset().into())
     }
@@ -139,7 +154,18 @@ impl Digest {
 
 #[cfg(test)]
 mod tests {
+    use std::io::Cursor;
+
     use super::{Checksum, Digest};
+
+    const LOREM: &[u8] =
+        b"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod.";
+
+    fn lorem_checksum() -> Checksum {
+        "sha256:b62fc4b9bfbd9310a47d2e595d2c8f468354266be0827aeea9b465d9984908de"
+            .parse()
+            .unwrap()
+    }
 
     #[test]
     fn checksum_parse_display() {
@@ -173,11 +199,26 @@ mod tests {
 
     #[test]
     fn digest() {
-        let input = b"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod.";
-        let expected = "sha256:b62fc4b9bfbd9310a47d2e595d2c8f468354266be0827aeea9b465d9984908de"
-            .parse()
-            .unwrap();
-        let actual = Digest::recommended().update(input).finish();
-        assert_eq!(actual, expected);
+        let actual = Digest::recommended().update(LOREM).finish();
+        assert_eq!(actual, lorem_checksum());
+    }
+
+    #[test]
+    fn digest_read() {
+        let actual = Digest::recommended()
+            .update_read(Cursor::new(LOREM))
+            .unwrap()
+            .finish();
+        assert_eq!(actual, lorem_checksum());
+    }
+
+    #[tokio::test]
+    async fn digest_read_async() {
+        let actual = Digest::recommended()
+            .update_read_async(Cursor::new(LOREM))
+            .await
+            .unwrap()
+            .finish();
+        assert_eq!(actual, lorem_checksum());
     }
 }

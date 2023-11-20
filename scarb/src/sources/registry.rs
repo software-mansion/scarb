@@ -110,8 +110,6 @@ impl<'c> Source for RegistrySource<'c> {
                 .build()
         };
 
-        // TODO(mkaput): Save checksums out-of-band for later use.
-
         Ok(records
             .iter()
             // NOTE: We filter based on IndexRecords here, to avoid unnecessarily allocating
@@ -127,26 +125,15 @@ impl<'c> Source for RegistrySource<'c> {
     async fn download(&self, id: PackageId) -> Result<Package> {
         let archive = self
             .client
-            .download_with_cache(id)
+            .download_and_verify_with_cache(id)
             .await
             .with_context(|| format!("failed to download package: {id}"))?;
 
-        self.verify_checksum(id, &archive).await?;
         self.load_package(id, archive).await
     }
 }
 
 impl<'c> RegistrySource<'c> {
-    async fn verify_checksum(&self, id: PackageId, _archive: &FileLockGuard) -> Result<()> {
-        self.config
-            .ui()
-            .verbose(Status::new("Verifying", &id.to_string()));
-
-        // TODO(mkaput): Verify checksum.
-
-        Ok(())
-    }
-
     /// Turn the downloaded `.tar.zst` tarball into a [`Package`].
     ///
     /// This method extracts the tarball into cache directory, and then loads it using
