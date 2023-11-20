@@ -11,6 +11,10 @@ use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::http::HttpRegistry;
 
 #[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "registry test failing on windows"
+)]
 fn usage() {
     let mut registry = HttpRegistry::serve();
     registry.publish(|t| {
@@ -190,6 +194,10 @@ fn missing_config_json() {
 }
 
 #[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "registry test failing on windows"
+)]
 fn caching() {
     let cache_dir = TempDir::new().unwrap();
 

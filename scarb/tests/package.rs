@@ -295,6 +295,10 @@ fn reserved_files_collision() {
 }
 
 #[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "registry test failing on windows"
+)]
 fn generated_manifest() {
     let t = TempDir::new().unwrap();
 

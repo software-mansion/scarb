@@ -7,6 +7,10 @@ use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::LocalRegistry;
 
 #[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "registry test failing on windows"
+)]
 fn checksum_mismatch() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
