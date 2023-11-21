@@ -54,15 +54,13 @@ impl<'a> PackageSourceStore<'a> {
         archive: FileLockGuard,
         fs: &Filesystem,
         config: &Config,
-    ) -> Result<FileLockGuard> {
+    ) -> Result<(Utf8PathBuf, FileLockGuard)> {
         trace!("attempting to extract `{pkg}`");
         trace!(archive = ?archive.path());
 
-        let (_, lock) = Self::extract_impl(pkg.tarball_basename(), archive, fs, config)
+        Self::extract_impl(pkg.tarball_basename(), archive, fs, config)
             .await
-            .with_context(|| format!("failed to extract: {pkg}"))?;
-
-        Ok(lock)
+            .with_context(|| format!("failed to extract: {pkg}"))
     }
 
     async fn extract_impl(

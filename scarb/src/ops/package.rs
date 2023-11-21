@@ -7,7 +7,6 @@ use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc, writedoc};
 
 use crate::core::registry::package_source_store::PackageSourceStore;
-use crate::internal::fsx::remove_dir_all;
 use crate::sources::client::PackageRepository;
 
 use scarb_ui::components::Status;
@@ -297,18 +296,17 @@ fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<F
         .ui()
         .print(Status::new("Verifying", &pkg.id.tarball_name()));
 
-    let dst = tar.path().parent().unwrap().join(pkg.id.tarball_basename());
-    if dst.exists() {
-        remove_dir_all(&dst)?;
+    let fs = Filesystem::new(tar.path().parent().unwrap().into());
+    unsafe {
+        fs.child(pkg.id.tarball_basename()).recreate()?;
     }
 
-    let fs = Filesystem::new(tar.path().parent().unwrap().into());
-    let lock = ws
+    let (path, lock) = ws
         .config()
         .tokio_handle()
         .block_on(async { PackageSourceStore::extract_to(pkg.id, tar, &fs, ws.config()).await })?;
 
-    let ws = ops::read_workspace(&dst.join(MANIFEST_FILE_NAME), ws.config())?;
+    let ws = ops::read_workspace(&path.join(MANIFEST_FILE_NAME), ws.config())?;
 
     ops::compile(
         ws.members().map(|p| p.id).collect(),
