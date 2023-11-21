@@ -118,7 +118,7 @@ fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Optio
     ensure!(
         opts.allow_dirty || repo.is_clean()?,
         indoc! {r#"
-            cannot package a repository containing uncommited changes
+            cannot package a repository containing uncommitted changes
             help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
         "#}
     );

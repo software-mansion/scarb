@@ -124,7 +124,7 @@ pub fn exec(cmd: &mut Command, config: &Config) -> Result<()> {
 
         let exit_status = proc
             .wait()
-            .with_context(|| anyhow!("could not wait for proces termination: {cmd_str}"))?;
+            .with_context(|| anyhow!("could not wait for process termination: {cmd_str}"))?;
         if exit_status.success() {
             Ok(())
         } else {
