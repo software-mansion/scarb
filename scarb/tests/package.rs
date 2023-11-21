@@ -532,7 +532,7 @@ fn dirty_repo() {
         .failure()
         .stdout_matches(indoc! {r#"
             [..] Packaging foo v1.0.0 [..]
-            error: cannot package a repository containing uncommited changes
+            error: cannot package a repository containing uncommitted changes
             help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
         "#});
 }

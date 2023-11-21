@@ -14,7 +14,7 @@ This is a location where Scarb will store a downloads, Git checkouts and package
 | macOS    | `$HOME/Library/Caches/com.swmansion.scarb`      |
 | Windows  | `%LocalAppData%\swmansion\scarb\cache`          |
 
-This path can be overriden via `SCARB_CACHE` environment variable.
+This path can be overridden via `SCARB_CACHE` environment variable.
 
 ## Config directory
 
@@ -26,7 +26,7 @@ This is a location where Scarb will look for global configuration in the future.
 | macOS    | `$HOME/Library/Application Support/com.swmansion/scarb` |
 | Windows  | `%LocalAppData%\swmansion\scarb\config`                 |
 
-This path can be overriden via `SCARB_CONFIG` environment variable.
+This path can be overridden via `SCARB_CONFIG` environment variable.
 
 ## Local data directory
 
@@ -39,6 +39,6 @@ Scarb will look for [subcommands] in the `bin` subdirectory.
 | macOS    | `$HOME/Library/Application Support/com.swmansion.scarb` |
 | Windows  | `%LocalAppData%\swmansion\scarb\data`                   |
 
-This path cannot be overriden.
+This path cannot be overridden.
 
 [subcommands]: ../writing-extensions/subcommands
