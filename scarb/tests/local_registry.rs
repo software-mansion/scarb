@@ -150,6 +150,9 @@ fn publish() {
             .success()
             .stdout_matches(formatdoc! {r#"
             [..] Packaging {name} v{version} ([..])
+            [..] Verifying {name}-{version}.tar.zst
+            [..] Compiling {name} v{version} ([..])
+            [..]  Finished release target(s) in [..]
             [..]  Packaged [..]
             [..] Uploading {name} v{version} (registry+file://[..]/index/)
             "#});

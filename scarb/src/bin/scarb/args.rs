@@ -319,6 +319,18 @@ pub struct TestArgs {
     pub args: Vec<OsString>,
 }
 
+/// Arguments accepted by both the `package` and the `publish` command.
+#[derive(Parser, Clone, Debug)]
+pub struct PackageSharedArgs {
+    /// Allow working directories with uncommitted VCS changes to be packaged.
+    #[arg(long)]
+    pub allow_dirty: bool,
+
+    /// Do not verify the contents by building them.
+    #[arg(long)]
+    pub no_verify: bool,
+}
+
 /// Arguments accepted by the `package` command.
 #[derive(Parser, Clone, Debug)]
 pub struct PackageArgs {
@@ -326,9 +338,8 @@ pub struct PackageArgs {
     #[arg(short, long)]
     pub list: bool,
 
-    /// Allow working directories with uncommitted VCS changes to be packaged.
-    #[arg(long)]
-    pub allow_dirty: bool,
+    #[clap(flatten)]
+    pub shared_args: PackageSharedArgs,
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
@@ -341,9 +352,8 @@ pub struct PublishArgs {
     #[arg(long, value_name = "URL")]
     pub index: Url,
 
-    /// Allow working directories with uncommitted VCS changes to be packaged.
-    #[arg(long)]
-    pub allow_dirty: bool,
+    #[clap(flatten)]
+    pub shared_args: PackageSharedArgs,
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,

@@ -1,8 +1,7 @@
 use anyhow::Result;
 
 use scarb::core::Config;
-use scarb::ops;
-use scarb::ops::PublishOpts;
+use scarb::ops::{self, PackageOpts, PublishOpts};
 
 use crate::args::PublishArgs;
 
@@ -13,7 +12,10 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
 
     let ops = PublishOpts {
         index_url: args.index,
-        allow_dirty: args.allow_dirty,
+        package_opts: PackageOpts {
+            allow_dirty: args.shared_args.allow_dirty,
+            verify: !args.shared_args.no_verify,
+        },
     };
 
     ops::publish(package.id, &ops, &ws)
