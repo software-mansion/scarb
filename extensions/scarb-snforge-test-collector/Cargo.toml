@@ -1,0 +1,42 @@
+[package]
+name = "scarb-snforge-test-collector"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+authors.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+cairo-felt.workspace = true
+cairo-lang-casm.workspace = true
+cairo-lang-compiler.workspace = true
+cairo-lang-debug.workspace = true
+cairo-lang-defs.workspace = true
+cairo-lang-diagnostics.workspace = true
+cairo-lang-filesystem.workspace = true
+cairo-lang-lowering.workspace = true
+cairo-lang-project.workspace = true
+cairo-lang-semantic.workspace = true
+cairo-lang-sierra.workspace = true
+cairo-lang-sierra-generator.workspace = true
+cairo-lang-starknet.workspace = true
+cairo-lang-syntax.workspace = true
+cairo-lang-test-plugin.workspace = true
+cairo-lang-utils.workspace = true
+camino.workspace = true
+clap.workspace = true
+create-output-dir = { path = "../../utils/create-output-dir" }
+fs4.workspace = true
+itertools.workspace = true
+num-bigint.workspace = true
+num-traits.workspace = true
+rayon.workspace = true
+scarb-metadata = { path = "../../scarb-metadata" }
+scarb-ui = { path = "../../utils/scarb-ui" }
+serde.workspace = true
+serde_json.workspace = true
+smol_str.workspace = true
+starknet.workspace = true
+thiserror.workspace = true
+walkdir.workspace = true
