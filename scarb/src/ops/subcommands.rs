@@ -52,7 +52,7 @@ pub fn execute_test_subcommand(
     let package_name = &package.id.name;
     let env = Some(HashMap::from_iter([(
         SCARB_MANIFEST_PATH_ENV.into(),
-        package.manifest_path().into(),
+        package.manifest_path().to_string(),
     )]));
     if let Some(script_definition) = package.manifest.scripts.get("test") {
         debug!("using `test` script: {script_definition}");
