@@ -10,7 +10,7 @@ using the [test targets](../reference/targets#test-targets) mechanism.
 The extension itself only relies on produced artifacts to actually run the tests.
 
 As for how to write Cairo tests, we recommend reading the "Testing Cairo Programs" chapter in the
-[Cairo Programming Language](https://cairo-book.github.io/) book.
+[Cairo Programming Language](https://book.cairo-lang.org/) book.
 
 ## Testing Starknet contracts
 
