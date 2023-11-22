@@ -18,24 +18,8 @@ pub fn execute_script(
     args: &[OsString],
     ws: &Workspace<'_>,
     cwd: &Utf8Path,
-    custom_env: Option<HashMap<OsString, OsString>>,
+    custom_env: Option<HashMap<String, String>>,
 ) -> Result<()> {
-    let target_dir = Some(ws.target_dir().path_unchecked().to_owned());
-    let mut env_vars: HashMap<String, String> = get_env_vars(ws.config(), target_dir)?
-        .into_iter()
-        .map(|(k, v)| {
-            (
-                k.to_string_lossy().to_string(),
-                v.to_string_lossy().to_string(),
-            )
-        })
-        .chain(custom_env.unwrap_or_default().into_iter().map(|(k, v)| {
-            (
-                k.to_string_lossy().to_string(),
-                v.to_string_lossy().to_string(),
-            )
-        }))
-        .collect();
     let custom_commands = HashMap::from([
         // Used to ensure deno_task_shell scripts use the current scarb executable.
         (
@@ -46,7 +30,7 @@ pub fn execute_script(
         ),
     ]);
     let list = script_definition.parse(args)?;
-
+    let mut env_vars = collect_env(custom_env, ws)?;
     // HACK: We help deno_task_shell use colors ;)
     // We want to avoid the problem of piping the coloured text, by ensuring script contains no pipes.
     // Perhaps there's a better way to tackle this issue (Maybe exec_replace instead of using env vars?).
@@ -75,6 +59,26 @@ pub fn execute_script(
     } else {
         Ok(())
     }
+}
+
+fn collect_env(
+    custom_env: Option<HashMap<String, String>>,
+    ws: &Workspace<'_>,
+) -> Result<HashMap<String, String>> {
+    let target_dir = Some(ws.target_dir().path_unchecked().to_owned());
+    let scarb_env = get_env_vars(ws.config(), target_dir)?
+        .into_iter()
+        .map(|(k, v)| {
+            (
+                k.to_string_lossy().to_string(),
+                v.to_string_lossy().to_string(),
+            )
+        });
+    let env_vars: HashMap<String, String> = std::env::vars()
+        .chain(scarb_env)
+        .chain(custom_env.unwrap_or_default())
+        .collect();
+    Ok(env_vars)
 }
 
 fn has_pipe(seq: &parser::Sequence) -> bool {

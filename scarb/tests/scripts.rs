@@ -83,6 +83,44 @@ fn run_missing_script_in_workspace() {
 }
 
 #[test]
+fn script_inherits_env_vars() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .manifest_extra(indoc! {r#"
+        [scripts]
+        some_script = "echo $HELLO"
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .env("HELLO", "Hello, world!")
+        .args(["run", "some_script"])
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq("Hello, world!\n");
+}
+
+#[test]
+fn scarb_env_var_cannot_be_overwritten() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .manifest_extra(indoc! {r#"
+        [scripts]
+        some_script = "echo $SCARB_PROFILE"
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .env("SCARB_PROFILE", "Hello, world!")
+        .args(["--release", "run", "some_script"])
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq("release\n");
+}
+
+#[test]
 fn list_scripts() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
