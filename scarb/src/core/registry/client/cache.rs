@@ -263,7 +263,11 @@ impl CacheDatabase {
     #[tracing::instrument(level = "trace", skip(ui))]
     fn create(path: &Utf8Path, ui: Ui) -> Result<Self> {
         fn create(path: &Utf8Path, ui: &Ui) -> Result<redb::Database> {
-            redb::Database::create(path)
+            // We do need to repair the database in case of corruption, because this is just
+            // a cache, and we can always re-download the data from the registry.
+            redb::Builder::new()
+                .set_repair_callback(|s| s.abort())
+                .create(path)
                 .context("failed to open local registry cache, trying to recreate it")
                 .or_else(|error| {
                     ui.warn_anyhow(&error);
