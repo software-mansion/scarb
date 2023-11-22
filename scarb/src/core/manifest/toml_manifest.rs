@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::default::Default;
 use std::fs;
+use std::iter::{repeat, zip};
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use cairo_lang_filesystem::db::Edition;
@@ -411,8 +412,16 @@ impl TomlManifest {
             PackageId::new(name, version, source_id)
         };
 
-        let mut dependencies = Vec::new();
-        for (name, toml_dep) in self.dependencies.iter().flatten() {
+        let mut dependencies =
+            Vec::with_capacity(self.dependencies.iter().len() + self.dev_dependencies.iter().len());
+        let toml_deps = zip(self.dependencies.iter().flatten(), repeat(DepKind::Normal));
+        let toml_dev_deps = zip(
+            self.dev_dependencies.iter().flatten(),
+            repeat(DepKind::Target(TargetKind::TEST)),
+        );
+        let all_deps = toml_deps.chain(toml_dev_deps);
+
+        for ((name, toml_dep), kind) in all_deps {
             let inherit_ws = || {
                 workspace
                     .dependencies
@@ -420,44 +429,14 @@ impl TomlManifest {
                     .and_then(|deps| deps.get(name.as_str()))
                     .cloned()
                     .ok_or_else(|| anyhow!("dependency `{}` not found in workspace", name.clone()))?
-                    .to_dependency(name.clone(), workspace_manifest_path, DepKind::Normal)
+                    .to_dependency(name.clone(), workspace_manifest_path, kind.clone())
             };
             let toml_dep = toml_dep
                 .clone()
-                .map(|dep| dep.to_dependency(name.clone(), manifest_path, DepKind::Normal))?
+                .map(|dep| dep.to_dependency(name.clone(), manifest_path, kind.clone()))?
                 .resolve(name.as_str(), inherit_ws)?;
             dependencies.push(toml_dep);
         }
-
-        let mut dev_dependencies = Vec::new();
-        for (name, toml_dep) in self.dev_dependencies.iter().flatten() {
-            let inherit_ws = || {
-                workspace
-                    .dependencies
-                    .as_ref()
-                    .and_then(|deps| deps.get(name.as_str()))
-                    .cloned()
-                    .ok_or_else(|| anyhow!("dependency `{}` not found in workspace", name.clone()))?
-                    .to_dependency(
-                        name.clone(),
-                        workspace_manifest_path,
-                        DepKind::Target(TargetKind::TEST),
-                    )
-            };
-            let toml_dep = toml_dep
-                .clone()
-                .map(|dep| {
-                    dep.to_dependency(
-                        name.clone(),
-                        manifest_path,
-                        DepKind::Target(TargetKind::TEST),
-                    )
-                })?
-                .resolve(name.as_str(), inherit_ws)?;
-            dev_dependencies.push(toml_dep);
-        }
-
-        dependencies.extend(dev_dependencies);
 
         let no_core = package.no_core.unwrap_or(false);
 
