@@ -23,6 +23,7 @@ pub struct ProjectBuilder {
     cairo_version: Option<Version>,
     src: HashMap<Utf8PathBuf, String>,
     deps: Vec<(String, Value)>,
+    dev_deps: Vec<(String, Value)>,
     manifest_extra: String,
 }
 
@@ -42,6 +43,7 @@ impl ProjectBuilder {
                 format!(r#"fn f{n}() -> felt252 {{ {n} }}"#),
             )]),
             deps: Vec::new(),
+            dev_deps: Vec::new(),
             manifest_extra: String::new(),
         }
     }
@@ -84,6 +86,11 @@ impl ProjectBuilder {
         self
     }
 
+    pub fn dev_dep(mut self, name: impl ToString, dep: impl DepBuilder) -> Self {
+        self.dev_deps.push((name.to_string(), dep.build()));
+        self
+    }
+
     pub fn dep_starknet(self) -> Self {
         self.dep("starknet", Dep.version(CAIRO_VERSION))
     }
@@ -107,6 +114,10 @@ impl ProjectBuilder {
         doc["dependencies"] = toml_edit::table();
         for (name, dep) in &self.deps {
             doc["dependencies"][name.clone()] = Item::Value(dep.clone());
+        }
+        doc["dev-dependencies"] = toml_edit::table();
+        for (name, dep) in &self.dev_deps {
+            doc["dev-dependencies"][name.clone()] = Item::Value(dep.clone());
         }
         let mut manifest = doc.to_string();
 

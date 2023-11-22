@@ -687,3 +687,49 @@ fn edition_must_exist() {
                  unknown variant `2021`, expected one of `2023_01`, `2023_10`, `2023_11`
         "#});
 }
+
+#[test]
+fn dev_dep_used_outside_tests() {
+    let t = TempDir::new().unwrap();
+    let q = t.child("q");
+    ProjectBuilder::start()
+        .name("q")
+        .build(&q);
+    ProjectBuilder::start()
+        .name("x")
+        .dev_dep("q", Dep.path("./q"))
+        .src("src/foo.cairo", r#"
+        use q::f0;
+
+        fn foo_not_working() {
+            f0();
+        }
+        "#)
+        .build(&t);
+
+    t.child("src/lib.cairo")
+        .write_str( r#"
+        mod foo;
+
+        fn not_working() {
+            foo::foo_not_working();
+        }
+        "#)
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+               Compiling x v1.0.0 ([..]/Scarb.toml)
+            error: Identifier not found.
+             --> [..]/src/foo.cairo:2:13
+                    use q::f0;
+                        ^
+
+
+            error: could not compile `x` due to previous error
+        "#});
+}
