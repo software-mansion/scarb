@@ -1,7 +1,8 @@
+use cargo_metadata::camino::Utf8PathBuf;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use cargo_metadata::MetadataCommand;
+use cargo_metadata::{MetadataCommand, Package};
 
 fn main() {
     commit_info();
@@ -66,9 +67,14 @@ fn cairo_version() {
         .iter()
         .find(|pkg| pkg.id == compiler_dep.pkg)
         .unwrap();
-
     let version = compiler_package.version.to_string();
     println!("cargo:rustc-env=SCARB_CAIRO_VERSION={version}");
+
+    if let Some(corelib_local_path) =
+        find_corelib_local_path(compiler_package).map(|p| p.to_string())
+    {
+        println!("cargo:rustc-env=SCARB_CORELIB_LOCAL_PATH={corelib_local_path}");
+    }
 
     let mut rev = format!("refs/tags/v{version}");
     if let Some(source) = &compiler_package.source {
@@ -84,6 +90,32 @@ fn cairo_version() {
         }
     }
     println!("cargo:rustc-env=SCARB_CAIRO_COMMIT_REV={rev}");
+}
+
+/// Find corelib in local cargo cache.
+///
+/// This function lookups `cairo-lang-compiler` crate in local cargo cache.
+/// This cache should be populated by Cargo, on `cargo metadata` call.
+/// It relies on manifest path provided by cargo metadata, and searches parent directories.
+/// If the crate is downloaded from the registry, the corelib will not be included.
+/// If the crate is downloaded as git or path dependency, the corelib should be present.
+fn find_corelib_local_path(compiler_package: &Package) -> Option<Utf8PathBuf> {
+    // The following logic follows Cairo repository layout.
+    // Starts with `cairo-lang-compiler` crate's manifest path.
+    compiler_package
+        .manifest_path
+        // Crate root directory.
+        .parent()
+        // The `crates` directory from Cairo repository.
+        .and_then(|p| p.parent())
+        // The Cairo repository root.
+        .and_then(|p| p.parent())
+        // Corelib should be present in Cairo compiler repository root.
+        .map(|p| p.join("corelib"))
+        // Ensure path exists
+        .and_then(|p| if p.exists() { Some(p) } else { None })
+    // Note, that for registry source, we do not get whole Cairo repository in cache.
+    // Thus the corelib will not be found - only the crate is downloaded.
 }
 
 fn find_cargo_lock() -> PathBuf {
