@@ -41,7 +41,7 @@ fn obtain_core(rev: &str) {
             io::copy(&mut src, &mut dst).unwrap();
             extract_zipped_core(&cairo_zip, &core_path);
         } else if let Some(corelib_path) = SCARB_CORELIB_LOCAL_PATH {
-            // Else, if corelib is present in Cargo cache, prefer it over remote.
+            // Otherwise; if corelib is present in Cargo cache, prefer it over remote.
             // Copy the corelib directory.
             let source = PathBuf::from(corelib_path);
             let copy_opts = CopyOptions {
