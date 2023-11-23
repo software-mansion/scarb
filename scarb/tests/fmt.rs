@@ -5,6 +5,7 @@ use assert_fs::TempDir;
 use indoc::indoc;
 
 use scarb_test_support::command::Scarb;
+use scarb_test_support::fsx;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
@@ -71,7 +72,7 @@ fn simple_emit_invalid() {
         .failure()
         .stdout_matches(format!(
             "{}:\n{}\n",
-            fs::canonicalize(t.child("src/lib.cairo"))
+            fsx::canonicalize(t.child("src/lib.cairo"))
                 .unwrap()
                 .display(),
             SIMPLE_FORMATTED
@@ -339,7 +340,7 @@ fn workspace_emit_with_root() {
         .failure()
         .stdout_matches(format!(
             "{}:\n{}\n",
-            fs::canonicalize(t.child("src/lib.cairo"))
+            fsx::canonicalize(t.child("src/lib.cairo"))
                 .unwrap()
                 .display(),
             SIMPLE_FORMATTED
@@ -359,15 +360,15 @@ fn workspace_emit_with_root() {
         .failure()
         .stdout_matches(format!(
             "{}:\n{}\n{}:\n{}\n{}:\n{}\n",
-            fs::canonicalize(t.child("first/src/lib.cairo"))
+            fsx::canonicalize(t.child("first/src/lib.cairo"))
                 .unwrap()
                 .display(),
             SIMPLE_FORMATTED,
-            fs::canonicalize(t.child("second/src/lib.cairo"))
+            fsx::canonicalize(t.child("second/src/lib.cairo"))
                 .unwrap()
                 .display(),
             SIMPLE_FORMATTED,
-            fs::canonicalize(t.child("src/lib.cairo"))
+            fsx::canonicalize(t.child("src/lib.cairo"))
                 .unwrap()
                 .display(),
             SIMPLE_FORMATTED,
