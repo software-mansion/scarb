@@ -26,12 +26,12 @@ pub const CAIRO_COMMIT_HASH: Option<CommitHash> = match (
     _ => panic!("Either SCARB_CAIRO_COMMIT_HASH or SCARB_CAIRO_SHORT_COMMIT_HASH is missing."),
 };
 
-// Commit hash corresponding to cairo compiler semver version.
+/// Commit hash corresponding to cairo compiler semver version.
 pub const CAIRO_COMMIT_REV: &str = env!("SCARB_CAIRO_COMMIT_REV");
-// Optional path to corelib from local cargo cache.
-//
-// If `None`, that the corelib should be attempted to be downloaded from Cairo
-// repository on GitHub.
+/// Optional path to corelib from local cargo cache.
+///
+/// If `None`, that the corelib should be attempted to be downloaded from Cairo
+/// repository on GitHub.
 pub const SCARB_CORELIB_LOCAL_PATH: Option<&str> = option_env!("SCARB_CORELIB_LOCAL_PATH");
 
 #[cfg(test)]
