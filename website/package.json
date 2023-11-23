@@ -11,12 +11,12 @@
     "preview": "vitepress preview"
   },
   "dependencies": {
-    "@octokit/core": "5.0.0",
-    "mermaid": "10.4.0",
-    "prettier": "3.0.3",
+    "@octokit/core": "5.0.2",
+    "mermaid": "10.6.1",
+    "prettier": "3.1.0",
     "semver": "7.5.4",
-    "vitepress": "1.0.0-rc.14",
-    "vitepress-plugin-mermaid": "2.0.14",
-    "vue": "3.3.4"
+    "vitepress": "1.0.0-rc.30",
+    "vitepress-plugin-mermaid": "2.0.15",
+    "vue": "3.3.8"
   }
 }
