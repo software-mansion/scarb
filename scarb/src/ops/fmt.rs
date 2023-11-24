@@ -11,6 +11,7 @@ use tracing::{info, warn};
 
 use crate::core::workspace::Workspace;
 use crate::core::PackageId;
+use crate::internal::fsx;
 use crate::internal::serdex::toml_merge;
 
 #[derive(Debug, Clone, ValueEnum)]
@@ -218,12 +219,18 @@ impl<'t> ParallelVisitor for PathFormatter<'t> {
             return Continue;
         }
 
+        let Ok(path) = fsx::canonicalize(path) else {
+            return Continue;
+        };
+
+        let path = path.iter().collect::<PathBuf>();
+
         info!("Formatting file: {}.", path.display());
 
         let success = match &self.opts.action {
-            FmtAction::Fix => format_file_in_place(self.fmt, self.opts, self.ws, path),
-            FmtAction::Check => check_file_formatting(self.fmt, self.opts, self.ws, path),
-            FmtAction::Emit(target) => emit_formatted_file(self.fmt, target, self.ws, path),
+            FmtAction::Fix => format_file_in_place(self.fmt, self.opts, self.ws, &path),
+            FmtAction::Check => check_file_formatting(self.fmt, self.opts, self.ws, &path),
+            FmtAction::Emit(target) => emit_formatted_file(self.fmt, target, self.ws, &path),
         };
 
         if !success {
