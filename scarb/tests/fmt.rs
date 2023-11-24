@@ -60,6 +60,10 @@ fn simple_check_invalid() {
 }
 
 #[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "TODO(#935): Fix paths display on windows."
+)]
 fn simple_emit_invalid() {
     let t = build_temp_dir(SIMPLE_ORIGINAL);
     Scarb::quick_snapbox()
@@ -307,6 +311,10 @@ fn workspace_with_root() {
 }
 
 #[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "TODO(#935): Fix paths display on windows."
+)]
 fn workspace_emit_with_root() {
     let t = TempDir::new().unwrap().child("test_workspace");
     let pkg1 = t.child("first");
