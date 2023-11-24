@@ -75,7 +75,7 @@ impl Lockfile {
                     .map(|dep| dep.name.clone())
                     .collect::<BTreeSet<_>>();
 
-                let summary = resolve.summary(package);
+                let summary = &resolve.summaries[&package];
 
                 PackageLock::builder()
                     .use_package_id(package)
