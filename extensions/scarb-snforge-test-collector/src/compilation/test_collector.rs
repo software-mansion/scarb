@@ -27,16 +27,15 @@ use smol_str::SmolStr;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use crate::compilation::test_collector::config::ExpectedTestResult;
+use crate::compilation::test_collector::config::{ExpectedTestResult, RawForkConfig};
 use crate::metadata::CompilationUnit;
-pub use config::RawForkConfig;
 use config::{forge_try_extract_test_config, FuzzerConfig, SingleTestConfig};
+use function_finder::FunctionFinder;
 use plugin::snforge_test_plugin_suite;
-use sierra_casm_generator::FunctionFinder;
 
 mod config;
+mod function_finder;
 mod plugin;
-mod sierra_casm_generator;
 
 fn find_all_tests(
     db: &dyn SemanticGroup,

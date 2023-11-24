@@ -37,6 +37,5 @@ scarb-ui = { path = "../../utils/scarb-ui" }
 serde.workspace = true
 serde_json.workspace = true
 smol_str.workspace = true
-starknet.workspace = true
 thiserror.workspace = true
 walkdir.workspace = true
