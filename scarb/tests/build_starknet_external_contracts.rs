@@ -1,5 +1,3 @@
-use std::fs;
-
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
@@ -124,8 +122,8 @@ fn compile_multiple_imported_contracts() {
     // Check starknet artifacts content
     let starknet_artifacts = world.child("target/dev/world.starknet_artifacts.json");
     starknet_artifacts.assert_is_json::<serde_json::Value>();
-    let content = fs::read_to_string(&starknet_artifacts).unwrap();
-    let json: serde_json::Value = serde_json::from_str(content.as_ref()).unwrap();
+    let content = starknet_artifacts.read_to_string();
+    let json: serde_json::Value = serde_json::from_str(&content).unwrap();
     let contracts = json
         .as_object()
         .unwrap()
@@ -277,8 +275,8 @@ fn compile_multiple_with_glob_path() {
     // Check starknet artifacts content
     let starknet_artifacts = world.child("target/dev/world.starknet_artifacts.json");
     starknet_artifacts.assert_is_json::<serde_json::Value>();
-    let content = fs::read_to_string(&starknet_artifacts).unwrap();
-    let json: serde_json::Value = serde_json::from_str(content.as_ref()).unwrap();
+    let content = starknet_artifacts.read_to_string();
+    let json: serde_json::Value = serde_json::from_str(&content).unwrap();
     let contracts = json
         .as_object()
         .unwrap()
