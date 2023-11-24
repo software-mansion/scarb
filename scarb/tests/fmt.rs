@@ -1,11 +1,10 @@
-use std::fs;
-
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::indoc;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx;
+use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
@@ -55,7 +54,7 @@ fn simple_check_invalid() {
             +}
 
             "});
-    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 }
 
@@ -77,7 +76,7 @@ fn simple_emit_invalid() {
                 .display(),
             SIMPLE_FORMATTED
         ));
-    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 }
 
@@ -114,7 +113,7 @@ fn simple_format() {
         .success();
 
     assert!(t.child("src/lib.cairo").is_file());
-    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_FORMATTED);
 }
 
@@ -129,7 +128,7 @@ fn simple_format_with_filter() {
         .stdout_eq("error: package `world` not found in workspace\n");
 
     assert!(t.child("src/lib.cairo").is_file());
-    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 
     Scarb::quick_snapbox()
@@ -139,7 +138,7 @@ fn simple_format_with_filter() {
         .success();
 
     assert!(t.child("src/lib.cairo").is_file());
-    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_FORMATTED);
 }
 
@@ -285,11 +284,11 @@ fn workspace_with_root() {
         .assert()
         .success();
 
-    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_FORMATTED);
-    let content = fs::read_to_string(t.child("first/src/lib.cairo")).unwrap();
+    let content = t.child("first/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
-    let content = fs::read_to_string(t.child("second/src/lib.cairo")).unwrap();
+    let content = t.child("second/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 
     Scarb::quick_snapbox()
@@ -298,11 +297,11 @@ fn workspace_with_root() {
         .assert()
         .success();
 
-    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_FORMATTED);
-    let content = fs::read_to_string(t.child("first/src/lib.cairo")).unwrap();
+    let content = t.child("first/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_FORMATTED);
-    let content = fs::read_to_string(t.child("second/src/lib.cairo")).unwrap();
+    let content = t.child("second/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_FORMATTED);
 }
 
@@ -346,11 +345,11 @@ fn workspace_emit_with_root() {
             SIMPLE_FORMATTED
         ));
 
-    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
-    let content = fs::read_to_string(t.child("first/src/lib.cairo")).unwrap();
+    let content = t.child("first/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
-    let content = fs::read_to_string(t.child("second/src/lib.cairo")).unwrap();
+    let content = t.child("second/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 
     Scarb::quick_snapbox()
@@ -374,10 +373,10 @@ fn workspace_emit_with_root() {
             SIMPLE_FORMATTED,
         ));
 
-    let content = fs::read_to_string(t.child("src/lib.cairo")).unwrap();
+    let content = t.child("src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
-    let content = fs::read_to_string(t.child("first/src/lib.cairo")).unwrap();
+    let content = t.child("first/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
-    let content = fs::read_to_string(t.child("second/src/lib.cairo")).unwrap();
+    let content = t.child("second/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 }
