@@ -25,6 +25,12 @@ use crate::core::{
 ///     our requests to it (aka returns the same results for the same query every time).
 ///     It is also advised to implement internal caching, as the resolver may frequently ask
 ///     repetitive queries.
+///
+/// * `lockfile` - a [`Lockfile`] instance, which is used to guide the resolution process. Empty
+///     lockfile will result in no guidance. This function does not read or write lock files from
+///     the filesystem.
+///
+/// * `ui` - an [`Ui`] instance used to show warnings to the user.
 #[tracing::instrument(level = "trace", skip_all)]
 pub async fn resolve(
     summaries: &[Summary],
