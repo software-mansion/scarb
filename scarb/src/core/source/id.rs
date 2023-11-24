@@ -54,7 +54,14 @@ impl SourceKind {
         }
     }
 
-    pub fn can_lock_source_kind(&self, other: &Self) -> bool {
+    /// Returns `true`, if self coming from the lock file, can lock dependency with `other`.
+    ///
+    /// * If both kinds are [`SourceKind::Git`] and both have `Some` value of the `precise` field,
+    ///   then they must be equal.
+    /// * If both kinds are [`SourceKind::Git`] and `self` has `Some` `precise` value, while the
+    ///   `other` has `None`, then both kinds must be equal ignoring the `precise` value.
+    /// * Otherwise; the regular equality check is performed.
+    fn can_lock_source_kind(&self, other: &Self) -> bool {
         if self == other {
             return true;
         }

@@ -42,7 +42,7 @@ The `test-type` property accepts either `unit` or `integration` as a value, as d
 
 Example test target definition:
 
-```tomls
+```toml
 [[test]]
 test-type = "unit"
 ```

@@ -8,7 +8,6 @@ use anyhow::{bail, ensure, Context, Result};
 use data_encoding::{Encoding, HEXLOWER_PERMISSIVE};
 use serde::{Deserialize, Serialize};
 use sha2::Digest as _;
-use tokio::io::{AsyncRead, AsyncReadExt};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
@@ -133,20 +132,6 @@ impl Digest {
         }
     }
 
-    pub async fn update_read_async(
-        &mut self,
-        mut input: impl AsyncRead + Unpin,
-    ) -> Result<&mut Self> {
-        let mut buf = [0; 64 * 1024];
-        loop {
-            let n = input.read(&mut buf).await?;
-            if n == 0 {
-                break Ok(self);
-            }
-            self.update(&buf[..n]);
-        }
-    }
-
     pub fn finish(&mut self) -> Checksum {
         Checksum(self.0.finalize_reset().into())
     }
@@ -207,16 +192,6 @@ mod tests {
     fn digest_read() {
         let actual = Digest::recommended()
             .update_read(Cursor::new(LOREM))
-            .unwrap()
-            .finish();
-        assert_eq!(actual, lorem_checksum());
-    }
-
-    #[tokio::test]
-    async fn digest_read_async() {
-        let actual = Digest::recommended()
-            .update_read_async(Cursor::new(LOREM))
-            .await
             .unwrap()
             .finish();
         assert_eq!(actual, lorem_checksum());

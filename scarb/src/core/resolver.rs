@@ -15,6 +15,7 @@ pub struct Resolve {
     ///
     /// If package `a` depends on package `b`, then this graph will contain an edge from `a` to `b`.
     pub graph: DiGraphMap<PackageId, DependencyEdge>,
+    /// Summaries of all packages in the graph.
     pub summaries: HashMap<PackageId, Summary>,
 }
 
@@ -52,10 +53,6 @@ impl Resolve {
     ) -> impl Iterator<Item = PackageId> + '_ {
         self.graph
             .neighbors_directed(package_id, petgraph::Direction::Outgoing)
-    }
-
-    pub fn summary(&self, package_id: PackageId) -> &Summary {
-        &self.summaries[&package_id]
     }
 }
 

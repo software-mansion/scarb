@@ -4,6 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use anyhow::Result;
 use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
+use clap::ValueEnum;
 use ignore::WalkState::{Continue, Skip};
 use ignore::{DirEntry, Error, ParallelVisitor, ParallelVisitorBuilder, WalkState};
 use tracing::{info, warn};
@@ -12,9 +13,24 @@ use crate::core::workspace::Workspace;
 use crate::core::PackageId;
 use crate::internal::serdex::toml_merge;
 
+#[derive(Debug, Clone, ValueEnum)]
+pub enum EmitTarget {
+    Stdout,
+}
+
+/// Format option to display the output formatted file
+/// Example: scarb fmt --emit stdout
+#[derive(Debug, Default, Clone)]
+pub enum FmtAction {
+    #[default]
+    Fix,
+    Check,
+    Emit(EmitTarget),
+}
+
 #[derive(Debug)]
 pub struct FmtOptions {
-    pub check: bool,
+    pub action: FmtAction,
     pub packages: Vec<PackageId>,
     pub color: bool,
 }
@@ -127,6 +143,40 @@ fn check_file_formatting(
     }
 }
 
+pub trait Emittable {
+    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str);
+}
+
+impl Emittable for EmitTarget {
+    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str) {
+        match self {
+            Self::Stdout => ws
+                .config()
+                .ui()
+                .print(format!("{}:\n{}", path.display(), formatted)),
+        }
+    }
+}
+
+fn emit_formatted_file(
+    fmt: &CairoFormatter,
+    target: &dyn Emittable,
+    ws: &Workspace<'_>,
+    path: &Path,
+) -> bool {
+    match fmt.format_to_string(&path) {
+        Ok(FormatOutcome::Identical(_)) => true,
+        Ok(FormatOutcome::DiffFound(diff)) => {
+            target.emit(ws, path, &diff.formatted);
+            false
+        }
+        Err(parsing_error) => {
+            print_error(ws, path, parsing_error);
+            false
+        }
+    }
+}
+
 fn format_file_in_place(
     fmt: &CairoFormatter,
     _opts: &FmtOptions,
@@ -170,10 +220,10 @@ impl<'t> ParallelVisitor for PathFormatter<'t> {
 
         info!("Formatting file: {}.", path.display());
 
-        let success = if self.opts.check {
-            check_file_formatting(self.fmt, self.opts, self.ws, path)
-        } else {
-            format_file_in_place(self.fmt, self.opts, self.ws, path)
+        let success = match &self.opts.action {
+            FmtAction::Fix => format_file_in_place(self.fmt, self.opts, self.ws, path),
+            FmtAction::Check => check_file_formatting(self.fmt, self.opts, self.ws, path),
+            FmtAction::Emit(target) => emit_formatted_file(self.fmt, target, self.ws, path),
         };
 
         if !success {

@@ -6,6 +6,7 @@ use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc, writedoc};
 
+use crate::core::registry::package_source_store::PackageSourceStore;
 use crate::sources::client::PackageRepository;
 
 use scarb_ui::components::Status;
@@ -14,8 +15,8 @@ use serde::Serialize;
 
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{Package, PackageId, PackageName, Workspace};
-use crate::flock::FileLockGuard;
+use crate::core::{Package, PackageId, PackageName, TargetKind, Workspace};
+use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
     ops, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME,
@@ -35,6 +36,7 @@ const RESERVED_FILES: &[&str] = &[
 #[derive(Clone)]
 pub struct PackageOpts {
     pub allow_dirty: bool,
+    pub verify: bool,
 }
 
 /// A listing of files to include in the archive, without actually building it yet.
@@ -116,7 +118,7 @@ fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Optio
     ensure!(
         opts.allow_dirty || repo.is_clean()?,
         indoc! {r#"
-            cannot package a repository containing uncommited changes
+            cannot package a repository containing uncommitted changes
             help: to proceed despite this and include the uncommitted changes, pass the `--allow-dirty` flag
         "#}
     );
@@ -160,7 +162,11 @@ fn package_one_impl(
 
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
-    // TODO(mkaput): Verify.
+    let mut dst = if opts.verify {
+        run_verify(pkg, dst, ws).context("failed to verify package tarball")?
+    } else {
+        dst
+    };
 
     dst.seek(SeekFrom::Start(0))?;
 
@@ -283,6 +289,35 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     );
 
     Ok(recipe)
+}
+
+fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<FileLockGuard> {
+    ws.config()
+        .ui()
+        .print(Status::new("Verifying", &pkg.id.tarball_name()));
+
+    let fs = Filesystem::new(tar.path().parent().unwrap().into());
+    unsafe {
+        fs.child(pkg.id.tarball_basename()).recreate()?;
+    }
+
+    let (path, lock) = ws
+        .config()
+        .tokio_handle()
+        .block_on(async { PackageSourceStore::extract_to(pkg.id, tar, &fs, ws.config()).await })?;
+
+    let ws = ops::read_workspace(&path.join(MANIFEST_FILE_NAME), ws.config())?;
+
+    ops::compile(
+        ws.members().map(|p| p.id).collect(),
+        ops::CompileOpts {
+            include_targets: Vec::new(),
+            exclude_targets: vec![TargetKind::TEST.clone()],
+        },
+        &ws,
+    )?;
+
+    Ok(lock)
 }
 
 #[tracing::instrument(level = "trace", skip_all)]

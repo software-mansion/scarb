@@ -1,12 +1,11 @@
-use std::io::SeekFrom;
+use std::io::{Seek, SeekFrom};
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use camino::Utf8Path;
 use redb::{MultimapTableDefinition, ReadableMultimapTable, ReadableTable, TableDefinition};
 use semver::Version;
-use tokio::io::AsyncSeekExt;
 use tokio::sync::OnceCell;
-use tokio::task::block_in_place;
+use tokio::task::{block_in_place, spawn_blocking};
 use tracing::trace;
 
 use scarb_ui::Ui;
@@ -214,25 +213,25 @@ impl<'c> RegistryClientCache<'c> {
         &self,
         package: PackageId,
         checksum: &Checksum,
-        file: FileLockGuard,
+        mut file: FileLockGuard,
     ) -> Result<FileLockGuard> {
-        let mut file = file.into_async();
+        let checksum = checksum.clone();
+        spawn_blocking(move || -> Result<_> {
+            file.seek(SeekFrom::Start(0))?;
+            let actual = checksum
+                .digest()
+                .update_read(&mut *file)
+                .with_context(|| format!("failed to calculate checksum of: {package}"))?
+                .finish();
 
-        file.seek(SeekFrom::Start(0)).await?;
-        let actual = checksum
-            .digest()
-            .update_read_async(&mut *file)
-            .await
-            .with_context(|| format!("failed to calculate checksum of: {package}"))?
-            .finish();
+            ensure!(
+                actual == checksum,
+                "failed to verify the checksum of downloaded archive"
+            );
 
-        ensure!(
-            actual == *checksum,
-            "failed to verify the checksum of downloaded archive"
-        );
-
-        let file = file.into_sync().await;
-        Ok(file)
+            Ok(file)
+        })
+        .await?
     }
 
     async fn get_record_maybe_uncached(&self, package: PackageId) -> Result<IndexRecord> {
@@ -264,7 +263,11 @@ impl CacheDatabase {
     #[tracing::instrument(level = "trace", skip(ui))]
     fn create(path: &Utf8Path, ui: Ui) -> Result<Self> {
         fn create(path: &Utf8Path, ui: &Ui) -> Result<redb::Database> {
-            redb::Database::create(path)
+            // We do need to repair the database in case of corruption, because this is just
+            // a cache, and we can always re-download the data from the registry.
+            redb::Builder::new()
+                .set_repair_callback(|s| s.abort())
+                .create(path)
                 .context("failed to open local registry cache, trying to recreate it")
                 .or_else(|error| {
                     ui.warn_anyhow(&error);

@@ -1,3 +1,4 @@
+use std::fs;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{PathBuf, MAIN_SEPARATOR_STR};
@@ -43,12 +44,17 @@ impl AssertFsUtf8Ext for &ChildPath {
 }
 
 pub trait ChildPathEx {
+    fn read_to_string(&self) -> String;
     fn files(&self) -> Vec<String>;
     fn tree(&self) -> String;
     fn assert_is_json<T: DeserializeOwned>(&self) -> T;
 }
 
 impl ChildPathEx for ChildPath {
+    fn read_to_string(&self) -> String {
+        fs::read_to_string(self.path()).unwrap()
+    }
+
     fn files(&self) -> Vec<String> {
         self.read_dir()
             .unwrap()

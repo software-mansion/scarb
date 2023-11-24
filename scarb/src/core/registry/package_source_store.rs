@@ -35,25 +35,50 @@ impl<'a> PackageSourceStore<'a> {
     pub async fn extract(&self, pkg: PackageId, archive: FileLockGuard) -> Result<Utf8PathBuf> {
         trace!("attempting to extract `{pkg}`");
         trace!(archive = ?archive.path());
-        self.extract_impl(pkg, archive)
+
+        let (path, _) = Self::extract_impl(pkg.tarball_basename(), archive, &self.fs, self.config)
+            .await
+            .with_context(|| format!("failed to extract: {pkg}"))?;
+
+        Ok(path)
+    }
+
+    /// Extract a package archive into a location specified by `fs` Filesystem.
+    ///
+    /// No action is taken if the source looks like it's already unpacked.
+    ///
+    /// The `archive` file guard taken as an argument is returned to prevent releasing it.
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub async fn extract_to(
+        pkg: PackageId,
+        archive: FileLockGuard,
+        fs: &Filesystem,
+        config: &Config,
+    ) -> Result<(Utf8PathBuf, FileLockGuard)> {
+        trace!("attempting to extract `{pkg}`");
+        trace!(archive = ?archive.path());
+
+        Self::extract_impl(pkg.tarball_basename(), archive, fs, config)
             .await
             .with_context(|| format!("failed to extract: {pkg}"))
     }
 
     async fn extract_impl(
-        &self,
-        pkg: PackageId,
+        prefix: String,
         mut archive: FileLockGuard,
-    ) -> Result<Utf8PathBuf> {
-        let prefix = pkg.tarball_basename();
-        let fs = self.fs.child(&prefix);
-        let parent_path = self.fs.path_existent()?.to_owned();
+        fs: &Filesystem,
+        config: &Config,
+    ) -> Result<(Utf8PathBuf, FileLockGuard)> {
+        let parent_path = fs.path_existent()?.to_owned();
+        let fs = fs.child(&prefix);
         let output_path = fs.path_existent()?.to_owned();
         trace!(?output_path);
-
         assert_eq!(parent_path.join(&prefix), output_path);
 
-        protected_run_if_not_ok!(&fs, &self.config.package_cache_lock(), {
+        // It is not known for sure whether relying on the global package cache lock
+        // for extracting an archive for verification is completely safe, and it might be
+        // a problem in the future.
+        protected_run_if_not_ok!(&fs, config.package_cache_lock(), {
             debug!("starting extraction");
 
             // Wipe anything already extracted.
@@ -61,7 +86,7 @@ impl<'a> PackageSourceStore<'a> {
                 fs.recreate()?;
             }
 
-            spawn_blocking(move || -> Result<()> {
+            archive = spawn_blocking(move || -> Result<FileLockGuard> {
                 // FIXME(mkaput): Verify VERSION is 1.
 
                 let mut tar = {
@@ -101,12 +126,12 @@ impl<'a> PackageSourceStore<'a> {
                     r.with_context(|| format!("failed to extract: {entry_path}"))?;
                 }
 
-                Ok(())
+                Ok(archive)
             })
             .await??;
         });
 
         trace!("extraction succeeded");
-        Ok(output_path)
+        Ok((output_path, archive))
     }
 }
