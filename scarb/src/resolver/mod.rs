@@ -148,7 +148,9 @@ pub async fn resolve(
         "});
     }
 
-    Ok(Resolve { graph, summaries })
+    let resolve = Resolve { graph, summaries };
+    resolve.check_checksums(&lockfile)?;
+    Ok(resolve)
 }
 
 fn rewrite_locked_dependency(
