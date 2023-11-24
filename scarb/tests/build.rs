@@ -694,28 +694,37 @@ fn dev_dep_used_outside_tests() {
     let q = t.child("q");
     ProjectBuilder::start()
         .name("q")
+        .lib_cairo(
+            r#"
+            fn dev_dep_function() -> felt252 {
+                42
+            }
+            "#,
+        )
         .build(&q);
     ProjectBuilder::start()
         .name("x")
-        .dev_dep("q", Dep.path("./q"))
-        .src("src/foo.cairo", r#"
-        use q::f0;
+        .dev_dep("q", &q)
+        .src(
+            "src/foo.cairo",
+            r#"
+        use q::dev_dep_function;
 
         fn foo_not_working() {
-            f0();
+            dev_dep_function();
         }
-        "#)
-        .build(&t);
-
-    t.child("src/lib.cairo")
-        .write_str( r#"
+        "#,
+        )
+        .lib_cairo(
+            r#"
         mod foo;
 
         fn not_working() {
             foo::foo_not_working();
         }
-        "#)
-        .unwrap();
+        "#,
+        )
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("build")
@@ -723,10 +732,10 @@ fn dev_dep_used_outside_tests() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-               Compiling x v1.0.0 ([..]/Scarb.toml)
+            [..] Compiling x v1.0.0 ([..])
             error: Identifier not found.
              --> [..]/src/foo.cairo:2:13
-                    use q::f0;
+                    use q::dev_dep_function;
                         ^
 
 

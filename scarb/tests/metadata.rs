@@ -207,9 +207,7 @@ fn local_dependencies() {
 fn dev_dependencies() {
     let t = assert_fs::TempDir::new().unwrap();
     let q = t.child("q");
-    ProjectBuilder::start()
-        .name("q")
-        .build(&q);
+    ProjectBuilder::start().name("q").build(&q);
     ProjectBuilder::start()
         .name("x")
         .dev_dep("q", Dep.path("./q"))
@@ -236,10 +234,7 @@ fn dev_dependencies() {
             ),
             (
                 "q".to_string(),
-                vec![
-                    "core".to_string(),
-                    "test_plugin".to_string()
-                ]
+                vec!["core".to_string(), "test_plugin".to_string()]
             )
         ])
     )

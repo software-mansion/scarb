@@ -412,8 +412,7 @@ impl TomlManifest {
             PackageId::new(name, version, source_id)
         };
 
-        let mut dependencies =
-            Vec::with_capacity(self.dependencies.iter().len() + self.dev_dependencies.iter().len());
+        let mut dependencies = Vec::new();
         let toml_deps = zip(self.dependencies.iter().flatten(), repeat(DepKind::Normal));
         let toml_dev_deps = zip(
             self.dev_dependencies.iter().flatten(),
