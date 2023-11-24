@@ -22,6 +22,7 @@ impl LocalRegistry {
         f(&t);
         Scarb::quick_snapbox()
             .arg("publish")
+            .arg("--no-verify")
             .arg("--index")
             .arg(&self.url)
             .current_dir(&t)
