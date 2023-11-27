@@ -11,8 +11,9 @@ use tracing::debug;
 use scarb_ui::components::Status;
 
 use crate::core::{Config, Package, ScriptDefinition, Workspace};
+use crate::internal::fsx::is_executable;
 use crate::ops;
-use crate::process::{exec_replace, is_executable};
+use crate::process::exec_replace;
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV};
 
 /// Prepare environment and execute an external subcommand.
