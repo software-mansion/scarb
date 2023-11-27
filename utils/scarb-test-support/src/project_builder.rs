@@ -115,9 +115,11 @@ impl ProjectBuilder {
         for (name, dep) in &self.deps {
             doc["dependencies"][name.clone()] = Item::Value(dep.clone());
         }
-        doc["dev-dependencies"] = toml_edit::table();
-        for (name, dep) in &self.dev_deps {
-            doc["dev-dependencies"][name.clone()] = Item::Value(dep.clone());
+        if !self.dev_deps.is_empty() {
+            doc["dev-dependencies"] = toml_edit::table();
+            for (name, dep) in &self.dev_deps {
+                doc["dev-dependencies"][name.clone()] = Item::Value(dep.clone());
+            }
         }
         let mut manifest = doc.to_string();
 
