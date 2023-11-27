@@ -1,9 +1,13 @@
+use std::collections::HashMap;
+
+use anyhow::{bail, Result};
+use indoc::formatdoc;
 use itertools::Itertools;
 use petgraph::graphmap::DiGraphMap;
 use petgraph::visit::{Dfs, EdgeFiltered, Walker};
 use smallvec::SmallVec;
-use std::collections::HashMap;
 
+use crate::core::lockfile::Lockfile;
 use crate::core::{PackageId, Summary, TargetKind};
 
 /// Represents a fully-resolved package dependency graph.
@@ -91,5 +95,106 @@ impl From<Vec<TargetKind>> for DependencyEdge {
 impl From<TargetKind> for DependencyEdge {
     fn from(target_kind: TargetKind) -> Self {
         Self(vec![target_kind].into())
+    }
+}
+
+/// Lockfiles handling.
+impl Resolve {
+    /// Check that the newly generated resolve is compliant with the previous one generated
+    /// from a lock file.
+    ///
+    /// Given an existing lock file, it should be forbidden to ever have a checksums which
+    /// *differ*. If the same package ids' summaries have differing checksums, then something
+    /// has gone wrong such as:
+    ///
+    /// * something got seriously corrupted,
+    /// * a "mirror" is not actually a mirror as some changes were made,
+    /// * a replacement source was not actually a replacement, some changes were made.
+    ///
+    /// In all of these cases, we want to report an error to indicate that something is awry.
+    /// Normal execution (esp. just using the default registry) should never run into this.
+    pub fn check_checksums(&self, lockfile: &Lockfile) -> Result<()> {
+        for package_lock in &lockfile.packages {
+            let (locked, source_id) = match (package_lock.checksum.as_ref(), package_lock.source) {
+                (None, None) => continue,
+                (Some(_), None) => {
+                    unreachable!(
+                        "Package lock entry `{n} v{v}` has `checksum` but no `source` field.",
+                        n = package_lock.name,
+                        v = package_lock.version
+                    );
+                }
+                (locked, Some(source_id)) => (locked, source_id),
+            };
+
+            let id = PackageId::new(
+                package_lock.name.clone(),
+                package_lock.version.clone(),
+                source_id,
+            );
+
+            let Some(actual) = self.summaries.get(&id).map(|s| s.checksum.as_ref()) else {
+                continue;
+            };
+
+            match (actual, locked) {
+                // If the checksums are the same, or both are not present, then we are good.
+                (Some(actual), Some(locked)) if actual == locked => {}
+                (None, None) => {}
+
+                // If the locked checksum was not calculated, and the current checksum is `Some`,
+                // it may indicate that a source was erroneously replaced or was replaced with
+                // something that desires stronger checksum guarantees than can be afforded
+                // elsewhere.
+                (Some(_), None) => {
+                    bail!(formatdoc! {"
+                        checksum for `{id}` was not previously calculated, but now it could be
+
+                        this could be indicative of a few possible situations:
+
+                            * the source `{source_id}` did not previously support checksums, \
+                              but was replaced with one that does
+                            * newer Scarb implementations know how to checksum this source, \
+                              but this older implementation does not
+                            * the lock file is corrupt
+                    "});
+                }
+
+                // If our checksum has not been calculated, then it could mean that future Scarb
+                // figured out how to do it or the source has been shadowed by with
+                // a different one thanks to some unknown future logic.
+                (None, Some(_)) => {
+                    bail!(formatdoc! {"
+                        checksum for `{id}` could not be calculated, but a checksum is listed in \
+                        the existing lock file
+
+                        this could be indicative of a few possible situations:
+
+                            * the source `{source_id}` supports checksums, \
+                              but was replaced with one that does not
+                            * the lock file is corrupt
+
+                        unable to verify that `{id}` is the same as when the lockfile was generated
+                    "});
+                }
+
+                // Both checksums are known, but they differ.
+                (Some(_), Some(_)) => {
+                    bail!(formatdoc! {"
+                        checksum for `{id}` changed between lock files
+
+                        this could be indicative of a few possible errors:
+
+                            * the lock file is corrupt
+                            * a replacement source in use (e.g. a mirror) returned a different \
+                              checksum
+                            * the source itself may be corrupt in one way or another
+
+                        unable to verify that `{id}` is the same as when the lockfile was generated
+                    "});
+                }
+            }
+        }
+        Ok(())
     }
 }

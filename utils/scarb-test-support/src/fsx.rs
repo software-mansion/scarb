@@ -48,6 +48,7 @@ pub trait ChildPathEx {
     fn files(&self) -> Vec<String>;
     fn tree(&self) -> String;
     fn assert_is_json<T: DeserializeOwned>(&self) -> T;
+    fn assert_is_toml_document(&self) -> toml_edit::Document;
 }
 
 impl ChildPathEx for ChildPath {
@@ -103,6 +104,10 @@ impl ChildPathEx for ChildPath {
         let file = File::open(self.path()).unwrap();
         let reader = BufReader::new(file);
         serde_json::from_reader(reader).unwrap()
+    }
+
+    fn assert_is_toml_document(&self) -> toml_edit::Document {
+        self.read_to_string().parse().unwrap()
     }
 }
 
