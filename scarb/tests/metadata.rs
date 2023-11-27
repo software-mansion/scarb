@@ -204,6 +204,43 @@ fn local_dependencies() {
 }
 
 #[test]
+fn dev_dependencies() {
+    let t = assert_fs::TempDir::new().unwrap();
+    let q = t.child("q");
+    ProjectBuilder::start().name("q").build(&q);
+    ProjectBuilder::start()
+        .name("x")
+        .dev_dep("q", Dep.path("./q"))
+        .build(&t);
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    assert_eq!(
+        packages_and_deps(meta),
+        BTreeMap::from_iter([
+            ("core".to_string(), vec![]),
+            ("test_plugin".to_string(), vec![]),
+            (
+                "x".to_string(),
+                vec![
+                    "core".to_string(),
+                    "q".to_string(),
+                    "test_plugin".to_string()
+                ]
+            ),
+            (
+                "q".to_string(),
+                vec!["core".to_string(), "test_plugin".to_string()]
+            )
+        ])
+    )
+}
+
+#[test]
 fn no_dep() {
     let t = assert_fs::TempDir::new().unwrap();
     create_local_dependencies_setup(&t);

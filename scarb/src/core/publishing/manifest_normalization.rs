@@ -38,6 +38,7 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
         package,
         workspace: None,
         dependencies,
+        dev_dependencies: None,
         lib: None,
         cairo_plugin,
         test: None,

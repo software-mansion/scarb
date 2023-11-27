@@ -687,3 +687,74 @@ fn edition_must_exist() {
                  unknown variant `2021`, expected one of `2023_01`, `2023_10`, `2023_11`
         "#});
 }
+
+#[test]
+fn dev_dep_used_outside_tests() {
+    let t = TempDir::new().unwrap();
+    let q = t.child("q");
+    ProjectBuilder::start()
+        .name("q")
+        .lib_cairo("fn dev_dep_function() -> felt252 { 42 }")
+        .build(&q);
+    ProjectBuilder::start()
+        .name("x")
+        .dev_dep("q", &q)
+        .lib_cairo(indoc! {r#"
+            use q::dev_dep_function;
+
+            fn not_working() {
+                dev_dep_function();
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling x v1.0.0 ([..])
+            error: Identifier not found.
+             --> [..]/src/lib.cairo[..]
+            use q::dev_dep_function;
+                ^
+
+
+            error: could not compile `x` due to previous error
+        "#});
+}
+
+#[test]
+fn dev_dep_inside_test() {
+    let t = TempDir::new().unwrap();
+    let q = t.child("q");
+    ProjectBuilder::start()
+        .name("q")
+        .lib_cairo("fn dev_dep_function() -> felt252 { 42 }")
+        .build(&q);
+    ProjectBuilder::start()
+        .name("x")
+        .dev_dep("q", &q)
+        .lib_cairo(indoc! {r#"
+            #[cfg(test)]
+            mod tests {
+                use q::dev_dep_function;
+
+                fn it_works() {
+                    dev_dep_function();
+                }
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling x v1.0.0 ([..])
+            [..]  Finished release target(s) in [..]
+        "#});
+}
