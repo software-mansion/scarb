@@ -69,7 +69,7 @@ fn simple_emit_invalid() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(format!(
+        .stdout_eq(format!(
             "{}:\n{}\n",
             fsx::canonicalize(t.child("src/lib.cairo"))
                 .unwrap()
@@ -337,7 +337,7 @@ fn workspace_emit_with_root() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(format!(
+        .stdout_eq(format!(
             "{}:\n{}\n",
             fsx::canonicalize(t.child("src/lib.cairo"))
                 .unwrap()
@@ -357,7 +357,7 @@ fn workspace_emit_with_root() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(format!(
+        .stdout_eq(format!(
             "{}:\n{}\n{}:\n{}\n{}:\n{}\n",
             fsx::canonicalize(t.child("first/src/lib.cairo"))
                 .unwrap()
