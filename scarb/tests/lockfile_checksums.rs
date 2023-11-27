@@ -175,8 +175,7 @@ fn unlisted_checksum_for_source_supporting_it() {
 
         this could be indicative of a few possible situations:
 
-            * the source `[..]` did not previously support checksums,
-              but was replaced with one that does
+            * the source `[..]` did not previously support checksums, but was replaced with one that does
             * newer Scarb implementations know how to checksum this source, but this older implementation does not
             * the lock file is corrupt
         "#});
