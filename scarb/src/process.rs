@@ -1,6 +1,5 @@
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Read};
-use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::{fmt, thread};
@@ -177,15 +176,3 @@ impl<'a> fmt::Display for ShlexJoin<'a> {
         Ok(())
     }
 }
-
-#[cfg(unix)]
-pub fn make_executable(path: &Path) {
-    use std::fs;
-    use std::os::unix::prelude::*;
-    let mut perms = fs::metadata(path).unwrap().permissions();
-    perms.set_mode(perms.mode() | 0o700);
-    fs::set_permissions(path, perms).unwrap();
-}
-
-#[cfg(windows)]
-pub fn make_executable(_path: &Path) {}

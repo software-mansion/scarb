@@ -115,7 +115,7 @@ mod tests {
     use camino::Utf8Path;
 
     use scarb::core::Config;
-    use scarb::process::make_executable;
+    use scarb_test_support::fsx::make_executable;
 
     use super::{list_commands, CommandInfo};
 

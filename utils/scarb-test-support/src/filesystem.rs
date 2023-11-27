@@ -5,7 +5,8 @@ use std::{env, iter, vec};
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::indoc;
-use scarb::process::make_executable;
+
+use crate::fsx::make_executable;
 
 pub fn write_script(name: &str, script_source: &str, t: &TempDir) {
     let script = t.child(format!("scarb-{name}{}", env::consts::EXE_SUFFIX));
