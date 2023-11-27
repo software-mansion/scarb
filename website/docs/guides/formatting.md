@@ -13,6 +13,15 @@ properly formatted:
 scarb fmt --check
 ```
 
+Alternatively, you can use the `--emit stdout` argument.
+With this argument, Scarb will not make any changes to the files on your disk.
+Instead, full new content of formatted files will be printed to stdout, prepended with their path.
+Files that had already been in a correct format will not be emitted.
+This may be useful for integrating with some external tools.
+
+You can choose packages to format with `--package / --workspace` arguments.
+When formatting a package, all cairo files in package root and directories below will be formatted (not only the `src/*` directory).
+
 ## Formatting options
 
 You can add `[tool.fmt]` section inside `Scarb.toml` to override the default formatter configuration.
