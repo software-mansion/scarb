@@ -1,6 +1,5 @@
 use crate::project_builder::{DepBuilder, ProjectBuilder};
 use assert_fs::prelude::*;
-use scarb::MANIFEST_FILE_NAME;
 use toml_edit::{Array, Document, Item, Value};
 
 #[derive(Default)]
@@ -59,6 +58,6 @@ impl WorkspaceBuilder {
             manifest.push_str(&self.manifest_extra);
         }
 
-        t.child(MANIFEST_FILE_NAME).write_str(&manifest).unwrap();
+        t.child("Scarb.toml").write_str(&manifest).unwrap();
     }
 }
