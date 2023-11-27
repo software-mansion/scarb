@@ -155,7 +155,7 @@ impl Resolve {
 
                         this could be indicative of a few possible situations:
 
-                            * the source `{source_id}` did not previously support checksums,
+                            * the source `{source_id}` did not previously support checksums, \
                               but was replaced with one that does
                             * newer Scarb implementations know how to checksum this source, \
                               but this older implementation does not
