@@ -164,8 +164,8 @@ impl Resolve {
                 }
 
                 // If our checksum has not been calculated, then it could mean that future Scarb
-                // figured out how to do it or more realistically we were overridden with a source
-                // that does not have checksums.
+                // figured out how to do it or the source has been shadowed by with
+                // a different one thanks to some unknown future logic.
                 (None, Some(_)) => {
                     bail!(formatdoc! {"
                         checksum for `{id}` could not be calculated, but a checksum is listed in \
