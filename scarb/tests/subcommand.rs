@@ -9,7 +9,7 @@ use indoc::indoc;
 use scarb_test_support::cargo::cargo_bin;
 
 use scarb_test_support::command::Scarb;
-use scarb_test_support::filesystem::{path_with_temp_dir, write_script, write_simple_hello_script};
+use scarb_test_support::filesystem::{path_with_temp_dir, write_simple_hello_script};
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
@@ -56,7 +56,7 @@ fn list_commands_e2e() {
 #[cfg(unix)]
 fn env_variables_are_passed() {
     let t = TempDir::new().unwrap();
-    write_script(
+    scarb_test_support::filesystem::write_script(
         "env",
         indoc! {
             r#"
@@ -98,7 +98,7 @@ fn env_variables_are_passed() {
 #[cfg(unix)]
 fn env_scarb_log_is_passed_verbatim() {
     let t = TempDir::new().unwrap();
-    write_script(
+    scarb_test_support::filesystem::write_script(
         "env",
         indoc! {
             r#"
@@ -196,7 +196,7 @@ fn can_find_scarb_directory_scripts_without_path() {
 
 #[test]
 fn can_list_scarb_directory_scripts() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     write_simple_hello_script("hello", &t);
 
     // Set scarb path to folder containing hello script
