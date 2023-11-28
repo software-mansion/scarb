@@ -223,6 +223,7 @@ fn publish_overwrites_existing() {
 
     Scarb::quick_snapbox()
         .arg("publish")
+        .arg("--no-verify")
         .arg("--index")
         .arg(Url::from_directory_path(&index).unwrap().to_string())
         .current_dir(&t)
