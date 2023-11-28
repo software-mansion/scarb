@@ -574,6 +574,34 @@ fn dirty_repo_allow_dirty() {
 }
 
 #[test]
+fn repo_without_commits() {
+    let t = TempDir::new().unwrap();
+
+    simple_project().build(&t);
+    gitx::init(&t);
+
+    t.child("src/bar.cairo").write_str("fn bar() {}").unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--allow-dirty")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
+        .name_and_version("foo", "1.0.0")
+        .contents(&[
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+            "src/lib.cairo",
+            "src/foo.cairo",
+            "src/bar.cairo",
+        ]);
+}
+
+#[test]
 fn list_clean_repo() {
     let t = TempDir::new().unwrap();
 
