@@ -123,7 +123,7 @@ fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Optio
         "#}
     );
 
-    // If the HEAD commit has cannot be determined, we assume the repository is empty.
+    // If the HEAD commit cannot be determined, we assume the repository is empty.
     // In that case there is no VCS info to return.
     if let Ok(sha1) = repo.head_rev_hash() {
         Ok(Some(VcsInfo {
