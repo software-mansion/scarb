@@ -30,6 +30,19 @@ impl LocalRegistry {
             .success();
         self
     }
+
+    pub fn publish_verified(&mut self, f: impl FnOnce(&TempDir)) -> &mut Self {
+        let t = TempDir::new().unwrap();
+        f(&t);
+        Scarb::quick_snapbox()
+            .arg("publish")
+            .arg("--index")
+            .arg(&self.url)
+            .current_dir(&t)
+            .assert()
+            .success();
+        self
+    }
 }
 
 impl fmt::Display for LocalRegistry {
