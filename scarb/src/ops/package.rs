@@ -123,12 +123,16 @@ fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Optio
         "#}
     );
 
-    Ok(Some(VcsInfo {
-        path_in_vcs: repo.path_in_vcs()?,
-        git: GitVcsInfo {
-            sha1: repo.head_rev_hash()?,
-        },
-    }))
+    // If the HEAD commit cannot be determined, we assume the repository is empty.
+    // In that case there is no VCS info to return.
+    if let Ok(sha1) = repo.head_rev_hash() {
+        Ok(Some(VcsInfo {
+            path_in_vcs: repo.path_in_vcs()?,
+            git: GitVcsInfo { sha1 },
+        }))
+    } else {
+        Ok(None)
+    }
 }
 
 #[tracing::instrument(level = "trace", skip(opts, ws))]
@@ -261,16 +265,14 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
 
     // Add VCS info file.
     if let Ok(repo) = PackageRepository::open(pkg) {
-        recipe.push(ArchiveFile {
-            path: VCS_INFO_FILE_NAME.into(),
-            contents: ArchiveFileContents::Generated({
-                let opts = opts.clone();
-                Box::new(move || {
-                    let vcs_info = extract_vcs_info(repo, &opts)?;
-                    Ok(serde_json::to_string(&vcs_info)?.into_bytes())
-                })
-            }),
-        });
+        if let Some(vcs_info) = extract_vcs_info(repo, opts)? {
+            recipe.push(ArchiveFile {
+                path: VCS_INFO_FILE_NAME.into(),
+                contents: ArchiveFileContents::Generated({
+                    Box::new(move || Ok(serde_json::to_string(&vcs_info)?.into_bytes()))
+                }),
+            });
+        }
     };
 
     // Put generated files in right order within the recipe.
