@@ -42,7 +42,7 @@ impl Compiler for TestCompiler {
         });
 
         diagnostics_reporter
-            .with_extra_crates(&main_crate_ids)
+            .with_crates(&main_crate_ids)
             .ensure(db)?;
 
         let test_compilation = {

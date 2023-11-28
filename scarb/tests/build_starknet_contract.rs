@@ -299,7 +299,7 @@ fn compile_starknet_contract_only_with_cfg() {
                     self.value.write(value_);
                 }
 
-                #[external(v0)]
+                #[abi(embed_v0)]
                 impl Balance of super::IBalance<ContractState> {
                     fn get(self: @ContractState) -> u128 {
                         self.value.read()
@@ -376,8 +376,8 @@ fn compile_starknet_contract_without_starknet_dep() {
 
         error: Plugin diagnostic: Unsupported attribute.
          --> [..]/lib.cairo:23:5
-            #[external(v0)]
-            ^*************^
+            #[abi(embed_v0)]
+            ^**************^
 
         error: Type not found.
          --> [..]/lib.cairo:19:30

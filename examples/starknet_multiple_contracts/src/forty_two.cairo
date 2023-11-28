@@ -3,7 +3,7 @@ mod FortyTwo {
     #[storage]
     struct Storage {}
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     fn answer(ref self: ContractState) -> felt252 {
         42
     }
