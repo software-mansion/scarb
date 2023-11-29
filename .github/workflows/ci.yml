@@ -9,27 +9,41 @@ on:
 
 jobs:
   build-test:
-    runs-on: ubuntu-latest
+    name: build test ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
-        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file nextest-archive.tar.zst
+        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
       - uses: actions/upload-artifact@v3
         with:
-          name: nextest-archive
-          path: nextest-archive.tar.zst
+          name: nextest-archive-${{ matrix.platform.os }}
+          path: nextest-archive-${{ matrix.platform.os }}.tar.zst
 
   test:
-    name: test ${{ matrix.partition }}/8
-    runs-on: ubuntu-latest
+    name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/8
+    runs-on: ${{ matrix.platform.os }}
     needs:
       - build-test
     strategy:
       fail-fast: false
       matrix:
+        platform:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
         partition: [ 1, 2, 3, 4, 5, 6, 7, 8 ]
     steps:
       - uses: actions/checkout@v4
@@ -37,9 +51,9 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - uses: actions/download-artifact@v3
         with:
-          name: nextest-archive
+          name: nextest-archive-${{ matrix.platform.os }}
       - name: nextest partition ${{ matrix.partition }}/8
-        run: cargo nextest run --partition 'count:${{ matrix.partition }}/8' --archive-file nextest-archive.tar.zst
+        run: cargo nextest run --partition 'count:${{ matrix.partition }}/8' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
 
   check-rust:
     runs-on: ubuntu-latest
