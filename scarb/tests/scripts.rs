@@ -5,9 +5,9 @@ use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 
-use scarb::process::make_executable;
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::filesystem::{path_with_temp_dir, write_simple_hello_script};
+use scarb_test_support::fsx::make_executable;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 

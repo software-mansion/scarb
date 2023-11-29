@@ -111,6 +111,46 @@ pub fn copy(from: impl AsRef<Path>, to: impl AsRef<Path>) -> Result<u64> {
     }
 }
 
+#[cfg(unix)]
+pub fn is_executable<P: AsRef<Path>>(path: P) -> bool {
+    use std::os::unix::prelude::*;
+    fs::metadata(path)
+        .map(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
+        .unwrap_or(false)
+}
+
+#[cfg(windows)]
+pub fn is_executable<P: AsRef<Path>>(path: P) -> bool {
+    path.as_ref().is_file()
+}
+
+#[cfg(unix)]
+pub fn is_hidden(entry: impl AsRef<Path>) -> bool {
+    is_hidden_by_dot(entry)
+}
+
+#[cfg(windows)]
+pub fn is_hidden(entry: impl AsRef<Path>) -> bool {
+    use std::os::windows::prelude::*;
+
+    let is_hidden = fs::metadata(entry.as_ref())
+        .ok()
+        .map(|metadata| metadata.file_attributes())
+        .map(|attributes| (attributes & 0x2) > 0)
+        .unwrap_or(false);
+
+    is_hidden || is_hidden_by_dot(entry)
+}
+
+fn is_hidden_by_dot(entry: impl AsRef<Path>) -> bool {
+    entry
+        .as_ref()
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .map(|s| s.starts_with('.'))
+        .unwrap_or(false)
+}
+
 pub trait PathUtf8Ext {
     fn try_as_utf8(&'_ self) -> Result<&'_ Utf8Path>;
 

@@ -1,7 +1,7 @@
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
-use std::path::{PathBuf, MAIN_SEPARATOR_STR};
+use std::path::{Path, PathBuf, MAIN_SEPARATOR_STR};
 
 use assert_fs::fixture::ChildPath;
 use assert_fs::TempDir;
@@ -14,6 +14,17 @@ pub use internal_fsx::{canonicalize, canonicalize_utf8, PathBufUtf8Ext, PathUtf8
 #[allow(unused)]
 #[path = "../../../scarb/src/internal/fsx.rs"]
 mod internal_fsx;
+
+#[cfg(unix)]
+pub fn make_executable(path: &Path) {
+    use std::os::unix::prelude::*;
+    let mut perms = fs::metadata(path).unwrap().permissions();
+    perms.set_mode(perms.mode() | 0o700);
+    fs::set_permissions(path, perms).unwrap();
+}
+
+#[cfg(windows)]
+pub fn make_executable(_path: &Path) {}
 
 pub trait AssertFsUtf8Ext {
     fn utf8_path(&self) -> &Utf8Path;
