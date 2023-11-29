@@ -57,6 +57,11 @@ impl HttpRegistry {
         self
     }
 
+    pub fn publish_verified(&mut self, f: impl FnOnce(&TempDir)) -> &mut Self {
+        self.local.publish_verified(f);
+        self
+    }
+
     /// Enable this when writing tests to see what requests are being made in the test.
     pub fn print_logs(&self) {
         self.server.print_logs(true);
