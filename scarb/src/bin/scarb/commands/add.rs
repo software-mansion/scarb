@@ -1,10 +1,10 @@
 use anyhow::Result;
 
 use scarb::core::Config;
-use scarb::manifest_editor::{AddDependency, DepId, EditManifestOptions, Op};
+use scarb::manifest_editor::{AddDependency, DepId, DepType, EditManifestOptions, Op};
 use scarb::{manifest_editor, ops};
 
-use crate::args::{AddArgs, AddSourceArgs};
+use crate::args::{AddArgs, AddSectionArgs, AddSourceArgs};
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: AddArgs, config: &mut Config) -> Result<()> {
@@ -14,7 +14,7 @@ pub fn run(args: AddArgs, config: &mut Config) -> Result<()> {
 
     manifest_editor::edit(
         package.manifest_path(),
-        build_ops(args.packages, args.source),
+        build_ops(args.packages, args.source, args.section),
         EditManifestOptions {
             config,
             dry_run: args.dry_run,
@@ -34,7 +34,13 @@ pub fn run(args: AddArgs, config: &mut Config) -> Result<()> {
     Ok(())
 }
 
-fn build_ops(packages: Vec<DepId>, source: AddSourceArgs) -> Vec<Box<dyn Op>> {
+fn build_ops(
+    packages: Vec<DepId>,
+    source: AddSourceArgs,
+    section: AddSectionArgs,
+) -> Vec<Box<dyn Op>> {
+    let dep_type = DepType::from_section(&section);
+
     let template = AddDependency {
         dep: DepId::unspecified(),
         path: source.path,
@@ -42,6 +48,7 @@ fn build_ops(packages: Vec<DepId>, source: AddSourceArgs) -> Vec<Box<dyn Op>> {
         branch: source.git_ref.branch,
         tag: source.git_ref.tag,
         rev: source.git_ref.rev,
+        dep_type,
     };
 
     if packages.is_empty() {
