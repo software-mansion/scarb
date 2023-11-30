@@ -8,6 +8,7 @@ use toml_edit::Document;
 
 pub use add::AddDependency;
 pub use dep_id::DepId;
+pub use dep_type::{DepType, SectionArgs};
 pub use remove::RemoveDependency;
 
 use crate::core::Config;
@@ -15,6 +16,7 @@ use crate::internal::fsx;
 
 mod add;
 mod dep_id;
+mod dep_type;
 mod remove;
 mod tomlx;
 
