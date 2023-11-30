@@ -66,6 +66,7 @@ You can add a `[dev-dependencies]` section to your Scarb.toml whose format is eq
 [dev-dependencies]
 tempdir = "0.3"
 ```
+
 Dev-dependencies are not used when compiling a package for building, but are used for compiling tests.
 
 These dependencies are not propagated to other packages which depend on this package.

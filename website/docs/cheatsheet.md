@@ -115,7 +115,7 @@ You can specify package version like this: `alexandria_math@0.1.0`, but see rema
 :::
 
 ::: info
-`--dev` flag adds/removes a dev-dependency. 
+`--dev` flag adds/removes a dev-dependency.
 :::
 
 ## Formatting
