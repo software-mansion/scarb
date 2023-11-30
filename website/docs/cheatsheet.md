@@ -84,6 +84,10 @@ You can add `branch`, `tag` and `rev` fields to Git dependencies.
 You can use `ssh://` URLs, Scarb uses local `git` installation for all network operations.
 :::
 
+::: info
+You can add dev-dependencies in `[dev-dependencies]` section.
+:::
+
 ### Via `scarb add`
 
 Add dependency hosted on a Git repository:
@@ -108,6 +112,10 @@ You can specify package version like this: `alexandria_math@0.1.0`, but see rema
 
 ::: info
 `scarb rm` removes a dependency.
+:::
+
+::: info
+`--dev` flag adds/removes a dev-dependency.
 :::
 
 ## Formatting
