@@ -47,6 +47,15 @@ hello_utils = { path = "hello_utils" }
 Scarb does not cache path dependencies, any changes made in them will be reflected immediately in builds of your
 package.
 
+## Specyfying dev-dependencies.
+
+In order to add dev-dependency, specify it under `[dev-dependencies]` section:
+
+```toml
+[dev-dependencies]
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+```
+
 ## Version requirements
 
 Scarb allows you to specify version requirements of dependencies with the `version` key:
