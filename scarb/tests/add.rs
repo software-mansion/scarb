@@ -464,3 +464,23 @@ fn should_not_sort_if_already_unsorted() {
         "#})
         .run();
 }
+
+#[test]
+fn add_dev_dep() {
+    ManifestEditHarness::offline()
+        .args(["add", "--dev", "foo@1.0.0"])
+        .input(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+        "#})
+        .output(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+
+            [dev-dependencies]
+            foo = "1.0.0"
+        "#})
+        .run();
+}
