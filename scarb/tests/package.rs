@@ -1257,7 +1257,6 @@ fn error_on_verification() {
         .
         ^
 
-        
         error: failed to verify package tarball
 
         Caused by:
