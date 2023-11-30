@@ -26,6 +26,7 @@ fn forge_test() {
     ProjectBuilder::start()
         .name("forge_test")
         .lib_cairo(SIMPLE_TEST)
+        .src("tests/lib.cairo", SIMPLE_TEST)
         .build(&pkg1);
     Scarb::quick_snapbox()
         .arg("snforge-test-collector")
@@ -33,10 +34,12 @@ fn forge_test() {
         .assert()
         .success();
 
-    let a = pkg1
+    let snforge_sierra = pkg1
         .child("target/dev/snforge/forge_test.snforge_sierra.json")
         .read_to_string();
-    let json: Value = serde_json::from_str(&a).unwrap();
+
+    let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
 
     assert_eq!(&json[0]["test_cases"][0]["name"], "forge_test::test");
+    assert_eq!(&json[1]["test_cases"][0]["name"], "tests::test");
 }
