@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use anyhow::{anyhow, bail, Result};
-use cairo_lang_defs::plugin::PluginSuite;
+use cairo_lang_semantic::plugin::PluginSuite;
 use itertools::Itertools;
 
 use crate::core::PackageId;

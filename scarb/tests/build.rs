@@ -758,3 +758,67 @@ fn dev_dep_inside_test() {
             [..]  Finished release target(s) in [..]
         "#});
 }
+
+#[test]
+fn warnings_allowed_by_default() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .lib_cairo(indoc! {r#"
+        fn hello() -> felt252 {
+            let a = 41;
+            let b = 42;
+            b
+        }
+    "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
+        warning: Unused variable. Consider ignoring by prefixing with `_`.
+         --> [..]lib.cairo:2:9
+            let a = 41;
+                ^
+
+
+            Finished release target(s) in [..] seconds
+        "#});
+}
+
+#[test]
+fn warnings_can_be_disallowed() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .lib_cairo(indoc! {r#"
+        fn hello() -> felt252 {
+            let a = 41;
+            let b = 42;
+            b
+        }
+        "#})
+        .manifest_extra(indoc! {r#"
+        [cairo]
+        allow-warnings = false
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
+        warning: Unused variable. Consider ignoring by prefixing with `_`.
+         --> [..]lib.cairo:2:9
+            let a = 41;
+                ^
+
+
+        error: could not compile [..] due to previous error
+        "#});
+}

@@ -1,12 +1,11 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_test_plugin::compile_test_prepared_db;
 use tracing::trace_span;
 
-use scarb_ui::components::TypedMessage;
-
-use crate::compiler::helpers::{collect_all_crate_ids, collect_main_crate_ids, write_json};
+use crate::compiler::helpers::{
+    build_compiler_config, collect_all_crate_ids, collect_main_crate_ids, write_json,
+};
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{PackageName, SourceId, TargetKind, Workspace};
 
@@ -32,17 +31,10 @@ impl Compiler for TestCompiler {
                 && plugin.package.id.source_id == SourceId::for_std()
         });
 
-        let diagnostics_reporter = DiagnosticsReporter::callback({
-            let config = ws.config();
-            |diagnostic: String| {
-                config
-                    .ui()
-                    .print(TypedMessage::naked_text("diagnostic", &diagnostic));
-            }
-        });
+        let diagnostics_reporter = build_compiler_config(&unit, ws).diagnostics_reporter;
 
         diagnostics_reporter
-            .with_extra_crates(&main_crate_ids)
+            .with_crates(&main_crate_ids)
             .ensure(db)?;
 
         let test_compilation = {

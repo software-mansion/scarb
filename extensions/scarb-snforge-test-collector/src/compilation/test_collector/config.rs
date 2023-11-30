@@ -1,8 +1,9 @@
 use anyhow::Result;
 use cairo_felt::Felt252;
 use cairo_lang_defs::plugin::PluginDiagnostic;
+use cairo_lang_diagnostics::Severity;
 use cairo_lang_syntax::attribute::structured::{Attribute, AttributeArg, AttributeArgVariant};
-use cairo_lang_syntax::node::ast::{ArgClause, Expr};
+use cairo_lang_syntax::node::ast::{ArgClause, Expr, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::GetIdentifier;
 use cairo_lang_test_plugin::test_config::{PanicExpectation, TestExpectation};
@@ -10,8 +11,7 @@ use cairo_lang_test_plugin::{try_extract_test_config, TestConfig};
 use cairo_lang_utils::OptionHelper;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
-use serde::{Deserialize, Serialize};
-use starknet::core::types::{BlockId, BlockTag, FieldElement};
+use serde::Serialize;
 
 const AVAILABLE_GAS_ATTR: &str = "available_gas";
 const FORK_ATTR: &str = "fork";
@@ -55,19 +55,20 @@ impl From<TestExpectation> for ExpectedTestResult {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum RawForkConfig {
     Id(String),
     Params(RawForkParams),
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct RawForkParams {
     pub url: String,
-    pub block_id: BlockId,
+    pub block_id_type: String,
+    pub block_id_value: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct FuzzerConfig {
     pub fuzzer_runs: u32,
     pub fuzzer_seed: u64,
@@ -106,6 +107,7 @@ pub fn forge_try_extract_test_config(
     if maybe_test_config.is_none() {
         for attr in [fork_attr, fuzzer_attr].into_iter().flatten() {
             diagnostics.push(PluginDiagnostic {
+                severity: Severity::Error,
                 stable_ptr: attr.id_stable_ptr.untyped(),
                 message: "Attribute should only appear on tests.".into(),
             });
@@ -126,6 +128,7 @@ pub fn forge_try_extract_test_config(
         } else {
             extract_fork_config(db, attr).on_none(|| {
                 diagnostics.push(PluginDiagnostic {
+                    severity: Severity::Error,
                     stable_ptr: attr.args_stable_ptr.untyped(),
                     message: "Expected fork config must be of the form `url: <double quote \
                                   string>, block_id: <snforge_std::BlockId>`."
@@ -140,6 +143,7 @@ pub fn forge_try_extract_test_config(
     let fuzzer_config = if let Some(attr) = fuzzer_attr {
         extract_fuzzer_config(db, attr).on_none(|| {
             diagnostics.push(PluginDiagnostic {
+                severity: Severity::Error,
                 stable_ptr: attr.args_stable_ptr.untyped(),
                 message: "Expected fuzzer config must be of the form `runs: <u32>, seed: <u64>`"
                     .into(),
@@ -284,60 +288,56 @@ fn extract_fork_config_from_args(db: &dyn SyntaxGroup, attr: &Attribute) -> Opti
         return None;
     }
 
-    let block_id_type = block_id
-        .path(db)
-        .elements(db)
-        .last()
-        .unwrap()
-        .identifier(db)
-        .to_string();
+    let block_id_type = elements[1].clone();
 
     let args = block_id.arguments(db).arguments(db).elements(db);
     let expr = match args.first()?.arg_clause(db) {
         ArgClause::Unnamed(unnamed_arg_clause) => Some(unnamed_arg_clause.value(db)),
         _ => None,
     }?;
-    let block_id = try_get_block_id(db, &block_id_type, &expr)?;
+    let block_id_value = try_get_block_id(db, &block_id_type, &expr)?;
 
-    Some(RawForkConfig::Params(RawForkParams { url, block_id }))
+    Some(RawForkConfig::Params(RawForkParams {
+        url,
+        block_id_type,
+        block_id_value,
+    }))
 }
 
-fn try_get_block_id(db: &dyn SyntaxGroup, block_id_type: &str, expr: &Expr) -> Option<BlockId> {
+fn try_get_block_id(db: &dyn SyntaxGroup, block_id_type: &str, expr: &Expr) -> Option<String> {
     match block_id_type {
         "Number" => {
             if let Expr::Literal(value) = expr {
-                return Some(BlockId::Number(
-                    u64::try_from(value.numeric_value(db).unwrap()).ok()?,
-                ));
+                return Some(
+                    u64::try_from(value.numeric_value(db).unwrap())
+                        .ok()?
+                        .to_string(),
+                );
             }
-            None
         }
         "Hash" => {
+            // TODO #1179: add range check
             if let Expr::Literal(value) = expr {
-                return Some(BlockId::Hash(
-                    FieldElement::from_bytes_be(
-                        &Felt252::from(value.numeric_value(db).unwrap()).to_be_bytes(),
-                    )
-                    .unwrap(),
-                ));
+                return Some(value.numeric_value(db).unwrap().to_string());
             }
-            None
         }
         "Tag" => {
             if let Expr::Path(block_tag) = expr {
-                let tag = block_tag
-                    .elements(db)
-                    .last()
-                    .unwrap()
-                    .identifier(db)
-                    .to_string();
-                return match tag.as_str() {
-                    "Latest" => Some(BlockId::Tag(BlockTag::Latest)),
-                    _ => None,
-                };
+                let tag_elements = block_tag.elements(db);
+                if tag_path_is_valid(&tag_elements, db) {
+                    return Some("Latest".to_string());
+                }
             }
-            None
         }
-        _ => None,
-    }
+        _ => (),
+    };
+
+    None
+}
+
+// Only valid options are `BlockTag::Latest` and `Latest`
+fn tag_path_is_valid(tag_elements: &[PathSegment], db: &dyn SyntaxGroup) -> bool {
+    (tag_elements.len() == 1
+        || (tag_elements.len() == 2 && tag_elements[0].identifier(db).as_str() == "BlockTag"))
+        && tag_elements.last().unwrap().identifier(db).as_str() == "Latest"
 }

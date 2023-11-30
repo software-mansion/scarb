@@ -14,9 +14,8 @@ use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
 use crate::core::TomlManifest;
 use crate::internal::fsx;
-use crate::internal::fsx::PathBufUtf8Ext;
+use crate::internal::fsx::{is_hidden, PathBufUtf8Ext};
 use crate::ops::find_workspace_manifest_path;
-use crate::process::is_hidden;
 use crate::MANIFEST_FILE_NAME;
 
 #[tracing::instrument(level = "debug", skip(config))]

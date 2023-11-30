@@ -1,6 +1,5 @@
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Read};
-use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::{fmt, thread};
@@ -11,6 +10,7 @@ use tracing::{debug, debug_span, warn, Span};
 use scarb_ui::components::{Spinner, Status};
 
 use crate::core::Config;
+pub use crate::internal::fsx::is_executable;
 
 /// Replaces the current process with the target process.
 ///
@@ -34,9 +34,10 @@ pub fn exec_replace(cmd: &mut Command) -> Result<()> {
 
 #[cfg(unix)]
 mod imp {
-    use anyhow::{bail, Result};
     use std::os::unix::process::CommandExt;
     use std::process::Command;
+
+    use anyhow::{bail, Result};
 
     pub fn exec_replace(cmd: &mut Command) -> Result<()> {
         let err = cmd.exec();
@@ -46,8 +47,9 @@ mod imp {
 
 #[cfg(windows)]
 mod imp {
-    use anyhow::{bail, Context, Result};
     use std::process::Command;
+
+    use anyhow::{bail, Context, Result};
     use windows_sys::Win32::Foundation::{BOOL, FALSE, TRUE};
     use windows_sys::Win32::System::Console::SetConsoleCtrlHandler;
 
@@ -144,20 +146,6 @@ pub fn exec(cmd: &mut Command, config: &Config) -> Result<()> {
     }
 }
 
-#[cfg(unix)]
-pub fn is_executable<P: AsRef<Path>>(path: P) -> bool {
-    use std::fs;
-    use std::os::unix::prelude::*;
-    fs::metadata(path)
-        .map(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
-        .unwrap_or(false)
-}
-
-#[cfg(windows)]
-pub fn is_executable<P: AsRef<Path>>(path: P) -> bool {
-    path.as_ref().is_file()
-}
-
 /// Python's [`shlex.join`] for [`Command`].
 ///
 /// [`shlex.join`]: https://docs.python.org/3/library/shlex.html#shlex.join
@@ -187,43 +175,4 @@ impl<'a> fmt::Display for ShlexJoin<'a> {
         }
         Ok(())
     }
-}
-
-#[cfg(unix)]
-pub fn make_executable(path: &Path) {
-    use std::fs;
-    use std::os::unix::prelude::*;
-    let mut perms = fs::metadata(path).unwrap().permissions();
-    perms.set_mode(perms.mode() | 0o700);
-    fs::set_permissions(path, perms).unwrap();
-}
-
-#[cfg(windows)]
-pub fn make_executable(_path: &Path) {}
-
-#[cfg(unix)]
-pub fn is_hidden(entry: impl AsRef<Path>) -> bool {
-    is_hidden_by_dot(entry)
-}
-
-#[cfg(windows)]
-pub fn is_hidden(entry: impl AsRef<Path>) -> bool {
-    use std::os::windows::prelude::*;
-
-    let is_hidden = std::fs::metadata(entry.as_ref())
-        .ok()
-        .map(|metadata| metadata.file_attributes())
-        .map(|attributes| (attributes & 0x2) > 0)
-        .unwrap_or(false);
-
-    is_hidden || is_hidden_by_dot(entry)
-}
-
-fn is_hidden_by_dot(entry: impl AsRef<Path>) -> bool {
-    entry
-        .as_ref()
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .map(|s| s.starts_with('.'))
-        .unwrap_or(false)
 }
