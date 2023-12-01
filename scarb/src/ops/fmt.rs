@@ -3,6 +3,8 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use anyhow::Result;
+use cairo_lang_diagnostics::Severity;
+use cairo_lang_formatter::cairo_formatter::ParsingError;
 use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
 use clap::ValueEnum;
 use ignore::WalkState::{Continue, Skip};
@@ -108,13 +110,12 @@ fn print_diff(ws: &Workspace<'_>, path: &Path, diff: impl Display) {
         .print(format!("Diff in file {}:\n {}", path.display(), diff));
 }
 
-fn print_error(ws: &Workspace<'_>, path: &Path, error: anyhow::Error) {
-    let error_msg = error.to_string();
+fn print_error(ws: &Workspace<'_>, path: &Path, error: String) {
     ws.config().ui().error(format!(
         "{}Error writing files: cannot parse {}",
         // TODO(maciektr): Fix this with proper upstream changes.
         //   The slice is a hacky way of avoiding duplicated "error: " prefix.
-        &error_msg[7..],
+        &error,
         path.display()
     ));
 }
@@ -136,9 +137,26 @@ fn check_file_formatting(
 
             false
         }
-        Err(parsing_error) => {
-            print_error(ws, path, parsing_error);
+        Ok(FormatOutcome::ParsingError(parsing_error)) => {
+            print_parsing_error(ws, path, parsing_error);
             false
+        }
+        Err(parsing_error) => {
+            print_error(ws, path, parsing_error.to_string());
+            false
+        }
+    }
+}
+
+fn print_parsing_error(ws: &Workspace<'_>, path: &Path, error: ParsingError) {
+    for (sev, msg) in error.diagnostics {
+        match sev {
+            Severity::Error => ws.config().ui().error(format!(
+                "{}Error writing files: cannot parse {}",
+                msg,
+                path.display()
+            )),
+            Severity::Warning => ws.config().ui().warn(msg),
         }
     }
 }
@@ -170,8 +188,12 @@ fn emit_formatted_file(
             target.emit(ws, path, &diff.formatted);
             false
         }
+        Ok(FormatOutcome::ParsingError(parsing_error)) => {
+            print_parsing_error(ws, path, parsing_error);
+            false
+        }
         Err(parsing_error) => {
-            print_error(ws, path, parsing_error);
+            print_error(ws, path, parsing_error.to_string());
             false
         }
     }
@@ -183,11 +205,16 @@ fn format_file_in_place(
     ws: &Workspace<'_>,
     path: &Path,
 ) -> bool {
-    if let Err(parsing_error) = fmt.format_in_place(&path) {
-        print_error(ws, path, parsing_error);
-        false
-    } else {
-        true
+    match fmt.format_in_place(&path) {
+        Err(parsing_error) => {
+            print_error(ws, path, parsing_error.to_string());
+            false
+        }
+        Ok(FormatOutcome::ParsingError(parsing_error)) => {
+            print_parsing_error(ws, path, parsing_error);
+            false
+        }
+        Ok(_) => true,
     }
 }
 
