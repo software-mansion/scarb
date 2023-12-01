@@ -132,7 +132,6 @@ fn simple_format_with_parsing_error() {
         fn main()    ->    {      42      }
                        ^
 
-        Error writing files: cannot parse [..]lib.cairo
         "#});
 }
 
