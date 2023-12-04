@@ -4572,6 +4572,7 @@ name = "scarb-snforge-test-collector"
 version = "2.3.1"
 dependencies = [
  "anyhow",
+ "assert_fs",
  "cairo-felt",
  "cairo-lang-casm",
  "cairo-lang-compiler",
@@ -4592,15 +4593,18 @@ dependencies = [
  "clap",
  "create-output-dir",
  "fs4",
+ "indoc",
  "itertools 0.12.0",
  "num-bigint",
  "num-traits 0.2.17",
  "rayon",
  "scarb-metadata 1.9.0",
+ "scarb-test-support",
  "scarb-ui",
  "serde",
  "serde_json",
  "smol_str",
+ "snapbox",
  "thiserror",
  "walkdir",
 ]
