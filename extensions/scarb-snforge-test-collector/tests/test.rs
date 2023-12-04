@@ -52,6 +52,29 @@ fn forge_test_locations() {
     assert_eq!(&json[0]["test_cases"][0]["fuzzer_config"], &Value::Null);
     assert_eq!(&json[0]["test_cases"][0]["ignored"], false);
 }
+#[test]
+fn forge_test_wrong_location() {
+    let t = TempDir::new().unwrap();
+    let pkg1 = t.child("forge");
+
+    ProjectBuilder::start()
+        .name("forge_test")
+        .src("a/lib.cairo", SIMPLE_TEST)
+        .build(&pkg1);
+    Scarb::quick_snapbox()
+        .arg("snforge-test-collector")
+        .current_dir(&pkg1)
+        .assert()
+        .success();
+
+    let snforge_sierra = pkg1
+        .child("target/dev/snforge/forge_test.snforge_sierra.json")
+        .read_to_string();
+
+    let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
+    assert_eq!(&json[0]["test_cases"][0], &Value::Null);
+
+}
 
 const WITH_MANY_ATTRIBUTES_TEST: &str = indoc! {r#"
     #[cfg(test)]
