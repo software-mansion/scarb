@@ -52,6 +52,7 @@ fn forge_test_locations() {
     assert_eq!(&json[0]["test_cases"][0]["fuzzer_config"], &Value::Null);
     assert_eq!(&json[0]["test_cases"][0]["ignored"], false);
 }
+
 #[test]
 fn forge_test_wrong_location() {
     let t = TempDir::new().unwrap();
