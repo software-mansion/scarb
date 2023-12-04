@@ -44,7 +44,9 @@ fn forge_test_locations() {
     let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
 
     assert_eq!(&json[0]["test_cases"][0]["name"], "forge_test::tests::test");
+    assert_eq!(&json[0]["tests_location"], "Lib");
     assert_eq!(&json[1]["test_cases"][0]["name"], "tests::tests::test");
+    assert_eq!(&json[1]["tests_location"], "Tests");
 
     assert_eq!(&json[0]["test_cases"][0]["available_gas"], &Value::Null);
     assert_eq!(&json[0]["test_cases"][0]["expected_result"], "Success");
@@ -74,7 +76,6 @@ fn forge_test_wrong_location() {
 
     let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
     assert_eq!(&json[0]["test_cases"][0], &Value::Null);
-
 }
 
 const WITH_MANY_ATTRIBUTES_TEST: &str = indoc! {r#"
