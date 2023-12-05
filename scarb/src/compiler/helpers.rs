@@ -16,20 +16,15 @@ use crate::core::Workspace;
 use crate::flock::Filesystem;
 
 pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> CompilerConfig<'c> {
-    let diagnostics_reporter = DiagnosticsReporter::callback({
-        let config = ws.config();
-        |diagnostic: String| {
-            config
-                .ui()
-                .print(TypedMessage::naked_text("diagnostic", &diagnostic));
-        }
-    });
     CompilerConfig {
-        diagnostics_reporter: if unit.compiler_config.allow_warnings {
-            diagnostics_reporter.allow_warnings()
-        } else {
-            diagnostics_reporter
-        },
+        diagnostics_reporter: DiagnosticsReporter::callback({
+            let config = ws.config();
+            |diagnostic: String| {
+                config
+                    .ui()
+                    .print(TypedMessage::naked_text("diagnostic", &diagnostic));
+            }
+        }),
         replace_ids: unit.compiler_config.sierra_replace_ids,
         ..CompilerConfig::default()
     }
