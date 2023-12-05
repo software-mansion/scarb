@@ -23,7 +23,7 @@ pub const BALANCE_CONTRACT: &str = indoc! {r#"
             self.value.write(value_);
         }
 
-        #[abi(embed_v0)]
+        #[external(v0)]
         impl Balance of super::IBalance<ContractState> {
             fn get(self: @ContractState) -> u128 {
                 self.value.read()
@@ -44,7 +44,7 @@ pub const FORTY_TWO_CONTRACT: &str = indoc! {r#"
     mod FortyTwo {
         #[storage]
         struct Storage {}
-        #[abi(embed_v0)]
+        #[external(v0)]
         fn answer(ref self: ContractState) -> felt252 { 42 }
         impl FortyTwo of super::IFortyTwo<ContractState> {
             fn answer(ref self: ContractState) -> felt252 { 42 }
@@ -61,7 +61,7 @@ pub const HELLO_CONTRACT: &str = indoc! {r#"
     mod HelloContract {
         #[storage]
         struct Storage {}
-        #[abi(embed_v0)]
+        #[external(v0)]
         impl HelloContract of super::IHelloContract<ContractState> {
             fn answer(ref self: ContractState) -> felt252 { 'hello' }
         }

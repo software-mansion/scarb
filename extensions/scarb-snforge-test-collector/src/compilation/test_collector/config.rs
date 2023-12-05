@@ -1,7 +1,6 @@
 use anyhow::Result;
 use cairo_felt::Felt252;
 use cairo_lang_defs::plugin::PluginDiagnostic;
-use cairo_lang_diagnostics::Severity;
 use cairo_lang_syntax::attribute::structured::{Attribute, AttributeArg, AttributeArgVariant};
 use cairo_lang_syntax::node::ast::{ArgClause, Expr, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
@@ -107,7 +106,6 @@ pub fn forge_try_extract_test_config(
     if maybe_test_config.is_none() {
         for attr in [fork_attr, fuzzer_attr].into_iter().flatten() {
             diagnostics.push(PluginDiagnostic {
-                severity: Severity::Error,
                 stable_ptr: attr.id_stable_ptr.untyped(),
                 message: "Attribute should only appear on tests.".into(),
             });
@@ -128,7 +126,6 @@ pub fn forge_try_extract_test_config(
         } else {
             extract_fork_config(db, attr).on_none(|| {
                 diagnostics.push(PluginDiagnostic {
-                    severity: Severity::Error,
                     stable_ptr: attr.args_stable_ptr.untyped(),
                     message: "Expected fork config must be of the form `url: <double quote \
                                   string>, block_id: <snforge_std::BlockId>`."
@@ -143,7 +140,6 @@ pub fn forge_try_extract_test_config(
     let fuzzer_config = if let Some(attr) = fuzzer_attr {
         extract_fuzzer_config(db, attr).on_none(|| {
             diagnostics.push(PluginDiagnostic {
-                severity: Severity::Error,
                 stable_ptr: attr.args_stable_ptr.untyped(),
                 message: "Expected fuzzer config must be of the form `runs: <u32>, seed: <u64>`"
                     .into(),
