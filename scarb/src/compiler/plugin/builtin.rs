@@ -1,5 +1,5 @@
 use anyhow::Result;
-use cairo_lang_semantic::plugin::PluginSuite;
+use cairo_lang_defs::plugin::PluginSuite;
 use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_test_plugin::test_plugin_suite;
 

@@ -34,7 +34,7 @@ impl Compiler for TestCompiler {
         let diagnostics_reporter = build_compiler_config(&unit, ws).diagnostics_reporter;
 
         diagnostics_reporter
-            .with_crates(&main_crate_ids)
+            .with_extra_crates(&main_crate_ids)
             .ensure(db)?;
 
         let test_compilation = {
