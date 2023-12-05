@@ -484,3 +484,24 @@ fn add_dev_dep() {
         "#})
         .run();
 }
+
+#[test]
+fn add_git_dep_with_invalid_url() {
+    ManifestEditHarness::offline()
+        .args(["add", "dep", "--git", "example.com"])
+        .input(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+        "#})
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: invalid URL provided: example.com
+            help: use an absolute URL to the Git repository
+
+
+            Caused by:
+                relative URL without a base
+        "#})
+        .run()
+}

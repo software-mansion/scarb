@@ -1,7 +1,8 @@
 use std::mem;
 
-use anyhow::{anyhow, ensure, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
+use indoc::formatdoc;
 use toml_edit::{value, Document, Entry, InlineTable, Item};
 use url::Url;
 
@@ -130,12 +131,16 @@ impl Dep {
                 DefaultBranch
             };
 
-            let git = match Url::parse(&git) {
-                Ok(url) => CanonicalUrl::new(&url)
-                    .map(|git_url| git_url.as_str().to_string())
-                    .unwrap_or(git),
-                Err(_) => git,
-            };
+            let git = CanonicalUrl::new(&Url::parse(&git).with_context(|| {
+                formatdoc!(
+                    r#"
+                    invalid URL provided: {git}
+                    help: use an absolute URL to the Git repository
+                    "#,
+                )
+            })?)
+            .map(|git_url| git_url.as_str().to_string())
+            .unwrap_or(git);
 
             Box::new(GitSource {
                 version,
