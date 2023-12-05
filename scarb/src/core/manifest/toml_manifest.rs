@@ -307,8 +307,6 @@ pub struct TomlCairo {
     ///
     /// Defaults to `false`.
     pub sierra_replace_ids: Option<bool>,
-    /// Do not exit with error on compiler warnings.
-    pub allow_warnings: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
@@ -797,9 +795,6 @@ impl TomlManifest {
         if let Some(cairo) = profile_definition.cairo {
             if let Some(sierra_replace_ids) = cairo.sierra_replace_ids {
                 compiler_config.sierra_replace_ids = sierra_replace_ids;
-            }
-            if let Some(allow_warnings) = cairo.allow_warnings {
-                compiler_config.allow_warnings = allow_warnings;
             }
         }
         Ok(compiler_config)
