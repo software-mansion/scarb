@@ -199,6 +199,10 @@ Keys are human-readable link names, and values are URLs.
 
 See [Specifying Dependencies](./specifying-dependencies) page.
 
+## `[dev-dependencies]`
+
+See [Specifying Dependencies](./specifying-dependencies) page.
+
 ## Target tables: `[lib]` and `[[target]]`
 
 See [Targets](./targets) page.

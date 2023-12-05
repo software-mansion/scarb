@@ -17,6 +17,7 @@ use url::Url;
 use scarb::compiler::Profile;
 use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
+use scarb::manifest_editor::SectionArgs;
 use scarb::version;
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::OutputFormat;
@@ -277,6 +278,10 @@ pub struct AddArgs {
     /// _Source_ section.
     #[command(flatten, next_help_heading = "Source")]
     pub source: AddSourceArgs,
+
+    /// _Section_ section.
+    #[command(flatten, next_help_heading = "Section")]
+    pub section: AddSectionArgs,
 }
 
 /// _Source_ section of [`AddArgs`].
@@ -297,6 +302,24 @@ pub struct AddSourceArgs {
     pub git_ref: GitRefGroup,
 }
 
+/// _Section_ section of [`AddArgs`].
+#[derive(Parser, Clone, Debug)]
+pub struct AddSectionArgs {
+    /// Add as development dependency.
+    ///
+    /// Dev-dependencies are only used when compiling tests.
+    ///
+    /// These dependencies are not propagated to other packages which depend on this package.
+    #[arg(long)]
+    pub dev: bool,
+}
+
+impl SectionArgs for AddSectionArgs {
+    fn dev(&self) -> bool {
+        self.dev
+    }
+}
+
 /// Arguments accepted by the `remove` command.
 #[derive(Parser, Clone, Debug)]
 pub struct RemoveArgs {
@@ -310,6 +333,24 @@ pub struct RemoveArgs {
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+
+    /// _Section_ section.
+    #[command(flatten, next_help_heading = "Section")]
+    pub section: RemoveSectionArgs,
+}
+
+/// _Section_ section of [`RemoveArgs`].
+#[derive(Parser, Clone, Debug)]
+pub struct RemoveSectionArgs {
+    /// Remove as development dependency.
+    #[arg(long)]
+    pub dev: bool,
+}
+
+impl SectionArgs for RemoveSectionArgs {
+    fn dev(&self) -> bool {
+        self.dev
+    }
 }
 
 /// Arguments accepted by the `test` command.

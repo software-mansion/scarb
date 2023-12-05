@@ -10,7 +10,7 @@ use crate::internal::fsx;
 use crate::sources::canonical_url::CanonicalUrl;
 
 use super::tomlx::get_table_mut;
-use super::{DepId, Op, OpCtx};
+use super::{DepId, DepType, Op, OpCtx};
 
 #[derive(Clone, Debug, Default)]
 pub struct AddDependency {
@@ -20,6 +20,7 @@ pub struct AddDependency {
     pub branch: Option<String>,
     pub tag: Option<String>,
     pub rev: Option<String>,
+    pub dep_type: DepType,
 }
 
 struct Dep {
@@ -49,7 +50,7 @@ struct GitSource {
 impl Op for AddDependency {
     #[tracing::instrument(level = "trace", skip(doc, ctx))]
     fn apply_to(self: Box<Self>, doc: &mut Document, ctx: OpCtx<'_>) -> Result<()> {
-        let tab = get_table_mut(doc, &["dependencies"])?;
+        let tab = get_table_mut(doc, &[self.dep_type.toml_section_str()])?;
 
         let dep = Dep::resolve(*self, ctx)?;
 
