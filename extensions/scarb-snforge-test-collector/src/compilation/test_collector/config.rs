@@ -88,7 +88,7 @@ pub struct SingleTestConfig {
     pub fork_config: Option<RawForkConfig>,
     /// Custom fuzzing configuration
     pub fuzzer_config: Option<FuzzerConfig>,
-    /// custom max steps
+    /// Custom max steps
     pub max_steps: Option<u32>,
 }
 
