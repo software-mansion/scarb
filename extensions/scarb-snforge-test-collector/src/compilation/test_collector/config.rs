@@ -328,12 +328,9 @@ fn extract_fork_config_from_args(db: &dyn SyntaxGroup, attr: &Attribute) -> Opti
 fn extract_max_steps(max_steps_attr: &Attribute, db: &dyn SyntaxGroup) -> Option<u32> {
     match &max_steps_attr.args[..] {
         [AttributeArg {
-            variant: AttributeArgVariant::Unnamed { value, .. },
+            variant: AttributeArgVariant::Unnamed { value: Expr::Literal(literal) , .. },
             ..
-        }] => match value {
-            Expr::Literal(literal) => literal.numeric_value(db).and_then(|v| v.to_u32()),
-            _ => None,
-        },
+        }] => literal.numeric_value(db).and_then(|v| v.to_u32()),
         _ => None,
     }
 }
