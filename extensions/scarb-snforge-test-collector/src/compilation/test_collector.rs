@@ -72,7 +72,7 @@ pub struct TestCaseRaw {
     pub expected_result: ExpectedTestResult,
     pub fork_config: Option<RawForkConfig>,
     pub fuzzer_config: Option<FuzzerConfig>,
-    pub max_steps: Option<u32>
+    pub max_steps: Option<u32>,
 }
 
 pub fn collect_tests(

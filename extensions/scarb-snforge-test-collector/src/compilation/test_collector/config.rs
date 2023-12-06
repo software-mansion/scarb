@@ -89,7 +89,7 @@ pub struct SingleTestConfig {
     /// Custom fuzzing configuration
     pub fuzzer_config: Option<FuzzerConfig>,
     /// custom max steps
-    pub max_steps: Option<u32>
+    pub max_steps: Option<u32>,
 }
 
 /// Extracts the configuration of a tests from attributes, or returns the diagnostics if the
@@ -126,7 +126,6 @@ pub fn forge_try_extract_test_config(
         None
     };
 
-   
     let fork_config = if let Some(attr) = fork_attr {
         if attr.args.is_empty() {
             None
@@ -153,8 +152,7 @@ pub fn forge_try_extract_test_config(
                 diagnostics.push(PluginDiagnostic {
                     severity: Severity::Error,
                     stable_ptr: attr.args_stable_ptr.untyped(),
-                    message: "Expected max steps must be <u32>"
-                        .into(),
+                    message: "Expected max steps value must be of the type <u32>".into(),
                 });
             })
         }
@@ -190,7 +188,7 @@ pub fn forge_try_extract_test_config(
             ignored,
             fork_config,
             fuzzer_config,
-            max_steps
+            max_steps,
         },
     );
     Ok(result)
@@ -327,21 +325,17 @@ fn extract_fork_config_from_args(db: &dyn SyntaxGroup, attr: &Attribute) -> Opti
     }))
 }
 
-fn extract_max_steps(
-    max_steps_attr: &Attribute,
-    db: &dyn SyntaxGroup,
-) -> Option<u32> {
-
+fn extract_max_steps(max_steps_attr: &Attribute, db: &dyn SyntaxGroup) -> Option<u32> {
     match &max_steps_attr.args[..] {
-        [AttributeArg { variant: AttributeArgVariant::Unnamed { value, .. }, .. }] => match value {
-            Expr::Literal(literal) => {
-                literal.numeric_value(db).and_then(|v| v.to_u32())
-            }
+        [AttributeArg {
+            variant: AttributeArgVariant::Unnamed { value, .. },
+            ..
+        }] => match value {
+            Expr::Literal(literal) => literal.numeric_value(db).and_then(|v| v.to_u32()),
             _ => None,
         },
         _ => None,
     }
-
 }
 
 fn try_get_block_id(db: &dyn SyntaxGroup, block_id_type: &str, expr: &Expr) -> Option<String> {
