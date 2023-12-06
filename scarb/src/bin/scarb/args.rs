@@ -342,6 +342,10 @@ pub struct PackageArgs {
     #[arg(short, long)]
     pub list: bool,
 
+    /// Ignore warnings about a lack of human-usable metadata
+    #[arg(long)]
+    pub no_metadata: bool,
+
     #[clap(flatten)]
     pub shared_args: PackageSharedArgs,
 

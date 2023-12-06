@@ -24,6 +24,7 @@ pub struct ProjectBuilder {
     src: HashMap<Utf8PathBuf, String>,
     deps: Vec<(String, Value)>,
     dev_deps: Vec<(String, Value)>,
+    publish_metadata: bool,
     manifest_extra: String,
 }
 
@@ -44,6 +45,7 @@ impl ProjectBuilder {
             )]),
             deps: Vec::new(),
             dev_deps: Vec::new(),
+            publish_metadata: true,
             manifest_extra: String::new(),
         }
     }
@@ -95,6 +97,11 @@ impl ProjectBuilder {
         self.dep("starknet", Dep.version(CAIRO_VERSION))
     }
 
+    pub fn no_publish_metadata(mut self) -> Self {
+        self.publish_metadata = false;
+        self
+    }
+
     pub fn manifest_extra(mut self, extra: impl ToString) -> Self {
         self.manifest_extra = extra.to_string();
         self
@@ -110,6 +117,11 @@ impl ProjectBuilder {
         }
         if let Some(cairo_version) = self.cairo_version.as_ref() {
             doc["package"]["cairo-version"] = Item::Value(Value::from(cairo_version.to_string()));
+        }
+        if self.publish_metadata {
+            doc["package"]["license"] = Item::Value(Value::from("MIT"));
+            doc["package"]["description"] = Item::Value(Value::from("Description of the package"));
+            doc["package"]["homepage"] = Item::Value(Value::from("https://example.com"));
         }
         doc["dependencies"] = toml_edit::table();
         for (name, dep) in &self.deps {

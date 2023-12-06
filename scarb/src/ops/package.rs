@@ -15,7 +15,7 @@ use serde::Serialize;
 
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{Package, PackageId, PackageName, TargetKind, Workspace};
+use crate::core::{Config, Package, PackageId, PackageName, TargetKind, Workspace};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
@@ -37,6 +37,7 @@ const RESERVED_FILES: &[&str] = &[
 pub struct PackageOpts {
     pub allow_dirty: bool,
     pub verify: bool,
+    pub check_metadata: bool,
 }
 
 /// A listing of files to include in the archive, without actually building it yet.
@@ -148,6 +149,9 @@ fn package_one_impl(
         .print(Status::new("Packaging", &pkg_id.to_string()));
 
     // TODO(mkaput): Check metadata
+    if opts.check_metadata {
+        check_metadata(pkg, ws.config())?;
+    }
 
     let recipe = prepare_archive_recipe(pkg, opts)?;
     let num_files = recipe.len();
@@ -485,4 +489,55 @@ fn tar(
     let encoder = ar.into_inner()?;
     encoder.finish()?;
     Ok(uncompressed_size)
+}
+
+// Checks that the package has some piece of metadata that a human can
+// use to tell what the package is about.
+fn check_metadata(pkg: &Package, config: &Config) -> Result<()> {
+    let md = &pkg.manifest.metadata;
+
+    let mut missing = vec![];
+
+    trait IsEmpty {
+        fn is_empty(&self) -> bool;
+    }
+    impl IsEmpty for Utf8PathBuf {
+        fn is_empty(&self) -> bool {
+            self.to_string().is_empty()
+        }
+    }
+    macro_rules! lacking {
+        ($( $($field: ident)||* ),*) => {{
+            $(
+                if $(md.$field.as_ref().map_or(true, |s| s.is_empty()))&&* {
+                    $(missing.push(stringify!($field).replace("_", "-"));)*
+                }
+            )*
+        }}
+    }
+    lacking!(
+        description,
+        license || license_file,
+        documentation || homepage || repository
+    );
+
+    if !missing.is_empty() {
+        let mut things = missing[..missing.len() - 1].join(", ");
+        // `things` will be empty if and only if its length is 1 (i.e., the only case
+        // to have no `or`).
+        if !things.is_empty() {
+            things.push_str(" or ");
+        }
+        things.push_str(missing.last().unwrap());
+
+        config.ui().warn(formatdoc!(
+            r#"
+            manifest has no {things}.
+            see https://docs.swmansion.com/scarb/docs/reference/manifest.html#package for more info.
+            "#,
+            things = things,
+        ))
+    }
+
+    Ok(())
 }

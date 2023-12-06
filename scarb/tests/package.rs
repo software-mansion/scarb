@@ -1285,3 +1285,29 @@ fn package_without_verification() {
         [..]  Packaged [..]
         "#});
 }
+
+#[test]
+fn package_without_publish_metadata() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .no_publish_metadata()
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging foo v1.0.0 [..]
+        warn: manifest has no description, license, license-file, documentation, homepage or repository.
+        see https://docs.swmansion.com/scarb/docs/reference/manifest.html#package for more info.
+
+        [..] Verifying foo-1.0.0.tar.zst
+        [..] Compiling foo v1.0.0 ([..])
+        [..]  Finished release target(s) in [..]
+        [..]  Packaged [..] files, [..] ([..] compressed)
+        "#});
+}
