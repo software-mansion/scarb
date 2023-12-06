@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
-use cairo_lang_filesystem::db::Edition;
-use cairo_lang_project::{AllCratesConfig, SingleCrateConfig};
+use cairo_lang_filesystem::db::{CrateSettings, Edition};
+use cairo_lang_project::AllCratesConfig;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use camino::{Utf8Path, Utf8PathBuf};
 use scarb_metadata::{CompilationUnitMetadata, Metadata, PackageMetadata};
@@ -71,14 +71,14 @@ impl CompilationUnit<'_> {
     }
 
     pub fn crates_config_for_compilation_unit(&self) -> AllCratesConfig {
-        let crates_config: OrderedHashMap<SmolStr, SingleCrateConfig> = self
+        let crates_config: OrderedHashMap<SmolStr, CrateSettings> = self
             .unit_metadata
             .components
             .iter()
             .map(|component| {
                 (
                     SmolStr::from(&component.name),
-                    SingleCrateConfig {
+                    CrateSettings {
                         edition: if let Some(edition) = self
                             .metadata
                             .get_package(&component.package)
@@ -93,6 +93,7 @@ impl CompilationUnit<'_> {
                         } else {
                             Edition::default()
                         },
+                        experimental_features: Default::default(),
                     },
                 )
             })
