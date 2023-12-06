@@ -1,4 +1,5 @@
 use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -23,7 +24,7 @@ use crate::sources::canonical_url::CanonicalUrl;
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct SourceId(&'static SourceIdInner);
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Eq, Ord, PartialOrd)]
 #[non_exhaustive]
 pub struct SourceIdInner {
     /// The source URL.
@@ -32,6 +33,19 @@ pub struct SourceIdInner {
     pub kind: SourceKind,
     /// The canonical URL of this source, used for internal comparison purposes.
     pub canonical_url: CanonicalUrl,
+}
+
+impl PartialEq for SourceIdInner {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind && self.canonical_url == other.canonical_url
+    }
+}
+
+impl Hash for SourceIdInner {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.kind.hash(state);
+        self.canonical_url.hash(state);
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -460,8 +474,9 @@ impl SourceKind {
 #[cfg(test)]
 mod tests {
     use test_case::test_case;
+    use url::Url;
 
-    use crate::core::source::SourceId;
+    use crate::core::{source::SourceId, GitReference};
 
     #[test_case(SourceId::mock_git())]
     #[test_case(SourceId::mock_path())]
@@ -471,6 +486,20 @@ mod tests {
         assert_eq!(
             SourceId::from_pretty_url(&source_id.to_pretty_url()).unwrap(),
             source_id
+        );
+    }
+
+    #[test]
+    fn ignores_git_suffix() {
+        fn mock_git(input: &str) -> SourceId {
+            let url = Url::parse(input).unwrap();
+            let reference = GitReference::Tag("test".into());
+            SourceId::for_git(&url, &reference).unwrap()
+        }
+
+        assert_eq!(
+            mock_git("https://github.com/starkware-libs/cairo"),
+            mock_git("https://github.com/starkware-libs/cairo.git")
         );
     }
 
@@ -496,9 +525,9 @@ mod tests {
 
     // NOTE: Path sources are deliberately not tested here, because paths have different form
     //   depending on running OS. We simply trust that this code works in that case.
-    #[test_case(SourceId::mock_git() => "github.com-atgougv2hpl3e")]
-    #[test_case(SourceId::default_registry() => "there-is-no-default-registry-yet.com-3ldkk58276fs8")]
-    #[test_case(SourceId::for_std() => "std-ggl5uom4dskj8")]
+    #[test_case(SourceId::mock_git() => "github.com-192sksn8g7p8c")]
+    #[test_case(SourceId::default_registry() => "there-is-no-default-registry-yet.com-rlhm60tcalr0i")]
+    #[test_case(SourceId::for_std() => "std-drqrn62cbjj5g")]
     fn ident(source_id: SourceId) -> String {
         source_id.ident()
     }
