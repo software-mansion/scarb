@@ -1,6 +1,6 @@
 use anyhow::{anyhow, ensure, Context, Result};
-use cairo_lang_filesystem::db::{CrateSettings, Edition, ExperimentalFeaturesConfig};
-use cairo_lang_project::AllCratesConfig;
+use cairo_lang_filesystem::db::Edition;
+use cairo_lang_project::{AllCratesConfig, SingleCrateConfig};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
@@ -104,7 +104,7 @@ impl CompilationUnit<'_> {
     }
 
     pub fn crates_config_for_compilation_unit(&self) -> AllCratesConfig {
-        let crates_config: OrderedHashMap<SmolStr, CrateSettings> = self
+        let crates_config: OrderedHashMap<SmolStr, SingleCrateConfig> = self
             .unit_metadata
             .components
             .iter()
@@ -115,7 +115,7 @@ impl CompilationUnit<'_> {
                     .unwrap_or_else(|| panic!("Failed to find = {} package", &component.package));
                 (
                     SmolStr::from(&component.name),
-                    CrateSettings {
+                    SingleCrateConfig {
                         edition: if let Some(edition) = pkg.edition.clone() {
                             let edition_value = serde_json::Value::String(edition);
                             serde_json::from_value(edition_value).unwrap()

@@ -1,10 +1,12 @@
 use anyhow::{anyhow, Result};
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
+use cairo_lang_compiler::project::{
+    AllCratesConfig, ProjectConfig, ProjectConfigContent, SingleCrateConfig,
+};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
-use cairo_lang_filesystem::db::{AsFilesGroupMut, CrateSettings, FilesGroup, FilesGroupEx};
+use cairo_lang_filesystem::db::{AsFilesGroupMut, FilesGroup, FilesGroupEx};
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smol_str::SmolStr;
@@ -89,14 +91,14 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         })
         .collect();
 
-    let crates_config: OrderedHashMap<SmolStr, CrateSettings> = unit
+    let crates_config: OrderedHashMap<SmolStr, SingleCrateConfig> = unit
         .components
         .iter()
         .map(|component| {
             let experimental_features = component.package.manifest.experimental_features.clone();
             (
                 component.cairo_package_name(),
-                CrateSettings {
+                SingleCrateConfig {
                     edition: component.package.manifest.edition,
                     // TODO (#1040): replace this with a macro
                     experimental_features: cairo_lang_filesystem::db::ExperimentalFeaturesConfig {
