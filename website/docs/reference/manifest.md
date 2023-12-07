@@ -21,11 +21,12 @@ authors = ["Alice <a@example.com>", "Bob <b@example.com>"]
 
 The only required fields are [`name`](#name) and [`version`](#version).
 If publishing to a registry, the registry may require additional fields:
+
 - [`license` or `license_file`](#license-and-license-file)
 - [`description`](#description)
 - [`homepage`](#homepage)
-- [`documentation`](#documentation) 
-- [`repository`](#repository) 
+- [`documentation`](#documentation)
+- [`repository`](#repository)
 - [`readme`](#readme)
 
 It would also be a good idea to include some [`keywords`](#keywords) and [`categories`](#ca), though they are not required.
