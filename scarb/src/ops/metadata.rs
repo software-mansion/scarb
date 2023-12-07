@@ -10,8 +10,8 @@ use scarb_ui::args::PackagesSource;
 
 use crate::compiler::CompilationUnit;
 use crate::core::{
-    edition_variant, DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId,
-    Target, Workspace,
+    edition_variant, DepKind, DependencyVersionReq, ManifestDependency, Package, PackageId,
+    SourceId, Target, Workspace,
 };
 use crate::ops;
 use crate::version::CommitInfo;
@@ -161,8 +161,22 @@ fn collect_dependency_metadata(dependency: &ManifestDependency) -> m::Dependency
         .name(dependency.name.to_string())
         .version_req(version_req)
         .source(wrap_source_id(dependency.source_id))
+        .kind(collect_dependency_kind(&dependency.kind))
         .build()
         .unwrap()
+}
+
+fn collect_dependency_kind(kind: &DepKind) -> Option<m::DepKind> {
+    match kind {
+        DepKind::Normal => None,
+        DepKind::Target(kind) => {
+            if kind.is_test() {
+                Some(m::DepKind::Dev)
+            } else {
+                unreachable!("only test target is supported for dep kinds")
+            }
+        }
+    }
 }
 
 fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
