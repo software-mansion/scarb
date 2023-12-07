@@ -80,7 +80,6 @@ fn compile_with_syntax_error() {
             not_a_keyword
             ^***********^
 
-
             error: could not compile `hello` due to previous error
         "#});
 }
@@ -102,7 +101,7 @@ fn compile_with_syntax_error_json() {
         .code(1)
         .stdout_matches(indoc! {r#"
             {"status":"compiling","message":"hello v0.1.0 ([..]Scarb.toml)"}
-            {"type":"diagnostic","message":"error: Skipped tokens. Expected: Const/Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum/TypeAlias/InlineMacro or an attribute./n --> [..]/lib.cairo:1:1/nnot_a_keyword/n^***********^/n/n"}
+            {"type":"error","message":"Skipped tokens. Expected: Const/Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum/TypeAlias/InlineMacro or an attribute./n --> [..]/lib.cairo:1:1/nnot_a_keyword/n^***********^/n"}
             {"type":"error","message":"could not compile `hello` due to previous error"}
         "#});
 }
@@ -720,7 +719,6 @@ fn dev_dep_used_outside_tests() {
             use q::dev_dep_function;
                 ^
 
-
             error: could not compile `x` due to previous error
         "#});
 }
@@ -779,11 +777,10 @@ fn warnings_allowed_by_default() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
-        warning: Unused variable. Consider ignoring by prefixing with `_`.
+        warn: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
             let a = 41;
                 ^
-
 
             Finished release target(s) in [..] seconds
         "#});
@@ -813,11 +810,10 @@ fn warnings_can_be_disallowed() {
         .failure()
         .stdout_matches(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
-        warning: Unused variable. Consider ignoring by prefixing with `_`.
+        warn: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
             let a = 41;
                 ^
-
 
         error: could not compile [..] due to previous error
         "#});
