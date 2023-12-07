@@ -40,7 +40,7 @@ fn hello_world() {
 }
 
 #[test]
-fn package_not_built() {
+fn scarb_build_is_called() {
     let example = manifest_dir()
         .parent()
         .unwrap()
@@ -65,5 +65,33 @@ fn package_not_built() {
                  Running hello_world
             Run completed successfully, returning [987]
             Remaining gas: 1953640
+        "#});
+}
+
+#[test]
+fn build_can_be_skipped() {
+    let example = manifest_dir()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("examples")
+        .join("hello_world");
+
+    let t = TempDir::new().unwrap();
+
+    Command::new(cargo_bin("scarb"))
+        .env("SCARB_TARGET_DIR", t.path())
+        .arg("cairo-run")
+        .arg("--available-gas")
+        .arg("2000000")
+        .arg("--no-build")
+        .current_dir(example)
+        .assert()
+        .failure()
+        .stderr_eq(indoc! {r#"
+            Error: package has not been compiled, file does not exist: hello_world.sierra.json
+            help: run `scarb build` to compile the package
+
         "#});
 }
