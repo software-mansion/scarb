@@ -45,7 +45,7 @@ impl ProjectBuilder {
             )]),
             deps: Vec::new(),
             dev_deps: Vec::new(),
-            publish_metadata: true,
+            publish_metadata: false,
             manifest_extra: String::new(),
         }
     }
@@ -97,8 +97,8 @@ impl ProjectBuilder {
         self.dep("starknet", Dep.version(CAIRO_VERSION))
     }
 
-    pub fn no_publish_metadata(mut self) -> Self {
-        self.publish_metadata = false;
+    pub fn publish_metadata(mut self) -> Self {
+        self.publish_metadata = true;
         self
     }
 
