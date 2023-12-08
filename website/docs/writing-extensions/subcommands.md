@@ -37,4 +37,4 @@ If you are using Rust, the [`scarb-metadata` crate](https://crates.io/crates/sca
 output.
 
 [dirs]: ../reference/global-directories
-[tracing-env-filter]: https://docs.rs/tracing-subscriber/latest/tracing_subscriber/struct.EnvFilter.html#directives
+[tracing-env-filter]: https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html#directives
