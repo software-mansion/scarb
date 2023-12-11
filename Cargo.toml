@@ -117,7 +117,7 @@ typed-builder = ">=0.17"
 url = { version = "2", features = ["serde"] }
 walkdir = "2"
 which = "5"
-windows-sys = "0.52"
+windows-sys = { version = "0.52", features = ["Win32_Foundation", "Win32_System", "Win32_System_Console"] }
 xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
