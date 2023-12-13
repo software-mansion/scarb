@@ -237,6 +237,14 @@ pub struct PackageMetadata {
     pub extra: HashMap<String, serde_json::Value>,
 }
 
+/// Dependency kind.
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum DepKind {
+    /// Development dependency.
+    Dev,
+}
+
 /// Scarb package dependency specification.
 ///
 /// Only the `name` field is strictly sourced from `Scarb.toml`, the rest is processed by Scarb
@@ -252,6 +260,8 @@ pub struct DependencyMetadata {
     pub version_req: VersionReq,
     /// Package source.
     pub source: SourceId,
+    /// Dependency kind. None denotes normal dependency.
+    pub kind: Option<DepKind>,
 
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]

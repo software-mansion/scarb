@@ -4,7 +4,7 @@ use assert_fs::prelude::*;
 use indoc::indoc;
 use serde_json::json;
 
-use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
+use scarb_metadata::{Cfg, DepKind, ManifestMetadataBuilder, Metadata, PackageMetadata};
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
@@ -210,6 +210,7 @@ fn dev_dependencies() {
     ProjectBuilder::start().name("q").build(&q);
     ProjectBuilder::start()
         .name("x")
+        .dep("q", Dep.path("./q"))
         .dev_dep("q", Dep.path("./q"))
         .build(&t);
     let meta = Scarb::quick_snapbox()
@@ -220,7 +221,7 @@ fn dev_dependencies() {
         .current_dir(&t)
         .stdout_json::<Metadata>();
     assert_eq!(
-        packages_and_deps(meta),
+        packages_and_deps(meta.clone()),
         BTreeMap::from_iter([
             ("core".to_string(), vec![]),
             ("test_plugin".to_string(), vec![]),
@@ -228,6 +229,7 @@ fn dev_dependencies() {
                 "x".to_string(),
                 vec![
                     "core".to_string(),
+                    "q".to_string(),
                     "q".to_string(),
                     "test_plugin".to_string()
                 ]
@@ -237,7 +239,24 @@ fn dev_dependencies() {
                 vec!["core".to_string(), "test_plugin".to_string()]
             )
         ])
-    )
+    );
+    assert_eq!(
+        meta.packages
+            .into_iter()
+            .filter(|p| p.name == "x")
+            .flat_map(|p| {
+                p.dependencies
+                    .into_iter()
+                    .map(|d| (d.name, d.kind))
+                    .collect::<Vec<_>>()
+            })
+            .filter(|(n, _)| n == "q")
+            .collect::<Vec<_>>(),
+        vec![
+            ("q".to_string(), None),
+            ("q".to_string(), Some(DepKind::Dev)),
+        ]
+    );
 }
 
 #[test]
