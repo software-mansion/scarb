@@ -148,7 +148,6 @@ fn package_one_impl(
         .ui()
         .print(Status::new("Packaging", &pkg_id.to_string()));
 
-    // TODO(mkaput): Check metadata
     if opts.check_metadata {
         check_metadata(pkg, ws.config())?;
     }
@@ -495,7 +494,6 @@ fn tar(
 // use to tell what the package is about.
 fn check_metadata(pkg: &Package, config: &Config) -> Result<()> {
     let md = &pkg.manifest.metadata;
-
     let mut missing = vec![];
 
     trait IsEmpty {
@@ -511,32 +509,27 @@ fn check_metadata(pkg: &Package, config: &Config) -> Result<()> {
             $(
                 if $(md.$field.as_ref().map_or(true, |s| s.is_empty()))&&* {
                     $(missing.push(stringify!($field).replace("_", "-"));)*
+                    missing.push(String::from(" "));
                 }
             )*
         }}
     }
     lacking!(
+        readme,
         description,
         license || license_file,
         documentation || homepage || repository
     );
-
     if !missing.is_empty() {
-        let mut things = missing[..missing.len() - 1].join(", ");
-        // `things` will be empty if and only if its length is 1 (i.e., the only case
-        // to have no `or`).
-        if !things.is_empty() {
-            things.push_str(" or ");
+        let messages = missing
+            .split(|elem| elem == " ")
+            .filter(|vec| !vec.is_empty())
+            .map(|vec| String::from("manifest has no ") + &*vec.join(" or "))
+            .collect::<Vec<String>>();
+        for message in messages {
+            config.ui().warn(message);
         }
-        things.push_str(missing.last().unwrap());
-
-        config.ui().warn(formatdoc!(
-            r#"
-            manifest has no {things}.
-            see https://docs.swmansion.com/scarb/docs/reference/manifest.html#package for more info.
-            "#,
-            things = things,
-        ))
+        config.ui().print("see https://docs.swmansion.com/scarb/docs/reference/manifest.html#package for more info\n");
     }
 
     Ok(())

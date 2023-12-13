@@ -168,10 +168,11 @@ fn symlink_dir<P: AsRef<Path>, Q: AsRef<Path>>(original: P, link: Q) {
 #[test]
 fn simple() {
     let t = TempDir::new().unwrap();
-    simple_project().publish_metadata().build(&t);
+    simple_project().build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .success()
@@ -214,9 +215,6 @@ fn simple() {
                 name = "foo"
                 version = "1.0.0"
                 edition = "2023_01"
-                description = "Description of the package"
-                homepage = "https://example.com"
-                license = "MIT"
 
                 [dependencies]
             "#},
@@ -287,11 +285,11 @@ fn reserved_files_collision() {
         .version("1.0.0")
         .src("VERSION", "oops")
         .src("Scarb.orig.toml", "oops")
-        .publish_metadata()
         .build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -401,13 +399,11 @@ fn workspace() {
     ProjectBuilder::start()
         .name("path_dep")
         .version("1.0.0")
-        .publish_metadata()
         .build(&path_dep);
 
     ProjectBuilder::start()
         .name("workspace_dep")
         .version("1.0.0")
-        .publish_metadata()
         .build(&workspace_dep);
 
     ProjectBuilder::start()
@@ -419,7 +415,6 @@ fn workspace() {
             [tool]
             fmt.workspace = true
         "#})
-        .publish_metadata()
         .build(&hello);
 
     WorkspaceBuilder::start()
@@ -430,13 +425,13 @@ fn workspace() {
             [workspace.tool.fmt]
             sort-module-level-items = true
         "#})
-        // .publish_metadata()
         .build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
         .arg("--workspace")
         .arg("--no-verify")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .success()
@@ -471,9 +466,6 @@ fn workspace() {
                 name = "hello"
                 version = "1.0.0"
                 edition = "2023_01"
-                description = "Description of the package"
-                homepage = "https://example.com"
-                license = "MIT"
 
                 [dependencies.path_dep]
                 version = "^1.0.0"
@@ -535,7 +527,7 @@ fn clean_repo() {
 fn dirty_repo() {
     let t = TempDir::new().unwrap();
 
-    simple_project().publish_metadata().build(&t);
+    simple_project().build(&t);
     gitx::init(&t);
     gitx::commit(&t);
 
@@ -543,6 +535,7 @@ fn dirty_repo() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -726,11 +719,11 @@ fn path_dependency_no_version() {
         .name("hello")
         .version("1.0.0")
         .dep("path_dep", &path_dep)
-        .publish_metadata()
         .build(&hello);
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&hello)
         .assert()
         .failure()
@@ -757,11 +750,11 @@ fn git_dependency_no_version() {
         .name("hello")
         .version("1.0.0")
         .dep("git_dep", &git_dep)
-        .publish_metadata()
         .build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -945,13 +938,11 @@ fn include_readme_and_license_from_workspace() {
 )]
 fn weird_characters_in_filenames() {
     let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .src("src/:foo", "")
-        .publish_metadata()
-        .build(&t);
+    ProjectBuilder::start().src("src/:foo", "").build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -971,11 +962,11 @@ fn windows_restricted_filenames() {
     ProjectBuilder::start()
         .lib_cairo("mod aux;")
         .src("src/aux.cairo", "")
-        .publish_metadata()
         .build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1022,13 +1013,13 @@ fn broken_symlink() {
     ProjectBuilder::start()
         .name("foo")
         .version("1.0.0")
-        .publish_metadata()
         .build(&t);
 
     symlink_dir("nowhere", t.child("src/foo.cairo"));
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1047,7 +1038,6 @@ fn broken_but_excluded_symlink() {
     ProjectBuilder::start()
         .name("foo")
         .version("1.0.0")
-        .publish_metadata()
         .build(&t);
 
     symlink_dir("nowhere", t.child("target"));
@@ -1055,6 +1045,7 @@ fn broken_but_excluded_symlink() {
     // FIXME(mkaput): Technically, we can just ignore such symlinks.
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1073,13 +1064,13 @@ fn filesystem_loop() {
     ProjectBuilder::start()
         .name("foo")
         .version("1.0.0")
-        .publish_metadata()
         .build(&t);
 
     symlink_dir(t.child("src/symlink/foo/bar/baz"), t.child("src/symlink"));
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1238,11 +1229,11 @@ fn no_lib_target() {
         .manifest_extra(indoc! {r#"
         [[target.starknet-contract]]
         "#})
-        .publish_metadata()
         .build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1262,11 +1253,11 @@ fn error_on_verification() {
         .name("foo")
         .version("1.0.0")
         .src("src/lib.cairo", ".")
-        .publish_metadata()
         .build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1294,12 +1285,12 @@ fn package_without_verification() {
         .name("foo")
         .version("1.0.0")
         .src("src/lib.cairo", "fn foo().")
-        .publish_metadata()
         .build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
         .arg("--no-verify")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .success()
@@ -1324,8 +1315,11 @@ fn package_without_publish_metadata() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
-        warn: manifest has no description, license, license-file, documentation, homepage or repository.
-        see https://docs.swmansion.com/scarb/docs/reference/manifest.html#package for more info.
+        warn: manifest has no readme
+        warn: manifest has no description
+        warn: manifest has no license or license-file
+        warn: manifest has no documentation or homepage or repository
+        see https://docs.swmansion.com/scarb/docs/reference/manifest.html#package for more info
 
         [..] Verifying foo-1.0.0.tar.zst
         [..] Compiling foo v1.0.0 ([..])

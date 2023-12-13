@@ -20,7 +20,7 @@ authors = ["Alice <a@example.com>", "Bob <b@example.com>"]
 ```
 
 The only required fields are [`name`](#name) and [`version`](#version).
-If publishing to a registry, the registry may require additional fields:
+If publishing to a registry, it's recommended to fill in additional fields:
 
 - [`license` or `license_file`](#license-and-license-file)
 - [`description`](#description)

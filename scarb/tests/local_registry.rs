@@ -150,6 +150,12 @@ fn publish() {
             .success()
             .stdout_matches(formatdoc! {r#"
             [..] Packaging {name} v{version} ([..])
+            warn: manifest has no [..]
+            warn: manifest has no [..]
+            warn: manifest has no [..]
+            warn: manifest has no [..]
+            [..]
+            [..]
             [..] Verifying {name}-{version}.tar.zst
             [..] Compiling {name} v{version} ([..])
             [..]  Finished release target(s) in [..]
