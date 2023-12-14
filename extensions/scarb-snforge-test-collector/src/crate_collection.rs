@@ -1,16 +1,8 @@
 use crate::metadata::CompilationUnit;
 use anyhow::{anyhow, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
-use serde::Serialize;
+use snforge_test_collector_interface::CrateLocation;
 use walkdir::WalkDir;
-
-#[derive(Debug, PartialEq, Clone, Serialize)]
-pub enum CrateLocation {
-    /// Main crate in a package
-    Lib,
-    /// Crate in the `tests/` directory
-    Tests,
-}
 
 #[derive(Debug, PartialEq)]
 pub struct TestCompilationTarget {

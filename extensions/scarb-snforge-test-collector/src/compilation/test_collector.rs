@@ -22,16 +22,16 @@ use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_test_plugin::test_plugin_suite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use itertools::Itertools;
-use serde::Serialize;
 use smol_str::SmolStr;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use crate::compilation::test_collector::config::{ExpectedTestResult, RawForkConfig};
 use crate::metadata::CompilationUnit;
-use config::{forge_try_extract_test_config, FuzzerConfig, SingleTestConfig};
+use config::forge_try_extract_test_config;
 use function_finder::FunctionFinder;
 use plugin::snforge_test_plugin_suite;
+
+use snforge_test_collector_interface::{SingleTestConfig, TestCaseRaw};
 
 mod config;
 mod function_finder;
@@ -62,16 +62,6 @@ fn find_all_tests(
         }));
     }
     tests
-}
-
-#[derive(Debug, PartialEq, Clone, Serialize)]
-pub struct TestCaseRaw {
-    pub name: String,
-    pub available_gas: Option<usize>,
-    pub ignored: bool,
-    pub expected_result: ExpectedTestResult,
-    pub fork_config: Option<RawForkConfig>,
-    pub fuzzer_config: Option<FuzzerConfig>,
 }
 
 pub fn collect_tests(

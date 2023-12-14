@@ -1,93 +1,21 @@
 use anyhow::Result;
-use cairo_felt::Felt252;
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_diagnostics::Severity;
 use cairo_lang_syntax::attribute::structured::{Attribute, AttributeArg, AttributeArgVariant};
 use cairo_lang_syntax::node::ast::{ArgClause, Expr, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::GetIdentifier;
-use cairo_lang_test_plugin::test_config::{PanicExpectation, TestExpectation};
 use cairo_lang_test_plugin::{try_extract_test_config, TestConfig};
 use cairo_lang_utils::OptionHelper;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
-use serde::Serialize;
+use snforge_test_collector_interface::{
+    FuzzerConfig, RawForkConfig, RawForkParams, SingleTestConfig,
+};
 
 const AVAILABLE_GAS_ATTR: &str = "available_gas";
 const FORK_ATTR: &str = "fork";
 const FUZZER_ATTR: &str = "fuzzer";
-
-/// Expectation for a panic case.
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub enum ExpectedPanicValue {
-    /// Accept any panic value.
-    Any,
-    /// Accept only this specific vector of panics.
-    Exact(Vec<Felt252>),
-}
-
-impl From<PanicExpectation> for ExpectedPanicValue {
-    fn from(value: PanicExpectation) -> Self {
-        match value {
-            PanicExpectation::Any => ExpectedPanicValue::Any,
-            PanicExpectation::Exact(vec) => ExpectedPanicValue::Exact(vec),
-        }
-    }
-}
-
-/// Expectation for a result of a test.
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub enum ExpectedTestResult {
-    /// Running the test should not panic.
-    Success,
-    /// Running the test should result in a panic.
-    Panics(ExpectedPanicValue),
-}
-
-impl From<TestExpectation> for ExpectedTestResult {
-    fn from(value: TestExpectation) -> Self {
-        match value {
-            TestExpectation::Success => ExpectedTestResult::Success,
-            TestExpectation::Panics(panic_expectation) => {
-                ExpectedTestResult::Panics(panic_expectation.into())
-            }
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub enum RawForkConfig {
-    Id(String),
-    Params(RawForkParams),
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct RawForkParams {
-    pub url: String,
-    pub block_id_type: String,
-    pub block_id_value: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct FuzzerConfig {
-    pub fuzzer_runs: u32,
-    pub fuzzer_seed: u64,
-}
-
-/// The configuration for running a single test.
-#[derive(Debug)]
-pub struct SingleTestConfig {
-    /// The amount of gas the test requested.
-    pub available_gas: Option<usize>,
-    /// The expected result of the run.
-    pub expected_result: ExpectedTestResult,
-    /// Should the test be ignored.
-    pub ignored: bool,
-    /// The configuration of forked network.
-    pub fork_config: Option<RawForkConfig>,
-    /// Custom fuzzing configuration
-    pub fuzzer_config: Option<FuzzerConfig>,
-}
 
 /// Extracts the configuration of a tests from attributes, or returns the diagnostics if the
 /// attributes are set illegally.

@@ -10,6 +10,7 @@ members = [
     "utils/scarb-build-metadata",
     "utils/scarb-test-support",
     "utils/scarb-ui",
+    "utils/snforge-test-collector-interface",
     "utils/test-for-each-example",
     "xtask",
 ]

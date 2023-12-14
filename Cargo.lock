@@ -4605,8 +4605,6 @@ version = "2.4.0"
 dependencies = [
  "anyhow",
  "assert_fs",
- "cairo-felt",
- "cairo-lang-casm",
  "cairo-lang-compiler",
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -4637,6 +4635,7 @@ dependencies = [
  "serde_json",
  "smol_str",
  "snapbox",
+ "snforge-test-collector-interface",
  "thiserror",
  "walkdir",
 ]
@@ -5020,6 +5019,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed1559baff8a696add3322b9be3e940d433e7bb4e38d79017205fd37ff28b28e"
 dependencies = [
  "anstream",
+]
+
+[[package]]
+name = "snforge-test-collector-interface"
+version = "2.4.0"
+dependencies = [
+ "anyhow",
+ "cairo-felt",
+ "cairo-lang-sierra",
+ "cairo-lang-test-plugin",
+ "num-bigint",
+ "serde",
 ]
 
 [[package]]

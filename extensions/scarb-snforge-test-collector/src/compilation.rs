@@ -2,9 +2,10 @@ use anyhow::Result;
 use cairo_lang_sierra::program::{ProgramArtifact, VersionedProgram};
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use serde::Serialize;
+use snforge_test_collector_interface::{CrateLocation, TestCaseRaw};
 
-use crate::compilation::test_collector::{collect_tests, TestCaseRaw};
-use crate::crate_collection::{CrateLocation, TestCompilationTarget};
+use crate::compilation::test_collector::collect_tests;
+use crate::crate_collection::TestCompilationTarget;
 use crate::metadata::CompilationUnit;
 
 pub mod test_collector;

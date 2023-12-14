@@ -1,0 +1,12 @@
+[package]
+name = "snforge-test-collector-interface"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+cairo-felt.workspace = true
+cairo-lang-sierra.workspace = true
+cairo-lang-test-plugin.workspace = true
+num-bigint.workspace = true
+serde.workspace = true
