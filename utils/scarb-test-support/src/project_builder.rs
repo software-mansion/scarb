@@ -24,10 +24,6 @@ pub struct ProjectBuilder {
     src: HashMap<Utf8PathBuf, String>,
     deps: Vec<(String, Value)>,
     dev_deps: Vec<(String, Value)>,
-    readme: Option<String>,
-    description: Option<String>,
-    license: Option<String>,
-    homepage: Option<String>,
     manifest_extra: String,
 }
 
@@ -48,10 +44,6 @@ impl ProjectBuilder {
             )]),
             deps: Vec::new(),
             dev_deps: Vec::new(),
-            readme: None,
-            description: None,
-            license: None,
-            homepage: None,
             manifest_extra: String::new(),
         }
     }
@@ -103,26 +95,6 @@ impl ProjectBuilder {
         self.dep("starknet", Dep.version(CAIRO_VERSION))
     }
 
-    pub fn readme(mut self, readme: impl ToString) -> Self {
-        self.readme = Some(readme.to_string());
-        self
-    }
-
-    pub fn description(mut self, description: impl ToString) -> Self {
-        self.description = Some(description.to_string());
-        self
-    }
-
-    pub fn license(mut self, license: impl ToString) -> Self {
-        self.license = Some(license.to_string());
-        self
-    }
-
-    pub fn homepage(mut self, homepage: impl ToString) -> Self {
-        self.homepage = Some(homepage.to_string());
-        self
-    }
-
     pub fn manifest_extra(mut self, extra: impl ToString) -> Self {
         self.manifest_extra = extra.to_string();
         self
@@ -138,18 +110,6 @@ impl ProjectBuilder {
         }
         if let Some(cairo_version) = self.cairo_version.as_ref() {
             doc["package"]["cairo-version"] = Item::Value(Value::from(cairo_version.to_string()));
-        }
-        if let Some(description) = self.description.as_ref() {
-            doc["package"]["description"] = Item::Value(Value::from(description.to_string()));
-        }
-        if let Some(license) = self.license.as_ref() {
-            doc["package"]["license"] = Item::Value(Value::from(license.to_string()));
-        }
-        if let Some(readme) = self.readme.as_ref() {
-            doc["package"]["readme"] = Item::Value(Value::from(readme.to_string()));
-        }
-        if let Some(homepage) = self.homepage.as_ref() {
-            doc["package"]["homepage"] = Item::Value(Value::from(homepage.to_string()));
         }
         doc["dependencies"] = toml_edit::table();
         for (name, dep) in &self.deps {

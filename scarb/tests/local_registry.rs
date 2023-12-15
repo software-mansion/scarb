@@ -154,7 +154,7 @@ fn publish() {
             warn: manifest has no [..]
             warn: manifest has no [..]
             warn: manifest has no [..]
-            [..]
+            see [..] for more info
             [..]
             [..] Verifying {name}-{version}.tar.zst
             [..] Compiling {name} v{version} ([..])
