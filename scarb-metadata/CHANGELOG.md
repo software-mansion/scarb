@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 1.10.0 (2023-12-13)
+- Added `kind` field to `DependencyMetadata`.
+
 ## 1.9.0 (2023-11-09)
 - Added `edition` field to `PackageMetadata`.
 

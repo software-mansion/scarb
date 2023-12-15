@@ -10,7 +10,7 @@ use clap::Parser;
 use indoc::formatdoc;
 use serde::Serializer;
 
-use scarb_metadata::{MetadataCommand, ScarbCommand};
+use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::Status;
 use scarb_ui::{Message, OutputFormat, Ui, Verbosity};
@@ -30,6 +30,10 @@ struct Args {
     /// Print more items in memory.
     #[arg(long, default_value_t = false)]
     print_full_memory: bool,
+
+    /// Do not rebuild the package.
+    #[arg(long, default_value_t = false)]
+    no_build: bool,
 }
 
 fn main() -> Result<()> {
@@ -41,7 +45,13 @@ fn main() -> Result<()> {
 
     let package = args.packages_filter.match_one(&metadata)?;
 
-    ScarbCommand::new().arg("build").run()?;
+    if !args.no_build {
+        let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
+        ScarbCommand::new()
+            .arg("build")
+            .env("SCARB_PACKAGES_FILTER", filter.to_env())
+            .run()?;
+    }
 
     let filename = format!("{}.sierra.json", package.name);
     let path = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?)

@@ -83,6 +83,10 @@ impl TargetKind {
         Ok(Self(name))
     }
 
+    pub fn is_test(&self) -> bool {
+        self == &Self::TEST
+    }
+
     #[inline(always)]
     pub fn as_str(&self) -> &str {
         self.0.as_str()
