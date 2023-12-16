@@ -364,7 +364,7 @@ fn check_cairo_version_compatibility(packages: &[Package], ws: &Workspace<'_>) -
             Some(package_version) if !package_version.matches(&current_version) => {
                 ws.config().ui().error(format!(
                     "Package {}. Required Cairo version isn't compatible with current version. Should be: {} is: {}",
-                    pkg.id.name, package_version, current_version
+                    pkg.id.name, current_version, package_version
                 ));
                 false
             }
