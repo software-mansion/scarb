@@ -172,6 +172,7 @@ fn simple() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .success()
@@ -288,6 +289,7 @@ fn reserved_files_collision() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -429,6 +431,7 @@ fn workspace() {
         .arg("package")
         .arg("--workspace")
         .arg("--no-verify")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .success()
@@ -532,6 +535,7 @@ fn dirty_repo() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -719,6 +723,7 @@ fn path_dependency_no_version() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&hello)
         .assert()
         .failure()
@@ -749,6 +754,7 @@ fn git_dependency_no_version() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -936,6 +942,7 @@ fn weird_characters_in_filenames() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -959,6 +966,7 @@ fn windows_restricted_filenames() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1011,6 +1019,7 @@ fn broken_symlink() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1036,6 +1045,7 @@ fn broken_but_excluded_symlink() {
     // FIXME(mkaput): Technically, we can just ignore such symlinks.
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1060,6 +1070,7 @@ fn filesystem_loop() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1222,6 +1233,7 @@ fn no_lib_target() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1245,6 +1257,7 @@ fn error_on_verification() {
 
     Scarb::quick_snapbox()
         .arg("package")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .failure()
@@ -1276,11 +1289,40 @@ fn package_without_verification() {
     Scarb::quick_snapbox()
         .arg("package")
         .arg("--no-verify")
+        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
         [..]  Packaged [..]
+        "#});
+}
+
+#[test]
+fn package_without_publish_metadata() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging foo v1.0.0 [..]
+        warn: manifest has no readme
+        warn: manifest has no description
+        warn: manifest has no license or license-file
+        warn: manifest has no documentation or homepage or repository
+        see https://docs.swmansion.com/scarb/docs/reference/manifest.html#package for more info
+
+        [..] Verifying foo-1.0.0.tar.zst
+        [..] Compiling foo v1.0.0 ([..])
+        [..]  Finished release target(s) in [..]
+        [..]  Packaged [..] files, [..] ([..] compressed)
         "#});
 }
