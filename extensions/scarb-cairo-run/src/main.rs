@@ -38,6 +38,7 @@ struct Args {
 
 fn main() -> Result<()> {
     let args: Args = Args::parse();
+    let available_gas = GasLimit::parse(args.available_gas);
 
     let ui = Ui::new(Verbosity::default(), OutputFormat::Text);
 
@@ -76,16 +77,16 @@ fn main() -> Result<()> {
     .into_v1()
     .with_context(|| format!("failed to load Sierra program: {path}"))?;
 
-    if args.available_gas.is_none() && sierra_program.program.requires_gas_counter() {
+    if available_gas.is_disabled() && sierra_program.program.requires_gas_counter() {
         bail!("program requires gas counter, please provide `--available-gas` argument");
     }
 
     let runner = SierraCasmRunner::new(
         sierra_program.program,
-        if args.available_gas.is_some() {
-            Some(Default::default())
-        } else {
+        if available_gas.is_disabled() {
             None
+        } else {
+            Some(Default::default())
         },
         Default::default(),
     )?;
@@ -94,7 +95,7 @@ fn main() -> Result<()> {
         .run_function_with_starknet_context(
             runner.find_function("::main")?,
             &[],
-            args.available_gas,
+            available_gas.value(),
             StarknetState::default(),
         )
         .context("failed to run the function")?;
@@ -102,6 +103,7 @@ fn main() -> Result<()> {
     ui.print(Summary {
         result,
         print_full_memory: args.print_full_memory,
+        gas_defined: available_gas.is_defined(),
     });
 
     Ok(())
@@ -110,6 +112,7 @@ fn main() -> Result<()> {
 struct Summary {
     result: RunResultStarknet,
     print_full_memory: bool,
+    gas_defined: bool,
 }
 
 impl Message for Summary {
@@ -133,8 +136,10 @@ impl Message for Summary {
             }
         }
 
-        if let Some(gas) = self.result.gas_counter {
-            println!("Remaining gas: {gas}");
+        if self.gas_defined {
+            if let Some(gas) = self.result.gas_counter {
+                println!("Remaining gas: {gas}");
+            }
         }
 
         if self.print_full_memory {
@@ -154,5 +159,36 @@ impl Message for Summary {
         Self: Sized,
     {
         todo!("JSON output is not implemented yet for this command")
+    }
+}
+
+enum GasLimit {
+    Disabled,
+    Unlimited,
+    Limited(usize),
+}
+impl GasLimit {
+    pub fn parse(value: Option<usize>) -> Self {
+        match value {
+            Some(0) => GasLimit::Disabled,
+            Some(value) => GasLimit::Limited(value),
+            None => GasLimit::Unlimited,
+        }
+    }
+
+    pub fn is_disabled(&self) -> bool {
+        matches!(self, GasLimit::Disabled)
+    }
+
+    pub fn is_defined(&self) -> bool {
+        !matches!(self, GasLimit::Unlimited)
+    }
+
+    pub fn value(&self) -> Option<usize> {
+        match self {
+            GasLimit::Disabled => None,
+            GasLimit::Limited(value) => Some(*value),
+            GasLimit::Unlimited => Some(usize::MAX),
+        }
     }
 }
