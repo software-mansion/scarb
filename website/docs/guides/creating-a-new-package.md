@@ -1,3 +1,7 @@
+<script setup>
+import {data as constants} from "../../constants.data";
+</script>
+
 # Creating a New Package
 
 To start a new package with Scarb, use `scarb new`:
@@ -18,11 +22,11 @@ As the result of running `scarb new`, Scarb has created two files:
 
 Let's take a closer look at `Scarb.toml`:
 
-```toml
+```toml-vue
 [package]
 name = "hello_world"
 version = "0.1.0"
-edition = "2023_10"
+edition = "{{ constants.edition }}"
 
 [dependencies]
 ```
