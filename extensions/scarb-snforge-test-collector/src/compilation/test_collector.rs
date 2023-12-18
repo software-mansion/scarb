@@ -111,7 +111,7 @@ pub fn collect_tests(
     let main_crate_id =
         insert_lib_entrypoint_content_into_db(db, crate_name, crate_root, lib_content);
 
-    if DiagnosticsReporter::stderr().check(db) {
+    if build_diagnostics_reporter(compilation_unit).check(db) {
         return Err(anyhow!(
             "Failed to compile test artifact, for detailed information go through the logs above"
         ));
@@ -166,6 +166,14 @@ pub fn collect_tests(
     validate_tests(sierra_program.clone(), &collected_tests)?;
 
     Ok((sierra_program, collected_tests))
+}
+
+fn build_diagnostics_reporter(compilation_unit: &CompilationUnit) -> DiagnosticsReporter<'static> {
+    if compilation_unit.allow_warnings() {
+        DiagnosticsReporter::stderr().allow_warnings()
+    } else {
+        DiagnosticsReporter::stderr()
+    }
 }
 
 // inspired with cairo-lang-compiler/src/project.rs:49 (part of setup_single_project_file)
