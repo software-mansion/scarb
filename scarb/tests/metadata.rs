@@ -646,6 +646,69 @@ fn workspace_with_root() {
 }
 
 #[test]
+#[ignore = "not implemented yet"]
+fn workspace_with_conflicting_dep() {
+    // TODO(#2): Allow using conflicting dependencies in unrelated workspace members.
+    let t = assert_fs::TempDir::new().unwrap().child("test_workspace");
+    let dep1 = t.child("dep1");
+    ProjectBuilder::start()
+        .name("some_dep")
+        .version("1.0.0")
+        .build(&dep1);
+    let dep2 = t.child("dep2");
+    ProjectBuilder::start()
+        .name("some_dep")
+        .version("2.0.0")
+        .build(&dep2);
+    let pkg1 = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .dep("some_dep", &dep1)
+        .build(&pkg1);
+    let pkg2 = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep("some_dep", &dep2)
+        .build(&pkg2);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version=1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    assert_eq!(
+        packages_and_deps(metadata),
+        BTreeMap::from_iter([
+            ("core".to_string(), vec![]),
+            ("test_plugin".to_string(), vec![]),
+            (
+                "first".to_string(),
+                vec![
+                    "core".to_string(),
+                    "some_dep".to_string(),
+                    "test_plugin".to_string()
+                ]
+            ),
+            (
+                "second".to_string(),
+                vec![
+                    "core".to_string(),
+                    "some_dep".to_string(),
+                    "test_plugin".to_string()
+                ]
+            ),
+            (
+                "some_dep".to_string(),
+                vec!["core".to_string(), "test_plugin".to_string()]
+            ),
+        ])
+    )
+}
+
+#[test]
 fn workspace_as_dep() {
     let t = assert_fs::TempDir::new().unwrap();
     let first_t = t.child("first_workspace");
