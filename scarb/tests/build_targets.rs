@@ -393,6 +393,52 @@ fn detect_single_file_test_targets() {
 }
 
 #[test]
+fn autodetect_test_target_non_cairo_files() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+    t.child("tests/test1.cairo").write_str("").unwrap();
+    t.child("tests/Scarb.toml").write_str("").unwrap();
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let test_cu: Vec<(PathBuf, String)> = metadata
+        .compilation_units
+        .iter()
+        .filter(|cu| cu.target.kind == "test")
+        .map(|cu| {
+            (
+                cu.target.source_path.clone().into_std_path_buf(),
+                cu.target
+                    .params
+                    .as_object()
+                    .unwrap()
+                    .get("test-type")
+                    .unwrap()
+                    .to_string(),
+            )
+        })
+        .sorted()
+        .collect();
+
+    assert_eq!(
+        test_cu,
+        vec![
+            (
+                fsx::canonicalize(t.child("src/lib.cairo")).unwrap(),
+                r#""unit""#.into()
+            ),
+            (
+                fsx::canonicalize(t.child("tests/test1.cairo")).unwrap(),
+                r#""integration""#.into()
+            ),
+        ]
+    );
+}
+
+#[test]
 fn detect_lib_test_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
