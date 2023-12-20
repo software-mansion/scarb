@@ -6,6 +6,7 @@ use std::iter::{repeat, zip};
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use cairo_lang_filesystem::db::Edition;
+use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
 use pathdiff::diff_utf8_paths;
@@ -672,6 +673,17 @@ impl TomlManifest {
                             continue;
                         }
                         let source_path = entry.path().try_into_utf8()?;
+                        if source_path
+                            .extension()
+                            .map(|ext| ext != CAIRO_FILE_EXTENSION)
+                            .unwrap_or(false)
+                        {
+                            trace!(
+                                "ignoring non-cairo file {} from tests",
+                                source_path.file_name().unwrap_or_default()
+                            );
+                            continue;
+                        }
                         let file_stem = source_path.file_stem().unwrap().to_string();
                         let target_name: SmolStr = format!("{package_name}_{file_stem}").into();
                         let target_config = TomlTarget::<TomlExternalTargetParams> {
