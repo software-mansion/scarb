@@ -1,5 +1,4 @@
-use cairo_lang_defs::plugin::{MacroPlugin, PluginResult};
-use cairo_lang_semantic::plugin::PluginSuite;
+use cairo_lang_defs::plugin::{MacroPlugin, PluginResult, PluginSuite};
 use cairo_lang_syntax::attribute::structured::AttributeListStructurize;
 use cairo_lang_syntax::node::ast;
 use cairo_lang_syntax::node::db::SyntaxGroup;
