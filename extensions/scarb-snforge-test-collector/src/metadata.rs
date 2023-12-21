@@ -139,16 +139,6 @@ impl CompilationUnit<'_> {
         }
     }
 
-    /// Retrieve `allow-warnings` flag from the compiler config.
-    pub fn allow_warnings(&self) -> bool {
-        self.unit_metadata
-            .compiler_config
-            .as_object()
-            .and_then(|config| config.get("allow_warnings"))
-            .and_then(|value| value.as_bool())
-            .unwrap_or(true)
-    }
-
     pub fn source_root(&self) -> Utf8PathBuf {
         self.unit_metadata.target.source_root().to_path_buf()
     }

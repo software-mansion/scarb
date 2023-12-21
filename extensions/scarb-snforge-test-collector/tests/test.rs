@@ -286,50 +286,6 @@ fn forge_test_with_should_panic_message_attribute() {
 }
 
 #[test]
-fn allows_warnings_by_default() {
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .lib_cairo(indoc! {r#"
-        fn hello() -> felt252 {
-            let a = 41;
-            let b = 42;
-            b
-        }
-        "#})
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("snforge-test-collector")
-        .current_dir(&t)
-        .assert()
-        .success();
-}
-
-#[test]
-fn can_disallow_warnings() {
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .lib_cairo(indoc! {r#"
-        fn hello() -> felt252 {
-            let a = 41;
-            let b = 42;
-            b
-        }
-        "#})
-        .manifest_extra(indoc! {r#"
-        [cairo]
-        allow-warnings = false
-        "#})
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("snforge-test-collector")
-        .current_dir(&t)
-        .assert()
-        .failure();
-}
-
-#[test]
 fn uses_dev_dependencies() {
     let t = TempDir::new().unwrap();
     let q = t.child("q");
