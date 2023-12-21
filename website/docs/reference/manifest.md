@@ -253,16 +253,6 @@ For example, while the Sierra name be `[6]`, with this flag turned on it might b
 sierra-replace-ids = true
 ```
 
-### `allow-warnings`
-
-If enabled, Scarb will not exit with error on compiler warnings.
-By default, this flag is enabled.
-
-```toml
-[cairo]
-allow-warnings = false
-```
-
 ## `[profile]`
 
 See [Profiles](./profiles) page.

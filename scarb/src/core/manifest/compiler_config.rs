@@ -15,15 +15,12 @@ pub struct ManifestCompilerConfig {
     /// - For types: `felt252` or `Box<Box<felt252>>`.
     /// - For user functions: `test::foo`.
     pub sierra_replace_ids: bool,
-    /// Do not exit with error on compiler warnings.
-    pub allow_warnings: bool,
 }
 
 impl DefaultForProfile for ManifestCompilerConfig {
     fn default_for_profile(profile: &Profile) -> Self {
         Self {
             sierra_replace_ids: profile.is_dev(),
-            allow_warnings: true,
         }
     }
 }
@@ -32,7 +29,6 @@ impl From<ManifestCompilerConfig> for TomlCairo {
     fn from(config: ManifestCompilerConfig) -> Self {
         Self {
             sierra_replace_ids: Some(config.sierra_replace_ids),
-            allow_warnings: Some(true),
         }
     }
 }
