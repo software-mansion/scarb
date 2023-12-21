@@ -147,7 +147,6 @@ pub fn forge_try_extract_test_config(
         } else {
             extract_max_steps(attr, db).on_none(|| {
                 diagnostics.push(PluginDiagnostic {
-                    severity: Severity::Error,
                     stable_ptr: attr.args_stable_ptr.untyped(),
                     message: "Expected max steps value must be of the type <u32>".into(),
                 });
