@@ -271,7 +271,7 @@ fn compile_with_incompatible_cairo_version() {
             [package]
             name = "hello"
             version = "0.1.0"
-            cairo-version = "3.0.0"
+            cairo-version = "33.33.0"
             "#,
         )
         .unwrap();
@@ -281,8 +281,11 @@ fn compile_with_incompatible_cairo_version() {
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-            error: Package hello. Required Cairo version isn't compatible with current version. Should be: ^3.0.0 is: [..]
-            error: For each package, the required Cairo version must match the current Cairo version.
+            error: the required Cairo version of package hello is not compatible with current version
+            Cairo version required: ^33.33.0
+            Cairo version of Scarb: [..]
+
+            error: the required Cairo version of each package must match the current Cairo version
         "#});
 }
 
