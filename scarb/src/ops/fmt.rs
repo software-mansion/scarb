@@ -3,8 +3,6 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use anyhow::Result;
-use cairo_lang_diagnostics::Severity;
-use cairo_lang_formatter::cairo_formatter::FormattingError;
 use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
 use clap::ValueEnum;
 use ignore::WalkState::{Continue, Skip};
@@ -110,25 +108,15 @@ fn print_diff(ws: &Workspace<'_>, path: &Path, diff: impl Display) {
         .print(format!("Diff in file {}:\n {}", path.display(), diff));
 }
 
-fn print_error(ws: &Workspace<'_>, path: &Path, error: FormattingError) {
-    match error {
-        FormattingError::ParsingError(error) => {
-            for entry in error.iter() {
-                let msg = entry
-                    .message()
-                    .strip_suffix('\n')
-                    .unwrap_or(entry.message());
-                match entry.severity() {
-                    Severity::Error => ws.config().ui().error(msg),
-                    Severity::Warning => ws.config().ui().warn(msg),
-                };
-            }
-        }
-        FormattingError::Error(error) => {
-            let error = error.context(format!("cannot format file {}", path.display()));
-            ws.config().ui().error(error.to_string());
-        }
-    }
+fn print_error(ws: &Workspace<'_>, path: &Path, error: anyhow::Error) {
+    let error_msg = error.to_string();
+    ws.config().ui().error(format!(
+        "{}Error writing files: cannot parse {}",
+        // TODO(maciektr): Fix this with proper upstream changes.
+        //   The slice is a hacky way of avoiding duplicated "error: " prefix.
+        &error_msg[7..],
+        path.display()
+    ));
 }
 
 fn check_file_formatting(
