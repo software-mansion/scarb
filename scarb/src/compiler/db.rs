@@ -93,16 +93,21 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         .components
         .iter()
         .map(|component| {
+            let experimental_features = component.package.manifest.experimental_features.clone();
             (
                 component.cairo_package_name(),
                 CrateSettings {
                     edition: component.package.manifest.edition,
-                    experimental_features: Default::default(),
+                    // TODO (#1040): replace this with a macro
+                    experimental_features: cairo_lang_filesystem::db::ExperimentalFeaturesConfig {
+                        negative_impls: experimental_features
+                            .unwrap_or_default()
+                            .contains(&SmolStr::new_inline("negative_impls")),
+                    },
                 },
             )
         })
         .collect();
-
     let crates_config = AllCratesConfig {
         override_map: crates_config,
         ..Default::default()
