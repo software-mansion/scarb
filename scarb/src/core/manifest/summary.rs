@@ -62,6 +62,14 @@ impl Summary {
         self.dependencies.iter().chain(self.implicit_dependencies())
     }
 
+    pub fn filtered_full_dependencies(
+        &self,
+        dep_filter: DependencyFilter,
+    ) -> impl Iterator<Item = &ManifestDependency> {
+        self.full_dependencies()
+            .filter(move |dep| dep_filter.filter(dep))
+    }
+
     pub fn implicit_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
         static CORE_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| {
             // NOTE: Pin `core` to exact version, because we know that's the only one we have.
@@ -101,5 +109,20 @@ impl Summary {
         self.dependencies
             .iter()
             .filter(|dep| dep.kind == DepKind::Normal)
+    }
+}
+
+#[derive(Default)]
+pub struct DependencyFilter {
+    pub do_propagate: bool,
+}
+
+impl DependencyFilter {
+    pub fn propagation(do_propagate: bool) -> Self {
+        Self { do_propagate }
+    }
+
+    pub fn filter(&self, dep: &ManifestDependency) -> bool {
+        self.do_propagate || dep.kind.is_propagated()
     }
 }

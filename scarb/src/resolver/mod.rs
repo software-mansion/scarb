@@ -4,12 +4,14 @@ use anyhow::{bail, Result};
 use indoc::{formatdoc, indoc};
 use petgraph::graphmap::DiGraphMap;
 use scarb_ui::Ui;
+use std::collections::HashSet;
 
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::resolver::{DependencyEdge, Resolve};
 use crate::core::{
-    DepKind, DependencyVersionReq, ManifestDependency, PackageId, Summary, TargetKind,
+    DepKind, DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, Summary,
+    TargetKind,
 };
 
 /// Builds the list of all packages required to build the first argument.
@@ -41,6 +43,10 @@ pub async fn resolve(
     // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
 
+    let main_packages = summaries
+        .iter()
+        .map(|sum| sum.package_id)
+        .collect::<HashSet<PackageId>>();
     let mut packages: HashMap<_, _> = HashMap::from_iter(
         summaries
             .iter()
@@ -59,7 +65,10 @@ pub async fn resolve(
         for package_id in queue {
             graph.add_node(package_id);
 
-            for dep in summaries[&package_id].clone().full_dependencies() {
+            let summary = summaries[&package_id].clone();
+            let dep_filter =
+                DependencyFilter::propagation(main_packages.contains(&summary.package_id));
+            for dep in summary.filtered_full_dependencies(dep_filter) {
                 let dep = rewrite_dependency_source_id(registry, &package_id, dep).await?;
 
                 let locked_package_id = lockfile.packages_matching(dep.clone());
@@ -129,7 +138,8 @@ pub async fn resolve(
     // Detect incompatibilities and bail in case ones are found.
     let mut incompatibilities = Vec::new();
     for from_package in graph.nodes() {
-        for manifest_dependency in summaries[&from_package].full_dependencies() {
+        let dep_filter = DependencyFilter::propagation(main_packages.contains(&from_package));
+        for manifest_dependency in summaries[&from_package].filtered_full_dependencies(dep_filter) {
             let to_package = packages[&manifest_dependency.name];
             if !manifest_dependency.matches_package_id(to_package) {
                 let message = format!(

@@ -273,9 +273,7 @@ fn dev_dependencies() {
 }
 
 #[test]
-#[ignore = "not implemented yet"]
 fn dev_deps_are_not_propagated() {
-    // TODO(maciektr): Make sure dev-deps are not propagated.
     let t = assert_fs::TempDir::new().unwrap();
 
     let dep1 = t.child("dep1");
@@ -290,7 +288,7 @@ fn dev_deps_are_not_propagated() {
     let pkg = t.child("pkg");
     ProjectBuilder::start()
         .name("x")
-        .dep("dep2", &dep2)
+        .dev_dep("dep2", &dep2)
         .build(&pkg);
 
     let metadata = Scarb::quick_snapbox()
@@ -315,10 +313,6 @@ fn dev_deps_are_not_propagated() {
                 ]
             ),
             (
-                "dep1".to_string(),
-                vec!["core".to_string(), "test_plugin".to_string()]
-            ),
-            (
                 "dep2".to_string(),
                 vec![
                     "core".to_string(),
@@ -332,10 +326,7 @@ fn dev_deps_are_not_propagated() {
     assert_eq!(
         units_and_components(metadata),
         BTreeMap::from_iter(vec![
-            (
-                "x".to_string(),
-                vec!["core".to_string(), "dep2".to_string(), "x".to_string()]
-            ),
+            ("x".to_string(), vec!["core".to_string(), "x".to_string()]),
             (
                 "x_unittest".to_string(),
                 vec!["core".to_string(), "dep2".to_string(), "x".to_string()]
