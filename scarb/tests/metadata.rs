@@ -273,9 +273,7 @@ fn dev_dependencies() {
 }
 
 #[test]
-#[ignore = "not implemented yet"]
 fn dev_deps_are_not_propagated() {
-    // TODO(maciektr): Make sure dev-deps are not propagated.
     let t = assert_fs::TempDir::new().unwrap();
 
     let dep1 = t.child("dep1");
