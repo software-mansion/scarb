@@ -33,7 +33,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: website/.vitepress/dist
 
