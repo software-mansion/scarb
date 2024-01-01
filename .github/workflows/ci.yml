@@ -26,7 +26,7 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
         run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
           path: nextest-archive-${{ matrix.platform.os }}.tar.zst
