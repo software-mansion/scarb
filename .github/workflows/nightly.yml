@@ -107,7 +107,7 @@ jobs:
           git archive "--prefix=scarb-${{ needs.prepare.outputs.nightly_tag }}/" -o "scarb-${{ needs.prepare.outputs.nightly_tag }}.tar.gz" HEAD
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts-dl
 
