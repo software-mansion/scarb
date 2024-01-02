@@ -363,6 +363,7 @@ fn compile_starknet_contract_without_starknet_dep() {
         #[starknet::contract]
         ^*******************^
 
+
         error: Plugin diagnostic: Unsupported attribute.
          --> [..]/lib.cairo:13:5
             #[storage]
@@ -412,6 +413,7 @@ fn compile_starknet_contract_without_starknet_dep() {
          --> [..]/lib.cairo:29:24
                     self.value.write( self.value.read() + a );
                                ^***^
+
 
         error: could not compile `hello` due to previous error
         "#});

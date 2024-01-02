@@ -18,7 +18,6 @@ anyhow.workspace = true
 async-trait.workspace = true
 cairo-lang-compiler.workspace = true
 cairo-lang-defs.workspace = true
-cairo-lang-diagnostics.workspace = true
 cairo-lang-filesystem.workspace = true
 cairo-lang-formatter.workspace = true
 cairo-lang-semantic.workspace = true

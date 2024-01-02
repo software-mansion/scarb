@@ -4,11 +4,12 @@ use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_compiler::CompilerConfig;
-use cairo_lang_diagnostics::Severity;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use serde::Serialize;
 use std::io::{BufWriter, Write};
+
+use scarb_ui::components::TypedMessage;
 
 use crate::compiler::CompilationUnit;
 use crate::core::Workspace;
@@ -17,14 +18,10 @@ use crate::flock::Filesystem;
 pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> CompilerConfig<'c> {
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
-
-        |severity: Severity, diagnostic: String| {
-            let msg = diagnostic.clone();
-            let msg = msg.strip_suffix('\n').unwrap_or(diagnostic.as_str());
-            match severity {
-                Severity::Error => config.ui().error(msg),
-                Severity::Warning => config.ui().warn(msg),
-            };
+        |diagnostic: String| {
+            config
+                .ui()
+                .print(TypedMessage::naked_text("diagnostic", &diagnostic));
         }
     });
     CompilerConfig {

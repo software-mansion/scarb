@@ -80,6 +80,7 @@ fn compile_with_syntax_error() {
             not_a_keyword
             ^***********^
 
+
             error: could not compile `hello` due to previous error
         "#});
 }
@@ -723,6 +724,7 @@ fn dev_dep_used_outside_tests() {
             use q::dev_dep_function;
                 ^
 
+
             error: could not compile `x` due to previous error
         "#});
 }
@@ -781,10 +783,11 @@ fn warnings_allowed_by_default() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
-        warn: Unused variable. Consider ignoring by prefixing with `_`.
+        warning: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
             let a = 41;
                 ^
+
 
             Finished release target(s) in [..] seconds
         "#});
@@ -814,10 +817,11 @@ fn warnings_can_be_disallowed() {
         .failure()
         .stdout_matches(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
-        warn: Unused variable. Consider ignoring by prefixing with `_`.
+        warning: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
             let a = 41;
                 ^
+
 
         error: could not compile [..] due to previous error
         "#});
