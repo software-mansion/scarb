@@ -72,7 +72,6 @@ pub struct TestCaseRaw {
     pub expected_result: ExpectedTestResult,
     pub fork_config: Option<RawForkConfig>,
     pub fuzzer_config: Option<FuzzerConfig>,
-    pub max_steps: Option<u32>,
 }
 
 pub fn collect_tests(
@@ -157,7 +156,6 @@ pub fn collect_tests(
             expected_result: config.expected_result,
             fork_config: config.fork_config,
             fuzzer_config: config.fuzzer_config,
-            max_steps: config.max_steps,
         })
         .collect();
 

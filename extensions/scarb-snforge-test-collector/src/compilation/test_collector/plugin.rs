@@ -35,7 +35,6 @@ impl MacroPlugin for TestPlugin {
             "should_panic".to_string(),
             "fork".to_string(),
             "fuzzer".to_string(),
-            "max_steps".to_string(),
         ]
     }
 }
