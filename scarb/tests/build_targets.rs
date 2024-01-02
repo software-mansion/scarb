@@ -229,6 +229,7 @@ fn compile_dep_not_a_lib() {
             fn hellp() -> felt252 { dep::forty_two() }
                                     ^*^
 
+
             error: could not compile `hello` due to previous error
         "#});
 }
