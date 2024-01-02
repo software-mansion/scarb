@@ -166,6 +166,8 @@ pub enum Command {
     /// Manipulate packages cache.
     #[clap(subcommand)]
     Cache(CacheSubcommand),
+    /// Compile until diagnostics checking.
+    Check,
     /// Remove generated artifacts.
     Clean,
     /// List installed commands.
