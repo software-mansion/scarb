@@ -75,7 +75,7 @@ fn compile_with_syntax_error() {
         .code(1)
         .stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]Scarb.toml)
-            error: Skipped tokens. Expected: Const/Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum/TypeAlias/InlineMacro or an attribute.
+            error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
              --> [..]/lib.cairo:1:1
             not_a_keyword
             ^***********^
@@ -101,7 +101,7 @@ fn compile_with_syntax_error_json() {
         .code(1)
         .stdout_matches(indoc! {r#"
             {"status":"compiling","message":"hello v0.1.0 ([..]Scarb.toml)"}
-            {"type":"error","message":"Skipped tokens. Expected: Const/Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum/TypeAlias/InlineMacro or an attribute./n --> [..]/lib.cairo:1:1/nnot_a_keyword/n^***********^/n"}
+            {"type":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute./n --> [..]/lib.cairo:1:1/nnot_a_keyword/n^***********^/n"}
             {"type":"error","message":"could not compile `hello` due to previous error"}
         "#});
 }
@@ -271,7 +271,7 @@ fn compile_with_incompatible_cairo_version() {
             [package]
             name = "hello"
             version = "0.1.0"
-            cairo-version = "3.0.0"
+            cairo-version = "33.33.0"
             "#,
         )
         .unwrap();
@@ -281,8 +281,11 @@ fn compile_with_incompatible_cairo_version() {
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-            error: Package hello. Required Cairo version isn't compatible with current version. Should be: ^3.0.0 is: [..]
-            error: For each package, the required Cairo version must match the current Cairo version.
+            error: the required Cairo version of package hello is not compatible with current version
+            Cairo version required: ^33.33.0
+            Cairo version of Scarb: [..]
+
+            error: the required Cairo version of each package must match the current Cairo version
         "#});
 }
 

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use anyhow::{bail, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
+use indoc::formatdoc;
 use itertools::Itertools;
 
 use crate::compiler::{CompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent};
@@ -359,20 +360,26 @@ fn build_cfg_set(target: &Target) -> CfgSet {
 
 fn check_cairo_version_compatibility(packages: &[Package], ws: &Workspace<'_>) -> Result<()> {
     let current_version = crate::version::get().cairo.version.to_version().unwrap();
-    let matching_version = packages.iter().all(|pkg| {
-        match &pkg.manifest.metadata.cairo_version {
+    let matching_version = packages
+        .iter()
+        .all(|pkg| match &pkg.manifest.metadata.cairo_version {
             Some(package_version) if !package_version.matches(&current_version) => {
-                ws.config().ui().error(format!(
-                    "Package {}. Required Cairo version isn't compatible with current version. Should be: {} is: {}",
-                    pkg.id.name, package_version, current_version
+                ws.config().ui().error(formatdoc!(
+                    r"
+                    the required Cairo version of package {} is not compatible with current version
+                    Cairo version required: {}
+                    Cairo version of Scarb: {}
+                    ",
+                    pkg.id.name,
+                    package_version,
+                    current_version
                 ));
                 false
             }
-            _ => true
-        }
-    });
+            _ => true,
+        });
     if !matching_version {
-        bail!("For each package, the required Cairo version must match the current Cairo version.");
+        bail!("the required Cairo version of each package must match the current Cairo version");
     }
     Ok(())
 }

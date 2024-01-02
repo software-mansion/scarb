@@ -1,3 +1,7 @@
+<script setup>
+import {data as constants} from "../../constants.data";
+</script>
+
 # The Manifest Format
 
 The `Scarb.toml` file, present in each package, is called its _manifest_.
@@ -57,9 +61,9 @@ The edition key is an optional key that affects which Cairo edition your package
 The editions allow newer Cairo compiler versions to introduce opt-in features that may break existing code.
 Setting the edition key in `[package]` will affect all targets in the package, including test suites etc.
 
-```toml
+```toml-vue
 [package]
-edition = '2023_01'
+edition = "{{ constants.edition }}"
 ```
 
 Most manifests have the edition field filled in automatically by `scarb new` with the latest available edition.

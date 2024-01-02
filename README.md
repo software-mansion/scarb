@@ -40,6 +40,7 @@ Scarb is under active development! Expect a lot of new features to appear soon! 
 - [ ] `scarb check`
 - [ ] Dependency overrides
 - [ ] Signing & notarization of Windows & macOS binaries
+- [ ] `scarb doc`
 
 ## Credits
 
