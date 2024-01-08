@@ -1,9 +1,11 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use cairo_lang_filesystem::db::{CrateSettings, Edition};
 use cairo_lang_project::AllCratesConfig;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use camino::{Utf8Path, Utf8PathBuf};
+use itertools::Itertools;
 use scarb_metadata::{CompilationUnitMetadata, Metadata, PackageMetadata};
+use serde_json::json;
 use smol_str::SmolStr;
 use std::path::PathBuf;
 
@@ -18,23 +20,54 @@ pub fn compilation_unit_for_package<'a>(
     metadata: &'a Metadata,
     package_metadata: &PackageMetadata,
 ) -> Result<CompilationUnit<'a>> {
-    let compilation_unit_metadata = metadata
+    let unit_test_cu = metadata
         .compilation_units
         .iter()
-        .filter(|unit| unit.package == package_metadata.id)
-        .min_by_key(|unit| match unit.target.kind.as_str() {
-            name @ "starknet-contract" => (0, name),
-            name @ "lib" => (1, name),
-            name => (2, name),
+        .find(|unit| {
+            unit.package == package_metadata.id
+                && unit.target.kind == "test"
+                && unit.target.params.get("test-type") == Some(&json!("unit"))
         })
         .ok_or_else(|| {
             anyhow!(
-                "Failed to find compilation unit for package = {}",
+                "Failed to find unit test compilation unit for package = {}",
                 package_metadata.name
             )
         })?;
+    let all_test_cus = metadata
+        .compilation_units
+        .iter()
+        .filter(|unit| unit.package == package_metadata.id && unit.target.kind == "test")
+        .collect_vec();
+
+    let unit_test_deps = unit_test_cu.components.iter().collect_vec();
+
+    for cu in all_test_cus {
+        let test_type = cu
+            .target
+            .params
+            .get("test-type")
+            .expect("Test target missing test-type param")
+            .as_str()
+            .expect("test-type param is not a string");
+
+        let test_deps_without_tests = cu
+            .components
+            .iter()
+            .filter(|du| match test_type {
+                "unit" => true,
+                _ => !du.source_root().starts_with(cu.target.source_root()),
+            })
+            .collect_vec();
+
+        ensure!(
+            unit_test_deps == test_deps_without_tests,
+            "Dependencies mismatch between test compilation units"
+        );
+    }
+
     Ok(CompilationUnit {
-        unit_metadata: compilation_unit_metadata,
+        unit_metadata: unit_test_cu,
         metadata,
     })
 }

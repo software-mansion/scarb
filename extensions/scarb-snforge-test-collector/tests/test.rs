@@ -273,7 +273,6 @@ fn forge_test_with_should_panic_message_attribute() {
         .read_to_string();
 
     let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
-    dbg!();
     assert_eq!(
         &json[0]["test_cases"][0]["expected_result"]["Panics"].to_string(),
         "{\"Exact\":[{\"value\":{\"val\":[1935763301,544040307,1634625891,112]}},{\"value\":{\"val\":[1935763301,544040307,1668247140,1814066021,1853125985,6649445]}}]}"
@@ -324,4 +323,47 @@ fn can_disallow_warnings() {
         .current_dir(&t)
         .assert()
         .failure();
+}
+
+#[test]
+fn uses_dev_dependencies() {
+    let t = TempDir::new().unwrap();
+    let q = t.child("q");
+    ProjectBuilder::start()
+        .name("q")
+        .lib_cairo("fn dev_dep_function() -> felt252 { 42 }")
+        .build(&q);
+
+    ProjectBuilder::start()
+        .name("x")
+        .dev_dep("q", &q)
+        .lib_cairo(indoc! {r#"
+            #[cfg(test)]
+            mod tests {
+                use q::dev_dep_function;
+            
+                #[test]
+                fn test() {
+                    assert(dev_dep_function() == 42, '');
+                }
+            }
+        "#})
+        .build(&t);
+
+    let test_path = t.child("tests/test.cairo");
+    test_path
+        .write_str(indoc! {r#"
+            use q::dev_dep_function;
+    
+            fn test() {
+                assert(dev_dep_function() == 42, '');
+            }
+    "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("snforge-test-collector")
+        .current_dir(&t)
+        .assert()
+        .success();
 }
