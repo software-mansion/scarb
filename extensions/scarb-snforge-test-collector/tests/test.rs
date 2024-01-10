@@ -8,7 +8,7 @@ use indoc::indoc;
 use scarb_test_support::command::Scarb;
 
 use scarb_test_support::project_builder::ProjectBuilder;
-use serde_json::Value;
+use serde_json::{Number, Value};
 
 const SIMPLE_TEST: &str = indoc! {r#"
     #[cfg(test)]
@@ -48,7 +48,7 @@ fn forge_test_locations() {
     assert_eq!(&json[1]["test_cases"][0]["name"], "tests::tests::test");
     assert_eq!(&json[1]["tests_location"], "Tests");
 
-    assert_eq!(&json[0]["test_cases"][0]["available_gas"], &Value::Null);
+    assert_eq!(&json[0]["test_cases"][0]["available_gas"], &Value::Number(Number::from(u32::MAX)));
     assert_eq!(&json[0]["test_cases"][0]["expected_result"], "Success");
     assert_eq!(&json[0]["test_cases"][0]["fork_config"], &Value::Null);
     assert_eq!(&json[0]["test_cases"][0]["fuzzer_config"], &Value::Null);
@@ -85,6 +85,7 @@ const WITH_MANY_ATTRIBUTES_TEST: &str = indoc! {r#"
         #[fork(url: "http://your.rpc.url", block_id: BlockId::Number(123))]
         #[should_panic]
         #[fuzzer(runs: 22, seed: 38)]
+        #[available_gas(100)]
         #[test]
         fn test(a: felt252) {
             assert(true == true, 'it works!')
@@ -114,7 +115,7 @@ fn forge_test_with_attributes() {
 
     let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
 
-    assert_eq!(&json[0]["test_cases"][0]["available_gas"], &Value::Null);
+    assert_eq!(&json[0]["test_cases"][0]["available_gas"], &Value::Number(Number::from(100)));
     assert_eq!(
         &json[0]["test_cases"][0]["expected_result"]["Panics"],
         "Any"
