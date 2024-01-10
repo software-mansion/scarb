@@ -129,5 +129,7 @@ lto = true
 [profile.ci]
 inherits = "test"
 strip = "debuginfo"
+[profile.ci.package."*"]
+opt-level = 1
 [profile.ci.package."salsa"]
 opt-level = 3
