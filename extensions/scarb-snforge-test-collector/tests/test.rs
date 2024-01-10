@@ -48,7 +48,10 @@ fn forge_test_locations() {
     assert_eq!(&json[1]["test_cases"][0]["name"], "tests::tests::test");
     assert_eq!(&json[1]["tests_location"], "Tests");
 
-    assert_eq!(&json[0]["test_cases"][0]["available_gas"], &Value::Number(Number::from(u32::MAX)));
+    assert_eq!(
+        &json[0]["test_cases"][0]["available_gas"],
+        &Value::Number(Number::from(u32::MAX))
+    );
     assert_eq!(&json[0]["test_cases"][0]["expected_result"], "Success");
     assert_eq!(&json[0]["test_cases"][0]["fork_config"], &Value::Null);
     assert_eq!(&json[0]["test_cases"][0]["fuzzer_config"], &Value::Null);
@@ -115,7 +118,10 @@ fn forge_test_with_attributes() {
 
     let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
 
-    assert_eq!(&json[0]["test_cases"][0]["available_gas"], &Value::Number(Number::from(100)));
+    assert_eq!(
+        &json[0]["test_cases"][0]["available_gas"],
+        &Value::Number(Number::from(100))
+    );
     assert_eq!(
         &json[0]["test_cases"][0]["expected_result"]["Panics"],
         "Any"
