@@ -129,3 +129,15 @@ lto = true
 [profile.ci]
 inherits = "test"
 strip = "debuginfo"
+[profile.ci.package."*"]
+opt-level = 1
+[profile.ci.package."salsa"]
+opt-level = 3
+[profile.ci.package."serde"]
+opt-level = 3
+[profile.ci.package."serde_json"]
+opt-level = 3
+[profile.ci.package."toml"]
+opt-level = 3
+[profile.ci.package."toml_edit"]
+opt-level = 3
