@@ -147,13 +147,13 @@ pub fn forge_try_extract_test_config(
 
     let result = maybe_test_config.map(
         |TestConfig {
+             available_gas,
              expectation,
              ignored,
-             available_gas,
          }| SingleTestConfig {
+            available_gas,
             expected_result: expectation.into(),
             ignored,
-            available_gas,
             fork_config,
             fuzzer_config,
         },
