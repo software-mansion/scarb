@@ -22,6 +22,7 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     let opts = CompileOpts {
         include_targets,
         exclude_targets,
+        compile_mode: ops::CompileMode::Build,
     };
     ops::compile(packages, opts, &ws)
 }

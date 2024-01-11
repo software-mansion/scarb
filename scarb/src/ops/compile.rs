@@ -10,10 +10,17 @@ use crate::compiler::CompilationUnit;
 use crate::core::{PackageId, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::ops;
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum CompileMode {
+    Build,
+    Check,
+}
+
 #[derive(Debug)]
 pub struct CompileOpts {
     pub include_targets: Vec<TargetKind>,
     pub exclude_targets: Vec<TargetKind>,
+    pub compile_mode: CompileMode,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -36,6 +43,7 @@ pub fn compile(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) 
         })
         .collect::<Vec<PackageId>>();
 
+    // TODO or pass opts.compile_mode as an artuent to `compiile_unit` in line 57 instead of here
     let compilation_units = ops::generate_compilation_units(&resolve, ws)?
         .into_iter()
         .filter(|cu| !opts.exclude_targets.contains(&cu.target().kind))
@@ -46,7 +54,7 @@ pub fn compile(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) 
         .collect::<Vec<_>>();
 
     for unit in compilation_units {
-        compile_unit(unit, ws)?;
+        compile_unit(unit, opts.compile_mode, ws)?;
     }
 
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
@@ -58,7 +66,11 @@ pub fn compile(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) 
     Ok(())
 }
 
-fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+fn compile_unit(
+    unit: CompilationUnit,
+    compile_mode: CompileMode,
+    ws: &Workspace<'_>,
+) -> Result<()> {
     let package_name = unit.main_package_id.name.clone();
 
     ws.config()
@@ -88,7 +100,7 @@ fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 
     ws.config()
         .compilers()
-        .compile(unit, &mut db, ws)
+        .compile(unit, &mut db, compile_mode, ws)
         .map_err(|err| {
             if !suppress_error(&err) {
                 ws.config().ui().anyhow(&err);

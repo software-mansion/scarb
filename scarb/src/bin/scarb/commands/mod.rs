@@ -36,7 +36,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         Build(args) => build::run(args, config),
         Cache(CacheSubcommand::Clean) => cache_clean::run(config),
         Cache(CacheSubcommand::Path) => cache_path::run(config),
-        Check => check::run(config),
+        Check(args) => check::run(args, config),
         Clean => clean::run(config),
         Commands => commands::run(config),
         External(args) => external::run(args, config),

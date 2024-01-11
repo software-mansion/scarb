@@ -25,6 +25,7 @@ use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::serdex::RelativeUtf8PathBuf;
 use crate::internal::stable_hash::short_hash;
+use crate::ops::CompileMode;
 
 const CAIRO_PATH_SEPARATOR: &str = "::";
 const GLOB_PATH_SELECTOR: &str = "*";
@@ -193,6 +194,7 @@ impl Compiler for StarknetContractCompiler {
         &self,
         unit: CompilationUnit,
         db: &mut RootDatabase,
+        compile_mode: CompileMode,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.target().props()?;
@@ -213,7 +215,13 @@ impl Compiler for StarknetContractCompiler {
 
         let target_dir = unit.target_dir(ws);
 
-        let compiler_config = build_compiler_config(&unit, ws);
+        let mut compiler_config = build_compiler_config(&unit, ws);
+
+        // TODO and here
+        if compile_mode == CompileMode::Check {
+            compiler_config.diagnostics_reporter.ensure(db)?;
+            return Ok(());
+        }
 
         let main_crate_ids = collect_main_crate_ids(&unit, db);
 
