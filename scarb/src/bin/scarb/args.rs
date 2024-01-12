@@ -24,7 +24,37 @@ use scarb_ui::OutputFormat;
 
 /// The Cairo package manager.
 #[derive(Parser, Clone, Debug)]
-#[command(author, version = version::get().short(), long_version = version::get().long())]
+#[command(
+    author,
+    version = version::get().short(),
+    long_version = version::get().long(),
+    help_template = "\
+{name} {version}
+{author-with-newline}{about-with-newline}
+Use -h for short descriptions and --help for more details.
+
+{before-help}{usage-heading} {usage}
+
+{all-args}{after-help}
+",
+    long_about = "Scarb is the Cairo package manager. It downloads your package's dependencies, compiles your \
+    projects, and works as an entry point for other tooling to work with your code.",
+    after_help = "Read the docs: https://docs.swmansion.com/scarb/",
+    after_long_help = "\
+Read the docs:
+- Scarb Book: https://docs.swmansion.com/scarb/docs.html
+- Cairo Book: https://book.cairo-lang.org/
+- Starknet Book: https://book.starknet.io/
+- Starknet Documentation: https://docs.starknet.io/
+
+Join the community:
+- Follow us on @swmansionxyz: https://twitter.com/swmansionxyz
+- Chat on Telegram: https://t.me/+G_YxIv-XTFlhNWU0
+- Socialize on Starknet's Discord: https://discord.gg/KZWaFtPZJf
+
+Report bugs: https://github.com/software-mansion/scarb/issues/new/choose\
+",
+)]
 pub struct ScarbArgs {
     /// Path to Scarb.toml.
     #[arg(long, env = "SCARB_MANIFEST_PATH", hide_short_help = true)]
