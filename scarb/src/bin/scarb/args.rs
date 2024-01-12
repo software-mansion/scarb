@@ -39,9 +39,13 @@ Use -h for short descriptions and --help for more details.
 ",
     long_about = "Scarb is the Cairo package manager. It downloads your package's dependencies, compiles your \
     projects, and works as an entry point for other tooling to work with your code.",
-Read the docs: https://docs.swmansion.com/scarb/
     after_help = "Read the docs: https://docs.swmansion.com/scarb/",
     after_long_help = "\
+Read the docs:
+- Scarb Book: https://docs.swmansion.com/scarb/docs.html
+- Cairo Book: https://book.cairo-lang.org/
+- Starknet Book: https://book.starknet.io/
+- Starknet Documentation: https://docs.starknet.io/
 
 Join the community:
 - Follow us on @swmansionxyz: https://twitter.com/swmansionxyz
