@@ -13,7 +13,6 @@ use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use serde::Serialize;
 
-const AVAILABLE_GAS_ATTR: &str = "available_gas";
 const FORK_ATTR: &str = "fork";
 const FUZZER_ATTR: &str = "fuzzer";
 
@@ -96,9 +95,6 @@ pub fn forge_try_extract_test_config(
     attrs: &[Attribute],
 ) -> Result<Option<SingleTestConfig>, Vec<PluginDiagnostic>> {
     let maybe_test_config = try_extract_test_config(db, attrs.to_vec())?;
-    let available_gas_attr = attrs
-        .iter()
-        .find(|attr| attr.id.as_str() == AVAILABLE_GAS_ATTR);
     let fork_attr = attrs.iter().find(|attr| attr.id.as_str() == FORK_ATTR);
     let fuzzer_attr = attrs.iter().find(|attr| attr.id.as_str() == FUZZER_ATTR);
 
@@ -113,14 +109,6 @@ pub fn forge_try_extract_test_config(
             });
         }
     }
-
-    let available_gas = if available_gas_attr.is_some() {
-        // we do not support it so we can write anything here,
-        // any errors in syntax will be caught by `try_extract_test_config` anyways
-        Some(0)
-    } else {
-        None
-    };
 
     let fork_config = if let Some(attr) = fork_attr {
         if attr.args.is_empty() {
@@ -159,9 +147,9 @@ pub fn forge_try_extract_test_config(
 
     let result = maybe_test_config.map(
         |TestConfig {
+             available_gas,
              expectation,
              ignored,
-             ..
          }| SingleTestConfig {
             available_gas,
             expected_result: expectation.into(),
