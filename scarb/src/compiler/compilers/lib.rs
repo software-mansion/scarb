@@ -59,17 +59,17 @@ impl Compiler for LibCompiler {
         let main_crate_ids = collect_main_crate_ids(&unit, db);
 
         if compile_mode == CompileMode::Check {
-            let start = Instant::now();
+            // let start = Instant::now();
             compiler_config.diagnostics_reporter.ensure(db)?;
-            let duration = start.elapsed();
+            // let duration = start.elapsed();
 
-            println!(
-                "Time elapsed in diagnostics_reporter.ensure(db) is: {:?}",
-                duration
-            );
+            // println!(
+            //     "Time elapsed in diagnostics_reporter.ensure(db) is: {:?}",
+            //     duration
+            // );
             return Ok(());
         }
-        println!("After unit.compile_mode check\n");
+        // println!("After unit.compile_mode check\n");
         // TODO up to this point, `cairo_lang_compiler::compile_prepared_db` calls diagnostics
         // what is it all about?
         // basically before diagnostics, whole program is turned into AST
