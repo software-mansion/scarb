@@ -276,9 +276,9 @@ dependencies = [
 
 [[package]]
 name = "assert_fs"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adc5d78e9048d836d12a0c0040ca5f45b18a94d204b4ba4f677a8a7de162426b"
+checksum = "2cd762e110c8ed629b11b6cde59458cc1c71de78ebbcc30099fc8e0403a2a2ec"
 dependencies = [
  "anstyle",
  "doc-comment",
@@ -1147,9 +1147,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "clap"
-version = "4.4.14"
+version = "4.4.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33e92c5c1a78c62968ec57dbc2440366a2d6e5a23faf829970ff1585dc6b18e2"
+checksum = "c12ed66a79a555082f595f7eb980d08669de95009dd4b3d61168c573ebe38fc9"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -1167,9 +1167,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.14"
+version = "4.4.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4323769dc8a61e2c39ad7dc26f6f2800524691a44d74fe3d1071a5c24db6370"
+checksum = "0f4645eab3431e5a8403a96bea02506a8b35d28cd0f0330977dd5d22f9c84f43"
 dependencies = [
  "anstream",
  "anstyle",
@@ -2780,11 +2780,11 @@ dependencies = [
 
 [[package]]
 name = "globwalk"
-version = "0.8.1"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93e3af942408868f6934a7b85134a3230832b9977cf66125df2f9edcfce4ddcc"
+checksum = "0bf760ebf69878d9fd8f110c89703d90ce35095324d1f1edcb595c63945ee757"
 dependencies = [
- "bitflags 1.3.2",
+ "bitflags 2.4.1",
  "ignore",
  "walkdir",
 ]
@@ -4949,9 +4949,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.11.2"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dccd0940a2dcdf68d092b8cbab7dc0ad8fa938bf95787e1b916b0e3d0e8e970"
+checksum = "2593d31f82ead8df961d8bd23a64c2ccf2eb5dd34b0a34bfb4dd54011c72009e"
 
 [[package]]
 name = "smol_str"
