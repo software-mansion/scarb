@@ -66,6 +66,7 @@ fn main() -> Result<()> {
                 filter: args.filter.clone(),
                 include_ignored: args.include_ignored,
                 ignored: args.ignored,
+                run_profiler: false,
             };
             let runner = CompiledTestRunner::new(test_compilation, config);
             runner.run()?;

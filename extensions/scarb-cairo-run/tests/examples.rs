@@ -81,7 +81,7 @@ fn can_limit_gas() {
                 Finished release target(s) in [..]
                  Running hello_world
             Run completed successfully, returning [987]
-            Remaining gas: 53640
+            Remaining gas: 67840
         "#});
 }
 
