@@ -4511,17 +4511,20 @@ version = "2.4.3"
 dependencies = [
  "anyhow",
  "assert_fs",
+ "cairo-felt",
  "cairo-lang-runner",
  "cairo-lang-sierra",
  "camino",
  "clap",
  "indoc",
+ "num-bigint",
  "scarb-metadata 1.10.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
  "serde_json",
  "snapbox",
+ "thiserror",
 ]
 
 [[package]]
