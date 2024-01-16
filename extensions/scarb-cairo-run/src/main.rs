@@ -38,7 +38,7 @@ struct Args {
     no_build: bool,
 
     /// Input to the program.
-    #[arg(long, default_value = "[]")]
+    #[arg(default_value = "[]")]
     program_input: deserialization::Args,
 }
 
