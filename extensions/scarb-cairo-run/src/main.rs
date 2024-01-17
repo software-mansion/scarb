@@ -89,7 +89,6 @@ fn main() -> Result<()> {
             Some(Default::default())
         },
         Default::default(),
-        false,
     )?;
 
     let result = runner
