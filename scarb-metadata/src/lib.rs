@@ -232,7 +232,7 @@ pub struct PackageMetadata {
     pub manifest_metadata: ManifestMetadata,
 
     /// Compiler experimental features allowed for this package.
-    pub experimental_features: Vec<String>,
+    pub allow_features: Vec<String>,
 
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]
