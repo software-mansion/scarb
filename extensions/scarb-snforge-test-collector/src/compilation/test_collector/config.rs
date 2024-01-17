@@ -15,7 +15,7 @@ use serde::Serialize;
 
 const FORK_ATTR: &str = "fork";
 const FUZZER_ATTR: &str = "fuzzer";
-
+const AVAILABLE_GAS_ATTR: &str = "available_gas";
 /// Expectation for a panic case.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum ExpectedPanicValue {
@@ -152,7 +152,11 @@ pub fn forge_try_extract_test_config(
              ignored,
          }| {
             // Older versions will crash if the default is passed through
-            if available_gas.is_some_and(|gas_amt| gas_amt == u32::MAX as usize){
+            let available_gas_attr = attrs
+                .iter()
+                .find(|attr| attr.id.as_str() == AVAILABLE_GAS_ATTR);
+
+            if available_gas_attr.is_none() {
                 available_gas = None
             }
 

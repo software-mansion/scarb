@@ -48,10 +48,7 @@ fn forge_test_locations() {
     assert_eq!(&json[1]["test_cases"][0]["name"], "tests::tests::test");
     assert_eq!(&json[1]["tests_location"], "Tests");
 
-    assert_eq!(
-        &json[0]["test_cases"][0]["available_gas"],
-        &Value::Null
-    );
+    assert_eq!(&json[0]["test_cases"][0]["available_gas"], &Value::Null);
     assert_eq!(&json[0]["test_cases"][0]["expected_result"], "Success");
     assert_eq!(&json[0]["test_cases"][0]["fork_config"], &Value::Null);
     assert_eq!(&json[0]["test_cases"][0]["fuzzer_config"], &Value::Null);
