@@ -125,7 +125,7 @@ impl CompilationUnit<'_> {
                         // TODO (#1040): replace this with a macro
                         experimental_features: ExperimentalFeaturesConfig {
                             negative_impls: pkg
-                                .allow_features
+                                .experimental_features
                                 .contains(&String::from("negative_impls")),
                         },
                     },

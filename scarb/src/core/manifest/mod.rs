@@ -51,7 +51,7 @@ pub struct Manifest {
     pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
     /// Allow experimental features.
     #[builder(default)]
-    pub allow_features: Option<Vec<SmolStr>>,
+    pub experimental_features: Option<Vec<SmolStr>>,
 }
 
 /// Subset of a [`Manifest`] that contains package metadata.

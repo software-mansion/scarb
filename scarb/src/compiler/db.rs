@@ -93,14 +93,14 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         .components
         .iter()
         .map(|component| {
-            let allow_features = component.package.manifest.allow_features.clone();
+            let experimental_features = component.package.manifest.experimental_features.clone();
             (
                 component.cairo_package_name(),
                 CrateSettings {
                     edition: component.package.manifest.edition,
                     // TODO (#1040): replace this with a macro
                     experimental_features: cairo_lang_filesystem::db::ExperimentalFeaturesConfig {
-                        negative_impls: allow_features
+                        negative_impls: experimental_features
                             .unwrap_or_default()
                             .contains(&SmolStr::new_inline("negative_impls")),
                     },
