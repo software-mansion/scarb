@@ -11,6 +11,7 @@ use crate::core::PackageId;
 use self::builtin::{BuiltinStarkNetPlugin, BuiltinTestPlugin};
 
 pub mod builtin;
+pub mod proc_macro;
 
 pub trait CairoPlugin: Sync {
     fn id(&self) -> PackageId;

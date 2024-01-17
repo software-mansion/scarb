@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_compiler::db::{RootDatabase, RootDatabaseBuilder};
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
@@ -11,6 +11,7 @@ use smol_str::SmolStr;
 use std::sync::Arc;
 use tracing::trace;
 
+use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
 use crate::compiler::{CompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
 use crate::DEFAULT_MODULE_MAIN_FILE;
@@ -23,17 +24,30 @@ pub(crate) fn build_scarb_root_database(
     let mut b = RootDatabase::builder();
     b.with_project_config(build_project_config(unit)?);
     b.with_cfg(unit.cfg_set.clone());
-
-    for plugin_info in &unit.cairo_plugins {
-        let package_id = plugin_info.package.id;
-        let plugin = ws.config().cairo_plugins().fetch(package_id)?;
-        let instance = plugin.instantiate()?;
-        b.with_plugin_suite(instance.plugin_suite());
-    }
-
+    load_plugins(unit, ws, &mut b)?;
     let mut db = b.build()?;
     inject_virtual_wrapper_lib(&mut db, unit)?;
     Ok(db)
+}
+
+fn load_plugins(
+    unit: &CompilationUnit,
+    ws: &Workspace<'_>,
+    builder: &mut RootDatabaseBuilder,
+) -> Result<()> {
+    let mut proc_macros = ProcMacroHostPlugin::default();
+    for plugin_info in &unit.cairo_plugins {
+        if plugin_info.builtin {
+            let package_id = plugin_info.package.id;
+            let plugin = ws.config().cairo_plugins().fetch(package_id)?;
+            let instance = plugin.instantiate()?;
+            builder.with_plugin_suite(instance.plugin_suite());
+        } else {
+            proc_macros.register(plugin_info.package.clone())?;
+        }
+    }
+    builder.with_plugin_suite(proc_macros.plugin_suite());
+    Ok(())
 }
 
 /// Generates a wrapper lib file for appropriate compilation units.
