@@ -24,7 +24,6 @@ pub struct ProjectBuilder {
     src: HashMap<Utf8PathBuf, String>,
     deps: Vec<(String, Value)>,
     dev_deps: Vec<(String, Value)>,
-    manifest_package_extra: String,
     manifest_extra: String,
 }
 
@@ -45,7 +44,6 @@ impl ProjectBuilder {
             )]),
             deps: Vec::new(),
             dev_deps: Vec::new(),
-            manifest_package_extra: String::new(),
             manifest_extra: String::new(),
         }
     }
@@ -97,11 +95,6 @@ impl ProjectBuilder {
         self.dep("starknet", Dep.version(CAIRO_VERSION))
     }
 
-    pub fn manifest_package_extra(mut self, extra: impl ToString) -> Self {
-        self.manifest_package_extra = extra.to_string();
-        self
-    }
-
     pub fn manifest_extra(mut self, extra: impl ToString) -> Self {
         self.manifest_extra = extra.to_string();
         self
@@ -118,12 +111,6 @@ impl ProjectBuilder {
         if let Some(cairo_version) = self.cairo_version.as_ref() {
             doc["package"]["cairo-version"] = Item::Value(Value::from(cairo_version.to_string()));
         }
-        let mut manifest = doc.to_string();
-        if !self.manifest_package_extra.is_empty() {
-            manifest.push_str(&self.manifest_package_extra);
-        }
-
-        let mut doc = manifest.parse::<Document>().unwrap();
         doc["dependencies"] = toml_edit::table();
         for (name, dep) in &self.deps {
             doc["dependencies"][name.clone()] = Item::Value(dep.clone());

@@ -135,15 +135,6 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
 
     let edition = edition_variant(package.manifest.edition);
 
-    let experimental_features: Vec<String> = package
-        .manifest
-        .experimental_features
-        .clone()
-        .unwrap_or_default()
-        .iter()
-        .map(|x| x.to_string())
-        .collect();
-
     m::PackageMetadataBuilder::default()
         .id(wrap_package_id(package.id))
         .name(package.id.name.clone())
@@ -155,7 +146,6 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
         .dependencies(dependencies)
         .targets(targets)
         .manifest_metadata(manifest_metadata)
-        .experimental_features(experimental_features)
         .build()
         .unwrap()
 }

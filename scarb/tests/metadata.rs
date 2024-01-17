@@ -1281,28 +1281,3 @@ fn includes_edition() {
     }
     panic!("Package not found in metadata!");
 }
-
-#[test]
-fn includes_experimental_features() {
-    let t = assert_fs::TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .version("0.1.0")
-        .manifest_package_extra(r#"experimental-features = ["negative_impls"]"#)
-        .build(&t);
-
-    let metadata = Scarb::quick_snapbox()
-        .arg("--json")
-        .arg("metadata")
-        .arg("--format-version")
-        .arg("1")
-        .current_dir(&t)
-        .stdout_json::<Metadata>();
-
-    assert!(packages_by_name(metadata)
-        .get("hello")
-        .unwrap()
-        .clone()
-        .experimental_features
-        .contains(&String::from("negative_impls")))
-}

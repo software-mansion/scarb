@@ -198,7 +198,6 @@ pub struct TomlPackage {
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
     pub no_core: Option<bool>,
     pub cairo_version: Option<MaybeWorkspaceField<VersionReq>>,
-    pub experimental_features: Option<Vec<SmolStr>>,
 }
 
 #[derive(Clone, Debug, Serialize, Eq, PartialEq)]
@@ -555,8 +554,6 @@ impl TomlManifest {
             .transpose()?
             .unwrap_or_default();
 
-        // TODO (#1040): add checking for fields that are not present in ExperimentalFeaturesConfig
-        let experimental_features = package.experimental_features.clone();
         let manifest = ManifestBuilder::default()
             .summary(summary)
             .targets(targets)
@@ -564,8 +561,8 @@ impl TomlManifest {
             .metadata(metadata)
             .compiler_config(compiler_config)
             .scripts(scripts)
-            .experimental_features(experimental_features)
             .build()?;
+
         Ok(manifest)
     }
 

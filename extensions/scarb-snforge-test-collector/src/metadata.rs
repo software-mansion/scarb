@@ -109,24 +109,22 @@ impl CompilationUnit<'_> {
             .components
             .iter()
             .map(|component| {
-                let pkg = self
-                    .metadata
-                    .get_package(&component.package)
-                    .unwrap_or_else(|| panic!("Failed to find = {} package", &component.package));
                 (
                     SmolStr::from(&component.name),
                     SingleCrateConfig {
-                        edition: if let Some(edition) = pkg.edition.clone() {
+                        edition: if let Some(edition) = self
+                            .metadata
+                            .get_package(&component.package)
+                            .unwrap_or_else(|| {
+                                panic!("Failed to find = {} package", component.package)
+                            })
+                            .edition
+                            .clone()
+                        {
                             let edition_value = serde_json::Value::String(edition);
                             serde_json::from_value(edition_value).unwrap()
                         } else {
                             Edition::default()
-                        },
-                        // TODO (#1040): replace this with a macro
-                        experimental_features: ExperimentalFeaturesConfig {
-                            negative_impls: pkg
-                                .experimental_features
-                                .contains(&String::from("negative_impls")),
                         },
                     },
                 )

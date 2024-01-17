@@ -209,15 +209,6 @@ Keys are human-readable link names, and values are URLs.
 "We're hiring" = "https://swmansion.com/careers/"
 ```
 
-### `experimental-features`
-
-This field is responsible for setting experimental flags to be used on the package for the compiler.
-
-```toml
-[package]
-experimental-features = ["negative_impls"]
-```
-
 ## `[dependencies]`
 
 See [Specifying Dependencies](./specifying-dependencies) page.
