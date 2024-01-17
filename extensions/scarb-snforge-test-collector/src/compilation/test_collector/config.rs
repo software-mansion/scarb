@@ -147,15 +147,22 @@ pub fn forge_try_extract_test_config(
 
     let result = maybe_test_config.map(
         |TestConfig {
-             available_gas,
+             mut available_gas,
              expectation,
              ignored,
-         }| SingleTestConfig {
-            available_gas,
-            expected_result: expectation.into(),
-            ignored,
-            fork_config,
-            fuzzer_config,
+         }| {
+            // Older versions will crash if the default is passed through
+            if available_gas.is_some_and(|gas_amt| gas_amt == u32::MAX as usize){
+                available_gas = None
+            }
+
+            SingleTestConfig {
+                available_gas,
+                expected_result: expectation.into(),
+                ignored,
+                fork_config,
+                fuzzer_config,
+            }
         },
     );
     Ok(result)

@@ -50,7 +50,7 @@ fn forge_test_locations() {
 
     assert_eq!(
         &json[0]["test_cases"][0]["available_gas"],
-        &Value::Number(Number::from(u32::MAX))
+        &Value::Null
     );
     assert_eq!(&json[0]["test_cases"][0]["expected_result"], "Success");
     assert_eq!(&json[0]["test_cases"][0]["fork_config"], &Value::Null);
