@@ -1283,12 +1283,12 @@ fn includes_edition() {
 }
 
 #[test]
-fn includes_allowed_features() {
+fn includes_experimental_features() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
-        .manifest_package_extra(r#"allow-features = ["negative_impls"]"#)
+        .manifest_package_extra(r#"experimental-features = ["negative_impls"]"#)
         .build(&t);
 
     let metadata = Scarb::quick_snapbox()
@@ -1303,6 +1303,6 @@ fn includes_allowed_features() {
         .get("hello")
         .unwrap()
         .clone()
-        .allow_features
+        .experimental_features
         .contains(&String::from("negative_impls")))
 }

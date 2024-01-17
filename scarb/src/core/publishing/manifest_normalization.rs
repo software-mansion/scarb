@@ -75,7 +75,7 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
         repository: metadata.repository.clone().map(MaybeWorkspace::Defined),
         no_core: summary.no_core.then_some(true),
         cairo_version: metadata.cairo_version.clone().map(MaybeWorkspace::Defined),
-        allow_features: pkg.manifest.allow_features.clone(),
+        experimental_features: pkg.manifest.experimental_features.clone(),
     })
 }
 

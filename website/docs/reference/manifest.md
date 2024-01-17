@@ -209,13 +209,13 @@ Keys are human-readable link names, and values are URLs.
 "We're hiring" = "https://swmansion.com/careers/"
 ```
 
-### `allow-features`
+### `experimental-features`
 
-This field is responsible for setting unstable features to be used on the package for the compiler.
+This field is responsible for setting experimental flags to be used on the package for the compiler.
 
 ```toml
 [package]
-allow-features = ["negative_impls"]
+experimental-features = ["negative_impls"]
 ```
 
 ## `[dependencies]`

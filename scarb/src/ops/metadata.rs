@@ -135,9 +135,9 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
 
     let edition = edition_variant(package.manifest.edition);
 
-    let allow_features: Vec<String> = package
+    let experimental_features: Vec<String> = package
         .manifest
-        .allow_features
+        .experimental_features
         .clone()
         .unwrap_or_default()
         .iter()
@@ -155,7 +155,7 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
         .dependencies(dependencies)
         .targets(targets)
         .manifest_metadata(manifest_metadata)
-        .allow_features(allow_features)
+        .experimental_features(experimental_features)
         .build()
         .unwrap()
 }
