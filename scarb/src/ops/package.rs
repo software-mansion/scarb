@@ -18,7 +18,6 @@ use crate::core::publishing::source::list_source_files;
 use crate::core::{Config, Package, PackageId, PackageName, TargetKind, Workspace};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
-use crate::ops::CompileMode;
 use crate::{
     ops, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME,
     VCS_INFO_FILE_NAME,
@@ -319,7 +318,6 @@ fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<F
         ops::CompileOpts {
             include_targets: Vec::new(),
             exclude_targets: vec![TargetKind::TEST.clone()],
-            compile_mode: CompileMode::Build,
         },
         &ws,
     )?;

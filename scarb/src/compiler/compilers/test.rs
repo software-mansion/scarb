@@ -8,7 +8,6 @@ use crate::compiler::helpers::{
 };
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{PackageName, SourceId, TargetKind, Workspace};
-use crate::ops::CompileMode;
 
 pub struct TestCompiler;
 
@@ -21,7 +20,6 @@ impl Compiler for TestCompiler {
         &self,
         unit: CompilationUnit,
         db: &mut RootDatabase,
-        compile_mode: CompileMode,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_dir = unit.target_dir(ws);
@@ -38,10 +36,6 @@ impl Compiler for TestCompiler {
         diagnostics_reporter
             .with_crates(&main_crate_ids)
             .ensure(db)?;
-        // TODO diag above, return if done
-        if compile_mode == CompileMode::Check {
-            return Ok(());
-        }
 
         let test_compilation = {
             let _ = trace_span!("compile_test").enter();

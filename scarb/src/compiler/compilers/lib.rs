@@ -2,7 +2,6 @@ use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra_to_casm::metadata::calc_metadata;
 use serde::{Deserialize, Serialize};
-use std::time::Instant;
 use tracing::trace_span;
 
 use crate::compiler::helpers::{
@@ -10,7 +9,6 @@ use crate::compiler::helpers::{
 };
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{TargetKind, Workspace};
-use crate::ops::CompileMode;
 
 pub struct LibCompiler;
 
@@ -41,7 +39,6 @@ impl Compiler for LibCompiler {
         &self,
         unit: CompilationUnit,
         db: &mut RootDatabase,
-        compile_mode: CompileMode,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.target().props()?;
@@ -54,31 +51,9 @@ impl Compiler for LibCompiler {
 
         let target_dir = unit.target_dir(ws);
 
-        let mut compiler_config = build_compiler_config(&unit, ws);
+        let compiler_config = build_compiler_config(&unit, ws);
 
         let main_crate_ids = collect_main_crate_ids(&unit, db);
-
-        if compile_mode == CompileMode::Check {
-            // let start = Instant::now();
-            compiler_config.diagnostics_reporter.ensure(db)?;
-            // let duration = start.elapsed();
-
-            // println!(
-            //     "Time elapsed in diagnostics_reporter.ensure(db) is: {:?}",
-            //     duration
-            // );
-            return Ok(());
-        }
-        // println!("After unit.compile_mode check\n");
-        // TODO up to this point, `cairo_lang_compiler::compile_prepared_db` calls diagnostics
-        // what is it all about?
-        // basically before diagnostics, whole program is turned into AST
-        // however, there are no checks if it is written with no errors, like syntax errors etc.
-        // (the problems with unknown functions etc, those with ^^^^^^ under the errors)
-        // (whole compiler is just a big graph db)
-        // so during diagnostics the whole program is checked if it is written without any errors
-
-        // Important: don't forget to run cargo build --release binaries! Default development builds generate super slow compiler code.
 
         let sierra_program = {
             let _ = trace_span!("compile_sierra").enter();

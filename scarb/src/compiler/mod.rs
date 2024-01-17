@@ -6,7 +6,6 @@ pub use profile::*;
 pub use repository::*;
 
 use crate::core::{TargetKind, Workspace};
-use crate::ops::CompileMode;
 
 mod compilation_unit;
 mod compilers;
@@ -23,7 +22,6 @@ pub trait Compiler: Sync {
         &self,
         unit: CompilationUnit,
         db: &mut RootDatabase,
-        compile_mode: CompileMode,
         ws: &Workspace<'_>,
     ) -> Result<()>;
 }

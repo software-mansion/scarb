@@ -10,7 +10,6 @@ use smol_str::SmolStr;
 use crate::compiler::compilers::{LibCompiler, StarknetContractCompiler, TestCompiler};
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::Workspace;
-use crate::ops::CompileMode;
 
 pub struct CompilerRepository {
     compilers: HashMap<SmolStr, Box<dyn Compiler>>,
@@ -46,14 +45,13 @@ impl CompilerRepository {
         &self,
         unit: CompilationUnit,
         db: &mut RootDatabase,
-        compile_mode: CompileMode,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_kind = &unit.target().kind;
         let Some(compiler) = self.compilers.get(target_kind.as_str()) else {
             bail!("unknown compiler for target `{target_kind}`");
         };
-        compiler.compile(unit, db, compile_mode, ws)
+        compiler.compile(unit, db, ws)
     }
 }
 
