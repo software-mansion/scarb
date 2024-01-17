@@ -14,7 +14,6 @@ repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-libc.workspace = true
 cairo-lang-macro-attributes = { path = "../cairo-lang-macro-attributes" }
 serde.workspace = true
 serde_json.workspace = true
