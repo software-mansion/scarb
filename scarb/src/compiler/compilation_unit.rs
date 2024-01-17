@@ -3,6 +3,7 @@ use std::hash::{Hash, Hasher};
 
 use cairo_lang_filesystem::cfg::CfgSet;
 use smol_str::SmolStr;
+use typed_builder::TypedBuilder;
 
 use crate::compiler::Profile;
 use crate::core::{ManifestCompilerConfig, Package, PackageId, Target, Workspace};
@@ -51,11 +52,12 @@ pub struct CompilationUnitComponent {
 }
 
 /// Information about a single package that is a compiler plugin to load for [`CompilationUnit`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, TypedBuilder)]
 #[non_exhaustive]
 pub struct CompilationUnitCairoPlugin {
     /// The Scarb plugin [`Package`] to load.
     pub package: Package,
+    pub builtin: bool,
 }
 
 impl CompilationUnit {
