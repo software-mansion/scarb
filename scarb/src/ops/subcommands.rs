@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-use std::env;
 use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::Command;
+use std::{env, iter};
 
 use anyhow::{bail, Result};
 use camino::Utf8PathBuf;
@@ -27,7 +27,7 @@ pub fn execute_external_subcommand(
     config: &Config,
     target_dir: Option<Utf8PathBuf>,
 ) -> Result<()> {
-    let Some(cmd) = find_external_subcommand(cmd, config) else {
+    let Some(cmd) = find_external_subcommand(cmd, config)? else {
         // TODO(mkaput): Reuse clap's no such command message logic here.
         bail!("no such command: `{cmd}`");
     };
@@ -74,19 +74,32 @@ pub fn execute_test_subcommand(
     }
 }
 
-fn find_external_subcommand(cmd: &str, config: &Config) -> Option<PathBuf> {
+/// Find an external subcommand executable.
+///
+/// # Search order
+///
+/// This function searches for an executable in the following locations, in order:
+/// 1. The directory containing the Scarb binary.
+/// 2. The directories in the `PATH` environment variable.
+/// 3. `{SCARB LOCAL DATA DIR}/bin`.
+///
+/// Why is the surrounding of the Scarb binary searched for before the `PATH`?
+/// Although is sounds tempting to allow users to override Scarb extensions bundled in the default installation,
+/// that would cause more harm than good in practice. For example, if the user is working on a custom build of Scarb,
+/// but has another one installed globally (for example via ASDF), then their custom build would use global extensions
+/// instead of the ones it was built with, which would be very confusing.
+fn find_external_subcommand(cmd: &str, config: &Config) -> Result<Option<PathBuf>> {
     let command_exe = format!("{}{}{}", EXTERNAL_CMD_PREFIX, cmd, env::consts::EXE_SUFFIX);
-    let mut dirs = config.dirs().path_dirs.clone();
 
-    // Add directory containing the Scarb executable.
-    if let Ok(path) = config.app_exe() {
-        if let Some(parent) = path.parent() {
-            let path = PathBuf::from(parent);
-            dirs.push(path);
-        }
-    }
+    let scarb_dir = config
+        .app_exe()?
+        .parent()
+        .expect("Scarb binary path should always have parent directory.");
 
-    dirs.iter()
+    let path_dirs = config.dirs().path_dirs.iter().map(AsRef::as_ref);
+
+    Ok(iter::once(scarb_dir)
+        .chain(path_dirs)
         .map(|dir| dir.join(&command_exe))
-        .find(|file| is_executable(file))
+        .find(|file| is_executable(file)))
 }
