@@ -21,6 +21,9 @@ mod errors;
 fn main() {
     let args = ScarbArgs::parse();
 
+    // Pre-create Ui used in logging & error reporting, because we will move `args` to `cli_main`.
+    let ui = Ui::new(args.ui_verbosity(), args.output_format());
+
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
         .with_env_filter(
@@ -29,10 +32,8 @@ fn main() {
                 .with_env_var("SCARB_LOG")
                 .from_env_lossy(),
         )
+        .with_ansi(ui.has_colors_enabled_stderr())
         .init();
-
-    // Pre-create Ui used in error reporting, because we will move `args` to `cli_main`.
-    let ui = Ui::new(args.ui_verbosity(), args.output_format());
 
     if let Err(err) = cli_main(args) {
         exit_with_error(err, &ui);
