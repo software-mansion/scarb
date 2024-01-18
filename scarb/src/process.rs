@@ -27,8 +27,9 @@ pub use crate::internal::fsx::is_executable;
 /// child process. If the child terminates then we'll reap them in Cargo pretty quickly, and if
 /// the child handles the signal then we won't terminate (and we shouldn't!) until the process
 /// itself later exits.
-#[tracing::instrument(level = "debug")]
+#[tracing::instrument(level = "debug", skip_all)]
 pub fn exec_replace(cmd: &mut Command) -> Result<()> {
+    debug!("{}", shlex_join(cmd));
     imp::exec_replace(cmd)
 }
 
