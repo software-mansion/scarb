@@ -15,6 +15,8 @@ use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::Status;
 use scarb_ui::{Message, OutputFormat, Ui, Verbosity};
 
+mod deserialization;
+
 /// Execute the main function of a package.
 #[derive(Parser, Clone, Debug)]
 #[command(author, version)]
@@ -34,6 +36,10 @@ struct Args {
     /// Do not rebuild the package.
     #[arg(long, default_value_t = false)]
     no_build: bool,
+
+    /// Input to the program.
+    #[arg(default_value = "[]")]
+    program_input: deserialization::Args,
 }
 
 fn main() -> Result<()> {
@@ -95,7 +101,7 @@ fn main() -> Result<()> {
     let result = runner
         .run_function_with_starknet_context(
             runner.find_function("::main")?,
-            &[],
+            &args.program_input,
             available_gas.value(),
             StarknetState::default(),
         )
