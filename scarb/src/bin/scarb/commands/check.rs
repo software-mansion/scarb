@@ -23,5 +23,5 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         include_targets,
         exclude_targets,
     };
-    ops::compile(packages, opts, &ws)
+    ops::check(packages, opts, &ws)
 }

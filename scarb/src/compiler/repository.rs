@@ -8,6 +8,7 @@ use itertools::Itertools;
 use smol_str::SmolStr;
 
 use crate::compiler::compilers::{LibCompiler, StarknetContractCompiler, TestCompiler};
+use crate::compiler::helpers::build_compiler_config;
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::Workspace;
 
@@ -52,6 +53,17 @@ impl CompilerRepository {
             bail!("unknown compiler for target `{target_kind}`");
         };
         compiler.compile(unit, db, ws)
+    }
+
+    pub fn check(
+        &self,
+        unit: CompilationUnit,
+        db: &mut RootDatabase,
+        ws: &Workspace<'_>,
+    ) -> Result<()> {
+        let mut compiler_config = build_compiler_config(&unit, ws);
+        compiler_config.diagnostics_reporter.ensure(db)?;
+        Ok(())
     }
 }
 
