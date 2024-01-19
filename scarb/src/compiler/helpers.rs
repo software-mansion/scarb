@@ -11,8 +11,10 @@ use serde::Serialize;
 use std::io::{BufWriter, Write};
 
 use crate::compiler::CompilationUnit;
-use crate::core::Workspace;
+use crate::core::{TargetKind, Workspace};
 use crate::flock::Filesystem;
+
+use super::CompilationUnitComponent;
 
 pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> CompilerConfig<'c> {
     let diagnostics_reporter = DiagnosticsReporter::callback({
@@ -47,6 +49,27 @@ pub fn collect_main_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<
 pub fn collect_all_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
     unit.components
         .iter()
+        .map(|component| db.intern_crate(CrateLongId::Real(component.cairo_package_name())))
+        .collect()
+}
+
+pub fn collect_non_test_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
+    let has_starknet_target = |component: &CompilationUnitComponent| -> bool {
+        let targets = &component.package.manifest.targets;
+
+        targets
+            .iter()
+            .any(|target| target.kind == TargetKind::STARKNET_CONTRACT)
+    };
+
+    unit.components
+        .iter()
+        .filter(|component| {
+            let package_name = component.cairo_package_name();
+            package_name != "core"
+                && package_name != unit.main_component().cairo_package_name()
+                && !has_starknet_target(component)
+        })
         .map(|component| db.intern_crate(CrateLongId::Real(component.cairo_package_name())))
         .collect()
 }
