@@ -28,6 +28,10 @@ pub fn check(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) ->
         })
         .collect::<Vec<PackageId>>();
 
+    // TODO this can raise an error:
+    //      bail!("compiling Cairo plugin packages is not possible yet")
+    //             ^^^^^^^^^, not checking
+    //  leave it as it is?
     let compilation_units = ops::generate_compilation_units(&resolve, ws)?
         .into_iter()
         .filter(|cu| !opts.exclude_targets.contains(&cu.target().kind))
