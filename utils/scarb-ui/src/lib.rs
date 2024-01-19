@@ -155,4 +155,23 @@ impl Ui {
     pub fn has_colors_enabled(&self) -> bool {
         console::colors_enabled()
     }
+
+    /// Forces colorization on or off for stdout.
+    ///
+    /// This overrides the default for the current process and changes the return value of
+    /// the [`Ui::has_colors_enabled`] function.
+    pub fn force_colors_enabled_stderr(&self, enable: bool) {
+        console::set_colors_enabled_stderr(enable);
+    }
+
+    /// Returns `true` if colors should be enabled for stderr.
+    ///
+    /// This honors the [clicolors spec](http://bixense.com/clicolors/).
+    ///
+    /// * `CLICOLOR != 0`: ANSI colors are supported and should be used when the program isn't piped.
+    /// * `CLICOLOR == 0`: Don't output ANSI color escape codes.
+    /// * `CLICOLOR_FORCE != 0`: ANSI colors should be enabled no matter what.
+    pub fn has_colors_enabled_stderr(&self) -> bool {
+        console::colors_enabled_stderr()
+    }
 }
