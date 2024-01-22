@@ -23,6 +23,7 @@ scarb build
 
 Built Sierra code of this package will be written to `target/dev` directory.
 
+<!-- prettier-ignore -->
 > [!TIP]
 > `scarb clean` cleans `target` directory.
 
@@ -99,12 +100,15 @@ scarb add alexandria_math --path ../path-to-alexandria-checkout/alexandria
 > [!TIP]
 > You can specify package version like this: `alexandria_math@0.1.0`, but see remarks in previous section.
 
+<!-- prettier-ignore -->
 > [!TIP]
 > `--git` supports `--branch`, `--tag` and `--rev` arguments.
 
+<!-- prettier-ignore -->
 > [!TIP]
 > `scarb rm` removes a dependency.
 
+<!-- prettier-ignore -->
 > [!TIP]
 > `--dev` flag adds/removes a development dependency.
 
