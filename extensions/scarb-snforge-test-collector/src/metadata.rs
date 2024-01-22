@@ -122,6 +122,7 @@ impl CompilationUnit<'_> {
                         } else {
                             Edition::default()
                         },
+                        cfg_set: None,
                         // TODO (#1040): replace this with a macro
                         experimental_features: ExperimentalFeaturesConfig {
                             negative_impls: pkg
