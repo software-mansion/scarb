@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.1.3 (2024-01-22)
+- Added `Ui::force_colors_enabled_stderr` and `Ui::has_colors_enabled_stderr`.
+
 ## 0.1.2 (2023-11-14)
 - Added `PackagesFilterLong` parser.
 
