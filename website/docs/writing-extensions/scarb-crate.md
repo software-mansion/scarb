@@ -3,7 +3,7 @@
 > [!WARNING]
 > Scarb crate is scheduled for deprecation in unspecified future.
 > It is advised not to use it in new projects.
-> 
+>
 > The combination of calling scarb command with the `--json` flag, and the `scarb metadata` command should cover all use
 > cases for communicating with Scarb from outside world.
 
