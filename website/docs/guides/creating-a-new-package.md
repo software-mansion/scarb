@@ -5,10 +5,9 @@ import {data as constants} from "../../constants.data";
 
 # Creating a New Package
 
-::: info
-At any time, you can review projects hosted in
-[example directory](https://github.com/software-mansion/scarb/tree/main/examples) from Scarb repository.
-:::
+> [!TIP]
+> At any time, you can review projects hosted in
+> [example directory](https://github.com/software-mansion/scarb/tree/main/examples) from Scarb repository.
 
 To start a new package with Scarb, use `scarb new`:
 
