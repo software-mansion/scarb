@@ -23,7 +23,8 @@ scarb build
 
 Built Sierra code of this package will be written to `target/dev` directory.
 
-> [!TIP] > `scarb clean` cleans `target` directory.
+> [!TIP]
+> `scarb clean` cleans `target` directory.
 
 ### Building CASM
 
@@ -98,11 +99,14 @@ scarb add alexandria_math --path ../path-to-alexandria-checkout/alexandria
 > [!TIP]
 > You can specify package version like this: `alexandria_math@0.1.0`, but see remarks in previous section.
 
-> [!TIP] > `--git` supports `--branch`, `--tag` and `--rev` arguments.
+> [!TIP]
+> `--git` supports `--branch`, `--tag` and `--rev` arguments.
 
-> [!TIP] > `scarb rm` removes a dependency.
+> [!TIP]
+> `scarb rm` removes a dependency.
 
-> [!TIP] > `--dev` flag adds/removes a development dependency.
+> [!TIP]
+> `--dev` flag adds/removes a development dependency.
 
 ## Formatting
 
