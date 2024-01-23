@@ -5,6 +5,7 @@ use cairo_lang_starknet::contract_class::ContractClass;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
 use predicates::prelude::*;
+use std::ops::Deref;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::contracts::{BALANCE_CONTRACT, FORTY_TWO_CONTRACT, HELLO_CONTRACT};
@@ -77,6 +78,10 @@ fn compile_starknet_contract() {
 
     t.child("target/dev/hello_Balance.contract_class.json")
         .assert_is_json::<ContractClass>();
+    t.child("target/dev/hello.starknet_artifacts.json")
+        .assert(predicates::str::contains(
+            r#""module_path":"hello::Balance""#,
+        ));
 }
 
 #[test]

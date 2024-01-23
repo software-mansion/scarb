@@ -164,15 +164,22 @@ struct ContractArtifacts {
     id: String,
     package_name: PackageName,
     contract_name: String,
+    module_path: String,
     artifacts: ContractArtifact,
 }
 
 impl ContractArtifacts {
-    fn new(package_name: &PackageName, contract_name: &str, contract_path: &str) -> Self {
+    fn new(
+        package_name: &PackageName,
+        contract_name: &str,
+        contract_path: &str,
+        module_path: String,
+    ) -> Self {
         Self {
             id: short_hash((&package_name, &contract_path)),
             package_name: package_name.clone(),
             contract_name: contract_name.to_owned(),
+            module_path,
             artifacts: ContractArtifact::default(),
         }
     }
@@ -216,6 +223,14 @@ impl Compiler for StarknetContractCompiler {
         let compiler_config = build_compiler_config(&unit, ws);
 
         let main_crate_ids = collect_main_crate_ids(&unit, db);
+        // main crate ids to definicja ze scarb.tomla glownego?
+        eprintln!("unit = {:#?}", unit);
+        eprintln!("unit.main_component() = {:#?}", unit.main_component());
+        eprintln!(
+            "unit.main_component().cairo_package_name() = {:#?}",
+            unit.main_component().cairo_package_name()
+        );
+        eprintln!("main_crate_ids = {:#?}", main_crate_ids);
 
         let contracts = find_project_contracts(
             db.upcast_mut(),
@@ -275,6 +290,7 @@ impl Compiler for StarknetContractCompiler {
                 &package_name,
                 &contract_name,
                 contract_selector.full_path().as_str(),
+                decl.module_id().full_path(db.upcast_mut()).clone(),
             );
 
             if props.sierra {
