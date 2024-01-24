@@ -324,7 +324,6 @@ fn find_project_contracts(
         let _ = trace_span!("find_internal_contracts").enter();
         find_contracts(db, &main_crate_ids)
     };
-    eprintln!("internal_contracts = {:#?}", internal_contracts);
 
     let external_contracts: Vec<ContractDeclaration> =
         if let Some(external_contracts) = external_contracts {
