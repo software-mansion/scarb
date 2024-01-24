@@ -173,13 +173,13 @@ impl ContractArtifacts {
         package_name: &PackageName,
         contract_name: &str,
         contract_path: &str,
-        module_path: String,
+        module_path: &str,
     ) -> Self {
         Self {
             id: short_hash((&package_name, &contract_path)),
             package_name: package_name.clone(),
             contract_name: contract_name.to_owned(),
-            module_path,
+            module_path: module_path.to_owned(),
             artifacts: ContractArtifact::default(),
         }
     }
@@ -282,7 +282,7 @@ impl Compiler for StarknetContractCompiler {
                 &package_name,
                 &contract_name,
                 contract_selector.full_path().as_str(),
-                decl.module_id().full_path(db.upcast_mut()).clone(),
+                &decl.module_id().full_path(db.upcast_mut()),
             );
 
             if props.sierra {
