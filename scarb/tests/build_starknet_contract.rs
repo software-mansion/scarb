@@ -77,6 +77,10 @@ fn compile_starknet_contract() {
 
     t.child("target/dev/hello_Balance.contract_class.json")
         .assert_is_json::<ContractClass>();
+    t.child("target/dev/hello.starknet_artifacts.json")
+        .assert(predicates::str::contains(
+            r#""module_path":"hello::Balance""#,
+        ));
 }
 
 #[test]
