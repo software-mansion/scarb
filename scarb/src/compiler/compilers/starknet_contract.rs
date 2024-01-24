@@ -223,14 +223,6 @@ impl Compiler for StarknetContractCompiler {
         let compiler_config = build_compiler_config(&unit, ws);
 
         let main_crate_ids = collect_main_crate_ids(&unit, db);
-        // main crate ids to definicja ze scarb.tomla glownego?
-        eprintln!("unit = {:#?}", unit);
-        eprintln!("unit.main_component() = {:#?}", unit.main_component());
-        eprintln!(
-            "unit.main_component().cairo_package_name() = {:#?}",
-            unit.main_component().cairo_package_name()
-        );
-        eprintln!("main_crate_ids = {:#?}", main_crate_ids);
 
         let contracts = find_project_contracts(
             db.upcast_mut(),
@@ -332,6 +324,7 @@ fn find_project_contracts(
         let _ = trace_span!("find_internal_contracts").enter();
         find_contracts(db, &main_crate_ids)
     };
+    eprintln!("internal_contracts = {:#?}", internal_contracts);
 
     let external_contracts: Vec<ContractDeclaration> =
         if let Some(external_contracts) = external_contracts {
@@ -367,7 +360,7 @@ fn find_project_contracts(
             debug!("no external contracts selected");
             Vec::new()
         };
-
+    eprintln!("external_contracts = {:#?}", external_contracts);
     Ok(internal_contracts
         .into_iter()
         .chain(external_contracts)

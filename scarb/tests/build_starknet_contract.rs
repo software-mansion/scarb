@@ -5,7 +5,6 @@ use cairo_lang_starknet::contract_class::ContractClass;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
 use predicates::prelude::*;
-use std::ops::Deref;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::contracts::{BALANCE_CONTRACT, FORTY_TWO_CONTRACT, HELLO_CONTRACT};
