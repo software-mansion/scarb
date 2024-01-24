@@ -759,6 +759,48 @@ fn dev_dep_inside_test() {
 }
 
 #[test]
+fn build_test_without_compiling_tests_from_dependencies() {
+    let t = TempDir::new().unwrap();
+    let q = t.child("q");
+    ProjectBuilder::start()
+        .name("q")
+        .lib_cairo(indoc! {r#"
+            fn dev_dep_function() -> felt252 { 42 }
+
+            #[cfg(test)]
+            mod tests {
+                use missing::func;
+            }
+        "#})
+        .build(&q);
+    ProjectBuilder::start()
+        .name("x")
+        .dev_dep("q", &q)
+        .lib_cairo(indoc! {r#"
+            #[cfg(test)]
+            mod tests {
+                use q::dev_dep_function;
+
+                fn it_works() {
+                    dev_dep_function();
+                }
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling test(x_unittest) x v1.0.0 ([..])
+            [..]  Finished release target(s) in [..]
+        "#});
+}
+
+#[test]
 fn warnings_allowed_by_default() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
