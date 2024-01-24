@@ -360,7 +360,7 @@ fn find_project_contracts(
             debug!("no external contracts selected");
             Vec::new()
         };
-    eprintln!("external_contracts = {:#?}", external_contracts);
+
     Ok(internal_contracts
         .into_iter()
         .chain(external_contracts)
