@@ -126,7 +126,8 @@ impl MetadataCommand {
         self
     }
 
-    fn scarb_command(&self) -> Command {
+    /// Creates [`Command`] from this [`MetadataCommand`]
+    pub fn scarb_command(&self) -> Command {
         let mut builder = self.inner.clone();
         builder.json();
         builder.args(["metadata", "--format-version"]);
@@ -151,7 +152,8 @@ impl MetadataCommand {
     }
 }
 
-fn parse_stream(data: &[u8]) -> Result<Metadata, MetadataCommandError> {
+/// Parses [`Metadata`] from raw output
+pub fn parse_stream(data: &[u8]) -> Result<Metadata, MetadataCommandError> {
     let mut err = None;
     for line in BufRead::split(data, b'\n') {
         let line = line?;
