@@ -167,7 +167,6 @@ pub enum Command {
     #[clap(subcommand)]
     Cache(CacheSubcommand),
     /// Compile until diagnostics checking.
-    // TODO temporarily, create another class CheckArgs
     Check(BuildArgs),
     /// Remove generated artifacts.
     Clean,
