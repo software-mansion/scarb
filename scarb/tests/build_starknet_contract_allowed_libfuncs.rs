@@ -38,9 +38,9 @@ fn default_behaviour() {
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
         .build(&t);
 
-    // TODO this warning can only be achieved by using `build`, not `check`
-    //  should we be worried about this?
     Scarb::quick_snapbox()
+        // NOTE: we cannot use `check` here, because without full compilation
+        // we cannot predict what libfuncs would be generated
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -105,13 +105,16 @@ fn check_false() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("check")
+        // NOTE: we cannot use `check` here, because without full compilation
+        // we cannot predict what libfuncs would be generated
+        // Also, `check` subcommand would not check if the libfuncs warning doesn't appear
+        .arg("build")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-        [..]  Checking hello v0.1.0 ([..])
-        [..]  Finished checking release target(s) in [..]
+        [..] Compiling hello v0.1.0 ([..])
+        [..]  Finished release target(s) in [..]
         "#});
 }
 
@@ -136,6 +139,8 @@ fn deny_true() {
         .build(&t);
 
     Scarb::quick_snapbox()
+        // NOTE: we cannot use `check` here, because without full compilation
+        // we cannot predict what libfuncs would be generated
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -165,6 +170,8 @@ fn pass_named_list() {
         .build(&t);
 
     Scarb::quick_snapbox()
+        // NOTE: we cannot use `check` here, because without full compilation
+        // we cannot predict what libfuncs would be generated
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -190,6 +197,8 @@ fn unknown_list_name() {
         .build(&t);
 
     Scarb::quick_snapbox()
+        // NOTE: we cannot use `check` here, because without full compilation
+        // we cannot predict what libfuncs would be generated
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -224,6 +233,8 @@ fn list_path() {
         .build(&t);
 
     Scarb::quick_snapbox()
+        // NOTE: we cannot use `check` here, because without full compilation
+        // we cannot predict what libfuncs would be generated
         .arg("build")
         .current_dir(&t)
         .assert()
@@ -252,6 +263,8 @@ fn list_path_does_not_exist() {
         .build(&t);
 
     Scarb::quick_snapbox()
+        // NOTE: we cannot use `check` here, because without full compilation
+        // we cannot predict what libfuncs would be generated
         .arg("build")
         .current_dir(&t)
         .assert()
