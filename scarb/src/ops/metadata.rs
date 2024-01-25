@@ -202,6 +202,16 @@ fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
 fn collect_compilation_unit_metadata(
     compilation_unit: &CompilationUnit,
 ) -> m::CompilationUnitMetadata {
+    let cfg = compilation_unit
+        .cfg_set
+        .iter()
+        .map(|cfg| {
+            serde_json::to_value(cfg)
+                .and_then(serde_json::from_value::<m::Cfg>)
+                .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
+        })
+        .collect::<Vec<_>>();
+
     let components: Vec<m::CompilationUnitComponentMetadata> = compilation_unit
         .components
         .iter()
@@ -210,6 +220,15 @@ fn collect_compilation_unit_metadata(
                 .package(wrap_package_id(c.package.id))
                 .name(c.cairo_package_name())
                 .source_path(c.target.source_path.clone())
+                .cfg(
+                    if compilation_unit.target().is_test()
+                        && compilation_unit.component_comes_from_external_dependency(c)
+                    {
+                        vec![m::Cfg::Name("lib".into())]
+                    } else {
+                        cfg.clone()
+                    },
+                )
                 .build()
                 .unwrap()
         })
@@ -230,16 +249,6 @@ fn collect_compilation_unit_metadata(
 
     let compiler_config = serde_json::to_value(&compilation_unit.compiler_config)
         .expect("Compiler config should always be JSON serializable.");
-
-    let cfg = compilation_unit
-        .cfg_set
-        .iter()
-        .map(|cfg| {
-            serde_json::to_value(cfg)
-                .and_then(serde_json::from_value::<m::Cfg>)
-                .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
-        })
-        .collect::<Vec<_>>();
 
     let components_legacy = components
         .iter()

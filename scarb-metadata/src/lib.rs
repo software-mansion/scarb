@@ -351,6 +351,12 @@ pub struct CompilationUnitComponentMetadata {
     pub name: String,
     /// Path to the root Cairo source file.
     pub source_path: Utf8PathBuf,
+    /// CfgSet this component is compiled with
+    ///
+    /// This will differ from parent CompilationUnit's CfgSet
+    /// when compiling for test target
+    #[serde(default)]
+    pub cfg: Vec<Cfg>,
 
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]
