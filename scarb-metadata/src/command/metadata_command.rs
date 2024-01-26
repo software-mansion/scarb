@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
-use std::io;
 use std::io::BufRead;
+use std::io::{self, stdout, Write};
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -53,6 +53,7 @@ impl MetadataCommandError {
 pub struct MetadataCommand {
     inner: InternalScarbCommandBuilder,
     no_deps: bool,
+    inherit_stdout: bool,
 }
 
 impl MetadataCommand {
@@ -126,9 +127,16 @@ impl MetadataCommand {
         self
     }
 
+    /// Inherit standard output, i.e. show Scarb output in this process's standard output.
+    pub fn inherit_stdout(&mut self) -> &mut Self {
+        // we can not just use self.inner.inherit_stdout()
+        // because it will make output.stdout empty
+        self.inherit_stdout = true;
+        self
+    }
+
     fn scarb_command(&self) -> Command {
         let mut builder = self.inner.clone();
-        builder.json();
         builder.args(["metadata", "--format-version"]);
         builder.arg(VersionPin.numeric().to_string());
         if self.no_deps {
@@ -142,6 +150,9 @@ impl MetadataCommand {
         let mut cmd = self.scarb_command();
         let output = cmd.output()?;
         if !output.status.success() {
+            if self.inherit_stdout {
+                stdout().write_all(&output.stdout)?;
+            }
             return Err(MetadataCommandError::ScarbError {
                 stdout: String::from_utf8_lossy(&output.stdout).into(),
                 stderr: String::from_utf8_lossy(&output.stderr).into(),
