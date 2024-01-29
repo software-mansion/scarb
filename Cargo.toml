@@ -8,6 +8,8 @@ members = [
     "extensions/scarb-snforge-test-collector",
     "utils/create-output-dir",
     "utils/scarb-build-metadata",
+    "utils/scarb-macro-attributes",
+    "utils/scarb-macro-interface",
     "utils/scarb-test-support",
     "utils/scarb-ui",
     "utils/test-for-each-example",

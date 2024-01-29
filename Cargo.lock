@@ -4485,6 +4485,7 @@ dependencies = [
  "redb",
  "reqwest",
  "scarb-build-metadata",
+ "scarb-macro-interface",
  "scarb-metadata 1.11.1",
  "scarb-test-support",
  "scarb-ui",
@@ -4576,6 +4577,25 @@ dependencies = [
  "serde_json",
  "snapbox",
  "test-for-each-example",
+]
+
+[[package]]
+name = "scarb-macro-attributes"
+version = "0.0.1"
+dependencies = [
+ "camino",
+ "quote",
+ "syn 2.0.48",
+]
+
+[[package]]
+name = "scarb-macro-interface"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "libc",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
