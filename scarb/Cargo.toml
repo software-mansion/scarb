@@ -46,6 +46,7 @@ ignore.workspace = true
 include_dir.workspace = true
 indoc.workspace = true
 itertools.workspace = true
+libloading.workspace = true
 once_cell.workspace = true
 pathdiff.workspace = true
 petgraph.workspace = true

@@ -1,3 +1,4 @@
+pub mod compilation;
 mod ffi;
 mod host;
 
