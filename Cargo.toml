@@ -6,6 +6,8 @@ members = [
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
     "extensions/scarb-snforge-test-collector",
+    "plugins/scarb-macro-attributes",
+    "plugins/scarb-macro-interface",
     "utils/create-output-dir",
     "utils/scarb-build-metadata",
     "utils/scarb-test-support",
