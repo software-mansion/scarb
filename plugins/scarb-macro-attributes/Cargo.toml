@@ -1,0 +1,21 @@
+[package]
+name = "scarb-macro-attributes"
+version = "0.0.1"
+edition.workspace = true
+
+authors.workspace = true
+categories = ["development-tools"]
+description = "Cariro procedural macro interface primitives."
+homepage.workspace = true
+keywords = ["scarb"]
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+camino.workspace = true
+quote.workspace = true
+syn = { workspace = true, features = ["full", "extra-traits"] }

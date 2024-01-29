@@ -24,8 +24,8 @@ cairo-lang-formatter.workspace = true
 cairo-lang-semantic.workspace = true
 cairo-lang-sierra-to-casm.workspace = true
 cairo-lang-sierra.workspace = true
-cairo-lang-starknet.workspace = true
 cairo-lang-starknet-classes.workspace = true
+cairo-lang-starknet.workspace = true
 cairo-lang-test-plugin.workspace = true
 cairo-lang-utils.workspace = true
 camino.workspace = true
@@ -45,12 +45,14 @@ ignore.workspace = true
 include_dir.workspace = true
 indoc.workspace = true
 itertools.workspace = true
+libc.workspace = true
 once_cell.workspace = true
 pathdiff.workspace = true
 petgraph.workspace = true
 redb.workspace = true
 reqwest.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
+scarb-macro-interface = { path = "../plugins/scarb-macro-interface" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }
 scarb-ui = { path = "../utils/scarb-ui" }
 semver.workspace = true
