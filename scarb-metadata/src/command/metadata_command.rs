@@ -167,7 +167,7 @@ fn parse_stream(data: &[u8]) -> Result<Metadata, MetadataCommandError> {
 
     let data = std::str::from_utf8(data).unwrap();
 
-    let mut lines = data.split("\n").map(|line| line.trim_end());
+    let mut lines = data.split('\n').map(|line| line.trim_end());
 
     macro_rules! json_parse {
         ($json:expr) => {
@@ -190,8 +190,8 @@ fn parse_stream(data: &[u8]) -> Result<Metadata, MetadataCommandError> {
         };
     }
 
-    const OPEN_BRACKET: &'static str = "{";
-    const CLOSE_BRACKET: &'static str = "}";
+    const OPEN_BRACKET: &str = "{";
+    const CLOSE_BRACKET: &str = "}";
 
     // depending on usage of --json flag scarb returns either one line json
     // or pretty printed one which starts with "{" and ends with "}" on single lines
