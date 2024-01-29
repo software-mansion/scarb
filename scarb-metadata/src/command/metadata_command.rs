@@ -165,7 +165,7 @@ impl MetadataCommand {
 fn parse_stream(data: &[u8]) -> Result<Metadata, MetadataCommandError> {
     let mut err = None;
 
-    let data = std::str::from_utf8(data).unwrap();
+    let data = String::from_utf8_lossy(data);
 
     let mut lines = data.split('\n').map(|line| line.trim_end());
 
@@ -179,7 +179,7 @@ fn parse_stream(data: &[u8]) -> Result<Metadata, MetadataCommandError> {
                             && !serde_err.to_string().contains("expected metadata version")
                         {
                             MetadataCommandError::NotFound {
-                                stdout: data.into(),
+                                stdout: data.to_string(),
                             }
                         } else {
                             serde_err.into()
