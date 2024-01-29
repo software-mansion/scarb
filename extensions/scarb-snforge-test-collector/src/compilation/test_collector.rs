@@ -124,7 +124,7 @@ pub fn collect_tests(
         })
         .collect();
 
-    let sierra_program = db
+    let (sierra_program, _) = db
         .get_sierra_program_for_functions(z)
         .to_option()
         .context("Compilation failed without any diagnostics")
