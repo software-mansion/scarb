@@ -125,6 +125,7 @@ xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
 zstd = "0.13"
+libloading = "0.8.1"
 
 [profile.release]
 lto = true
