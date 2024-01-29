@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
-use std::io::BufRead;
 use std::io::{self, stdout, Write};
+use std::iter::once;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -164,33 +164,69 @@ impl MetadataCommand {
 
 fn parse_stream(data: &[u8]) -> Result<Metadata, MetadataCommandError> {
     let mut err = None;
-    for line in BufRead::split(data, b'\n') {
-        let line = line?;
 
-        // HACK: Use a heuristic to guess if this line in the output is the metadata one.
-        //   This works based on the assumption that the output comes from a call to
-        //   `scarb metadata` that:
-        //   1. Used `--json` flag, so that messages are NDJSON.
-        //   2. Fields were not reordered: the "version" field is always first.
-        if !line.starts_with(br#"{"version":"#) {
-            continue;
+    let data = std::str::from_utf8(data).unwrap();
+
+    let mut lines = data.split("\n").map(|line| line.trim_end());
+
+    macro_rules! json_parse {
+        ($json:expr) => {
+            match serde_json::from_str($json) {
+                Ok(metadata) => return Ok(metadata),
+                Err(serde_err) => {
+                    err = Some(
+                        if serde_err.is_data()
+                            && !serde_err.to_string().contains("expected metadata version")
+                        {
+                            MetadataCommandError::NotFound {
+                                stdout: data.into(),
+                            }
+                        } else {
+                            serde_err.into()
+                        },
+                    )
+                }
+            }
+        };
+    }
+
+    const OPEN_BRACKET: &'static str = "{";
+    const CLOSE_BRACKET: &'static str = "}";
+
+    // depending on usage of --json flag scarb returns either one line json
+    // or pretty printed one which starts with "{" and ends with "}" on single lines
+    //
+    // singleline json's -- it should be useless since we do not use --json flag
+    // but better safe than sorry
+    for line in lines
+        .clone()
+        .filter(|line| line.starts_with(OPEN_BRACKET) && line.ends_with(CLOSE_BRACKET))
+    {
+        json_parse!(line);
+    }
+    // multiline json's
+    loop {
+        let json_lines = lines
+            .by_ref()
+            .skip_while(|line| *line != OPEN_BRACKET)
+            .skip(1)
+            .take_while(|line| *line != CLOSE_BRACKET);
+
+        let json_string = once(OPEN_BRACKET)
+            .chain(json_lines)
+            .chain(once(CLOSE_BRACKET))
+            .collect::<Vec<&str>>()
+            .join("");
+
+        if json_string == format!("{OPEN_BRACKET}{CLOSE_BRACKET}") {
+            break;
         }
 
-        // Deal with hypothetical case that somehow Scarb outputs other messages with "version"
-        // field first. If one is spotted before the metadata message, deserialization of it should
-        // fail. Instead of immediately returning the error, we save it, and continue to look up
-        // for the metadata later in output. If it is found -- great, we will return it and forget
-        // about the error. Otherwise, we assume that the found message was meant actually to be
-        // the metadata object that failed to deserialize, and thus we report deserialization error
-        // instead of `NotFound`.
-        match serde_json::from_slice(&line) {
-            Ok(metadata) => return Ok(metadata),
-            Err(serde_err) => err = Some(serde_err.into()),
-        }
+        json_parse!(&json_string);
     }
 
     Err(err.unwrap_or_else(|| MetadataCommandError::NotFound {
-        stdout: String::from_utf8_lossy(data).into(),
+        stdout: data.into(),
     }))
 }
 

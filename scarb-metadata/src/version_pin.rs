@@ -49,9 +49,23 @@ impl Serialize for VersionPin {
 impl<'de> Deserialize<'de> for VersionPin {
     fn deserialize<D: Deserializer<'de>>(d: D) -> Result<VersionPin, D::Error> {
         use serde::de::Error;
-        let num = u64::deserialize(d)?;
-        VersionPin::from_numeric(num)
-            .ok_or_else(|| Error::custom(format!("expected metadata version {}", Self.numeric())))
+        match u64::deserialize(d) {
+            Ok(num) => VersionPin::from_numeric(num).ok_or_else(|| {
+                Error::custom(format!("expected metadata version {}", Self.numeric()))
+            }),
+            Err(err) => Err({
+                let err_message = err.to_string();
+
+                if err_message.contains("missing field") {
+                    err
+                } else {
+                    Error::custom(format!(
+                        "{}\n expected metadata version to be of type u64",
+                        err_message
+                    ))
+                }
+            }),
+        }
     }
 }
 
