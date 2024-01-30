@@ -31,3 +31,20 @@ $ scarb build
 ```
 
 This will fetch all the dependencies and then build them, along with the package.
+
+You might want to simply check the package and all of its dependencies for errors without performing the last step of generating Sierra files.
+Instead of `scarb build`, you can use a bit faster command - `scarb check`:
+
+```shell
+$ scarb check
+    Checking alexandria_ascii v0.1.0 (/path/to/package/alexandria/src/ascii/Scarb.toml)
+    Checking alexandria_data_structures v0.1.0 (/path/to/package/alexandria/src/data_structures/Scarb.toml)
+    Checking alexandria_encoding v0.1.0 (/path/to/package/alexandria/src/encoding/Scarb.toml)
+    Checking alexandria_linalg v0.1.0 (/path/to/package/alexandria/src/linalg/Scarb.toml)
+    Checking alexandria_math v0.2.0 (/path/to/package/alexandria/src/math/Scarb.toml)
+    Checking alexandria_numeric v0.1.0 (/path/to/package/alexandria/src/numeric/Scarb.toml)
+    Checking alexandria_searching v0.1.0 (/path/to/package/alexandria/src/searching/Scarb.toml)
+    Checking alexandria_sorting v0.1.0 (/path/to/package/alexandria/src/sorting/Scarb.toml)
+    Checking alexandria_storage v0.2.0 (/path/to/package/alexandria/src/storage/Scarb.toml)
+    Finished checking release target(s) in 4 seconds
+```
