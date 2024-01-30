@@ -32,7 +32,7 @@ $ scarb build
 
 This will fetch all the dependencies and then build them, along with the package.
 
-You might want to simply check the package and all of its dependencies for errors without performing the last step of generating Sierra files.
+You might want to simply check the package and all of its dependencies for errors without performing the final step of output files generation.
 Instead of `scarb build`, you can use a bit faster command - `scarb check`:
 
 ```shell
