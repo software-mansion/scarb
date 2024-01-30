@@ -15,7 +15,10 @@ use crate::{Metadata, VersionPin};
 pub enum MetadataCommandError {
     /// `scarb metadata` command did not produce any metadata
     #[error("`scarb metadata` command did not produce any metadata")]
-    NotFound,
+    NotFound {
+        /// Captured standard output if any.
+        stdout: String,
+    },
 
     /// Failed to read `scarb metadata` output.
     #[error("failed to read `scarb metadata` output")]
@@ -38,7 +41,7 @@ pub enum MetadataCommandError {
 impl MetadataCommandError {
     /// Check if this is [`MetadataCommandError::NotFound`].
     pub const fn did_not_found(&self) -> bool {
-        matches!(self, Self::NotFound)
+        matches!(self, Self::NotFound { .. })
     }
 }
 
@@ -161,14 +164,14 @@ impl MetadataCommand {
         let stdout_string = String::from_utf8_lossy(&output.stdout).to_string();
 
         if output.status.success() {
-            let lines = stdout_string.split('\n');
-            let parse_result = parse_stream(lines.clone());
+            let parse_result = parse_stream(stdout_string.clone());
 
             let data = parse_result
                 .as_ref()
                 // if we parsed successfully dont print lines consumed for printing
                 .map(|parse_result| {
-                    lines
+                    stdout_string
+                        .split('\n')
                         .enumerate()
                         .filter(|(n, _)| !parse_result.used_lines.contains(n))
                         .map(|(_, line)| line)
@@ -213,20 +216,17 @@ impl ParseResult {
     }
 }
 
-fn parse_stream<'a>(
-    lines: impl Iterator<Item = &'a str> + Clone,
-) -> Result<ParseResult, MetadataCommandError> {
+fn parse_stream(stdout: String) -> Result<ParseResult, MetadataCommandError> {
     const OPEN_BRACKET: &str = "{";
     const CLOSE_BRACKET: &str = "}";
 
     let mut err = None;
-    let mut lines = lines.map(|line| line.trim_end()).enumerate();
+    let mut lines = stdout.split('\n').map(|line| line.trim_end()).enumerate();
 
     // depending on usage of --json flag scarb returns either one line json
     // or pretty printed one which starts with "{" and ends with "}" on single lines
     //
-    // singleline json's -- it should be useless since we do not use --json flag
-    // but better safe than sorry
+    // singleline json's
     for (n, line) in lines
         .clone()
         .filter(|(_, line)| line.starts_with(OPEN_BRACKET) && line.ends_with(CLOSE_BRACKET))
@@ -262,7 +262,7 @@ fn parse_stream<'a>(
         }
     }
 
-    Err(err.unwrap_or(MetadataCommandError::NotFound))
+    Err(err.unwrap_or(MetadataCommandError::NotFound { stdout }))
 }
 
 #[cfg(test)]
@@ -277,8 +277,7 @@ mod tests {
             let actual = crate::command::metadata_command::parse_stream(
                 $input
                     .to_string()
-                    .replace("{meta}", &minimal_metadata_json())
-                    .split("\n"),
+                    .replace("{meta}", &minimal_metadata_json()),
             );
 
             assert!(matches!(actual, $expected));
@@ -286,8 +285,7 @@ mod tests {
             let actual = crate::command::metadata_command::parse_stream(
                 $input
                     .to_string()
-                    .replace("{meta}", &minimal_metadata_json_pretty())
-                    .split("\n"),
+                    .replace("{meta}", &minimal_metadata_json_pretty()),
             );
 
             assert!(matches!(actual, $expected));
@@ -316,12 +314,12 @@ mod tests {
 
     #[test]
     fn parse_stream_empty() {
-        check_parse_stream!("", Err(MetadataCommandError::NotFound));
+        check_parse_stream!("", Err(MetadataCommandError::NotFound { .. }));
     }
 
     #[test]
     fn parse_stream_empty_nl() {
-        check_parse_stream!("\n", Err(MetadataCommandError::NotFound));
+        check_parse_stream!('\n', Err(MetadataCommandError::NotFound { .. }));
     }
 
     #[test]
