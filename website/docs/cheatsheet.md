@@ -27,6 +27,10 @@ Built Sierra code of this package will be written to `target/dev` directory.
 > [!TIP]
 > `scarb clean` cleans `target` directory.
 
+<!-- prettier-ignore -->
+> [!TIP]
+> `scarb check` checks for errors without compiling the packages.
+
 ### Building CASM
 
 Add following to `Scarb.toml`:
