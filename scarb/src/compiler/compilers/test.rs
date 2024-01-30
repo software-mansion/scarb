@@ -1,6 +1,6 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
+use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::{CrateConfiguration, CrateSettings, FilesGroup, FilesGroupEx};
 use cairo_lang_test_plugin::compile_test_prepared_db;
 use tracing::trace_span;
@@ -43,7 +43,9 @@ impl Compiler for TestCompiler {
                     Some(CrateConfiguration {
                         root: cfg.root,
                         settings: CrateSettings {
-                            cfg_set: Some(CfgSet::from_iter([Cfg::name("lib")])),
+                            cfg_set: Some(CfgSet::from_iter(
+                                db.cfg_set().iter().filter(|cfg| cfg.key != "test").cloned(),
+                            )),
                             ..cfg.settings
                         },
                     }),
