@@ -36,7 +36,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .build(world);
 
     Scarb::quick_snapbox()
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
+        .arg("build")
         .current_dir(world)
         .assert()
         .success()
@@ -349,12 +349,12 @@ fn compile_starknet_contract_without_starknet_dep() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
+        .arg("check")
         .current_dir(&t)
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        [..] Compiling hello v0.1.0 ([..])
+        [..] Checking hello v0.1.0 ([..])
         warn: package `hello` declares `starknet-contract` target, but does not depend on `starknet` package
         note: this may cause contract compilation to fail with cryptic errors
         help: add dependency on `starknet` to package manifest
@@ -417,7 +417,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                     self.value.write( self.value.read() + a );
                                ^***^
 
-        error: could not compile `hello` due to previous error
+        error: could not check `hello` due to previous error
         "#});
 }
 

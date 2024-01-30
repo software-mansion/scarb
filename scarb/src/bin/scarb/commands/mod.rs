@@ -10,6 +10,7 @@ pub mod add;
 pub mod build;
 pub mod cache_clean;
 pub mod cache_path;
+pub mod check;
 pub mod clean;
 pub mod commands;
 pub mod external;
@@ -35,6 +36,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         Build(args) => build::run(args, config),
         Cache(CacheSubcommand::Clean) => cache_clean::run(config),
         Cache(CacheSubcommand::Path) => cache_path::run(config),
+        Check(args) => check::run(args, config),
         Clean => clean::run(config),
         Commands => commands::run(config),
         External(args) => external::run(args, config),

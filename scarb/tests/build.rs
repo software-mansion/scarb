@@ -69,18 +69,18 @@ fn compile_with_syntax_error() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
+        .arg("check")
         .current_dir(&t)
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-               Compiling hello v0.1.0 ([..]Scarb.toml)
+                Checking hello v0.1.0 ([..]Scarb.toml)
             error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
              --> [..]/lib.cairo:1:1
             not_a_keyword
             ^***********^
 
-            error: could not compile `hello` due to previous error
+            error: could not check `hello` due to previous error
         "#});
 }
 
@@ -95,14 +95,14 @@ fn compile_with_syntax_error_json() {
 
     Scarb::quick_snapbox()
         .arg("--json")
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test, if --json is available for check.
+        .arg("check")
         .current_dir(&t)
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-            {"status":"compiling","message":"hello v0.1.0 ([..]Scarb.toml)"}
+            {"status":"checking","message":"hello v0.1.0 ([..]Scarb.toml)"}
             {"type":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute./n --> [..]/lib.cairo:1:1/nnot_a_keyword/n^***********^/n"}
-            {"type":"error","message":"could not compile `hello` due to previous error"}
+            {"type":"error","message":"could not check `hello` due to previous error"}
         "#});
 }
 
@@ -276,7 +276,7 @@ fn compile_with_incompatible_cairo_version() {
         )
         .unwrap();
     Scarb::quick_snapbox()
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
+        .arg("check")
         .current_dir(&t)
         .assert()
         .code(1)
