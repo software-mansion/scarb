@@ -160,7 +160,7 @@ impl MetadataCommand {
                 .map(|parse_result| {
                     lines
                         .enumerate()
-                        .filter(|(n, _)| !parse_result.used_lines.contains(&n))
+                        .filter(|(n, _)| !parse_result.used_lines.contains(n))
                         .map(|(_, line)| line)
                         .collect::<Vec<_>>()
                         .join("\n")
