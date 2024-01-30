@@ -51,6 +51,7 @@ pub struct MetadataCommand {
     inner: InternalScarbCommandBuilder,
     no_deps: bool,
     inherit_stdout: bool,
+    json: bool,
 }
 
 impl MetadataCommand {
@@ -132,8 +133,17 @@ impl MetadataCommand {
         self
     }
 
+    /// Set output format to JSON.
+    pub fn json(&mut self) -> &mut Self {
+        self.json = true;
+        self
+    }
+
     fn scarb_command(&self) -> Command {
         let mut builder = self.inner.clone();
+        if self.json {
+            builder.json();
+        }
         builder.args(["metadata", "--format-version"]);
         builder.arg(VersionPin.numeric().to_string());
         if self.no_deps {

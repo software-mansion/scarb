@@ -13,6 +13,7 @@ pub struct InternalScarbCommandBuilder {
     env_clear: bool,
     inherit_stderr: bool,
     inherit_stdout: bool,
+    json: bool,
     manifest_path: Option<PathBuf>,
     scarb_path: Option<PathBuf>,
 }
@@ -116,6 +117,12 @@ impl InternalScarbCommandBuilder {
         self
     }
 
+    /// Set output format to JSON.
+    pub fn json(&mut self) -> &mut Self {
+        self.json = true;
+        self
+    }
+
     /// Build executable `scarb` command.
     pub fn command(&self) -> Command {
         let scarb = self
@@ -125,6 +132,10 @@ impl InternalScarbCommandBuilder {
             .unwrap_or_else(|| PathBuf::from("scarb"));
 
         let mut cmd = Command::new(scarb);
+
+        if self.json {
+            cmd.arg("--json");
+        }
 
         if let Some(manifest_path) = &self.manifest_path {
             cmd.arg("--manifest-path").arg(manifest_path);
