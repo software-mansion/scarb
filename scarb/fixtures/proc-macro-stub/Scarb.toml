@@ -1,0 +1,6 @@
+[package]
+name = "proc_macro_stub"
+version = "0.1.0"
+edition = "2023_11"
+
+[cairo-plugin]

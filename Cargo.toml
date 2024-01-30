@@ -15,6 +15,9 @@ members = [
     "utils/test-for-each-example",
     "xtask",
 ]
+exclude = [
+    "scarb/fixtures/proc-macro-stub"
+]
 "resolver" = "2"
 
 [workspace.package]
