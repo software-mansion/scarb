@@ -166,7 +166,7 @@ pub enum Command {
     /// Manipulate packages cache.
     #[clap(subcommand)]
     Cache(CacheSubcommand),
-    /// Compile until diagnostics checking.
+    /// Analyze the current package and report errors, but don't build Sierra files.
     Check(BuildArgs),
     /// Remove generated artifacts.
     Clean,
