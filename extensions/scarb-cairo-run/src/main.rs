@@ -37,9 +37,13 @@ struct Args {
     #[arg(long, default_value_t = false)]
     no_build: bool,
 
-    /// Input to the program.
+    /// Program arguments.
+    ///
+    /// This should be a JSON array of numbers, decimal bigints or recursive arrays of those. For example, pass `[1]`
+    /// to the following function `fn main(a: u64)`, or pass `[1, "2"]` to `fn main(a: u64, b: u64)`,
+    /// or `[[1, 2], [3, 4, 5]]` to `fn main(t: (u64, u64), v: Array<u64>)`.
     #[arg(default_value = "[]")]
-    program_input: deserialization::Args,
+    arguments: deserialization::Args,
 }
 
 fn main() -> Result<()> {
@@ -101,7 +105,7 @@ fn main() -> Result<()> {
     let result = runner
         .run_function_with_starknet_context(
             runner.find_function("::main")?,
-            &args.program_input,
+            &args.arguments,
             available_gas.value(),
             StarknetState::default(),
         )

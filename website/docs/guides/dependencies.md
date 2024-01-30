@@ -3,10 +3,9 @@
 Scarb manages dependencies by cloning packages from their Git repositories.
 To add a dependency, simply declare it in your `Scarb.toml`.
 
-::: info
-Using Git repositories as a foundation for package management is not an ideal
-approach. Therefore, we plan to create a proper package registry in long term.
-:::
+> [!NOTE]
+> Using Git repositories as a foundation for package management is not an ideal
+> approach. Therefore, we plan to create a proper package registry in long term.
 
 ## Adding a dependency
 
