@@ -31,7 +31,7 @@ jobs:
           - name: linux x86-64
             os: ubuntu-latest
           - name: macos x86-64
-            os: macos-latest
+            os: macos-14
           - name: windows x86-64
             os: windows-latest
     steps:
