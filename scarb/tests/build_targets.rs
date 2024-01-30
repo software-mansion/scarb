@@ -217,19 +217,19 @@ fn compile_dep_not_a_lib() {
         .build(&hello);
 
     Scarb::quick_snapbox()
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
+        .arg("check")
         .current_dir(&hello)
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
             warn: hello v1.0.0 ([..]) ignoring invalid dependency `dep` which is missing a lib or cairo-plugin target
-               Compiling hello v1.0.0 ([..])
+                Checking hello v1.0.0 ([..])
             error: Identifier not found.
              --> [..]/lib.cairo:1:25
             fn hellp() -> felt252 { dep::forty_two() }
                                     ^*^
 
-            error: could not compile `hello` due to previous error
+            error: could not check `hello` due to previous error
         "#});
 }
 
