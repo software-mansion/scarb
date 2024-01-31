@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
 use std::io;
-use std::io::BufRead;
+use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -53,6 +53,8 @@ impl MetadataCommandError {
 pub struct MetadataCommand {
     inner: InternalScarbCommandBuilder,
     no_deps: bool,
+    inherit_stdout: bool,
+    json: bool,
 }
 
 impl MetadataCommand {
@@ -126,9 +128,25 @@ impl MetadataCommand {
         self
     }
 
+    /// Inherit standard output, i.e. show Scarb output in this process's standard output.
+    pub fn inherit_stdout(&mut self) -> &mut Self {
+        // we can not just use self.inner.inherit_stdout()
+        // because it will make output.stdout empty
+        self.inherit_stdout = true;
+        self
+    }
+
+    /// Set output format to JSON.
+    pub fn json(&mut self) -> &mut Self {
+        self.json = true;
+        self
+    }
+
     fn scarb_command(&self) -> Command {
         let mut builder = self.inner.clone();
-        builder.json();
+        if self.json {
+            builder.json();
+        }
         builder.args(["metadata", "--format-version"]);
         builder.arg(VersionPin.numeric().to_string());
         if self.no_deps {
@@ -140,47 +158,111 @@ impl MetadataCommand {
     /// Runs configured `scarb metadata` and returns parsed `Metadata`.
     pub fn exec(&self) -> Result<Metadata, MetadataCommandError> {
         let mut cmd = self.scarb_command();
+
         let output = cmd.output()?;
-        if !output.status.success() {
-            return Err(MetadataCommandError::ScarbError {
-                stdout: String::from_utf8_lossy(&output.stdout).into(),
+
+        let stdout_string = String::from_utf8_lossy(&output.stdout).to_string();
+
+        if output.status.success() {
+            let parse_result = parse_stream(stdout_string.clone());
+
+            let data = parse_result
+                .as_ref()
+                // if we parsed successfully dont print lines consumed for printing
+                .map(|parse_result| {
+                    stdout_string
+                        .split('\n')
+                        .enumerate()
+                        .filter(|(n, _)| !parse_result.used_lines.contains(n))
+                        .map(|(_, line)| line)
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                })
+                .unwrap_or(stdout_string);
+
+            self.print(&data);
+
+            parse_result.map(|result| result.metadata)
+        } else {
+            self.print(&stdout_string);
+
+            Err(MetadataCommandError::ScarbError {
+                stdout: stdout_string,
                 stderr: String::from_utf8_lossy(&output.stderr).into(),
-            });
+            })
         }
-        parse_stream(output.stdout.as_slice())
+    }
+
+    fn print(&self, data: &str) {
+        if self.inherit_stdout {
+            print!("{data}");
+        }
     }
 }
 
-fn parse_stream(data: &[u8]) -> Result<Metadata, MetadataCommandError> {
-    let mut err = None;
-    for line in BufRead::split(data, b'\n') {
-        let line = line?;
+#[derive(Debug)]
+struct ParseResult {
+    metadata: Metadata,
+    /// lines from `scarb metadata` output that were consumed for parsing [`Metadata`]
+    used_lines: RangeInclusive<usize>,
+}
 
-        // HACK: Use a heuristic to guess if this line in the output is the metadata one.
-        //   This works based on the assumption that the output comes from a call to
-        //   `scarb metadata` that:
-        //   1. Used `--json` flag, so that messages are NDJSON.
-        //   2. Fields were not reordered: the "version" field is always first.
-        if !line.starts_with(br#"{"version":"#) {
-            continue;
+impl ParseResult {
+    fn new(metadata: Metadata, used_lines: RangeInclusive<usize>) -> Self {
+        Self {
+            metadata,
+            used_lines,
         }
+    }
+}
 
-        // Deal with hypothetical case that somehow Scarb outputs other messages with "version"
-        // field first. If one is spotted before the metadata message, deserialization of it should
-        // fail. Instead of immediately returning the error, we save it, and continue to look up
-        // for the metadata later in output. If it is found -- great, we will return it and forget
-        // about the error. Otherwise, we assume that the found message was meant actually to be
-        // the metadata object that failed to deserialize, and thus we report deserialization error
-        // instead of `NotFound`.
-        match serde_json::from_slice(&line) {
-            Ok(metadata) => return Ok(metadata),
+fn parse_stream(stdout: String) -> Result<ParseResult, MetadataCommandError> {
+    const OPEN_BRACKET: &str = "{";
+    const CLOSE_BRACKET: &str = "}";
+
+    let mut err = None;
+    let mut lines = stdout.split('\n').map(|line| line.trim_end()).enumerate();
+
+    // depending on usage of --json flag scarb returns either one line json
+    // or pretty printed one which starts with "{" and ends with "}" on single lines
+    //
+    // singleline json's
+    for (n, line) in lines
+        .clone()
+        .filter(|(_, line)| line.starts_with(OPEN_BRACKET) && line.ends_with(CLOSE_BRACKET))
+    {
+        match serde_json::from_str(line) {
+            Ok(metadata) => return Ok(ParseResult::new(metadata, n..=n)),
+            Err(serde_err) => err = Some(serde_err.into()),
+        }
+    }
+    // multiline json's
+    loop {
+        let json_lines = lines
+            .by_ref()
+            .skip_while(|(_, line)| *line != OPEN_BRACKET)
+            .skip(1)
+            .take_while(|(_, line)| *line != CLOSE_BRACKET);
+
+        let json_lines = json_lines.collect::<Vec<_>>();
+
+        let used_lines = match (json_lines.first(), json_lines.last()) {
+            (Some((first, _)), Some((last, _))) => *first - 1..=*last + 1,
+            _ => break,
+        };
+        let json_string = json_lines
+            .into_iter()
+            .map(|(_, line)| line)
+            .collect::<Vec<_>>()
+            .join("");
+
+        match serde_json::from_str(&format!("{OPEN_BRACKET}{json_string}{CLOSE_BRACKET}")) {
+            Ok(metadata) => return Ok(ParseResult::new(metadata, used_lines)),
             Err(serde_err) => err = Some(serde_err.into()),
         }
     }
 
-    Err(err.unwrap_or_else(|| MetadataCommandError::NotFound {
-        stdout: String::from_utf8_lossy(data).into(),
-    }))
+    Err(err.unwrap_or(MetadataCommandError::NotFound { stdout }))
 }
 
 #[cfg(test)]
@@ -195,8 +277,15 @@ mod tests {
             let actual = crate::command::metadata_command::parse_stream(
                 $input
                     .to_string()
-                    .replace("{meta}", &minimal_metadata_json())
-                    .as_bytes(),
+                    .replace("{meta}", &minimal_metadata_json()),
+            );
+
+            assert!(matches!(actual, $expected));
+
+            let actual = crate::command::metadata_command::parse_stream(
+                $input
+                    .to_string()
+                    .replace("{meta}", &minimal_metadata_json_pretty()),
             );
 
             assert!(matches!(actual, $expected));
@@ -230,24 +319,24 @@ mod tests {
 
     #[test]
     fn parse_stream_empty_nl() {
-        check_parse_stream!("\n", Err(MetadataCommandError::NotFound { .. }));
+        check_parse_stream!('\n', Err(MetadataCommandError::NotFound { .. }));
     }
 
     #[test]
     fn parse_stream_garbage_message() {
-        check_parse_stream!("{\"foo\":1}", Err(MetadataCommandError::NotFound { .. }));
+        check_parse_stream!("{\"foo\":1}", Err(MetadataCommandError::Json(_)));
     }
 
     #[test]
     fn parse_stream_garbage_message_nl() {
-        check_parse_stream!("{\"foo\":1}\n", Err(MetadataCommandError::NotFound { .. }));
+        check_parse_stream!("{\"foo\":1}\n", Err(MetadataCommandError::Json(_)));
     }
 
     #[test]
     fn parse_stream_garbage_messages() {
         check_parse_stream!(
             "{\"foo\":1}\n{\"bar\":1}",
-            Err(MetadataCommandError::NotFound { .. })
+            Err(MetadataCommandError::Json(_))
         );
     }
 
@@ -282,6 +371,10 @@ mod tests {
 
     fn minimal_metadata_json() -> String {
         serde_json::to_string(&minimal_metadata()).unwrap()
+    }
+
+    fn minimal_metadata_json_pretty() -> String {
+        serde_json::to_string_pretty(&minimal_metadata()).unwrap()
     }
 
     fn minimal_metadata() -> Metadata {

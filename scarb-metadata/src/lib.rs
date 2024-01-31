@@ -119,7 +119,6 @@ fn profiles_default() -> Vec<String> {
 #[cfg_attr(feature = "builder", builder(setter(into)))]
 #[non_exhaustive]
 pub struct Metadata {
-    // NOTE: This field must always be first! `MetadataCommand` is assuming this.
     /// The metadata format version.
     ///
     /// This struct will not deserialize if version does not match.
