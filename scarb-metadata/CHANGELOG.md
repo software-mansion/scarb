@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 1.11.0 (2024-01-31)
+- Added `experimental_features` field to `PackageMetadata`.
+- Added `inherit_stdout` and `json` flags to `MetadataCommand`. Scarb output is now textual by default.   
+
 ## 1.10.0 (2023-12-13)
 - Added `kind` field to `DependencyMetadata`.
 
