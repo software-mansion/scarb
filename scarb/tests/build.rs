@@ -629,14 +629,11 @@ fn workspace_as_dep() {
                 r#""debug_name":"withdraw_gas_all""#,
             )),
     );
-    // TODO(maciektr): FIX THIS TEST
-    // second_t.child("target/dev/third.sierra.json").assert(
-    //     predicates::str::contains(r#""debug_name":"second::fib""#)
-    //         .and(predicates::str::contains(r#""debug_name":"jump""#))
-    //         .and(predicates::str::contains(
-    //             r#""debug_name":"get_builtin_costs""#,
-    //         )),
-    // );
+    second_t.child("target/dev/third.sierra.json").assert(
+        predicates::str::contains(r#""debug_name":"second::fib""#).and(predicates::str::contains(
+            r#""debug_name":"get_builtin_costs""#,
+        )),
+    );
 }
 
 #[test]
