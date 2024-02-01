@@ -93,6 +93,21 @@ impl MetadataCommand {
         self
     }
 
+    /// Defines profile to use for `scarb metadata` command.
+    pub fn profile(&mut self, profile: impl AsRef<OsStr>) -> &mut Self {
+        self.env("SCARB_PROFILE", profile)
+    }
+
+    /// Defines profile to use for `scarb metadata` command as "dev".
+    pub fn dev(&mut self) -> &mut Self {
+        self.profile("dev")
+    }
+
+    /// Defines profile to use for `scarb metadata` command as "release".
+    pub fn release(&mut self) -> &mut Self {
+        self.profile("release")
+    }
+
     /// Inserts or updates an environment variable mapping.
     pub fn env(&mut self, key: impl AsRef<OsStr>, val: impl AsRef<OsStr>) -> &mut Self {
         self.inner.env(key, val);
@@ -268,8 +283,12 @@ fn parse_stream(stdout: String) -> Result<ParseResult, MetadataCommandError> {
 #[cfg(test)]
 mod tests {
     use semver::Version;
+    use std::ffi::OsStr;
 
-    use crate::{CairoVersionInfo, Metadata, MetadataCommandError, VersionInfo, WorkspaceMetadata};
+    use crate::{
+        CairoVersionInfo, Metadata, MetadataCommand, MetadataCommandError, VersionInfo,
+        WorkspaceMetadata,
+    };
 
     macro_rules! check_parse_stream {
         ($input:expr, $expected:pat) => {{
@@ -405,5 +424,29 @@ mod tests {
             profiles: vec!["dev".into()],
             extra: Default::default(),
         }
+    }
+
+    #[test]
+    fn can_define_profile() {
+        let mut cmd = MetadataCommand::new();
+        cmd.profile("test");
+        assert_profile(cmd, "test");
+
+        let mut cmd = MetadataCommand::new();
+        cmd.dev();
+        assert_profile(cmd, "dev");
+
+        let mut cmd = MetadataCommand::new();
+        cmd.profile("test");
+        cmd.release();
+        assert_profile(cmd, "release");
+    }
+
+    fn assert_profile(cmd: MetadataCommand, profile: impl AsRef<OsStr>) {
+        let cmd = cmd.scarb_command();
+        let (_key, Some(val)) = cmd.get_envs().find(|(k, _)| k == &"SCARB_PROFILE").unwrap() else {
+            panic!("profile not defined")
+        };
+        assert_eq!(val, profile.as_ref());
     }
 }
