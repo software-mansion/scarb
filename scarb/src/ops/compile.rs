@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use indoc::formatdoc;
+use itertools::Itertools;
 
 use scarb_ui::components::Status;
 use scarb_ui::HumanDuration;
@@ -59,11 +60,21 @@ where
 
     let compilation_units = ops::generate_compilation_units(&resolve, ws)?
         .into_iter()
-        .filter(|cu| !opts.exclude_targets.contains(&cu.target().kind))
         .filter(|cu| {
-            opts.include_targets.is_empty() || opts.include_targets.contains(&cu.target().kind)
+            let is_excluded = opts.exclude_targets.contains(&cu.target().kind);
+            let is_included =
+                opts.include_targets.is_empty() || opts.include_targets.contains(&cu.target().kind);
+            let is_selected = packages.contains(&cu.main_package_id);
+            let is_cairo_plugin = cu.components.first().unwrap().target.is_cairo_plugin();
+            is_cairo_plugin || (is_selected && is_included && !is_excluded)
         })
-        .filter(|cu| packages.contains(&cu.main_package_id))
+        .sorted_by_key(|cu| {
+            if cu.components.first().unwrap().target.is_cairo_plugin() {
+                0
+            } else {
+                1
+            }
+        })
         .collect::<Vec<_>>();
 
     for unit in compilation_units {
