@@ -191,6 +191,8 @@ fn generate_cairo_compilation_units(
             let is_integration_test = props.test_type == TestTargetType::Integration;
             let test_package_id = member.id.for_test_target(member_target.name.clone());
 
+            let main_component_name = packages.iter().next().unwrap().id.name.to_smol_str();
+
             let mut components: Vec<CompilationUnitComponent> = packages
                 .iter()
                 .cloned()
@@ -219,7 +221,32 @@ fn generate_cairo_compilation_units(
                         package
                     };
 
-                    CompilationUnitComponent { package, target }
+                    let cfg_set = {
+                        let package_name = package.id.name.to_smol_str();
+
+                        if package_name == main_component_name
+                            || package_name == "core"
+                            || package
+                                .manifest
+                                .targets
+                                .iter()
+                                .any(|target| target.kind == TargetKind::STARKNET_CONTRACT)
+                        {
+                            cfg_set.clone()
+                        } else {
+                            cfg_set
+                                .iter()
+                                .filter(|cfg| cfg.key != "test")
+                                .cloned()
+                                .collect()
+                        }
+                    };
+
+                    CompilationUnitComponent {
+                        package,
+                        target,
+                        cfg_set,
+                    }
                 })
                 .collect();
 
@@ -241,6 +268,7 @@ fn generate_cairo_compilation_units(
                 // Add `lib` target for tested package, to be available as dependency.
                 components.push(CompilationUnitComponent {
                     package: member.clone(),
+                    cfg_set: cfg_set.clone(),
                     target,
                 });
 

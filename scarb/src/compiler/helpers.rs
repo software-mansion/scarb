@@ -51,14 +51,6 @@ pub fn collect_all_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<C
         .collect()
 }
 
-pub fn collect_non_test_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
-    unit.components
-        .iter()
-        .filter(|component| unit.component_comes_from_external_dependency(component))
-        .map(|component| db.intern_crate(CrateLongId::Real(component.cairo_package_name())))
-        .collect()
-}
-
 pub fn write_json(
     file_name: &str,
     description: &str,
