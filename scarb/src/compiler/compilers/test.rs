@@ -1,13 +1,12 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::{CrateConfiguration, CrateSettings, FilesGroup, FilesGroupEx};
+use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_test_plugin::compile_test_prepared_db;
 use tracing::trace_span;
 
 use crate::compiler::helpers::{
-    build_compiler_config, collect_all_crate_ids, collect_main_crate_ids,
-    collect_non_test_crate_ids, write_json,
+    build_compiler_config, collect_all_crate_ids, collect_main_crate_ids, write_json,
 };
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{PackageName, SourceId, TargetKind, Workspace};
@@ -34,18 +33,15 @@ impl Compiler for TestCompiler {
                 && plugin.package.id.source_id == SourceId::for_std()
         });
 
-        let non_test_crate_ids = collect_non_test_crate_ids(&unit, db);
-
-        for crate_id in non_test_crate_ids {
+        for component in &unit.components {
+            let crate_id = db.intern_crate(CrateLongId::Real(component.cairo_package_name()));
             if let Some(cfg) = db.crate_config(crate_id) {
                 db.set_crate_config(
                     crate_id,
                     Some(CrateConfiguration {
                         root: cfg.root,
                         settings: CrateSettings {
-                            cfg_set: Some(CfgSet::from_iter(
-                                db.cfg_set().iter().filter(|cfg| cfg.key != "test").cloned(),
-                            )),
+                            cfg_set: Some(component.cfg_set.clone()),
                             ..cfg.settings
                         },
                     }),

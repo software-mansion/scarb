@@ -6,7 +6,7 @@ use smol_str::SmolStr;
 use typed_builder::TypedBuilder;
 
 use crate::compiler::Profile;
-use crate::core::{ManifestCompilerConfig, Package, PackageId, Target, TargetKind, Workspace};
+use crate::core::{ManifestCompilerConfig, Package, PackageId, Target, Workspace};
 use crate::flock::Filesystem;
 use crate::internal::stable_hash::StableHasher;
 
@@ -49,6 +49,8 @@ pub struct CompilationUnitComponent {
     pub package: Package,
     /// Information about the specific target to build, out of the possible targets in `package`.
     pub target: Target,
+    /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this component.
+    pub cfg_set: CfgSet,
 }
 
 /// Information about a single package that is a compiler plugin to load for [`CompilationUnit`].
@@ -134,18 +136,6 @@ impl CompilationUnit {
         self.profile.hash(&mut hasher);
         self.compiler_config.hash(&mut hasher);
         hasher.finish_as_short_hash()
-    }
-
-    pub fn component_comes_from_external_dependency(&self, c: &CompilationUnitComponent) -> bool {
-        let package_name = c.cairo_package_name();
-        package_name != self.main_component().cairo_package_name()
-            && package_name != "core"
-            && !c
-                .package
-                .manifest
-                .targets
-                .iter()
-                .any(|target| target.kind == TargetKind::STARKNET_CONTRACT)
     }
 }
 
