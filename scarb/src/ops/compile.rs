@@ -2,12 +2,14 @@ use anyhow::{anyhow, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use indoc::formatdoc;
+use itertools::Itertools;
 
 use scarb_ui::components::Status;
 use scarb_ui::HumanDuration;
 
 use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin};
 use crate::compiler::helpers::build_compiler_config;
+use crate::compiler::plugin::proc_macro;
 use crate::compiler::CompilationUnit;
 use crate::core::{PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::ops;
@@ -59,11 +61,21 @@ where
 
     let compilation_units = ops::generate_compilation_units(&resolve, ws)?
         .into_iter()
-        .filter(|cu| !opts.exclude_targets.contains(&cu.target().kind))
         .filter(|cu| {
-            opts.include_targets.is_empty() || opts.include_targets.contains(&cu.target().kind)
+            let is_excluded = opts.exclude_targets.contains(&cu.target().kind);
+            let is_included =
+                opts.include_targets.is_empty() || opts.include_targets.contains(&cu.target().kind);
+            let is_selected = packages.contains(&cu.main_package_id);
+            let is_cairo_plugin = cu.components.first().unwrap().target.is_cairo_plugin();
+            is_cairo_plugin || (is_selected && is_included && !is_excluded)
         })
-        .filter(|cu| packages.contains(&cu.main_package_id))
+        .sorted_by_key(|cu| {
+            if cu.components.first().unwrap().target.is_cairo_plugin() {
+                0
+            } else {
+                1
+            }
+        })
         .collect::<Vec<_>>();
 
     for unit in compilation_units {
@@ -89,22 +101,21 @@ fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         .ui()
         .print(Status::new("Compiling", &unit.name()));
 
-    let mut db = build_scarb_root_database(&unit, ws)?;
+    let result = if unit.is_cairo_plugin() {
+        proc_macro::compile_unit(unit, ws)
+    } else {
+        let mut db = build_scarb_root_database(&unit, ws)?;
+        check_starknet_dependency(&unit, ws, &db, &package_name);
+        ws.config().compilers().compile(unit, &mut db, ws)
+    };
 
-    check_starknet_dependency(&unit, ws, &db, &package_name);
+    result.map_err(|err| {
+        if !suppress_error(&err) {
+            ws.config().ui().anyhow(&err);
+        }
 
-    ws.config()
-        .compilers()
-        .compile(unit, &mut db, ws)
-        .map_err(|err| {
-            if !suppress_error(&err) {
-                ws.config().ui().anyhow(&err);
-            }
-
-            anyhow!("could not compile `{package_name}` due to previous error")
-        })?;
-
-    Ok(())
+        anyhow!("could not compile `{package_name}` due to previous error")
+    })
 }
 
 fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {

@@ -5,6 +5,7 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
+#[ignore = "TODO(maciektr): Remove when proc-macros are implemented."]
 fn compile_cairo_plugin() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()

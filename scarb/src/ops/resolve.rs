@@ -155,10 +155,22 @@ pub fn generate_compilation_units(
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members() {
         units.extend(if member.is_cairo_plugin() {
-            generate_cairo_plugin_compilation_units()?
+            generate_cairo_plugin_compilation_units(&member, ws)?
         } else {
             generate_cairo_compilation_units(&member, resolve, ws)?
         });
+    }
+
+    let cairo_plugins = units
+        .iter()
+        .flat_map(|unit| unit.cairo_plugins.clone())
+        .filter(|plugin| !plugin.builtin)
+        .map(|plugin| plugin.package.clone())
+        .unique_by(|plugin| plugin.id)
+        .collect_vec();
+
+    for plugin in cairo_plugins {
+        units.extend(generate_cairo_plugin_compilation_units(&plugin, ws)?);
     }
 
     assert!(
@@ -425,6 +437,24 @@ fn check_cairo_version_compatibility(packages: &[Package], ws: &Workspace<'_>) -
     Ok(())
 }
 
-fn generate_cairo_plugin_compilation_units() -> Result<Vec<CompilationUnit>> {
-    bail!("compiling Cairo plugin packages is not possible yet")
+fn generate_cairo_plugin_compilation_units(
+    member: &Package,
+    ws: &Workspace<'_>,
+) -> Result<Vec<CompilationUnit>> {
+    Ok(vec![CompilationUnit {
+        main_package_id: member.id,
+        components: vec![CompilationUnitComponent {
+            package: member.clone(),
+            cfg_set: None,
+            target: member
+                .fetch_target(&TargetKind::CAIRO_PLUGIN)
+                .cloned()
+                // Safe to unwrap, as member.is_cairo_plugin() has been ensured before.
+                .expect("main component of procedural macro must define `cairo-plugin` target"),
+        }],
+        cairo_plugins: Vec::new(),
+        profile: ws.current_profile()?,
+        compiler_config: member.manifest.compiler_config.clone(),
+        cfg_set: Default::default(),
+    }])
 }

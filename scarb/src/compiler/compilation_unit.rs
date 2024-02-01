@@ -91,6 +91,10 @@ impl CompilationUnit {
         ws.target_dir().child(self.profile.as_str())
     }
 
+    pub fn is_cairo_plugin(&self) -> bool {
+        self.target().is_cairo_plugin()
+    }
+
     pub fn is_sole_for_package(&self) -> bool {
         self.main_component()
             .package
