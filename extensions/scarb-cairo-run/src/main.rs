@@ -2,6 +2,7 @@ use std::env;
 use std::fs;
 
 use anyhow::{bail, ensure, Context, Result};
+use cairo_lang_runner::profiling::ProfilingInfoProcessor;
 use cairo_lang_runner::short_string::as_cairo_short_string;
 use cairo_lang_runner::{RunResultStarknet, RunResultValue, SierraCasmRunner, StarknetState};
 use cairo_lang_sierra::program::VersionedProgram;
@@ -36,6 +37,10 @@ struct Args {
     /// Do not rebuild the package.
     #[arg(long, default_value_t = false)]
     no_build: bool,
+
+    /// Run the profiler alongside the program.
+    #[arg(long, default_value_t = false)]
+    run_profiler: bool,
 
     /// Program arguments.
     ///
@@ -92,14 +97,14 @@ fn main() -> Result<()> {
     }
 
     let runner = SierraCasmRunner::new(
-        sierra_program.program,
+        sierra_program.program.clone(),
         if available_gas.is_disabled() {
             None
         } else {
             Some(Default::default())
         },
         Default::default(),
-        false,
+        args.run_profiler,
     )?;
 
     let result = runner
@@ -111,19 +116,41 @@ fn main() -> Result<()> {
         )
         .context("failed to run the function")?;
 
+    let profiling_info = if args.run_profiler {
+        let profiling_info_processor =
+            ProfilingInfoProcessor::new(sierra_program.program, Default::default());
+        match &result.profiling_info {
+            Some(raw_profiling_info) => Some(ProfilingInfoStatus::Success(
+                profiling_info_processor
+                    .process(raw_profiling_info)
+                    .to_string(),
+            )),
+            None => Some(ProfilingInfoStatus::NotFound),
+        }
+    } else {
+        None
+    };
+
     ui.print(Summary {
         result,
         print_full_memory: args.print_full_memory,
         gas_defined: available_gas.is_defined(),
+        profiling_info,
     });
 
     Ok(())
+}
+
+enum ProfilingInfoStatus {
+    Success(String),
+    NotFound,
 }
 
 struct Summary {
     result: RunResultStarknet,
     print_full_memory: bool,
     gas_defined: bool,
+    profiling_info: Option<ProfilingInfoStatus>,
 }
 
 impl Message for Summary {
@@ -162,6 +189,13 @@ impl Message for Summary {
                 }
             }
             println!("]");
+        }
+
+        if let Some(profiling_info) = self.profiling_info {
+            match profiling_info {
+                ProfilingInfoStatus::Success(info) => println!("Profiling info:\n{}", info),
+                ProfilingInfoStatus::NotFound => println!("Warning: Profiling info not found."),
+            }
         }
     }
 
