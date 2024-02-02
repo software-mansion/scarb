@@ -66,11 +66,15 @@ impl CompilationUnit {
         component
     }
 
-    pub fn core_package_component(&self) -> &CompilationUnitComponent {
+    pub fn core_package_component(&self) -> Option<&CompilationUnitComponent> {
         // NOTE: This uses the order invariant of `component` field.
-        let component = &self.components[1];
-        assert!(component.package.id.is_core());
-        component
+        if self.components.len() < 2 {
+            None
+        } else {
+            let component = &self.components[1];
+            assert!(component.package.id.is_core());
+            Some(component)
+        }
     }
 
     pub fn target(&self) -> &Target {

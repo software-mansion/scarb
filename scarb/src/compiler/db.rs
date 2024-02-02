@@ -114,9 +114,9 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         ..Default::default()
     };
 
-    let corelib = Some(Directory::Real(
-        unit.core_package_component().target.source_root().into(),
-    ));
+    let corelib = unit
+        .core_package_component()
+        .map(|core| Directory::Real(core.target.source_root().into()));
 
     let content = ProjectConfigContent {
         crate_roots,
