@@ -231,6 +231,7 @@ pub struct PackageMetadata {
     pub manifest_metadata: ManifestMetadata,
 
     /// Compiler experimental features allowed for this package.
+    #[serde(default)]
     pub experimental_features: Vec<String>,
 
     /// Additional data not captured by deserializer.
