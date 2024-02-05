@@ -50,7 +50,7 @@ pub struct CompilationUnitComponent {
     /// Information about the specific target to build, out of the possible targets in `package`.
     pub target: Target,
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this component.
-    pub cfg_set: CfgSet,
+    pub cfg_set: Option<CfgSet>,
 }
 
 /// Information about a single package that is a compiler plugin to load for [`CompilationUnit`].

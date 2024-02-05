@@ -210,14 +210,14 @@ fn collect_compilation_unit_metadata(
                 .package(wrap_package_id(c.package.id))
                 .name(c.cairo_package_name())
                 .source_path(c.target.source_path.clone())
-                .cfg(c.cfg_set
+                .cfg(c.cfg_set.as_ref().map(|cfg_set| cfg_set
                     .iter()
                     .map(|cfg| {
-                        serde_json::to_value(cfg)
+                         serde_json::to_value(cfg)
                             .and_then(serde_json::from_value::<m::Cfg>)
                             .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
                     })
-                    .collect::<Vec<_>>())
+                    .collect::<Vec<_>>()))
                 .build()
                 .unwrap()
         })

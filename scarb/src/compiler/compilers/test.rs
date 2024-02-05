@@ -1,7 +1,5 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_filesystem::db::{CrateConfiguration, CrateSettings, FilesGroup, FilesGroupEx};
-use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_test_plugin::compile_test_prepared_db;
 use tracing::trace_span;
 
@@ -32,22 +30,6 @@ impl Compiler for TestCompiler {
             plugin.package.id.name == PackageName::STARKNET
                 && plugin.package.id.source_id == SourceId::for_std()
         });
-
-        for component in &unit.components {
-            let crate_id = db.intern_crate(CrateLongId::Real(component.cairo_package_name()));
-            if let Some(cfg) = db.crate_config(crate_id) {
-                db.set_crate_config(
-                    crate_id,
-                    Some(CrateConfiguration {
-                        root: cfg.root,
-                        settings: CrateSettings {
-                            cfg_set: Some(component.cfg_set.clone()),
-                            ..cfg.settings
-                        },
-                    }),
-                )
-            }
-        }
 
         let diagnostics_reporter = build_compiler_config(&unit, ws).diagnostics_reporter;
 

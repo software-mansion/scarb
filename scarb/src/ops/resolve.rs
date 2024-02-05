@@ -223,23 +223,16 @@ fn generate_cairo_compilation_units(
                     };
 
                     let cfg_set = {
-                        let package_name = package.id.name.to_smol_str();
-
-                        if package_name == main_component_name
-                            || package_name == "core"
-                            || package
-                                .manifest
-                                .targets
-                                .iter()
-                                .any(|target| target.kind == TargetKind::STARKNET_CONTRACT)
-                        {
-                            cfg_set.clone()
+                        if package.id.name.to_smol_str() == main_component_name {
+                            None
                         } else {
-                            cfg_set
-                                .iter()
-                                .filter(|cfg| cfg.key != "test")
-                                .cloned()
-                                .collect()
+                            Some(
+                                cfg_set
+                                    .iter()
+                                    .filter(|cfg| **cfg != Cfg::name("test"))
+                                    .cloned()
+                                    .collect(),
+                            )
                         }
                     };
 
@@ -269,7 +262,7 @@ fn generate_cairo_compilation_units(
                 // Add `lib` target for tested package, to be available as dependency.
                 components.push(CompilationUnitComponent {
                     package: member.clone(),
-                    cfg_set: cfg_set.clone(),
+                    cfg_set: None,
                     target,
                 });
 
