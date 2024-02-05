@@ -6,13 +6,13 @@ use anyhow::{bail, ensure, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use cairo_lang_semantic::db::SemanticGroup;
-use cairo_lang_starknet::allowed_libfuncs::{
-    validate_compatible_sierra_version, AllowedLibfuncsError, ListSelector,
-    BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST,
-};
-use cairo_lang_starknet::casm_contract_class::CasmContractClass;
+use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::{find_contracts, ContractDeclaration};
-use cairo_lang_starknet::contract_class::{compile_prepared_db, ContractClass};
+use cairo_lang_starknet_classes::allowed_libfuncs::{
+    AllowedLibfuncsError, ListSelector, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST,
+};
+use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
+use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_utils::{Upcast, UpcastMut};
 use indoc::{formatdoc, writedoc};
 use itertools::{izip, Itertools};
@@ -390,7 +390,7 @@ fn check_allowed_libfuncs(
 
     let mut found_disallowed = false;
     for (decl, class) in zip(contracts, classes) {
-        match validate_compatible_sierra_version(class, list_selector.clone()) {
+        match class.validate_version_compatible(list_selector.clone()) {
             Ok(()) => {}
 
             Err(AllowedLibfuncsError::UnsupportedLibfunc {
