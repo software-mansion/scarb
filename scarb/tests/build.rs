@@ -6,7 +6,8 @@ use indoc::indoc;
 use predicates::prelude::*;
 
 use scarb_build_metadata::CAIRO_VERSION;
-use scarb_test_support::command::Scarb;
+use scarb_metadata::Metadata;
+use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
@@ -818,4 +819,23 @@ fn warnings_can_be_disallowed() {
 
         error: could not compile [..] due to previous error
         "#});
+}
+
+#[test]
+fn can_compile_no_core_package() {
+    let t = TempDir::new().unwrap();
+    // Find path to corelib.
+    ProjectBuilder::start().name("hello").build(&t);
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let core = metadata.packages.iter().find(|p| p.name == "core").unwrap();
+    let core = core.root.clone();
+    // Compile corelib.
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(core)
+        .assert()
+        .success();
 }
