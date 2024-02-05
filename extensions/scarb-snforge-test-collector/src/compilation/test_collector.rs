@@ -159,7 +159,7 @@ pub fn collect_tests(
         })
         .collect();
 
-    let sierra_program = replace_sierra_ids_in_program(db, &sierra_program.0);
+    let sierra_program = replace_sierra_ids_in_program(db, &sierra_program.program);
 
     validate_tests(sierra_program.clone(), &collected_tests)?;
 
