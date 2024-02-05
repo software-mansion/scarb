@@ -5,6 +5,7 @@ use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
 use crate::compiler::{CompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent};
 use crate::core::lockfile::Lockfile;
@@ -262,6 +263,15 @@ fn generate_cairo_compilation_units(
         .collect::<Result<Vec<CompilationUnit>>>()
 }
 
+/// Properties that can be defined on Cairo plugin target.
+#[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(rename_all = "kebab-case")]
+struct CairoPluginProps {
+    /// Mark this macro plugin as builtin.
+    /// Builtin plugins are assumed to be available in `CairoPluginRepository` for the whole Scarb execution.
+    pub builtin: bool,
+}
+
 pub struct PackageSolutionCollector<'a> {
     member: &'a Package,
     resolve: &'a WorkspaceResolve,
@@ -342,8 +352,16 @@ impl<'a> PackageSolutionCollector<'a> {
 
         let cairo_plugins = cairo_plugins
             .into_iter()
-            .map(|package| CompilationUnitCairoPlugin { package })
-            .collect::<Vec<_>>();
+            .map(|package| {
+                // We can safely unwrap as all packages with `PackageClass::CairoPlugin` must define plugin target.
+                let target = package.target(&TargetKind::CAIRO_PLUGIN).unwrap();
+                let props: CairoPluginProps = target.props()?;
+                Ok(CompilationUnitCairoPlugin::builder()
+                    .package(package)
+                    .builtin(props.builtin)
+                    .build())
+            })
+            .collect::<Result<Vec<_>>>()?;
 
         Ok((packages, cairo_plugins))
     }
