@@ -351,9 +351,9 @@ pub struct CompilationUnitComponentMetadata {
     pub name: String,
     /// Path to the root Cairo source file.
     pub source_path: Utf8PathBuf,
-    /// CfgSet this component is compiled with
+    /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this component.
     ///
-    /// This will be Some when the set is different from the parent unit CfgSet
+    /// If not specified, the one from `CompilationUnit` will be used.
     #[serde(default)]
     pub cfg: Option<Vec<Cfg>>,
 

@@ -192,8 +192,6 @@ fn generate_cairo_compilation_units(
             let is_integration_test = props.test_type == TestTargetType::Integration;
             let test_package_id = member.id.for_test_target(member_target.name.clone());
 
-            let main_component_name = packages.iter().next().unwrap().id.name.to_smol_str();
-
             let mut components: Vec<CompilationUnitComponent> = packages
                 .iter()
                 .cloned()
@@ -223,16 +221,20 @@ fn generate_cairo_compilation_units(
                     };
 
                     let cfg_set = {
-                        if package.id.name.to_smol_str() == main_component_name {
+                        if package.id == member.id {
                             None
                         } else {
-                            Some(
-                                cfg_set
-                                    .iter()
-                                    .filter(|cfg| **cfg != Cfg::name("test"))
-                                    .cloned()
-                                    .collect(),
-                            )
+                            let component_cfg_set = cfg_set
+                                .iter()
+                                .filter(|cfg| **cfg != Cfg::name("test"))
+                                .cloned()
+                                .collect();
+
+                            if component_cfg_set != cfg_set {
+                                Some(component_cfg_set)
+                            } else {
+                                None
+                            }
                         }
                     };
 

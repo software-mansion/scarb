@@ -38,6 +38,8 @@ pub struct CompilationUnit {
     pub compiler_config: ManifestCompilerConfig,
 
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this unit.
+    ///
+    /// Each individual component can override this value.
     pub cfg_set: CfgSet,
 }
 
