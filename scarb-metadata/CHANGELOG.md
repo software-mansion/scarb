@@ -3,7 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
-- Fix backward compatibility of `experimental_features` field deserialization.
+
+## 1.11.1 (2024-02-06)
+Fix backward compatibility of `experimental_features` field deserialization.
 - Added `profile`, `dev` and `release` arguments to `MetadataCommand`.
 
 ## 1.11.0 (2024-01-31)
