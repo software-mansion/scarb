@@ -4645,6 +4645,7 @@ dependencies = [
  "cairo-lang-semantic",
  "cairo-lang-sierra",
  "cairo-lang-sierra-generator",
+ "cairo-lang-sierra-type-size",
  "cairo-lang-starknet",
  "cairo-lang-syntax",
  "cairo-lang-test-plugin",

@@ -2,8 +2,10 @@
 
 use cairo_lang_sierra::extensions::core::{CoreLibfunc, CoreType};
 use cairo_lang_sierra::extensions::ConcreteType;
+use cairo_lang_sierra::ids::{ConcreteTypeId, GenericTypeId};
 use cairo_lang_sierra::program::Function;
 use cairo_lang_sierra::program_registry::{ProgramRegistry, ProgramRegistryError};
+use cairo_lang_sierra_type_size::{get_type_size_map, TypeSizeMap};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -12,6 +14,8 @@ pub enum FinderError {
     MissingFunction { suffix: String },
     #[error(transparent)]
     ProgramRegistryError(#[from] Box<ProgramRegistryError>),
+    #[error("Unable to create TypeSizeMap.")]
+    TypeSizeMapError,
 }
 
 pub struct FunctionFinder {
@@ -19,6 +23,8 @@ pub struct FunctionFinder {
     sierra_program: cairo_lang_sierra::program::Program,
     /// Program registry for the Sierra program.
     sierra_program_registry: ProgramRegistry<CoreType, CoreLibfunc>,
+    // Mapping for the sizes of all types for sierra_program
+    type_size_map: TypeSizeMap,
 }
 
 #[allow(clippy::result_large_err)]
@@ -26,9 +32,13 @@ impl FunctionFinder {
     pub fn new(sierra_program: cairo_lang_sierra::program::Program) -> Result<Self, FinderError> {
         let sierra_program_registry =
             ProgramRegistry::<CoreType, CoreLibfunc>::new(&sierra_program)?;
+        let type_size_map = get_type_size_map(&sierra_program, &sierra_program_registry)
+            .ok_or(FinderError::TypeSizeMapError)?;
+
         Ok(Self {
             sierra_program,
             sierra_program_registry,
+            type_size_map,
         })
     }
 
@@ -56,5 +66,21 @@ impl FunctionFinder {
         ty: &cairo_lang_sierra::ids::ConcreteTypeId,
     ) -> &cairo_lang_sierra::extensions::types::TypeInfo {
         self.sierra_program_registry.get_type(ty).unwrap().info()
+    }
+
+    /// Converts array of `ConcreteTypeId`s into corresponding `GenericTypeId`s and their sizes
+    pub fn generic_id_and_size_from_concrete(
+        &self,
+        types: &[ConcreteTypeId],
+    ) -> Vec<(GenericTypeId, i16)> {
+        types
+            .iter()
+            .map(|pt| {
+                let info = self.get_info(pt);
+                let generic_id = &info.long_id.generic_id;
+                let size = self.type_size_map[pt];
+                (generic_id.clone(), size)
+            })
+            .collect()
     }
 }

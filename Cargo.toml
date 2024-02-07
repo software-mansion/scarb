@@ -48,6 +48,7 @@ cairo-lang-semantic = { git = "https://github.com/starkware-libs/cairo", rev = "
 cairo-lang-sierra = { git = "https://github.com/starkware-libs/cairo", rev = "c20ac70ca515de15692f2f514325abb84cc79152" }
 cairo-lang-sierra-generator = { git = "https://github.com/starkware-libs/cairo", rev = "c20ac70ca515de15692f2f514325abb84cc79152" }
 cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo", rev = "c20ac70ca515de15692f2f514325abb84cc79152" }
+cairo-lang-sierra-type-size = { git = "https://github.com/starkware-libs/cairo", rev = "c20ac70ca515de15692f2f514325abb84cc79152" }
 cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo", rev = "c20ac70ca515de15692f2f514325abb84cc79152" }
 cairo-lang-starknet-classes = { git = "https://github.com/starkware-libs/cairo", rev = "c20ac70ca515de15692f2f514325abb84cc79152" }
 cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo", rev = "c20ac70ca515de15692f2f514325abb84cc79152" }
