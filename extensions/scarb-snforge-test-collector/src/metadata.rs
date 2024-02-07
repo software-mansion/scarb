@@ -128,6 +128,9 @@ impl CompilationUnit<'_> {
                             negative_impls: pkg
                                 .experimental_features
                                 .contains(&String::from("negative_impls")),
+                            // TODO(maciektr): Fix corelib config and remove the override.
+                            coupons: pkg.name == "core"
+                                || pkg.experimental_features.contains(&String::from("coupons")),
                         },
                     },
                 )

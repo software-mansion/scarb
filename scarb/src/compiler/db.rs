@@ -93,7 +93,12 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
         .components
         .iter()
         .map(|component| {
-            let experimental_features = component.package.manifest.experimental_features.clone();
+            let experimental_features = component
+                .package
+                .manifest
+                .experimental_features
+                .clone()
+                .unwrap_or_default();
             (
                 component.cairo_package_name(),
                 CrateSettings {
@@ -102,8 +107,10 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
                     // TODO (#1040): replace this with a macro
                     experimental_features: cairo_lang_filesystem::db::ExperimentalFeaturesConfig {
                         negative_impls: experimental_features
-                            .unwrap_or_default()
                             .contains(&SmolStr::new_inline("negative_impls")),
+                        // TODO(maciektr): Fix corelib config and remove the override.
+                        coupons: component.package.id.is_core()
+                            || experimental_features.contains(&SmolStr::new_inline("coupons")),
                     },
                 },
             )

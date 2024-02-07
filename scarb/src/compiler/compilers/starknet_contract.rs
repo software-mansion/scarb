@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use tracing::{debug, trace, trace_span};
 
+use crate::compiler::compilers::MAX_BYTECODE_SIZE;
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
 use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
@@ -253,6 +254,7 @@ impl Compiler for StarknetContractCompiler {
                     let casm_class = CasmContractClass::from_contract_class(
                         class.clone(),
                         props.casm_add_pythonic_hints,
+                        MAX_BYTECODE_SIZE,
                     )
                     .with_context(|| {
                         format!("{contract_name}: failed to compile Sierra contract to CASM")

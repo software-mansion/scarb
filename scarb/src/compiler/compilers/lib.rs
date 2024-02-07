@@ -1,9 +1,11 @@
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::calc_metadata;
 use serde::{Deserialize, Serialize};
 use tracing::trace_span;
 
+use crate::compiler::compilers::MAX_BYTECODE_SIZE;
 use crate::compiler::helpers::{
     build_compiler_config, collect_main_crate_ids, write_json, write_string,
 };
@@ -97,7 +99,11 @@ impl Compiler for LibCompiler {
 
             let cairo_program = {
                 let _ = trace_span!("compile_casm").enter();
-                cairo_lang_sierra_to_casm::compiler::compile(&program, &metadata, gas_usage_check)?
+                let config = SierraToCasmConfig {
+                    gas_usage_check,
+                    max_bytecode_size: MAX_BYTECODE_SIZE,
+                };
+                cairo_lang_sierra_to_casm::compiler::compile(&program, &metadata, config)?
             };
 
             write_string(
