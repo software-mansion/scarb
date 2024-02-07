@@ -98,7 +98,7 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
                 component.cairo_package_name(),
                 CrateSettings {
                     edition: component.package.manifest.edition,
-                    cfg_set: None,
+                    cfg_set: component.cfg_set.clone(),
                     // TODO (#1040): replace this with a macro
                     experimental_features: cairo_lang_filesystem::db::ExperimentalFeaturesConfig {
                         negative_impls: experimental_features

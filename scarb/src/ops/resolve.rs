@@ -220,7 +220,29 @@ fn generate_cairo_compilation_units(
                         package
                     };
 
-                    CompilationUnitComponent { package, target }
+                    let cfg_set = {
+                        if package.id == member.id {
+                            None
+                        } else {
+                            let component_cfg_set = cfg_set
+                                .iter()
+                                .filter(|cfg| **cfg != Cfg::name("test"))
+                                .cloned()
+                                .collect();
+
+                            if component_cfg_set != cfg_set {
+                                Some(component_cfg_set)
+                            } else {
+                                None
+                            }
+                        }
+                    };
+
+                    CompilationUnitComponent {
+                        package,
+                        target,
+                        cfg_set,
+                    }
                 })
                 .collect();
 
@@ -242,6 +264,7 @@ fn generate_cairo_compilation_units(
                 // Add `lib` target for tested package, to be available as dependency.
                 components.push(CompilationUnitComponent {
                     package: member.clone(),
+                    cfg_set: None,
                     target,
                 });
 
