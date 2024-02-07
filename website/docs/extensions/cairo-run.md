@@ -15,8 +15,11 @@ The `main` function may take arguments. They can be passed to the `scarb cairo-r
 numbers, decimal bigints or recursive arrays of those. Nested arrays can translate to either Cairo arrays, tuples or
 plain structures. Consult the following table for example valid arguments and their matching function signatures:
 
-| Argument              | Function signature                      |
-| --------------------- | --------------------------------------- |
-| `[1]`                 | `fn main(a: u64)`                       |
-| `[1, "2"]`            | `fn main(a: u64, b: u64)`               |
-| `[[1, 2], [3, 4, 5]]` | `fn main(t: (u64, u64), v: Array<u64>)` |
+| Argument               | Function signature                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `[1]`                  | `fn main(a: u64)`                                                                                                               |
+| `[1, "2"]`             | `fn main(a: u64, b: u64)`                                                                                                       |
+| `[1, 2, [3, 4, 5]]`    | `fn main(t: (u64, u64), v: Array<u64>)`                                                                                         |
+| `[1, 2, 3, [3, 4, 5]]` | <pre>struct Input {<br/> a: felt252,<br/> b: felt252,<br/> c: felt252,<br/>}<br/>fn main(t: Input, v: Array\<u64>)</pre>        |
+| `[1, 2, 3, 4, 5]`      | <pre>struct Input {<br/> a: felt252,<br/> b: felt252,<br/> c: felt252,<br/>}<br/>fn main(t: Input, v: (felt252, felt252))</pre> |
+| `[[1, 2, 3]]`          | <pre>struct Input {<br/> a: Array\<felt252>,<br/>}<br/>fn main(t: Input)</pre>                                                  |

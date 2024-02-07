@@ -41,7 +41,7 @@ struct Args {
     ///
     /// This should be a JSON array of numbers, decimal bigints or recursive arrays of those. For example, pass `[1]`
     /// to the following function `fn main(a: u64)`, or pass `[1, "2"]` to `fn main(a: u64, b: u64)`,
-    /// or `[[1, 2], [3, 4, 5]]` to `fn main(t: (u64, u64), v: Array<u64>)`.
+    /// or `[1, 2, [3, 4, 5]]` to `fn main(t: (u64, u64), v: Array<u64>)`.
     #[arg(default_value = "[]")]
     arguments: deserialization::Args,
 }
