@@ -1,4 +1,5 @@
 use anyhow::{anyhow, ensure, Context, Result};
+use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{CrateSettings, Edition, ExperimentalFeaturesConfig};
 use cairo_lang_project::AllCratesConfig;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
@@ -112,7 +113,12 @@ impl CompilationUnit<'_> {
                 let pkg = self
                     .metadata
                     .get_package(&component.package)
-                    .unwrap_or_else(|| panic!("Failed to find = {} package", &component.package));
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "Failed to find = {} package",
+                            &component.package.to_string()
+                        )
+                    });
                 (
                     SmolStr::from(&component.name),
                     CrateSettings {
@@ -122,7 +128,7 @@ impl CompilationUnit<'_> {
                         } else {
                             Edition::default()
                         },
-                        cfg_set: None,
+                        cfg_set: component.cfg.clone().map(build_cfg_set),
                         // TODO (#1040): replace this with a macro
                         experimental_features: ExperimentalFeaturesConfig {
                             negative_impls: pkg
@@ -157,4 +163,12 @@ impl CompilationUnit<'_> {
     pub fn source_file_path(&self) -> &Utf8Path {
         &self.unit_metadata.target.source_path
     }
+}
+
+fn build_cfg_set(cfg: Vec<scarb_metadata::Cfg>) -> CfgSet {
+    CfgSet::from_iter(cfg.iter().map(|cfg| {
+        serde_json::to_value(cfg)
+            .and_then(serde_json::from_value::<Cfg>)
+            .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
+    }))
 }
