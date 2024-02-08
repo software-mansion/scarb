@@ -6,7 +6,9 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{FreeFunctionId, FunctionWithBodyId, ModuleId, ModuleItemId};
 use cairo_lang_diagnostics::ToOption;
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
-use cairo_lang_filesystem::db::{AsFilesGroupMut, CrateConfiguration, FilesGroup, FilesGroupEx};
+use cairo_lang_filesystem::db::{
+    AsFilesGroupMut, CrateConfiguration, CrateSettings, FilesGroup, FilesGroupEx,
+};
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId, Directory};
 use cairo_lang_lowering::ids::ConcreteFunctionWithBodyId;
 use cairo_lang_project::{ProjectConfig, ProjectConfigContent};
@@ -107,8 +109,14 @@ pub fn collect_tests(
         b.build()?
     };
 
-    let main_crate_id =
-        insert_lib_entrypoint_content_into_db(db, crate_name, crate_root, lib_content);
+    let main_package_crate_settings = compilation_unit.main_package_crate_settings();
+    let main_crate_id = insert_lib_entrypoint_content_into_db(
+        db,
+        crate_name,
+        crate_root,
+        lib_content,
+        main_package_crate_settings,
+    );
 
     if build_diagnostics_reporter(compilation_unit).check(db) {
         return Err(anyhow!(
@@ -180,13 +188,15 @@ fn insert_lib_entrypoint_content_into_db(
     crate_name: &str,
     crate_root: &Path,
     lib_content: &str,
+    main_package_crate_settings: CrateSettings,
 ) -> CrateId {
     let main_crate_id = db.intern_crate(CrateLongId::Real(SmolStr::from(crate_name)));
     db.set_crate_config(
         main_crate_id,
-        Some(CrateConfiguration::default_for_root(Directory::Real(
-            crate_root.to_path_buf(),
-        ))),
+        Some(CrateConfiguration {
+            root: Directory::Real(crate_root.to_path_buf()),
+            settings: main_package_crate_settings,
+        }),
     );
 
     let module_id = ModuleId::CrateRoot(main_crate_id);
