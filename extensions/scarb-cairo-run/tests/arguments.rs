@@ -50,12 +50,15 @@ fn invalid_number_of_args() {
     Scarb::quick_snapbox()
         .arg("cairo-run")
         .arg("--")
-        .arg(r#"[2, 1, 3, 7]"#)
+        .arg(r#"[0, 1, 2, 3]"#)
         .current_dir(&t)
         .assert()
         .failure()
-        .stderr_matches(indoc! {r#"
-            Error: failed to run the function
+        .stdout_matches(indoc! {r#"
+               Compiling hello v0.1.0 ([..]/Scarb.toml)
+                Finished release target(s) in [..]
+                 Running hello
+            error: failed to run the function
 
             Caused by:
                 Function expects arguments of size 3 and received 4 instead.
@@ -74,8 +77,11 @@ fn array_instead_of_felt() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stderr_matches(indoc! {r#"
-            Error: failed to run the function
+        .stdout_matches(indoc! {r#"
+               Compiling hello v0.1.0 ([..]Scarb.toml)
+                Finished release target(s) in [..] seconds
+                 Running hello
+            error: failed to run the function
 
             Caused by:
                 Function param 2 only partially contains argument 2.
@@ -91,6 +97,7 @@ fn invalid_string_instead_of_felt() {
         .arg("cairo-run")
         .arg("--")
         .arg(r#"[0, 1, "asdf"]"#)
+        .env("SCARB_LOG", "error")
         .current_dir(&t)
         .assert()
         .failure()
@@ -201,8 +208,11 @@ fn invalid_struct_deserialization() {
         .assert()
         .failure()
         // Received 2, because arrays in Cairo are represented as [begin_addr, end_addr]
-        .stderr_matches(indoc! {r#"
-            Error: failed to run the function
+        .stdout_matches(indoc! {r#"
+               Compiling hello v0.1.0 ([..]Scarb.toml)
+                Finished release target(s) in [..] seconds
+                 Running hello
+            error: failed to run the function
 
             Caused by:
                 Function expects arguments of size 3 and received 2 instead.

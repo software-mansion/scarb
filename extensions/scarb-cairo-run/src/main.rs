@@ -47,10 +47,18 @@ struct Args {
 }
 
 fn main() -> Result<()> {
+    let ui = Ui::new(Verbosity::default(), OutputFormat::Text);
+
+    if let Err(err) = main_inner(&ui) {
+        ui.anyhow(&err);
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+fn main_inner(ui: &Ui) -> Result<()> {
     let args: Args = Args::parse();
     let available_gas = GasLimit::parse(args.available_gas);
-
-    let ui = Ui::new(Verbosity::default(), OutputFormat::Text);
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
@@ -109,7 +117,7 @@ fn main() -> Result<()> {
             available_gas.value(),
             StarknetState::default(),
         )
-        .context("failed to run the function")?;
+        .with_context(|| "failed to run the function")?;
 
     ui.print(Summary {
         result,
