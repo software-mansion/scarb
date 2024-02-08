@@ -3,6 +3,7 @@ use std::hash::{Hash, Hasher};
 
 use cairo_lang_filesystem::cfg::CfgSet;
 use smol_str::SmolStr;
+use typed_builder::TypedBuilder;
 
 use crate::compiler::Profile;
 use crate::core::{ManifestCompilerConfig, Package, PackageId, Target, Workspace};
@@ -37,6 +38,8 @@ pub struct CompilationUnit {
     pub compiler_config: ManifestCompilerConfig,
 
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this unit.
+    ///
+    /// Each individual component can override this value.
     pub cfg_set: CfgSet,
 }
 
@@ -48,14 +51,17 @@ pub struct CompilationUnitComponent {
     pub package: Package,
     /// Information about the specific target to build, out of the possible targets in `package`.
     pub target: Target,
+    /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this component.
+    pub cfg_set: Option<CfgSet>,
 }
 
 /// Information about a single package that is a compiler plugin to load for [`CompilationUnit`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, TypedBuilder)]
 #[non_exhaustive]
 pub struct CompilationUnitCairoPlugin {
     /// The Scarb plugin [`Package`] to load.
     pub package: Package,
+    pub builtin: bool,
 }
 
 impl CompilationUnit {
@@ -66,11 +72,15 @@ impl CompilationUnit {
         component
     }
 
-    pub fn core_package_component(&self) -> &CompilationUnitComponent {
+    pub fn core_package_component(&self) -> Option<&CompilationUnitComponent> {
         // NOTE: This uses the order invariant of `component` field.
-        let component = &self.components[1];
-        assert!(component.package.id.is_core());
-        component
+        if self.components.len() < 2 {
+            None
+        } else {
+            let component = &self.components[1];
+            assert!(component.package.id.is_core());
+            Some(component)
+        }
     }
 
     pub fn target(&self) -> &Target {

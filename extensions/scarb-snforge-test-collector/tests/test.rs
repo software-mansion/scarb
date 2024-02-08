@@ -371,3 +371,47 @@ fn uses_dev_dependencies() {
         .assert()
         .success();
 }
+
+#[test]
+fn does_not_compile_tests_in_dependencies() {
+    let t = TempDir::new().unwrap();
+    let q = t.child("q");
+    ProjectBuilder::start()
+        .name("q")
+        .lib_cairo(indoc! {r#"
+            #[cfg(test)]
+            fn dev_dep_function() -> felt252 { 42 }
+        "#})
+        .build(&q);
+
+    ProjectBuilder::start()
+        .name("x")
+        .dev_dep("q", &q)
+        .lib_cairo(indoc! {r#"
+            #[cfg(test)]
+            mod tests {
+                use q::dev_dep_function;
+
+                #[test]
+                fn test() {
+                    assert(dev_dep_function() == 42, '');
+                }
+            }
+        "#})
+        .build(&t);
+
+    let output = Scarb::quick_snapbox()
+        .arg("snforge-test-collector")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(stderr.contains(indoc! {r#"
+        use q::dev_dep_function;
+               ^**************^
+
+    Error: Failed to compile test artifact, for detailed information go through the logs above
+    "#}));
+}

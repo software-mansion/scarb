@@ -231,6 +231,7 @@ pub struct PackageMetadata {
     pub manifest_metadata: ManifestMetadata,
 
     /// Compiler experimental features allowed for this package.
+    #[serde(default)]
     pub experimental_features: Vec<String>,
 
     /// Additional data not captured by deserializer.
@@ -350,6 +351,11 @@ pub struct CompilationUnitComponentMetadata {
     pub name: String,
     /// Path to the root Cairo source file.
     pub source_path: Utf8PathBuf,
+    /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this component.
+    ///
+    /// If not specified, the one from `CompilationUnit` will be used.
+    #[serde(default)]
+    pub cfg: Option<Vec<Cfg>>,
 
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]

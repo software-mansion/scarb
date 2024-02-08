@@ -55,6 +55,19 @@ jobs:
       - name: nextest partition ${{ matrix.partition }}/8
         run: cargo nextest run --partition 'count:${{ matrix.partition }}/8' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
 
+  scarb-metadata-compatibility:
+    name: scarb-metadata compatibility check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.3.0"
+      - run: echo "SCARB_TEST_BIN=$(which scarb)" >> $GITHUB_ENV
+      - name: run tests
+        run: cargo test -p scarb-metadata
+
   check-rust:
     runs-on: ubuntu-latest
     steps:
