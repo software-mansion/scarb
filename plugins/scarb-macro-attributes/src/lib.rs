@@ -9,7 +9,7 @@ use syn::{parse_macro_input, ItemFn};
 /// # Safety
 /// Note that token stream deserialization may fail.
 #[proc_macro_attribute]
-pub fn inline_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
     let item: ItemFn = parse_macro_input!(input as ItemFn);
     let item_name = &item.sig.ident;
     let expanded = quote! {
@@ -17,7 +17,7 @@ pub fn inline_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
 
         #[no_mangle]
         pub unsafe extern "C" fn expand(token_stream: scarb_macro_interface::stable_abi::StableTokenStream) -> scarb_macro_interface::stable_abi::StableProcMacroResult {
-            let token_stream = token_stream.to_token_stream();
+            let token_stream = token_stream.into_token_stream();
             let result = #item_name(token_stream);
             scarb_macro_interface::stable_abi::StableProcMacroResult::from_proc_macro_result(result)
         }
