@@ -6,7 +6,8 @@ use indoc::indoc;
 use predicates::prelude::*;
 
 use scarb_build_metadata::CAIRO_VERSION;
-use scarb_test_support::command::Scarb;
+use scarb_metadata::Metadata;
+use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
@@ -759,6 +760,48 @@ fn dev_dep_inside_test() {
 }
 
 #[test]
+fn build_test_without_compiling_tests_from_dependencies() {
+    let t = TempDir::new().unwrap();
+    let q = t.child("q");
+    ProjectBuilder::start()
+        .name("q")
+        .lib_cairo(indoc! {r#"
+            fn dev_dep_function() -> felt252 { 42 }
+
+            #[cfg(test)]
+            mod tests {
+                use missing::func;
+            }
+        "#})
+        .build(&q);
+    ProjectBuilder::start()
+        .name("x")
+        .dev_dep("q", &q)
+        .lib_cairo(indoc! {r#"
+            #[cfg(test)]
+            mod tests {
+                use q::dev_dep_function;
+
+                fn it_works() {
+                    dev_dep_function();
+                }
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling test(x_unittest) x v1.0.0 ([..])
+            [..]  Finished release target(s) in [..]
+        "#});
+}
+
+#[test]
 fn warnings_allowed_by_default() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -818,4 +861,23 @@ fn warnings_can_be_disallowed() {
 
         error: could not compile [..] due to previous error
         "#});
+}
+
+#[test]
+fn can_compile_no_core_package() {
+    let t = TempDir::new().unwrap();
+    // Find path to corelib.
+    ProjectBuilder::start().name("hello").build(&t);
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let core = metadata.packages.iter().find(|p| p.name == "core").unwrap();
+    let core = core.root.clone();
+    // Compile corelib.
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(core)
+        .assert()
+        .success();
 }

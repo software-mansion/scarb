@@ -25,9 +25,9 @@ pub fn collect_test_compilation_targets(
     package_path: &Utf8Path,
     compilation_unit: &CompilationUnit,
 ) -> Result<Vec<TestCompilationTarget>> {
-    let package_source_file_path = compilation_unit.source_file_path();
+    let package_source_file_path = compilation_unit.main_package_source_file_path();
     let mut compilation_targets = vec![TestCompilationTarget {
-        crate_root: compilation_unit.source_root(),
+        crate_root: compilation_unit.main_package_source_root(),
         crate_name: package_name.to_string(),
         crate_location: CrateLocation::Lib,
         lib_content: std::fs::read_to_string(package_source_file_path)

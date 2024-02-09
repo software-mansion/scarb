@@ -1,10 +1,13 @@
 use anyhow::{anyhow, ensure, Context, Result};
+use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{CrateSettings, Edition, ExperimentalFeaturesConfig};
 use cairo_lang_project::AllCratesConfig;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
-use scarb_metadata::{CompilationUnitMetadata, Metadata, PackageMetadata};
+use scarb_metadata::{
+    CompilationUnitComponentMetadata, CompilationUnitMetadata, Metadata, PackageMetadata,
+};
 use serde_json::json;
 use smol_str::SmolStr;
 use std::path::PathBuf;
@@ -66,14 +69,29 @@ pub fn compilation_unit_for_package<'a>(
         );
     }
 
+    let main_package_metadata = unit_test_cu
+        .components
+        .iter()
+        .find(|comp| comp.package == package_metadata.id)
+        .into_iter()
+        .collect_vec();
+
+    assert_eq!(
+        main_package_metadata.len(),
+        1,
+        "More than one cu component with main package id found"
+    );
+
     Ok(CompilationUnit {
         unit_metadata: unit_test_cu,
+        main_package_metadata: main_package_metadata[0],
         metadata,
     })
 }
 
 pub struct CompilationUnit<'a> {
     unit_metadata: &'a CompilationUnitMetadata,
+    main_package_metadata: &'a CompilationUnitComponentMetadata,
     metadata: &'a Metadata,
 }
 
@@ -112,24 +130,15 @@ impl CompilationUnit<'_> {
                 let pkg = self
                     .metadata
                     .get_package(&component.package)
-                    .unwrap_or_else(|| panic!("Failed to find = {} package", &component.package));
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "Failed to find = {} package",
+                            &component.package.to_string()
+                        )
+                    });
                 (
                     SmolStr::from(&component.name),
-                    CrateSettings {
-                        edition: if let Some(edition) = pkg.edition.clone() {
-                            let edition_value = serde_json::Value::String(edition);
-                            serde_json::from_value(edition_value).unwrap()
-                        } else {
-                            Edition::default()
-                        },
-                        cfg_set: None,
-                        // TODO (#1040): replace this with a macro
-                        experimental_features: ExperimentalFeaturesConfig {
-                            negative_impls: pkg
-                                .experimental_features
-                                .contains(&String::from("negative_impls")),
-                        },
-                    },
+                    get_crate_settings_for_package(pkg, component.cfg.clone().map(build_cfg_set)),
                 )
             })
             .collect();
@@ -150,11 +159,55 @@ impl CompilationUnit<'_> {
             .unwrap_or(true)
     }
 
-    pub fn source_root(&self) -> Utf8PathBuf {
-        self.unit_metadata.target.source_root().to_path_buf()
+    pub fn main_package_source_root(&self) -> Utf8PathBuf {
+        self.main_package_metadata.source_root().to_path_buf()
     }
 
-    pub fn source_file_path(&self) -> &Utf8Path {
-        &self.unit_metadata.target.source_path
+    pub fn main_package_source_file_path(&self) -> &Utf8Path {
+        &self.main_package_metadata.source_path
     }
+
+    pub fn main_package_crate_settings(&self) -> CrateSettings {
+        let package = self
+            .metadata
+            .packages
+            .iter()
+            .find(|package| package.id == self.main_package_metadata.package)
+            .expect("Main package not found in metadata");
+
+        get_crate_settings_for_package(package, None)
+    }
+}
+
+fn get_crate_settings_for_package(
+    package: &PackageMetadata,
+    cfg_set: Option<CfgSet>,
+) -> CrateSettings {
+    let edition = package
+        .edition
+        .clone()
+        .map_or(Edition::default(), |edition| {
+            let edition_value = serde_json::Value::String(edition);
+            serde_json::from_value(edition_value).unwrap()
+        });
+    // TODO (#1040): replace this with a macro
+    let experimental_features = ExperimentalFeaturesConfig {
+        negative_impls: package
+            .experimental_features
+            .contains(&String::from("negative_impls")),
+    };
+
+    CrateSettings {
+        edition,
+        cfg_set,
+        experimental_features,
+    }
+}
+
+fn build_cfg_set(cfg: Vec<scarb_metadata::Cfg>) -> CfgSet {
+    CfgSet::from_iter(cfg.iter().map(|cfg| {
+        serde_json::to_value(cfg)
+            .and_then(serde_json::from_value::<Cfg>)
+            .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
+    }))
 }
