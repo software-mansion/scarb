@@ -55,8 +55,8 @@ fn build_can_be_skipped() {
         .current_dir(example)
         .assert()
         .failure()
-        .stderr_eq(indoc! {r#"
-            Error: package has not been compiled, file does not exist: hello_world.sierra.json
+        .stdout_eq(indoc! {r#"
+            error: package has not been compiled, file does not exist: hello_world.sierra.json
             help: run `scarb build` to compile the package
 
         "#});
@@ -117,7 +117,10 @@ fn can_disable_gas() {
         .current_dir(example)
         .assert()
         .failure()
-        .stderr_eq(indoc! {r#"
-            Error: program requires gas counter, please provide `--available-gas` argument
+        .stdout_matches(indoc! {r#"
+               Compiling hello_world v0.1.0 ([..]Scarb.toml)
+                Finished release target(s) in [..] seconds
+                 Running hello_world
+            error: program requires gas counter, please provide `--available-gas` argument
         "#});
 }
