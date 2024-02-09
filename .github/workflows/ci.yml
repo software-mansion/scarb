@@ -19,10 +19,15 @@ jobs:
             os: ubuntu-latest
           - name: windows x86-64
             os: windows-latest
+    env:
+      RUSTC_WRAPPER: sccache
+      SCCACHE_GHA_ENABLED: true
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+        # TODO here
+#      - uses: Swatinem/rust-cache@v2
+      - uses: mozilla-actions/sccache-action@v0.0.4
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
         run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
@@ -57,10 +62,15 @@ jobs:
 
   check-rust:
     runs-on: ubuntu-latest
+    env:
+      RUSTC_WRAPPER: sccache
+      SCCACHE_GHA_ENABLED: true
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+        # TODO here
+#      - uses: Swatinem/rust-cache@v2
+      - uses: mozilla-actions/sccache-action@v0.0.4
       - run: cargo fmt --check
       - run: cargo clippy --all-targets --all-features -- --no-deps
         env:
