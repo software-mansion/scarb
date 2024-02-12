@@ -1,0 +1,19 @@
+[package]
+name = "scarb-macro-interface"
+version = "0.0.1"
+edition.workspace = true
+
+authors.workspace = true
+categories = ["development-tools"]
+description = "Cairo procedural macro interface primitives."
+homepage.workspace = true
+keywords = ["scarb"]
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+libc.workspace = true
