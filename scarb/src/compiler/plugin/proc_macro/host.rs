@@ -2,15 +2,17 @@ use crate::compiler::plugin::proc_macro::{FromItemAst, ProcMacroInstance};
 use crate::core::{Config, Package, PackageId};
 use anyhow::Result;
 use cairo_lang_defs::plugin::{
-    MacroPlugin, MacroPluginMetadata, PluginGeneratedFile, PluginResult,
+    DynGeneratedFileAuxData, GeneratedFileAuxData, MacroPlugin, MacroPluginMetadata,
+    PluginGeneratedFile, PluginResult,
 };
-use cairo_lang_macro::{ProcMacroResult, TokenStream};
+use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream};
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::attribute::structured::AttributeListStructurize;
 use cairo_lang_syntax::node::ast;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use itertools::Itertools;
 use smol_str::SmolStr;
+use std::any::Any;
 use std::sync::Arc;
 
 /// A Cairo compiler plugin controlling the procedural macro execution.
@@ -40,6 +42,19 @@ pub struct ProcMacroInput {
     pub id: ProcMacroId,
     pub kind: ProcMacroKind,
     pub macro_package_id: PackageId,
+}
+
+#[derive(Debug)]
+pub struct ProcMacroAuxData(serde_json::Value);
+
+impl GeneratedFileAuxData for ProcMacroAuxData {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn eq(&self, other: &dyn GeneratedFileAuxData) -> bool {
+        self.0 == other.as_any().downcast_ref::<Self>().unwrap().0
+    }
 }
 
 impl ProcMacroHostPlugin {
@@ -122,6 +137,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
             .chain(self.handle_derive(db, item_ast.clone()));
 
         let mut token_stream = TokenStream::from_item_ast(db, item_ast);
+        let mut aux_data: Option<AuxData> = None;
         let mut modified = false;
         for input in expansions {
             let instance = self
@@ -130,8 +146,12 @@ impl MacroPlugin for ProcMacroHostPlugin {
                 .find(|m| m.package_id() == input.macro_package_id)
                 .expect("procedural macro must be registered in proc macro host");
             match instance.generate_code(token_stream.clone()) {
-                ProcMacroResult::Replace(new_token_stream) => {
+                ProcMacroResult::Replace {
+                    token_stream: new_token_stream,
+                    aux_data: new_aux_data,
+                } => {
                     token_stream = new_token_stream;
+                    aux_data = new_aux_data;
                     modified = true;
                 }
                 ProcMacroResult::Remove => {
@@ -150,7 +170,8 @@ impl MacroPlugin for ProcMacroHostPlugin {
                     name: "proc_macro".into(),
                     content: token_stream.to_string(),
                     code_mappings: Default::default(),
-                    aux_data: Default::default(),
+                    aux_data: aux_data
+                        .map(|ad| DynGeneratedFileAuxData::new(ProcMacroAuxData(ad.to_value()))),
                 }),
                 diagnostics: Vec::new(),
                 remove_original_item: true,
