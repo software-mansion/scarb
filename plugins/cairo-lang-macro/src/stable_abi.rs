@@ -1,4 +1,4 @@
-use crate::{ProcMacroResult, TokenStream};
+use crate::{AuxData, ProcMacroResult, TokenStream};
 use std::ffi::CString;
 use std::os::raw::c_char;
 
@@ -9,6 +9,16 @@ use std::os::raw::c_char;
 #[derive(Debug)]
 pub struct StableTokenStream(pub *mut c_char);
 
+/// Auxiliary data returned by procedural macro.
+///
+/// This struct implements FFI-safe stable ABI.
+#[repr(C)]
+#[derive(Debug)]
+pub enum StableAuxData {
+    None,
+    Some(*mut c_char),
+}
+
 /// Procedural macro result.
 ///
 /// This struct implements FFI-safe stable ABI.
@@ -18,7 +28,10 @@ pub enum StableProcMacroResult {
     /// Plugin has not taken any action.
     Leave,
     /// Plugin generated [`TokenStream`] replacement.
-    Replace(StableTokenStream),
+    Replace {
+        token_stream: StableTokenStream,
+        aux_data: StableAuxData,
+    },
     /// Plugin ordered item removal.
     Remove,
 }
@@ -28,12 +41,7 @@ impl StableTokenStream {
     ///
     /// # Safety
     pub unsafe fn to_string(&self) -> String {
-        if self.0.is_null() {
-            String::default()
-        } else {
-            let cstr = CString::from_raw(self.0);
-            cstr.to_string_lossy().to_string()
-        }
+        raw_to_string(self.0)
     }
 
     /// Convert to native Rust representation.
@@ -52,6 +60,24 @@ impl StableTokenStream {
     }
 }
 
+impl StableAuxData {
+    pub unsafe fn into_aux_data(self) -> Result<Option<AuxData>, serde_json::Error> {
+        match self {
+            Self::None => Ok(None),
+            Self::Some(raw) => Some(AuxData::try_new(raw_to_string(raw))).transpose(),
+        }
+    }
+
+    pub unsafe fn from_aux_data(aux_data: Option<AuxData>) -> Self {
+        if let Some(aux_data) = aux_data {
+            let cstr = CString::new(aux_data.0.to_string()).unwrap();
+            StableAuxData::Some(cstr.into_raw())
+        } else {
+            StableAuxData::None
+        }
+    }
+}
+
 impl StableProcMacroResult {
     /// Convert to native Rust representation.
     ///
@@ -60,9 +86,13 @@ impl StableProcMacroResult {
         match self {
             Self::Leave => ProcMacroResult::Leave,
             Self::Remove => ProcMacroResult::Remove,
-            Self::Replace(token_stream) => {
-                ProcMacroResult::Replace(token_stream.into_token_stream())
-            }
+            Self::Replace {
+                token_stream,
+                aux_data,
+            } => ProcMacroResult::Replace {
+                token_stream: token_stream.into_token_stream(),
+                aux_data: aux_data.into_aux_data().unwrap(),
+            },
         }
     }
 
@@ -73,9 +103,22 @@ impl StableProcMacroResult {
         match result {
             ProcMacroResult::Leave => StableProcMacroResult::Leave,
             ProcMacroResult::Remove => StableProcMacroResult::Remove,
-            ProcMacroResult::Replace(token_stream) => {
-                StableProcMacroResult::Replace(StableTokenStream::from_token_stream(token_stream))
-            }
+            ProcMacroResult::Replace {
+                token_stream,
+                aux_data,
+            } => StableProcMacroResult::Replace {
+                token_stream: StableTokenStream::from_token_stream(token_stream),
+                aux_data: StableAuxData::from_aux_data(aux_data),
+            },
         }
+    }
+}
+
+unsafe fn raw_to_string(raw: *mut c_char) -> String {
+    if raw.is_null() {
+        String::default()
+    } else {
+        let cstr = CString::from_raw(raw);
+        cstr.to_string_lossy().to_string()
     }
 }
