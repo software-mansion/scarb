@@ -725,6 +725,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-lang-macro-attributes"
+version = "0.0.1"
+dependencies = [
+ "camino",
+ "quote",
+ "syn 2.0.48",
+]
+
+[[package]]
+name = "cairo-lang-macro-interface"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "cairo-lang-macro-attributes",
+ "libc",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "cairo-lang-parser"
 version = "2.5.3"
 source = "git+https://github.com/starkware-libs/cairo?rev=c20ac70ca515de15692f2f514325abb84cc79152#c20ac70ca515de15692f2f514325abb84cc79152"
@@ -4450,6 +4470,7 @@ dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
+ "cairo-lang-macro-interface",
  "cairo-lang-semantic",
  "cairo-lang-sierra",
  "cairo-lang-sierra-to-casm",
@@ -4486,7 +4507,6 @@ dependencies = [
  "redb",
  "reqwest",
  "scarb-build-metadata",
- "scarb-macro-interface",
  "scarb-metadata 1.11.1",
  "scarb-test-support",
  "scarb-ui",
@@ -4578,25 +4598,6 @@ dependencies = [
  "serde_json",
  "snapbox",
  "test-for-each-example",
-]
-
-[[package]]
-name = "scarb-macro-attributes"
-version = "0.0.1"
-dependencies = [
- "camino",
- "quote",
- "syn 2.0.48",
-]
-
-[[package]]
-name = "scarb-macro-interface"
-version = "0.0.1"
-dependencies = [
- "anyhow",
- "libc",
- "serde",
- "serde_json",
 ]
 
 [[package]]

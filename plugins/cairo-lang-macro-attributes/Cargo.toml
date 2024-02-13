@@ -1,5 +1,5 @@
 [package]
-name = "scarb-macro-interface"
+name = "cairo-lang-macro-attributes"
 version = "0.0.1"
 edition.workspace = true
 
@@ -12,8 +12,10 @@ license.workspace = true
 readme = "README.md"
 repository.workspace = true
 
+[lib]
+proc-macro = true
+
 [dependencies]
-anyhow.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-libc.workspace = true
+camino.workspace = true
+quote.workspace = true
+syn = { workspace = true, features = ["full", "extra-traits"] }
