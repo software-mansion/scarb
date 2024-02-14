@@ -18,6 +18,7 @@ updates:
           - "*"
         exclude-patterns:
           - "cairo-lang-*"
+          - "cairo-felt"
           - "deno_task_shell"
           - "gix"
           - "semver"
