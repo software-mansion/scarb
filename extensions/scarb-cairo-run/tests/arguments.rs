@@ -47,14 +47,27 @@ fn invalid_number_of_args() {
     let t = TempDir::new().unwrap();
     setup_fib_three_felt_args(&t);
 
-    Scarb::quick_snapbox()
+    let snapbox = Scarb::quick_snapbox()
         .arg("cairo-run")
         .arg("--")
         .arg(r#"[0, 1, 2, 3]"#)
         .current_dir(&t)
         .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
+        .failure();
+
+    #[cfg(windows)]
+    snapbox.stdout_matches(indoc! {r#"
+               Compiling hello v0.1.0 ([..]/Scarb.toml)
+                Finished release target(s) in [..]
+                 Running hello
+            error: failed to run the function
+
+            Caused by:
+                Function expects arguments of size 3 and received 4 instead.
+            error: process did not exit successfully: exit code: 1
+        "#});
+    #[cfg(not(windows))]
+    snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]/Scarb.toml)
                 Finished release target(s) in [..]
                  Running hello
