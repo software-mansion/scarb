@@ -17,6 +17,7 @@ use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::{ConcreteFunction, FunctionLongId};
 use cairo_lang_sierra::extensions::enm::EnumType;
 use cairo_lang_sierra::extensions::NamedType;
+use cairo_lang_sierra::ids::GenericTypeId;
 use cairo_lang_sierra::program::{GenericArg, Program};
 use cairo_lang_sierra_generator::db::SierraGenGroup;
 use cairo_lang_sierra_generator::replace_ids::replace_sierra_ids_in_program;
@@ -74,6 +75,14 @@ pub struct TestCaseRaw {
     pub expected_result: ExpectedTestResult,
     pub fork_config: Option<RawForkConfig>,
     pub fuzzer_config: Option<FuzzerConfig>,
+    pub test_details: TestDetails,
+}
+
+#[derive(Debug, PartialEq, Clone, Serialize)]
+pub struct TestDetails {
+    pub entry_point_offset: usize,
+    pub parameter_types: Vec<(GenericTypeId, i16)>,
+    pub return_types: Vec<(GenericTypeId, i16)>,
 }
 
 pub fn collect_tests(
@@ -138,6 +147,9 @@ pub fn collect_tests(
         .context("Compilation failed without any diagnostics")
         .context("Failed to get sierra program")?;
 
+    let sierra_program = replace_sierra_ids_in_program(db, &sierra_program.program);
+    let function_finder = FunctionFinder::new(sierra_program.clone())?;
+
     let collected_tests = all_tests
         .into_iter()
         .map(|(func_id, test)| {
@@ -157,21 +169,37 @@ pub fn collect_tests(
         })
         .collect_vec()
         .into_iter()
-        .map(|(test_name, config)| TestCaseRaw {
-            name: test_name,
-            available_gas: config.available_gas,
-            ignored: config.ignored,
-            expected_result: config.expected_result,
-            fork_config: config.fork_config,
-            fuzzer_config: config.fuzzer_config,
+        .map(|(test_name, config)| {
+            let test_details = build_test_details(&function_finder, &test_name).unwrap();
+            TestCaseRaw {
+                name: test_name,
+                available_gas: config.available_gas,
+                ignored: config.ignored,
+                expected_result: config.expected_result,
+                fork_config: config.fork_config,
+                fuzzer_config: config.fuzzer_config,
+                test_details,
+            }
         })
         .collect();
 
-    let sierra_program = replace_sierra_ids_in_program(db, &sierra_program.program);
-
-    validate_tests(sierra_program.clone(), &collected_tests)?;
+    validate_tests(&function_finder, &collected_tests)?;
 
     Ok((sierra_program, collected_tests))
+}
+
+fn build_test_details(function_finder: &FunctionFinder, test_name: &str) -> Result<TestDetails> {
+    let func = function_finder.find_function(test_name)?;
+
+    let parameter_types =
+        function_finder.generic_id_and_size_from_concrete(&func.signature.param_types);
+    let return_types = function_finder.generic_id_and_size_from_concrete(&func.signature.ret_types);
+
+    Ok(TestDetails {
+        entry_point_offset: func.entry_point.0,
+        parameter_types,
+        return_types,
+    })
 }
 
 fn build_diagnostics_reporter(compilation_unit: &CompilationUnit) -> DiagnosticsReporter<'static> {
@@ -208,13 +236,9 @@ fn insert_lib_entrypoint_content_into_db(
 }
 
 fn validate_tests(
-    sierra_program: Program,
+    function_finder: &FunctionFinder,
     collected_tests: &Vec<TestCaseRaw>,
 ) -> Result<(), anyhow::Error> {
-    let function_finder = match FunctionFinder::new(sierra_program) {
-        Ok(casm_generator) => casm_generator,
-        Err(e) => panic!("{}", e),
-    };
     for test in collected_tests {
         let func = function_finder.find_function(&test.name)?;
         let signature = &func.signature;
