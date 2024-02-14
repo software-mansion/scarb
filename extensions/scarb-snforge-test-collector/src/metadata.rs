@@ -1,4 +1,5 @@
 use anyhow::{anyhow, ensure, Context, Result};
+use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{CrateSettings, Edition, ExperimentalFeaturesConfig};
 use cairo_lang_project::AllCratesConfig;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
@@ -189,6 +190,9 @@ fn get_crate_settings_for_package(
         negative_impls: package
             .experimental_features
             .contains(&String::from("negative_impls")),
+        coupons: package
+            .experimental_features
+            .contains(&String::from("coupons")),
     };
 
     CrateSettings {

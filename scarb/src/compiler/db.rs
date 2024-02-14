@@ -108,9 +108,7 @@ fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
                     experimental_features: cairo_lang_filesystem::db::ExperimentalFeaturesConfig {
                         negative_impls: experimental_features
                             .contains(&SmolStr::new_inline("negative_impls")),
-                        // TODO(maciektr): Fix corelib config and remove the override.
-                        coupons: component.package.id.is_core()
-                            || experimental_features.contains(&SmolStr::new_inline("coupons")),
+                        coupons: experimental_features.contains(&SmolStr::new_inline("coupons")),
                     },
                 },
             )
