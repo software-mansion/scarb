@@ -1,7 +1,7 @@
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
-use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
-use cairo_lang_starknet_classes::contract_class::ContractClass;
+use cairo_lang_starknet::casm_contract_class::CasmContractClass;
+use cairo_lang_starknet::contract_class::ContractClass;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
 use predicates::prelude::*;

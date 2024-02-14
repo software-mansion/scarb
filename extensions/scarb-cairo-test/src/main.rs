@@ -2,7 +2,7 @@ use std::{env, fs};
 
 use anyhow::{Context, Result};
 use cairo_lang_test_plugin::TestCompilation;
-use cairo_lang_test_runner::{CompiledTestRunner, RunProfilerConfig, TestRunConfig};
+use cairo_lang_test_runner::{CompiledTestRunner, TestRunConfig};
 use clap::Parser;
 
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
@@ -66,10 +66,10 @@ fn main() -> Result<()> {
                 filter: args.filter.clone(),
                 include_ignored: args.include_ignored,
                 ignored: args.ignored,
-                run_profiler: RunProfilerConfig::None,
+                run_profiler: false,
             };
             let runner = CompiledTestRunner::new(test_compilation, config);
-            runner.run(None)?;
+            runner.run()?;
             println!();
         }
     }
