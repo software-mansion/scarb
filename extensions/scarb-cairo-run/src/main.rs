@@ -41,16 +41,24 @@ struct Args {
     ///
     /// This should be a JSON array of numbers, decimal bigints or recursive arrays of those. For example, pass `[1]`
     /// to the following function `fn main(a: u64)`, or pass `[1, "2"]` to `fn main(a: u64, b: u64)`,
-    /// or `[[1, 2], [3, 4, 5]]` to `fn main(t: (u64, u64), v: Array<u64>)`.
+    /// or `[1, 2, [3, 4, 5]]` to `fn main(t: (u64, u64), v: Array<u64>)`.
     #[arg(default_value = "[]")]
     arguments: deserialization::Args,
 }
 
 fn main() -> Result<()> {
+    let ui = Ui::new(Verbosity::default(), OutputFormat::Text);
+
+    if let Err(err) = main_inner(&ui) {
+        ui.anyhow(&err);
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+fn main_inner(ui: &Ui) -> Result<()> {
     let args: Args = Args::parse();
     let available_gas = GasLimit::parse(args.available_gas);
-
-    let ui = Ui::new(Verbosity::default(), OutputFormat::Text);
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
@@ -109,7 +117,7 @@ fn main() -> Result<()> {
             available_gas.value(),
             StarknetState::default(),
         )
-        .context("failed to run the function")?;
+        .with_context(|| "failed to run the function")?;
 
     ui.print(Summary {
         result,
