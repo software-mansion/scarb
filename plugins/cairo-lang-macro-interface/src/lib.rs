@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+pub use cairo_lang_macro_attributes::*;
+
 #[doc(hidden)]
 pub mod stable_abi;
 
