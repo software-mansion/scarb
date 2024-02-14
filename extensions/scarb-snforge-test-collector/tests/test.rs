@@ -48,11 +48,20 @@ fn forge_test_locations() {
     assert_eq!(&json[1]["test_cases"][0]["name"], "tests::tests::test");
     assert_eq!(&json[1]["tests_location"], "Tests");
 
-    assert_eq!(&json[0]["test_cases"][0]["available_gas"], &Value::Null);
-    assert_eq!(&json[0]["test_cases"][0]["expected_result"], "Success");
-    assert_eq!(&json[0]["test_cases"][0]["fork_config"], &Value::Null);
-    assert_eq!(&json[0]["test_cases"][0]["fuzzer_config"], &Value::Null);
-    assert_eq!(&json[0]["test_cases"][0]["ignored"], false);
+    let case_0 = &json[0]["test_cases"][0];
+
+    assert_eq!(&case_0["available_gas"], &Value::Null);
+    assert_eq!(&case_0["expected_result"], "Success");
+    assert_eq!(&case_0["fork_config"], &Value::Null);
+    assert_eq!(&case_0["fuzzer_config"], &Value::Null);
+    assert_eq!(&case_0["ignored"], false);
+    assert_eq!(&case_0["test_details"]["entry_point_offset"], 0);
+    assert_eq!(
+        &case_0["test_details"]["parameter_types"],
+        &Value::Array(vec![])
+    );
+    assert_eq!(&case_0["test_details"]["return_types"][0][0], "Enum");
+    assert_eq!(&case_0["test_details"]["return_types"][0][1], 3);
 }
 
 #[test]
@@ -88,7 +97,9 @@ const WITH_MANY_ATTRIBUTES_TEST: &str = indoc! {r#"
         #[available_gas(100)]
         #[test]
         fn test(a: felt252) {
-            assert(true == true, 'it works!')
+            let (x, y) = (1_u8, 2_u8);
+            let z = x + y;
+            assert(x < z, 'it works!')
         }
     }
     "#
@@ -114,37 +125,32 @@ fn forge_test_with_attributes() {
         .read_to_string();
 
     let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
+    let case_0 = &json[0]["test_cases"][0];
 
+    assert_eq!(&case_0["available_gas"], &Value::Number(Number::from(100)));
+    assert_eq!(&case_0["expected_result"]["Panics"], "Any");
+    assert_eq!(&case_0["fork_config"]["Params"]["block_id_type"], "Number");
+    assert_eq!(&case_0["fork_config"]["Params"]["block_id_value"], "123");
     assert_eq!(
-        &json[0]["test_cases"][0]["available_gas"],
-        &Value::Number(Number::from(100))
-    );
-    assert_eq!(
-        &json[0]["test_cases"][0]["expected_result"]["Panics"],
-        "Any"
-    );
-    assert_eq!(
-        &json[0]["test_cases"][0]["fork_config"]["Params"]["block_id_type"],
-        "Number"
-    );
-    assert_eq!(
-        &json[0]["test_cases"][0]["fork_config"]["Params"]["block_id_value"],
-        "123"
-    );
-    assert_eq!(
-        &json[0]["test_cases"][0]["fork_config"]["Params"]["url"],
+        case_0["fork_config"]["Params"]["url"],
         "http://your.rpc.url"
     );
+    assert_eq!(&case_0["fuzzer_config"]["fuzzer_runs"], 22);
+    assert_eq!(&case_0["fuzzer_config"]["fuzzer_seed"], 38);
+    assert_eq!(&case_0["ignored"], true);
+    assert_eq!(&case_0["name"], "forge_test::tests::test");
+    assert_eq!(&case_0["test_details"]["entry_point_offset"], 0);
     assert_eq!(
-        &json[0]["test_cases"][0]["fuzzer_config"]["fuzzer_runs"],
-        22
+        &case_0["test_details"]["parameter_types"][0][0],
+        "RangeCheck"
     );
-    assert_eq!(
-        &json[0]["test_cases"][0]["fuzzer_config"]["fuzzer_seed"],
-        38
-    );
-    assert_eq!(&json[0]["test_cases"][0]["ignored"], true);
-    assert_eq!(&json[0]["test_cases"][0]["name"], "forge_test::tests::test");
+    assert_eq!(&case_0["test_details"]["parameter_types"][0][1], 1);
+    assert_eq!(&case_0["test_details"]["parameter_types"][1][0], "felt252");
+    assert_eq!(&case_0["test_details"]["parameter_types"][1][1], 1);
+    assert_eq!(&case_0["test_details"]["return_types"][0][0], "RangeCheck");
+    assert_eq!(&case_0["test_details"]["return_types"][0][1], 1);
+    assert_eq!(&case_0["test_details"]["return_types"][1][0], "Enum");
+    assert_eq!(&case_0["test_details"]["return_types"][1][1], 3);
 }
 
 const FORK_TAG_TEST: &str = indoc! {r#"
@@ -179,21 +185,16 @@ fn forge_test_with_fork_tag_attribute() {
         .read_to_string();
 
     let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
+    let case_0 = &json[0]["test_cases"][0];
 
+    assert_eq!(&case_0["fork_config"]["Params"]["block_id_type"], "Tag");
+    assert_eq!(&case_0["fork_config"]["Params"]["block_id_value"], "Latest");
     assert_eq!(
-        &json[0]["test_cases"][0]["fork_config"]["Params"]["block_id_type"],
-        "Tag"
-    );
-    assert_eq!(
-        &json[0]["test_cases"][0]["fork_config"]["Params"]["block_id_value"],
-        "Latest"
-    );
-    assert_eq!(
-        &json[0]["test_cases"][0]["fork_config"]["Params"]["url"],
+        case_0["fork_config"]["Params"]["url"],
         "http://your.rpc.url"
     );
 
-    assert_eq!(&json[0]["test_cases"][0]["name"], "forge_test::tests::test");
+    assert_eq!(&case_0["name"], "forge_test::tests::test");
 }
 
 const FORK_HASH_TEST: &str = indoc! {r#"
@@ -228,21 +229,16 @@ fn forge_test_with_fork_hash_attribute() {
         .read_to_string();
 
     let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
+    let case_0 = &json[0]["test_cases"][0];
 
+    assert_eq!(&case_0["fork_config"]["Params"]["block_id_type"], "Hash");
+    assert_eq!(&case_0["fork_config"]["Params"]["block_id_value"], "123");
     assert_eq!(
-        &json[0]["test_cases"][0]["fork_config"]["Params"]["block_id_type"],
-        "Hash"
-    );
-    assert_eq!(
-        &json[0]["test_cases"][0]["fork_config"]["Params"]["block_id_value"],
-        "123"
-    );
-    assert_eq!(
-        &json[0]["test_cases"][0]["fork_config"]["Params"]["url"],
+        case_0["fork_config"]["Params"]["url"],
         "http://your.rpc.url"
     );
 
-    assert_eq!(&json[0]["test_cases"][0]["name"], "forge_test::tests::test");
+    assert_eq!(&case_0["name"], "forge_test::tests::test");
 }
 
 const SHOULD_PANIC_TEST: &str = indoc! {r#"
