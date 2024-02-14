@@ -369,6 +369,7 @@ fn uses_dev_dependencies() {
 }
 
 #[test]
+#[ignore = "Cairo compiler side fix omitted for `2.5.4`."]
 fn does_not_compile_tests_in_dependencies() {
     let t = TempDir::new().unwrap();
     let q = t.child("q");

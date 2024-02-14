@@ -760,6 +760,7 @@ fn dev_dep_inside_test() {
 }
 
 #[test]
+#[ignore = "Cairo compiler side fix omitted for `2.5.4`."]
 fn build_test_without_compiling_tests_from_dependencies() {
     let t = TempDir::new().unwrap();
     let q = t.child("q");
@@ -864,6 +865,7 @@ fn warnings_can_be_disallowed() {
 }
 
 #[test]
+#[ignore = "Cairo compiler side fix omitted for `2.5.4`."]
 fn can_compile_no_core_package() {
     let t = TempDir::new().unwrap();
     // Find path to corelib.

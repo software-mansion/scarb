@@ -141,13 +141,13 @@ pub fn collect_tests(
         })
         .collect();
 
-    let sierra_program = db
+    let (sierra_program, _) = db
         .get_sierra_program_for_functions(z)
         .to_option()
         .context("Compilation failed without any diagnostics")
         .context("Failed to get sierra program")?;
 
-    let sierra_program = replace_sierra_ids_in_program(db, &sierra_program.program);
+    let sierra_program = replace_sierra_ids_in_program(db, &sierra_program);
     let function_finder = FunctionFinder::new(sierra_program.clone())?;
 
     let collected_tests = all_tests
