@@ -725,16 +725,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cairo-lang-macro-attributes"
-version = "0.0.1"
-dependencies = [
- "camino",
- "quote",
- "syn 2.0.48",
-]
-
-[[package]]
-name = "cairo-lang-macro-interface"
+name = "cairo-lang-macro"
 version = "0.0.1"
 dependencies = [
  "anyhow",
@@ -742,6 +733,15 @@ dependencies = [
  "libc",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "cairo-lang-macro-attributes"
+version = "0.0.1"
+dependencies = [
+ "camino",
+ "quote",
+ "syn 2.0.48",
 ]
 
 [[package]]
@@ -4470,7 +4470,7 @@ dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
- "cairo-lang-macro-interface",
+ "cairo-lang-macro",
  "cairo-lang-semantic",
  "cairo-lang-sierra",
  "cairo-lang-sierra-to-casm",
