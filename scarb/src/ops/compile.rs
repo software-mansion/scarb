@@ -125,23 +125,27 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         .ui()
         .print(Status::new("Checking", &unit.name()));
 
-    let db = build_scarb_root_database(&unit, ws)?;
+    if unit.is_cairo_plugin() {
+        proc_macro::check_unit(unit, ws)?;
+    } else {
+        let db = build_scarb_root_database(&unit, ws)?;
 
-    check_starknet_dependency(&unit, ws, &db, &package_name);
+        check_starknet_dependency(&unit, ws, &db, &package_name);
 
-    let mut compiler_config = build_compiler_config(&unit, ws);
+        let mut compiler_config = build_compiler_config(&unit, ws);
 
-    compiler_config
-        .diagnostics_reporter
-        .ensure(&db)
-        .map_err(|err| {
-            let valid_error = err.into();
-            if !suppress_error(&valid_error) {
-                ws.config().ui().anyhow(&valid_error);
-            }
+        compiler_config
+            .diagnostics_reporter
+            .ensure(&db)
+            .map_err(|err| {
+                let valid_error = err.into();
+                if !suppress_error(&valid_error) {
+                    ws.config().ui().anyhow(&valid_error);
+                }
 
-            anyhow!("could not check `{package_name}` due to previous error")
-        })?;
+                anyhow!("could not check `{package_name}` due to previous error")
+            })?;
+    }
 
     Ok(())
 }
