@@ -166,6 +166,40 @@ fn resolve_fetched_plugins() {
 }
 
 #[test]
+fn can_use_json_output() {
+    let t = TempDir::new().unwrap();
+    simple_project(&t);
+    let output = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("check")
+        // Disable colors in Cargo output.
+        .env("CARGO_TERM_COLOR", "never")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
+    let (first, lines) = lines.split_first().unwrap();
+    assert_matches(
+        r#"{"status":"checking","message":"hello v1.0.0 ([..]Scarb.toml)"}"#,
+        first,
+    );
+    let (last, lines) = lines.split_last().unwrap();
+    assert_matches(
+        r#"{"status":"finished","message":"checking release target(s) in [..]"}"#,
+        last,
+    );
+    // Line from Cargo.
+    let (last, _lines) = lines.split_last().unwrap();
+    assert_matches(r#"{"reason":"build-finished","success":true}"#, last);
+}
+
+#[test]
 fn compile_cairo_plugin_with_lib_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
