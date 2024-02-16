@@ -146,6 +146,26 @@ fn check_cairo_plugin() {
 }
 
 #[test]
+fn resolve_fetched_plugins() {
+    let t = TempDir::new().unwrap();
+    simple_project(&t);
+    assert!(!t.child("Cargo.lock").exists());
+    let output = Scarb::quick_snapbox()
+        .arg("fetch")
+        // Disable colors in Cargo output.
+        .env("CARGO_TERM_COLOR", "never")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(t.child("Cargo.lock").exists())
+}
+
+#[test]
 fn compile_cairo_plugin_with_lib_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()

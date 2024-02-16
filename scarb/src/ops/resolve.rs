@@ -1,12 +1,4 @@
-use std::collections::HashMap;
-
-use anyhow::{bail, Result};
-use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
-use futures::TryFutureExt;
-use indoc::formatdoc;
-use itertools::Itertools;
-use serde::{Deserialize, Serialize};
-
+use crate::compiler::plugin::{fetch_cairo_plugin, CairoPluginProps};
 use crate::compiler::{CompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent};
 use crate::core::lockfile::Lockfile;
 use crate::core::package::{Package, PackageClass, PackageId};
@@ -24,6 +16,12 @@ use crate::core::{
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::{resolver, DEFAULT_SOURCE_PATH};
+use anyhow::{bail, Result};
+use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
+use futures::TryFutureExt;
+use indoc::formatdoc;
+use itertools::Itertools;
+use std::collections::HashMap;
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -121,6 +119,12 @@ pub fn resolve_workspace_with_opts(
             write_lockfile(Lockfile::from_resolve(&resolve), ws)?;
 
             let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
+
+            packages
+                .values()
+                .filter(|p| p.is_cairo_plugin())
+                .map(|p| fetch_cairo_plugin(p, ws))
+                .collect::<Result<Vec<()>>>()?;
 
             Ok(WorkspaceResolve { resolve, packages })
         }
@@ -296,15 +300,6 @@ fn generate_cairo_compilation_units(
             })
         })
         .collect::<Result<Vec<CompilationUnit>>>()
-}
-
-/// Properties that can be defined on Cairo plugin target.
-#[derive(Debug, Serialize, Deserialize, Default)]
-#[serde(rename_all = "kebab-case")]
-struct CairoPluginProps {
-    /// Mark this macro plugin as builtin.
-    /// Builtin plugins are assumed to be available in `CairoPluginRepository` for the whole Scarb execution.
-    pub builtin: bool,
 }
 
 pub struct PackageSolutionCollector<'a> {
