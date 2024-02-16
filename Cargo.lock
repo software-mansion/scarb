@@ -730,7 +730,6 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "cairo-lang-macro-attributes",
- "libc",
  "serde",
  "serde_json",
 ]
@@ -4476,6 +4475,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-starknet",
  "cairo-lang-starknet-classes",
+ "cairo-lang-syntax",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
  "camino",
