@@ -10,11 +10,14 @@ use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use serde::Serialize;
 use std::io::{BufWriter, Write};
 
-use crate::compiler::CompilationUnit;
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
 use crate::core::Workspace;
 use crate::flock::Filesystem;
 
-pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> CompilerConfig<'c> {
+pub fn build_compiler_config<'c>(
+    unit: &CairoCompilationUnit,
+    ws: &Workspace<'c>,
+) -> CompilerConfig<'c> {
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
 
@@ -38,13 +41,13 @@ pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> 
     }
 }
 
-pub fn collect_main_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
+pub fn collect_main_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
     vec![db.intern_crate(CrateLongId::Real(
         unit.main_component().cairo_package_name(),
     ))]
 }
 
-pub fn collect_all_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
+pub fn collect_all_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
     unit.components
         .iter()
         .map(|component| db.intern_crate(CrateLongId::Real(component.cairo_package_name())))

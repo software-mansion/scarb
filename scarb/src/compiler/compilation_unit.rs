@@ -11,10 +11,16 @@ use crate::flock::Filesystem;
 use crate::internal::stable_hash::StableHasher;
 
 /// An object that has enough information so that Scarb knows how to build it.
+pub enum CompilationUnit {
+    Cairo(CairoCompilationUnit),
+    ProcMacro(ProcMacroCompilationUnit),
+}
+
+/// An object that has enough information so that Scarb knows how to build Cairo code with it.
 #[derive(Clone, Debug)]
 #[non_exhaustive]
-pub struct CompilationUnit {
-    /// The Scarb [`Package`] to be build.
+pub struct CairoCompilationUnit {
+    /// The Scarb [`Package`] to be built.
     pub main_package_id: PackageId,
 
     /// Collection of all [`Package`]s needed to provide as _crate roots_ to
@@ -43,11 +49,29 @@ pub struct CompilationUnit {
     pub cfg_set: CfgSet,
 }
 
+/// An object that has enough information so that Scarb knows how to build procedural macro with it.
+#[derive(Clone, Debug)]
+#[non_exhaustive]
+pub struct ProcMacroCompilationUnit {
+    /// The Scarb [`Package`] to be built.
+    pub main_package_id: PackageId,
+
+    /// Collection of all [`Package`]s needed in order to build `package`.
+    ///
+    /// ## Invariants
+    ///
+    /// For performance purposes, the component describing the main package is always **first**.
+    pub components: Vec<CompilationUnitComponent>,
+
+    /// Rust compiler configuration parameters to use in this unit.
+    pub compiler_config: serde_json::Value,
+}
+
 /// Information about a single package that is part of a [`CompilationUnit`].
 #[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct CompilationUnitComponent {
-    /// The Scarb [`Package`] to be build.
+    /// The Scarb [`Package`] to be built.
     pub package: Package,
     /// Information about the specific target to build, out of the possible targets in `package`.
     pub target: Target,
@@ -64,38 +88,27 @@ pub struct CompilationUnitCairoPlugin {
     pub builtin: bool,
 }
 
-impl CompilationUnit {
-    pub fn main_component(&self) -> &CompilationUnitComponent {
+pub trait CompilationUnitAttributes {
+    fn main_package_id(&self) -> PackageId;
+    fn components(&self) -> &[CompilationUnitComponent];
+    fn digest(&self) -> String;
+
+    fn main_component(&self) -> &CompilationUnitComponent {
         // NOTE: This uses the order invariant of `component` field.
-        let component = &self.components[0];
-        assert_eq!(component.package.id, self.main_package_id);
+        let component = &self.components()[0];
+        assert_eq!(component.package.id, self.main_package_id());
         component
     }
 
-    pub fn core_package_component(&self) -> Option<&CompilationUnitComponent> {
-        // NOTE: This uses the order invariant of `component` field.
-        if self.components.len() < 2 {
-            None
-        } else {
-            let component = &self.components[1];
-            assert!(component.package.id.is_core());
-            Some(component)
-        }
-    }
-
-    pub fn target(&self) -> &Target {
+    fn target(&self) -> &Target {
         &self.main_component().target
     }
 
-    pub fn target_dir(&self, ws: &Workspace<'_>) -> Filesystem {
-        ws.target_dir().child(self.profile.as_str())
+    fn id(&self) -> String {
+        format!("{}-{}", self.main_package_id().name, self.digest())
     }
 
-    pub fn is_cairo_plugin(&self) -> bool {
-        self.target().is_cairo_plugin()
-    }
-
-    pub fn is_sole_for_package(&self) -> bool {
+    fn is_sole_for_package(&self) -> bool {
         self.main_component()
             .package
             .manifest
@@ -106,15 +119,11 @@ impl CompilationUnit {
             >= 2
     }
 
-    pub fn has_custom_name(&self) -> bool {
-        self.main_component().target.kind.as_str() != self.main_package_id.name.as_str()
+    fn has_custom_name(&self) -> bool {
+        self.main_component().target.kind.as_str() != self.main_package_id().name.as_str()
     }
 
-    pub fn id(&self) -> String {
-        format!("{}-{}", self.main_package_id.name, self.digest())
-    }
-
-    pub fn name(&self) -> String {
+    fn name(&self) -> String {
         let mut string = String::new();
 
         let main_component = self.main_component();
@@ -128,12 +137,42 @@ impl CompilationUnit {
             write!(&mut string, " ").unwrap();
         }
 
-        write!(&mut string, "{}", self.main_package_id).unwrap();
+        write!(&mut string, "{}", self.main_package_id()).unwrap();
 
         string
     }
+}
 
-    pub fn digest(&self) -> String {
+impl CompilationUnitAttributes for CompilationUnit {
+    fn main_package_id(&self) -> PackageId {
+        match self {
+            Self::Cairo(unit) => unit.main_package_id(),
+            Self::ProcMacro(unit) => unit.main_package_id(),
+        }
+    }
+    fn components(&self) -> &[CompilationUnitComponent] {
+        match self {
+            Self::Cairo(unit) => unit.components(),
+            Self::ProcMacro(unit) => unit.components(),
+        }
+    }
+    fn digest(&self) -> String {
+        match self {
+            Self::Cairo(unit) => unit.digest(),
+            Self::ProcMacro(unit) => unit.digest(),
+        }
+    }
+}
+
+impl CompilationUnitAttributes for CairoCompilationUnit {
+    fn main_package_id(&self) -> PackageId {
+        self.main_package_id
+    }
+    fn components(&self) -> &[CompilationUnitComponent] {
+        &self.components
+    }
+
+    fn digest(&self) -> String {
         let mut hasher = StableHasher::new();
         self.main_package_id.hash(&mut hasher);
         for component in &self.components {
@@ -142,6 +181,41 @@ impl CompilationUnit {
         self.profile.hash(&mut hasher);
         self.compiler_config.hash(&mut hasher);
         hasher.finish_as_short_hash()
+    }
+}
+
+impl CompilationUnitAttributes for ProcMacroCompilationUnit {
+    fn main_package_id(&self) -> PackageId {
+        self.main_package_id
+    }
+    fn components(&self) -> &[CompilationUnitComponent] {
+        &self.components
+    }
+
+    fn digest(&self) -> String {
+        let mut hasher = StableHasher::new();
+        self.main_package_id.hash(&mut hasher);
+        for component in &self.components {
+            component.hash(&mut hasher);
+        }
+        hasher.finish_as_short_hash()
+    }
+}
+
+impl CairoCompilationUnit {
+    pub fn core_package_component(&self) -> Option<&CompilationUnitComponent> {
+        // NOTE: This uses the order invariant of `component` field.
+        if self.components.len() < 2 {
+            None
+        } else {
+            let component = &self.components[1];
+            assert!(component.package.id.is_core());
+            Some(component)
+        }
+    }
+
+    pub fn target_dir(&self, ws: &Workspace<'_>) -> Filesystem {
+        ws.target_dir().child(self.profile.as_str())
     }
 }
 
