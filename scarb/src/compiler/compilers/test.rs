@@ -6,7 +6,7 @@ use tracing::trace_span;
 use crate::compiler::helpers::{
     build_compiler_config, collect_all_crate_ids, collect_main_crate_ids, write_json,
 };
-use crate::compiler::{CompilationUnit, Compiler};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, SourceId, TargetKind, Workspace};
 
 pub struct TestCompiler;
@@ -18,7 +18,7 @@ impl Compiler for TestCompiler {
 
     fn compile(
         &self,
-        unit: CompilationUnit,
+        unit: CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {

@@ -22,7 +22,7 @@ use smol_str::SmolStr;
 use tracing::{debug, trace, trace_span};
 
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
-use crate::compiler::{CompilationUnit, Compiler};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::serdex::RelativeUtf8PathBuf;
 use crate::internal::stable_hash::short_hash;
@@ -199,7 +199,7 @@ impl Compiler for StarknetContractCompiler {
 
     fn compile(
         &self,
-        unit: CompilationUnit,
+        unit: CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -372,7 +372,7 @@ fn check_allowed_libfuncs(
     contracts: &[&ContractDeclaration],
     classes: &[ContractClass],
     db: &RootDatabase,
-    unit: &CompilationUnit,
+    unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     if !props.allowed_libfuncs {

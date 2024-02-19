@@ -8,7 +8,10 @@ use smol_str::SmolStr;
 use scarb_metadata as m;
 use scarb_ui::args::PackagesSource;
 
-use crate::compiler::CompilationUnit;
+use crate::compiler::{
+    CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
+    ProcMacroCompilationUnit,
+};
 use crate::core::{
     edition_variant, DepKind, DependencyVersionReq, ManifestDependency, Package, PackageId,
     SourceId, Target, Workspace,
@@ -202,27 +205,16 @@ fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
 fn collect_compilation_unit_metadata(
     compilation_unit: &CompilationUnit,
 ) -> m::CompilationUnitMetadata {
-    let components: Vec<m::CompilationUnitComponentMetadata> = compilation_unit
-        .components
-        .iter()
-        .map(|c| {
-            m::CompilationUnitComponentMetadataBuilder::default()
-                .package(wrap_package_id(c.package.id))
-                .name(c.cairo_package_name())
-                .source_path(c.target.source_path.clone())
-                .cfg(c.cfg_set.as_ref().map(|cfg_set| cfg_set
-                    .iter()
-                    .map(|cfg| {
-                         serde_json::to_value(cfg)
-                            .and_then(serde_json::from_value::<m::Cfg>)
-                            .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
-                    })
-                    .collect::<Vec<_>>()))
-                .build()
-                .unwrap()
-        })
-        .sorted_by_key(|c| c.package.clone())
-        .collect();
+    match compilation_unit {
+        CompilationUnit::Cairo(cu) => collect_cairo_compilation_unit_metadata(cu),
+        CompilationUnit::ProcMacro(cu) => collect_proc_macro_compilation_unit_metadata(cu),
+    }
+}
+
+fn collect_cairo_compilation_unit_metadata(
+    compilation_unit: &CairoCompilationUnit,
+) -> m::CompilationUnitMetadata {
+    let components = collect_compilation_unit_components(compilation_unit.components.iter());
 
     let cairo_plugins: Vec<m::CompilationUnitCairoPluginMetadata> = compilation_unit
         .cairo_plugins
@@ -256,7 +248,7 @@ fn collect_compilation_unit_metadata(
 
     m::CompilationUnitMetadataBuilder::default()
         .id(compilation_unit.id())
-        .package(wrap_package_id(compilation_unit.main_package_id))
+        .package(wrap_package_id(compilation_unit.main_package_id()))
         .target(collect_target_metadata(compilation_unit.target()))
         .components(components)
         .cairo_plugins(cairo_plugins)
@@ -268,6 +260,50 @@ fn collect_compilation_unit_metadata(
         )]))
         .build()
         .unwrap()
+}
+
+fn collect_proc_macro_compilation_unit_metadata(
+    compilation_unit: &ProcMacroCompilationUnit,
+) -> m::CompilationUnitMetadata {
+    let components = collect_compilation_unit_components(compilation_unit.components.iter());
+    m::CompilationUnitMetadataBuilder::default()
+        .id(compilation_unit.id())
+        .package(wrap_package_id(compilation_unit.main_package_id()))
+        .target(collect_target_metadata(compilation_unit.target()))
+        .components(components)
+        .cairo_plugins(Vec::new())
+        .compiler_config(serde_json::Value::Null)
+        .cfg(Vec::new())
+        .extra(HashMap::new())
+        .build()
+        .unwrap()
+}
+
+fn collect_compilation_unit_components<'a, I>(
+    components: I,
+) -> Vec<m::CompilationUnitComponentMetadata>
+where
+    I: Iterator<Item = &'a CompilationUnitComponent>,
+{
+    components.into_iter()
+        .map(|c| {
+            m::CompilationUnitComponentMetadataBuilder::default()
+                .package(wrap_package_id(c.package.id))
+                .name(c.cairo_package_name())
+                .source_path(c.target.source_path.clone())
+                .cfg(c.cfg_set.as_ref().map(|cfg_set| cfg_set
+                    .iter()
+                    .map(|cfg| {
+                        serde_json::to_value(cfg)
+                            .and_then(serde_json::from_value::<m::Cfg>)
+                            .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
+                    })
+                    .collect::<Vec<_>>()))
+                .build()
+                .unwrap()
+        })
+        .sorted_by_key(|c| c.package.clone())
+        .collect()
 }
 
 fn collect_app_version_metadata() -> m::VersionInfo {
