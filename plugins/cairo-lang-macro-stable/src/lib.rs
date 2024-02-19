@@ -15,6 +15,26 @@ pub enum StableAuxData {
     Some(*mut c_char),
 }
 
+/// Diagnostic returned by the procedural macro.
+///
+/// This struct implements FFI-safe stable ABI.
+#[repr(C)]
+#[derive(Debug)]
+pub struct StableDiagnostic {
+    pub message: *mut c_char,
+    pub severity: StableSeverity,
+}
+
+/// The severity of a diagnostic.
+///
+/// This struct implements FFI-safe stable ABI.
+#[repr(C)]
+#[derive(Debug)]
+pub enum StableSeverity {
+    Error,
+    Warning,
+}
+
 /// Procedural macro result.
 ///
 /// This struct implements FFI-safe stable ABI.
@@ -22,14 +42,22 @@ pub enum StableAuxData {
 #[derive(Debug)]
 pub enum StableProcMacroResult {
     /// Plugin has not taken any action.
-    Leave,
+    Leave {
+        diagnostics: *mut StableDiagnostic,
+        diagnostics_n: usize,
+    },
     /// Plugin generated [`StableTokenStream`] replacement.
     Replace {
         token_stream: StableTokenStream,
         aux_data: StableAuxData,
+        diagnostics: *mut StableDiagnostic,
+        diagnostics_n: usize,
     },
     /// Plugin ordered item removal.
-    Remove,
+    Remove {
+        diagnostics: *mut StableDiagnostic,
+        diagnostics_n: usize,
+    },
 }
 
 impl StableTokenStream {

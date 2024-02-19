@@ -59,29 +59,21 @@ fn lib_path(lib_name: &str) -> String {
     serde_json::to_string(&path).unwrap()
 }
 
-fn simple_project(t: &impl PathChild) {
+fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
     let macro_lib_path = lib_path("cairo-lang-macro");
     let macro_stable_lib_path = lib_path("cairo-lang-macro-stable");
     CairoPluginProjectBuilder::start()
         .scarb_project(|b| {
-            b.name("hello")
+            b.name("some")
                 .version("1.0.0")
                 .manifest_extra(r#"[cairo-plugin]"#)
         })
-        .lib_rs(indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-
-        #[attribute_macro]
-        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
-            let _code = token_stream.to_string();
-            ProcMacroResult::Leave
-        }
-        "#})
+        .lib_rs(code)
         .src(
             "Cargo.toml",
             formatdoc! {r#"
         [package]
-        name = "proc-macro-stub"
+        name = "some"
         version = "0.1.0"
         edition = "2021"
         publish = false
@@ -95,6 +87,19 @@ fn simple_project(t: &impl PathChild) {
         "#},
         )
         .build(t);
+}
+
+fn simple_project(t: &impl PathChild) {
+    let code = indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+        #[attribute_macro]
+        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+            let _code = token_stream.to_string();
+            ProcMacroResult::Leave { diagnostics: Vec::new() }
+        }
+        "#};
+    simple_project_with_code(t, code);
 }
 
 #[test]
@@ -114,7 +119,7 @@ fn compile_cairo_plugin() {
         String::from_utf8_lossy(&output.stderr)
     );
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    assert!(stdout.contains("Compiling hello v1.0.0"));
+    assert!(stdout.contains("Compiling some v1.0.0"));
     let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
     let (last, lines) = lines.split_last().unwrap();
     assert_matches(r#"[..] Finished release target(s) in [..]"#, last);
@@ -140,7 +145,7 @@ fn check_cairo_plugin() {
         String::from_utf8_lossy(&output.stderr)
     );
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    assert!(stdout.contains("Checking hello v1.0.0"));
+    assert!(stdout.contains("Checking some v1.0.0"));
     let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
     let (last, lines) = lines.split_last().unwrap();
     assert_matches(r#"[..] Finished checking release target(s) in [..]"#, last);
@@ -190,7 +195,7 @@ fn can_use_json_output() {
     let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
     let (first, lines) = lines.split_first().unwrap();
     assert_matches(
-        r#"{"status":"checking","message":"hello v1.0.0 ([..]Scarb.toml)"}"#,
+        r#"{"status":"checking","message":"some v1.0.0 ([..]Scarb.toml)"}"#,
         first,
     );
     let (last, lines) = lines.split_last().unwrap();
@@ -250,5 +255,58 @@ fn compile_cairo_plugin_with_other_target() {
 
         Caused by:
             target `cairo-plugin` cannot be mixed with other targets
+        "#});
+}
+
+#[test]
+fn can_emit_plugin_diagnostics() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
+
+        #[attribute_macro]
+        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+            let _code = token_stream.to_string();
+            let diag1 = Diagnostic::warn("Some warning from macro.");
+            let diag2 = Diagnostic::error("Some error from macro.");
+            ProcMacroResult::Leave { diagnostics: vec![diag1, diag2] }
+        }
+        "#},
+    );
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn f() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            warn: Plugin diagnostic: Some warning from macro.
+             --> [..]lib.cairo:1:1
+            #[some]
+            ^*****^
+
+            error: Plugin diagnostic: Some error from macro.
+             --> [..]lib.cairo:1:1
+            #[some]
+            ^*****^
+
+            error: could not compile `hello` due to previous error
         "#});
 }

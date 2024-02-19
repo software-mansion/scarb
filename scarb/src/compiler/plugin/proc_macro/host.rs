@@ -1,15 +1,17 @@
 use crate::compiler::plugin::proc_macro::{FromItemAst, ProcMacroInstance};
 use crate::core::{Config, Package, PackageId};
 use anyhow::Result;
+use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, GeneratedFileAuxData, MacroPlugin, MacroPluginMetadata,
     PluginGeneratedFile, PluginResult,
 };
-use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream};
+use cairo_lang_macro::{AuxData, Diagnostic, ProcMacroResult, Severity, TokenStream};
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::attribute::structured::AttributeListStructurize;
-use cairo_lang_syntax::node::ast;
 use cairo_lang_syntax::node::db::SyntaxGroup;
+use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
+use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use itertools::Itertools;
 use smol_str::SmolStr;
 use std::any::Any;
@@ -135,10 +137,12 @@ impl MacroPlugin for ProcMacroHostPlugin {
             .into_iter()
             .chain(self.handle_attribute(db, item_ast.clone()))
             .chain(self.handle_derive(db, item_ast.clone()));
+        let stable_ptr = item_ast.clone().stable_ptr().untyped();
 
         let mut token_stream = TokenStream::from_item_ast(db, item_ast);
         let mut aux_data: Option<AuxData> = None;
         let mut modified = false;
+        let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
         for input in expansions {
             let instance = self
                 .macros
@@ -149,19 +153,24 @@ impl MacroPlugin for ProcMacroHostPlugin {
                 ProcMacroResult::Replace {
                     token_stream: new_token_stream,
                     aux_data: new_aux_data,
+                    diagnostics,
                 } => {
                     token_stream = new_token_stream;
                     aux_data = new_aux_data;
                     modified = true;
+                    all_diagnostics.extend(diagnostics);
                 }
-                ProcMacroResult::Remove => {
+                ProcMacroResult::Remove { diagnostics } => {
+                    all_diagnostics.extend(diagnostics);
                     return PluginResult {
+                        diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),
                         code: None,
-                        diagnostics: Vec::new(),
                         remove_original_item: true,
-                    }
+                    };
                 }
-                ProcMacroResult::Leave => {}
+                ProcMacroResult::Leave { diagnostics } => {
+                    all_diagnostics.extend(diagnostics);
+                }
             };
         }
         if modified {
@@ -173,11 +182,15 @@ impl MacroPlugin for ProcMacroHostPlugin {
                     aux_data: aux_data
                         .map(|ad| DynGeneratedFileAuxData::new(ProcMacroAuxData(ad.to_value()))),
                 }),
-                diagnostics: Vec::new(),
+                diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),
                 remove_original_item: true,
             }
         } else {
-            PluginResult::default()
+            PluginResult {
+                code: None,
+                diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),
+                remove_original_item: false,
+            }
         }
     }
 
@@ -187,6 +200,23 @@ impl MacroPlugin for ProcMacroHostPlugin {
             .flat_map(|m| m.declared_attributes())
             .collect()
     }
+}
+
+fn into_cairo_diagnostics(
+    diagnostics: Vec<Diagnostic>,
+    stable_ptr: SyntaxStablePtrId,
+) -> Vec<PluginDiagnostic> {
+    diagnostics
+        .into_iter()
+        .map(|diag| PluginDiagnostic {
+            stable_ptr,
+            message: diag.message,
+            severity: match diag.severity {
+                Severity::Error => cairo_lang_diagnostics::Severity::Error,
+                Severity::Warning => cairo_lang_diagnostics::Severity::Warning,
+            },
+        })
+        .collect_vec()
 }
 
 /// A Scarb wrapper around the `ProcMacroHost` compiler plugin.

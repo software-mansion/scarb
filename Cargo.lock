@@ -732,6 +732,7 @@ dependencies = [
  "anyhow",
  "cairo-lang-macro-attributes",
  "cairo-lang-macro-stable",
+ "libc",
  "serde",
  "serde_json",
 ]
