@@ -1,8 +1,8 @@
 use crate::core::{Config, Package, PackageId};
 use anyhow::{Context, Result};
 use cairo_lang_defs::patcher::PatchBuilder;
-use cairo_lang_macro::stable_abi::{StableProcMacroResult, StableTokenStream};
 use cairo_lang_macro::{ProcMacroResult, TokenStream};
+use cairo_lang_macro_stable::{StableProcMacroResult, StableTokenStream};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use camino::Utf8PathBuf;
@@ -66,9 +66,9 @@ impl ProcMacroInstance {
 
     /// Apply expansion to token stream.
     pub(crate) fn generate_code(&self, token_stream: TokenStream) -> ProcMacroResult {
-        let ffi_token_stream = unsafe { StableTokenStream::from_token_stream(token_stream) };
+        let ffi_token_stream = token_stream.into_stable();
         let result = (self.plugin.vtable.expand)(ffi_token_stream);
-        unsafe { result.into_proc_macro_result() }
+        unsafe { ProcMacroResult::from_stable(result) }
     }
 }
 
