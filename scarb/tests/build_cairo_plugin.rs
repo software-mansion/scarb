@@ -49,16 +49,19 @@ impl CairoPluginProjectBuilder {
     }
 }
 
-fn cairo_lang_macro_lib_path() -> String {
+fn lib_path(lib_name: &str) -> String {
     let path = fsx::canonicalize(
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../plugins/cairo-lang-macro/"),
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../plugins/")
+            .join(lib_name),
     )
     .unwrap();
     serde_json::to_string(&path).unwrap()
 }
 
 fn simple_project(t: &impl PathChild) {
-    let macro_lib_path = cairo_lang_macro_lib_path();
+    let macro_lib_path = lib_path("cairo-lang-macro");
+    let macro_stable_lib_path = lib_path("cairo-lang-macro-stable");
     CairoPluginProjectBuilder::start()
         .scarb_project(|b| {
             b.name("hello")
@@ -88,6 +91,7 @@ fn simple_project(t: &impl PathChild) {
 
         [dependencies]
         cairo-lang-macro = {{ path = {macro_lib_path}}}
+        cairo-lang-macro-stable = {{ path = {macro_stable_lib_path}}}
         "#},
         )
         .build(t);

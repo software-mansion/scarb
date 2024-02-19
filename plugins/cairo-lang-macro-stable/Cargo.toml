@@ -1,11 +1,11 @@
 [package]
-name = "cairo-lang-macro"
+name = "cairo-lang-macro-stable"
 version = "0.0.1"
 edition.workspace = true
 
 authors.workspace = true
 categories = ["development-tools"]
-description = "Cairo procedural macro interface primitives."
+description = "Cairo procedural macro stable ABI interface primitives."
 homepage.workspace = true
 keywords = ["scarb"]
 license.workspace = true
@@ -14,7 +14,5 @@ repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-cairo-lang-macro-attributes = { path = "../cairo-lang-macro-attributes" }
-cairo-lang-macro-stable = { path = "../cairo-lang-macro-stable" }
 serde.workspace = true
 serde_json.workspace = true
