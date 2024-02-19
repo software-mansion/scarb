@@ -16,10 +16,14 @@ pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
         #item
 
         #[no_mangle]
-        pub unsafe extern "C" fn expand(token_stream: cairo_lang_macro_stable::StableTokenStream) -> cairo_lang_macro_stable::StableProcMacroResult {
-            let token_stream = cairo_lang_macro::TokenStream::from_stable(token_stream);
+        pub unsafe extern "C" fn expand(stable_token_stream: cairo_lang_macro_stable::StableTokenStream) -> cairo_lang_macro_stable::StableResultWrapper {
+            let token_stream = cairo_lang_macro::TokenStream::from_stable(&stable_token_stream);
             let result = #item_name(token_stream);
-            result.into_stable()
+            let result: cairo_lang_macro_stable::StableProcMacroResult = result.into_stable();
+            cairo_lang_macro_stable::StableResultWrapper {
+                input: stable_token_stream,
+                output: result,
+            }
         }
     };
     TokenStream::from(expanded)

@@ -741,7 +741,6 @@ dependencies = [
 name = "cairo-lang-macro-attributes"
 version = "0.0.1"
 dependencies = [
- "camino",
  "quote",
  "syn 2.0.52",
 ]

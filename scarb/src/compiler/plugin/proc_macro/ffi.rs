@@ -2,7 +2,7 @@ use crate::core::{Config, Package, PackageId};
 use anyhow::{Context, Result};
 use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_macro::{ProcMacroResult, TokenStream};
-use cairo_lang_macro_stable::{StableProcMacroResult, StableTokenStream};
+use cairo_lang_macro_stable::{StableProcMacroResult, StableResultWrapper, StableTokenStream};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use camino::Utf8PathBuf;
@@ -77,23 +77,23 @@ impl ProcMacroInstance {
         let stable_token_stream = token_stream.into_stable();
         // Call FFI interface for code expansion.
         // Note that `stable_result` has been allocated by the dynamic library.
-        let stable_result = (self.plugin.vtable.expand)(stable_token_stream.clone());
+        let stable_result = (self.plugin.vtable.expand)(stable_token_stream);
         // Free the memory allocated by the `stable_token_stream`.
         // This will call `CString::from_raw` under the hood, to take ownership.
         unsafe {
-            TokenStream::from_owned_stable(stable_token_stream);
+            TokenStream::from_owned_stable(stable_result.input);
         };
         // Create Rust representation of the result.
         // Note, that the memory still needs to be freed on the allocator side!
-        let result = unsafe { ProcMacroResult::from_stable(stable_result.clone()) };
+        let result = unsafe { ProcMacroResult::from_stable(&stable_result.output) };
         // Call FFI interface to free the `stable_result` that has been allocated by previous call.
-        (self.plugin.vtable.free_result)(stable_result);
+        (self.plugin.vtable.free_result)(stable_result.output);
         // Return obtained result.
         result
     }
 }
 
-type ExpandCode = extern "C" fn(StableTokenStream) -> StableProcMacroResult;
+type ExpandCode = extern "C" fn(StableTokenStream) -> StableResultWrapper;
 type FreeResult = extern "C" fn(StableProcMacroResult);
 
 struct VTableV0 {
