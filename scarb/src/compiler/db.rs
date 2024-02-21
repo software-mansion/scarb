@@ -43,7 +43,7 @@ fn load_plugins(
             let instance = plugin.instantiate()?;
             builder.with_plugin_suite(instance.plugin_suite());
         } else {
-            proc_macros.register(plugin_info.package.clone())?;
+            proc_macros.register(plugin_info.package.clone(), ws.config())?;
         }
     }
     builder.with_plugin_suite(proc_macros.into_plugin_suite());

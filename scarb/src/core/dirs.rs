@@ -70,6 +70,10 @@ impl AppDirs {
     pub fn registry_dir(&self) -> Filesystem {
         self.cache_dir.child("registry")
     }
+
+    pub fn procedural_macros_dir(&self) -> Filesystem {
+        self.cache_dir.child("plugins").child("proc_macro")
+    }
 }
 
 impl fmt::Display for AppDirs {
