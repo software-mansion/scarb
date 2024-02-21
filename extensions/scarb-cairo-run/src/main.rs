@@ -107,7 +107,7 @@ fn main_inner(ui: &Ui) -> Result<()> {
             Some(Default::default())
         },
         Default::default(),
-        false,
+        None,
     )?;
 
     let result = runner
