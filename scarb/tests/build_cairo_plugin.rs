@@ -358,3 +358,107 @@ fn can_emit_plugin_error() {
             error: could not compile `hello` due to previous error
         "#});
 }
+
+#[test]
+fn can_remove_original_node() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, macro_commons};
+
+        macro_commons!();
+
+        #[attribute_macro]
+        pub fn some_macro(_: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::Remove { diagnostics: Vec::new() }
+        }
+        "#},
+    );
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 12 }
+
+            fn main() -> felt252 { 34 }
+
+            #[some]
+            fn main() -> felt252 { 56 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            Run completed successfully, returning [34]
+        "#});
+}
+
+#[test]
+fn can_replace_original_node() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, macro_commons};
+
+        macro_commons!();
+
+        #[attribute_macro]
+        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream = TokenStream::new(
+                token_stream
+                    .to_string()
+                    // Remove macro call to avoid infinite loop.
+                    .replace("#[some]", "")
+                    .replace("12", "34")
+            );
+            ProcMacroResult::Replace {
+                token_stream,
+                aux_data: None,
+                diagnostics: Vec::new()
+            }
+        }
+        "##},
+    );
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            Run completed successfully, returning [34]
+        "#});
+}
