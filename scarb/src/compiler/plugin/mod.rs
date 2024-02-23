@@ -5,13 +5,34 @@ use std::fmt;
 use anyhow::{anyhow, bail, Result};
 use cairo_lang_semantic::plugin::PluginSuite;
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
-use crate::core::PackageId;
+use crate::core::{Package, PackageId, TargetKind, Workspace};
 
 use self::builtin::{BuiltinStarkNetPlugin, BuiltinTestPlugin};
 
 pub mod builtin;
 pub mod proc_macro;
+
+/// Properties that can be defined on Cairo plugin target.
+#[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct CairoPluginProps {
+    /// Mark this macro plugin as builtin.
+    /// Builtin plugins are assumed to be available in `CairoPluginRepository` for the whole Scarb execution.
+    pub builtin: bool,
+}
+
+pub fn fetch_cairo_plugin(package: &Package, ws: &Workspace<'_>) -> Result<()> {
+    assert!(package.is_cairo_plugin());
+    let target = package.fetch_target(&TargetKind::CAIRO_PLUGIN)?;
+    let props: CairoPluginProps = target.props()?;
+    // No need to fetch for buildin plugins.
+    if !props.builtin {
+        proc_macro::fetch_package(package, ws)?;
+    }
+    Ok(())
+}
 
 pub trait CairoPlugin: Sync {
     fn id(&self) -> PackageId;

@@ -45,19 +45,24 @@ impl SharedLibraryProvider for Package {
 }
 
 pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-    run_cargo(CargoAction::Build, unit, ws)
+    let package = unit.components.first().unwrap().package.clone();
+    run_cargo(CargoAction::Build, &package, ws)
 }
 
 pub fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-    run_cargo(CargoAction::Check, unit, ws)
+    let package = unit.components.first().unwrap().package.clone();
+    run_cargo(CargoAction::Check, &package, ws)
 }
 
-fn run_cargo(action: CargoAction, unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
-    let main_package = unit.components.first().unwrap().package.clone();
+pub fn fetch_package(package: &Package, ws: &Workspace<'_>) -> Result<()> {
+    run_cargo(CargoAction::Fetch, package, ws)
+}
+
+fn run_cargo(action: CargoAction, package: &Package, ws: &Workspace<'_>) -> Result<()> {
     let cmd = CargoCommand {
         action,
-        current_dir: main_package.root().to_path_buf(),
-        target_dir: main_package
+        current_dir: package.root().to_path_buf(),
+        target_dir: package
             .target_path(ws.config())
             .path_unchecked()
             .to_path_buf(),
@@ -72,6 +77,7 @@ fn run_cargo(action: CargoAction, unit: CompilationUnit, ws: &Workspace<'_>) -> 
 enum CargoAction {
     Build,
     Check,
+    Fetch,
 }
 
 struct CargoCommand {
@@ -85,12 +91,18 @@ impl From<CargoCommand> for Command {
         let mut cmd = Command::new("cargo");
         cmd.current_dir(args.current_dir);
         match args.action {
+            CargoAction::Fetch => cmd.arg("fetch"),
             CargoAction::Build => cmd.arg("build"),
             CargoAction::Check => cmd.arg("check"),
         };
-        cmd.arg("--release");
-        cmd.arg("--target-dir");
-        cmd.arg(args.target_dir);
+        match args.action {
+            CargoAction::Fetch => (),
+            _ => {
+                cmd.arg("--release");
+                cmd.arg("--target-dir");
+                cmd.arg(args.target_dir);
+            }
+        }
         cmd
     }
 }
