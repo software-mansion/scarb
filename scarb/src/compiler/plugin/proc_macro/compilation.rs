@@ -6,6 +6,10 @@ use crate::process::exec_piping;
 use anyhow::Result;
 use camino::Utf8PathBuf;
 use libloading::library_filename;
+use scarb_ui::{Message, OutputFormat};
+use serde::{Serialize, Serializer};
+use serde_json::value::RawValue;
+use std::fmt::Display;
 use std::process::Command;
 use tracing::trace_span;
 
@@ -62,6 +66,7 @@ fn run_cargo(action: CargoAction, package: &Package, ws: &Workspace<'_>) -> Resu
     let cmd = CargoCommand {
         action,
         current_dir: package.root().to_path_buf(),
+        output_format: ws.config().ui().output_format(),
         target_dir: package
             .target_path(ws.config())
             .path_unchecked()
@@ -83,7 +88,31 @@ enum CargoAction {
 struct CargoCommand {
     current_dir: Utf8PathBuf,
     target_dir: Utf8PathBuf,
+    output_format: OutputFormat,
     action: CargoAction,
+}
+
+enum CargoOutputFormat {
+    Human,
+    Json,
+}
+
+impl Display for CargoOutputFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CargoOutputFormat::Human => write!(f, "human"),
+            CargoOutputFormat::Json => write!(f, "json"),
+        }
+    }
+}
+
+impl From<OutputFormat> for CargoOutputFormat {
+    fn from(format: OutputFormat) -> Self {
+        match format {
+            OutputFormat::Text => CargoOutputFormat::Human,
+            OutputFormat::Json => CargoOutputFormat::Json,
+        }
+    }
 }
 
 impl From<CargoCommand> for Command {
@@ -99,6 +128,9 @@ impl From<CargoCommand> for Command {
             CargoAction::Fetch => (),
             _ => {
                 cmd.arg("--release");
+                cmd.arg("--message-format");
+                let output_format: CargoOutputFormat = args.output_format.into();
+                cmd.arg(output_format.to_string());
                 cmd.arg("--target-dir");
                 cmd.arg(args.target_dir);
             }
@@ -111,7 +143,33 @@ fn exec(cmd: &mut Command, config: &Config) -> Result<()> {
     exec_piping(
         cmd,
         config,
-        |line: &str| config.ui().print(line),
-        |line: &str| config.ui().print(line),
+        |line: &str| config.ui().print(PipedText::new(line)),
+        |line: &str| config.ui().print(PipedText::new(line)),
     )
+}
+
+/// This message can be used for piped text from subprocesses.
+///
+/// It accepts either a string or a JSON string.
+/// If the input is a JSON string, it can be serialized as a structured message.
+/// Otherwise, the structured message will be skipped.
+pub struct PipedText(String);
+
+impl PipedText {
+    pub fn new(text: impl Into<String>) -> Self {
+        Self(text.into())
+    }
+}
+
+impl Message for PipedText {
+    fn text(self) -> String {
+        self.0
+    }
+
+    fn structured<S: Serializer>(self, ser: S) -> Result<S::Ok, S::Error> {
+        match serde_json::from_str::<&RawValue>(self.0.as_str()) {
+            Ok(value) => value.serialize(ser),
+            Err(_e) => Self::skip_structured(ser),
+        }
+    }
 }
