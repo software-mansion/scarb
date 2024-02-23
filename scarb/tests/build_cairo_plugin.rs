@@ -120,6 +120,32 @@ fn compile_cairo_plugin() {
 }
 
 #[test]
+fn check_cairo_plugin() {
+    let t = TempDir::new().unwrap();
+    simple_project(&t);
+    let output = Scarb::quick_snapbox()
+        .arg("check")
+        // Disable colors in Cargo output.
+        .env("CARGO_TERM_COLOR", "never")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    assert!(stdout.contains("Checking hello v1.0.0"));
+    let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
+    let (last, lines) = lines.split_last().unwrap();
+    assert_matches(r#"[..] Finished checking release target(s) in [..]"#, last);
+    let (last, _lines) = lines.split_last().unwrap();
+    // Line from Cargo output
+    assert_matches(r#"[..]Finished release [optimized] target(s) in[..]"#, last);
+}
+
+#[test]
 fn compile_cairo_plugin_with_lib_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
