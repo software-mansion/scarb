@@ -59,19 +59,20 @@ fn lib_path(lib_name: &str) -> String {
     serde_json::to_string(&path).unwrap()
 }
 
-fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
-    let macro_lib_path = lib_path("cairo-lang-macro");
-    let macro_stable_lib_path = lib_path("cairo-lang-macro-stable");
-    CairoPluginProjectBuilder::start()
-        .scarb_project(|b| {
-            b.name("some")
-                .version("1.0.0")
-                .manifest_extra(r#"[cairo-plugin]"#)
-        })
-        .lib_rs(code)
-        .src(
-            "Cargo.toml",
-            formatdoc! {r#"
+fn simple_example_code() -> String {
+    String::from(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+        #[attribute_macro]
+        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+            let _code = token_stream.to_string();
+            ProcMacroResult::Leave { diagnostics: Vec::new() }
+        }
+    "#})
+}
+
+fn simple_example_cargo_manifest() -> String {
+    formatdoc! {r#"
         [package]
         name = "some"
         version = "0.1.0"
@@ -84,22 +85,26 @@ fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
         [dependencies]
         cairo-lang-macro = {{ path = {macro_lib_path}}}
         cairo-lang-macro-stable = {{ path = {macro_stable_lib_path}}}
-        "#},
-        )
+        "#,
+        macro_lib_path = lib_path("cairo-lang-macro"),
+        macro_stable_lib_path = lib_path("cairo-lang-macro-stable"),
+    }
+}
+
+fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
+    CairoPluginProjectBuilder::start()
+        .scarb_project(|b| {
+            b.name("some")
+                .version("1.0.0")
+                .manifest_extra(r#"[cairo-plugin]"#)
+        })
+        .lib_rs(code)
+        .src("Cargo.toml", simple_example_cargo_manifest())
         .build(t);
 }
 
 fn simple_project(t: &impl PathChild) {
-    let code = indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-
-        #[attribute_macro]
-        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
-            let _code = token_stream.to_string();
-            ProcMacroResult::Leave { diagnostics: Vec::new() }
-        }
-        "#};
-    simple_project_with_code(t, code);
+    simple_project_with_code(t, simple_example_code());
 }
 
 #[test]
@@ -409,4 +414,80 @@ fn can_replace_original_node() {
             [..]Running hello
             Run completed successfully, returning [34]
         "#});
+}
+
+#[test]
+fn manifest_can_pass_cargo_args() {
+    let t = TempDir::new().unwrap();
+    CairoPluginProjectBuilder::start()
+        .scarb_project(|b| {
+            b.name("some").version("1.0.0").manifest_extra(indoc! {r#"
+                    [cairo-plugin]
+
+                    [tool.cargo]
+                    build = ["--help"]
+                    check = ["--help"]
+                    fetch = ["--help"]
+                "#})
+        })
+        .lib_rs(simple_example_code())
+        .src("Cargo.toml", simple_example_cargo_manifest())
+        .build(&t);
+
+    let output = Scarb::quick_snapbox()
+        .arg("check")
+        // Disable colors in Cargo output.
+        .env("CARGO_TERM_COLOR", "never")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "stderr = {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    assert!(
+        stdout.contains("Usage: cargo check [OPTIONS]"),
+        "stdout = {}",
+        stdout
+    );
+
+    let output = Scarb::quick_snapbox()
+        .arg("build")
+        // Disable colors in Cargo output.
+        .env("CARGO_TERM_COLOR", "never")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "stderr = {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    assert!(
+        stdout.contains("Usage: cargo build [OPTIONS]"),
+        "stdout = {}",
+        stdout
+    );
+
+    let output = Scarb::quick_snapbox()
+        .arg("fetch")
+        // Disable colors in Cargo output.
+        .env("CARGO_TERM_COLOR", "never")
+        .current_dir(&t)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "stderr = {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    assert!(
+        stdout.contains("Usage: cargo fetch [OPTIONS]"),
+        "stdout = {}",
+        stdout
+    );
 }

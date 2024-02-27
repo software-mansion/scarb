@@ -7,7 +7,7 @@ use anyhow::Result;
 use camino::Utf8PathBuf;
 use libloading::library_filename;
 use scarb_ui::{Message, OutputFormat};
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use serde_json::value::RawValue;
 use std::fmt::Display;
 use std::process::Command;
@@ -71,6 +71,11 @@ fn run_cargo(action: CargoAction, package: &Package, ws: &Workspace<'_>) -> Resu
             .target_path(ws.config())
             .path_unchecked()
             .to_path_buf(),
+        manifest_args: package
+            .tool_metadata("cargo")
+            .cloned()
+            .map(toml::Value::try_into)
+            .transpose()?,
     };
     {
         let _ = trace_span!("proc_macro").enter();
@@ -90,11 +95,29 @@ struct CargoCommand {
     target_dir: Utf8PathBuf,
     output_format: OutputFormat,
     action: CargoAction,
+    manifest_args: Option<ManifestCargoArgs>,
 }
 
 enum CargoOutputFormat {
     Human,
     Json,
+}
+
+#[derive(Deserialize)]
+struct ManifestCargoArgs {
+    build: Option<Vec<String>>,
+    check: Option<Vec<String>>,
+    fetch: Option<Vec<String>>,
+}
+
+impl ManifestCargoArgs {
+    fn get_for_action(&self, action: CargoAction) -> Vec<String> {
+        match action {
+            CargoAction::Build => self.build.clone().unwrap_or_default(),
+            CargoAction::Check => self.check.clone().unwrap_or_default(),
+            CargoAction::Fetch => self.fetch.clone().unwrap_or_default(),
+        }
+    }
 }
 
 impl Display for CargoOutputFormat {
@@ -134,6 +157,9 @@ impl From<CargoCommand> for Command {
                 cmd.arg("--target-dir");
                 cmd.arg(args.target_dir);
             }
+        }
+        if let Some(manifest_args) = args.manifest_args {
+            cmd.args(manifest_args.get_for_action(args.action));
         }
         cmd
     }
