@@ -8,7 +8,7 @@ use itertools::Itertools;
 use smol_str::SmolStr;
 
 use crate::compiler::compilers::{LibCompiler, StarknetContractCompiler, TestCompiler};
-use crate::compiler::{CompilationUnit, Compiler};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::Workspace;
 
 pub struct CompilerRepository {
@@ -43,7 +43,7 @@ impl CompilerRepository {
 
     pub fn compile(
         &self,
-        unit: CompilationUnit,
+        unit: CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {

@@ -12,13 +12,13 @@ use std::sync::Arc;
 use tracing::trace;
 
 use crate::compiler::plugin::proc_macro::ProcMacroHost;
-use crate::compiler::{CompilationUnit, CompilationUnitComponent};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
 use crate::core::Workspace;
 use crate::DEFAULT_MODULE_MAIN_FILE;
 
 // TODO(mkaput): ScarbDatabase?
 pub(crate) fn build_scarb_root_database(
-    unit: &CompilationUnit,
+    unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
 ) -> Result<RootDatabase> {
     let mut b = RootDatabase::builder();
@@ -31,7 +31,7 @@ pub(crate) fn build_scarb_root_database(
 }
 
 fn load_plugins(
-    unit: &CompilationUnit,
+    unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
     builder: &mut RootDatabaseBuilder,
 ) -> Result<()> {
@@ -55,7 +55,7 @@ fn load_plugins(
 /// This approach allows compiling crates that do not define `lib.cairo` file.
 /// For example, single file crates can be created this way.
 /// The actual single file module is defined as `mod` item in created lib file.
-fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CompilationUnit) -> Result<()> {
+fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit) -> Result<()> {
     let components: Vec<&CompilationUnitComponent> = unit
         .components
         .iter()
@@ -90,7 +90,7 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CompilationUnit) -> 
     Ok(())
 }
 
-fn build_project_config(unit: &CompilationUnit) -> Result<ProjectConfig> {
+fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
     let crate_roots = unit
         .components
         .iter()

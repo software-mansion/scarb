@@ -7,7 +7,7 @@ use tracing::trace_span;
 use crate::compiler::helpers::{
     build_compiler_config, collect_main_crate_ids, write_json, write_string,
 };
-use crate::compiler::{CompilationUnit, Compiler};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Workspace};
 
 pub struct LibCompiler;
@@ -37,7 +37,7 @@ impl Compiler for LibCompiler {
 
     fn compile(
         &self,
-        unit: CompilationUnit,
+        unit: CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {

@@ -1,5 +1,5 @@
 use crate::compiler::plugin::proc_macro::PROC_MACRO_BUILD_PROFILE;
-use crate::compiler::CompilationUnit;
+use crate::compiler::ProcMacroCompilationUnit;
 use crate::core::{Config, Package, Workspace};
 use crate::flock::Filesystem;
 use crate::process::exec_piping;
@@ -48,12 +48,12 @@ impl SharedLibraryProvider for Package {
     }
 }
 
-pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+pub fn compile_unit(unit: ProcMacroCompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package = unit.components.first().unwrap().package.clone();
     run_cargo(CargoAction::Build, &package, ws)
 }
 
-pub fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+pub fn check_unit(unit: ProcMacroCompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package = unit.components.first().unwrap().package.clone();
     run_cargo(CargoAction::Check, &package, ws)
 }
