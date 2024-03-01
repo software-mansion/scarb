@@ -54,6 +54,7 @@ redb.workspace = true
 reqwest.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 cairo-lang-macro = { path = "../plugins/cairo-lang-macro" }
+cairo-lang-macro-stable = { path = "../plugins/cairo-lang-macro-stable" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }
 scarb-ui = { path = "../utils/scarb-ui" }
 semver.workspace = true

@@ -731,6 +731,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "cairo-lang-macro-attributes",
+ "cairo-lang-macro-stable",
  "serde",
  "serde_json",
 ]
@@ -743,6 +744,10 @@ dependencies = [
  "quote",
  "syn 2.0.51",
 ]
+
+[[package]]
+name = "cairo-lang-macro-stable"
+version = "1.0.0"
 
 [[package]]
 name = "cairo-lang-parser"
@@ -4446,6 +4451,7 @@ dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
  "cairo-lang-macro",
+ "cairo-lang-macro-stable",
  "cairo-lang-semantic",
  "cairo-lang-sierra",
  "cairo-lang-sierra-to-casm",
