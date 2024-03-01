@@ -1,4 +1,7 @@
 pub use cairo_lang_macro_attributes::*;
+#[doc(hidden)]
+pub use linkme;
+
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
     StableAuxData, StableDiagnostic, StableProcMacroResult, StableSeverity, StableTokenStream,
@@ -22,6 +25,30 @@ use std::vec::IntoIter;
 #[doc(hidden)]
 pub unsafe extern "C" fn free_result(result: StableProcMacroResult) {
     ProcMacroResult::from_owned_stable(result);
+}
+
+#[doc(hidden)]
+#[linkme::distributed_slice]
+pub static AUX_DATA_CALLBACKS: [fn(Vec<AuxData>)];
+
+#[no_mangle]
+#[doc(hidden)]
+pub unsafe extern "C" fn aux_data_callback(
+    stable_aux_data: StableSlice<StableAuxData>,
+) -> StableSlice<StableAuxData> {
+    if !AUX_DATA_CALLBACKS.is_empty() {
+        // Callback has been defined, applying the aux data collection.
+        let (ptr, n) = stable_aux_data.raw_parts();
+        let aux_data: &[StableAuxData] = slice::from_raw_parts(ptr, n);
+        let aux_data = aux_data
+            .iter()
+            .filter_map(|a| AuxData::from_stable(a))
+            .collect::<Vec<_>>();
+        for fun in AUX_DATA_CALLBACKS {
+            fun(aux_data.clone());
+        }
+    }
+    stable_aux_data
 }
 
 #[derive(Debug)]
@@ -55,7 +82,7 @@ impl Display for TokenStream {
 }
 
 /// Auxiliary data returned by procedural macro.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AuxData(Vec<u8>);
 
 impl AuxData {

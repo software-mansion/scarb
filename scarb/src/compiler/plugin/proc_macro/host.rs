@@ -17,6 +17,7 @@ use itertools::Itertools;
 use smol_str::SmolStr;
 use std::any::Any;
 use std::sync::Arc;
+use tracing::{debug, trace_span};
 
 /// A Cairo compiler plugin controlling the procedural macro execution.
 ///
@@ -171,7 +172,19 @@ impl ProcMacroHostPlugin {
                 }
             }
         }
-        let _aux_data = data.into_iter().into_group_map_by(|d| d.macro_package_id);
+        let aux_data = data.into_iter().into_group_map_by(|d| d.macro_package_id);
+        for instance in self.macros.iter() {
+            let _ = trace_span!(
+                "aux_data_collection_callback",
+                instance = %instance.package_id()
+            )
+            .entered();
+            let data = aux_data.get(&instance.package_id()).cloned();
+            if let Some(data) = data {
+                debug!("calling aux data callback with: {data:?}");
+                instance.aux_data_callback(data.clone());
+            }
+        }
         Ok(())
     }
 }

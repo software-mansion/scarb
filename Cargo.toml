@@ -82,6 +82,7 @@ io_tee = "0.1"
 itertools = "0.12"
 libc = "0.2"
 libloading = "0.8.3"
+linkme = "0.3"
 log = "0.4"
 ntest = "0.9"
 num-bigint = { version = "0.4", features = ["rand"] }
