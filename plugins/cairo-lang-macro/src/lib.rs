@@ -66,6 +66,12 @@ impl AuxData {
     pub fn try_new<T: serde::Serialize>(value: T) -> Result<Self, serde_json::Error> {
         Ok(Self(serde_json::to_string(&value)?))
     }
+
+    pub fn from_aux_data<T: serde::de::DeserializeOwned>(
+        aux_data: Self,
+    ) -> Result<T, serde_json::Error> {
+        serde_json::from_str(&aux_data.to_string())
+    }
 }
 
 impl Display for AuxData {

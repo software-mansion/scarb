@@ -171,7 +171,13 @@ impl ProcMacroHostPlugin {
                 }
             }
         }
-        let _aux_data = data.into_iter().into_group_map_by(|d| d.macro_package_id);
+        let aux_data = data.into_iter().into_group_map_by(|d| d.macro_package_id);
+        for instance in self.macros.iter() {
+            let data = aux_data.get(&instance.package_id()).cloned();
+            if let Some(data) = data {
+                instance.aux_data_callback(data.clone());
+            }
+        }
         Ok(())
     }
 }

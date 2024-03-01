@@ -84,6 +84,8 @@ fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
         [dependencies]
         cairo-lang-macro = {{ path = {macro_lib_path}}}
         cairo-lang-macro-stable = {{ path = {macro_stable_lib_path}}}
+        serde = "*"
+        serde_json = "*"
         "#},
         )
         .build(t);
@@ -91,13 +93,16 @@ fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
 
 fn simple_project(t: &impl PathChild) {
     let code = indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, aux_data_callback};
 
         #[attribute_macro]
         pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
             let _code = token_stream.to_string();
             ProcMacroResult::Leave { diagnostics: Vec::new() }
         }
+
+        #[aux_data_callback]
+        pub fn callback(_: Vec<AuxData>) {}
         "#};
     simple_project_with_code(t, code);
 }
@@ -266,7 +271,7 @@ fn can_emit_plugin_warning() {
     simple_project_with_code(
         &t,
         indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, aux_data_callback, AuxData, Diagnostic};
         
         #[attribute_macro]
         pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
@@ -274,6 +279,9 @@ fn can_emit_plugin_warning() {
             let diag = Diagnostic::warn("Some warning from macro.");
             ProcMacroResult::Leave { diagnostics: vec![diag] }
         }
+
+        #[aux_data_callback]
+        pub fn callback(_: Vec<AuxData>) {}
         "#},
     );
     let project = temp.child("hello");
@@ -313,7 +321,7 @@ fn can_emit_plugin_error() {
     simple_project_with_code(
         &t,
         indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, aux_data_callback, AuxData, Diagnostic};
 
         #[attribute_macro]
         pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
@@ -321,6 +329,9 @@ fn can_emit_plugin_error() {
             let diag = Diagnostic::error("Some error from macro.");
             ProcMacroResult::Leave { diagnostics: vec![diag] }
         }
+
+        #[aux_data_callback]
+        pub fn callback(_: Vec<AuxData>) {}
         "#},
     );
     let project = temp.child("hello");
@@ -360,12 +371,15 @@ fn can_remove_original_node() {
     simple_project_with_code(
         &t,
         indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, aux_data_callback};
 
         #[attribute_macro]
         pub fn some_macro(_: TokenStream) -> ProcMacroResult {
             ProcMacroResult::Remove { diagnostics: Vec::new() }
         }
+
+        #[aux_data_callback]
+        pub fn callback(_: Vec<AuxData>) {}
         "#},
     );
     let project = temp.child("hello");
@@ -407,7 +421,7 @@ fn can_replace_original_node() {
     simple_project_with_code(
         &t,
         indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, aux_data_callback};
 
         #[attribute_macro]
         pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
@@ -424,6 +438,9 @@ fn can_replace_original_node() {
                 diagnostics: Vec::new()
             }
         }
+
+        #[aux_data_callback]
+        pub fn callback(_: Vec<AuxData>) {}
         "##},
     );
     let project = temp.child("hello");
@@ -450,5 +467,81 @@ fn can_replace_original_node() {
             [..]Finished release target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [34]
+        "#});
+}
+
+#[test]
+fn can_return_aux_data_from_plugin() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, macro_commons, AuxData, aux_data_callback};
+        use serde::{Serialize, Deserialize};
+
+        macro_commons!();
+        
+        #[derive(Debug, Serialize, Deserialize)]
+        struct SomeMacroDataFormat {
+            msg: String
+        }
+
+        #[attribute_macro]
+        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream = TokenStream::new(
+                token_stream
+                    .to_string()
+                    // Remove macro call to avoid infinite loop.
+                    .replace("#[some]", "")
+                    .replace("12", "34")
+            );
+            let aux_data = AuxData::try_new(
+                SomeMacroDataFormat { msg: "Hello from some macro!".to_string() }
+                ).unwrap();
+            ProcMacroResult::Replace {
+                token_stream,
+                aux_data: Some(aux_data),
+                diagnostics: Vec::new()
+            }
+        }
+
+        #[aux_data_callback]
+        pub fn callback(aux_data: Vec<AuxData>) {
+            let aux_data = aux_data.into_iter()
+                .map(AuxData::from_aux_data::<SomeMacroDataFormat>)
+                .collect::<Result<Vec<_>, serde_json::Error>>();
+            println!("{:?}", aux_data);
+        }
+
+        "##},
+    );
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            Ok([SomeMacroDataFormat { msg: "Hello from some macro!" }])
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            [..]Run completed successfully, returning [..]
         "#});
 }

@@ -1,8 +1,10 @@
 use crate::core::{Config, Package, PackageId};
 use anyhow::{Context, Result};
 use cairo_lang_defs::patcher::PatchBuilder;
-use cairo_lang_macro::{ProcMacroResult, TokenStream};
-use cairo_lang_macro_stable::{StableProcMacroResult, StableResultWrapper, StableTokenStream};
+use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream};
+use cairo_lang_macro_stable::{
+    StableAuxData, StableProcMacroResult, StableResultWrapper, StableTokenStream,
+};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use camino::Utf8PathBuf;
@@ -10,6 +12,8 @@ use libloading::{Library, Symbol};
 use std::fmt::Debug;
 
 use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::ProcMacroAuxData;
+use cairo_lang_macro_stable::ffi::StableSlice;
 #[cfg(not(windows))]
 use libloading::os::unix::Symbol as RawSymbol;
 #[cfg(windows)]
@@ -91,14 +95,32 @@ impl ProcMacroInstance {
         // Return obtained result.
         result
     }
+
+    pub(crate) fn aux_data_callback(&self, aux_data: Vec<ProcMacroAuxData>) {
+        // Convert to stable aux data.
+        let aux_data: Vec<AuxData> = aux_data.into_iter().map(Into::into).collect();
+        let aux_data = aux_data
+            .into_iter()
+            .map(|a| a.into_stable())
+            .collect::<Vec<_>>();
+        // Create stable slice representation from vector.
+        // Note this needs to be freed manually.
+        let aux_data = StableSlice::new(aux_data);
+        // Actual call to FFI interface for aux data callback.
+        let aux_data = (self.plugin.vtable.aux_data_callback)(aux_data);
+        // Free the memory allocated by vec.
+        let _ = aux_data.into_owned();
+    }
 }
 
 type ExpandCode = extern "C" fn(StableTokenStream) -> StableResultWrapper;
 type FreeResult = extern "C" fn(StableProcMacroResult);
+type AuxDataCallback = extern "C" fn(StableSlice<StableAuxData>) -> StableSlice<StableAuxData>;
 
 struct VTableV0 {
     expand: RawSymbol<ExpandCode>,
     free_result: RawSymbol<FreeResult>,
+    aux_data_callback: RawSymbol<AuxDataCallback>,
 }
 
 impl VTableV0 {
@@ -111,9 +133,14 @@ impl VTableV0 {
             .get(b"free_result\0")
             .context("failed to load free_result function for procedural macro")?;
         let free_result = free_result.into_raw();
+        let aux_data_callback: Symbol<'_, AuxDataCallback> = library
+            .get(b"aux_data_callback\0")
+            .context("failed to load aux_data_callback function for procedural macro")?;
+        let aux_data_callback = aux_data_callback.into_raw();
         Ok(VTableV0 {
             expand,
             free_result,
+            aux_data_callback,
         })
     }
 }
