@@ -8,6 +8,7 @@ use predicates::prelude::*;
 use scarb_build_metadata::CAIRO_VERSION;
 use scarb_metadata::Metadata;
 use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::contracts::BALANCE_CONTRACT;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
@@ -534,7 +535,7 @@ fn sierra_replace_ids() {
     t.child("target/dev/hello.sierra.json").assert(
         predicates::str::contains(r#""debug_name":"hello::example""#)
             .and(predicates::str::contains(
-                r#""debug_name":"felt252_const<42>""#,
+                r#""debug_name":"Const<felt252, 42>""#,
             ))
             .and(predicates::str::contains(
                 r#""debug_name":"store_temp<felt252>""#,
@@ -625,16 +626,11 @@ fn workspace_as_dep() {
     );
     second_t.child("target/dev/third.sierra.json").assert(
         predicates::str::contains(r#""debug_name":"third::example""#)
-            .and(predicates::str::contains(r#""debug_name":"third::hello""#))
-            .and(predicates::str::contains(
-                r#""debug_name":"withdraw_gas_all""#,
-            )),
+            .and(predicates::str::contains(r#""debug_name":"third::hello""#)),
     );
-    second_t.child("target/dev/third.sierra.json").assert(
-        predicates::str::contains(r#""debug_name":"second::fib""#).and(predicates::str::contains(
-            r#""debug_name":"get_builtin_costs""#,
-        )),
-    );
+    second_t
+        .child("target/dev/third.sierra.json")
+        .assert(predicates::str::contains(r#""debug_name":"second::fib""#));
 }
 
 #[test]
@@ -880,4 +876,98 @@ fn can_compile_no_core_package() {
         .current_dir(core)
         .assert()
         .success();
+}
+
+#[test]
+fn gas_enabled_by_default() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn main() -> u32 {
+                fib(16)
+            }
+
+            fn fib(mut n: u32) -> u32 {
+                let mut a: u32 = 0;
+                let mut b: u32 = 1;
+                while n != 0 {
+                    n = n - 1;
+                    let temp = b;
+                    b = a + b;
+                    a = temp;
+                };
+                a
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::str::contains(r#""withdraw_gas""#));
+}
+
+#[test]
+fn can_disable_gas() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn main() -> u32 {
+                fib(16)
+            }
+
+            fn fib(mut n: u32) -> u32 {
+                let mut a: u32 = 0;
+                let mut b: u32 = 1;
+                while n != 0 {
+                    n = n - 1;
+                    let temp = b;
+                    b = a + b;
+                    a = temp;
+                };
+                a
+            }
+        "#})
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            enable-gas = false
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::str::contains(r#""withdraw_gas""#).not());
+}
+
+#[test]
+fn cannot_disable_gas_for_starknet_contract() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_starknet()
+        .lib_cairo(BALANCE_CONTRACT)
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: the target starknet contract compilation requires gas to be enabled
+            error: could not compile `hello` due to previous error
+        "#});
 }

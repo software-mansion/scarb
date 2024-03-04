@@ -311,6 +311,8 @@ pub struct TomlCairo {
     pub sierra_replace_ids: Option<bool>,
     /// Do not exit with error on compiler warnings.
     pub allow_warnings: Option<bool>,
+    /// Enable auto gas withdrawal and gas usage check.
+    pub enable_gas: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
@@ -815,6 +817,9 @@ impl TomlManifest {
             }
             if let Some(allow_warnings) = cairo.allow_warnings {
                 compiler_config.allow_warnings = allow_warnings;
+            }
+            if let Some(enable_gas) = cairo.enable_gas {
+                compiler_config.enable_gas = enable_gas;
             }
         }
         Ok(compiler_config)

@@ -263,6 +263,18 @@ By default, this flag is enabled.
 allow-warnings = false
 ```
 
+### `enable-gas`
+
+If enabled, during the project compilation Scarb will not add any instructions related to gas usage calculation.
+By default, this flag is enabled.
+
+```toml
+[cairo]
+enable-gas = false
+```
+
+This flag cannot be disabled while compiling the `starknet-contract` target.
+
 ## `[profile]`
 
 See [Profiles](./profiles) page.

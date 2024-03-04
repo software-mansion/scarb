@@ -17,6 +17,8 @@ pub struct ManifestCompilerConfig {
     pub sierra_replace_ids: bool,
     /// Do not exit with error on compiler warnings.
     pub allow_warnings: bool,
+    /// Enable auto gas withdrawal and gas usage check.
+    pub enable_gas: bool,
 }
 
 impl DefaultForProfile for ManifestCompilerConfig {
@@ -24,6 +26,7 @@ impl DefaultForProfile for ManifestCompilerConfig {
         Self {
             sierra_replace_ids: profile.is_dev(),
             allow_warnings: true,
+            enable_gas: true,
         }
     }
 }
@@ -32,7 +35,8 @@ impl From<ManifestCompilerConfig> for TomlCairo {
     fn from(config: ManifestCompilerConfig) -> Self {
         Self {
             sierra_replace_ids: Some(config.sierra_replace_ids),
-            allow_warnings: Some(true),
+            allow_warnings: Some(config.allow_warnings),
+            enable_gas: Some(config.enable_gas),
         }
     }
 }
