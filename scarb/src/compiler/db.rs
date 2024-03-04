@@ -25,6 +25,9 @@ pub(crate) fn build_scarb_root_database(
     b.with_project_config(build_project_config(unit)?);
     b.with_cfg(unit.cfg_set.clone());
     load_plugins(unit, ws, &mut b)?;
+    if !unit.compiler_config.enable_gas {
+        b.skip_auto_withdraw_gas();
+    }
     let mut db = b.build()?;
     inject_virtual_wrapper_lib(&mut db, unit)?;
     Ok(db)

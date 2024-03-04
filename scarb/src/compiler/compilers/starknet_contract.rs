@@ -211,6 +211,11 @@ impl Compiler for StarknetContractCompiler {
             );
         }
 
+        ensure!(
+            unit.compiler_config.enable_gas,
+            "the target starknet contract compilation requires gas to be enabled"
+        );
+
         if let Some(external_contracts) = props.build_external_contracts.clone() {
             for path in external_contracts.iter() {
                 ensure!(path.0.matches(GLOB_PATH_SELECTOR).count() <= 1,

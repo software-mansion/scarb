@@ -97,7 +97,7 @@ impl Compiler for LibCompiler {
             let cairo_program = {
                 let _ = trace_span!("compile_casm").enter();
                 let sierra_to_casm = SierraToCasmConfig {
-                    gas_usage_check: true,
+                    gas_usage_check: unit.compiler_config.enable_gas,
                     max_bytecode_size: usize::MAX,
                 };
                 cairo_lang_sierra_to_casm::compiler::compile(&program, &metadata, sierra_to_casm)?
