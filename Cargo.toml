@@ -80,7 +80,7 @@ indoc = "2"
 io_tee = "0.1"
 itertools = "0.12"
 libc = "0.2"
-libloading = "0.8.1"
+libloading = "0.8.2"
 log = "0.4"
 ntest = "0.9"
 num-bigint = { version = "0.4", features = ["rand"] }
@@ -91,7 +91,7 @@ petgraph = "0.6"
 predicates = "3"
 proc-macro2 = "1"
 quote = "1"
-rayon = "1.8"
+rayon = "1.9"
 redb = "1.5"
 reqwest = { version = "0.11", features = ["gzip", "brotli", "deflate", "json", "stream"], default-features = false }
 semver = { version = "1", features = ["serde"] }
