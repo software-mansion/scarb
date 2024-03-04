@@ -254,6 +254,7 @@ impl Compiler for StarknetContractCompiler {
                     let casm_class = CasmContractClass::from_contract_class(
                         class.clone(),
                         props.casm_add_pythonic_hints,
+                        usize::MAX,
                     )
                     .with_context(|| {
                         format!("{contract_name}: failed to compile Sierra contract to CASM")

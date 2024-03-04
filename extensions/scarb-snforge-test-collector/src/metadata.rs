@@ -195,6 +195,9 @@ fn get_crate_settings_for_package(
         negative_impls: package
             .experimental_features
             .contains(&String::from("negative_impls")),
+        coupons: package
+            .experimental_features
+            .contains(&String::from("coupons")),
     };
 
     CrateSettings {
