@@ -1,11 +1,9 @@
-use std::collections::HashSet;
-use std::fmt::Write;
-use std::iter::zip;
-
 use anyhow::{bail, ensure, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::ids::NamedLanguageElementId;
-use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use cairo_lang_filesystem::db::{AsFilesGroupMut, FilesGroup};
+use cairo_lang_filesystem::flag::Flag;
+use cairo_lang_filesystem::ids::{CrateId, CrateLongId, FlagId};
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::{find_contracts, ContractDeclaration};
@@ -19,6 +17,9 @@ use indoc::{formatdoc, writedoc};
 use itertools::{izip, Itertools};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+use std::collections::HashSet;
+use std::fmt::Write;
+use std::iter::zip;
 use tracing::{debug, trace, trace_span};
 
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
@@ -192,6 +193,8 @@ struct ContractArtifact {
     casm: Option<String>,
 }
 
+const AUTO_WITHDRAW_GAS_FLAG: &str = "add_withdraw_gas";
+
 impl Compiler for StarknetContractCompiler {
     fn target_kind(&self) -> TargetKind {
         TargetKind::STARKNET_CONTRACT.clone()
@@ -211,10 +214,7 @@ impl Compiler for StarknetContractCompiler {
             );
         }
 
-        ensure!(
-            unit.compiler_config.enable_gas,
-            "the target starknet contract compilation requires gas to be enabled"
-        );
+        ensure_gas_enabled(db)?;
 
         if let Some(external_contracts) = props.build_external_contracts.clone() {
             for path in external_contracts.iter() {
@@ -320,6 +320,17 @@ impl Compiler for StarknetContractCompiler {
 
         Ok(())
     }
+}
+
+fn ensure_gas_enabled(db: &mut RootDatabase) -> Result<()> {
+    let flag = FlagId::new(db.as_files_group_mut(), AUTO_WITHDRAW_GAS_FLAG);
+    let flag = db.get_flag(flag);
+    ensure!(
+        flag.map(|f| matches!(*f, Flag::AddWithdrawGas(true)))
+            .unwrap_or(false),
+        "the target starknet contract compilation requires gas to be enabled"
+    );
+    Ok(())
 }
 
 fn find_project_contracts(
