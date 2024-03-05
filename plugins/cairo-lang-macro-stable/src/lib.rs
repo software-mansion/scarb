@@ -1,15 +1,15 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
 /// Token stream.
 ///
 /// This struct implements FFI-safe stable ABI.
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StableTokenStream(*mut c_char);
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StableAuxData {
     None,
     Some(*mut c_char),
@@ -19,7 +19,7 @@ pub enum StableAuxData {
 ///
 /// This struct implements FFI-safe stable ABI.
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StableProcMacroResult {
     /// Plugin has not taken any action.
     Leave,
@@ -41,7 +41,13 @@ impl StableTokenStream {
     ///
     /// # Safety
     pub unsafe fn to_string(&self) -> String {
-        raw_to_string(self.0)
+        // Note that this does not deallocate the c-string.
+        // The memory must still be freed with `CString::from_raw`.
+        CStr::from_ptr(self.0).to_string_lossy().to_string()
+    }
+
+    pub fn into_owned_string(self) -> String {
+        unsafe { raw_to_string(self.0) }
     }
 }
 
