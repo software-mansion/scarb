@@ -95,9 +95,9 @@ impl Summary {
 
         if !self.no_core {
             deps.push(&CORE_DEPENDENCY);
-            if self.target_kinds.contains(&TargetKind::TEST) {
-                deps.push(&TEST_PLUGIN_DEPENDENCY);
-            }
+        }
+        if self.target_kinds.contains(&TargetKind::TEST) {
+            deps.push(&TEST_PLUGIN_DEPENDENCY);
         }
 
         deps.into_iter()

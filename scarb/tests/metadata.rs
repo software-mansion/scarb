@@ -181,7 +181,7 @@ fn local_dependencies() {
     assert_eq!(
         packages_and_deps(meta),
         BTreeMap::from_iter([
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["test_plugin".to_string()]),
             ("test_plugin".to_string(), vec![]),
             (
                 "q".to_string(),
@@ -236,7 +236,7 @@ fn dev_dependencies() {
     assert_eq!(
         packages_and_deps(meta.clone()),
         BTreeMap::from_iter([
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["test_plugin".to_string()]),
             ("test_plugin".to_string(), vec![]),
             (
                 "x".to_string(),
@@ -302,7 +302,7 @@ fn dev_deps_are_not_propagated() {
     assert_eq!(
         packages_and_deps(metadata.clone()),
         BTreeMap::from_iter([
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["test_plugin".to_string()]),
             ("test_plugin".to_string(), vec![]),
             (
                 "x".to_string(),
@@ -566,7 +566,7 @@ fn workspace_simple() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["test_plugin".to_string()]),
             ("test_plugin".to_string(), vec![]),
             (
                 "first".to_string(),
@@ -612,7 +612,7 @@ fn workspace_with_root() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["test_plugin".to_string()]),
             (
                 "some_root".to_string(),
                 vec![
@@ -668,7 +668,7 @@ fn workspace_as_dep() {
         packages_and_deps(metadata),
         BTreeMap::from_iter([
             ("test_plugin".to_string(), vec![]),
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["test_plugin".to_string()]),
             (
                 "first".to_string(),
                 vec!["core".to_string(), "test_plugin".to_string()]
@@ -711,7 +711,7 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["test_plugin".to_string()]),
             ("test_plugin".to_string(), vec![]),
             (
                 "first".to_string(),
@@ -785,7 +785,7 @@ fn workspace_package_key_inheritance() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["test_plugin".to_string()]),
             ("test_plugin".to_string(), vec![]),
             (
                 "first".to_string(),
