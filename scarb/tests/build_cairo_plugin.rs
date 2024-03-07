@@ -69,8 +69,10 @@ fn simple_project(t: &impl PathChild) {
                 .manifest_extra(r#"[cairo-plugin]"#)
         })
         .lib_rs(indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, macro_commons};
 
+        macro_commons!();
+        
         #[attribute_macro]
         pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
             let _code = token_stream.to_string();
@@ -110,8 +112,9 @@ fn compile_cairo_plugin() {
         .unwrap();
     assert!(
         output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
+        "stdout={}\n stderr={}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
     );
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     assert!(stdout.contains("Compiling hello v1.0.0"));

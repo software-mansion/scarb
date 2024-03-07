@@ -1,4 +1,4 @@
-use std::ffi::{c_char, CString};
+use std::ffi::{c_char, CStr, CString};
 use std::fmt::Display;
 
 pub use cairo_lang_macro_attributes::*;
@@ -72,7 +72,9 @@ impl ProcMacroResult {
         }
     }
 
-    /// Convert to native Rust representation.
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `from_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -85,7 +87,28 @@ impl ProcMacroResult {
                 aux_data,
             } => ProcMacroResult::Replace {
                 token_stream: TokenStream::from_stable(token_stream),
-                aux_data: AuxData::from_stable(aux_data).unwrap(),
+                aux_data: AuxData::from_stable(aux_data),
+            },
+        }
+    }
+
+    /// Convert to native Rust representation, with taking the ownership of the string.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_owned_stable(result: StableProcMacroResult) -> Self {
+        match result {
+            StableProcMacroResult::Leave => ProcMacroResult::Leave,
+            StableProcMacroResult::Remove => ProcMacroResult::Remove,
+            StableProcMacroResult::Replace {
+                token_stream,
+                aux_data,
+            } => ProcMacroResult::Replace {
+                token_stream: TokenStream::from_owned_stable(token_stream),
+                aux_data: AuxData::from_owned_stable(aux_data),
             },
         }
     }
@@ -101,12 +124,25 @@ impl TokenStream {
         StableTokenStream::new(cstr.into_raw())
     }
 
-    /// Convert to native Rust representation.
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `from_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn from_stable(token_stream: StableTokenStream) -> Self {
         Self::new(token_stream.to_string())
+    }
+
+    /// Convert to native Rust representation, with taking the ownership of the string.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_owned_stable(token_stream: StableTokenStream) -> Self {
+        Self::new(token_stream.into_owned_string())
     }
 }
 
@@ -131,23 +167,52 @@ impl AuxData {
         StableAuxData::Some(cstr.into_raw())
     }
 
-    /// Convert to native Rust representation.
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `from_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_stable(aux_data: StableAuxData) -> Result<Option<Self>, serde_json::Error> {
+    pub unsafe fn from_stable(aux_data: StableAuxData) -> Option<Self> {
         match aux_data {
-            StableAuxData::None => Ok(None),
-            StableAuxData::Some(raw) => Some(Self::try_new(raw_to_string(raw))).transpose(),
+            StableAuxData::None => None,
+            StableAuxData::Some(raw) => Some(Self::new(from_raw_cstr(raw))),
+        }
+    }
+
+    /// Convert to native Rust representation, with taking the ownership of the string.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_owned_stable(aux_data: StableAuxData) -> Option<Self> {
+        match aux_data {
+            StableAuxData::None => None,
+            StableAuxData::Some(raw) => Some(Self::new(from_raw_cstring(raw))),
         }
     }
 }
 
-unsafe fn raw_to_string(raw: *mut c_char) -> String {
+// Create a string from a raw pointer to a c_char.
+// Note that this will free the underlying memory.
+unsafe fn from_raw_cstring(raw: *mut c_char) -> String {
     if raw.is_null() {
         String::default()
     } else {
         let cstr = CString::from_raw(raw);
+        cstr.to_string_lossy().to_string()
+    }
+}
+
+// Note that this will not free the underlying memory.
+// You still need to free the memory by calling `CString::from_raw`.
+unsafe fn from_raw_cstr(raw: *mut c_char) -> String {
+    if raw.is_null() {
+        String::default()
+    } else {
+        let cstr = CStr::from_ptr(raw);
         cstr.to_string_lossy().to_string()
     }
 }

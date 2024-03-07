@@ -65,17 +65,40 @@ impl ProcMacroInstance {
     }
 
     /// Apply expansion to token stream.
+    ///
+    /// This function implements the actual calls to functions from the dynamic library.
+    ///
+    /// All values passing the FFI-barrier must implement a stable ABI.
+    ///
+    /// Please be aware that the memory management of values passing the FFI-barrier is tricky.
+    /// The memory must be freed on the same side of the barrier, where the allocation was made.
     pub(crate) fn generate_code(&self, token_stream: TokenStream) -> ProcMacroResult {
-        let ffi_token_stream = token_stream.into_stable();
-        let result = (self.plugin.vtable.expand)(ffi_token_stream);
-        unsafe { ProcMacroResult::from_stable(result) }
+        // This must be manually freed with call to from_owned_stable.
+        let stable_token_stream = token_stream.into_stable();
+        // Call FFI interface for code expansion.
+        // Note that `stable_result` has been allocated by the dynamic library.
+        let stable_result = (self.plugin.vtable.expand)(stable_token_stream.clone());
+        // Free the memory allocated by the `stable_token_stream`.
+        // This will call `CString::from_raw` under the hood, to take ownership.
+        unsafe {
+            TokenStream::from_owned_stable(stable_token_stream);
+        };
+        // Create Rust representation of the result.
+        // Note, that the memory still needs to be freed on the allocator side!
+        let result = unsafe { ProcMacroResult::from_stable(stable_result.clone()) };
+        // Call FFI interface to free the `stable_result` that has been allocated by previous call.
+        (self.plugin.vtable.free_result)(stable_result);
+        // Return obtained result.
+        result
     }
 }
 
 type ExpandCode = extern "C" fn(StableTokenStream) -> StableProcMacroResult;
+type FreeResult = extern "C" fn(StableProcMacroResult);
 
 struct VTableV0 {
     expand: RawSymbol<ExpandCode>,
+    free_result: RawSymbol<FreeResult>,
 }
 
 impl VTableV0 {
@@ -84,7 +107,14 @@ impl VTableV0 {
             .get(b"expand\0")
             .context("failed to load expand function for procedural macro")?;
         let expand = expand.into_raw();
-        Ok(VTableV0 { expand })
+        let free_result: Symbol<'_, FreeResult> = library
+            .get(b"free_result\0")
+            .context("failed to load free_result function for procedural macro")?;
+        let free_result = free_result.into_raw();
+        Ok(VTableV0 {
+            expand,
+            free_result,
+        })
     }
 }
 
