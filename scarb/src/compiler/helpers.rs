@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_compiler::CompilerConfig;
-use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
+use cairo_lang_diagnostics::Severity;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use serde::Serialize;
@@ -21,12 +21,10 @@ pub fn build_compiler_config<'c>(
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
 
-        |entry: FormattedDiagnosticEntry| {
-            let msg = entry
-                .message()
-                .strip_suffix('\n')
-                .unwrap_or(entry.message());
-            match entry.severity() {
+        |severity: Severity, diagnostic: String| {
+            let msg = diagnostic.clone();
+            let msg = msg.strip_suffix('\n').unwrap_or(diagnostic.as_str());
+            match severity {
                 Severity::Error => config.ui().error(msg),
                 Severity::Warning => config.ui().warn(msg),
             };
