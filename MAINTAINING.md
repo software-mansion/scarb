@@ -37,6 +37,11 @@ You might need to swiftly pause the [Website Deploy] workflow to prevent publish
 > Make sure `scarb-metadata` crate is [released and published](#scarb-metadata-release-procedure) to [crates.io].
 > Only [StarkNet Crates.io Admins] can do this.
 
+> [!IMPORTANT]
+> If you add or remove a binary target compiled with the release (i.e. create or remove a crate in `extensions` directory),
+> make sure to work with the Homebrew team to upgrade their
+> [Scarb installation formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/s/scarb.rb#L26).
+
 ### Write release notes
 
 Upon completion, the [Release] workflow should draft a release on GitHub.
