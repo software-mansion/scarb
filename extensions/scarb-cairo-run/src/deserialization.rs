@@ -43,15 +43,14 @@ impl Args {
 
 impl Clone for Args {
     fn clone(&self) -> Self {
-        Self(
-            self.0
-                .iter()
-                .map(|arg| match arg {
-                    Arg::Value(value) => Arg::Value(value.to_owned()),
-                    Arg::Array(array) => Arg::Array(array.iter().map(ToOwned::to_owned).collect()),
-                })
-                .collect(),
-        )
+        Self(self.0.iter().map(clone_arg).collect())
+    }
+}
+
+fn clone_arg(arg: &Arg) -> Arg {
+    match arg {
+        Arg::Value(value) => Arg::Value(value.to_owned()),
+        Arg::Array(args) => Arg::Array(args.iter().map(clone_arg).collect()),
     }
 }
 
@@ -103,11 +102,12 @@ impl Args {
                         match a {
                             Value::Number(n) => {
                                 let n = n.as_u64().ok_or(ArgsError::NumberOutOfRange)?;
-                                inner_args.push(Felt252::from(n));
+                                inner_args.push(Arg::Value(Felt252::from(n)));
                             }
                             Value::String(n) => {
                                 let n = num_bigint::BigUint::from_str(n)?;
-                                inner_args.push(Felt252::from_bytes_be(&n.to_bytes_be()));
+                                inner_args
+                                    .push(Arg::Value(Felt252::from_bytes_be(&n.to_bytes_be())));
                             }
                             _ => (),
                         }
