@@ -1,35 +1,65 @@
+use crate::ffi::StableSlice;
 use std::ffi::{CStr, CString};
+use std::num::NonZeroU8;
 use std::os::raw::c_char;
+
+pub mod ffi;
 
 /// Token stream.
 ///
 /// This struct implements FFI-safe stable ABI.
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct StableTokenStream(*mut c_char);
 
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum StableAuxData {
     None,
     Some(*mut c_char),
 }
 
+/// Diagnostic returned by the procedural macro.
+///
+/// This struct implements FFI-safe stable ABI.
+#[repr(C)]
+#[derive(Debug)]
+pub struct StableDiagnostic {
+    pub message: *mut c_char,
+    pub severity: StableSeverity,
+}
+
+/// The severity of a diagnostic.
+///
+/// This struct implements FFI-safe stable ABI.
+pub type StableSeverity = NonZeroU8;
+
 /// Procedural macro result.
 ///
 /// This struct implements FFI-safe stable ABI.
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum StableProcMacroResult {
     /// Plugin has not taken any action.
-    Leave,
+    Leave {
+        diagnostics: StableSlice<StableDiagnostic>,
+    },
     /// Plugin generated [`StableTokenStream`] replacement.
     Replace {
+        diagnostics: StableSlice<StableDiagnostic>,
         token_stream: StableTokenStream,
         aux_data: StableAuxData,
     },
     /// Plugin ordered item removal.
-    Remove,
+    Remove {
+        diagnostics: StableSlice<StableDiagnostic>,
+    },
+}
+
+#[repr(C)]
+pub struct StableResultWrapper {
+    pub input: StableTokenStream,
+    pub output: StableProcMacroResult,
 }
 
 impl StableTokenStream {

@@ -16,6 +16,5 @@ repository.workspace = true
 proc-macro = true
 
 [dependencies]
-camino.workspace = true
 quote.workspace = true
 syn = { workspace = true, features = ["full", "extra-traits"] }
