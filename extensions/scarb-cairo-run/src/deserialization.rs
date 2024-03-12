@@ -43,15 +43,14 @@ impl Args {
 
 impl Clone for Args {
     fn clone(&self) -> Self {
-        Self(
-            self.0
-                .iter()
-                .map(|arg| match arg {
-                    Arg::Value(value) => Arg::Value(value.to_owned()),
-                    Arg::Array(array) => Arg::Array(array.iter().map(ToOwned::to_owned).collect()),
-                })
-                .collect(),
-        )
+        Self(self.0.iter().map(clone_arg).collect())
+    }
+}
+
+fn clone_arg(arg: &Arg) -> Arg {
+    match arg {
+        Arg::Value(value) => Arg::Value(value.to_owned()),
+        Arg::Array(args) => Arg::Array(args.iter().map(clone_arg).collect()),
     }
 }
 
@@ -83,7 +82,7 @@ impl FromStr for Args {
 }
 
 impl Args {
-    fn visit_seq_helper(seq: &[Value]) -> Result<Self, ArgsError> {
+    fn visit_seq_helper(seq: &[Value]) -> Result<Vec<Arg>, ArgsError> {
         let iterator = seq.iter();
         let mut args = Vec::new();
 
@@ -98,27 +97,13 @@ impl Args {
                     args.push(Arg::Value(Felt252::from_bytes_be(&n.to_bytes_be())));
                 }
                 Value::Array(arr) => {
-                    let mut inner_args = Vec::new();
-                    for a in arr {
-                        match a {
-                            Value::Number(n) => {
-                                let n = n.as_u64().ok_or(ArgsError::NumberOutOfRange)?;
-                                inner_args.push(Felt252::from(n));
-                            }
-                            Value::String(n) => {
-                                let n = num_bigint::BigUint::from_str(n)?;
-                                inner_args.push(Felt252::from_bytes_be(&n.to_bytes_be()));
-                            }
-                            _ => (),
-                        }
-                    }
-                    args.push(Arg::Array(inner_args));
+                    args.push(Arg::Array(Self::visit_seq_helper(arr)?));
                 }
                 _ => (),
             }
         }
 
-        Ok(Self::new(args))
+        Ok(args)
     }
 }
 
@@ -141,7 +126,9 @@ impl<'de> Visitor<'de> for Args {
             }
         }
 
-        Self::visit_seq_helper(&args).map_err(|e| serde::de::Error::custom(e.to_string()))
+        Self::visit_seq_helper(&args)
+            .map(Self::new)
+            .map_err(|e| serde::de::Error::custom(e.to_string()))
     }
 }
 
