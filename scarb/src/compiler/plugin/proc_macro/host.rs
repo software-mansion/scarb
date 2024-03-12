@@ -1,6 +1,7 @@
 use crate::compiler::plugin::proc_macro::{FromItemAst, ProcMacroInstance};
 use crate::core::{Config, Package, PackageId};
 use anyhow::Result;
+use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, GeneratedFileAuxData, MacroPlugin, MacroPluginMetadata,
@@ -47,11 +48,25 @@ pub struct ProcMacroInput {
 }
 
 #[derive(Clone, Debug)]
-pub struct ProcMacroAuxData(String);
+pub struct ProcMacroAuxData {
+    value: String,
+    macro_id: ProcMacroId,
+    macro_package_id: PackageId,
+}
+
+impl ProcMacroAuxData {
+    pub fn new(value: String, macro_id: ProcMacroId, macro_package_id: PackageId) -> Self {
+        Self {
+            value,
+            macro_id,
+            macro_package_id,
+        }
+    }
+}
 
 impl From<ProcMacroAuxData> for AuxData {
     fn from(data: ProcMacroAuxData) -> Self {
-        Self::new(data.0)
+        Self::new(data.value)
     }
 }
 
@@ -61,7 +76,8 @@ impl GeneratedFileAuxData for ProcMacroAuxData {
     }
 
     fn eq(&self, other: &dyn GeneratedFileAuxData) -> bool {
-        self.0 == other.as_any().downcast_ref::<Self>().unwrap().0
+        self.value == other.as_any().downcast_ref::<Self>().unwrap().value
+            && self.macro_id == other.as_any().downcast_ref::<Self>().unwrap().macro_id
     }
 }
 
@@ -128,6 +144,36 @@ impl ProcMacroHostPlugin {
             .find(|m| m.declared_attributes().contains(&name))
             .map(|m| m.package_id())
     }
+
+    pub fn build_plugin_suite(macr_host: Arc<Self>) -> PluginSuite {
+        let mut suite = PluginSuite::default();
+        suite.add_plugin_ex(macr_host);
+        suite
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    pub fn collect_aux_data(&self, db: &dyn DefsGroup) -> Result<()> {
+        let mut data = Vec::new();
+        for crate_id in db.crates() {
+            let crate_modules = db.crate_modules(crate_id);
+            for module in crate_modules.iter() {
+                let file_infos = db.module_generated_file_infos(*module);
+                if let Ok(file_infos) = file_infos {
+                    for file_info in file_infos.iter().flatten() {
+                        let aux_data = file_info
+                            .aux_data
+                            .as_ref()
+                            .and_then(|ad| ad.as_any().downcast_ref::<ProcMacroAuxData>());
+                        if let Some(aux_data) = aux_data {
+                            data.push(aux_data.clone());
+                        }
+                    }
+                }
+            }
+        }
+        let _aux_data = data.into_iter().into_group_map_by(|d| d.macro_package_id);
+        Ok(())
+    }
 }
 
 impl MacroPlugin for ProcMacroHostPlugin {
@@ -146,7 +192,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
         let stable_ptr = item_ast.clone().stable_ptr().untyped();
 
         let mut token_stream = TokenStream::from_item_ast(db, item_ast);
-        let mut aux_data: Option<AuxData> = None;
+        let mut aux_data: Option<ProcMacroAuxData> = None;
         let mut modified = false;
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
         for input in expansions {
@@ -162,7 +208,13 @@ impl MacroPlugin for ProcMacroHostPlugin {
                     diagnostics,
                 } => {
                     token_stream = new_token_stream;
-                    aux_data = new_aux_data;
+                    if let Some(new_aux_data) = new_aux_data {
+                        aux_data = Some(ProcMacroAuxData::new(
+                            new_aux_data.to_string(),
+                            input.id,
+                            input.macro_package_id,
+                        ));
+                    }
                     modified = true;
                     all_diagnostics.extend(diagnostics);
                 }
@@ -185,8 +237,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
                     name: "proc_macro".into(),
                     content: token_stream.to_string(),
                     code_mappings: Default::default(),
-                    aux_data: aux_data
-                        .map(|ad| DynGeneratedFileAuxData::new(ProcMacroAuxData(ad.to_string()))),
+                    aux_data: aux_data.map(DynGeneratedFileAuxData::new),
                 }),
                 diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),
                 remove_original_item: true,
@@ -241,10 +292,7 @@ impl ProcMacroHost {
         Ok(())
     }
 
-    pub fn into_plugin_suite(self) -> PluginSuite {
-        let macro_host = ProcMacroHostPlugin::new(self.macros);
-        let mut suite = PluginSuite::default();
-        suite.add_plugin_ex(Arc::new(macro_host));
-        suite
+    pub fn into_plugin(self) -> ProcMacroHostPlugin {
+        ProcMacroHostPlugin::new(self.macros)
     }
 }

@@ -1,13 +1,14 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
+use cairo_lang_utils::Upcast;
 use indoc::formatdoc;
 use itertools::Itertools;
 
 use scarb_ui::components::Status;
 use scarb_ui::HumanDuration;
 
-use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin};
+use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin, ScarbDatabase};
 use crate::compiler::helpers::build_compiler_config;
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
@@ -104,9 +105,16 @@ fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let result = match unit {
         CompilationUnit::ProcMacro(unit) => proc_macro::compile_unit(unit, ws),
         CompilationUnit::Cairo(unit) => {
-            let mut db = build_scarb_root_database(&unit, ws)?;
+            let ScarbDatabase {
+                mut db,
+                proc_macro_host,
+            } = build_scarb_root_database(&unit, ws)?;
             check_starknet_dependency(&unit, ws, &db, &package_name);
-            ws.config().compilers().compile(unit, &mut db, ws)
+            let result = ws.config().compilers().compile(unit, &mut db, ws);
+            proc_macro_host
+                .collect_aux_data(db.upcast())
+                .context("procedural macro auxiliary data callback call failed")?;
+            result
         }
     };
 
@@ -126,28 +134,26 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         .ui()
         .print(Status::new("Checking", &unit.name()));
 
-    match unit {
-        CompilationUnit::ProcMacro(unit) => proc_macro::check_unit(unit, ws)?,
+    let result = match unit {
+        CompilationUnit::ProcMacro(unit) => proc_macro::check_unit(unit, ws),
         CompilationUnit::Cairo(unit) => {
-            let db = build_scarb_root_database(&unit, ws)?;
-
+            let ScarbDatabase { db, .. } = build_scarb_root_database(&unit, ws)?;
             check_starknet_dependency(&unit, ws, &db, &package_name);
-
             let mut compiler_config = build_compiler_config(&unit, ws);
-
             compiler_config
                 .diagnostics_reporter
                 .ensure(&db)
-                .map_err(|err| {
-                    let valid_error = err.into();
-                    if !suppress_error(&valid_error) {
-                        ws.config().ui().anyhow(&valid_error);
-                    }
-
-                    anyhow!("could not check `{package_name}` due to previous error")
-                })?;
+                .map_err(|err| err.into())
         }
-    }
+    };
+
+    result.map_err(|err| {
+        if !suppress_error(&err) {
+            ws.config().ui().anyhow(&err);
+        }
+
+        anyhow!("could not check `{package_name}` due to previous error")
+    })?;
 
     Ok(())
 }

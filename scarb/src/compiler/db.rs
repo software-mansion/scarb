@@ -11,33 +11,40 @@ use smol_str::SmolStr;
 use std::sync::Arc;
 use tracing::trace;
 
-use crate::compiler::plugin::proc_macro::ProcMacroHost;
+use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
 use crate::core::Workspace;
 use crate::DEFAULT_MODULE_MAIN_FILE;
 
-// TODO(mkaput): ScarbDatabase?
+pub struct ScarbDatabase {
+    pub db: RootDatabase,
+    pub proc_macro_host: Arc<ProcMacroHostPlugin>,
+}
+
 pub(crate) fn build_scarb_root_database(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
-) -> Result<RootDatabase> {
+) -> Result<ScarbDatabase> {
     let mut b = RootDatabase::builder();
     b.with_project_config(build_project_config(unit)?);
     b.with_cfg(unit.cfg_set.clone());
-    load_plugins(unit, ws, &mut b)?;
+    let proc_macro_host = load_plugins(unit, ws, &mut b)?;
     if !unit.compiler_config.enable_gas {
         b.skip_auto_withdraw_gas();
     }
     let mut db = b.build()?;
     inject_virtual_wrapper_lib(&mut db, unit)?;
-    Ok(db)
+    Ok(ScarbDatabase {
+        db,
+        proc_macro_host,
+    })
 }
 
 fn load_plugins(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
     builder: &mut RootDatabaseBuilder,
-) -> Result<()> {
+) -> Result<Arc<ProcMacroHostPlugin>> {
     let mut proc_macros = ProcMacroHost::default();
     for plugin_info in &unit.cairo_plugins {
         if plugin_info.builtin {
@@ -49,8 +56,9 @@ fn load_plugins(
             proc_macros.register(plugin_info.package.clone(), ws.config())?;
         }
     }
-    builder.with_plugin_suite(proc_macros.into_plugin_suite());
-    Ok(())
+    let macro_host = Arc::new(proc_macros.into_plugin());
+    builder.with_plugin_suite(ProcMacroHostPlugin::build_plugin_suite(macro_host.clone()));
+    Ok(macro_host)
 }
 
 /// Generates a wrapper lib file for appropriate compilation units.
