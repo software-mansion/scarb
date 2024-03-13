@@ -91,9 +91,7 @@ fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
 
 fn simple_project(t: &impl PathChild) {
     let code = indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, macro_commons};
-
-        macro_commons!();
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
         pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
@@ -268,9 +266,7 @@ fn can_emit_plugin_warning() {
     simple_project_with_code(
         &t,
         indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, macro_commons, Diagnostic};
-        
-        macro_commons!();
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
         
         #[attribute_macro]
         pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
@@ -317,10 +313,8 @@ fn can_emit_plugin_error() {
     simple_project_with_code(
         &t,
         indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, macro_commons, Diagnostic};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
 
-        macro_commons!();
-        
         #[attribute_macro]
         pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
             let _code = token_stream.to_string();
@@ -366,9 +360,7 @@ fn can_remove_original_node() {
     simple_project_with_code(
         &t,
         indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, macro_commons};
-
-        macro_commons!();
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
         pub fn some_macro(_: TokenStream) -> ProcMacroResult {
@@ -415,9 +407,7 @@ fn can_replace_original_node() {
     simple_project_with_code(
         &t,
         indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, macro_commons};
-
-        macro_commons!();
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
         pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {

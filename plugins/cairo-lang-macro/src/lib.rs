@@ -9,6 +9,14 @@ use std::num::NonZeroU8;
 use std::slice;
 use std::vec::IntoIter;
 
+/// Free the memory allocated for the [`StableProcMacroResult`].
+///
+/// # Safety
+#[no_mangle]
+pub unsafe extern "C" fn free_result(result: StableProcMacroResult) {
+    ProcMacroResult::from_owned_stable(result);
+}
+
 #[derive(Debug)]
 pub enum ProcMacroResult {
     /// Plugin has not taken any action.
