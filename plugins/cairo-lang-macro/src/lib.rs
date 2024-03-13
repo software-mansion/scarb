@@ -9,6 +9,21 @@ use std::num::NonZeroU8;
 use std::slice;
 use std::vec::IntoIter;
 
+/// Free the memory allocated for the [`StableProcMacroResult`].
+///
+/// This function needs to be accessible through the FFI interface,
+/// of the dynamic library re-exporting it.
+/// The name of this function will not be mangled by the Rust compiler (through the `no_mangle` attribute).
+/// This means that the name will not be extended with neither additional prefixes nor suffixes
+/// by the Rust compiler and the corresponding symbol will be available by the name of the function as id.
+///
+/// # Safety
+#[no_mangle]
+#[doc(hidden)]
+pub unsafe extern "C" fn free_result(result: StableProcMacroResult) {
+    ProcMacroResult::from_owned_stable(result);
+}
+
 #[derive(Debug)]
 pub enum ProcMacroResult {
     /// Plugin has not taken any action.
