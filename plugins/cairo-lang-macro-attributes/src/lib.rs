@@ -28,13 +28,3 @@ pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
     };
     TokenStream::from(expanded)
 }
-
-#[proc_macro]
-pub fn macro_commons(_input: TokenStream) -> TokenStream {
-    TokenStream::from(quote! {
-        #[no_mangle]
-        pub unsafe extern "C" fn free_result(result: cairo_lang_macro_stable::StableProcMacroResult) {
-            cairo_lang_macro::ProcMacroResult::from_owned_stable(result);
-        }
-    })
-}
