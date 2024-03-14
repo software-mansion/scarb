@@ -49,13 +49,13 @@ pub struct ProcMacroInput {
 
 #[derive(Clone, Debug)]
 pub struct ProcMacroAuxData {
-    value: String,
+    value: Vec<u8>,
     macro_id: ProcMacroId,
     macro_package_id: PackageId,
 }
 
 impl ProcMacroAuxData {
-    pub fn new(value: String, macro_id: ProcMacroId, macro_package_id: PackageId) -> Self {
+    pub fn new(value: Vec<u8>, macro_id: ProcMacroId, macro_package_id: PackageId) -> Self {
         Self {
             value,
             macro_id,
@@ -210,7 +210,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
                     token_stream = new_token_stream;
                     if let Some(new_aux_data) = new_aux_data {
                         aux_data = Some(ProcMacroAuxData::new(
-                            new_aux_data.to_string(),
+                            new_aux_data.into(),
                             input.id,
                             input.macro_package_id,
                         ));

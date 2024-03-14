@@ -91,7 +91,7 @@ fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
 
 fn simple_project(t: &impl PathChild) {
     let code = indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData};
 
         #[attribute_macro]
         pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
