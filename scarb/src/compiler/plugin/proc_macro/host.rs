@@ -7,13 +7,16 @@ use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, GeneratedFileAuxData, MacroPlugin, MacroPluginMetadata,
     PluginGeneratedFile, PluginResult,
 };
-use cairo_lang_macro::{AuxData, Diagnostic, ProcMacroResult, Severity, TokenStream};
+use cairo_lang_macro::{
+    AuxData, Diagnostic, ProcMacroResult, Severity, TokenStream, TokenStreamMetadata,
+};
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::attribute::structured::AttributeListStructurize;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use itertools::Itertools;
+use scarb_stable_hash::short_hash;
 use smol_str::SmolStr;
 use std::any::Any;
 use std::sync::Arc;
@@ -203,8 +206,11 @@ impl MacroPlugin for ProcMacroHostPlugin {
             .chain(self.handle_attribute(db, item_ast.clone()))
             .chain(self.handle_derive(db, item_ast.clone()));
         let stable_ptr = item_ast.clone().stable_ptr().untyped();
+        let file_path = stable_ptr.file_id(db).full_path(db.upcast());
+        let file_id = short_hash(file_path.clone());
 
-        let mut token_stream = TokenStream::from_item_ast(db, item_ast);
+        let mut token_stream = TokenStream::from_item_ast(db, item_ast)
+            .with_metadata(TokenStreamMetadata::new(file_path, file_id));
         let mut aux_data: Option<ProcMacroAuxData> = None;
         let mut modified = false;
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
