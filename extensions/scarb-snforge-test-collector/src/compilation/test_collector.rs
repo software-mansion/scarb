@@ -18,7 +18,7 @@ use cairo_lang_semantic::{ConcreteFunction, FunctionLongId};
 use cairo_lang_sierra::extensions::enm::EnumType;
 use cairo_lang_sierra::extensions::NamedType;
 use cairo_lang_sierra::ids::GenericTypeId;
-use cairo_lang_sierra::program::{GenericArg, Program};
+use cairo_lang_sierra::program::{GenericArg, Program, StatementIdx};
 use cairo_lang_sierra_generator::db::SierraGenGroup;
 use cairo_lang_sierra_generator::replace_ids::replace_sierra_ids_in_program;
 use cairo_lang_starknet::starknet_plugin_suite;
@@ -27,6 +27,7 @@ use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use itertools::Itertools;
 use serde::Serialize;
 use smol_str::SmolStr;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -90,7 +91,7 @@ pub fn collect_tests(
     crate_root: &Path,
     lib_content: &str,
     compilation_unit: &CompilationUnit,
-) -> Result<(Program, Vec<TestCaseRaw>)> {
+) -> Result<(Program, Vec<TestCaseRaw>, HashMap<StatementIdx, String>)> {
     let crate_roots: OrderedHashMap<SmolStr, PathBuf> = compilation_unit
         .dependencies()
         .iter()
@@ -147,6 +148,14 @@ pub fn collect_tests(
         .context("Compilation failed without any diagnostics")
         .context("Failed to get sierra program")?;
 
+    let locations_map = HashMap::from_iter(
+        sierra_program
+            .debug_info
+            .statements_locations
+            .get_statements_functions_map(db)
+            .into_iter_sorted(),
+    );
+
     let sierra_program = replace_sierra_ids_in_program(db, &sierra_program.program);
     let function_finder = FunctionFinder::new(sierra_program.clone())?;
 
@@ -185,7 +194,7 @@ pub fn collect_tests(
 
     validate_tests(&function_finder, &collected_tests)?;
 
-    Ok((sierra_program, collected_tests))
+    Ok((sierra_program, collected_tests, locations_map))
 }
 
 fn build_test_details(function_finder: &FunctionFinder, test_name: &str) -> Result<TestDetails> {

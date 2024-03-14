@@ -1,7 +1,8 @@
 use anyhow::Result;
-use cairo_lang_sierra::program::{ProgramArtifact, VersionedProgram};
+use cairo_lang_sierra::program::{ProgramArtifact, StatementIdx, VersionedProgram};
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use serde::Serialize;
+use std::collections::HashMap;
 
 use crate::compilation::test_collector::{collect_tests, TestCaseRaw};
 use crate::crate_collection::{CrateLocation, TestCompilationTarget};
@@ -14,6 +15,7 @@ pub struct CompiledTestCrateRaw {
     pub sierra_program: VersionedProgram,
     pub test_cases: Vec<TestCaseRaw>,
     pub tests_location: CrateLocation,
+    pub locations_map: HashMap<StatementIdx, String>,
 }
 
 pub fn compile_tests(
@@ -28,7 +30,7 @@ pub fn compile_tests(
 
 impl TestCompilationTarget {
     fn compile_tests(&self, compilation_unit: &CompilationUnit) -> Result<CompiledTestCrateRaw> {
-        let (sierra_program, test_cases) = collect_tests(
+        let (sierra_program, test_cases, locations_map) = collect_tests(
             &self.crate_name,
             self.crate_root.as_std_path(),
             &self.lib_content,
@@ -39,6 +41,7 @@ impl TestCompilationTarget {
             sierra_program: VersionedProgram::v1(ProgramArtifact::stripped(sierra_program)),
             test_cases,
             tests_location: self.crate_location.clone(),
+            locations_map,
         })
     }
 }
