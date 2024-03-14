@@ -26,7 +26,7 @@ use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, wr
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::serdex::RelativeUtf8PathBuf;
-use crate::internal::stable_hash::short_hash;
+use scarb_stable_hash::short_hash;
 
 const CAIRO_PATH_SEPARATOR: &str = "::";
 const GLOB_PATH_SELECTOR: &str = "*";

@@ -3,7 +3,7 @@ use std::fmt;
 use anyhow::{ensure, Result};
 use url::Url;
 
-use crate::internal::stable_hash::short_hash;
+use scarb_stable_hash::short_hash;
 
 /// A newtype wrapper around [`Url`] which represents a _canonical_ version of an original URL.
 ///

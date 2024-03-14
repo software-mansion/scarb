@@ -1,0 +1,14 @@
+[package]
+name = "scarb-stable-hash"
+version = "1.0.0"
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+xxhash-rust.workspace = true
+data-encoding.workspace = true

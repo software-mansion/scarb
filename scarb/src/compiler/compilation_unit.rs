@@ -8,7 +8,7 @@ use typed_builder::TypedBuilder;
 use crate::compiler::Profile;
 use crate::core::{ManifestCompilerConfig, Package, PackageId, Target, Workspace};
 use crate::flock::Filesystem;
-use crate::internal::stable_hash::StableHasher;
+use scarb_stable_hash::StableHasher;
 
 /// An object that has enough information so that Scarb knows how to build it.
 pub enum CompilationUnit {
