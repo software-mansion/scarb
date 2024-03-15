@@ -12,20 +12,20 @@ use syn::{parse_macro_input, ItemFn};
 #[proc_macro_attribute]
 pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
     let item: ItemFn = parse_macro_input!(input as ItemFn);
+    let original_item_name = item.sig.ident.to_string();
+    let item = hide_name(item);
     let item_name = &item.sig.ident;
     let expanded = quote! {
         #item
 
-        #[no_mangle]
-        pub unsafe extern "C" fn expand(stable_token_stream: cairo_lang_macro_stable::StableTokenStream) -> cairo_lang_macro_stable::StableResultWrapper {
-            let token_stream = cairo_lang_macro::TokenStream::from_stable(&stable_token_stream);
-            let result = #item_name(token_stream);
-            let result: cairo_lang_macro_stable::StableProcMacroResult = result.into_stable();
-            cairo_lang_macro_stable::StableResultWrapper {
-                input: stable_token_stream,
-                output: result,
-            }
-        }
+        #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::MACRO_DEFINITIONS_SLICE)]
+        #[linkme(crate = ::cairo_lang_macro::linkme)]
+        static MACRO_DEFINITIONS_SLICE_DESERIALIZE: ::cairo_lang_macro::ExpansionDefinition =
+            ::cairo_lang_macro::ExpansionDefinition{
+                name: #original_item_name,
+                kind: ::cairo_lang_macro::ExpansionKind::Attr,
+                fun: #item_name,
+            };
     };
     TokenStream::from(expanded)
 }
@@ -50,12 +50,8 @@ pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// # Safety
 #[proc_macro_attribute]
 pub fn aux_data_collection_callback(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let mut item: ItemFn = parse_macro_input!(input as ItemFn);
-    // Rename item to hide it from the macro source code.
-    let id = short_hash(item.sig.ident.to_string());
-    let item_name = format!("{}_{}", item.sig.ident, id);
-    item.sig.ident = syn::Ident::new(item_name.as_str(), item.sig.ident.span());
-
+    let item: ItemFn = parse_macro_input!(input as ItemFn);
+    let item = hide_name(item);
     let item_name = &item.sig.ident;
     let expanded = quote! {
         #item
@@ -65,4 +61,12 @@ pub fn aux_data_collection_callback(_args: TokenStream, input: TokenStream) -> T
         static AUX_DATA_CALLBACK_DESERIALIZE: fn(Vec<AuxData>) = #item_name;
     };
     TokenStream::from(expanded)
+}
+
+/// Rename item to hide it from the macro source code.
+fn hide_name(mut item: ItemFn) -> ItemFn {
+    let id = short_hash(item.sig.ident.to_string());
+    let item_name = format!("{}_{}", item.sig.ident, id);
+    item.sig.ident = syn::Ident::new(item_name.as_str(), item.sig.ident.span());
+    item
 }

@@ -3,12 +3,94 @@ pub use cairo_lang_macro_attributes::*;
 pub use linkme;
 
 use cairo_lang_macro_stable::ffi::StableSlice;
-use cairo_lang_macro_stable::{StableAuxData, StableProcMacroResult};
+use cairo_lang_macro_stable::{StableAuxData, StableExpansionsList, StableProcMacroResult};
+use std::ffi::{c_char, CStr};
 use std::slice;
 
 mod types;
 
 pub use types::*;
+
+#[derive(Clone)]
+pub struct ExpansionDefinition {
+    pub name: &'static str,
+    pub kind: ExpansionKind,
+    pub fun: ExpansionFunc,
+}
+
+type ExpansionFunc = fn(TokenStream) -> ProcMacroResult;
+
+/// Distributed slice for storing procedural macro code expansion capabilities.
+///
+/// Each element denotes name of the macro, and the expand function pointer.
+#[doc(hidden)]
+#[linkme::distributed_slice]
+pub static MACRO_DEFINITIONS_SLICE: [ExpansionDefinition];
+
+/// This function discovers expansion capabilities defined by the procedural macro.
+///
+/// This function needs to be accessible through the FFI interface,
+/// of the dynamic library re-exporting it.
+///
+/// # Safety
+#[no_mangle]
+#[doc(hidden)]
+pub unsafe extern "C" fn list_expansions() -> StableExpansionsList {
+    let list = MACRO_DEFINITIONS_SLICE
+        .iter()
+        .map(|m| m.clone().into_stable())
+        .collect();
+    StableSlice::new(list)
+}
+
+/// Free the memory allocated for the [`StableProcMacroResult`].
+///
+/// This function needs to be accessible through the FFI interface,
+/// of the dynamic library re-exporting it.
+///
+/// # Safety
+#[no_mangle]
+#[doc(hidden)]
+pub unsafe extern "C" fn free_expansions_list(list: StableExpansionsList) {
+    let v = list.into_owned();
+    v.into_iter().for_each(|v| {
+        ExpansionDefinition::free_owned(v);
+    });
+}
+
+/// The code expansion callback.
+///
+/// This function needs to be accessible through the FFI interface,
+/// of the dynamic library re-exporting it.
+///
+/// The function will be called for each code expansion by the procedural macro.
+///
+/// # Safety
+#[no_mangle]
+#[doc(hidden)]
+pub unsafe extern "C" fn expand(
+    item_name: *const c_char,
+    stable_token_stream: cairo_lang_macro_stable::StableTokenStream,
+) -> cairo_lang_macro_stable::StableResultWrapper {
+    let token_stream = TokenStream::from_stable(&stable_token_stream);
+    let item_name = CStr::from_ptr(item_name).to_string_lossy().to_string();
+    let fun = MACRO_DEFINITIONS_SLICE
+        .iter()
+        .find_map(|m| {
+            if m.name == item_name.as_str() {
+                Some(m.fun)
+            } else {
+                None
+            }
+        })
+        .expect("proc macro not found");
+    let result = fun(token_stream);
+    let result: StableProcMacroResult = result.into_stable();
+    cairo_lang_macro_stable::StableResultWrapper {
+        input: stable_token_stream,
+        output: result,
+    }
+}
 
 /// Free the memory allocated for the [`StableProcMacroResult`].
 ///

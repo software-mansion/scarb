@@ -2,6 +2,9 @@ use std::fmt::Display;
 use std::vec::IntoIter;
 
 mod conversion;
+mod expansions;
+
+pub use expansions::*;
 
 #[derive(Debug)]
 pub enum ProcMacroResult {

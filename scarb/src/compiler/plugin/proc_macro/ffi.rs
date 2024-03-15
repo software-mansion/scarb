@@ -9,6 +9,7 @@ use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use camino::Utf8PathBuf;
 use libloading::{Library, Symbol};
+use std::ffi::{c_char, CString};
 use std::fmt::Debug;
 
 use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
@@ -79,9 +80,15 @@ impl ProcMacroInstance {
     pub(crate) fn generate_code(&self, token_stream: TokenStream) -> ProcMacroResult {
         // This must be manually freed with call to from_owned_stable.
         let stable_token_stream = token_stream.into_stable();
+        // Allocate proc macro name.
+        let item_name = CString::new(self.package_id.name.to_string())
+            .unwrap()
+            .into_raw();
         // Call FFI interface for code expansion.
         // Note that `stable_result` has been allocated by the dynamic library.
-        let stable_result = (self.plugin.vtable.expand)(stable_token_stream);
+        let stable_result = (self.plugin.vtable.expand)(item_name, stable_token_stream);
+        // Free proc macro name.
+        let _ = unsafe { CString::from_raw(item_name) };
         // Free the memory allocated by the `stable_token_stream`.
         // This will call `CString::from_raw` under the hood, to take ownership.
         unsafe {
@@ -113,7 +120,7 @@ impl ProcMacroInstance {
     }
 }
 
-type ExpandCode = extern "C" fn(StableTokenStream) -> StableResultWrapper;
+type ExpandCode = extern "C" fn(*const c_char, StableTokenStream) -> StableResultWrapper;
 type FreeResult = extern "C" fn(StableProcMacroResult);
 type AuxDataCallback = extern "C" fn(StableSlice<StableAuxData>) -> StableSlice<StableAuxData>;
 

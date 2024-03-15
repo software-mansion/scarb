@@ -96,7 +96,7 @@ fn simple_project(t: &impl PathChild) {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData};
 
         #[attribute_macro]
-        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
             let _code = token_stream.to_string();
             ProcMacroResult::Leave { diagnostics: Vec::new() }
         }
@@ -271,7 +271,7 @@ fn can_emit_plugin_warning() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
         
         #[attribute_macro]
-        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
             let _code = token_stream.to_string();
             let diag = Diagnostic::warn("Some warning from macro.");
             ProcMacroResult::Leave { diagnostics: vec![diag] }
@@ -318,7 +318,7 @@ fn can_emit_plugin_error() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
 
         #[attribute_macro]
-        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
             let _code = token_stream.to_string();
             let diag = Diagnostic::error("Some error from macro.");
             ProcMacroResult::Leave { diagnostics: vec![diag] }
@@ -365,7 +365,7 @@ fn can_remove_original_node() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn some_macro(_: TokenStream) -> ProcMacroResult {
+        pub fn some(_: TokenStream) -> ProcMacroResult {
             ProcMacroResult::Remove { diagnostics: Vec::new() }
         }
         "#},
@@ -412,7 +412,7 @@ fn can_replace_original_node() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
             let token_stream = TokenStream::new(
                 token_stream
                     .to_string()
@@ -471,7 +471,7 @@ fn can_return_aux_data_from_plugin() {
         }
 
         #[attribute_macro]
-        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
             let token_stream = TokenStream::new(
                 token_stream
                     .to_string()
@@ -542,7 +542,7 @@ fn can_read_token_stream_metadata() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
             println!("{:#?}", token_stream.metadata());
             ProcMacroResult::Leave { diagnostics: Vec::new() }
         }
