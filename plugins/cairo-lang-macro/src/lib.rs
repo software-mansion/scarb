@@ -56,21 +56,23 @@ impl Display for TokenStream {
 
 /// Auxiliary data returned by procedural macro.
 #[derive(Debug)]
-pub struct AuxData(String);
+pub struct AuxData(Vec<u8>);
 
 impl AuxData {
-    pub fn new(s: String) -> Self {
-        Self(s)
-    }
-
-    pub fn try_new<T: serde::Serialize>(value: T) -> Result<Self, serde_json::Error> {
-        Ok(Self(serde_json::to_string(&value)?))
+    pub fn new(data: Vec<u8>) -> Self {
+        Self(data)
     }
 }
 
-impl Display for AuxData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+impl From<&[u8]> for AuxData {
+    fn from(bytes: &[u8]) -> Self {
+        Self(bytes.to_vec())
+    }
+}
+
+impl From<AuxData> for Vec<u8> {
+    fn from(aux_data: AuxData) -> Vec<u8> {
+        aux_data.0
     }
 }
 
@@ -346,8 +348,8 @@ impl AuxData {
     /// # Safety
     #[doc(hidden)]
     pub fn into_stable(self) -> StableAuxData {
-        let cstr = CString::new(self.0.to_string()).unwrap();
-        StableAuxData::Some(cstr.into_raw())
+        let value: Vec<u8> = self.into();
+        StableAuxData::Some(StableSlice::new(value))
     }
 
     /// Convert to native Rust representation, without taking the ownership of the string.
@@ -359,7 +361,11 @@ impl AuxData {
     pub unsafe fn from_stable(aux_data: &StableAuxData) -> Option<Self> {
         match aux_data {
             StableAuxData::None => None,
-            StableAuxData::Some(raw) => Some(Self::new(from_raw_cstr(*raw))),
+            StableAuxData::Some(raw) => {
+                let (ptr, n) = raw.raw_parts();
+                let value = slice::from_raw_parts(ptr, n);
+                Some(value.into())
+            }
         }
     }
 
@@ -373,7 +379,7 @@ impl AuxData {
     pub unsafe fn from_owned_stable(aux_data: StableAuxData) -> Option<Self> {
         match aux_data {
             StableAuxData::None => None,
-            StableAuxData::Some(raw) => Some(Self::new(from_raw_cstring(raw))),
+            StableAuxData::Some(raw) => Some(Self::new(raw.into_owned())),
         }
     }
 }

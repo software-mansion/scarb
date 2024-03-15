@@ -730,11 +730,8 @@ dependencies = [
 name = "cairo-lang-macro"
 version = "0.0.1"
 dependencies = [
- "anyhow",
  "cairo-lang-macro-attributes",
  "cairo-lang-macro-stable",
- "serde",
- "serde_json",
 ]
 
 [[package]]

@@ -16,7 +16,7 @@ pub struct StableTokenStream(*mut c_char);
 #[derive(Debug)]
 pub enum StableAuxData {
     None,
-    Some(*mut c_char),
+    Some(StableSlice<u8>),
 }
 
 /// Diagnostic returned by the procedural macro.
