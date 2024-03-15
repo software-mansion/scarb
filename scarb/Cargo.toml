@@ -21,9 +21,10 @@ cairo-lang-defs.workspace = true
 cairo-lang-diagnostics.workspace = true
 cairo-lang-filesystem.workspace = true
 cairo-lang-formatter.workspace = true
+cairo-lang-macro = { path = "../plugins/cairo-lang-macro" }
+cairo-lang-macro-stable = { path = "../plugins/cairo-lang-macro-stable" }
 cairo-lang-semantic.workspace = true
 cairo-lang-sierra-to-casm.workspace = true
-cairo-lang-sierra.workspace = true
 cairo-lang-starknet-classes.workspace = true
 cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
@@ -53,9 +54,8 @@ petgraph.workspace = true
 redb.workspace = true
 reqwest.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
-cairo-lang-macro = { path = "../plugins/cairo-lang-macro" }
-cairo-lang-macro-stable = { path = "../plugins/cairo-lang-macro-stable" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }
+scarb-stable-hash = { path = "../utils/scarb-stable-hash" }
 scarb-ui = { path = "../utils/scarb-ui" }
 semver.workspace = true
 serde-untagged.workspace = true
@@ -79,7 +79,6 @@ url.workspace = true
 walkdir.workspace = true
 which.workspace = true
 windows-sys.workspace = true
-xxhash-rust.workspace = true
 zip.workspace = true
 zstd.workspace = true
 

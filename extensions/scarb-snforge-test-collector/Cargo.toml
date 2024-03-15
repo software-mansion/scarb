@@ -9,7 +9,6 @@ authors.workspace = true
 [dependencies]
 anyhow.workspace = true
 cairo-felt.workspace = true
-cairo-lang-casm.workspace = true
 cairo-lang-compiler.workspace = true
 cairo-lang-debug.workspace = true
 cairo-lang-defs.workspace = true

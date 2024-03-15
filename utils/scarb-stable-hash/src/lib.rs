@@ -7,11 +7,12 @@ use xxhash_rust::xxh3::Xxh3;
 ///
 /// The hasher should be fast and have a low chance of collisions (but is not sufficient for
 /// cryptographic purposes).
+#[derive(Default)]
 pub struct StableHasher(Xxh3);
 
 impl StableHasher {
     pub fn new() -> Self {
-        Self(Default::default())
+        Default::default()
     }
 
     pub fn finish_as_short_hash(&self) -> String {
