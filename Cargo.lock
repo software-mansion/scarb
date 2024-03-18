@@ -723,6 +723,7 @@ version = "0.0.1"
 dependencies = [
  "cairo-lang-macro-attributes",
  "cairo-lang-macro-stable",
+ "linkme",
 ]
 
 [[package]]
@@ -730,6 +731,7 @@ name = "cairo-lang-macro-attributes"
 version = "0.0.1"
 dependencies = [
  "quote",
+ "scarb-stable-hash",
  "syn 2.0.53",
 ]
 
@@ -3345,6 +3347,26 @@ dependencies = [
  "bitflags 2.4.1",
  "libc",
  "redox_syscall 0.4.1",
+]
+
+[[package]]
+name = "linkme"
+version = "0.3.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb2cfee0de9bd869589fb9a015e155946d1be5ff415cb844c2caccc6cc4b5db9"
+dependencies = [
+ "linkme-impl",
+]
+
+[[package]]
+name = "linkme-impl"
+version = "0.3.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adf157a4dc5a29b7b464aa8fe7edeff30076e07e13646a1c3874f58477dc99f8"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.53",
 ]
 
 [[package]]

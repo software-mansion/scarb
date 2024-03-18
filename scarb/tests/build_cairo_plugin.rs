@@ -84,6 +84,8 @@ fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
         [dependencies]
         cairo-lang-macro = {{ path = {macro_lib_path}}}
         cairo-lang-macro-stable = {{ path = {macro_stable_lib_path}}}
+        serde = {{ version = "*", features = ["derive"] }}
+        serde_json = "*"
         "#},
         )
         .build(t);
@@ -450,5 +452,84 @@ fn can_replace_original_node() {
             [..]Finished release target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [34]
+        "#});
+}
+
+#[test]
+fn can_return_aux_data_from_plugin() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, aux_data_collection_callback};
+        use serde::{Serialize, Deserialize};
+
+        #[derive(Debug, Serialize, Deserialize)]
+        struct SomeMacroDataFormat {
+            msg: String
+        }
+
+        #[attribute_macro]
+        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream = TokenStream::new(
+                token_stream
+                    .to_string()
+                    // Remove macro call to avoid infinite loop.
+                    .replace("#[some]", "")
+                    .replace("12", "34")
+            );
+            let value = SomeMacroDataFormat { msg: "Hello from some macro!".to_string() };
+            let value = serde_json::to_string(&value).unwrap();
+            let value: Vec<u8> = value.into_bytes();
+            let aux_data = AuxData::new(value);
+
+            ProcMacroResult::Replace {
+                token_stream,
+                aux_data: Some(aux_data),
+                diagnostics: Vec::new()
+            }
+        }
+
+        #[aux_data_collection_callback]
+        pub fn callback(aux_data: Vec<AuxData>) {
+            let aux_data = aux_data.into_iter()
+                .map(|aux_data| {
+                    let value: Vec<u8> = aux_data.into();
+                    let aux_data: SomeMacroDataFormat = serde_json::from_slice(&value).unwrap();
+                    aux_data
+                })
+                .collect::<Vec<_>>();
+            println!("{:?}", aux_data);
+        }
+        "##},
+    );
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [SomeMacroDataFormat { msg: "Hello from some macro!" }]
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            [..]Run completed successfully, returning [..]
         "#});
 }

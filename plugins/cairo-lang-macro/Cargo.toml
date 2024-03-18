@@ -15,3 +15,4 @@ repository.workspace = true
 [dependencies]
 cairo-lang-macro-attributes = { path = "../cairo-lang-macro-attributes" }
 cairo-lang-macro-stable = { path = "../cairo-lang-macro-stable" }
+linkme.workspace = true
