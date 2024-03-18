@@ -2,7 +2,7 @@ use std::io::{Seek, SeekFrom};
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use camino::Utf8Path;
-use redb::{MultimapTableDefinition, ReadableMultimapTable, ReadableTable, TableDefinition};
+use redb::{MultimapTableDefinition, ReadableTable, TableDefinition};
 use semver::Version;
 use tokio::sync::OnceCell;
 use tokio::task::{block_in_place, spawn_blocking};
