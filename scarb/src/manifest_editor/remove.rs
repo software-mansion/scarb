@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use toml_edit::Document;
+use toml_edit::DocumentMut;
 
 use scarb_ui::components::Status;
 
@@ -17,7 +17,7 @@ pub struct RemoveDependency {
 
 impl Op for RemoveDependency {
     #[tracing::instrument(level = "trace", skip(doc, ctx))]
-    fn apply_to(self: Box<Self>, doc: &mut Document, ctx: OpCtx<'_>) -> Result<()> {
+    fn apply_to(self: Box<Self>, doc: &mut DocumentMut, ctx: OpCtx<'_>) -> Result<()> {
         let tab = get_table_mut(doc, &[self.dep_type.toml_section_str()])?;
 
         // section is hardcoded as there's no support for other section types yet

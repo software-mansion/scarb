@@ -1,7 +1,7 @@
 use anyhow::{ensure, Result};
 use clap::Parser;
 use semver::{Prerelease, Version};
-use toml_edit::{value, Document};
+use toml_edit::{value, DocumentMut};
 use xshell::{cmd, Shell};
 
 pub fn expected_scarb_version() -> Result<Version> {
@@ -10,7 +10,7 @@ pub fn expected_scarb_version() -> Result<Version> {
     // deliberately not using cargo_metadata, to reduce build times of xtasks.
 
     let sh = Shell::new()?;
-    let cargo_lock = sh.read_file("Cargo.lock")?.parse::<Document>()?;
+    let cargo_lock = sh.read_file("Cargo.lock")?.parse::<DocumentMut>()?;
     let packages = cargo_lock["package"].as_array_of_tables().unwrap();
     let compiler = {
         let pkgs = packages
@@ -41,7 +41,7 @@ pub struct Args {
 pub fn main(args: Args) -> Result<()> {
     let sh = Shell::new()?;
 
-    let mut cargo_toml = sh.read_file("Cargo.toml")?.parse::<Document>()?;
+    let mut cargo_toml = sh.read_file("Cargo.toml")?.parse::<DocumentMut>()?;
     let package = cargo_toml["workspace"]["package"].as_table_mut().unwrap();
 
     let mut version = expected_scarb_version()?;

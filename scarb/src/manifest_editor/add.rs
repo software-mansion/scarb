@@ -3,7 +3,7 @@ use std::mem;
 use anyhow::{anyhow, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::formatdoc;
-use toml_edit::{value, Document, Entry, InlineTable, Item};
+use toml_edit::{value, DocumentMut, Entry, InlineTable, Item};
 use url::Url;
 
 use crate::core::{GitReference, PackageName};
@@ -50,7 +50,7 @@ struct GitSource {
 
 impl Op for AddDependency {
     #[tracing::instrument(level = "trace", skip(doc, ctx))]
-    fn apply_to(self: Box<Self>, doc: &mut Document, ctx: OpCtx<'_>) -> Result<()> {
+    fn apply_to(self: Box<Self>, doc: &mut DocumentMut, ctx: OpCtx<'_>) -> Result<()> {
         let tab = get_table_mut(doc, &[self.dep_type.toml_section_str()])?;
 
         let dep = Dep::resolve(*self, ctx)?;
