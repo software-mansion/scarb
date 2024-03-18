@@ -1,4 +1,3 @@
-use crate::compiler::plugin::proc_macro::PROC_MACRO_BUILD_PROFILE;
 use crate::compiler::ProcMacroCompilationUnit;
 use crate::core::{Config, Package, Workspace};
 use crate::flock::Filesystem;
@@ -12,6 +11,8 @@ use serde_json::value::RawValue;
 use std::fmt::Display;
 use std::process::Command;
 use tracing::trace_span;
+
+pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
 
 /// This trait is used to define the shared library path for a package.
 pub trait SharedLibraryProvider {

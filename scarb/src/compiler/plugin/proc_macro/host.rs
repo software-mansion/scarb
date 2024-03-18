@@ -1,6 +1,6 @@
-use crate::compiler::plugin::proc_macro::{FromItemAst, ProcMacroInstance};
+use crate::compiler::plugin::proc_macro::{Expansion, FromItemAst, ProcMacroInstance};
 use crate::core::{Config, Package, PackageId};
-use anyhow::Result;
+use anyhow::{ensure, Result};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_defs::plugin::{
@@ -8,7 +8,7 @@ use cairo_lang_defs::plugin::{
     PluginGeneratedFile, PluginResult,
 };
 use cairo_lang_macro::{
-    AuxData, Diagnostic, ProcMacroResult, Severity, TokenStream, TokenStreamMetadata,
+    AuxData, Diagnostic, ExpansionKind, ProcMacroResult, Severity, TokenStream, TokenStreamMetadata,
 };
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::attribute::structured::AttributeListStructurize;
@@ -17,7 +17,6 @@ use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use itertools::Itertools;
 use scarb_stable_hash::short_hash;
-use smol_str::SmolStr;
 use std::any::Any;
 use std::sync::Arc;
 use tracing::{debug, trace_span};
@@ -31,40 +30,30 @@ pub struct ProcMacroHostPlugin {
     macros: Vec<Arc<ProcMacroInstance>>,
 }
 
-pub type ProcMacroId = SmolStr;
-
-#[derive(Debug)]
-#[allow(dead_code)]
-pub enum ProcMacroKind {
-    /// `proc_macro_name!(...)`
-    MacroCall,
-    /// `#[proc_macro_name]`
-    Attribute,
-    /// `#[derive(...)]`
-    Derive,
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ProcMacroId {
+    pub package_id: PackageId,
+    pub expansion: Expansion,
 }
 
-#[derive(Debug)]
-pub struct ProcMacroInput {
-    pub id: ProcMacroId,
-    pub kind: ProcMacroKind,
-    pub macro_package_id: PackageId,
+impl ProcMacroId {
+    pub fn new(package_id: PackageId, expansion: Expansion) -> Self {
+        Self {
+            package_id,
+            expansion,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct ProcMacroAuxData {
     value: Vec<u8>,
     macro_id: ProcMacroId,
-    macro_package_id: PackageId,
 }
 
 impl ProcMacroAuxData {
-    pub fn new(value: Vec<u8>, macro_id: ProcMacroId, macro_package_id: PackageId) -> Self {
-        Self {
-            value,
-            macro_id,
-            macro_package_id,
-        }
+    pub fn new(value: Vec<u8>, macro_id: ProcMacroId) -> Self {
+        Self { value, macro_id }
     }
 }
 
@@ -86,16 +75,40 @@ impl GeneratedFileAuxData for ProcMacroAuxData {
 }
 
 impl ProcMacroHostPlugin {
-    pub fn new(macros: Vec<Arc<ProcMacroInstance>>) -> Self {
-        Self { macros }
+    pub fn try_new(macros: Vec<Arc<ProcMacroInstance>>) -> Result<Self> {
+        // Validate expansions.
+        let mut expansions = macros
+            .iter()
+            .flat_map(|m| {
+                m.get_expansions()
+                    .iter()
+                    .map(|e| ProcMacroId::new(m.package_id(), e.clone()))
+                    .collect_vec()
+            })
+            .collect::<Vec<_>>();
+        expansions.sort_unstable_by_key(|e| e.expansion.name.clone());
+        ensure!(
+            expansions
+                .windows(2)
+                .all(|w| w[0].expansion.name != w[1].expansion.name),
+            "duplicate expansions defined for procedural macros: {duplicates}",
+            duplicates = expansions
+                .windows(2)
+                .filter(|w| w[0].expansion.name == w[1].expansion.name)
+                .map(|w| format!(
+                    "{} ({} and {})",
+                    w[0].expansion.name.as_str(),
+                    w[0].package_id,
+                    w[1].package_id
+                ))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        Ok(Self { macros })
     }
 
     /// Handle `proc_macro_name!` expression.
-    fn handle_macro(
-        &self,
-        _db: &dyn SyntaxGroup,
-        _item_ast: ast::ModuleItem,
-    ) -> Vec<ProcMacroInput> {
+    fn handle_macro(&self, _db: &dyn SyntaxGroup, _item_ast: ast::ModuleItem) -> Vec<ProcMacroId> {
         // Todo(maciektr): Implement.
         Vec::new()
     }
@@ -105,7 +118,7 @@ impl ProcMacroHostPlugin {
         &self,
         db: &dyn SyntaxGroup,
         item_ast: ast::ModuleItem,
-    ) -> Vec<ProcMacroInput> {
+    ) -> Vec<ProcMacroId> {
         let attrs = match item_ast {
             ast::ModuleItem::Struct(struct_ast) => Some(struct_ast.attributes(db)),
             ast::ModuleItem::Enum(enum_ast) => Some(enum_ast.attributes(db)),
@@ -122,31 +135,23 @@ impl ProcMacroHostPlugin {
             .unwrap_or_default()
             .iter()
             .filter_map(|attr| {
-                self.find_macro_package(attr.id.to_string())
-                    .map(|pid| ProcMacroInput {
-                        id: attr.id.clone(),
-                        kind: ProcMacroKind::Attribute,
-                        macro_package_id: pid,
-                    })
+                self.find_expansion(&Expansion::new(attr.id.clone(), ExpansionKind::Attr))
             })
             .collect_vec()
     }
 
     /// Handle `#[derive(...)]` attribute.
-    fn handle_derive(
-        &self,
-        _db: &dyn SyntaxGroup,
-        _item_ast: ast::ModuleItem,
-    ) -> Vec<ProcMacroInput> {
+    fn handle_derive(&self, _db: &dyn SyntaxGroup, _item_ast: ast::ModuleItem) -> Vec<ProcMacroId> {
         // Todo(maciektr): Implement.
         Vec::new()
     }
 
-    fn find_macro_package(&self, name: String) -> Option<PackageId> {
+    fn find_expansion(&self, expansion: &Expansion) -> Option<ProcMacroId> {
         self.macros
             .iter()
-            .find(|m| m.declared_attributes().contains(&name))
+            .find(|m| m.get_expansions().contains(expansion))
             .map(|m| m.package_id())
+            .map(|package_id| ProcMacroId::new(package_id, expansion.clone()))
     }
 
     pub fn build_plugin_suite(macr_host: Arc<Self>) -> PluginSuite {
@@ -175,7 +180,9 @@ impl ProcMacroHostPlugin {
                 }
             }
         }
-        let aux_data = data.into_iter().into_group_map_by(|d| d.macro_package_id);
+        let aux_data = data
+            .into_iter()
+            .into_group_map_by(|d| d.macro_id.package_id);
         for instance in self.macros.iter() {
             let _ = trace_span!(
                 "aux_data_collection_callback",
@@ -218,7 +225,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
             let instance = self
                 .macros
                 .iter()
-                .find(|m| m.package_id() == input.macro_package_id)
+                .find(|m| m.package_id() == input.package_id)
                 .expect("procedural macro must be registered in proc macro host");
             match instance.generate_code(token_stream.clone()) {
                 ProcMacroResult::Replace {
@@ -230,8 +237,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
                     if let Some(new_aux_data) = new_aux_data {
                         aux_data = Some(ProcMacroAuxData::new(
                             new_aux_data.into(),
-                            input.id,
-                            input.macro_package_id,
+                            ProcMacroId::new(input.package_id, input.expansion.clone()),
                         ));
                     }
                     modified = true;
@@ -311,7 +317,7 @@ impl ProcMacroHost {
         Ok(())
     }
 
-    pub fn into_plugin(self) -> ProcMacroHostPlugin {
-        ProcMacroHostPlugin::new(self.macros)
+    pub fn into_plugin(self) -> Result<ProcMacroHostPlugin> {
+        ProcMacroHostPlugin::try_new(self.macros)
     }
 }

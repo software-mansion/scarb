@@ -56,7 +56,7 @@ fn load_plugins(
             proc_macros.register(plugin_info.package.clone(), ws.config())?;
         }
     }
-    let macro_host = Arc::new(proc_macros.into_plugin());
+    let macro_host = Arc::new(proc_macros.into_plugin()?);
     builder.with_plugin_suite(ProcMacroHostPlugin::build_plugin_suite(macro_host.clone()));
     Ok(macro_host)
 }
