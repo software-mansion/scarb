@@ -5,7 +5,7 @@ use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use camino::Utf8PathBuf;
 use semver::Version;
-use toml_edit::{Document, Item, Value};
+use toml_edit::{DocumentMut, Item, Value};
 
 use scarb_build_metadata::CAIRO_VERSION;
 use to_version::ToVersion;
@@ -108,7 +108,7 @@ impl ProjectBuilder {
     }
 
     pub fn render_manifest(&self) -> String {
-        let mut doc = Document::new();
+        let mut doc = DocumentMut::new();
         doc["package"] = toml_edit::table();
         doc["package"]["name"] = Item::Value(Value::from(self.name.clone()));
         doc["package"]["version"] = Item::Value(Value::from(self.version.to_string()));
@@ -123,7 +123,7 @@ impl ProjectBuilder {
             manifest.push_str(&self.manifest_package_extra);
         }
 
-        let mut doc = manifest.parse::<Document>().unwrap();
+        let mut doc = manifest.parse::<DocumentMut>().unwrap();
         doc["dependencies"] = toml_edit::table();
         for (name, dep) in &self.deps {
             doc["dependencies"][name.clone()] = Item::Value(dep.clone());
