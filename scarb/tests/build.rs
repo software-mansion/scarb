@@ -915,24 +915,30 @@ fn can_disable_gas() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        // Note: Compiling to CASM will fail on gas validation in `calc_metadata`
+        // unless `calc_metadata_ap_change_only` is used.
         .lib_cairo(indoc! {r#"
-            fn main() -> u32 {
-                fib(16)
+            fn foo(mut shape: Span<usize>) -> usize {
+                let mut result: usize = 1;
+
+                loop {
+                    match shape.pop_front() {
+                        Option::Some(item) => { result *= *item; },
+                        Option::None => { break; }
+                    };
+                };
+
+                result
             }
 
-            fn fib(mut n: u32) -> u32 {
-                let mut a: u32 = 0;
-                let mut b: u32 = 1;
-                while n != 0 {
-                    n = n - 1;
-                    let temp = b;
-                    b = a + b;
-                    a = temp;
-                };
-                a
+            fn main() -> usize {
+                foo(array![1, 2].span())
             }
         "#})
         .manifest_extra(indoc! {r#"
+            [lib]
+            casm = true
+
             [cairo]
             enable-gas = false
         "#})

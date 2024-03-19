@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
-use cairo_lang_sierra_to_casm::metadata::calc_metadata;
+use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
 use serde::{Deserialize, Serialize};
-use tracing::trace_span;
+use tracing::{debug, trace_span};
 
 use crate::compiler::helpers::{
     build_compiler_config, collect_main_crate_ids, write_json, write_string,
@@ -90,8 +90,15 @@ impl Compiler for LibCompiler {
 
             let metadata = {
                 let _ = trace_span!("casm_calc_metadata").enter();
-                calc_metadata(&program, Default::default())
-                    .context("failed calculating Sierra variables")?
+
+                if unit.compiler_config.enable_gas {
+                    debug!("calculating Sierra variables");
+                    calc_metadata(&program, Default::default())
+                } else {
+                    debug!("calculating Sierra variables with no gas validation");
+                    calc_metadata_ap_change_only(&program)
+                }
+                .context("failed calculating Sierra variables")?
             };
 
             let cairo_program = {
