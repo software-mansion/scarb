@@ -10,7 +10,9 @@ use clap::Parser;
 use indoc::formatdoc;
 use serde::Serializer;
 
-use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
+use scarb_metadata::{
+    CompilationUnitMetadata, Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand,
+};
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::Status;
 use scarb_ui::{Message, OutputFormat, Ui, Verbosity};
@@ -58,11 +60,12 @@ fn main() -> Result<()> {
 
 fn main_inner(ui: &Ui) -> Result<()> {
     let args: Args = Args::parse();
-    let available_gas = GasLimit::parse(args.available_gas);
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
     let package = args.packages_filter.match_one(&metadata)?;
+
+    let available_gas = GasLimit::parse(args.available_gas).with_metadata(&metadata, &package)?;
 
     if !args.no_build {
         let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
@@ -186,6 +189,7 @@ enum GasLimit {
     Unlimited,
     Limited(usize),
 }
+
 impl GasLimit {
     pub fn parse(value: Option<usize>) -> Self {
         match value {
@@ -195,10 +199,36 @@ impl GasLimit {
         }
     }
 
+    /// Disable gas based on the compilation unit compiler config.
+    pub fn with_metadata(self, metadata: &Metadata, package: &PackageMetadata) -> Result<Self> {
+        let compilation_unit = metadata.package_lib_compilation_unit(package.id.clone());
+        let cu_enables_gas = compilation_unit
+            .map(|cu| cu.compiler_config.clone())
+            .and_then(|c| {
+                c.as_object()
+                    .and_then(|c| c.get("enable_gas").and_then(|x| x.as_bool()))
+            })
+            // Defaults to true, meaning gas enabled - relies on cli config then.
+            .unwrap_or(true);
+        ensure!(
+            cu_enables_gas || !self.is_defined(),
+            "gas calculation disabled for package `{package_name}`, cannot define custom gas limit",
+            package_name = package.name
+        );
+        if cu_enables_gas {
+            // Leave unchanged.
+            Ok(self)
+        } else {
+            // Disable gas based on CU config.
+            Ok(GasLimit::Disabled)
+        }
+    }
+
     pub fn is_disabled(&self) -> bool {
         matches!(self, GasLimit::Disabled)
     }
 
+    /// Returns true if the gas limit has been defined by the user.
     pub fn is_defined(&self) -> bool {
         !matches!(self, GasLimit::Unlimited)
     }
@@ -211,3 +241,24 @@ impl GasLimit {
         }
     }
 }
+
+trait CompilationUnitProvider {
+    /// Return the compilation unit for the package's lib target.
+    fn package_lib_compilation_unit(
+        &self,
+        package_id: PackageId,
+    ) -> Option<&CompilationUnitMetadata>;
+}
+
+impl CompilationUnitProvider for Metadata {
+    fn package_lib_compilation_unit(
+        &self,
+        package_id: PackageId,
+    ) -> Option<&CompilationUnitMetadata> {
+        self.compilation_units
+            .iter()
+            .find(|m| m.package == package_id && m.target.kind == LIB_TARGET_KIND)
+    }
+}
+
+const LIB_TARGET_KIND: &str = "lib";
