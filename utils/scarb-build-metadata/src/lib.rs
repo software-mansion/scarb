@@ -54,8 +54,12 @@ mod tests {
         }
 
         assert_eq!(
-            (scarb.major, scarb.minor, scarb.patch),
-            (cairo.major, cairo.minor, cairo.patch),
+            (scarb.major, scarb.minor),
+            (cairo.major, cairo.minor),
+            "versions not in sync:\nscarb {scarb}\ncairo {cairo}"
+        );
+        assert!(
+            scarb.patch >= cairo.patch,
             "versions not in sync:\nscarb {scarb}\ncairo {cairo}"
         );
         assert!(
