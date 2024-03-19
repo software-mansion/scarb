@@ -11,6 +11,7 @@ use crate::flock::Filesystem;
 use scarb_stable_hash::StableHasher;
 
 /// An object that has enough information so that Scarb knows how to build it.
+#[derive(Clone, Debug)]
 pub enum CompilationUnit {
     Cairo(CairoCompilationUnit),
     ProcMacro(ProcMacroCompilationUnit),
