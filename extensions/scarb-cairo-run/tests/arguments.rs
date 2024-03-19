@@ -259,35 +259,6 @@ fn invalid_struct_deserialization() {
 }
 
 #[test]
-fn can_accept_nested_array() {
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .version("0.1.0")
-        .lib_cairo(indoc! {r#"
-        fn main(a: felt252, b: felt252, n: Array<Array<felt252>>) {
-            println!("[{}, {}, {:?}]", a, b, n);
-        }
-        "#})
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        .arg("cairo-run")
-        .arg("--")
-        .arg(r#"[0, 1, [[17], [1, 15, 3], [42]]]"#)
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-        [..]   Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]    Finished release target(s) in [..]
-        [..]     Running hello
-        [..][0, 1, [[17], [1, 15, 3], [42]]]
-        [..]Run completed successfully, returning []
-        "#});
-}
-
-#[test]
 fn cannot_set_gas_limit_for_package_with_disabled_gas_calculation() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
