@@ -286,3 +286,52 @@ fn can_accept_nested_array() {
         [..]Run completed successfully, returning []
         "#});
 }
+
+#[test]
+fn cannot_set_gas_limit_for_package_with_disabled_gas_calculation() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn foo(mut shape: Span<usize>) -> usize {
+                let mut result: usize = 1;
+
+                loop {
+                    match shape.pop_front() {
+                        Option::Some(item) => { result *= *item; },
+                        Option::None => { break; }
+                    };
+                };
+
+                result
+            }
+
+            fn main() -> usize {
+                foo(array![1, 2].span())
+            }
+        "#})
+        .manifest_extra(indoc! {r#"
+            [lib]
+            sierra = true
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .build(&t);
+    let output = Scarb::quick_snapbox()
+        .arg("cairo-run")
+        .arg("--available-gas")
+        .arg("10")
+        .current_dir(&t)
+        .assert()
+        .failure();
+    #[cfg(windows)]
+    output.stdout_eq(indoc! {r#"
+            error: gas calculation disabled for package `hello`, cannot define custom gas limit
+            error: process did not exit successfully: exit code: 1
+        "#});
+    #[cfg(not(windows))]
+    output.stdout_eq(indoc! {r#"
+            error: gas calculation disabled for package `hello`, cannot define custom gas limit
+        "#});
+}
