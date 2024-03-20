@@ -6,6 +6,17 @@ use std::ptr::NonNull;
 
 pub mod ffi;
 
+#[repr(C)]
+#[derive(Debug)]
+pub struct StableExpansion {
+    pub name: *mut c_char,
+    pub kind: StableExpansionKind,
+}
+
+pub type StableExpansionKind = NonZeroU8;
+
+pub type StableExpansionsList = StableSlice<StableExpansion>;
+
 /// Token stream.
 ///
 /// This struct implements FFI-safe stable ABI.

@@ -1,8 +1,11 @@
-use crate::{AuxData, Diagnostic, ProcMacroResult, Severity, TokenStream, TokenStreamMetadata};
+use crate::{
+    AuxData, Diagnostic, ExpansionDefinition, ProcMacroResult, Severity, TokenStream,
+    TokenStreamMetadata,
+};
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
-    StableAuxData, StableDiagnostic, StableProcMacroResult, StableSeverity, StableTokenStream,
-    StableTokenStreamMetadata,
+    StableAuxData, StableDiagnostic, StableExpansion, StableProcMacroResult, StableSeverity,
+    StableTokenStream, StableTokenStreamMetadata,
 };
 use std::ffi::{c_char, CStr, CString};
 use std::num::NonZeroU8;
@@ -348,6 +351,30 @@ impl Severity {
             // Note that it defaults to warning for unknown values.
             Self::Warning
         }
+    }
+}
+
+impl ExpansionDefinition {
+    // Convert to FFI-safe representation.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableExpansion {
+        StableExpansion {
+            name: CString::new(self.name).unwrap().into_raw(),
+            kind: self.kind.into_stable(),
+        }
+    }
+
+    /// Take the ownership of the string.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn free_owned(expansion: StableExpansion) {
+        let _ = from_raw_cstring(expansion.name);
     }
 }
 
