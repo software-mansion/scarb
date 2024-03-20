@@ -1,16 +1,18 @@
 use crate::core::{Config, Package, PackageId};
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use cairo_lang_defs::patcher::PatchBuilder;
-use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream};
+use cairo_lang_macro::{AuxData, ExpansionKind, ProcMacroResult, TokenStream};
 use cairo_lang_macro_stable::{
-    StableAuxData, StableProcMacroResult, StableResultWrapper, StableTokenStream,
+    StableAuxData, StableExpansion, StableExpansionsList, StableProcMacroResult,
+    StableResultWrapper, StableTokenStream,
 };
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use camino::Utf8PathBuf;
 use libloading::{Library, Symbol};
-use std::ffi::{c_char, CString};
+use std::ffi::{c_char, CStr, CString};
 use std::fmt::Debug;
+use std::slice;
 
 use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::ProcMacroAuxData;
@@ -19,8 +21,7 @@ use cairo_lang_macro_stable::ffi::StableSlice;
 use libloading::os::unix::Symbol as RawSymbol;
 #[cfg(windows)]
 use libloading::os::windows::Symbol as RawSymbol;
-
-pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
+use smol_str::SmolStr;
 
 pub trait FromItemAst {
     fn from_item_ast(db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> Self;
@@ -41,6 +42,7 @@ impl FromItemAst for TokenStream {
 pub struct ProcMacroInstance {
     package_id: PackageId,
     plugin: Plugin,
+    expansions: Vec<Expansion>,
 }
 
 impl Debug for ProcMacroInstance {
@@ -52,21 +54,58 @@ impl Debug for ProcMacroInstance {
 }
 
 impl ProcMacroInstance {
-    pub fn package_id(&self) -> PackageId {
-        self.package_id
-    }
-
     /// Load shared library
     pub fn try_new(package: Package, config: &Config) -> Result<Self> {
         let lib_path = package.shared_lib_path(config);
         let plugin = unsafe { Plugin::try_new(lib_path.to_path_buf())? };
         Ok(Self {
-            plugin,
+            expansions: unsafe { Self::load_expansions(&plugin, package.id)? },
             package_id: package.id,
+            plugin,
         })
     }
+
+    unsafe fn load_expansions(plugin: &Plugin, package_id: PackageId) -> Result<Vec<Expansion>> {
+        // Make a call to the FFI interface to list declared expansions.
+        let stable_expansions = (plugin.vtable.list_expansions)();
+        let (ptr, n) = stable_expansions.raw_parts();
+        let expansions = slice::from_raw_parts(ptr, n);
+        let mut expansions: Vec<Expansion> = expansions
+            .iter()
+            .map(|e| Expansion::from_stable(e))
+            .collect();
+        // Free the memory allocated by the `stable_expansions`.
+        (plugin.vtable.free_expansions_list)(stable_expansions);
+        // Validate expansions.
+        expansions.sort_unstable_by_key(|e| e.name.clone());
+        ensure!(
+            expansions.windows(2).all(|w| w[0].name != w[1].name),
+            "duplicate expansions defined for procedural macro {package_id}: {duplicates}",
+            duplicates = expansions
+                .windows(2)
+                .filter(|w| w[0].name == w[1].name)
+                .map(|w| w[0].name.as_str())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        Ok(expansions)
+    }
+
+    pub fn get_expansions(&self) -> &[Expansion] {
+        &self.expansions
+    }
+
+    pub fn package_id(&self) -> PackageId {
+        self.package_id
+    }
+
     pub fn declared_attributes(&self) -> Vec<String> {
-        vec![self.package_id.name.to_string()]
+        self.get_expansions()
+            .iter()
+            .filter(|e| e.kind == ExpansionKind::Attr)
+            .map(|e| e.name.clone())
+            .map(Into::into)
+            .collect()
     }
 
     /// Apply expansion to token stream.
@@ -120,34 +159,71 @@ impl ProcMacroInstance {
     }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Expansion {
+    pub name: SmolStr,
+    pub kind: ExpansionKind,
+}
+
+impl Expansion {
+    pub fn new(name: impl ToString, kind: ExpansionKind) -> Self {
+        Self {
+            name: SmolStr::new(name.to_string()),
+            kind,
+        }
+    }
+
+    unsafe fn from_stable(stable_expansion: &StableExpansion) -> Self {
+        // Note this does not take ownership of underlying memory.
+        let name = if stable_expansion.name.is_null() {
+            String::default()
+        } else {
+            let cstr = CStr::from_ptr(stable_expansion.name);
+            cstr.to_string_lossy().to_string()
+        };
+        Self {
+            name: SmolStr::new(name),
+            kind: ExpansionKind::from_stable(&stable_expansion.kind),
+        }
+    }
+}
+
+type ListExpansions = extern "C" fn() -> StableExpansionsList;
+type FreeExpansionsList = extern "C" fn(StableExpansionsList);
 type ExpandCode = extern "C" fn(*const c_char, StableTokenStream) -> StableResultWrapper;
 type FreeResult = extern "C" fn(StableProcMacroResult);
 type AuxDataCallback = extern "C" fn(StableSlice<StableAuxData>) -> StableSlice<StableAuxData>;
 
 struct VTableV0 {
+    list_expansions: RawSymbol<ListExpansions>,
+    free_expansions_list: RawSymbol<FreeExpansionsList>,
     expand: RawSymbol<ExpandCode>,
     free_result: RawSymbol<FreeResult>,
     aux_data_callback: RawSymbol<AuxDataCallback>,
 }
 
+macro_rules! get_symbol {
+    ($library:ident, $name:literal, $type:ty) => {{
+        let symbol: Symbol<'_, $type> = $library.get($name).context(format!(
+            "failed to load {} symbol for procedural macro",
+            stringify!($name)
+        ))?;
+        symbol.into_raw()
+    }};
+}
+
 impl VTableV0 {
     unsafe fn try_new(library: &Library) -> Result<VTableV0> {
-        let expand: Symbol<'_, ExpandCode> = library
-            .get(b"expand\0")
-            .context("failed to load expand function for procedural macro")?;
-        let expand = expand.into_raw();
-        let free_result: Symbol<'_, FreeResult> = library
-            .get(b"free_result\0")
-            .context("failed to load free_result function for procedural macro")?;
-        let free_result = free_result.into_raw();
-        let aux_data_callback: Symbol<'_, AuxDataCallback> = library
-            .get(b"aux_data_callback\0")
-            .context("failed to load aux_data_callback function for procedural macro")?;
-        let aux_data_callback = aux_data_callback.into_raw();
         Ok(VTableV0 {
-            expand,
-            free_result,
-            aux_data_callback,
+            list_expansions: get_symbol!(library, b"list_expansions\0", ListExpansions),
+            free_expansions_list: get_symbol!(
+                library,
+                b"free_expansions_list\0",
+                FreeExpansionsList
+            ),
+            expand: get_symbol!(library, b"expand\0", ExpandCode),
+            free_result: get_symbol!(library, b"free_result\0", FreeResult),
+            aux_data_callback: get_symbol!(library, b"aux_data_callback\0", AuxDataCallback),
         })
     }
 }
