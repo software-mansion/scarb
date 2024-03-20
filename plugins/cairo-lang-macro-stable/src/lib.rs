@@ -1,20 +1,10 @@
-use crate::ffi::StableSlice;
+use crate::ffi::{StableOption, StableSlice};
 use std::ffi::CStr;
 use std::num::NonZeroU8;
 use std::os::raw::c_char;
 use std::ptr::NonNull;
 
 pub mod ffi;
-
-/// An option.
-///
-/// This struct implements FFI-safe stable ABI.
-#[repr(C)]
-#[derive(Debug)]
-pub enum StableOption<T> {
-    None,
-    Some(T),
-}
 
 /// Token stream.
 ///
