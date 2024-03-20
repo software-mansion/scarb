@@ -518,7 +518,7 @@ fn can_return_aux_data_from_plugin() {
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
@@ -529,7 +529,57 @@ fn can_return_aux_data_from_plugin() {
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [SomeMacroDataFormat { msg: "Hello from some macro!" }]
             [..]Finished release target(s) in [..]
-            [..]Running hello
-            [..]Run completed successfully, returning [..]
+        "#});
+}
+
+#[test]
+fn can_read_token_stream_metadata() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+        #[attribute_macro]
+        pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+            println!("{:#?}", token_stream.metadata());
+            ProcMacroResult::Leave { diagnostics: Vec::new() }
+        }
+
+        "##},
+    );
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            TokenStreamMetadata {
+                original_file_path: Some(
+                    "[..]lib.cairo",
+                ),
+                file_id: Some(
+                    "[..]",
+                ),
+            }
+            [..]Finished release target(s) in [..]
         "#});
 }

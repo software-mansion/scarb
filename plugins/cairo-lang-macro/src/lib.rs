@@ -5,10 +5,12 @@ pub use linkme;
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
     StableAuxData, StableDiagnostic, StableProcMacroResult, StableSeverity, StableTokenStream,
+    StableTokenStreamMetadata,
 };
 use std::ffi::{c_char, CStr, CString};
 use std::fmt::Display;
 use std::num::NonZeroU8;
+use std::ptr::NonNull;
 use std::slice;
 use std::vec::IntoIter;
 
@@ -66,18 +68,49 @@ pub enum ProcMacroResult {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct TokenStream(String);
+pub struct TokenStream {
+    value: String,
+    metadata: TokenStreamMetadata,
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct TokenStreamMetadata {
+    original_file_path: Option<String>,
+    file_id: Option<String>,
+}
 
 impl TokenStream {
     #[doc(hidden)]
-    pub fn new(s: String) -> Self {
-        Self(s)
+    pub fn new(value: String) -> Self {
+        Self {
+            value,
+            metadata: TokenStreamMetadata::default(),
+        }
+    }
+
+    #[doc(hidden)]
+    pub fn with_metadata(mut self, metadata: TokenStreamMetadata) -> Self {
+        self.metadata = metadata;
+        self
+    }
+
+    pub fn metadata(&self) -> &TokenStreamMetadata {
+        &self.metadata
     }
 }
 
 impl Display for TokenStream {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.value)
+    }
+}
+
+impl TokenStreamMetadata {
+    pub fn new(file_path: impl ToString, file_id: impl ToString) -> Self {
+        Self {
+            original_file_path: Some(file_path.to_string()),
+            file_id: Some(file_id.to_string()),
+        }
     }
 }
 
@@ -332,8 +365,11 @@ impl TokenStream {
     /// # Safety
     #[doc(hidden)]
     pub fn into_stable(self) -> StableTokenStream {
-        let cstr = CString::new(self.0).unwrap();
-        StableTokenStream::new(cstr.into_raw())
+        let cstr = CString::new(self.value).unwrap();
+        StableTokenStream {
+            value: cstr.into_raw(),
+            metadata: self.metadata.into_stable(),
+        }
     }
 
     /// Convert to native Rust representation, without taking the ownership of the string.
@@ -343,7 +379,10 @@ impl TokenStream {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn from_stable(token_stream: &StableTokenStream) -> Self {
-        Self::new(token_stream.to_string())
+        Self {
+            value: from_raw_cstr(token_stream.value),
+            metadata: TokenStreamMetadata::from_stable(&token_stream.metadata),
+        }
     }
 
     /// Convert to native Rust representation, with taking the ownership of the string.
@@ -354,7 +393,64 @@ impl TokenStream {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn from_owned_stable(token_stream: StableTokenStream) -> Self {
-        Self::new(token_stream.into_owned_string())
+        Self {
+            value: from_raw_cstring(token_stream.value),
+            metadata: TokenStreamMetadata::from_owned_stable(token_stream.metadata),
+        }
+    }
+}
+
+impl TokenStreamMetadata {
+    /// Convert to FFI-safe representation.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableTokenStreamMetadata {
+        let original_file_path = self
+            .original_file_path
+            .and_then(|path| NonNull::new(CString::new(path).unwrap().into_raw()));
+        let file_id = self
+            .file_id
+            .and_then(|path| NonNull::new(CString::new(path).unwrap().into_raw()));
+        StableTokenStreamMetadata {
+            original_file_path,
+            file_id,
+        }
+    }
+
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_stable(metadata: &StableTokenStreamMetadata) -> Self {
+        let original_file_path = metadata
+            .original_file_path
+            .map(|raw| from_raw_cstr(raw.as_ptr()));
+        let file_id = metadata.file_id.map(|raw| from_raw_cstr(raw.as_ptr()));
+        Self {
+            original_file_path,
+            file_id,
+        }
+    }
+
+    /// Convert to native Rust representation, with taking the ownership of the string.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_owned_stable(metadata: StableTokenStreamMetadata) -> Self {
+        let original_file_path = metadata
+            .original_file_path
+            .map(|raw| from_raw_cstring(raw.as_ptr()));
+        let file_id = metadata.file_id.map(|raw| from_raw_cstring(raw.as_ptr()));
+        Self {
+            original_file_path,
+            file_id,
+        }
     }
 }
 
@@ -493,5 +589,17 @@ unsafe fn from_raw_cstr(raw: *mut c_char) -> String {
     } else {
         let cstr = CStr::from_ptr(raw);
         cstr.to_string_lossy().to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::TokenStream;
+
+    #[test]
+    fn new_token_stream_metadata_empty() {
+        let token_stream = TokenStream::new("".to_string());
+        assert!(token_stream.metadata.file_id.is_none());
+        assert!(token_stream.metadata.original_file_path.is_none());
     }
 }

@@ -733,6 +733,7 @@ dependencies = [
  "cairo-lang-macro-attributes",
  "cairo-lang-macro-stable",
  "linkme",
+ "scarb-stable-hash",
 ]
 
 [[package]]
