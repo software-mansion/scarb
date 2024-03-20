@@ -16,3 +16,4 @@ repository.workspace = true
 cairo-lang-macro-attributes = { path = "../cairo-lang-macro-attributes" }
 cairo-lang-macro-stable = { path = "../cairo-lang-macro-stable" }
 linkme.workspace = true
+scarb-stable-hash = { path = "../../utils/scarb-stable-hash" }

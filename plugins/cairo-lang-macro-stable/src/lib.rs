@@ -1,23 +1,45 @@
 use crate::ffi::StableSlice;
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::num::NonZeroU8;
 use std::os::raw::c_char;
+use std::ptr::NonNull;
 
 pub mod ffi;
+
+/// An option.
+///
+/// This struct implements FFI-safe stable ABI.
+#[repr(C)]
+#[derive(Debug)]
+pub enum StableOption<T> {
+    None,
+    Some(T),
+}
 
 /// Token stream.
 ///
 /// This struct implements FFI-safe stable ABI.
 #[repr(C)]
 #[derive(Debug)]
-pub struct StableTokenStream(*mut c_char);
+pub struct StableTokenStream {
+    pub value: *mut c_char,
+    pub metadata: StableTokenStreamMetadata,
+}
 
+/// Token stream metadata.
+///
+/// This struct implements FFI-safe stable ABI.
 #[repr(C)]
 #[derive(Debug)]
-pub enum StableAuxData {
-    None,
-    Some(StableSlice<u8>),
+pub struct StableTokenStreamMetadata {
+    pub original_file_path: Option<NonNull<c_char>>,
+    pub file_id: Option<NonNull<c_char>>,
 }
+
+/// Auxiliary data returned by the procedural macro.
+///
+/// This struct implements FFI-safe stable ABI.
+pub type StableAuxData = StableOption<StableSlice<u8>>;
 
 /// Diagnostic returned by the procedural macro.
 ///
@@ -63,29 +85,12 @@ pub struct StableResultWrapper {
 }
 
 impl StableTokenStream {
-    pub fn new(s: *mut c_char) -> Self {
-        Self(s)
-    }
-
     /// Convert to String.
     ///
     /// # Safety
     pub unsafe fn to_string(&self) -> String {
         // Note that this does not deallocate the c-string.
         // The memory must still be freed with `CString::from_raw`.
-        CStr::from_ptr(self.0).to_string_lossy().to_string()
-    }
-
-    pub fn into_owned_string(self) -> String {
-        unsafe { raw_to_string(self.0) }
-    }
-}
-
-unsafe fn raw_to_string(raw: *mut c_char) -> String {
-    if raw.is_null() {
-        String::default()
-    } else {
-        let cstr = CString::from_raw(raw);
-        cstr.to_string_lossy().to_string()
+        CStr::from_ptr(self.value).to_string_lossy().to_string()
     }
 }
