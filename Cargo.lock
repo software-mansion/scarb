@@ -4591,10 +4591,13 @@ name = "scarb-cairo-test"
 version = "2.6.3"
 dependencies = [
  "anyhow",
+ "assert_fs",
  "cairo-lang-test-plugin",
  "cairo-lang-test-runner",
  "clap",
+ "indoc",
  "scarb-metadata 1.11.1",
+ "scarb-test-support",
  "scarb-ui",
  "serde_json",
  "snapbox",

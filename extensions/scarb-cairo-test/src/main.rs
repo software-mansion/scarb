@@ -5,7 +5,9 @@ use cairo_lang_test_plugin::TestCompilation;
 use cairo_lang_test_runner::{CompiledTestRunner, RunProfilerConfig, TestRunConfig};
 use clap::Parser;
 
-use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
+use scarb_metadata::{
+    Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
+};
 use scarb_ui::args::PackagesFilter;
 
 /// Execute all unit tests of a local package.
@@ -67,6 +69,7 @@ fn main() -> Result<()> {
                 include_ignored: args.include_ignored,
                 ignored: args.ignored,
                 run_profiler: RunProfilerConfig::None,
+                gas_enabled: is_gas_enabled(&metadata, &package.id, target),
             };
             let runner = CompiledTestRunner::new(test_compilation, config);
             runner.run(None)?;
@@ -75,6 +78,22 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn is_gas_enabled(metadata: &Metadata, package_id: &PackageId, target: &TargetMetadata) -> bool {
+    metadata
+        .compilation_units
+        .iter()
+        .find(|cu| {
+            cu.package == *package_id && cu.target.kind == "test" && cu.target.name == target.name
+        })
+        .map(|cu| cu.compiler_config.clone())
+        .and_then(|c| {
+            c.as_object()
+                .and_then(|c| c.get("enable_gas").and_then(|x| x.as_bool()))
+        })
+        // Defaults to true, meaning gas enabled - relies on cli config then.
+        .unwrap_or(true)
 }
 
 fn find_testable_targets(package: &PackageMetadata) -> Vec<&TargetMetadata> {
