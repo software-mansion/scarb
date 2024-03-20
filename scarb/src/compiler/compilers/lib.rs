@@ -59,6 +59,7 @@ impl Compiler for LibCompiler {
         let sierra_program = {
             let _ = trace_span!("compile_sierra").enter();
             cairo_lang_compiler::compile_prepared_db(db, main_crate_ids, compiler_config)?
+                .program
                 .into_artifact()
         };
 
