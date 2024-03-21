@@ -60,11 +60,15 @@ fn lib_path(lib_name: &str) -> String {
 }
 
 fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
+    simple_project_with_code_and_name(t, code, "some")
+}
+
+fn simple_project_with_code_and_name(t: &impl PathChild, code: impl ToString, name: &str) {
     let macro_lib_path = lib_path("cairo-lang-macro");
     let macro_stable_lib_path = lib_path("cairo-lang-macro-stable");
     CairoPluginProjectBuilder::start()
         .scarb_project(|b| {
-            b.name("some")
+            b.name(name)
                 .version("1.0.0")
                 .manifest_extra(r#"[cairo-plugin]"#)
         })
@@ -73,7 +77,7 @@ fn simple_project_with_code(t: &impl PathChild, code: impl ToString) {
             "Cargo.toml",
             formatdoc! {r#"
         [package]
-        name = "some"
+        name = "{name}"
         version = "0.1.0"
         edition = "2021"
         publish = false
@@ -582,5 +586,93 @@ fn can_read_token_stream_metadata() {
                 ),
             }
             [..]Finished release target(s) in [..]
+        "#});
+}
+
+#[test]
+fn can_define_multiple_macros() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+        #[attribute_macro]
+        pub fn hello(token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream = TokenStream::new(
+                token_stream
+                    .to_string()
+                    // Remove macro call to avoid infinite loop.
+                    .replace("#[hello]", "")
+                    .replace("12", "34")
+            );
+            ProcMacroResult::replace(token_stream, None)
+        }
+
+        #[attribute_macro]
+        pub fn world(token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream = TokenStream::new(
+                token_stream
+                    .to_string()
+                    // Remove macro call to avoid infinite loop.
+                    .replace("#[world]", "")
+                    .replace("56", "78")
+            );
+            ProcMacroResult::replace(token_stream, None)
+        }
+        "##},
+    );
+
+    let w = temp.child("other");
+    simple_project_with_code_and_name(
+        &w,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+        #[attribute_macro]
+        pub fn beautiful(token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream = TokenStream::new(
+                token_stream
+                    .to_string()
+                    // Remove macro call to avoid infinite loop.
+                    .replace("#[beautiful]", "")
+                    .replace("90", "09")
+            );
+            ProcMacroResult::replace(token_stream, None)
+        }
+        "##},
+        "other",
+    );
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .dep("other", &w)
+        .lib_cairo(indoc! {r#"
+            #[hello]
+            #[beautiful]
+            #[world]
+            fn main() -> felt252 { 12 + 56 + 90 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            Run completed successfully, returning [121]
         "#});
 }
