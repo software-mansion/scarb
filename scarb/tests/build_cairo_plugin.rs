@@ -689,3 +689,153 @@ fn can_define_multiple_macros() {
             Run completed successfully, returning [121]
         "#});
 }
+
+#[test]
+fn cannot_duplicate_macros() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+        #[attribute_macro]
+        pub fn hello(_token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::leave()
+        }
+
+        #[attribute_macro]
+        pub fn hello(_token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::leave()
+        }
+        "##},
+    );
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[hello]
+            fn main() -> felt252 { 12 + 56 + 90 }
+        "#})
+        .build(&project);
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        // Fails with Cargo compile error.
+        .failure();
+}
+
+#[test]
+fn cannot_duplicate_macros_across_packages() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+        #[attribute_macro]
+        pub fn hello(_token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::leave()
+        }
+
+        #[attribute_macro]
+        pub fn world(_token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::leave()
+        }
+        "##},
+    );
+
+    let w = temp.child("other");
+    simple_project_with_code_and_name(
+        &w,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+        #[attribute_macro]
+        pub fn hello(_token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::leave()
+        }
+        "##},
+        "other",
+    );
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .dep("other", &w)
+        .lib_cairo(indoc! {r#"
+            #[hello]
+            #[world]
+            fn main() -> felt252 { 12 + 56 + 90 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: duplicate expansions defined for procedural macros: hello (some v1.0.0 ([..]Scarb.toml) and other v1.0.0 ([..]Scarb.toml))
+        "#});
+}
+
+#[test]
+fn cannot_use_undefined_macro() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+        #[attribute_macro]
+        pub fn hello(_token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::leave()
+        }
+        "##},
+    );
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[world]
+            fn main() -> felt252 { 12 + 56 + 90 }
+        "#})
+        .build(&project);
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling some v1.0.0 ([..]Scarb.toml)
+        [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+        error: Plugin diagnostic: Unsupported attribute.
+         --> [..]lib.cairo:1:1
+        #[world]
+        ^******^
+
+        error: could not compile `hello` due to previous error
+        "#});
+}
