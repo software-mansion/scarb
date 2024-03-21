@@ -484,11 +484,7 @@ fn can_return_aux_data_from_plugin() {
             let value: Vec<u8> = value.into_bytes();
             let aux_data = AuxData::new(value);
 
-            ProcMacroResult::Replace {
-                token_stream,
-                aux_data: Some(aux_data),
-                diagnostics: Vec::new()
-            }
+            ProcMacroResult::replace(token_stream, Some(aux_data))
         }
 
         #[post_process]

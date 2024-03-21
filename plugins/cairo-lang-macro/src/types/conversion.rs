@@ -242,6 +242,7 @@ impl AuxData {
     /// Convert to FFI-safe representation.
     ///
     /// # Safety
+    #[doc(hidden)]
     pub fn maybe_into_stable(aux_data: Option<Self>) -> StableAuxData {
         if let Some(aux_data) = aux_data {
             aux_data.into_stable()

@@ -6,6 +6,7 @@ mod expansions;
 
 pub use expansions::*;
 
+/// Result of procedural macro code generation.
 #[derive(Debug)]
 pub enum ProcMacroResult {
     /// Plugin has not taken any action.
@@ -20,16 +21,26 @@ pub enum ProcMacroResult {
     Remove { diagnostics: Vec<Diagnostic> },
 }
 
+/// An abstract stream of Cairo tokens.
+///
+/// This is both input and part of an output of a procedural macro.
 #[derive(Debug, Default, Clone)]
 pub struct TokenStream {
     value: String,
     metadata: TokenStreamMetadata,
 }
 
+/// Metadata of [`TokenStream`].
+///
+/// This struct can be used to describe the origin of the [`TokenStream`].
 #[derive(Debug, Default, Clone)]
 pub struct TokenStreamMetadata {
-    original_file_path: Option<String>,
-    file_id: Option<String>,
+    /// The path to the file from which the [`TokenStream`] has been created.
+    pub original_file_path: Option<String>,
+    /// ID of the file from which the [`TokenStream`] has been created.
+    ///
+    /// It is guaranteed, that the `file_id` will be unique for each file.
+    pub file_id: Option<String>,
 }
 
 impl TokenStream {
@@ -47,6 +58,9 @@ impl TokenStream {
         self
     }
 
+    /// Get `[TokenStreamMetadata`] associated with this [`TokenStream`].
+    ///
+    /// The metadata struct can be used to describe the [`TokenStream`] origin.
     pub fn metadata(&self) -> &TokenStreamMetadata {
         &self.metadata
     }
@@ -59,6 +73,7 @@ impl Display for TokenStream {
 }
 
 impl TokenStreamMetadata {
+    #[doc(hidden)]
     pub fn new(file_path: impl ToString, file_id: impl ToString) -> Self {
         Self {
             original_file_path: Some(file_path.to_string()),
@@ -67,11 +82,61 @@ impl TokenStreamMetadata {
     }
 }
 
-/// Auxiliary data returned by procedural macro.
+/// **Auxiliary data** returned by procedural macro code generation.
+///
+/// This struct can be used to collect additional information from the Cairo source code of
+/// compiled project.
+/// For instance, you can create a procedural macro that collects some information stored by
+/// the Cairo programmer as attributes in the project source code.
+///
+/// The auxiliary data struct stores `Vec<u8>` leaving the serialization and deserialization
+/// of the data as user responsibility. No assumptions regarding the serialization algorithm
+/// are made.
+///
+/// For instance, auxiliary data can be serialized as JSON.
+///
+/// ```
+/// use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream, attribute_macro, post_process_callback}
+/// use serde::{Serialize, Deserialize};
+/// #[derive(Debug, Serialize, Deserialize)]
+/// struct SomeAuxDataFormat {
+///     some_message: String
+/// }
+///
+/// #[attribute_macro]
+/// pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+///     let token_stream = TokenStream::new(
+///         token_stream.to_string()
+///         // Remove macro call to avoid infinite loop.
+///         .replace("#[some]", "")
+///     );
+///     let value = SomeAuxDataFormat { some_message: "Hello from some macro!".to_string() };
+///     let value = serde_json::to_string(&value).unwrap();
+///     let value: Vec<u8> = value.into_bytes();
+///     let aux_data = AuxData::new(value);
+///     ProcMacroResult::replace(token_stream, Some(aux_data))
+/// }
+///
+/// #[post_process_callback]
+/// pub fn callback(aux_data: Vec<AuxData>) {
+///     let aux_data = aux_data.into_iter()
+///         .map(|aux_data| {
+///             let value: Vec<u8> = aux_data.into();
+///             let aux_data: SomeAuxDataFormat = serde_json::from_slice(&value).unwrap();
+///             aux_data
+///         })
+///         .collect::<Vec<_>>();
+///     println!("{:?}", aux_data);
+/// }
+/// ```
+///
+/// All auxiliary data emitted during compilation can be consumed
+/// in the `post_process_callback` implementation.
 #[derive(Debug, Clone)]
 pub struct AuxData(Vec<u8>);
 
 impl AuxData {
+    /// Create new [`AuxData`] struct from serialized data.
     pub fn new(data: Vec<u8>) -> Self {
         Self(data)
     }
@@ -92,21 +157,40 @@ impl From<AuxData> for Vec<u8> {
 /// Diagnostic returned by the procedural macro.
 #[derive(Debug)]
 pub struct Diagnostic {
+    /// A human addressed message associated with the [`Diagnostic`].
+    ///
+    /// This message will not be parsed by the compiler,
+    /// but rather shown to the user as an explanation.
     pub message: String,
+    /// The severity of the [`Diagnostic`].
+    ///
+    /// Defines how this diagnostic should influence the compilation.
     pub severity: Severity,
 }
 
 /// The severity of a diagnostic.
+///
+/// This should be roughly equivalent to the severity of Cairo diagnostics.
+///
+/// The appropriate action for each diagnostic kind will be taken by `Scarb`.
 #[derive(Debug)]
 pub enum Severity {
+    /// An error has occurred.
+    ///
+    /// Emitting diagnostic with [`Severity::Error`] severity will fail the source code compilation.
     Error = 1,
+    /// A warning suggestion will be shown to the user.
+    ///
+    /// Emitting diagnostic with [`Severity::Warning`] severity does not stop the compilation.
     Warning = 2,
 }
 
+/// A set of diagnostics that arose during the computation.
 #[derive(Debug)]
 pub struct Diagnostics(Vec<Diagnostic>);
 
 impl Diagnostic {
+    /// Create new diagnostic with severity [`Severity::Error`].
     pub fn error(message: impl ToString) -> Self {
         Self {
             message: message.to_string(),
@@ -114,6 +198,7 @@ impl Diagnostic {
         }
     }
 
+    /// Create new diagnostic with severity [`Severity::Warning`].
     pub fn warn(message: impl ToString) -> Self {
         Self {
             message: message.to_string(),
@@ -127,16 +212,22 @@ impl From<Vec<Diagnostic>> for Diagnostics {
         Self(diagnostics)
     }
 }
+
 impl Diagnostics {
+    /// Create new [`Diagnostics`] from a vector of diagnostics.
     pub fn new(diagnostics: Vec<Diagnostic>) -> Self {
         Self(diagnostics)
     }
 
+    /// Create new diagnostic with severity [`Severity::Error`]
+    /// and push to the vector.
     pub fn error(mut self, message: impl ToString) -> Self {
         self.0.push(Diagnostic::error(message));
         self
     }
 
+    /// Create new diagnostic with severity [`Severity::Warning`]
+    /// and push to the vector.
     pub fn warn(mut self, message: impl ToString) -> Self {
         self.0.push(Diagnostic::warn(message));
         self
@@ -153,18 +244,21 @@ impl IntoIterator for Diagnostics {
 }
 
 impl ProcMacroResult {
+    /// Create new [`ProcMacroResult::Leave`] variant, empty diagnostics set.
     pub fn leave() -> Self {
         Self::Leave {
             diagnostics: Vec::new(),
         }
     }
 
+    /// Create new [`ProcMacroResult::Remove`] variant, empty diagnostics set.
     pub fn remove() -> Self {
         Self::Remove {
             diagnostics: Vec::new(),
         }
     }
 
+    /// Create new [`ProcMacroResult::Replace`] variant, empty diagnostics set.
     pub fn replace(token_stream: TokenStream, aux_data: Option<AuxData>) -> Self {
         Self::Replace {
             aux_data,
@@ -173,6 +267,7 @@ impl ProcMacroResult {
         }
     }
 
+    /// Append diagnostics to the [`ProcMacroResult`] diagnostics set.
     pub fn with_diagnostics(mut self, diagnostics: Diagnostics) -> Self {
         match &mut self {
             Self::Leave { diagnostics: d } => d.extend(diagnostics),
