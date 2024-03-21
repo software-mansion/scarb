@@ -227,7 +227,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
                 .iter()
                 .find(|m| m.package_id() == input.package_id)
                 .expect("procedural macro must be registered in proc macro host");
-            match instance.generate_code(token_stream.clone()) {
+            match instance.generate_code(input.expansion.name.clone(), token_stream.clone()) {
                 ProcMacroResult::Replace {
                     token_stream: new_token_stream,
                     aux_data: new_aux_data,
