@@ -52,7 +52,7 @@ fn cairo_version() {
         .root
         .expect("Expected metadata resolve root to be present.");
     assert!(
-        root.repr.starts_with("scarb "),
+        root.repr.contains("scarb#"),
         "Expected metadata resolve root to be `scarb`."
     );
 
