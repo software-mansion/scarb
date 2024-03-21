@@ -19,6 +19,7 @@ use itertools::Itertools;
 use scarb_stable_hash::short_hash;
 use std::any::Any;
 use std::sync::Arc;
+use std::vec::IntoIter;
 use tracing::{debug, trace_span};
 
 /// A Cairo compiler plugin controlling the procedural macro execution.
@@ -45,7 +46,7 @@ impl ProcMacroId {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ProcMacroAuxData {
     value: Vec<u8>,
     macro_id: ProcMacroId,
@@ -63,14 +64,35 @@ impl From<ProcMacroAuxData> for AuxData {
     }
 }
 
-impl GeneratedFileAuxData for ProcMacroAuxData {
+#[derive(Debug, Clone, Default)]
+pub struct EmittedAuxData(Vec<ProcMacroAuxData>);
+
+impl GeneratedFileAuxData for EmittedAuxData {
     fn as_any(&self) -> &dyn Any {
         self
     }
 
     fn eq(&self, other: &dyn GeneratedFileAuxData) -> bool {
-        self.value == other.as_any().downcast_ref::<Self>().unwrap().value
-            && self.macro_id == other.as_any().downcast_ref::<Self>().unwrap().macro_id
+        self.0 == other.as_any().downcast_ref::<Self>().unwrap().0
+    }
+}
+
+impl EmittedAuxData {
+    pub fn push(&mut self, aux_data: ProcMacroAuxData) {
+        self.0.push(aux_data);
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl IntoIterator for EmittedAuxData {
+    type Item = ProcMacroAuxData;
+    type IntoIter = IntoIter<Self::Item>;
+
+    fn into_iter(self) -> IntoIter<ProcMacroAuxData> {
+        self.0.into_iter()
     }
 }
 
@@ -172,9 +194,9 @@ impl ProcMacroHostPlugin {
                         let aux_data = file_info
                             .aux_data
                             .as_ref()
-                            .and_then(|ad| ad.as_any().downcast_ref::<ProcMacroAuxData>());
+                            .and_then(|ad| ad.as_any().downcast_ref::<EmittedAuxData>());
                         if let Some(aux_data) = aux_data {
-                            data.push(aux_data.clone());
+                            data.extend(aux_data.clone().into_iter());
                         }
                     }
                 }
@@ -218,7 +240,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
 
         let mut token_stream = TokenStream::from_item_ast(db, item_ast)
             .with_metadata(TokenStreamMetadata::new(file_path, file_id));
-        let mut aux_data: Option<ProcMacroAuxData> = None;
+        let mut aux_data = EmittedAuxData::default();
         let mut modified = false;
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
         for input in expansions {
@@ -235,7 +257,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
                 } => {
                     token_stream = new_token_stream;
                     if let Some(new_aux_data) = new_aux_data {
-                        aux_data = Some(ProcMacroAuxData::new(
+                        aux_data.push(ProcMacroAuxData::new(
                             new_aux_data.into(),
                             ProcMacroId::new(input.package_id, input.expansion.clone()),
                         ));
@@ -262,7 +284,11 @@ impl MacroPlugin for ProcMacroHostPlugin {
                     name: "proc_macro".into(),
                     content: token_stream.to_string(),
                     code_mappings: Default::default(),
-                    aux_data: aux_data.map(DynGeneratedFileAuxData::new),
+                    aux_data: if aux_data.is_empty() {
+                        None
+                    } else {
+                        Some(DynGeneratedFileAuxData::new(aux_data))
+                    },
                 }),
                 diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),
                 remove_original_item: true,

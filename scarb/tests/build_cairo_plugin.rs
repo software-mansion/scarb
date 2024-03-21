@@ -596,7 +596,7 @@ fn can_define_multiple_macros() {
     simple_project_with_code(
         &t,
         indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, post_process};
 
         #[attribute_macro]
         pub fn hello(token_stream: TokenStream) -> ProcMacroResult {
@@ -607,7 +607,8 @@ fn can_define_multiple_macros() {
                     .replace("#[hello]", "")
                     .replace("12", "34")
             );
-            ProcMacroResult::replace(token_stream, None)
+            let aux_data = AuxData::new(Vec::new());
+            ProcMacroResult::replace(token_stream, Some(aux_data))
         }
 
         #[attribute_macro]
@@ -619,7 +620,13 @@ fn can_define_multiple_macros() {
                     .replace("#[world]", "")
                     .replace("56", "78")
             );
-            ProcMacroResult::replace(token_stream, None)
+            let aux_data = AuxData::new(Vec::new());
+            ProcMacroResult::replace(token_stream, Some(aux_data))
+        }
+
+        #[post_process]
+        pub fn callback(aux_data: Vec<AuxData>) {
+            assert_eq!(aux_data.len(), 2);
         }
         "##},
     );
@@ -628,7 +635,7 @@ fn can_define_multiple_macros() {
     simple_project_with_code_and_name(
         &w,
         indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, post_process};
 
         #[attribute_macro]
         pub fn beautiful(token_stream: TokenStream) -> ProcMacroResult {
@@ -639,7 +646,13 @@ fn can_define_multiple_macros() {
                     .replace("#[beautiful]", "")
                     .replace("90", "09")
             );
-            ProcMacroResult::replace(token_stream, None)
+            let aux_data = AuxData::new(Vec::new());
+            ProcMacroResult::replace(token_stream, Some(aux_data))
+        }
+
+        #[post_process]
+        pub fn callback(aux_data: Vec<AuxData>) {
+            assert_eq!(aux_data.len(), 1);
         }
         "##},
         "other",
