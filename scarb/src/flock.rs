@@ -149,6 +149,7 @@ pub struct AdvisoryLock<'f> {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct AdvisoryLockGuard(Arc<FileLockGuard>);
 
 impl<'f> AdvisoryLock<'f> {
