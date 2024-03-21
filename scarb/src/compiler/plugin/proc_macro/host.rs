@@ -185,7 +185,7 @@ impl ProcMacroHostPlugin {
             .into_group_map_by(|d| d.macro_id.package_id);
         for instance in self.macros.iter() {
             let _ = trace_span!(
-                "aux_data_collection_callback",
+                "post_process_callback",
                 instance = %instance.package_id()
             )
             .entered();

@@ -30,7 +30,7 @@ pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-/// This macro can be used to construct the auxiliary data collection callback.
+/// Constructs the post-processing callback.
 ///
 /// The procedural macro can emit additional auxiliary data alongside the generated [`TokenStream`]
 /// during the code expansion. This data can be used to collect additional information from the
@@ -49,7 +49,7 @@ pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// # Safety
 #[proc_macro_attribute]
-pub fn aux_data_collection_callback(_args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn post_process(_args: TokenStream, input: TokenStream) -> TokenStream {
     let item: ItemFn = parse_macro_input!(input as ItemFn);
     let item = hide_name(item);
     let item_name = &item.sig.ident;
