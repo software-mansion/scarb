@@ -498,6 +498,11 @@ fn can_return_aux_data_from_plugin() {
                 .collect::<Vec<_>>();
             println!("{:?}", aux_data);
         }
+
+        #[post_process]
+        pub fn some_no_op_callback(aux_data: Vec<AuxData>) {
+            drop(aux_data);
+        }
         "##},
     );
 
