@@ -462,7 +462,7 @@ fn can_return_aux_data_from_plugin() {
     simple_project_with_code(
         &t,
         indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, aux_data_collection_callback};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, post_process};
         use serde::{Serialize, Deserialize};
 
         #[derive(Debug, Serialize, Deserialize)]
@@ -491,7 +491,7 @@ fn can_return_aux_data_from_plugin() {
             }
         }
 
-        #[aux_data_collection_callback]
+        #[post_process]
         pub fn callback(aux_data: Vec<AuxData>) {
             let aux_data = aux_data.into_iter()
                 .map(|aux_data| {
