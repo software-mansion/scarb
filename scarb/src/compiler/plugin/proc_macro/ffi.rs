@@ -116,13 +116,15 @@ impl ProcMacroInstance {
     ///
     /// Please be aware that the memory management of values passing the FFI-barrier is tricky.
     /// The memory must be freed on the same side of the barrier, where the allocation was made.
-    pub(crate) fn generate_code(&self, token_stream: TokenStream) -> ProcMacroResult {
+    pub(crate) fn generate_code(
+        &self,
+        item_name: SmolStr,
+        token_stream: TokenStream,
+    ) -> ProcMacroResult {
         // This must be manually freed with call to from_owned_stable.
         let stable_token_stream = token_stream.into_stable();
         // Allocate proc macro name.
-        let item_name = CString::new(self.package_id.name.to_string())
-            .unwrap()
-            .into_raw();
+        let item_name = CString::new(item_name.to_string()).unwrap().into_raw();
         // Call FFI interface for code expansion.
         // Note that `stable_result` has been allocated by the dynamic library.
         let stable_result = (self.plugin.vtable.expand)(item_name, stable_token_stream);

@@ -101,7 +101,7 @@ pub unsafe extern "C" fn expand(
                 None
             }
         })
-        .expect("proc macro not found");
+        .expect("procedural macro not found");
     let result = fun(token_stream);
     let result: StableProcMacroResult = result.into_stable();
     cairo_lang_macro_stable::StableResultWrapper {
