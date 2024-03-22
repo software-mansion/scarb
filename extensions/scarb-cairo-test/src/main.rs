@@ -28,6 +28,10 @@ struct Args {
     /// Run only ignored tests.
     #[arg(long, default_value_t = false)]
     ignored: bool,
+
+    /// Whether to print resource usage after each test.
+    #[arg(long, default_value_t = false)]
+    print_resource_usage: bool,
 }
 
 fn main() -> Result<()> {
@@ -70,6 +74,7 @@ fn main() -> Result<()> {
                 ignored: args.ignored,
                 run_profiler: RunProfilerConfig::None,
                 gas_enabled: is_gas_enabled(&metadata, &package.id, target),
+                print_resource_usage: args.print_resource_usage,
             };
             let runner = CompiledTestRunner::new(test_compilation, config);
             runner.run(None)?;
