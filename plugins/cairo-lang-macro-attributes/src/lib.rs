@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use scarb_stable_hash::short_hash;
+use syn::spanned::Spanned;
 use syn::{parse_macro_input, ItemFn};
 
 /// Constructs the attribute macro implementation.
@@ -14,18 +15,26 @@ pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
     let original_item_name = item.sig.ident.to_string();
     let item = hide_name(item);
     let item_name = &item.sig.ident;
+
+    let callback_link = format!(
+        "EXPANSIONS_DESERIALIZE_{}",
+        item_name.to_string().to_uppercase()
+    );
+    let callback_link = syn::Ident::new(callback_link.as_str(), item.span());
+
     let expanded = quote! {
         #item
 
         #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::MACRO_DEFINITIONS_SLICE)]
         #[linkme(crate = ::cairo_lang_macro::linkme)]
-        static MACRO_DEFINITIONS_SLICE_DESERIALIZE: ::cairo_lang_macro::ExpansionDefinition =
+        static #callback_link: ::cairo_lang_macro::ExpansionDefinition =
             ::cairo_lang_macro::ExpansionDefinition{
                 name: #original_item_name,
                 kind: ::cairo_lang_macro::ExpansionKind::Attr,
                 fun: #item_name,
             };
     };
+
     TokenStream::from(expanded)
 }
 
@@ -55,13 +64,21 @@ pub fn post_process(_args: TokenStream, input: TokenStream) -> TokenStream {
     let item: ItemFn = parse_macro_input!(input as ItemFn);
     let item = hide_name(item);
     let item_name = &item.sig.ident;
+
+    let callback_link = format!(
+        "POST_PROCESS_DESERIALIZE_{}",
+        item_name.to_string().to_uppercase()
+    );
+    let callback_link = syn::Ident::new(callback_link.as_str(), item.span());
+
     let expanded = quote! {
         #item
 
         #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::AUX_DATA_CALLBACKS)]
         #[linkme(crate = ::cairo_lang_macro::linkme)]
-        static AUX_DATA_CALLBACK_DESERIALIZE: fn(Vec<AuxData>) = #item_name;
+        static #callback_link: fn(Vec<AuxData>) = #item_name;
     };
+
     TokenStream::from(expanded)
 }
 

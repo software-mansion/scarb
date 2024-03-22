@@ -96,7 +96,7 @@ impl TokenStreamMetadata {
 /// For instance, auxiliary data can be serialized as JSON.
 ///
 /// ```
-/// use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream, attribute_macro, post_process_callback}
+/// use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream, attribute_macro, post_process}
 /// use serde::{Serialize, Deserialize};
 /// #[derive(Debug, Serialize, Deserialize)]
 /// struct SomeAuxDataFormat {
@@ -117,7 +117,7 @@ impl TokenStreamMetadata {
 ///     ProcMacroResult::replace(token_stream, Some(aux_data))
 /// }
 ///
-/// #[post_process_callback]
+/// #[post_process]
 /// pub fn callback(aux_data: Vec<AuxData>) {
 ///     let aux_data = aux_data.into_iter()
 ///         .map(|aux_data| {
@@ -131,7 +131,7 @@ impl TokenStreamMetadata {
 /// ```
 ///
 /// All auxiliary data emitted during compilation can be consumed
-/// in the `post_process_callback` implementation.
+/// in the `post_process` implementation.
 #[derive(Debug, Clone)]
 pub struct AuxData(Vec<u8>);
 
