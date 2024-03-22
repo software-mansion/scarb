@@ -2,6 +2,7 @@ use cairo_lang_macro_stable::StableExpansionKind;
 use std::num::NonZeroU8;
 
 /// Representation of a macro expansion kind.
+#[doc(hidden)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExpansionKind {
     /// `#[proc_macro_name]`

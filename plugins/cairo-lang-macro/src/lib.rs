@@ -1,3 +1,20 @@
+//! <br>
+//!
+//! **A library for writing Cairo procedural macros in Rust.**
+//! <br>
+//!
+//! # Cairo procedural macro
+//!
+//! A Cairo procedural macro is a dynamic library that can be loaded by
+//! [Scarb](https://github.com/software-mansion/scarb) package manager during the project build.
+//! The goal of procedural macros is to provide dynamic code generation capabilities to Cairo
+//! programmers.
+//!
+//! The code generation should be implemented as a Rust function, that takes [`TokenStream`] as
+//! input and returns [`ProcMacroResult`] as output.
+//! The function implementing the macro should be wrapped with [`attribute_macro`].
+//!
+
 pub use cairo_lang_macro_attributes::*;
 #[doc(hidden)]
 pub use linkme;
@@ -11,6 +28,7 @@ mod types;
 
 pub use types::*;
 
+#[doc(hidden)]
 #[derive(Clone)]
 pub struct ExpansionDefinition {
     pub name: &'static str,
@@ -33,8 +51,8 @@ pub static MACRO_DEFINITIONS_SLICE: [ExpansionDefinition];
 /// of the dynamic library re-exporting it.
 ///
 /// # Safety
-#[no_mangle]
 #[doc(hidden)]
+#[no_mangle]
 pub unsafe extern "C" fn list_expansions() -> StableExpansionsList {
     let list = MACRO_DEFINITIONS_SLICE
         .iter()
@@ -49,8 +67,8 @@ pub unsafe extern "C" fn list_expansions() -> StableExpansionsList {
 /// of the dynamic library re-exporting it.
 ///
 /// # Safety
-#[no_mangle]
 #[doc(hidden)]
+#[no_mangle]
 pub unsafe extern "C" fn free_expansions_list(list: StableExpansionsList) {
     let v = list.into_owned();
     v.into_iter().for_each(|v| {
@@ -66,8 +84,8 @@ pub unsafe extern "C" fn free_expansions_list(list: StableExpansionsList) {
 /// The function will be called for each code expansion by the procedural macro.
 ///
 /// # Safety
-#[no_mangle]
 #[doc(hidden)]
+#[no_mangle]
 pub unsafe extern "C" fn expand(
     item_name: *const c_char,
     stable_token_stream: cairo_lang_macro_stable::StableTokenStream,
@@ -101,8 +119,8 @@ pub unsafe extern "C" fn expand(
 /// by the Rust compiler and the corresponding symbol will be available by the name of the function as id.
 ///
 /// # Safety
-#[no_mangle]
 #[doc(hidden)]
+#[no_mangle]
 pub unsafe extern "C" fn free_result(result: StableProcMacroResult) {
     ProcMacroResult::from_owned_stable(result);
 }
@@ -121,8 +139,8 @@ pub static AUX_DATA_CALLBACKS: [fn(Vec<AuxData>)];
 /// behaviour or not. In case no custom behaviour is defined, this is a no-op.
 ///
 /// # Safety
-#[no_mangle]
 #[doc(hidden)]
+#[no_mangle]
 pub unsafe extern "C" fn aux_data_callback(
     stable_aux_data: StableSlice<StableAuxData>,
 ) -> StableSlice<StableAuxData> {
