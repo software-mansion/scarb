@@ -48,6 +48,26 @@ The normalization process consists of the following:
 
 The original `Scarb.toml` file from the package source directory, without any processing.
 
+### `README` and `LICENSE`
+
+If these files are present in the project root, or paths to them are provided in the manifest, they are copied to the archive as `README.md` and `LICENSE` respectively.
+
+### `VCS.json`
+
+File containing info about version control system used in your package.\
+Currently only git is supported.
+
+```json
+{
+  "git": {
+    "sha1": "a928d5ba03fc09d3316b39f04f30ee135df0c606"
+  },
+  "path_in_vcs": ""
+}
+```
+
+It contains information about the hash of the commit that the package was created on, together with `path_in_vcs` which describes package relative position to the git working directory root. It will be an empty string if it is the same as package root.
+
 ## Package source
 
 By default, only the `src` directory from package source is included in the tarball.
