@@ -570,10 +570,10 @@ impl TomlManifest {
             for (&ref feature_name, &ref dependent_features) in feat.iter() {
                 for dep in dependent_features.iter() {
                     if dep == feature_name {
-                        return Err(anyhow!("feature {} depends on itself", feature_name));
+                        return Err(anyhow!("feature '{}' depends on itself", feature_name));
                     }
                     if !feat.contains_key(dep) {
-                        return Err(anyhow!("feature {} is dependent on {} which is not defined", feature_name, dep));
+                        return Err(anyhow!("feature '{}' is dependent on '{}' which is not defined", feature_name, dep));
                     }
                 }
             }

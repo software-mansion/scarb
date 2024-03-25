@@ -224,6 +224,10 @@ pub struct BuildArgs {
     /// Build tests.
     #[arg(short, long, default_value_t = false)]
     pub test: bool,
+
+    /// Which features to include.
+    #[arg(short, long)]
+    pub features: Option<String>,
 }
 
 /// Arguments accepted by the `run` command.
@@ -394,6 +398,8 @@ pub struct TestArgs {
     /// Arguments for the test program.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,
+
+    // TODO: add features here
 }
 
 /// Arguments accepted by both the `package` and the `publish` command.
