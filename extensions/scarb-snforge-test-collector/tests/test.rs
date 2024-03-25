@@ -107,14 +107,16 @@ fn forge_empty_test() {
         .build(&pkg1);
     let output = Scarb::quick_snapbox()
         .arg("snforge-test-collector")
-        .current_dir(&pkg1).output().unwrap();
+        .current_dir(&pkg1)
+        .output()
+        .unwrap();
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
     assert!(stderr.contains(
-    "Error: The test function forge_test::tests::test always succeeds and cannot be used as a test"));
+    "Error: The test function forge_test::tests::test always succeeds and cannot be used as a test")
+    );
 }
-
 
 const WITH_MANY_ATTRIBUTES_TEST: &str = indoc! {r#"
     #[cfg(test)]
