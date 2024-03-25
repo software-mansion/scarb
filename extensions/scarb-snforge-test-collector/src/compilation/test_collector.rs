@@ -243,6 +243,12 @@ fn validate_tests(
         let func = function_finder.find_function(&test.name)?;
         let signature = &func.signature;
         let ret_types = &signature.ret_types;
+        if ret_types.is_empty() {
+            bail!(
+                "The test function {} always succeeds and cannot be used as a test. Make sure to include panickable statements such as `assert` in your test",
+                test.name
+            );
+        }
         let tp = &ret_types[ret_types.len() - 1];
         let info = function_finder.get_info(tp);
         let mut maybe_return_type_name = None;
