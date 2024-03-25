@@ -52,6 +52,8 @@ pub struct Manifest {
     /// Allow experimental features.
     #[builder(default)]
     pub experimental_features: Option<Vec<SmolStr>>,
+    #[builder(default)]
+    pub features: Option<BTreeMap<String, Vec<String>>>,
 }
 
 /// Subset of a [`Manifest`] that contains package metadata.
