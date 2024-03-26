@@ -725,6 +725,8 @@ dependencies = [
  "cairo-lang-macro-stable",
  "linkme",
  "scarb-stable-hash",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
