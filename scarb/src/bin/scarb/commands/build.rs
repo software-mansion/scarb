@@ -17,7 +17,7 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
 
     // TODO: support for multiple packages
     let package = args.packages_filter.match_many(&ws).unwrap()[0].clone();
-    let available_features = package.manifest.features.clone().unwrap();
+    let available_features = package.manifest.features.clone().unwrap(); // TODO: don't unwrap here
     let enabled_features = args
         .features
         .map(|x| x.split(",").map(|y| y.to_string()).collect::<Vec<String>>());

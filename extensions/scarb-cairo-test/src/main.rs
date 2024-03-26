@@ -34,8 +34,8 @@ struct Args {
     print_resource_usage: bool,
 
     /// Which features to enable in code.
-    #[arg(short, long)]
-    pub features: Option<String>,
+    #[arg(long)]
+    features: Option<String>,
 }
 
 fn main() -> Result<()> {
