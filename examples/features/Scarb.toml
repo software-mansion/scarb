@@ -12,3 +12,6 @@ edition = "2023_10"
 main_feat1 = []
 main_feat2 = []
 dep_feat1 = ["main_feat1"]
+x = []
+y = []
+z = []

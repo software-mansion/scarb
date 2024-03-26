@@ -32,6 +32,10 @@ struct Args {
     /// Whether to print resource usage after each test.
     #[arg(long, default_value_t = false)]
     print_resource_usage: bool,
+
+    /// Which features to enable in code.
+    #[arg(short, long)]
+    pub features: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -43,9 +47,15 @@ fn main() -> Result<()> {
 
     let matched = args.packages_filter.match_many(&metadata)?;
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
+    let features_args = args
+        .features
+        .map(|x| vec!["--features".to_string(), x])
+        .unwrap_or_else(|| vec![]);
+
     ScarbCommand::new()
         .arg("build")
         .arg("--test")
+        .args(features_args)
         .env("SCARB_PACKAGES_FILTER", filter.to_env())
         .run()?;
 

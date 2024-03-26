@@ -25,7 +25,11 @@ pub struct MetadataOptions {
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
-pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m::Metadata> {
+pub fn collect_metadata(
+    opts: &MetadataOptions,
+    ws: &Workspace<'_>,
+    enabled_features: &Option<Vec<String>>,
+) -> Result<m::Metadata> {
     if opts.version != m::VersionPin.numeric() {
         bail!(
             "metadata version {} not supported, only {} is currently supported",
@@ -43,7 +47,7 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
             .collect();
 
         let compilation_units: Vec<m::CompilationUnitMetadata> =
-            ops::generate_compilation_units(&resolve, ws)?
+            ops::generate_compilation_units(&resolve, ws, enabled_features)?
                 .iter()
                 .map(collect_compilation_unit_metadata)
                 .collect();

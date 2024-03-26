@@ -562,10 +562,10 @@ impl TomlManifest {
 
         // TODO (#1040): add checking for fields that are not present in ExperimentalFeaturesConfig
         let experimental_features = package.experimental_features.clone();
-        
+
         // TODO: recursively resolve which features have to be included
         let features = self.features.clone();
-        
+
         if let Some(feat) = features {
             for (&ref feature_name, &ref dependent_features) in feat.iter() {
                 for dep in dependent_features.iter() {
@@ -573,7 +573,11 @@ impl TomlManifest {
                         return Err(anyhow!("feature '{}' depends on itself", feature_name));
                     }
                     if !feat.contains_key(dep) {
-                        return Err(anyhow!("feature '{}' is dependent on '{}' which is not defined", feature_name, dep));
+                        return Err(anyhow!(
+                            "feature '{}' is dependent on '{}' which is not defined",
+                            feature_name,
+                            dep
+                        ));
                     }
                 }
             }

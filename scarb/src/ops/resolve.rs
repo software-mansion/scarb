@@ -158,10 +158,16 @@ async fn collect_packages_from_resolve_graph(
 pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
     ws: &Workspace<'_>,
+    enabled_features: &Option<Vec<String>>,
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members().filter(|member| !member.is_cairo_plugin()) {
-        units.extend(generate_cairo_compilation_units(&member, resolve, ws)?);
+        units.extend(generate_cairo_compilation_units(
+            &member,
+            resolve,
+            ws,
+            enabled_features,
+        )?);
     }
 
     let cairo_plugins = units
@@ -193,6 +199,7 @@ fn generate_cairo_compilation_units(
     member: &Package,
     resolve: &WorkspaceResolve,
     ws: &Workspace<'_>,
+    enabled_features: &Option<Vec<String>>,
 ) -> Result<Vec<CompilationUnit>> {
     let profile = ws.current_profile()?;
     let mut solution = PackageSolutionCollector::new(member, resolve, ws);
@@ -242,7 +249,15 @@ fn generate_cairo_compilation_units(
 
                     let cfg_set = {
                         if package.id == member.id {
-                            None
+                            // None
+                            let mut cfg_set = cfg_set.clone();
+                            if let Some(features) = enabled_features.clone() {
+                                for feature in features.iter() {
+                                    cfg_set.insert(Cfg::kv("feature", feature));
+                                }
+                            }
+                            println!("cfg {:?}", cfg_set);
+                            Some(cfg_set)
                         } else {
                             let component_cfg_set = cfg_set
                                 .iter()
