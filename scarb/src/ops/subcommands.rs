@@ -49,7 +49,6 @@ pub fn execute_test_subcommand(
     package: &Package,
     args: &[OsString],
     ws: &Workspace<'_>,
-    enabled_features: Option<Vec<String>>,
 ) -> Result<()> {
     let package_name = &package.id.name;
     let env = Some(HashMap::from_iter([(
@@ -71,12 +70,7 @@ pub fn execute_test_subcommand(
             &format!("cairo-test {package_name}"),
         ));
         let args = args.iter().map(OsString::from).collect::<Vec<_>>();
-        let script_command = format![
-            "scarb cairo-test{}",
-            enabled_features
-                .map(|x| format!(" --features {}", x.join(",")))
-                .unwrap_or("".to_string())
-        ];
+        let script_command = "scarb cairo-test".to_string();
         let script_definition = ScriptDefinition::new(script_command);
         ops::execute_script(&script_definition, args.as_ref(), ws, package.root(), env)
     }
