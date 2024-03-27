@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
@@ -33,9 +33,25 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         Default::default()
     };
 
-    // TODO recursive function to resolve selected_features dependencies by adding lower layer elements to this union
-    let selected_features: HashSet<String> =
+    let mut selected_features: HashSet<String> =
         cli_features.union(&default_features).cloned().collect();
+
+    // BFS to get set of features
+    let mut queue = VecDeque::new();
+    queue.extend(selected_features.clone().into_iter());
+
+    while let Some(key) = queue.pop_front() {
+        if let Some(neighbors) = features.get(&key) {
+            for neighbor in neighbors.iter() {
+                if !selected_features.contains(neighbor) {
+                    selected_features.insert(neighbor.clone());
+                    queue.push_back(neighbor.clone());
+                }
+            }
+        }
+    }
+
+    println!("{:?}", selected_features);
 
     let not_found_features = selected_features
         .difference(&available_features)
