@@ -24,19 +24,21 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     let available_features: HashSet<String> = features.keys().cloned().collect();
     let cli_features: HashSet<String> = args.features.into_iter().collect();
 
-    let default_features: HashSet<String> = if !args.no_default_features {
-        features
-            .get("default")
-            .map(|f| HashSet::from_iter(f.iter().cloned()))
-            .unwrap_or_default()
+    let mut selected_features: HashSet<String> = if !args.no_default_features {
+        cli_features
+            .union(
+                &features
+                    .get("default")
+                    .map(|f| HashSet::from_iter(f.iter().cloned()))
+                    .unwrap_or_default(),
+            )
+            .cloned()
+            .collect()
     } else {
-        Default::default()
+        cli_features
     };
 
-    let mut selected_features: HashSet<String> =
-        cli_features.union(&default_features).cloned().collect();
-
-    // BFS to get set of features
+    // BFS set of features
     let mut queue = VecDeque::new();
     queue.extend(selected_features.clone().into_iter());
 
@@ -50,8 +52,6 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
             }
         }
     }
-
-    println!("{:?}", selected_features);
 
     let not_found_features = selected_features
         .difference(&available_features)
