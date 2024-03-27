@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
 use serde::{Deserialize, Serialize};
@@ -58,9 +59,12 @@ impl Compiler for LibCompiler {
 
         let sierra_program = {
             let _ = trace_span!("compile_sierra").enter();
-            cairo_lang_compiler::compile_prepared_db(db, main_crate_ids, compiler_config)?
-                .program
-                .into_artifact()
+            let program_artifact = cairo_lang_compiler::compile_prepared_db_program_artifact(
+                db,
+                main_crate_ids,
+                compiler_config,
+            )?;
+            VersionedProgram::v1(program_artifact)
         };
 
         if props.sierra {

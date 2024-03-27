@@ -313,6 +313,10 @@ pub struct TomlCairo {
     pub allow_warnings: Option<bool>,
     /// Enable auto gas withdrawal and gas usage check.
     pub enable_gas: Option<bool>,
+    /// Add a mapping between sierra statement indexes and fully qualified paths of cairo functions.
+    /// A statement index always maps to a function which cause the statement to be generated.
+    /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
+    pub add_statements_functions_debug_info: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
@@ -820,6 +824,12 @@ impl TomlManifest {
             }
             if let Some(enable_gas) = cairo.enable_gas {
                 compiler_config.enable_gas = enable_gas;
+            }
+            if let Some(add_statements_functions_debug_info) =
+                cairo.add_statements_functions_debug_info
+            {
+                compiler_config.add_statements_functions_debug_info =
+                    add_statements_functions_debug_info;
             }
         }
         Ok(compiler_config)

@@ -19,6 +19,10 @@ pub struct ManifestCompilerConfig {
     pub allow_warnings: bool,
     /// Enable auto gas withdrawal and gas usage check.
     pub enable_gas: bool,
+    /// Add a mapping between sierra statement indexes and fully qualified paths of cairo functions.
+    /// A statement index always maps to a function which cause the statement to be generated.
+    /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
+    pub add_statements_functions_debug_info: bool,
 }
 
 impl DefaultForProfile for ManifestCompilerConfig {
@@ -27,6 +31,7 @@ impl DefaultForProfile for ManifestCompilerConfig {
             sierra_replace_ids: profile.is_dev(),
             allow_warnings: true,
             enable_gas: true,
+            add_statements_functions_debug_info: false,
         }
     }
 }
@@ -37,6 +42,7 @@ impl From<ManifestCompilerConfig> for TomlCairo {
             sierra_replace_ids: Some(config.sierra_replace_ids),
             allow_warnings: Some(config.allow_warnings),
             enable_gas: Some(config.enable_gas),
+            add_statements_functions_debug_info: Some(config.add_statements_functions_debug_info),
         }
     }
 }
