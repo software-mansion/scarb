@@ -12,6 +12,7 @@ use cairo_lang_utils::OptionHelper;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use serde::Serialize;
+use std::num::NonZeroU32;
 
 const FORK_ATTR: &str = "fork";
 const FUZZER_ATTR: &str = "fuzzer";
@@ -69,7 +70,7 @@ pub struct RawForkParams {
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct FuzzerConfig {
-    pub fuzzer_runs: u32,
+    pub fuzzer_runs: NonZeroU32,
     pub fuzzer_seed: u64,
 }
 
@@ -133,8 +134,9 @@ pub fn forge_try_extract_test_config(
             diagnostics.push(PluginDiagnostic {
                 severity: Severity::Error,
                 stable_ptr: attr.args_stable_ptr.untyped(),
-                message: "Expected fuzzer config must be of the form `runs: <u32>, seed: <u64>`"
-                    .into(),
+                message:
+                    "Expected fuzzer config must be of the form `runs: <NonZeroU32>, seed: <u64>`"
+                        .into(),
             });
         })
     } else {
@@ -211,7 +213,10 @@ fn extract_fuzzer_config(db: &dyn SyntaxGroup, attr: &Attribute) -> Option<Fuzze
         return None;
     };
 
-    let fuzzer_runs = extract_numeric_value(db, fuzzer_runs)?.to_u32()?;
+    let fuzzer_runs = extract_numeric_value(db, fuzzer_runs)?
+        .to_u32()?
+        .try_into()
+        .ok()?;
     let fuzzer_seed = extract_numeric_value(db, fuzzer_seed)?.to_u64()?;
 
     Some(FuzzerConfig {
