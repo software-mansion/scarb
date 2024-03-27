@@ -14,7 +14,7 @@ pub fn run(args: TestArgs, config: &Config) -> Result<()> {
     let available_features = package.manifest.features.clone().unwrap();
     let enabled_features = args
         .features
-        .map(|x| x.split(",").map(|y| y.to_string()).collect::<Vec<String>>());
+        .map(|x| x.split(',').map(|y| y.to_string()).collect::<Vec<String>>());
 
     let mut not_found_features: Vec<String> = Vec::new();
     if let Some(enabled_features_str) = enabled_features.as_ref() {

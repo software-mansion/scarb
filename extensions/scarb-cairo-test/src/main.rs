@@ -50,7 +50,7 @@ fn main() -> Result<()> {
     let features_args = args
         .features
         .map(|x| vec!["--features".to_string(), x])
-        .unwrap_or_else(|| vec![]);
+        .unwrap_or_default();
 
     ScarbCommand::new()
         .arg("build")
