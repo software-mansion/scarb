@@ -36,7 +36,9 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     let selected_features: HashSet<String> =
         cli_features.union(&default_features).cloned().collect();
 
-    let not_found_features = selected_features.difference(&available_features).collect_vec();
+    let not_found_features = selected_features
+        .difference(&available_features)
+        .collect_vec();
     if !not_found_features.is_empty() {
         return Err(anyhow!(
             "Unknown features: {}",
