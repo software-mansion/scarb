@@ -1,5 +1,6 @@
+use std::collections::HashSet;
+
 use anyhow::{anyhow, Result};
-use gix::hashtable::hash_set::HashSet;
 use itertools::Itertools;
 
 use crate::args::BuildArgs;
