@@ -51,6 +51,7 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     let opts = CompileOpts {
         include_targets,
         exclude_targets,
+        enabled_features,
     };
-    ops::compile(packages, opts, &ws, enabled_features)
+    ops::compile(packages, opts, &ws)
 }
