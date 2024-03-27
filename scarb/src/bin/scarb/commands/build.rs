@@ -22,7 +22,16 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     let features = package.manifest.features.to_owned().unwrap_or_default();
 
     let available_features: HashSet<String> = features.keys().cloned().collect();
+
     let cli_features: HashSet<String> = args.features.into_iter().collect();
+    let not_found_features = cli_features.difference(&available_features).collect_vec();
+    if !not_found_features.is_empty() {
+        return Err(anyhow!(
+            "Unknown features: {}",
+            not_found_features.iter().join(", ")
+        ));
+    }
+
     let default_features: HashSet<String> = if !args.no_default_features {
         features
             .get("default")
@@ -41,22 +50,16 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         .cloned()
         .collect_vec();
 
-    let not_found_features = cli_features.difference(&available_features).collect_vec();
-    if !not_found_features.is_empty() {
-        return Err(anyhow!(
-            "Unknown features: {}",
-            not_found_features.iter().join(", ")
-        ));
-    }
-
     let (include_targets, exclude_targets): (Vec<TargetKind>, Vec<TargetKind>) = if args.test {
         (vec![TargetKind::TEST.clone()], Vec::new())
     } else {
         (Vec::new(), vec![TargetKind::TEST.clone()])
     };
+
     let opts = CompileOpts {
         include_targets,
         exclude_targets,
+        enabled_features,
     };
-    ops::compile(packages, opts, &ws, enabled_features)
+    ops::compile(packages, opts, &ws)
 }

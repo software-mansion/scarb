@@ -19,21 +19,17 @@ use crate::ops;
 pub struct CompileOpts {
     pub include_targets: Vec<TargetKind>,
     pub exclude_targets: Vec<TargetKind>,
+    pub enabled_features: Vec<String>,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
-pub fn compile(
-    packages: Vec<PackageId>,
-    opts: CompileOpts,
-    ws: &Workspace<'_>,
-    enabled_features: Vec<String>,
-) -> Result<()> {
-    process(packages, opts, ws, compile_unit, None, enabled_features)
+pub fn compile(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) -> Result<()> {
+    process(packages, opts, ws, compile_unit, None)
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn check(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) -> Result<()> {
-    process(packages, opts, ws, check_unit, Some("checking"), vec![]) // TODO: add features to check cli and fix this
+    process(packages, opts, ws, check_unit, Some("checking"))
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -43,7 +39,6 @@ fn process<F>(
     ws: &Workspace<'_>,
     mut operation: F,
     operation_type: Option<&str>,
-    enabled_features: Vec<String>,
 ) -> Result<()>
 where
     F: FnMut(CompilationUnit, &Workspace<'_>) -> Result<()>,
@@ -66,7 +61,7 @@ where
         })
         .collect::<Vec<PackageId>>();
 
-    let compilation_units = ops::generate_compilation_units(&resolve, ws, enabled_features)?
+    let compilation_units = ops::generate_compilation_units(&resolve, ws, opts.enabled_features)?
         .into_iter()
         .filter(|cu| {
             let is_excluded = opts.exclude_targets.contains(&cu.target().kind);
