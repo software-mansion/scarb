@@ -320,7 +320,7 @@ fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<F
             exclude_targets: vec![TargetKind::TEST.clone()],
         },
         &ws,
-        &None, // TODO: what to do here?
+        None, // TODO: what to do here?
     )?;
 
     Ok(lock)

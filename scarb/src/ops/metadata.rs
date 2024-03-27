@@ -28,7 +28,7 @@ pub struct MetadataOptions {
 pub fn collect_metadata(
     opts: &MetadataOptions,
     ws: &Workspace<'_>,
-    enabled_features: &Option<Vec<String>>,
+    enabled_features: Option<Vec<String>>,
 ) -> Result<m::Metadata> {
     if opts.version != m::VersionPin.numeric() {
         bail!(

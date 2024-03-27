@@ -567,7 +567,7 @@ impl TomlManifest {
         let features = self.features.clone();
 
         if let Some(feat) = features {
-            for (&ref feature_name, &ref dependent_features) in feat.iter() {
+            for (feature_name, dependent_features) in feat.iter() {
                 for dep in dependent_features.iter() {
                     if dep == feature_name {
                         return Err(anyhow!("feature '{}' depends on itself", feature_name));

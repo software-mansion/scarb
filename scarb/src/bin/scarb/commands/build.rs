@@ -20,7 +20,7 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     let available_features = package.manifest.features.clone().unwrap(); // TODO: don't unwrap here
     let enabled_features = args
         .features
-        .map(|x| x.split(",").map(|y| y.to_string()).collect::<Vec<String>>());
+        .map(|x| x.split(',').map(|y| y.to_string()).collect::<Vec<String>>());
 
     let mut not_found_features: Vec<String> = Vec::new();
     if let Some(enabled_features_str) = enabled_features.as_ref() {
@@ -52,5 +52,5 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         include_targets,
         exclude_targets,
     };
-    ops::compile(packages, opts, &ws, &enabled_features)
+    ops::compile(packages, opts, &ws, enabled_features)
 }
