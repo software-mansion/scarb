@@ -1,4 +1,6 @@
 use anyhow::{anyhow, Result};
+use gix::hashtable::hash_set::HashSet;
+use itertools::Itertools;
 
 use crate::args::BuildArgs;
 use scarb::core::{Config, TargetKind};
@@ -16,30 +18,34 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         .collect::<Vec<_>>();
 
     // TODO: support for multiple packages
-    let package = args.packages_filter.match_many(&ws).unwrap()[0].clone();
-    let available_features = package.manifest.features.clone().unwrap(); // TODO: don't unwrap here
-    let enabled_features = args
-        .features
-        .map(|x| x.split(',').map(|y| y.to_string()).collect::<Vec<String>>());
+    let package = args.packages_filter.match_many(&ws).unwrap()[0].to_owned();
+    let features = package.manifest.features.to_owned().unwrap_or_default();
 
-    let mut not_found_features: Vec<String> = Vec::new();
-    if let Some(enabled_features_str) = enabled_features.as_ref() {
-        for f in enabled_features_str.iter() {
-            if !available_features.contains_key(f) {
-                // TODO: maybe change error message
-                not_found_features.push(format!("'{f}'"));
-            }
-        }
-    }
+    let available_features: HashSet<String> = features.keys().cloned().collect();
+    let cli_features: HashSet<String> = args.features.into_iter().collect();
+    let default_features: HashSet<String> = if !args.no_default_features {
+        features
+            .get("default")
+            .map(|f| HashSet::from_iter(f.iter().cloned()))
+            .unwrap_or_default()
+    } else {
+        Default::default()
+    };
+
+    // TODO recursive function to resolve selected_features dependencies by adding lower layer elements to this union
+    let selected_features: HashSet<String> =
+        cli_features.union(&default_features).cloned().collect();
+
+    let enabled_features = available_features
+        .intersection(&selected_features)
+        .cloned()
+        .collect_vec();
+
+    let not_found_features = cli_features.difference(&available_features).collect_vec();
     if !not_found_features.is_empty() {
         return Err(anyhow!(
-            "Feature{} {} not found in .toml file",
-            if not_found_features.len() > 1 {
-                "s"
-            } else {
-                ""
-            },
-            not_found_features.join(", ")
+            "Unknown features: {}",
+            not_found_features.iter().join(", ")
         ));
     }
 

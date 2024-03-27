@@ -26,14 +26,14 @@ pub fn compile(
     packages: Vec<PackageId>,
     opts: CompileOpts,
     ws: &Workspace<'_>,
-    enabled_features: Option<Vec<String>>,
+    enabled_features: Vec<String>,
 ) -> Result<()> {
     process(packages, opts, ws, compile_unit, None, enabled_features)
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn check(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) -> Result<()> {
-    process(packages, opts, ws, check_unit, Some("checking"), None) // TODO: add features to check cli and fix this
+    process(packages, opts, ws, check_unit, Some("checking"), vec![]) // TODO: add features to check cli and fix this
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -43,7 +43,7 @@ fn process<F>(
     ws: &Workspace<'_>,
     mut operation: F,
     operation_type: Option<&str>,
-    enabled_features: Option<Vec<String>>,
+    enabled_features: Vec<String>,
 ) -> Result<()>
 where
     F: FnMut(CompilationUnit, &Workspace<'_>) -> Result<()>,

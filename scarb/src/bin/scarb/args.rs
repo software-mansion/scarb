@@ -226,8 +226,12 @@ pub struct BuildArgs {
     pub test: bool,
 
     /// Which features to enable in code.
-    #[arg(short, long)]
-    pub features: Option<String>,
+    #[arg(short, long, value_delimiter = ',')]
+    pub features: Vec<String>,
+
+    /// Disables the default features of the package.
+    #[arg(short, long, default_value_t = false)]
+    pub no_default_features: bool,
 }
 
 /// Arguments accepted by the `run` command.

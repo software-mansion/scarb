@@ -158,7 +158,7 @@ async fn collect_packages_from_resolve_graph(
 pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
     ws: &Workspace<'_>,
-    enabled_features: Option<Vec<String>>,
+    enabled_features: Vec<String>,
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members().filter(|member| !member.is_cairo_plugin()) {
@@ -199,7 +199,7 @@ fn generate_cairo_compilation_units(
     member: &Package,
     resolve: &WorkspaceResolve,
     ws: &Workspace<'_>,
-    enabled_features: &Option<Vec<String>>,
+    enabled_features: &[String],
 ) -> Result<Vec<CompilationUnit>> {
     let profile = ws.current_profile()?;
     let mut solution = PackageSolutionCollector::new(member, resolve, ws);
@@ -252,11 +252,10 @@ fn generate_cairo_compilation_units(
                             // None
                             let mut cfg_set = cfg_set.clone();
 
-                            if let Some(f) = enabled_features {
-                                f.iter()
-                                    .map(|f| Cfg::kv("feature", f))
-                                    .for_each(|f| cfg_set.insert(f));
-                            }
+                            enabled_features
+                                .iter()
+                                .map(|f| Cfg::kv("feature", f))
+                                .for_each(|f| cfg_set.insert(f));
 
                             Some(cfg_set)
                         } else {

@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::default::Default;
 use std::fs;
 use std::iter::{repeat, zip};
@@ -563,22 +563,24 @@ impl TomlManifest {
         // TODO (#1040): add checking for fields that are not present in ExperimentalFeaturesConfig
         let experimental_features = package.experimental_features.clone();
 
-        // TODO: recursively resolve which features have to be included
         let features = self.features.clone();
 
-        if let Some(feat) = features {
-            for (feature_name, dependent_features) in feat.iter() {
-                for dep in dependent_features.iter() {
-                    if dep == feature_name {
-                        return Err(anyhow!("feature '{}' depends on itself", feature_name));
-                    }
-                    if !feat.contains_key(dep) {
-                        return Err(anyhow!(
-                            "feature '{}' is dependent on '{}' which is not defined",
-                            feature_name,
-                            dep
-                        ));
-                    }
+        if let Some(features) = features {
+            let available_features: HashSet<String> = features.keys().cloned().collect();
+            for (key, val) in features {
+                let dependent_features = HashSet::<String>::from_iter(val.into_iter());
+                if dependent_features.contains(&key) {
+                    return Err(anyhow!("feature '{}' depends on itself", key));
+                }
+                let not_found_features = dependent_features
+                    .difference(&available_features)
+                    .collect_vec();
+                if !not_found_features.is_empty() {
+                    return Err(anyhow!(
+                        "feature '{}' is dependent on '{}' which is not defined",
+                        key,
+                        not_found_features.iter().join(", "),
+                    ));
                 }
             }
         }
