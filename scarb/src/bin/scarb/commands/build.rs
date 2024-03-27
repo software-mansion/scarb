@@ -20,17 +20,8 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     // TODO: support for multiple packages
     let package = args.packages_filter.match_many(&ws).unwrap()[0].to_owned();
     let features = package.manifest.features.to_owned().unwrap_or_default();
-
     let available_features: HashSet<String> = features.keys().cloned().collect();
-
     let cli_features: HashSet<String> = args.features.into_iter().collect();
-    let not_found_features = cli_features.difference(&available_features).collect_vec();
-    if !not_found_features.is_empty() {
-        return Err(anyhow!(
-            "Unknown features: {}",
-            not_found_features.iter().join(", ")
-        ));
-    }
 
     let default_features: HashSet<String> = if !args.no_default_features {
         features
@@ -44,6 +35,14 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     // TODO recursive function to resolve selected_features dependencies by adding lower layer elements to this union
     let selected_features: HashSet<String> =
         cli_features.union(&default_features).cloned().collect();
+
+    let not_found_features = selected_features.difference(&available_features).collect_vec();
+    if !not_found_features.is_empty() {
+        return Err(anyhow!(
+            "Unknown features: {}",
+            not_found_features.iter().join(", ")
+        ));
+    }
 
     let enabled_features = available_features
         .intersection(&selected_features)
