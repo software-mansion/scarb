@@ -1,12 +1,12 @@
-use crate::compiler::plugin::proc_macro::{Expansion, FromItemAst, ProcMacroInstance};
+use crate::compiler::plugin::proc_macro::{Expansion, FromSyntaxNode, ProcMacroInstance};
 use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Result};
 use cairo_lang_defs::db::DefsGroup;
-use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, GeneratedFileAuxData, MacroPlugin, MacroPluginMetadata,
     PluginGeneratedFile, PluginResult,
 };
+use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_macro::{
     AuxData, Diagnostic, ExpansionKind, ProcMacroResult, Severity, TokenStream, TokenStreamMetadata,
 };
@@ -129,12 +129,6 @@ impl ProcMacroHostPlugin {
         Ok(Self { macros })
     }
 
-    /// Handle `proc_macro_name!` expression.
-    fn handle_macro(&self, _db: &dyn SyntaxGroup, _item_ast: ast::ModuleItem) -> Vec<ProcMacroId> {
-        // Todo(maciektr): Implement.
-        Vec::new()
-    }
-
     /// Handle `#[proc_macro_name]` attribute.
     fn handle_attribute(
         &self,
@@ -176,9 +170,24 @@ impl ProcMacroHostPlugin {
             .map(|package_id| ProcMacroId::new(package_id, expansion.clone()))
     }
 
-    pub fn build_plugin_suite(macr_host: Arc<Self>) -> PluginSuite {
+    pub fn build_plugin_suite(macro_host: Arc<Self>) -> PluginSuite {
         let mut suite = PluginSuite::default();
-        suite.add_plugin_ex(macr_host);
+        // Register inline macro plugins.
+        for proc_macro in &macro_host.macros {
+            let expansions = proc_macro
+                .get_expansions()
+                .iter()
+                .filter(|exp| matches!(exp.kind, ExpansionKind::Inline));
+            for expansion in expansions {
+                let plugin = Arc::new(ProcMacroInlinePlugin::new(
+                    proc_macro.clone(),
+                    expansion.clone(),
+                ));
+                suite.add_inline_macro_plugin_ex(expansion.name.as_str(), plugin);
+            }
+        }
+        // Register procedural macro host plugin.
+        suite.add_plugin_ex(macro_host);
         suite
     }
 
@@ -219,6 +228,13 @@ impl ProcMacroHostPlugin {
         }
         Ok(())
     }
+
+    pub fn instance(&self, package_id: PackageId) -> &ProcMacroInstance {
+        self.macros
+            .iter()
+            .find(|m| m.package_id() == package_id)
+            .expect("procedural macro must be registered in proc macro host")
+    }
 }
 
 impl MacroPlugin for ProcMacroHostPlugin {
@@ -230,9 +246,8 @@ impl MacroPlugin for ProcMacroHostPlugin {
     ) -> PluginResult {
         // Apply expansion to `item_ast` where needed.
         let expansions = self
-            .handle_macro(db, item_ast.clone())
+            .handle_attribute(db, item_ast.clone())
             .into_iter()
-            .chain(self.handle_attribute(db, item_ast.clone()))
             .chain(self.handle_derive(db, item_ast.clone()));
         let stable_ptr = item_ast.clone().stable_ptr().untyped();
         let file_path = stable_ptr.file_id(db).full_path(db.upcast());
@@ -244,12 +259,10 @@ impl MacroPlugin for ProcMacroHostPlugin {
         let mut modified = false;
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
         for input in expansions {
-            let instance = self
-                .macros
-                .iter()
-                .find(|m| m.package_id() == input.package_id)
-                .expect("procedural macro must be registered in proc macro host");
-            match instance.generate_code(input.expansion.name.clone(), token_stream.clone()) {
+            match self
+                .instance(input.package_id)
+                .generate_code(input.expansion.name.clone(), token_stream.clone())
+            {
                 ProcMacroResult::Replace {
                     token_stream: new_token_stream,
                     aux_data: new_aux_data,
@@ -307,6 +320,85 @@ impl MacroPlugin for ProcMacroHostPlugin {
             .iter()
             .flat_map(|m| m.declared_attributes())
             .collect()
+    }
+}
+
+/// A Cairo compiler inline macro plugin controlling the inline procedural macro execution.
+///
+/// This plugin represents a single expansion capable of handling inline procedural macros.
+/// The plugin triggers code expansion in a corresponding procedural macro instance.
+#[derive(Debug)]
+pub struct ProcMacroInlinePlugin {
+    instance: Arc<ProcMacroInstance>,
+    expansion: Expansion,
+}
+
+impl ProcMacroInlinePlugin {
+    pub fn new(instance: Arc<ProcMacroInstance>, expansion: Expansion) -> Self {
+        assert!(instance.get_expansions().contains(&expansion));
+        Self {
+            instance,
+            expansion,
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        self.expansion.name.as_str()
+    }
+
+    fn instance(&self) -> &ProcMacroInstance {
+        &self.instance
+    }
+}
+
+impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
+    fn generate_code(
+        &self,
+        db: &dyn SyntaxGroup,
+        syntax: &ast::ExprInlineMacro,
+    ) -> InlinePluginResult {
+        let stable_ptr = syntax.clone().stable_ptr().untyped();
+
+        let token_stream = TokenStream::from_syntax_node(db, syntax.as_syntax_node());
+        match self
+            .instance()
+            .generate_code(self.expansion.name.clone(), token_stream)
+        {
+            ProcMacroResult::Replace {
+                token_stream,
+                aux_data,
+                diagnostics,
+            } => {
+                let aux_data = aux_data.map(|aux_data| {
+                    let aux_data = ProcMacroAuxData::new(
+                        aux_data.into(),
+                        ProcMacroId::new(self.instance.package_id(), self.expansion.clone()),
+                    );
+                    let mut emitted = EmittedAuxData::default();
+                    emitted.push(aux_data);
+                    DynGeneratedFileAuxData::new(emitted)
+                });
+
+                InlinePluginResult {
+                    code: Some(PluginGeneratedFile {
+                        name: "inline_proc_macro".into(),
+                        content: token_stream.to_string(),
+                        code_mappings: Default::default(),
+                        aux_data,
+                    }),
+                    diagnostics: into_cairo_diagnostics(diagnostics, stable_ptr),
+                }
+            }
+            ProcMacroResult::Remove { diagnostics } => InlinePluginResult {
+                code: None,
+                diagnostics: into_cairo_diagnostics(diagnostics, stable_ptr),
+            },
+            ProcMacroResult::Leave { .. } => {
+                // Safe to panic, as all inline macros should originally return `InlineProcMacroResult`.
+                // Which is validated inside the inline macro helper attribute.
+                panic!("inline macro cannot return `Leave` result");
+            }
+        }
     }
 }
 
