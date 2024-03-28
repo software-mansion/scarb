@@ -19,15 +19,11 @@ use crate::ops;
 pub struct CompileOpts {
     pub include_targets: Vec<TargetKind>,
     pub exclude_targets: Vec<TargetKind>,
-    pub enabled_features: Option<Vec<String>>,
+    pub enabled_features: Vec<String>,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
-pub fn compile(
-    packages: Vec<PackageId>,
-    opts: CompileOpts,
-    ws: &Workspace<'_>,
-) -> Result<()> {
+pub fn compile(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) -> Result<()> {
     process(packages, opts, ws, compile_unit, None)
 }
 

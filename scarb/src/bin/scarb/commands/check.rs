@@ -22,7 +22,7 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     let opts = CompileOpts {
         include_targets,
         exclude_targets,
-        enabled_features: None, // TODO: add features to check cli and fix this
+        enabled_features: vec![], // TODO: add features to check cli and fix this
     };
     ops::check(packages, opts, &ws)
 }
