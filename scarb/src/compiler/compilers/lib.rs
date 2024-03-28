@@ -57,14 +57,14 @@ impl Compiler for LibCompiler {
 
         let main_crate_ids = collect_main_crate_ids(&unit, db);
 
-        let sierra_program = {
+        let sierra_program: VersionedProgram = {
             let _ = trace_span!("compile_sierra").enter();
             let program_artifact = cairo_lang_compiler::compile_prepared_db_program_artifact(
                 db,
                 main_crate_ids,
                 compiler_config,
             )?;
-            VersionedProgram::v1(program_artifact)
+            program_artifact.into()
         };
 
         if props.sierra {

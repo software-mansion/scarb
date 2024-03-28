@@ -132,7 +132,7 @@ zip = { version = "0.6", default-features = false, features = ["deflate"] }
 zstd = "0.13"
 
 [profile.release]
-#lto = true
+lto = true
 
 [profile.ci]
 inherits = "test"
