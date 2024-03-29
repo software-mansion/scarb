@@ -49,11 +49,11 @@ pub struct Manifest {
     pub compiler_config: ManifestCompilerConfig,
     #[builder(default)]
     pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
+    #[builder(default)]
+    pub features: Option<BTreeMap<String, Vec<String>>>,
     /// Allow experimental features.
     #[builder(default)]
     pub experimental_features: Option<Vec<SmolStr>>,
-    #[builder(default)]
-    pub features: Option<BTreeMap<String, Vec<String>>>,
 }
 
 /// Subset of a [`Manifest`] that contains package metadata.

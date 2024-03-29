@@ -56,7 +56,6 @@ pub fn execute_test_subcommand(
         package.manifest_path().to_string(),
     )]));
     if let Some(script_definition) = package.manifest.scripts.get("test") {
-        // TODO: what to do with this case?
         debug!("using `test` script: {script_definition}");
         ws.config().ui().print(Status::new(
             "Running",
@@ -70,8 +69,7 @@ pub fn execute_test_subcommand(
             &format!("cairo-test {package_name}"),
         ));
         let args = args.iter().map(OsString::from).collect::<Vec<_>>();
-        let script_command = "scarb cairo-test".to_string();
-        let script_definition = ScriptDefinition::new(script_command);
+        let script_definition = ScriptDefinition::new("scarb cairo-test".into());
         ops::execute_script(&script_definition, args.as_ref(), ws, package.root(), env)
     }
 }

@@ -8,7 +8,6 @@ use crate::args::TestArgs;
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: TestArgs, config: &Config) -> Result<()> {
     let ws = ops::read_workspace(config.manifest_path(), config)?;
-
     args.packages_filter
         .match_many(&ws)?
         .iter()
