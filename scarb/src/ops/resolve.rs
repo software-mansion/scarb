@@ -19,7 +19,7 @@ use crate::core::{
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::{resolver, DEFAULT_SOURCE_PATH};
-use anyhow::{anyhow, bail, Error, Result};
+use anyhow::{bail, Error, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;

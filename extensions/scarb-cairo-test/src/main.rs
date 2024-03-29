@@ -1,4 +1,4 @@
-use std::{env, fs, vec};
+use std::{env, fs};
 
 use anyhow::{Context, Result};
 use cairo_lang_test_plugin::TestCompilation;
@@ -56,7 +56,10 @@ fn main() -> Result<()> {
         .arg("build")
         .arg("--test")
         .env("SCARB_FEATURES", args.features)
-        .env("SCARB_NO_DEFAULT_FEATURES", args.no_default_features.to_string())
+        .env(
+            "SCARB_NO_DEFAULT_FEATURES",
+            args.no_default_features.to_string(),
+        )
         .env("SCARB_PACKAGES_FILTER", filter.to_env())
         .run()?;
 

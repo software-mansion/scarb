@@ -230,7 +230,12 @@ pub struct BuildArgs {
     pub features: Vec<String>,
 
     /// Disables the default features of the package.
-    #[arg(short, long, default_value_t = false, env = "SCARB_NO_DEFAULT_FEATURES")]
+    #[arg(
+        short,
+        long,
+        default_value_t = false,
+        env = "SCARB_NO_DEFAULT_FEATURES"
+    )]
     pub no_default_features: bool,
 }
 
@@ -402,8 +407,9 @@ pub struct TestArgs {
     /// Arguments for the test program.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,
-
+    //
     // TODO: SHOULD WE INCLUDE FEATURES HERE?
+    // because now they don't show in `scarb test -h`
 }
 
 /// Arguments accepted by both the `package` and the `publish` command.
