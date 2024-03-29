@@ -222,7 +222,6 @@ fn generate_cairo_compilation_units(
             let is_integration_test = props.test_type == TestTargetType::Integration;
             let test_package_id = member.id.for_test_target(member_target.name.clone());
 
-            let mut err: Option<Error> = None;
             let mut components: Vec<CompilationUnitComponent> = packages
                 .iter()
                 .cloned()
@@ -260,10 +259,7 @@ fn generate_cairo_compilation_units(
                                 no_default_features,
                             ) {
                                 Ok(cfg_set) => cfg_set,
-                                Err(e) => {
-                                    err = Some(e);
-                                    None
-                                }
+                                Err(e) => return Err(e),
                             }
                         } else {
                             let component_cfg_set = cfg_set
@@ -280,17 +276,13 @@ fn generate_cairo_compilation_units(
                         }
                     };
 
-                    CompilationUnitComponent {
+                    Ok(CompilationUnitComponent {
                         package,
                         target,
                         cfg_set,
-                    }
+                    })
                 })
-                .collect();
-
-            if let Some(e) = err {
-                return Err(e);
-            }
+                .collect::<Result<_>>()?;
 
             // Apply overrides for integration test.
             let main_package_id = if is_integration_test {
@@ -345,7 +337,7 @@ fn get_cfg_with_features(
     }
     let Some(features) = features_manifest else {
         bail!("No features in manifest");
-    }; // TODO: change error message
+    };
     let available_features: HashSet<String> = features.keys().cloned().collect();
     let cli_features: HashSet<String> = enabled_features.iter().cloned().collect();
 
@@ -365,7 +357,7 @@ fn get_cfg_with_features(
 
     // BFS set of features
     let mut queue = VecDeque::new();
-    queue.extend(selected_features.clone().into_iter());
+    queue.extend(selected_features.clone());
 
     while let Some(key) = queue.pop_front() {
         if let Some(neighbors) = features.get(&key) {
