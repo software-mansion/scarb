@@ -96,7 +96,7 @@ impl TokenStreamMetadata {
 /// For instance, auxiliary data can be serialized as JSON.
 ///
 /// ```
-/// use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream, attribute_macro, post_process}
+/// use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream, attribute_macro, post_process};
 /// use serde::{Serialize, Deserialize};
 /// #[derive(Debug, Serialize, Deserialize)]
 /// struct SomeAuxDataFormat {
