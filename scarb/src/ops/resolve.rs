@@ -344,7 +344,7 @@ fn get_cfg_with_features(
         return Ok(None);
     }
     let Some(features) = features_manifest else {
-        return Err(anyhow!("No features in manifest"));
+        bail!("No features in manifest");
     }; // TODO: change error message
     let available_features: HashSet<String> = features.keys().cloned().collect();
     let cli_features: HashSet<String> = enabled_features.iter().cloned().collect();
@@ -383,10 +383,7 @@ fn get_cfg_with_features(
         .collect_vec();
 
     if !not_found_features.is_empty() {
-        return Err(anyhow!(
-            "Unknown features: {}",
-            not_found_features.iter().join(", ")
-        ));
+        bail!("Unknown features: {}", not_found_features.iter().join(", "));
     }
 
     available_features

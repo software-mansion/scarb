@@ -570,17 +570,17 @@ impl TomlManifest {
             for (key, val) in features {
                 let dependent_features = HashSet::<String>::from_iter(val.into_iter());
                 if dependent_features.contains(&key) {
-                    return Err(anyhow!("feature '{}' depends on itself", key));
+                    bail!("feature '{}' depends on itself", key);
                 }
                 let not_found_features = dependent_features
                     .difference(&available_features)
                     .collect_vec();
                 if !not_found_features.is_empty() {
-                    return Err(anyhow!(
+                    bail!(
                         "feature '{}' is dependent on '{}' which is not defined",
                         key,
                         not_found_features.iter().join(", "),
-                    ));
+                    );
                 }
             }
         }

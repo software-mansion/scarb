@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::args::BuildArgs;
+use anyhow::Result;
 use scarb::core::{Config, TargetKind};
 use scarb::ops;
 use scarb::ops::CompileOpts;
