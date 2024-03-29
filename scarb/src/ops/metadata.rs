@@ -28,8 +28,7 @@ pub struct MetadataOptions {
 pub fn collect_metadata(
     opts: &MetadataOptions,
     ws: &Workspace<'_>,
-    enabled_features: Vec<String>,
-    no_default_features: bool,
+    enabled_features: ops::FeaturesOpts,
 ) -> Result<m::Metadata> {
     if opts.version != m::VersionPin.numeric() {
         bail!(
@@ -48,7 +47,7 @@ pub fn collect_metadata(
             .collect();
 
         let compilation_units: Vec<m::CompilationUnitMetadata> =
-            ops::generate_compilation_units(&resolve, ws, &enabled_features, no_default_features)?
+            ops::generate_compilation_units(&resolve, ws, &enabled_features)?
                 .iter()
                 .map(collect_compilation_unit_metadata)
                 .collect();

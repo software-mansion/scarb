@@ -70,12 +70,13 @@ pub fn package(
     packages: &[PackageId],
     opts: &PackageOpts,
     ws: &Workspace<'_>,
+    features: ops::FeaturesOpts,
 ) -> Result<Vec<FileLockGuard>> {
     before_package(ws)?;
 
     packages
         .iter()
-        .map(|pkg| package_one_impl(*pkg, opts, ws))
+        .map(|pkg| package_one_impl(*pkg, opts, ws, features.clone()))
         .collect()
 }
 
@@ -83,8 +84,9 @@ pub fn package_one(
     package_id: PackageId,
     opts: &PackageOpts,
     ws: &Workspace<'_>,
+    features: ops::FeaturesOpts,
 ) -> Result<FileLockGuard> {
-    package(&[package_id], opts, ws).map(|mut v| v.pop().unwrap())
+    package(&[package_id], opts, ws, features).map(|mut v| v.pop().unwrap())
 }
 
 #[tracing::instrument(level = "debug", skip(opts, ws))]
@@ -141,6 +143,7 @@ fn package_one_impl(
     pkg_id: PackageId,
     opts: &PackageOpts,
     ws: &Workspace<'_>,
+    features: ops::FeaturesOpts,
 ) -> Result<FileLockGuard> {
     let pkg = ws.fetch_package(&pkg_id)?;
 
@@ -170,7 +173,7 @@ fn package_one_impl(
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
     let mut dst = if opts.verify {
-        run_verify(pkg, dst, ws).context("failed to verify package tarball")?
+        run_verify(pkg, dst, ws, features).context("failed to verify package tarball")?
     } else {
         dst
     };
@@ -296,7 +299,12 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     Ok(recipe)
 }
 
-fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<FileLockGuard> {
+fn run_verify(
+    pkg: &Package,
+    tar: FileLockGuard,
+    ws: &Workspace<'_>,
+    features: ops::FeaturesOpts,
+) -> Result<FileLockGuard> {
     ws.config()
         .ui()
         .print(Status::new("Verifying", &pkg.id.tarball_name()));
@@ -318,8 +326,7 @@ fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<F
         ops::CompileOpts {
             include_targets: Vec::new(),
             exclude_targets: vec![TargetKind::TEST.clone()],
-            enabled_features: vec![],   // TODO: what to do here?
-            no_default_features: false, // TODO
+            features: features,
         },
         &ws,
     )?;

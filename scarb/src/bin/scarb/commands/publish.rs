@@ -19,5 +19,11 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
         },
     };
 
-    ops::publish(package.id, &ops, &ws)
+    let features = ops::FeaturesOpts {
+        features: args.features,
+        all_features: args.all_features,
+        no_default_features: args.no_default_features,
+    };
+
+    ops::publish(package.id, &ops, &ws, features)
 }

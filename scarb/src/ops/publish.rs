@@ -15,7 +15,12 @@ pub struct PublishOpts {
 }
 
 #[tracing::instrument(level = "debug", skip(opts, ws))]
-pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) -> Result<()> {
+pub fn publish(
+    package_id: PackageId,
+    opts: &PublishOpts,
+    ws: &Workspace<'_>,
+    features: ops::FeaturesOpts,
+) -> Result<()> {
     let package = ws.fetch_package(&package_id)?.clone();
 
     let source_id = SourceId::for_registry(&opts.index_url)?;
@@ -31,7 +36,7 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
         "publishing packages is not supported by registry: {source_id}"
     );
 
-    let tarball = ops::package_one(package_id, &opts.package_opts, ws)?;
+    let tarball = ops::package_one(package_id, &opts.package_opts, ws, features)?;
 
     let dest_package_id = package_id.with_source_id(source_id);
 

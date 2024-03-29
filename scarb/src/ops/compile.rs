@@ -15,13 +15,18 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttr
 use crate::core::{PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::ops;
 
+#[derive(Debug, Clone)]
+pub struct FeaturesOpts {
+    pub features: Vec<String>,
+    pub all_features: bool,
+    pub no_default_features: bool,
+}
+
 #[derive(Debug)]
 pub struct CompileOpts {
     pub include_targets: Vec<TargetKind>,
     pub exclude_targets: Vec<TargetKind>,
-
-    pub enabled_features: Vec<String>,
-    pub no_default_features: bool,
+    pub features: FeaturesOpts,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -63,29 +68,24 @@ where
         })
         .collect::<Vec<PackageId>>();
 
-    let compilation_units = ops::generate_compilation_units(
-        &resolve,
-        ws,
-        &opts.enabled_features,
-        opts.no_default_features,
-    )?
-    .into_iter()
-    .filter(|cu| {
-        let is_excluded = opts.exclude_targets.contains(&cu.target().kind);
-        let is_included =
-            opts.include_targets.is_empty() || opts.include_targets.contains(&cu.target().kind);
-        let is_selected = packages.contains(&cu.main_package_id());
-        let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
-        is_cairo_plugin || (is_selected && is_included && !is_excluded)
-    })
-    .sorted_by_key(|cu| {
-        if matches!(cu, CompilationUnit::ProcMacro(_)) {
-            0
-        } else {
-            1
-        }
-    })
-    .collect::<Vec<_>>();
+    let compilation_units = ops::generate_compilation_units(&resolve, ws, &opts.features)?
+        .into_iter()
+        .filter(|cu| {
+            let is_excluded = opts.exclude_targets.contains(&cu.target().kind);
+            let is_included =
+                opts.include_targets.is_empty() || opts.include_targets.contains(&cu.target().kind);
+            let is_selected = packages.contains(&cu.main_package_id());
+            let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
+            is_cairo_plugin || (is_selected && is_included && !is_excluded)
+        })
+        .sorted_by_key(|cu| {
+            if matches!(cu, CompilationUnit::ProcMacro(_)) {
+                0
+            } else {
+                1
+            }
+        })
+        .collect::<Vec<_>>();
 
     for unit in compilation_units {
         operation(unit, ws)?;

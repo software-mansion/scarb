@@ -225,17 +225,16 @@ pub struct BuildArgs {
     #[arg(short, long, default_value_t = false)]
     pub test: bool,
 
-    /// Which features to enable in code.
-    #[arg(short, long, value_delimiter = ',', env = "SCARB_FEATURES")]
+    /// Comma separated list of features to activate
+    #[arg(short = 'F', long, value_delimiter = ',', env = "SCARB_FEATURES")]
     pub features: Vec<String>,
 
-    /// Disables the default features of the package.
-    #[arg(
-        short,
-        long,
-        default_value_t = false,
-        env = "SCARB_NO_DEFAULT_FEATURES"
-    )]
+    /// Activate all available features
+    #[arg(long, default_value_t = false, env = "SCARB_ALL_FEATURES")]
+    pub all_features: bool,
+
+    /// Do not activate the `default` feature
+    #[arg(long, default_value_t = false, env = "SCARB_NO_DEFAULT_FEATURES")]
     pub no_default_features: bool,
 }
 
@@ -275,6 +274,15 @@ pub struct MetadataArgs {
     /// Output information only about the workspace members and don't fetch dependencies.
     #[arg(long)]
     pub no_deps: bool,
+    /// Comma separated list of features to activate
+    #[arg(short = 'F', long, value_delimiter = ',')]
+    pub features: Vec<String>,
+    /// Activate all available features
+    #[arg(long, default_value_t = false)]
+    pub all_features: bool,
+    /// Do not activate the `default` feature
+    #[arg(long, default_value_t = false)]
+    pub no_default_features: bool,
 }
 
 /// Arguments accepted by the `new` command.
@@ -440,6 +448,18 @@ pub struct PackageArgs {
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+
+    /// Comma separated list of features to activate
+    #[arg(short = 'F', long, value_delimiter = ',', env = "SCARB_FEATURES")]
+    pub features: Vec<String>,
+
+    /// Activate all available features
+    #[arg(long, default_value_t = false, env = "SCARB_ALL_FEATURES")]
+    pub all_features: bool,
+
+    /// Do not activate the `default` feature
+    #[arg(long, default_value_t = false, env = "SCARB_NO_DEFAULT_FEATURES")]
+    pub no_default_features: bool,
 }
 
 /// Arguments accepted by the `publish` command.
@@ -454,6 +474,18 @@ pub struct PublishArgs {
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+
+    /// Comma separated list of features to activate
+    #[arg(short = 'F', long, value_delimiter = ',')]
+    pub features: Vec<String>,
+
+    /// Activate all available features
+    #[arg(long, default_value_t = false)]
+    pub all_features: bool,
+
+    /// Do not activate the `default` feature
+    #[arg(long, default_value_t = false)]
+    pub no_default_features: bool,
 }
 
 /// Git reference specification arguments.

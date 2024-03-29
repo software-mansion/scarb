@@ -15,7 +15,13 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
         no_deps: args.no_deps,
     };
 
-    let metadata = ops::collect_metadata(&opts, &ws, vec![], false)?; // TODO: what to do with it?
+    let features = ops::FeaturesOpts {
+        features: args.features,
+        all_features: args.all_features,
+        no_default_features: args.no_default_features,
+    };
+
+    let metadata = ops::collect_metadata(&opts, &ws, features)?;
 
     config.ui().print(MachineMessage(metadata));
 

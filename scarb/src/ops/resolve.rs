@@ -18,8 +18,9 @@ use crate::core::{
 };
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
+use crate::ops::FeaturesOpts;
 use crate::{resolver, DEFAULT_SOURCE_PATH};
-use anyhow::{bail, Error, Result};
+use anyhow::{bail, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;
@@ -158,8 +159,7 @@ async fn collect_packages_from_resolve_graph(
 pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
     ws: &Workspace<'_>,
-    enabled_features: &Vec<String>,
-    no_default_features: bool,
+    enabled_features: &FeaturesOpts,
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members().filter(|member| !member.is_cairo_plugin()) {
@@ -168,7 +168,6 @@ pub fn generate_compilation_units(
             resolve,
             ws,
             enabled_features,
-            no_default_features,
         )?);
     }
 
@@ -201,8 +200,7 @@ fn generate_cairo_compilation_units(
     member: &Package,
     resolve: &WorkspaceResolve,
     ws: &Workspace<'_>,
-    enabled_features: &Vec<String>,
-    no_default_features: bool,
+    enabled_features: &FeaturesOpts,
 ) -> Result<Vec<CompilationUnit>> {
     let profile = ws.current_profile()?;
     let mut solution = PackageSolutionCollector::new(member, resolve, ws);
@@ -255,8 +253,7 @@ fn generate_cairo_compilation_units(
                             match get_cfg_with_features(
                                 cfg_set.clone(),
                                 &package.manifest.features,
-                                &enabled_features,
-                                no_default_features,
+                                enabled_features,
                             ) {
                                 Ok(cfg_set) => cfg_set,
                                 Err(e) => return Err(e),
@@ -327,10 +324,12 @@ fn generate_cairo_compilation_units(
 fn get_cfg_with_features(
     mut cfg_set: CfgSet,
     features_manifest: &Option<BTreeMap<String, Vec<String>>>,
-    enabled_features: &Vec<String>,
-    no_default_features: bool,
+    enabled_features: &FeaturesOpts,
 ) -> Result<Option<CfgSet>> {
-    if enabled_features.is_empty() && !no_default_features && features_manifest.is_none() {
+    if enabled_features.features.is_empty()
+        && !enabled_features.no_default_features
+        && features_manifest.is_none()
+    {
         // It is ok to have no features in manifest
         // only if no features are enabled and default features are not turned off.
         return Ok(None);
@@ -339,9 +338,9 @@ fn get_cfg_with_features(
         bail!("No features in manifest");
     };
     let available_features: HashSet<String> = features.keys().cloned().collect();
-    let cli_features: HashSet<String> = enabled_features.iter().cloned().collect();
+    let cli_features: HashSet<String> = enabled_features.features.iter().cloned().collect();
 
-    let mut selected_features: HashSet<String> = if !no_default_features {
+    let mut selected_features: HashSet<String> = if !enabled_features.no_default_features {
         cli_features
             .union(
                 &features
@@ -355,7 +354,11 @@ fn get_cfg_with_features(
         cli_features
     };
 
-    // BFS set of features
+    if enabled_features.all_features {
+        selected_features.extend(available_features.iter().cloned());
+    }
+
+    // Resolve features that are dependencies of selected features.
     let mut queue = VecDeque::new();
     queue.extend(selected_features.clone());
 

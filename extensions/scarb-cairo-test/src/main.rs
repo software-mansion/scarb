@@ -33,12 +33,16 @@ struct Args {
     #[arg(long, default_value_t = false)]
     print_resource_usage: bool,
 
-    /// Which features to enable in code.
-    #[arg(long, default_value = "")]
+    /// Comma separated list of features to activate
+    #[arg(short = 'F', long, default_value = "")]
     pub features: String,
 
-    /// Disables the default features of the package.
-    #[arg(short, long, default_value_t = false)]
+    /// Activate all available features
+    #[arg(long, default_value_t = false)]
+    pub all_features: bool,
+
+    /// Do not activate the `default` feature
+    #[arg(long, default_value_t = false)]
     pub no_default_features: bool,
 }
 
@@ -52,14 +56,22 @@ fn main() -> Result<()> {
     let matched = args.packages_filter.match_many(&metadata)?;
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
 
+    // TODO: refactor
+    let features_env = if args.features.is_empty() {
+        vec![]
+    } else {
+        vec![("SCARB_FEATURES", args.features.clone())]
+    };
+
     ScarbCommand::new()
         .arg("build")
         .arg("--test")
-        .env("SCARB_FEATURES", args.features)
+        .envs(features_env)
         .env(
             "SCARB_NO_DEFAULT_FEATURES",
             args.no_default_features.to_string(),
         )
+        .env("SCARB_ALL_FEATURES", args.all_features.to_string())
         .env("SCARB_PACKAGES_FILTER", filter.to_env())
         .run()?;
 
