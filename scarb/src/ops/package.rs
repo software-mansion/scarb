@@ -318,7 +318,8 @@ fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<F
         ops::CompileOpts {
             include_targets: Vec::new(),
             exclude_targets: vec![TargetKind::TEST.clone()],
-            enabled_features: vec![], // TODO: what to do here?
+            enabled_features: vec![],   // TODO: what to do here?
+            no_default_features: false, // TODO
         },
         &ws,
     )?;

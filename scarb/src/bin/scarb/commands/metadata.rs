@@ -15,7 +15,7 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
         no_deps: args.no_deps,
     };
 
-    let metadata = ops::collect_metadata(&opts, &ws, vec![])?; // TODO: what to do with it?
+    let metadata = ops::collect_metadata(&opts, &ws, vec![], false)?; // TODO: what to do with it?
 
     config.ui().print(MachineMessage(metadata));
 

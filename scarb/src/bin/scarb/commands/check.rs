@@ -23,6 +23,7 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         include_targets,
         exclude_targets,
         enabled_features: vec![], // TODO: add features to check cli and fix this
+        no_default_features: false, // TODO
     };
     ops::check(packages, opts, &ws)
 }

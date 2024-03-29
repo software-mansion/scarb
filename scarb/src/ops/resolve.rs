@@ -19,12 +19,12 @@ use crate::core::{
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::{resolver, DEFAULT_SOURCE_PATH};
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Error, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -158,7 +158,8 @@ async fn collect_packages_from_resolve_graph(
 pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
     ws: &Workspace<'_>,
-    enabled_features: Vec<String>,
+    enabled_features: &Vec<String>,
+    no_default_features: bool,
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members().filter(|member| !member.is_cairo_plugin()) {
@@ -166,7 +167,8 @@ pub fn generate_compilation_units(
             &member,
             resolve,
             ws,
-            &enabled_features,
+            enabled_features,
+            no_default_features,
         )?);
     }
 
@@ -199,7 +201,8 @@ fn generate_cairo_compilation_units(
     member: &Package,
     resolve: &WorkspaceResolve,
     ws: &Workspace<'_>,
-    enabled_features: &[String],
+    enabled_features: &Vec<String>,
+    no_default_features: bool,
 ) -> Result<Vec<CompilationUnit>> {
     let profile = ws.current_profile()?;
     let mut solution = PackageSolutionCollector::new(member, resolve, ws);
@@ -219,6 +222,7 @@ fn generate_cairo_compilation_units(
             let is_integration_test = props.test_type == TestTargetType::Integration;
             let test_package_id = member.id.for_test_target(member_target.name.clone());
 
+            let mut err: Option<Error> = None;
             let mut components: Vec<CompilationUnitComponent> = packages
                 .iter()
                 .cloned()
@@ -249,15 +253,18 @@ fn generate_cairo_compilation_units(
 
                     let cfg_set = {
                         if package.id == member.id {
-                            // None
-                            let mut cfg_set = cfg_set.clone();
-
-                            enabled_features
-                                .iter()
-                                .map(|f| Cfg::kv("feature", f))
-                                .for_each(|f| cfg_set.insert(f));
-
-                            Some(cfg_set)
+                            match get_cfg_with_features(
+                                cfg_set.clone(),
+                                &package.manifest.features,
+                                &enabled_features,
+                                no_default_features,
+                            ) {
+                                Ok(cfg_set) => cfg_set,
+                                Err(e) => {
+                                    err = Some(e);
+                                    None
+                                }
+                            }
                         } else {
                             let component_cfg_set = cfg_set
                                 .iter()
@@ -280,6 +287,10 @@ fn generate_cairo_compilation_units(
                     }
                 })
                 .collect();
+
+            if let Some(e) = err {
+                return Err(e);
+            }
 
             // Apply overrides for integration test.
             let main_package_id = if is_integration_test {
@@ -319,6 +330,71 @@ fn generate_cairo_compilation_units(
             }))
         })
         .collect::<Result<Vec<CompilationUnit>>>()
+}
+
+fn get_cfg_with_features(
+    mut cfg_set: CfgSet,
+    features_manifest: &Option<BTreeMap<String, Vec<String>>>,
+    enabled_features: &Vec<String>,
+    no_default_features: bool,
+) -> Result<Option<CfgSet>> {
+    if enabled_features.is_empty() && !no_default_features && features_manifest.is_none() {
+        // It is ok to have no features in manifest
+        // only if no features are enabled and default features are not turned off.
+        return Ok(None);
+    }
+    let Some(features) = features_manifest else {
+        return Err(anyhow!("No features in manifest"));
+    }; // TODO: change error message
+    let available_features: HashSet<String> = features.keys().cloned().collect();
+    let cli_features: HashSet<String> = enabled_features.iter().cloned().collect();
+
+    let mut selected_features: HashSet<String> = if !no_default_features {
+        cli_features
+            .union(
+                &features
+                    .get("default")
+                    .map(|f| HashSet::from_iter(f.iter().cloned()))
+                    .unwrap_or_default(),
+            )
+            .cloned()
+            .collect()
+    } else {
+        cli_features
+    };
+
+    // BFS set of features
+    let mut queue = VecDeque::new();
+    queue.extend(selected_features.clone().into_iter());
+
+    while let Some(key) = queue.pop_front() {
+        if let Some(neighbors) = features.get(&key) {
+            for neighbor in neighbors.iter() {
+                if !selected_features.contains(neighbor) {
+                    selected_features.insert(neighbor.clone());
+                    queue.push_back(neighbor.clone());
+                }
+            }
+        }
+    }
+
+    let not_found_features = selected_features
+        .difference(&available_features)
+        .collect_vec();
+
+    if !not_found_features.is_empty() {
+        return Err(anyhow!(
+            "Unknown features: {}",
+            not_found_features.iter().join(", ")
+        ));
+    }
+
+    available_features
+        .intersection(&selected_features)
+        .map(|f| Cfg::kv("feature", f))
+        .for_each(|f| cfg_set.insert(f));
+
+    Ok(Some(cfg_set))
 }
 
 pub struct PackageSolutionCollector<'a> {

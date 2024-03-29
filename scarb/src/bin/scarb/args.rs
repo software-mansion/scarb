@@ -402,6 +402,8 @@ pub struct TestArgs {
     /// Arguments for the test program.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,
+
+    // TODO: SHOULD WE INCLUDE FEATURES HERE?
 }
 
 /// Arguments accepted by both the `package` and the `publish` command.
