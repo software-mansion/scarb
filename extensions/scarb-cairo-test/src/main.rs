@@ -34,8 +34,8 @@ struct Args {
     print_resource_usage: bool,
 
     /// Which features to enable in code.
-    #[arg(long, value_delimiter = ',')]
-    pub features: Vec<String>,
+    #[arg(long, default_value = "")]
+    pub features: String,
 
     /// Disables the default features of the package.
     #[arg(short, long, default_value_t = false)]
@@ -52,22 +52,11 @@ fn main() -> Result<()> {
     let matched = args.packages_filter.match_many(&metadata)?;
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
 
-    let features_args = if !args.features.is_empty() {
-        vec!["--features".to_string(), args.features.join(",")]
-    } else {
-        vec![]
-    };
-    let no_default_features_args = if args.no_default_features {
-        vec!["--no-default-features"]
-    } else {
-        vec![]
-    };
-
     ScarbCommand::new()
         .arg("build")
         .arg("--test")
-        .args(features_args)
-        .args(no_default_features_args)
+        .env("SCARB_FEATURES", args.features)
+        .env("SCARB_NO_DEFAULT_FEATURES", args.no_default_features.to_string())
         .env("SCARB_PACKAGES_FILTER", filter.to_env())
         .run()?;
 
