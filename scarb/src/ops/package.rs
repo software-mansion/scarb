@@ -326,7 +326,7 @@ fn run_verify(
         ops::CompileOpts {
             include_targets: Vec::new(),
             exclude_targets: vec![TargetKind::TEST.clone()],
-            features: features,
+            features,
         },
         &ws,
     )?;
