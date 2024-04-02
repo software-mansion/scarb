@@ -1,6 +1,6 @@
 use clap::Parser;
 
-/// Features
+/// [`clap`] structured arguments that provide features selection.
 #[derive(Parser, Clone, Debug)]
 pub struct FeaturesSpec {
     /// Comma separated list of features to activate.
