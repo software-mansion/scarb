@@ -33,15 +33,15 @@ struct Args {
     #[arg(long, default_value_t = false)]
     print_resource_usage: bool,
 
-    /// Comma separated list of features to activate
+    /// Comma separated list of features to activate.
     #[arg(short = 'F', long, default_value = "")]
     pub features: String,
 
-    /// Activate all available features
+    /// Activate all available features.
     #[arg(long, default_value_t = false)]
     pub all_features: bool,
 
-    /// Do not activate the `default` feature
+    /// Do not activate the `default` feature.
     #[arg(long, default_value_t = false)]
     pub no_default_features: bool,
 }
