@@ -8,7 +8,7 @@ use clap::Parser;
 use scarb_metadata::{
     Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
 };
-use scarb_ui::args::PackagesFilter;
+use scarb_ui::args::{FeaturesSpec, PackagesFilter};
 
 /// Execute all unit tests of a local package.
 #[derive(Parser, Clone, Debug)]
@@ -33,17 +33,9 @@ struct Args {
     #[arg(long, default_value_t = false)]
     print_resource_usage: bool,
 
-    /// Comma separated list of features to activate.
-    #[arg(short = 'F', long, default_value = "")]
-    pub features: String,
-
-    /// Activate all available features.
-    #[arg(long, default_value_t = false)]
-    pub all_features: bool,
-
-    /// Do not activate the `default` feature.
-    #[arg(long, default_value_t = false)]
-    pub no_default_features: bool,
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 fn main() -> Result<()> {
@@ -57,10 +49,10 @@ fn main() -> Result<()> {
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
 
     // TODO: refactor
-    let features_env = if args.features.is_empty() {
+    let features_env = if args.features.features.is_empty() {
         vec![]
     } else {
-        vec![("SCARB_FEATURES", args.features.clone())]
+        vec![("SCARB_FEATURES", args.features.features.join(","))]
     };
 
     ScarbCommand::new()
@@ -69,9 +61,9 @@ fn main() -> Result<()> {
         .envs(features_env)
         .env(
             "SCARB_NO_DEFAULT_FEATURES",
-            args.no_default_features.to_string(),
+            args.features.no_default_features.to_string(),
         )
-        .env("SCARB_ALL_FEATURES", args.all_features.to_string())
+        .env("SCARB_ALL_FEATURES", args.features.all_features.to_string())
         .env("SCARB_PACKAGES_FILTER", filter.to_env())
         .run()?;
 

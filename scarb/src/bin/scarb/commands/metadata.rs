@@ -15,11 +15,7 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
         no_deps: args.no_deps,
     };
 
-    let features = ops::FeaturesOpts {
-        features: args.features,
-        all_features: args.all_features,
-        no_default_features: args.no_default_features,
-    };
+    let features = args.features.into();
 
     let metadata = ops::collect_metadata(&opts, &ws, features)?;
 

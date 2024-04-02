@@ -3,7 +3,7 @@ use anyhow::Result;
 use crate::args::BuildArgs;
 use scarb::core::{Config, TargetKind};
 use scarb::ops;
-use scarb::ops::{CompileOpts, FeaturesOpts};
+use scarb::ops::CompileOpts;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
@@ -22,11 +22,7 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
     let opts = CompileOpts {
         include_targets,
         exclude_targets,
-        features: FeaturesOpts {
-            features: args.features,
-            all_features: args.all_features,
-            no_default_features: args.no_default_features,
-        },
+        features: args.features.into(),
     };
     ops::check(packages, opts, &ws)
 }

@@ -5,6 +5,7 @@ use cairo_lang_utils::Upcast;
 use indoc::formatdoc;
 use itertools::Itertools;
 
+use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use scarb_ui::HumanDuration;
 
@@ -20,6 +21,20 @@ pub struct FeaturesOpts {
     pub features: Vec<String>,
     pub all_features: bool,
     pub no_default_features: bool,
+}
+
+impl From<FeaturesSpec> for FeaturesOpts {
+    fn from(spec: FeaturesSpec) -> Self {
+        Self {
+            features: spec
+                .features
+                .into_iter()
+                .filter(|f| !f.is_empty())
+                .collect(),
+            all_features: spec.all_features,
+            no_default_features: spec.no_default_features,
+        }
+    }
 }
 
 #[derive(Debug)]

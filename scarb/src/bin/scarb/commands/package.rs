@@ -28,11 +28,7 @@ pub fn run(args: PackageArgs, config: &Config) -> Result<()> {
         check_metadata: !args.no_metadata,
     };
 
-    let features = ops::FeaturesOpts {
-        features: args.features,
-        all_features: args.all_features,
-        no_default_features: args.no_default_features,
-    };
+    let features: ops::FeaturesOpts = args.features.into();
 
     if args.list {
         let result = ops::package_list(&packages, &opts, &ws)?;

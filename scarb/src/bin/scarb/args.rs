@@ -19,7 +19,7 @@ use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
 use scarb::manifest_editor::SectionArgs;
 use scarb::version;
-use scarb_ui::args::PackagesFilter;
+use scarb_ui::args::{FeaturesSpec, PackagesFilter};
 use scarb_ui::OutputFormat;
 
 /// The Cairo package manager.
@@ -225,17 +225,9 @@ pub struct BuildArgs {
     #[arg(short, long, default_value_t = false)]
     pub test: bool,
 
-    /// Comma separated list of features to activate.
-    #[arg(short = 'F', long, value_delimiter = ',', env = "SCARB_FEATURES")]
-    pub features: Vec<String>,
-
-    /// Activate all available features.
-    #[arg(long, default_value_t = false, env = "SCARB_ALL_FEATURES")]
-    pub all_features: bool,
-
-    /// Do not activate the `default` feature.
-    #[arg(long, default_value_t = false, env = "SCARB_NO_DEFAULT_FEATURES")]
-    pub no_default_features: bool,
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Arguments accepted by the `run` command.
@@ -274,15 +266,10 @@ pub struct MetadataArgs {
     /// Output information only about the workspace members and don't fetch dependencies.
     #[arg(long)]
     pub no_deps: bool,
-    /// Comma separated list of features to activate.
-    #[arg(short = 'F', long, value_delimiter = ',')]
-    pub features: Vec<String>,
-    /// Activate all available features.
-    #[arg(long, default_value_t = false)]
-    pub all_features: bool,
-    /// Do not activate the `default` feature.
-    #[arg(long, default_value_t = false)]
-    pub no_default_features: bool,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Arguments accepted by the `new` command.
@@ -449,17 +436,9 @@ pub struct PackageArgs {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
-    /// Comma separated list of features to activate.
-    #[arg(short = 'F', long, value_delimiter = ',', env = "SCARB_FEATURES")]
-    pub features: Vec<String>,
-
-    /// Activate all available features.
-    #[arg(long, default_value_t = false, env = "SCARB_ALL_FEATURES")]
-    pub all_features: bool,
-
-    /// Do not activate the `default` feature.
-    #[arg(long, default_value_t = false, env = "SCARB_NO_DEFAULT_FEATURES")]
-    pub no_default_features: bool,
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Arguments accepted by the `publish` command.
@@ -475,17 +454,9 @@ pub struct PublishArgs {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
-    /// Comma separated list of features to activate.
-    #[arg(short = 'F', long, value_delimiter = ',')]
-    pub features: Vec<String>,
-
-    /// Activate all available features.
-    #[arg(long, default_value_t = false)]
-    pub all_features: bool,
-
-    /// Do not activate the `default` feature.
-    #[arg(long, default_value_t = false)]
-    pub no_default_features: bool,
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Git reference specification arguments.
