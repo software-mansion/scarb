@@ -15,11 +15,7 @@ pub struct PublishOpts {
 }
 
 #[tracing::instrument(level = "debug", skip(opts, ws))]
-pub fn publish(
-    package_id: PackageId,
-    opts: &PublishOpts,
-    ws: &Workspace<'_>,
-) -> Result<()> {
+pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) -> Result<()> {
     let package = ws.fetch_package(&package_id)?.clone();
 
     let source_id = SourceId::for_registry(&opts.index_url)?;

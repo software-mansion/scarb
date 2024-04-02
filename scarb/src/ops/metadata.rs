@@ -26,10 +26,7 @@ pub struct MetadataOptions {
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
-pub fn collect_metadata(
-    opts: &MetadataOptions,
-    ws: &Workspace<'_>,
-) -> Result<m::Metadata> {
+pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m::Metadata> {
     if opts.version != m::VersionPin.numeric() {
         bail!(
             "metadata version {} not supported, only {} is currently supported",

@@ -171,7 +171,8 @@ fn package_one_impl(
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
     let mut dst = if opts.verify {
-        run_verify(pkg, dst, ws, opts.features.clone()).context("failed to verify package tarball")?
+        run_verify(pkg, dst, ws, opts.features.clone())
+            .context("failed to verify package tarball")?
     } else {
         dst
     };
