@@ -250,14 +250,11 @@ fn generate_cairo_compilation_units(
 
                     let cfg_set = {
                         if package.id == member.id {
-                            match get_cfg_with_features(
+                            get_cfg_with_features(
                                 cfg_set.clone(),
                                 &package.manifest.features,
                                 enabled_features,
-                            ) {
-                                Ok(cfg_set) => cfg_set,
-                                Err(e) => return Err(e),
-                            }
+                            )?
                         } else {
                             let component_cfg_set = cfg_set
                                 .iter()
