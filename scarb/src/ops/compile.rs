@@ -31,6 +31,7 @@ impl From<FeaturesSpec> for FeaturesOpts {
                 .features
                 .into_iter()
                 .filter(|f| !f.is_empty())
+                .map(Into::into)
                 .collect(),
             all_features: spec.all_features,
             no_default_features: spec.no_default_features,

@@ -25,8 +25,8 @@ use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;
 use itertools::Itertools;
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use smol_str::SmolStr;
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,

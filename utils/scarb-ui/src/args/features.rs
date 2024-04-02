@@ -1,12 +1,11 @@
 use clap::Parser;
-use smol_str::SmolStr;
 
 /// Features
 #[derive(Parser, Clone, Debug)]
 pub struct FeaturesSpec {
     /// Comma separated list of features to activate.
     #[arg(short = 'F', long, value_delimiter = ',', env = "SCARB_FEATURES")]
-    pub features: Vec<SmolStr>,
+    pub features: Vec<String>,
 
     /// Activate all available features.
     #[arg(long, default_value_t = false, env = "SCARB_ALL_FEATURES")]

@@ -18,7 +18,7 @@ fn packages_by_name(meta: Metadata) -> BTreeMap<String, PackageMetadata> {
         .collect::<BTreeMap<_, _>>()
 }
 
-fn packages_and_deps(meta: Metadata) -> BTreeMap<SmolStr, Vec<SmolStr>> {
+fn packages_and_deps(meta: Metadata) -> BTreeMap<String, Vec<String>> {
     meta.packages
         .into_iter()
         .map(|p| {
@@ -32,7 +32,7 @@ fn packages_and_deps(meta: Metadata) -> BTreeMap<SmolStr, Vec<SmolStr>> {
         .collect::<BTreeMap<_, _>>()
 }
 
-fn units_and_components(meta: Metadata) -> BTreeMap<SmolStr, Vec<SmolStr>> {
+fn units_and_components(meta: Metadata) -> BTreeMap<String, Vec<String>> {
     meta.compilation_units
         .iter()
         .map(|cu| {
