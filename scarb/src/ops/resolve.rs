@@ -375,7 +375,7 @@ fn get_cfg_with_features(
         .collect_vec();
 
     if !not_found_features.is_empty() {
-        bail!("Unknown features: {}", not_found_features.iter().join(", "));
+        bail!("Unknown features: `{}`", not_found_features.iter().join("`, `"));
     }
 
     available_features
