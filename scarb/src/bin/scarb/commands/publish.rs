@@ -16,10 +16,9 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
             allow_dirty: args.shared_args.allow_dirty,
             verify: !args.shared_args.no_verify,
             check_metadata: true,
+            features: args.features.into(),
         },
     };
 
-    let features = args.features.into();
-
-    ops::publish(package.id, &ops, &ws, features)
+    ops::publish(package.id, &ops, &ws)
 }

@@ -26,15 +26,14 @@ pub fn run(args: PackageArgs, config: &Config) -> Result<()> {
         allow_dirty: args.list || args.shared_args.allow_dirty,
         verify: !args.shared_args.no_verify,
         check_metadata: !args.no_metadata,
+        features: args.features.into(),
     };
-
-    let features: ops::FeaturesOpts = args.features.into();
 
     if args.list {
         let result = ops::package_list(&packages, &opts, &ws)?;
         ws.config().ui().print(ListMessage(result));
     } else {
-        ops::package(&packages, &opts, &ws, features)?;
+        ops::package(&packages, &opts, &ws)?;
     }
 
     Ok(())

@@ -38,6 +38,7 @@ pub struct PackageOpts {
     pub allow_dirty: bool,
     pub verify: bool,
     pub check_metadata: bool,
+    pub features: ops::FeaturesOpts,
 }
 
 /// A listing of files to include in the archive, without actually building it yet.
@@ -70,13 +71,12 @@ pub fn package(
     packages: &[PackageId],
     opts: &PackageOpts,
     ws: &Workspace<'_>,
-    features: ops::FeaturesOpts,
 ) -> Result<Vec<FileLockGuard>> {
     before_package(ws)?;
 
     packages
         .iter()
-        .map(|pkg| package_one_impl(*pkg, opts, ws, features.clone()))
+        .map(|pkg| package_one_impl(*pkg, opts, ws))
         .collect()
 }
 
@@ -84,9 +84,8 @@ pub fn package_one(
     package_id: PackageId,
     opts: &PackageOpts,
     ws: &Workspace<'_>,
-    features: ops::FeaturesOpts,
 ) -> Result<FileLockGuard> {
-    package(&[package_id], opts, ws, features).map(|mut v| v.pop().unwrap())
+    package(&[package_id], opts, ws).map(|mut v| v.pop().unwrap())
 }
 
 #[tracing::instrument(level = "debug", skip(opts, ws))]
@@ -143,7 +142,6 @@ fn package_one_impl(
     pkg_id: PackageId,
     opts: &PackageOpts,
     ws: &Workspace<'_>,
-    features: ops::FeaturesOpts,
 ) -> Result<FileLockGuard> {
     let pkg = ws.fetch_package(&pkg_id)?;
 
@@ -173,7 +171,7 @@ fn package_one_impl(
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
     let mut dst = if opts.verify {
-        run_verify(pkg, dst, ws, features).context("failed to verify package tarball")?
+        run_verify(pkg, dst, ws, opts.features.clone()).context("failed to verify package tarball")?
     } else {
         dst
     };

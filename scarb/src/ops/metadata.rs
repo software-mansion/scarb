@@ -22,13 +22,13 @@ use crate::version::CommitInfo;
 pub struct MetadataOptions {
     pub version: u64,
     pub no_deps: bool,
+    pub features: ops::FeaturesOpts,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn collect_metadata(
     opts: &MetadataOptions,
     ws: &Workspace<'_>,
-    enabled_features: ops::FeaturesOpts,
 ) -> Result<m::Metadata> {
     if opts.version != m::VersionPin.numeric() {
         bail!(
@@ -47,7 +47,7 @@ pub fn collect_metadata(
             .collect();
 
         let compilation_units: Vec<m::CompilationUnitMetadata> =
-            ops::generate_compilation_units(&resolve, ws, &enabled_features)?
+            ops::generate_compilation_units(&resolve, ws, &opts.features)?
                 .iter()
                 .map(collect_compilation_unit_metadata)
                 .collect();
