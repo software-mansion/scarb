@@ -48,22 +48,9 @@ fn main() -> Result<()> {
     let matched = args.packages_filter.match_many(&metadata)?;
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
 
-    // TODO: refactor
-    let features_env = if args.features.features.is_empty() {
-        vec![]
-    } else {
-        vec![("SCARB_FEATURES", args.features.features.join(","))]
-    };
-
     ScarbCommand::new()
         .arg("build")
         .arg("--test")
-        .envs(features_env)
-        .env(
-            "SCARB_NO_DEFAULT_FEATURES",
-            args.features.no_default_features.to_string(),
-        )
-        .env("SCARB_ALL_FEATURES", args.features.all_features.to_string())
         .env("SCARB_PACKAGES_FILTER", filter.to_env())
         .run()?;
 
