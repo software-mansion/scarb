@@ -26,6 +26,7 @@ use futures::TryFutureExt;
 use indoc::formatdoc;
 use itertools::Itertools;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use smol_str::SmolStr;
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -320,7 +321,7 @@ fn generate_cairo_compilation_units(
 
 fn get_cfg_with_features(
     mut cfg_set: CfgSet,
-    features_manifest: &BTreeMap<String, Vec<String>>,
+    features_manifest: &BTreeMap<SmolStr, Vec<SmolStr>>,
     enabled_features: &FeaturesOpts,
 ) -> Result<Option<CfgSet>> {
     if features_manifest.is_empty() {
@@ -333,10 +334,10 @@ fn get_cfg_with_features(
             return Ok(None);
         }
     }
-    let available_features: HashSet<String> = features_manifest.keys().cloned().collect();
-    let cli_features: HashSet<String> = enabled_features.features.iter().cloned().collect();
+    let available_features: HashSet<SmolStr> = features_manifest.keys().cloned().collect();
+    let cli_features: HashSet<SmolStr> = enabled_features.features.iter().cloned().collect();
 
-    let mut selected_features: HashSet<String> = if !enabled_features.no_default_features {
+    let mut selected_features: HashSet<SmolStr> = if !enabled_features.no_default_features {
         cli_features
             .union(
                 &features_manifest
@@ -379,7 +380,7 @@ fn get_cfg_with_features(
 
     available_features
         .intersection(&selected_features)
-        .map(|f| Cfg::kv("feature", f))
+        .map(|f| Cfg::kv("feature", f.to_string()))
         .for_each(|f| cfg_set.insert(f));
 
     Ok(Some(cfg_set))

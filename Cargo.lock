@@ -4725,6 +4725,7 @@ dependencies = [
  "scarb-metadata 1.11.1",
  "serde",
  "serde_json",
+ "smol_str",
 ]
 
 [[package]]

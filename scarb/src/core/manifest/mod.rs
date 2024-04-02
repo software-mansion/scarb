@@ -50,7 +50,7 @@ pub struct Manifest {
     #[builder(default)]
     pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
     #[builder(default)]
-    pub features: BTreeMap<String, Vec<String>>,
+    pub features: BTreeMap<SmolStr, Vec<SmolStr>>,
     /// Allow experimental features.
     #[builder(default)]
     pub experimental_features: Option<Vec<SmolStr>>,

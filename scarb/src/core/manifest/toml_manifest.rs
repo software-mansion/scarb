@@ -53,7 +53,7 @@ pub struct TomlManifest {
     pub profile: Option<TomlProfilesDefinition>,
     pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
-    pub features: Option<BTreeMap<String, Vec<String>>>,
+    pub features: Option<BTreeMap<SmolStr, Vec<SmolStr>>>,
 }
 
 type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, WorkspaceScriptDefinition>;
@@ -564,9 +564,9 @@ impl TomlManifest {
         let experimental_features = package.experimental_features.clone();
 
         let features = self.features.clone().unwrap_or_default();
-        let available_features: HashSet<String> = features.keys().cloned().collect();
+        let available_features: HashSet<SmolStr> = features.keys().cloned().collect();
         for (key, vals) in features.iter() {
-            let dependent_features = vals.iter().cloned().collect::<HashSet<String>>();
+            let dependent_features = vals.iter().cloned().collect::<HashSet<SmolStr>>();
             if dependent_features.contains(key) {
                 bail!("feature `{}` depends on itself", key);
             }

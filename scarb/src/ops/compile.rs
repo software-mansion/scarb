@@ -4,6 +4,7 @@ use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use cairo_lang_utils::Upcast;
 use indoc::formatdoc;
 use itertools::Itertools;
+use smol_str::SmolStr;
 
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
@@ -18,7 +19,7 @@ use crate::ops;
 
 #[derive(Debug, Clone)]
 pub struct FeaturesOpts {
-    pub features: Vec<String>,
+    pub features: Vec<SmolStr>,
     pub all_features: bool,
     pub no_default_features: bool,
 }
