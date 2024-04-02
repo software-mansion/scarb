@@ -563,25 +563,22 @@ impl TomlManifest {
         // TODO (#1040): add checking for fields that are not present in ExperimentalFeaturesConfig
         let experimental_features = package.experimental_features.clone();
 
-        let features = self.features.clone();
-
-        if let Some(features) = features {
-            let available_features: HashSet<String> = features.keys().cloned().collect();
-            for (key, val) in features {
-                let dependent_features = HashSet::<String>::from_iter(val.into_iter());
-                if dependent_features.contains(&key) {
-                    bail!("feature `{}` depends on itself", key);
-                }
-                let not_found_features = dependent_features
-                    .difference(&available_features)
-                    .collect_vec();
-                if !not_found_features.is_empty() {
-                    bail!(
-                        "feature `{}` is dependent on `{}` which is not defined",
-                        key,
-                        not_found_features.iter().join(", "),
-                    );
-                }
+        let features = self.features.clone().unwrap_or_default();
+        let available_features: HashSet<String> = features.keys().cloned().collect();
+        for (key, vals) in features.iter() {
+            let dependent_features = vals.iter().cloned().collect::<HashSet<String>>();
+            if dependent_features.contains(key) {
+                bail!("feature `{}` depends on itself", key);
+            }
+            let not_found_features = dependent_features
+                .difference(&available_features)
+                .collect_vec();
+            if !not_found_features.is_empty() {
+                bail!(
+                    "feature `{}` is dependent on `{}` which is not defined",
+                    key,
+                    not_found_features.iter().join(", "),
+                );
             }
         }
 
@@ -593,7 +590,7 @@ impl TomlManifest {
             .compiler_config(compiler_config)
             .scripts(scripts)
             .experimental_features(experimental_features)
-            .features(self.features.clone())
+            .features(features)
             .build()?;
         Ok(manifest)
     }

@@ -320,27 +320,26 @@ fn generate_cairo_compilation_units(
 
 fn get_cfg_with_features(
     mut cfg_set: CfgSet,
-    features_manifest: &Option<BTreeMap<String, Vec<String>>>,
+    features_manifest: &BTreeMap<String, Vec<String>>,
     enabled_features: &FeaturesOpts,
 ) -> Result<Option<CfgSet>> {
-    if enabled_features.features.is_empty()
-        && !enabled_features.no_default_features
-        && features_manifest.is_none()
-    {
-        // It is ok to have no features in manifest
-        // only if no features are enabled and default features are not turned off.
-        return Ok(None);
+    if features_manifest.is_empty() {
+        if !enabled_features.features.is_empty()
+            || enabled_features.no_default_features
+            || enabled_features.all_features
+        {
+            bail!("No features in manifest. To use features, you need to define [features] section in Scarb.toml.");
+        } else {
+            return Ok(None);
+        }
     }
-    let Some(features) = features_manifest else {
-        bail!("No features in manifest");
-    };
-    let available_features: HashSet<String> = features.keys().cloned().collect();
+    let available_features: HashSet<String> = features_manifest.keys().cloned().collect();
     let cli_features: HashSet<String> = enabled_features.features.iter().cloned().collect();
 
     let mut selected_features: HashSet<String> = if !enabled_features.no_default_features {
         cli_features
             .union(
-                &features
+                &features_manifest
                     .get("default")
                     .map(|f| HashSet::from_iter(f.iter().cloned()))
                     .unwrap_or_default(),
@@ -360,7 +359,7 @@ fn get_cfg_with_features(
     queue.extend(selected_features.clone());
 
     while let Some(key) = queue.pop_front() {
-        if let Some(neighbors) = features.get(&key) {
+        if let Some(neighbors) = features_manifest.get(&key) {
             for neighbor in neighbors.iter() {
                 if !selected_features.contains(neighbor) {
                     selected_features.insert(neighbor.clone());
