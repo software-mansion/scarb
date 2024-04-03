@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Context, Error, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use cairo_lang_utils::Upcast;
@@ -31,8 +31,8 @@ pub struct FeaturesOpts {
 }
 
 impl TryFrom<FeaturesSpec> for FeaturesOpts {
-    type Error = anyhow::Error;
-    fn try_from(spec: FeaturesSpec) -> anyhow::Result<Self> {
+    type Error = Error;
+    fn try_from(spec: FeaturesSpec) -> Result<Self> {
         Ok(Self {
             features: if spec.all_features {
                 FeaturesSelector::AllFeatures

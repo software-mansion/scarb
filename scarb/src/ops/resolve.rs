@@ -166,8 +166,8 @@ pub fn generate_compilation_units(
         units.extend(generate_cairo_compilation_units(
             &member,
             resolve,
-            ws,
             enabled_features,
+            ws,
         )?);
     }
 
