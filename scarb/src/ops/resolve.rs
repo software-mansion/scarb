@@ -329,7 +329,10 @@ fn get_cfg_with_features(
             || enabled_features.no_default_features
             || enabled_features.all_features
         {
-            bail!("No features in manifest. To use features, you need to define [features] section in Scarb.toml.");
+            bail!(
+                "no features in manifest\n\
+                note: to use features, you need to define [features] section in Scarb.toml",
+            )
         } else {
             return Ok(None);
         }
@@ -375,8 +378,8 @@ fn get_cfg_with_features(
 
     if !not_found_features.is_empty() {
         bail!(
-            "Unknown features: `{}`",
-            not_found_features.iter().join("`, `")
+            "Unknown features: {}",
+            not_found_features.iter().join(", ")
         );
     }
 
