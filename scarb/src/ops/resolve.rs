@@ -159,8 +159,8 @@ async fn collect_packages_from_resolve_graph(
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
-    ws: &Workspace<'_>,
     enabled_features: &FeaturesOpts,
+    ws: &Workspace<'_>,
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members().filter(|member| !member.is_cairo_plugin()) {
