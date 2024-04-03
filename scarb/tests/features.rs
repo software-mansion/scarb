@@ -60,7 +60,7 @@ fn features_unknown_feature() {
         .arg("z")
         .current_dir(&t)
         .assert()
-        .stdout_matches("error: Unknown features: z\n")
+        .stdout_matches("error: unknown features: z\n")
         .failure();
 }
 
