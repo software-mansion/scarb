@@ -21,7 +21,7 @@ use cairo_lang_syntax::attribute::structured::{
 use cairo_lang_syntax::node::ast::Expr;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
-use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
+use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use itertools::Itertools;
 use scarb_stable_hash::short_hash;
 use std::any::Any;

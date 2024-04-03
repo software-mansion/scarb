@@ -15,10 +15,11 @@ use cairo_lang_project::{ProjectConfig, ProjectConfigContent};
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::{ConcreteFunction, FunctionLongId};
+use cairo_lang_sierra::debug_info::{Annotations, DebugInfo};
 use cairo_lang_sierra::extensions::enm::EnumType;
 use cairo_lang_sierra::extensions::NamedType;
 use cairo_lang_sierra::ids::GenericTypeId;
-use cairo_lang_sierra::program::{GenericArg, Program};
+use cairo_lang_sierra::program::{GenericArg, ProgramArtifact};
 use cairo_lang_sierra_generator::db::SierraGenGroup;
 use cairo_lang_sierra_generator::replace_ids::replace_sierra_ids_in_program;
 use cairo_lang_starknet::starknet_plugin_suite;
@@ -90,7 +91,8 @@ pub fn collect_tests(
     crate_root: &Path,
     lib_content: &str,
     compilation_unit: &CompilationUnit,
-) -> Result<(Program, Vec<TestCaseRaw>)> {
+    generate_statements_functions_mappings: bool,
+) -> Result<(ProgramArtifact, Vec<TestCaseRaw>)> {
     let crate_roots: OrderedHashMap<SmolStr, PathBuf> = compilation_unit
         .dependencies()
         .iter()
@@ -147,6 +149,23 @@ pub fn collect_tests(
         .context("Compilation failed without any diagnostics")
         .context("Failed to get sierra program")?;
 
+    let debug_annotations = if generate_statements_functions_mappings {
+        Some(Annotations::from(
+            sierra_program
+                .debug_info
+                .statements_locations
+                .extract_statements_functions(db),
+        ))
+    } else {
+        None
+    };
+    let debug_info = debug_annotations.map(|annotations| DebugInfo {
+        type_names: Default::default(),
+        libfunc_names: Default::default(),
+        user_func_names: Default::default(),
+        annotations,
+    });
+
     let sierra_program = replace_sierra_ids_in_program(db, &sierra_program.program);
     let function_finder = FunctionFinder::new(sierra_program.clone())?;
 
@@ -185,7 +204,13 @@ pub fn collect_tests(
 
     validate_tests(&function_finder, &collected_tests)?;
 
-    Ok((sierra_program, collected_tests))
+    Ok((
+        ProgramArtifact {
+            program: sierra_program,
+            debug_info,
+        },
+        collected_tests,
+    ))
 }
 
 fn build_test_details(function_finder: &FunctionFinder, test_name: &str) -> Result<TestDetails> {

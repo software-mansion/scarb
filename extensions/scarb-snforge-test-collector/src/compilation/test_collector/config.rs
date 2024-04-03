@@ -6,7 +6,6 @@ use cairo_lang_syntax::attribute::structured::{Attribute, AttributeArg, Attribut
 use cairo_lang_syntax::node::ast::{ArgClause, Expr, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::GetIdentifier;
-use cairo_lang_syntax::node::TypedStablePtr;
 use cairo_lang_test_plugin::test_config::{PanicExpectation, TestExpectation};
 use cairo_lang_test_plugin::{try_extract_test_config, TestConfig};
 use cairo_lang_utils::OptionHelper;

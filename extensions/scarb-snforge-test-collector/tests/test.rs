@@ -442,3 +442,30 @@ fn does_not_compile_tests_in_dependencies() {
     Error: Failed to compile test artifact, for detailed information go through the logs above
     "#}));
 }
+
+#[test]
+fn generates_statements_functions_mappings() {
+    let t = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("forge_test")
+        .lib_cairo(SIMPLE_TEST)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("snforge-test-collector")
+        .arg("--generate-statements-functions-mappings")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let snforge_sierra = t
+        .child("target/dev/snforge/forge_test.snforge_sierra.json")
+        .read_to_string();
+
+    let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
+
+    assert!(&json[0]["sierra_program"]["debug_info"]["annotations"]
+        ["github.com/software-mansion/cairo-profiler"]["statements_functions"]
+        .is_object());
+}

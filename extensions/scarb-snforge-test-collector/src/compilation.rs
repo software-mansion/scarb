@@ -1,5 +1,5 @@
 use anyhow::Result;
-use cairo_lang_sierra::program::{ProgramArtifact, VersionedProgram};
+use cairo_lang_sierra::program::VersionedProgram;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use serde::Serialize;
 
@@ -19,24 +19,32 @@ pub struct CompiledTestCrateRaw {
 pub fn compile_tests(
     targets: &Vec<TestCompilationTarget>,
     compilation_unit: &CompilationUnit,
+    generate_statements_functions_mappings: bool,
 ) -> Result<Vec<CompiledTestCrateRaw>> {
     targets
         .par_iter()
-        .map(|target| target.compile_tests(compilation_unit))
+        .map(|target| {
+            target.compile_tests(compilation_unit, generate_statements_functions_mappings)
+        })
         .collect()
 }
 
 impl TestCompilationTarget {
-    fn compile_tests(&self, compilation_unit: &CompilationUnit) -> Result<CompiledTestCrateRaw> {
-        let (sierra_program, test_cases) = collect_tests(
+    fn compile_tests(
+        &self,
+        compilation_unit: &CompilationUnit,
+        generate_statements_functions_mappings: bool,
+    ) -> Result<CompiledTestCrateRaw> {
+        let (program_artifact, test_cases) = collect_tests(
             &self.crate_name,
             self.crate_root.as_std_path(),
             &self.lib_content,
             compilation_unit,
+            generate_statements_functions_mappings,
         )?;
 
         Ok(CompiledTestCrateRaw {
-            sierra_program: VersionedProgram::v1(ProgramArtifact::stripped(sierra_program)),
+            sierra_program: program_artifact.into(),
             test_cases,
             tests_location: self.crate_location.clone(),
         })

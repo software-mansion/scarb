@@ -22,6 +22,13 @@ mod metadata;
 struct Args {
     #[command(flatten)]
     packages_filter: PackagesFilter,
+
+    /// Unstable flag used to add a mapping between sierra statement indexes and fully qualified
+    /// paths of cairo functions to debug info.
+    /// A statement index maps to a function which cause the statement to be generated.
+    /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
+    #[arg(long)]
+    generate_statements_functions_mappings: bool,
 }
 
 fn main() -> Result<()> {
@@ -47,7 +54,11 @@ fn main() -> Result<()> {
             &compilation_unit,
         )?;
 
-        let test_crates = compile_tests(&compilation_targets, &compilation_unit)?;
+        let test_crates = compile_tests(
+            &compilation_targets,
+            &compilation_unit,
+            args.generate_statements_functions_mappings,
+        )?;
 
         // artifact saved to `{target_dir}/{profile_name}/{package_name}.sierra.json`
         let output_path =
