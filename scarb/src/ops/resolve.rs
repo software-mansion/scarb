@@ -199,8 +199,8 @@ pub fn generate_compilation_units(
 fn generate_cairo_compilation_units(
     member: &Package,
     resolve: &WorkspaceResolve,
-    ws: &Workspace<'_>,
     enabled_features: &FeaturesOpts,
+    ws: &Workspace<'_>,
 ) -> Result<Vec<CompilationUnit>> {
     let profile = ws.current_profile()?;
     let mut solution = PackageSolutionCollector::new(member, resolve, ws);
