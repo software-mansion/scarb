@@ -123,9 +123,10 @@ impl ToEnv for ops::FeaturesOpts {
             FeaturesSelector::AllFeatures => {
                 env.insert("SCARB_ALL_FEATURES".into(), true.to_string());
             }
-            FeaturesSelector::Features(features) => {
+            FeaturesSelector::Features(features) if !features.is_empty() => {
                 env.insert("SCARB_FEATURES".into(), features.join(","));
             }
+            _ => {}
         };
         env.insert(
             "SCARB_NO_DEFAULT_FEATURES".into(),
