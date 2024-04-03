@@ -1037,7 +1037,7 @@ fn add_statements_functions_debug_info() {
             casm = true
 
             [cairo]
-            add-statements-functions-debug-info = true
+            unstable-add-statements-functions-debug-info = true
         "#})
         .dep_starknet()
         .build(&t);
