@@ -18,22 +18,31 @@ use crate::core::{PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Work
 use crate::ops;
 
 #[derive(Debug, Clone)]
+pub enum FeaturesSelector {
+    Features(Vec<SmolStr>),
+    AllFeatures,
+}
+
+#[derive(Debug, Clone)]
 pub struct FeaturesOpts {
-    pub features: Vec<SmolStr>,
-    pub all_features: bool,
+    pub features: FeaturesSelector,
     pub no_default_features: bool,
 }
 
 impl From<FeaturesSpec> for FeaturesOpts {
     fn from(spec: FeaturesSpec) -> Self {
         Self {
-            features: spec
-                .features
-                .into_iter()
-                .filter(|f| !f.is_empty())
-                .map(Into::into)
-                .collect(),
-            all_features: spec.all_features,
+            features: if spec.all_features {
+                FeaturesSelector::AllFeatures
+            } else {
+                FeaturesSelector::Features(
+                    spec.features
+                        .into_iter()
+                        .filter(|f| !f.is_empty())
+                        .map(Into::into)
+                        .collect(),
+                )
+            },
             no_default_features: spec.no_default_features,
         }
     }

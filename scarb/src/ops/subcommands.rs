@@ -12,7 +12,7 @@ use scarb_ui::components::Status;
 
 use crate::core::{Config, Package, ScriptDefinition, Workspace};
 use crate::internal::fsx::is_executable;
-use crate::ops;
+use crate::ops::{self, FeaturesSelector};
 use crate::process::exec_replace;
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV};
 
@@ -119,11 +119,14 @@ pub trait ToEnv {
 impl ToEnv for ops::FeaturesOpts {
     fn to_env_vars(&self) -> HashMap<String, String> {
         let mut env = HashMap::new();
-        let features = self.features.join(",");
-        if !features.is_empty() {
-            env.insert("SCARB_FEATURES".into(), features);
-        }
-        env.insert("SCARB_ALL_FEATURES".into(), self.all_features.to_string());
+        match &self.features {
+            FeaturesSelector::AllFeatures => {
+                env.insert("SCARB_ALL_FEATURES".into(), true.to_string());
+            },
+            FeaturesSelector::Features(features) => {
+                env.insert("SCARB_FEATURES".into(), features.join(","));
+            }
+        };
         env.insert(
             "SCARB_NO_DEFAULT_FEATURES".into(),
             self.no_default_features.to_string(),
