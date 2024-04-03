@@ -122,7 +122,7 @@ impl ToEnv for ops::FeaturesOpts {
         match &self.features {
             FeaturesSelector::AllFeatures => {
                 env.insert("SCARB_ALL_FEATURES".into(), true.to_string());
-            },
+            }
             FeaturesSelector::Features(features) => {
                 env.insert("SCARB_FEATURES".into(), features.join(","));
             }

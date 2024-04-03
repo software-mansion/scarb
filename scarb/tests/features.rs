@@ -4,7 +4,6 @@ use indoc::indoc;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
-
 fn build_example_program(t: &TempDir) {
     ProjectBuilder::start()
         .name("hello")
