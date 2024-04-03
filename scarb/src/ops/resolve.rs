@@ -13,19 +13,18 @@ use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::core::{
-    DepKind, DependencyVersionReq, ManifestDependency, PackageName, SourceId, Target, TargetKind,
-    TestTargetProps, TestTargetType,
+    DepKind, DependencyVersionReq, FeatureName, ManifestDependency, PackageName, SourceId, Target,
+    TargetKind, TestTargetProps, TestTargetType,
 };
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
-use crate::ops::FeaturesOpts;
+use crate::ops::{FeaturesOpts, FeaturesSelector};
 use crate::{resolver, DEFAULT_SOURCE_PATH};
 use anyhow::{bail, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;
 use itertools::Itertools;
-use smol_str::SmolStr;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 pub struct WorkspaceResolve {
@@ -159,8 +158,8 @@ async fn collect_packages_from_resolve_graph(
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
-    ws: &Workspace<'_>,
     enabled_features: &FeaturesOpts,
+    ws: &Workspace<'_>,
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members().filter(|member| !member.is_cairo_plugin()) {
@@ -321,43 +320,42 @@ fn generate_cairo_compilation_units(
 
 fn get_cfg_with_features(
     mut cfg_set: CfgSet,
-    features_manifest: &BTreeMap<SmolStr, Vec<SmolStr>>,
+    features_manifest: &BTreeMap<FeatureName, Vec<FeatureName>>,
     enabled_features: &FeaturesOpts,
 ) -> Result<Option<CfgSet>> {
     if features_manifest.is_empty() {
-        if !enabled_features.features.is_empty()
-            || enabled_features.no_default_features
-            || enabled_features.all_features
-        {
-            bail!("No features in manifest. To use features, you need to define [features] section in Scarb.toml.");
-        } else {
-            return Ok(None);
+        match &enabled_features.features {
+            FeaturesSelector::Features(features) if !features.is_empty() => {
+                bail!(
+                    "no features in manifest\n\
+                    note: to use features, you need to define [features] section in Scarb.toml",
+                )
+            }
+            _ => {
+                return Ok(None);
+            }
         }
     }
-    let available_features: HashSet<SmolStr> = features_manifest.keys().cloned().collect();
-    let cli_features: HashSet<SmolStr> = enabled_features.features.iter().cloned().collect();
+    let available_features: HashSet<FeatureName> = features_manifest.keys().cloned().collect();
 
-    let mut selected_features: HashSet<SmolStr> = if !enabled_features.no_default_features {
-        cli_features
-            .union(
-                &features_manifest
-                    .get("default")
-                    .map(|f| HashSet::from_iter(f.iter().cloned()))
-                    .unwrap_or_default(),
-            )
-            .cloned()
-            .collect()
-    } else {
-        cli_features
+    let mut selected_features: HashSet<FeatureName> = match &enabled_features.features {
+        FeaturesSelector::AllFeatures => available_features.clone(),
+        FeaturesSelector::Features(features) => {
+            let mut features: HashSet<FeatureName> = features.iter().cloned().collect();
+            if !enabled_features.no_default_features {
+                features.extend(
+                    features_manifest
+                        .get("default")
+                        .cloned()
+                        .unwrap_or_default(),
+                )
+            }
+            features
+        }
     };
 
-    if enabled_features.all_features {
-        selected_features.extend(available_features.iter().cloned());
-    }
-
     // Resolve features that are dependencies of selected features.
-    let mut queue = VecDeque::new();
-    queue.extend(selected_features.clone());
+    let mut queue = VecDeque::from_iter(selected_features.clone());
 
     while let Some(key) = queue.pop_front() {
         if let Some(neighbors) = features_manifest.get(&key) {
@@ -375,10 +373,7 @@ fn get_cfg_with_features(
         .collect_vec();
 
     if !not_found_features.is_empty() {
-        bail!(
-            "Unknown features: `{}`",
-            not_found_features.iter().join("`, `")
-        );
+        bail!("Unknown features: {}", not_found_features.iter().join(", "));
     }
 
     available_features

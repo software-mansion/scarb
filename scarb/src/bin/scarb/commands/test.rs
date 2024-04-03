@@ -12,7 +12,12 @@ pub fn run(args: TestArgs, config: &Config) -> Result<()> {
         .match_many(&ws)?
         .iter()
         .try_for_each(|package| {
-            ops::execute_test_subcommand(package, &args.args, &ws, args.features.clone().into())
-                .map(|_| ())
+            ops::execute_test_subcommand(
+                package,
+                &args.args,
+                &ws,
+                args.features.clone().try_into()?,
+            )
+            .map(|_| ())
         })
 }

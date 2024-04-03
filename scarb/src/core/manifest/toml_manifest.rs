@@ -35,7 +35,7 @@ use crate::{
     DEFAULT_MODULE_MAIN_FILE, DEFAULT_SOURCE_PATH, DEFAULT_TESTS_PATH, MANIFEST_FILE_NAME,
 };
 
-use super::Manifest;
+use super::{FeatureName, Manifest};
 
 /// This type is used to deserialize `Scarb.toml` files.
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -53,7 +53,7 @@ pub struct TomlManifest {
     pub profile: Option<TomlProfilesDefinition>,
     pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
-    pub features: Option<BTreeMap<SmolStr, Vec<SmolStr>>>,
+    pub features: Option<BTreeMap<FeatureName, Vec<FeatureName>>>,
 }
 
 type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, WorkspaceScriptDefinition>;
@@ -564,23 +564,7 @@ impl TomlManifest {
         let experimental_features = package.experimental_features.clone();
 
         let features = self.features.clone().unwrap_or_default();
-        let available_features: HashSet<SmolStr> = features.keys().cloned().collect();
-        for (key, vals) in features.iter() {
-            let dependent_features = vals.iter().cloned().collect::<HashSet<SmolStr>>();
-            if dependent_features.contains(key) {
-                bail!("feature `{}` depends on itself", key);
-            }
-            let not_found_features = dependent_features
-                .difference(&available_features)
-                .collect_vec();
-            if !not_found_features.is_empty() {
-                bail!(
-                    "feature `{}` is dependent on `{}` which is not defined",
-                    key,
-                    not_found_features.iter().join(", "),
-                );
-            }
-        }
+        Self::check_features(&features)?;
 
         let manifest = ManifestBuilder::default()
             .summary(summary)
@@ -879,6 +863,27 @@ impl TomlManifest {
                 }
             })
             .transpose()
+    }
+
+    fn check_features(features: &BTreeMap<FeatureName, Vec<FeatureName>>) -> Result<()> {
+        let available_features: HashSet<&FeatureName> = features.keys().collect();
+        for (key, vals) in features.iter() {
+            let dependent_features = vals.iter().collect::<HashSet<&FeatureName>>();
+            if dependent_features.contains(key) {
+                bail!("feature `{}` depends on itself", key);
+            }
+            let not_found_features = dependent_features
+                .difference(&available_features)
+                .collect_vec();
+            if !not_found_features.is_empty() {
+                bail!(
+                    "feature `{}` is dependent on `{}` which is not defined",
+                    key,
+                    not_found_features.iter().join(", "),
+                );
+            }
+        }
+        Ok(())
     }
 }
 
