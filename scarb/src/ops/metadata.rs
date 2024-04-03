@@ -44,7 +44,7 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
             .collect();
 
         let compilation_units: Vec<m::CompilationUnitMetadata> =
-            ops::generate_compilation_units(&resolve, ws, &opts.features)?
+            ops::generate_compilation_units(&resolve, &opts.features, ws)?
                 .iter()
                 .map(collect_compilation_unit_metadata)
                 .collect();

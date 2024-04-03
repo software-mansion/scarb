@@ -85,7 +85,7 @@ where
         })
         .collect::<Vec<PackageId>>();
 
-    let compilation_units = ops::generate_compilation_units(&resolve, ws, &opts.features)?
+    let compilation_units = ops::generate_compilation_units(&resolve, &opts.features, ws)?
         .into_iter()
         .filter(|cu| {
             let is_excluded = opts.exclude_targets.contains(&cu.target().kind);
