@@ -35,7 +35,7 @@ use crate::{
     DEFAULT_MODULE_MAIN_FILE, DEFAULT_SOURCE_PATH, DEFAULT_TESTS_PATH, MANIFEST_FILE_NAME,
 };
 
-use super::Manifest;
+use super::{FeatureName, Manifest};
 
 /// This type is used to deserialize `Scarb.toml` files.
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -53,7 +53,7 @@ pub struct TomlManifest {
     pub profile: Option<TomlProfilesDefinition>,
     pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
-    pub features: Option<BTreeMap<SmolStr, Vec<SmolStr>>>,
+    pub features: Option<BTreeMap<FeatureName, Vec<FeatureName>>>,
 }
 
 type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, WorkspaceScriptDefinition>;
@@ -865,10 +865,10 @@ impl TomlManifest {
             .transpose()
     }
 
-    fn check_features(features: &BTreeMap<SmolStr, Vec<SmolStr>>) -> Result<()> {
-        let available_features: HashSet<&SmolStr> = features.keys().collect();
+    fn check_features(features: &BTreeMap<FeatureName, Vec<FeatureName>>) -> Result<()> {
+        let available_features: HashSet<&FeatureName> = features.keys().collect();
         for (key, vals) in features.iter() {
-            let dependent_features = vals.iter().collect::<HashSet<&SmolStr>>();
+            let dependent_features = vals.iter().collect::<HashSet<&FeatureName>>();
             if dependent_features.contains(key) {
                 bail!("feature `{}` depends on itself", key);
             }

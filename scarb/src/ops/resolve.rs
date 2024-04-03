@@ -13,8 +13,8 @@ use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::core::{
-    DepKind, DependencyVersionReq, ManifestDependency, PackageName, SourceId, Target, TargetKind,
-    TestTargetProps, TestTargetType,
+    DepKind, DependencyVersionReq, FeatureName, ManifestDependency, PackageName, SourceId, Target,
+    TargetKind, TestTargetProps, TestTargetType,
 };
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
@@ -25,7 +25,6 @@ use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;
 use itertools::Itertools;
-use smol_str::SmolStr;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 pub struct WorkspaceResolve {
@@ -321,7 +320,7 @@ fn generate_cairo_compilation_units(
 
 fn get_cfg_with_features(
     mut cfg_set: CfgSet,
-    features_manifest: &BTreeMap<SmolStr, Vec<SmolStr>>,
+    features_manifest: &BTreeMap<FeatureName, Vec<FeatureName>>,
     enabled_features: &FeaturesOpts,
 ) -> Result<Option<CfgSet>> {
     if features_manifest.is_empty() {
@@ -337,12 +336,12 @@ fn get_cfg_with_features(
             }
         }
     }
-    let available_features: HashSet<SmolStr> = features_manifest.keys().cloned().collect();
+    let available_features: HashSet<FeatureName> = features_manifest.keys().cloned().collect();
 
-    let mut selected_features: HashSet<SmolStr> = match &enabled_features.features {
+    let mut selected_features: HashSet<FeatureName> = match &enabled_features.features {
         FeaturesSelector::AllFeatures => available_features.clone(),
         FeaturesSelector::Features(features) => {
-            let mut features: HashSet<SmolStr> = features.iter().cloned().collect();
+            let mut features: HashSet<FeatureName> = features.iter().cloned().collect();
             if !enabled_features.no_default_features {
                 features.extend(
                     features_manifest

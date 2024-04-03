@@ -4,7 +4,6 @@ use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use cairo_lang_utils::Upcast;
 use indoc::formatdoc;
 use itertools::Itertools;
-use smol_str::SmolStr;
 
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
@@ -14,12 +13,14 @@ use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin, ScarbD
 use crate::compiler::helpers::build_compiler_config;
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
-use crate::core::{PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
+use crate::core::{
+    FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
+};
 use crate::ops;
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
-    Features(Vec<SmolStr>),
+    Features(Vec<FeatureName>),
     AllFeatures,
 }
 
@@ -29,22 +30,22 @@ pub struct FeaturesOpts {
     pub no_default_features: bool,
 }
 
-impl From<FeaturesSpec> for FeaturesOpts {
-    fn from(spec: FeaturesSpec) -> Self {
-        Self {
+impl TryFrom<FeaturesSpec> for FeaturesOpts {
+    type Error = anyhow::Error;
+    fn try_from(spec: FeaturesSpec) -> anyhow::Result<Self> {
+        Ok(Self {
             features: if spec.all_features {
                 FeaturesSelector::AllFeatures
             } else {
                 FeaturesSelector::Features(
                     spec.features
                         .into_iter()
-                        .filter(|f| !f.is_empty())
-                        .map(Into::into)
-                        .collect(),
+                        .map(FeatureName::try_from)
+                        .try_collect()?,
                 )
             },
             no_default_features: spec.no_default_features,
-        }
+        })
     }
 }
 
