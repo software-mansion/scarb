@@ -356,8 +356,7 @@ fn get_cfg_with_features(
     }
 
     // Resolve features that are dependencies of selected features.
-    let mut queue = VecDeque::new();
-    queue.extend(selected_features.clone());
+    let mut queue = VecDeque::from_iter(selected_features.clone());
 
     while let Some(key) = queue.pop_front() {
         if let Some(neighbors) = features_manifest.get(&key) {
