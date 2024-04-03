@@ -40,6 +40,7 @@ impl TryFrom<FeaturesSpec> for FeaturesOpts {
                 FeaturesSelector::Features(
                     spec.features
                         .into_iter()
+                        .filter(|f| !f.is_empty())
                         .map(FeatureName::try_from)
                         .try_collect()?,
                 )
