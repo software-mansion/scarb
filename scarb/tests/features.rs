@@ -166,7 +166,7 @@ fn features_fail_both_features_enabled() {
             fn f() -> felt252 { 59 }
                ^
             
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to previous error[..]
         "#})
         .failure();
 }
@@ -328,7 +328,7 @@ fn features_no_default_and_all_failing() {
         .stderr_matches(indoc! {r#"
             error: the argument '--no-default-features' cannot be used with '--all-features'
 
-            Usage: scarb build --no-default-features
+            Usage: scarb[..] build --no-default-features
 
             For more information, try '--help'.
         "#})
