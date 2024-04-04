@@ -184,5 +184,5 @@ fn features_test_build_failed() {
         
         error: could not compile `hello` due to previous error[..]
         error: process did not exit successfully: exit code: 1
-    "#})
+    "#});
 }
