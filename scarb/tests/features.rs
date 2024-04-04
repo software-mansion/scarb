@@ -67,6 +67,30 @@ fn build_incorrect_manifest_feature_example_program(t: &TempDir) {
         .build(t);
 }
 
+fn build_with_default_features(t: &TempDir) {
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [features]
+            default = ["x", "y"]
+            x = []
+            y = []
+            "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn g() -> felt252 { 21 }
+
+            #[cfg(feature: 'y')]
+            fn f() -> felt252 { g() }
+
+            fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .build(t);
+
+}
+
 #[test]
 fn features_success() {
     let t = TempDir::new().unwrap();
@@ -191,4 +215,39 @@ fn features_fail_incorrect_manifest() {
         .failure();
 }
 
-// TODO: add tests for default features, --no-default-features and --all-features
+#[test]
+fn features_with_default_features() {
+    let t = TempDir::new().unwrap();
+    build_with_default_features(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::str::contains(r#""debug_name":"hello::main""#));
+}
+
+#[test]
+fn features_no_default_features() {
+    let t = TempDir::new().unwrap();
+    build_with_default_features(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--no-default-features")
+        .current_dir(&t)
+        .assert()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling hello v1.0.0 ([..])
+            error: Function not found.
+             --> [..]/src/lib.cairo[..]
+                f()
+                ^
+
+            error: could not compile `hello` due to previous error
+        "#})
+        .failure();
+}
+
+// TODO: add tests for --all-features
