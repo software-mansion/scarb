@@ -19,7 +19,7 @@ use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
 use scarb::manifest_editor::SectionArgs;
 use scarb::version;
-use scarb_ui::args::PackagesFilter;
+use scarb_ui::args::{FeaturesSpec, PackagesFilter};
 use scarb_ui::OutputFormat;
 
 /// The Cairo package manager.
@@ -224,6 +224,10 @@ pub struct BuildArgs {
     /// Build tests.
     #[arg(short, long, default_value_t = false)]
     pub test: bool,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Arguments accepted by the `run` command.
@@ -262,6 +266,10 @@ pub struct MetadataArgs {
     /// Output information only about the workspace members and don't fetch dependencies.
     #[arg(long)]
     pub no_deps: bool,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Arguments accepted by the `new` command.
@@ -394,6 +402,10 @@ pub struct TestArgs {
     /// Arguments for the test program.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Arguments accepted by both the `package` and the `publish` command.
@@ -424,6 +436,10 @@ pub struct PackageArgs {
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Arguments accepted by the `publish` command.
@@ -438,6 +454,10 @@ pub struct PublishArgs {
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Git reference specification arguments.

@@ -38,6 +38,7 @@ pub struct PackageOpts {
     pub allow_dirty: bool,
     pub verify: bool,
     pub check_metadata: bool,
+    pub features: ops::FeaturesOpts,
 }
 
 /// A listing of files to include in the archive, without actually building it yet.
@@ -170,7 +171,8 @@ fn package_one_impl(
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
     let mut dst = if opts.verify {
-        run_verify(pkg, dst, ws).context("failed to verify package tarball")?
+        run_verify(pkg, dst, ws, opts.features.clone())
+            .context("failed to verify package tarball")?
     } else {
         dst
     };
@@ -296,7 +298,12 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     Ok(recipe)
 }
 
-fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<FileLockGuard> {
+fn run_verify(
+    pkg: &Package,
+    tar: FileLockGuard,
+    ws: &Workspace<'_>,
+    features: ops::FeaturesOpts,
+) -> Result<FileLockGuard> {
     ws.config()
         .ui()
         .print(Status::new("Verifying", &pkg.id.tarball_name()));
@@ -318,6 +325,7 @@ fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<F
         ops::CompileOpts {
             include_targets: Vec::new(),
             exclude_targets: vec![TargetKind::TEST.clone()],
+            features,
         },
         &ws,
     )?;

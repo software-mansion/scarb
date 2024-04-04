@@ -106,3 +106,83 @@ fn can_print_test_resources() {
 
         "#});
 }
+
+fn get_features_test_build(t: &TempDir) {
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+            "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn f() -> felt252 { 21 }
+
+            fn main() -> felt252 { f() }
+
+            #[cfg(test)]
+            mod tests {
+                use super::main;
+
+                #[test]
+                fn it_works() {
+                    assert(main() == 21, 'it works!');
+                }
+            }
+        "#})
+        .build(t);
+}
+
+#[test]
+fn features_test_build_success() {
+    let t = TempDir::new().unwrap();
+    get_features_test_build(&t);
+    Scarb::quick_snapbox()
+        .arg("cairo-test")
+        .env("SCARB_FEATURES", "x")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
+            [..]Finished release target(s) in [..]
+            testing hello ...
+            running 1 test
+            test hello::tests::it_works ... ok[..]
+            test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
+
+        "#});
+}
+
+#[test]
+fn features_test_build_failed() {
+    let t = TempDir::new().unwrap();
+    get_features_test_build(&t);
+    let snapbox = Scarb::quick_snapbox()
+        .arg("cairo-test")
+        .current_dir(&t)
+        .assert()
+        .failure();
+
+    #[cfg(not(windows))]
+    snapbox.stdout_matches(indoc! {r#"
+        [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
+        error: Function not found.
+         --> [..]/src/lib.cairo[..]
+        fn main() -> felt252 { f() }
+                               ^
+        
+        error: could not compile `hello` due to previous error[..]
+    "#});
+    #[cfg(windows)]
+    snapbox.stdout_matches(indoc! {r#"
+        [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
+        error: Function not found.
+         --> [..]/src/lib.cairo[..]
+        fn main() -> felt252 { f() }
+                               ^
+        
+        error: could not compile `hello` due to previous error[..]
+        error: process did not exit successfully: exit code: 1
+    "#});
+}

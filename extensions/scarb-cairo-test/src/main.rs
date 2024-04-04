@@ -8,7 +8,7 @@ use clap::Parser;
 use scarb_metadata::{
     Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
 };
-use scarb_ui::args::PackagesFilter;
+use scarb_ui::args::{FeaturesSpec, PackagesFilter};
 
 /// Execute all unit tests of a local package.
 #[derive(Parser, Clone, Debug)]
@@ -32,6 +32,10 @@ struct Args {
     /// Whether to print resource usage after each test.
     #[arg(long, default_value_t = false)]
     print_resource_usage: bool,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 fn main() -> Result<()> {
@@ -43,6 +47,7 @@ fn main() -> Result<()> {
 
     let matched = args.packages_filter.match_many(&metadata)?;
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
+
     ScarbCommand::new()
         .arg("build")
         .arg("--test")

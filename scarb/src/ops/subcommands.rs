@@ -12,7 +12,7 @@ use scarb_ui::components::Status;
 
 use crate::core::{Config, Package, ScriptDefinition, Workspace};
 use crate::internal::fsx::is_executable;
-use crate::ops;
+use crate::ops::{self, FeaturesSelector};
 use crate::process::exec_replace;
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV};
 
@@ -49,19 +49,21 @@ pub fn execute_test_subcommand(
     package: &Package,
     args: &[OsString],
     ws: &Workspace<'_>,
+    features: ops::FeaturesOpts,
 ) -> Result<()> {
     let package_name = &package.id.name;
-    let env = Some(HashMap::from_iter([(
+    let mut env = HashMap::from_iter([(
         SCARB_MANIFEST_PATH_ENV.into(),
         package.manifest_path().to_string(),
-    )]));
+    )]);
+    env.extend(features.to_env_vars());
     if let Some(script_definition) = package.manifest.scripts.get("test") {
         debug!("using `test` script: {script_definition}");
         ws.config().ui().print(Status::new(
             "Running",
             &format!("test {package_name} ({script_definition})"),
         ));
-        ops::execute_script(script_definition, args, ws, package.root(), env)
+        ops::execute_script(script_definition, args, ws, package.root(), Some(env))
     } else {
         debug!("no explicit `test` script found, delegating to scarb-cairo-test");
         ws.config().ui().print(Status::new(
@@ -70,7 +72,13 @@ pub fn execute_test_subcommand(
         ));
         let args = args.iter().map(OsString::from).collect::<Vec<_>>();
         let script_definition = ScriptDefinition::new("scarb cairo-test".into());
-        ops::execute_script(&script_definition, args.as_ref(), ws, package.root(), env)
+        ops::execute_script(
+            &script_definition,
+            args.as_ref(),
+            ws,
+            package.root(),
+            Some(env),
+        )
     }
 }
 
@@ -102,4 +110,28 @@ fn find_external_subcommand(cmd: &str, config: &Config) -> Result<Option<PathBuf
         .chain(path_dirs)
         .map(|dir| dir.join(&command_exe))
         .find(|file| is_executable(file)))
+}
+
+pub trait ToEnv {
+    fn to_env_vars(&self) -> HashMap<String, String>;
+}
+
+impl ToEnv for ops::FeaturesOpts {
+    fn to_env_vars(&self) -> HashMap<String, String> {
+        let mut env = HashMap::new();
+        match &self.features {
+            FeaturesSelector::AllFeatures => {
+                env.insert("SCARB_ALL_FEATURES".into(), true.to_string());
+            }
+            FeaturesSelector::Features(features) if !features.is_empty() => {
+                env.insert("SCARB_FEATURES".into(), features.join(","));
+            }
+            _ => {}
+        };
+        env.insert(
+            "SCARB_NO_DEFAULT_FEATURES".into(),
+            self.no_default_features.to_string(),
+        );
+        env
+    }
 }

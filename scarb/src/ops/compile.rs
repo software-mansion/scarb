@@ -1,10 +1,11 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Context, Error, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use cairo_lang_utils::Upcast;
 use indoc::formatdoc;
 use itertools::Itertools;
 
+use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use scarb_ui::HumanDuration;
 
@@ -12,13 +13,48 @@ use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin, ScarbD
 use crate::compiler::helpers::build_compiler_config;
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
-use crate::core::{PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
+use crate::core::{
+    FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
+};
 use crate::ops;
+
+#[derive(Debug, Clone)]
+pub enum FeaturesSelector {
+    Features(Vec<FeatureName>),
+    AllFeatures,
+}
+
+#[derive(Debug, Clone)]
+pub struct FeaturesOpts {
+    pub features: FeaturesSelector,
+    pub no_default_features: bool,
+}
+
+impl TryFrom<FeaturesSpec> for FeaturesOpts {
+    type Error = Error;
+    fn try_from(spec: FeaturesSpec) -> Result<Self> {
+        Ok(Self {
+            features: if spec.all_features {
+                FeaturesSelector::AllFeatures
+            } else {
+                FeaturesSelector::Features(
+                    spec.features
+                        .into_iter()
+                        .filter(|f| !f.is_empty())
+                        .map(FeatureName::try_from)
+                        .try_collect()?,
+                )
+            },
+            no_default_features: spec.no_default_features,
+        })
+    }
+}
 
 #[derive(Debug)]
 pub struct CompileOpts {
     pub include_targets: Vec<TargetKind>,
     pub exclude_targets: Vec<TargetKind>,
+    pub features: FeaturesOpts,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -60,7 +96,7 @@ where
         })
         .collect::<Vec<PackageId>>();
 
-    let compilation_units = ops::generate_compilation_units(&resolve, ws)?
+    let compilation_units = ops::generate_compilation_units(&resolve, &opts.features, ws)?
         .into_iter()
         .filter(|cu| {
             let is_excluded = opts.exclude_targets.contains(&cu.target().kind);

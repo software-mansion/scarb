@@ -22,6 +22,8 @@ pub use version_req::*;
 use crate::compiler::DefaultForProfile;
 use crate::compiler::Profile;
 
+use super::PackageName;
+
 mod compiler_config;
 mod dependency;
 mod maybe_workspace;
@@ -31,6 +33,8 @@ mod target;
 mod target_kind;
 mod toml_manifest;
 mod version_req;
+
+pub type FeatureName = PackageName;
 
 /// Contains all the information about a package, as loaded from the manifest file.
 /// Construct using [`ManifestBuilder`].
@@ -49,6 +53,8 @@ pub struct Manifest {
     pub compiler_config: ManifestCompilerConfig,
     #[builder(default)]
     pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
+    #[builder(default)]
+    pub features: BTreeMap<FeatureName, Vec<FeatureName>>,
     /// Allow experimental features.
     #[builder(default)]
     pub experimental_features: Option<Vec<SmolStr>>,

@@ -13,18 +13,19 @@ use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::core::{
-    DepKind, DependencyVersionReq, ManifestDependency, PackageName, SourceId, Target, TargetKind,
-    TestTargetProps, TestTargetType,
+    DepKind, DependencyVersionReq, FeatureName, ManifestDependency, PackageName, SourceId, Target,
+    TargetKind, TestTargetProps, TestTargetType,
 };
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
+use crate::ops::{FeaturesOpts, FeaturesSelector};
 use crate::{resolver, DEFAULT_SOURCE_PATH};
 use anyhow::{bail, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -157,11 +158,17 @@ async fn collect_packages_from_resolve_graph(
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
+    enabled_features: &FeaturesOpts,
     ws: &Workspace<'_>,
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     for member in ws.members().filter(|member| !member.is_cairo_plugin()) {
-        units.extend(generate_cairo_compilation_units(&member, resolve, ws)?);
+        units.extend(generate_cairo_compilation_units(
+            &member,
+            resolve,
+            enabled_features,
+            ws,
+        )?);
     }
 
     let cairo_plugins = units
@@ -192,6 +199,7 @@ pub fn generate_compilation_units(
 fn generate_cairo_compilation_units(
     member: &Package,
     resolve: &WorkspaceResolve,
+    enabled_features: &FeaturesOpts,
     ws: &Workspace<'_>,
 ) -> Result<Vec<CompilationUnit>> {
     let profile = ws.current_profile()?;
@@ -242,7 +250,11 @@ fn generate_cairo_compilation_units(
 
                     let cfg_set = {
                         if package.id == member.id {
-                            None
+                            get_cfg_with_features(
+                                cfg_set.clone(),
+                                &package.manifest.features,
+                                enabled_features,
+                            )?
                         } else {
                             let component_cfg_set = cfg_set
                                 .iter()
@@ -258,13 +270,13 @@ fn generate_cairo_compilation_units(
                         }
                     };
 
-                    CompilationUnitComponent {
+                    Ok(CompilationUnitComponent {
                         package,
                         target,
                         cfg_set,
-                    }
+                    })
                 })
-                .collect();
+                .collect::<Result<_>>()?;
 
             // Apply overrides for integration test.
             let main_package_id = if is_integration_test {
@@ -304,6 +316,72 @@ fn generate_cairo_compilation_units(
             }))
         })
         .collect::<Result<Vec<CompilationUnit>>>()
+}
+
+fn get_cfg_with_features(
+    mut cfg_set: CfgSet,
+    features_manifest: &BTreeMap<FeatureName, Vec<FeatureName>>,
+    enabled_features: &FeaturesOpts,
+) -> Result<Option<CfgSet>> {
+    if features_manifest.is_empty() {
+        match &enabled_features.features {
+            FeaturesSelector::Features(features) if !features.is_empty() => {
+                bail!(
+                    "no features in manifest\n\
+                    note: to use features, you need to define [features] section in Scarb.toml",
+                )
+            }
+            _ => {
+                return Ok(None);
+            }
+        }
+    }
+    let available_features: HashSet<FeatureName> = features_manifest.keys().cloned().collect();
+
+    let mut selected_features: HashSet<FeatureName> = match &enabled_features.features {
+        FeaturesSelector::AllFeatures => available_features.clone(),
+        FeaturesSelector::Features(features) => {
+            let mut features: HashSet<FeatureName> = features.iter().cloned().collect();
+            if !enabled_features.no_default_features {
+                features.extend(
+                    features_manifest
+                        .get("default")
+                        .cloned()
+                        .unwrap_or_default(),
+                )
+            }
+            features
+        }
+    };
+
+    // Resolve features that are dependencies of selected features.
+    let mut queue = VecDeque::from_iter(selected_features.clone());
+
+    while let Some(key) = queue.pop_front() {
+        if let Some(neighbors) = features_manifest.get(&key) {
+            for neighbor in neighbors.iter() {
+                if !selected_features.contains(neighbor) {
+                    selected_features.insert(neighbor.clone());
+                    queue.push_back(neighbor.clone());
+                }
+            }
+        }
+    }
+
+    let not_found_features = selected_features
+        .difference(&available_features)
+        .collect_vec();
+
+    if !not_found_features.is_empty() {
+        bail!("unknown features: {}", not_found_features.iter().join(", "));
+    }
+
+    available_features
+        .intersection(&selected_features)
+        .map(|f| Cfg::kv("feature", f.to_string()))
+        .for_each(|f| cfg_set.insert(f));
+
+    Ok(Some(cfg_set))
 }
 
 pub struct PackageSolutionCollector<'a> {

@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::default::Default;
 use std::fs;
 use std::iter::{repeat, zip};
@@ -35,7 +35,7 @@ use crate::{
     DEFAULT_MODULE_MAIN_FILE, DEFAULT_SOURCE_PATH, DEFAULT_TESTS_PATH, MANIFEST_FILE_NAME,
 };
 
-use super::Manifest;
+use super::{FeatureName, Manifest};
 
 /// This type is used to deserialize `Scarb.toml` files.
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -53,6 +53,7 @@ pub struct TomlManifest {
     pub profile: Option<TomlProfilesDefinition>,
     pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
+    pub features: Option<BTreeMap<FeatureName, Vec<FeatureName>>>,
 }
 
 type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, WorkspaceScriptDefinition>;
@@ -561,6 +562,10 @@ impl TomlManifest {
 
         // TODO (#1040): add checking for fields that are not present in ExperimentalFeaturesConfig
         let experimental_features = package.experimental_features.clone();
+
+        let features = self.features.clone().unwrap_or_default();
+        Self::check_features(&features)?;
+
         let manifest = ManifestBuilder::default()
             .summary(summary)
             .targets(targets)
@@ -569,6 +574,7 @@ impl TomlManifest {
             .compiler_config(compiler_config)
             .scripts(scripts)
             .experimental_features(experimental_features)
+            .features(features)
             .build()?;
         Ok(manifest)
     }
@@ -857,6 +863,27 @@ impl TomlManifest {
                 }
             })
             .transpose()
+    }
+
+    fn check_features(features: &BTreeMap<FeatureName, Vec<FeatureName>>) -> Result<()> {
+        let available_features: HashSet<&FeatureName> = features.keys().collect();
+        for (key, vals) in features.iter() {
+            let dependent_features = vals.iter().collect::<HashSet<&FeatureName>>();
+            if dependent_features.contains(key) {
+                bail!("feature `{}` depends on itself", key);
+            }
+            let not_found_features = dependent_features
+                .difference(&available_features)
+                .collect_vec();
+            if !not_found_features.is_empty() {
+                bail!(
+                    "feature `{}` is dependent on `{}` which is not defined",
+                    key,
+                    not_found_features.iter().join(", "),
+                );
+            }
+        }
+        Ok(())
     }
 }
 
