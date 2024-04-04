@@ -88,7 +88,36 @@ fn build_with_default_features(t: &TempDir) {
             }
         "#})
         .build(t);
+}
 
+fn build_with_all_features_required(t: &TempDir) {
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [features]
+            w = []
+            x = []
+            y = []
+            z = []
+            "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn f() -> felt252 { 22 }
+
+            #[cfg(feature: 'y')]
+            fn g() -> felt252 { f() }
+
+            #[cfg(feature: 'z')]
+            fn h() -> felt252 { g() }
+
+            #[cfg(feature: 'w')]
+            fn i() -> felt252 { h() }
+
+            fn main() -> felt252 {
+                i()
+            }
+        "#})
+        .build(t);
 }
 
 #[test]
@@ -250,4 +279,58 @@ fn features_no_default_features() {
         .failure();
 }
 
-// TODO: add tests for --all-features
+#[test]
+fn features_all_features() {
+    let t = TempDir::new().unwrap();
+    build_with_all_features_required(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--all-features")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::str::contains(r#""debug_name":"hello::main""#));
+}
+
+#[test]
+fn features_all_features_failing() {
+    let t = TempDir::new().unwrap();
+    build_with_all_features_required(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling hello v1.0.0 ([..])
+            error: Function not found.
+             --> [..]/src/lib.cairo[..]
+                i()
+                ^
+
+            error: could not compile `hello` due to previous error
+        "#})
+        .failure();
+
+}
+
+#[test]
+fn features_no_default_and_all_failing() {
+    let t = TempDir::new().unwrap();
+    build_with_default_features(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--no-default-features")
+        .arg("--all-features")
+        .current_dir(&t)
+        .assert()
+        .stderr_matches(indoc! {r#"
+            error: the argument '--no-default-features' cannot be used with '--all-features'
+
+            Usage: scarb build --no-default-features
+
+            For more information, try '--help'.
+        "#})
+        .failure();
+}
