@@ -1,14 +1,17 @@
 use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Context, Result};
 use cairo_lang_defs::patcher::PatchBuilder;
-use cairo_lang_macro::{AuxData, ExpansionKind, ProcMacroResult, TokenStream};
+use cairo_lang_macro::{
+    ExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult, TokenStream,
+};
 use cairo_lang_macro_stable::{
-    StableAuxData, StableExpansion, StableExpansionsList, StableProcMacroResult,
+    StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
     StableResultWrapper, StableTokenStream,
 };
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{ast, SyntaxNode, TypedSyntaxNode};
 use camino::Utf8PathBuf;
+use itertools::Itertools;
 use libloading::{Library, Symbol};
 use std::ffi::{c_char, CStr, CString};
 use std::fmt::Debug;
@@ -16,7 +19,7 @@ use std::slice;
 
 use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::ProcMacroAuxData;
-use cairo_lang_macro_stable::ffi::StableSlice;
+
 #[cfg(not(windows))]
 use libloading::os::unix::Symbol as RawSymbol;
 #[cfg(windows)]
@@ -149,20 +152,21 @@ impl ProcMacroInstance {
         result
     }
 
-    pub(crate) fn aux_data_callback(&self, aux_data: Vec<ProcMacroAuxData>) {
-        // Convert to stable aux data.
-        let aux_data: Vec<AuxData> = aux_data.into_iter().map(Into::into).collect();
-        let aux_data = aux_data
-            .into_iter()
-            .map(|a| a.into_stable())
-            .collect::<Vec<_>>();
-        // Create stable slice representation from vector.
-        // Note this needs to be freed manually.
-        let aux_data = StableSlice::new(aux_data);
+    pub(crate) fn post_process_callback(
+        &self,
+        aux_data: Vec<ProcMacroAuxData>,
+        full_path_markers: Vec<FullPathMarker>,
+    ) {
+        // Create stable representation of the context.
+        let context = PostProcessContext {
+            aux_data: aux_data.into_iter().map(Into::into).collect_vec(),
+            full_path_markers,
+        }
+        .into_stable();
         // Actual call to FFI interface for aux data callback.
-        let aux_data = (self.plugin.vtable.aux_data_callback)(aux_data);
-        // Free the memory allocated by vec.
-        let _ = aux_data.into_owned();
+        let context = (self.plugin.vtable.post_process_callback)(context);
+        // Free the allocated memory.
+        let _ = unsafe { PostProcessContext::from_owned_stable(context) };
     }
 }
 
@@ -199,14 +203,14 @@ type ListExpansions = extern "C" fn() -> StableExpansionsList;
 type FreeExpansionsList = extern "C" fn(StableExpansionsList);
 type ExpandCode = extern "C" fn(*const c_char, StableTokenStream) -> StableResultWrapper;
 type FreeResult = extern "C" fn(StableProcMacroResult);
-type AuxDataCallback = extern "C" fn(StableSlice<StableAuxData>) -> StableSlice<StableAuxData>;
+type PostProcessCallback = extern "C" fn(StablePostProcessContext) -> StablePostProcessContext;
 
 struct VTableV0 {
     list_expansions: RawSymbol<ListExpansions>,
     free_expansions_list: RawSymbol<FreeExpansionsList>,
     expand: RawSymbol<ExpandCode>,
     free_result: RawSymbol<FreeResult>,
-    aux_data_callback: RawSymbol<AuxDataCallback>,
+    post_process_callback: RawSymbol<PostProcessCallback>,
 }
 
 macro_rules! get_symbol {
@@ -230,7 +234,11 @@ impl VTableV0 {
             ),
             expand: get_symbol!(library, b"expand\0", ExpandCode),
             free_result: get_symbol!(library, b"free_result\0", FreeResult),
-            aux_data_callback: get_symbol!(library, b"aux_data_callback\0", AuxDataCallback),
+            post_process_callback: get_symbol!(
+                library,
+                b"post_process_callback\0",
+                PostProcessCallback
+            ),
         })
     }
 }

@@ -1,11 +1,12 @@
 use crate::{
-    AuxData, Diagnostic, ExpansionDefinition, ProcMacroResult, Severity, TokenStream,
-    TokenStreamMetadata,
+    AuxData, Diagnostic, ExpansionDefinition, FullPathMarker, PostProcessContext, ProcMacroResult,
+    Severity, TokenStream, TokenStreamMetadata,
 };
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
-    StableAuxData, StableDiagnostic, StableExpansion, StableProcMacroResult, StableSeverity,
-    StableTokenStream, StableTokenStreamMetadata,
+    StableAuxData, StableDiagnostic, StableExpansion, StableFullPathMarker,
+    StablePostProcessContext, StableProcMacroResult, StableSeverity, StableTokenStream,
+    StableTokenStreamMetadata,
 };
 use std::ffi::{c_char, CStr, CString};
 use std::num::NonZeroU8;
@@ -41,15 +42,21 @@ impl ProcMacroResult {
                 token_stream,
                 aux_data,
                 diagnostics,
+                full_path_markers,
             } => {
                 let diagnostics = diagnostics
                     .into_iter()
                     .map(|d| d.into_stable())
                     .collect::<Vec<_>>();
+                let full_path_markers = full_path_markers
+                    .into_iter()
+                    .map(|m| CString::new(m).unwrap().into_raw())
+                    .collect::<Vec<_>>();
                 StableProcMacroResult::Replace {
                     token_stream: token_stream.into_stable(),
                     aux_data: AuxData::maybe_into_stable(aux_data),
                     diagnostics: StableSlice::new(diagnostics),
+                    full_path_markers: StableSlice::new(full_path_markers),
                 }
             }
         }
@@ -83,16 +90,23 @@ impl ProcMacroResult {
                 token_stream,
                 aux_data,
                 diagnostics,
+                full_path_markers,
             } => {
                 let (ptr, n) = diagnostics.raw_parts();
                 let diagnostics = slice::from_raw_parts(ptr, n)
                     .iter()
                     .map(|d| Diagnostic::from_stable(d))
                     .collect::<Vec<_>>();
+                let (ptr, n) = full_path_markers.raw_parts();
+                let full_path_markers = slice::from_raw_parts(ptr, n)
+                    .iter()
+                    .map(|m| from_raw_cstr(*m))
+                    .collect::<Vec<_>>();
                 ProcMacroResult::Replace {
                     token_stream: TokenStream::from_stable(token_stream),
                     aux_data: AuxData::from_stable(aux_data),
                     diagnostics,
+                    full_path_markers,
                 }
             }
         }
@@ -127,16 +141,23 @@ impl ProcMacroResult {
                 token_stream,
                 aux_data,
                 diagnostics,
+                full_path_markers,
             } => {
                 let diagnostics = diagnostics.into_owned();
                 let diagnostics = diagnostics
                     .into_iter()
                     .map(|d| Diagnostic::from_owned_stable(d))
                     .collect::<Vec<_>>();
+                let full_path_markers = full_path_markers
+                    .into_owned()
+                    .iter()
+                    .map(|m| from_raw_cstring(*m))
+                    .collect::<Vec<_>>();
                 ProcMacroResult::Replace {
                     token_stream: TokenStream::from_owned_stable(token_stream),
                     aux_data: AuxData::from_owned_stable(aux_data),
                     diagnostics,
+                    full_path_markers,
                 }
             }
         }
@@ -376,6 +397,120 @@ impl ExpansionDefinition {
     #[doc(hidden)]
     pub unsafe fn free_owned(expansion: StableExpansion) {
         let _ = from_raw_cstring(expansion.name);
+    }
+}
+
+impl FullPathMarker {
+    // Convert to FFI-safe representation.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableFullPathMarker {
+        StableFullPathMarker {
+            key: CString::new(self.key).unwrap().into_raw(),
+            full_path: CString::new(self.full_path).unwrap().into_raw(),
+        }
+    }
+
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_stable(marker: &StableFullPathMarker) -> Self {
+        Self {
+            key: from_raw_cstr(marker.key),
+            full_path: from_raw_cstr(marker.full_path),
+        }
+    }
+
+    /// Convert to native Rust representation, with taking the ownership of the string.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_owned_stable(marker: StableFullPathMarker) -> Self {
+        Self {
+            key: from_raw_cstring(marker.key),
+            full_path: from_raw_cstring(marker.full_path),
+        }
+    }
+}
+
+impl PostProcessContext {
+    // Convert to FFI-safe representation.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StablePostProcessContext {
+        let aux_data = self
+            .aux_data
+            .into_iter()
+            .map(|a| a.into_stable())
+            .collect::<Vec<_>>();
+
+        let full_path_markers = self
+            .full_path_markers
+            .into_iter()
+            .map(|m| m.into_stable())
+            .collect::<Vec<_>>();
+
+        StablePostProcessContext {
+            aux_data: StableSlice::new(aux_data),
+            full_path_markers: StableSlice::new(full_path_markers),
+        }
+    }
+
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_stable(context: &StablePostProcessContext) -> Self {
+        let (ptr, n) = context.aux_data.raw_parts();
+        let aux_data = slice::from_raw_parts(ptr, n)
+            .iter()
+            .filter_map(|a| AuxData::from_stable(a))
+            .collect::<Vec<_>>();
+        let (ptr, n) = context.full_path_markers.raw_parts();
+        let full_path_markers = slice::from_raw_parts(ptr, n)
+            .iter()
+            .map(|m| FullPathMarker::from_stable(m))
+            .collect::<Vec<_>>();
+        Self {
+            aux_data,
+            full_path_markers,
+        }
+    }
+
+    /// Convert to native Rust representation, with taking the ownership of the string.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_owned_stable(diagnostic: StablePostProcessContext) -> Self {
+        let aux_data = diagnostic
+            .aux_data
+            .into_owned()
+            .into_iter()
+            .filter_map(|a| AuxData::from_owned_stable(a))
+            .collect::<Vec<_>>();
+        let full_path_markers = diagnostic
+            .full_path_markers
+            .into_owned()
+            .into_iter()
+            .map(|m| FullPathMarker::from_owned_stable(m))
+            .collect::<Vec<_>>();
+        Self {
+            aux_data,
+            full_path_markers,
+        }
     }
 }
 

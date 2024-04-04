@@ -116,7 +116,7 @@ pub fn post_process(_args: TokenStream, input: TokenStream) -> TokenStream {
 
         #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::AUX_DATA_CALLBACKS)]
         #[linkme(crate = ::cairo_lang_macro::linkme)]
-        static #callback_link: fn(Vec<AuxData>) = #item_name;
+        static #callback_link: fn(::cairo_lang_macro::PostProcessContext) = #item_name;
     };
 
     TokenStream::from(expanded)

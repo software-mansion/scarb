@@ -20,9 +20,10 @@ pub use cairo_lang_macro_attributes::*;
 pub use linkme;
 
 use cairo_lang_macro_stable::ffi::StableSlice;
-use cairo_lang_macro_stable::{StableAuxData, StableExpansionsList, StableProcMacroResult};
+use cairo_lang_macro_stable::{
+    StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
+};
 use std::ffi::{c_char, CStr};
-use std::slice;
 
 mod types;
 
@@ -128,7 +129,7 @@ pub unsafe extern "C" fn free_result(result: StableProcMacroResult) {
 /// Distributed slice for storing auxiliary data collection callback pointers.
 #[doc(hidden)]
 #[linkme::distributed_slice]
-pub static AUX_DATA_CALLBACKS: [fn(Vec<AuxData>)];
+pub static AUX_DATA_CALLBACKS: [fn(PostProcessContext)];
 
 /// The auxiliary data collection callback.
 ///
@@ -141,20 +142,15 @@ pub static AUX_DATA_CALLBACKS: [fn(Vec<AuxData>)];
 /// # Safety
 #[doc(hidden)]
 #[no_mangle]
-pub unsafe extern "C" fn aux_data_callback(
-    stable_aux_data: StableSlice<StableAuxData>,
-) -> StableSlice<StableAuxData> {
+pub unsafe extern "C" fn post_process_callback(
+    context: StablePostProcessContext,
+) -> StablePostProcessContext {
     if !AUX_DATA_CALLBACKS.is_empty() {
         // Callback has been defined, applying the aux data collection.
-        let (ptr, n) = stable_aux_data.raw_parts();
-        let aux_data: &[StableAuxData] = slice::from_raw_parts(ptr, n);
-        let aux_data = aux_data
-            .iter()
-            .filter_map(|a| AuxData::from_stable(a))
-            .collect::<Vec<_>>();
+        let context = PostProcessContext::from_stable(&context);
         for fun in AUX_DATA_CALLBACKS {
-            fun(aux_data.clone());
+            fun(context.clone());
         }
     }
-    stable_aux_data
+    context
 }
