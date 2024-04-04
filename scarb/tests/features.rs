@@ -3,7 +3,8 @@ use assert_fs::fixture::PathChild;
 use assert_fs::TempDir;
 use indoc::indoc;
 
-use scarb_test_support::command::Scarb;
+use scarb_metadata::{Cfg, Metadata};
+use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::project_builder::ProjectBuilder;
 
 fn build_example_program(t: &TempDir) {
@@ -312,7 +313,6 @@ fn features_all_features_failing() {
             error: could not compile `hello` due to previous error
         "#})
         .failure();
-
 }
 
 #[test]
@@ -333,4 +333,33 @@ fn features_no_default_and_all_failing() {
             For more information, try '--help'.
         "#})
         .failure();
+}
+
+#[test]
+fn features_metadata_feature_in_compilation_units() {
+    let t = assert_fs::TempDir::new().unwrap();
+    build_example_program(&t);
+    let output = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--features")
+        .arg("x")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert!(!output.compilation_units.is_empty());
+    let unit = &output.compilation_units[0];
+    assert!(unit.package.repr.starts_with("hello "));
+    assert_eq!(unit.target.name, "hello");
+    assert!(!unit.components.is_empty());
+    assert!(unit
+        .cfg
+        .contains(&Cfg::KV("target".into(), unit.target.kind.clone())));
+    assert!(unit.components.len() >= 2);
+    let main_component_cfg = unit.components[1].cfg.clone();
+    assert!(
+        main_component_cfg.is_some_and(|cfg| cfg.contains(&Cfg::KV("feature".into(), "x".into())))
+    );
 }
