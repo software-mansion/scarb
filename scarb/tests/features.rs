@@ -105,17 +105,35 @@ fn features_fail_both_features_enabled() {
         .arg("x,y")
         .current_dir(&t)
         .assert()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling hello v1.0.0 ([..])
+            error: The name `f` is defined multiple times.
+             --> [..]/src/lib.cairo[..]
+            fn f() -> felt252 { 59 }
+               ^
+            
+            error: could not compile `hello` due to previous error
+        "#})
         .failure();
 }
 
 #[test]
-fn features_fail_feature_not_enabled() {
+fn features_fail_no_feature_enabled() {
     let t = TempDir::new().unwrap();
     build_example_program(&t);
     Scarb::quick_snapbox()
         .arg("build")
         .current_dir(&t)
         .assert()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling hello v1.0.0 ([..])
+            error: Function not found.
+             --> [..]/src/lib.cairo[..]
+                f()
+                ^
+
+            error: could not compile `hello` due to previous error
+        "#})
         .failure();
 }
 
