@@ -169,7 +169,7 @@ fn features_test_build_failed() {
             fn main() -> felt252 { f() }
                                    ^
             
-            error: could not compile `hello` due to previous error
+            error: could not compile `hello` due to previous error[..]
         "#})
         .failure();
 }

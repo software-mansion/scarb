@@ -166,7 +166,7 @@ fn features_fail_both_features_enabled() {
             fn f() -> felt252 { 59 }
                ^
             
-            error: could not compile `hello` due to previous error[..]
+            error: could not compile `hello` due to previous error
         "#})
         .failure();
 }
