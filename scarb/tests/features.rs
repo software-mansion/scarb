@@ -337,7 +337,7 @@ fn features_no_default_and_all_failing() {
 
 #[test]
 fn features_metadata_feature_in_compilation_units() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     build_example_program(&t);
     let output = Scarb::quick_snapbox()
         .arg("--json")
