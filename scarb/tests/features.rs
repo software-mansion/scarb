@@ -1,3 +1,5 @@
+use assert_fs::assert::PathAssert;
+use assert_fs::fixture::PathChild;
 use assert_fs::TempDir;
 use indoc::indoc;
 
@@ -37,6 +39,34 @@ fn features_success() {
         .current_dir(&t)
         .assert()
         .success();
+
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::str::contains(r#""debug_name":"hello::f""#));
+
+    build_example_program(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--features")
+        .arg("y")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::str::contains(r#""debug_name":"hello::f""#));
+}
+
+#[test]
+fn features_fail_both_features_enabled() {
+    let t = TempDir::new().unwrap();
+    build_example_program(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--features")
+        .arg("x,y")
+        .current_dir(&t)
+        .assert()
+        .failure();
 }
 
 #[test]
