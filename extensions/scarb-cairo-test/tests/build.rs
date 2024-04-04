@@ -158,18 +158,31 @@ fn features_test_build_success() {
 fn features_test_build_failed() {
     let t = TempDir::new().unwrap();
     get_features_test_build(&t);
-    Scarb::quick_snapbox()
+    let snapbox = Scarb::quick_snapbox()
         .arg("cairo-test")
         .current_dir(&t)
         .assert()
-        .stdout_matches(indoc! {r#"
-            [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
-            error: Function not found.
-             --> [..]/src/lib.cairo[..]
-            fn main() -> felt252 { f() }
-                                   ^
-            
-            error: could not compile `hello` due to previous error[..]
-        "#})
         .failure();
+
+    #[cfg(not(windows))]
+    snapbox.stdout_matches(indoc! {r#"
+        [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
+        error: Function not found.
+            --> [..]/src/lib.cairo[..]
+        fn main() -> felt252 { f() }
+                                ^
+        
+        error: could not compile `hello` due to previous error[..]
+    "#});
+    #[cfg(windows)]
+    snapbox.stdout_matches(indoc! {r#"
+        [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
+        error: Function not found.
+            --> [..]/src/lib.cairo[..]
+        fn main() -> felt252 { f() }
+                                ^
+        
+        error: could not compile `hello` due to previous error[..]
+        error: process did not exit successfully: exit code: 1
+    "#})
 }
