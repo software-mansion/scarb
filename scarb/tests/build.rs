@@ -822,7 +822,7 @@ fn warnings_allowed_by_default() {
             let a = 41;
                 ^
 
-            Finished release target(s) in [..] seconds
+            Finished release target(s) in [..]
         "#});
 }
 
