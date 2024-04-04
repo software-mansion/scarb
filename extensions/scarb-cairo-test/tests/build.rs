@@ -168,9 +168,9 @@ fn features_test_build_failed() {
     snapbox.stdout_matches(indoc! {r#"
         [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
         error: Function not found.
-            --> [..]/src/lib.cairo[..]
+         --> [..]/src/lib.cairo[..]
         fn main() -> felt252 { f() }
-                                ^
+                               ^
         
         error: could not compile `hello` due to previous error[..]
     "#});
@@ -178,9 +178,9 @@ fn features_test_build_failed() {
     snapbox.stdout_matches(indoc! {r#"
         [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
         error: Function not found.
-            --> [..]/src/lib.cairo[..]
+         --> [..]/src/lib.cairo[..]
         fn main() -> felt252 { f() }
-                                ^
+                               ^
         
         error: could not compile `hello` due to previous error[..]
         error: process did not exit successfully: exit code: 1
