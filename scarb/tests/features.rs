@@ -143,7 +143,10 @@ fn features_fail_missing_manifest() {
         .arg("x")
         .current_dir(&t)
         .assert()
-        .stdout_matches("error: no features in manifest\n")
+        .stdout_matches(indoc! {r#"
+            error: no features in manifest
+            note: to use features, you need to define [features] section in Scarb.toml
+        "#})
         .failure();
 }
 
