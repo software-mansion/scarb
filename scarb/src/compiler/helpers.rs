@@ -39,6 +39,9 @@ pub fn build_compiler_config<'c>(
             diagnostics_reporter
         },
         replace_ids: unit.compiler_config.sierra_replace_ids,
+        add_statements_functions: unit
+            .compiler_config
+            .unstable_add_statements_functions_debug_info,
         ..CompilerConfig::default()
     }
 }

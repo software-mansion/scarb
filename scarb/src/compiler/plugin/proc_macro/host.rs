@@ -14,7 +14,7 @@ use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::attribute::structured::AttributeListStructurize;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
-use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
+use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
 use itertools::Itertools;
 use scarb_stable_hash::short_hash;
 use std::any::Any;

@@ -33,7 +33,8 @@ If publishing to a registry, it's recommended to fill in additional fields:
 - [`repository`](#repository)
 - [`readme`](#readme)
 
-It would also be a good idea to include some [`keywords`](#keywords) and [`categories`](#ca), though they are not required.
+It would also be a good idea to include some [`keywords`](#keywords) and [`categories`](#ca), though they are not
+required.
 
 ### `name`
 
@@ -128,10 +129,11 @@ information about the package.
 readme = "README.md"
 ```
 
-If no value is specified for this field, and a file named `README.md`, `README.txt` or `README` exists in the package root,
-then the name of that file will be used.
+If no value is specified for this field, and a file named `README.md`, `README.txt` or `README` exists in the package
+root, then the name of that file will be used.
 You can suppress this behavior by setting this field to false.
-If the field is set to true, a default value of `README.md` will be assumed, unless file named `README.txt` or `README` exists in the package root, in which case it will be used instead.
+If the field is set to true, a default value of `README.md` will be assumed, unless file named `README.txt` or `README`
+exists in the package root, in which case it will be used instead.
 
 ### `homepage`
 
@@ -274,6 +276,23 @@ enable-gas = false
 ```
 
 This flag cannot be disabled while compiling the `starknet-contract` target.
+
+### `unstable-add-statements-functions-debug-info`
+
+> [!WARNING]
+> This is highly experimental and unstable feature intended to be used
+> by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
+> It may slow down the compilation - it is advised not to use it for other purposes than mentioned in
+> [cairo-profiler](https://github.com/software-mansion/cairo-profiler) documentation.
+
+If enabled, during the project compilation Scarb will add mapping between Sierra statement indexes and fully qualified
+paths of Cairo functions to debug info. A statement index maps to a function which caused the statement to be generated.
+By default, this flag is disabled.
+
+```toml
+[cairo]
+unstable-add-statements-functions-debug-info = true
+```
 
 ## `[profile]`
 
