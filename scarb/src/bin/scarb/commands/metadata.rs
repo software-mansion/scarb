@@ -19,7 +19,7 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
 
     let metadata = ops::collect_metadata(&opts, &ws)?;
 
-    config.ui().print(MachineMessage(metadata));
+    config.ui().force_print(MachineMessage(metadata));
 
     Ok(())
 }

@@ -85,6 +85,11 @@ impl Ui {
         }
     }
 
+    /// Print the message to standard output regardless of the verbosity mode.
+    pub fn force_print<T: Message>(&self, message: T) {
+        self.do_print(message);
+    }
+
     /// Print the message to the standard output only in verbose mode.
     pub fn verbose<T: Message>(&self, message: T) {
         if self.verbosity >= Verbosity::Verbose {
