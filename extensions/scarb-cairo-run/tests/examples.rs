@@ -128,7 +128,7 @@ fn can_disable_gas() {
     #[cfg(windows)]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello_world v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..] seconds
+                Finished release target(s) in [..]
                  Running hello_world
             error: program requires gas counter, please provide `--available-gas` argument
             error: process did not exit successfully: exit code: 1
@@ -136,7 +136,7 @@ fn can_disable_gas() {
     #[cfg(not(windows))]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello_world v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..] seconds
+                Finished release target(s) in [..]
                  Running hello_world
             error: program requires gas counter, please provide `--available-gas` argument
         "#});

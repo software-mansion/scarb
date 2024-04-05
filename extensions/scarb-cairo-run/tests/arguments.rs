@@ -94,7 +94,7 @@ fn array_instead_of_felt() {
     #[cfg(windows)]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..] seconds
+                Finished release target(s) in [..]
                  Running hello
             error: failed to run the function
 
@@ -105,7 +105,7 @@ fn array_instead_of_felt() {
     #[cfg(not(windows))]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..] seconds
+                Finished release target(s) in [..]
                  Running hello
             error: failed to run the function
 
@@ -238,7 +238,7 @@ fn invalid_struct_deserialization() {
     #[cfg(windows)]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..] seconds
+                Finished release target(s) in [..]
                  Running hello
             error: failed to run the function
 
@@ -249,7 +249,7 @@ fn invalid_struct_deserialization() {
     #[cfg(not(windows))]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..] seconds
+                Finished release target(s) in [..]
                  Running hello
             error: failed to run the function
 
