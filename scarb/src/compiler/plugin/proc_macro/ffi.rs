@@ -7,7 +7,7 @@ use cairo_lang_macro_stable::{
     StableResultWrapper, StableTokenStream,
 };
 use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
+use cairo_lang_syntax::node::{ast, SyntaxNode, TypedSyntaxNode};
 use camino::Utf8PathBuf;
 use libloading::{Library, Symbol};
 use std::ffi::{c_char, CStr, CString};
@@ -23,15 +23,20 @@ use libloading::os::unix::Symbol as RawSymbol;
 use libloading::os::windows::Symbol as RawSymbol;
 use smol_str::SmolStr;
 
-pub trait FromItemAst {
+pub trait FromSyntaxNode {
+    fn from_syntax_node(db: &dyn SyntaxGroup, node: SyntaxNode) -> Self;
     fn from_item_ast(db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> Self;
 }
 
-impl FromItemAst for TokenStream {
-    fn from_item_ast(db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> Self {
+impl FromSyntaxNode for TokenStream {
+    fn from_syntax_node(db: &dyn SyntaxGroup, node: SyntaxNode) -> Self {
         let mut builder = PatchBuilder::new(db);
-        builder.add_node(item_ast.as_syntax_node());
+        builder.add_node(node);
         Self::new(builder.code)
+    }
+
+    fn from_item_ast(db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> Self {
+        Self::from_syntax_node(db, item_ast.as_syntax_node())
     }
 }
 

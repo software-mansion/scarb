@@ -38,6 +38,46 @@ pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+#[proc_macro_attribute]
+pub fn inline_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
+    let item: ItemFn = parse_macro_input!(input as ItemFn);
+    let original_item_name = item.sig.ident.to_string();
+    let item = hide_name(item);
+    let item_name = &item.sig.ident;
+
+    let callback_link = format!(
+        "EXPANSIONS_DESERIALIZE_{}",
+        item_name.to_string().to_uppercase()
+    );
+    let callback_link = syn::Ident::new(callback_link.as_str(), item.span());
+
+    // We wrap original function with `InlineProcMacroResult` to `ProcMacroResult` conversion.
+    // This stems from the fact, that `ProcMacroResult::Remove` does not really make sense for inline macros.
+    let wrapper_name = format!("{item_name}_inline_wrapper");
+    let wrapper_name = syn::Ident::new(wrapper_name.as_str(), item.span());
+
+    let expanded = quote! {
+        #item
+
+        fn #wrapper_name(token_stream: ::cairo_lang_macro::TokenStream) -> ::cairo_lang_macro::ProcMacroResult {
+            // Assign function pointer, to validate type.
+            let f: fn(::cairo_lang_macro::TokenStream) -> ::cairo_lang_macro::InlineProcMacroResult = #item_name;
+            f(token_stream).into()
+        }
+
+        #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::MACRO_DEFINITIONS_SLICE)]
+        #[linkme(crate = ::cairo_lang_macro::linkme)]
+        static #callback_link: ::cairo_lang_macro::ExpansionDefinition =
+            ::cairo_lang_macro::ExpansionDefinition{
+                name: #original_item_name,
+                kind: ::cairo_lang_macro::ExpansionKind::Inline,
+                fun: #wrapper_name,
+            };
+    };
+
+    TokenStream::from(expanded)
+}
+
 /// Constructs the post-processing callback.
 ///
 /// This callback will be called after the source code compilation (and thus after all the procedural
