@@ -68,7 +68,7 @@ deno_task_shell = ">=0.13"
 derive_builder = ">=0.12"
 directories = "5"
 dunce = "1"
-expect-test = "1.4"
+expect-test = "1.5"
 fs4 = { version = "0.7", features = ["tokio"] }
 fs_extra = "1"
 futures = { version = "0.3", default-features = false, features = ["std", "async-await"] }
