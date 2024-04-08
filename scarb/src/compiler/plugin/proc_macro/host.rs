@@ -9,8 +9,7 @@ use cairo_lang_defs::plugin::{
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_diagnostics::ToOption;
 use cairo_lang_macro::{
-    AuxData, Diagnostic, ExpansionKind, FullPathMarker, ProcMacroResult, Severity, TokenStream,
-    TokenStreamMetadata,
+    AuxData, Diagnostic, ExpansionKind, FullPathMarker, Severity, TokenStream, TokenStreamMetadata,
 };
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
@@ -353,44 +352,39 @@ impl MacroPlugin for ProcMacroHostPlugin {
         let mut modified = false;
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
         for input in expansions {
-            match self
+            let result = self
                 .instance(input.package_id)
-                .generate_code(input.expansion.name.clone(), token_stream.clone())
-            {
-                ProcMacroResult::Replace {
-                    token_stream: new_token_stream,
-                    aux_data: new_aux_data,
-                    diagnostics,
-                    full_path_markers,
-                } => {
-                    token_stream = new_token_stream;
-                    if let Some(new_aux_data) = new_aux_data {
-                        aux_data.push(ProcMacroAuxData::new(
-                            new_aux_data.into(),
-                            ProcMacroId::new(input.package_id, input.expansion.clone()),
-                        ));
-                    }
-                    modified = true;
-                    all_diagnostics.extend(diagnostics);
-                    self.full_path_markers
-                        .write()
-                        .unwrap()
-                        .entry(input.package_id)
-                        .and_modify(|markers| markers.extend(full_path_markers.clone().into_iter()))
-                        .or_insert(full_path_markers);
-                }
-                ProcMacroResult::Remove { diagnostics } => {
-                    all_diagnostics.extend(diagnostics);
-                    return PluginResult {
-                        diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),
-                        code: None,
-                        remove_original_item: true,
-                    };
-                }
-                ProcMacroResult::Leave { diagnostics } => {
-                    all_diagnostics.extend(diagnostics);
-                }
-            };
+                .generate_code(input.expansion.name.clone(), token_stream.clone());
+
+            // Handle diagnostics.
+            all_diagnostics.extend(result.diagnostics);
+            // Handle aux data.
+            if let Some(new_aux_data) = result.aux_data {
+                aux_data.push(ProcMacroAuxData::new(
+                    new_aux_data.into(),
+                    ProcMacroId::new(input.package_id, input.expansion.clone()),
+                ));
+            }
+            // Handle token stream.
+            let new_token_stream = result.token_stream.clone();
+            if new_token_stream.is_empty() {
+                // Remove original code
+                return PluginResult {
+                    diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),
+                    code: None,
+                    remove_original_item: true,
+                };
+            }
+            // Replace original code.
+            modified = new_token_stream.to_string() != token_stream.to_string();
+            token_stream = new_token_stream;
+            // Full path markers require code modification.
+            self.full_path_markers
+                .write()
+                .unwrap()
+                .entry(input.package_id)
+                .and_modify(|markers| markers.extend(result.full_path_markers.clone().into_iter()))
+                .or_insert(result.full_path_markers);
         }
         if modified {
             PluginResult {
@@ -462,45 +456,37 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         let stable_ptr = syntax.clone().stable_ptr().untyped();
 
         let token_stream = TokenStream::from_syntax_node(db, syntax.as_syntax_node());
-        match self
+        let result = self
             .instance()
-            .generate_code(self.expansion.name.clone(), token_stream)
-        {
-            ProcMacroResult::Replace {
-                token_stream,
-                aux_data,
-                diagnostics,
-                // Ignore, as we know that inline macros do not generate full path markers.
-                full_path_markers: _,
-            } => {
-                let aux_data = aux_data.map(|aux_data| {
-                    let aux_data = ProcMacroAuxData::new(
-                        aux_data.into(),
-                        ProcMacroId::new(self.instance.package_id(), self.expansion.clone()),
-                    );
-                    let mut emitted = EmittedAuxData::default();
-                    emitted.push(aux_data);
-                    DynGeneratedFileAuxData::new(emitted)
-                });
-
-                InlinePluginResult {
-                    code: Some(PluginGeneratedFile {
-                        name: "inline_proc_macro".into(),
-                        content: token_stream.to_string(),
-                        code_mappings: Default::default(),
-                        aux_data,
-                    }),
-                    diagnostics: into_cairo_diagnostics(diagnostics, stable_ptr),
-                }
-            }
-            ProcMacroResult::Remove { diagnostics } => InlinePluginResult {
+            .generate_code(self.expansion.name.clone(), token_stream);
+        // Handle diagnostics.
+        let diagnostics = into_cairo_diagnostics(result.diagnostics, stable_ptr);
+        let token_stream = result.token_stream.clone();
+        if token_stream.is_empty() {
+            // Remove original code
+            InlinePluginResult {
                 code: None,
-                diagnostics: into_cairo_diagnostics(diagnostics, stable_ptr),
-            },
-            ProcMacroResult::Leave { .. } => {
-                // Safe to panic, as all inline macros should originally return `InlineProcMacroResult`.
-                // Which is validated inside the inline macro helper attribute.
-                panic!("inline macro cannot return `Leave` result");
+                diagnostics,
+            }
+        } else {
+            // Replace
+            let aux_data = result.aux_data.map(|aux_data| {
+                let aux_data = ProcMacroAuxData::new(
+                    aux_data.into(),
+                    ProcMacroId::new(self.instance.package_id(), self.expansion.clone()),
+                );
+                let mut emitted = EmittedAuxData::default();
+                emitted.push(aux_data);
+                DynGeneratedFileAuxData::new(emitted)
+            });
+            InlinePluginResult {
+                code: Some(PluginGeneratedFile {
+                    name: "inline_proc_macro".into(),
+                    content: token_stream.to_string(),
+                    code_mappings: Default::default(),
+                    aux_data,
+                }),
+                diagnostics,
             }
         }
     }
