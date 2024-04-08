@@ -148,8 +148,8 @@ fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
             check_starknet_dependency(&unit, ws, &db, &package_name);
             let result = ws.config().compilers().compile(unit, &mut db, ws);
             proc_macro_host
-                .collect_aux_data(db.upcast())
-                .context("procedural macro auxiliary data callback call failed")?;
+                .post_process(db.upcast())
+                .context("procedural macro post processing callback failed")?;
             result
         }
     };

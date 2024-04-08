@@ -1,26 +1,36 @@
 use crate::compiler::plugin::proc_macro::{Expansion, FromSyntaxNode, ProcMacroInstance};
 use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Result};
-use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, GeneratedFileAuxData, MacroPlugin, MacroPluginMetadata,
     PluginGeneratedFile, PluginResult,
 };
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
+use cairo_lang_diagnostics::ToOption;
 use cairo_lang_macro::{
-    AuxData, Diagnostic, ExpansionKind, ProcMacroResult, Severity, TokenStream, TokenStreamMetadata,
+    AuxData, Diagnostic, ExpansionKind, FullPathMarker, ProcMacroResult, Severity, TokenStream,
+    TokenStreamMetadata,
 };
+use cairo_lang_semantic::db::SemanticGroup;
+use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
 use cairo_lang_semantic::plugin::PluginSuite;
-use cairo_lang_syntax::attribute::structured::AttributeListStructurize;
+use cairo_lang_syntax::attribute::structured::{
+    Attribute, AttributeArgVariant, AttributeListStructurize,
+};
+use cairo_lang_syntax::node::ast::Expr;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
 use itertools::Itertools;
 use scarb_stable_hash::short_hash;
 use std::any::Any;
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 use std::vec::IntoIter;
 use tracing::{debug, trace_span};
+
+const FULL_PATH_MARKER_KEY: &str = "macro::full_path_marker";
 
 /// A Cairo compiler plugin controlling the procedural macro execution.
 ///
@@ -29,6 +39,7 @@ use tracing::{debug, trace_span};
 #[derive(Debug)]
 pub struct ProcMacroHostPlugin {
     macros: Vec<Arc<ProcMacroInstance>>,
+    full_path_markers: RwLock<HashMap<PackageId, Vec<String>>>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -126,7 +137,10 @@ impl ProcMacroHostPlugin {
                 .collect::<Vec<_>>()
                 .join(", ")
         );
-        Ok(Self { macros })
+        Ok(Self {
+            macros,
+            full_path_markers: RwLock::new(Default::default()),
+        })
     }
 
     /// Handle `#[proc_macro_name]` attribute.
@@ -192,7 +206,101 @@ impl ProcMacroHostPlugin {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    pub fn collect_aux_data(&self, db: &dyn DefsGroup) -> Result<()> {
+    pub fn post_process(&self, db: &dyn SemanticGroup) -> Result<()> {
+        let markers = self.collect_full_path_markers(db);
+
+        let aux_data = self.collect_aux_data(db);
+        for instance in self.macros.iter() {
+            let _ = trace_span!(
+                "post_process_callback",
+                instance = %instance.package_id()
+            )
+            .entered();
+            let instance_markers = self
+                .full_path_markers
+                .read()
+                .unwrap()
+                .get(&instance.package_id())
+                .cloned()
+                .unwrap_or_default();
+            let markers_for_instance = markers
+                .iter()
+                .filter(|(key, _)| instance_markers.contains(key))
+                .map(|(key, full_path)| FullPathMarker {
+                    key: key.clone(),
+                    full_path: full_path.clone(),
+                })
+                .collect_vec();
+            let data = aux_data
+                .get(&instance.package_id())
+                .cloned()
+                .unwrap_or_default();
+            debug!("calling post processing callback with: {data:?}");
+            instance.post_process_callback(data.clone(), markers_for_instance);
+        }
+        Ok(())
+    }
+
+    fn collect_full_path_markers(&self, db: &dyn SemanticGroup) -> HashMap<String, String> {
+        let mut markers: HashMap<String, String> = HashMap::new();
+        // FULL_PATH_MARKER_KEY
+        for crate_id in db.crates() {
+            let modules = db.crate_modules(crate_id);
+            for module_id in modules.iter() {
+                let Ok(module_items) = db.module_items(*module_id) else {
+                    continue;
+                };
+                for item_id in module_items.iter() {
+                    let attr = match item_id {
+                        ModuleItemId::Struct(id) => {
+                            id.query_attr(db, FULL_PATH_MARKER_KEY).to_option()
+                        }
+                        ModuleItemId::Enum(id) => {
+                            id.query_attr(db, FULL_PATH_MARKER_KEY).to_option()
+                        }
+                        ModuleItemId::FreeFunction(id) => {
+                            id.query_attr(db, FULL_PATH_MARKER_KEY).to_option()
+                        }
+                        _ => None,
+                    };
+
+                    let keys = attr
+                        .unwrap_or_default()
+                        .into_iter()
+                        .filter_map(|attr| Self::extract_key(db, attr))
+                        .collect_vec();
+                    let full_path = item_id.full_path(db.upcast());
+                    for key in keys {
+                        markers.insert(key, full_path.clone());
+                    }
+                }
+            }
+        }
+        markers
+    }
+
+    fn extract_key(db: &dyn SemanticGroup, attr: Attribute) -> Option<String> {
+        if attr.id != FULL_PATH_MARKER_KEY {
+            return None;
+        }
+
+        for arg in attr.args.clone() {
+            if let AttributeArgVariant::Unnamed {
+                value: Expr::String(s),
+                ..
+            } = arg.variant
+            {
+                return s.string_value(db.upcast());
+            }
+        }
+
+        None
+    }
+
+    fn collect_aux_data(
+        &self,
+        db: &dyn SemanticGroup,
+    ) -> HashMap<PackageId, Vec<ProcMacroAuxData>> {
         let mut data = Vec::new();
         for crate_id in db.crates() {
             let crate_modules = db.crate_modules(crate_id);
@@ -211,22 +319,8 @@ impl ProcMacroHostPlugin {
                 }
             }
         }
-        let aux_data = data
-            .into_iter()
-            .into_group_map_by(|d| d.macro_id.package_id);
-        for instance in self.macros.iter() {
-            let _ = trace_span!(
-                "post_process_callback",
-                instance = %instance.package_id()
-            )
-            .entered();
-            let data = aux_data.get(&instance.package_id()).cloned();
-            if let Some(data) = data {
-                debug!("calling aux data callback with: {data:?}");
-                instance.aux_data_callback(data.clone());
-            }
-        }
-        Ok(())
+        data.into_iter()
+            .into_group_map_by(|d| d.macro_id.package_id)
     }
 
     pub fn instance(&self, package_id: PackageId) -> &ProcMacroInstance {
@@ -267,6 +361,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
                     token_stream: new_token_stream,
                     aux_data: new_aux_data,
                     diagnostics,
+                    full_path_markers,
                 } => {
                     token_stream = new_token_stream;
                     if let Some(new_aux_data) = new_aux_data {
@@ -277,6 +372,12 @@ impl MacroPlugin for ProcMacroHostPlugin {
                     }
                     modified = true;
                     all_diagnostics.extend(diagnostics);
+                    self.full_path_markers
+                        .write()
+                        .unwrap()
+                        .entry(input.package_id)
+                        .and_modify(|markers| markers.extend(full_path_markers.clone().into_iter()))
+                        .or_insert(full_path_markers);
                 }
                 ProcMacroResult::Remove { diagnostics } => {
                     all_diagnostics.extend(diagnostics);
@@ -319,6 +420,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
         self.macros
             .iter()
             .flat_map(|m| m.declared_attributes())
+            .chain(vec![FULL_PATH_MARKER_KEY.to_string()])
             .collect()
     }
 }
@@ -368,6 +470,8 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                 token_stream,
                 aux_data,
                 diagnostics,
+                // Ignore, as we know that inline macros do not generate full path markers.
+                full_path_markers: _,
             } => {
                 let aux_data = aux_data.map(|aux_data| {
                     let aux_data = ProcMacroAuxData::new(

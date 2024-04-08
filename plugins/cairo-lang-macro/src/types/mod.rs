@@ -16,6 +16,7 @@ pub enum ProcMacroResult {
         token_stream: TokenStream,
         aux_data: Option<AuxData>,
         diagnostics: Vec<Diagnostic>,
+        full_path_markers: Vec<String>,
     },
     /// Plugin ordered item removal.
     Remove { diagnostics: Vec<Diagnostic> },
@@ -278,6 +279,7 @@ impl ProcMacroResult {
             aux_data,
             token_stream,
             diagnostics: Vec::new(),
+            full_path_markers: Vec::new(),
         }
     }
 
@@ -331,9 +333,30 @@ impl From<InlineProcMacroResult> for ProcMacroResult {
                 token_stream,
                 aux_data,
                 diagnostics,
+                full_path_markers: Vec::new(),
             },
         }
     }
+}
+
+/// Input for the post-process callback.
+#[derive(Clone, Debug)]
+pub struct PostProcessContext {
+    /// Auxiliary data returned by the procedural macro.
+    pub aux_data: Vec<AuxData>,
+    /// Full path markers resolved by the host.
+    pub full_path_markers: Vec<FullPathMarker>,
+}
+
+/// Full path marker.
+///
+/// This contains information about full cairo path resolved by the host, identified by key.
+#[derive(Clone, Debug)]
+pub struct FullPathMarker {
+    /// Key returned by the procedural macro.
+    pub key: String,
+    /// Full path resolved by the host.
+    pub full_path: String,
 }
 
 #[cfg(test)]

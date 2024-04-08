@@ -427,7 +427,8 @@ fn can_replace_original_node() {
             ProcMacroResult::Replace {
                 token_stream,
                 aux_data: None,
-                diagnostics: Vec::new()
+                diagnostics: Vec::new(),
+                full_path_markers: Vec::new(),
             }
         }
         "##},
@@ -466,7 +467,7 @@ fn can_return_aux_data_from_plugin() {
     simple_project_with_code(
         &t,
         indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, post_process};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process};
         use serde::{Serialize, Deserialize};
 
         #[derive(Debug, Serialize, Deserialize)]
@@ -492,8 +493,8 @@ fn can_return_aux_data_from_plugin() {
         }
 
         #[post_process]
-        pub fn callback(aux_data: Vec<AuxData>) {
-            let aux_data = aux_data.into_iter()
+        pub fn callback(context: PostProcessContext) {
+            let aux_data = context.aux_data.into_iter()
                 .map(|aux_data| {
                     let value: Vec<u8> = aux_data.into();
                     let aux_data: SomeMacroDataFormat = serde_json::from_slice(&value).unwrap();
@@ -504,8 +505,8 @@ fn can_return_aux_data_from_plugin() {
         }
 
         #[post_process]
-        pub fn some_no_op_callback(aux_data: Vec<AuxData>) {
-            drop(aux_data);
+        pub fn some_no_op_callback(context: PostProcessContext) {
+            drop(context.aux_data);
         }
         "##},
     );
@@ -596,7 +597,7 @@ fn can_define_multiple_macros() {
     simple_project_with_code(
         &t,
         indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, post_process};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process};
 
         #[attribute_macro]
         pub fn hello(token_stream: TokenStream) -> ProcMacroResult {
@@ -625,8 +626,8 @@ fn can_define_multiple_macros() {
         }
 
         #[post_process]
-        pub fn callback(aux_data: Vec<AuxData>) {
-            assert_eq!(aux_data.len(), 2);
+        pub fn callback(context: PostProcessContext) {
+            assert_eq!(context.aux_data.len(), 2);
         }
         "##},
     );
@@ -635,7 +636,7 @@ fn can_define_multiple_macros() {
     simple_project_with_code_and_name(
         &w,
         indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, post_process};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process};
 
         #[attribute_macro]
         pub fn beautiful(token_stream: TokenStream) -> ProcMacroResult {
@@ -651,8 +652,8 @@ fn can_define_multiple_macros() {
         }
 
         #[post_process]
-        pub fn callback(aux_data: Vec<AuxData>) {
-            assert_eq!(aux_data.len(), 1);
+        pub fn callback(context: PostProcessContext) {
+            assert_eq!(context.aux_data.len(), 1);
         }
         "##},
         "other",
@@ -837,5 +838,68 @@ fn cannot_use_undefined_macro() {
         ^******^
 
         error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn can_resolve_full_path_markers() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, post_process, PostProcessContext};
+
+        #[attribute_macro]
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream = TokenStream::new(
+                token_stream
+                    .to_string()
+                    // Remove macro call to avoid infinite loop.
+                    .replace("#[some]", r#"#[macro::full_path_marker("some-key")]"#)
+                    .replace("12", "34")
+            );
+
+            let full_path_markers = vec!["some-key".to_string()];
+
+            ProcMacroResult::Replace {
+                token_stream,
+                full_path_markers,
+                aux_data: None,
+                diagnostics: Vec::new(),
+            }
+        }
+
+        #[post_process]
+        pub fn callback(context: PostProcessContext) {
+            println!("{:?}", context.full_path_markers);
+        }
+        "##},
+    );
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [FullPathMarker { key: "some-key", full_path: "hello::main" }]
+            [..]Finished release target(s) in [..]
         "#});
 }

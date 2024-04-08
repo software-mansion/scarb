@@ -72,6 +72,7 @@ pub enum StableProcMacroResult {
         diagnostics: StableSlice<StableDiagnostic>,
         token_stream: StableTokenStream,
         aux_data: StableAuxData,
+        full_path_markers: StableSlice<*mut c_char>,
     },
     /// Plugin ordered item removal.
     Remove {
@@ -94,4 +95,16 @@ impl StableTokenStream {
         // The memory must still be freed with `CString::from_raw`.
         CStr::from_ptr(self.value).to_string_lossy().to_string()
     }
+}
+
+#[repr(C)]
+pub struct StablePostProcessContext {
+    pub aux_data: StableSlice<StableAuxData>,
+    pub full_path_markers: StableSlice<StableFullPathMarker>,
+}
+
+#[repr(C)]
+pub struct StableFullPathMarker {
+    pub key: *mut c_char,
+    pub full_path: *mut c_char,
 }
