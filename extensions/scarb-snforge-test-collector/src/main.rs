@@ -28,7 +28,7 @@ struct Args {
     /// A statement index maps to a function which cause the statement to be generated.
     /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
     #[arg(long)]
-    generate_statements_functions_mappings: bool,
+    unstable_add_statements_functions_debug_info: bool,
 }
 
 fn main() -> Result<()> {
@@ -57,7 +57,7 @@ fn main() -> Result<()> {
         let test_crates = compile_tests(
             &compilation_targets,
             &compilation_unit,
-            args.generate_statements_functions_mappings,
+            args.unstable_add_statements_functions_debug_info,
         )?;
 
         // artifact saved to `{target_dir}/{profile_name}/{package_name}.sierra.json`
