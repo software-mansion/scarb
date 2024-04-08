@@ -8,32 +8,11 @@ pub use expansions::*;
 
 /// Result of procedural macro code generation.
 #[derive(Debug)]
-pub enum ProcMacroResult {
-    /// Plugin has not taken any action.
-    Leave { diagnostics: Vec<Diagnostic> },
-    /// Plugin generated [`TokenStream`] replacement.
-    Replace {
-        token_stream: TokenStream,
-        aux_data: Option<AuxData>,
-        diagnostics: Vec<Diagnostic>,
-        full_path_markers: Vec<String>,
-    },
-    /// Plugin ordered item removal.
-    Remove { diagnostics: Vec<Diagnostic> },
-}
-
-/// Result of inline procedural macro code generation.
-///
-/// This enum differs from `ProcMacroResult` by not having `Remove` variant.
-pub enum InlineProcMacroResult {
-    /// Plugin has not taken any action.
-    Leave { diagnostics: Vec<Diagnostic> },
-    /// Plugin generated [`TokenStream`] replacement.
-    Replace {
-        token_stream: TokenStream,
-        aux_data: Option<AuxData>,
-        diagnostics: Vec<Diagnostic>,
-    },
+pub struct ProcMacroResult {
+    pub token_stream: TokenStream,
+    pub aux_data: Option<AuxData>,
+    pub diagnostics: Vec<Diagnostic>,
+    pub full_path_markers: Vec<String>,
 }
 
 /// An abstract stream of Cairo tokens.
@@ -68,6 +47,11 @@ impl TokenStream {
     }
 
     #[doc(hidden)]
+    pub fn empty() -> Self {
+        Self::new("".to_string())
+    }
+
+    #[doc(hidden)]
     pub fn with_metadata(mut self, metadata: TokenStreamMetadata) -> Self {
         self.metadata = metadata;
         self
@@ -78,6 +62,10 @@ impl TokenStream {
     /// The metadata struct can be used to describe the [`TokenStream`] origin.
     pub fn metadata(&self) -> &TokenStreamMetadata {
         &self.metadata
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.to_string().is_empty()
     }
 }
 
@@ -129,7 +117,7 @@ impl TokenStreamMetadata {
 ///     let value = serde_json::to_string(&value).unwrap();
 ///     let value: Vec<u8> = value.into_bytes();
 ///     let aux_data = AuxData::new(value);
-///     ProcMacroResult::replace(token_stream, Some(aux_data))
+///     ProcMacroResult::new(token_stream).with_aux_data(aux_data)
 /// }
 ///
 /// #[post_process]
@@ -259,83 +247,32 @@ impl IntoIterator for Diagnostics {
 }
 
 impl ProcMacroResult {
-    /// Create new [`ProcMacroResult::Leave`] variant, empty diagnostics set.
-    pub fn leave() -> Self {
-        Self::Leave {
-            diagnostics: Vec::new(),
-        }
-    }
-
-    /// Create new [`ProcMacroResult::Remove`] variant, empty diagnostics set.
-    pub fn remove() -> Self {
-        Self::Remove {
-            diagnostics: Vec::new(),
-        }
-    }
-
-    /// Create new [`ProcMacroResult::Replace`] variant, empty diagnostics set.
-    pub fn replace(token_stream: TokenStream, aux_data: Option<AuxData>) -> Self {
-        Self::Replace {
-            aux_data,
+    /// Create new [`ProcMacroResult`], empty diagnostics set.
+    pub fn new(token_stream: TokenStream) -> Self {
+        Self {
             token_stream,
-            diagnostics: Vec::new(),
-            full_path_markers: Vec::new(),
+            aux_data: Default::default(),
+            diagnostics: Default::default(),
+            full_path_markers: Default::default(),
         }
+    }
+
+    /// Set [`AuxData`] on the [`ProcMacroResult`].
+    pub fn with_aux_data(mut self, aux_data: AuxData) -> Self {
+        self.aux_data = Some(aux_data);
+        self
+    }
+
+    /// Append full path markers to the [`ProcMacroResult`].
+    pub fn with_full_path_markers(mut self, full_path_markers: Vec<String>) -> Self {
+        self.full_path_markers.extend(full_path_markers);
+        self
     }
 
     /// Append diagnostics to the [`ProcMacroResult`] diagnostics set.
     pub fn with_diagnostics(mut self, diagnostics: Diagnostics) -> Self {
-        match &mut self {
-            Self::Leave { diagnostics: d } => d.extend(diagnostics),
-            Self::Remove { diagnostics: d } => d.extend(diagnostics),
-            Self::Replace { diagnostics: d, .. } => d.extend(diagnostics),
-        };
+        self.diagnostics.extend(diagnostics);
         self
-    }
-}
-
-impl InlineProcMacroResult {
-    /// Create new [`InlineProcMacroResult::Leave`] variant, empty diagnostics set.
-    pub fn leave() -> Self {
-        Self::Leave {
-            diagnostics: Vec::new(),
-        }
-    }
-
-    /// Create new [`InlineProcMacroResult::Replace`] variant, empty diagnostics set.
-    pub fn replace(token_stream: TokenStream, aux_data: Option<AuxData>) -> Self {
-        Self::Replace {
-            aux_data,
-            token_stream,
-            diagnostics: Vec::new(),
-        }
-    }
-
-    /// Append diagnostics to the [`InlineProcMacroResult`] diagnostics set.
-    pub fn with_diagnostics(mut self, diagnostics: Diagnostics) -> Self {
-        match &mut self {
-            Self::Leave { diagnostics: d } => d.extend(diagnostics),
-            Self::Replace { diagnostics: d, .. } => d.extend(diagnostics),
-        };
-        self
-    }
-}
-
-impl From<InlineProcMacroResult> for ProcMacroResult {
-    fn from(result: InlineProcMacroResult) -> Self {
-        match result {
-            InlineProcMacroResult::Leave { diagnostics } => ProcMacroResult::Leave { diagnostics },
-            InlineProcMacroResult::Replace {
-                token_stream,
-                aux_data,
-                diagnostics,
-            } => ProcMacroResult::Replace {
-                token_stream,
-                aux_data,
-                diagnostics,
-                full_path_markers: Vec::new(),
-            },
-        }
     }
 }
 
@@ -365,7 +302,7 @@ mod tests {
 
     #[test]
     fn new_token_stream_metadata_empty() {
-        let token_stream = TokenStream::new("".to_string());
+        let token_stream = TokenStream::empty();
         assert!(token_stream.metadata.file_id.is_none());
         assert!(token_stream.metadata.original_file_path.is_none());
     }

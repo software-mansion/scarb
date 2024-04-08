@@ -101,8 +101,7 @@ fn simple_project(t: &impl PathChild) {
 
         #[attribute_macro]
         pub fn some(token_stream: TokenStream) -> ProcMacroResult {
-            let _code = token_stream.to_string();
-            ProcMacroResult::Leave { diagnostics: Vec::new() }
+            ProcMacroResult::new(token_stream)
         }
         "#};
     simple_project_with_code(t, code);
@@ -276,9 +275,9 @@ fn can_emit_plugin_warning() {
         
         #[attribute_macro]
         pub fn some(token_stream: TokenStream) -> ProcMacroResult {
-            let _code = token_stream.to_string();
             let diag = Diagnostic::warn("Some warning from macro.");
-            ProcMacroResult::Leave { diagnostics: vec![diag] }
+            ProcMacroResult::new(token_stream)
+                .with_diagnostics(vec![diag].into())
         }
         "#},
     );
@@ -323,9 +322,9 @@ fn can_emit_plugin_error() {
 
         #[attribute_macro]
         pub fn some(token_stream: TokenStream) -> ProcMacroResult {
-            let _code = token_stream.to_string();
             let diag = Diagnostic::error("Some error from macro.");
-            ProcMacroResult::Leave { diagnostics: vec![diag] }
+            ProcMacroResult::new(token_stream)
+                .with_diagnostics(vec![diag].into())
         }
         "#},
     );
@@ -370,7 +369,7 @@ fn can_remove_original_node() {
 
         #[attribute_macro]
         pub fn some(_: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::Remove { diagnostics: Vec::new() }
+            ProcMacroResult::new(TokenStream::empty())
         }
         "#},
     );
@@ -424,12 +423,7 @@ fn can_replace_original_node() {
                     .replace("#[some]", "")
                     .replace("12", "34")
             );
-            ProcMacroResult::Replace {
-                token_stream,
-                aux_data: None,
-                diagnostics: Vec::new(),
-                full_path_markers: Vec::new(),
-            }
+            ProcMacroResult::new(token_stream)
         }
         "##},
     );
@@ -488,8 +482,7 @@ fn can_return_aux_data_from_plugin() {
             let value = serde_json::to_string(&value).unwrap();
             let value: Vec<u8> = value.into_bytes();
             let aux_data = AuxData::new(value);
-
-            ProcMacroResult::replace(token_stream, Some(aux_data))
+            ProcMacroResult::new(token_stream).with_aux_data(aux_data)
         }
 
         #[post_process]
@@ -550,7 +543,7 @@ fn can_read_token_stream_metadata() {
         #[attribute_macro]
         pub fn some(token_stream: TokenStream) -> ProcMacroResult {
             println!("{:#?}", token_stream.metadata());
-            ProcMacroResult::Leave { diagnostics: Vec::new() }
+            ProcMacroResult::new(token_stream)
         }
 
         "##},
@@ -609,7 +602,7 @@ fn can_define_multiple_macros() {
                     .replace("12", "34")
             );
             let aux_data = AuxData::new(Vec::new());
-            ProcMacroResult::replace(token_stream, Some(aux_data))
+            ProcMacroResult::new(token_stream).with_aux_data(aux_data)
         }
 
         #[attribute_macro]
@@ -622,7 +615,7 @@ fn can_define_multiple_macros() {
                     .replace("56", "78")
             );
             let aux_data = AuxData::new(Vec::new());
-            ProcMacroResult::replace(token_stream, Some(aux_data))
+            ProcMacroResult::new(token_stream).with_aux_data(aux_data)
         }
 
         #[post_process]
@@ -648,7 +641,7 @@ fn can_define_multiple_macros() {
                     .replace("90", "09")
             );
             let aux_data = AuxData::new(Vec::new());
-            ProcMacroResult::replace(token_stream, Some(aux_data))
+            ProcMacroResult::new(token_stream).with_aux_data(aux_data)
         }
 
         #[post_process]
@@ -701,13 +694,13 @@ fn cannot_duplicate_macros() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn hello(_token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::leave()
+        pub fn hello(token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(token_stream)
         }
 
         #[attribute_macro]
-        pub fn hello(_token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::leave()
+        pub fn hello(token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(token_stream)
         }
         "##},
     );
@@ -742,13 +735,13 @@ fn cannot_duplicate_macros_across_packages() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn hello(_token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::leave()
+        pub fn hello(token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(token_stream)
         }
 
         #[attribute_macro]
-        pub fn world(_token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::leave()
+        pub fn world(token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(token_stream)
         }
         "##},
     );
@@ -760,8 +753,8 @@ fn cannot_duplicate_macros_across_packages() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn hello(_token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::leave()
+        pub fn hello(token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(token_stream)
         }
         "##},
         "other",
@@ -806,8 +799,8 @@ fn cannot_use_undefined_macro() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn hello(_token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::leave()
+        pub fn hello(token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(token_stream)
         }
         "##},
     );
@@ -862,12 +855,8 @@ fn can_resolve_full_path_markers() {
 
             let full_path_markers = vec!["some-key".to_string()];
 
-            ProcMacroResult::Replace {
-                token_stream,
-                full_path_markers,
-                aux_data: None,
-                diagnostics: Vec::new(),
-            }
+            ProcMacroResult::new(token_stream)
+                .with_full_path_markers(full_path_markers)
         }
 
         #[post_process]
@@ -901,5 +890,93 @@ fn can_resolve_full_path_markers() {
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [FullPathMarker { key: "some-key", full_path: "hello::main" }]
             [..]Finished release target(s) in [..]
+        "#});
+}
+
+#[test]
+fn can_implement_inline_macro() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(TokenStream::new("34".to_string()))
+        }
+        "##},
+    );
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 { some!() }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            Run completed successfully, returning [34]
+        "#});
+}
+
+#[test]
+fn empty_inline_macro() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    simple_project_with_code(
+        &t,
+        indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(TokenStream::empty())
+        }
+        "##},
+    );
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 {
+                let _x = some!();
+                12
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Inline macro `some` failed.
+             --> [..]lib.cairo:2:14
+                let _x = some!();
+                         ^*****^
+
+            error: could not compile `hello` due to previous error
         "#});
 }

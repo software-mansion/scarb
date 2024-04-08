@@ -62,22 +62,11 @@ pub type StableSeverity = NonZeroU8;
 /// This struct implements FFI-safe stable ABI.
 #[repr(C)]
 #[derive(Debug)]
-pub enum StableProcMacroResult {
-    /// Plugin has not taken any action.
-    Leave {
-        diagnostics: StableSlice<StableDiagnostic>,
-    },
-    /// Plugin generated [`StableTokenStream`] replacement.
-    Replace {
-        diagnostics: StableSlice<StableDiagnostic>,
-        token_stream: StableTokenStream,
-        aux_data: StableAuxData,
-        full_path_markers: StableSlice<*mut c_char>,
-    },
-    /// Plugin ordered item removal.
-    Remove {
-        diagnostics: StableSlice<StableDiagnostic>,
-    },
+pub struct StableProcMacroResult {
+    pub token_stream: StableTokenStream,
+    pub diagnostics: StableSlice<StableDiagnostic>,
+    pub aux_data: StableAuxData,
+    pub full_path_markers: StableSlice<*mut c_char>,
 }
 
 #[repr(C)]
