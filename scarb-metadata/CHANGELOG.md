@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 1.12.0 (2024-04-09)
+- Added `cfg` field on `CompilationUnitComponentMetadata`.
+
 ## 1.11.1 (2024-02-06)
 - Fix backward compatibility of `experimental_features` field deserialization.
 - Added `profile`, `dev` and `release` arguments to `MetadataCommand`.

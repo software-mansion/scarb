@@ -4521,7 +4521,7 @@ dependencies = [
  "redb",
  "reqwest",
  "scarb-build-metadata",
- "scarb-metadata 1.11.1",
+ "scarb-metadata 1.12.0",
  "scarb-stable-hash",
  "scarb-test-support",
  "scarb-ui",
@@ -4584,7 +4584,7 @@ dependencies = [
  "clap",
  "indoc",
  "num-bigint",
- "scarb-metadata 1.11.1",
+ "scarb-metadata 1.12.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -4603,7 +4603,7 @@ dependencies = [
  "cairo-lang-test-runner",
  "clap",
  "indoc",
- "scarb-metadata 1.11.1",
+ "scarb-metadata 1.12.0",
  "scarb-test-support",
  "scarb-ui",
  "serde_json",
@@ -4626,7 +4626,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-metadata"
-version = "1.11.1"
+version = "1.12.0"
 dependencies = [
  "assert_fs",
  "cairo-lang-filesystem",
@@ -4670,7 +4670,7 @@ dependencies = [
  "num-bigint",
  "num-traits 0.2.18",
  "rayon",
- "scarb-metadata 1.11.1",
+ "scarb-metadata 1.12.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -4727,7 +4727,7 @@ dependencies = [
  "clap",
  "console",
  "indicatif",
- "scarb-metadata 1.11.1",
+ "scarb-metadata 1.12.0",
  "serde",
  "serde_json",
  "tracing-core",
