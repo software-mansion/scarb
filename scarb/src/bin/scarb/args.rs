@@ -10,8 +10,6 @@ use camino::Utf8PathBuf;
 use clap::{CommandFactory, Parser, Subcommand};
 use scarb::ops::EmitTarget;
 use smol_str::SmolStr;
-use tracing::level_filters::LevelFilter;
-use tracing_log::AsTrace;
 use url::Url;
 
 use scarb::compiler::Profile;
@@ -19,7 +17,7 @@ use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
 use scarb::manifest_editor::SectionArgs;
 use scarb::version;
-use scarb_ui::args::{FeaturesSpec, PackagesFilter};
+use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use scarb_ui::OutputFormat;
 
 /// The Cairo package manager.
@@ -62,7 +60,7 @@ pub struct ScarbArgs {
 
     /// Logging verbosity.
     #[command(flatten)]
-    pub verbose: clap_verbosity_flag::Verbosity,
+    pub verbose: VerbositySpec,
 
     /// Print machine-readable output in NDJSON format.
     #[arg(long)]
@@ -115,18 +113,6 @@ impl ScarbArgs {
             OutputFormat::Json
         } else {
             OutputFormat::default()
-        }
-    }
-
-    /// Get [`ui::Verbosity`] out of these arguments.
-    pub fn ui_verbosity(&self) -> scarb_ui::Verbosity {
-        let filter = self.verbose.log_level_filter().as_trace();
-        if filter >= LevelFilter::WARN {
-            scarb_ui::Verbosity::Verbose
-        } else if filter > LevelFilter::OFF {
-            scarb_ui::Verbosity::Normal
-        } else {
-            scarb_ui::Verbosity::Quiet
         }
     }
 

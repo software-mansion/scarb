@@ -335,3 +335,26 @@ fn cannot_set_gas_limit_for_package_with_disabled_gas_calculation() {
             error: gas calculation disabled for package `hello`, cannot define custom gas limit
         "#});
 }
+
+#[test]
+fn can_control_verbosity() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .lib_cairo(indoc! {r#"
+            fn main() {
+                println!("something");
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("--quiet")
+        .arg("cairo-run")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        something
+        "#});
+}

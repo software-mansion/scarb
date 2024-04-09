@@ -120,6 +120,7 @@ toml_edit = { version = "0.22", features = ["serde"] }
 tower-http = { version = "0.4", features = ["fs"] }
 tracing = "0.1"
 tracing-log = "0.2"
+tracing-core = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 typed-builder = ">=0.17"
 url = { version = "2", features = ["serde"] }

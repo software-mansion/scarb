@@ -3,7 +3,6 @@ use std::env;
 use anyhow::{Error, Result};
 use clap::Parser;
 use tracing::debug;
-use tracing_log::AsTrace;
 use tracing_subscriber::EnvFilter;
 
 use args::ScarbArgs;
@@ -22,13 +21,13 @@ fn main() {
     let args = ScarbArgs::parse();
 
     // Pre-create Ui used in logging & error reporting, because we will move `args` to `cli_main`.
-    let ui = Ui::new(args.ui_verbosity(), args.output_format());
+    let ui = Ui::new(args.verbose.clone().into(), args.output_format());
 
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
         .with_env_filter(
             EnvFilter::builder()
-                .with_default_directive(args.verbose.log_level_filter().as_trace().into())
+                .with_default_directive(args.verbose.as_trace().into())
                 .with_env_var("SCARB_LOG")
                 .from_env_lossy(),
         )
@@ -59,7 +58,6 @@ fn exit_with_error(err: Error, ui: &Ui) {
 }
 
 fn cli_main(args: ScarbArgs) -> Result<()> {
-    let ui_verbosity = args.ui_verbosity();
     let ui_output_format = args.output_format();
 
     let manifest_path = ops::find_manifest_path(args.manifest_path.as_deref())?;
@@ -68,7 +66,7 @@ fn cli_main(args: ScarbArgs) -> Result<()> {
         .global_cache_dir_override(args.global_cache_dir)
         .global_config_dir_override(args.global_config_dir)
         .target_dir_override(args.target_dir)
-        .ui_verbosity(ui_verbosity)
+        .ui_verbosity(args.verbose.clone().into())
         .ui_output_format(ui_output_format)
         .offline(args.offline)
         .log_filter_directive(env::var_os("SCARB_LOG"))

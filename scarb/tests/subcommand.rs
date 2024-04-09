@@ -4,7 +4,6 @@ use std::process::{Child, Command};
 use std::{env, io};
 
 use assert_fs::TempDir;
-#[cfg(unix)]
 use indoc::indoc;
 use scarb_test_support::cargo::cargo_bin;
 
@@ -214,4 +213,34 @@ fn can_list_scarb_directory_scripts() {
     let output = cmd.get_output().stdout.clone();
     let stdout = String::from_utf8(output).unwrap();
     assert!(stdout.contains("hello"))
+}
+
+#[test]
+fn scarb_reads_verbosity_from_env() {
+    let p = TempDir::new().unwrap();
+    ProjectBuilder::start().build(&p);
+    Scarb::quick_snapbox()
+        .current_dir(&p)
+        .arg("check")
+        .env("SCARB_UI_VERBOSITY", "quiet")
+        .assert()
+        .success()
+        .stdout_eq("");
+}
+
+#[test]
+fn cli_verbosity_overrides_env() {
+    let p = TempDir::new().unwrap();
+    ProjectBuilder::start().build(&p);
+    Scarb::quick_snapbox()
+        .current_dir(&p)
+        .arg("check")
+        .arg("--verbose")
+        .env("SCARB_UI_VERBOSITY", "quiet")
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Checking pkg0 v1.0.0 ([..]Scarb.toml)
+            [..]Finished checking release target(s) in [..]
+        "#});
 }

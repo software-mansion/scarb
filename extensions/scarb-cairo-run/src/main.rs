@@ -13,9 +13,9 @@ use serde::Serializer;
 use scarb_metadata::{
     CompilationUnitMetadata, Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand,
 };
-use scarb_ui::args::PackagesFilter;
+use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use scarb_ui::components::Status;
-use scarb_ui::{Message, OutputFormat, Ui, Verbosity};
+use scarb_ui::{Message, OutputFormat, Ui};
 
 mod deserialization;
 
@@ -39,6 +39,10 @@ struct Args {
     #[arg(long, default_value_t = false)]
     no_build: bool,
 
+    /// Logging verbosity.
+    #[command(flatten)]
+    pub verbose: VerbositySpec,
+
     /// Program arguments.
     ///
     /// This should be a JSON array of numbers, decimal bigints or recursive arrays of those. For example, pass `[1]`
@@ -49,18 +53,16 @@ struct Args {
 }
 
 fn main() -> Result<()> {
-    let ui = Ui::new(Verbosity::default(), OutputFormat::Text);
-
-    if let Err(err) = main_inner(&ui) {
+    let args: Args = Args::parse();
+    let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
+    if let Err(err) = main_inner(&ui, args) {
         ui.anyhow(&err);
         std::process::exit(1);
     }
     Ok(())
 }
 
-fn main_inner(ui: &Ui) -> Result<()> {
-    let args: Args = Args::parse();
-
+fn main_inner(ui: &Ui, args: Args) -> Result<()> {
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
     let package = args.packages_filter.match_one(&metadata)?;
