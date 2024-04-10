@@ -19,31 +19,20 @@ pub struct CompiledTestCrateRaw {
 pub fn compile_tests(
     targets: &Vec<TestCompilationTarget>,
     compilation_unit: &CompilationUnit,
-    unstable_add_statements_functions_debug_info: bool,
 ) -> Result<Vec<CompiledTestCrateRaw>> {
     targets
         .par_iter()
-        .map(|target| {
-            target.compile_tests(
-                compilation_unit,
-                unstable_add_statements_functions_debug_info,
-            )
-        })
+        .map(|target| target.compile_tests(compilation_unit))
         .collect()
 }
 
 impl TestCompilationTarget {
-    fn compile_tests(
-        &self,
-        compilation_unit: &CompilationUnit,
-        unstable_add_statements_functions_debug_info: bool,
-    ) -> Result<CompiledTestCrateRaw> {
+    fn compile_tests(&self, compilation_unit: &CompilationUnit) -> Result<CompiledTestCrateRaw> {
         let (program_artifact, test_cases) = collect_tests(
             &self.crate_name,
             self.crate_root.as_std_path(),
             &self.lib_content,
             compilation_unit,
-            unstable_add_statements_functions_debug_info,
         )?;
 
         Ok(CompiledTestCrateRaw {

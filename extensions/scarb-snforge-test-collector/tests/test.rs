@@ -450,11 +450,14 @@ fn generates_statements_functions_mappings() {
     ProjectBuilder::start()
         .name("forge_test")
         .lib_cairo(SIMPLE_TEST)
+        .manifest_extra(indoc! {r#"
+        [cairo]
+        unstable-add-statements-functions-debug-info = true
+        "#})
         .build(&t);
 
     Scarb::quick_snapbox()
         .arg("snforge-test-collector")
-        .arg("--generate-statements-functions-mappings")
         .current_dir(&t)
         .assert()
         .success();

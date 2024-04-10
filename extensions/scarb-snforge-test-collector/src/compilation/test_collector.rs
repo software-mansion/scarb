@@ -91,7 +91,6 @@ pub fn collect_tests(
     crate_root: &Path,
     lib_content: &str,
     compilation_unit: &CompilationUnit,
-    unstable_add_statements_functions_debug_info: bool,
 ) -> Result<(ProgramArtifact, Vec<TestCaseRaw>)> {
     let crate_roots: OrderedHashMap<SmolStr, PathBuf> = compilation_unit
         .dependencies()
@@ -149,7 +148,7 @@ pub fn collect_tests(
         .context("Compilation failed without any diagnostics")
         .context("Failed to get sierra program")?;
 
-    let debug_annotations = if unstable_add_statements_functions_debug_info {
+    let debug_annotations = if compilation_unit.unstable_add_statements_functions_debug_info() {
         Some(Annotations::from(
             sierra_program
                 .debug_info
