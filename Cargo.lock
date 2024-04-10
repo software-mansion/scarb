@@ -724,7 +724,6 @@ dependencies = [
  "cairo-lang-macro-attributes",
  "cairo-lang-macro-stable",
  "linkme",
- "scarb-stable-hash",
  "serde",
  "serde_json",
 ]
@@ -1194,16 +1193,6 @@ checksum = "c12ed66a79a555082f595f7eb980d08669de95009dd4b3d61168c573ebe38fc9"
 dependencies = [
  "clap_builder",
  "clap_derive",
-]
-
-[[package]]
-name = "clap-verbosity-flag"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb9b20c0dd58e4c2e991c8d203bbeb76c11304d1011659686b5b644bc29aa478"
-dependencies = [
- "clap",
- "log",
 ]
 
 [[package]]
@@ -4493,7 +4482,6 @@ dependencies = [
  "cairo-lang-utils",
  "camino",
  "clap",
- "clap-verbosity-flag",
  "create-output-dir",
  "data-encoding",
  "deno_task_shell",
@@ -4545,7 +4533,6 @@ dependencies = [
  "toml",
  "toml_edit 0.22.9",
  "tracing",
- "tracing-log",
  "tracing-subscriber",
  "typed-builder",
  "url",
@@ -4730,6 +4717,7 @@ dependencies = [
  "scarb-metadata 1.12.0",
  "serde",
  "serde_json",
+ "test-case",
  "tracing-core",
 ]
 
@@ -6227,7 +6215,6 @@ dependencies = [
  "anyhow",
  "clap",
  "semver",
- "serde",
  "serde_json",
  "time",
  "toml_edit 0.22.9",
