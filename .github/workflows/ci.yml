@@ -55,6 +55,15 @@ jobs:
       - name: nextest partition ${{ matrix.partition }}/8
         run: cargo nextest run --partition 'count:${{ matrix.partition }}/8' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
 
+  test-doc:
+    name: doc tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: run tests
+        run: cargo test --doc
+
   scarb-metadata-compatibility:
     name: scarb-metadata compatibility check
     runs-on: ubuntu-latest
