@@ -39,7 +39,7 @@ Enabling all features can be done with the `--all-features` flag.
 
 ## `default` features
 
-By default, all features are disabled unless explicitly enabled with the `--features` flag. However, this behavior can be changed by specifying a default feature in the `[features]` section, like so:
+By default, all features are disabled unless explicitly enabled. However, this behaviour can be changed by specifying a default feature in the `[features]` section, like so:
 
 ```toml
 [features]
