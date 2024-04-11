@@ -60,7 +60,6 @@ cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "c06
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
-clap-verbosity-flag = "2"
 console = "0.15"
 darling = "0.20"
 data-encoding = "2"

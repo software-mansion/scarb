@@ -32,7 +32,6 @@ cairo-lang-syntax.workspace = true
 cairo-lang-test-plugin.workspace = true
 cairo-lang-utils.workspace = true
 camino.workspace = true
-clap-verbosity-flag.workspace = true
 clap.workspace = true
 create-output-dir = { path = "../utils/create-output-dir" }
 data-encoding.workspace = true
@@ -72,7 +71,6 @@ thiserror.workspace = true
 tokio.workspace = true
 toml.workspace = true
 toml_edit.workspace = true
-tracing-log.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true
 typed-builder.workspace = true
@@ -80,7 +78,6 @@ url.workspace = true
 walkdir.workspace = true
 which.workspace = true
 windows-sys.workspace = true
-zip.workspace = true
 zstd.workspace = true
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]

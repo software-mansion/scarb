@@ -35,9 +35,9 @@ pub struct VerbositySpec {
 impl Verbosity {
     fn level_value(level: Self) -> i8 {
         match level {
-            Self::Quiet => 0,
-            Self::Normal => 2,
-            Self::Verbose => 4,
+            Self::Quiet => -1,
+            Self::Normal => 0,
+            Self::Verbose => 1,
         }
     }
 }
@@ -62,8 +62,7 @@ impl VerbositySpec {
     }
 
     fn integer_verbosity(&self) -> i8 {
-        let int_level = Verbosity::level_value(Verbosity::default()) - (self.quiet as i8)
-            + (self.verbose as i8);
+        let int_level = (self.verbose as i8) - (self.quiet as i8);
         if self.is_present() {
             int_level
         } else {
@@ -77,9 +76,54 @@ impl VerbositySpec {
 impl From<VerbositySpec> for Verbosity {
     fn from(spec: VerbositySpec) -> Self {
         match spec.integer_verbosity() {
-            v if v < 2 => Verbosity::Quiet,
-            2 => Verbosity::Normal,
+            v if v < 0 => Verbosity::Quiet,
+            0 => Verbosity::Normal,
             _ => Verbosity::Verbose,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use test_case::test_case;
+
+    use crate::args::VerbositySpec;
+    use crate::Verbosity;
+
+    #[test_case(Verbosity::Quiet)]
+    #[test_case(Verbosity::Normal)]
+    #[test_case(Verbosity::Verbose)]
+    fn verbosity_serialization_identity(level: Verbosity) {
+        assert_eq!(
+            Verbosity::from(VerbositySpec {
+                verbose: 0,
+                quiet: 0,
+                verbosity: Some(level),
+            }),
+            level
+        );
+    }
+
+    #[test_case(2, 0, Verbosity::Quiet, tracing_core::LevelFilter::OFF)]
+    #[test_case(1, 0, Verbosity::Quiet, tracing_core::LevelFilter::OFF)]
+    #[test_case(0, 0, Verbosity::Normal, tracing_core::LevelFilter::ERROR)]
+    #[test_case(0, 1, Verbosity::Verbose, tracing_core::LevelFilter::WARN)]
+    #[test_case(0, 2, Verbosity::Verbose, tracing_core::LevelFilter::INFO)]
+    #[test_case(0, 3, Verbosity::Verbose, tracing_core::LevelFilter::DEBUG)]
+    #[test_case(0, 4, Verbosity::Verbose, tracing_core::LevelFilter::TRACE)]
+    #[test_case(0, 5, Verbosity::Verbose, tracing_core::LevelFilter::TRACE)]
+    fn verbosity_levels(
+        quiet: u8,
+        verbose: u8,
+        level: Verbosity,
+        trace: tracing_core::LevelFilter,
+    ) {
+        let spec = VerbositySpec {
+            verbose,
+            quiet,
+            verbosity: None,
+        };
+        assert_eq!(spec.as_trace(), trace);
+        assert_eq!(Verbosity::from(spec), level);
     }
 }
