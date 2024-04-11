@@ -49,7 +49,7 @@ pedersen = []
 keccak = []
 ```
 
-During compilation, the compiler will enable the default feature, which in turn activates all listed features.
+When the package is built, the default feature is enabled which in turn enables the listed features.
 
 To disable the default feature, use the `--no-default-features` flag.
 
