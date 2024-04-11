@@ -4,7 +4,7 @@ Features in Scarb provide a way to conditionally compile specific parts of the c
 
 ## `[features]` section
 
-In the `Scarb.toml` file, features are defined within the `[features]` section. Each feature lists other features that it enables.
+A package defines a set of named features in the `[features]` section of `Scarb.toml` file. Each defined feature can list other features that should be enabled with it.
 
 For example, a package supporting various hash functions might define features like this:
 
