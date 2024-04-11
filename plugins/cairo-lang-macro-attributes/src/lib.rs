@@ -24,6 +24,16 @@ pub fn inline_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
     macro_helper(input, quote!(::cairo_lang_macro::ExpansionKind::Inline))
 }
 
+/// Constructs the derive macro implementation.
+///
+/// This macro hides the conversion to stable ABI structs from the user.
+///
+/// Note, that this macro can be used multiple times, to define multiple independent attribute macros.
+#[proc_macro_attribute]
+pub fn derive_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
+    macro_helper(input, quote!(::cairo_lang_macro::ExpansionKind::Derive))
+}
+
 fn macro_helper(input: TokenStream, kind: impl ToTokens) -> TokenStream {
     let item: ItemFn = parse_macro_input!(input as ItemFn);
     let original_item_name = item.sig.ident.to_string();
