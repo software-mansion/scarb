@@ -54,6 +54,7 @@ During compilation, the compiler will enable the default feature, which in turn 
 To disable the default feature, use the `--no-default-features` flag.
 
 For example, in the provided scenario:
+
 - Running `scarb build` would enable `poseidon` and `pedersen` features.
 - `scarb build --features keccak` would enable `poseidon`, `pedersen`, and `keccak` features.
 - `scarb build --no-default-features --features keccak` would enable only the `keccak` feature.
