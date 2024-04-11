@@ -18,7 +18,7 @@ keccak = []
 With these features set, conditional compilation (`cfg`) attributes can be used to selectively include code to support requested features during compile time. For instance:
 
 ```rust
-// Conditionally include a package
+// Conditionally include a module
 #[cfg(feature: 'poseidon')]
 mod poseidon;
 
