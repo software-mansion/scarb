@@ -11,7 +11,11 @@ use syn::{parse_macro_input, ItemFn};
 /// Note, that this macro can be used multiple times, to define multiple independent attribute macros.
 #[proc_macro_attribute]
 pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
-    macro_helper(input, quote!(::cairo_lang_macro::ExpansionKind::Attr))
+    macro_helper(
+        input,
+        quote!(::cairo_lang_macro::ExpansionKind::Attr),
+        quote!(::cairo_lang_macro::ExpansionFunc::Attr),
+    )
 }
 
 /// Constructs the inline macro implementation.
@@ -21,7 +25,11 @@ pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// Note, that this macro can be used multiple times, to define multiple independent attribute macros.
 #[proc_macro_attribute]
 pub fn inline_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
-    macro_helper(input, quote!(::cairo_lang_macro::ExpansionKind::Inline))
+    macro_helper(
+        input,
+        quote!(::cairo_lang_macro::ExpansionKind::Inline),
+        quote!(::cairo_lang_macro::ExpansionFunc::Other),
+    )
 }
 
 /// Constructs the derive macro implementation.
@@ -31,10 +39,14 @@ pub fn inline_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// Note, that this macro can be used multiple times, to define multiple independent attribute macros.
 #[proc_macro_attribute]
 pub fn derive_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
-    macro_helper(input, quote!(::cairo_lang_macro::ExpansionKind::Derive))
+    macro_helper(
+        input,
+        quote!(::cairo_lang_macro::ExpansionKind::Derive),
+        quote!(::cairo_lang_macro::ExpansionFunc::Other),
+    )
 }
 
-fn macro_helper(input: TokenStream, kind: impl ToTokens) -> TokenStream {
+fn macro_helper(input: TokenStream, kind: impl ToTokens, func: impl ToTokens) -> TokenStream {
     let item: ItemFn = parse_macro_input!(input as ItemFn);
     let original_item_name = item.sig.ident.to_string();
     let item = hide_name(item);
@@ -56,7 +68,7 @@ fn macro_helper(input: TokenStream, kind: impl ToTokens) -> TokenStream {
             ::cairo_lang_macro::ExpansionDefinition{
                 name: #original_item_name,
                 kind: #kind,
-                fun: #item_name,
+                fun: #func(#item_name),
             };
     };
     TokenStream::from(expanded)

@@ -107,7 +107,7 @@ impl TokenStreamMetadata {
 /// }
 ///
 /// #[attribute_macro]
-/// pub fn some_macro(token_stream: TokenStream) -> ProcMacroResult {
+/// pub fn some_macro(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
 ///     let token_stream = TokenStream::new(
 ///         token_stream.to_string()
 ///         // Remove macro call to avoid infinite loop.
