@@ -819,7 +819,7 @@ fn warnings_allowed_by_default() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
-        warn: Unused variable. Consider ignoring by prefixing with `_`.
+        warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
             let a = 41;
                 ^
@@ -852,12 +852,38 @@ fn warnings_can_be_disallowed() {
         .failure()
         .stdout_matches(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
-        warn: Unused variable. Consider ignoring by prefixing with `_`.
+        warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
             let a = 41;
                 ^
 
         error: could not compile [..] due to previous error
+        "#});
+}
+
+#[test]
+fn error_codes_shown_in_json_output() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .lib_cairo(indoc! {r#"
+        fn hello() -> felt252 {
+            let a = 41;
+            let b = 42;
+            b
+        }
+    "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            {"status":"compiling","message":"[..] v1.0.0 ([..]Scarb.toml)"}
+            {"type":"warn","message":"Unused variable. Consider ignoring by prefixing with `_`./n --> [..]lib.cairo:2:9/n    let a = 41;/n        ^/n","code":"E0001"}
+            {"status":"finished","message":"release target(s) in [..]"}
         "#});
 }
 

@@ -119,6 +119,18 @@ impl Ui {
         self.print(TypedMessage::styled("error", "red", message.as_ref()))
     }
 
+    /// Print a warning to the user.
+    pub fn warn_with_code(&self, code: impl AsRef<str>, message: impl AsRef<str>) {
+        self.print(
+            TypedMessage::styled("warn", "yellow", message.as_ref()).with_code(code.as_ref()),
+        )
+    }
+
+    /// Print an error to the user.
+    pub fn error_with_code(&self, code: impl AsRef<str>, message: impl AsRef<str>) {
+        self.print(TypedMessage::styled("error", "red", message.as_ref()).with_code(code.as_ref()))
+    }
+
     /// Nicely format an [`anyhow::Error`] for display to the user, and print it with [`Ui::error`].
     pub fn anyhow(&self, error: &anyhow::Error) {
         // NOTE: Some errors, particularly ones from `toml_edit` like to add trailing newlines.
