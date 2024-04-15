@@ -9,15 +9,8 @@ use scarb_metadata::{
     CompilationUnitComponentMetadata, CompilationUnitMetadata, Metadata, PackageMetadata,
 };
 use serde_json::json;
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 use std::path::PathBuf;
-
-/// Represents a dependency of a Cairo project
-#[derive(Debug, Clone)]
-pub struct LinkedLibrary {
-    pub name: String,
-    pub path: PathBuf,
-}
 
 pub fn compilation_unit_for_package<'a>(
     metadata: &'a Metadata,
@@ -96,15 +89,17 @@ pub struct CompilationUnit<'a> {
 }
 
 impl CompilationUnit<'_> {
-    pub fn dependencies(&self) -> Vec<LinkedLibrary> {
+    pub fn dependencies(&self) -> OrderedHashMap<SmolStr, PathBuf> {
         let dependencies = self
             .unit_metadata
             .components
             .iter()
             .filter(|du| &du.name != "core")
-            .map(|cu| LinkedLibrary {
-                name: cu.name.clone(),
-                path: cu.source_root().to_owned().into_std_path_buf(),
+            .map(|cu| {
+                (
+                    cu.name.to_smolstr(),
+                    cu.source_root().to_owned().into_std_path_buf(),
+                )
             })
             .collect();
 
@@ -138,7 +133,10 @@ impl CompilationUnit<'_> {
                     });
                 (
                     SmolStr::from(&component.name),
-                    get_crate_settings_for_package(pkg, component.cfg.clone().map(build_cfg_set)),
+                    get_crate_settings_for_package(
+                        pkg,
+                        component.cfg.as_ref().map(|cfg_vec| build_cfg_set(cfg_vec)),
+                    ),
                 )
             })
             .collect();
@@ -184,7 +182,17 @@ impl CompilationUnit<'_> {
             .find(|package| package.id == self.main_package_metadata.package)
             .expect("Main package not found in metadata");
 
-        get_crate_settings_for_package(package, None)
+        get_crate_settings_for_package(
+            package,
+            self.main_package_metadata
+                .cfg
+                .as_ref()
+                .map(|cfg_vec| build_cfg_set(cfg_vec)),
+        )
+    }
+
+    pub fn compilation_unit_cfg_set(&self) -> CfgSet {
+        build_cfg_set(&self.unit_metadata.cfg)
     }
 }
 
@@ -216,7 +224,7 @@ fn get_crate_settings_for_package(
     }
 }
 
-fn build_cfg_set(cfg: Vec<scarb_metadata::Cfg>) -> CfgSet {
+fn build_cfg_set(cfg: &[scarb_metadata::Cfg]) -> CfgSet {
     CfgSet::from_iter(cfg.iter().map(|cfg| {
         serde_json::to_value(cfg)
             .and_then(serde_json::from_value::<Cfg>)
