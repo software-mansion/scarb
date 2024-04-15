@@ -216,6 +216,12 @@ impl From<Vec<Diagnostic>> for Diagnostics {
     }
 }
 
+impl From<Diagnostic> for Diagnostics {
+    fn from(diagnostics: Diagnostic) -> Self {
+        Self(vec![diagnostics])
+    }
+}
+
 impl Diagnostics {
     /// Create new [`Diagnostics`] from a vector of diagnostics.
     pub fn new(diagnostics: Vec<Diagnostic>) -> Self {

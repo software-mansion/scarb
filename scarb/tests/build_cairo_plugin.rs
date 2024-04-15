@@ -289,7 +289,7 @@ fn can_emit_plugin_warning() {
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
             let diag = Diagnostic::warn("Some warning from macro.");
             ProcMacroResult::new(token_stream)
-                .with_diagnostics(vec![diag].into())
+                .with_diagnostics(diag.into())
         }
         "#})
         .build(&t);
@@ -335,7 +335,7 @@ fn can_emit_plugin_error() {
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
             let diag = Diagnostic::error("Some error from macro.");
             ProcMacroResult::new(token_stream)
-                .with_diagnostics(vec![diag].into())
+                .with_diagnostics(diag.into())
         }
         "#})
         .build(&t);
