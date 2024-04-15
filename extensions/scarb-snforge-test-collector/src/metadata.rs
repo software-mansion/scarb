@@ -75,8 +75,6 @@ pub fn compilation_unit_for_package<'a>(
         "More than one cu component with main package id found"
     );
 
-    println!("{:?}", unit_test_cu);
-
     Ok(CompilationUnit {
         unit_metadata: unit_test_cu,
         main_package_metadata: main_package_metadata[0],
@@ -183,9 +181,6 @@ impl CompilationUnit<'_> {
             .iter()
             .find(|package| package.id == self.main_package_metadata.package)
             .expect("Main package not found in metadata");
-
-        println!("{:?}", self.main_package_metadata.cfg);
-        println!("{:?}", self.main_package_metadata);
 
         get_crate_settings_for_package(
             package,
