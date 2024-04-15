@@ -138,12 +138,13 @@ fn features_test_build_success() {
     let t = TempDir::new().unwrap();
     get_features_test_build(&t);
     Scarb::quick_snapbox()
-        .arg("cairo-test")
-        .env("SCARB_FEATURES", "x")
+        .arg("test")
+        .arg("--features=x")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            [..]Running cairo-test hello
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
             [..]Finished release target(s) in [..]
             testing hello ...
