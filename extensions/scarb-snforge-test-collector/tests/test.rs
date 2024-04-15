@@ -500,7 +500,7 @@ fn features_test_build_success() {
 
     Scarb::quick_snapbox()
         .arg("snforge-test-collector")
-        .args(["--features", "x"])
+        .env("SCARB_FEATURES", "x")
         .current_dir(&t)
         .assert()
         .success();

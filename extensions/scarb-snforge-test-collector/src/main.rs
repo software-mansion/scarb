@@ -1,12 +1,11 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use fs4::FileExt;
-use scarb::ops::{FeaturesOpts, ToEnv};
 use std::fs::{create_dir_all, File};
 use std::io::BufWriter;
 
 use scarb_metadata::MetadataCommand;
-use scarb_ui::args::{FeaturesSpec, PackagesFilter};
+use scarb_ui::args::PackagesFilter;
 
 use crate::compilation::compile_tests;
 use crate::crate_collection::collect_test_compilation_targets;
@@ -23,19 +22,12 @@ mod metadata;
 struct Args {
     #[command(flatten)]
     packages_filter: PackagesFilter,
-
-    #[command(flatten)]
-    pub features: FeaturesSpec,
 }
 
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    let features_envs = FeaturesOpts::try_from(args.features)?.to_env_vars();
-    let metadata = MetadataCommand::new()
-        .envs(features_envs)
-        .inherit_stderr()
-        .exec()?;
+    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
     let selected_packages_metadata = args.packages_filter.match_many(&metadata)?;
 
     let target_dir = metadata
