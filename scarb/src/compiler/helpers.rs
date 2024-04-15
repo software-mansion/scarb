@@ -27,8 +27,20 @@ pub fn build_compiler_config<'c>(
                 .strip_suffix('\n')
                 .unwrap_or(entry.message());
             match entry.severity() {
-                Severity::Error => config.ui().error(msg),
-                Severity::Warning => config.ui().warn(msg),
+                Severity::Error => {
+                    if let Some(code) = entry.error_code() {
+                        config.ui().error_with_code(code.as_str(), msg)
+                    } else {
+                        config.ui().error(msg)
+                    }
+                }
+                Severity::Warning => {
+                    if let Some(code) = entry.error_code() {
+                        config.ui().warn_with_code(code.as_str(), msg)
+                    } else {
+                        config.ui().warn(msg)
+                    }
+                }
             };
         }
     });
