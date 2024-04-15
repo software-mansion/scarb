@@ -845,17 +845,14 @@ fn can_resolve_full_path_markers() {
 
         #[attribute_macro]
         pub fn some(token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
-                token_stream
-                    .to_string()
-                    // Remove macro call to avoid infinite loop.
-                    .replace("#[some]", r#"#[macro::full_path_marker("some-key")]"#)
-                    .replace("12", "34")
-            );
-
             let full_path_markers = vec!["some-key".to_string()];
 
-            ProcMacroResult::new(token_stream)
+            let code = format!(
+                r#"#[macro::full_path_marker("some-key")] {}"#,
+                token_stream.to_string().replace("12", "34")
+            );
+
+            ProcMacroResult::new(TokenStream::new(code))
                 .with_full_path_markers(full_path_markers)
         }
 
@@ -976,5 +973,158 @@ fn empty_inline_macro_result() {
                          ^*****^
             
             error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn can_implement_derive_macro() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream};
+
+            #[derive_macro]
+            pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
+                let name = token_stream
+                    .clone()
+                    .to_string()
+                    .lines()
+                    .find(|l| l.starts_with("struct"))
+                    .unwrap()
+                    .to_string()
+                    .replace("struct", "")
+                    .replace("}", "")
+                    .replace("{", "")
+                    .trim()
+                    .to_string();
+
+                let token_stream = TokenStream::new(indoc::formatdoc!{r#"
+                    impl SomeImpl of Hello<{name}> {{
+                        fn world(self: @{name}) -> u32 {{
+                            32
+                        }}
+                    }}
+                "#});
+
+                ProcMacroResult::new(token_stream)
+            }
+        "##})
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                fn world(self: @T) -> u32;
+            }
+
+            #[derive(CustomDerive, Drop)]
+            struct SomeType {}
+
+            fn main() -> u32 {
+                let a = SomeType {};
+                a.world()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            Run completed successfully, returning [32]
+        "#});
+}
+
+#[test]
+fn can_use_both_derive_and_attr() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{derive_macro, attribute_macro, ProcMacroResult, TokenStream};
+
+            #[attribute_macro]
+            pub fn first_attribute(token_stream: TokenStream) -> ProcMacroResult {
+                ProcMacroResult::new(TokenStream::new(
+                    token_stream.to_string()
+                    .replace("SomeType", "OtherType")
+                ))
+            }
+
+            #[attribute_macro]
+            pub fn second_attribute(token_stream: TokenStream) -> ProcMacroResult {
+                let token_stream = TokenStream::new(
+                    token_stream.to_string().replace("OtherType", "RenamedStruct")
+                );
+                ProcMacroResult::new(TokenStream::new(
+                    format!("#[derive(Drop)]\n{token_stream}")
+                ))
+            }
+
+            #[derive_macro]
+            pub fn custom_derive(_token_stream: TokenStream) -> ProcMacroResult {
+                ProcMacroResult::new(TokenStream::new(
+                    indoc::formatdoc!{r#"
+                    impl SomeImpl of Hello<RenamedStruct> {{
+                        fn world(self: @RenamedStruct) -> u32 {{
+                            32
+                        }}
+                    }}
+                    "#}
+                ))
+            }
+        "##})
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                fn world(self: @T) -> u32;
+            }
+
+            #[first_attribute]
+            #[derive(CustomDerive)]
+            #[second_attribute]
+            struct SomeType {}
+
+            fn main() -> u32 {
+                let a = RenamedStruct {};
+                a.world()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            Run completed successfully, returning [32]
         "#});
 }
