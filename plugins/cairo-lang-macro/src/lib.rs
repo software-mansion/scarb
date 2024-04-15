@@ -37,7 +37,11 @@ pub struct ExpansionDefinition {
     pub fun: ExpansionFunc,
 }
 
-type ExpansionFunc = fn(TokenStream) -> ProcMacroResult;
+#[derive(Clone)]
+pub enum ExpansionFunc {
+    Attr(fn(TokenStream, TokenStream) -> ProcMacroResult),
+    Other(fn(TokenStream) -> ProcMacroResult),
+}
 
 /// Distributed slice for storing procedural macro code expansion capabilities.
 ///
@@ -89,24 +93,30 @@ pub unsafe extern "C" fn free_expansions_list(list: StableExpansionsList) {
 #[no_mangle]
 pub unsafe extern "C" fn expand(
     item_name: *const c_char,
+    stable_attr: cairo_lang_macro_stable::StableTokenStream,
     stable_token_stream: cairo_lang_macro_stable::StableTokenStream,
 ) -> cairo_lang_macro_stable::StableResultWrapper {
     let token_stream = TokenStream::from_stable(&stable_token_stream);
+    let attr_token_stream = TokenStream::from_stable(&stable_attr);
     let item_name = CStr::from_ptr(item_name).to_string_lossy().to_string();
     let fun = MACRO_DEFINITIONS_SLICE
         .iter()
         .find_map(|m| {
             if m.name == item_name.as_str() {
-                Some(m.fun)
+                Some(m.fun.clone())
             } else {
                 None
             }
         })
         .expect("procedural macro not found");
-    let result = fun(token_stream);
+    let result = match fun {
+        ExpansionFunc::Attr(fun) => fun(attr_token_stream, token_stream),
+        ExpansionFunc::Other(fun) => fun(token_stream),
+    };
     let result: StableProcMacroResult = result.into_stable();
     cairo_lang_macro_stable::StableResultWrapper {
         input: stable_token_stream,
+        input_attr: stable_attr,
         output: result,
     }
 }

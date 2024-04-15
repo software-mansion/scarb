@@ -157,7 +157,7 @@ impl ProcMacroHostPlugin {
         &self,
         db: &dyn SyntaxGroup,
         item_ast: ast::ModuleItem,
-    ) -> (Option<ProcMacroId>, TokenStream) {
+    ) -> (Option<(ProcMacroId, TokenStream)>, TokenStream) {
         let mut item_builder = PatchBuilder::new(db);
         let input = match item_ast {
             ast::ModuleItem::Struct(struct_ast) => {
@@ -223,7 +223,7 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         builder: &mut PatchBuilder<'_>,
         attrs: Vec<ast::Attribute>,
-    ) -> Option<ProcMacroId> {
+    ) -> Option<(ProcMacroId, TokenStream)> {
         let mut expansion = None;
         for attr in attrs {
             if expansion.is_none() {
@@ -232,8 +232,11 @@ impl ProcMacroHostPlugin {
                     structured_attr.id.clone(),
                     ExpansionKind::Attr,
                 ));
-                if found.is_some() {
-                    expansion = found;
+                if let Some(found) = found {
+                    let mut args_builder = PatchBuilder::new(db);
+                    args_builder.add_node(attr.arguments(db).as_syntax_node());
+                    let args = TokenStream::new(args_builder.code);
+                    expansion = Some((found, args));
                     // Do not add the attribute for found expansion.
                     continue;
                 }
@@ -300,9 +303,11 @@ impl ProcMacroHostPlugin {
 
         let mut derived_code = PatchBuilder::new(db);
         for derive in derives {
-            let result = self
-                .instance(derive.package_id)
-                .generate_code(derive.expansion.name.clone(), token_stream.clone());
+            let result = self.instance(derive.package_id).generate_code(
+                derive.expansion.name.clone(),
+                TokenStream::empty(),
+                token_stream.clone(),
+            );
 
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);
@@ -353,12 +358,15 @@ impl ProcMacroHostPlugin {
     fn expand_attribute(
         &self,
         input: ProcMacroId,
+        args: TokenStream,
         token_stream: TokenStream,
         stable_ptr: SyntaxStablePtrId,
     ) -> PluginResult {
-        let result = self
-            .instance(input.package_id)
-            .generate_code(input.expansion.name.clone(), token_stream.clone());
+        let result = self.instance(input.package_id).generate_code(
+            input.expansion.name.clone(),
+            args.clone(),
+            token_stream.clone(),
+        );
 
         // Handle token stream.
         if result.token_stream.is_empty() {
@@ -574,10 +582,10 @@ impl MacroPlugin for ProcMacroHostPlugin {
         // Expand first attribute.
         // Note that we only expand the first attribute, as we assume that the rest of the attributes
         // will be handled by a subsequent call to this function.
-        if let (Some(input), token_stream) = self.parse_attribute(db, item_ast.clone()) {
+        if let (Some((input, args)), token_stream) = self.parse_attribute(db, item_ast.clone()) {
             let token_stream = token_stream.with_metadata(stream_metadata.clone());
             let stable_ptr = item_ast.clone().stable_ptr().untyped();
-            return self.expand_attribute(input, token_stream, stable_ptr);
+            return self.expand_attribute(input, args, token_stream, stable_ptr);
         }
 
         // Expand all derives.
@@ -640,9 +648,11 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         let stable_ptr = syntax.clone().stable_ptr().untyped();
 
         let token_stream = TokenStream::from_syntax_node(db, syntax.as_syntax_node());
-        let result = self
-            .instance()
-            .generate_code(self.expansion.name.clone(), token_stream);
+        let result = self.instance().generate_code(
+            self.expansion.name.clone(),
+            TokenStream::empty(),
+            token_stream,
+        );
         // Handle diagnostics.
         let diagnostics = into_cairo_diagnostics(result.diagnostics, stable_ptr);
         let token_stream = result.token_stream.clone();

@@ -72,6 +72,7 @@ pub struct StableProcMacroResult {
 #[repr(C)]
 pub struct StableResultWrapper {
     pub input: StableTokenStream,
+    pub input_attr: StableTokenStream,
     pub output: StableProcMacroResult,
 }
 

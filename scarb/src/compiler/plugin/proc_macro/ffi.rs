@@ -127,21 +127,25 @@ impl ProcMacroInstance {
     pub(crate) fn generate_code(
         &self,
         item_name: SmolStr,
+        attr: TokenStream,
         token_stream: TokenStream,
     ) -> ProcMacroResult {
         // This must be manually freed with call to from_owned_stable.
         let stable_token_stream = token_stream.into_stable();
+        let stable_attr = attr.into_stable();
         // Allocate proc macro name.
         let item_name = CString::new(item_name.to_string()).unwrap().into_raw();
         // Call FFI interface for code expansion.
         // Note that `stable_result` has been allocated by the dynamic library.
-        let stable_result = (self.plugin.vtable.expand)(item_name, stable_token_stream);
+        let stable_result =
+            (self.plugin.vtable.expand)(item_name, stable_attr, stable_token_stream);
         // Free proc macro name.
         let _ = unsafe { CString::from_raw(item_name) };
         // Free the memory allocated by the `stable_token_stream`.
         // This will call `CString::from_raw` under the hood, to take ownership.
         unsafe {
             TokenStream::from_owned_stable(stable_result.input);
+            TokenStream::from_owned_stable(stable_result.input_attr);
         };
         // Create Rust representation of the result.
         // Note, that the memory still needs to be freed on the allocator side!
@@ -201,7 +205,8 @@ impl Expansion {
 
 type ListExpansions = extern "C" fn() -> StableExpansionsList;
 type FreeExpansionsList = extern "C" fn(StableExpansionsList);
-type ExpandCode = extern "C" fn(*const c_char, StableTokenStream) -> StableResultWrapper;
+type ExpandCode =
+    extern "C" fn(*const c_char, StableTokenStream, StableTokenStream) -> StableResultWrapper;
 type FreeResult = extern "C" fn(StableProcMacroResult);
 type PostProcessCallback = extern "C" fn(StablePostProcessContext) -> StablePostProcessContext;
 
