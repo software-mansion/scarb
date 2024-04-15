@@ -355,6 +355,15 @@ impl PackagesSource for Metadata {
     }
 }
 
+impl super::ToEnvVars for PackagesFilter {
+    fn to_env_vars(self) -> Vec<(String, String)> {
+        vec![(
+            "SCARB_PACKAGES_FILTER".into(),
+            self.to_env().to_string_lossy().to_string(),
+        )]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;

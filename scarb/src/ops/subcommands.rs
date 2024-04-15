@@ -6,13 +6,14 @@ use std::{env, iter};
 
 use anyhow::{bail, Result};
 use camino::Utf8PathBuf;
+use scarb_ui::args::{FeaturesSpec, ToEnvVars};
 use tracing::debug;
 
 use scarb_ui::components::Status;
 
 use crate::core::{Config, Package, ScriptDefinition, Workspace};
 use crate::internal::fsx::is_executable;
-use crate::ops::{self, FeaturesSelector};
+use crate::ops::{self, FeaturesOpts};
 use crate::process::exec_replace;
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV};
 
@@ -49,13 +50,15 @@ pub fn execute_test_subcommand(
     package: &Package,
     args: &[OsString],
     ws: &Workspace<'_>,
-    features: ops::FeaturesOpts,
+    features: FeaturesSpec,
 ) -> Result<()> {
     let package_name = &package.id.name;
     let mut env = HashMap::from_iter([(
         SCARB_MANIFEST_PATH_ENV.into(),
         package.manifest_path().to_string(),
     )]);
+    // Validate features opts.
+    let _: FeaturesOpts = features.clone().try_into()?;
     env.extend(features.to_env_vars());
     if let Some(script_definition) = package.manifest.scripts.get("test") {
         debug!("using `test` script: {script_definition}");
@@ -110,28 +113,4 @@ fn find_external_subcommand(cmd: &str, config: &Config) -> Result<Option<PathBuf
         .chain(path_dirs)
         .map(|dir| dir.join(&command_exe))
         .find(|file| is_executable(file)))
-}
-
-pub trait ToEnv {
-    fn to_env_vars(&self) -> HashMap<String, String>;
-}
-
-impl ToEnv for ops::FeaturesOpts {
-    fn to_env_vars(&self) -> HashMap<String, String> {
-        let mut env = HashMap::new();
-        match &self.features {
-            FeaturesSelector::AllFeatures => {
-                env.insert("SCARB_ALL_FEATURES".into(), true.to_string());
-            }
-            FeaturesSelector::Features(features) if !features.is_empty() => {
-                env.insert("SCARB_FEATURES".into(), features.join(","));
-            }
-            _ => {}
-        };
-        env.insert(
-            "SCARB_NO_DEFAULT_FEATURES".into(),
-            self.no_default_features.to_string(),
-        );
-        env
-    }
 }

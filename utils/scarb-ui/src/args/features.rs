@@ -25,3 +25,22 @@ pub struct FeaturesSpec {
     )]
     pub no_default_features: bool,
 }
+
+impl super::ToEnvVars for FeaturesSpec {
+    fn to_env_vars(self) -> Vec<(String, String)> {
+        let mut env = vec![("SCARB_FEATURES".to_string(), self.features.join(","))];
+        if self.all_features {
+            env.push((
+                "SCARB_ALL_FEATURES".to_string(),
+                self.all_features.to_string(),
+            ));
+        }
+        if self.no_default_features {
+            env.push((
+                "SCARB_NO_DEFAULT_FEATURES".to_string(),
+                self.no_default_features.to_string(),
+            ));
+        }
+        env
+    }
+}
