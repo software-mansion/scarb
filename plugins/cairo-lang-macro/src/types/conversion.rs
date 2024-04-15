@@ -19,46 +19,21 @@ impl ProcMacroResult {
     /// # Safety
     #[doc(hidden)]
     pub fn into_stable(self) -> StableProcMacroResult {
-        match self {
-            ProcMacroResult::Leave { diagnostics } => {
-                let diagnostics = diagnostics
-                    .into_iter()
-                    .map(|d| d.into_stable())
-                    .collect::<Vec<_>>();
-                StableProcMacroResult::Leave {
-                    diagnostics: StableSlice::new(diagnostics),
-                }
-            }
-            ProcMacroResult::Remove { diagnostics } => {
-                let diagnostics = diagnostics
-                    .into_iter()
-                    .map(|d| d.into_stable())
-                    .collect::<Vec<_>>();
-                StableProcMacroResult::Remove {
-                    diagnostics: StableSlice::new(diagnostics),
-                }
-            }
-            ProcMacroResult::Replace {
-                token_stream,
-                aux_data,
-                diagnostics,
-                full_path_markers,
-            } => {
-                let diagnostics = diagnostics
-                    .into_iter()
-                    .map(|d| d.into_stable())
-                    .collect::<Vec<_>>();
-                let full_path_markers = full_path_markers
-                    .into_iter()
-                    .map(|m| CString::new(m).unwrap().into_raw())
-                    .collect::<Vec<_>>();
-                StableProcMacroResult::Replace {
-                    token_stream: token_stream.into_stable(),
-                    aux_data: AuxData::maybe_into_stable(aux_data),
-                    diagnostics: StableSlice::new(diagnostics),
-                    full_path_markers: StableSlice::new(full_path_markers),
-                }
-            }
+        let diagnostics = self
+            .diagnostics
+            .into_iter()
+            .map(|d| d.into_stable())
+            .collect::<Vec<_>>();
+        let full_path_markers = self
+            .full_path_markers
+            .into_iter()
+            .map(|m| CString::new(m).unwrap().into_raw())
+            .collect::<Vec<_>>();
+        StableProcMacroResult {
+            token_stream: self.token_stream.into_stable(),
+            aux_data: AuxData::maybe_into_stable(self.aux_data),
+            diagnostics: StableSlice::new(diagnostics),
+            full_path_markers: StableSlice::new(full_path_markers),
         }
     }
 
@@ -69,46 +44,21 @@ impl ProcMacroResult {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn from_stable(result: &StableProcMacroResult) -> Self {
-        match result {
-            StableProcMacroResult::Leave { diagnostics } => {
-                let (ptr, n) = diagnostics.raw_parts();
-                let diagnostics = slice::from_raw_parts(ptr, n)
-                    .iter()
-                    .map(|d| Diagnostic::from_stable(d))
-                    .collect::<Vec<_>>();
-                ProcMacroResult::Leave { diagnostics }
-            }
-            StableProcMacroResult::Remove { diagnostics } => {
-                let (ptr, n) = diagnostics.raw_parts();
-                let diagnostics = slice::from_raw_parts(ptr, n)
-                    .iter()
-                    .map(|d| Diagnostic::from_stable(d))
-                    .collect::<Vec<_>>();
-                ProcMacroResult::Remove { diagnostics }
-            }
-            StableProcMacroResult::Replace {
-                token_stream,
-                aux_data,
-                diagnostics,
-                full_path_markers,
-            } => {
-                let (ptr, n) = diagnostics.raw_parts();
-                let diagnostics = slice::from_raw_parts(ptr, n)
-                    .iter()
-                    .map(|d| Diagnostic::from_stable(d))
-                    .collect::<Vec<_>>();
-                let (ptr, n) = full_path_markers.raw_parts();
-                let full_path_markers = slice::from_raw_parts(ptr, n)
-                    .iter()
-                    .map(|m| from_raw_cstr(*m))
-                    .collect::<Vec<_>>();
-                ProcMacroResult::Replace {
-                    token_stream: TokenStream::from_stable(token_stream),
-                    aux_data: AuxData::from_stable(aux_data),
-                    diagnostics,
-                    full_path_markers,
-                }
-            }
+        let (ptr, n) = result.diagnostics.raw_parts();
+        let diagnostics = slice::from_raw_parts(ptr, n)
+            .iter()
+            .map(|d| Diagnostic::from_stable(d))
+            .collect::<Vec<_>>();
+        let (ptr, n) = result.full_path_markers.raw_parts();
+        let full_path_markers = slice::from_raw_parts(ptr, n)
+            .iter()
+            .map(|m| from_raw_cstr(*m))
+            .collect::<Vec<_>>();
+        ProcMacroResult {
+            token_stream: TokenStream::from_stable(&result.token_stream),
+            diagnostics,
+            full_path_markers,
+            aux_data: AuxData::from_stable(&result.aux_data),
         }
     }
 
@@ -120,46 +70,22 @@ impl ProcMacroResult {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn from_owned_stable(result: StableProcMacroResult) -> Self {
-        match result {
-            StableProcMacroResult::Leave { diagnostics } => {
-                let diagnostics = diagnostics.into_owned();
-                let diagnostics = diagnostics
-                    .into_iter()
-                    .map(|d| Diagnostic::from_owned_stable(d))
-                    .collect::<Vec<_>>();
-                ProcMacroResult::Leave { diagnostics }
-            }
-            StableProcMacroResult::Remove { diagnostics } => {
-                let diagnostics = diagnostics.into_owned();
-                let diagnostics = diagnostics
-                    .into_iter()
-                    .map(|d| Diagnostic::from_owned_stable(d))
-                    .collect::<Vec<_>>();
-                ProcMacroResult::Remove { diagnostics }
-            }
-            StableProcMacroResult::Replace {
-                token_stream,
-                aux_data,
-                diagnostics,
-                full_path_markers,
-            } => {
-                let diagnostics = diagnostics.into_owned();
-                let diagnostics = diagnostics
-                    .into_iter()
-                    .map(|d| Diagnostic::from_owned_stable(d))
-                    .collect::<Vec<_>>();
-                let full_path_markers = full_path_markers
-                    .into_owned()
-                    .iter()
-                    .map(|m| from_raw_cstring(*m))
-                    .collect::<Vec<_>>();
-                ProcMacroResult::Replace {
-                    token_stream: TokenStream::from_owned_stable(token_stream),
-                    aux_data: AuxData::from_owned_stable(aux_data),
-                    diagnostics,
-                    full_path_markers,
-                }
-            }
+        let diagnostics = result.diagnostics.into_owned();
+        let diagnostics = diagnostics
+            .into_iter()
+            .map(|d| Diagnostic::from_owned_stable(d))
+            .collect::<Vec<_>>();
+        let full_path_markers = result
+            .full_path_markers
+            .into_owned()
+            .iter()
+            .map(|m| from_raw_cstring(*m))
+            .collect::<Vec<_>>();
+        ProcMacroResult {
+            token_stream: TokenStream::from_owned_stable(result.token_stream),
+            aux_data: AuxData::from_owned_stable(result.aux_data),
+            diagnostics,
+            full_path_markers,
         }
     }
 }
