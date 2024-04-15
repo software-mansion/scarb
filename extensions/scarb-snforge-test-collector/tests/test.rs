@@ -472,3 +472,36 @@ fn generates_statements_functions_mappings() {
         ["github.com/software-mansion/cairo-profiler"]["statements_functions"]
         .is_object());
 }
+
+#[test]
+fn features_test_build_success() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+            "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn f() -> felt252 { 21 }
+
+            #[cfg(test)]
+            mod tests {
+                use super::f;
+                
+                #[test]
+                fn it_works() {
+                    assert(f() == 21, 'it works!');
+                }
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("snforge-test-collector")
+        .args(["--features", "x"])
+        .current_dir(&t)
+        .assert()
+        .success();
+}

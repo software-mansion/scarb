@@ -24,11 +24,10 @@ use cairo_lang_sierra_generator::db::SierraGenGroup;
 use cairo_lang_sierra_generator::replace_ids::replace_sierra_ids_in_program;
 use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_test_plugin::test_plugin_suite;
-use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use itertools::Itertools;
 use serde::Serialize;
 use smol_str::SmolStr;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 
 use crate::compilation::test_collector::config::{ExpectedTestResult, RawForkConfig};
@@ -92,18 +91,11 @@ pub fn collect_tests(
     lib_content: &str,
     compilation_unit: &CompilationUnit,
 ) -> Result<(ProgramArtifact, Vec<TestCaseRaw>)> {
-    let crate_roots: OrderedHashMap<SmolStr, PathBuf> = compilation_unit
-        .dependencies()
-        .iter()
-        .cloned()
-        .map(|source_root| (source_root.name.into(), source_root.path))
-        .collect();
-
     let project_config = ProjectConfig {
         base_path: crate_root.into(),
         corelib: Some(Directory::Real(compilation_unit.corelib_path()?)),
         content: ProjectConfigContent {
-            crate_roots,
+            crate_roots: compilation_unit.dependencies(),
             crates_config: compilation_unit.crates_config_for_compilation_unit(),
         },
     };
@@ -111,7 +103,10 @@ pub fn collect_tests(
     // code taken from crates/cairo-lang-test-runner/src/lib.rs
     let db = &mut {
         let mut b = RootDatabase::builder();
-        b.with_cfg(CfgSet::from_iter([Cfg::name("test")]));
+        b.with_cfg(
+            CfgSet::from_iter([Cfg::name("test")])
+                .union(&compilation_unit.compilation_unit_cfg_set()),
+        );
         b.with_plugin_suite(snforge_test_plugin_suite());
         b.with_plugin_suite(test_plugin_suite());
         b.with_plugin_suite(starknet_plugin_suite());
