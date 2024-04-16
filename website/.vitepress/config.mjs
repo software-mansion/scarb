@@ -47,7 +47,6 @@ const sidebar = {
       items: [
         p("Compilation model", "/docs/reference/compilation-model"),
         p("Conditional compilation", "/docs/reference/conditional-compilation"),
-        p("Features", "/docs/reference/features"),
         p("Global directories", "/docs/reference/global-directories"),
         p("Manifest", "/docs/reference/manifest"),
         p("Lockfile", "/docs/reference/lockfile"),
