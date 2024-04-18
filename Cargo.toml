@@ -2,6 +2,7 @@
 members = [
     "scarb",
     "scarb-metadata",
+    "extensions/cairodoc",
     "extensions/scarb-cairo-language-server",
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
@@ -56,7 +57,9 @@ cairo-lang-starknet-classes = { git = "https://github.com/starkware-libs/cairo",
 cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo", rev = "d6525b8c58bb37c13bac1f1d87cf23a374bdf59d" }
 cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", rev = "d6525b8c58bb37c13bac1f1d87cf23a374bdf59d" }
 cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "d6525b8c58bb37c13bac1f1d87cf23a374bdf59d" }
-cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "d6525b8c58bb37c13bac1f1d87cf23a374bdf59d", features = ["env_logger"] }
+cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "d6525b8c58bb37c13bac1f1d87cf23a374bdf59d", features = [
+    "env_logger",
+] }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
@@ -70,7 +73,10 @@ dunce = "1"
 expect-test = "1.5"
 fs4 = { version = "0.7", features = ["tokio"] }
 fs_extra = "1"
-futures = { version = "0.3", default-features = false, features = ["std", "async-await"] }
+futures = { version = "0.3", default-features = false, features = [
+    "std",
+    "async-await",
+] }
 gix = ">=0.55"
 glob = "0.3"
 ignore = "0.4"
@@ -113,7 +119,13 @@ tempfile = "3"
 test-case = "3"
 thiserror = "1"
 time = "0.3"
-tokio = { version = "1", features = ["macros", "io-util", "rt", "rt-multi-thread", "sync"] }
+tokio = { version = "1", features = [
+    "macros",
+    "io-util",
+    "rt",
+    "rt-multi-thread",
+    "sync",
+] }
 toml = "0.8"
 toml_edit = { version = "0.22", features = ["serde"] }
 tower-http = { version = "0.4", features = ["fs"] }
@@ -125,7 +137,11 @@ typed-builder = ">=0.17"
 url = { version = "2", features = ["serde"] }
 walkdir = "2"
 which = "5"
-windows-sys = { version = "0.52", features = ["Win32_Foundation", "Win32_System", "Win32_System_Console"] }
+windows-sys = { version = "0.52", features = [
+    "Win32_Foundation",
+    "Win32_System",
+    "Win32_System_Console",
+] }
 xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
