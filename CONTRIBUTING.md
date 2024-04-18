@@ -9,7 +9,7 @@ Grab any unassigned issue labeled with [`help-wanted`](https://github.com/softwa
 Check out issues labeled with [`good-first-issue`](https://github.com/software-mansion/scarb/labels/good%20first%20issue)!
 
 *Need some guidance?*
-Reach out to other developers on [Telegram](https://t.me/+1pMLtrNj5NthZWJk) or open a [discussion](https://github.com/software-mansion/scarb/discussions) on GitHub!
+Reach out to other developers on [Telegram](https://t.me/+1pMLtrNj5NthZWJk)!
 
 ## Environment setup
 

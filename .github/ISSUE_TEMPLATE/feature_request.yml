@@ -9,10 +9,10 @@ body:
 
         If the feature request is relatively small and already with a possible solution, this might be the place for you.
 
-        If you are brewing a big feature that needs feedback from the community, [the ideas forum] is the best fit.
+        If you are brewing a big feature that needs feedback from the community, [the Scarb Telegram channel][tg] is the best fit.
         You can also talk the idea over with other developers over there.
 
-        [the ideas forum]: https://github.com/software-mansion/scarb/discussions/categories/ideas
+        [tg]: https://t.me/+G_YxIv-XTFlhNWU0
   - type: textarea
     id: problem
     attributes:
