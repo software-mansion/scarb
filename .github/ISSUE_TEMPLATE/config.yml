@@ -1,4 +1,7 @@
 contact_links:
-  - name: Scarb Community
-    url: https://github.com/software-mansion/scarb/discussions
-    about: Please ask and answer questions here.
+  - name: "#scarb on Starknet Discord"
+    url: https://discord.gg/KZWaFtPZJf
+    about: Have a question or issue? Chat with the community and developers here.
+  - name: Scarb Telegram Channel
+    url: https://t.me/+G_YxIv-XTFlhNWU0
+    about: Please discuss development ideas with the community here.

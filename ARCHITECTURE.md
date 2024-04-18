@@ -278,7 +278,7 @@ In the future, Scarb will also provide a way to define Cairo plugins as package 
 
 **The mechanism for requiring Cairo plugins as package dependencies or compiling them in Scarb runtime is not implemented yet.**
 
-Please see [the RFC document](https://github.com/software-mansion/scarb/discussions/227) for more information.
+Please see [the design document](design/01-proc-macro.md) for more information.
 
 ### RootDatabase management within the compiler
 
