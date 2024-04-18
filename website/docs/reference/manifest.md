@@ -320,3 +320,7 @@ Each field can accept any valid toml value including a table.
 ## `[workspace]`
 
 See [Workspaces](./workspaces) page.
+
+## `[features]`
+
+See [Features](./conditional-compilation#features) page.
