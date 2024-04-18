@@ -57,7 +57,7 @@ The enabled by default property `sierra` determines whether this target builds a
 ## CASM contract class generation
 
 Historically, contract classes have been defined in terms of Cairo assembly, or CASM for short (the class definition also included more information needed for execution, e.g., hint data).
-The novelty of Cairo 1.0 is the introduction of Sierra, an intermediate layer between Cairo 1.0 and CASM.
+The novelty of Cairo is the introduction of Sierra, an intermediate layer between Cairo and CASM.
 
 When executing a contract on Starknet, the Sequencer downloads a [Contract Class] which contains Sierra bytecode.
 It is a role of the Sequencer to compile it to CASM, which is a language that you can physically execute and generate proof of such execution.
