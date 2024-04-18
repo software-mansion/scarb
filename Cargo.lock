@@ -1139,6 +1139,14 @@ dependencies = [
 [[package]]
 name = "cairodoc"
 version = "2.6.3"
+dependencies = [
+ "anyhow",
+ "cairo-lang-compiler",
+ "cairo-lang-defs",
+ "cairo-lang-semantic",
+ "camino",
+ "clap",
+]
 
 [[package]]
 name = "camino"
