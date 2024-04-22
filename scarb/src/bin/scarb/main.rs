@@ -1,4 +1,5 @@
 use std::env;
+use std::str::FromStr;
 
 use anyhow::{Error, Result};
 use clap::Parser;
@@ -27,7 +28,9 @@ fn main() {
         .with_writer(std::io::stderr)
         .with_env_filter(
             EnvFilter::builder()
-                .with_default_directive(args.verbose.as_trace().into())
+                .with_default_directive(
+                    FromStr::from_str(args.verbose.as_trace().as_str()).unwrap(),
+                )
                 .with_env_var("SCARB_LOG")
                 .from_env_lossy(),
         )
@@ -59,6 +62,7 @@ fn exit_with_error(err: Error, ui: &Ui) {
 
 fn cli_main(args: ScarbArgs) -> Result<()> {
     let ui_output_format = args.output_format();
+    let scarb_log = env::var_os("SCARB_LOG").unwrap_or_else(|| args.verbose.as_trace().into());
 
     let manifest_path = ops::find_manifest_path(args.manifest_path.as_deref())?;
 
@@ -69,7 +73,7 @@ fn cli_main(args: ScarbArgs) -> Result<()> {
         .ui_verbosity(args.verbose.clone().into())
         .ui_output_format(ui_output_format)
         .offline(args.offline)
-        .log_filter_directive(env::var_os("SCARB_LOG"))
+        .log_filter_directive(Some(scarb_log))
         .profile(args.profile_spec.determine()?)
         .build()?;
 
