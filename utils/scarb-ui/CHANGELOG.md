@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.1.5 (2024-04-23)
+- Fixed log verbosity calculation.
+- Added support for diagnostics error codes.
+- Added `ToEnvVars` trait.
+
 ## 0.1.4 (2024-04-09)
 - Added `FeaturesSpec` and `VerbositySpec` parsers.
 
