@@ -50,15 +50,16 @@ impl VerbositySpec {
     }
 
     /// Convert the verbosity specification to a [`tracing_core::LevelFilter`].
-    pub fn as_trace(&self) -> tracing_core::LevelFilter {
-        match self.integer_verbosity() {
+    pub fn as_trace(&self) -> String {
+        let level = match self.integer_verbosity() {
             i8::MIN..=-1 => tracing_core::LevelFilter::OFF,
             0 => tracing_core::LevelFilter::ERROR,
             1 => tracing_core::LevelFilter::WARN,
             2 => tracing_core::LevelFilter::INFO,
             3 => tracing_core::LevelFilter::DEBUG,
             4..=i8::MAX => tracing_core::LevelFilter::TRACE,
-        }
+        };
+        format!("scarb={level}")
     }
 
     fn integer_verbosity(&self) -> i8 {
@@ -123,7 +124,7 @@ mod tests {
             quiet,
             verbosity: None,
         };
-        assert_eq!(spec.as_trace(), trace);
+        assert_eq!(spec.as_trace(), format!("scarb={trace}"));
         assert_eq!(Verbosity::from(spec), level);
     }
 }
