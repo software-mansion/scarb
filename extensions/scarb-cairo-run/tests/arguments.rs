@@ -358,3 +358,79 @@ fn can_control_verbosity() {
         something
         "#});
 }
+
+#[test]
+fn can_choose_function_to_run_by_name() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .lib_cairo(indoc! {r#"
+            fn a() {
+                println!("A");
+            }
+            fn main() {
+                println!("M");
+            }
+            fn b() {
+                println!("B");
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("--quiet")
+        .arg("cairo-run")
+        .arg("--function")
+        .arg("b")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        B
+        "#});
+    Scarb::quick_snapbox()
+        .arg("--quiet")
+        .arg("cairo-run")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        M
+        "#});
+}
+
+#[test]
+fn choose_not_existing_function() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .lib_cairo(indoc! {r#"
+            fn main() {
+                println!("main");
+            }
+        "#})
+        .build(&t);
+    let output = Scarb::quick_snapbox()
+        .arg("cairo-run")
+        .arg("--function")
+        .arg("b")
+        .current_dir(&t)
+        .assert()
+        .failure();
+    #[cfg(windows)]
+    output.stdout_matches(indoc! {r#"
+            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            [..]error: Function with suffix `::b` to run not found.
+            error: process did not exit successfully: exit code: 1
+        "#});
+    #[cfg(not(windows))]
+    output.stdout_matches(indoc! {r#"
+            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            [..]error: Function with suffix `::b` to run not found.
+        "#});
+}
