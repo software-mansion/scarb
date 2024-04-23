@@ -13,6 +13,7 @@ use std::process::Command;
 
 use anyhow::{anyhow, bail, Context, Result};
 use camino::Utf8PathBuf;
+use tracing::log::debug;
 
 use scarb_ui::Verbosity;
 
@@ -202,8 +203,30 @@ impl GitDatabase {
     }
 
     pub fn copy_to(&self, fs: &Filesystem, rev: Rev, config: &Config) -> Result<GitCheckout<'_>> {
+        // If the checkout exists, the rev matches, and is marked ok, use it.
+        // A non-ok checkout can happen if the checkout operation was
+        // interrupted. In that case, the checkout gets deleted and a new
+        // clone is created.
+        if fs.is_ok()
+            && fs
+                .path_existent()
+                .ok()
+                .and_then(|path| gix::discover(path).ok())
+                .and_then(|repo| repo.rev_parse_single("HEAD").ok().map(|r| r.detach()))
+                .map(Rev::from)
+                .map(|real| real == rev)
+                .unwrap_or_default()
+        {
+            debug!("git checkout ready; skipping clone; fs={fs}");
+            return Ok(GitCheckout {
+                db: self,
+                location: fs.path_existent()?.to_path_buf(),
+                rev,
+            });
+        }
         let checkout = GitCheckout::clone(self, fs, rev, config)?;
         checkout.reset(config)?;
+        fs.mark_ok()?;
         Ok(checkout)
     }
 
