@@ -27,6 +27,10 @@ struct Args {
     #[command(flatten)]
     packages_filter: PackagesFilter,
 
+    /// Specify name of the function to run.
+    #[arg(long)]
+    function: Option<String>,
+
     /// Maximum amount of gas available to the program.
     #[arg(long)]
     available_gas: Option<usize>,
@@ -115,9 +119,10 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
         None,
     )?;
 
+    let function = args.function.as_deref().unwrap_or("main");
     let result = runner
         .run_function_with_starknet_context(
-            runner.find_function("::main")?,
+            runner.find_function(format!("::{function}").as_str())?,
             &args.arguments,
             available_gas.value(),
             StarknetState::default(),
