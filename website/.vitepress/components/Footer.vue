@@ -47,7 +47,7 @@
           target="_blank"
           >Software Mansion</a
         >
-        2024.
+        2023.
       </span>
       All trademarks and copyrights belong to their respective owners.
     </span>
