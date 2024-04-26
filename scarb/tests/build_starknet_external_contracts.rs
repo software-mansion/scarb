@@ -424,7 +424,74 @@ fn compile_with_bad_glob_path() {
         .failure()
         .stdout_matches(indoc! {r#"
         [..] Compiling world v0.1.0 ([..]/Scarb.toml)
-        error: external contract path hello::** has multiple global path selectors, only one '*' selector is allowed
+        error: external contract path `hello::**` has multiple global path selectors, only one '*' selector is allowed
         error: could not compile `world` due to previous error
         "#});
+}
+
+#[test]
+fn will_warn_about_unmatched_paths() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(indoc! {r#"
+            mod lorem;
+        "#})
+        .src(
+            "src/lorem.cairo",
+            indoc! {r#"
+            mod ipsum;
+        "#},
+        )
+        .src(
+            "src/lorem/ipsum.cairo",
+            format!("{}\n{}", BALANCE_CONTRACT, HELLO_CONTRACT),
+        )
+        .build(&hello);
+
+    ProjectBuilder::start()
+        .name("world")
+        .version("0.1.0")
+        .dep("hello", &hello)
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+            build-external-contracts = [
+                "hello::lorem::ipsum::Balance",
+                "hello::lorem::ipsum::HelloContract",
+                "hello::lorem::mopsum::*",
+            ]
+        "#})
+        .dep_starknet()
+        .lib_cairo(format!("{}\n{}", FORTY_TWO_CONTRACT, HELLO_CONTRACT))
+        .build(&world);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&world)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling world v0.1.0 ([..]/Scarb.toml)
+            warn: external contracts not found for selectors: `hello::lorem::mopsum::*`
+            [..]  Finished release target(s) in [..]
+        "#});
+    assert_eq!(
+        world.child("target/dev").files(),
+        vec![
+            "world.starknet_artifacts.json",
+            "world_Balance.contract_class.json",
+            "world_FortyTwo.contract_class.json",
+            "world_hello_lorem_ipsum_HelloContract.contract_class.json",
+            "world_world_HelloContract.contract_class.json",
+        ]
+    );
 }

@@ -27,6 +27,7 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler}
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::serdex::RelativeUtf8PathBuf;
 use scarb_stable_hash::short_hash;
+use scarb_ui::Ui;
 
 const CAIRO_PATH_SEPARATOR: &str = "::";
 const GLOB_PATH_SELECTOR: &str = "*";
@@ -219,7 +220,7 @@ impl Compiler for StarknetContractCompiler {
         if let Some(external_contracts) = props.build_external_contracts.clone() {
             for path in external_contracts.iter() {
                 ensure!(path.0.matches(GLOB_PATH_SELECTOR).count() <= 1,
-                    "external contract path {} has multiple global path selectors, only one '*' selector is allowed",
+                    "external contract path `{}` has multiple global path selectors, only one '*' selector is allowed",
                     path.0);
             }
         }
@@ -232,6 +233,7 @@ impl Compiler for StarknetContractCompiler {
 
         let contracts = find_project_contracts(
             db.upcast_mut(),
+            ws.config().ui(),
             main_crate_ids,
             props.build_external_contracts.clone(),
         )?;
@@ -335,6 +337,7 @@ fn ensure_gas_enabled(db: &mut RootDatabase) -> Result<()> {
 
 fn find_project_contracts(
     mut db: &dyn SemanticGroup,
+    ui: Ui,
     main_crate_ids: Vec<CrateId>,
     external_contracts: Option<Vec<ContractSelector>>,
 ) -> Result<Vec<ContractDeclaration>> {
@@ -362,15 +365,31 @@ fn find_project_contracts(
                 .into_iter()
                 .filter(|decl| {
                     let contract_path = decl.module_id().full_path(db.upcast());
-                    external_contracts.iter().any(|selector| {
-                        if selector.is_wildcard() {
-                            contract_path.starts_with(&selector.partial_path())
-                        } else {
-                            contract_path == selector.full_path()
-                        }
-                    })
+                    external_contracts
+                        .iter()
+                        .any(|selector| contract_matches(selector, contract_path.as_str()))
                 })
                 .collect();
+
+            let never_matched = external_contracts
+                .iter()
+                .filter(|selector| {
+                    !filtered_contracts.iter().any(|decl| {
+                        let contract_path = decl.module_id().full_path(db.upcast());
+                        contract_matches(selector, contract_path.as_str())
+                    })
+                })
+                .collect_vec();
+            if !never_matched.is_empty() {
+                let never_matched = never_matched
+                    .iter()
+                    .map(|selector| selector.full_path())
+                    .collect_vec()
+                    .join("`, `");
+                ui.warn(format!(
+                    "external contracts not found for selectors: `{never_matched}`"
+                ));
+            }
 
             filtered_contracts
         } else {
@@ -382,6 +401,14 @@ fn find_project_contracts(
         .into_iter()
         .chain(external_contracts)
         .collect())
+}
+
+fn contract_matches(selector: &ContractSelector, contract_path: &str) -> bool {
+    if selector.is_wildcard() {
+        contract_path.starts_with(&selector.partial_path())
+    } else {
+        contract_path == selector.full_path()
+    }
 }
 
 fn check_allowed_libfuncs(
