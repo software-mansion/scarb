@@ -19,3 +19,5 @@ proc-macro = true
 quote.workspace = true
 syn = { workspace = true, features = ["full", "extra-traits"] }
 scarb-stable-hash = { path = "../../utils/scarb-stable-hash" }
+proc-macro2.workspace = true
+darling.workspace = true

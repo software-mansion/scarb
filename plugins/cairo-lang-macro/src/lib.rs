@@ -21,9 +21,11 @@ pub use linkme;
 
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
-    StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
+    StableExecutableAttributesList, StableExpansionsList, StablePostProcessContext,
+    StableProcMacroResult,
 };
-use std::ffi::{c_char, CStr};
+use std::ffi::{c_char, CStr, CString};
+use std::ptr::NonNull;
 
 mod types;
 
@@ -163,4 +165,31 @@ pub unsafe extern "C" fn post_process_callback(
         }
     }
     context
+}
+
+/// Distributed slice for storing executable attribute names.
+#[doc(hidden)]
+#[linkme::distributed_slice]
+pub static EXECUTABLE_ATTRIBUTE: [&'static str];
+
+#[doc(hidden)]
+#[no_mangle]
+pub unsafe extern "C" fn list_executable_attributes() -> StableExecutableAttributesList {
+    let list = EXECUTABLE_ATTRIBUTE
+        .iter()
+        .filter_map(|s| NonNull::new(CString::new(*s).unwrap().into_raw()))
+        .collect::<Vec<_>>();
+    StableSlice::new(list)
+}
+
+#[doc(hidden)]
+#[no_mangle]
+pub unsafe extern "C" fn free_executable_attributes_list(list: StableExecutableAttributesList) {
+    let v = list.into_owned();
+    v.into_iter().for_each(|v| {
+        let raw = v.as_ptr();
+        if !raw.is_null() {
+            let _ = CString::from_raw(raw);
+        }
+    });
 }

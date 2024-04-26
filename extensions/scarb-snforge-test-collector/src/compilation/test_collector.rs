@@ -157,6 +157,7 @@ pub fn collect_tests(
         type_names: Default::default(),
         libfunc_names: Default::default(),
         user_func_names: Default::default(),
+        executables: Default::default(),
         annotations,
     });
 

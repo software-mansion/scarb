@@ -34,6 +34,7 @@ use tracing::{debug, trace_span};
 
 const FULL_PATH_MARKER_KEY: &str = "macro::full_path_marker";
 const DERIVE_ATTR: &str = "derive";
+const USED_ATTR_MARKER: &str = "proc_macro::";
 
 /// A Cairo compiler plugin controlling the procedural macro execution.
 ///
@@ -236,7 +237,9 @@ impl ProcMacroHostPlugin {
                     let mut args_builder = PatchBuilder::new(db);
                     args_builder.add_node(attr.arguments(db).as_syntax_node());
                     let args = TokenStream::new(args_builder.code);
+                    let name = found.expansion.name.clone();
                     expansion = Some((found, args));
+                    builder.add_str(format!("#[{USED_ATTR_MARKER}{name}]").as_str());
                     // Do not add the attribute for found expansion.
                     continue;
                 }
@@ -603,11 +606,21 @@ impl MacroPlugin for ProcMacroHostPlugin {
     }
 
     fn declared_attributes(&self) -> Vec<String> {
-        self.macros
-            .iter()
-            .flat_map(|m| m.declared_attributes())
+        let macros = self.macros.iter().flat_map(|m| m.declared_attributes());
+        macros
+            .clone()
+            .chain(macros.map(|m| format!("{USED_ATTR_MARKER}{m}")))
             .chain(vec![FULL_PATH_MARKER_KEY.to_string()])
             .collect()
+    }
+
+    fn executable_attributes(&self) -> IntoIter<String> {
+        self.macros
+            .iter()
+            .flat_map(|m| m.executable_attributes())
+            .map(|s| format!("{USED_ATTR_MARKER}{s}"))
+            .collect_vec()
+            .into_iter()
     }
 }
 

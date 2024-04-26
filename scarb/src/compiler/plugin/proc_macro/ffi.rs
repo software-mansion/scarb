@@ -5,8 +5,8 @@ use cairo_lang_macro::{
     ExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult, TokenStream,
 };
 use cairo_lang_macro_stable::{
-    StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
-    StableResultWrapper, StableTokenStream,
+    StableExecutableAttributesList, StableExpansion, StableExpansionsList,
+    StablePostProcessContext, StableProcMacroResult, StableResultWrapper, StableTokenStream,
 };
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{ast, SyntaxNode, TypedSyntaxNode};
@@ -51,6 +51,7 @@ pub struct ProcMacroInstance {
     package_id: PackageId,
     plugin: Plugin,
     expansions: Vec<Expansion>,
+    executable_attributes: Vec<SmolStr>,
 }
 
 impl Debug for ProcMacroInstance {
@@ -68,6 +69,7 @@ impl ProcMacroInstance {
         let plugin = unsafe { Plugin::try_new(lib_path.to_path_buf())? };
         Ok(Self {
             expansions: unsafe { Self::load_expansions(&plugin, package.id)? },
+            executable_attributes: unsafe { Self::load_executable_attributes(&plugin)? },
             package_id: package.id,
             plugin,
         })
@@ -99,6 +101,23 @@ impl ProcMacroInstance {
         Ok(expansions)
     }
 
+    unsafe fn load_executable_attributes(plugin: &Plugin) -> Result<Vec<SmolStr>> {
+        let stable_attrs = (plugin.vtable.list_executable_attributes)();
+        // Convert from stable representation.
+        let (ptr, n) = stable_attrs.raw_parts();
+        let attrs = slice::from_raw_parts(ptr, n);
+        let attrs = attrs
+            .iter()
+            .map(|s| CStr::from_ptr(s.as_ptr()).to_string_lossy().to_string())
+            .map(SmolStr::new)
+            // Deduplicate.
+            .unique()
+            .collect();
+        // Free the memory allocated by the `stable_attrs`.
+        (plugin.vtable.free_executable_attributes_list)(stable_attrs);
+        Ok(attrs)
+    }
+
     pub fn get_expansions(&self) -> &[Expansion] {
         &self.expansions
     }
@@ -114,6 +133,10 @@ impl ProcMacroInstance {
             .map(|e| e.name.clone())
             .map(Into::into)
             .collect()
+    }
+
+    pub fn executable_attributes(&self) -> Vec<SmolStr> {
+        self.executable_attributes.clone()
     }
 
     /// Apply expansion to token stream.
@@ -209,6 +232,8 @@ type ExpandCode =
     extern "C" fn(*const c_char, StableTokenStream, StableTokenStream) -> StableResultWrapper;
 type FreeResult = extern "C" fn(StableProcMacroResult);
 type PostProcessCallback = extern "C" fn(StablePostProcessContext) -> StablePostProcessContext;
+type ListExecutableAttributes = extern "C" fn() -> StableExecutableAttributesList;
+type FreeExecutableAttributesList = extern "C" fn(StableExecutableAttributesList);
 
 struct VTableV0 {
     list_expansions: RawSymbol<ListExpansions>,
@@ -216,6 +241,8 @@ struct VTableV0 {
     expand: RawSymbol<ExpandCode>,
     free_result: RawSymbol<FreeResult>,
     post_process_callback: RawSymbol<PostProcessCallback>,
+    list_executable_attributes: RawSymbol<ListExecutableAttributes>,
+    free_executable_attributes_list: RawSymbol<FreeExecutableAttributesList>,
 }
 
 macro_rules! get_symbol {
@@ -243,6 +270,16 @@ impl VTableV0 {
                 library,
                 b"post_process_callback\0",
                 PostProcessCallback
+            ),
+            list_executable_attributes: get_symbol!(
+                library,
+                b"list_executable_attributes\0",
+                ListExecutableAttributes
+            ),
+            free_executable_attributes_list: get_symbol!(
+                library,
+                b"free_executable_attributes_list\0",
+                FreeExecutableAttributesList
             ),
         })
     }

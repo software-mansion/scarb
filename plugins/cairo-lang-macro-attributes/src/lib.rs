@@ -1,8 +1,17 @@
+use darling::ast::NestedMeta;
+use darling::{Error, FromMeta};
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use scarb_stable_hash::short_hash;
 use syn::spanned::Spanned;
 use syn::{parse_macro_input, ItemFn};
+
+#[derive(Debug, FromMeta)]
+struct AttributeMacroArgs {
+    /// Mark functions with this attribute as executable.
+    #[darling(default)]
+    executable: Option<bool>,
+}
 
 /// Constructs the attribute macro implementation.
 ///
@@ -10,12 +19,48 @@ use syn::{parse_macro_input, ItemFn};
 ///
 /// Note, that this macro can be used multiple times, to define multiple independent attribute macros.
 #[proc_macro_attribute]
-pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
-    macro_helper(
-        input,
+pub fn attribute_macro(args: TokenStream, input: TokenStream) -> TokenStream {
+    // Parse args
+    let attr_args = match NestedMeta::parse_meta_list(args.into()) {
+        Ok(v) => v,
+        Err(e) => {
+            return TokenStream::from(Error::from(e).write_errors());
+        }
+    };
+    let args = match AttributeMacroArgs::from_list(&attr_args) {
+        Ok(v) => v,
+        Err(e) => {
+            return TokenStream::from(e.write_errors());
+        }
+    };
+    let executable = args.executable.unwrap_or_default();
+    // Expand input
+    let item: ItemFn = parse_macro_input!(input as ItemFn);
+    let item_name = item.sig.ident.to_string();
+    let item_span = item.span();
+    let tokens = macro_helper(
+        item,
         quote!(::cairo_lang_macro::ExpansionKind::Attr),
         quote!(::cairo_lang_macro::ExpansionFunc::Attr),
-    )
+    );
+    let expanded: proc_macro2::TokenStream = tokens.into();
+    let result = if executable {
+        let marker = format!(
+            "EXECUTABLE_ATTRIBUTE_DESERIALIZE_{}",
+            item_name.to_uppercase()
+        );
+        let marker = syn::Ident::new(marker.as_str(), item_span);
+        quote! {
+            #expanded
+
+            #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::EXECUTABLE_ATTRIBUTE)]
+            #[linkme(crate = ::cairo_lang_macro::linkme)]
+            static #marker: &'static str = #item_name;
+        }
+    } else {
+        expanded
+    };
+    TokenStream::from(result)
 }
 
 /// Constructs the inline macro implementation.
@@ -25,8 +70,9 @@ pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// Note, that this macro can be used multiple times, to define multiple independent attribute macros.
 #[proc_macro_attribute]
 pub fn inline_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
+    let item: ItemFn = parse_macro_input!(input as ItemFn);
     macro_helper(
-        input,
+        item,
         quote!(::cairo_lang_macro::ExpansionKind::Inline),
         quote!(::cairo_lang_macro::ExpansionFunc::Other),
     )
@@ -39,15 +85,15 @@ pub fn inline_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// Note, that this macro can be used multiple times, to define multiple independent attribute macros.
 #[proc_macro_attribute]
 pub fn derive_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
+    let item: ItemFn = parse_macro_input!(input as ItemFn);
     macro_helper(
-        input,
+        item,
         quote!(::cairo_lang_macro::ExpansionKind::Derive),
         quote!(::cairo_lang_macro::ExpansionFunc::Other),
     )
 }
 
-fn macro_helper(input: TokenStream, kind: impl ToTokens, func: impl ToTokens) -> TokenStream {
-    let item: ItemFn = parse_macro_input!(input as ItemFn);
+fn macro_helper(item: ItemFn, kind: impl ToTokens, func: impl ToTokens) -> TokenStream {
     let original_item_name = item.sig.ident.to_string();
     let item = hide_name(item);
     let item_name = &item.sig.ident;

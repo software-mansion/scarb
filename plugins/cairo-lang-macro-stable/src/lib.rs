@@ -17,6 +17,8 @@ pub type StableExpansionKind = NonZeroU8;
 
 pub type StableExpansionsList = StableSlice<StableExpansion>;
 
+pub type StableExecutableAttributesList = StableSlice<NonNull<c_char>>;
+
 /// Token stream.
 ///
 /// This struct implements FFI-safe stable ABI.
