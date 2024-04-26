@@ -1,5 +1,5 @@
 [package]
-name = "cairodoc"
+name = "scarb-doc"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
