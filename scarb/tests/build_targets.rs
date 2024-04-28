@@ -88,6 +88,7 @@ fn compile_with_custom_lib_target() {
             sierra = false
             casm = true
             sierra-text = true
+            casm-text = true
             "#,
         )
         .unwrap();
@@ -104,14 +105,18 @@ fn compile_with_custom_lib_target() {
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished release target(s) in [..]
         "#});
-
-    t.child("target/dev/not_hello.casm")
+    
+    t.child("target/dev/not_hello.sierra.json")
+        .assert(predicates::path::exists().not());
+    t.child("target/dev/not_hello.casm.json")
         .assert(predicates::str::is_empty().not());
     t.child("target/dev/not_hello.sierra")
         .assert(predicates::str::is_empty().not());
-    t.child("target/dev/not_hello.sierra.json")
-        .assert(predicates::path::exists().not());
+    t.child("target/dev/not_hello.casm")
+        .assert(predicates::str::is_empty().not());
     t.child("target/dev/hello.sierra.json")
+        .assert(predicates::path::exists().not());
+    t.child("target/dev/hello.casm.json")
         .assert(predicates::path::exists().not());
     t.child("target/dev/hello.casm")
         .assert(predicates::path::exists().not());
@@ -156,9 +161,9 @@ fn compile_with_named_default_lib_target() {
         .assert(predicates::path::exists().not());
     t.child("target/dev/hello.sierra.json")
         .assert(predicates::path::exists().not());
-    t.child("target/dev/hello.casm")
-        .assert(predicates::path::exists().not());
     t.child("target/dev/hello.sierra")
+        .assert(predicates::path::exists().not());
+    t.child("target/dev/hello.casm")
         .assert(predicates::path::exists().not());
 }
 

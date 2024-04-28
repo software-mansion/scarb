@@ -4435,6 +4435,7 @@ dependencies = [
  "anyhow",
  "assert_fs",
  "async-trait",
+ "cairo-lang-casm",
  "cairo-lang-compiler",
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
