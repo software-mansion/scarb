@@ -4573,6 +4573,7 @@ name = "scarb-doc"
 version = "2.6.3"
 dependencies = [
  "anyhow",
+ "assert_fs",
  "cairo-lang-compiler",
  "cairo-lang-defs",
  "cairo-lang-semantic",

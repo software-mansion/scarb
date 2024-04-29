@@ -18,3 +18,4 @@ cairo-lang-semantic.workspace = true
 
 [dev-dependencies]
 scarb-test-support = { path = "../../utils/scarb-test-support" }
+assert_fs.workspace = true
