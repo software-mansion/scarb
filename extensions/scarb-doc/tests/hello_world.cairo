@@ -61,10 +61,10 @@ impl CircleShape of Shape<Circle> {
 /// Tests module
 mod tests {
     /// Imported fib function from the parent module
-    use super::fib;
+    use super::fib as fib_function;
 
     #[test]
     fn it_works() {
-        assert(fib(16) == 987, 'it works!');
+        assert(fib_function(16) == 987, 'it works!');
     }
 }

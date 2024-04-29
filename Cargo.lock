@@ -4578,6 +4578,7 @@ dependencies = [
  "cairo-lang-semantic",
  "camino",
  "clap",
+ "scarb-test-support",
 ]
 
 [[package]]
