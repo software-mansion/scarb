@@ -2,6 +2,7 @@
 members = [
     "scarb",
     "scarb-metadata",
+    "extensions/scarb-doc",
     "extensions/scarb-cairo-language-server",
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",

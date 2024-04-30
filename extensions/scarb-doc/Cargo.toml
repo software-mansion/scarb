@@ -1,0 +1,21 @@
+[package]
+name = "scarb-doc"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+camino.workspace = true
+clap.workspace = true
+cairo-lang-compiler.workspace = true
+cairo-lang-defs.workspace = true
+cairo-lang-semantic.workspace = true
+
+[dev-dependencies]
+scarb-test-support = { path = "../../utils/scarb-test-support" }
+assert_fs.workspace = true
