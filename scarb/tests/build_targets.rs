@@ -105,7 +105,7 @@ fn compile_with_custom_lib_target() {
         [..] Compiling hello v0.1.0 ([..])
         [..]  Finished release target(s) in [..]
         "#});
-    
+
     t.child("target/dev/not_hello.sierra.json")
         .assert(predicates::path::exists().not());
     t.child("target/dev/not_hello.casm.json")

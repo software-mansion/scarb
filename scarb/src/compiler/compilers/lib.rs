@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_casm::hints::Hint;
+use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
@@ -118,12 +118,15 @@ impl Compiler for LibCompiler {
 
         if props.casm {
             let assembled_cairo_program = cairo_program.assemble();
-            let bytecode = assembled_cairo_program.bytecode.iter().map(|x| BigIntAsHex{ value: x.to_owned() }).collect::<Vec<BigIntAsHex>>();
+            let bytecode = assembled_cairo_program
+                .bytecode
+                .iter()
+                .map(|x| BigIntAsHex {
+                    value: x.to_owned(),
+                })
+                .collect::<Vec<BigIntAsHex>>();
             let hints = assembled_cairo_program.hints;
-            let casm_program = SerializedCasm {
-                bytecode,
-                hints,
-            };
+            let casm_program = SerializedCasm { bytecode, hints };
             write_json(
                 format!("{}.casm.json", unit.target().name).as_str(),
                 "output file",
@@ -131,9 +134,7 @@ impl Compiler for LibCompiler {
                 ws,
                 &casm_program,
             )
-            .with_context(|| {
-                format!("failed to serialize CASM program {}", unit.target().name)
-            })?;
+            .with_context(|| format!("failed to serialize CASM program {}", unit.target().name))?;
         }
 
         if props.casm_text {
