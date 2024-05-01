@@ -29,7 +29,7 @@ impl Default for Props {
     fn default() -> Self {
         Self {
             sierra: true,
-            casm: true,
+            casm: false,
             sierra_text: false,
             casm_text: false,
         }
