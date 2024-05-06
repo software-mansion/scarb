@@ -144,7 +144,10 @@ fn compile_cairo_plugin() {
     assert_matches(r#"[..] Finished release target(s) in [..]"#, last);
     let (last, _lines) = lines.split_last().unwrap();
     // Line from Cargo output
-    assert_matches(r#"[..]Finished release [optimized] target(s) in[..]"#, last);
+    assert_matches(
+        r#"[..]Finished `release` profile [optimized] target(s) in[..]"#,
+        last,
+    );
 }
 
 #[test]
@@ -170,7 +173,10 @@ fn check_cairo_plugin() {
     assert_matches(r#"[..] Finished checking release target(s) in [..]"#, last);
     let (last, _lines) = lines.split_last().unwrap();
     // Line from Cargo output
-    assert_matches(r#"[..]Finished release [optimized] target(s) in[..]"#, last);
+    assert_matches(
+        r#"[..]Finished `release` profile [optimized] target(s) in[..]"#,
+        last,
+    );
 }
 
 #[test]
