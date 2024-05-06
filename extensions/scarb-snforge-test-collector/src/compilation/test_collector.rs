@@ -155,6 +155,7 @@ pub fn collect_tests(
     };
     let debug_info = debug_annotations.map(|annotations| DebugInfo {
         type_names: Default::default(),
+        executables: Default::default(),
         libfunc_names: Default::default(),
         user_func_names: Default::default(),
         annotations,
