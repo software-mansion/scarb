@@ -31,7 +31,25 @@ fn can_build_release() {
         .args(["--release", "build"])
         .current_dir(&t)
         .assert()
-        .success();
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling hello v1.0.0 ([..])
+            warn: artefacts produced by this build may be hard to utilize due to the build configuration
+            please make sure your build configuration is correct
+            help: if you want to use your build with a specialized tool that runs Sierra code (for
+            instance with a test framework like Forge), please make sure all required dependencies
+            are specified in your package manifest.
+            help: if you want to compile a Starknet contract, make sure to use the `starknet-contract`
+            target, by adding following excerpt to your package manifest
+            -> Scarb.toml
+                [[target.starknet-contract]]
+            help: if you want to read the generated Sierra code yourself, consider enabling
+            the debug names, by adding the following excerpt to your package manifest.
+            -> Scarb.toml
+                [cairo]
+                sierra-replace-ids = true
+            [..]Finished release target(s) in [..]
+        "#});
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "release"]);
     assert_eq!(t.child("target/release").files(), vec!["hello.sierra.json"]);
