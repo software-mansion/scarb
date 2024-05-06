@@ -158,11 +158,11 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         item_ast: ast::ModuleItem,
     ) -> (Option<(ProcMacroId, TokenStream)>, TokenStream) {
-        let mut item_builder = PatchBuilder::new(db);
-        let input = match item_ast {
+        let mut item_builder = PatchBuilder::new(db, &item_ast);
+        let input = match item_ast.clone() {
             ast::ModuleItem::Struct(struct_ast) => {
                 let attrs = struct_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut item_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(struct_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(struct_ast.struct_kw(db).as_syntax_node());
                 item_builder.add_node(struct_ast.name(db).as_syntax_node());
@@ -174,7 +174,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::Enum(enum_ast) => {
                 let attrs = enum_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut item_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(enum_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(enum_ast.enum_kw(db).as_syntax_node());
                 item_builder.add_node(enum_ast.name(db).as_syntax_node());
@@ -186,7 +186,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::ExternType(extern_type_ast) => {
                 let attrs = extern_type_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut item_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(extern_type_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(extern_type_ast.extern_kw(db).as_syntax_node());
                 item_builder.add_node(extern_type_ast.type_kw(db).as_syntax_node());
@@ -197,7 +197,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::ExternFunction(extern_func_ast) => {
                 let attrs = extern_func_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut item_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(extern_func_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(extern_func_ast.extern_kw(db).as_syntax_node());
                 item_builder.add_node(extern_func_ast.declaration(db).as_syntax_node());
@@ -206,7 +206,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::FreeFunction(free_func_ast) => {
                 let attrs = free_func_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut item_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(free_func_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(free_func_ast.declaration(db).as_syntax_node());
                 item_builder.add_node(free_func_ast.body(db).as_syntax_node());
@@ -214,7 +214,7 @@ impl ProcMacroHostPlugin {
             }
             _ => None,
         };
-        let token_stream = TokenStream::new(item_builder.code);
+        let token_stream = TokenStream::new(item_builder.build().0);
         (input, token_stream)
     }
 
@@ -223,6 +223,7 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         builder: &mut PatchBuilder<'_>,
         attrs: Vec<ast::Attribute>,
+        item_ast: &ast::ModuleItem,
     ) -> Option<(ProcMacroId, TokenStream)> {
         let mut expansion = None;
         for attr in attrs {
@@ -233,9 +234,9 @@ impl ProcMacroHostPlugin {
                     ExpansionKind::Attr,
                 ));
                 if let Some(found) = found {
-                    let mut args_builder = PatchBuilder::new(db);
+                    let mut args_builder = PatchBuilder::new(db, item_ast);
                     args_builder.add_node(attr.arguments(db).as_syntax_node());
-                    let args = TokenStream::new(args_builder.code);
+                    let args = TokenStream::new(args_builder.build().0);
                     expansion = Some((found, args));
                     // Do not add the attribute for found expansion.
                     continue;
@@ -262,7 +263,7 @@ impl ProcMacroHostPlugin {
             .map(|attr| attr.clone().structurize(db))
             .flat_map(|attr| attr.args.into_iter())
             .filter_map(|attr| {
-                let AttributeArgVariant::Unnamed { value, .. } = attr.clone().variant else {
+                let AttributeArgVariant::Unnamed(value) = attr.clone().variant else {
                     return None;
                 };
                 let Expr::Path(path) = value else {
@@ -292,7 +293,7 @@ impl ProcMacroHostPlugin {
     ) -> Option<PluginResult> {
         let stable_ptr = item_ast.clone().stable_ptr().untyped();
         let token_stream =
-            TokenStream::from_item_ast(db, item_ast.clone()).with_metadata(stream_metadata.clone());
+            TokenStream::from_syntax_node(db, &item_ast).with_metadata(stream_metadata.clone());
 
         let mut aux_data = EmittedAuxData::default();
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
@@ -301,7 +302,7 @@ impl ProcMacroHostPlugin {
         let derives = self.parse_derive(db, item_ast.clone());
         let any_derives = !derives.is_empty();
 
-        let mut derived_code = PatchBuilder::new(db);
+        let mut derived_code = PatchBuilder::new(db, &item_ast);
         for derive in derives {
             let result = self.instance(derive.package_id).generate_code(
                 derive.expansion.name.clone(),
@@ -330,13 +331,14 @@ impl ProcMacroHostPlugin {
         }
 
         if any_derives {
+            let derived_code = derived_code.build().0;
             return Some(PluginResult {
-                code: if derived_code.code.is_empty() {
+                code: if derived_code.is_empty() {
                     None
                 } else {
                     Some(PluginGeneratedFile {
                         name: "proc_macro_derive".into(),
-                        content: derived_code.code.to_string(),
+                        content: derived_code,
                         code_mappings: Default::default(),
                         aux_data: if aux_data.is_empty() {
                             None
@@ -508,11 +510,7 @@ impl ProcMacroHostPlugin {
         }
 
         for arg in attr.args.clone() {
-            if let AttributeArgVariant::Unnamed {
-                value: Expr::String(s),
-                ..
-            } = arg.variant
-            {
+            if let AttributeArgVariant::Unnamed(Expr::String(s)) = arg.variant {
                 return s.string_value(db.upcast());
             }
         }
@@ -646,8 +644,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         syntax: &ast::ExprInlineMacro,
     ) -> InlinePluginResult {
         let stable_ptr = syntax.clone().stable_ptr().untyped();
-
-        let token_stream = TokenStream::from_syntax_node(db, syntax.as_syntax_node());
+        let token_stream = TokenStream::from_syntax_node(db, syntax);
         let result = self.instance().generate_code(
             self.expansion.name.clone(),
             TokenStream::empty(),

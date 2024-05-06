@@ -181,9 +181,7 @@ fn extract_fork_config(db: &dyn SyntaxGroup, attr: &Attribute) -> Option<RawFork
     }
 
     match &attr.args[0].variant {
-        AttributeArgVariant::Unnamed { value: fork_id, .. } => {
-            extract_fork_config_from_id(fork_id, db)
-        }
+        AttributeArgVariant::Unnamed(fork_id) => extract_fork_config_from_id(fork_id, db),
         _ => extract_fork_config_from_args(db, attr),
     }
 }
@@ -210,7 +208,7 @@ fn extract_fuzzer_config(db: &dyn SyntaxGroup, attr: &Attribute) -> Option<Fuzze
         return None;
     };
 
-    if fuzzer_runs_name != "runs" || fuzzer_seed_name != "seed" {
+    if fuzzer_runs_name.text.as_str() != "runs" || fuzzer_seed_name.text.as_str() != "seed" {
         return None;
     };
 
@@ -265,7 +263,7 @@ fn extract_fork_config_from_args(db: &dyn SyntaxGroup, attr: &Attribute) -> Opti
         return None;
     };
 
-    if url_arg_name != "url" {
+    if url_arg_name.text.as_str() != "url" {
         return None;
     }
     let Expr::String(url_str) = url else {
@@ -273,7 +271,7 @@ fn extract_fork_config_from_args(db: &dyn SyntaxGroup, attr: &Attribute) -> Opti
     };
     let url = url_str.string_value(db)?;
 
-    if block_id_arg_name != "block_id" {
+    if block_id_arg_name.text.as_str() != "block_id" {
         return None;
     }
     let Expr::FunctionCall(block_id) = block_id else {
