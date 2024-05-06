@@ -9,7 +9,7 @@ use cairo_lang_macro_stable::{
     StableResultWrapper, StableTokenStream,
 };
 use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_syntax::node::{ast, SyntaxNode, TypedSyntaxNode};
+use cairo_lang_syntax::node::TypedSyntaxNode;
 use camino::Utf8PathBuf;
 use itertools::Itertools;
 use libloading::{Library, Symbol};
@@ -27,19 +27,14 @@ use libloading::os::windows::Symbol as RawSymbol;
 use smol_str::SmolStr;
 
 pub trait FromSyntaxNode {
-    fn from_syntax_node(db: &dyn SyntaxGroup, node: SyntaxNode) -> Self;
-    fn from_item_ast(db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> Self;
+    fn from_syntax_node(db: &dyn SyntaxGroup, node: &impl TypedSyntaxNode) -> Self;
 }
 
 impl FromSyntaxNode for TokenStream {
-    fn from_syntax_node(db: &dyn SyntaxGroup, node: SyntaxNode) -> Self {
-        let mut builder = PatchBuilder::new(db);
-        builder.add_node(node);
-        Self::new(builder.code)
-    }
-
-    fn from_item_ast(db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> Self {
-        Self::from_syntax_node(db, item_ast.as_syntax_node())
+    fn from_syntax_node(db: &dyn SyntaxGroup, node: &impl TypedSyntaxNode) -> Self {
+        let mut builder = PatchBuilder::new(db, node);
+        builder.add_node(node.as_syntax_node());
+        Self::new(builder.build().0)
     }
 }
 
