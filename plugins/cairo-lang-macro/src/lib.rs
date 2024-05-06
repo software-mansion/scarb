@@ -164,3 +164,12 @@ pub unsafe extern "C" fn post_process_callback(
     }
     context
 }
+
+/// A no-op Cairo attribute macro implementation.
+///
+/// This macro implementation does not produce any changes.
+/// Can be exposed as a placeholder macro for the internal purposes.
+#[doc(hidden)]
+pub fn no_op_attr(_attr: TokenStream, input: TokenStream) -> ProcMacroResult {
+    ProcMacroResult::new(input)
+}

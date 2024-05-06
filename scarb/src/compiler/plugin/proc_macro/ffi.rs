@@ -2,7 +2,8 @@ use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Context, Result};
 use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_macro::{
-    ExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult, TokenStream,
+    ExpansionKind as SharedExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult,
+    TokenStream,
 };
 use cairo_lang_macro_stable::{
     StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
@@ -37,6 +38,8 @@ impl FromSyntaxNode for TokenStream {
         Self::new(builder.build().0)
     }
 }
+
+const EXEC_ATTR_PREFIX: &str = "__exec_attr_";
 
 /// Representation of a single procedural macro.
 ///
@@ -105,7 +108,16 @@ impl ProcMacroInstance {
     pub fn declared_attributes(&self) -> Vec<String> {
         self.get_expansions()
             .iter()
-            .filter(|e| e.kind == ExpansionKind::Attr)
+            .filter(|e| e.kind == ExpansionKind::Attr || e.kind == ExpansionKind::Executable)
+            .map(|e| e.name.clone())
+            .map(Into::into)
+            .collect()
+    }
+
+    pub fn executable_attributes(&self) -> Vec<String> {
+        self.get_expansions()
+            .iter()
+            .filter(|e| e.kind == ExpansionKind::Executable)
             .map(|e| e.name.clone())
             .map(Into::into)
             .collect()
@@ -169,6 +181,24 @@ impl ProcMacroInstance {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ExpansionKind {
+    Attr,
+    Derive,
+    Inline,
+    Executable,
+}
+
+impl From<SharedExpansionKind> for ExpansionKind {
+    fn from(kind: SharedExpansionKind) -> Self {
+        match kind {
+            SharedExpansionKind::Attr => Self::Attr,
+            SharedExpansionKind::Derive => Self::Derive,
+            SharedExpansionKind::Inline => Self::Inline,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Expansion {
     pub name: SmolStr,
@@ -191,9 +221,17 @@ impl Expansion {
             let cstr = CStr::from_ptr(stable_expansion.name);
             cstr.to_string_lossy().to_string()
         };
+        // Handle special case for executable attributes.
+        if name.starts_with(EXEC_ATTR_PREFIX) {
+            let name = name.strip_prefix(EXEC_ATTR_PREFIX).unwrap();
+            return Self {
+                name: SmolStr::new(name),
+                kind: ExpansionKind::Executable,
+            };
+        }
         Self {
             name: SmolStr::new(name),
-            kind: ExpansionKind::from_stable(&stable_expansion.kind),
+            kind: SharedExpansionKind::from_stable(&stable_expansion.kind).into(),
         }
     }
 }
