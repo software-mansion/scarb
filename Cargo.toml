@@ -114,7 +114,7 @@ tempfile = "3"
 test-case = "3"
 thiserror = "1"
 time = "0.3"
-tokio = { version = "1", features = ["macros", "io-util", "rt", "rt-multi-thread", "sync"] }
+tokio = { version = "1", features = ["macros", "io-util", "process", "rt", "rt-multi-thread", "sync"] }
 toml = "0.8"
 toml_edit = { version = "0.22", features = ["serde"] }
 tower-http = { version = "0.4", features = ["fs"] }
