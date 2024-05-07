@@ -18,7 +18,7 @@ use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{LookupItemId, ModuleItemId, NamedLanguageElementId};
 
-use cairo_lang_filesystem::ids::Directory;
+use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_semantic::db::SemanticGroup;
 
 #[derive(Parser, Debug)]
@@ -42,8 +42,7 @@ fn main() -> Result<()> {
         b.build()?
     };
 
-    let crate_ids = db.crates();
-    let main_crate_id = crate_ids.into_iter().next().unwrap();
+    let main_crate_id = db.intern_crate(CrateLongId::Real(package_metadata.name.into()));
 
     let crate_modules = db.crate_modules(main_crate_id);
 
@@ -87,7 +86,7 @@ fn main() -> Result<()> {
 fn get_project_config(metadata: &Metadata, package_metadata: &PackageMetadata) -> ProjectConfig {
     let compilation_unit_metadata =
         package_lib_compilation_unit(metadata, package_metadata.id.clone())
-            .expect("Failed to find compilation unit for package");
+            .expect("failed to find compilation unit for package");
     let corelib = get_corelib(compilation_unit_metadata);
     let dependencies = get_dependencies(compilation_unit_metadata);
     let crates_config = get_crates_config(metadata, compilation_unit_metadata);
@@ -128,7 +127,7 @@ fn get_dependencies(
     compilation_unit_metadata
         .components
         .iter()
-        .filter(|du| du.name != "core")
+        .filter(|du| du.name != CORELIB_CRATE_NAME)
         .map(|cu| {
             (
                 cu.name.to_smolstr(),
@@ -148,7 +147,7 @@ fn get_crates_config(
         .map(|component| {
             let pkg = metadata.get_package(&component.package).unwrap_or_else(|| {
                 panic!(
-                    "Failed to find = {} package",
+                    "failed to find = {} package",
                     &component.package.to_string()
                 )
             });
