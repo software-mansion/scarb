@@ -1,8 +1,11 @@
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_compiler::CompilerConfig;
+use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
+use indoc::formatdoc;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, trace_span};
 
@@ -10,7 +13,7 @@ use crate::compiler::helpers::{
     build_compiler_config, collect_main_crate_ids, write_json, write_string,
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
-use crate::core::{TargetKind, Workspace};
+use crate::core::{TargetKind, Utf8PathWorkspaceExt, Workspace};
 
 pub struct LibCompiler;
 
@@ -56,6 +59,8 @@ impl Compiler for LibCompiler {
         let compiler_config = build_compiler_config(&unit, ws);
 
         let main_crate_ids = collect_main_crate_ids(&unit, db);
+
+        validate_compiler_config(db, &compiler_config, &unit, ws);
 
         let sierra_program: VersionedProgram = {
             let _ = trace_span!("compile_sierra").enter();
@@ -125,5 +130,40 @@ impl Compiler for LibCompiler {
         }
 
         Ok(())
+    }
+}
+
+fn validate_compiler_config(
+    db: &RootDatabase,
+    compiler_config: &CompilerConfig<'_>,
+    unit: &CairoCompilationUnit,
+    ws: &Workspace<'_>,
+) {
+    // Generally, lib target compilation should be driven by a certain objective (e.g. cairo-run,
+    // test framework, etc.), expressed by the plugin set with executables definition.
+    // This does not apply to debug build (expressed by `replace_ids` flag),
+    // which is a goal by itself.
+    // See starkware-libs/cairo#5440 for more context.
+    let executable_plugin = db
+        .macro_plugins()
+        .iter()
+        .any(|plugin| !plugin.executable_attributes().is_empty());
+    if !executable_plugin && !compiler_config.replace_ids {
+        ws.config().ui().warn(formatdoc! {r#"
+            artefacts produced by this build may be hard to utilize due to the build configuration
+            please make sure your build configuration is correct
+            help: if you want to use your build with a specialized tool that runs Sierra code (for
+            instance with a test framework like Forge), please make sure all required dependencies
+            are specified in your package manifest.
+            help: if you want to compile a Starknet contract, make sure to use the `starknet-contract`
+            target, by adding following excerpt to your package manifest
+            -> {scarb_toml}
+                [[target.starknet-contract]]
+            help: if you want to read the generated Sierra code yourself, consider enabling
+            the debug names, by adding the following excerpt to your package manifest.
+            -> {scarb_toml}
+                [cairo]
+                sierra-replace-ids = true"#, scarb_toml=unit.main_component().package.manifest_path().workspace_relative(ws),
+        }, );
     }
 }
