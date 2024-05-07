@@ -436,8 +436,6 @@ fn can_replace_original_node() {
             let token_stream = TokenStream::new(
                 token_stream
                     .to_string()
-                    // Remove macro call to avoid infinite loop.
-                    .replace("#[some]", "")
                     .replace("12", "34")
             );
             ProcMacroResult::new(token_stream)
@@ -487,13 +485,6 @@ fn can_return_aux_data_from_plugin() {
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
-                token_stream
-                    .to_string()
-                    // Remove macro call to avoid infinite loop.
-                    .replace("#[some]", "")
-                    .replace("12", "34")
-            );
             let value = SomeMacroDataFormat { msg: "Hello from some macro!".to_string() };
             let value = serde_json::to_string(&value).unwrap();
             let value: Vec<u8> = value.into_bytes();
@@ -611,8 +602,6 @@ fn can_define_multiple_macros() {
             let token_stream = TokenStream::new(
                 token_stream
                     .to_string()
-                    // Remove macro call to avoid infinite loop.
-                    .replace("#[hello]", "")
                     .replace("12", "34")
             );
             let aux_data = AuxData::new(Vec::new());
@@ -624,8 +613,6 @@ fn can_define_multiple_macros() {
             let token_stream = TokenStream::new(
                 token_stream
                     .to_string()
-                    // Remove macro call to avoid infinite loop.
-                    .replace("#[world]", "")
                     .replace("56", "78")
             );
             let aux_data = AuxData::new(Vec::new());
@@ -650,8 +637,6 @@ fn can_define_multiple_macros() {
             let token_stream = TokenStream::new(
                 token_stream
                     .to_string()
-                    // Remove macro call to avoid infinite loop.
-                    .replace("#[beautiful]", "")
                     .replace("90", "09")
             );
             let aux_data = AuxData::new(Vec::new());

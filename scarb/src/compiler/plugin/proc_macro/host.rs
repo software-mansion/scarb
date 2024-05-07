@@ -159,7 +159,7 @@ impl ProcMacroHostPlugin {
         &self,
         db: &dyn SyntaxGroup,
         item_ast: ast::ModuleItem,
-    ) -> (Option<(ProcMacroId, TokenStream)>, TokenStream) {
+    ) -> (AttrExpansionFound, TokenStream) {
         let mut item_builder = PatchBuilder::new(db, &item_ast);
         let input = match item_ast.clone() {
             ast::ModuleItem::Struct(struct_ast) => {
@@ -214,7 +214,7 @@ impl ProcMacroHostPlugin {
                 item_builder.add_node(free_func_ast.body(db).as_syntax_node());
                 expansion
             }
-            _ => None,
+            _ => AttrExpansionFound::None,
         };
         let token_stream = TokenStream::new(item_builder.build().0);
         (input, token_stream)
@@ -226,31 +226,41 @@ impl ProcMacroHostPlugin {
         builder: &mut PatchBuilder<'_>,
         attrs: Vec<ast::Attribute>,
         item_ast: &ast::ModuleItem,
-    ) -> Option<(ProcMacroId, TokenStream)> {
+    ) -> AttrExpansionFound {
         // Note this function does not affect the executable attributes,
         // as it only pulls `ExpansionKind::Attr` from the plugin.
         // This means that executable attributes will neither be removed from the item,
         // nor will they cause the item to be rewritten.
         let mut expansion = None;
+        let mut last = true;
         for attr in attrs {
-            if expansion.is_none() {
+            // We ensure that this flag is changed *after* the expansion is found.
+            if last {
                 let structured_attr = attr.clone().structurize(db);
                 let found = self.find_expansion(&Expansion::new(
                     structured_attr.id.clone(),
                     ExpansionKind::Attr,
                 ));
                 if let Some(found) = found {
-                    let mut args_builder = PatchBuilder::new(db, item_ast);
-                    args_builder.add_node(attr.arguments(db).as_syntax_node());
-                    let args = TokenStream::new(args_builder.build().0);
-                    expansion = Some((found, args));
-                    // Do not add the attribute for found expansion.
-                    continue;
+                    if expansion.is_none() {
+                        let mut args_builder = PatchBuilder::new(db, item_ast);
+                        args_builder.add_node(attr.arguments(db).as_syntax_node());
+                        let args = TokenStream::new(args_builder.build().0);
+                        expansion = Some((found, args));
+                        // Do not add the attribute for found expansion.
+                        continue;
+                    } else {
+                        last = false;
+                    }
                 }
             }
             builder.add_node(attr.as_syntax_node());
         }
-        expansion
+        match (expansion, last) {
+            (Some((expansion, args)), true) => AttrExpansionFound::Last { expansion, args },
+            (Some((expansion, args)), false) => AttrExpansionFound::Some { expansion, args },
+            (None, _) => AttrExpansionFound::None,
+        }
     }
 
     /// Handle `#[derive(...)]` attribute.
@@ -366,6 +376,7 @@ impl ProcMacroHostPlugin {
     fn expand_attribute(
         &self,
         input: ProcMacroId,
+        last: bool,
         args: TokenStream,
         token_stream: TokenStream,
         stable_ptr: SyntaxStablePtrId,
@@ -388,6 +399,27 @@ impl ProcMacroHostPlugin {
 
         // Full path markers require code modification.
         self.register_full_path_markers(input.package_id, result.full_path_markers.clone());
+
+        // This is a minor optimization.
+        // If the expanded macro attribute is the only one that will be expanded by `ProcMacroHost`
+        // in this `generate_code` call (i.e. all the other macro attributes has been expanded by
+        // previous calls), and the expansion did not produce any changes, we can skip rewriting the
+        // expanded node by simply returning no generated code, and leaving the original item as is.
+        // However, if we have other macro attributes to expand, we must rewrite the node even if no
+        // changes have been produced, so that we can parse the attributes once again and expand them.
+        // In essence, `code: None, remove_original_item: false` means `ProcMacroHost` will not be
+        // called again for this AST item.
+        // This optimization limits the number of generated nodes a bit.
+        if last
+            && result.aux_data.is_none()
+            && token_stream.to_string() == result.token_stream.to_string()
+        {
+            return PluginResult {
+                code: None,
+                remove_original_item: false,
+                diagnostics: into_cairo_diagnostics(result.diagnostics, stable_ptr),
+            };
+        }
 
         let file_name = format!("proc_macro_{}", input.expansion.name);
         PluginResult {
@@ -586,10 +618,19 @@ impl MacroPlugin for ProcMacroHostPlugin {
         // Expand first attribute.
         // Note that we only expand the first attribute, as we assume that the rest of the attributes
         // will be handled by a subsequent call to this function.
-        if let (Some((input, args)), token_stream) = self.parse_attribute(db, item_ast.clone()) {
-            let token_stream = token_stream.with_metadata(stream_metadata.clone());
+        let (input, body) = self.parse_attribute(db, item_ast.clone());
+
+        if let Some(result) = match input {
+            AttrExpansionFound::Last { expansion, args } => Some((expansion, args, true)),
+            AttrExpansionFound::Some { expansion, args } => Some((expansion, args, false)),
+            AttrExpansionFound::None => None,
+        }
+        .map(|(expansion, args, last)| {
+            let token_stream = body.with_metadata(stream_metadata.clone());
             let stable_ptr = item_ast.clone().stable_ptr().untyped();
-            return self.expand_attribute(input, args, token_stream, stable_ptr);
+            self.expand_attribute(expansion, last, args, token_stream, stable_ptr)
+        }) {
+            return result;
         }
 
         // Expand all derives.
@@ -620,6 +661,18 @@ impl MacroPlugin for ProcMacroHostPlugin {
             .flat_map(|m| m.executable_attributes())
             .collect()
     }
+}
+
+enum AttrExpansionFound {
+    Some {
+        expansion: ProcMacroId,
+        args: TokenStream,
+    },
+    None,
+    Last {
+        expansion: ProcMacroId,
+        args: TokenStream,
+    },
 }
 
 /// A Cairo compiler inline macro plugin controlling the inline procedural macro execution.
