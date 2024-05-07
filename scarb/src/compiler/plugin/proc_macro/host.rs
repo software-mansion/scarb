@@ -1,4 +1,6 @@
-use crate::compiler::plugin::proc_macro::{Expansion, FromSyntaxNode, ProcMacroInstance};
+use crate::compiler::plugin::proc_macro::{
+    Expansion, ExpansionKind, FromSyntaxNode, ProcMacroInstance,
+};
 use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Result};
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
@@ -10,7 +12,7 @@ use cairo_lang_defs::plugin::{
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_diagnostics::ToOption;
 use cairo_lang_macro::{
-    AuxData, Diagnostic, ExpansionKind, FullPathMarker, Severity, TokenStream, TokenStreamMetadata,
+    AuxData, Diagnostic, FullPathMarker, Severity, TokenStream, TokenStreamMetadata,
 };
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
@@ -225,6 +227,10 @@ impl ProcMacroHostPlugin {
         attrs: Vec<ast::Attribute>,
         item_ast: &ast::ModuleItem,
     ) -> Option<(ProcMacroId, TokenStream)> {
+        // Note this function does not affect the executable attributes,
+        // as it only pulls `ExpansionKind::Attr` from the plugin.
+        // This means that executable attributes will neither be removed from the item,
+        // nor will they cause the item to be rewritten.
         let mut expansion = None;
         for attr in attrs {
             if expansion.is_none() {
@@ -605,6 +611,13 @@ impl MacroPlugin for ProcMacroHostPlugin {
             .iter()
             .flat_map(|m| m.declared_attributes())
             .chain(vec![FULL_PATH_MARKER_KEY.to_string()])
+            .collect()
+    }
+
+    fn executable_attributes(&self) -> Vec<String> {
+        self.macros
+            .iter()
+            .flat_map(|m| m.executable_attributes())
             .collect()
     }
 }

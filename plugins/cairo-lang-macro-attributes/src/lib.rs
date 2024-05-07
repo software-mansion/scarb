@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use scarb_stable_hash::short_hash;
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, ItemFn};
+use syn::{parse_macro_input, ItemFn, LitStr};
 
 /// Constructs the attribute macro implementation.
 ///
@@ -124,4 +124,30 @@ fn hide_name(mut item: ItemFn) -> ItemFn {
     let item_name = format!("{}_{}", item.sig.ident, id);
     item.sig.ident = syn::Ident::new(item_name.as_str(), item.sig.ident.span());
     item
+}
+
+const EXEC_ATTR_PREFIX: &str = "__exec_attr_";
+
+#[proc_macro]
+pub fn executable_attribute(input: TokenStream) -> TokenStream {
+    let input: LitStr = parse_macro_input!(input as LitStr);
+    let callback_link = format!("EXEC_ATTR_DESERIALIZE{}", input.value().to_uppercase());
+    let callback_link = syn::Ident::new(callback_link.as_str(), input.span());
+    let item_name = format!("{EXEC_ATTR_PREFIX}{}", input.value());
+    let org_name = syn::Ident::new(item_name.as_str(), input.span());
+    let expanded = quote! {
+        fn #org_name() {
+            // No op to ensure no function with the same name is created.
+        }
+
+        #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::MACRO_DEFINITIONS_SLICE)]
+        #[linkme(crate = ::cairo_lang_macro::linkme)]
+        static #callback_link: ::cairo_lang_macro::ExpansionDefinition =
+            ::cairo_lang_macro::ExpansionDefinition{
+                name: #item_name,
+                kind: ::cairo_lang_macro::ExpansionKind::Attr,
+                fun: ::cairo_lang_macro::ExpansionFunc::Attr(::cairo_lang_macro::no_op_attr),
+            };
+    };
+    TokenStream::from(expanded)
 }
