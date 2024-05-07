@@ -4558,7 +4558,12 @@ dependencies = [
 name = "scarb-cairo-language-server"
 version = "2.6.3"
 dependencies = [
+ "assert_fs",
  "cairo-lang-language-server",
+ "scarb-test-support",
+ "serde_json",
+ "tokio",
+ "url",
 ]
 
 [[package]]
