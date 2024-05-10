@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use cairo_lang_compiler::db::{RootDatabase, RootDatabaseBuilder};
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
 use cairo_lang_defs::db::DefsGroup;
@@ -7,14 +7,14 @@ use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{AsFilesGroupMut, CrateSettings, FilesGroup, FilesGroupEx};
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
+use itertools::Itertools;
 use smol_str::SmolStr;
 use std::sync::Arc;
 use tracing::trace;
 
 use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
-use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, GroupCompilationUnit};
 use crate::core::Workspace;
-use crate::DEFAULT_MODULE_MAIN_FILE;
 
 pub struct ScarbDatabase {
     pub db: RootDatabase,
@@ -32,10 +32,8 @@ pub(crate) fn build_scarb_root_database(
     if !unit.compiler_config.enable_gas {
         b.skip_auto_withdraw_gas();
     }
-    let mut db = b.build()?;
-    inject_virtual_wrapper_lib(&mut db, unit)?;
     Ok(ScarbDatabase {
-        db,
+        db: b.build()?,
         proc_macro_host,
     })
 }
@@ -61,43 +59,29 @@ fn load_plugins(
     Ok(macro_host)
 }
 
-/// Generates a wrapper lib file for appropriate compilation units.
+/// Generates a wrapper lib file for group compilation units.
 ///
-/// This approach allows compiling crates that do not define `lib.cairo` file.
-/// For example, single file crates can be created this way.
+/// This approach allows compiling multiple creates together as a single module.
 /// The actual single file module is defined as `mod` item in created lib file.
-fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit) -> Result<()> {
-    let components: Vec<&CompilationUnitComponent> = unit
-        .components
+pub(crate) fn inject_virtual_wrapper_lib_for_group(
+    db: &mut RootDatabase,
+    group: &GroupCompilationUnit,
+) -> Result<()> {
+    let component = group.main_component();
+    let crate_name = component.cairo_package_name();
+    let crate_id = db.intern_crate(CrateLongId::Real(crate_name));
+    let module_id = ModuleId::CrateRoot(crate_id);
+    let file_id = db.module_main_file(module_id).unwrap();
+    // Inject virtual lib file wrapper.
+    let group = group
+        .compilation_units
         .iter()
-        .filter(|component| !component.package.id.is_core())
-        // Skip components defining the default source path, as they already define lib.cairo files.
-        .filter(|component| {
-            component
-                .target
-                .source_path
-                .file_name()
-                .map(|file_name| file_name != DEFAULT_MODULE_MAIN_FILE)
-                .unwrap_or(false)
-        })
-        .collect();
-
-    for component in components {
-        let crate_name = component.cairo_package_name();
-        let crate_id = db.intern_crate(CrateLongId::Real(crate_name));
-        let file_stem = component.target.source_path.file_stem().ok_or_else(|| {
-            anyhow!(
-                "failed to get file stem for component {}",
-                component.target.source_path
-            )
-        })?;
-        let module_id = ModuleId::CrateRoot(crate_id);
-        let file_id = db.module_main_file(module_id).unwrap();
-        // Inject virtual lib file wrapper.
-        db.as_files_group_mut()
-            .override_file_content(file_id, Some(Arc::new(format!("mod {file_stem};"))));
-    }
-
+        .filter_map(|comp| comp.target().source_path.file_name())
+        .map(|comp| format!("mod {comp};"))
+        .collect_vec();
+    let content = group.join("\n");
+    db.as_files_group_mut()
+        .override_file_content(file_id, Some(Arc::new(content)));
     Ok(())
 }
 

@@ -9,7 +9,10 @@ use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use scarb_ui::HumanDuration;
 
-use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin, ScarbDatabase};
+use crate::compiler::db::{
+    build_scarb_root_database, has_starknet_plugin, inject_virtual_wrapper_lib_for_group,
+    ScarbDatabase,
+};
 use crate::compiler::helpers::build_compiler_config;
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
@@ -152,7 +155,20 @@ fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 .context("procedural macro post processing callback failed")?;
             result
         }
-        CompilationUnit::Group(_) => Ok(()),
+        CompilationUnit::Group(group) => {
+            let unit = group.compilation_units[0].clone();
+            let ScarbDatabase {
+                mut db,
+                proc_macro_host,
+            } = build_scarb_root_database(&unit, ws)?;
+            inject_virtual_wrapper_lib_for_group(&mut db, &group)?;
+            check_starknet_dependency(&unit, ws, &db, &package_name);
+            let result = ws.config().compilers().compile(unit, &mut db, ws);
+            proc_macro_host
+                .post_process(db.upcast())
+                .context("procedural macro post processing callback failed")?;
+            result
+        }
     };
 
     result.map_err(|err| {
@@ -182,7 +198,17 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 .ensure(&db)
                 .map_err(|err| err.into())
         }
-        CompilationUnit::Group(_) => Ok(()),
+        CompilationUnit::Group(group) => {
+            let unit = group.compilation_units[0].clone();
+            let ScarbDatabase { mut db, .. } = build_scarb_root_database(&unit, ws)?;
+            inject_virtual_wrapper_lib_for_group(&mut db, &group)?;
+            check_starknet_dependency(&unit, ws, &db, &package_name);
+            let mut compiler_config = build_compiler_config(&unit, ws);
+            compiler_config
+                .diagnostics_reporter
+                .ensure(&db)
+                .map_err(|err| err.into())
+        }
     };
 
     result.map_err(|err| {
