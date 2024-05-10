@@ -32,6 +32,10 @@ struct Args {
     /// Whether to print resource usage after each test.
     #[arg(long, default_value_t = false)]
     print_resource_usage: bool,
+
+    /// Do not rebuild the package.
+    #[arg(long, default_value_t = false)]
+    no_build: bool,
 }
 
 fn main() -> Result<()> {
@@ -42,13 +46,15 @@ fn main() -> Result<()> {
     check_scarb_version(&metadata);
 
     let matched = args.packages_filter.match_many(&metadata)?;
-    let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
 
-    ScarbCommand::new()
-        .arg("build")
-        .arg("--test")
-        .env("SCARB_PACKAGES_FILTER", filter.to_env())
-        .run()?;
+    if !args.no_build {
+        let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
+        ScarbCommand::new()
+            .arg("build")
+            .arg("--test")
+            .env("SCARB_PACKAGES_FILTER", filter.to_env())
+            .run()?;
+    }
 
     let profile = env::var("SCARB_PROFILE").unwrap_or("dev".into());
     let default_target_dir = metadata.runtime_manifest.join("target");
