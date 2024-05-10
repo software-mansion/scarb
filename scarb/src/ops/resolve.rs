@@ -1,7 +1,7 @@
 use crate::compiler::plugin::{fetch_cairo_plugin, CairoPluginProps};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
-    CompilationUnitComponent, ProcMacroCompilationUnit,
+    CompilationUnitComponent, ProcMacroCompilationUnit, Profile,
 };
 use crate::core::lockfile::Lockfile;
 use crate::core::package::{Package, PackageClass, PackageId};
@@ -210,114 +210,130 @@ fn generate_cairo_compilation_units(
         .iter()
         .sorted_by_key(|target| target.kind.clone())
         .map(|member_target| {
-            solution.collect(&member_target.kind)?;
-            let packages = solution.packages.as_ref().unwrap();
-            let cairo_plugins = solution.cairo_plugins.as_ref().unwrap();
-
-            let cfg_set = build_cfg_set(member_target);
-
-            let props: TestTargetProps = member_target.props()?;
-            let is_integration_test = props.test_type == TestTargetType::Integration;
-            let test_package_id = member.id.for_test_target(member_target.name.clone());
-
-            let mut components: Vec<CompilationUnitComponent> = packages
-                .iter()
-                .cloned()
-                .map(|package| {
-                    // If this is this compilation's unit main package, then use the target we are
-                    // building. Otherwise, assume library target for all dependency packages,
-                    // because that's what it is for.
-                    let target = if package.id == member.id {
-                        member_target
-                    } else {
-                        // We can safely unwrap here, because compilation unit generator ensures
-                        // that all dependencies have library target.
-                        package.fetch_target(&TargetKind::LIB).unwrap()
-                    };
-                    let target = target.clone();
-
-                    // For integration tests target, rewrite package with prefixed name.
-                    // This allows integration test code to reference main package as dependency.
-                    let package_id_rewritten = package.id == member.id && is_integration_test;
-                    let package = if package_id_rewritten {
-                        Package::new(
-                            test_package_id,
-                            package.manifest_path().to_path_buf(),
-                            package.manifest.clone(),
-                        )
-                    } else {
-                        package
-                    };
-
-                    let cfg_set = {
-                        if package.id == member.id || package_id_rewritten {
-                            // This is the main package.
-                            get_cfg_with_features(
-                                cfg_set.clone(),
-                                &package.manifest.features,
-                                enabled_features,
-                            )?
-                        } else {
-                            let component_cfg_set = cfg_set
-                                .iter()
-                                .filter(|cfg| **cfg != Cfg::name("test"))
-                                .cloned()
-                                .collect();
-
-                            if component_cfg_set != cfg_set {
-                                Some(component_cfg_set)
-                            } else {
-                                None
-                            }
-                        }
-                    };
-
-                    Ok(CompilationUnitComponent {
-                        package,
-                        target,
-                        cfg_set,
-                    })
-                })
-                .collect::<Result<_>>()?;
-
-            // Apply overrides for integration test.
-            let main_package_id = if is_integration_test {
-                // Try pulling from targets.
-                let target = member
-                    .fetch_target(&TargetKind::LIB)
-                    .cloned()
-                    .unwrap_or_else(|_| {
-                        // If not defined, create a dummy `lib` target.
-                        Target::without_params(
-                            TargetKind::LIB,
-                            member.id.name.clone(),
-                            member.root().join(DEFAULT_SOURCE_PATH.as_path()),
-                        )
-                    });
-
-                // Add `lib` target for tested package, to be available as dependency.
-                components.push(CompilationUnitComponent {
-                    package: member.clone(),
-                    cfg_set: None,
-                    target,
-                });
-
-                // Set test package as main package for this compilation unit.
-                test_package_id
-            } else {
-                member.id
-            };
-
-            Ok(CompilationUnit::Cairo(CairoCompilationUnit {
-                main_package_id,
-                components,
-                cairo_plugins: cairo_plugins.clone(),
-                profile: profile.clone(),
-                compiler_config: member.manifest.compiler_config.clone(),
-                cfg_set,
-            }))
+            Ok(CompilationUnit::Cairo(cairo_compilation_unit_for_target(
+                member_target,
+                member,
+                profile.clone(),
+                enabled_features,
+                &mut solution,
+            )?))
         })
         .collect::<Result<Vec<CompilationUnit>>>()
+}
+
+fn cairo_compilation_unit_for_target(
+    member_target: &Target,
+    member: &Package,
+    profile: Profile,
+    enabled_features: &FeaturesOpts,
+    solution: &mut PackageSolutionCollector<'_>,
+) -> Result<CairoCompilationUnit> {
+    solution.collect(&member_target.kind)?;
+    let packages = solution.packages.as_ref().unwrap();
+    let cairo_plugins = solution.cairo_plugins.as_ref().unwrap();
+
+    let cfg_set = build_cfg_set(member_target);
+
+    let props: TestTargetProps = member_target.props()?;
+    let is_integration_test = props.test_type == TestTargetType::Integration;
+    let test_package_id = member.id.for_test_target(member_target.name.clone());
+
+    let mut components: Vec<CompilationUnitComponent> = packages
+        .iter()
+        .cloned()
+        .map(|package| {
+            // If this is this compilation's unit main package, then use the target we are
+            // building. Otherwise, assume library target for all dependency packages,
+            // because that's what it is for.
+            let target = if package.id == member.id {
+                member_target
+            } else {
+                // We can safely unwrap here, because compilation unit generator ensures
+                // that all dependencies have library target.
+                package.fetch_target(&TargetKind::LIB).unwrap()
+            };
+            let target = target.clone();
+
+            // For integration tests target, rewrite package with prefixed name.
+            // This allows integration test code to reference main package as dependency.
+            let package_id_rewritten = package.id == member.id && is_integration_test;
+            let package = if package_id_rewritten {
+                Package::new(
+                    test_package_id,
+                    package.manifest_path().to_path_buf(),
+                    package.manifest.clone(),
+                )
+            } else {
+                package
+            };
+
+            let cfg_set = {
+                if package.id == member.id || package_id_rewritten {
+                    // This is the main package.
+                    get_cfg_with_features(
+                        cfg_set.clone(),
+                        &package.manifest.features,
+                        enabled_features,
+                    )?
+                } else {
+                    let component_cfg_set = cfg_set
+                        .iter()
+                        .filter(|cfg| **cfg != Cfg::name("test"))
+                        .cloned()
+                        .collect();
+
+                    if component_cfg_set != cfg_set {
+                        Some(component_cfg_set)
+                    } else {
+                        None
+                    }
+                }
+            };
+
+            Ok(CompilationUnitComponent {
+                package,
+                target,
+                cfg_set,
+            })
+        })
+        .collect::<Result<_>>()?;
+
+    // Apply overrides for integration test.
+    let main_package_id = if is_integration_test {
+        // Try pulling from targets.
+        let target = member
+            .fetch_target(&TargetKind::LIB)
+            .cloned()
+            .unwrap_or_else(|_| {
+                // If not defined, create a dummy `lib` target.
+                Target::without_params(
+                    TargetKind::LIB,
+                    member.id.name.clone(),
+                    member.root().join(DEFAULT_SOURCE_PATH.as_path()),
+                )
+            });
+
+        // Add `lib` target for tested package, to be available as dependency.
+        components.push(CompilationUnitComponent {
+            package: member.clone(),
+            cfg_set: None,
+            target,
+        });
+
+        // Set test package as main package for this compilation unit.
+        test_package_id
+    } else {
+        member.id
+    };
+
+    Ok(CairoCompilationUnit {
+        main_package_id,
+        components,
+        cairo_plugins: cairo_plugins.clone(),
+        profile: profile.clone(),
+        compiler_config: member.manifest.compiler_config.clone(),
+        cfg_set,
+    })
 }
 
 fn get_cfg_with_features(
