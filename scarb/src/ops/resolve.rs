@@ -238,7 +238,8 @@ fn generate_cairo_compilation_units(
 
                     // For integration tests target, rewrite package with prefixed name.
                     // This allows integration test code to reference main package as dependency.
-                    let package = if package.id == member.id && is_integration_test {
+                    let package_id_rewritten = package.id == member.id && is_integration_test;
+                    let package = if package_id_rewritten {
                         Package::new(
                             test_package_id,
                             package.manifest_path().to_path_buf(),
@@ -249,7 +250,8 @@ fn generate_cairo_compilation_units(
                     };
 
                     let cfg_set = {
-                        if package.id == member.id {
+                        if package.id == member.id || package_id_rewritten {
+                            // This is the main package.
                             get_cfg_with_features(
                                 cfg_set.clone(),
                                 &package.manifest.features,
