@@ -61,8 +61,8 @@ pub struct CairoCompilationUnit {
 #[doc(hidden)]
 pub struct GroupCompilationUnit {
     pub(crate) compilation_units: Vec<CairoCompilationUnit>,
-    main_package_id: PackageId,
-    components: Vec<CompilationUnitComponent>,
+    pub(crate) main_package_id: PackageId,
+    pub(crate) components: Vec<CompilationUnitComponent>,
 }
 
 /// An object that has enough information so that Scarb knows how to build procedural macro with it.

@@ -1,7 +1,7 @@
 use crate::compiler::plugin::{fetch_cairo_plugin, CairoPluginProps};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
-    CompilationUnitComponent, ProcMacroCompilationUnit, Profile,
+    CompilationUnitComponent, GroupCompilationUnit, ProcMacroCompilationUnit, Profile,
 };
 use crate::core::lockfile::Lockfile;
 use crate::core::package::{Package, PackageClass, PackageId};
@@ -19,7 +19,7 @@ use crate::core::{
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::ops::{FeaturesOpts, FeaturesSelector};
-use crate::{resolver, DEFAULT_SOURCE_PATH};
+use crate::{resolver, DEFAULT_MODULE_MAIN_FILE, DEFAULT_SOURCE_PATH};
 use anyhow::{bail, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
@@ -202,23 +202,90 @@ fn generate_cairo_compilation_units(
     enabled_features: &FeaturesOpts,
     ws: &Workspace<'_>,
 ) -> Result<Vec<CompilationUnit>> {
+    let mut compilation_units = Vec::new();
+
     let profile = ws.current_profile()?;
     let mut solution = PackageSolutionCollector::new(member, resolve, ws);
-    member
-        .manifest
-        .targets
+
+    let (int_test_targets, other): (Vec<&Target>, Vec<&Target>) =
+        member.manifest.targets.iter().partition(|target| {
+            let Ok(props) = target.props::<TestTargetProps>() else {
+                return false;
+            };
+            let is_integration_test = props.test_type == TestTargetType::Integration;
+            let is_non_default_path = target
+                .source_path
+                .file_name()
+                .map(|file_name| file_name != DEFAULT_MODULE_MAIN_FILE)
+                .unwrap_or(false);
+            let has_parent = target.source_path.parent().is_some();
+            target.kind.is_test() && is_integration_test && is_non_default_path && has_parent
+        });
+
+    compilation_units.extend(
+        other
+            .iter()
+            .sorted_by_key(|target| target.kind.clone())
+            .map(|member_target| {
+                Ok(CompilationUnit::Cairo(cairo_compilation_unit_for_target(
+                    member_target,
+                    member,
+                    profile.clone(),
+                    enabled_features,
+                    &mut solution,
+                )?))
+            })
+            .collect::<Result<Vec<CompilationUnit>>>()?,
+    );
+
+    let targets = int_test_targets
         .iter()
-        .sorted_by_key(|target| target.kind.clone())
-        .map(|member_target| {
-            Ok(CompilationUnit::Cairo(cairo_compilation_unit_for_target(
-                member_target,
-                member,
-                profile.clone(),
-                enabled_features,
-                &mut solution,
-            )?))
-        })
-        .collect::<Result<Vec<CompilationUnit>>>()
+        .sorted_by_key(|target| target.source_path.clone())
+        .group_by(|target| (target.source_path.parent().unwrap(), target.params.clone()));
+    for ((_parent, _), group) in targets.into_iter() {
+        solution.collect(&TargetKind::TEST)?;
+
+        let units = group
+            .cloned()
+            .map(|target| {
+                cairo_compilation_unit_for_target(
+                    target,
+                    member,
+                    profile.clone(),
+                    enabled_features,
+                    &mut solution,
+                )
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        if units.len() == 1 {
+            compilation_units.push(CompilationUnit::Cairo(units.first().cloned().unwrap()));
+            continue;
+        }
+
+        let components = units
+            .iter()
+            .flat_map(|unit| unit.components.clone())
+            .unique_by(|component| component.package.id)
+            .sorted_by_key(|component| {
+                if component.package.id == member.id {
+                    0
+                } else if component.package.id.is_core() {
+                    1
+                } else {
+                    2
+                }
+            })
+            .collect();
+
+        compilation_units.push(CompilationUnit::Group(GroupCompilationUnit {
+            compilation_units: units,
+            main_package_id: member.id,
+            components,
+        }))
+    }
+
+    Ok(compilation_units)
 }
 
 fn cairo_compilation_unit_for_target(
@@ -269,7 +336,6 @@ fn cairo_compilation_unit_for_target(
 
             let cfg_set = {
                 if package.id == member.id || package_id_rewritten {
-                    // This is the main package.
                     get_cfg_with_features(
                         cfg_set.clone(),
                         &package.manifest.features,
