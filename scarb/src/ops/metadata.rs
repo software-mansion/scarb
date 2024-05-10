@@ -46,7 +46,7 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
         let compilation_units: Vec<m::CompilationUnitMetadata> =
             ops::generate_compilation_units(&resolve, &opts.features, ws)?
                 .iter()
-                .map(collect_compilation_unit_metadata)
+                .flat_map(collect_compilation_unit_metadata)
                 .collect();
 
         (packages, compilation_units)
@@ -205,10 +205,15 @@ fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
 
 fn collect_compilation_unit_metadata(
     compilation_unit: &CompilationUnit,
-) -> m::CompilationUnitMetadata {
+) -> Vec<m::CompilationUnitMetadata> {
     match compilation_unit {
-        CompilationUnit::Cairo(cu) => collect_cairo_compilation_unit_metadata(cu),
-        CompilationUnit::ProcMacro(cu) => collect_proc_macro_compilation_unit_metadata(cu),
+        CompilationUnit::Cairo(cu) => vec![collect_cairo_compilation_unit_metadata(cu)],
+        CompilationUnit::ProcMacro(cu) => vec![collect_proc_macro_compilation_unit_metadata(cu)],
+        CompilationUnit::Group(group) => group
+            .compilation_units
+            .iter()
+            .map(collect_cairo_compilation_unit_metadata)
+            .collect(),
     }
 }
 

@@ -15,6 +15,7 @@ use scarb_stable_hash::StableHasher;
 pub enum CompilationUnit {
     Cairo(CairoCompilationUnit),
     ProcMacro(ProcMacroCompilationUnit),
+    Group(GroupCompilationUnit),
 }
 
 /// An object that has enough information so that Scarb knows how to build Cairo code with it.
@@ -48,6 +49,20 @@ pub struct CairoCompilationUnit {
     ///
     /// Each individual component can override this value.
     pub cfg_set: CfgSet,
+}
+
+/// A compilation unit that builds multiple Cairo modules together.
+///
+/// This is an internal optimization marking compilation units that *can* be built together,
+/// to avoid rebuilding the same module multiple times.
+/// This should not be exposed to the user or other tooling.
+#[derive(Clone, Debug)]
+#[non_exhaustive]
+#[doc(hidden)]
+pub struct GroupCompilationUnit {
+    pub(crate) compilation_units: Vec<CairoCompilationUnit>,
+    main_package_id: PackageId,
+    components: Vec<CompilationUnitComponent>,
 }
 
 /// An object that has enough information so that Scarb knows how to build procedural macro with it.
@@ -149,19 +164,40 @@ impl CompilationUnitAttributes for CompilationUnit {
         match self {
             Self::Cairo(unit) => unit.main_package_id(),
             Self::ProcMacro(unit) => unit.main_package_id(),
+            Self::Group(unit) => unit.main_package_id(),
         }
     }
     fn components(&self) -> &[CompilationUnitComponent] {
         match self {
             Self::Cairo(unit) => unit.components(),
             Self::ProcMacro(unit) => unit.components(),
+            Self::Group(unit) => unit.components(),
         }
     }
     fn digest(&self) -> String {
         match self {
             Self::Cairo(unit) => unit.digest(),
             Self::ProcMacro(unit) => unit.digest(),
+            Self::Group(unit) => unit.digest(),
         }
+    }
+}
+
+impl CompilationUnitAttributes for GroupCompilationUnit {
+    fn main_package_id(&self) -> PackageId {
+        self.main_package_id
+    }
+
+    fn components(&self) -> &[CompilationUnitComponent] {
+        &self.components
+    }
+
+    fn digest(&self) -> String {
+        let mut hasher = StableHasher::new();
+        for unit in self.compilation_units.iter() {
+            unit.digest().hash(&mut hasher);
+        }
+        hasher.finish_as_short_hash()
     }
 }
 

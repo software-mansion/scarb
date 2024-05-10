@@ -152,6 +152,7 @@ fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 .context("procedural macro post processing callback failed")?;
             result
         }
+        CompilationUnit::Group(_) => Ok(()),
     };
 
     result.map_err(|err| {
@@ -181,6 +182,7 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 .ensure(&db)
                 .map_err(|err| err.into())
         }
+        CompilationUnit::Group(_) => Ok(()),
     };
 
     result.map_err(|err| {
