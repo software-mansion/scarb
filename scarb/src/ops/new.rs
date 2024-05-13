@@ -8,6 +8,7 @@ use crate::core::{edition_variant, Config, PackageName};
 use crate::internal::fsx;
 use crate::internal::restricted_names;
 use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
+use std::process::Command;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum VersionControl {
@@ -20,6 +21,7 @@ pub struct InitOptions {
     pub path: Utf8PathBuf,
     pub name: Option<PackageName>,
     pub vcs: VersionControl,
+    pub snforge: bool,
 }
 
 #[derive(Debug)]
@@ -46,6 +48,7 @@ pub fn new_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
             path: opts.path.clone(),
             name: name.clone(),
             version_control: opts.vcs,
+            snforge: opts.snforge,
         },
         config,
     )
@@ -67,6 +70,7 @@ pub fn init_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
             path: opts.path,
             name: name.clone(),
             version_control: opts.vcs,
+            snforge: opts.snforge,
         },
         config,
     )
@@ -113,6 +117,7 @@ struct MkOpts {
     path: Utf8PathBuf,
     name: PackageName,
     version_control: VersionControl,
+    snforge: bool,
 }
 
 fn mk(
@@ -120,6 +125,7 @@ fn mk(
         path,
         name,
         version_control,
+        snforge,
     }: MkOpts,
     config: &Config,
 ) -> Result<()> {
@@ -192,6 +198,19 @@ fn mk(
             {err:?}
         "#})
     }
+
+    if snforge {
+        init_snforge(name)?;
+    }
+
+    Ok(())
+}
+
+fn init_snforge(name: PackageName) -> Result<()> {
+    Command::new("snforge")
+        .arg("init")
+        .arg(name.as_str())
+        .status()?;
 
     Ok(())
 }

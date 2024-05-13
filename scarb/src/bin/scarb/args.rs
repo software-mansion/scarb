@@ -241,6 +241,10 @@ pub struct InitArgs {
     /// Do not initialize a new Git repository.
     #[arg(long)]
     pub no_vcs: bool,
+
+    /// Initialize snforge setup.
+    #[arg(long)]
+    pub snforge: bool,
 }
 
 /// Arguments accepted by the `metadata` command.
