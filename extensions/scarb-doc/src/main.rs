@@ -36,7 +36,7 @@ fn main() -> Result<()> {
             item_documentation.insert(LookupItemId::ModuleItem(*item), item_doc);
 
             if let ModuleItemId::Trait(trait_id) = *item {
-                let trait_items_names = db.trait_item_names(trait_id).unwrap();
+                let trait_items_names = db.trait_required_item_names(trait_id).unwrap();
 
                 for trait_item_name in trait_items_names.into_iter() {
                     let trait_item_id = db
