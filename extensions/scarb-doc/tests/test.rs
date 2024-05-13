@@ -1,6 +1,8 @@
-use assert_fs::TempDir;
+use assert_fs::{fixture::PathChild, TempDir};
 use indoc::indoc;
-use scarb_test_support::{command::Scarb, project_builder::ProjectBuilder};
+use scarb_test_support::{
+    command::Scarb, project_builder::ProjectBuilder, workspace_builder::WorkspaceBuilder,
+};
 
 #[test]
 fn test_main() {
@@ -105,4 +107,58 @@ fn test_main() {
     for item in expected_items.iter() {
         assert!(stdout.contains(item));
     }
+}
+
+#[test]
+fn test_workspace() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello_world");
+    let goodbye = t.child("goodbye_world");
+
+    ProjectBuilder::start()
+        .name("hello_world")
+        .version("0.1.0")
+        .lib_cairo(indoc! {r#"
+        /// Hello world
+        fn hello_world() -> u32 {
+            1
+        }
+        "#})
+        .build(&hello);
+
+    ProjectBuilder::start()
+        .name("goodbye_world")
+        .version("0.1.0")
+        .lib_cairo(indoc! {r#"
+        /// Goodbye world
+        fn goodbye_world() -> u32 {
+            0
+        }
+        "#})
+        .build(&goodbye);
+
+    WorkspaceBuilder::start()
+        .add_member("hello_world")
+        .add_member("goodbye_world")
+        .build(&t);
+
+    let output = Scarb::quick_snapbox()
+        .arg("doc")
+        .arg("-p")
+        .arg("hello_world")
+        .current_dir(&t)
+        .assert()
+        .success();
+    let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
+    assert!(stdout.contains("/// Hello world"));
+
+    let output = Scarb::quick_snapbox()
+        .arg("doc")
+        .arg("-p")
+        .arg("goodbye_world")
+        .current_dir(&t)
+        .assert()
+        .success();
+    let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
+    assert!(stdout.contains("/// Goodbye world"));
 }
