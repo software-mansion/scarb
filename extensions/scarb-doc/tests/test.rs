@@ -161,4 +161,5 @@ fn test_workspace() {
         .success();
     let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
     assert!(stdout.contains("/// Goodbye world"));
+    assert!(!stdout.contains("/// Hello world"));
 }
