@@ -7,8 +7,9 @@ use itertools::Itertools;
 use crate::core::{edition_variant, Config, PackageName};
 use crate::internal::fsx;
 use crate::internal::restricted_names;
+use crate::subcommands::get_env_vars;
 use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum VersionControl {
@@ -132,7 +133,7 @@ fn mk(
     // Create project directory in case we are called from `new` op.
     fsx::create_dir_all(&path)?;
 
-    let canonical_path = fsx::canonicalize_utf8(&path).unwrap_or(path);
+    let canonical_path = fsx::canonicalize_utf8(&path).unwrap_or(path.clone());
 
     init_vcs(&canonical_path, version_control)?;
     write_vcs_ignore(&canonical_path, config, version_control)?;
@@ -200,16 +201,19 @@ fn mk(
     }
 
     if snforge {
-        init_snforge(name)?;
+        init_snforge(name, path, config)?;
     }
 
     Ok(())
 }
 
-fn init_snforge(name: PackageName) -> Result<()> {
+fn init_snforge(name: PackageName, target_dir: Utf8PathBuf, config: &Config) -> Result<()> {
     Command::new("snforge")
         .arg("init")
         .arg(name.as_str())
+        .envs(get_env_vars(config, Some(target_dir))?)
+        .stderr(Stdio::inherit())
+        .stdout(Stdio::inherit())
         .status()?;
 
     Ok(())

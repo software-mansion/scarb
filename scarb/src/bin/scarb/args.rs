@@ -242,7 +242,7 @@ pub struct InitArgs {
     #[arg(long)]
     pub no_vcs: bool,
 
-    /// Initialize snforge setup.
+    /// Use a Starknet Foundry Forge template.
     #[arg(long)]
     pub snforge: bool,
 }
