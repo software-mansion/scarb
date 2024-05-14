@@ -4607,10 +4607,18 @@ dependencies = [
  "assert_fs",
  "cairo-lang-compiler",
  "cairo-lang-defs",
+ "cairo-lang-filesystem",
  "cairo-lang-semantic",
+ "cairo-lang-utils",
  "camino",
  "clap",
+ "indoc",
+ "itertools 0.12.1",
+ "scarb-metadata 1.12.0",
  "scarb-test-support",
+ "scarb-ui",
+ "serde_json",
+ "smol_str",
 ]
 
 [[package]]
