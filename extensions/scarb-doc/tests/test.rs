@@ -91,22 +91,38 @@ fn test_main() {
         .success();
     let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
 
-    let expected_items = [
-        "main",
-        "FOO",
-        "fib",
-        "Pair",
-        "Color",
-        "Shape",
-        "Circle",
-        "CircleShape",
-        "tests",
-        "fib_function",
-        "it_works",
-    ];
-    for item in expected_items.iter() {
-        assert!(stdout.contains(item));
-    }
+    assert_eq!(
+        stdout,
+        indoc! {r#"
+        Module: hello_world
+        Submodules      : ["hello_world::tests"]
+        Constants       : ["FOO"]
+        Uses            : []
+        Free Functions  : ["main", "fib"]
+        Structs         : ["Circle"]
+        Enums           : ["Color"]
+        Type Aliases    : ["Pair"]
+        Impl Aliases    : []
+        Traits          : ["Shape"]
+        Impls           : ["CircleShape", "CircleDrop", "CircleSerde", "CirclePartialEq"]
+        Extern Types    : []
+        Extern Functions: []
+        
+        Module: hello_world::tests
+        Submodules      : []
+        Constants       : []
+        Uses            : ["fib_function"]
+        Free Functions  : ["it_works"]
+        Structs         : []
+        Enums           : []
+        Type Aliases    : []
+        Impl Aliases    : []
+        Traits          : []
+        Impls           : []
+        Extern Types    : []
+        Extern Functions: []
+        "#}
+    )
 }
 
 #[test]
@@ -150,16 +166,6 @@ fn test_workspace() {
         .assert()
         .success();
     let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
-    assert!(stdout.contains("/// Hello world"));
-
-    let output = Scarb::quick_snapbox()
-        .arg("doc")
-        .arg("-p")
-        .arg("goodbye_world")
-        .current_dir(&t)
-        .assert()
-        .success();
-    let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
-    assert!(stdout.contains("/// Goodbye world"));
-    assert!(!stdout.contains("/// Hello world"));
+    assert!(stdout.contains("Module: hello_world"));
+    assert!(!stdout.contains("Module: goodbye_world"));
 }
