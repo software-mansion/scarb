@@ -592,6 +592,7 @@ impl TomlManifest {
             self.lib.as_ref(),
             &package_name,
             root,
+            None,
         )?);
 
         targets.extend(Self::collect_target(
@@ -599,6 +600,7 @@ impl TomlManifest {
             self.cairo_plugin.as_ref(),
             &package_name,
             root,
+            None,
         )?);
 
         for (kind, ext_toml) in self
@@ -612,6 +614,7 @@ impl TomlManifest {
                 Some(ext_toml),
                 &package_name,
                 root,
+                None,
             )?);
         }
 
@@ -645,6 +648,7 @@ impl TomlManifest {
                     Some(test_toml),
                     &package_name,
                     root,
+                    None,
                 )?);
             }
         } else if auto_detect {
@@ -661,6 +665,7 @@ impl TomlManifest {
                 Some(&target_config),
                 &package_name,
                 root,
+                None,
             )?);
             // Auto-detect test targets from `tests` directory.
             let tests_path = root.join(DEFAULT_TESTS_PATH);
@@ -679,6 +684,7 @@ impl TomlManifest {
                     Some(&target_config),
                     &package_name,
                     root,
+                    None,
                 )?);
             } else {
                 // Tests directory does not contain `lib.cairo` file.
@@ -712,6 +718,7 @@ impl TomlManifest {
                             Some(&target_config),
                             &package_name,
                             root,
+                            Some("integration_tests".into()),
                         )?);
                     }
                 }
@@ -725,6 +732,7 @@ impl TomlManifest {
         target: Option<&TomlTarget<T>>,
         default_name: &SmolStr,
         root: &Utf8Path,
+        group_id: Option<SmolStr>,
     ) -> Result<Option<Target>> {
         let default_source_path = root.join(DEFAULT_SOURCE_PATH.as_path());
         let Some(target) = target else {
@@ -747,7 +755,8 @@ impl TomlManifest {
             .transpose()?
             .unwrap_or(default_source_path.to_path_buf());
 
-        let target = Target::try_from_structured_params(kind, name, source_path, &target.params)?;
+        let target =
+            Target::try_from_structured_params(kind, name, source_path, group_id, &target.params)?;
 
         Ok(Some(target))
     }

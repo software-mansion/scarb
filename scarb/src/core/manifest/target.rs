@@ -20,6 +20,7 @@ pub struct TargetInner {
     pub kind: TargetKind,
     pub name: SmolStr,
     pub source_path: Utf8PathBuf,
+    pub group_id: Option<SmolStr>,
     pub params: toml::Value,
 }
 
@@ -36,6 +37,7 @@ impl Target {
         kind: TargetKind,
         name: impl Into<SmolStr>,
         source_path: impl Into<Utf8PathBuf>,
+        group_id: Option<SmolStr>,
         params: toml::Value,
     ) -> Self {
         assert!(params.is_table(), "params must be a TOML table");
@@ -43,6 +45,7 @@ impl Target {
             kind,
             name: name.into(),
             source_path: source_path.into(),
+            group_id,
             params,
         }))
     }
@@ -56,6 +59,7 @@ impl Target {
             kind,
             name,
             source_path,
+            None,
             toml::Value::Table(toml::Table::new()),
         )
     }
@@ -64,10 +68,11 @@ impl Target {
         kind: TargetKind,
         name: impl Into<SmolStr>,
         source_path: impl Into<Utf8PathBuf>,
+        group_id: Option<SmolStr>,
         params: impl Serialize,
     ) -> Result<Self> {
         let params = toml::Value::try_from(params)?;
-        Ok(Self::new(kind, name, source_path, params))
+        Ok(Self::new(kind, name, source_path, group_id, params))
     }
 
     pub fn is_lib(&self) -> bool {

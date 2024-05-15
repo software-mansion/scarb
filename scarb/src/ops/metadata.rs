@@ -194,11 +194,18 @@ fn collect_dependency_kind(kind: &DepKind) -> Option<m::DepKind> {
 }
 
 fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
+    let mut params = toml_to_json(&target.params);
+    if let Some(group) = target.group_id.as_ref() {
+        params.as_object_mut().unwrap().insert(
+            "group-id".to_string(),
+            serde_json::Value::String(group.to_string()),
+        );
+    }
     m::TargetMetadataBuilder::default()
         .kind(target.kind.to_string())
         .name(target.name.to_string())
         .source_path(target.source_path.clone())
-        .params(toml_to_json(&target.params))
+        .params(params)
         .build()
         .unwrap()
 }
