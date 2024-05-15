@@ -126,3 +126,25 @@ fn target_name_duplicate() {
             help: use different target names to resolve the conflict
         "#});
 }
+
+#[test]
+fn target_group_id_duplicates_target_name() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+        [[target.starknet-contract]]
+        name = "hello"
+        group-id = "hello"
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+           error: the group id `hello` of target `starknet-contract` duplicates target name
+           help: use different group name to resolve the conflict
+        "#});
+}

@@ -280,6 +280,7 @@ pub struct DetailedTomlDependency {
 pub struct TomlTarget<P> {
     pub name: Option<SmolStr>,
     pub source_path: Option<Utf8PathBuf>,
+    pub group_id: Option<SmolStr>,
 
     #[serde(flatten)]
     pub params: P,
@@ -654,6 +655,7 @@ impl TomlManifest {
             let target_config = TomlTarget::<TomlExternalTargetParams> {
                 name: Some(target_name),
                 source_path,
+                group_id: None,
                 params: TestTargetProps::default().try_into()?,
             };
             targets.extend(Self::collect_target::<TomlExternalTargetParams>(
@@ -672,6 +674,7 @@ impl TomlManifest {
                 let target_config = TomlTarget::<TomlExternalTargetParams> {
                     name: Some(target_name),
                     source_path: Some(source_path),
+                    group_id: None,
                     params: TestTargetProps::new(TestTargetType::Integration).try_into()?,
                 };
                 targets.extend(Self::collect_target::<TomlExternalTargetParams>(
@@ -705,6 +708,7 @@ impl TomlManifest {
                         let target_config = TomlTarget::<TomlExternalTargetParams> {
                             name: Some(target_name),
                             source_path: Some(source_path),
+                            group_id: Some("integration_tests".into()),
                             params: TestTargetProps::new(TestTargetType::Integration).try_into()?,
                         };
                         targets.extend(Self::collect_target(
@@ -747,7 +751,13 @@ impl TomlManifest {
             .transpose()?
             .unwrap_or(default_source_path.to_path_buf());
 
-        let target = Target::try_from_structured_params(kind, name, source_path, &target.params)?;
+        let target = Target::try_from_structured_params(
+            kind,
+            name,
+            source_path,
+            target.group_id.clone(),
+            &target.params,
+        )?;
 
         Ok(Some(target))
     }
