@@ -65,7 +65,7 @@ fn load_plugins(
 ///
 /// This approach allows compiling crates that do not define `lib.cairo` file.
 /// For example, single file crates can be created this way.
-/// The actual single file module is defined as `mod` item in created lib file.
+/// The actual single file modules are defined as `mod` items in created lib file.
 fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit) -> Result<()> {
     let components: Vec<&CompilationUnitComponent> = unit
         .components
@@ -73,29 +73,42 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
         .filter(|component| !component.package.id.is_core())
         // Skip components defining the default source path, as they already define lib.cairo files.
         .filter(|component| {
-            component
-                .target
-                .source_path
-                .file_name()
-                .map(|file_name| file_name != DEFAULT_MODULE_MAIN_FILE)
-                .unwrap_or(false)
+            !component.targets.is_empty()
+                && (component.targets.len() > 1
+                    || component
+                        .first_target()
+                        .source_path
+                        .file_name()
+                        .map(|file_name| file_name != DEFAULT_MODULE_MAIN_FILE)
+                        .unwrap_or(false))
         })
         .collect();
 
     for component in components {
         let crate_name = component.cairo_package_name();
         let crate_id = db.intern_crate(CrateLongId::Real(crate_name));
-        let file_stem = component.target.source_path.file_stem().ok_or_else(|| {
-            anyhow!(
-                "failed to get file stem for component {}",
-                component.target.source_path
-            )
-        })?;
+        let file_stems = component
+            .targets
+            .iter()
+            .map(|target| {
+                target
+                    .source_path
+                    .file_stem()
+                    .map(|file_stem| format!("mod {file_stem};"))
+                    .ok_or_else(|| {
+                        anyhow!(
+                            "failed to get file stem for component {}",
+                            target.source_path
+                        )
+                    })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let content = file_stems.join("\n");
         let module_id = ModuleId::CrateRoot(crate_id);
         let file_id = db.module_main_file(module_id).unwrap();
         // Inject virtual lib file wrapper.
         db.as_files_group_mut()
-            .override_file_content(file_id, Some(Arc::new(format!("mod {file_stem};"))));
+            .override_file_content(file_id, Some(Arc::new(content)));
     }
 
     Ok(())
@@ -109,7 +122,7 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
         .map(|component| {
             (
                 component.cairo_package_name(),
-                component.target.source_root().into(),
+                component.first_target().source_root().into(),
             )
         })
         .collect();
@@ -142,7 +155,7 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
 
     let corelib = unit
         .core_package_component()
-        .map(|core| Directory::Real(core.target.source_root().into()));
+        .map(|core| Directory::Real(core.first_target().source_root().into()));
 
     let content = ProjectConfigContent {
         crate_roots,

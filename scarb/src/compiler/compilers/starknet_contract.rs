@@ -207,7 +207,7 @@ impl Compiler for StarknetContractCompiler {
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
-        let props: Props = unit.target().props()?;
+        let props: Props = unit.main_component().target_props()?;
         if !props.sierra && !props.casm {
             ws.config().ui().warn(
                 "both Sierra and CASM Starknet contract targets have been disabled, \
@@ -276,7 +276,7 @@ impl Compiler for StarknetContractCompiler {
         let mut artifacts = StarknetArtifacts::default();
         let mut file_stem_calculator = ContractFileStemCalculator::new(contract_paths);
 
-        let target_name = &unit.target().name;
+        let target_name = &unit.main_component().target_name();
         for (decl, class, casm_class) in izip!(contracts, classes, casm_classes) {
             let contract_name = decl.submodule_id.name(db.upcast_mut());
             let contract_path = decl.module_id().full_path(db.upcast_mut());

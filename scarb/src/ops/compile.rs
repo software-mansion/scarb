@@ -99,9 +99,13 @@ where
     let compilation_units = ops::generate_compilation_units(&resolve, &opts.features, ws)?
         .into_iter()
         .filter(|cu| {
-            let is_excluded = opts.exclude_targets.contains(&cu.target().kind);
-            let is_included =
-                opts.include_targets.is_empty() || opts.include_targets.contains(&cu.target().kind);
+            let is_excluded = opts
+                .exclude_targets
+                .contains(&cu.main_component().target_kind());
+            let is_included = opts.include_targets.is_empty()
+                || opts
+                    .include_targets
+                    .contains(&cu.main_component().target_kind());
             let is_selected = packages.contains(&cu.main_package_id());
             let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
             is_cairo_plugin || (is_selected && is_included && !is_excluded)
@@ -204,7 +208,9 @@ fn check_starknet_dependency(
     //   `starknet` dependency will error in 99% real-world Starknet contract projects.
     //   I think we can get away with emitting false positives for users who write raw contracts
     //   without using Starknet code generators. Such people shouldn't do what they do 😁
-    if unit.target().kind == TargetKind::STARKNET_CONTRACT && !has_starknet_plugin(db) {
+    if unit.main_component().target_kind() == TargetKind::STARKNET_CONTRACT
+        && !has_starknet_plugin(db)
+    {
         ws.config().ui().warn(formatdoc! {
             r#"
             package `{package_name}` declares `starknet-contract` target, but does not depend on `starknet` package

@@ -44,7 +44,7 @@ impl Compiler for TestCompiler {
 
         {
             let _ = trace_span!("serialize_test").enter();
-            let file_name = format!("{}.test.json", unit.target().name);
+            let file_name = format!("{}.test.json", unit.main_component().target_name());
             write_json(
                 &file_name,
                 "output file",

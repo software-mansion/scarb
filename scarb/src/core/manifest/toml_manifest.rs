@@ -708,7 +708,7 @@ impl TomlManifest {
                         let target_config = TomlTarget::<TomlExternalTargetParams> {
                             name: Some(target_name),
                             source_path: Some(source_path),
-                            group_id: Some("integration_tests".into()),
+                            group_id: Some(format!("{package_name}_integrationtest").into()),
                             params: TestTargetProps::new(TestTargetType::Integration).try_into()?,
                         };
                         targets.extend(Self::collect_target(
