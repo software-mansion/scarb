@@ -211,7 +211,7 @@ fn init_snforge(name: PackageName, target_dir: Utf8PathBuf, config: &Config) -> 
     let mut process = Command::new("snforge")
         .arg("init")
         .arg(name.as_str())
-        .current_dir(target_dir.canonicalize_utf8()?)
+        .current_dir(fsx::canonicalize_utf8(&target_dir)?)
         .envs(get_env_vars(config, Some(target_dir))?)
         .stderr(Stdio::inherit())
         .stdout(Stdio::inherit())
