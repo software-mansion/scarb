@@ -290,11 +290,7 @@ fn cairo_compilation_unit_for_target(
                 }
             };
 
-            Ok(CompilationUnitComponent {
-                package,
-                target,
-                cfg_set,
-            })
+            CompilationUnitComponent::try_new(package, vec![target], cfg_set)
         })
         .collect::<Result<_>>()?;
 
@@ -314,11 +310,11 @@ fn cairo_compilation_unit_for_target(
             });
 
         // Add `lib` target for tested package, to be available as dependency.
-        components.push(CompilationUnitComponent {
-            package: member.clone(),
-            cfg_set: None,
-            target,
-        });
+        components.push(CompilationUnitComponent::try_new(
+            member.clone(),
+            vec![target],
+            None,
+        )?);
 
         // Set test package as main package for this compilation unit.
         test_package_id
@@ -536,14 +532,14 @@ fn generate_cairo_plugin_compilation_units(member: &Package) -> Result<Vec<Compi
     Ok(vec![CompilationUnit::ProcMacro(ProcMacroCompilationUnit {
         main_package_id: member.id,
         compiler_config: serde_json::Value::Null,
-        components: vec![CompilationUnitComponent {
-            package: member.clone(),
-            cfg_set: None,
-            target: member
+        components: vec![CompilationUnitComponent::try_new(
+            member.clone(),
+            vec![member
                 .fetch_target(&TargetKind::CAIRO_PLUGIN)
                 .cloned()
                 // Safe to unwrap, as member.is_cairo_plugin() has been ensured before.
-                .expect("main component of procedural macro must define `cairo-plugin` target"),
-        }],
+                .expect("main component of procedural macro must define `cairo-plugin` target")],
+            None,
+        )?],
     })])
 }
