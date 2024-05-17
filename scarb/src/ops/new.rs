@@ -208,13 +208,16 @@ fn mk(
 }
 
 fn init_snforge(name: PackageName, target_dir: Utf8PathBuf, config: &Config) -> Result<()> {
-    Command::new("snforge")
+    let mut process = Command::new("snforge")
         .arg("init")
         .arg(name.as_str())
+        .current_dir(target_dir.canonicalize_utf8()?)
         .envs(get_env_vars(config, Some(target_dir))?)
         .stderr(Stdio::inherit())
         .stdout(Stdio::inherit())
-        .status()?;
+        .spawn()?;
+
+    process.wait()?;
 
     Ok(())
 }
