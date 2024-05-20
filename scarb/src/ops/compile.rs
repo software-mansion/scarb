@@ -89,7 +89,12 @@ where
                 .manifest
                 .targets
                 .iter()
-                .map(|t| package.id.for_test_target(t.name.clone()))
+                .filter(|t| t.is_test())
+                .map(|t| {
+                    package
+                        .id
+                        .for_test_target(t.group_id.clone().unwrap_or(t.name.clone()))
+                })
                 .collect();
             result.push(package_id);
             result
