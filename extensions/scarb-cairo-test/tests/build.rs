@@ -229,13 +229,13 @@ fn integration_tests() {
         .success()
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
-            [..]Compiling test(hello_integrationtest) hello_a v1.0.0 ([..]Scarb.toml)
-            [..]Compiling test(hello_integrationtest) hello_b v1.0.0 ([..]Scarb.toml)
+            [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
             [..]Finished release target(s) in [..]
             testing hello ...
-            running 1 test
-            test hello_b::b::tests::it_works ... ok (gas usage est.: 42440)
-            test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
+            running 2 tests
+            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 42440)
+            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 42440)
+            test result: ok. 2 passed; 0 failed; 0 ignored; 0 filtered out;
 
             running 1 test
             test hello::tests::it_works ... ok (gas usage est.: 42440)
