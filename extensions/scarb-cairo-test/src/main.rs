@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::{env, fs};
 
 use anyhow::{Context, Result};
@@ -58,11 +59,22 @@ fn main() -> Result<()> {
         .unwrap_or(default_target_dir)
         .join(profile);
 
+    let mut seen: HashSet<String> = HashSet::new();
     for package in matched {
         println!("testing {} ...", package.name);
 
         for target in find_testable_targets(&package) {
-            let file_path = target_dir.join(format!("{}.test.json", target.name.clone()));
+            let name = target
+                .params
+                .get("group-id")
+                .and_then(|v| v.as_str())
+                .map(ToString::to_string)
+                .unwrap_or(target.name.clone());
+            let already_seen = !seen.insert(name.clone());
+            if already_seen {
+                continue;
+            }
+            let file_path = target_dir.join(format!("{}.test.json", name));
             let test_compilation = serde_json::from_str::<TestCompilation>(
                 &fs::read_to_string(file_path.clone())
                     .with_context(|| format!("failed to read file: {file_path}"))?,
