@@ -241,6 +241,10 @@ pub struct InitArgs {
     /// Do not initialize a new Git repository.
     #[arg(long)]
     pub no_vcs: bool,
+
+    /// Use a Starknet Foundry Forge template.
+    #[arg(long)]
+    pub snforge: bool,
 }
 
 /// Arguments accepted by the `metadata` command.

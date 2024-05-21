@@ -7,7 +7,9 @@ use itertools::Itertools;
 use crate::core::{edition_variant, Config, PackageName};
 use crate::internal::fsx;
 use crate::internal::restricted_names;
+use crate::subcommands::get_env_vars;
 use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
+use std::process::{Command, Stdio};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum VersionControl {
@@ -20,6 +22,7 @@ pub struct InitOptions {
     pub path: Utf8PathBuf,
     pub name: Option<PackageName>,
     pub vcs: VersionControl,
+    pub snforge: bool,
 }
 
 #[derive(Debug)]
@@ -46,6 +49,7 @@ pub fn new_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
             path: opts.path.clone(),
             name: name.clone(),
             version_control: opts.vcs,
+            snforge: opts.snforge,
         },
         config,
     )
@@ -67,6 +71,7 @@ pub fn init_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
             path: opts.path,
             name: name.clone(),
             version_control: opts.vcs,
+            snforge: opts.snforge,
         },
         config,
     )
@@ -113,6 +118,7 @@ struct MkOpts {
     path: Utf8PathBuf,
     name: PackageName,
     version_control: VersionControl,
+    snforge: bool,
 }
 
 fn mk(
@@ -120,13 +126,14 @@ fn mk(
         path,
         name,
         version_control,
+        snforge,
     }: MkOpts,
     config: &Config,
 ) -> Result<()> {
     // Create project directory in case we are called from `new` op.
     fsx::create_dir_all(&path)?;
 
-    let canonical_path = fsx::canonicalize_utf8(&path).unwrap_or(path);
+    let canonical_path = fsx::canonicalize_utf8(&path).unwrap_or(path.clone());
 
     init_vcs(&canonical_path, version_control)?;
     write_vcs_ignore(&canonical_path, config, version_control)?;
@@ -192,6 +199,25 @@ fn mk(
             {err:?}
         "#})
     }
+
+    if snforge {
+        init_snforge(name, path, config)?;
+    }
+
+    Ok(())
+}
+
+fn init_snforge(name: PackageName, target_dir: Utf8PathBuf, config: &Config) -> Result<()> {
+    let mut process = Command::new("snforge")
+        .arg("init")
+        .arg(name.as_str())
+        .current_dir(fsx::canonicalize_utf8(&target_dir)?)
+        .envs(get_env_vars(config, Some(target_dir))?)
+        .stderr(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .spawn()?;
+
+    process.wait()?;
 
     Ok(())
 }
