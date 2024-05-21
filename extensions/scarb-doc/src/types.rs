@@ -1,14 +1,23 @@
-// TODO(drknzz): Remove if not needed.
+// TODO(drknzz): Remove when not needed.
 #![allow(dead_code)]
 
+use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::diagnostic_utils::StableLocation;
 use cairo_lang_defs::ids::{
-    ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId, ImplDefId,
-    LookupItemId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId, StructId,
-    TopLevelLanguageElementId, TraitId, UseId,
+    ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
+    ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LookupItemId,
+    MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, StructId, TopLevelLanguageElementId,
+    TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId, UseId, VariantId,
 };
 use cairo_lang_filesystem::ids::CrateId;
-use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
+use cairo_lang_semantic::db::SemanticGroup;
+use cairo_lang_syntax::node::db::SyntaxGroup;
+use cairo_lang_syntax::node::kind::SyntaxKind;
+use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
+use cairo_lang_utils::Upcast;
+use itertools::Itertools;
+use smol_str::SmolStr;
 
 #[derive(Clone, Debug)]
 pub struct Crate {
@@ -16,7 +25,7 @@ pub struct Crate {
 }
 
 impl Crate {
-    pub fn new(db: &dyn DefsGroup, crate_id: CrateId) -> Self {
+    pub fn new(db: &RootDatabase, crate_id: CrateId) -> Self {
         Self {
             root_module: Module::new(db, ModuleId::CrateRoot(crate_id)),
         }
@@ -43,77 +52,77 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn new(db: &dyn DefsGroup, module_id: ModuleId) -> Self {
+    pub fn new(db: &RootDatabase, module_id: ModuleId) -> Self {
         let module_constants = db.module_constants(module_id).unwrap();
         let constants = module_constants
             .iter()
-            .map(|(id, node)| Constant::new(db, *id, node))
+            .map(|(id, _)| Constant::new(db, *id))
             .collect();
 
         let module_uses = db.module_uses(module_id).unwrap();
         let uses = module_uses
             .iter()
-            .map(|(id, node)| Use::new(db, *id, node))
+            .map(|(id, _)| Use::new(db, *id))
             .collect();
 
         let module_free_functions = db.module_free_functions(module_id).unwrap();
         let free_functions = module_free_functions
             .iter()
-            .map(|(id, node)| FreeFunction::new(db, *id, node))
+            .map(|(id, _)| FreeFunction::new(db, *id))
             .collect();
 
         let module_structs = db.module_structs(module_id).unwrap();
         let structs = module_structs
             .iter()
-            .map(|(id, node)| Struct::new(db, *id, node))
+            .map(|(id, _)| Struct::new(db, *id))
             .collect();
 
         let module_enums = db.module_enums(module_id).unwrap();
         let enums = module_enums
             .iter()
-            .map(|(id, node)| Enum::new(db, *id, node))
+            .map(|(id, _)| Enum::new(db, *id))
             .collect();
 
         let module_type_aliases = db.module_type_aliases(module_id).unwrap();
         let type_aliases = module_type_aliases
             .iter()
-            .map(|(id, node)| TypeAlias::new(db, *id, node))
+            .map(|(id, _)| TypeAlias::new(db, *id))
             .collect();
 
         let module_impl_aliases = db.module_impl_aliases(module_id).unwrap();
         let impl_aliases = module_impl_aliases
             .iter()
-            .map(|(id, node)| ImplAlias::new(db, *id, node))
+            .map(|(id, _)| ImplAlias::new(db, *id))
             .collect();
 
         let module_traits = db.module_traits(module_id).unwrap();
         let traits = module_traits
             .iter()
-            .map(|(id, node)| Trait::new(db, *id, node))
+            .map(|(id, _)| Trait::new(db, *id))
             .collect();
 
         let module_impls = db.module_impls(module_id).unwrap();
         let impls = module_impls
             .iter()
-            .map(|(id, node)| Impl::new(db, *id, node))
+            .map(|(id, _)| Impl::new(db, *id))
             .collect();
 
         let module_extern_types = db.module_extern_types(module_id).unwrap();
         let extern_types = module_extern_types
             .iter()
-            .map(|(id, node)| ExternType::new(db, *id, node))
+            .map(|(id, _)| ExternType::new(db, *id))
             .collect();
 
         let module_extern_functions = db.module_extern_functions(module_id).unwrap();
         let extern_functions = module_extern_functions
             .iter()
-            .map(|(id, node)| ExternFunction::new(db, *id, node))
+            .map(|(id, _)| ExternFunction::new(db, *id))
             .collect();
 
         let module_submodules = db.module_submodules(module_id).unwrap();
         let submodules = module_submodules
             .iter()
-            .map(|(id, _node)| Self::new(db, ModuleId::Submodule(*id)))
+            .map(|(id, _)| Self::new(db, ModuleId::Submodule(*id)))
             .collect();
 
         Self {
@@ -138,22 +147,40 @@ impl Module {
 #[derive(Clone, Debug)]
 pub struct ItemData {
     pub name: String,
-    pub full_path: String,
-
     pub doc: Option<String>,
-    pub definition: String,
+    pub signature: String,
 
-    pub text: String,
+    pub full_path: String,
+    pub text_without_trivia: String,
 }
 
 impl ItemData {
-    pub fn new(db: &dyn DefsGroup, id: ModuleItemId, node: &impl TypedSyntaxNode) -> Self {
+    pub fn new(
+        db: &RootDatabase,
+        id: impl TopLevelLanguageElementId,
+        node: impl TypedStablePtr,
+        lookup_item_id: LookupItemId,
+    ) -> Self {
         Self {
             name: id.name(db).into(),
+            doc: db.get_item_documentation(lookup_item_id),
+            signature: db.get_item_signature(lookup_item_id),
             full_path: id.full_path(db),
-            doc: db.get_item_documentation(LookupItemId::ModuleItem(id)),
-            definition: db.get_item_signature(LookupItemId::ModuleItem(id)),
-            text: node.as_syntax_node().get_text_without_trivia(db.upcast()),
+            text_without_trivia: node.lookup(db).as_syntax_node().get_text_without_trivia(db),
+        }
+    }
+
+    pub fn new_without_docs_and_signature(
+        db: &RootDatabase,
+        id: impl TopLevelLanguageElementId,
+        node: impl TypedStablePtr,
+    ) -> Self {
+        Self {
+            name: id.name(db).into(),
+            doc: None,
+            signature: String::new(),
+            full_path: id.full_path(db),
+            text_without_trivia: node.lookup(db).as_syntax_node().get_text_without_trivia(db),
         }
     }
 }
@@ -167,11 +194,17 @@ pub struct Constant {
 }
 
 impl Constant {
-    pub fn new(db: &dyn DefsGroup, id: ConstantId, node: &ast::ItemConstant) -> Self {
+    pub fn new(db: &RootDatabase, id: ConstantId) -> Self {
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::Constant(id), node),
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::Constant(id)),
+            ),
         }
     }
 }
@@ -185,11 +218,17 @@ pub struct Use {
 }
 
 impl Use {
-    pub fn new(db: &dyn DefsGroup, id: UseId, node: &ast::UsePathLeaf) -> Self {
+    pub fn new(db: &RootDatabase, id: UseId) -> Self {
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::Use(id), node),
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::Use(id)),
+            ),
         }
     }
 }
@@ -203,11 +242,17 @@ pub struct FreeFunction {
 }
 
 impl FreeFunction {
-    pub fn new(db: &dyn DefsGroup, id: FreeFunctionId, node: &ast::FunctionWithBody) -> Self {
+    pub fn new(db: &RootDatabase, id: FreeFunctionId) -> Self {
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::FreeFunction(id), node),
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::FreeFunction(id)),
+            ),
         }
     }
 }
@@ -217,15 +262,60 @@ pub struct Struct {
     pub id: StructId,
     pub node: ast::ItemStructPtr,
 
+    pub members: Vec<Member>,
+
     pub item_data: ItemData,
 }
 
 impl Struct {
-    pub fn new(db: &dyn DefsGroup, id: StructId, node: &ast::ItemStruct) -> Self {
+    pub fn new(db: &RootDatabase, id: StructId) -> Self {
+        let members = db.struct_members(id).unwrap();
+
+        let members = members
+            .iter()
+            .map(|(name, semantic_member)| Member::new(db, semantic_member.id, name))
+            .collect::<Vec<_>>();
+
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::Struct(id), node),
+            node,
+            members,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::Struct(id)),
+            ),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Member {
+    pub id: MemberId,
+    pub node: ast::MemberPtr,
+
+    pub item_data: ItemData,
+}
+
+impl Member {
+    pub fn new(db: &RootDatabase, id: MemberId, name: &SmolStr) -> Self {
+        let node = id.stable_ptr(db);
+        let stable_location = StableLocation::new(node.0);
+
+        let mut item_data = ItemData::new_without_docs_and_signature(db, id, node);
+
+        item_data.full_path.push_str("::");
+        item_data.full_path.push_str(name.as_str());
+
+        item_data.signature = get_item_signature(db, &stable_location);
+        item_data.doc = get_item_documentation(db, &stable_location);
+
+        Self {
+            id,
+            node,
+            item_data,
         }
     }
 }
@@ -235,15 +325,59 @@ pub struct Enum {
     pub id: EnumId,
     pub node: ast::ItemEnumPtr,
 
+    pub variants: Vec<Variant>,
+
     pub item_data: ItemData,
 }
 
 impl Enum {
-    pub fn new(db: &dyn DefsGroup, id: EnumId, node: &ast::ItemEnum) -> Self {
+    pub fn new(db: &RootDatabase, id: EnumId) -> Self {
+        let variants = db.enum_variants(id).unwrap();
+        let variants = variants
+            .iter()
+            .map(|(name, variant_id)| Variant::new(db, *variant_id, name))
+            .collect::<Vec<_>>();
+
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::Enum(id), node),
+            node,
+            variants,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::Enum(id)),
+            ),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Variant {
+    pub id: VariantId,
+    pub node: ast::VariantPtr,
+
+    pub item_data: ItemData,
+}
+
+impl Variant {
+    pub fn new(db: &RootDatabase, id: VariantId, name: &SmolStr) -> Self {
+        let node = id.stable_ptr(db);
+        let stable_location = StableLocation::new(node.0);
+
+        let mut item_data = ItemData::new_without_docs_and_signature(db, id, node);
+
+        item_data.full_path.push_str("::");
+        item_data.full_path.push_str(name.as_str());
+
+        item_data.doc = get_item_documentation(db, &stable_location);
+        item_data.signature = get_item_signature(db, &stable_location);
+
+        Self {
+            id,
+            node,
+            item_data,
         }
     }
 }
@@ -257,11 +391,17 @@ pub struct TypeAlias {
 }
 
 impl TypeAlias {
-    pub fn new(db: &dyn DefsGroup, id: ModuleTypeAliasId, node: &ast::ItemTypeAlias) -> Self {
+    pub fn new(db: &RootDatabase, id: ModuleTypeAliasId) -> Self {
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::TypeAlias(id), node),
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::TypeAlias(id)),
+            ),
         }
     }
 }
@@ -275,11 +415,17 @@ pub struct ImplAlias {
 }
 
 impl ImplAlias {
-    pub fn new(db: &dyn DefsGroup, id: ImplAliasId, node: &ast::ItemImplAlias) -> Self {
+    pub fn new(db: &RootDatabase, id: ImplAliasId) -> Self {
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::ImplAlias(id), node),
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::ImplAlias(id)),
+            ),
         }
     }
 }
@@ -289,15 +435,113 @@ pub struct Trait {
     pub id: TraitId,
     pub node: ast::ItemTraitPtr,
 
+    pub trait_constants: Vec<TraitConstant>,
+    pub trait_types: Vec<TraitType>,
+    pub trait_functions: Vec<TraitFunction>,
+
     pub item_data: ItemData,
 }
 
 impl Trait {
-    pub fn new(db: &dyn DefsGroup, id: TraitId, node: &ast::ItemTrait) -> Self {
+    pub fn new(db: &RootDatabase, id: TraitId) -> Self {
+        let trait_constants = db.trait_constants(id).unwrap();
+        let trait_constants = trait_constants
+            .iter()
+            .map(|(_name, trait_constant_id)| TraitConstant::new(db, *trait_constant_id))
+            .collect::<Vec<_>>();
+
+        let trait_types = db.trait_types(id).unwrap();
+        let trait_types = trait_types
+            .iter()
+            .map(|(_name, trait_type_id)| TraitType::new(db, *trait_type_id))
+            .collect::<Vec<_>>();
+
+        let trait_functions = db.trait_functions(id).unwrap();
+        let trait_functions = trait_functions
+            .iter()
+            .map(|(_name, trait_function_id)| TraitFunction::new(db, *trait_function_id))
+            .collect::<Vec<_>>();
+
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::Trait(id), node),
+            node,
+            trait_constants,
+            trait_types,
+            trait_functions,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::Trait(id)),
+            ),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct TraitConstant {
+    pub id: TraitConstantId,
+    pub node: ast::TraitItemConstantPtr,
+
+    pub item_data: ItemData,
+}
+
+impl TraitConstant {
+    pub fn new(db: &RootDatabase, id: TraitConstantId) -> Self {
+        let node = id.stable_ptr(db);
+        Self {
+            id,
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::TraitItem(TraitItemId::Constant(id)),
+            ),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct TraitType {
+    pub id: TraitTypeId,
+    pub node: ast::TraitItemTypePtr,
+
+    pub item_data: ItemData,
+}
+
+impl TraitType {
+    pub fn new(db: &RootDatabase, id: TraitTypeId) -> Self {
+        let node = id.stable_ptr(db);
+        Self {
+            id,
+            node,
+            item_data: ItemData::new(db, id, node, LookupItemId::TraitItem(TraitItemId::Type(id))),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct TraitFunction {
+    pub id: TraitFunctionId,
+    pub node: ast::TraitItemFunctionPtr,
+
+    pub item_data: ItemData,
+}
+
+impl TraitFunction {
+    pub fn new(db: &RootDatabase, id: TraitFunctionId) -> Self {
+        let node = id.stable_ptr(db);
+        Self {
+            id,
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::TraitItem(TraitItemId::Function(id)),
+            ),
         }
     }
 }
@@ -307,15 +551,113 @@ pub struct Impl {
     pub id: ImplDefId,
     pub node: ast::ItemImplPtr,
 
+    pub impl_types: Vec<ImplType>,
+    pub impl_constants: Vec<ImplConstant>,
+    pub impl_functions: Vec<ImplFunction>,
+
     pub item_data: ItemData,
 }
 
 impl Impl {
-    pub fn new(db: &dyn DefsGroup, id: ImplDefId, node: &ast::ItemImpl) -> Self {
+    pub fn new(db: &RootDatabase, id: ImplDefId) -> Self {
+        let impl_types = db.impl_types(id).unwrap();
+        let impl_types = impl_types
+            .iter()
+            .map(|(id, _)| ImplType::new(db, *id))
+            .collect::<Vec<_>>();
+
+        let impl_constants = db.impl_constants(id).unwrap();
+        let impl_constants = impl_constants
+            .iter()
+            .map(|(id, _)| ImplConstant::new(db, *id))
+            .collect::<Vec<_>>();
+
+        let impl_functions = db.impl_functions(id).unwrap();
+        let impl_functions = impl_functions
+            .iter()
+            .map(|(_name, id)| ImplFunction::new(db, *id))
+            .collect::<Vec<_>>();
+
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::Impl(id), node),
+            node,
+            impl_types,
+            impl_constants,
+            impl_functions,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::Impl(id)),
+            ),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ImplType {
+    pub id: ImplTypeDefId,
+    pub node: ast::ItemTypeAliasPtr,
+
+    pub item_data: ItemData,
+}
+
+impl ImplType {
+    pub fn new(db: &RootDatabase, id: ImplTypeDefId) -> Self {
+        let node = id.stable_ptr(db);
+        Self {
+            id,
+            node,
+            item_data: ItemData::new(db, id, node, LookupItemId::ImplItem(ImplItemId::Type(id))),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ImplConstant {
+    pub id: ImplConstantDefId,
+    pub node: ast::ItemConstantPtr,
+
+    pub item_data: ItemData,
+}
+
+impl ImplConstant {
+    pub fn new(db: &RootDatabase, id: ImplConstantDefId) -> Self {
+        let node = id.stable_ptr(db);
+        Self {
+            id,
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ImplItem(ImplItemId::Constant(id)),
+            ),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ImplFunction {
+    pub id: ImplFunctionId,
+    pub node: ast::FunctionWithBodyPtr,
+
+    pub item_data: ItemData,
+}
+
+impl ImplFunction {
+    pub fn new(db: &RootDatabase, id: ImplFunctionId) -> Self {
+        let node = id.stable_ptr(db);
+        Self {
+            id,
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ImplItem(ImplItemId::Function(id)),
+            ),
         }
     }
 }
@@ -329,11 +671,17 @@ pub struct ExternType {
 }
 
 impl ExternType {
-    pub fn new(db: &dyn DefsGroup, id: ExternTypeId, node: &ast::ItemExternType) -> Self {
+    pub fn new(db: &RootDatabase, id: ExternTypeId) -> Self {
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::ExternType(id), node),
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::ExternType(id)),
+            ),
         }
     }
 }
@@ -347,11 +695,127 @@ pub struct ExternFunction {
 }
 
 impl ExternFunction {
-    pub fn new(db: &dyn DefsGroup, id: ExternFunctionId, node: &ast::ItemExternFunction) -> Self {
+    pub fn new(db: &RootDatabase, id: ExternFunctionId) -> Self {
+        let node = id.stable_ptr(db);
         Self {
             id,
-            node: node.stable_ptr(),
-            item_data: ItemData::new(db, ModuleItemId::ExternFunction(id), node),
+            node,
+            item_data: ItemData::new(
+                db,
+                id,
+                node,
+                LookupItemId::ModuleItem(ModuleItemId::ExternFunction(id)),
+            ),
         }
     }
+}
+
+// This function is temporarily copied until further modifications in cairo compiler are done.
+fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) -> Option<String> {
+    let doc = stable_location.syntax_node(db).get_text(db.upcast());
+    let doc = doc
+        .lines()
+        .take_while_ref(|line| {
+            !line
+                .trim_start()
+                .chars()
+                .next()
+                .map_or(false, |c| c.is_alphabetic())
+        })
+        .filter_map(|line| {
+            let dedent = line.trim_start();
+            for prefix in ["///", "//!"] {
+                if let Some(content) = dedent.strip_prefix(prefix) {
+                    return Some(content.strip_prefix(' ').unwrap_or(content));
+                }
+            }
+            None
+        })
+        .collect::<Vec<&str>>();
+    (!doc.is_empty()).then(|| doc.join("\n"))
+}
+
+// This function is temporarily copied until further modifications in cairo compiler are done.
+fn get_item_signature(db: &dyn DefsGroup, stable_location: &StableLocation) -> String {
+    let syntax_node = stable_location.syntax_node(db);
+    let definition = match syntax_node.green_node(db.upcast()).kind {
+        SyntaxKind::ItemConstant
+        | SyntaxKind::TraitItemFunction
+        | SyntaxKind::ItemTypeAlias
+        | SyntaxKind::ItemImplAlias => syntax_node.clone().get_text_without_trivia(db.upcast()),
+        SyntaxKind::FunctionWithBody | SyntaxKind::ItemExternFunction => {
+            let children =
+                <dyn DefsGroup as Upcast<dyn SyntaxGroup>>::upcast(db).get_children(syntax_node);
+            children[1..]
+                .iter()
+                .map_while(|node| {
+                    let kind = node.kind(db.upcast());
+                    (kind != SyntaxKind::ExprBlock
+                        && kind != SyntaxKind::ImplBody
+                        && kind != SyntaxKind::TraitBody)
+                        .then_some(
+                            if kind == SyntaxKind::VisibilityPub
+                                || kind == SyntaxKind::TerminalExtern
+                            {
+                                node.clone()
+                                    .get_text_without_trivia(db.upcast())
+                                    .trim()
+                                    .to_owned()
+                                    + " "
+                            } else {
+                                node.clone()
+                                    .get_text_without_trivia(db.upcast())
+                                    .lines()
+                                    .map(|line| line.trim())
+                                    .collect::<Vec<&str>>()
+                                    .join("")
+                            },
+                        )
+                })
+                .collect::<Vec<String>>()
+                .join("")
+        }
+        SyntaxKind::ItemEnum | SyntaxKind::ItemExternType | SyntaxKind::ItemStruct => {
+            <dyn DefsGroup as Upcast<dyn SyntaxGroup>>::upcast(db)
+                .get_children(syntax_node)
+                .iter()
+                .skip(1)
+                .map(|node| node.clone().get_text(db.upcast()))
+                .collect::<Vec<String>>()
+                .join("")
+        }
+        SyntaxKind::ItemTrait | SyntaxKind::ItemImpl => {
+            let children =
+                <dyn DefsGroup as Upcast<dyn SyntaxGroup>>::upcast(db).get_children(syntax_node);
+            children[1..]
+                .iter()
+                .enumerate()
+                .map_while(|(index, node)| {
+                    let kind = node.kind(db.upcast());
+                    if kind != SyntaxKind::ImplBody && kind != SyntaxKind::TraitBody {
+                        let text = node
+                            .clone()
+                            .get_text_without_trivia(db.upcast())
+                            .lines()
+                            .map(|line| line.trim())
+                            .collect::<Vec<&str>>()
+                            .join("");
+
+                        Some(
+                            if index == 0 || kind == SyntaxKind::WrappedGenericParamList {
+                                text
+                            } else {
+                                " ".to_owned() + &text
+                            },
+                        )
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<String>>()
+                .join("")
+        }
+        _ => "".to_owned(),
+    };
+    definition
 }

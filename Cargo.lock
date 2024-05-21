@@ -4734,6 +4734,7 @@ dependencies = [
  "cairo-lang-defs",
  "cairo-lang-filesystem",
  "cairo-lang-semantic",
+ "cairo-lang-starknet",
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "camino",

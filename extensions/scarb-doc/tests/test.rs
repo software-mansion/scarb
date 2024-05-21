@@ -13,11 +13,16 @@ fn test_main() {
         .lib_cairo(indoc! {r#"
         //! Fibonacci sequence calculator
 
+
         /// Main function that calculates the 16th Fibonacci number
         fn main() -> u32 {
             fib(16)
         }
 
+        /// use into_trait
+        use core::traits::Into as into_trait;
+        use core::traits::TryInto;
+        
         /// FOO constant with value 42
         const FOO: u32 = 42;
 
@@ -53,6 +58,12 @@ fn test_main() {
 
         /// Shape trait for objects that have an area
         trait Shape<T> {
+            /// Constant for the shape type
+            const SHAPE_CONST = "SHAPE";
+        
+            /// Type alias for a pair of shapes
+            type ShapePair<T> = (Shape<T>, Shape<T>);
+        
             /// Calculate the area of the shape
             fn area(self: T) -> u32;
         }
@@ -66,6 +77,13 @@ fn test_main() {
 
         /// Implementation of the Shape trait for Circle
         impl CircleShape of Shape<Circle> {
+            /// Type alias for a pair of circles
+            type ShapePair<Circle> = (Circle, Circle);
+        
+            /// Shape constant
+            const SHAPE_CONST = "xyz";
+
+            /// Implementation of the area method for Circle
             fn area(self: Circle) -> u32 {
                 3 * self.radius * self.radius
             }
@@ -94,21 +112,45 @@ fn test_main() {
     assert_eq!(
         stdout,
         indoc! {r#"
-        Module: hello_world
+        Module: "hello_world"
         Submodules      : ["hello_world::tests"]
         Constants       : ["FOO"]
-        Uses            : []
+        Uses            : ["into_trait", "TryInto"]
         Free Functions  : ["main", "fib"]
         Structs         : ["Circle"]
+            Struct "Circle"
+                Members: ["radius"]
         Enums           : ["Color"]
+            Enum "Color"
+                Variants: ["Red", "Green", "Blue"]
         Type Aliases    : ["Pair"]
         Impl Aliases    : []
         Traits          : ["Shape"]
+            Trait "Shape"
+                Trait constants: ["SHAPE_CONST"]
+                Trait types    : ["ShapePair"]
+                Trait functions: ["area"]
         Impls           : ["CircleShape", "CircleDrop", "CircleSerde", "CirclePartialEq"]
+            Impl "CircleShape"
+                Impl types     : ["ShapePair"]
+                Impl constants : ["SHAPE_CONST"]
+                Impl functions : ["area"]
+            Impl "CircleDrop"
+                Impl types     : []
+                Impl constants : []
+                Impl functions : []
+            Impl "CircleSerde"
+                Impl types     : []
+                Impl constants : []
+                Impl functions : ["serialize", "deserialize"]
+            Impl "CirclePartialEq"
+                Impl types     : []
+                Impl constants : []
+                Impl functions : ["eq"]
         Extern Types    : []
         Extern Functions: []
         
-        Module: hello_world::tests
+        Module: "hello_world::tests"
         Submodules      : []
         Constants       : []
         Uses            : ["fib_function"]
@@ -139,6 +181,12 @@ fn test_workspace() {
         fn hello_world() -> u32 {
             1
         }
+
+        /// Nice essa.
+        struct Essa {
+           /// Nice field.
+           field: u8,
+        }
         "#})
         .build(&hello);
 
@@ -166,6 +214,7 @@ fn test_workspace() {
         .assert()
         .success();
     let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
-    assert!(stdout.contains("Module: hello_world"));
-    assert!(!stdout.contains("Module: goodbye_world"));
+
+    assert!(stdout.contains("Module: \"hello_world\""));
+    assert!(!stdout.contains("Module: \"goodbye_world\""));
 }

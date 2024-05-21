@@ -7,6 +7,7 @@ use scarb_ui::args::PackagesFilter;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateLongId;
+use cairo_lang_starknet::starknet_plugin_suite;
 
 use compilation::get_project_config;
 use types::Crate;
@@ -42,6 +43,7 @@ fn main() -> Result<()> {
     let db = &mut {
         let mut b = RootDatabase::builder();
         b.with_project_config(project_config);
+        b.with_plugin_suite(starknet_plugin_suite());
         b.build()?
     };
 
@@ -49,12 +51,13 @@ fn main() -> Result<()> {
     let crate_ = Crate::new(db, main_crate_id);
 
     print_module(&crate_.root_module);
+    println!("{crate_:?}");
 
     Ok(())
 }
 
 fn print_module(module: &types::Module) {
-    println!("Module: {}", module.full_path);
+    println!("Module: {:?}", module.full_path);
     println!(
         "Submodules      : {:?}",
         module
@@ -67,11 +70,34 @@ fn print_module(module: &types::Module) {
     print_names!("Uses            ", module.uses);
     print_names!("Free Functions  ", module.free_functions);
     print_names!("Structs         ", module.structs);
+    for st in module.structs.iter() {
+        println!("    Struct {:?}", st.item_data.name);
+        print_names!("        Members", st.members);
+    }
+
     print_names!("Enums           ", module.enums);
+    for enu in module.enums.iter() {
+        println!("    Enum {:?}", enu.item_data.name);
+        print_names!("        Variants", enu.variants);
+    }
     print_names!("Type Aliases    ", module.type_aliases);
     print_names!("Impl Aliases    ", module.impl_aliases);
+
     print_names!("Traits          ", module.traits);
+    for tr in module.traits.iter() {
+        println!("    Trait {:?}", tr.item_data.name);
+        print_names!("        Trait constants", tr.trait_constants);
+        print_names!("        Trait types    ", tr.trait_types);
+        print_names!("        Trait functions", tr.trait_functions);
+    }
+
     print_names!("Impls           ", module.impls);
+    for imp in module.impls.iter() {
+        println!("    Impl {:?}", imp.item_data.name);
+        print_names!("        Impl types     ", imp.impl_types);
+        print_names!("        Impl constants ", imp.impl_constants);
+        print_names!("        Impl functions ", imp.impl_functions);
+    }
     print_names!("Extern Types    ", module.extern_types);
     print_names!("Extern Functions", module.extern_functions);
 
