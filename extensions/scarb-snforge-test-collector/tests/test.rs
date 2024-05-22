@@ -285,7 +285,6 @@ const SHOULD_PANIC_TEST: &str = indoc! {r#"
 };
 
 #[test]
-#[ignore = "TODO: fix felt serialization"]
 fn forge_test_with_should_panic_message_attribute() {
     let t = TempDir::new().unwrap();
     let pkg1 = t.child("forge");
