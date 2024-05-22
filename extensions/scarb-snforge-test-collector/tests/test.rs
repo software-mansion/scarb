@@ -1,5 +1,7 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use cairo_lang_sierra::program::StatementIdx;
+use std::collections::HashMap;
 
 use scarb_test_support::fsx::ChildPathEx;
 
@@ -466,9 +468,10 @@ fn generates_statements_functions_mappings() {
 
     let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
 
-    assert!(&json[0]["sierra_program"]["debug_info"]["annotations"]
-        ["github.com/software-mansion/cairo-profiler"]["statements_functions"]
-        .is_object());
+    let mappings = &json[0]["sierra_program"]["debug_info"]["annotations"]
+        ["github.com/software-mansion/cairo-profiler"]["statements_functions"];
+
+    assert!(serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok());
 }
 
 #[test]
