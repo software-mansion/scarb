@@ -1,3 +1,4 @@
+use crate::felt252::Felt252;
 use anyhow::Result;
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_diagnostics::Severity;
@@ -12,7 +13,6 @@ use cairo_lang_utils::OptionHelper;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use serde::Serialize;
-use starknet_types_core::felt::Felt as Felt252;
 use std::num::NonZeroU32;
 
 const FORK_ATTR: &str = "fork";
@@ -31,7 +31,9 @@ impl From<PanicExpectation> for ExpectedPanicValue {
     fn from(value: PanicExpectation) -> Self {
         match value {
             PanicExpectation::Any => ExpectedPanicValue::Any,
-            PanicExpectation::Exact(vec) => ExpectedPanicValue::Exact(vec),
+            PanicExpectation::Exact(vec) => {
+                ExpectedPanicValue::Exact(vec.into_iter().map(Felt252::new).collect())
+            }
         }
     }
 }
