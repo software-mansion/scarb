@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::{env, fs};
 
 use anyhow::{Context, Result};
@@ -58,11 +59,22 @@ fn main() -> Result<()> {
         .unwrap_or(default_target_dir)
         .join(profile);
 
+    let mut deduplicator = TargetGroupDeduplicator::default();
     for package in matched {
         println!("testing {} ...", package.name);
 
         for target in find_testable_targets(&package) {
-            let file_path = target_dir.join(format!("{}.test.json", target.name.clone()));
+            let name = target
+                .params
+                .get("group-id")
+                .and_then(|v| v.as_str())
+                .map(ToString::to_string)
+                .unwrap_or(target.name.clone());
+            let already_seen = deduplicator.visit(package.name.clone(), name.clone());
+            if already_seen {
+                continue;
+            }
+            let file_path = target_dir.join(format!("{}.test.json", name));
             let test_compilation = serde_json::from_str::<TestCompilation>(
                 &fs::read_to_string(file_path.clone())
                     .with_context(|| format!("failed to read file: {file_path}"))?,
@@ -84,6 +96,18 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[derive(Default)]
+struct TargetGroupDeduplicator {
+    seen: HashSet<(String, String)>,
+}
+
+impl TargetGroupDeduplicator {
+    /// Returns true if already visited.
+    pub fn visit(&mut self, package_name: String, group_name: String) -> bool {
+        !self.seen.insert((package_name, group_name))
+    }
 }
 
 fn is_gas_enabled(metadata: &Metadata, package_id: &PackageId, target: &TargetMetadata) -> bool {

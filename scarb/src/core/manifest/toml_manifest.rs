@@ -718,7 +718,7 @@ impl TomlManifest {
                             Some(&target_config),
                             &package_name,
                             root,
-                            Some("integration_tests".into()),
+                            Some(format!("{package_name}_integrationtest").into()),
                         )?);
                     }
                 }

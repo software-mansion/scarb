@@ -47,7 +47,7 @@ impl CompilerRepository {
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
-        let target_kind = &unit.target().kind;
+        let target_kind = &unit.main_component().target_kind();
         let Some(compiler) = self.compilers.get(target_kind.as_str()) else {
             bail!("unknown compiler for target `{target_kind}`");
         };

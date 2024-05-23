@@ -46,7 +46,7 @@ impl Compiler for LibCompiler {
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
-        let props: Props = unit.target().props()?;
+        let props: Props = unit.main_component().target_props()?;
         if !props.sierra && !props.casm && !props.sierra_text {
             ws.config().ui().warn(
                 "Sierra, textual Sierra and CASM lib targets have been disabled, \
@@ -74,20 +74,23 @@ impl Compiler for LibCompiler {
 
         if props.sierra {
             write_json(
-                format!("{}.sierra.json", unit.target().name).as_str(),
+                format!("{}.sierra.json", unit.main_component().target_name()).as_str(),
                 "output file",
                 &target_dir,
                 ws,
                 &sierra_program,
             )
             .with_context(|| {
-                format!("failed to serialize Sierra program {}", unit.target().name)
+                format!(
+                    "failed to serialize Sierra program {}",
+                    unit.main_component().target_name()
+                )
             })?;
         }
 
         if props.sierra_text {
             write_string(
-                format!("{}.sierra", unit.target().name).as_str(),
+                format!("{}.sierra", unit.main_component().target_name()).as_str(),
                 "output file",
                 &target_dir,
                 ws,
@@ -121,7 +124,7 @@ impl Compiler for LibCompiler {
             };
 
             write_string(
-                format!("{}.casm", unit.target().name).as_str(),
+                format!("{}.casm", unit.main_component().target_name()).as_str(),
                 "output file",
                 &target_dir,
                 ws,

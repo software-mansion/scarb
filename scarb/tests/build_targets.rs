@@ -335,12 +335,17 @@ fn compile_test_target() {
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
     assert_eq!(
         t.child("target/dev").files(),
-        vec!["hello_test1.test.json", "hello_unittest.test.json",]
+        vec![
+            "hello_integrationtest.test.json",
+            "hello_unittest.test.json",
+        ]
     );
 
-    t.child("target/dev/hello_test1.test.json")
+    t.child("target/dev/hello_integrationtest.test.json")
         .assert_is_json::<serde_json::Value>();
-    let content = t.child("target/dev/hello_test1.test.json").read_to_string();
+    let content = t
+        .child("target/dev/hello_integrationtest.test.json")
+        .read_to_string();
     let json: serde_json::Value = serde_json::from_str(&content).unwrap();
     let tests = json.get("named_tests").unwrap().as_array().unwrap();
     assert_eq!(tests.len(), 1);
