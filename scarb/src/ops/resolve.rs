@@ -204,39 +204,68 @@ fn generate_cairo_compilation_units(
 ) -> Result<Vec<CompilationUnit>> {
     let profile = ws.current_profile()?;
     let mut solution = PackageSolutionCollector::new(member, resolve, ws);
-    member
+    let grouped = member
         .manifest
         .targets
         .iter()
-        .sorted_by_key(|target| target.kind.clone())
-        .map(|member_target| {
+        .filter(|target| target.group_id.is_some())
+        .group_by(|target| target.group_id.clone())
+        .into_iter()
+        .map(|(group_id, group)| (group_id, group.collect_vec()))
+        .sorted_by_key(|(_, group)| group[0].kind.clone())
+        .map(|(_group_id, group)| {
+            let group = group.into_iter().cloned().collect_vec();
             Ok(CompilationUnit::Cairo(cairo_compilation_unit_for_target(
-                member_target,
+                group,
                 member,
                 profile.clone(),
                 enabled_features,
                 &mut solution,
             )?))
         })
-        .collect::<Result<Vec<CompilationUnit>>>()
+        .collect::<Result<Vec<_>>>()?;
+    let result = member
+        .manifest
+        .targets
+        .iter()
+        .filter(|target| target.group_id.is_none())
+        .map(|member_target| {
+            Ok(CompilationUnit::Cairo(cairo_compilation_unit_for_target(
+                vec![member_target.clone()],
+                member,
+                profile.clone(),
+                enabled_features,
+                &mut solution,
+            )?))
+        })
+        .collect::<Result<Vec<_>>>()?
+        .into_iter()
+        .chain(grouped)
+        .collect();
+    Ok(result)
 }
 
 fn cairo_compilation_unit_for_target(
-    member_target: &Target,
+    member_targets: Vec<Target>,
     member: &Package,
     profile: Profile,
     enabled_features: &FeaturesOpts,
     solution: &mut PackageSolutionCollector<'_>,
 ) -> Result<CairoCompilationUnit> {
+    let member_target = member_targets.first().cloned().unwrap();
     solution.collect(&member_target.kind)?;
     let packages = solution.packages.as_ref().unwrap();
     let cairo_plugins = solution.cairo_plugins.as_ref().unwrap();
 
-    let cfg_set = build_cfg_set(member_target);
+    let cfg_set = build_cfg_set(&member_target);
 
     let props: TestTargetProps = member_target.props()?;
     let is_integration_test = props.test_type == TestTargetType::Integration;
-    let test_package_id = member.id.for_test_target(member_target.name.clone());
+    let name = member_target
+        .group_id
+        .clone()
+        .unwrap_or(member_target.name.clone());
+    let test_package_id = member.id.for_test_target(name);
 
     let mut components: Vec<CompilationUnitComponent> = packages
         .iter()
@@ -245,14 +274,13 @@ fn cairo_compilation_unit_for_target(
             // If this is this compilation's unit main package, then use the target we are
             // building. Otherwise, assume library target for all dependency packages,
             // because that's what it is for.
-            let target = if package.id == member.id {
-                member_target
+            let targets = if package.id == member.id {
+                member_targets.clone()
             } else {
                 // We can safely unwrap here, because compilation unit generator ensures
                 // that all dependencies have library target.
-                package.fetch_target(&TargetKind::LIB).unwrap()
+                vec![package.fetch_target(&TargetKind::LIB).unwrap().clone()]
             };
-            let target = target.clone();
 
             // For integration tests target, rewrite package with prefixed name.
             // This allows integration test code to reference main package as dependency.
@@ -290,7 +318,7 @@ fn cairo_compilation_unit_for_target(
                 }
             };
 
-            CompilationUnitComponent::try_new(package, vec![target], cfg_set)
+            CompilationUnitComponent::try_new(package, targets, cfg_set)
         })
         .collect::<Result<_>>()?;
 
