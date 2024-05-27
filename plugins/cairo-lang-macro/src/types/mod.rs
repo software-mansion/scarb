@@ -5,6 +5,7 @@ mod conversion;
 mod expansions;
 
 pub use expansions::*;
+use std::ops::Deref;
 
 /// Result of procedural macro code generation.
 #[derive(Debug)]
@@ -158,7 +159,7 @@ impl From<AuxData> for Vec<u8> {
 }
 
 /// Diagnostic returned by the procedural macro.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Diagnostic {
     /// A human addressed message associated with the [`Diagnostic`].
     ///
@@ -176,7 +177,7 @@ pub struct Diagnostic {
 /// This should be roughly equivalent to the severity of Cairo diagnostics.
 ///
 /// The appropriate action for each diagnostic kind will be taken by `Scarb`.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Severity {
     /// An error has occurred.
     ///
@@ -189,8 +190,16 @@ pub enum Severity {
 }
 
 /// A set of diagnostics that arose during the computation.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Diagnostics(Vec<Diagnostic>);
+
+impl Deref for Diagnostics {
+    type Target = Vec<Diagnostic>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl Diagnostic {
     /// Create new diagnostic with severity [`Severity::Error`].
