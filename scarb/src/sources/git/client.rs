@@ -13,7 +13,7 @@ use std::process::Command;
 
 use anyhow::{anyhow, bail, Context, Result};
 use camino::Utf8PathBuf;
-use tracing::log::debug;
+use tracing::debug;
 
 use scarb_ui::Verbosity;
 
