@@ -260,7 +260,7 @@ impl FromIterator<Diagnostic> for Diagnostics {
 
 impl Extend<Diagnostic> for Diagnostics {
     fn extend<T: IntoIterator<Item = Diagnostic>>(&mut self, iter: T) {
-        self.0.extend(iter.into_iter());
+        self.0.extend(iter);
     }
 }
 
