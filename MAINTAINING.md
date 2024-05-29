@@ -3,7 +3,7 @@
 ## Maintainers
 
 All Scarb maintainers are members of the **[@software-mansion/scarb-maintainers]** GitHub team.
-Current project leader is **[@mkaput]**.
+Current project leader is **[@maciektr]**.
 
 ## Release procedure
 
@@ -169,7 +169,7 @@ Releasing `scarb-ui` crate is also a semi-automated process.
 
 [@software-mansion/scarb-maintainers]: https://github.com/orgs/software-mansion/teams/scarb-maintainers
 
-[@mkaput]: https://github.com/mkaput
+[@maciektr]: https://github.com/maciektr
 
 [website deploy]: https://github.com/software-mansion/scarb/actions/workflows/website-deploy.yml
 
