@@ -54,7 +54,7 @@ If these files are present in the project root, or paths to them are provided in
 
 ### `VCS.json`
 
-File containing info about version control system used in your package.\
+File containing info about version control system used in your package.
 Currently only git is supported.
 
 ```json
