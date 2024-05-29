@@ -5,7 +5,7 @@ When you want to share your package over package registry, it needs to be turned
 Use `scarb package` command to create an archive of your package. You can read about package compression algorithm and contents in [Package tarball](/docs/registries/package-tarball) section.
 Basically when you run the command Scarb looks for the source code of your package together with metadata files such as manifest file and put them in an archive in `target/package` directory.
 
-If you are in a git repository, Scarb will first check if the repo state is clean and error out in case of any changes present in a git working directory. To ignore this check you can use the `--allow-dirty` flag.
+If you are in a Git repository, Scarb will first check if the repo state is clean and error out in case of any changes present in a git working directory. To ignore this check you can use the `--allow-dirty` flag.
 
 Next step is the package verification. After creating an initial archive, Scarb will attempt to unpack it and compile to check for any corruptions in the packaging process. If you want to speed up the package process you can disable this step using the `--no-verify` flag.
 
