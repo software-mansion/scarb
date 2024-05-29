@@ -5,7 +5,7 @@ mod conversion;
 mod expansions;
 
 pub use expansions::*;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 /// Result of procedural macro code generation.
 #[derive(Debug)]
@@ -198,6 +198,12 @@ impl Deref for Diagnostics {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for Diagnostics {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
