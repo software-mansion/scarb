@@ -5,7 +5,6 @@ mod conversion;
 mod expansions;
 
 pub use expansions::*;
-use std::ops::{Deref, DerefMut};
 
 /// Result of procedural macro code generation.
 #[derive(Debug)]
@@ -193,20 +192,6 @@ pub enum Severity {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Diagnostics(Vec<Diagnostic>);
 
-impl Deref for Diagnostics {
-    type Target = Vec<Diagnostic>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Diagnostics {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
 impl Diagnostic {
     /// Create new diagnostic with severity [`Severity::Error`].
     pub fn error(message: impl ToString) -> Self {
@@ -264,6 +249,18 @@ impl IntoIterator for Diagnostics {
 
     fn into_iter(self) -> IntoIter<Diagnostic> {
         self.0.into_iter()
+    }
+}
+
+impl FromIterator<Diagnostic> for Diagnostics {
+    fn from_iter<T: IntoIterator<Item = Diagnostic>>(iter: T) -> Self {
+        Self(iter.into_iter().collect())
+    }
+}
+
+impl Extend<Diagnostic> for Diagnostics {
+    fn extend<T: IntoIterator<Item = Diagnostic>>(&mut self, iter: T) {
+        self.0.extend(iter.into_iter());
     }
 }
 
