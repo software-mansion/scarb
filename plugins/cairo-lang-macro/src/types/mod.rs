@@ -159,17 +159,17 @@ impl From<AuxData> for Vec<u8> {
 }
 
 /// Diagnostic returned by the procedural macro.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Diagnostic {
-    /// The severity of the [`Diagnostic`].
-    ///
-    /// Defines how this diagnostic should influence the compilation.
-    pub severity: Severity,
     /// A human addressed message associated with the [`Diagnostic`].
     ///
     /// This message will not be parsed by the compiler,
     /// but rather shown to the user as an explanation.
     pub message: String,
+    /// The severity of the [`Diagnostic`].
+    ///
+    /// Defines how this diagnostic should influence the compilation.
+    pub severity: Severity,
 }
 
 /// The severity of a diagnostic.
@@ -177,20 +177,20 @@ pub struct Diagnostic {
 /// This should be roughly equivalent to the severity of Cairo diagnostics.
 ///
 /// The appropriate action for each diagnostic kind will be taken by `Scarb`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Severity {
-    /// A warning suggestion will be shown to the user.
-    ///
-    /// Emitting diagnostic with [`Severity::Warning`] severity does not stop the compilation.
-    Warning = 1,
     /// An error has occurred.
     ///
     /// Emitting diagnostic with [`Severity::Error`] severity will fail the source code compilation.
-    Error = 2,
+    Error = 1,
+    /// A warning suggestion will be shown to the user.
+    ///
+    /// Emitting diagnostic with [`Severity::Warning`] severity does not stop the compilation.
+    Warning = 2,
 }
 
 /// A set of diagnostics that arose during the computation.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Diagnostics(Vec<Diagnostic>);
 
 impl Deref for Diagnostics {
