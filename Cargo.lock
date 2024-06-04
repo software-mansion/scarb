@@ -4696,6 +4696,7 @@ dependencies = [
  "cairo-lang-defs",
  "cairo-lang-filesystem",
  "cairo-lang-semantic",
+ "cairo-lang-syntax",
  "cairo-lang-utils",
  "camino",
  "clap",
