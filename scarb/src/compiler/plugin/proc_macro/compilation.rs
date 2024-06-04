@@ -5,6 +5,7 @@ use crate::process::exec_piping;
 use anyhow::Result;
 use camino::Utf8PathBuf;
 use libloading::library_filename;
+use ra_ap_toolchain::Tool;
 use scarb_ui::{Message, OutputFormat};
 use serde::{Serialize, Serializer};
 use serde_json::value::RawValue;
@@ -118,7 +119,7 @@ impl From<OutputFormat> for CargoOutputFormat {
 
 impl From<CargoCommand> for Command {
     fn from(args: CargoCommand) -> Self {
-        let mut cmd = Command::new("cargo");
+        let mut cmd = Command::new(Tool::Cargo.path());
         cmd.current_dir(args.current_dir);
         match args.action {
             CargoAction::Fetch => cmd.arg("fetch"),
