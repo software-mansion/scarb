@@ -4173,6 +4173,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ra_ap_toolchain"
+version = "0.0.218"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53393fc4d85057bcca4dd2d7fa24929a094bb94712980814695f56cb9aa0b1e2"
+dependencies = [
+ "camino",
+ "home",
+]
+
+[[package]]
 name = "radium"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4578,6 +4588,7 @@ dependencies = [
  "pathdiff",
  "petgraph",
  "predicates",
+ "ra_ap_toolchain",
  "redb",
  "reqwest",
  "scarb-build-metadata",
