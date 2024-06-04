@@ -187,6 +187,23 @@ fn check_unique_targets(targets: &Vec<&Target>) -> Result<()> {
             )
         }
     }
+    for (kind, group_id) in targets
+        .iter()
+        .filter_map(|target| {
+            target
+                .group_id
+                .clone()
+                .map(|group_id| (target.kind.clone(), group_id))
+        })
+        .unique()
+    {
+        if used.contains(&(kind.as_str(), group_id.as_str())) {
+            bail!(
+                "the group id `{group_id}` of target `{kind}` duplicates target name\n\
+                 help: use different group name to resolve the conflict",
+            )
+        }
+    }
     Ok(())
 }
 

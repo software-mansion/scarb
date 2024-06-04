@@ -1,5 +1,5 @@
 use assert_fs::TempDir;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
@@ -186,4 +186,60 @@ fn features_test_build_failed() {
         error: could not compile `hello` due to previous error[..]
         error: process did not exit successfully: exit code: 1
     "#});
+}
+
+#[test]
+fn integration_tests() {
+    let t = TempDir::new().unwrap();
+    let test_case = indoc! {r#"
+        #[cfg(test)]
+        mod tests {
+            use hello::fib;
+
+            #[test]
+            fn it_works() {
+                assert(fib(16) == 987, 'it works!');
+            }
+        }
+    "#};
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(formatdoc! {r#"
+            fn fib(mut n: u32) -> u32 {{
+                let mut a: u32 = 0;
+                let mut b: u32 = 1;
+                while n != 0 {{
+                    n = n - 1;
+                    let temp = b;
+                    b = a + b;
+                    a = temp;
+                }};
+                a
+            }}
+
+            {test_case}
+        "#})
+        .src("tests/a.cairo", test_case)
+        .src("tests/b.cairo", test_case)
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("cairo-test")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
+            [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            testing hello ...
+            running 2 tests
+            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 42440)
+            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 42440)
+            test result: ok. 2 passed; 0 failed; 0 ignored; 0 filtered out;
+
+            running 1 test
+            test hello::tests::it_works ... ok (gas usage est.: 42440)
+            test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
+
+        "#});
 }

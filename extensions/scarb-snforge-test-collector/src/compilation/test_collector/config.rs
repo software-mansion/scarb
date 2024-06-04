@@ -1,5 +1,5 @@
+use crate::felt252::Felt252;
 use anyhow::Result;
-use cairo_felt::Felt252;
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_diagnostics::Severity;
 use cairo_lang_syntax::attribute::structured::{Attribute, AttributeArg, AttributeArgVariant};
@@ -31,7 +31,9 @@ impl From<PanicExpectation> for ExpectedPanicValue {
     fn from(value: PanicExpectation) -> Self {
         match value {
             PanicExpectation::Any => ExpectedPanicValue::Any,
-            PanicExpectation::Exact(vec) => ExpectedPanicValue::Exact(vec),
+            PanicExpectation::Exact(vec) => {
+                ExpectedPanicValue::Exact(vec.into_iter().map(Felt252::new).collect())
+            }
         }
     }
 }

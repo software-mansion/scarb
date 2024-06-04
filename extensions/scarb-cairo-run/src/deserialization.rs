@@ -1,9 +1,9 @@
 use std::{ops::Deref, str::FromStr};
 
-use cairo_felt::Felt252;
 use cairo_lang_runner::Arg;
 use serde::{de::Visitor, Deserialize};
 use serde_json::Value;
+use starknet_types_core::felt::Felt as Felt252;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -12,6 +12,8 @@ pub enum ArgsError {
     NumberParseError(#[from] std::num::ParseIntError),
     #[error("failed to parse bigint: {0}")]
     BigIntParseError(#[from] num_bigint::ParseBigIntError),
+    #[error("failed to convert slice to array: {0}")]
+    ArrayFromSlice(#[from] std::array::TryFromSliceError),
     #[error("number out of range")]
     NumberOutOfRange,
     #[error("failed to parse arguments: {0}")]
@@ -94,7 +96,9 @@ impl Args {
                 }
                 Value::String(n) => {
                     let n = num_bigint::BigUint::from_str(n)?;
-                    args.push(Arg::Value(Felt252::from_bytes_be(&n.to_bytes_be())));
+                    let n = n.to_bytes_be();
+                    let slice = <&[u8; 32]>::try_from(n.as_slice())?;
+                    args.push(Arg::Value(Felt252::from_bytes_be(slice)));
                 }
                 Value::Array(arr) => {
                     args.push(Arg::Array(Self::visit_seq_helper(arr)?));

@@ -24,8 +24,8 @@ cairo-lang-formatter.workspace = true
 cairo-lang-macro = { path = "../plugins/cairo-lang-macro" }
 cairo-lang-macro-stable = { path = "../plugins/cairo-lang-macro-stable" }
 cairo-lang-semantic.workspace = true
-cairo-lang-sierra.workspace = true
 cairo-lang-sierra-to-casm.workspace = true
+cairo-lang-sierra.workspace = true
 cairo-lang-starknet-classes.workspace = true
 cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
@@ -51,6 +51,7 @@ libloading.workspace = true
 once_cell.workspace = true
 pathdiff.workspace = true
 petgraph.workspace = true
+ra_ap_toolchain.workspace = true
 redb.workspace = true
 reqwest.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }

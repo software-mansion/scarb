@@ -46,7 +46,7 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
         let compilation_units: Vec<m::CompilationUnitMetadata> =
             ops::generate_compilation_units(&resolve, &opts.features, ws)?
                 .iter()
-                .map(collect_compilation_unit_metadata)
+                .flat_map(collect_compilation_unit_metadata)
                 .collect();
 
         (packages, compilation_units)
@@ -194,21 +194,32 @@ fn collect_dependency_kind(kind: &DepKind) -> Option<m::DepKind> {
 }
 
 fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
+    let mut params = toml_to_json(&target.params);
+    if let Some(group) = target.group_id.as_ref() {
+        params.as_object_mut().unwrap().insert(
+            "group-id".to_string(),
+            serde_json::Value::String(group.to_string()),
+        );
+    }
     m::TargetMetadataBuilder::default()
         .kind(target.kind.to_string())
         .name(target.name.to_string())
         .source_path(target.source_path.clone())
-        .params(toml_to_json(&target.params))
+        .params(params)
         .build()
         .unwrap()
 }
 
 fn collect_compilation_unit_metadata(
     compilation_unit: &CompilationUnit,
-) -> m::CompilationUnitMetadata {
+) -> Vec<m::CompilationUnitMetadata> {
     match compilation_unit {
-        CompilationUnit::Cairo(cu) => collect_cairo_compilation_unit_metadata(cu),
-        CompilationUnit::ProcMacro(cu) => collect_proc_macro_compilation_unit_metadata(cu),
+        CompilationUnit::Cairo(cu) => cu
+            .rewrite_to_single_source_paths()
+            .into_iter()
+            .map(|cu| collect_cairo_compilation_unit_metadata(&cu))
+            .collect_vec(),
+        CompilationUnit::ProcMacro(cu) => vec![collect_proc_macro_compilation_unit_metadata(cu)],
     }
 }
 
@@ -247,10 +258,20 @@ fn collect_cairo_compilation_unit_metadata(
         .map(|c| c.package.to_string())
         .collect::<Vec<_>>();
 
+    assert_eq!(
+        compilation_unit.main_component().targets.len(),
+        1,
+        "compilation unit should have been rewritten to have a single target"
+    );
+
     m::CompilationUnitMetadataBuilder::default()
         .id(compilation_unit.id())
         .package(wrap_package_id(compilation_unit.main_package_id()))
-        .target(collect_target_metadata(compilation_unit.target()))
+        .target(collect_target_metadata(
+            // We use first_target, as compilation units with multiple targets
+            // have already been rewritten to single target ones.
+            &compilation_unit.main_component().first_target().clone(),
+        ))
         .components(components)
         .cairo_plugins(cairo_plugins)
         .compiler_config(compiler_config)
@@ -267,10 +288,17 @@ fn collect_proc_macro_compilation_unit_metadata(
     compilation_unit: &ProcMacroCompilationUnit,
 ) -> m::CompilationUnitMetadata {
     let components = collect_compilation_unit_components(compilation_unit.components.iter());
+    assert_eq!(
+        compilation_unit.main_component().targets.len(),
+        1,
+        "proc macro compilation unit should have only one target"
+    );
     m::CompilationUnitMetadataBuilder::default()
         .id(compilation_unit.id())
         .package(wrap_package_id(compilation_unit.main_package_id()))
-        .target(collect_target_metadata(compilation_unit.target()))
+        .target(collect_target_metadata(
+            &compilation_unit.main_component().first_target().clone(),
+        ))
         .components(components)
         .cairo_plugins(Vec::new())
         .compiler_config(serde_json::Value::Null)
@@ -291,7 +319,9 @@ where
             m::CompilationUnitComponentMetadataBuilder::default()
                 .package(wrap_package_id(c.package.id))
                 .name(c.cairo_package_name())
-                .source_path(c.target.source_path.clone())
+                // We use first_target, as compilation units with multiple targets
+                // have already been rewritten to single target ones.
+                .source_path(c.first_target().source_path.clone())
                 .cfg(c.cfg_set.as_ref().map(|cfg_set| cfg_set
                     .iter()
                     .map(|cfg| {

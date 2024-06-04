@@ -1,5 +1,7 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use cairo_lang_sierra::program::StatementIdx;
+use std::collections::HashMap;
 
 use scarb_test_support::fsx::ChildPathEx;
 
@@ -435,12 +437,9 @@ fn does_not_compile_tests_in_dependencies() {
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-    assert!(stderr.contains(indoc! {r#"
-        use q::dev_dep_function;
-               ^**************^
-
-    Error: Failed to compile test artifact, for detailed information go through the logs above
-    "#}));
+    assert!(stderr.contains("error: Identifier not found."));
+    assert!(stderr.contains("use q::dev_dep_function;"));
+    assert!(stderr.contains("Error: Failed to compile test artifact, for detailed information go through the logs above"));
 }
 
 #[test]
@@ -468,9 +467,10 @@ fn generates_statements_functions_mappings() {
 
     let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
 
-    assert!(&json[0]["sierra_program"]["debug_info"]["annotations"]
-        ["github.com/software-mansion/cairo-profiler"]["statements_functions"]
-        .is_object());
+    let mappings = &json[0]["sierra_program"]["debug_info"]["annotations"]
+        ["github.com/software-mansion/cairo-profiler"]["statements_functions"];
+
+    assert!(serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok());
 }
 
 #[test]

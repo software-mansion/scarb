@@ -151,7 +151,12 @@ impl Message for Summary {
     {
         match self.result.value {
             RunResultValue::Success(values) => {
-                println!("Run completed successfully, returning {values:?}")
+                let values = values
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect::<Vec<_>>();
+                let values = values.join(", ");
+                println!("Run completed successfully, returning [{values}]")
             }
             RunResultValue::Panic(values) => {
                 print!("Run panicked with [");

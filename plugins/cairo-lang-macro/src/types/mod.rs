@@ -158,7 +158,7 @@ impl From<AuxData> for Vec<u8> {
 }
 
 /// Diagnostic returned by the procedural macro.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Diagnostic {
     /// A human addressed message associated with the [`Diagnostic`].
     ///
@@ -176,7 +176,7 @@ pub struct Diagnostic {
 /// This should be roughly equivalent to the severity of Cairo diagnostics.
 ///
 /// The appropriate action for each diagnostic kind will be taken by `Scarb`.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Severity {
     /// An error has occurred.
     ///
@@ -189,7 +189,7 @@ pub enum Severity {
 }
 
 /// A set of diagnostics that arose during the computation.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Diagnostics(Vec<Diagnostic>);
 
 impl Diagnostic {
@@ -249,6 +249,18 @@ impl IntoIterator for Diagnostics {
 
     fn into_iter(self) -> IntoIter<Diagnostic> {
         self.0.into_iter()
+    }
+}
+
+impl FromIterator<Diagnostic> for Diagnostics {
+    fn from_iter<T: IntoIterator<Item = Diagnostic>>(iter: T) -> Self {
+        Self(iter.into_iter().collect())
+    }
+}
+
+impl Extend<Diagnostic> for Diagnostics {
+    fn extend<T: IntoIterator<Item = Diagnostic>>(&mut self, iter: T) {
+        self.0.extend(iter);
     }
 }
 
