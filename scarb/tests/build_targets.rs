@@ -361,6 +361,53 @@ fn compile_test_target() {
 }
 
 #[test]
+fn integration_tests_do_not_enable_cfg_in_main_package() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            #[cfg(test)]
+            fn f() -> felt252 { 42 }
+        "#})
+        .build(&t);
+    t.child("tests").create_dir_all().unwrap();
+    t.child("tests/test1.cairo")
+        .write_str(indoc! {r#"
+        #[cfg(test)]
+        mod tests {
+            use hello::f;
+            #[test]
+            fn it_works() {
+                assert(f() == 42, 'it works!');
+            }
+        }
+         "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
+            [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
+            error: Identifier not found.
+             --> [..]test1.cairo:3:16
+                use hello::f;
+                           ^
+
+            error: Type annotations needed. Failed to infer ?0.
+             --> [..]test1.cairo:6:16
+                    assert(f() == 42, 'it works!');
+                           ^*******^
+
+            error: could not compile `hello_integrationtest` due to previous error
+        "#});
+}
+
+#[test]
 fn detect_single_file_test_targets() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);

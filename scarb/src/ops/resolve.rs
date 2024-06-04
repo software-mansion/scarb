@@ -258,6 +258,16 @@ fn cairo_compilation_unit_for_target(
     let cairo_plugins = solution.cairo_plugins.as_ref().unwrap();
 
     let cfg_set = build_cfg_set(&member_target);
+    let no_test_cfg_set = cfg_set
+        .iter()
+        .filter(|cfg| **cfg != Cfg::name("test"))
+        .cloned()
+        .collect();
+    let no_test_cfg_set = if no_test_cfg_set != cfg_set {
+        Some(no_test_cfg_set)
+    } else {
+        None
+    };
 
     let props: TestTargetProps = member_target.props()?;
     let is_integration_test = props.test_type == TestTargetType::Integration;
@@ -304,17 +314,7 @@ fn cairo_compilation_unit_for_target(
                         enabled_features,
                     )?
                 } else {
-                    let component_cfg_set = cfg_set
-                        .iter()
-                        .filter(|cfg| **cfg != Cfg::name("test"))
-                        .cloned()
-                        .collect();
-
-                    if component_cfg_set != cfg_set {
-                        Some(component_cfg_set)
-                    } else {
-                        None
-                    }
+                    no_test_cfg_set.clone()
                 }
             };
 
@@ -341,7 +341,7 @@ fn cairo_compilation_unit_for_target(
         components.push(CompilationUnitComponent::try_new(
             member.clone(),
             vec![target],
-            None,
+            no_test_cfg_set,
         )?);
 
         // Set test package as main package for this compilation unit.
