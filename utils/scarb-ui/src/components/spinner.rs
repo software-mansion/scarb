@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 
 use crate::Widget;
 
@@ -37,7 +37,7 @@ impl Widget for Spinner {
     type Handle = SpinnerHandle;
 
     fn text(self) -> Self::Handle {
-        let pb = ProgressBar::new_spinner()
+        let pb = ProgressBar::with_draw_target(None, ProgressDrawTarget::stdout())
             .with_style(Spinner::default_style())
             .with_message(self.message);
         pb.enable_steady_tick(Duration::from_millis(120));
