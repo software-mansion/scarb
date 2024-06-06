@@ -149,6 +149,8 @@ pub enum Command {
     Remove(RemoveArgs),
     /// Compile current project.
     Build(BuildArgs),
+    /// Expand macros.
+    Expand(ExpandArgs),
     /// Manipulate packages cache.
     #[clap(subcommand)]
     Cache(CacheSubcommand),
@@ -214,6 +216,21 @@ pub struct BuildArgs {
     /// Specify features to enable.
     #[command(flatten)]
     pub features: FeaturesSpec,
+}
+
+/// Arguments accepted by the `expand` command.
+#[derive(Parser, Clone, Debug)]
+pub struct ExpandArgs {
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
+
+    /// Do not attempt formatting.
+    #[arg(long, default_value_t = false)]
+    pub ugly: bool,
 }
 
 /// Arguments accepted by the `run` command.
