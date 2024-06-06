@@ -1,8 +1,8 @@
 use std::time::Duration;
 
-use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
+use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle, WeakProgressBar};
 
-use crate::Widget;
+use crate::{Widget, WidgetHandle};
 
 /// Spinner widget informing about an ongoing process.
 pub struct Spinner {
@@ -30,6 +30,12 @@ pub struct SpinnerHandle {
 impl Drop for SpinnerHandle {
     fn drop(&mut self) {
         self.pb.finish_and_clear()
+    }
+}
+
+impl WidgetHandle for SpinnerHandle {
+    fn weak_progress_bar(&self) -> Option<WeakProgressBar> {
+        Some(self.pb.downgrade())
     }
 }
 
