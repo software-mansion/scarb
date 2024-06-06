@@ -22,10 +22,13 @@
 #![warn(rust_2018_idioms)]
 
 use clap::ValueEnum;
+use indicatif::WeakProgressBar;
 pub use indicatif::{
     BinaryBytes, DecimalBytes, FormattedDuration, HumanBytes, HumanCount, HumanDuration,
     HumanFloatCount,
 };
+use std::fmt::Debug;
+use std::sync::{Arc, RwLock};
 
 pub use message::*;
 pub use verbosity::*;
@@ -53,10 +56,29 @@ pub enum OutputFormat {
 /// colour, etc.
 ///
 /// All human-oriented messaging (basically all writes to `stdout`) must go through this object.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Ui {
     verbosity: Verbosity,
     output_format: OutputFormat,
+    state: Arc<RwLock<State>>,
+}
+
+impl Debug for Ui {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Ui")
+            .field("verbosity", &self.verbosity)
+            .field("output_format", &self.output_format)
+            .finish()
+    }
+}
+
+/// An encapsulation of the UI state.
+///
+/// This can be used by `Ui` to store stateful information.
+#[derive(Default)]
+#[non_exhaustive]
+struct State {
+    active_spinner: WeakProgressBar,
 }
 
 impl Ui {
@@ -65,6 +87,7 @@ impl Ui {
         Self {
             verbosity,
             output_format,
+            state: Default::default(),
         }
     }
 
@@ -103,6 +126,12 @@ impl Ui {
     pub fn widget<T: Widget>(&self, widget: T) -> Option<T::Handle> {
         if self.output_format == OutputFormat::Text && self.verbosity >= Verbosity::Normal {
             let handle = widget.text();
+            if let Some(handle) = handle.weak_progress_bar() {
+                self.state
+                    .write()
+                    .expect("cannot lock ui state for writing")
+                    .active_spinner = handle;
+            }
             Some(handle)
         } else {
             None
@@ -148,9 +177,20 @@ impl Ui {
     }
 
     fn do_print<T: Message>(&self, message: T) {
-        match self.output_format {
+        let print = || match self.output_format {
             OutputFormat::Text => message.print_text(),
             OutputFormat::Json => message.print_json(),
+        };
+        let handle = self
+            .state
+            .read()
+            .expect("cannot lock ui state for reading")
+            .active_spinner
+            .clone();
+        if let Some(pb) = handle.upgrade() {
+            pb.suspend(print);
+        } else {
+            print();
         }
     }
 
