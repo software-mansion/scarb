@@ -145,6 +145,14 @@ export default withMermaid(
       ["meta", { property: "og:image:type", content: "image/png" }],
       ["meta", { property: "og:image:width", content: "1280" }],
       ["meta", { property: "og:image:height", content: "640" }],
+      [
+        "script",
+        {
+          "data-goatcounter": "https://gc-scarb.swmtest.xyz/count",
+          async: true,
+          src: `${base}count.js`,
+        },
+      ],
     ],
 
     lastUpdated: true,
