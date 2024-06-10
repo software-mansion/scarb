@@ -1,7 +1,8 @@
 use anyhow::Result;
+use smol_str::ToSmolStr;
 
 use crate::args::ExpandArgs;
-use scarb::core::Config;
+use scarb::core::{Config, TargetKind};
 use scarb::ops;
 use scarb::ops::ExpandOpts;
 
@@ -12,6 +13,8 @@ pub fn run(args: ExpandArgs, config: &Config) -> Result<()> {
     let opts = ExpandOpts {
         features: args.features.try_into()?,
         ugly: args.ugly,
+        target_name: args.target_name.map(|n| n.to_smolstr()),
+        target_kind: args.target_kind.map(TargetKind::try_new).transpose()?,
     };
     ops::expand(package, opts, &ws)
 }

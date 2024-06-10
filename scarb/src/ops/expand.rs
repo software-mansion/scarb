@@ -3,9 +3,8 @@ use crate::compiler::helpers::{build_compiler_config, write_string};
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
 use crate::core::{Package, TargetKind, Workspace};
 use crate::ops;
-use crate::ops::FeaturesOpts;
+use crate::ops::{get_test_package_ids, FeaturesOpts};
 use anyhow::{anyhow, bail, Context, Result};
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{LanguageElementId, ModuleId, ModuleItemId};
@@ -18,11 +17,14 @@ use cairo_lang_parser::db::ParserGroup;
 use cairo_lang_syntax::node::helpers::UsePathEx;
 use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
 use cairo_lang_utils::Upcast;
+use smol_str::SmolStr;
 use std::collections::HashSet;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ExpandOpts {
     pub features: FeaturesOpts,
+    pub target_kind: Option<TargetKind>,
+    pub target_name: Option<SmolStr>,
     pub ugly: bool,
 }
 
@@ -38,30 +40,49 @@ pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<
         .map(|unit| ops::compile::compile_unit(unit.clone(), ws))
         .collect::<Result<Vec<_>>>()?;
 
-    let Some(compilation_unit) = compilation_units.into_iter().find(|unit| {
-        unit.main_package_id() == package.id
-            && unit.main_component().target_kind() == TargetKind::LIB
-    }) else {
-        bail!("compilation unit not found for `{package_name}`")
-    };
-    let CompilationUnit::Cairo(compilation_unit) = compilation_unit else {
-        bail!("only cairo compilation units can be expanded")
-    };
-    let ScarbDatabase { db, .. } = build_scarb_root_database(&compilation_unit, ws)?;
-    let mut compiler_config = build_compiler_config(&compilation_unit, ws);
-    compiler_config
-        .diagnostics_reporter
-        .ensure(&db)
-        .map_err(|err| err.into())
-        .map_err(|err| {
-            if !suppress_error(&err) {
-                ws.config().ui().anyhow(&err);
-            }
+    let compilation_units = compilation_units
+        .into_iter()
+        // We rewrite group compilation units to single source paths ones. We value simplicity over
+        // performance here, as expand output will be read by people rather than tooling.
+        .flat_map(|unit| match unit {
+            CompilationUnit::Cairo(unit) => unit
+                .rewrite_to_single_source_paths()
+                .into_iter()
+                .map(CompilationUnit::Cairo)
+                .collect::<Vec<_>>(),
+            // We include non-cairo compilation units here, so we can show better error msg later.
+            _ => vec![unit],
+        })
+        .filter(|unit| {
+            let target_kind = if opts.target_name.is_none() && opts.target_kind.is_none() {
+                // If no target specifier is used - default to lib.
+                Some(TargetKind::LIB)
+            } else {
+                opts.target_kind.clone()
+            };
+            // Includes test package ids.
+            get_test_package_ids(vec![package.id], ws).contains(&unit.main_package_id())
+                // We can use main_component below, as targets are not grouped.
+                && target_kind.as_ref()
+                    .map_or(true, |kind| unit.main_component().target_kind() == *kind)
+                && opts
+                    .target_name
+                    .as_ref()
+                    .map_or(true, |name| unit.main_component().first_target().name == *name)
+        })
+        .map(|unit| match unit {
+            CompilationUnit::Cairo(unit) => Ok(unit),
+            _ => bail!("only cairo compilation units can be expanded"),
+        })
+        .collect::<Result<Vec<_>>>()?;
 
-            anyhow!("could not check `{package_name}` due to previous error")
-        })?;
+    if compilation_units.is_empty() {
+        bail!("no compilation units found for `{package_name}`")
+    }
 
-    do_expand(&db, &compilation_unit, opts, ws)?;
+    for compilation_unit in compilation_units {
+        do_expand(&compilation_unit, opts.clone(), ws)?;
+    }
 
     Ok(())
 }
@@ -123,11 +144,23 @@ impl ModuleStack {
 }
 
 fn do_expand(
-    db: &RootDatabase,
     compilation_unit: &CairoCompilationUnit,
     opts: ExpandOpts,
     ws: &Workspace<'_>,
 ) -> Result<()> {
+    let ScarbDatabase { db, .. } = build_scarb_root_database(compilation_unit, ws)?;
+    let mut compiler_config = build_compiler_config(compilation_unit, ws);
+    compiler_config
+        .diagnostics_reporter
+        .ensure(&db)
+        .map_err(|err| err.into())
+        .map_err(|err| {
+            if !suppress_error(&err) {
+                ws.config().ui().anyhow(&err);
+            }
+
+            anyhow!("could not check due to previous error")
+        })?;
     let main_crate_id = db.intern_crate(CrateLongId::Real(
         compilation_unit.main_component().cairo_package_name(),
     ));
@@ -142,13 +175,13 @@ fn do_expand(
         .context("failed to retrieve module main file syntax")?;
 
     let crate_modules = db.crate_modules(main_crate_id);
-    let item_asts = file_syntax.items(db);
+    let item_asts = file_syntax.items(&db);
 
-    let mut builder = PatchBuilder::new(db, &item_asts);
+    let mut builder = PatchBuilder::new(&db, &item_asts);
     let mut module_stack = ModuleStack::new();
 
     for module_id in crate_modules.iter() {
-        builder.add_str(module_stack.register(module_id.full_path(db)).as_str());
+        builder.add_str(module_stack.register(module_id.full_path(&db)).as_str());
         let Some(module_items) = db.module_items(*module_id).to_option() else {
             continue;
         };
@@ -156,7 +189,7 @@ fn do_expand(
         for item_id in module_items.iter() {
             // We need to handle uses manually, as module data only includes use leaf instead of path.
             if let ModuleItemId::Use(use_id) = item_id {
-                let use_item = use_id.stable_ptr(db).lookup(db.upcast());
+                let use_item = use_id.stable_ptr(&db).lookup(db.upcast());
                 let item = ast::UsePath::Leaf(use_item.clone()).get_item(db.upcast());
                 let item = item.use_path(db.upcast());
                 // We need to deduplicate multi-uses (`a::{b, c}`), which are split into multiple leaves.
@@ -172,7 +205,7 @@ fn do_expand(
             if let ModuleItemId::Submodule(_) = item_id {
                 continue;
             }
-            let node = item_id.stable_location(db).syntax_node(db);
+            let node = item_id.stable_location(&db).syntax_node(&db);
             builder.add_node(node);
         }
     }
