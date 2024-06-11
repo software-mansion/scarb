@@ -610,6 +610,9 @@ fn profile_overrides_tool() {
 
             [profile.release.tool.snforge]
             some-key = "some-other-value"
+
+            [profile.newprof]
+            inherits = "release"
         "#})
         .dep_cairo_test()
         .build(&t);
@@ -641,11 +644,17 @@ fn profile_overrides_tool() {
     );
 
     let metadata = Scarb::quick_snapbox()
-        .args(["--json", "--release", "metadata", "--format-version", "1"])
+        .args([
+            "--json",
+            "--profile=newprof",
+            "metadata",
+            "--format-version",
+            "1",
+        ])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
-    assert_eq!(metadata.current_profile, "release".to_string());
+    assert_eq!(metadata.current_profile, "newprof".to_string());
     assert_eq!(metadata.packages.len(), 3);
     let package = metadata
         .packages
@@ -665,5 +674,60 @@ fn profile_overrides_tool() {
             .as_str()
             .unwrap(),
         "some-other-value"
+    );
+}
+
+#[test]
+fn tools_can_be_merged_recursively() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [tool.something.a]
+            key = "value"
+
+            [profile.release]
+            inherits = "dev"
+
+            [profile.release.tool.something]
+            merge-strategy = "merge"
+            b = "some-value"
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args([
+            "--json",
+            "--profile=release",
+            "metadata",
+            "--format-version",
+            "1",
+        ])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let package = metadata
+        .packages
+        .iter()
+        .find(|pkg| pkg.name.starts_with("hello"))
+        .cloned()
+        .unwrap();
+    assert_eq!(
+        package
+            .manifest_metadata
+            .tool
+            .unwrap()
+            .get("something")
+            .unwrap()
+            .as_object()
+            .unwrap()
+            .get("a")
+            .unwrap()
+            .as_object()
+            .unwrap()
+            .get("key")
+            .unwrap()
+            .as_str()
+            .unwrap(),
+        "value"
     );
 }

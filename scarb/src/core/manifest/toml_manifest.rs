@@ -29,7 +29,7 @@ use crate::core::{
 };
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
-use crate::internal::serdex::{toml_merge, RelativeUtf8PathBuf};
+use crate::internal::serdex::{toml_merge, toml_merge_apply_strategy, RelativeUtf8PathBuf};
 use crate::internal::to_version::ToVersion;
 use crate::{
     DEFAULT_MODULE_MAIN_FILE, DEFAULT_SOURCE_PATH, DEFAULT_TESTS_PATH, MANIFEST_FILE_NAME,
@@ -876,7 +876,7 @@ impl TomlManifest {
             .transpose()?
             .map(|tool| {
                 if let Some(profile_tool) = &profile_definition.tool {
-                    toml_merge(&tool, profile_tool)
+                    toml_merge_apply_strategy(&tool, profile_tool)
                 } else {
                     Ok(tool)
                 }
