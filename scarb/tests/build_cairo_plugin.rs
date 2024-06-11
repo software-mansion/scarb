@@ -1269,3 +1269,112 @@ fn executable_name_cannot_clash_attr() {
             error: duplicate expansions defined for procedural macro some v1.0.0 ([..]Scarb.toml): some
         "#});
 }
+
+#[test]
+fn can_be_expanded() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, derive_macro};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream = TokenStream::new(
+                token_stream
+                    .to_string()
+                    .replace("12", "34")
+            );
+            ProcMacroResult::new(token_stream)
+        }
+
+        #[derive_macro]
+        pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
+            let name = token_stream
+                .clone()
+                .to_string()
+                .lines()
+                .find(|l| l.starts_with("struct"))
+                .unwrap()
+                .to_string()
+                .replace("struct", "")
+                .replace("}", "")
+                .replace("{", "")
+                .trim()
+                .to_string();
+
+            let token_stream = TokenStream::new(indoc::formatdoc!{r#"
+                impl SomeImpl of Hello<{name}> {{
+                    fn world(self: @{name}) -> u32 {{
+                        32
+                    }}
+                }}
+            "#});
+
+            ProcMacroResult::new(token_stream)
+        }
+        "##})
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                fn world(self: @T) -> u32;
+            }
+
+            #[derive(CustomDerive, Drop)]
+            struct SomeType {}
+
+            #[some]
+            fn main() -> u32 {
+                let x = 12;
+                let a = SomeType {};
+                a.world() + x
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("expand")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+
+    assert_eq!(
+        project.child("target/dev").files(),
+        vec!["hello.expanded.cairo"]
+    );
+    let expanded = project
+        .child("target/dev/hello.expanded.cairo")
+        .read_to_string();
+    snapbox::assert_eq(
+        indoc! {r#"
+        mod hello {
+            trait Hello<T> {
+                fn world(self: @T) -> u32;
+            }
+
+            #[derive(CustomDerive, Drop)]
+            struct SomeType {}
+            impl SomeTypeDrop of core::traits::Drop<SomeType>;
+            impl SomeImpl of Hello<SomeType> {
+                fn world(self: @SomeType) -> u32 {
+                    32
+                }
+            }
+            fn main() -> u32 {
+                let x = 34;
+                let a = SomeType {};
+                a.world() + x
+            }
+        }
+        "#},
+        expanded,
+    );
+}
