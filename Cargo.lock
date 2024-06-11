@@ -4609,7 +4609,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "2.6.4"
+version = "2.6.5"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -4695,7 +4695,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-build-metadata"
-version = "2.6.4"
+version = "2.6.5"
 dependencies = [
  "cargo_metadata",
  "semver",
@@ -4703,14 +4703,14 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "2.6.4"
+version = "2.6.5"
 dependencies = [
  "cairo-lang-language-server",
 ]
 
 [[package]]
 name = "scarb-cairo-run"
-version = "2.6.4"
+version = "2.6.5"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -4732,7 +4732,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "2.6.4"
+version = "2.6.5"
 dependencies = [
  "anyhow",
  "cairo-lang-test-plugin",
@@ -4775,7 +4775,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-snforge-test-collector"
-version = "2.6.4"
+version = "2.6.5"
 dependencies = [
  "anyhow",
  "assert_fs",
