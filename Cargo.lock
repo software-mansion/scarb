@@ -4555,6 +4555,7 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-macro",
  "cairo-lang-macro-stable",
+ "cairo-lang-parser",
  "cairo-lang-semantic",
  "cairo-lang-sierra",
  "cairo-lang-sierra-to-casm",

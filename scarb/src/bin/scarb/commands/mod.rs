@@ -13,6 +13,7 @@ pub mod cache_path;
 pub mod check;
 pub mod clean;
 pub mod commands;
+mod expand;
 pub mod external;
 pub mod fetch;
 pub mod fmt;
@@ -34,6 +35,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         // Keep these sorted alphabetically.
         Add(args) => add::run(args, config),
         Build(args) => build::run(args, config),
+        Expand(args) => expand::run(args, config),
         Cache(CacheSubcommand::Clean) => cache_clean::run(config),
         Cache(CacheSubcommand::Path) => cache_path::run(config),
         Check(args) => check::run(args, config),

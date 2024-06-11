@@ -5,6 +5,7 @@
 pub use cache::*;
 pub use clean::*;
 pub use compile::*;
+pub use expand::*;
 pub use fmt::*;
 pub use manifest::*;
 pub use metadata::*;
@@ -19,6 +20,7 @@ pub use workspace::*;
 mod cache;
 mod clean;
 mod compile;
+mod expand;
 mod fmt;
 mod lockfile;
 mod manifest;

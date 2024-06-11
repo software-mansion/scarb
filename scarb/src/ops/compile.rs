@@ -140,7 +140,7 @@ where
     Ok(())
 }
 
-fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package_name = unit.main_package_id().name.clone();
 
     ws.config()
