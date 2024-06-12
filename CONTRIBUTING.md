@@ -59,6 +59,10 @@ While your PR is being reviewed on, you can push merge commits and
 use [`git commit --fixup`](https://git-scm.com/docs/git-commit/2.32.0#Documentation/git-commit.txt---fixupamendrewordltcommitgt)
 to push further changes to your commits.
 
+### Typos
+Our policy is to not accept PRs that only fix typos in the documentation and code. We appreciate your effort, but we
+encourage you to focus on bugs and features instead.
+
 ---
 
 Thanks! ❤️ ❤️ ❤️
