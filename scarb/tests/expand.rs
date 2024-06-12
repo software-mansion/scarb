@@ -385,3 +385,42 @@ fn can_skip_formatting() {
         expanded,
     );
 }
+
+#[test]
+fn can_expand_erroneous_code() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        // Missing opening bracket.
+        .lib_cairo(indoc! {r#"
+            fn hello() -> felt252 {
+                0
+
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("expand")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            error: Missing token TerminalRBrace.
+             --> [..]lib.cairo:2:6
+                0
+                 ^
+
+        "#});
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
+    assert_eq!(t.child("target/dev").files(), vec!["hello.expanded.cairo"]);
+    let expanded = t.child("target/dev/hello.expanded.cairo").read_to_string();
+    snapbox::assert_eq(
+        indoc! {r#"
+
+        mod hello {
+        fn hello() -> felt252 {
+            0
+        }
+        "#},
+        expanded,
+    );
+}
