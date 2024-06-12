@@ -228,6 +228,14 @@ pub struct ExpandArgs {
     #[command(flatten)]
     pub features: FeaturesSpec,
 
+    /// Specify the target to expand by target kind.
+    #[arg(long)]
+    pub target_kind: Option<String>,
+
+    /// Specify the target to expand by target name.
+    #[arg(long)]
+    pub target_name: Option<String>,
+
     /// Do not attempt formatting.
     #[arg(long, default_value_t = false)]
     pub ugly: bool,

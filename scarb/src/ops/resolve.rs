@@ -571,3 +571,29 @@ fn generate_cairo_plugin_compilation_units(member: &Package) -> Result<Vec<Compi
         )?],
     })])
 }
+
+/// Generate package ids associated with test compilation units for the given packages.
+/// This function will return input list along with generated test package ids.
+pub fn get_test_package_ids(packages: Vec<PackageId>, ws: &Workspace<'_>) -> Vec<PackageId> {
+    packages
+        .into_iter()
+        .flat_map(|package_id| {
+            let Some(package) = ws.members().find(|p| p.id == package_id) else {
+                return Vec::new();
+            };
+            let mut result: Vec<PackageId> = package
+                .manifest
+                .targets
+                .iter()
+                .filter(|t| t.is_test())
+                .map(|t| {
+                    package
+                        .id
+                        .for_test_target(t.group_id.clone().unwrap_or(t.name.clone()))
+                })
+                .collect();
+            result.push(package_id);
+            result
+        })
+        .collect::<Vec<PackageId>>()
+}
