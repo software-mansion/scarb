@@ -152,7 +152,7 @@ impl ItemData {
             name: id.name(db).into(),
             full_path: id.full_path(db),
             doc: db.get_item_documentation(LookupItemId::ModuleItem(id)),
-            definition: db.get_item_definition(LookupItemId::ModuleItem(id)),
+            definition: db.get_item_signature(LookupItemId::ModuleItem(id)),
             text: node.as_syntax_node().get_text_without_trivia(db.upcast()),
         }
     }
