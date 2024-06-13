@@ -61,8 +61,7 @@ impl fmt::Debug for GitDatabase {
 
 /// A local checkout of a particular Git commit.
 #[derive(Debug)]
-pub struct GitCheckout<'d> {
-    pub db: &'d GitDatabase,
+pub struct GitCheckout {
     pub location: Utf8PathBuf,
     pub rev: Rev,
 }
@@ -202,7 +201,7 @@ impl GitDatabase {
         exec(&mut cmd, config)
     }
 
-    pub fn copy_to(&self, fs: &Filesystem, rev: Rev, config: &Config) -> Result<GitCheckout<'_>> {
+    pub fn copy_to(&self, fs: &Filesystem, rev: Rev, config: &Config) -> Result<GitCheckout> {
         // If the checkout exists, the rev matches, and is marked ok, use it.
         // A non-ok checkout can happen if the checkout operation was
         // interrupted. In that case, the checkout gets deleted and a new
@@ -219,7 +218,6 @@ impl GitDatabase {
         {
             debug!("git checkout ready; skipping clone; fs={fs}");
             return Ok(GitCheckout {
-                db: self,
                 location: fs.path_existent()?.to_path_buf(),
                 rev,
             });
@@ -280,9 +278,9 @@ impl GitDatabase {
     }
 }
 
-impl<'d> GitCheckout<'d> {
+impl GitCheckout {
     #[tracing::instrument(level = "trace", skip(config))]
-    fn clone(db: &'d GitDatabase, fs: &Filesystem, rev: Rev, config: &Config) -> Result<Self> {
+    fn clone(db: &GitDatabase, fs: &Filesystem, rev: Rev, config: &Config) -> Result<Self> {
         unsafe {
             fs.recreate()?;
         }
@@ -298,7 +296,7 @@ impl<'d> GitCheckout<'d> {
         cmd.arg(&location);
         exec(&mut cmd, config)?;
 
-        Ok(Self { db, location, rev })
+        Ok(Self { location, rev })
     }
 
     #[tracing::instrument(level = "trace", skip(config))]
