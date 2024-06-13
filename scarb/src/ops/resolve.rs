@@ -117,8 +117,7 @@ pub fn resolve_workspace_with_opts(
                 read_lockfile(ws)?
             };
 
-            let resolve =
-                resolver::resolve(&members_summaries, &patched, lockfile, ws.config().ui()).await?;
+            let resolve = resolver::resolve(&members_summaries, &patched, lockfile).await?;
 
             write_lockfile(Lockfile::from_resolve(&resolve), ws)?;
 
@@ -242,6 +241,7 @@ fn generate_cairo_compilation_units(
         .into_iter()
         .chain(grouped)
         .collect();
+    solution.show_warnings();
     Ok(result)
 }
 
@@ -433,6 +433,7 @@ pub struct PackageSolutionCollector<'a> {
     packages: Option<Vec<Package>>,
     cairo_plugins: Option<Vec<CompilationUnitCairoPlugin>>,
     target_kind: Option<TargetKind>,
+    warnings: HashSet<String>,
 }
 
 impl<'a> PackageSolutionCollector<'a> {
@@ -444,6 +445,7 @@ impl<'a> PackageSolutionCollector<'a> {
             packages: None,
             cairo_plugins: None,
             target_kind: None,
+            warnings: HashSet::new(),
         }
     }
 
@@ -464,7 +466,7 @@ impl<'a> PackageSolutionCollector<'a> {
     }
 
     fn pull_from_graph(
-        &self,
+        &mut self,
         target_kind: &TargetKind,
     ) -> Result<(Vec<Package>, Vec<CompilationUnitCairoPlugin>)> {
         let mut classes = self
@@ -504,6 +506,15 @@ impl<'a> PackageSolutionCollector<'a> {
 
         check_cairo_version_compatibility(&packages, self.ws)?;
 
+        // Print warnings for dependencies that are not usable.
+        let other = classes.remove(&PackageClass::Other).unwrap_or_default();
+        for pkg in other {
+            self.warnings.insert(format!(
+                "{} ignoring invalid dependency `{}` which is missing a lib or cairo-plugin target",
+                self.member.id, pkg.id.name
+            ));
+        }
+
         let cairo_plugins = cairo_plugins
             .into_iter()
             .map(|package| {
@@ -518,6 +529,12 @@ impl<'a> PackageSolutionCollector<'a> {
             .collect::<Result<Vec<_>>>()?;
 
         Ok((packages, cairo_plugins))
+    }
+
+    pub fn show_warnings(self) {
+        for warning in self.warnings {
+            self.ws.config().ui().warn(warning);
+        }
     }
 }
 

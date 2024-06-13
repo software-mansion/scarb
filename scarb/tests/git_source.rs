@@ -423,10 +423,12 @@ fn transitive_path_dep() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep0")
+            .dep_cairo_test()
             .lib_cairo("fn hello() -> felt252 { 42 }")
             .build(&t.child("zero"));
         ProjectBuilder::start()
             .name("dep1")
+            .dep_cairo_test()
             .lib_cairo("fn hello() -> felt252 { dep0::hello() }")
             .dep("dep0", Dep.path("../zero"))
             .build(&t.child("one"));
@@ -436,6 +438,7 @@ fn transitive_path_dep() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
+        .dep_cairo_test()
         .dep("dep0", &git_dep)
         .dep("dep1", &git_dep)
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")

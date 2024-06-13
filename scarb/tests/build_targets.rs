@@ -309,6 +309,7 @@ fn compile_test_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .dep_cairo_test()
         .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
         .build(&t);
     t.child("tests").create_dir_all().unwrap();
@@ -365,6 +366,7 @@ fn integration_tests_do_not_enable_cfg_in_main_package() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .dep_cairo_test()
         .lib_cairo(indoc! {r#"
             #[cfg(test)]
             fn f() -> felt252 { 42 }

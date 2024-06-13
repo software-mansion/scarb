@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::fmt;
 
 use anyhow::{anyhow, bail, Context, Result};
@@ -16,7 +15,7 @@ use crate::core::registry::package_source_store::PackageSourceStore;
 use crate::core::source::Source;
 use crate::core::{
     Checksum, Config, DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId,
-    Summary, TargetKind,
+    Summary,
 };
 use crate::flock::FileLockGuard;
 use crate::sources::PathSource;
@@ -105,7 +104,6 @@ impl<'c> Source for RegistrySource<'c> {
             Summary::builder()
                 .package_id(package_id)
                 .dependencies(dependencies)
-                .target_kinds(HashSet::from_iter([TargetKind::LIB]))
                 .no_core(record.no_core)
                 .checksum(Some(record.checksum.clone()))
                 .build()

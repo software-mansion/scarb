@@ -114,6 +114,7 @@ fn expand_integration_test() {
     "#};
     ProjectBuilder::start()
         .name("hello")
+        .dep_cairo_test()
         .lib_cairo(formatdoc! {r#"
             fn fib(mut n: u32) -> u32 {{
                 let mut a: u32 = 0;
@@ -170,6 +171,7 @@ fn can_select_target_by_kind() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .dep_cairo_test()
         .lib_cairo(indoc! {r#"
             fn hello() -> felt252 {
                 42
@@ -237,6 +239,7 @@ fn can_expand_multiple_targets() {
     "#};
     ProjectBuilder::start()
         .name("hello")
+        .dep_cairo_test()
         .lib_cairo(formatdoc! {r#"
             fn fib(mut n: u32) -> u32 {{
                 let mut a: u32 = 0;

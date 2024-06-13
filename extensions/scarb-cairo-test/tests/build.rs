@@ -33,6 +33,7 @@ fn can_test_without_gas() {
                 }
             }
         "#})
+        .dep_cairo_test()
         .manifest_extra(indoc! {r#"
             [cairo]
             enable-gas = false
@@ -86,6 +87,7 @@ fn can_print_test_resources() {
                 }
             }
         "#})
+        .dep_cairo_test()
         .build(&t);
     Scarb::quick_snapbox()
         .arg("cairo-test")
@@ -130,6 +132,7 @@ fn get_features_test_build(t: &TempDir) {
                 }
             }
         "#})
+        .dep_cairo_test()
         .build(t);
 }
 
@@ -219,6 +222,7 @@ fn integration_tests() {
 
             {test_case}
         "#})
+        .dep_cairo_test()
         .src("tests/a.cairo", test_case)
         .src("tests/b.cairo", test_case)
         .build(&t);

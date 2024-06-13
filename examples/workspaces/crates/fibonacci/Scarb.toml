@@ -10,3 +10,6 @@ snforge.workspace = true
 
 [dependencies]
 addition = { path = "../addition" }
+
+[dev-dependencies]
+cairo_test.workspace = true
