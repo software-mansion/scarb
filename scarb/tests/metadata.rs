@@ -100,71 +100,33 @@ fn fails_without_format_version() {
 }
 
 fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
-    t.child("Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "x"
-            version = "1.0.0"
+    ProjectBuilder::start()
+        .name("q")
+        .version("1.0.0")
+        .lib_cairo(r"fn f() -> felt252 { 42 }")
+        .build(&t.child("q"));
 
-            [dependencies]
-            y = { path = "y" }
-            "#,
-        )
-        .unwrap();
+    ProjectBuilder::start()
+        .name("z")
+        .version("1.0.0")
+        .lib_cairo(r"fn f() -> felt252 { q::f() }")
+        .dep("q", Dep.path("../q"))
+        .build(&t.child("z"));
 
-    t.child("src/lib.cairo")
-        .write_str(r"fn f() -> felt252 { y::f() }")
-        .unwrap();
+    ProjectBuilder::start()
+        .name("y")
+        .version("1.0.0")
+        .lib_cairo(r"fn f() -> felt252 { z::f() }")
+        .dep("z", Dep.path("../z"))
+        .dep("q", Dep.path("../q"))
+        .build(&t.child("y"));
 
-    t.child("y/Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "y"
-            version = "1.0.0"
-
-            [dependencies]
-            q = { path = "../q" }
-            z = { path = "../z" }
-            "#,
-        )
-        .unwrap();
-
-    t.child("y/src/lib.cairo")
-        .write_str(r"fn f() -> felt252 { z::f() }")
-        .unwrap();
-
-    t.child("z/Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "z"
-            version = "1.0.0"
-
-            [dependencies]
-            q = { path = "../q" }
-            "#,
-        )
-        .unwrap();
-
-    t.child("z/src/lib.cairo")
-        .write_str(r"fn f() -> felt252 { q::f() }")
-        .unwrap();
-
-    t.child("q/Scarb.toml")
-        .write_str(
-            r#"
-            [package]
-            name = "q"
-            version = "1.0.0"
-            "#,
-        )
-        .unwrap();
-
-    t.child("q/src/lib.cairo")
-        .write_str(r"fn f() -> felt252 { 42 }")
-        .unwrap();
+    ProjectBuilder::start()
+        .name("x")
+        .version("1.0.0")
+        .lib_cairo(r"fn f() -> felt252 { y::f() }")
+        .dep("y", Dep.path("y"))
+        .build(t);
 }
 
 #[test]
@@ -181,35 +143,35 @@ fn local_dependencies() {
     assert_eq!(
         packages_and_deps(meta),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["test_plugin".to_string()]),
-            ("test_plugin".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("cairo_test".to_string(), vec![]),
             (
                 "q".to_string(),
-                vec!["core".to_string(), "test_plugin".to_string()]
+                vec!["cairo_test".to_string(), "core".to_string(),]
             ),
             (
                 "x".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
-                    "test_plugin".to_string(),
                     "y".to_string()
                 ]
             ),
             (
                 "y".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "q".to_string(),
-                    "test_plugin".to_string(),
                     "z".to_string()
                 ]
             ),
             (
                 "z".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "q".to_string(),
-                    "test_plugin".to_string()
                 ]
             ),
         ])
@@ -236,20 +198,20 @@ fn dev_dependencies() {
     assert_eq!(
         packages_and_deps(meta.clone()),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["test_plugin".to_string()]),
-            ("test_plugin".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("cairo_test".to_string(), vec![]),
             (
                 "x".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "q".to_string(),
                     "q".to_string(),
-                    "test_plugin".to_string()
                 ]
             ),
             (
                 "q".to_string(),
-                vec!["core".to_string(), "test_plugin".to_string()]
+                vec!["cairo_test".to_string(), "core".to_string(),]
             )
         ])
     );
@@ -302,22 +264,22 @@ fn dev_deps_are_not_propagated() {
     assert_eq!(
         packages_and_deps(metadata.clone()),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["test_plugin".to_string()]),
-            ("test_plugin".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("cairo_test".to_string(), vec![]),
             (
                 "x".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "dep2".to_string(),
-                    "test_plugin".to_string(),
                 ]
             ),
             (
                 "dep2".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "dep1".to_string(),
-                    "test_plugin".to_string()
                 ]
             )
         ])
@@ -359,8 +321,8 @@ fn no_dep() {
         BTreeMap::from_iter([(
             "x".to_string(),
             vec![
+                "cairo_test".to_string(),
                 "core".to_string(),
-                "test_plugin".to_string(),
                 "y".to_string()
             ]
         )])
@@ -504,7 +466,7 @@ fn tool_metadata_is_packaged_contained() {
             .collect::<BTreeMap<_, _>>(),
         BTreeMap::from_iter([
             ("core".to_string(), None),
-            ("test_plugin".to_string(), None),
+            ("cairo_test".to_string(), None),
             (
                 "q".to_string(),
                 Some(BTreeMap::from_iter([(
@@ -566,18 +528,18 @@ fn workspace_simple() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["test_plugin".to_string()]),
-            ("test_plugin".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["core".to_string(), "test_plugin".to_string()]
+                vec!["cairo_test".to_string(), "core".to_string(),]
             ),
             (
                 "second".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
-                    "test_plugin".to_string()
                 ]
             ),
         ])
@@ -612,29 +574,29 @@ fn workspace_with_root() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["test_plugin".to_string()]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
             (
                 "some_root".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
                     "second".to_string(),
-                    "test_plugin".to_string()
                 ]
             ),
             (
                 "first".to_string(),
-                vec!["core".to_string(), "test_plugin".to_string()]
+                vec!["cairo_test".to_string(), "core".to_string(),]
             ),
             (
                 "second".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
-                    "test_plugin".to_string(),
                 ]
             ),
-            ("test_plugin".to_string(), vec![]),
+            ("cairo_test".to_string(), vec![]),
         ])
     )
 }
@@ -667,18 +629,18 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("test_plugin".to_string(), vec![]),
-            ("core".to_string(), vec!["test_plugin".to_string()]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["core".to_string(), "test_plugin".to_string()]
+                vec!["cairo_test".to_string(), "core".to_string(),]
             ),
             (
                 "second".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
-                    "test_plugin".to_string()
                 ]
             ),
         ])
@@ -711,34 +673,34 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["test_plugin".to_string()]),
-            ("test_plugin".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["core".to_string(), "test_plugin".to_string()]
+                vec!["cairo_test".to_string(), "core".to_string(),]
             ),
             (
                 "second".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
-                    "test_plugin".to_string()
                 ]
             ),
             (
                 "third".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
                     "second".to_string(),
-                    "test_plugin".to_string()
                 ]
             ),
             (
                 "fourth".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
-                    "test_plugin".to_string(),
                     "third".to_string()
                 ]
             ),
@@ -785,27 +747,27 @@ fn workspace_package_key_inheritance() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["test_plugin".to_string()]),
-            ("test_plugin".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "some_dep".to_string(),
-                    "test_plugin".to_string()
                 ]
             ),
             (
                 "second".to_string(),
                 vec![
+                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
-                    "test_plugin".to_string()
                 ]
             ),
             (
                 "some_dep".to_string(),
-                vec!["core".to_string(), "test_plugin".to_string()]
+                vec!["cairo_test".to_string(), "core".to_string(),]
             )
         ])
     )
