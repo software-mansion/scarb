@@ -1,7 +1,7 @@
 use crate::compiler::db::{build_scarb_root_database, ScarbDatabase};
 use crate::compiler::helpers::{build_compiler_config, write_string};
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
-use crate::core::{Package, TargetKind, Workspace};
+use crate::core::{Package, PackageId, TargetKind, Workspace};
 use crate::ops;
 use crate::ops::{get_test_package_ids, FeaturesOpts};
 use anyhow::{bail, Context, Result};
@@ -16,8 +16,17 @@ use cairo_lang_parser::db::ParserGroup;
 use cairo_lang_syntax::node::helpers::UsePathEx;
 use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
 use cairo_lang_utils::Upcast;
+use scarb_ui::Message;
+use serde::{Serialize, Serializer};
 use smol_str::SmolStr;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
+
+#[derive(Debug, Clone, Default)]
+pub enum ExpandEmitTarget {
+    Stdout,
+    #[default]
+    File,
+}
 
 #[derive(Clone, Debug)]
 pub struct ExpandOpts {
@@ -25,6 +34,7 @@ pub struct ExpandOpts {
     pub target_kind: Option<TargetKind>,
     pub target_name: Option<SmolStr>,
     pub ugly: bool,
+    pub emit: Option<ExpandEmitTarget>,
 }
 
 pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<()> {
@@ -209,17 +219,80 @@ fn do_expand(
         format_cairo(content.clone()).unwrap_or(content)
     };
 
-    let file_name = format!(
-        "{}.expanded.cairo",
-        compilation_unit
-            .main_component()
-            .first_target()
-            .name
-            .clone()
-    );
-    let target_dir = compilation_unit.target_dir(ws);
-    write_string(file_name.as_str(), "output file", &target_dir, ws, content)?;
+    opts.emit
+        .unwrap_or_default()
+        .emit(content, compilation_unit, ws)?;
+
     Ok(())
+}
+
+impl ExpandEmitTarget {
+    fn emit(
+        &self,
+        content: String,
+        compilation_unit: &CairoCompilationUnit,
+        ws: &Workspace<'_>,
+    ) -> Result<()> {
+        match self {
+            Self::Stdout => {
+                ws.config()
+                    .ui()
+                    .force_print(EmittedText::new(content, compilation_unit));
+            }
+            Self::File => {
+                let file_name = format!(
+                    "{}.expanded.cairo",
+                    compilation_unit
+                        .main_component()
+                        .first_target()
+                        .name
+                        .clone()
+                );
+                let target_dir = compilation_unit.target_dir(ws);
+                write_string(file_name.as_str(), "output file", &target_dir, ws, content)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+struct EmittedText {
+    expanded: String,
+    package_id: PackageId,
+    target: String,
+}
+
+impl EmittedText {
+    pub fn new(expanded: String, compilation_unit: &CairoCompilationUnit) -> Self {
+        Self {
+            expanded,
+            package_id: compilation_unit.main_package_id(),
+            target: compilation_unit
+                .main_component()
+                .first_target()
+                .name
+                .clone()
+                .to_string(),
+        }
+    }
+}
+
+impl Message for EmittedText {
+    fn text(self) -> String {
+        self.expanded
+    }
+
+    fn structured<S: Serializer>(self, ser: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        Self: Sized,
+    {
+        BTreeMap::from_iter(vec![
+            ("package_id".to_string(), self.package_id.to_string()),
+            ("target_name".to_string(), self.target),
+            ("expanded".to_string(), self.expanded),
+        ])
+        .serialize(ser)
+    }
 }
 
 fn format_cairo(content: String) -> Option<String> {

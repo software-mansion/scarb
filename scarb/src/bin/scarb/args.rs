@@ -7,8 +7,7 @@ use std::ffi::OsString;
 
 use anyhow::Result;
 use camino::Utf8PathBuf;
-use clap::{CommandFactory, Parser, Subcommand};
-use scarb::ops::EmitTarget;
+use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use smol_str::SmolStr;
 use url::Url;
 
@@ -203,6 +202,11 @@ pub enum Command {
     External(Vec<OsString>),
 }
 
+#[derive(ValueEnum, Clone, Debug)]
+pub enum EmitTarget {
+    Stdout,
+}
+
 /// Arguments accepted by the `build` command.
 #[derive(Parser, Clone, Debug)]
 pub struct BuildArgs {
@@ -239,6 +243,10 @@ pub struct ExpandArgs {
     /// Do not attempt formatting.
     #[arg(long, default_value_t = false)]
     pub ugly: bool,
+
+    /// Emit the expanded file to stdout
+    #[arg(short, long)]
+    pub emit: Option<EmitTarget>,
 }
 
 /// Arguments accepted by the `run` command.

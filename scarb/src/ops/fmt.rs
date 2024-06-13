@@ -6,7 +6,6 @@ use anyhow::Result;
 use cairo_lang_diagnostics::Severity;
 use cairo_lang_formatter::cairo_formatter::FormattingError;
 use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
-use clap::ValueEnum;
 use ignore::WalkState::{Continue, Skip};
 use ignore::{DirEntry, Error, ParallelVisitor, ParallelVisitorBuilder, WalkState};
 use tracing::{info, warn};
@@ -15,8 +14,8 @@ use crate::core::workspace::Workspace;
 use crate::core::PackageId;
 use crate::internal::serdex::toml_merge;
 
-#[derive(Debug, Clone, ValueEnum)]
-pub enum EmitTarget {
+#[derive(Debug, Clone)]
+pub enum FmtEmitTarget {
     Stdout,
 }
 
@@ -27,7 +26,7 @@ pub enum FmtAction {
     #[default]
     Fix,
     Check,
-    Emit(EmitTarget),
+    Emit(FmtEmitTarget),
 }
 
 #[derive(Debug)]
@@ -159,7 +158,7 @@ pub trait Emittable {
     fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str);
 }
 
-impl Emittable for EmitTarget {
+impl Emittable for FmtEmitTarget {
     fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str) {
         match self {
             Self::Stdout => ws
