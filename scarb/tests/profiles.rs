@@ -619,8 +619,12 @@ fn profile_overrides_tool() {
 
     assert_eq!(metadata.current_profile, "dev".to_string());
     assert_eq!(metadata.packages.len(), 3);
-
-    let package = metadata.packages[1].clone();
+    let package = metadata
+        .packages
+        .iter()
+        .find(|pkg| pkg.name.starts_with("hello"))
+        .cloned()
+        .unwrap();
     assert_eq!(
         package
             .manifest_metadata
@@ -642,8 +646,12 @@ fn profile_overrides_tool() {
 
     assert_eq!(metadata.current_profile, "release".to_string());
     assert_eq!(metadata.packages.len(), 3);
-
-    let package = metadata.packages[1].clone();
+    let package = metadata
+        .packages
+        .iter()
+        .find(|pkg| pkg.name.starts_with("hello"))
+        .cloned()
+        .unwrap();
     assert_eq!(
         package
             .manifest_metadata

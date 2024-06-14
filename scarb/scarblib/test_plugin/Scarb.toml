@@ -1,5 +1,5 @@
 [package]
-name = "test_plugin"
+name = "cairo_test"
 version = "{{ CAIRO_VERSION }}"
 
 no-core = true
