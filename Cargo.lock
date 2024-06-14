@@ -4816,8 +4816,10 @@ version = "2.6.4"
 dependencies = [
  "anyhow",
  "assert_fs",
+ "cairo-lang-sierra",
  "cairo-lang-test-plugin",
  "cairo-lang-test-runner",
+ "camino",
  "clap",
  "indoc",
  "scarb-metadata 1.12.0",

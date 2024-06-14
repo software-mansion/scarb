@@ -2,8 +2,10 @@ use std::collections::HashSet;
 use std::{env, fs};
 
 use anyhow::{Context, Result};
-use cairo_lang_test_plugin::TestCompilation;
+use cairo_lang_sierra::program::VersionedProgram;
+use cairo_lang_test_plugin::{TestCompilation, TestCompilationMetadata};
 use cairo_lang_test_runner::{CompiledTestRunner, RunProfilerConfig, TestRunConfig};
+use camino::Utf8PathBuf;
 use clap::Parser;
 
 use scarb_metadata::{
@@ -74,13 +76,7 @@ fn main() -> Result<()> {
             if already_seen {
                 continue;
             }
-            let file_path = target_dir.join(format!("{}.test.json", name));
-            let test_compilation = serde_json::from_str::<TestCompilation>(
-                &fs::read_to_string(file_path.clone())
-                    .with_context(|| format!("failed to read file: {file_path}"))?,
-            )
-            .with_context(|| format!("failed to deserialize compiled tests file: {file_path}"))?;
-
+            let test_compilation = deserialize_test_compilation(&target_dir, name.clone())?;
             let config = TestRunConfig {
                 filter: args.filter.clone(),
                 include_ignored: args.include_ignored,
@@ -96,6 +92,27 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn deserialize_test_compilation(target_dir: &Utf8PathBuf, name: String) -> Result<TestCompilation> {
+    let file_path = target_dir.join(format!("{}.test.json", name));
+    let test_comp_metadata = serde_json::from_str::<TestCompilationMetadata>(
+        &fs::read_to_string(file_path.clone())
+            .with_context(|| format!("failed to read file: {file_path}"))?,
+    )
+    .with_context(|| format!("failed to deserialize compiled tests metadata file: {file_path}"))?;
+
+    let file_path = target_dir.join(format!("{}.test.sierra.json", name));
+    let sierra_program = serde_json::from_str::<VersionedProgram>(
+        &fs::read_to_string(file_path.clone())
+            .with_context(|| format!("failed to read file: {file_path}"))?,
+    )
+    .with_context(|| format!("failed to deserialize compiled tests sierra file: {file_path}"))?;
+
+    Ok(TestCompilation {
+        sierra_program: sierra_program.into_v1()?,
+        metadata: test_comp_metadata,
+    })
 }
 
 #[derive(Default)]
