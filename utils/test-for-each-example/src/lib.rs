@@ -1,3 +1,7 @@
+// TODO(maciektr): Remove when `darling` gets fixed.
+// See: https://github.com/TedDriggs/darling/pull/292
+#![allow(clippy::manual_unwrap_or_default)]
+
 use proc_macro::TokenStream;
 use std::path::Path;
 

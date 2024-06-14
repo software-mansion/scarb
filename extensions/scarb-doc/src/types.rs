@@ -1,3 +1,6 @@
+// TODO(drknzz): Remove if not needed.
+#![allow(dead_code)]
+
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId, ImplDefId,
