@@ -41,6 +41,64 @@ fn expand_package_simple() {
 }
 
 #[test]
+fn can_expand_to_stdout() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn hello() -> felt252 {
+                0
+
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("expand")
+        .arg("--emit=stdout")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            error: Missing token TerminalRBrace.
+             --> [..]lib.cairo:2:6
+                0
+                 ^
+
+
+            mod hello {
+            fn hello() -> felt252 {
+                0
+            }
+
+        "#});
+    assert!(!t.child("target").exists());
+}
+
+#[test]
+fn can_expand_to_stdout_json() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn hello() -> felt252 {
+                0
+
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("expand")
+        .arg("--emit=stdout")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            {"type":"error","message":"Missing token TerminalRBrace./n --> [..]lib.cairo:2:6/n    0/n     ^/n"}
+            {"expanded":"/nmod hello {/nfn hello() -> felt252 {/n    0/n}/n","package_id":"hello v1.0.0 ([..]Scarb.toml)","target_name":"hello"}
+        "#});
+    assert!(!t.child("target").exists());
+}
+
+#[test]
 fn expand_integration_test() {
     let t = TempDir::new().unwrap();
     let test_case = indoc! {r#"
