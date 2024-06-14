@@ -4,8 +4,7 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttr
 use crate::core::{Package, TargetKind, Workspace};
 use crate::ops;
 use crate::ops::{get_test_package_ids, FeaturesOpts};
-use anyhow::{anyhow, bail, Context, Result};
-use cairo_lang_compiler::diagnostics::DiagnosticsError;
+use anyhow::{bail, Context, Result};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{LanguageElementId, ModuleId, ModuleItemId};
 use cairo_lang_defs::patcher::PatchBuilder;
@@ -150,17 +149,8 @@ fn do_expand(
 ) -> Result<()> {
     let ScarbDatabase { db, .. } = build_scarb_root_database(compilation_unit, ws)?;
     let mut compiler_config = build_compiler_config(compilation_unit, ws);
-    compiler_config
-        .diagnostics_reporter
-        .ensure(&db)
-        .map_err(|err| err.into())
-        .map_err(|err| {
-            if !suppress_error(&err) {
-                ws.config().ui().anyhow(&err);
-            }
-
-            anyhow!("could not check due to previous error")
-        })?;
+    // Report diagnostics, but do not fail.
+    let _ = compiler_config.diagnostics_reporter.check(&db);
     let main_crate_id = db.intern_crate(CrateLongId::Real(
         compilation_unit.main_component().cairo_package_name(),
     ));
@@ -240,8 +230,4 @@ fn format_cairo(content: String) -> Option<String> {
         FormatOutcome::Identical(value) => value,
         FormatOutcome::DiffFound(diff) => diff.formatted,
     })
-}
-
-fn suppress_error(err: &anyhow::Error) -> bool {
-    matches!(err.downcast_ref(), Some(&DiagnosticsError))
 }
