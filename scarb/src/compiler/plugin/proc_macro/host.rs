@@ -25,6 +25,7 @@ use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{ast, Terminal, TypedStablePtr, TypedSyntaxNode};
+use convert_case::{Case, Casing};
 use itertools::Itertools;
 use scarb_stable_hash::short_hash;
 use std::any::Any;
@@ -294,7 +295,7 @@ impl ProcMacroHostPlugin {
                 let value = ident.text(db).to_string();
 
                 self.find_expansion(&Expansion::new(
-                    camel_to_snake(value),
+                    value.to_case(Case::Snake),
                     ExpansionKind::Derive,
                 ))
             })
@@ -655,6 +656,14 @@ impl MacroPlugin for ProcMacroHostPlugin {
             .collect()
     }
 
+    fn declared_derives(&self) -> Vec<String> {
+        self.macros
+            .iter()
+            .flat_map(|m| m.declared_derives())
+            .map(|s| s.to_case(Case::UpperCamel))
+            .collect()
+    }
+
     fn executable_attributes(&self) -> Vec<String> {
         self.macros
             .iter()
@@ -784,37 +793,5 @@ impl ProcMacroHost {
 
     pub fn into_plugin(self) -> Result<ProcMacroHostPlugin> {
         ProcMacroHostPlugin::try_new(self.macros)
-    }
-}
-
-fn camel_to_snake(name: String) -> String {
-    let mut result = String::with_capacity(name.len());
-    for (i, c) in name.chars().enumerate() {
-        if c.is_uppercase() {
-            if i > 0 {
-                result.push('_');
-            }
-            result.push(c.to_ascii_lowercase());
-        } else {
-            result.push(c);
-        }
-    }
-    result
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_camel_to_snake() {
-        assert_eq!(camel_to_snake("CamelCase".to_string()), "camel_case");
-        assert_eq!(camel_to_snake("Camel".to_string()), "camel");
-        assert_eq!(camel_to_snake("camel".to_string()), "camel");
-        assert_eq!(camel_to_snake("CAMEL".to_string()), "c_a_m_e_l");
-        assert_eq!(
-            camel_to_snake("CamelCaseCase".to_string()),
-            "camel_case_case"
-        );
     }
 }
