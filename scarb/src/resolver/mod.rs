@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use anyhow::{bail, Result};
 use indoc::{formatdoc, indoc};
 use petgraph::graphmap::DiGraphMap;
-use scarb_ui::Ui;
 use std::collections::HashSet;
 
 use crate::core::lockfile::Lockfile;
@@ -38,7 +37,6 @@ pub async fn resolve(
     summaries: &[Summary],
     registry: &dyn Registry,
     lockfile: Lockfile,
-    ui: Ui,
 ) -> Result<Resolve> {
     // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
@@ -89,15 +87,6 @@ pub async fn resolve(
                     DepKind::Target(target_kind) => Some(target_kind),
                 };
                 let dep = dep_summary.package_id;
-
-                if !(dep_summary.target_kinds.contains(&TargetKind::CAIRO_PLUGIN)
-                    || dep_summary.target_kinds.contains(&TargetKind::LIB))
-                {
-                    ui.warn(format!(
-                        "{} ignoring invalid dependency `{}` which is missing a lib or cairo-plugin target",
-                        package_id, dep.name
-                    ));
-                }
 
                 if let Some(existing) = packages.get(dep.name.as_ref()) {
                     if existing.source_id != dep.source_id {
@@ -215,8 +204,6 @@ mod tests {
     use anyhow::Result;
     use indoc::indoc;
     use itertools::Itertools;
-    use scarb_ui::Verbosity::Verbose;
-    use scarb_ui::{OutputFormat, Ui};
     use semver::Version;
     use similar_asserts::assert_serde_eq;
     use tokio::runtime::Builder;
@@ -300,8 +287,7 @@ mod tests {
             .collect_vec();
 
         let lockfile = Lockfile::new(locks.iter().cloned());
-        let ui = Ui::new(Verbose, OutputFormat::Text);
-        runtime.block_on(super::resolve(&summaries, &registry, lockfile, ui))
+        runtime.block_on(super::resolve(&summaries, &registry, lockfile))
     }
 
     fn package_id<S: AsRef<str>>(name: S) -> PackageId {

@@ -104,12 +104,14 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
         .name("q")
         .version("1.0.0")
         .lib_cairo(r"fn f() -> felt252 { 42 }")
+        .dep_cairo_test()
         .build(&t.child("q"));
 
     ProjectBuilder::start()
         .name("z")
         .version("1.0.0")
         .lib_cairo(r"fn f() -> felt252 { q::f() }")
+        .dep_cairo_test()
         .dep("q", Dep.path("../q"))
         .build(&t.child("z"));
 
@@ -117,6 +119,7 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
         .name("y")
         .version("1.0.0")
         .lib_cairo(r"fn f() -> felt252 { z::f() }")
+        .dep_cairo_test()
         .dep("z", Dep.path("../z"))
         .dep("q", Dep.path("../q"))
         .build(&t.child("y"));
@@ -125,6 +128,7 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
         .name("x")
         .version("1.0.0")
         .lib_cairo(r"fn f() -> felt252 { y::f() }")
+        .dep_cairo_test()
         .dep("y", Dep.path("y"))
         .build(t);
 }
@@ -143,7 +147,9 @@ fn local_dependencies() {
     assert_eq!(
         packages_and_deps(meta),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
+            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
+            // ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("core".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "q".to_string(),
@@ -182,10 +188,11 @@ fn local_dependencies() {
 fn dev_dependencies() {
     let t = assert_fs::TempDir::new().unwrap();
     let q = t.child("q");
-    ProjectBuilder::start().name("q").build(&q);
+    ProjectBuilder::start().name("q").dep_cairo_test().build(&q);
     ProjectBuilder::start()
         .name("x")
         .dep("q", Dep.path("./q"))
+        .dep_cairo_test()
         .dev_dep("q", Dep.path("./q"))
         .build(&t);
     let meta = Scarb::quick_snapbox()
@@ -198,7 +205,9 @@ fn dev_dependencies() {
     assert_eq!(
         packages_and_deps(meta.clone()),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
+            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
+            // ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("core".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "x".to_string(),
@@ -239,17 +248,22 @@ fn dev_deps_are_not_propagated() {
     let t = assert_fs::TempDir::new().unwrap();
 
     let dep1 = t.child("dep1");
-    ProjectBuilder::start().name("dep1").build(&dep1);
+    ProjectBuilder::start()
+        .name("dep1")
+        .dep_cairo_test()
+        .build(&dep1);
 
     let dep2 = t.child("dep2");
     ProjectBuilder::start()
         .name("dep2")
+        .dep_cairo_test()
         .dev_dep("dep1", &dep1)
         .build(&dep2);
 
     let pkg = t.child("pkg");
     ProjectBuilder::start()
         .name("x")
+        .dep_cairo_test()
         .dev_dep("dep2", &dep2)
         .build(&pkg);
 
@@ -264,7 +278,9 @@ fn dev_deps_are_not_propagated() {
     assert_eq!(
         packages_and_deps(metadata.clone()),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
+            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
+            // ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("core".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "x".to_string(),
@@ -506,11 +522,13 @@ fn workspace_simple() {
     let pkg1 = t.child("first");
     ProjectBuilder::start()
         .name("first")
+        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .build(&pkg1);
     let pkg2 = t.child("second");
     ProjectBuilder::start()
         .name("second")
+        .dep_cairo_test()
         .manifest_extra("[[test]]")
         // Check paths are relative to manifest file.
         .dep("first", Dep.path("../first"))
@@ -528,7 +546,9 @@ fn workspace_simple() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
+            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
+            // ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("core".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
@@ -550,14 +570,19 @@ fn workspace_simple() {
 fn workspace_with_root() {
     let t = assert_fs::TempDir::new().unwrap().child("test_workspace");
     let pkg1 = t.child("first");
-    ProjectBuilder::start().name("first").build(&pkg1);
+    ProjectBuilder::start()
+        .name("first")
+        .dep_cairo_test()
+        .build(&pkg1);
     let pkg2 = t.child("second");
     ProjectBuilder::start()
         .name("second")
+        .dep_cairo_test()
         .dep("first", Dep.path("../first"))
         .build(&pkg2);
     let root = ProjectBuilder::start()
         .name("some_root")
+        .dep_cairo_test()
         .dep("first", Dep.path("./first"))
         .dep("second", Dep.path("./second"));
     WorkspaceBuilder::start()
@@ -574,7 +599,9 @@ fn workspace_with_root() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
+            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
+            // ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("core".to_string(), vec![]),
             (
                 "some_root".to_string(),
                 vec![
@@ -608,11 +635,13 @@ fn workspace_as_dep() {
     let pkg1 = first_t.child("first");
     ProjectBuilder::start()
         .name("first")
+        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .build(&pkg1);
     let pkg2 = first_t.child("second");
     ProjectBuilder::start()
         .name("second")
+        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .dep("first", Dep.path("../first"))
         .build(&pkg2);
@@ -629,7 +658,9 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
+            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
+            // ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("core".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
@@ -651,6 +682,7 @@ fn workspace_as_dep() {
     ProjectBuilder::start()
         .name("third")
         .manifest_extra("[[test]]")
+        .dep_cairo_test()
         .dep("first", Dep.path("../../first_workspace"))
         .dep("second", Dep.path("../../first_workspace"))
         .build(&pkg1);
@@ -658,6 +690,7 @@ fn workspace_as_dep() {
     ProjectBuilder::start()
         .name("fourth")
         .manifest_extra("[[test]]")
+        .dep_cairo_test()
         .dep("third", Dep.path("../third"))
         .build(&pkg2);
     WorkspaceBuilder::start()
@@ -673,7 +706,9 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
+            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
+            // ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("core".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
@@ -715,6 +750,7 @@ fn workspace_package_key_inheritance() {
     let some_dep = t.child("some_dep");
     ProjectBuilder::start()
         .name("some_dep")
+        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .version("0.1.0")
         .build(&some_dep);
@@ -723,12 +759,14 @@ fn workspace_package_key_inheritance() {
     let pkg1 = some_workspace.child("first");
     ProjectBuilder::start()
         .name("first")
+        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .dep("some_dep", Dep.workspace())
         .build(&pkg1);
     let pkg2 = some_workspace.child("second");
     ProjectBuilder::start()
         .name("second")
+        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .dep("first", Dep.path("../first"))
         .build(&pkg2);
@@ -747,7 +785,9 @@ fn workspace_package_key_inheritance() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
+            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
+            // ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("core".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),

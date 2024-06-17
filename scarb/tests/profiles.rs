@@ -611,6 +611,7 @@ fn profile_overrides_tool() {
             [profile.release.tool.snforge]
             some-key = "some-other-value"
         "#})
+        .dep_cairo_test()
         .build(&t);
     let metadata = Scarb::quick_snapbox()
         .args(["--json", "metadata", "--format-version", "1"])

@@ -34,9 +34,7 @@ pub(crate) mod mock {
 
     use crate::core::package::PackageName;
     use crate::core::registry::Registry;
-    use crate::core::{
-        ManifestBuilder, ManifestDependency, Package, PackageId, SourceId, Summary, TargetKind,
-    };
+    use crate::core::{ManifestBuilder, ManifestDependency, Package, PackageId, SourceId, Summary};
 
     #[derive(Debug, Default)]
     pub struct MockRegistry {
@@ -111,7 +109,6 @@ pub(crate) mod mock {
 
         fn build_package(package_id: PackageId, dependencies: Vec<ManifestDependency>) -> Package {
             let summary = Summary::builder()
-                .target_kinds(HashSet::from_iter(vec![TargetKind::LIB]))
                 .package_id(package_id)
                 .dependencies(dependencies)
                 .no_core(package_id.is_core())

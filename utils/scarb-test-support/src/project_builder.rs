@@ -97,6 +97,10 @@ impl ProjectBuilder {
         self.dep("starknet", Dep.version(CAIRO_VERSION))
     }
 
+    pub fn dep_cairo_test(self) -> Self {
+        self.dev_dep("cairo_test", Dep.version(CAIRO_VERSION))
+    }
+
     pub fn manifest_package_extra(mut self, extra: impl ToString) -> Self {
         self.manifest_package_extra = extra.to_string();
         self
