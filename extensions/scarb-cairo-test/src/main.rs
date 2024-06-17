@@ -7,6 +7,7 @@ use cairo_lang_test_plugin::{TestCompilation, TestCompilationMetadata};
 use cairo_lang_test_runner::{CompiledTestRunner, RunProfilerConfig, TestRunConfig};
 use camino::Utf8PathBuf;
 use clap::Parser;
+use indoc::formatdoc;
 
 use scarb_metadata::{
     Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
@@ -43,6 +44,7 @@ fn main() -> Result<()> {
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
     check_scarb_version(&metadata);
+    check_cairo_test_plugin(&metadata);
 
     let matched = args.packages_filter.match_many(&metadata)?;
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
@@ -165,5 +167,51 @@ fn check_scarb_version(metadata: &Metadata) {
          cairo-test: `{}`, scarb: `{}`",
             app_version, scarb_version
         );
+    }
+}
+
+fn check_cairo_test_plugin(metadata: &Metadata) {
+    let app_version = env!("CARGO_PKG_VERSION").to_string();
+    let warn = || {
+        println!(
+            "{}",
+            formatdoc! {r#"
+        warn: `cairo_test` plugin not found
+        please add the following snippet to your Scarb.toml manifest:
+        ```
+        [dev-dependencies]
+        cairo_test = "{}"
+        ```
+        "#, app_version}
+        );
+    };
+
+    let Some(plugin_pkg) = metadata.packages.iter().find(|pkg| {
+        pkg.name == "cairo_test"
+            && pkg.targets.iter().any(|t| {
+                t.kind == "cairo-plugin"
+                    && t.name == "cairo_test"
+                    && t.params
+                        .get("builtin")
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false)
+            })
+    }) else {
+        warn();
+        return;
+    };
+
+    for cu in &metadata.compilation_units {
+        if cu.target.kind != "test" {
+            continue;
+        }
+        if !cu
+            .cairo_plugins
+            .iter()
+            .any(|plugin| plugin.package == plugin_pkg.id)
+        {
+            warn();
+            return;
+        }
     }
 }
