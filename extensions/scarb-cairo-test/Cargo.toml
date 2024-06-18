@@ -16,10 +16,10 @@ clap.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde_json.workspace = true
+indoc.workspace = true
 
 [dev-dependencies]
 snapbox.workspace = true
 test-for-each-example = { path = "../../utils/test-for-each-example" }
 scarb-test-support = { path = "../../utils/scarb-test-support" }
 assert_fs.workspace = true
-indoc.workspace = true

@@ -247,3 +247,44 @@ fn integration_tests() {
 
         "#});
 }
+
+#[test]
+fn warn_if_cairo_test_plugin_missing() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(formatdoc! {r#"
+            fn fib(mut n: u32) -> u32 {{
+                let mut a: u32 = 0;
+                let mut b: u32 = 1;
+                while n != 0 {{
+                    n = n - 1;
+                    let temp = b;
+                    b = a + b;
+                    a = temp;
+                }};
+                a
+            }}
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("cairo-test")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            warn: `cairo_test` plugin not found
+            please add the following snippet to your Scarb.toml manifest:
+            ```
+            [dev-dependencies]
+            cairo_test = "[..]"
+            ```
+
+            [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            testing hello ...
+            running 0 tests
+            test result: ok. 0 passed; 0 failed; 0 ignored; 0 filtered out;
+
+       "#});
+}
