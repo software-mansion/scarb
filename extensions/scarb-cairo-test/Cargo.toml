@@ -8,8 +8,10 @@ authors.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+cairo-lang-sierra.workspace = true
 cairo-lang-test-plugin.workspace = true
 cairo-lang-test-runner.workspace = true
+camino.workspace = true
 clap.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }

@@ -1,5 +1,6 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use cairo_lang_sierra::program::VersionedProgram;
 use indoc::indoc;
 use itertools::Itertools;
 use predicates::prelude::*;
@@ -338,12 +339,16 @@ fn compile_test_target() {
         t.child("target/dev").files(),
         vec![
             "hello_integrationtest.test.json",
+            "hello_integrationtest.test.sierra.json",
             "hello_unittest.test.json",
+            "hello_unittest.test.sierra.json",
         ]
     );
 
     t.child("target/dev/hello_integrationtest.test.json")
         .assert_is_json::<serde_json::Value>();
+    t.child("target/dev/hello_integrationtest.test.sierra.json")
+        .assert_is_json::<VersionedProgram>();
     let content = t
         .child("target/dev/hello_integrationtest.test.json")
         .read_to_string();
@@ -352,6 +357,8 @@ fn compile_test_target() {
     assert_eq!(tests.len(), 1);
 
     t.child("target/dev/hello_unittest.test.json")
+        .assert_is_json::<serde_json::Value>();
+    t.child("target/dev/hello_unittest.test.sierra.json")
         .assert_is_json::<serde_json::Value>();
     let content = t
         .child("target/dev/hello_unittest.test.json")

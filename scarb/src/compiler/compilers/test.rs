@@ -1,5 +1,6 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_test_plugin::compile_test_prepared_db;
 use tracing::trace_span;
 
@@ -44,13 +45,18 @@ impl Compiler for TestCompiler {
 
         {
             let _ = trace_span!("serialize_test").enter();
+
+            let sierra_program: VersionedProgram = test_compilation.sierra_program.clone().into();
+            let file_name = format!("{}.test.sierra.json", unit.main_component().target_name());
+            write_json(&file_name, "output file", &target_dir, ws, &sierra_program)?;
+
             let file_name = format!("{}.test.json", unit.main_component().target_name());
             write_json(
                 &file_name,
                 "output file",
                 &target_dir,
                 ws,
-                &test_compilation,
+                &test_compilation.metadata,
             )?;
         }
 
