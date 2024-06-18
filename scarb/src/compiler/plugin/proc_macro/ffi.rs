@@ -114,6 +114,15 @@ impl ProcMacroInstance {
             .collect()
     }
 
+    pub fn declared_derives(&self) -> Vec<String> {
+        self.get_expansions()
+            .iter()
+            .filter(|e| e.kind == ExpansionKind::Derive)
+            .map(|e| e.name.clone())
+            .map(Into::into)
+            .collect()
+    }
+
     pub fn executable_attributes(&self) -> Vec<String> {
         self.get_expansions()
             .iter()
