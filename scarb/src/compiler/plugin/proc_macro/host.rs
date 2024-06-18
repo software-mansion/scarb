@@ -11,6 +11,8 @@ use cairo_lang_defs::plugin::{
 };
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_diagnostics::ToOption;
+use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
+use cairo_lang_filesystem::span::{TextOffset, TextSpan, TextWidth};
 use cairo_lang_macro::{
     AuxData, Diagnostic, FullPathMarker, Severity, TokenStream, TokenStreamMetadata,
 };
@@ -309,6 +311,7 @@ impl ProcMacroHostPlugin {
         stream_metadata: TokenStreamMetadata,
     ) -> Option<PluginResult> {
         let stable_ptr = item_ast.clone().stable_ptr().untyped();
+        let span = item_ast.as_syntax_node().span(db);
         let token_stream =
             TokenStream::from_syntax_node(db, &item_ast).with_metadata(stream_metadata.clone());
 
@@ -355,8 +358,15 @@ impl ProcMacroHostPlugin {
                 } else {
                     Some(PluginGeneratedFile {
                         name: "proc_macro_derive".into(),
+                        code_mappings: vec![CodeMapping {
+                            origin: CodeOrigin::Span(span),
+                            span: TextSpan {
+                                start: TextOffset::default(),
+                                end: TextOffset::default()
+                                    .add_width(TextWidth::from_str(&derived_code)),
+                            },
+                        }],
                         content: derived_code,
-                        code_mappings: Default::default(),
                         aux_data: if aux_data.is_empty() {
                             None
                         } else {
@@ -380,6 +390,7 @@ impl ProcMacroHostPlugin {
         last: bool,
         args: TokenStream,
         token_stream: TokenStream,
+        span: TextSpan,
         stable_ptr: SyntaxStablePtrId,
     ) -> PluginResult {
         let result = self.instance(input.package_id).generate_code(
@@ -423,11 +434,18 @@ impl ProcMacroHostPlugin {
         }
 
         let file_name = format!("proc_macro_{}", input.expansion.name);
+        let content = result.token_stream.to_string();
         PluginResult {
             code: Some(PluginGeneratedFile {
                 name: file_name.into(),
-                content: result.token_stream.to_string(),
-                code_mappings: Default::default(),
+                code_mappings: vec![CodeMapping {
+                    origin: CodeOrigin::Span(span),
+                    span: TextSpan {
+                        start: TextOffset::default(),
+                        end: TextOffset::default().add_width(TextWidth::from_str(&content)),
+                    },
+                }],
+                content,
                 aux_data: result.aux_data.map(|new_aux_data| {
                     DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
                         new_aux_data.into(),
@@ -629,7 +647,8 @@ impl MacroPlugin for ProcMacroHostPlugin {
         .map(|(expansion, args, last)| {
             let token_stream = body.with_metadata(stream_metadata.clone());
             let stable_ptr = item_ast.clone().stable_ptr().untyped();
-            self.expand_attribute(expansion, last, args, token_stream, stable_ptr)
+            let span = item_ast.as_syntax_node().span(db);
+            self.expand_attribute(expansion, last, args, token_stream, span, stable_ptr)
         }) {
             return result;
         }
@@ -718,6 +737,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         db: &dyn SyntaxGroup,
         syntax: &ast::ExprInlineMacro,
     ) -> InlinePluginResult {
+        let origin = CodeOrigin::Span(syntax.as_syntax_node().span(db));
         let stable_ptr = syntax.clone().stable_ptr().untyped();
         let token_stream = TokenStream::from_syntax_node(db, syntax);
         let result = self.instance().generate_code(
@@ -745,11 +765,18 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                 emitted.push(aux_data);
                 DynGeneratedFileAuxData::new(emitted)
             });
+            let content = token_stream.to_string();
             InlinePluginResult {
                 code: Some(PluginGeneratedFile {
                     name: "inline_proc_macro".into(),
-                    content: token_stream.to_string(),
-                    code_mappings: Default::default(),
+                    code_mappings: vec![CodeMapping {
+                        origin,
+                        span: TextSpan {
+                            start: TextOffset::default(),
+                            end: TextOffset::default().add_width(TextWidth::from_str(&content)),
+                        },
+                    }],
+                    content,
                     aux_data,
                 }),
                 diagnostics,
