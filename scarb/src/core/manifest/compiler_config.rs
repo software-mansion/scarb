@@ -20,8 +20,9 @@ pub struct ManifestCompilerConfig {
     /// Enable auto gas withdrawal and gas usage check.
     pub enable_gas: bool,
     /// Add a mapping between sierra statement indexes and fully qualified paths of cairo functions
-    /// to debug info. A statement index maps to a function which caused the statement to be
-    /// generated. Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
+    /// to debug info. A statement index maps to a vector consisting of a function which caused the
+    /// statement to be generated and all functions that were inlined or generated along the way.
+    /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
     /// This feature is unstable and is subject to change.
     pub unstable_add_statements_functions_debug_info: bool,
 }
