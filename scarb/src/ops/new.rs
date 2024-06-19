@@ -9,6 +9,7 @@ use crate::internal::fsx;
 use crate::internal::restricted_names;
 use crate::subcommands::get_env_vars;
 use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
+use scarb_build_metadata::SCARB_VERSION;
 use std::process::{Command, Stdio};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -141,6 +142,15 @@ fn mk(
     // Create the `Scarb.toml` file.
     let manifest_path = canonical_path.join(MANIFEST_FILE_NAME);
     let edition = edition_variant(Edition::latest());
+    let dev_deps = if snforge {
+        String::new()
+    } else {
+        formatdoc! {r#"
+
+            [dev-dependencies]
+            cairo_test = "{SCARB_VERSION}"
+        "#}
+    };
     fsx::write(
         &manifest_path,
         formatdoc! {r#"
@@ -152,7 +162,7 @@ fn mk(
             # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
             [dependencies]
-        "#},
+        "#} + &dev_deps,
     )?;
 
     // Create hello world source files (with respective parent directories) if none exist.
