@@ -285,8 +285,9 @@ This flag cannot be disabled while compiling the `starknet-contract` target.
 > It may slow down the compilation - it is advised not to use it for other purposes than mentioned in
 > [cairo-profiler](https://github.com/software-mansion/cairo-profiler) documentation.
 
-If enabled, during the project compilation Scarb will add mapping between Sierra statement indexes and fully qualified
-paths of Cairo functions to debug info. A statement index maps to a function which caused the statement to be generated.
+If enabled, during the project compilation Scarb will a add mapping between Sierra statement indexes and vectors of fully
+qualified paths of Cairo functions to debug info. A statement index maps to a vector consisting of a function which
+caused the statement to be generated and all functions that were inlined or generated along the way.
 By default, this flag is disabled.
 
 ```toml
