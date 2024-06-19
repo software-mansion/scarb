@@ -201,18 +201,19 @@ fn mk(
     }
 
     if snforge {
-        init_snforge(name, path, config)?;
+        init_snforge(name, canonical_path, config)?;
     }
 
     Ok(())
 }
 
 fn init_snforge(name: PackageName, target_dir: Utf8PathBuf, config: &Config) -> Result<()> {
+    let target_dir = target_dir.parent().context("package must have a parent")?;
     let mut process = Command::new("snforge")
         .arg("init")
         .arg(name.as_str())
-        .current_dir(fsx::canonicalize_utf8(&target_dir)?)
-        .envs(get_env_vars(config, Some(target_dir))?)
+        .current_dir(target_dir)
+        .envs(get_env_vars(config, None)?)
         .stderr(Stdio::inherit())
         .stdout(Stdio::inherit())
         .spawn()?;
