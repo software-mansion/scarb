@@ -1,10 +1,11 @@
 use std::env;
 use std::fs;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use cairo_lang_runner::short_string::as_cairo_short_string;
 use cairo_lang_runner::{RunResultStarknet, RunResultValue, SierraCasmRunner, StarknetState};
-use cairo_lang_sierra::program::VersionedProgram;
+use cairo_lang_sierra::ids::FunctionId;
+use cairo_lang_sierra::program::{Function, ProgramArtifact, VersionedProgram};
 use camino::Utf8PathBuf;
 use clap::Parser;
 use indoc::formatdoc;
@@ -18,6 +19,9 @@ use scarb_ui::components::Status;
 use scarb_ui::{Message, OutputFormat, Ui};
 
 mod deserialization;
+
+const EXECUTABLE_NAME: &str = "main";
+const DEFAULT_MAIN_FUNCTION: &str = "::main";
 
 /// Execute the main function of a package.
 #[derive(Parser, Clone, Debug)]
@@ -109,7 +113,7 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
     }
 
     let runner = SierraCasmRunner::new(
-        sierra_program.program,
+        sierra_program.program.clone(),
         if available_gas.is_disabled() {
             None
         } else {
@@ -119,10 +123,9 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
         None,
     )?;
 
-    let function = args.function.as_deref().unwrap_or("main");
     let result = runner
         .run_function_with_starknet_context(
-            runner.find_function(format!("::{function}").as_str())?,
+            main_function(&runner, &sierra_program, args.function.as_deref())?,
             &args.arguments,
             available_gas.value(),
             StarknetState::default(),
@@ -136,6 +139,75 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
     });
 
     Ok(())
+}
+
+fn main_function<'a>(
+    runner: &'a SierraCasmRunner,
+    sierra_program: &'a ProgramArtifact,
+    name: Option<&str>,
+) -> Result<&'a Function> {
+    let executables = sierra_program
+        .debug_info
+        .as_ref()
+        .and_then(|di| di.executables.get(EXECUTABLE_NAME))
+        .cloned()
+        .unwrap_or_default();
+
+    // Prioritize `--function` args. First search among executables, then among all functions.
+    if let Some(name) = name {
+        let name = format!("::{name}");
+        return executables
+            .iter()
+            .find(|fid| {
+                fid.debug_name
+                    .as_deref()
+                    .map(|debug_name| debug_name.ends_with(&name))
+                    .unwrap_or_default()
+            })
+            .map(|fid| find_function(sierra_program, fid))
+            .unwrap_or_else(|| Ok(runner.find_function(&name)?));
+    }
+
+    // Then check if executables are unambiguous.
+    if executables.len() == 1 {
+        return find_function(
+            sierra_program,
+            executables.first().expect("executables can't be empty"),
+        );
+    }
+
+    // If executables are ambiguous, bail with error.
+    if executables.len() > 1 {
+        let names = executables
+            .iter()
+            .flat_map(|fid| fid.debug_name.clone())
+            .map(|name| name.to_string())
+            .collect::<Vec<_>>();
+        let msg = if names.is_empty() {
+            "please only mark a single function as executable or enable debug ids and choose function by name".to_string()
+        } else {
+            format!(
+                "please choose a function to run from the list:\n`{}`",
+                names.join("`, `")
+            )
+        };
+        bail!("multiple executable functions found\n{msg}");
+    }
+
+    // Finally check default function.
+    Ok(runner.find_function(DEFAULT_MAIN_FUNCTION)?)
+}
+
+fn find_function<'a>(
+    sierra_program: &'a ProgramArtifact,
+    fid: &FunctionId,
+) -> Result<&'a Function> {
+    sierra_program
+        .program
+        .funcs
+        .iter()
+        .find(|f| f.id == *fid)
+        .ok_or_else(|| anyhow!("function not found"))
 }
 
 struct Summary {
