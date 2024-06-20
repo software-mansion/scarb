@@ -147,9 +147,7 @@ fn local_dependencies() {
     assert_eq!(
         packages_and_deps(meta),
         BTreeMap::from_iter([
-            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
-            // ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
             ("cairo_test".to_string(), vec![]),
             (
                 "q".to_string(),
@@ -205,9 +203,7 @@ fn dev_dependencies() {
     assert_eq!(
         packages_and_deps(meta.clone()),
         BTreeMap::from_iter([
-            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
-            // ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
             ("cairo_test".to_string(), vec![]),
             (
                 "x".to_string(),
@@ -278,9 +274,7 @@ fn dev_deps_are_not_propagated() {
     assert_eq!(
         packages_and_deps(metadata.clone()),
         BTreeMap::from_iter([
-            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
-            // ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
             ("cairo_test".to_string(), vec![]),
             (
                 "x".to_string(),
@@ -546,9 +540,7 @@ fn workspace_simple() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
-            // ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
@@ -599,9 +591,7 @@ fn workspace_with_root() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
-            // ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
             (
                 "some_root".to_string(),
                 vec![
@@ -658,9 +648,7 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
-            // ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
@@ -706,9 +694,7 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
-            // ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
@@ -785,9 +771,7 @@ fn workspace_package_key_inheritance() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            // TODO(maciektr): Update corelib manifest to include cairo_test dep.
-            // ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("core".to_string(), vec![]),
+            ("core".to_string(), vec!["cairo_test".to_string()]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
