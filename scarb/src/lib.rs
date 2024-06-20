@@ -38,3 +38,4 @@ pub const DEFAULT_README_FILE_NAME: &str = "README.md";
 pub const DEFAULT_LICENSE_FILE_NAME: &str = "LICENSE";
 pub const STARKNET_PLUGIN_NAME: &str = "starknet";
 pub const TEST_PLUGIN_NAME: &str = "cairo_test";
+pub const CAIRO_RUN_PLUGIN_NAME: &str = "cairo_run";

@@ -93,6 +93,12 @@ pub fn resolve_workspace_with_opts(
                         .version_req(version_req.clone())
                         .source_id(SourceId::for_std())
                         .build(),
+                    ManifestDependency::builder()
+                        .kind(DepKind::Target(TargetKind::LIB))
+                        .name(PackageName::CAIRO_RUN_PLUGIN)
+                        .version_req(version_req.clone())
+                        .source_id(SourceId::for_std())
+                        .build(),
                 ],
             );
             if let Some(custom_source_patches) = ws.config().custom_source_patches() {
