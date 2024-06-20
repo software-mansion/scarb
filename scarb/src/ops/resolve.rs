@@ -1,3 +1,11 @@
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+
+use anyhow::{bail, Result};
+use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
+use futures::TryFutureExt;
+use indoc::formatdoc;
+use itertools::Itertools;
+
 use crate::compiler::plugin::{fetch_cairo_plugin, CairoPluginProps};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
@@ -20,12 +28,6 @@ use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::ops::{FeaturesOpts, FeaturesSelector};
 use crate::{resolver, DEFAULT_SOURCE_PATH};
-use anyhow::{bail, Result};
-use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
-use futures::TryFutureExt;
-use indoc::formatdoc;
-use itertools::Itertools;
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -90,6 +92,12 @@ pub fn resolve_workspace_with_opts(
                     ManifestDependency::builder()
                         .kind(DepKind::Target(TargetKind::TEST))
                         .name(PackageName::TEST_PLUGIN)
+                        .version_req(version_req.clone())
+                        .source_id(SourceId::for_std())
+                        .build(),
+                    ManifestDependency::builder()
+                        .kind(DepKind::Target(TargetKind::LIB))
+                        .name(PackageName::CAIRO_RUN_PLUGIN)
                         .version_req(version_req.clone())
                         .source_id(SourceId::for_std())
                         .build(),

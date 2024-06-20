@@ -76,9 +76,18 @@ impl Summary {
                 .version_req(DependencyVersionReq::exact(&cairo_version))
                 .build()
         });
+        static CAIRO_RUN_PLUGIN_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| {
+            // NOTE: Pin test plugin to exact version, because we know that's the only one we have.
+            let cairo_version = crate::version::get().cairo.version.parse().unwrap();
+            ManifestDependency::builder()
+                .name(PackageName::CAIRO_RUN_PLUGIN)
+                .version_req(DependencyVersionReq::exact(&cairo_version))
+                .build()
+        });
         let mut deps: Vec<&ManifestDependency> = Vec::new();
         if !self.no_core {
             deps.push(&CORE_DEPENDENCY);
+            deps.push(&CAIRO_RUN_PLUGIN_DEPENDENCY);
         }
         deps.into_iter()
     }

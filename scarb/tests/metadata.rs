@@ -150,14 +150,20 @@ fn local_dependencies() {
             // TODO(maciektr): Update corelib manifest to include cairo_test dep.
             // ("core".to_string(), vec!["cairo_test".to_string()]),
             ("core".to_string(), vec![]),
+            ("cairo_run".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "q".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec![
+                    "cairo_run".to_string(),
+                    "cairo_test".to_string(),
+                    "core".to_string(),
+                ]
             ),
             (
                 "x".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "y".to_string()
@@ -166,6 +172,7 @@ fn local_dependencies() {
             (
                 "y".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "q".to_string(),
@@ -175,6 +182,7 @@ fn local_dependencies() {
             (
                 "z".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "q".to_string(),
@@ -209,9 +217,11 @@ fn dev_dependencies() {
             // ("core".to_string(), vec!["cairo_test".to_string()]),
             ("core".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
+            ("cairo_run".to_string(), vec![]),
             (
                 "x".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "q".to_string(),
@@ -220,7 +230,11 @@ fn dev_dependencies() {
             ),
             (
                 "q".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec![
+                    "cairo_run".to_string(),
+                    "cairo_test".to_string(),
+                    "core".to_string(),
+                ]
             )
         ])
     );
@@ -281,10 +295,12 @@ fn dev_deps_are_not_propagated() {
             // TODO(maciektr): Update corelib manifest to include cairo_test dep.
             // ("core".to_string(), vec!["cairo_test".to_string()]),
             ("core".to_string(), vec![]),
+            ("cairo_run".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "x".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "dep2".to_string(),
@@ -293,6 +309,7 @@ fn dev_deps_are_not_propagated() {
             (
                 "dep2".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "dep1".to_string(),
@@ -337,6 +354,7 @@ fn no_dep() {
         BTreeMap::from_iter([(
             "x".to_string(),
             vec![
+                "cairo_run".to_string(),
                 "cairo_test".to_string(),
                 "core".to_string(),
                 "y".to_string()
@@ -482,6 +500,7 @@ fn tool_metadata_is_packaged_contained() {
             .collect::<BTreeMap<_, _>>(),
         BTreeMap::from_iter([
             ("core".to_string(), None),
+            ("cairo_run".to_string(), None),
             ("cairo_test".to_string(), None),
             (
                 "q".to_string(),
@@ -550,13 +569,19 @@ fn workspace_simple() {
             // ("core".to_string(), vec!["cairo_test".to_string()]),
             ("core".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
+            ("cairo_run".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec![
+                    "cairo_run".to_string(),
+                    "cairo_test".to_string(),
+                    "core".to_string(),
+                ]
             ),
             (
                 "second".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
@@ -605,6 +630,7 @@ fn workspace_with_root() {
             (
                 "some_root".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
@@ -613,17 +639,23 @@ fn workspace_with_root() {
             ),
             (
                 "first".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec![
+                    "cairo_run".to_string(),
+                    "cairo_test".to_string(),
+                    "core".to_string(),
+                ]
             ),
             (
                 "second".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
                 ]
             ),
             ("cairo_test".to_string(), vec![]),
+            ("cairo_run".to_string(), vec![]),
         ])
     )
 }
@@ -661,14 +693,20 @@ fn workspace_as_dep() {
             // TODO(maciektr): Update corelib manifest to include cairo_test dep.
             // ("core".to_string(), vec!["cairo_test".to_string()]),
             ("core".to_string(), vec![]),
+            ("cairo_run".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec![
+                    "cairo_run".to_string(),
+                    "cairo_test".to_string(),
+                    "core".to_string(),
+                ]
             ),
             (
                 "second".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
@@ -709,14 +747,20 @@ fn workspace_as_dep() {
             // TODO(maciektr): Update corelib manifest to include cairo_test dep.
             // ("core".to_string(), vec!["cairo_test".to_string()]),
             ("core".to_string(), vec![]),
+            ("cairo_run".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec![
+                    "cairo_run".to_string(),
+                    "cairo_test".to_string(),
+                    "core".to_string(),
+                ]
             ),
             (
                 "second".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
@@ -725,6 +769,7 @@ fn workspace_as_dep() {
             (
                 "third".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
@@ -734,6 +779,7 @@ fn workspace_as_dep() {
             (
                 "fourth".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "third".to_string()
@@ -788,10 +834,12 @@ fn workspace_package_key_inheritance() {
             // TODO(maciektr): Update corelib manifest to include cairo_test dep.
             // ("core".to_string(), vec!["cairo_test".to_string()]),
             ("core".to_string(), vec![]),
+            ("cairo_run".to_string(), vec![]),
             ("cairo_test".to_string(), vec![]),
             (
                 "first".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "some_dep".to_string(),
@@ -800,6 +848,7 @@ fn workspace_package_key_inheritance() {
             (
                 "second".to_string(),
                 vec![
+                    "cairo_run".to_string(),
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
@@ -807,7 +856,11 @@ fn workspace_package_key_inheritance() {
             ),
             (
                 "some_dep".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec![
+                    "cairo_run".to_string(),
+                    "cairo_test".to_string(),
+                    "core".to_string(),
+                ]
             )
         ])
     )
