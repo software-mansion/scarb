@@ -7,6 +7,7 @@ use cairo_lang_semantic::plugin::PluginSuite;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
+use crate::compiler::plugin::builtin::BuiltinCairoRunPlugin;
 use crate::core::{Package, PackageId, TargetKind, Workspace};
 
 use self::builtin::{BuiltinStarkNetPlugin, BuiltinTestPlugin};
@@ -62,6 +63,7 @@ impl CairoPluginRepository {
         //   library code to users etc.
         repo.add(Box::new(BuiltinStarkNetPlugin)).unwrap();
         repo.add(Box::new(BuiltinTestPlugin)).unwrap();
+        repo.add(Box::new(BuiltinCairoRunPlugin)).unwrap();
         repo
     }
 
