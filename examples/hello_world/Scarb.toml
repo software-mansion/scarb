@@ -8,4 +8,4 @@ edition = "2023_10"
 [dependencies]
 
 [dev-dependencies]
-cairo_test = "2.6.0"
+cairo_test = "2.7.0-rc.0"
