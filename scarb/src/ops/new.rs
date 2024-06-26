@@ -226,9 +226,10 @@ fn init_snforge(name: PackageName, target_dir: Utf8PathBuf, config: &Config) -> 
         .envs(get_env_vars(config, None)?)
         .stderr(Stdio::inherit())
         .stdout(Stdio::inherit())
-        .spawn()?;
+        .spawn()
+        .context("failed to spawn snforge")?;
 
-    process.wait()?;
+    process.wait().context("failed to execute snforge")?;
 
     Ok(())
 }
