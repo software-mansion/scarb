@@ -58,7 +58,8 @@ Features in Scarb provide a way to conditionally compile specific parts of the c
 
 ### `[features]` section
 
-A package defines a set of named features in the `[features]` section of `Scarb.toml` file. Each defined feature can list other features that should be enabled with it.
+A package defines a set of named features in the `[features]` section of `Scarb.toml` file. Each defined feature can
+list other features that should be enabled with it.
 
 For example, a package supporting various hash functions might define features like this:
 
@@ -69,9 +70,10 @@ pedersen = []
 keccak = []
 ```
 
-With these features set, conditional compilation (`cfg`) attributes can be used to selectively include code to support requested features during compile time. For instance:
+With these features set, conditional compilation (`cfg`) attributes can be used to selectively include code to support
+requested features during compile time. For instance:
 
-```rust
+```cairo
 // Conditionally include a module
 #[cfg(feature: 'poseidon')]
 mod poseidon;
@@ -83,7 +85,8 @@ fn hash_pedersen(value: felt252) -> felt252 {
 }
 ```
 
-To enable specific features, use the `--features` flag followed by a comma-separated list of features. For example, to build with only the `poseidon` and `pedersen` features enabled:
+To enable specific features, use the `--features` flag followed by a comma-separated list of features. For example, to
+build with only the `poseidon` and `pedersen` features enabled:
 
 ```
 scarb build --features poseidon,pedersen
@@ -93,7 +96,8 @@ Enabling all features can be done with the `--all-features` flag.
 
 ### `default` features
 
-By default, all features are disabled unless explicitly enabled. However, this behaviour can be changed by specifying a default feature in the `[features]` section, like so:
+By default, all features are disabled unless explicitly enabled. However, this behaviour can be changed by specifying a
+default feature in the `[features]` section, like so:
 
 ```toml
 [features]

@@ -1,5 +1,6 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
+import * as syntaxes from "./syntaxes.mjs";
 
 const base = "/scarb/";
 const absoluteBase = `https://docs.swmansion.com${base}`;
@@ -198,6 +199,10 @@ export default withMermaid(
 
     sitemap: {
       hostname: absoluteBase,
+    },
+
+    markdown: {
+      languages: [syntaxes.cairo],
     },
   }),
 );
