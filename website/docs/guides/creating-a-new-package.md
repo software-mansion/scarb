@@ -94,3 +94,21 @@ $ scarb build
 
 This will create a Sierra contract class artifact of your program in `target/dev/hello_world.contract_class.json`
 that can be deployed to Starknet network.
+
+### Creating a Starknet Foundry project
+
+If you intend to use Starknet Foundry Forge to test your contracts, you can create a Starknet Foundry project by
+running:
+
+```shell
+scarb new hello_world --snforge
+```
+
+This will create a Starknet package, with Forge already set up as your test runner. You can then execute Forge tests by
+simply running:
+
+```shell
+scarb test
+```
+
+You can also build your package, like a regular Starknet package.
