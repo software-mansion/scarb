@@ -4,6 +4,7 @@ use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use cairo_lang_utils::Upcast;
 use indoc::formatdoc;
 use itertools::Itertools;
+use smol_str::{SmolStr, ToSmolStr};
 
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
@@ -53,9 +54,29 @@ impl TryFrom<FeaturesSpec> for FeaturesOpts {
 
 #[derive(Debug)]
 pub struct CompileOpts {
-    pub include_targets: Vec<TargetKind>,
-    pub exclude_targets: Vec<TargetKind>,
+    pub include_target_kinds: Vec<TargetKind>,
+    pub exclude_target_kinds: Vec<TargetKind>,
+    pub include_target_names: Vec<SmolStr>,
     pub features: FeaturesOpts,
+}
+
+impl CompileOpts {
+    pub fn try_new(features: FeaturesSpec, test: bool, target_names: Vec<String>) -> Result<Self> {
+        let (include_targets, exclude_targets): (Vec<TargetKind>, Vec<TargetKind>) = if test {
+            (vec![TargetKind::TEST.clone()], Vec::new())
+        } else {
+            (Vec::new(), vec![TargetKind::TEST.clone()])
+        };
+        Ok(Self {
+            include_target_kinds: include_targets,
+            exclude_target_kinds: exclude_targets,
+            include_target_names: target_names
+                .into_iter()
+                .map(|v| v.to_smolstr())
+                .collect_vec(),
+            features: features.try_into()?,
+        })
+    }
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -87,12 +108,19 @@ where
         .into_iter()
         .filter(|cu| {
             let is_excluded = opts
-                .exclude_targets
+                .exclude_target_kinds
                 .contains(&cu.main_component().target_kind());
-            let is_included = opts.include_targets.is_empty()
+            let is_included = opts.include_target_kinds.is_empty()
                 || opts
-                    .include_targets
+                    .include_target_kinds
                     .contains(&cu.main_component().target_kind());
+            let is_included = is_included
+                && (opts.include_target_names.is_empty()
+                    || cu
+                        .main_component()
+                        .targets
+                        .iter()
+                        .any(|t| opts.include_target_names.contains(&t.name)));
             let is_selected = packages.contains(&cu.main_package_id());
             let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
             is_cairo_plugin || (is_selected && is_included && !is_excluded)
