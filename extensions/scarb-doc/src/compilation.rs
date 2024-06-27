@@ -53,6 +53,7 @@ fn package_compilation_unit(
         })
         .expect("failed to find compilation unit for package")
 }
+
 fn get_corelib(
     compilation_unit_metadata: &CompilationUnitMetadata,
 ) -> &CompilationUnitComponentMetadata {
