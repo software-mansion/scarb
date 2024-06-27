@@ -12,7 +12,10 @@ use cairo_lang_starknet::starknet_plugin_suite;
 use compilation::get_project_config;
 use types::Crate;
 
+use std::path::PathBuf;
+
 mod compilation;
+mod render;
 mod types;
 
 #[derive(Parser, Debug)]
@@ -20,6 +23,10 @@ mod types;
 struct Args {
     #[command(flatten)]
     packages_filter: PackagesFilter,
+
+    /// Generate the documentation.
+    #[arg(long)]
+    save: bool,
 }
 
 macro_rules! print_names {
@@ -52,6 +59,12 @@ fn main() -> Result<()> {
 
     print_module(&crate_.root_module);
     println!("{crate_:?}");
+
+    if args.save {
+        let path = PathBuf::from(crate_.root_module.name.as_str());
+        let doc_path = PathBuf::from("doc").join(path);
+        crate_.root_module.save_to_file_recursive(&doc_path)?;
+    }
 
     Ok(())
 }

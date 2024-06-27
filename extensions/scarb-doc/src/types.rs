@@ -7,8 +7,9 @@ use cairo_lang_defs::diagnostic_utils::StableLocation;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LookupItemId,
-    MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, StructId, TopLevelLanguageElementId,
-    TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId, UseId, VariantId,
+    MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId, StructId,
+    TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
+    UseId, VariantId,
 };
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
@@ -36,6 +37,8 @@ impl Crate {
 pub struct Module {
     pub module_id: ModuleId,
     pub full_path: String,
+    pub name: String,
+    pub doc: Option<String>,
 
     pub submodules: Vec<Module>,
     pub constants: Vec<Constant>,
@@ -125,9 +128,19 @@ impl Module {
             .map(|(id, _)| Self::new(db, ModuleId::Submodule(*id)))
             .collect();
 
+        let (name, doc) = match module_id {
+            ModuleId::CrateRoot(id) => (id.name(db).into(), None),
+            ModuleId::Submodule(id) => (
+                id.name(db).into(),
+                db.get_item_documentation(LookupItemId::ModuleItem(ModuleItemId::Submodule(id))),
+            ),
+        };
+
         Self {
             module_id,
             full_path: module_id.full_path(db),
+            name,
+            doc,
             submodules,
             constants,
             uses,
