@@ -6,7 +6,7 @@ use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_test_plugin::{TestCompilation, TestCompilationMetadata};
 use cairo_lang_test_runner::{CompiledTestRunner, RunProfilerConfig, TestRunConfig};
 use camino::Utf8PathBuf;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use indoc::formatdoc;
 
 use scarb_metadata::{
@@ -33,9 +33,31 @@ struct Args {
     #[arg(long, default_value_t = false)]
     ignored: bool,
 
+    /// Choose test kind to run.
+    #[arg(short, long)]
+    pub test_kind: Option<TestKind>,
+
     /// Whether to print resource usage after each test.
     #[arg(long, default_value_t = false)]
     print_resource_usage: bool,
+}
+
+#[derive(ValueEnum, Clone, Debug, Default)]
+pub enum TestKind {
+    Unit,
+    Integration,
+    #[default]
+    All,
+}
+
+impl TestKind {
+    pub fn matches(&self, kind: &str) -> bool {
+        match self {
+            TestKind::Unit => kind == "unit",
+            TestKind::Integration => kind == "integration",
+            TestKind::All => true,
+        }
+    }
 }
 
 fn main() -> Result<()> {
@@ -48,10 +70,30 @@ fn main() -> Result<()> {
 
     let matched = args.packages_filter.match_many(&metadata)?;
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
+    let test_kind = args.test_kind.unwrap_or_default();
+    let target_names = matched
+        .iter()
+        .flat_map(|package| {
+            find_testable_targets(package)
+                .iter()
+                .filter(|target| {
+                    test_kind.matches(
+                        target
+                            .params
+                            .get("test-type")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or_default(),
+                    )
+                })
+                .map(|t| t.name.clone())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
 
     ScarbCommand::new()
         .arg("build")
         .arg("--test")
+        .env("SCARB_TARGET_NAMES", target_names.clone().join(","))
         .env("SCARB_PACKAGES_FILTER", filter.to_env())
         .run()?;
 
@@ -66,8 +108,10 @@ fn main() -> Result<()> {
     let mut deduplicator = TargetGroupDeduplicator::default();
     for package in matched {
         println!("testing {} ...", package.name);
-
         for target in find_testable_targets(&package) {
+            if !target_names.contains(&target.name) {
+                continue;
+            }
             let name = target
                 .params
                 .get("group-id")
