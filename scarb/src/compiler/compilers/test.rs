@@ -1,7 +1,7 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_sierra::program::VersionedProgram;
-use cairo_lang_test_plugin::compile_test_prepared_db;
+use cairo_lang_test_plugin::{compile_test_prepared_db, TestsCompilationConfig};
 use tracing::trace_span;
 
 use crate::compiler::helpers::{
@@ -40,7 +40,15 @@ impl Compiler for TestCompiler {
 
         let test_compilation = {
             let _ = trace_span!("compile_test").enter();
-            compile_test_prepared_db(db, starknet, main_crate_ids, test_crate_ids)?
+            compile_test_prepared_db(
+                db,
+                TestsCompilationConfig {
+                    starknet,
+                    add_statements_functions: false,
+                },
+                main_crate_ids,
+                test_crate_ids,
+            )?
         };
 
         {
