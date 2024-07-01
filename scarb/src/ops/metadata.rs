@@ -67,7 +67,7 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
         .packages(packages)
         .compilation_units(compilation_units)
         .current_profile(ws.current_profile()?.to_string())
-        .profiles(ws.profile_names()?)
+        .profiles(ws.profile_names())
         .build()
         .unwrap())
 }
