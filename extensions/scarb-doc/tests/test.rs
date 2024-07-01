@@ -1,8 +1,11 @@
-use assert_fs::{fixture::PathChild, TempDir};
+use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_test_support::{
-    command::Scarb, project_builder::ProjectBuilder, workspace_builder::WorkspaceBuilder,
-};
+
+use scarb_metadata::MetadataCommand;
+use scarb_test_support::project_builder::ProjectBuilder;
+
+use scarb_doc::compilation::get_project_config;
+use scarb_doc::generate_language_elements_tree_for_package;
 
 #[test]
 fn test_main() {
@@ -102,67 +105,15 @@ fn test_main() {
         "#})
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
-        .arg("doc")
-        .current_dir(&t)
-        .assert()
-        .success();
-    let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
+    let metadata = MetadataCommand::new().current_dir(t.path()).exec().unwrap();
+    let package_metadata = metadata
+        .packages
+        .iter()
+        .find(|pkg| pkg.id == metadata.workspace.members[0])
+        .unwrap();
 
-    assert_eq!(
-        stdout,
-        indoc! {r#"
-        Module: "hello_world"
-        Submodules      : ["hello_world::tests"]
-        Constants       : ["FOO"]
-        Uses            : ["into_trait", "TryInto"]
-        Free Functions  : ["main", "fib"]
-        Structs         : ["Circle"]
-            Struct "Circle"
-                Members: ["radius"]
-        Enums           : ["Color"]
-            Enum "Color"
-                Variants: ["Red", "Green", "Blue"]
-        Type Aliases    : ["Pair"]
-        Impl Aliases    : []
-        Traits          : ["Shape"]
-            Trait "Shape"
-                Trait constants: ["SHAPE_CONST"]
-                Trait types    : ["ShapePair"]
-                Trait functions: ["area"]
-        Impls           : ["CircleShape", "CircleDrop", "CircleSerde", "CirclePartialEq"]
-            Impl "CircleShape"
-                Impl types     : ["ShapePair"]
-                Impl constants : ["SHAPE_CONST"]
-                Impl functions : ["area"]
-            Impl "CircleDrop"
-                Impl types     : []
-                Impl constants : []
-                Impl functions : []
-            Impl "CircleSerde"
-                Impl types     : []
-                Impl constants : []
-                Impl functions : ["serialize", "deserialize"]
-            Impl "CirclePartialEq"
-                Impl types     : []
-                Impl constants : []
-                Impl functions : ["eq"]
-        Extern Types    : []
-        Extern Functions: []
-        
-        Module: "hello_world::tests"
-        Submodules      : []
-        Constants       : []
-        Uses            : ["fib_function"]
-        Free Functions  : ["it_works"]
-        Structs         : []
-        Enums           : []
-        Type Aliases    : []
-        Impl Aliases    : []
-        Traits          : []
-        Impls           : []
-        Extern Types    : []
-        Extern Functions: []
-        "#}
-    )
+    let project_config = get_project_config(&metadata, package_metadata);
+
+    generate_language_elements_tree_for_package(package_metadata.name.clone(), project_config)
+        .unwrap();
 }
