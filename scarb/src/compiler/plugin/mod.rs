@@ -2,6 +2,7 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fmt;
 
+use crate::compiler::plugin::builtin::BuiltinTestAssertsPlugin;
 use anyhow::{anyhow, bail, Result};
 use cairo_lang_semantic::plugin::PluginSuite;
 use itertools::Itertools;
@@ -64,6 +65,7 @@ impl CairoPluginRepository {
         repo.add(Box::new(BuiltinStarkNetPlugin)).unwrap();
         repo.add(Box::new(BuiltinTestPlugin)).unwrap();
         repo.add(Box::new(BuiltinCairoRunPlugin)).unwrap();
+        repo.add(Box::new(BuiltinTestAssertsPlugin)).unwrap();
         repo
     }
 
