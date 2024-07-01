@@ -399,7 +399,7 @@ impl PackageRepository {
 }
 
 fn git_command() -> Command {
-    let mut cmd = Command::new("git");
+    let mut cmd = Command::new(gix_path::env::exe_invocation());
 
     // If Scarb is run by Git (for example, the `exec` command in `git rebase`),
     // the GIT_DIR is set by Git and will point to the wrong location (this takes precedence
