@@ -58,7 +58,16 @@ fn can_build_release() {
 #[test]
 fn defaults_to_dev() {
     let t = TempDir::new().unwrap();
-    ProjectBuilder::start().name("hello").build(&t);
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [profile.release]
+            inherits = "dev"
+            
+            [profile.dev]
+            inherits = "dev"
+        "#})
+        .build(&t);
 
     let metadata = Scarb::quick_snapbox()
         .args(["--json", "metadata", "--format-version", "1"])
