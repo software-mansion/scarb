@@ -18,13 +18,15 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
-    let package_metadata = args.packages_filter.match_one(&metadata)?;
+    let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
 
-    let project_config = get_project_config(&metadata, &package_metadata);
-    let crate_ =
-        generate_language_elements_tree_for_package(package_metadata.name, project_config)?;
+    for package_metadata in metadata_for_packages {
+        let project_config = get_project_config(&metadata, &package_metadata);
+        let crate_ =
+            generate_language_elements_tree_for_package(package_metadata.name, project_config)?;
 
-    println!("{crate_:?}");
+        println!("{crate_:?}");
+    }
 
     Ok(())
 }
