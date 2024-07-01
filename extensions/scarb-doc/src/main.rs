@@ -22,10 +22,8 @@ fn main() -> Result<()> {
 
     for package_metadata in metadata_for_packages {
         let project_config = get_project_config(&metadata, &package_metadata);
-        let crate_ =
+        let _crate_ =
             generate_language_elements_tree_for_package(package_metadata.name, project_config)?;
-
-        println!("{crate_:?}");
     }
 
     Ok(())
