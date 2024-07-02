@@ -154,7 +154,7 @@ impl ItemData {
         //     definition: db.get_item_signature(LookupItemId::ModuleItem(id)),
         //     text: node.as_syntax_node().get_text_without_trivia(db.upcast()),
         // }
-        todo!("fix")
+        todo!("TODO(piotmag769): fix")
     }
 }
 
