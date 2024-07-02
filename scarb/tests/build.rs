@@ -683,7 +683,7 @@ fn edition_must_exist() {
                    |
                  4 | edition = "2021"
                    |           ^^^^^^
-                 unknown variant `2021`, expected one of `2023_01`, `2023_10`, `2023_11`
+                 unknown variant `2021`, expected one of `2023_01`, `2023_10`, `2023_11`, `2024_07`
         "#});
 }
 
