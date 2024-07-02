@@ -4,8 +4,7 @@
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId, ImplDefId,
-    LookupItemId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId, StructId,
-    TopLevelLanguageElementId, TraitId, UseId,
+    ModuleId, ModuleItemId, ModuleTypeAliasId, StructId, TraitId, UseId,
 };
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
@@ -147,14 +146,15 @@ pub struct ItemData {
 }
 
 impl ItemData {
-    pub fn new(db: &dyn DefsGroup, id: ModuleItemId, node: &impl TypedSyntaxNode) -> Self {
-        Self {
-            name: id.name(db).into(),
-            full_path: id.full_path(db),
-            doc: db.get_item_documentation(LookupItemId::ModuleItem(id)),
-            definition: db.get_item_signature(LookupItemId::ModuleItem(id)),
-            text: node.as_syntax_node().get_text_without_trivia(db.upcast()),
-        }
+    pub fn new(_db: &dyn DefsGroup, _id: ModuleItemId, _node: &impl TypedSyntaxNode) -> Self {
+        // Self {
+        //     name: id.name(db).into(),
+        //     full_path: id.full_path(db),
+        //     doc: db.get_item_documentation(LookupItemId::ModuleItem(id)),
+        //     definition: db.get_item_signature(LookupItemId::ModuleItem(id)),
+        //     text: node.as_syntax_node().get_text_without_trivia(db.upcast()),
+        // }
+        todo!("fix")
     }
 }
 
