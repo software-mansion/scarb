@@ -62,7 +62,7 @@ impl Module {
                 signature: None,
                 full_path: module_id.full_path(db),
             },
-            ModuleId::Submodule(submodule_id) => ItemData::new(
+            ModuleId::Submodule(submodule_id) => ItemData::new_without_signature(
                 db,
                 submodule_id,
                 LookupItemId::ModuleItem(ModuleItemId::Submodule(submodule_id)),
@@ -160,7 +160,7 @@ impl Module {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ItemData {
     pub name: String,
     pub doc: Option<String>,
@@ -224,13 +224,19 @@ pub struct Use {
     pub item_data: ItemData,
 }
 
+// TODO: do we even want to document this?
 impl Use {
     pub fn new(db: &RootDatabase, id: UseId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, LookupItemId::ModuleItem(ModuleItemId::Use(id))),
+            // TODO: docs for `use` doesn't work.
+            item_data: ItemData::new_without_signature(
+                db,
+                id,
+                LookupItemId::ModuleItem(ModuleItemId::Use(id)),
+            ),
         }
     }
 }

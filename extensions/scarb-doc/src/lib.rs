@@ -9,7 +9,7 @@ use cairo_lang_starknet::starknet_plugin_suite;
 use types::Crate;
 
 pub mod compilation;
-mod types;
+pub mod types;
 
 pub fn generate_language_elements_tree_for_package(
     package_name: String,
