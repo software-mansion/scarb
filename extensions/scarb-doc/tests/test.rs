@@ -105,7 +105,10 @@ fn test_main() {
         "#})
         .build(&t);
 
-    let metadata = MetadataCommand::new().current_dir(t.path()).exec().unwrap();
+    let metadata = MetadataCommand::new()
+        .current_dir(t.path())
+        .exec()
+        .expect("Failed to obtain metadata");
     let package_metadata = metadata
         .packages
         .iter()
@@ -114,6 +117,11 @@ fn test_main() {
 
     let project_config = get_project_config(&metadata, package_metadata);
 
-    generate_language_elements_tree_for_package(package_metadata.name.clone(), project_config)
-        .unwrap();
+    let root_module =
+        generate_language_elements_tree_for_package(package_metadata.name.clone(), project_config)
+            .expect("Failed to generate language elements tree")
+            .root_module;
+
+    assert_eq!(root_module.item_data.full_path, "hello_world");
+    println!("{root_module:?}");
 }

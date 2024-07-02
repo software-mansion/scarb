@@ -1,23 +1,24 @@
 // TODO(drknzz): Remove when not needed.
 #![allow(dead_code)]
 
+use itertools::Itertools;
+
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::diagnostic_utils::StableLocation;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LookupItemId,
-    MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, StructId, TopLevelLanguageElementId,
-    TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId, UseId, VariantId,
+    MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId, StructId,
+    TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
+    UseId, VariantId,
 };
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
+use cairo_lang_syntax::node::ast;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::kind::SyntaxKind;
-use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
 use cairo_lang_utils::Upcast;
-use itertools::Itertools;
-use smol_str::SmolStr;
 
 #[derive(Clone, Debug)]
 pub struct Crate {
@@ -35,7 +36,7 @@ impl Crate {
 #[derive(Clone, Debug)]
 pub struct Module {
     pub module_id: ModuleId,
-    pub full_path: String,
+    pub item_data: ItemData,
 
     pub submodules: Vec<Module>,
     pub constants: Vec<Constant>,
@@ -53,6 +54,21 @@ pub struct Module {
 
 impl Module {
     pub fn new(db: &RootDatabase, module_id: ModuleId) -> Self {
+        // TODO: temporary before crate root module doc fetching works.
+        let item_data = match module_id {
+            ModuleId::CrateRoot(crate_id) => ItemData {
+                name: crate_id.name(db).to_string(),
+                doc: None,
+                signature: None,
+                full_path: module_id.full_path(db),
+            },
+            ModuleId::Submodule(submodule_id) => ItemData::new(
+                db,
+                submodule_id,
+                LookupItemId::ModuleItem(ModuleItemId::Submodule(submodule_id)),
+            ),
+        };
+
         let module_constants = db.module_constants(module_id).unwrap();
         let constants = module_constants
             .iter()
@@ -127,7 +143,7 @@ impl Module {
 
         Self {
             module_id,
-            full_path: module_id.full_path(db),
+            item_data,
             submodules,
             constants,
             uses,
@@ -148,39 +164,35 @@ impl Module {
 pub struct ItemData {
     pub name: String,
     pub doc: Option<String>,
-    pub signature: String,
-
+    pub signature: Option<String>,
     pub full_path: String,
-    pub text_without_trivia: String,
 }
 
 impl ItemData {
     pub fn new(
         db: &RootDatabase,
         id: impl TopLevelLanguageElementId,
-        node: impl TypedStablePtr,
         lookup_item_id: LookupItemId,
     ) -> Self {
         Self {
             name: id.name(db).into(),
             doc: db.get_item_documentation(lookup_item_id),
-            signature: db.get_item_signature(lookup_item_id),
+            signature: Some(db.get_item_signature(lookup_item_id)),
+
             full_path: id.full_path(db),
-            text_without_trivia: node.lookup(db).as_syntax_node().get_text_without_trivia(db),
         }
     }
 
-    pub fn new_without_docs_and_signature(
+    pub fn new_without_signature(
         db: &RootDatabase,
         id: impl TopLevelLanguageElementId,
-        node: impl TypedStablePtr,
+        lookup_item_id: LookupItemId,
     ) -> Self {
         Self {
             name: id.name(db).into(),
-            doc: None,
-            signature: String::new(),
+            doc: db.get_item_documentation(lookup_item_id),
+            signature: None,
             full_path: id.full_path(db),
-            text_without_trivia: node.lookup(db).as_syntax_node().get_text_without_trivia(db),
         }
     }
 }
@@ -199,12 +211,7 @@ impl Constant {
         Self {
             id,
             node,
-            item_data: ItemData::new(
-                db,
-                id,
-                node,
-                LookupItemId::ModuleItem(ModuleItemId::Constant(id)),
-            ),
+            item_data: ItemData::new(db, id, LookupItemId::ModuleItem(ModuleItemId::Constant(id))),
         }
     }
 }
@@ -223,12 +230,7 @@ impl Use {
         Self {
             id,
             node,
-            item_data: ItemData::new(
-                db,
-                id,
-                node,
-                LookupItemId::ModuleItem(ModuleItemId::Use(id)),
-            ),
+            item_data: ItemData::new(db, id, LookupItemId::ModuleItem(ModuleItemId::Use(id))),
         }
     }
 }
@@ -250,7 +252,6 @@ impl FreeFunction {
             item_data: ItemData::new(
                 db,
                 id,
-                node,
                 LookupItemId::ModuleItem(ModuleItemId::FreeFunction(id)),
             ),
         }
@@ -271,9 +272,17 @@ impl Struct {
     pub fn new(db: &RootDatabase, id: StructId) -> Self {
         let members = db.struct_members(id).unwrap();
 
+        let item_data = ItemData::new_without_signature(
+            db,
+            id,
+            LookupItemId::ModuleItem(ModuleItemId::Struct(id)),
+        );
+
         let members = members
             .iter()
-            .map(|(name, semantic_member)| Member::new(db, semantic_member.id, name))
+            .map(|(_name, semantic_member)| {
+                Member::new(db, semantic_member.id, item_data.full_path.clone())
+            })
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
@@ -281,12 +290,7 @@ impl Struct {
             id,
             node,
             members,
-            item_data: ItemData::new(
-                db,
-                id,
-                node,
-                LookupItemId::ModuleItem(ModuleItemId::Struct(id)),
-            ),
+            item_data,
         }
     }
 }
@@ -300,17 +304,20 @@ pub struct Member {
 }
 
 impl Member {
-    pub fn new(db: &RootDatabase, id: MemberId, name: &SmolStr) -> Self {
+    pub fn new(db: &RootDatabase, id: MemberId, struct_full_path: String) -> Self {
         let node = id.stable_ptr(db);
         let stable_location = StableLocation::new(node.0);
 
-        let mut item_data = ItemData::new_without_docs_and_signature(db, id, node);
+        let name = id.name(db).into();
+        // TODO: Replace with `id.full_path(db)` after it is fixed in the compiler.
+        let full_path = format!("{}::{}", struct_full_path, name);
 
-        item_data.full_path.push_str("::");
-        item_data.full_path.push_str(name.as_str());
-
-        item_data.signature = get_item_signature(db, &stable_location);
-        item_data.doc = get_item_documentation(db, &stable_location);
+        let item_data = ItemData {
+            name,
+            doc: get_item_documentation(db, &stable_location),
+            signature: None,
+            full_path,
+        };
 
         Self {
             id,
@@ -333,9 +340,15 @@ pub struct Enum {
 impl Enum {
     pub fn new(db: &RootDatabase, id: EnumId) -> Self {
         let variants = db.enum_variants(id).unwrap();
+        let item_data = ItemData::new_without_signature(
+            db,
+            id,
+            LookupItemId::ModuleItem(ModuleItemId::Enum(id)),
+        );
+
         let variants = variants
             .iter()
-            .map(|(name, variant_id)| Variant::new(db, *variant_id, name))
+            .map(|(_name, variant_id)| Variant::new(db, *variant_id, item_data.full_path.clone()))
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
@@ -343,12 +356,7 @@ impl Enum {
             id,
             node,
             variants,
-            item_data: ItemData::new(
-                db,
-                id,
-                node,
-                LookupItemId::ModuleItem(ModuleItemId::Enum(id)),
-            ),
+            item_data,
         }
     }
 }
@@ -362,17 +370,20 @@ pub struct Variant {
 }
 
 impl Variant {
-    pub fn new(db: &RootDatabase, id: VariantId, name: &SmolStr) -> Self {
+    pub fn new(db: &RootDatabase, id: VariantId, enum_full_path: String) -> Self {
         let node = id.stable_ptr(db);
         let stable_location = StableLocation::new(node.0);
 
-        let mut item_data = ItemData::new_without_docs_and_signature(db, id, node);
+        let name = id.name(db).into();
+        // TODO: Replace with `id.full_path(db)` after it is fixed in the compiler.
+        let full_path = format!("{}::{}", enum_full_path, name);
 
-        item_data.full_path.push_str("::");
-        item_data.full_path.push_str(name.as_str());
-
-        item_data.doc = get_item_documentation(db, &stable_location);
-        item_data.signature = get_item_signature(db, &stable_location);
+        let item_data = ItemData {
+            name,
+            doc: get_item_documentation(db, &stable_location),
+            signature: None,
+            full_path,
+        };
 
         Self {
             id,
@@ -399,7 +410,6 @@ impl TypeAlias {
             item_data: ItemData::new(
                 db,
                 id,
-                node,
                 LookupItemId::ModuleItem(ModuleItemId::TypeAlias(id)),
             ),
         }
@@ -423,7 +433,6 @@ impl ImplAlias {
             item_data: ItemData::new(
                 db,
                 id,
-                node,
                 LookupItemId::ModuleItem(ModuleItemId::ImplAlias(id)),
             ),
         }
@@ -469,12 +478,7 @@ impl Trait {
             trait_constants,
             trait_types,
             trait_functions,
-            item_data: ItemData::new(
-                db,
-                id,
-                node,
-                LookupItemId::ModuleItem(ModuleItemId::Trait(id)),
-            ),
+            item_data: ItemData::new(db, id, LookupItemId::ModuleItem(ModuleItemId::Trait(id))),
         }
     }
 }
@@ -493,10 +497,9 @@ impl TraitConstant {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_without_signature(
                 db,
                 id,
-                node,
                 LookupItemId::TraitItem(TraitItemId::Constant(id)),
             ),
         }
@@ -517,7 +520,11 @@ impl TraitType {
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, node, LookupItemId::TraitItem(TraitItemId::Type(id))),
+            item_data: ItemData::new_without_signature(
+                db,
+                id,
+                LookupItemId::TraitItem(TraitItemId::Type(id)),
+            ),
         }
     }
 }
@@ -536,12 +543,7 @@ impl TraitFunction {
         Self {
             id,
             node,
-            item_data: ItemData::new(
-                db,
-                id,
-                node,
-                LookupItemId::TraitItem(TraitItemId::Function(id)),
-            ),
+            item_data: ItemData::new(db, id, LookupItemId::TraitItem(TraitItemId::Function(id))),
         }
     }
 }
@@ -585,12 +587,7 @@ impl Impl {
             impl_types,
             impl_constants,
             impl_functions,
-            item_data: ItemData::new(
-                db,
-                id,
-                node,
-                LookupItemId::ModuleItem(ModuleItemId::Impl(id)),
-            ),
+            item_data: ItemData::new(db, id, LookupItemId::ModuleItem(ModuleItemId::Impl(id))),
         }
     }
 }
@@ -609,7 +606,7 @@ impl ImplType {
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, node, LookupItemId::ImplItem(ImplItemId::Type(id))),
+            item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id))),
         }
     }
 }
@@ -628,12 +625,7 @@ impl ImplConstant {
         Self {
             id,
             node,
-            item_data: ItemData::new(
-                db,
-                id,
-                node,
-                LookupItemId::ImplItem(ImplItemId::Constant(id)),
-            ),
+            item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Constant(id))),
         }
     }
 }
@@ -652,12 +644,7 @@ impl ImplFunction {
         Self {
             id,
             node,
-            item_data: ItemData::new(
-                db,
-                id,
-                node,
-                LookupItemId::ImplItem(ImplItemId::Function(id)),
-            ),
+            item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Function(id))),
         }
     }
 }
@@ -679,7 +666,6 @@ impl ExternType {
             item_data: ItemData::new(
                 db,
                 id,
-                node,
                 LookupItemId::ModuleItem(ModuleItemId::ExternType(id)),
             ),
         }
@@ -703,14 +689,13 @@ impl ExternFunction {
             item_data: ItemData::new(
                 db,
                 id,
-                node,
                 LookupItemId::ModuleItem(ModuleItemId::ExternFunction(id)),
             ),
         }
     }
 }
 
-// This function is temporarily copied until further modifications in cairo compiler are done.
+// TODO: This function is temporarily copied until further modifications in cairo compiler are done.
 fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) -> Option<String> {
     let doc = stable_location.syntax_node(db).get_text(db.upcast());
     let doc = doc
@@ -735,7 +720,7 @@ fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) 
     (!doc.is_empty()).then(|| doc.join("\n"))
 }
 
-// This function is temporarily copied until further modifications in cairo compiler are done.
+// TODO: This function is temporarily copied until further modifications in cairo compiler are done.
 fn get_item_signature(db: &dyn DefsGroup, stable_location: &StableLocation) -> String {
     let syntax_node = stable_location.syntax_node(db);
     let definition = match syntax_node.green_node(db.upcast()).kind {
