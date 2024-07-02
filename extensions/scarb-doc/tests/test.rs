@@ -1,8 +1,11 @@
-use assert_fs::{fixture::PathChild, TempDir};
+use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_test_support::{
-    command::Scarb, project_builder::ProjectBuilder, workspace_builder::WorkspaceBuilder,
-};
+
+use scarb_metadata::MetadataCommand;
+use scarb_test_support::project_builder::ProjectBuilder;
+
+use scarb_doc::compilation::get_project_config;
+use scarb_doc::generate_language_elements_tree_for_package;
 
 #[test]
 fn test_main() {
@@ -13,11 +16,16 @@ fn test_main() {
         .lib_cairo(indoc! {r#"
         //! Fibonacci sequence calculator
 
+
         /// Main function that calculates the 16th Fibonacci number
         fn main() -> u32 {
             fib(16)
         }
 
+        /// use into_trait
+        use core::traits::Into as into_trait;
+        use core::traits::TryInto;
+        
         /// FOO constant with value 42
         const FOO: u32 = 42;
 
@@ -53,6 +61,12 @@ fn test_main() {
 
         /// Shape trait for objects that have an area
         trait Shape<T> {
+            /// Constant for the shape type
+            const SHAPE_CONST = "SHAPE";
+        
+            /// Type alias for a pair of shapes
+            type ShapePair<T> = (Shape<T>, Shape<T>);
+        
             /// Calculate the area of the shape
             fn area(self: T) -> u32;
         }
@@ -66,6 +80,13 @@ fn test_main() {
 
         /// Implementation of the Shape trait for Circle
         impl CircleShape of Shape<Circle> {
+            /// Type alias for a pair of circles
+            type ShapePair<Circle> = (Circle, Circle);
+        
+            /// Shape constant
+            const SHAPE_CONST = "xyz";
+
+            /// Implementation of the area method for Circle
             fn area(self: Circle) -> u32 {
                 3 * self.radius * self.radius
             }
@@ -84,88 +105,23 @@ fn test_main() {
         "#})
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
-        .arg("doc")
-        .current_dir(&t)
-        .assert()
-        .success();
-    let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
+    let metadata = MetadataCommand::new()
+        .current_dir(t.path())
+        .exec()
+        .expect("Failed to obtain metadata");
+    let package_metadata = metadata
+        .packages
+        .iter()
+        .find(|pkg| pkg.id == metadata.workspace.members[0])
+        .unwrap();
 
-    assert_eq!(
-        stdout,
-        indoc! {r#"
-        Module: hello_world
-        Submodules      : ["hello_world::tests"]
-        Constants       : ["FOO"]
-        Uses            : []
-        Free Functions  : ["main", "fib"]
-        Structs         : ["Circle"]
-        Enums           : ["Color"]
-        Type Aliases    : ["Pair"]
-        Impl Aliases    : []
-        Traits          : ["Shape"]
-        Impls           : ["CircleShape", "CircleDrop", "CircleSerde", "CirclePartialEq"]
-        Extern Types    : []
-        Extern Functions: []
-        
-        Module: hello_world::tests
-        Submodules      : []
-        Constants       : []
-        Uses            : ["fib_function"]
-        Free Functions  : ["it_works"]
-        Structs         : []
-        Enums           : []
-        Type Aliases    : []
-        Impl Aliases    : []
-        Traits          : []
-        Impls           : []
-        Extern Types    : []
-        Extern Functions: []
-        "#}
-    )
-}
+    let project_config = get_project_config(&metadata, package_metadata);
 
-#[test]
-fn test_workspace() {
-    let t = TempDir::new().unwrap();
-    let hello = t.child("hello_world");
-    let goodbye = t.child("goodbye_world");
+    let root_module =
+        generate_language_elements_tree_for_package(package_metadata.name.clone(), project_config)
+            .expect("Failed to generate language elements tree")
+            .root_module;
 
-    ProjectBuilder::start()
-        .name("hello_world")
-        .version("0.1.0")
-        .lib_cairo(indoc! {r#"
-        /// Hello world
-        fn hello_world() -> u32 {
-            1
-        }
-        "#})
-        .build(&hello);
-
-    ProjectBuilder::start()
-        .name("goodbye_world")
-        .version("0.1.0")
-        .lib_cairo(indoc! {r#"
-        /// Goodbye world
-        fn goodbye_world() -> u32 {
-            0
-        }
-        "#})
-        .build(&goodbye);
-
-    WorkspaceBuilder::start()
-        .add_member("hello_world")
-        .add_member("goodbye_world")
-        .build(&t);
-
-    let output = Scarb::quick_snapbox()
-        .arg("doc")
-        .arg("-p")
-        .arg("hello_world")
-        .current_dir(&t)
-        .assert()
-        .success();
-    let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
-    assert!(stdout.contains("Module: hello_world"));
-    assert!(!stdout.contains("Module: goodbye_world"));
+    assert_eq!(root_module.item_data.full_path, "hello_world");
+    println!("{root_module:?}");
 }

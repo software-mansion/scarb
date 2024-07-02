@@ -9,21 +9,20 @@ use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{CrateSettings, Edition, ExperimentalFeaturesConfig};
 use cairo_lang_filesystem::ids::Directory;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
+use itertools::Itertools;
 
 const LIB_TARGET_KIND: &str = "lib";
+const STARKNET_TARGET_KIND: &str = "starknet-contract";
 const CORELIB_CRATE_NAME: &str = "core";
 
 pub fn get_project_config(
     metadata: &Metadata,
     package_metadata: &PackageMetadata,
 ) -> ProjectConfig {
-    let compilation_unit_metadata =
-        package_lib_compilation_unit(metadata, package_metadata.id.clone())
-            .expect("failed to find compilation unit for package");
+    let compilation_unit_metadata = package_compilation_unit(metadata, package_metadata.id.clone());
     let corelib = get_corelib(compilation_unit_metadata);
     let dependencies = get_dependencies(compilation_unit_metadata);
     let crates_config = get_crates_config(metadata, compilation_unit_metadata);
-
     ProjectConfig {
         base_path: package_metadata.root.clone().into(),
         corelib: Some(Directory::Real(corelib.source_root().into())),
@@ -34,16 +33,26 @@ pub fn get_project_config(
     }
 }
 
-fn package_lib_compilation_unit(
+fn package_compilation_unit(
     metadata: &Metadata,
     package_id: PackageId,
-) -> Option<&CompilationUnitMetadata> {
-    metadata
+) -> &CompilationUnitMetadata {
+    let relevant_cus = metadata
         .compilation_units
         .iter()
-        .find(|m| m.package == package_id && m.target.kind == LIB_TARGET_KIND)
-}
+        .filter(|m| m.package == package_id)
+        .collect_vec();
 
+    relevant_cus
+        .iter()
+        .find(|m| m.target.kind == LIB_TARGET_KIND)
+        .or_else(|| {
+            relevant_cus
+                .iter()
+                .find(|m| m.target.kind == STARKNET_TARGET_KIND)
+        })
+        .expect("failed to find compilation unit for package")
+}
 fn get_corelib(
     compilation_unit_metadata: &CompilationUnitMetadata,
 ) -> &CompilationUnitComponentMetadata {
