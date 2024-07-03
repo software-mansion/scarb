@@ -4571,6 +4571,7 @@ dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
+ "cairo-lang-lowering",
  "cairo-lang-macro",
  "cairo-lang-macro-stable",
  "cairo-lang-parser",
