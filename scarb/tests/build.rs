@@ -1,8 +1,9 @@
+use std::collections::HashMap;
 use std::fs;
 
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
-use cairo_lang_sierra::program::VersionedProgram;
+use cairo_lang_sierra::program::{StatementIdx, VersionedProgram};
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use indoc::indoc;
 use predicates::prelude::*;
@@ -1080,31 +1081,33 @@ fn add_statements_functions_debug_info() {
     let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
     let contract_sierra = serde_json::from_str::<ContractClass>(&contract_sierra_string).unwrap();
 
+    let debug_info = lib_sierra
+        .into_v1()
+        .unwrap()
+        .debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-profiler")
+        .expect("Expected cairo-profiler annotations to exist")
+        .get("statements_functions")
+        .expect("Expected statements_functions info to exist");
     assert!(
-        lib_sierra
-            .into_v1()
-            .unwrap()
-            .debug_info
-            .expect("Expected debug info to exist")
-            .annotations
-            .get("github.com/software-mansion/cairo-profiler")
-            .expect("Expected cairo-profiler annotations to exist")
-            .get("statements_functions")
-            .expect("Expected statements_functions info to exist")
-            .is_object(),
+        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
         "Expected statements_functions info to be a map"
     );
 
+    let debug_info = contract_sierra
+        .sierra_program_debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-profiler")
+        .expect("Expected cairo-profiler annotations to exist")
+        .get("statements_functions")
+        .expect("Expected statements_functions info to exist");
     assert!(
-        contract_sierra
-            .sierra_program_debug_info
-            .expect("Expected debug info to exist")
-            .annotations
-            .get("github.com/software-mansion/cairo-profiler")
-            .expect("Expected cairo-profiler annotations to exist")
-            .get("statements_functions")
-            .expect("Expected statements_functions info to exist")
-            .is_object(),
+        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
         "Expected statements_functions info to be a map"
     );
 }
@@ -1178,18 +1181,19 @@ fn add_statements_functions_debug_info_to_tests() {
         .read_to_string();
     let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
 
+    let debug_info = lib_sierra
+        .into_v1()
+        .unwrap()
+        .debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-profiler")
+        .expect("Expected cairo-profiler annotations to exist")
+        .get("statements_functions")
+        .expect("Expected statements_functions info to exist");
     assert!(
-        lib_sierra
-            .into_v1()
-            .unwrap()
-            .debug_info
-            .expect("Expected debug info to exist")
-            .annotations
-            .get("github.com/software-mansion/cairo-profiler")
-            .expect("Expected cairo-profiler annotations to exist")
-            .get("statements_functions")
-            .expect("Expected statements_functions info to exist")
-            .is_object(),
+        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
         "Expected statements_functions info to be a map"
     );
 }
