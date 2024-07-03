@@ -4,8 +4,10 @@
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId, ImplDefId,
-    ModuleId, ModuleItemId, ModuleTypeAliasId, StructId, TraitId, UseId,
+    LookupItemId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId, StructId,
+    TopLevelLanguageElementId, TraitId, UseId,
 };
+use cairo_lang_doc::db::DocGroup;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 
@@ -15,7 +17,7 @@ pub struct Crate {
 }
 
 impl Crate {
-    pub fn new(db: &dyn DefsGroup, crate_id: CrateId) -> Self {
+    pub fn new(db: &dyn DocGroup, crate_id: CrateId) -> Self {
         Self {
             root_module: Module::new(db, ModuleId::CrateRoot(crate_id)),
         }
@@ -42,74 +44,75 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn new(db: &dyn DefsGroup, module_id: ModuleId) -> Self {
-        let module_constants = db.module_constants(module_id).unwrap();
+    pub fn new(db: &dyn DocGroup, module_id: ModuleId) -> Self {
+        let defs_db: &dyn DefsGroup = db.upcast();
+        let module_constants = defs_db.module_constants(module_id).unwrap();
         let constants = module_constants
             .iter()
             .map(|(id, node)| Constant::new(db, *id, node))
             .collect();
 
-        let module_uses = db.module_uses(module_id).unwrap();
+        let module_uses = defs_db.module_uses(module_id).unwrap();
         let uses = module_uses
             .iter()
             .map(|(id, node)| Use::new(db, *id, node))
             .collect();
 
-        let module_free_functions = db.module_free_functions(module_id).unwrap();
+        let module_free_functions = defs_db.module_free_functions(module_id).unwrap();
         let free_functions = module_free_functions
             .iter()
             .map(|(id, node)| FreeFunction::new(db, *id, node))
             .collect();
 
-        let module_structs = db.module_structs(module_id).unwrap();
+        let module_structs = defs_db.module_structs(module_id).unwrap();
         let structs = module_structs
             .iter()
             .map(|(id, node)| Struct::new(db, *id, node))
             .collect();
 
-        let module_enums = db.module_enums(module_id).unwrap();
+        let module_enums = defs_db.module_enums(module_id).unwrap();
         let enums = module_enums
             .iter()
             .map(|(id, node)| Enum::new(db, *id, node))
             .collect();
 
-        let module_type_aliases = db.module_type_aliases(module_id).unwrap();
+        let module_type_aliases = defs_db.module_type_aliases(module_id).unwrap();
         let type_aliases = module_type_aliases
             .iter()
             .map(|(id, node)| TypeAlias::new(db, *id, node))
             .collect();
 
-        let module_impl_aliases = db.module_impl_aliases(module_id).unwrap();
+        let module_impl_aliases = defs_db.module_impl_aliases(module_id).unwrap();
         let impl_aliases = module_impl_aliases
             .iter()
             .map(|(id, node)| ImplAlias::new(db, *id, node))
             .collect();
 
-        let module_traits = db.module_traits(module_id).unwrap();
+        let module_traits = defs_db.module_traits(module_id).unwrap();
         let traits = module_traits
             .iter()
             .map(|(id, node)| Trait::new(db, *id, node))
             .collect();
 
-        let module_impls = db.module_impls(module_id).unwrap();
+        let module_impls = defs_db.module_impls(module_id).unwrap();
         let impls = module_impls
             .iter()
             .map(|(id, node)| Impl::new(db, *id, node))
             .collect();
 
-        let module_extern_types = db.module_extern_types(module_id).unwrap();
+        let module_extern_types = defs_db.module_extern_types(module_id).unwrap();
         let extern_types = module_extern_types
             .iter()
             .map(|(id, node)| ExternType::new(db, *id, node))
             .collect();
 
-        let module_extern_functions = db.module_extern_functions(module_id).unwrap();
+        let module_extern_functions = defs_db.module_extern_functions(module_id).unwrap();
         let extern_functions = module_extern_functions
             .iter()
             .map(|(id, node)| ExternFunction::new(db, *id, node))
             .collect();
 
-        let module_submodules = db.module_submodules(module_id).unwrap();
+        let module_submodules = defs_db.module_submodules(module_id).unwrap();
         let submodules = module_submodules
             .iter()
             .map(|(id, _node)| Self::new(db, ModuleId::Submodule(*id)))
@@ -117,7 +120,7 @@ impl Module {
 
         Self {
             module_id,
-            full_path: module_id.full_path(db),
+            full_path: module_id.full_path(defs_db),
             submodules,
             constants,
             uses,
@@ -146,15 +149,15 @@ pub struct ItemData {
 }
 
 impl ItemData {
-    pub fn new(_db: &dyn DefsGroup, _id: ModuleItemId, _node: &impl TypedSyntaxNode) -> Self {
-        // Self {
-        //     name: id.name(db).into(),
-        //     full_path: id.full_path(db),
-        //     doc: db.get_item_documentation(LookupItemId::ModuleItem(id)),
-        //     definition: db.get_item_signature(LookupItemId::ModuleItem(id)),
-        //     text: node.as_syntax_node().get_text_without_trivia(db.upcast()),
-        // }
-        todo!("TODO(piotmag769): fix")
+    pub fn new(db: &dyn DocGroup, id: ModuleItemId, node: &impl TypedSyntaxNode) -> Self {
+        let defs_db = db.upcast();
+        Self {
+            name: id.name(defs_db).into(),
+            full_path: id.full_path(defs_db),
+            doc: db.get_item_documentation(LookupItemId::ModuleItem(id)),
+            definition: db.get_item_signature(LookupItemId::ModuleItem(id)),
+            text: node.as_syntax_node().get_text_without_trivia(db.upcast()),
+        }
     }
 }
 
@@ -167,7 +170,7 @@ pub struct Constant {
 }
 
 impl Constant {
-    pub fn new(db: &dyn DefsGroup, id: ConstantId, node: &ast::ItemConstant) -> Self {
+    pub fn new(db: &dyn DocGroup, id: ConstantId, node: &ast::ItemConstant) -> Self {
         Self {
             id,
             node: node.stable_ptr(),
@@ -185,7 +188,7 @@ pub struct Use {
 }
 
 impl Use {
-    pub fn new(db: &dyn DefsGroup, id: UseId, node: &ast::UsePathLeaf) -> Self {
+    pub fn new(db: &dyn DocGroup, id: UseId, node: &ast::UsePathLeaf) -> Self {
         Self {
             id,
             node: node.stable_ptr(),
@@ -203,7 +206,7 @@ pub struct FreeFunction {
 }
 
 impl FreeFunction {
-    pub fn new(db: &dyn DefsGroup, id: FreeFunctionId, node: &ast::FunctionWithBody) -> Self {
+    pub fn new(db: &dyn DocGroup, id: FreeFunctionId, node: &ast::FunctionWithBody) -> Self {
         Self {
             id,
             node: node.stable_ptr(),
@@ -221,7 +224,7 @@ pub struct Struct {
 }
 
 impl Struct {
-    pub fn new(db: &dyn DefsGroup, id: StructId, node: &ast::ItemStruct) -> Self {
+    pub fn new(db: &dyn DocGroup, id: StructId, node: &ast::ItemStruct) -> Self {
         Self {
             id,
             node: node.stable_ptr(),
@@ -239,7 +242,7 @@ pub struct Enum {
 }
 
 impl Enum {
-    pub fn new(db: &dyn DefsGroup, id: EnumId, node: &ast::ItemEnum) -> Self {
+    pub fn new(db: &dyn DocGroup, id: EnumId, node: &ast::ItemEnum) -> Self {
         Self {
             id,
             node: node.stable_ptr(),
@@ -257,7 +260,7 @@ pub struct TypeAlias {
 }
 
 impl TypeAlias {
-    pub fn new(db: &dyn DefsGroup, id: ModuleTypeAliasId, node: &ast::ItemTypeAlias) -> Self {
+    pub fn new(db: &dyn DocGroup, id: ModuleTypeAliasId, node: &ast::ItemTypeAlias) -> Self {
         Self {
             id,
             node: node.stable_ptr(),
@@ -275,7 +278,7 @@ pub struct ImplAlias {
 }
 
 impl ImplAlias {
-    pub fn new(db: &dyn DefsGroup, id: ImplAliasId, node: &ast::ItemImplAlias) -> Self {
+    pub fn new(db: &dyn DocGroup, id: ImplAliasId, node: &ast::ItemImplAlias) -> Self {
         Self {
             id,
             node: node.stable_ptr(),
@@ -293,7 +296,7 @@ pub struct Trait {
 }
 
 impl Trait {
-    pub fn new(db: &dyn DefsGroup, id: TraitId, node: &ast::ItemTrait) -> Self {
+    pub fn new(db: &dyn DocGroup, id: TraitId, node: &ast::ItemTrait) -> Self {
         Self {
             id,
             node: node.stable_ptr(),
@@ -311,7 +314,7 @@ pub struct Impl {
 }
 
 impl Impl {
-    pub fn new(db: &dyn DefsGroup, id: ImplDefId, node: &ast::ItemImpl) -> Self {
+    pub fn new(db: &dyn DocGroup, id: ImplDefId, node: &ast::ItemImpl) -> Self {
         Self {
             id,
             node: node.stable_ptr(),
@@ -329,7 +332,7 @@ pub struct ExternType {
 }
 
 impl ExternType {
-    pub fn new(db: &dyn DefsGroup, id: ExternTypeId, node: &ast::ItemExternType) -> Self {
+    pub fn new(db: &dyn DocGroup, id: ExternTypeId, node: &ast::ItemExternType) -> Self {
         Self {
             id,
             node: node.stable_ptr(),
@@ -347,7 +350,7 @@ pub struct ExternFunction {
 }
 
 impl ExternFunction {
-    pub fn new(db: &dyn DefsGroup, id: ExternFunctionId, node: &ast::ItemExternFunction) -> Self {
+    pub fn new(db: &dyn DocGroup, id: ExternFunctionId, node: &ast::ItemExternFunction) -> Self {
         Self {
             id,
             node: node.stable_ptr(),

@@ -5,7 +5,6 @@ use scarb_test_support::{
 };
 
 #[test]
-#[ignore = "TODO(piotmag769): fix"]
 fn test_main() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -127,7 +126,6 @@ fn test_main() {
 }
 
 #[test]
-#[ignore = "TODO(piotmag769): fix"]
 fn test_workspace() {
     let t = TempDir::new().unwrap();
     let hello = t.child("hello_world");
