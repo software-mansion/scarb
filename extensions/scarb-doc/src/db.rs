@@ -3,6 +3,7 @@ use cairo_lang_compiler::project::{
 };
 use cairo_lang_defs::db::{DefsDatabase, DefsGroup};
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
+use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
     init_files_group, AsFilesGroupMut, FilesDatabase, FilesGroup, CORELIB_CRATE_NAME,
 };
@@ -37,6 +38,7 @@ impl ScarbDocDatabase {
 
         init_files_group(&mut db);
 
+        db.set_cfg_set(Self::initial_cfg_set().into());
         let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
             .into_iter()
             .fold(PluginSuite::default(), |mut acc, suite| {
@@ -51,6 +53,10 @@ impl ScarbDocDatabase {
         }
 
         db
+    }
+
+    fn initial_cfg_set() -> CfgSet {
+        CfgSet::from_iter([Cfg::name("doc")])
     }
 
     fn apply_plugin_suite(&mut self, plugin_suite: PluginSuite) {
