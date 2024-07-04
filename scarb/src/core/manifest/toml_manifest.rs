@@ -24,8 +24,8 @@ use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Targe
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{
-    DepKind, DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName,
-    TargetKind, TestTargetProps, TestTargetType,
+    DepKind, DependencyVersionReq, InliningStrategy, ManifestBuilder, ManifestCompilerConfig,
+    PackageName, TargetKind, TestTargetProps, TestTargetType,
 };
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
@@ -320,6 +320,8 @@ pub struct TomlCairo {
     /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
     /// This feature is unstable and is subject to change.
     pub unstable_add_statements_functions_debug_info: Option<bool>,
+    /// Inlining strategy.
+    pub inlining_strategy: Option<InliningStrategy>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
@@ -834,6 +836,9 @@ impl TomlManifest {
         if let Some(cairo) = profile_definition.cairo {
             if let Some(sierra_replace_ids) = cairo.sierra_replace_ids {
                 compiler_config.sierra_replace_ids = sierra_replace_ids;
+            }
+            if let Some(inlining_strategy) = cairo.inlining_strategy {
+                compiler_config.inlining_strategy = inlining_strategy;
             }
             if let Some(allow_warnings) = cairo.allow_warnings {
                 compiler_config.allow_warnings = allow_warnings;

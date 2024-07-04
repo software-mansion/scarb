@@ -317,7 +317,7 @@ fn can_use_shortcuts_in_scripts() {
 }
 
 #[test]
-fn sierra_replace_ids_defaults_true_in_dev() {
+fn compiler_config_defaults_in_dev() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
@@ -335,6 +335,14 @@ fn sierra_replace_ids_defaults_true_in_dev() {
             .unwrap()
             .as_bool()
             .unwrap());
+        assert_eq!(
+            compiler_config
+                .get("inlining_strategy")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "default"
+        );
     }
 }
 
@@ -376,6 +384,7 @@ fn compiler_config_set_for_all_profiles() {
             r#"
             [cairo]
             sierra-replace-ids = true
+            inlining-strategy = "avoid"
 
             [profile.some-profile]
             "#,
@@ -396,6 +405,14 @@ fn compiler_config_set_for_all_profiles() {
             .unwrap()
             .as_bool()
             .unwrap());
+        assert_eq!(
+            compiler_config
+                .get("inlining_strategy")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "avoid"
+        );
     }
 
     let metadata = Scarb::quick_snapbox()
@@ -412,6 +429,14 @@ fn compiler_config_set_for_all_profiles() {
             .unwrap()
             .as_bool()
             .unwrap());
+        assert_eq!(
+            compiler_config
+                .get("inlining_strategy")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "avoid"
+        );
     }
 
     let metadata = Scarb::quick_snapbox()
@@ -435,6 +460,14 @@ fn compiler_config_set_for_all_profiles() {
             .unwrap()
             .as_bool()
             .unwrap());
+        assert_eq!(
+            compiler_config
+                .get("inlining_strategy")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "avoid"
+        );
     }
 }
 

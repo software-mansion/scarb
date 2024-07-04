@@ -11,7 +11,7 @@ use serde::Serialize;
 use std::io::{BufWriter, Write};
 
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
-use crate::core::Workspace;
+use crate::core::{InliningStrategy, Workspace};
 use crate::flock::Filesystem;
 
 pub fn build_compiler_config<'c>(
@@ -51,10 +51,30 @@ pub fn build_compiler_config<'c>(
             diagnostics_reporter
         },
         replace_ids: unit.compiler_config.sierra_replace_ids,
+        inlining_strategy: unit.compiler_config.inlining_strategy.clone().into(),
         add_statements_functions: unit
             .compiler_config
             .unstable_add_statements_functions_debug_info,
         ..CompilerConfig::default()
+    }
+}
+
+impl From<InliningStrategy> for cairo_lang_lowering::utils::InliningStrategy {
+    fn from(value: InliningStrategy) -> Self {
+        match value {
+            InliningStrategy::Default => cairo_lang_lowering::utils::InliningStrategy::Default,
+            InliningStrategy::Avoid => cairo_lang_lowering::utils::InliningStrategy::Avoid,
+        }
+    }
+}
+
+#[allow(unused)]
+impl From<cairo_lang_lowering::utils::InliningStrategy> for InliningStrategy {
+    fn from(value: cairo_lang_lowering::utils::InliningStrategy) -> Self {
+        match value {
+            cairo_lang_lowering::utils::InliningStrategy::Default => InliningStrategy::Default,
+            cairo_lang_lowering::utils::InliningStrategy::Avoid => InliningStrategy::Avoid,
+        }
     }
 }
 
