@@ -1,13 +1,22 @@
 use assert_fs::TempDir;
 use indoc::indoc;
+use std::env;
 use std::iter::zip;
+use std::path::PathBuf;
 
 use scarb_metadata::MetadataCommand;
+use scarb_test_support::cargo::cargo_bin;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 use scarb_doc::compilation::get_project_config;
 use scarb_doc::generate_language_elements_tree_for_package;
 use scarb_doc::types::ItemData;
+
+fn scarb_bin() -> PathBuf {
+    env::var_os("SCARB_TEST_BIN")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| cargo_bin("scarb"))
+}
 
 #[test]
 fn integration_test() {
@@ -109,6 +118,7 @@ fn integration_test() {
         .build(&t);
 
     let metadata = MetadataCommand::new()
+        .scarb_path(scarb_bin())
         .current_dir(t.path())
         .exec()
         .expect("Failed to obtain metadata");
@@ -340,6 +350,4 @@ fn integration_test() {
         4,
         "Traits from derive are not present"
     );
-
-    t.close().unwrap();
 }
