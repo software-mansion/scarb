@@ -1,8 +1,9 @@
+use std::collections::HashMap;
 use std::fs;
 
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
-use cairo_lang_sierra::program::VersionedProgram;
+use cairo_lang_sierra::program::{StatementIdx, VersionedProgram};
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use indoc::indoc;
 use predicates::prelude::*;
@@ -683,7 +684,7 @@ fn edition_must_exist() {
                    |
                  4 | edition = "2021"
                    |           ^^^^^^
-                 unknown variant `2021`, expected one of `2023_01`, `2023_10`, `2023_11`
+                 unknown variant `2021`, expected one of `2023_01`, `2023_10`, `2023_11`, `2024_07`
         "#});
 }
 
@@ -1080,31 +1081,119 @@ fn add_statements_functions_debug_info() {
     let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
     let contract_sierra = serde_json::from_str::<ContractClass>(&contract_sierra_string).unwrap();
 
+    let debug_info = lib_sierra
+        .into_v1()
+        .unwrap()
+        .debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-profiler")
+        .expect("Expected cairo-profiler annotations to exist")
+        .get("statements_functions")
+        .expect("Expected statements_functions info to exist");
     assert!(
-        lib_sierra
-            .into_v1()
-            .unwrap()
-            .debug_info
-            .expect("Expected debug info to exist")
-            .annotations
-            .get("github.com/software-mansion/cairo-profiler")
-            .expect("Expected cairo-profiler annotations to exist")
-            .get("statements_functions")
-            .expect("Expected statements_functions info to exist")
-            .is_object(),
+        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
         "Expected statements_functions info to be a map"
     );
 
+    let debug_info = contract_sierra
+        .sierra_program_debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-profiler")
+        .expect("Expected cairo-profiler annotations to exist")
+        .get("statements_functions")
+        .expect("Expected statements_functions info to exist");
     assert!(
-        contract_sierra
-            .sierra_program_debug_info
-            .expect("Expected debug info to exist")
-            .annotations
-            .get("github.com/software-mansion/cairo-profiler")
-            .expect("Expected cairo-profiler annotations to exist")
-            .get("statements_functions")
-            .expect("Expected statements_functions info to exist")
-            .is_object(),
+        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
+        "Expected statements_functions info to be a map"
+    );
+}
+
+#[test]
+fn add_statements_functions_debug_info_to_tests() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r##"
+            #[starknet::interface]
+            pub trait IHelloStarknet<TContractState> {
+                fn increase_balance(ref self: TContractState, amount: felt252);
+                fn get_balance(self: @TContractState) -> felt252;
+            }
+
+            #[starknet::contract]
+            mod HelloStarknet {
+                #[storage]
+                struct Storage {
+                    balance: felt252,
+                }
+
+                #[abi(embed_v0)]
+                impl HelloStarknetImpl of super::IHelloStarknet<ContractState> {
+                    fn increase_balance(ref self: ContractState, amount: felt252) {
+                        assert(amount != 0, 'Amount cannot be 0');
+                        self.balance.write(self.balance.read() + amount);
+                    }
+
+                    fn get_balance(self: @ContractState) -> felt252 {
+                        self.balance.read()
+                    }
+                }
+            }
+
+            fn foo(mut shape: Span<usize>) -> usize {
+                let mut result: usize = 1;
+
+                loop {
+                    match shape.pop_front() {
+                        Option::Some(item) => { result *= *item; },
+                        Option::None => { break; }
+                    };
+                };
+
+                result
+            }
+
+            fn main() -> usize {
+                foo(array![1, 2].span())
+            }
+        "##})
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+
+            [cairo]
+            unstable-add-statements-functions-debug-info = true
+        "#})
+        .dep_starknet()
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lib_sierra_string = t
+        .child("target/dev/hello_unittest.test.sierra.json")
+        .read_to_string();
+    let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
+
+    let debug_info = lib_sierra
+        .into_v1()
+        .unwrap()
+        .debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-profiler")
+        .expect("Expected cairo-profiler annotations to exist")
+        .get("statements_functions")
+        .expect("Expected statements_functions info to exist");
+    assert!(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
         "Expected statements_functions info to be a map"
     );
 }

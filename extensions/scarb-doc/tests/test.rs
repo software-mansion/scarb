@@ -140,7 +140,7 @@ fn integration_test() {
         tests_submodule.item_data,
         ItemData {
             name: "tests".to_string(),
-            doc: Some("Tests module".to_string()),
+            doc: Some("Tests module\n".to_string()),
             signature: None,
             full_path: "hello_world::tests".to_string(),
         }
@@ -151,7 +151,7 @@ fn integration_test() {
         free_func_in_submodule.item_data,
         ItemData {
             name: "it_works".to_string(),
-            doc: Some("Really\nworks.".to_string()),
+            doc: Some("Really\nworks.\n".to_string()),
             signature: Some("fn it_works()".to_string()),
             full_path: "hello_world::tests::it_works".to_string(),
         }
@@ -162,7 +162,7 @@ fn integration_test() {
         constant.item_data,
         ItemData {
             name: "FOO".to_string(),
-            doc: Some("FOO constant with value 42".to_string()),
+            doc: Some("FOO constant with value 42\n".to_string()),
             signature: Some("const FOO: u32 = 42;".to_string()),
             full_path: "hello_world::FOO".to_string(),
         }
@@ -173,7 +173,7 @@ fn integration_test() {
         main_function.item_data,
         ItemData {
             name: "main".to_string(),
-            doc: Some("Fibonacci sequence calculator\nMain function that calculates the 16th Fibonacci number".to_string()),
+            doc: Some("Fibonacci sequence calculator\nMain function that calculates the 16th Fibonacci number\n".to_string()),
             signature: Some("fn main() -> u32".to_string()),
             full_path: "hello_world::main".to_string(),
         }
@@ -196,7 +196,7 @@ fn integration_test() {
         circle_struct.item_data,
         ItemData {
             name: "Circle".to_string(),
-            doc: Some("Circle struct with radius field".to_string()),
+            doc: Some("Circle struct with radius field\n".to_string()),
             signature: None,
             full_path: "hello_world::Circle".to_string(),
         }
@@ -218,7 +218,7 @@ fn integration_test() {
         color_enum.item_data,
         ItemData {
             name: "Color".to_string(),
-            doc: Some("Color enum with Red, Green, and Blue variants".to_string()),
+            doc: Some("Color enum with Red, Green, and Blue variants\n".to_string()),
             signature: None,
             full_path: "hello_world::Color".to_string(),
         }
@@ -241,7 +241,7 @@ fn integration_test() {
         pair_type_alias.item_data,
         ItemData {
             name: "Pair".to_string(),
-            doc: Some("Pair type alias for a tuple of two u32 values".to_string()),
+            doc: Some("Pair type alias for a tuple of two u32 values\n".to_string()),
             signature: Some("type Pair = (u32, u32);".to_string()),
             full_path: "hello_world::Pair".to_string(),
         }
@@ -252,8 +252,8 @@ fn integration_test() {
         shape_trait.item_data,
         ItemData {
             name: "Shape".to_string(),
-            doc: Some("Shape trait for objects that have an area".to_string()),
-            signature: Some(" trait Shape<T>".to_string()), // FIXME: trim whitespaces in compiler
+            doc: Some("Shape trait for objects that have an area\n".to_string()),
+            signature: Some("trait Shape<T>".to_string()), // FIXME: trim whitespaces in compiler
             full_path: "hello_world::Shape".to_string(),
         }
     );
@@ -263,7 +263,7 @@ fn integration_test() {
         trait_constant.item_data,
         ItemData {
             name: "SHAPE_CONST".to_string(),
-            doc: Some("Constant for the shape type".to_string()),
+            doc: Some("Constant for the shape type\n".to_string()),
             signature: None, // FIXME: compiler returns empty string here
             full_path: "Shape::SHAPE_CONST".to_string(), // FIXME: incorrect path
         }
@@ -274,7 +274,7 @@ fn integration_test() {
         trait_type.item_data,
         ItemData {
             name: "ShapePair".to_string(),
-            doc: Some("Type alias for a pair of shapes".to_string()),
+            doc: Some("Type alias for a pair of shapes\n".to_string()),
             signature: None, // FIXME: compiler returns empty string here
             full_path: "Shape::ShapePair".to_string(), // FIXME: incorrect path
         }
@@ -285,8 +285,8 @@ fn integration_test() {
         trait_function.item_data,
         ItemData {
             name: "area".to_string(),
-            doc: Some("Calculate the area of the shape".to_string()),
-            signature: Some("fn area(self: T) -> u32;".to_string()),
+            doc: Some("Calculate the area of the shape\n".to_string()),
+            signature: Some("fn area(self: T) -> u32".to_string()),
             full_path: "Shape::area".to_string(), // FIXME: incorrect path
         }
     );
@@ -296,8 +296,8 @@ fn integration_test() {
         circle_shape_impl.item_data,
         ItemData {
             name: "CircleShape".to_string(),
-            doc: Some("Implementation of the Shape trait for Circle".to_string()),
-            signature: Some(" impl CircleShape  of Shape<Circle>".to_string()), // FIXME: trim whitespaces in compiler
+            doc: Some("Implementation of the Shape trait for Circle\n".to_string()),
+            signature: Some("impl CircleShape of Shape<Circle>".to_string()), // FIXME: trim whitespaces in compiler
             full_path: "hello_world::CircleShape".to_string(),
         }
     );
@@ -307,7 +307,7 @@ fn integration_test() {
         impl_func.item_data,
         ItemData {
             name: "area".to_string(),
-            doc: Some("Implementation of the area method for Circle".to_string()),
+            doc: Some("Implementation of the area method for Circle\n".to_string()),
             signature: Some("fn area(self: Circle) -> u32".to_string()),
             full_path: "hello_world::CircleShape::area".to_string(),
         }
@@ -318,7 +318,7 @@ fn integration_test() {
         impl_const.item_data,
         ItemData {
             name: "SHAPE_CONST".to_string(),
-            doc: Some("Shape constant".to_string()),
+            doc: Some("Shape constant\n".to_string()),
             signature: Some("const SHAPE_CONST = \"xyz\";".to_string()),
             full_path: "CircleShape::SHAPE_CONST".to_string(), // FIXME: incorrect path
         }
@@ -329,7 +329,7 @@ fn integration_test() {
         impl_type.item_data,
         ItemData {
             name: "ShapePair".to_string(),
-            doc: Some("Type alias for a pair of circles".to_string()),
+            doc: Some("Type alias for a pair of circles\n".to_string()),
             signature: Some("type ShapePair<Circle> = (Circle, Circle);".to_string()),
             full_path: "CircleShape::ShapePair".to_string(), // FIXME: incorrect path
         }

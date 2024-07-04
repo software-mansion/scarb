@@ -3,7 +3,7 @@
 
 use itertools::Itertools;
 
-use cairo_lang_compiler::db::RootDatabase;
+use crate::db::ScarbDocDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::diagnostic_utils::StableLocation;
 use cairo_lang_defs::ids::{
@@ -13,6 +13,7 @@ use cairo_lang_defs::ids::{
     TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
     UseId, VariantId,
 };
+use cairo_lang_doc::db::DocGroup;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_syntax::node::ast;
@@ -26,7 +27,7 @@ pub struct Crate {
 }
 
 impl Crate {
-    pub fn new(db: &RootDatabase, crate_id: CrateId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, crate_id: CrateId) -> Self {
         Self {
             root_module: Module::new(db, ModuleId::CrateRoot(crate_id)),
         }
@@ -53,7 +54,7 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn new(db: &RootDatabase, module_id: ModuleId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, module_id: ModuleId) -> Self {
         // TODO: temporary before crate root module doc fetching works.
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData {
@@ -170,7 +171,7 @@ pub struct ItemData {
 
 impl ItemData {
     pub fn new(
-        db: &RootDatabase,
+        db: &ScarbDocDatabase,
         id: impl TopLevelLanguageElementId,
         lookup_item_id: LookupItemId,
     ) -> Self {
@@ -184,7 +185,7 @@ impl ItemData {
     }
 
     pub fn new_without_signature(
-        db: &RootDatabase,
+        db: &ScarbDocDatabase,
         id: impl TopLevelLanguageElementId,
         lookup_item_id: LookupItemId,
     ) -> Self {
@@ -206,7 +207,7 @@ pub struct Constant {
 }
 
 impl Constant {
-    pub fn new(db: &RootDatabase, id: ConstantId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ConstantId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -226,7 +227,7 @@ pub struct Use {
 
 // TODO: do we even want to document this?
 impl Use {
-    pub fn new(db: &RootDatabase, id: UseId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: UseId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -250,7 +251,7 @@ pub struct FreeFunction {
 }
 
 impl FreeFunction {
-    pub fn new(db: &RootDatabase, id: FreeFunctionId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: FreeFunctionId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -275,7 +276,7 @@ pub struct Struct {
 }
 
 impl Struct {
-    pub fn new(db: &RootDatabase, id: StructId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: StructId) -> Self {
         let members = db.struct_members(id).unwrap();
 
         let item_data = ItemData::new_without_signature(
@@ -310,7 +311,7 @@ pub struct Member {
 }
 
 impl Member {
-    pub fn new(db: &RootDatabase, id: MemberId, struct_full_path: String) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: MemberId, struct_full_path: String) -> Self {
         let node = id.stable_ptr(db);
         let stable_location = StableLocation::new(node.0);
 
@@ -320,7 +321,7 @@ impl Member {
 
         let item_data = ItemData {
             name,
-            doc: get_item_documentation(db, &stable_location),
+            doc: get_item_documentation(db.upcast(), &stable_location),
             signature: None,
             full_path,
         };
@@ -344,7 +345,7 @@ pub struct Enum {
 }
 
 impl Enum {
-    pub fn new(db: &RootDatabase, id: EnumId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: EnumId) -> Self {
         let variants = db.enum_variants(id).unwrap();
         let item_data = ItemData::new_without_signature(
             db,
@@ -376,7 +377,7 @@ pub struct Variant {
 }
 
 impl Variant {
-    pub fn new(db: &RootDatabase, id: VariantId, enum_full_path: String) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: VariantId, enum_full_path: String) -> Self {
         let node = id.stable_ptr(db);
         let stable_location = StableLocation::new(node.0);
 
@@ -408,7 +409,7 @@ pub struct TypeAlias {
 }
 
 impl TypeAlias {
-    pub fn new(db: &RootDatabase, id: ModuleTypeAliasId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ModuleTypeAliasId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -431,7 +432,7 @@ pub struct ImplAlias {
 }
 
 impl ImplAlias {
-    pub fn new(db: &RootDatabase, id: ImplAliasId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplAliasId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -458,7 +459,7 @@ pub struct Trait {
 }
 
 impl Trait {
-    pub fn new(db: &RootDatabase, id: TraitId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitId) -> Self {
         let trait_constants = db.trait_constants(id).unwrap();
         let trait_constants = trait_constants
             .iter()
@@ -498,7 +499,7 @@ pub struct TraitConstant {
 }
 
 impl TraitConstant {
-    pub fn new(db: &RootDatabase, id: TraitConstantId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitConstantId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -521,7 +522,7 @@ pub struct TraitType {
 }
 
 impl TraitType {
-    pub fn new(db: &RootDatabase, id: TraitTypeId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitTypeId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -544,7 +545,7 @@ pub struct TraitFunction {
 }
 
 impl TraitFunction {
-    pub fn new(db: &RootDatabase, id: TraitFunctionId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitFunctionId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -567,7 +568,7 @@ pub struct Impl {
 }
 
 impl Impl {
-    pub fn new(db: &RootDatabase, id: ImplDefId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplDefId) -> Self {
         let impl_types = db.impl_types(id).unwrap();
         let impl_types = impl_types
             .iter()
@@ -607,7 +608,7 @@ pub struct ImplType {
 }
 
 impl ImplType {
-    pub fn new(db: &RootDatabase, id: ImplTypeDefId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplTypeDefId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -626,7 +627,7 @@ pub struct ImplConstant {
 }
 
 impl ImplConstant {
-    pub fn new(db: &RootDatabase, id: ImplConstantDefId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplConstantDefId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -645,7 +646,7 @@ pub struct ImplFunction {
 }
 
 impl ImplFunction {
-    pub fn new(db: &RootDatabase, id: ImplFunctionId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplFunctionId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -664,7 +665,7 @@ pub struct ExternType {
 }
 
 impl ExternType {
-    pub fn new(db: &RootDatabase, id: ExternTypeId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ExternTypeId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -687,7 +688,7 @@ pub struct ExternFunction {
 }
 
 impl ExternFunction {
-    pub fn new(db: &RootDatabase, id: ExternFunctionId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ExternFunctionId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,

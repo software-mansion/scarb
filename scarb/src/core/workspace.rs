@@ -162,7 +162,7 @@ impl<'c> Workspace<'c> {
         Ok(profile)
     }
 
-    pub fn profile_names(&self) -> Result<Vec<String>> {
+    pub fn profile_names(&self) -> Vec<String> {
         let mut names = self
             .profiles
             .iter()
@@ -171,7 +171,8 @@ impl<'c> Workspace<'c> {
         names.push(Profile::DEV.to_string());
         names.push(Profile::RELEASE.to_string());
         names.sort();
-        Ok(names)
+        names.dedup();
+        names
     }
 }
 

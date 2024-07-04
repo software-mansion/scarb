@@ -323,8 +323,9 @@ fn run_verify(
     ops::compile(
         ws.members().map(|p| p.id).collect(),
         ops::CompileOpts {
-            include_targets: Vec::new(),
-            exclude_targets: vec![TargetKind::TEST.clone()],
+            include_target_kinds: Vec::new(),
+            exclude_target_kinds: vec![TargetKind::TEST.clone()],
+            include_target_names: Vec::new(),
             features,
         },
         &ws,

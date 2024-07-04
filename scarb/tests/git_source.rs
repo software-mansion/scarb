@@ -490,9 +490,9 @@ fn deps_only_cloned_to_checkouts_once() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
-        [..]Running git fetch --verbose --force --update-head-ok [..]dep1 +HEAD:refs/remotes/origin/HEAD
-        [..]Running git clone --local --verbose --config core.autocrlf=false --recurse-submodules [..].git [..]
-        [..]Running git reset --hard [..]
+        [..]Running git[EXE] fetch --verbose --force --update-head-ok [..]dep1 +HEAD:refs/remotes/origin/HEAD
+        [..]Running git[EXE] clone --local --verbose --config core.autocrlf=false --recurse-submodules [..].git [..]
+        [..]Running git[EXE] reset --hard [..]
         "#});
     fs::remove_file(t.child("Scarb.lock")).unwrap();
     Scarb::quick_snapbox()
@@ -504,6 +504,6 @@ fn deps_only_cloned_to_checkouts_once() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
-        [..]Running git fetch --verbose --force --update-head-ok [..]dep1 +HEAD:refs/remotes/origin/HEAD
+        [..]Running git[EXE] fetch --verbose --force --update-head-ok [..]dep1 +HEAD:refs/remotes/origin/HEAD
         "#});
 }

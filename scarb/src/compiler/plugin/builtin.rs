@@ -4,7 +4,7 @@ use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_syntax::node::ast::ModuleItem;
 use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_test_plugin::test_plugin_suite;
+use cairo_lang_test_plugin::{test_assert_suite, test_plugin_suite};
 
 use crate::compiler::plugin::{CairoPlugin, CairoPluginInstance};
 use crate::core::{PackageId, PackageName, SourceId};
@@ -103,5 +103,29 @@ impl MacroPlugin for CairoRunPlugin {
     }
     fn executable_attributes(&self) -> Vec<String> {
         self.declared_attributes()
+    }
+}
+
+pub struct BuiltinTestAssertsPlugin;
+
+impl CairoPlugin for BuiltinTestAssertsPlugin {
+    fn id(&self) -> PackageId {
+        PackageId::new(
+            PackageName::TEST_ASSERTS_PLUGIN,
+            semver::Version::new(0, 1, 0),
+            SourceId::for_std(),
+        )
+    }
+
+    fn instantiate(&self) -> Result<Box<dyn CairoPluginInstance>> {
+        Ok(Box::new(BuiltinTestAssertsPluginInstance))
+    }
+}
+
+struct BuiltinTestAssertsPluginInstance;
+
+impl CairoPluginInstance for BuiltinTestAssertsPluginInstance {
+    fn plugin_suite(&self) -> PluginSuite {
+        test_assert_suite()
     }
 }

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::hash::Hash;
 
 use crate::compiler::{DefaultForProfile, Profile};
 use crate::core::TomlCairo;
@@ -25,6 +26,18 @@ pub struct ManifestCompilerConfig {
     /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
     /// This feature is unstable and is subject to change.
     pub unstable_add_statements_functions_debug_info: bool,
+    // Inlining strategy.
+    pub inlining_strategy: InliningStrategy,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Eq, PartialEq, Hash, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub enum InliningStrategy {
+    /// Do not override inlining strategy.
+    #[default]
+    Default,
+    /// Inline only in the case of an `inline(always)` annotation.
+    Avoid,
 }
 
 impl DefaultForProfile for ManifestCompilerConfig {
@@ -34,6 +47,7 @@ impl DefaultForProfile for ManifestCompilerConfig {
             allow_warnings: true,
             enable_gas: true,
             unstable_add_statements_functions_debug_info: false,
+            inlining_strategy: InliningStrategy::default(),
         }
     }
 }
@@ -47,6 +61,7 @@ impl From<ManifestCompilerConfig> for TomlCairo {
             unstable_add_statements_functions_debug_info: Some(
                 config.unstable_add_statements_functions_debug_info,
             ),
+            inlining_strategy: Some(config.inlining_strategy),
         }
     }
 }
