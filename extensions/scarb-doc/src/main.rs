@@ -4,15 +4,13 @@ use clap::Parser;
 use scarb_metadata::MetadataCommand;
 use scarb_ui::args::PackagesFilter;
 
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateLongId;
 
-use compilation::get_project_config;
-use types::Crate;
-
-mod compilation;
-mod types;
+use scarb_doc::compilation::get_project_config;
+use scarb_doc::db::ScarbDocDatabase;
+use scarb_doc::types;
+use scarb_doc::types::Crate;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -39,14 +37,10 @@ fn main() -> Result<()> {
 
     let project_config = get_project_config(&metadata, &package_metadata);
 
-    let db = &mut {
-        let mut b = RootDatabase::builder();
-        b.with_project_config(project_config);
-        b.build()?
-    };
+    let db = ScarbDocDatabase::new(Some(project_config));
 
     let main_crate_id = db.intern_crate(CrateLongId::Real(package_metadata.name.clone().into()));
-    let crate_ = Crate::new(db, main_crate_id);
+    let crate_ = Crate::new(&db, main_crate_id);
 
     print_module(&crate_.root_module);
 
