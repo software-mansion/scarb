@@ -253,7 +253,7 @@ fn integration_test() {
         ItemData {
             name: "Shape".to_string(),
             doc: Some("Shape trait for objects that have an area\n".to_string()),
-            signature: Some("trait Shape<T>".to_string()), // FIXME: trim whitespaces in compiler
+            signature: Some("trait Shape<T>".to_string()),
             full_path: "hello_world::Shape".to_string(),
         }
     );
@@ -297,7 +297,7 @@ fn integration_test() {
         ItemData {
             name: "CircleShape".to_string(),
             doc: Some("Implementation of the Shape trait for Circle\n".to_string()),
-            signature: Some("impl CircleShape of Shape<Circle>".to_string()), // FIXME: trim whitespaces in compiler
+            signature: Some("impl CircleShape of Shape<Circle>".to_string()),
             full_path: "hello_world::CircleShape".to_string(),
         }
     );
