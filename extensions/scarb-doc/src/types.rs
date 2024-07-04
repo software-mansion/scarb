@@ -11,7 +11,7 @@ use cairo_lang_defs::ids::{
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LookupItemId,
     MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId, StructId,
     TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
-    UseId, VariantId,
+    VariantId,
 };
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_filesystem::ids::CrateId;
@@ -41,7 +41,6 @@ pub struct Module {
 
     pub submodules: Vec<Module>,
     pub constants: Vec<Constant>,
-    pub uses: Vec<Use>,
     pub free_functions: Vec<FreeFunction>,
     pub structs: Vec<Struct>,
     pub enums: Vec<Enum>,
@@ -74,12 +73,6 @@ impl Module {
         let constants = module_constants
             .iter()
             .map(|(id, _)| Constant::new(db, *id))
-            .collect();
-
-        let module_uses = db.module_uses(module_id).unwrap();
-        let uses = module_uses
-            .iter()
-            .map(|(id, _)| Use::new(db, *id))
             .collect();
 
         let module_free_functions = db.module_free_functions(module_id).unwrap();
@@ -147,7 +140,6 @@ impl Module {
             item_data,
             submodules,
             constants,
-            uses,
             free_functions,
             structs,
             enums,
@@ -213,31 +205,6 @@ impl Constant {
             id,
             node,
             item_data: ItemData::new(db, id, LookupItemId::ModuleItem(ModuleItemId::Constant(id))),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Use {
-    pub id: UseId,
-    pub node: ast::UsePathLeafPtr,
-
-    pub item_data: ItemData,
-}
-
-// TODO: do we even want to document this?
-impl Use {
-    pub fn new(db: &ScarbDocDatabase, id: UseId) -> Self {
-        let node = id.stable_ptr(db);
-        Self {
-            id,
-            node,
-            // TODO: docs for `use` doesn't work.
-            item_data: ItemData::new_without_signature(
-                db,
-                id,
-                LookupItemId::ModuleItem(ModuleItemId::Use(id)),
-            ),
         }
     }
 }
