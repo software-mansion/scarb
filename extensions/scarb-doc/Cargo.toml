@@ -20,6 +20,7 @@ cairo-lang-semantic.workspace = true
 cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-utils.workspace = true
+itertools.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde_json.workspace = true
