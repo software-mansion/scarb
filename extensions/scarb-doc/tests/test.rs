@@ -340,4 +340,6 @@ fn integration_test() {
         4,
         "Traits from derive are not present"
     );
+
+    t.close().unwrap();
 }
