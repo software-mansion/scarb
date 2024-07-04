@@ -15,7 +15,7 @@ pub enum ArgsError {
     #[error("failed to convert slice to array: {0}")]
     ArrayFromSlice(#[from] std::array::TryFromSliceError),
     #[error("number out of range")]
-    NumberOutOfRange,
+    NumberOutOfRange(#[from] starknet_types_core::felt::FromStrError),
     #[error("failed to parse arguments: {0}")]
     ParseError(#[from] serde_json::Error),
 }
@@ -91,8 +91,8 @@ impl Args {
         for arg in iterator {
             match arg {
                 Value::Number(n) => {
-                    let n = n.as_u64().ok_or(ArgsError::NumberOutOfRange)?;
-                    args.push(Arg::Value(Felt252::from(n)));
+                    let n = Felt252::from_str(n.to_string().as_str())?;
+                    args.push(Arg::Value(n));
                 }
                 Value::String(n) => {
                     let n = num_bigint::BigUint::from_str(n)?;
