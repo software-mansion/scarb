@@ -43,6 +43,35 @@ fn valid_number_of_args() {
 }
 
 #[test]
+fn can_deserialize_big_number() {
+    let t = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .lib_cairo(indoc! {r#"
+        fn main(n: felt252) -> felt252 {
+            n
+        }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        .arg("--")
+        .arg(r#"[1129815197211541481934112806673325772687763881719835256646064516195041515616]"#)
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+               Compiling hello v0.1.0 ([..]/Scarb.toml)
+                Finished release target(s) in [..]
+                 Running hello
+            Run completed successfully, returning [1129815197211541481934112806673325772687763881719835256646064516195041515616]
+        "#});
+}
+
+#[test]
 fn invalid_number_of_args() {
     let t = TempDir::new().unwrap();
     setup_fib_three_felt_args(&t);
