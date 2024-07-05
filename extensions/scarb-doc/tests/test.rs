@@ -1,24 +1,41 @@
-use assert_fs::{fixture::PathChild, TempDir};
+use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_test_support::{
-    command::Scarb, project_builder::ProjectBuilder, workspace_builder::WorkspaceBuilder,
-};
+use std::env;
+use std::iter::zip;
+use std::path::PathBuf;
+
+use scarb_metadata::MetadataCommand;
+use scarb_test_support::cargo::cargo_bin;
+use scarb_test_support::project_builder::ProjectBuilder;
+
+use scarb_doc::compilation::get_project_config;
+use scarb_doc::generate_language_elements_tree_for_package;
+use scarb_doc::types::ItemData;
+
+fn scarb_bin() -> PathBuf {
+    env::var_os("SCARB_TEST_BIN")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| cargo_bin("scarb"))
+}
 
 #[test]
-#[ignore = "TODO(piotmag769): fix"]
-fn test_main() {
+fn integration_test() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello_world")
-        .version("0.1.0")
         .lib_cairo(indoc! {r#"
         //! Fibonacci sequence calculator
+
 
         /// Main function that calculates the 16th Fibonacci number
         fn main() -> u32 {
             fib(16)
         }
 
+        /// use into_trait
+        use core::traits::Into as into_trait;
+        use core::traits::TryInto;
+        
         /// FOO constant with value 42
         const FOO: u32 = 42;
 
@@ -54,6 +71,12 @@ fn test_main() {
 
         /// Shape trait for objects that have an area
         trait Shape<T> {
+            /// Constant for the shape type
+            const SHAPE_CONST = "SHAPE";
+        
+            /// Type alias for a pair of shapes
+            type ShapePair<T> = (Shape<T>, Shape<T>);
+        
             /// Calculate the area of the shape
             fn area(self: T) -> u32;
         }
@@ -67,6 +90,13 @@ fn test_main() {
 
         /// Implementation of the Shape trait for Circle
         impl CircleShape of Shape<Circle> {
+            /// Type alias for a pair of circles
+            type ShapePair<Circle> = (Circle, Circle);
+        
+            /// Shape constant
+            const SHAPE_CONST = "xyz";
+
+            /// Implementation of the area method for Circle
             fn area(self: Circle) -> u32 {
                 3 * self.radius * self.radius
             }
@@ -77,7 +107,9 @@ fn test_main() {
             /// Imported fib function from the parent module
             use super::fib as fib_function;
 
+            /// Really
             #[test]
+            /// works.
             fn it_works() {
                 assert(fib_function(16) == 987, 'it works!');
             }
@@ -85,89 +117,237 @@ fn test_main() {
         "#})
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
-        .arg("doc")
-        .current_dir(&t)
-        .assert()
-        .success();
-    let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
+    let metadata = MetadataCommand::new()
+        .scarb_path(scarb_bin())
+        .current_dir(t.path())
+        .exec()
+        .expect("Failed to obtain metadata");
+    let package_metadata = metadata
+        .packages
+        .iter()
+        .find(|pkg| pkg.id == metadata.workspace.members[0])
+        .unwrap();
+
+    let project_config = get_project_config(&metadata, package_metadata);
+
+    let root_module =
+        generate_language_elements_tree_for_package(package_metadata.name.clone(), project_config)
+            .expect("Failed to generate language elements tree")
+            .root_module;
 
     assert_eq!(
-        stdout,
-        indoc! {r#"
-        Module: hello_world
-        Submodules      : ["hello_world::tests"]
-        Constants       : ["FOO"]
-        Uses            : []
-        Free Functions  : ["main", "fib"]
-        Structs         : ["Circle"]
-        Enums           : ["Color"]
-        Type Aliases    : ["Pair"]
-        Impl Aliases    : []
-        Traits          : ["Shape"]
-        Impls           : ["CircleShape", "CircleDrop", "CircleSerde", "CirclePartialEq"]
-        Extern Types    : []
-        Extern Functions: []
-        
-        Module: hello_world::tests
-        Submodules      : []
-        Constants       : []
-        Uses            : ["fib_function"]
-        Free Functions  : ["it_works"]
-        Structs         : []
-        Enums           : []
-        Type Aliases    : []
-        Impl Aliases    : []
-        Traits          : []
-        Impls           : []
-        Extern Types    : []
-        Extern Functions: []
-        "#}
-    )
-}
-
-#[test]
-#[ignore = "TODO(piotmag769): fix"]
-fn test_workspace() {
-    let t = TempDir::new().unwrap();
-    let hello = t.child("hello_world");
-    let goodbye = t.child("goodbye_world");
-
-    ProjectBuilder::start()
-        .name("hello_world")
-        .version("0.1.0")
-        .lib_cairo(indoc! {r#"
-        /// Hello world
-        fn hello_world() -> u32 {
-            1
+        root_module.item_data,
+        ItemData {
+            name: "hello_world".to_string(),
+            doc: None, // FIXME: compiler doesn't support fetching root crate doc
+            signature: None,
+            full_path: "hello_world".to_string(),
         }
-        "#})
-        .build(&hello);
+    );
 
-    ProjectBuilder::start()
-        .name("goodbye_world")
-        .version("0.1.0")
-        .lib_cairo(indoc! {r#"
-        /// Goodbye world
-        fn goodbye_world() -> u32 {
-            0
+    let tests_submodule = &root_module.submodules[0];
+    assert_eq!(
+        tests_submodule.item_data,
+        ItemData {
+            name: "tests".to_string(),
+            doc: Some("Tests module\n".to_string()),
+            signature: None,
+            full_path: "hello_world::tests".to_string(),
         }
-        "#})
-        .build(&goodbye);
+    );
 
-    WorkspaceBuilder::start()
-        .add_member("hello_world")
-        .add_member("goodbye_world")
-        .build(&t);
+    let free_func_in_submodule = &tests_submodule.free_functions[0];
+    assert_eq!(
+        free_func_in_submodule.item_data,
+        ItemData {
+            name: "it_works".to_string(),
+            doc: Some("Really\nworks.\n".to_string()),
+            signature: Some("fn it_works()".to_string()),
+            full_path: "hello_world::tests::it_works".to_string(),
+        }
+    );
 
-    let output = Scarb::quick_snapbox()
-        .arg("doc")
-        .arg("-p")
-        .arg("hello_world")
-        .current_dir(&t)
-        .assert()
-        .success();
-    let stdout = std::str::from_utf8(&output.get_output().stdout).unwrap();
-    assert!(stdout.contains("Module: hello_world"));
-    assert!(!stdout.contains("Module: goodbye_world"));
+    let constant = &root_module.constants[0];
+    assert_eq!(
+        constant.item_data,
+        ItemData {
+            name: "FOO".to_string(),
+            doc: Some("FOO constant with value 42\n".to_string()),
+            signature: Some("const FOO: u32 = 42;".to_string()),
+            full_path: "hello_world::FOO".to_string(),
+        }
+    );
+
+    let main_function = &root_module.free_functions[0];
+    assert_eq!(
+        main_function.item_data,
+        ItemData {
+            name: "main".to_string(),
+            doc: Some("Fibonacci sequence calculator\nMain function that calculates the 16th Fibonacci number\n".to_string()),
+            signature: Some("fn main() -> u32".to_string()),
+            full_path: "hello_world::main".to_string(),
+        }
+    );
+
+    let fib_function = &root_module.free_functions[1];
+    assert_eq!(
+        fib_function.item_data,
+        ItemData {
+            name: "fib".to_string(),
+            doc: Some("Calculate the nth Fibonacci number\n\n# Arguments\n* `n` - The index of the Fibonacci number to calculate\n".to_string()),
+            signature: Some("fn fib(mut n: u32) -> u32".to_string()),
+            full_path: "hello_world::fib".to_string(),
+        }
+    );
+
+    let circle_struct = &root_module.structs[0];
+
+    assert_eq!(
+        circle_struct.item_data,
+        ItemData {
+            name: "Circle".to_string(),
+            doc: Some("Circle struct with radius field\n".to_string()),
+            signature: None,
+            full_path: "hello_world::Circle".to_string(),
+        }
+    );
+
+    let radius_field = &circle_struct.members[0];
+    assert_eq!(
+        radius_field.item_data,
+        ItemData {
+            name: "radius".to_string(),
+            doc: Some("Radius of the circle".to_string()),
+            signature: None,
+            full_path: "hello_world::Circle::radius".to_string(),
+        }
+    );
+
+    let color_enum = &root_module.enums[0];
+    assert_eq!(
+        color_enum.item_data,
+        ItemData {
+            name: "Color".to_string(),
+            doc: Some("Color enum with Red, Green, and Blue variants\n".to_string()),
+            signature: None,
+            full_path: "hello_world::Color".to_string(),
+        }
+    );
+
+    for (variant, color_name) in zip(&color_enum.variants, ["Red", "Green", "Blue"]) {
+        assert_eq!(
+            variant.item_data,
+            ItemData {
+                name: color_name.to_string(),
+                doc: Some(format!("{color_name} color")),
+                signature: None,
+                full_path: format!("hello_world::Color::{color_name}"),
+            }
+        );
+    }
+
+    let pair_type_alias = &root_module.type_aliases[0];
+    assert_eq!(
+        pair_type_alias.item_data,
+        ItemData {
+            name: "Pair".to_string(),
+            doc: Some("Pair type alias for a tuple of two u32 values\n".to_string()),
+            signature: Some("type Pair = (u32, u32);".to_string()),
+            full_path: "hello_world::Pair".to_string(),
+        }
+    );
+
+    let shape_trait = &root_module.traits[0];
+    assert_eq!(
+        shape_trait.item_data,
+        ItemData {
+            name: "Shape".to_string(),
+            doc: Some("Shape trait for objects that have an area\n".to_string()),
+            signature: Some("trait Shape<T>".to_string()),
+            full_path: "hello_world::Shape".to_string(),
+        }
+    );
+
+    let trait_constant = &shape_trait.trait_constants[0];
+    assert_eq!(
+        trait_constant.item_data,
+        ItemData {
+            name: "SHAPE_CONST".to_string(),
+            doc: Some("Constant for the shape type\n".to_string()),
+            signature: None, // FIXME: compiler returns empty string here
+            full_path: "Shape::SHAPE_CONST".to_string(), // FIXME: incorrect path
+        }
+    );
+
+    let trait_type = &shape_trait.trait_types[0];
+    assert_eq!(
+        trait_type.item_data,
+        ItemData {
+            name: "ShapePair".to_string(),
+            doc: Some("Type alias for a pair of shapes\n".to_string()),
+            signature: None, // FIXME: compiler returns empty string here
+            full_path: "Shape::ShapePair".to_string(), // FIXME: incorrect path
+        }
+    );
+
+    let trait_function = &shape_trait.trait_functions[0];
+    assert_eq!(
+        trait_function.item_data,
+        ItemData {
+            name: "area".to_string(),
+            doc: Some("Calculate the area of the shape\n".to_string()),
+            signature: Some("fn area(self: T) -> u32".to_string()),
+            full_path: "Shape::area".to_string(), // FIXME: incorrect path
+        }
+    );
+
+    let circle_shape_impl = &root_module.impls[0];
+    assert_eq!(
+        circle_shape_impl.item_data,
+        ItemData {
+            name: "CircleShape".to_string(),
+            doc: Some("Implementation of the Shape trait for Circle\n".to_string()),
+            signature: Some("impl CircleShape of Shape<Circle>".to_string()),
+            full_path: "hello_world::CircleShape".to_string(),
+        }
+    );
+
+    let impl_func = &circle_shape_impl.impl_functions[0];
+    assert_eq!(
+        impl_func.item_data,
+        ItemData {
+            name: "area".to_string(),
+            doc: Some("Implementation of the area method for Circle\n".to_string()),
+            signature: Some("fn area(self: Circle) -> u32".to_string()),
+            full_path: "hello_world::CircleShape::area".to_string(),
+        }
+    );
+
+    let impl_const = &circle_shape_impl.impl_constants[0];
+    assert_eq!(
+        impl_const.item_data,
+        ItemData {
+            name: "SHAPE_CONST".to_string(),
+            doc: Some("Shape constant\n".to_string()),
+            signature: Some("const SHAPE_CONST = \"xyz\";".to_string()),
+            full_path: "CircleShape::SHAPE_CONST".to_string(), // FIXME: incorrect path
+        }
+    );
+
+    let impl_type = &circle_shape_impl.impl_types[0];
+    assert_eq!(
+        impl_type.item_data,
+        ItemData {
+            name: "ShapePair".to_string(),
+            doc: Some("Type alias for a pair of circles\n".to_string()),
+            signature: Some("type ShapePair<Circle> = (Circle, Circle);".to_string()),
+            full_path: "CircleShape::ShapePair".to_string(), // FIXME: incorrect path
+        }
+    );
+
+    assert_eq!(
+        root_module.impls.len(),
+        4,
+        "Traits from derive are not present"
+    );
 }

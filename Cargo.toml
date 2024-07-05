@@ -40,6 +40,7 @@ cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo", rev = "
 cairo-lang-debug = { git = "https://github.com/starkware-libs/cairo", rev = "43cf361d9b6b26ec8cd5ee076dd15341bde7577c" }
 cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo", rev = "43cf361d9b6b26ec8cd5ee076dd15341bde7577c" }
 cairo-lang-diagnostics = { git = "https://github.com/starkware-libs/cairo", rev = "43cf361d9b6b26ec8cd5ee076dd15341bde7577c" }
+cairo-lang-doc = { git = "https://github.com/starkware-libs/cairo", rev = "43cf361d9b6b26ec8cd5ee076dd15341bde7577c" }
 cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo", rev = "43cf361d9b6b26ec8cd5ee076dd15341bde7577c" }
 cairo-lang-formatter = { git = "https://github.com/starkware-libs/cairo", rev = "43cf361d9b6b26ec8cd5ee076dd15341bde7577c" }
 cairo-lang-language-server = { git = "https://github.com/starkware-libs/cairo", rev = "43cf361d9b6b26ec8cd5ee076dd15341bde7577c" }
@@ -99,6 +100,7 @@ ra_ap_toolchain = "0.0.218"
 rayon = "1.10"
 redb = "2.1.1"
 reqwest = { version = "0.11", features = ["gzip", "brotli", "deflate", "json", "stream"], default-features = false }
+salsa = "0.16.1"
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["serde_derive"] }
 serde-untagged = "0.1"

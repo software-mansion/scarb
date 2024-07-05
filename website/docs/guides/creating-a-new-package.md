@@ -97,14 +97,14 @@ that can be deployed to Starknet network.
 
 ### Creating a Starknet Foundry project
 
-If you intend to use Starknet Foundry Forge to test your contracts, you can create a Starknet Foundry project by
+If you intend to use Starknet Foundry to test your contracts, you can create a Starknet Foundry project by
 running:
 
 ```shell
 scarb new hello_world --snforge
 ```
 
-This will create a Starknet package, with Forge already set up as your test runner. You can then execute Forge tests by
+This will create a Starknet package, with `snforge` already set up as your test runner. You can then execute `snforge` tests by
 simply running:
 
 ```shell
