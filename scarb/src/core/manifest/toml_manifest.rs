@@ -455,6 +455,8 @@ impl TomlManifest {
 
         let targets = self.collect_targets(package.name.to_smol_str(), root)?;
 
+        let publish = package.publish.unwrap_or(true);
+
         let summary = Summary::builder()
             .package_id(package_id)
             .dependencies(dependencies)
@@ -575,6 +577,7 @@ impl TomlManifest {
         let manifest = ManifestBuilder::default()
             .summary(summary)
             .targets(targets)
+            .publish(publish)
             .edition(edition)
             .metadata(metadata)
             .compiler_config(compiler_config)
