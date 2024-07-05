@@ -134,6 +134,8 @@ fn integration_test() {
         generate_language_elements_tree_for_package(package_metadata.name.clone(), project_config)
             .expect("Failed to generate language elements tree");
 
-    let expected = expect_file!["./data/integration_test_data.txt"];
-    expected.assert_debug_eq(&crate_);
+    let serialized_crate = serde_json::to_string_pretty(&crate_).unwrap();
+
+    let expected = expect_file!["./data/integration_test_data.json"];
+    expected.assert_eq(&serialized_crate);
 }
