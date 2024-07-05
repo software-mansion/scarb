@@ -1326,3 +1326,25 @@ fn package_without_publish_metadata() {
         [..]  Packaged [..] files, [..] ([..] compressed)
         "#});
 }
+
+#[test]
+fn package_with_disabled_publish() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .manifest_package_extra("publish = false")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--no-metadata")
+        .arg("--no-verify")
+        .current_dir(&t)
+        .assert()
+        .failure().stdout_matches(indoc! {r#"
+        [..] Packaging [..]
+        error: publishing disabled for package foo
+        help: set `publish = true` in package manifest
+        "#});
+}

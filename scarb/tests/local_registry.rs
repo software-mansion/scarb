@@ -217,6 +217,34 @@ fn publish() {
 }
 
 #[test]
+fn publish_disabled() {
+    let t = TempDir::new().unwrap();
+    let index = t.child("index");
+    index.create_dir_all().unwrap();
+
+    ProjectBuilder::start()
+        .name("foobar")
+        .version("1.0.0")
+        .manifest_package_extra("publish = false")
+        .lib_cairo("fn main() -> felt252 { 0 }")
+        .build(&t);
+
+
+    Scarb::quick_snapbox()
+        .arg("publish")
+        .arg("--no-verify")
+        .arg("--index")
+        .arg(Url::from_directory_path(&index).unwrap().to_string())
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        error: publishing disabled for package foobar v1.0.0 ([..]Scarb.toml)
+        help: set `publish = true` in package manifest
+        "#});
+}
+
+#[test]
 fn publish_overwrites_existing() {
     let index = TempDir::new().unwrap();
 
