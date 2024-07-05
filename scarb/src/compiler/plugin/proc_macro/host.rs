@@ -33,7 +33,7 @@ use scarb_stable_hash::short_hash;
 use std::any::Any;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, OnceLock, RwLock};
 use std::vec::IntoIter;
 use tracing::{debug, trace_span};
 
@@ -711,6 +711,7 @@ enum AttrExpansionFound {
 pub struct ProcMacroInlinePlugin {
     instance: Arc<ProcMacroInstance>,
     expansion: Expansion,
+    doc: OnceLock<Option<String>>,
 }
 
 impl ProcMacroInlinePlugin {
@@ -719,6 +720,7 @@ impl ProcMacroInlinePlugin {
         Self {
             instance,
             expansion,
+            doc: Default::default(),
         }
     }
 
@@ -783,6 +785,12 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                 diagnostics,
             }
         }
+    }
+
+    fn documentation(&self) -> Option<String> {
+        self.doc
+            .get_or_init(|| self.instance().doc(self.expansion.name.clone()))
+            .clone()
     }
 }
 
