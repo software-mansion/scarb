@@ -736,6 +736,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         &self,
         db: &dyn SyntaxGroup,
         syntax: &ast::ExprInlineMacro,
+        _metadata: &MacroPluginMetadata<'_>,
     ) -> InlinePluginResult {
         let origin = CodeOrigin::Span(syntax.as_syntax_node().span(db));
         let stable_ptr = syntax.clone().stable_ptr().untyped();
