@@ -229,7 +229,6 @@ fn publish_disabled() {
         .lib_cairo("fn main() -> felt252 { 0 }")
         .build(&t);
 
-
     Scarb::quick_snapbox()
         .arg("publish")
         .arg("--no-verify")

@@ -1342,7 +1342,8 @@ fn package_with_disabled_publish() {
         .arg("--no-verify")
         .current_dir(&t)
         .assert()
-        .failure().stdout_matches(indoc! {r#"
+        .failure()
+        .stdout_matches(indoc! {r#"
         [..] Packaging [..]
         error: publishing disabled for package foo
         help: set `publish = true` in package manifest
