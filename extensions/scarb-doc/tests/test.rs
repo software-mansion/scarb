@@ -17,6 +17,7 @@ fn scarb_bin() -> PathBuf {
         .unwrap_or_else(|| cargo_bin("scarb"))
 }
 
+// Run `UPDATE_EXPECT=1 cargo test` to fix this test.
 #[test]
 fn integration_test() {
     let t = TempDir::new().unwrap();
