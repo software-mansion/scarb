@@ -249,14 +249,6 @@ Crate {
                 ],
                 impl_functions: [
                     ImplFunction {
-                        id: ImplFunctionId(
-                            0,
-                        ),
-                        node: FunctionWithBodyPtr(
-                            SyntaxStablePtrId(
-                                256,
-                            ),
-                        ),
                         item_data: ItemData {
                             name: "area",
                             doc: Some(
@@ -298,14 +290,6 @@ Crate {
                 impl_constants: [],
                 impl_functions: [
                     ImplFunction {
-                        id: ImplFunctionId(
-                            1,
-                        ),
-                        node: FunctionWithBodyPtr(
-                            SyntaxStablePtrId(
-                                310,
-                            ),
-                        ),
                         item_data: ItemData {
                             name: "serialize",
                             doc: None,
@@ -316,14 +300,6 @@ Crate {
                         },
                     },
                     ImplFunction {
-                        id: ImplFunctionId(
-                            2,
-                        ),
-                        node: FunctionWithBodyPtr(
-                            SyntaxStablePtrId(
-                                311,
-                            ),
-                        ),
                         item_data: ItemData {
                             name: "deserialize",
                             doc: None,
@@ -348,14 +324,6 @@ Crate {
                 impl_constants: [],
                 impl_functions: [
                     ImplFunction {
-                        id: ImplFunctionId(
-                            3,
-                        ),
-                        node: FunctionWithBodyPtr(
-                            SyntaxStablePtrId(
-                                323,
-                            ),
-                        ),
                         item_data: ItemData {
                             name: "eq",
                             doc: None,

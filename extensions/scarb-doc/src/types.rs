@@ -663,7 +663,9 @@ impl ImplConstant {
 #[derive(Derivative, Clone)]
 #[derivative(Debug)]
 pub struct ImplFunction {
+    #[derivative(Debug = "ignore")]
     pub id: ImplFunctionId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::FunctionWithBodyPtr,
 
     pub item_data: ItemData,
