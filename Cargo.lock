@@ -4727,6 +4727,8 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "clap",
+ "derivative",
+ "expect-test",
  "indoc",
  "itertools 0.12.1",
  "salsa",

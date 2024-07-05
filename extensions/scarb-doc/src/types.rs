@@ -20,8 +20,9 @@ use cairo_lang_syntax::node::ast;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::kind::SyntaxKind;
 use cairo_lang_utils::Upcast;
+use derivative::Derivative;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct Crate {
     pub root_module: Module,
 }
@@ -34,8 +35,10 @@ impl Crate {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct Module {
+    #[derivative(Debug = "ignore")]
     pub module_id: ModuleId,
     pub item_data: ItemData,
 
@@ -54,7 +57,7 @@ pub struct Module {
 
 impl Module {
     pub fn new(db: &ScarbDocDatabase, module_id: ModuleId) -> Self {
-        // TODO: temporary before crate root module doc fetching works.
+        // FIXME: compiler doesn't support fetching root crate doc
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData {
                 name: crate_id.name(db).to_string(),
@@ -153,7 +156,8 @@ impl Module {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct ItemData {
     pub name: String,
     pub doc: Option<String>,
@@ -190,9 +194,12 @@ impl ItemData {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct Constant {
+    #[derivative(Debug = "ignore")]
     pub id: ConstantId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemConstantPtr,
 
     pub item_data: ItemData,
@@ -209,9 +216,12 @@ impl Constant {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct FreeFunction {
+    #[derivative(Debug = "ignore")]
     pub id: FreeFunctionId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::FunctionWithBodyPtr,
 
     pub item_data: ItemData,
@@ -232,9 +242,12 @@ impl FreeFunction {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct Struct {
+    #[derivative(Debug = "ignore")]
     pub id: StructId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemStructPtr,
 
     pub members: Vec<Member>,
@@ -269,9 +282,12 @@ impl Struct {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct Member {
+    #[derivative(Debug = "ignore")]
     pub id: MemberId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::MemberPtr,
 
     pub item_data: ItemData,
@@ -301,9 +317,12 @@ impl Member {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct Enum {
+    #[derivative(Debug = "ignore")]
     pub id: EnumId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemEnumPtr,
 
     pub variants: Vec<Variant>,
@@ -335,9 +354,12 @@ impl Enum {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct Variant {
+    #[derivative(Debug = "ignore")]
     pub id: VariantId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::VariantPtr,
 
     pub item_data: ItemData,
@@ -367,9 +389,12 @@ impl Variant {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct TypeAlias {
+    #[derivative(Debug = "ignore")]
     pub id: ModuleTypeAliasId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemTypeAliasPtr,
 
     pub item_data: ItemData,
@@ -390,9 +415,12 @@ impl TypeAlias {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct ImplAlias {
+    #[derivative(Debug = "ignore")]
     pub id: ImplAliasId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemImplAliasPtr,
 
     pub item_data: ItemData,
@@ -413,9 +441,12 @@ impl ImplAlias {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct Trait {
+    #[derivative(Debug = "ignore")]
     pub id: TraitId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemTraitPtr,
 
     pub trait_constants: Vec<TraitConstant>,
@@ -457,9 +488,12 @@ impl Trait {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct TraitConstant {
+    #[derivative(Debug = "ignore")]
     pub id: TraitConstantId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::TraitItemConstantPtr,
 
     pub item_data: ItemData,
@@ -471,6 +505,8 @@ impl TraitConstant {
         Self {
             id,
             node,
+            // FIXME: compiler returns empty string for a signature
+            // FIXME: incorrect full path
             item_data: ItemData::new_without_signature(
                 db,
                 id,
@@ -480,9 +516,12 @@ impl TraitConstant {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct TraitType {
+    #[derivative(Debug = "ignore")]
     pub id: TraitTypeId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::TraitItemTypePtr,
 
     pub item_data: ItemData,
@@ -494,6 +533,8 @@ impl TraitType {
         Self {
             id,
             node,
+            // FIXME: compiler returns empty string for a signature
+            // FIXME: incorrect full path
             item_data: ItemData::new_without_signature(
                 db,
                 id,
@@ -503,9 +544,12 @@ impl TraitType {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct TraitFunction {
+    #[derivative(Debug = "ignore")]
     pub id: TraitFunctionId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::TraitItemFunctionPtr,
 
     pub item_data: ItemData,
@@ -517,14 +561,18 @@ impl TraitFunction {
         Self {
             id,
             node,
+            // FIXME: incorrect full path
             item_data: ItemData::new(db, id, LookupItemId::TraitItem(TraitItemId::Function(id))),
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct Impl {
+    #[derivative(Debug = "ignore")]
     pub id: ImplDefId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemImplPtr,
 
     pub impl_types: Vec<ImplType>,
@@ -566,9 +614,12 @@ impl Impl {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct ImplType {
+    #[derivative(Debug = "ignore")]
     pub id: ImplTypeDefId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemTypeAliasPtr,
 
     pub item_data: ItemData,
@@ -580,14 +631,18 @@ impl ImplType {
         Self {
             id,
             node,
+            // FIXME: incorrect full path
             item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id))),
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct ImplConstant {
+    #[derivative(Debug = "ignore")]
     pub id: ImplConstantDefId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemConstantPtr,
 
     pub item_data: ItemData,
@@ -599,12 +654,14 @@ impl ImplConstant {
         Self {
             id,
             node,
+            // FIXME: incorrect full path
             item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Constant(id))),
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct ImplFunction {
     pub id: ImplFunctionId,
     pub node: ast::FunctionWithBodyPtr,
@@ -623,9 +680,12 @@ impl ImplFunction {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct ExternType {
+    #[derivative(Debug = "ignore")]
     pub id: ExternTypeId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemExternTypePtr,
 
     pub item_data: ItemData,
@@ -646,9 +706,12 @@ impl ExternType {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Derivative, Clone)]
+#[derivative(Debug)]
 pub struct ExternFunction {
+    #[derivative(Debug = "ignore")]
     pub id: ExternFunctionId,
+    #[derivative(Debug = "ignore")]
     pub node: ast::ItemExternFunctionPtr,
 
     pub item_data: ItemData,

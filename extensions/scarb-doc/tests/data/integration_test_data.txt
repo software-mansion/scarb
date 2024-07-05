@@ -1,0 +1,382 @@
+Crate {
+    root_module: Module {
+        item_data: ItemData {
+            name: "hello_world",
+            doc: None,
+            signature: None,
+            full_path: "hello_world",
+        },
+        submodules: [
+            Module {
+                item_data: ItemData {
+                    name: "tests",
+                    doc: Some(
+                        "Tests module\n",
+                    ),
+                    signature: None,
+                    full_path: "hello_world::tests",
+                },
+                submodules: [],
+                constants: [],
+                free_functions: [
+                    FreeFunction {
+                        item_data: ItemData {
+                            name: "it_works",
+                            doc: Some(
+                                "Really\nworks.\n",
+                            ),
+                            signature: Some(
+                                "fn it_works()",
+                            ),
+                            full_path: "hello_world::tests::it_works",
+                        },
+                    },
+                ],
+                structs: [],
+                enums: [],
+                type_aliases: [],
+                impl_aliases: [],
+                traits: [],
+                impls: [],
+                extern_types: [],
+                extern_functions: [],
+            },
+        ],
+        constants: [
+            Constant {
+                item_data: ItemData {
+                    name: "FOO",
+                    doc: Some(
+                        "FOO constant with value 42\n",
+                    ),
+                    signature: Some(
+                        "const FOO: u32 = 42;",
+                    ),
+                    full_path: "hello_world::FOO",
+                },
+            },
+        ],
+        free_functions: [
+            FreeFunction {
+                item_data: ItemData {
+                    name: "main",
+                    doc: Some(
+                        "Fibonacci sequence calculator\nMain function that calculates the 16th Fibonacci number\n",
+                    ),
+                    signature: Some(
+                        "fn main() -> u32",
+                    ),
+                    full_path: "hello_world::main",
+                },
+            },
+            FreeFunction {
+                item_data: ItemData {
+                    name: "fib",
+                    doc: Some(
+                        "Calculate the nth Fibonacci number\n\n# Arguments\n* `n` - The index of the Fibonacci number to calculate\n",
+                    ),
+                    signature: Some(
+                        "fn fib(mut n: u32) -> u32",
+                    ),
+                    full_path: "hello_world::fib",
+                },
+            },
+        ],
+        structs: [
+            Struct {
+                members: [
+                    Member {
+                        item_data: ItemData {
+                            name: "radius",
+                            doc: Some(
+                                "Radius of the circle",
+                            ),
+                            signature: None,
+                            full_path: "hello_world::Circle::radius",
+                        },
+                    },
+                ],
+                item_data: ItemData {
+                    name: "Circle",
+                    doc: Some(
+                        "Circle struct with radius field\n",
+                    ),
+                    signature: None,
+                    full_path: "hello_world::Circle",
+                },
+            },
+        ],
+        enums: [
+            Enum {
+                variants: [
+                    Variant {
+                        item_data: ItemData {
+                            name: "Red",
+                            doc: Some(
+                                "Red color",
+                            ),
+                            signature: None,
+                            full_path: "hello_world::Color::Red",
+                        },
+                    },
+                    Variant {
+                        item_data: ItemData {
+                            name: "Green",
+                            doc: Some(
+                                "Green color",
+                            ),
+                            signature: None,
+                            full_path: "hello_world::Color::Green",
+                        },
+                    },
+                    Variant {
+                        item_data: ItemData {
+                            name: "Blue",
+                            doc: Some(
+                                "Blue color",
+                            ),
+                            signature: None,
+                            full_path: "hello_world::Color::Blue",
+                        },
+                    },
+                ],
+                item_data: ItemData {
+                    name: "Color",
+                    doc: Some(
+                        "Color enum with Red, Green, and Blue variants\n",
+                    ),
+                    signature: None,
+                    full_path: "hello_world::Color",
+                },
+            },
+        ],
+        type_aliases: [
+            TypeAlias {
+                item_data: ItemData {
+                    name: "Pair",
+                    doc: Some(
+                        "Pair type alias for a tuple of two u32 values\n",
+                    ),
+                    signature: Some(
+                        "type Pair = (u32, u32);",
+                    ),
+                    full_path: "hello_world::Pair",
+                },
+            },
+        ],
+        impl_aliases: [],
+        traits: [
+            Trait {
+                trait_constants: [
+                    TraitConstant {
+                        item_data: ItemData {
+                            name: "SHAPE_CONST",
+                            doc: Some(
+                                "Constant for the shape type\n",
+                            ),
+                            signature: None,
+                            full_path: "Shape::SHAPE_CONST",
+                        },
+                    },
+                ],
+                trait_types: [
+                    TraitType {
+                        item_data: ItemData {
+                            name: "ShapePair",
+                            doc: Some(
+                                "Type alias for a pair of shapes\n",
+                            ),
+                            signature: None,
+                            full_path: "Shape::ShapePair",
+                        },
+                    },
+                ],
+                trait_functions: [
+                    TraitFunction {
+                        item_data: ItemData {
+                            name: "area",
+                            doc: Some(
+                                "Calculate the area of the shape\n",
+                            ),
+                            signature: Some(
+                                "fn area(self: T) -> u32",
+                            ),
+                            full_path: "Shape::area",
+                        },
+                    },
+                ],
+                item_data: ItemData {
+                    name: "Shape",
+                    doc: Some(
+                        "Shape trait for objects that have an area\n",
+                    ),
+                    signature: Some(
+                        "trait Shape<T>",
+                    ),
+                    full_path: "hello_world::Shape",
+                },
+            },
+        ],
+        impls: [
+            Impl {
+                impl_types: [
+                    ImplType {
+                        item_data: ItemData {
+                            name: "ShapePair",
+                            doc: Some(
+                                "Type alias for a pair of circles\n",
+                            ),
+                            signature: Some(
+                                "type ShapePair<Circle> = (Circle, Circle);",
+                            ),
+                            full_path: "CircleShape::ShapePair",
+                        },
+                    },
+                ],
+                impl_constants: [
+                    ImplConstant {
+                        item_data: ItemData {
+                            name: "SHAPE_CONST",
+                            doc: Some(
+                                "Shape constant\n",
+                            ),
+                            signature: Some(
+                                "const SHAPE_CONST = \"xyz\";",
+                            ),
+                            full_path: "CircleShape::SHAPE_CONST",
+                        },
+                    },
+                ],
+                impl_functions: [
+                    ImplFunction {
+                        id: ImplFunctionId(
+                            0,
+                        ),
+                        node: FunctionWithBodyPtr(
+                            SyntaxStablePtrId(
+                                256,
+                            ),
+                        ),
+                        item_data: ItemData {
+                            name: "area",
+                            doc: Some(
+                                "Implementation of the area method for Circle\n",
+                            ),
+                            signature: Some(
+                                "fn area(self: Circle) -> u32",
+                            ),
+                            full_path: "hello_world::CircleShape::area",
+                        },
+                    },
+                ],
+                item_data: ItemData {
+                    name: "CircleShape",
+                    doc: Some(
+                        "Implementation of the Shape trait for Circle\n",
+                    ),
+                    signature: Some(
+                        "impl CircleShape of Shape<Circle>",
+                    ),
+                    full_path: "hello_world::CircleShape",
+                },
+            },
+            Impl {
+                impl_types: [],
+                impl_constants: [],
+                impl_functions: [],
+                item_data: ItemData {
+                    name: "CircleDrop",
+                    doc: None,
+                    signature: Some(
+                        "impl CircleDrop of core::traits::Drop<Circle>;",
+                    ),
+                    full_path: "hello_world::CircleDrop",
+                },
+            },
+            Impl {
+                impl_types: [],
+                impl_constants: [],
+                impl_functions: [
+                    ImplFunction {
+                        id: ImplFunctionId(
+                            1,
+                        ),
+                        node: FunctionWithBodyPtr(
+                            SyntaxStablePtrId(
+                                310,
+                            ),
+                        ),
+                        item_data: ItemData {
+                            name: "serialize",
+                            doc: None,
+                            signature: Some(
+                                "fn serialize(self: @Circle, ref output: core::array::Array<felt252>)",
+                            ),
+                            full_path: "hello_world::CircleSerde::serialize",
+                        },
+                    },
+                    ImplFunction {
+                        id: ImplFunctionId(
+                            2,
+                        ),
+                        node: FunctionWithBodyPtr(
+                            SyntaxStablePtrId(
+                                311,
+                            ),
+                        ),
+                        item_data: ItemData {
+                            name: "deserialize",
+                            doc: None,
+                            signature: Some(
+                                "fn deserialize(ref serialized: core::array::Span<felt252>) -> core::option::Option<Circle>",
+                            ),
+                            full_path: "hello_world::CircleSerde::deserialize",
+                        },
+                    },
+                ],
+                item_data: ItemData {
+                    name: "CircleSerde",
+                    doc: None,
+                    signature: Some(
+                        "impl CircleSerde of core::serde::Serde<Circle>",
+                    ),
+                    full_path: "hello_world::CircleSerde",
+                },
+            },
+            Impl {
+                impl_types: [],
+                impl_constants: [],
+                impl_functions: [
+                    ImplFunction {
+                        id: ImplFunctionId(
+                            3,
+                        ),
+                        node: FunctionWithBodyPtr(
+                            SyntaxStablePtrId(
+                                323,
+                            ),
+                        ),
+                        item_data: ItemData {
+                            name: "eq",
+                            doc: None,
+                            signature: Some(
+                                "fn eq(lhs: @Circle, rhs: @Circle) -> bool",
+                            ),
+                            full_path: "hello_world::CirclePartialEq::eq",
+                        },
+                    },
+                ],
+                item_data: ItemData {
+                    name: "CirclePartialEq",
+                    doc: None,
+                    signature: Some(
+                        "impl CirclePartialEq of core::traits::PartialEq<Circle>",
+                    ),
+                    full_path: "hello_world::CirclePartialEq",
+                },
+            },
+        ],
+        extern_types: [],
+        extern_functions: [],
+    },
+}
