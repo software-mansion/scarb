@@ -186,6 +186,7 @@ pub struct TomlPackage {
     pub name: PackageName,
     pub version: MaybeWorkspaceField<Version>,
     pub edition: Option<MaybeWorkspaceField<Edition>>,
+    pub publish: Option<bool>,
     pub authors: Option<MaybeWorkspaceField<Vec<String>>>,
     pub urls: Option<BTreeMap<String, String>>,
     pub description: Option<MaybeWorkspaceField<String>>,
