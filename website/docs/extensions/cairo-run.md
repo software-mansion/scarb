@@ -21,7 +21,7 @@ In general, a function to run can be specified in two ways:
 - with the `#[main]` attribute, provided by the `cairo_run` package.
 
 You can enable the `#[main]` attribute in your project by
-adding `starknet = "{{ rel.stable.starknetPackageVersionReq }}"` to the dependencies section of your Scarb manifest.
+adding `cairo_run = "{{ rel.stable.starknetPackageVersionReq }}"` to the dependencies section of your Scarb manifest.
 If you do not add the `cairo_run` package to your dependencies - it's required to build the project
 with [`sierra-replace-ids`](../reference/manifest#sierra-replace-ids) flag enabled.
 You can also provide a function name argument with `--function` flag.
