@@ -11,7 +11,7 @@ pub mod patch_map;
 pub mod patcher;
 pub mod source_map;
 
-pub const DEFAULT_REGISTRY_INDEX: &str = "https://there-is-no-default-registry-yet.com";
+pub const DEFAULT_REGISTRY_INDEX: &str = "https://scarbs.xyz";
 
 #[async_trait(?Send)]
 pub trait Registry {
