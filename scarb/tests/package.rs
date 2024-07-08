@@ -1328,7 +1328,7 @@ fn package_without_publish_metadata() {
 }
 
 #[test]
-fn package_with_disabled_publish() {
+fn package_with_publish_disabled() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("foo")

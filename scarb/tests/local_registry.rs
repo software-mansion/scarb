@@ -219,8 +219,7 @@ fn publish() {
 #[test]
 fn publish_disabled() {
     let t = TempDir::new().unwrap();
-    let index = t.child("index");
-    index.create_dir_all().unwrap();
+    let index = TempDir::new().unwrap();
 
     ProjectBuilder::start()
         .name("foobar")
