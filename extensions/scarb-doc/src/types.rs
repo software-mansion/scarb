@@ -2,8 +2,8 @@
 #![allow(dead_code)]
 
 use itertools::Itertools;
+use serde::Serialize;
 
-use crate::db::ScarbDocDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::diagnostic_utils::StableLocation;
 use cairo_lang_defs::ids::{
@@ -21,7 +21,9 @@ use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::kind::SyntaxKind;
 use cairo_lang_utils::Upcast;
 
-#[derive(Clone, Debug)]
+use crate::db::ScarbDocDatabase;
+
+#[derive(Serialize, Clone)]
 pub struct Crate {
     pub root_module: Module,
 }
@@ -34,8 +36,9 @@ impl Crate {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct Module {
+    #[serde(skip)]
     pub module_id: ModuleId,
     pub item_data: ItemData,
 
@@ -54,7 +57,7 @@ pub struct Module {
 
 impl Module {
     pub fn new(db: &ScarbDocDatabase, module_id: ModuleId) -> Self {
-        // TODO: temporary before crate root module doc fetching works.
+        // FIXME: compiler doesn't support fetching root crate doc
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData {
                 name: crate_id.name(db).to_string(),
@@ -153,7 +156,7 @@ impl Module {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Serialize, Clone)]
 pub struct ItemData {
     pub name: String,
     pub doc: Option<String>,
@@ -190,9 +193,11 @@ impl ItemData {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct Constant {
+    #[serde(skip)]
     pub id: ConstantId,
+    #[serde(skip)]
     pub node: ast::ItemConstantPtr,
 
     pub item_data: ItemData,
@@ -209,9 +214,11 @@ impl Constant {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct FreeFunction {
+    #[serde(skip)]
     pub id: FreeFunctionId,
+    #[serde(skip)]
     pub node: ast::FunctionWithBodyPtr,
 
     pub item_data: ItemData,
@@ -232,9 +239,11 @@ impl FreeFunction {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct Struct {
+    #[serde(skip)]
     pub id: StructId,
+    #[serde(skip)]
     pub node: ast::ItemStructPtr,
 
     pub members: Vec<Member>,
@@ -269,9 +278,11 @@ impl Struct {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct Member {
+    #[serde(skip)]
     pub id: MemberId,
+    #[serde(skip)]
     pub node: ast::MemberPtr,
 
     pub item_data: ItemData,
@@ -301,9 +312,11 @@ impl Member {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct Enum {
+    #[serde(skip)]
     pub id: EnumId,
+    #[serde(skip)]
     pub node: ast::ItemEnumPtr,
 
     pub variants: Vec<Variant>,
@@ -335,9 +348,11 @@ impl Enum {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct Variant {
+    #[serde(skip)]
     pub id: VariantId,
+    #[serde(skip)]
     pub node: ast::VariantPtr,
 
     pub item_data: ItemData,
@@ -367,9 +382,11 @@ impl Variant {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct TypeAlias {
+    #[serde(skip)]
     pub id: ModuleTypeAliasId,
+    #[serde(skip)]
     pub node: ast::ItemTypeAliasPtr,
 
     pub item_data: ItemData,
@@ -390,9 +407,11 @@ impl TypeAlias {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct ImplAlias {
+    #[serde(skip)]
     pub id: ImplAliasId,
+    #[serde(skip)]
     pub node: ast::ItemImplAliasPtr,
 
     pub item_data: ItemData,
@@ -413,9 +432,11 @@ impl ImplAlias {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct Trait {
+    #[serde(skip)]
     pub id: TraitId,
+    #[serde(skip)]
     pub node: ast::ItemTraitPtr,
 
     pub trait_constants: Vec<TraitConstant>,
@@ -457,9 +478,11 @@ impl Trait {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct TraitConstant {
+    #[serde(skip)]
     pub id: TraitConstantId,
+    #[serde(skip)]
     pub node: ast::TraitItemConstantPtr,
 
     pub item_data: ItemData,
@@ -471,6 +494,8 @@ impl TraitConstant {
         Self {
             id,
             node,
+            // FIXME: compiler returns empty string for a signature
+            // FIXME: incorrect full path
             item_data: ItemData::new_without_signature(
                 db,
                 id,
@@ -480,9 +505,11 @@ impl TraitConstant {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct TraitType {
+    #[serde(skip)]
     pub id: TraitTypeId,
+    #[serde(skip)]
     pub node: ast::TraitItemTypePtr,
 
     pub item_data: ItemData,
@@ -494,6 +521,8 @@ impl TraitType {
         Self {
             id,
             node,
+            // FIXME: compiler returns empty string for a signature
+            // FIXME: incorrect full path
             item_data: ItemData::new_without_signature(
                 db,
                 id,
@@ -503,9 +532,11 @@ impl TraitType {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct TraitFunction {
+    #[serde(skip)]
     pub id: TraitFunctionId,
+    #[serde(skip)]
     pub node: ast::TraitItemFunctionPtr,
 
     pub item_data: ItemData,
@@ -517,14 +548,17 @@ impl TraitFunction {
         Self {
             id,
             node,
+            // FIXME: incorrect full path
             item_data: ItemData::new(db, id, LookupItemId::TraitItem(TraitItemId::Function(id))),
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct Impl {
+    #[serde(skip)]
     pub id: ImplDefId,
+    #[serde(skip)]
     pub node: ast::ItemImplPtr,
 
     pub impl_types: Vec<ImplType>,
@@ -566,9 +600,11 @@ impl Impl {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct ImplType {
+    #[serde(skip)]
     pub id: ImplTypeDefId,
+    #[serde(skip)]
     pub node: ast::ItemTypeAliasPtr,
 
     pub item_data: ItemData,
@@ -580,14 +616,17 @@ impl ImplType {
         Self {
             id,
             node,
+            // FIXME: incorrect full path
             item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id))),
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct ImplConstant {
+    #[serde(skip)]
     pub id: ImplConstantDefId,
+    #[serde(skip)]
     pub node: ast::ItemConstantPtr,
 
     pub item_data: ItemData,
@@ -599,14 +638,17 @@ impl ImplConstant {
         Self {
             id,
             node,
+            // FIXME: incorrect full path
             item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Constant(id))),
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct ImplFunction {
+    #[serde(skip)]
     pub id: ImplFunctionId,
+    #[serde(skip)]
     pub node: ast::FunctionWithBodyPtr,
 
     pub item_data: ItemData,
@@ -623,9 +665,11 @@ impl ImplFunction {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct ExternType {
+    #[serde(skip)]
     pub id: ExternTypeId,
+    #[serde(skip)]
     pub node: ast::ItemExternTypePtr,
 
     pub item_data: ItemData,
@@ -646,9 +690,11 @@ impl ExternType {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Clone)]
 pub struct ExternFunction {
+    #[serde(skip)]
     pub id: ExternFunctionId,
+    #[serde(skip)]
     pub node: ast::ItemExternFunctionPtr,
 
     pub item_data: ItemData,
