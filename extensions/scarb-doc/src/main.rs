@@ -37,7 +37,7 @@ fn main_inner() -> Result<()> {
     let metadata = MetadataCommand::new()
         .inherit_stderr()
         .exec()
-        .context("Metadata command failed")?;
+        .context("metadata command failed")?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
 
     let mut json_output = serde_json::Map::new();
@@ -51,7 +51,7 @@ fn main_inner() -> Result<()> {
 
         json_output.insert(
             package_metadata.name,
-            serde_json::to_value(crate_).expect("Failed to serialize information about a crate"),
+            serde_json::to_value(crate_).expect("failed to serialize information about a crate"),
         );
     }
 
@@ -60,16 +60,16 @@ fn main_inner() -> Result<()> {
         .unwrap_or_else(|| metadata.workspace.root.join("target"))
         .join("doc");
 
-    fs::create_dir_all(&output_dir).context("Failed to create output directory for scarb doc")?;
+    fs::create_dir_all(&output_dir).context("failed to create output directory for scarb doc")?;
 
     match args.output_format {
         OutputFormat::Json => {
             let output = serde_json::to_string_pretty(&json_output)
-                .expect("Failed to serialize information about crates");
+                .expect("failed to serialize information about crates");
             let output_path = output_dir.join("output.json");
 
             fs::write(output_path, output)
-                .context("Failed to write output of scarb doc to a file")?;
+                .context("failed to write output of scarb doc to a file")?;
         }
         OutputFormat::Markdown => todo!("#1424"),
     }
