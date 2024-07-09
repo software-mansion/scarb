@@ -1,25 +1,14 @@
 use assert_fs::TempDir;
 use expect_test::expect_file;
 use indoc::indoc;
-use std::env;
-use std::path::PathBuf;
+use std::fs;
 
-use scarb_metadata::MetadataCommand;
-use scarb_test_support::cargo::cargo_bin;
+use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
-
-use scarb_doc::compilation::get_project_config;
-use scarb_doc::generate_language_elements_tree_for_package;
-
-fn scarb_bin() -> PathBuf {
-    env::var_os("SCARB_TEST_BIN")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| cargo_bin("scarb"))
-}
 
 // Run `UPDATE_EXPECT=1 cargo test` to fix this test.
 #[test]
-fn integration_test() {
+fn json_output() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello_world")
@@ -117,25 +106,15 @@ fn integration_test() {
         "#})
         .build(&t);
 
-    let metadata = MetadataCommand::new()
-        .scarb_path(scarb_bin())
-        .current_dir(t.path())
-        .exec()
-        .expect("Failed to obtain metadata");
-    let package_metadata = metadata
-        .packages
-        .iter()
-        .find(|pkg| pkg.id == metadata.workspace.members[0])
-        .unwrap();
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args(["--output-format", "json"])
+        .current_dir(&t)
+        .assert()
+        .success();
 
-    let project_config = get_project_config(&metadata, package_metadata);
-
-    let crate_ =
-        generate_language_elements_tree_for_package(package_metadata.name.clone(), project_config)
-            .expect("Failed to generate language elements tree");
-
-    let serialized_crate = serde_json::to_string_pretty(&crate_).unwrap();
-
-    let expected = expect_file!["./data/integration_test_data.json"];
-    expected.assert_eq(&serialized_crate);
+    let serialized_crates = fs::read_to_string(t.path().join("target/doc/output.json"))
+        .expect("Failed to read from file");
+    let expected = expect_file!["./data/json_output_test_data.json"];
+    expected.assert_eq(&serialized_crates);
 }
