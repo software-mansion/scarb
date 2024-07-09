@@ -8,7 +8,7 @@ const FORMAT_VERSION: u8 = 1;
 
 #[derive(Serialize)]
 pub struct VersionedJsonOutput {
-    pub format_version: u8,
+    format_version: u8,
     pub package_information_map: BTreeMap<PackageName, Crate>,
 }
 
