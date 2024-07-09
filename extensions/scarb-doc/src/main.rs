@@ -65,7 +65,8 @@ fn main_inner() -> Result<()> {
         OutputFormat::Json => {
             let versioned_json_output = VersionedJsonOutput::new(package_information_map);
             let output = serde_json::to_string_pretty(&versioned_json_output)
-                .expect("failed to serialize information about crates");
+                .expect("failed to serialize information about crates")
+                + "\n";
             let output_path = output_dir.join("output.json");
 
             fs::write(output_path, output)
