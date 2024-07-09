@@ -17,9 +17,6 @@ use cairo_lang_doc::db::DocGroup;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_syntax::node::ast;
-use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_syntax::node::kind::SyntaxKind;
-use cairo_lang_utils::Upcast;
 
 use crate::db::ScarbDocDatabase;
 
@@ -299,7 +296,7 @@ impl Member {
 
         let item_data = ItemData {
             name,
-            doc: get_item_documentation(db.upcast(), &stable_location),
+            doc: get_item_documentation(db, &stable_location),
             signature: None,
             full_path,
         };
@@ -766,89 +763,4 @@ fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) 
         })
         .collect::<Vec<&str>>();
     (!doc.is_empty()).then(|| doc.join("\n"))
-}
-
-// TODO(#1428): This function is temporarily copied until further modifications in cairo compiler are done.
-fn get_item_signature(db: &dyn DefsGroup, stable_location: &StableLocation) -> String {
-    let syntax_node = stable_location.syntax_node(db);
-    let definition = match syntax_node.green_node(db.upcast()).kind {
-        SyntaxKind::ItemConstant
-        | SyntaxKind::TraitItemFunction
-        | SyntaxKind::ItemTypeAlias
-        | SyntaxKind::ItemImplAlias => syntax_node.clone().get_text_without_trivia(db.upcast()),
-        SyntaxKind::FunctionWithBody | SyntaxKind::ItemExternFunction => {
-            let children =
-                <dyn DefsGroup as Upcast<dyn SyntaxGroup>>::upcast(db).get_children(syntax_node);
-            children[1..]
-                .iter()
-                .map_while(|node| {
-                    let kind = node.kind(db.upcast());
-                    (kind != SyntaxKind::ExprBlock
-                        && kind != SyntaxKind::ImplBody
-                        && kind != SyntaxKind::TraitBody)
-                        .then_some(
-                            if kind == SyntaxKind::VisibilityPub
-                                || kind == SyntaxKind::TerminalExtern
-                            {
-                                node.clone()
-                                    .get_text_without_trivia(db.upcast())
-                                    .trim()
-                                    .to_owned()
-                                    + " "
-                            } else {
-                                node.clone()
-                                    .get_text_without_trivia(db.upcast())
-                                    .lines()
-                                    .map(|line| line.trim())
-                                    .collect::<Vec<&str>>()
-                                    .join("")
-                            },
-                        )
-                })
-                .collect::<Vec<String>>()
-                .join("")
-        }
-        SyntaxKind::ItemEnum | SyntaxKind::ItemExternType | SyntaxKind::ItemStruct => {
-            <dyn DefsGroup as Upcast<dyn SyntaxGroup>>::upcast(db)
-                .get_children(syntax_node)
-                .iter()
-                .skip(1)
-                .map(|node| node.clone().get_text(db.upcast()))
-                .collect::<Vec<String>>()
-                .join("")
-        }
-        SyntaxKind::ItemTrait | SyntaxKind::ItemImpl => {
-            let children =
-                <dyn DefsGroup as Upcast<dyn SyntaxGroup>>::upcast(db).get_children(syntax_node);
-            children[1..]
-                .iter()
-                .enumerate()
-                .map_while(|(index, node)| {
-                    let kind = node.kind(db.upcast());
-                    if kind != SyntaxKind::ImplBody && kind != SyntaxKind::TraitBody {
-                        let text = node
-                            .clone()
-                            .get_text_without_trivia(db.upcast())
-                            .lines()
-                            .map(|line| line.trim())
-                            .collect::<Vec<&str>>()
-                            .join("");
-
-                        Some(
-                            if index == 0 || kind == SyntaxKind::WrappedGenericParamList {
-                                text
-                            } else {
-                                " ".to_owned() + &text
-                            },
-                        )
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<String>>()
-                .join("")
-        }
-        _ => "".to_owned(),
-    };
-    definition
 }
