@@ -8,6 +8,7 @@ use scarb_metadata::MetadataCommand;
 use scarb_ui::args::PackagesFilter;
 
 use scarb_doc::generate_language_elements_tree_for_package;
+use scarb_doc::versioned_json_output::VersionedJsonOutput;
 
 #[derive(Default, Debug, Clone, clap::ValueEnum)]
 enum OutputFormat {
@@ -50,10 +51,7 @@ fn main_inner() -> Result<()> {
             project_config,
         );
 
-        package_information_map.insert(
-            package_metadata.name,
-            serde_json::to_value(crate_).expect("failed to serialize information about a crate"),
-        );
+        package_information_map.insert(package_metadata.name, crate_);
     }
 
     let output_dir = metadata
@@ -65,7 +63,8 @@ fn main_inner() -> Result<()> {
 
     match args.output_format {
         OutputFormat::Json => {
-            let output = serde_json::to_string_pretty(&package_information_map)
+            let versioned_json_output = VersionedJsonOutput::new(package_information_map);
+            let output = serde_json::to_string_pretty(&versioned_json_output)
                 .expect("failed to serialize information about crates");
             let output_path = output_dir.join("output.json");
 

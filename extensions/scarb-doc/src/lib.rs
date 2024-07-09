@@ -8,6 +8,7 @@ use types::Crate;
 pub mod compilation;
 pub mod db;
 pub mod types;
+pub mod versioned_json_output;
 
 pub fn generate_language_elements_tree_for_package(
     package_name: String,
