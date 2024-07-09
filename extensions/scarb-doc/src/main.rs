@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use scarb_doc::compilation::get_project_config;
+use std::collections::BTreeMap;
 use std::fs;
 
 use scarb_metadata::MetadataCommand;
@@ -40,7 +41,7 @@ fn main_inner() -> Result<()> {
         .context("metadata command failed")?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
 
-    let mut json_output = serde_json::Map::new();
+    let mut package_information_map = BTreeMap::new();
 
     for package_metadata in metadata_for_packages {
         let project_config = get_project_config(&metadata, &package_metadata);
@@ -49,7 +50,7 @@ fn main_inner() -> Result<()> {
             project_config,
         );
 
-        json_output.insert(
+        package_information_map.insert(
             package_metadata.name,
             serde_json::to_value(crate_).expect("failed to serialize information about a crate"),
         );
@@ -64,7 +65,7 @@ fn main_inner() -> Result<()> {
 
     match args.output_format {
         OutputFormat::Json => {
-            let output = serde_json::to_string_pretty(&json_output)
+            let output = serde_json::to_string_pretty(&package_information_map)
                 .expect("failed to serialize information about crates");
             let output_path = output_dir.join("output.json");
 
