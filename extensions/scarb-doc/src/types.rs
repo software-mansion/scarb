@@ -57,7 +57,7 @@ pub struct Module {
 
 impl Module {
     pub fn new(db: &ScarbDocDatabase, module_id: ModuleId) -> Self {
-        // FIXME: compiler doesn't support fetching root crate doc
+        // FIXME(#1438): compiler doesn't support fetching root crate doc
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData {
                 name: crate_id.name(db).to_string(),
@@ -294,7 +294,7 @@ impl Member {
         let stable_location = StableLocation::new(node.0);
 
         let name = id.name(db).into();
-        // TODO: Replace with `id.full_path(db)` after it is fixed in the compiler.
+        // TODO(#1438): Replace with `id.full_path(db)` after it is fixed in the compiler.
         let full_path = format!("{}::{}", struct_full_path, name);
 
         let item_data = ItemData {
@@ -364,7 +364,7 @@ impl Variant {
         let stable_location = StableLocation::new(node.0);
 
         let name = id.name(db).into();
-        // TODO: Replace with `id.full_path(db)` after it is fixed in the compiler.
+        // TODO(#1438): Replace with `id.full_path(db)` after it is fixed in the compiler.
         let full_path = format!("{}::{}", enum_full_path, name);
 
         let item_data = ItemData {
@@ -503,10 +503,10 @@ impl TraitConstant {
     pub fn new(db: &ScarbDocDatabase, id: TraitConstantId, full_path_to_trait: String) -> Self {
         let node = id.stable_ptr(db);
 
-        // FIXME: compiler returns empty string for a signature
+        // FIXME(#1437): compiler returns empty string for a signature
         let mut item_data =
             ItemData::new(db, id, LookupItemId::TraitItem(TraitItemId::Constant(id)));
-        // TODO: introduce proper fix in compiler
+        // TODO(#1438): introduce proper fix in compiler
         item_data.full_path = full_path_to_trait + &item_data.full_path;
 
         Self {
@@ -531,9 +531,9 @@ impl TraitType {
     pub fn new(db: &ScarbDocDatabase, id: TraitTypeId, full_path_to_trait: String) -> Self {
         let node = id.stable_ptr(db);
 
-        // FIXME: compiler returns empty string for a signature
+        // FIXME(#1437): compiler returns empty string for a signature
         let mut item_data = ItemData::new(db, id, LookupItemId::TraitItem(TraitItemId::Type(id)));
-        // TODO: introduce proper fix in compiler
+        // TODO(#1438): introduce proper fix in compiler
         item_data.full_path = full_path_to_trait + &item_data.full_path;
 
         Self {
@@ -634,7 +634,7 @@ impl ImplType {
         let node = id.stable_ptr(db);
 
         let mut item_data = ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id)));
-        // TODO: introduce proper fix in compiler
+        // TODO(#1438): introduce proper fix in compiler
         item_data.full_path = full_path_to_impl + &item_data.full_path;
 
         Self {
@@ -660,7 +660,7 @@ impl ImplConstant {
         let node = id.stable_ptr(db);
 
         let mut item_data = ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Constant(id)));
-        // TODO: introduce proper fix in compiler
+        // TODO(#1438): introduce proper fix in compiler
         item_data.full_path = full_path_to_impl + &item_data.full_path;
 
         Self {
