@@ -141,8 +141,8 @@
                 "item_data": {
                   "name": "SHAPE_CONST",
                   "doc": "Constant for the shape type\n",
-                  "signature": null,
-                  "full_path": "Shape::SHAPE_CONST"
+                  "signature": "",
+                  "full_path": "hello_world::Shape::SHAPE_CONST"
                 }
               }
             ],
@@ -151,8 +151,8 @@
                 "item_data": {
                   "name": "ShapePair",
                   "doc": "Type alias for a pair of shapes\n",
-                  "signature": null,
-                  "full_path": "Shape::ShapePair"
+                  "signature": "",
+                  "full_path": "hello_world::Shape::ShapePair"
                 }
               }
             ],
@@ -182,7 +182,7 @@
                   "name": "ShapePair",
                   "doc": "Type alias for a pair of circles\n",
                   "signature": "type ShapePair<Circle> = (Circle, Circle);",
-                  "full_path": "CircleShape::ShapePair"
+                  "full_path": "hello_world::CircleShape::ShapePair"
                 }
               }
             ],
@@ -192,7 +192,7 @@
                   "name": "SHAPE_CONST",
                   "doc": "Shape constant\n",
                   "signature": "const SHAPE_CONST = \"xyz\";",
-                  "full_path": "CircleShape::SHAPE_CONST"
+                  "full_path": "hello_world::CircleShape::SHAPE_CONST"
                 }
               }
             ],

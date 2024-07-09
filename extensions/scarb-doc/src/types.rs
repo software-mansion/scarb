@@ -448,16 +448,27 @@ pub struct Trait {
 
 impl Trait {
     pub fn new(db: &ScarbDocDatabase, id: TraitId) -> Self {
+        let item_data = ItemData::new(db, id, LookupItemId::ModuleItem(ModuleItemId::Trait(id)));
+        let full_path_to_trait = item_data
+            .full_path
+            .strip_suffix(item_data.name.as_str())
+            .unwrap()
+            .to_string();
+
         let trait_constants = db.trait_constants(id).unwrap();
         let trait_constants = trait_constants
             .iter()
-            .map(|(_name, trait_constant_id)| TraitConstant::new(db, *trait_constant_id))
+            .map(|(_name, trait_constant_id)| {
+                TraitConstant::new(db, *trait_constant_id, full_path_to_trait.clone())
+            })
             .collect::<Vec<_>>();
 
         let trait_types = db.trait_types(id).unwrap();
         let trait_types = trait_types
             .iter()
-            .map(|(_name, trait_type_id)| TraitType::new(db, *trait_type_id))
+            .map(|(_name, trait_type_id)| {
+                TraitType::new(db, *trait_type_id, full_path_to_trait.clone())
+            })
             .collect::<Vec<_>>();
 
         let trait_functions = db.trait_functions(id).unwrap();
@@ -473,7 +484,7 @@ impl Trait {
             trait_constants,
             trait_types,
             trait_functions,
-            item_data: ItemData::new(db, id, LookupItemId::ModuleItem(ModuleItemId::Trait(id))),
+            item_data,
         }
     }
 }
@@ -489,18 +500,19 @@ pub struct TraitConstant {
 }
 
 impl TraitConstant {
-    pub fn new(db: &ScarbDocDatabase, id: TraitConstantId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitConstantId, full_path_to_trait: String) -> Self {
         let node = id.stable_ptr(db);
+
+        // FIXME: compiler returns empty string for a signature
+        let mut item_data =
+            ItemData::new(db, id, LookupItemId::TraitItem(TraitItemId::Constant(id)));
+        // TODO: introduce proper fix in compiler
+        item_data.full_path = full_path_to_trait + &item_data.full_path;
+
         Self {
             id,
             node,
-            // FIXME: compiler returns empty string for a signature
-            // FIXME: incorrect full path
-            item_data: ItemData::new_without_signature(
-                db,
-                id,
-                LookupItemId::TraitItem(TraitItemId::Constant(id)),
-            ),
+            item_data,
         }
     }
 }
@@ -516,18 +528,18 @@ pub struct TraitType {
 }
 
 impl TraitType {
-    pub fn new(db: &ScarbDocDatabase, id: TraitTypeId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitTypeId, full_path_to_trait: String) -> Self {
         let node = id.stable_ptr(db);
+
+        // FIXME: compiler returns empty string for a signature
+        let mut item_data = ItemData::new(db, id, LookupItemId::TraitItem(TraitItemId::Type(id)));
+        // TODO: introduce proper fix in compiler
+        item_data.full_path = full_path_to_trait + &item_data.full_path;
+
         Self {
             id,
             node,
-            // FIXME: compiler returns empty string for a signature
-            // FIXME: incorrect full path
-            item_data: ItemData::new_without_signature(
-                db,
-                id,
-                LookupItemId::TraitItem(TraitItemId::Type(id)),
-            ),
+            item_data,
         }
     }
 }
@@ -545,10 +557,10 @@ pub struct TraitFunction {
 impl TraitFunction {
     pub fn new(db: &ScarbDocDatabase, id: TraitFunctionId) -> Self {
         let node = id.stable_ptr(db);
+
         Self {
             id,
             node,
-            // FIXME: incorrect full path
             item_data: ItemData::new(db, id, LookupItemId::TraitItem(TraitItemId::Function(id))),
         }
     }
@@ -570,16 +582,23 @@ pub struct Impl {
 
 impl Impl {
     pub fn new(db: &ScarbDocDatabase, id: ImplDefId) -> Self {
+        let item_data = ItemData::new(db, id, LookupItemId::ModuleItem(ModuleItemId::Impl(id)));
+        let full_path_to_impl = item_data
+            .full_path
+            .strip_suffix(item_data.name.as_str())
+            .unwrap()
+            .to_string();
+
         let impl_types = db.impl_types(id).unwrap();
         let impl_types = impl_types
             .iter()
-            .map(|(id, _)| ImplType::new(db, *id))
+            .map(|(id, _)| ImplType::new(db, *id, full_path_to_impl.clone()))
             .collect::<Vec<_>>();
 
         let impl_constants = db.impl_constants(id).unwrap();
         let impl_constants = impl_constants
             .iter()
-            .map(|(id, _)| ImplConstant::new(db, *id))
+            .map(|(id, _)| ImplConstant::new(db, *id, full_path_to_impl.clone()))
             .collect::<Vec<_>>();
 
         let impl_functions = db.impl_functions(id).unwrap();
@@ -595,7 +614,7 @@ impl Impl {
             impl_types,
             impl_constants,
             impl_functions,
-            item_data: ItemData::new(db, id, LookupItemId::ModuleItem(ModuleItemId::Impl(id))),
+            item_data,
         }
     }
 }
@@ -611,13 +630,17 @@ pub struct ImplType {
 }
 
 impl ImplType {
-    pub fn new(db: &ScarbDocDatabase, id: ImplTypeDefId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplTypeDefId, full_path_to_impl: String) -> Self {
         let node = id.stable_ptr(db);
+
+        let mut item_data = ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id)));
+        // TODO: introduce proper fix in compiler
+        item_data.full_path = full_path_to_impl + &item_data.full_path;
+
         Self {
             id,
             node,
-            // FIXME: incorrect full path
-            item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id))),
+            item_data,
         }
     }
 }
@@ -633,13 +656,17 @@ pub struct ImplConstant {
 }
 
 impl ImplConstant {
-    pub fn new(db: &ScarbDocDatabase, id: ImplConstantDefId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplConstantDefId, full_path_to_impl: String) -> Self {
         let node = id.stable_ptr(db);
+
+        let mut item_data = ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Constant(id)));
+        // TODO: introduce proper fix in compiler
+        item_data.full_path = full_path_to_impl + &item_data.full_path;
+
         Self {
             id,
             node,
-            // FIXME: incorrect full path
-            item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Constant(id))),
+            item_data,
         }
     }
 }
@@ -657,6 +684,7 @@ pub struct ImplFunction {
 impl ImplFunction {
     pub fn new(db: &ScarbDocDatabase, id: ImplFunctionId) -> Self {
         let node = id.stable_ptr(db);
+
         Self {
             id,
             node,
