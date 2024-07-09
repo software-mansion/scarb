@@ -13,7 +13,7 @@ pub struct VersionedJsonOutput {
 }
 
 impl VersionedJsonOutput {
-    pub fn new(package_information_map: BTreeMap<String, Crate>) -> Self {
+    pub fn new(package_information_map: BTreeMap<PackageName, Crate>) -> Self {
         Self {
             format_version: FORMAT_VERSION,
             package_information_map,
