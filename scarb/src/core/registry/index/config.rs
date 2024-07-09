@@ -44,7 +44,7 @@ pub struct IndexConfig {
 }
 
 impl IndexConfig {
-    pub const WELL_KNOWN_PATH: &'static str = "config.json";
+    pub const WELL_KNOWN_PATH: &'static str = "api/v1/index/config.json";
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]

@@ -1,5 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
+use once_cell::sync::Lazy;
+use std::env;
 
 use crate::core::{ManifestDependency, Package, PackageId, Summary};
 
@@ -11,7 +13,15 @@ pub mod patch_map;
 pub mod patcher;
 pub mod source_map;
 
-pub const DEFAULT_REGISTRY_INDEX: &str = "https://there-is-no-default-registry-yet.com";
+static DEFAULT_REGISTRY_INDEX: Lazy<&'static str> = Lazy::new(|| {
+    let registry_url = env::var("SCARB_REGISTRY_URL")
+        .unwrap_or_else(|_| "https://there-is-no-default-registry-yet.com".into());
+    Box::leak(registry_url.into_boxed_str())
+});
+
+pub fn default_registry_index() -> &'static str {
+    *DEFAULT_REGISTRY_INDEX
+}
 
 #[async_trait(?Send)]
 pub trait Registry {
