@@ -743,7 +743,7 @@ impl ExternFunction {
     }
 }
 
-// TODO: This function is temporarily copied until further modifications in cairo compiler are done.
+// TODO(#1428): This function is temporarily copied until further modifications in cairo compiler are done.
 fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) -> Option<String> {
     let doc = stable_location.syntax_node(db).get_text(db.upcast());
     let doc = doc
@@ -768,7 +768,7 @@ fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) 
     (!doc.is_empty()).then(|| doc.join("\n"))
 }
 
-// TODO: This function is temporarily copied until further modifications in cairo compiler are done.
+// TODO(#1428): This function is temporarily copied until further modifications in cairo compiler are done.
 fn get_item_signature(db: &dyn DefsGroup, stable_location: &StableLocation) -> String {
     let syntax_node = stable_location.syntax_node(db);
     let definition = match syntax_node.green_node(db.upcast()).kind {
