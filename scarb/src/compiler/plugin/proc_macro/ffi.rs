@@ -188,6 +188,25 @@ impl ProcMacroInstance {
         // Free the allocated memory.
         let _ = unsafe { PostProcessContext::from_owned_stable(context) };
     }
+
+    pub fn doc(&self, item_name: SmolStr) -> Option<String> {
+        // Allocate proc macro name.
+        let item_name = CString::new(item_name.to_string()).unwrap().into_raw();
+        // Call FFI interface for expansion doc.
+        // Note that `stable_result` has been allocated by the dynamic library.
+        let stable_result = (self.plugin.vtable.doc)(item_name);
+        let doc = if stable_result.is_null() {
+            None
+        } else {
+            let cstr = unsafe { CStr::from_ptr(stable_result) };
+            Some(cstr.to_string_lossy().to_string())
+        };
+        // Free proc macro name.
+        let _ = unsafe { CString::from_raw(item_name) };
+        // Call FFI interface to free the `stable_result` that has been allocated by previous call.
+        (self.plugin.vtable.free_doc)(stable_result);
+        doc
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -251,6 +270,8 @@ type ExpandCode =
     extern "C" fn(*const c_char, StableTokenStream, StableTokenStream) -> StableResultWrapper;
 type FreeResult = extern "C" fn(StableProcMacroResult);
 type PostProcessCallback = extern "C" fn(StablePostProcessContext) -> StablePostProcessContext;
+type DocExpansion = extern "C" fn(*const c_char) -> *mut c_char;
+type FreeExpansionDoc = extern "C" fn(*mut c_char);
 
 struct VTableV0 {
     list_expansions: RawSymbol<ListExpansions>,
@@ -258,6 +279,8 @@ struct VTableV0 {
     expand: RawSymbol<ExpandCode>,
     free_result: RawSymbol<FreeResult>,
     post_process_callback: RawSymbol<PostProcessCallback>,
+    doc: RawSymbol<DocExpansion>,
+    free_doc: RawSymbol<FreeExpansionDoc>,
 }
 
 macro_rules! get_symbol {
@@ -286,6 +309,8 @@ impl VTableV0 {
                 b"post_process_callback\0",
                 PostProcessCallback
             ),
+            doc: get_symbol!(library, b"doc\0", DocExpansion),
+            free_doc: get_symbol!(library, b"free_doc\0", FreeExpansionDoc),
         })
     }
 }

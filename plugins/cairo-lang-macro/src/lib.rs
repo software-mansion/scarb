@@ -23,7 +23,7 @@ use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
     StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
 };
-use std::ffi::{c_char, CStr};
+use std::ffi::{c_char, CStr, CString};
 
 mod types;
 
@@ -33,6 +33,7 @@ pub use types::*;
 #[derive(Clone)]
 pub struct ExpansionDefinition {
     pub name: &'static str,
+    pub doc: &'static str,
     pub kind: ExpansionKind,
     pub fun: ExpansionFunc,
 }
@@ -163,6 +164,39 @@ pub unsafe extern "C" fn post_process_callback(
         }
     }
     context
+}
+
+/// Return documentation string associated with this procedural macro expansion.
+///
+/// # Safety
+///
+#[doc(hidden)]
+#[no_mangle]
+pub unsafe extern "C" fn doc(item_name: *mut c_char) -> *mut c_char {
+    let item_name = CStr::from_ptr(item_name).to_string_lossy().to_string();
+    let doc = MACRO_DEFINITIONS_SLICE
+        .iter()
+        .find_map(|m| {
+            if m.name == item_name.as_str() {
+                Some(m.doc)
+            } else {
+                None
+            }
+        })
+        .expect("procedural macro not found");
+    CString::new(doc).unwrap().into_raw()
+}
+
+/// Free the memory allocated for the documentation.
+///
+/// # Safety
+///
+#[doc(hidden)]
+#[no_mangle]
+pub unsafe extern "C" fn free_doc(doc: *mut c_char) {
+    if !doc.is_null() {
+        let _ = CString::from_raw(doc);
+    }
 }
 
 /// A no-op Cairo attribute macro implementation.
