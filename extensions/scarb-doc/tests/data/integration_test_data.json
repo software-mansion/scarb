@@ -1,276 +1,278 @@
 {
-  "root_module": {
-    "item_data": {
-      "name": "hello_world",
-      "doc": null,
-      "signature": null,
-      "full_path": "hello_world"
-    },
-    "submodules": [
-      {
-        "item_data": {
-          "name": "tests",
-          "doc": "Tests module\n",
-          "signature": null,
-          "full_path": "hello_world::tests"
+  "hello_world": {
+    "root_module": {
+      "constants": [
+        {
+          "item_data": {
+            "doc": "FOO constant with value 42\n",
+            "full_path": "hello_world::FOO",
+            "name": "FOO",
+            "signature": "const FOO: u32 = 42;"
+          }
+        }
+      ],
+      "enums": [
+        {
+          "item_data": {
+            "doc": "Color enum with Red, Green, and Blue variants\n",
+            "full_path": "hello_world::Color",
+            "name": "Color",
+            "signature": null
+          },
+          "variants": [
+            {
+              "item_data": {
+                "doc": "Red color",
+                "full_path": "hello_world::Color::Red",
+                "name": "Red",
+                "signature": null
+              }
+            },
+            {
+              "item_data": {
+                "doc": "Green color",
+                "full_path": "hello_world::Color::Green",
+                "name": "Green",
+                "signature": null
+              }
+            },
+            {
+              "item_data": {
+                "doc": "Blue color",
+                "full_path": "hello_world::Color::Blue",
+                "name": "Blue",
+                "signature": null
+              }
+            }
+          ]
+        }
+      ],
+      "extern_functions": [],
+      "extern_types": [],
+      "free_functions": [
+        {
+          "item_data": {
+            "doc": "Fibonacci sequence calculator\nMain function that calculates the 16th Fibonacci number\n",
+            "full_path": "hello_world::main",
+            "name": "main",
+            "signature": "fn main() -> u32"
+          }
         },
-        "submodules": [],
-        "constants": [],
-        "free_functions": [
-          {
-            "item_data": {
-              "name": "it_works",
-              "doc": "Really\nworks.\n",
-              "signature": "fn it_works()",
-              "full_path": "hello_world::tests::it_works"
-            }
+        {
+          "item_data": {
+            "doc": "Calculate the nth Fibonacci number\n\n# Arguments\n* `n` - The index of the Fibonacci number to calculate\n",
+            "full_path": "hello_world::fib",
+            "name": "fib",
+            "signature": "fn fib(mut n: u32) -> u32"
           }
-        ],
-        "structs": [],
-        "enums": [],
-        "type_aliases": [],
-        "impl_aliases": [],
-        "traits": [],
-        "impls": [],
-        "extern_types": [],
-        "extern_functions": []
-      }
-    ],
-    "constants": [
-      {
-        "item_data": {
-          "name": "FOO",
-          "doc": "FOO constant with value 42\n",
-          "signature": "const FOO: u32 = 42;",
-          "full_path": "hello_world::FOO"
         }
-      }
-    ],
-    "free_functions": [
-      {
-        "item_data": {
-          "name": "main",
-          "doc": "Fibonacci sequence calculator\nMain function that calculates the 16th Fibonacci number\n",
-          "signature": "fn main() -> u32",
-          "full_path": "hello_world::main"
+      ],
+      "impl_aliases": [],
+      "impls": [
+        {
+          "impl_constants": [
+            {
+              "item_data": {
+                "doc": "Shape constant\n",
+                "full_path": "CircleShape::SHAPE_CONST",
+                "name": "SHAPE_CONST",
+                "signature": "const SHAPE_CONST = \"xyz\";"
+              }
+            }
+          ],
+          "impl_functions": [
+            {
+              "item_data": {
+                "doc": "Implementation of the area method for Circle\n",
+                "full_path": "hello_world::CircleShape::area",
+                "name": "area",
+                "signature": "fn area(self: Circle) -> u32"
+              }
+            }
+          ],
+          "impl_types": [
+            {
+              "item_data": {
+                "doc": "Type alias for a pair of circles\n",
+                "full_path": "CircleShape::ShapePair",
+                "name": "ShapePair",
+                "signature": "type ShapePair<Circle> = (Circle, Circle);"
+              }
+            }
+          ],
+          "item_data": {
+            "doc": "Implementation of the Shape trait for Circle\n",
+            "full_path": "hello_world::CircleShape",
+            "name": "CircleShape",
+            "signature": "impl CircleShape of Shape<Circle>"
+          }
+        },
+        {
+          "impl_constants": [],
+          "impl_functions": [],
+          "impl_types": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "hello_world::CircleDrop",
+            "name": "CircleDrop",
+            "signature": "impl CircleDrop of core::traits::Drop<Circle>;"
+          }
+        },
+        {
+          "impl_constants": [],
+          "impl_functions": [
+            {
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::CircleSerde::serialize",
+                "name": "serialize",
+                "signature": "fn serialize(self: @Circle, ref output: core::array::Array<felt252>)"
+              }
+            },
+            {
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::CircleSerde::deserialize",
+                "name": "deserialize",
+                "signature": "fn deserialize(ref serialized: core::array::Span<felt252>) -> core::option::Option<Circle>"
+              }
+            }
+          ],
+          "impl_types": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "hello_world::CircleSerde",
+            "name": "CircleSerde",
+            "signature": "impl CircleSerde of core::serde::Serde<Circle>"
+          }
+        },
+        {
+          "impl_constants": [],
+          "impl_functions": [
+            {
+              "item_data": {
+                "doc": null,
+                "full_path": "hello_world::CirclePartialEq::eq",
+                "name": "eq",
+                "signature": "fn eq(lhs: @Circle, rhs: @Circle) -> bool"
+              }
+            }
+          ],
+          "impl_types": [],
+          "item_data": {
+            "doc": null,
+            "full_path": "hello_world::CirclePartialEq",
+            "name": "CirclePartialEq",
+            "signature": "impl CirclePartialEq of core::traits::PartialEq<Circle>"
+          }
         }
+      ],
+      "item_data": {
+        "doc": null,
+        "full_path": "hello_world",
+        "name": "hello_world",
+        "signature": null
       },
-      {
-        "item_data": {
-          "name": "fib",
-          "doc": "Calculate the nth Fibonacci number\n\n# Arguments\n* `n` - The index of the Fibonacci number to calculate\n",
-          "signature": "fn fib(mut n: u32) -> u32",
-          "full_path": "hello_world::fib"
-        }
-      }
-    ],
-    "structs": [
-      {
-        "members": [
-          {
-            "item_data": {
-              "name": "radius",
-              "doc": "Radius of the circle",
-              "signature": null,
-              "full_path": "hello_world::Circle::radius"
-            }
-          }
-        ],
-        "item_data": {
-          "name": "Circle",
-          "doc": "Circle struct with radius field\n",
-          "signature": null,
-          "full_path": "hello_world::Circle"
-        }
-      }
-    ],
-    "enums": [
-      {
-        "variants": [
-          {
-            "item_data": {
-              "name": "Red",
-              "doc": "Red color",
-              "signature": null,
-              "full_path": "hello_world::Color::Red"
-            }
+      "structs": [
+        {
+          "item_data": {
+            "doc": "Circle struct with radius field\n",
+            "full_path": "hello_world::Circle",
+            "name": "Circle",
+            "signature": null
           },
-          {
-            "item_data": {
-              "name": "Green",
-              "doc": "Green color",
-              "signature": null,
-              "full_path": "hello_world::Color::Green"
+          "members": [
+            {
+              "item_data": {
+                "doc": "Radius of the circle",
+                "full_path": "hello_world::Circle::radius",
+                "name": "radius",
+                "signature": null
+              }
             }
+          ]
+        }
+      ],
+      "submodules": [
+        {
+          "constants": [],
+          "enums": [],
+          "extern_functions": [],
+          "extern_types": [],
+          "free_functions": [
+            {
+              "item_data": {
+                "doc": "Really\nworks.\n",
+                "full_path": "hello_world::tests::it_works",
+                "name": "it_works",
+                "signature": "fn it_works()"
+              }
+            }
+          ],
+          "impl_aliases": [],
+          "impls": [],
+          "item_data": {
+            "doc": "Tests module\n",
+            "full_path": "hello_world::tests",
+            "name": "tests",
+            "signature": null
           },
-          {
-            "item_data": {
-              "name": "Blue",
-              "doc": "Blue color",
-              "signature": null,
-              "full_path": "hello_world::Color::Blue"
-            }
-          }
-        ],
-        "item_data": {
-          "name": "Color",
-          "doc": "Color enum with Red, Green, and Blue variants\n",
-          "signature": null,
-          "full_path": "hello_world::Color"
+          "structs": [],
+          "submodules": [],
+          "traits": [],
+          "type_aliases": []
         }
-      }
-    ],
-    "type_aliases": [
-      {
-        "item_data": {
-          "name": "Pair",
-          "doc": "Pair type alias for a tuple of two u32 values\n",
-          "signature": "type Pair = (u32, u32);",
-          "full_path": "hello_world::Pair"
-        }
-      }
-    ],
-    "impl_aliases": [],
-    "traits": [
-      {
-        "trait_constants": [
-          {
-            "item_data": {
-              "name": "SHAPE_CONST",
-              "doc": "Constant for the shape type\n",
-              "signature": null,
-              "full_path": "Shape::SHAPE_CONST"
-            }
-          }
-        ],
-        "trait_types": [
-          {
-            "item_data": {
-              "name": "ShapePair",
-              "doc": "Type alias for a pair of shapes\n",
-              "signature": null,
-              "full_path": "Shape::ShapePair"
-            }
-          }
-        ],
-        "trait_functions": [
-          {
-            "item_data": {
-              "name": "area",
-              "doc": "Calculate the area of the shape\n",
-              "signature": "fn area(self: T) -> u32",
-              "full_path": "Shape::area"
-            }
-          }
-        ],
-        "item_data": {
-          "name": "Shape",
-          "doc": "Shape trait for objects that have an area\n",
-          "signature": "trait Shape<T>",
-          "full_path": "hello_world::Shape"
-        }
-      }
-    ],
-    "impls": [
-      {
-        "impl_types": [
-          {
-            "item_data": {
-              "name": "ShapePair",
-              "doc": "Type alias for a pair of circles\n",
-              "signature": "type ShapePair<Circle> = (Circle, Circle);",
-              "full_path": "CircleShape::ShapePair"
-            }
-          }
-        ],
-        "impl_constants": [
-          {
-            "item_data": {
-              "name": "SHAPE_CONST",
-              "doc": "Shape constant\n",
-              "signature": "const SHAPE_CONST = \"xyz\";",
-              "full_path": "CircleShape::SHAPE_CONST"
-            }
-          }
-        ],
-        "impl_functions": [
-          {
-            "item_data": {
-              "name": "area",
-              "doc": "Implementation of the area method for Circle\n",
-              "signature": "fn area(self: Circle) -> u32",
-              "full_path": "hello_world::CircleShape::area"
-            }
-          }
-        ],
-        "item_data": {
-          "name": "CircleShape",
-          "doc": "Implementation of the Shape trait for Circle\n",
-          "signature": "impl CircleShape of Shape<Circle>",
-          "full_path": "hello_world::CircleShape"
-        }
-      },
-      {
-        "impl_types": [],
-        "impl_constants": [],
-        "impl_functions": [],
-        "item_data": {
-          "name": "CircleDrop",
-          "doc": null,
-          "signature": "impl CircleDrop of core::traits::Drop<Circle>;",
-          "full_path": "hello_world::CircleDrop"
-        }
-      },
-      {
-        "impl_types": [],
-        "impl_constants": [],
-        "impl_functions": [
-          {
-            "item_data": {
-              "name": "serialize",
-              "doc": null,
-              "signature": "fn serialize(self: @Circle, ref output: core::array::Array<felt252>)",
-              "full_path": "hello_world::CircleSerde::serialize"
-            }
+      ],
+      "traits": [
+        {
+          "item_data": {
+            "doc": "Shape trait for objects that have an area\n",
+            "full_path": "hello_world::Shape",
+            "name": "Shape",
+            "signature": "trait Shape<T>"
           },
-          {
-            "item_data": {
-              "name": "deserialize",
-              "doc": null,
-              "signature": "fn deserialize(ref serialized: core::array::Span<felt252>) -> core::option::Option<Circle>",
-              "full_path": "hello_world::CircleSerde::deserialize"
+          "trait_constants": [
+            {
+              "item_data": {
+                "doc": "Constant for the shape type\n",
+                "full_path": "Shape::SHAPE_CONST",
+                "name": "SHAPE_CONST",
+                "signature": null
+              }
             }
-          }
-        ],
-        "item_data": {
-          "name": "CircleSerde",
-          "doc": null,
-          "signature": "impl CircleSerde of core::serde::Serde<Circle>",
-          "full_path": "hello_world::CircleSerde"
-        }
-      },
-      {
-        "impl_types": [],
-        "impl_constants": [],
-        "impl_functions": [
-          {
-            "item_data": {
-              "name": "eq",
-              "doc": null,
-              "signature": "fn eq(lhs: @Circle, rhs: @Circle) -> bool",
-              "full_path": "hello_world::CirclePartialEq::eq"
+          ],
+          "trait_functions": [
+            {
+              "item_data": {
+                "doc": "Calculate the area of the shape\n",
+                "full_path": "Shape::area",
+                "name": "area",
+                "signature": "fn area(self: T) -> u32"
+              }
             }
-          }
-        ],
-        "item_data": {
-          "name": "CirclePartialEq",
-          "doc": null,
-          "signature": "impl CirclePartialEq of core::traits::PartialEq<Circle>",
-          "full_path": "hello_world::CirclePartialEq"
+          ],
+          "trait_types": [
+            {
+              "item_data": {
+                "doc": "Type alias for a pair of shapes\n",
+                "full_path": "Shape::ShapePair",
+                "name": "ShapePair",
+                "signature": null
+              }
+            }
+          ]
         }
-      }
-    ],
-    "extern_types": [],
-    "extern_functions": []
+      ],
+      "type_aliases": [
+        {
+          "item_data": {
+            "doc": "Pair type alias for a tuple of two u32 values\n",
+            "full_path": "hello_world::Pair",
+            "name": "Pair",
+            "signature": "type Pair = (u32, u32);"
+          }
+        }
+      ]
+    }
   }
 }

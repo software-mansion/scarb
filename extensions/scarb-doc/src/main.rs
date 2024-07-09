@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Parser;
 use scarb_doc::compilation::get_project_config;
 use std::fs;
@@ -34,7 +34,10 @@ struct Args {
 fn main_inner() -> Result<()> {
     let args = Args::parse();
 
-    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
+    let metadata = MetadataCommand::new()
+        .inherit_stderr()
+        .exec()
+        .context("Metadata command failed")?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
 
     let mut json_output = serde_json::Map::new();
@@ -44,7 +47,7 @@ fn main_inner() -> Result<()> {
         let crate_ = generate_language_elements_tree_for_package(
             package_metadata.name.clone(),
             project_config,
-        )?;
+        );
 
         json_output.insert(
             package_metadata.name,
@@ -57,11 +60,16 @@ fn main_inner() -> Result<()> {
         .unwrap_or_else(|| metadata.workspace.root.join("target"))
         .join("doc");
 
+    fs::create_dir_all(&output_dir).context("Failed to create output directory for scarb doc")?;
+
     match args.output_format {
         OutputFormat::Json => {
             let output = serde_json::to_string_pretty(&json_output)
                 .expect("Failed to serialize information about crates");
-            fs::write(output_dir, output)?;
+            let output_path = output_dir.join("output.json");
+
+            fs::write(output_path, output)
+                .context("Failed to write output of scarb doc to a file")?;
         }
         OutputFormat::Markdown => todo!("#1424"),
     }
@@ -71,7 +79,7 @@ fn main_inner() -> Result<()> {
 
 fn main() {
     match main_inner() {
-        Ok(()) => {}
+        Ok(()) => std::process::exit(0),
         Err(error) => {
             scarb_ui::Ui::new(scarb_ui::Verbosity::Normal, scarb_ui::OutputFormat::Text)
                 .error(error.to_string());
