@@ -115,6 +115,6 @@ fn json_output() {
 
     let serialized_crates = fs::read_to_string(t.path().join("target/doc/output.json"))
         .expect("Failed to read from file");
-    let expected = expect_file!["./data/integration_test_data.json"];
+    let expected = expect_file!["./data/json_output_test_data.json"];
     expected.assert_eq(&serialized_crates);
 }
