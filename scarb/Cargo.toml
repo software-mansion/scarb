@@ -44,8 +44,8 @@ directories.workspace = true
 dunce.workspace = true
 fs4.workspace = true
 futures.workspace = true
-gix.workspace = true
 gix-path.workspace = true
+gix.workspace = true
 glob.workspace = true
 ignore.workspace = true
 include_dir.workspace = true
@@ -55,6 +55,7 @@ libloading.workspace = true
 once_cell.workspace = true
 pathdiff.workspace = true
 petgraph.workspace = true
+pubgrub.workspace = true
 ra_ap_toolchain.workspace = true
 redb.workspace = true
 reqwest.workspace = true
@@ -62,6 +63,7 @@ scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }
 scarb-stable-hash = { path = "../utils/scarb-stable-hash" }
 scarb-ui = { path = "../utils/scarb-ui" }
+semver-pubgrub.workspace = true
 semver.workspace = true
 serde-untagged.workspace = true
 serde-value.workspace = true

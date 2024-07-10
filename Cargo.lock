@@ -4157,6 +4157,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "priority-queue"
+version = "2.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70c501afe3a2e25c9bd219aa56ec1e04cdb3fcdd763055be268778c13fa82c1f"
+dependencies = [
+ "autocfg",
+ "equivalent",
+ "indexmap 2.2.6",
+]
+
+[[package]]
 name = "proc-macro-crate"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4182,6 +4193,18 @@ checksum = "744a264d26b88a6a7e37cbad97953fa233b94d585236310bcbc88474b4092d79"
 dependencies = [
  "bytesize",
  "human_format",
+]
+
+[[package]]
+name = "pubgrub"
+version = "0.2.1"
+source = "git+https://github.com/pubgrub-rs/pubgrub.git?branch=dev#df8395771231be4d3bf6fba80e8fd9658c634c2c"
+dependencies = [
+ "indexmap 2.2.6",
+ "log",
+ "priority-queue",
+ "rustc-hash",
+ "thiserror",
 ]
 
 [[package]]
@@ -4623,6 +4646,7 @@ dependencies = [
  "pathdiff",
  "petgraph",
  "predicates",
+ "pubgrub",
  "ra_ap_toolchain",
  "redb",
  "reqwest",
@@ -4632,6 +4656,7 @@ dependencies = [
  "scarb-test-support",
  "scarb-ui",
  "semver",
+ "semver-pubgrub",
  "serde",
  "serde-untagged",
  "serde-value",
@@ -4954,6 +4979,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61697e0a1c7e512e84a621326239844a24d8207b4669b41bc18b32ea5cbf988b"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "semver-pubgrub"
+version = "0.1.0"
+source = "git+https://github.com/pubgrub-rs/semver-pubgrub.git#da5538d43c1b718e4d032cf8a63dfc47bd8c2460"
+dependencies = [
+ "pubgrub",
+ "semver",
 ]
 
 [[package]]

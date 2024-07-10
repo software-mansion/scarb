@@ -129,7 +129,13 @@ pub fn resolve_workspace_with_opts(
                 read_lockfile(ws)?
             };
 
-            let resolve = resolver::resolve(&members_summaries, &patched, lockfile).await?;
+            let resolve = resolver::resolve(
+                &members_summaries,
+                &patched,
+                lockfile,
+                ws.config().tokio_handle(),
+            )
+            .await?;
 
             write_lockfile(Lockfile::from_resolve(&resolve), ws)?;
 
