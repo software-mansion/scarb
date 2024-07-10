@@ -35,7 +35,7 @@ struct Args {
 
     /// Choose test kind to run.
     #[arg(short, long)]
-    pub test_kind: Option<TestKind>,
+    test_kind: Option<TestKind>,
 
     /// Whether to print resource usage after each test.
     #[arg(long, default_value_t = false)]
