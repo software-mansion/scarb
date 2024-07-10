@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::resolver::DependencyEdge;
@@ -9,12 +11,14 @@ use anyhow::bail;
 use indoc::{formatdoc, indoc};
 use petgraph::graphmap::DiGraphMap;
 use std::collections::{HashMap, HashSet};
+use tokio::runtime::Handle;
 
 #[tracing::instrument(level = "trace", skip_all)]
-pub async fn resolve(
+pub async fn resolve<'c>(
     summaries: &[Summary],
     registry: &dyn Registry,
     lockfile: Lockfile,
+    _handle: &'c Handle,
 ) -> anyhow::Result<Resolve> {
     // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
