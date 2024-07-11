@@ -48,6 +48,8 @@ pub struct Manifest {
     #[builder(default)]
     pub edition: Edition,
     #[builder(default)]
+    pub publish: bool,
+    #[builder(default)]
     pub metadata: ManifestMetadata,
     #[builder(default = "ManifestCompilerConfig::default_for_profile(&Profile::DEV)")]
     pub compiler_config: ManifestCompilerConfig,

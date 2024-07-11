@@ -186,6 +186,7 @@ pub struct TomlPackage {
     pub name: PackageName,
     pub version: MaybeWorkspaceField<Version>,
     pub edition: Option<MaybeWorkspaceField<Edition>>,
+    pub publish: Option<bool>,
     pub authors: Option<MaybeWorkspaceField<Vec<String>>>,
     pub urls: Option<BTreeMap<String, String>>,
     pub description: Option<MaybeWorkspaceField<String>>,
@@ -456,6 +457,8 @@ impl TomlManifest {
 
         let targets = self.collect_targets(package.name.to_smol_str(), root)?;
 
+        let publish = package.publish.unwrap_or(true);
+
         let summary = Summary::builder()
             .package_id(package_id)
             .dependencies(dependencies)
@@ -576,6 +579,7 @@ impl TomlManifest {
         let manifest = ManifestBuilder::default()
             .summary(summary)
             .targets(targets)
+            .publish(publish)
             .edition(edition)
             .metadata(metadata)
             .compiler_config(compiler_config)
