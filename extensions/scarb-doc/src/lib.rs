@@ -1,5 +1,3 @@
-use anyhow::Result;
-
 use cairo_lang_compiler::project::ProjectConfig;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateLongId;
@@ -10,14 +8,15 @@ use types::Crate;
 pub mod compilation;
 pub mod db;
 pub mod types;
+pub mod versioned_json_output;
 
 pub fn generate_language_elements_tree_for_package(
     package_name: String,
     project_config: ProjectConfig,
-) -> Result<Crate> {
+) -> Crate {
     let db = ScarbDocDatabase::new(Some(project_config));
 
     let main_crate_id = db.intern_crate(CrateLongId::Real(package_name.into()));
 
-    Ok(Crate::new(&db, main_crate_id))
+    Crate::new(&db, main_crate_id)
 }

@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use scarb_stable_hash::short_hash;
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, ItemFn, LitStr};
+use syn::{parse_macro_input, Expr, ItemFn, LitStr, Meta};
 
 /// Constructs the attribute macro implementation.
 ///
@@ -48,7 +48,24 @@ pub fn derive_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
 
 fn macro_helper(input: TokenStream, kind: impl ToTokens, func: impl ToTokens) -> TokenStream {
     let item: ItemFn = parse_macro_input!(input as ItemFn);
+
     let original_item_name = item.sig.ident.to_string();
+    let doc = item
+        .attrs
+        .iter()
+        .filter_map(|attr| match &attr.meta {
+            Meta::NameValue(meta) => meta.path.is_ident("doc").then(|| match &meta.value {
+                Expr::Lit(lit) => match &lit.lit {
+                    syn::Lit::Str(lit) => Some(lit.value().trim().to_string()),
+                    _ => None,
+                },
+                _ => None,
+            }),
+            _ => None,
+        })
+        .flatten()
+        .collect::<Vec<_>>()
+        .join("\n");
     let item = hide_name(item);
     let item_name = &item.sig.ident;
 
@@ -67,6 +84,7 @@ fn macro_helper(input: TokenStream, kind: impl ToTokens, func: impl ToTokens) ->
         static #callback_link: ::cairo_lang_macro::ExpansionDefinition =
             ::cairo_lang_macro::ExpansionDefinition{
                 name: #original_item_name,
+                doc: #doc,
                 kind: #kind,
                 fun: #func(#item_name),
             };
@@ -145,6 +163,7 @@ pub fn executable_attribute(input: TokenStream) -> TokenStream {
         static #callback_link: ::cairo_lang_macro::ExpansionDefinition =
             ::cairo_lang_macro::ExpansionDefinition{
                 name: #item_name,
+                doc: "",
                 kind: ::cairo_lang_macro::ExpansionKind::Attr,
                 fun: ::cairo_lang_macro::ExpansionFunc::Attr(::cairo_lang_macro::no_op_attr),
             };
