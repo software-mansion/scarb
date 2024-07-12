@@ -1,14 +1,16 @@
 use anyhow::{Context, Result};
 use clap::Parser;
-use scarb_doc::compilation::get_project_config;
-use std::collections::BTreeMap;
+use scarb_doc::docs_generation::markdown::MarkdownContent;
 use std::fs;
 
 use scarb_metadata::MetadataCommand;
 use scarb_ui::args::PackagesFilter;
 
-use scarb_doc::generate_language_elements_tree_for_package;
+use scarb_doc::generate_packages_information;
+use scarb_doc::metadata::get_target_dir;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
+
+const OUTPUT_DIR: &str = "doc";
 
 #[derive(Default, Debug, Clone, clap::ValueEnum)]
 enum OutputFormat {
@@ -40,30 +42,17 @@ fn main_inner() -> Result<()> {
         .inherit_stderr()
         .exec()
         .context("metadata command failed")?;
-    let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
+    let packages_metadata = args.packages_filter.match_many(&metadata)?;
 
-    let mut package_information_map = BTreeMap::new();
+    let packages_information = generate_packages_information(&metadata, &packages_metadata);
 
-    for package_metadata in metadata_for_packages {
-        let project_config = get_project_config(&metadata, &package_metadata);
-        let crate_ = generate_language_elements_tree_for_package(
-            package_metadata.name.clone(),
-            project_config,
-        );
-
-        package_information_map.insert(package_metadata.name, crate_);
-    }
-
-    let output_dir = metadata
-        .target_dir
-        .unwrap_or_else(|| metadata.workspace.root.join("target"))
-        .join("doc");
+    let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
 
     fs::create_dir_all(&output_dir).context("failed to create output directory for scarb doc")?;
 
     match args.output_format {
         OutputFormat::Json => {
-            let versioned_json_output = VersionedJsonOutput::new(package_information_map);
+            let versioned_json_output = VersionedJsonOutput::new(packages_information);
             let output = serde_json::to_string_pretty(&versioned_json_output)
                 .expect("failed to serialize information about crates")
                 + "\n";
@@ -72,7 +61,19 @@ fn main_inner() -> Result<()> {
             fs::write(output_path, output)
                 .context("failed to write output of scarb doc to a file")?;
         }
-        OutputFormat::Markdown => todo!("#1424"),
+        OutputFormat::Markdown => {
+            for pkg_information in packages_information {
+                let markdown_content = MarkdownContent::from_crate(&pkg_information);
+                let pkg_output_dir = output_dir.join(&pkg_information.metadata.name);
+
+                markdown_content.save(&pkg_output_dir).with_context(|| {
+                    format!(
+                        "Failed to save docs for package {}",
+                        pkg_information.metadata.name
+                    )
+                })?;
+            }
+        }
     }
 
     Ok(())
@@ -83,7 +84,7 @@ fn main() {
         Ok(()) => std::process::exit(0),
         Err(error) => {
             scarb_ui::Ui::new(scarb_ui::Verbosity::Normal, scarb_ui::OutputFormat::Text)
-                .error(error.to_string());
+                .error(format!("{error:#}"));
             std::process::exit(1);
         }
     }

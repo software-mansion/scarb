@@ -171,7 +171,6 @@ impl ItemData {
             name: id.name(db).into(),
             doc: db.get_item_documentation(lookup_item_id),
             signature: Some(db.get_item_signature(lookup_item_id)),
-
             full_path: id.full_path(db),
         }
     }

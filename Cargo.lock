@@ -4738,6 +4738,7 @@ dependencies = [
  "cairo-lang-starknet",
  "cairo-lang-syntax",
  "cairo-lang-utils",
+ "camino",
  "clap",
  "expect-test",
  "indoc",
@@ -4749,6 +4750,7 @@ dependencies = [
  "serde",
  "serde_json",
  "smol_str",
+ "walkdir",
 ]
 
 [[package]]

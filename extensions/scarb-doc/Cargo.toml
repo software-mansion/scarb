@@ -10,6 +10,7 @@ repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+camino.workspace = true
 clap.workspace = true
 cairo-lang-compiler.workspace = true
 cairo-lang-defs.workspace = true
@@ -21,6 +22,7 @@ cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-utils.workspace = true
 expect-test.workspace = true
+indoc.workspace = true
 itertools.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
@@ -33,3 +35,4 @@ smol_str.workspace = true
 assert_fs.workspace = true
 indoc.workspace = true
 scarb-test-support = { path = "../../utils/scarb-test-support" }
+walkdir.workspace = true
