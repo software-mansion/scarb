@@ -10,8 +10,8 @@ test = "snforge"
 exit_first = true
 
 [workspace.dependencies]
-cairo_test = "2.6.4"
-starknet = "2.6.4"
+cairo_test = "2.7.0-rc.2"
+starknet = "2.7.0-rc.2"
 
 [workspace.package]
 version = "0.1.0"
