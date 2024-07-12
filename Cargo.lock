@@ -4198,7 +4198,7 @@ dependencies = [
 [[package]]
 name = "pubgrub"
 version = "0.2.1"
-source = "git+https://github.com/pubgrub-rs/pubgrub.git?branch=dev#df8395771231be4d3bf6fba80e8fd9658c634c2c"
+source = "git+https://github.com/maciektr/pubgrub.git?branch=dev#6e12ee740000e367984d8b965c8d9d574e6bee7d"
 dependencies = [
  "indexmap 2.2.6",
  "log",

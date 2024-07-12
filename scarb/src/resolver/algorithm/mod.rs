@@ -5,7 +5,9 @@ use crate::resolver::algorithm::provider::{PubGrubDependencyProvider, PubGrubPac
 use crate::resolver::algorithm::solution::build_resolve;
 use anyhow::bail;
 use indoc::indoc;
+use itertools::Itertools;
 use pubgrub::type_aliases::SelectedDependencies;
+use pubgrub::{Incompatibility, State};
 use std::collections::{HashMap, HashSet};
 use tokio::runtime::Handle;
 use tokio::task::block_in_place;
@@ -24,12 +26,34 @@ pub async fn resolve<'c>(
     let main_package_ids: HashSet<PackageId> =
         HashSet::from_iter(summaries.iter().map(|sum| sum.package_id));
     block_in_place(|| {
-        let summary = summaries.iter().next().unwrap();
-        let package: PubGrubPackage = summary.into();
-        let version = summary.package_id.version.clone();
-        let provider = PubGrubDependencyProvider::new(registry, handle, main_package_ids.clone());
+        let provider = PubGrubDependencyProvider::new(registry, handle, main_package_ids);
 
-        let solution = pubgrub::solver::resolve(&provider, package, version)
+        // Init state
+        let main_package_ids = provider
+            .main_package_ids()
+            .clone()
+            .into_iter()
+            .collect_vec();
+        let Some((first, rest)) = main_package_ids.split_first() else {
+            bail!("empty summaries");
+        };
+        let package: PubGrubPackage = (*first).into();
+        let version = first.version.clone();
+        let mut state = State::init(package.clone(), version);
+        state
+            .unit_propagation(package.clone())
+            .map_err(|err| anyhow::format_err!("unit propagation failed: {:?}", err))?;
+        for package_id in rest {
+            let package: PubGrubPackage = (*package_id).into();
+            let version = package_id.version.clone();
+            state.add_incompatibility(Incompatibility::not_root(package.clone(), version.clone()));
+            state
+                .unit_propagation(package)
+                .map_err(|err| anyhow::format_err!("unit propagation failed: {:?}", err))?
+        }
+
+        // Resolve requirements
+        let solution = pubgrub::solver::resolve_state(&provider, &mut state, package)
             .map_err(|err| anyhow::format_err!("failed to resolve: {:?}", err))?;
 
         dbg!(&solution);
