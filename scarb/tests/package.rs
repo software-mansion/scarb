@@ -1342,10 +1342,9 @@ fn package_with_publish_disabled() {
         .arg("--no-verify")
         .current_dir(&t)
         .assert()
-        .failure()
+        .success()
         .stdout_matches(indoc! {r#"
-        [..] Packaging [..]
-        error: publishing disabled for package foo
-        help: set `publish = true` in package manifest
+            [..]Packaging foo v1.0.0 ([..]Scarb.toml)
+            [..]Packaged [..] files, [..] ([..] compressed)
         "#});
 }

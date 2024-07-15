@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use anyhow::{bail, ensure, Result};
+use anyhow::{bail, Result};
 use camino::Utf8PathBuf;
 use indoc::formatdoc;
 
@@ -14,16 +14,6 @@ use crate::{
 };
 
 pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
-    ensure!(
-        pkg.is_publishable(),
-        formatdoc! {
-            r#"
-                publishing disabled for package {package_name}
-                help: set `publish = true` in package manifest
-            "#,
-            package_name = pkg.id.name,
-        }
-    );
     let package = Some(generate_package(pkg));
 
     let dependencies = Some(generate_dependencies(
