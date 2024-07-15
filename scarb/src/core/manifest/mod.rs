@@ -47,7 +47,7 @@ pub struct Manifest {
     pub targets: Vec<Target>,
     #[builder(default)]
     pub edition: Edition,
-    #[builder(default)]
+    #[builder(default = "true")]
     pub publish: bool,
     #[builder(default)]
     pub metadata: ManifestMetadata,
