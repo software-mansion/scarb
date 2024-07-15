@@ -8,4 +8,4 @@ version = "0.1.0"
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 
 [dev-dependencies]
-cairo_test = "2.7.0-rc.2"
+cairo_test = "2.6.4"
