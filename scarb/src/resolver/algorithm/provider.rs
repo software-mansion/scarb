@@ -138,8 +138,9 @@ impl<'a, 'c> PubGrubDependencyProvider<'a, 'c> {
                 write_lock.insert(summary.package_id, summary.clone());
                 write_lock.insert(package_id, summary.clone());
             }
-            summary.ok_or_else(|| {
-                DependencyProviderError::PackageNotFound(dependency.name.clone().to_string())
+            summary.ok_or_else(|| DependencyProviderError::PackageNotFound {
+                name: dependency.name.clone().to_string(),
+                version: dependency.version_req.clone(),
             })
         })
     }
@@ -254,8 +255,11 @@ impl<'a, 'c> DependencyProvider for PubGrubDependencyProvider<'a, 'c> {
                 summaries
                     .into_iter()
                     .find(|summary| req.matches(&summary.package_id.version))
-                    .map(|summary| (summary, req))
-                    .ok_or_else(|| DependencyProviderError::PackageNotFound(dep_name))
+                    .map(|summary| (summary, req.clone()))
+                    .ok_or_else(|| DependencyProviderError::PackageNotFound {
+                        name: dep_name,
+                        version: DependencyVersionReq::Req(req),
+                    })
             })
             .collect::<Result<Vec<(Summary, VersionReq)>, DependencyProviderError>>()?;
         let constraints = deps
@@ -272,9 +276,12 @@ impl<'a, 'c> DependencyProvider for PubGrubDependencyProvider<'a, 'c> {
 #[non_exhaustive]
 pub enum DependencyProviderError {
     /// Package not found.
-    #[error("failed to get package `{0}`")]
-    PackageNotFound(String),
+    #[error("cannot find package `{name} {version}`")]
+    PackageNotFound {
+        name: String,
+        version: DependencyVersionReq,
+    },
     // Package query failed.
-    #[error("package query failed: {0}")]
+    #[error("{0}")]
     PackageQueryFailed(#[from] anyhow::Error),
 }

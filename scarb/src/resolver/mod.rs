@@ -320,12 +320,10 @@ mod tests {
             ],
             &[deps![("top1", "1"), ("top2", "1")]],
             Err(indoc! {"
-            Version solving failed:
-            - top2 v1.0.0 cannot use foo v1.0.0, because top2 requires foo ^2.0.0
-
-            Scarb does not have real version solving algorithm yet.
-            Perhaps in the future this conflict could be resolved, but currently,
-            please upgrade your dependencies to use latest versions of their dependencies.
+            version solving failed:
+            Because there is no version of top2 in >1.0.0, <2.0.0 and top2 1.0.0 depends on foo >=2.0.0, <3.0.0, top2 >=1.0.0, <2.0.0 depends on foo >=2.0.0, <3.0.0.
+            And because top1 1.0.0 depends on foo >=1.0.0, <2.0.0 and there is no version of top1 in >1.0.0, <2.0.0, top1 >=1.0.0, <2.0.0, top2 >=1.0.0, <2.0.0 are incompatible.
+            And because root_1 1.0.0 depends on top1 >=1.0.0, <2.0.0 and root_1 1.0.0 depends on top2 >=1.0.0, <2.0.0, root_1 1.0.0 is forbidden.
             "}),
         )
     }
@@ -335,7 +333,7 @@ mod tests {
         check(
             registry![],
             &[deps![("foo", "1.0.0")]],
-            Err(r#"MockRegistry/query: cannot find foo ^1.0.0"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -344,7 +342,7 @@ mod tests {
         check(
             registry![("foo v2.0.0", []),],
             &[deps![("foo", "1.0.0")]],
-            Err(r#"cannot find package foo"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -353,7 +351,7 @@ mod tests {
         check(
             registry![("foo v1.0.0", []),],
             &[deps![("foo", "1.0.0", "git+https://example.git/foo.git")]],
-            Err(r#"MockRegistry/query: cannot find foo ^1.0.0 (git+https://example.git/foo.git)"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -369,7 +367,7 @@ mod tests {
                 ("b v3.8.14", []),
             ],
             &[deps![("a", "~3.6"), ("b", "~3.6")]],
-            Err(r#"cannot find package a"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -389,7 +387,7 @@ mod tests {
                 ("b v3.8.5", [("d", "2.9.0")]),
             ],
             &[deps![("a", "~3.6"), ("c", "~1.1"), ("b", "~3.6")]],
-            Err(r#"cannot find package a"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -412,7 +410,7 @@ mod tests {
                 ),
             ],
             &[deps![("e", "~1.0"), ("a", "~3.7"), ("b", "~3.7")]],
-            Err(r#"cannot find package e"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 

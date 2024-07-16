@@ -4984,7 +4984,7 @@ dependencies = [
 [[package]]
 name = "semver-pubgrub"
 version = "0.1.0"
-source = "git+https://github.com/pubgrub-rs/semver-pubgrub.git#da5538d43c1b718e4d032cf8a63dfc47bd8c2460"
+source = "git+https://github.com/maciektr/semver-pubgrub.git#a12311e3f5b0aa29d78b79001ac564b49de8212b"
 dependencies = [
  "pubgrub",
  "semver",
