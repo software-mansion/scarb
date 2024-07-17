@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use clap::Parser;
+use scarb_doc::docs_generation::markdown::MarkdownContent;
 use scarb_doc::metadata::get_target_dir;
 
 use scarb_metadata::MetadataCommand;
@@ -51,7 +52,20 @@ fn main_inner() -> Result<()> {
                 .save_to_file(&output_dir)
                 .context("failed to write output of scarb doc to a file")?;
         }
-        OutputFormat::Markdown => todo!("#1424"),
+        OutputFormat::Markdown => {
+            for pkg_information in packages_information {
+                let pkg_output_dir = output_dir.join(&pkg_information.metadata.name);
+
+                MarkdownContent::from_crate(&pkg_information)
+                    .save(&pkg_output_dir)
+                    .with_context(|| {
+                        format!(
+                            "failed to save docs for package {}",
+                            pkg_information.metadata.name
+                        )
+                    })?;
+            }
+        }
     }
 
     Ok(())

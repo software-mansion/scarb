@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use crate::types::{
     Constant, Crate, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
     ImplFunction, ImplType, Member, Module, Struct, Trait, TraitConstant, TraitFunction, TraitType,

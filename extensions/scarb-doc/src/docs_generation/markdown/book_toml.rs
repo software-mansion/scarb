@@ -2,7 +2,6 @@ use indoc::formatdoc;
 
 use crate::AdditionalMetadata;
 
-#[allow(dead_code)]
 pub fn generate_book_toml_content(package_metadata: &AdditionalMetadata) -> String {
     formatdoc! {
         r#"
