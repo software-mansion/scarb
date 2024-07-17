@@ -1,11 +1,15 @@
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::{PackageId, PackageName, Resolve, Summary};
-use crate::resolver::algorithm::provider::{PubGrubDependencyProvider, PubGrubPackage};
+use crate::resolver::algorithm::provider::{
+    DependencyProviderError, PubGrubDependencyProvider, PubGrubPackage,
+};
 use crate::resolver::algorithm::solution::build_resolve;
 use anyhow::bail;
 use indoc::indoc;
 use itertools::Itertools;
+use pubgrub::error::PubGrubError;
+use pubgrub::report::{DefaultStringReporter, Reporter};
 use pubgrub::type_aliases::SelectedDependencies;
 use pubgrub::{Incompatibility, State};
 use std::collections::{HashMap, HashSet};
@@ -53,14 +57,47 @@ pub async fn resolve<'c>(
         }
 
         // Resolve requirements
-        let solution = pubgrub::solver::resolve_state(&provider, &mut state, package)
-            .map_err(|err| anyhow::format_err!("failed to resolve: {:?}", err))?;
+        let solution =
+            pubgrub::solver::resolve_state(&provider, &mut state, package).map_err(format_error)?;
 
         dbg!(&solution);
 
         validate_solution(&solution)?;
         build_resolve(&provider, solution)
     })
+}
+
+fn format_error(err: PubGrubError<PubGrubDependencyProvider<'_, '_>>) -> anyhow::Error {
+    match err {
+        PubGrubError::NoSolution(derivation_tree) => {
+            anyhow::format_err!(
+                "version solving failed:\n{}\n",
+                DefaultStringReporter::report(&derivation_tree)
+            )
+        }
+        PubGrubError::ErrorChoosingPackageVersion(DependencyProviderError::PackageNotFound {
+            name,
+            version,
+        }) => {
+            anyhow::format_err!("cannot find package `{name} {version}`")
+        }
+        PubGrubError::ErrorChoosingPackageVersion(DependencyProviderError::PackageQueryFailed(
+            err,
+        )) => anyhow::format_err!("{}", err).context("dependency query failed"),
+        PubGrubError::ErrorRetrievingDependencies {
+            package,
+            version,
+            source,
+        } => anyhow::Error::from(source)
+            .context(format!("cannot get dependencies of `{package}@{version}`")),
+        PubGrubError::SelfDependency { package, version } => {
+            anyhow::format_err!("self dependency found: `{}@{}`", package, version)
+        }
+        PubGrubError::ErrorInShouldCancel(err) => {
+            anyhow::format_err!("{}", err).context("should cancel failed")
+        }
+        PubGrubError::Failure(msg) => anyhow::format_err!("{}", msg).context("resolver failure"),
+    }
 }
 
 fn validate_solution(

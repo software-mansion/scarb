@@ -38,10 +38,12 @@ fn https_something_happens() {
             .failure()
             .stdout_matches(indoc! {r#"
             [..] Updating git repository https://127.0.0.1:[..]/foo/bar
-            error: failed to clone into: [..]
+            error: cannot get dependencies of `hello@1.0.0`
 
             Caused by:
-                process did not exit successfully: exit [..]: 128
+                0: failed to clone into: [..]
+                1: failed to clone into: [..]
+                2: process did not exit successfully: exit status: 128
             "#});
     });
 }
@@ -73,10 +75,12 @@ fn ssh_something_happens() {
             .failure()
             .stdout_matches(indoc! {r#"
             [..] Updating git repository ssh://127.0.0.1:[..]/foo/bar
-            error: failed to clone into: [..]
+            error: cannot get dependencies of `hello@1.0.0`
 
             Caused by:
-                process did not exit successfully: exit [..]: 128
+                0: failed to clone into: [..]
+                1: failed to clone into: [..]
+                2: process did not exit successfully: exit status: 128
             "#});
     });
 }

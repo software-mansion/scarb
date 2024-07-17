@@ -199,7 +199,10 @@ fn runs_resolver_if_network_is_allowed() {
         "#})
         .failure()
         .stdout_matches(indoc! {r#"
-            error: cannot find package dep
+            error: cannot get dependencies of `hello@1.0.0`
+
+            Caused by:
+                cannot find package `dep ^1.0.0`
         "#})
         .run();
 }
