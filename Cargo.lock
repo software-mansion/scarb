@@ -4738,6 +4738,7 @@ dependencies = [
  "cairo-lang-starknet",
  "cairo-lang-syntax",
  "cairo-lang-utils",
+ "camino",
  "clap",
  "expect-test",
  "indoc",
