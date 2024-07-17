@@ -511,7 +511,7 @@ mod tests {
             registry![("foo v1.0.0", []),],
             &[deps![("foo", "2.0.0"),]],
             locks![("foo v1.0.0", [])],
-            Err("cannot find package foo"),
+            Err("cannot get dependencies of `root_1@1.0.0`"),
         );
     }
 
