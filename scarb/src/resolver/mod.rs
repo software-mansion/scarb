@@ -1,9 +1,9 @@
-use anyhow::Result;
-
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::Summary;
+use anyhow::Result;
+use tokio::runtime::Handle;
 
 mod algorithm;
 mod primitive;
@@ -28,12 +28,14 @@ mod primitive;
 ///
 /// * `ui` - an [`Ui`] instance used to show warnings to the user.
 #[tracing::instrument(level = "trace", skip_all)]
-pub async fn resolve(
+pub async fn resolve<'c>(
     summaries: &[Summary],
     registry: &dyn Registry,
     lockfile: Lockfile,
+    handle: &'c Handle,
 ) -> Result<Resolve> {
-    primitive::resolve(summaries, registry, lockfile).await
+    // primitive::resolve(summaries, registry, lockfile, handle).await
+    algorithm::resolve(summaries, registry, lockfile, handle).await
 }
 
 #[cfg(test)]
@@ -126,7 +128,12 @@ mod tests {
             .collect_vec();
 
         let lockfile = Lockfile::new(locks.iter().cloned());
-        runtime.block_on(super::resolve(&summaries, &registry, lockfile))
+        runtime.block_on(super::resolve(
+            &summaries,
+            &registry,
+            lockfile,
+            runtime.handle(),
+        ))
     }
 
     fn package_id<S: AsRef<str>>(name: S) -> PackageId {
@@ -253,20 +260,7 @@ mod tests {
                 ("baz v1.0.0", []),
             ],
             &[deps![("foo", "*")]],
-            // TODO(#2): Expected result is commented out.
-            // Ok(pkgs![
-            //     "bar v1.0.0",
-            //     "baz v1.0.0",
-            //     "foo v1.0.0"
-            // ]),
-            Err(indoc! {"
-            Version solving failed:
-            - bar v2.0.0 cannot use baz v1.0.0, because bar requires baz ^2.0.0
-
-            Scarb does not have real version solving algorithm yet.
-            Perhaps in the future this conflict could be resolved, but currently,
-            please upgrade your dependencies to use latest versions of their dependencies.
-            "}),
+            Ok(pkgs!["bar v1.0.0", "baz v1.0.0", "foo v1.0.0"]),
         )
     }
 
@@ -285,20 +279,7 @@ mod tests {
                 ("baz v2.1.0", []),
             ],
             &[deps![("bar", "~1.1.0"), ("foo", "~2.7")]],
-            // TODO(#2): Expected result is commented out.
-            // Ok(pkgs![
-            //     "bar v1.1.1",
-            //     "baz v1.7.1",
-            //     "foo v2.7.0"
-            // ]),
-            Err(indoc! {"
-            Version solving failed:
-            - foo v2.7.0 cannot use baz v2.1.0, because foo requires baz ~1.7.1
-
-            Scarb does not have real version solving algorithm yet.
-            Perhaps in the future this conflict could be resolved, but currently,
-            please upgrade your dependencies to use latest versions of their dependencies.
-            "}),
+            Ok(pkgs!["bar v1.1.1", "baz v1.7.1", "foo v2.7.0"]),
         )
     }
 
@@ -807,8 +788,8 @@ mod tests {
             Err(indoc! {"
                 found dependencies on the same package `baz` coming from \
                 incompatible sources:
-                source 1: git+https://example.com/foo.git
-                source 2: git+https://example.com/bar.git
+                source 1: git+https://example.com/bar.git
+                source 2: git+https://example.com/foo.git
             "}),
         )
     }
