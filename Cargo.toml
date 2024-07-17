@@ -96,7 +96,7 @@ pathdiff = { version = "0.2", features = ["camino"] }
 petgraph = "0.6"
 predicates = "3"
 proc-macro2 = "1"
-pubgrub = { git = "https://github.com/pubgrub-rs/pubgrub.git", branch = "dev" }
+pubgrub = { git = "https://github.com/maciektr/pubgrub.git", branch = "dev" }
 quote = "1"
 ra_ap_toolchain = "0.0.218"
 rayon = "1.10"
@@ -140,6 +140,9 @@ xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
 zstd = "0.13"
+
+[patch.'https://github.com/pubgrub-rs/pubgrub.git']
+pubgrub = { git = 'https://github.com/maciektr/pubgrub.git', branch = 'dev' }
 
 [profile.release]
 lto = true
