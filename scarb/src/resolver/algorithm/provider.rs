@@ -170,6 +170,35 @@ impl<'a, 'c> PubGrubDependencyProvider<'a, 'c> {
 
         Ok(summaries)
     }
+
+    fn rewrite_dependency_source_id(
+        &self,
+        package_id: PackageId,
+        dependency: &ManifestDependency,
+    ) -> Result<ManifestDependency, DependencyProviderError> {
+        // Rewrite path dependencies for git sources.
+        if package_id.source_id.is_git() && dependency.source_id.is_path() {
+            let rewritten_dep = ManifestDependency::builder()
+                .kind(dependency.kind.clone())
+                .name(dependency.name.clone())
+                .source_id(package_id.source_id)
+                .version_req(dependency.version_req.clone())
+                .build();
+            // Check if this dependency can be queried from git source.
+            // E.g. packages below other package's manifest will not be accessible.
+            if !self
+                .handle
+                .block_on(self.registry.query(&rewritten_dep))
+                .map_err(DependencyProviderError::PackageQueryFailed)?
+                .is_empty()
+            {
+                // If it is, return rewritten dependency.
+                return Ok(rewritten_dep);
+            }
+        };
+
+        Ok(dependency.clone())
+    }
 }
 
 impl<'a, 'c> DependencyProvider for PubGrubDependencyProvider<'a, 'c> {
@@ -249,6 +278,9 @@ impl<'a, 'c> DependencyProvider for PubGrubDependencyProvider<'a, 'c> {
             .filtered_full_dependencies(dep_filter)
             .cloned()
             .map(|dependency| {
+                let dependency =
+                    self.rewrite_dependency_source_id(summary.package_id, &dependency)?;
+
                 let req = VersionReq::from(dependency.version_req.clone());
                 let dep_name = dependency.name.clone().to_string();
                 let summaries = self.query(dependency)?;
