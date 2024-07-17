@@ -22,6 +22,7 @@ cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-utils.workspace = true
 expect-test.workspace = true
+indoc.workspace = true
 itertools.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
@@ -32,5 +33,4 @@ smol_str.workspace = true
 
 [dev-dependencies]
 assert_fs.workspace = true
-indoc.workspace = true
 scarb-test-support = { path = "../../utils/scarb-test-support" }

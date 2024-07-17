@@ -9,6 +9,7 @@ use crate::metadata::compilation::get_project_config;
 use types::Crate;
 
 pub mod db;
+pub mod docs_generation;
 pub mod metadata;
 pub mod types;
 pub mod versioned_json_output;
