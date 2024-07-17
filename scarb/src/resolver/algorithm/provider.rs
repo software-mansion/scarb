@@ -6,7 +6,7 @@ use crate::core::{
 use itertools::Itertools;
 use pubgrub::solver::{Dependencies, DependencyProvider};
 use pubgrub::version_set::VersionSet;
-use semver::{Version, VersionReq};
+use semver::Version;
 use semver_pubgrub::SemverPubgrub;
 use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
@@ -280,26 +280,36 @@ impl<'a, 'c> DependencyProvider for PubGrubDependencyProvider<'a, 'c> {
             .map(|dependency| {
                 let dependency =
                     self.rewrite_dependency_source_id(summary.package_id, &dependency)?;
-
-                let req = VersionReq::from(dependency.version_req.clone());
                 let dep_name = dependency.name.clone().to_string();
-                let summaries = self.query(dependency)?;
+                let summaries = self.query(dependency.clone())?;
                 summaries
                     .into_iter()
-                    .find(|summary| req.matches(&summary.package_id.version))
-                    .map(|summary| (summary, req.clone()))
+                    .find(|summary| dependency.version_req.matches(&summary.package_id.version))
+                    .map(|summary| (summary, dependency.version_req.clone()))
                     .ok_or_else(|| DependencyProviderError::PackageNotFound {
                         name: dep_name,
-                        version: DependencyVersionReq::Req(req),
+                        version: dependency.version_req.clone(),
                     })
             })
-            .collect::<Result<Vec<(Summary, VersionReq)>, DependencyProviderError>>()?;
+            .collect::<Result<Vec<(Summary, DependencyVersionReq)>, DependencyProviderError>>()?;
         let constraints = deps
             .into_iter()
-            .map(|(summary, req)| (summary.package_id.into(), SemverPubgrub::from(&req)))
+            .map(|(summary, req)| (summary.package_id.into(), req.into()))
             .collect();
 
         Ok(Dependencies::Available(constraints))
+    }
+}
+
+impl From<DependencyVersionReq> for SemverPubgrub {
+    fn from(req: DependencyVersionReq) -> Self {
+        match req {
+            DependencyVersionReq::Req(req) => SemverPubgrub::from(&req),
+            DependencyVersionReq::Any => SemverPubgrub::empty().complement(),
+            DependencyVersionReq::Locked { exact, .. } => {
+                DependencyVersionReq::exact(&exact).into()
+            }
+        }
     }
 }
 
