@@ -40,3 +40,4 @@ pub const STARKNET_PLUGIN_NAME: &str = "starknet";
 pub const TEST_PLUGIN_NAME: &str = "cairo_test";
 pub const TEST_ASSERTS_PLUGIN_NAME: &str = "assert_macros";
 pub const CAIRO_RUN_PLUGIN_NAME: &str = "cairo_run";
+pub const REGISTRY_URL_ENV: &str = "SCARB_REGISTRY_URL";
