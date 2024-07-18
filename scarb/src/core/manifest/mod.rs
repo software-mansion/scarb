@@ -47,6 +47,8 @@ pub struct Manifest {
     pub targets: Vec<Target>,
     #[builder(default)]
     pub edition: Edition,
+    #[builder(default = "true")]
+    pub publish: bool,
     #[builder(default)]
     pub metadata: ManifestMetadata,
     #[builder(default = "ManifestCompilerConfig::default_for_profile(&Profile::DEV)")]

@@ -449,8 +449,8 @@ mod tests {
             // TODO(#2): Expected result is commented out.
             // Ok(pkgs![
             //     "bar v1.1.1",
-            //     "baz v1.8.0",
-            //     "foo v2.9.0"
+            //     "baz v1.7.1",
+            //     "foo v2.7.0"
             // ]),
             Err(indoc! {"
             Version solving failed:

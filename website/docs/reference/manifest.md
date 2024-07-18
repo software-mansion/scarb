@@ -277,6 +277,18 @@ enable-gas = false
 
 This flag cannot be disabled while compiling the `starknet-contract` target.
 
+### `inlining-strategy`
+
+This field is responsible for setting the inlining strategy to be used by compiler when building the package.
+The possible values are `default` or `avoid`.
+If `avoid` strategy is set, the compiler will only inline function annotated with `#[inline(always)]` attribute.
+
+> [!WARNING]
+> Using the `avoid` strategy may result in a slower execution of the compiled code and significantly larger artefacts
+> size.
+> Please use with caution, only if your tooling requires that.
+> You can use profile settings overwriting, for more granular control of which builds use the avoid strategy.
+
 ### `unstable-add-statements-functions-debug-info`
 
 > [!WARNING]
@@ -285,9 +297,9 @@ This flag cannot be disabled while compiling the `starknet-contract` target.
 > It may slow down the compilation - it is advised not to use it for other purposes than mentioned in
 > [cairo-profiler](https://github.com/software-mansion/cairo-profiler) documentation.
 
-If enabled, during the project compilation Scarb will a add mapping between Sierra statement indexes and vectors of fully
-qualified paths of Cairo functions to debug info. A statement index maps to a vector consisting of a function which
-caused the statement to be generated and all functions that were inlined or generated along the way.
+If enabled, during the project compilation Scarb will a add mapping between Sierra statement indexes and vectors of
+fully qualified paths of Cairo functions to debug info. A statement index maps to a vector consisting of a function
+which caused the statement to be generated and all functions that were inlined or generated along the way.
 By default, this flag is disabled.
 
 ```toml
