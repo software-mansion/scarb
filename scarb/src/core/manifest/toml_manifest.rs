@@ -356,10 +356,11 @@ impl TomlManifest {
 }
 
 impl TomlDependency {
-    fn resolve(&self) -> Cow<'_, DetailedTomlDependency> {
+    fn resolve(&self, registry_url: &Url) -> Cow<'_, DetailedTomlDependency> {
         match self {
             TomlDependency::Simple(version) => Cow::Owned(DetailedTomlDependency {
                 version: Some(version.clone()),
+                registry: Some(registry_url.to_owned()),
                 ..Default::default()
             }),
             TomlDependency::Detailed(detailed) => Cow::Borrowed(detailed),
@@ -392,6 +393,7 @@ impl TomlManifest {
         source_id: SourceId,
         profile: Profile,
         workspace_manifest: Option<&TomlManifest>,
+        registry_url: &Url,
     ) -> Result<Manifest> {
         let root = manifest_path
             .parent()
@@ -443,11 +445,18 @@ impl TomlManifest {
                     .and_then(|deps| deps.get(name.as_str()))
                     .cloned()
                     .ok_or_else(|| anyhow!("dependency `{}` not found in workspace", name.clone()))?
-                    .to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                    .to_dependency(
+                        name.clone(),
+                        workspace_manifest_path,
+                        kind.clone(),
+                        registry_url,
+                    )
             };
             let toml_dep = toml_dep
                 .clone()
-                .map(|dep| dep.to_dependency(name.clone(), manifest_path, kind.clone()))?
+                .map(|dep| {
+                    dep.to_dependency(name.clone(), manifest_path, kind.clone(), registry_url)
+                })?
                 .resolve(name.as_str(), inherit_ws)?;
             dependencies.push(toml_dep);
         }
@@ -959,8 +968,10 @@ impl TomlDependency {
         name: PackageName,
         manifest_path: &Utf8Path,
         dep_kind: DepKind,
+        registry_url: &Url,
     ) -> Result<ManifestDependency> {
-        self.resolve().to_dependency(name, manifest_path, dep_kind)
+        self.resolve(registry_url)
+            .to_dependency(name, manifest_path, dep_kind)
     }
 }
 
