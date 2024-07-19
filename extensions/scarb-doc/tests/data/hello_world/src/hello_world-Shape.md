@@ -9,7 +9,7 @@ Fully qualified path: `hello_world::Shape`
 trait Shape<T>
 ```
 
-## Trait Constants
+## Trait constants
 
 ### SHAPE_CONST
 
@@ -19,7 +19,7 @@ Constant for the shape type
 Fully qualified path: `hello_world::Shape::SHAPE_CONST`
 
 
-## Trait Functions
+## Trait functions
 
 ### area
 
@@ -33,7 +33,7 @@ fn area(self: T) -> u32
 ```
 
 
-## Trait Types
+## Trait types
 
 ### ShapePair
 

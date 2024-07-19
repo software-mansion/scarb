@@ -1,12 +1,44 @@
-# it_works
+# hello_world
 
-Really
-works.
+Fully qualified path: `hello_world`
 
+## Modules
 
-Fully qualified path: `hello_world::tests::it_works`
+- [tests](./hello_world-tests.md)
 
-```rust
-fn it_works()
-```
+## Constants
+
+- [FOO](./hello_world-FOO.md)
+
+## Free functions
+
+- [main](./hello_world-main.md)
+
+- [fib](./hello_world-fib.md)
+
+## Structs
+
+- [Circle](./hello_world-Circle.md)
+
+## Enums
+
+- [Color](./hello_world-Color.md)
+
+## Type aliases
+
+- [Pair](./hello_world-Pair.md)
+
+## Traits
+
+- [Shape](./hello_world-Shape.md)
+
+## Impls
+
+- [CircleShape](./hello_world-CircleShape.md)
+
+- [CircleDrop](./hello_world-CircleDrop.md)
+
+- [CircleSerde](./hello_world-CircleSerde.md)
+
+- [CirclePartialEq](./hello_world-CirclePartialEq.md)
 

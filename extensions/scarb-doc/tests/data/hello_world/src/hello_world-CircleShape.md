@@ -9,7 +9,7 @@ Fully qualified path: `hello_world::CircleShape`
 impl CircleShape of Shape<Circle>
 ```
 
-## Impl Constants
+## Impl constants
 
 ### SHAPE_CONST
 
@@ -23,7 +23,7 @@ const SHAPE_CONST: felt252 = 'xyz';
 ```
 
 
-## Impl Functions
+## Impl functions
 
 ### area
 
@@ -37,7 +37,7 @@ fn area(self: Circle) -> u32
 ```
 
 
-## Impl Types
+## Impl types
 
 ### ShapePair
 

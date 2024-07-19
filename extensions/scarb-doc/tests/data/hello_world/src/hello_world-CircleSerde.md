@@ -6,7 +6,7 @@ Fully qualified path: `hello_world::CircleSerde`
 impl CircleSerde of core::serde::Serde<Circle>
 ```
 
-## Impl Functions
+## Impl functions
 
 ### serialize
 

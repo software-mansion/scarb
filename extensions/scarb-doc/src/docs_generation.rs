@@ -106,6 +106,8 @@ impl TopLevelDocItem for TypeAlias {}
 
 // Wrapper trait over a documentable item to hide implementation details of the item type.
 trait DocItem {
+    const HEADER: &'static str;
+
     fn name(&self) -> &str;
     fn doc(&self) -> &Option<String>;
     fn signature(&self) -> &Option<String>;
@@ -113,8 +115,10 @@ trait DocItem {
 }
 
 macro_rules! impl_doc_item {
-    ($t:ty) => {
+    ($t:ty, $name:expr) => {
         impl DocItem for $t {
+            const HEADER: &'static str = $name;
+
             fn name(&self) -> &str {
                 &self.item_data.name
             }
@@ -134,22 +138,22 @@ macro_rules! impl_doc_item {
     };
 }
 
-impl_doc_item!(Constant);
-impl_doc_item!(Enum);
-impl_doc_item!(ExternFunction);
-impl_doc_item!(ExternType);
-impl_doc_item!(FreeFunction);
-impl_doc_item!(Impl);
-impl_doc_item!(ImplAlias);
-impl_doc_item!(ImplConstant);
-impl_doc_item!(ImplFunction);
-impl_doc_item!(ImplType);
-impl_doc_item!(Member);
-impl_doc_item!(Module);
-impl_doc_item!(Struct);
-impl_doc_item!(Trait);
-impl_doc_item!(TraitConstant);
-impl_doc_item!(TraitType);
-impl_doc_item!(TraitFunction);
-impl_doc_item!(TypeAlias);
-impl_doc_item!(Variant);
+impl_doc_item!(Constant, "Constants");
+impl_doc_item!(Enum, "Enums");
+impl_doc_item!(ExternFunction, "Extern functions");
+impl_doc_item!(ExternType, "Extern types");
+impl_doc_item!(FreeFunction, "Free functions");
+impl_doc_item!(Impl, "Impls");
+impl_doc_item!(ImplAlias, "Impl aliases");
+impl_doc_item!(ImplConstant, "Impl constants");
+impl_doc_item!(ImplFunction, "Impl functions");
+impl_doc_item!(ImplType, "Impl types");
+impl_doc_item!(Member, "Members");
+impl_doc_item!(Module, "Modules");
+impl_doc_item!(Struct, "Structs");
+impl_doc_item!(Trait, "Traits");
+impl_doc_item!(TraitConstant, "Trait constants");
+impl_doc_item!(TraitType, "Trait types");
+impl_doc_item!(TraitFunction, "Trait functions");
+impl_doc_item!(TypeAlias, "Type aliases");
+impl_doc_item!(Variant, "Variants");
