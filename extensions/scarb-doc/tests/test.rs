@@ -4,8 +4,11 @@ use assert_fs::TempDir;
 use expect_test::expect_file;
 use indoc::indoc;
 use std::fs;
+use std::iter::zip;
+use walkdir::WalkDir;
 
 use scarb_test_support::command::Scarb;
+use scarb_test_support::fsx;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 const CODE: &str = indoc! {
@@ -122,4 +125,37 @@ fn json_output() {
         .expect("Failed to read from file");
     let expected = expect_file!["./data/json_output_test_data.json"];
     expected.assert_eq(&serialized_crates);
+}
+
+#[test]
+fn markdown_output() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(CODE)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args(["--output-format", "markdown"])
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    for (dir_entry_1, dir_entry_2) in zip(
+        WalkDir::new("tests/data/hello_world").sort_by_file_name(),
+        WalkDir::new(t.path().join("target/doc/hello_world")).sort_by_file_name(),
+    ) {
+        let dir_entry_1 = dir_entry_1.unwrap();
+        let dir_entry_2 = dir_entry_2.unwrap();
+
+        if dir_entry_1.file_type().is_file() {
+            assert!(dir_entry_2.file_type().is_file());
+
+            let content = fs::read_to_string(dir_entry_2.path()).unwrap();
+
+            let expect_file = expect_file![fsx::canonicalize(dir_entry_1.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+    }
 }
