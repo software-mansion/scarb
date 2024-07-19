@@ -9,7 +9,7 @@ use crate::internal::fsx;
 use crate::internal::restricted_names;
 use crate::subcommands::get_env_vars;
 use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
-use scarb_build_metadata::SCARB_VERSION;
+use scarb_build_metadata::CAIRO_VERSION;
 use std::process::{Command, Stdio};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -148,7 +148,7 @@ fn mk(
         formatdoc! {r#"
 
             [dev-dependencies]
-            cairo_test = "{SCARB_VERSION}"
+            cairo_test = "{CAIRO_VERSION}"
         "#}
     };
     fsx::write(
