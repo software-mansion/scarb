@@ -75,7 +75,10 @@ pub fn resolve_workspace_with_opts(
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
             let version_req = DependencyVersionReq::exact(&cairo_version);
             patch_map.insert(
-                SourceId::default().canonical_url.clone(),
+                SourceId::for_registry(ws.config().registry_url())
+                    .expect("Failed to obtain registry url")
+                    .canonical_url
+                    .clone(),
                 [
                     ManifestDependency::builder()
                         .name(PackageName::CORE)

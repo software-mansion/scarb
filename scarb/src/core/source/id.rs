@@ -237,8 +237,7 @@ impl SourceId {
 
     pub fn default_registry() -> Self {
         static CACHE: Lazy<SourceId> = Lazy::new(|| {
-            let url = Url::parse(DEFAULT_REGISTRY_INDEX).unwrap();
-            SourceId::new(url, SourceKind::Registry).unwrap()
+            SourceId::new(DEFAULT_REGISTRY_INDEX.clone(), SourceKind::Registry).unwrap()
         });
         *CACHE
     }

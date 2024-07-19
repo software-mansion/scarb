@@ -9,18 +9,20 @@ use camino::{Utf8Path, Utf8PathBuf};
 use once_cell::sync::OnceCell;
 use tokio::runtime::{Builder, Handle, Runtime};
 use tracing::trace;
+use url::Url;
 use which::which_in;
 
 use scarb_ui::{OutputFormat, Ui, Verbosity};
 
 use crate::compiler::plugin::CairoPluginRepository;
 use crate::compiler::{CompilerRepository, Profile};
+use crate::core::registry::DEFAULT_REGISTRY_INDEX;
 use crate::core::AppDirs;
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::flock::AdvisoryLock;
 use crate::internal::fsx;
-use crate::SCARB_ENV;
+use crate::{REGISTRY_URL_ENV, SCARB_ENV};
 
 use super::ManifestDependency;
 
@@ -46,6 +48,7 @@ pub struct Config {
     tokio_handle: OnceCell<Handle>,
     profile: Profile,
     http_client: OnceCell<reqwest::Client>,
+    registry_url: Url,
 }
 
 impl Config {
@@ -77,6 +80,7 @@ impl Config {
         if let Some(handle) = b.tokio_handle {
             tokio_handle.set(handle).unwrap();
         }
+        let registry_url = b.registry_url.unwrap_or(DEFAULT_REGISTRY_INDEX.clone());
 
         Ok(Self {
             manifest_path: b.manifest_path,
@@ -95,6 +99,7 @@ impl Config {
             tokio_handle,
             profile,
             http_client: OnceCell::new(),
+            registry_url,
         })
     }
 
@@ -285,6 +290,10 @@ impl Config {
         );
         self.http()
     }
+
+    pub fn registry_url(&self) -> &Url {
+        &self.registry_url
+    }
 }
 
 #[derive(Debug)]
@@ -303,6 +312,7 @@ pub struct ConfigBuilder {
     custom_source_patches: Option<Vec<ManifestDependency>>,
     tokio_handle: Option<Handle>,
     profile: Option<Profile>,
+    registry_url: Option<Url>,
 }
 
 impl ConfigBuilder {
@@ -322,6 +332,7 @@ impl ConfigBuilder {
             custom_source_patches: None,
             tokio_handle: None,
             profile: None,
+            registry_url: None,
         }
     }
 
@@ -403,6 +414,17 @@ impl ConfigBuilder {
 
     pub fn profile(mut self, profile: Profile) -> Self {
         self.profile = Some(profile);
+        self
+    }
+
+    pub fn with_registry(mut self) -> Self {
+        self.registry_url = match env::var(REGISTRY_URL_ENV) {
+            Ok(value) => match Url::parse(&value) {
+                Ok(parsed_url) => Some(parsed_url),
+                Err(_) => panic!("Failed to parse url set by SCARB_REGISTRY_URL env variable"),
+            },
+            Err(_) => None,
+        };
         self
     }
 }

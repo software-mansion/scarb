@@ -75,6 +75,7 @@ fn cli_main(args: ScarbArgs) -> Result<()> {
         .offline(args.offline)
         .log_filter_directive(Some(scarb_log))
         .profile(args.profile_spec.determine()?)
+        .with_registry()
         .build()?;
 
     commands::run(args.command, &mut config)

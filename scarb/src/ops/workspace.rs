@@ -86,6 +86,7 @@ fn read_workspace_root<'c>(
                 source_id,
                 config.profile(),
                 Some(&toml_manifest),
+                config.registry_url(),
             )
             .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;
         let manifest = Box::new(manifest);
@@ -118,6 +119,7 @@ fn read_workspace_root<'c>(
                         source_id,
                         config.profile(),
                         Some(&toml_manifest),
+                        config.registry_url(),
                     )
                     .with_context(|| format!("failed to parse manifest at: {manifest_path}"))?;
                 let manifest = Box::new(manifest);

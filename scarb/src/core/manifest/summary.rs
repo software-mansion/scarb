@@ -7,7 +7,7 @@ use typed_builder::TypedBuilder;
 #[cfg(doc)]
 use crate::core::Manifest;
 use crate::core::{
-    Checksum, DepKind, DependencyVersionReq, ManifestDependency, PackageId, PackageName,
+    Checksum, DepKind, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId,
 };
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
@@ -74,6 +74,7 @@ impl Summary {
             ManifestDependency::builder()
                 .name(PackageName::CORE)
                 .version_req(DependencyVersionReq::exact(&cairo_version))
+                .source_id(SourceId::for_std())
                 .build()
         });
         let mut deps: Vec<&ManifestDependency> = Vec::new();
