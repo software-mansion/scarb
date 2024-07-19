@@ -526,7 +526,7 @@ mod tests {
     // NOTE: Path sources are deliberately not tested here, because paths have different form
     //   depending on running OS. We simply trust that this code works in that case.
     #[test_case(SourceId::mock_git() => "github.com-192sksn8g7p8c")]
-    #[test_case(SourceId::default_registry() => "there-is-no-default-registry-yet.com-rlhm60tcalr0i")]
+    #[test_case(SourceId::default_registry() => "scarbs.xyz-9djtpev4jug5q")]
     #[test_case(SourceId::for_std() => "std-drqrn62cbjj5g")]
     fn ident(source_id: SourceId) -> String {
         source_id.ident()

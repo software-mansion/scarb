@@ -41,7 +41,7 @@ fn usage() {
         "#});
 
     let expected = expect![["
-        GET /config.json
+        GET /api/v1/index/config.json
         accept: */*
         accept-encoding: gzip, br, deflate
         host: ...
@@ -118,7 +118,7 @@ fn publish_verified() {
         "#});
 
     let expected = expect![["
-        GET /config.json
+        GET /api/v1/index/config.json
         accept: */*
         accept-encoding: gzip, br, deflate
         host: ...
@@ -198,7 +198,7 @@ fn not_found() {
         "#});
 
     let expected = expect![["
-        GET /config.json
+        GET /api/v1/index/config.json
         accept: */*
         accept-encoding: gzip, br, deflate
         host: ...
@@ -229,7 +229,7 @@ fn not_found() {
 #[test]
 fn missing_config_json() {
     let registry = HttpRegistry::serve();
-    fs::remove_file(registry.child("config.json")).unwrap();
+    fs::remove_file(registry.child("api/v1/index/config.json")).unwrap();
 
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -253,7 +253,7 @@ fn missing_config_json() {
         "#});
 
     let expected = expect![["
-        GET /config.json
+        GET /api/v1/index/config.json
         accept: */*
         accept-encoding: gzip, br, deflate
         host: ...
@@ -310,7 +310,7 @@ fn caching() {
         .stdout_eq("");
 
     let expected = expect![[r#"
-        GET /config.json
+        GET /api/v1/index/config.json
         accept: */*
         accept-encoding: gzip, br, deflate
         host: ...
