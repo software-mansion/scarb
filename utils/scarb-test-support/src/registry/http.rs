@@ -45,7 +45,7 @@ impl HttpRegistry {
         });
         local
             .t
-            .child("config.json")
+            .child("api/v1/index/config.json")
             .write_str(&serde_json::to_string(&config).unwrap())
             .unwrap();
 

@@ -220,7 +220,7 @@ mod tests {
             [[package]]
             name = "first"
             version = "1.0.0"
-            source = "registry+https://there-is-no-default-registry-yet.com/"
+            source = "registry+https://scarbs.xyz/"
             checksum = "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
             dependencies = [
              "fourth",
@@ -229,7 +229,7 @@ mod tests {
             [[package]]
             name = "fourth"
             version = "80.0.85"
-            source = "registry+https://there-is-no-default-registry-yet.com/"
+            source = "registry+https://scarbs.xyz/"
             dependencies = [
              "third",
             ]
