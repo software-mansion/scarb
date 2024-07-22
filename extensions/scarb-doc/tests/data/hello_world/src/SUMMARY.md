@@ -1,46 +1,46 @@
 # Summary
 
-# Modules
+- [Modules](./modules.md)
 
-- [hello_world](./hello_world.md)
+  - [hello_world](./hello_world.md)
 
-- [tests](./hello_world-tests.md)
+  - [tests](./hello_world-tests.md)
 
-# Constants
+- [Constants](./constants.md)
 
-- [FOO](./hello_world-FOO.md)
+  - [FOO](./hello_world-FOO.md)
 
-# Free functions
+- [Free functions](./free_functions.md)
 
-- [main](./hello_world-main.md)
+  - [main](./hello_world-main.md)
 
-- [fib](./hello_world-fib.md)
+  - [fib](./hello_world-fib.md)
 
-- [it_works](./hello_world-tests-it_works.md)
+  - [it_works](./hello_world-tests-it_works.md)
 
-# Structs
+- [Structs](./structs.md)
 
-- [Circle](./hello_world-Circle.md)
+  - [Circle](./hello_world-Circle.md)
 
-# Enums
+- [Enums](./enums.md)
 
-- [Color](./hello_world-Color.md)
+  - [Color](./hello_world-Color.md)
 
-# Type Aliases
+- [Type aliases](./type_aliases.md)
 
-- [Pair](./hello_world-Pair.md)
+  - [Pair](./hello_world-Pair.md)
 
-# Traits
+- [Traits](./traits.md)
 
-- [Shape](./hello_world-Shape.md)
+  - [Shape](./hello_world-Shape.md)
 
-# Impls
+- [Impls](./impls.md)
 
-- [CircleShape](./hello_world-CircleShape.md)
+  - [CircleShape](./hello_world-CircleShape.md)
 
-- [CircleDrop](./hello_world-CircleDrop.md)
+  - [CircleDrop](./hello_world-CircleDrop.md)
 
-- [CircleSerde](./hello_world-CircleSerde.md)
+  - [CircleSerde](./hello_world-CircleSerde.md)
 
-- [CirclePartialEq](./hello_world-CirclePartialEq.md)
+  - [CirclePartialEq](./hello_world-CirclePartialEq.md)
 

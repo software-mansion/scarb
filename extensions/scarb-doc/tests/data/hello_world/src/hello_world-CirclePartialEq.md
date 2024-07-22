@@ -6,7 +6,7 @@ Fully qualified path: `hello_world::CirclePartialEq`
 impl CirclePartialEq of core::traits::PartialEq<Circle>
 ```
 
-## Impl Functions
+## Impl functions
 
 ### eq
 
