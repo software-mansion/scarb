@@ -3,7 +3,7 @@ use anyhow::Result;
 use scarb::core::Config;
 use scarb::ops::{self, VersionControl};
 
-use crate::args::NewArgs;
+use crate::args::{NewArgs, TestRunner};
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: NewArgs, config: &Config) -> Result<()> {
@@ -18,7 +18,7 @@ pub fn run(args: NewArgs, config: &Config) -> Result<()> {
             } else {
                 VersionControl::Git
             },
-            snforge: args.init.snforge,
+            snforge: matches!(args.init.test_runner, Some(TestRunner::StarknetFoundry)),
         },
         config,
     )?;

@@ -13,10 +13,12 @@ use scarb::ops;
 use scarb_ui::Ui;
 
 use crate::errors::ErrorWithExitCode;
+use crate::interactive::resolve_command;
 
 mod args;
 mod commands;
 mod errors;
+mod interactive;
 
 fn main() {
     let args = ScarbArgs::parse();
@@ -77,5 +79,5 @@ fn cli_main(args: ScarbArgs) -> Result<()> {
         .profile(args.profile_spec.determine()?)
         .build()?;
 
-    commands::run(args.command, &mut config)
+    commands::run(resolve_command(&args.command)?, &mut config)
 }

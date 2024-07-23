@@ -9,6 +9,8 @@ use scarb::core::TomlManifest;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::AssertFsUtf8Ext;
 
+const CAIRO_NATIVE_RUNNER: [&str; 2] = ["--test-runner", "cairo-native-runner"];
+
 #[test]
 fn new_simple() {
     let pt = assert_fs::TempDir::new().unwrap();
@@ -16,6 +18,7 @@ fn new_simple() {
     Scarb::quick_snapbox()
         .arg("new")
         .arg("hello")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .assert()
         .success();
@@ -48,6 +51,7 @@ fn new_simple_without_vcs() {
         .arg("new")
         .arg("hello")
         .arg("--no-vcs")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .assert()
         .success();
@@ -68,6 +72,7 @@ fn init_simple() {
 
     Scarb::quick_snapbox()
         .arg("init")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&t)
         .assert()
         .success();
@@ -100,6 +105,7 @@ fn init_simple_without_vcs() {
     Scarb::quick_snapbox()
         .arg("init")
         .arg("--no-vcs")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&t)
         .assert()
         .success();
@@ -115,6 +121,7 @@ fn init_simple_without_vcs() {
 fn new_no_path_arg() {
     Scarb::quick_snapbox()
         .arg("new")
+        .args(CAIRO_NATIVE_RUNNER)
         .assert()
         .failure()
         .stdout_eq("")
@@ -122,7 +129,7 @@ fn new_no_path_arg() {
             error: the following required arguments were not provided:
               <PATH>
 
-            Usage: scarb[..] new <PATH>
+            Usage: scarb[..] new [..] <PATH>
 
             For more information, try '--help'.
         "#});
@@ -136,6 +143,7 @@ fn new_existing() {
 
     Scarb::quick_snapbox()
         .arg("new")
+        .args(CAIRO_NATIVE_RUNNER)
         .arg("hello")
         .current_dir(&pt)
         .assert()
@@ -154,6 +162,7 @@ fn issue_148() {
         .arg("--json")
         .arg("new")
         .arg("hello")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .output()
         .expect("Failed to spawn command");
@@ -180,6 +189,7 @@ fn invalid_package_name() {
     Scarb::quick_snapbox()
         .arg("new")
         .arg("a-b")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .assert()
         .failure()
@@ -189,6 +199,7 @@ fn invalid_package_name() {
     Scarb::quick_snapbox()
         .arg("new")
         .arg("a_B")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .assert()
         .failure()
@@ -206,6 +217,7 @@ fn keyword_name() {
     Scarb::quick_snapbox()
         .arg("new")
         .arg("as")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .assert()
         .failure()
@@ -215,6 +227,7 @@ fn keyword_name() {
     Scarb::quick_snapbox()
         .arg("new")
         .arg("loop")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .assert()
         .failure()
@@ -230,6 +243,7 @@ fn internal_name() {
     Scarb::quick_snapbox()
         .arg("new")
         .arg("core")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .assert()
         .success();
@@ -243,6 +257,7 @@ fn windows_test() {
     Scarb::quick_snapbox()
         .arg("new")
         .arg("con")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .assert()
         .success();
@@ -256,6 +271,7 @@ fn windows_test() {
     Scarb::quick_snapbox()
         .arg("new")
         .arg("con")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .assert()
         .failure()
@@ -271,6 +287,7 @@ fn new_explicit_project_name() {
         .arg("hello")
         .arg("--name")
         .arg("world")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&pt)
         .assert()
         .success();
@@ -291,6 +308,7 @@ fn init_existing_manifest() {
 
     Scarb::quick_snapbox()
         .arg("init")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&t)
         .assert()
         .failure()
@@ -310,6 +328,7 @@ fn init_existing_source() {
 
     Scarb::quick_snapbox()
         .arg("init")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&t)
         .assert()
         .success();
@@ -326,6 +345,7 @@ fn init_does_not_overwrite_gitignore() {
 
     Scarb::quick_snapbox()
         .arg("init")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&t)
         .assert()
         .success();
@@ -344,6 +364,7 @@ fn init_incorrect_name() {
 
     Scarb::quick_snapbox()
         .arg("init")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&t)
         .assert()
         .failure()
@@ -362,6 +383,7 @@ fn init_keyword_name() {
 
     Scarb::quick_snapbox()
         .arg("init")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&t)
         .assert()
         .failure()
@@ -378,6 +400,7 @@ fn init_core_name() {
 
     Scarb::quick_snapbox()
         .arg("init")
+        .args(CAIRO_NATIVE_RUNNER)
         .current_dir(&t)
         .assert()
         .success();

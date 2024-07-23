@@ -50,6 +50,7 @@ glob.workspace = true
 ignore.workspace = true
 include_dir.workspace = true
 indoc.workspace = true
+inquire.workspace = true
 itertools.workspace = true
 libloading.workspace = true
 once_cell.workspace = true
