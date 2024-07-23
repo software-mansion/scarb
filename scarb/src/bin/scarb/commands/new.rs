@@ -4,6 +4,7 @@ use scarb::core::Config;
 use scarb::ops::{self, VersionControl};
 
 use crate::args::{NewArgs, TestRunner};
+use crate::interactive::ask_for_test_runner;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: NewArgs, config: &Config) -> Result<()> {
@@ -18,7 +19,14 @@ pub fn run(args: NewArgs, config: &Config) -> Result<()> {
             } else {
                 VersionControl::Git
             },
-            snforge: matches!(args.init.test_runner, Some(TestRunner::StarknetFoundry)),
+            snforge: matches!(
+                if let Some(test_runner) = args.init.test_runner {
+                    test_runner
+                } else {
+                    ask_for_test_runner()?
+                },
+                TestRunner::StarknetFoundry
+            ),
         },
         config,
     )?;

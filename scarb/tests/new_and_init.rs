@@ -1,5 +1,3 @@
-use std::fs;
-
 use assert_fs::prelude::*;
 use indoc::indoc;
 use predicates::prelude::*;
@@ -9,7 +7,7 @@ use scarb::core::TomlManifest;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::AssertFsUtf8Ext;
 
-const CAIRO_NATIVE_RUNNER: [&str; 2] = ["--test-runner", "cairo-native-runner"];
+const CAIRO_NATIVE_RUNNER: [&str; 2] = ["--test-runner", "cairo-test"];
 
 #[test]
 fn new_simple() {

@@ -275,7 +275,7 @@ pub struct ScriptsRunnerArgs {
 #[derive(ValueEnum, Clone, Debug)]
 pub enum TestRunner {
     StarknetFoundry,
-    CairoNativeRunner,
+    CairoTest,
 }
 
 /// Arguments accepted by the `init` command.
