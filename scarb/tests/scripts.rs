@@ -1,15 +1,15 @@
-use std::collections::BTreeMap;
-use std::env;
-
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
-
+use itertools::Itertools;
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::filesystem::{path_with_temp_dir, write_simple_hello_script};
 use scarb_test_support::fsx::make_executable;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use std::collections::BTreeMap;
+use std::env;
+use std::io::BufRead;
 
 #[test]
 fn run_simple_script() {
@@ -154,20 +154,25 @@ fn list_scripts() {
 }
 
 #[test]
-fn list_scripts_in_workspace() {
+fn list_scripts_in_workspace_with_package_filter() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("first")
         .manifest_extra(indoc! {r#"
-        [scripts]
-        some_script = "echo 'Hello'"
-        some_other_script = "echo 'world!'"
+            [scripts]
+            some_script.workspace = true
+            some_other_script.workspace = true
         "#})
         .build(&t.child("first"));
     ProjectBuilder::start()
         .name("second")
         .build(&t.child("second"));
     WorkspaceBuilder::start()
+        .manifest_extra(indoc! {r#"
+            [workspace.scripts]
+            some_script = "echo 'Hello'"
+            some_other_script = "echo 'world!'"
+        "#})
         .add_member("first")
         .add_member("second")
         .build(&t);
@@ -190,6 +195,85 @@ fn list_scripts_in_workspace() {
             Scripts available via `scarb run` for package `first`:
             some_other_script     : echo 'world!'
             some_script           : echo 'Hello'
+
+        "#});
+}
+
+#[test]
+fn list_scripts_in_workspace() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+            [scripts]
+            some_script.workspace = true
+            some_other_script.workspace = true
+        "#})
+        .build(&t.child("first"));
+    ProjectBuilder::start()
+        .name("second")
+        .build(&t.child("second"));
+    WorkspaceBuilder::start()
+        .manifest_extra(indoc! {r#"
+            [workspace.scripts]
+            some_script = "echo 'Hello'"
+            some_other_script = "echo 'world!'"
+        "#})
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+
+    let output = Scarb::quick_snapbox()
+        .args(["--json", "run"])
+        .current_dir(&t)
+        .output();
+
+    let output = output.expect("Failed to spawn command");
+    assert!(
+        output.status.success(),
+        "Command failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let output = BufRead::split(output.stdout.as_slice(), b'\n')
+        .map(|line| line.expect("Failed to read line from stdout"))
+        .collect_vec();
+    let Some((first, rest)) = output.split_first() else {
+        panic!("Expected exactly two lines of output")
+    };
+
+    let Some((second, rest)) = rest.split_first() else {
+        panic!("Expected exactly two lines of output")
+    };
+
+    assert_eq!(rest.len(), 0, "Expected exactly two lines of output");
+
+    match serde_json::de::from_slice::<BTreeMap<String, String>>(first) {
+        Ok(output) => {
+            assert_eq!(output["some_script"], "echo 'Hello'");
+            assert_eq!(output["some_other_script"], "echo 'world!'");
+            assert_eq!(output.len(), 2);
+        }
+        Err(_) => panic!("Cannot deserialize first scripts list"),
+    }
+
+    match serde_json::de::from_slice::<BTreeMap<String, String>>(second) {
+        Ok(output) => {
+            assert_eq!(output, BTreeMap::new());
+        }
+        Err(_) => panic!("Cannot deserialize second scripts list"),
+    }
+
+    Scarb::quick_snapbox()
+        .args(["run"])
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            Scripts available via `scarb run` for package `first`:
+            some_other_script     : echo 'world!'
+            some_script           : echo 'Hello'
+
+            Scripts available via `scarb run` for package `second`:
 
         "#});
 }
@@ -402,4 +486,129 @@ fn additional_args_not_parsed_as_package_filter() {
         .assert()
         .success()
         .stdout_eq("Hello -p world\n");
+}
+
+#[test]
+fn run_missing_script_in_workspace_root() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+        [scripts]
+        some_script.workspace = true
+        "#})
+        .build(&t.child("first"));
+    ProjectBuilder::start()
+        .name("second")
+        .build(&t.child("second"));
+    WorkspaceBuilder::start()
+        .manifest_extra(indoc! {r#"
+        [workspace.scripts]
+        some_script = "echo 'Hello, world!'"
+        "#})
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+    Scarb::quick_snapbox()
+        .args(["run", "--workspace-root", "some_other_script"])
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: missing script `some_other_script` for workspace root
+
+            To see a list of scripts, run:
+                scarb run --workspace-root
+        "#});
+}
+
+#[test]
+fn list_scripts_in_workspace_root() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+            [scripts]
+            some_package_script = "echo 'Hello'"
+        "#})
+        .build(&t.child("first"));
+    ProjectBuilder::start()
+        .name("second")
+        .build(&t.child("second"));
+    WorkspaceBuilder::start()
+        .manifest_extra(indoc! {r#"
+            [workspace.scripts]
+            some_script = "echo 'Hello'"
+            some_other_script = "echo 'world!'"
+        "#})
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .args(["run", "--workspace-root"])
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc! {r#"
+            Scripts available via `scarb run` for workspace root:
+            some_other_script     : echo 'world!'
+            some_script           : echo 'Hello'
+
+        "#});
+
+    let output: BTreeMap<String, String> = Scarb::quick_snapbox()
+        .args(["--json", "run", "--workspace-root"])
+        .current_dir(&t)
+        .stdout_json();
+
+    assert_eq!(output["some_script"], "echo 'Hello'");
+    assert_eq!(output["some_other_script"], "echo 'world!'");
+    assert_eq!(output.len(), 2);
+}
+
+#[test]
+fn run_workspace_root_script() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+            [scripts]
+            pwd.workspace = true
+        "#})
+        .build(&t.child("first"));
+    ProjectBuilder::start()
+        .name("second")
+        .build(&t.child("second"));
+    WorkspaceBuilder::start()
+        .manifest_extra(indoc! {r#"
+            [workspace.scripts]
+            pwd = "pwd"
+        "#})
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+    let output = Scarb::quick_snapbox()
+        .args(["run", "-p", "first", "pwd"])
+        .current_dir(&t)
+        .output()
+        .expect("failed to spawn command");
+    assert!(
+        output.status.success(),
+        "Command failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let pkg_pwd = String::from_utf8_lossy(&output.stdout).to_string();
+    let output = Scarb::quick_snapbox()
+        .args(["run", "--workspace-root", "pwd"])
+        .current_dir(&t)
+        .output()
+        .expect("failed to spawn command");
+    assert!(
+        output.status.success(),
+        "Command failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let ws_pwd = String::from_utf8_lossy(&output.stdout).to_string();
+    assert_ne!(pkg_pwd, ws_pwd);
 }
