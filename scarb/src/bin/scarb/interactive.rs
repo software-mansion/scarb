@@ -4,12 +4,22 @@ use crate::args::TestRunner;
 use anyhow::{ensure, Result};
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::Select;
+use indoc::indoc;
 use which::which;
 
-pub fn ask_for_test_runner() -> Result<TestRunner> {
+pub fn get_or_ask_for_test_runner(test_runner: Option<TestRunner>) -> Result<TestRunner> {
+    Ok(test_runner)
+        .transpose()
+        .unwrap_or_else(ask_for_test_runner)
+}
+
+fn ask_for_test_runner() -> Result<TestRunner> {
     ensure!(
         io::stdout().is_terminal(),
-        "You are not running in terminal. Please provide the --test-runner flag."
+        indoc! {r"
+            you are not running in terminal
+            help: please provide the --test-runner flag
+        "}
     );
 
     let options = if which("snforge").is_ok() {

@@ -157,9 +157,10 @@ fn new_interactive_not_in_terminal() {
         .current_dir(&pt)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
-            error: You are not running in terminal. Please provide the --test-runner flag.
-        "#});
+        .stdout_eq(indoc! {r"
+            error: you are not running in terminal
+            help: please provide the --test-runner flag
+        "});
 }
 
 #[test]
@@ -174,9 +175,10 @@ fn init_interactive_not_in_terminal() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq(indoc! {r#"
-            error: You are not running in terminal. Please provide the --test-runner flag.
-        "#});
+        .stdout_eq(indoc! {r"
+            error: you are not running in terminal
+            help: please provide the --test-runner flag
+        "});
 }
 
 #[test]
