@@ -101,6 +101,7 @@ fn read_workspace_root<'c>(
             .parent()
             .expect("Manifest path must have parent.");
 
+        let scripts = workspace.scripts.unwrap_or_default();
         // Read workspace members.
         let mut packages = workspace
             .members
@@ -137,6 +138,7 @@ fn read_workspace_root<'c>(
             root_package,
             config,
             profiles,
+            scripts,
         )
     } else {
         // Read single package workspace

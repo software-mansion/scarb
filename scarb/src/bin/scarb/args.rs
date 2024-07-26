@@ -263,6 +263,10 @@ pub struct ScriptsRunnerArgs {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
+    /// Run the script in workspace root only.
+    #[arg(long, default_value_t = false)]
+    pub workspace_root: bool,
+
     /// Arguments to pass to executed script.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,

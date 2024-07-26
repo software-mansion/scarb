@@ -5,11 +5,12 @@ use anyhow::{anyhow, bail, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
 use scarb_ui::args::PackagesSource;
+use smol_str::SmolStr;
 
 use crate::compiler::Profile;
 use crate::core::config::Config;
 use crate::core::package::Package;
-use crate::core::{PackageId, Target};
+use crate::core::{PackageId, ScriptDefinition, Target};
 use crate::flock::Filesystem;
 use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME};
 
@@ -22,6 +23,7 @@ pub struct Workspace<'c> {
     members: BTreeMap<PackageId, Package>,
     manifest_path: Utf8PathBuf,
     profiles: Vec<Profile>,
+    scripts: BTreeMap<SmolStr, ScriptDefinition>,
     root_package: Option<PackageId>,
     target_dir: Filesystem,
 }
@@ -33,6 +35,7 @@ impl<'c> Workspace<'c> {
         root_package: Option<PackageId>,
         config: &'c Config,
         profiles: Vec<Profile>,
+        scripts: BTreeMap<SmolStr, ScriptDefinition>,
     ) -> Result<Self> {
         let targets = packages
             .iter()
@@ -58,6 +61,7 @@ impl<'c> Workspace<'c> {
             root_package,
             target_dir,
             members: packages,
+            scripts,
         })
     }
 
@@ -75,6 +79,7 @@ impl<'c> Workspace<'c> {
             root_package,
             config,
             profiles,
+            BTreeMap::new(),
         )
     }
 
@@ -173,6 +178,14 @@ impl<'c> Workspace<'c> {
         names.sort();
         names.dedup();
         names
+    }
+
+    pub fn scripts(&self) -> &BTreeMap<SmolStr, ScriptDefinition> {
+        &self.scripts
+    }
+
+    pub fn script(&self, name: &SmolStr) -> Option<&ScriptDefinition> {
+        self.scripts.get(name)
     }
 }
 
