@@ -9,7 +9,7 @@
 #![warn(rust_2018_idioms)]
 
 use camino::Utf8PathBuf;
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 pub use subcommands::EXTERNAL_CMD_PREFIX;
 
 pub mod compiler;
@@ -32,8 +32,8 @@ pub const DEFAULT_MODULE_MAIN_FILE: &str = "lib.cairo";
 pub const DEFAULT_TESTS_PATH: &str = "tests";
 pub const DEFAULT_TARGET_DIR_NAME: &str = "target";
 pub const SCARB_IGNORE_FILE_NAME: &str = ".scarbignore";
-pub static DEFAULT_SOURCE_PATH: Lazy<Utf8PathBuf> =
-    Lazy::new(|| ["src", "lib.cairo"].iter().collect());
+pub static DEFAULT_SOURCE_PATH: LazyLock<Utf8PathBuf> =
+    LazyLock::new(|| ["src", "lib.cairo"].iter().collect());
 pub const DEFAULT_README_FILE_NAME: &str = "README.md";
 pub const DEFAULT_LICENSE_FILE_NAME: &str = "LICENSE";
 pub const STARKNET_PLUGIN_NAME: &str = "starknet";

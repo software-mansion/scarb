@@ -15,7 +15,6 @@ dunce.workspace = true
 hyper = "0.14"
 indoc.workspace = true
 itertools.workspace = true
-once_cell.workspace = true
 scarb = { path = "../../scarb" }
 scarb-build-metadata = { path = "../scarb-build-metadata" }
 scarb-ui = { path = "../scarb-ui" }

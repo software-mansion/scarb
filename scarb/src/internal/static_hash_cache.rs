@@ -1,14 +1,12 @@
 use std::collections::HashSet;
 use std::hash::Hash;
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 
-use once_cell::sync::OnceCell;
-
-pub struct StaticHashCache<T: 'static + Eq + Hash>(OnceCell<Mutex<HashSet<&'static T>>>);
+pub struct StaticHashCache<T: 'static + Eq + Hash>(OnceLock<Mutex<HashSet<&'static T>>>);
 
 impl<T: 'static + Eq + Hash> StaticHashCache<T> {
     pub const fn new() -> Self {
-        Self(OnceCell::new())
+        Self(OnceLock::new())
     }
 
     pub fn intern(&self, value: T) -> &'static T {

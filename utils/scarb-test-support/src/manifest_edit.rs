@@ -1,10 +1,10 @@
+use std::cell::LazyCell;
 use std::ffi::OsStr;
 use std::fs;
 
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
-use once_cell::sync::Lazy;
 use snapbox::cmd::Command;
 
 use crate::command::Scarb;
@@ -35,7 +35,7 @@ impl ManifestEditHarness {
     }
 
     pub fn run(self) {
-        let t = Lazy::new(|| TempDir::new().unwrap());
+        let t = LazyCell::new(|| TempDir::new().unwrap());
         let t = self.path.unwrap_or_else(|| t.child("proj"));
 
         let input_manifest = self.input_manifest.unwrap();

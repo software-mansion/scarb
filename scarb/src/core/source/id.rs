@@ -1,11 +1,10 @@
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use anyhow::{anyhow, bail, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smol_str::SmolStr;
 use url::Url;
@@ -228,7 +227,7 @@ impl SourceId {
     }
 
     pub fn for_std() -> Self {
-        static CACHE: Lazy<SourceId> = Lazy::new(|| {
+        static CACHE: LazyLock<SourceId> = LazyLock::new(|| {
             let url = Url::parse("scarb:/std").unwrap();
             SourceId::new(url, SourceKind::Std).unwrap()
         });
@@ -236,7 +235,7 @@ impl SourceId {
     }
 
     pub fn default_registry() -> Self {
-        static CACHE: Lazy<SourceId> = Lazy::new(|| {
+        static CACHE: LazyLock<SourceId> = LazyLock::new(|| {
             let url = Url::parse(DEFAULT_REGISTRY_INDEX).unwrap();
             SourceId::new(url, SourceKind::Registry).unwrap()
         });
