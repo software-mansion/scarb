@@ -28,6 +28,7 @@ pub(crate) fn build_scarb_root_database(
     let mut b = RootDatabase::builder();
     b.with_project_config(build_project_config(unit)?);
     b.with_cfg(unit.cfg_set.clone());
+    b.with_inlining_strategy(unit.compiler_config.inlining_strategy.clone().into());
     let proc_macro_host = load_plugins(unit, ws, &mut b)?;
     if !unit.compiler_config.enable_gas {
         b.skip_auto_withdraw_gas();
