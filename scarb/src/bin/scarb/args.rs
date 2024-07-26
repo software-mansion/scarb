@@ -290,7 +290,7 @@ pub struct InitArgs {
     pub no_vcs: bool,
 
     /// Test runner to use. Starts interactive session if not specified.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_TEST_RUNNER")]
     pub test_runner: Option<TestRunner>,
 }
 

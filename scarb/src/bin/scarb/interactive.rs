@@ -9,7 +9,7 @@ pub fn ask_for_test_runner() -> Result<TestRunner> {
     } else {
         vec![
             "Cairo Test (default)",
-            "Starknet Foundry (recommended, requires snforge installed)",
+            "Starknet Foundry (recommended, requires snforge installed: https://github.com/foundry-rs/starknet-foundry)",
         ]
     };
 

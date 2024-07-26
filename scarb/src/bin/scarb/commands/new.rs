@@ -20,11 +20,9 @@ pub fn run(args: NewArgs, config: &Config) -> Result<()> {
                 VersionControl::Git
             },
             snforge: matches!(
-                if let Some(test_runner) = args.init.test_runner {
-                    test_runner
-                } else {
-                    ask_for_test_runner()?
-                },
+                Ok(args.init.test_runner)
+                    .transpose()
+                    .unwrap_or_else(ask_for_test_runner)?,
                 TestRunner::StarknetFoundry
             ),
         },

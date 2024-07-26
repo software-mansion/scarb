@@ -1,3 +1,5 @@
+use std::fs;
+
 use assert_fs::prelude::*;
 use indoc::indoc;
 use predicates::prelude::*;
