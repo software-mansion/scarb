@@ -54,6 +54,7 @@ impl Scarb {
         cmd.env("SCARB_LOG", self.log);
         cmd.env("SCARB_CACHE", self.cache.path());
         cmd.env("SCARB_CONFIG", self.config.path());
+        cmd.env("SCARB_INIT_TEST_RUNNER", "cairo-test");
         cmd
     }
 

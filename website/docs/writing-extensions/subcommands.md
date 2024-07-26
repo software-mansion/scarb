@@ -16,18 +16,18 @@ Any additional arguments on the command line after `${command}` will be forwarde
 
 Additionally, Scarb passes more contextual information via environment variables:
 
-| Environment variable  | Description                                                                                         |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| `SCARB`               | Path to Scarb executable.                                                                           |
-| `PATH`                | System `$PATH` but augmented with `bin` directory in Scarb's [local data directory][dirs].          |
-| `SCARB_CACHE`         | Path to Scarb's [cache][dirs] directory.                                                            |
-| `SCARB_CONFIG`        | Path to Scarb's [config][dirs] directory.                                                           |
-| `SCARB_TARGET_DIR`    | Path to the current target directory.                                                               |
-| `SCARB_PROFILE`       | Name of the current profile.                                                                        |
-| `SCARB_MANIFEST_PATH` | Absolute path to current `Scarb.toml`.                                                              |
-| `SCARB_UI_VERBOSITY`  | Scarb's messages verbosity, possible values: `quiet`, `normal`, `verbose`.                          |
-| `SCARB_LOG`           | Scarb's logger directives, follows [`tracing`'s `EnvFilter` syntax][tracing-env-filter].            |
-| `SCARB_TEST_RUNNER`   | Test runner to use when calling `new` or `init`. possible values: `starknet-foundry`, `cairo-test`. |
+| Environment variable     | Description                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `SCARB`                  | Path to Scarb executable.                                                                           |
+| `PATH`                   | System `$PATH` but augmented with `bin` directory in Scarb's [local data directory][dirs].          |
+| `SCARB_CACHE`            | Path to Scarb's [cache][dirs] directory.                                                            |
+| `SCARB_CONFIG`           | Path to Scarb's [config][dirs] directory.                                                           |
+| `SCARB_TARGET_DIR`       | Path to the current target directory.                                                               |
+| `SCARB_PROFILE`          | Name of the current profile.                                                                        |
+| `SCARB_MANIFEST_PATH`    | Absolute path to current `Scarb.toml`.                                                              |
+| `SCARB_UI_VERBOSITY`     | Scarb's messages verbosity, possible values: `quiet`, `normal`, `verbose`.                          |
+| `SCARB_LOG`              | Scarb's logger directives, follows [`tracing`'s `EnvFilter` syntax][tracing-env-filter].            |
+| `SCARB_INIT_TEST_RUNNER` | Test runner to use when calling `new` or `init`. possible values: `starknet-foundry`, `cairo-test`. |
 
 ## Implementation recommendations
 

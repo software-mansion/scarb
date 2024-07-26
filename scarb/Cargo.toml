@@ -40,6 +40,7 @@ create-output-dir = { path = "../utils/create-output-dir" }
 data-encoding.workspace = true
 deno_task_shell.workspace = true
 derive_builder.workspace = true
+dialoguer.workspace = true
 directories.workspace = true
 dunce.workspace = true
 fs4.workspace = true
@@ -50,7 +51,6 @@ glob.workspace = true
 ignore.workspace = true
 include_dir.workspace = true
 indoc.workspace = true
-inquire.workspace = true
 itertools.workspace = true
 libloading.workspace = true
 once_cell.workspace = true

@@ -1,9 +1,17 @@
+use std::io::{self, IsTerminal};
+
 use crate::args::TestRunner;
-use anyhow::Result;
-use inquire::Select;
+use anyhow::{ensure, Result};
+use dialoguer::theme::ColorfulTheme;
+use dialoguer::Select;
 use which::which;
 
 pub fn ask_for_test_runner() -> Result<TestRunner> {
+    ensure!(
+        io::stdout().is_terminal(),
+        "You are not running in terminal. Please provide the --test-runner flag."
+    );
+
     let options = if which("snforge").is_ok() {
         vec!["Starknet Foundry (default)", "Cairo Test"]
     } else {
@@ -13,9 +21,13 @@ pub fn ask_for_test_runner() -> Result<TestRunner> {
         ]
     };
 
-    let answer = Select::new("Which test runner do you want to set up?", options).prompt()?;
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Which test runner do you want to set up?")
+        .items(&options)
+        .default(0)
+        .interact()?;
 
-    if answer.starts_with("Cairo Test") {
+    if options[selection].starts_with("Cairo Test") {
         Ok(TestRunner::CairoTest)
     } else {
         Ok(TestRunner::StarknetFoundry)
