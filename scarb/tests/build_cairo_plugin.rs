@@ -3,17 +3,16 @@ use assert_fs::TempDir;
 use cairo_lang_sierra::program::VersionedProgram;
 use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc};
-use once_cell::sync::Lazy;
-use snapbox::assert_matches;
-use std::collections::HashMap;
-use std::path::PathBuf;
-
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
+use snapbox::assert_matches;
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::sync::LazyLock;
 
-static CAIRO_LANG_MACRO_PATH: Lazy<String> = Lazy::new(|| {
+static CAIRO_LANG_MACRO_PATH: LazyLock<String> = LazyLock::new(|| {
     let path = fsx::canonicalize(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../plugins/")

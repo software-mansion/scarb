@@ -1,7 +1,6 @@
 use std::ops::Deref;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
-use once_cell::sync::Lazy;
 use typed_builder::TypedBuilder;
 
 #[cfg(doc)]
@@ -68,7 +67,7 @@ impl Summary {
     }
 
     pub fn implicit_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
-        static CORE_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| {
+        static CORE_DEPENDENCY: LazyLock<ManifestDependency> = LazyLock::new(|| {
             // NOTE: Pin `core` to exact version, because we know that's the only one we have.
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
             ManifestDependency::builder()
