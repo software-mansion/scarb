@@ -12,7 +12,7 @@ fn new_simple() {
     Scarb::quick_snapbox()
         .arg("new")
         .arg("hello")
-        .arg("--snforge")
+        .args(["--test-runner", "starknet-foundry"])
         .current_dir(&pt)
         .assert()
         .success();

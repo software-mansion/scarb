@@ -17,6 +17,7 @@ use crate::errors::ErrorWithExitCode;
 mod args;
 mod commands;
 mod errors;
+mod interactive;
 
 fn main() {
     let args = ScarbArgs::parse();

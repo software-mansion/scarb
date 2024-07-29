@@ -70,6 +70,7 @@ fn manifest_path() {
 fn init_project(t: &TempDir) {
     Command::new(scarb_bin())
         .args(["init", "--name", "hello"])
+        .env("SCARB_INIT_TEST_RUNNER", "cairo-test")
         .current_dir(t)
         .assert()
         .success();

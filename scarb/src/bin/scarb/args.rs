@@ -272,6 +272,12 @@ pub struct ScriptsRunnerArgs {
     pub args: Vec<OsString>,
 }
 
+#[derive(ValueEnum, Clone, Debug)]
+pub enum TestRunner {
+    StarknetFoundry,
+    CairoTest,
+}
+
 /// Arguments accepted by the `init` command.
 #[derive(Parser, Clone, Debug)]
 pub struct InitArgs {
@@ -283,9 +289,9 @@ pub struct InitArgs {
     #[arg(long)]
     pub no_vcs: bool,
 
-    /// Use a Starknet Foundry Forge template.
-    #[arg(long)]
-    pub snforge: bool,
+    /// Test runner to use. Starts interactive session if not specified.
+    #[arg(long, env = "SCARB_INIT_TEST_RUNNER")]
+    pub test_runner: Option<TestRunner>,
 }
 
 /// Arguments accepted by the `metadata` command.

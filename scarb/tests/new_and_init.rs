@@ -122,7 +122,7 @@ fn new_no_path_arg() {
             error: the following required arguments were not provided:
               <PATH>
 
-            Usage: scarb[..] new <PATH>
+            Usage: scarb[..] new [..] <PATH>
 
             For more information, try '--help'.
         "#});
@@ -144,6 +144,41 @@ fn new_existing() {
             error: destination `hello` already exists
             help: use `scarb init` to initialize the directory
         "#});
+}
+
+#[test]
+fn new_interactive_not_in_terminal() {
+    let pt = assert_fs::TempDir::new().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("new")
+        .arg("hello")
+        .env_remove("SCARB_INIT_TEST_RUNNER")
+        .current_dir(&pt)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r"
+            error: you are not running in terminal
+            help: please provide the --test-runner flag
+        "});
+}
+
+#[test]
+fn init_interactive_not_in_terminal() {
+    let pt = assert_fs::TempDir::new().unwrap();
+    let t = pt.child("hello");
+    t.create_dir_all().unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("init")
+        .env_remove("SCARB_INIT_TEST_RUNNER")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r"
+            error: you are not running in terminal
+            help: please provide the --test-runner flag
+        "});
 }
 
 #[test]
