@@ -18,6 +18,7 @@ members = [
     "utils/test-for-each-example",
     "xtask",
 ]
+exclude = ["examples/procedural_macro/some_macro"]
 "resolver" = "2"
 
 [workspace.package]
