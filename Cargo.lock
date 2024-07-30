@@ -765,7 +765,7 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-macro-attributes"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "quote",
  "scarb-stable-hash",
