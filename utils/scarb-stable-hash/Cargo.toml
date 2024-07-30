@@ -1,13 +1,13 @@
 [package]
 name = "scarb-stable-hash"
 version = "1.0.0"
-edition.workspace = true
+description = "Implementation of a hasher that produces the same values across Scarb releases"
+readme = "README.md"
 authors.workspace = true
+edition.workspace = true
 homepage.workspace = true
 license.workspace = true
-readme.workspace = true
 repository.workspace = true
-publish = false
 
 [dependencies]
 xxhash-rust.workspace = true
