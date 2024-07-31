@@ -13,6 +13,7 @@ use crate::metadata::compilation_unit_for_package;
 
 mod compilation;
 mod crate_collection;
+mod felt252;
 mod metadata;
 
 /// Starknet Foundry private extension for compiling test artifacts.

@@ -16,7 +16,9 @@ fn delegates_to_cairo_test() {
 
     ProjectBuilder::start().build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::new()
+        .isolate_from_extensions()
+        .snapbox()
         .args(["test", "beautiful", "world"])
         .env("PATH", path_with_temp_dir(&t))
         .current_dir(&t)

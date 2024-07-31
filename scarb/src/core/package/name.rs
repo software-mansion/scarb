@@ -12,6 +12,10 @@ use crate::internal::restricted_names;
 #[cfg(doc)]
 use crate::core::Package;
 
+use crate::{
+    CAIRO_RUN_PLUGIN_NAME, STARKNET_PLUGIN_NAME, TEST_ASSERTS_PLUGIN_NAME, TEST_PLUGIN_NAME,
+};
+
 /// A [`String`]-like type representing [`Package`] name.
 ///
 /// * Instances of this type are validated upon construction to comply with the
@@ -28,8 +32,11 @@ pub struct PackageName(SmolStr);
 
 impl PackageName {
     pub const CORE: Self = PackageName(SmolStr::new_inline(CORELIB_CRATE_NAME));
-    pub const STARKNET: Self = PackageName(SmolStr::new_inline("starknet"));
-    pub const TEST_PLUGIN: Self = PackageName(SmolStr::new_inline("test_plugin"));
+    pub const STARKNET: Self = PackageName(SmolStr::new_inline(STARKNET_PLUGIN_NAME));
+    pub const TEST_PLUGIN: Self = PackageName(SmolStr::new_inline(TEST_PLUGIN_NAME));
+    pub const CAIRO_RUN_PLUGIN: Self = PackageName(SmolStr::new_inline(CAIRO_RUN_PLUGIN_NAME));
+    pub const TEST_ASSERTS_PLUGIN: Self =
+        PackageName(SmolStr::new_inline(TEST_ASSERTS_PLUGIN_NAME));
 
     /// Constructs and validates new [`PackageName`].
     ///

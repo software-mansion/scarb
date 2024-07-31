@@ -4,24 +4,44 @@ use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_compiler::CompilerConfig;
+use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use serde::Serialize;
 use std::io::{BufWriter, Write};
 
-use scarb_ui::components::TypedMessage;
-
-use crate::compiler::CompilationUnit;
-use crate::core::Workspace;
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
+use crate::core::{InliningStrategy, Workspace};
 use crate::flock::Filesystem;
 
-pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> CompilerConfig<'c> {
+pub fn build_compiler_config<'c>(
+    unit: &CairoCompilationUnit,
+    ws: &Workspace<'c>,
+) -> CompilerConfig<'c> {
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
-        |diagnostic: String| {
-            config
-                .ui()
-                .print(TypedMessage::naked_text("diagnostic", &diagnostic));
+
+        |entry: FormattedDiagnosticEntry| {
+            let msg = entry
+                .message()
+                .strip_suffix('\n')
+                .unwrap_or(entry.message());
+            match entry.severity() {
+                Severity::Error => {
+                    if let Some(code) = entry.error_code() {
+                        config.ui().error_with_code(code.as_str(), msg)
+                    } else {
+                        config.ui().error(msg)
+                    }
+                }
+                Severity::Warning => {
+                    if let Some(code) = entry.error_code() {
+                        config.ui().warn_with_code(code.as_str(), msg)
+                    } else {
+                        config.ui().warn(msg)
+                    }
+                }
+            };
         }
     });
     CompilerConfig {
@@ -31,17 +51,40 @@ pub fn build_compiler_config<'c>(unit: &CompilationUnit, ws: &Workspace<'c>) -> 
             diagnostics_reporter
         },
         replace_ids: unit.compiler_config.sierra_replace_ids,
+        inlining_strategy: unit.compiler_config.inlining_strategy.clone().into(),
+        add_statements_functions: unit
+            .compiler_config
+            .unstable_add_statements_functions_debug_info,
         ..CompilerConfig::default()
     }
 }
 
-pub fn collect_main_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
+impl From<InliningStrategy> for cairo_lang_lowering::utils::InliningStrategy {
+    fn from(value: InliningStrategy) -> Self {
+        match value {
+            InliningStrategy::Default => cairo_lang_lowering::utils::InliningStrategy::Default,
+            InliningStrategy::Avoid => cairo_lang_lowering::utils::InliningStrategy::Avoid,
+        }
+    }
+}
+
+#[allow(unused)]
+impl From<cairo_lang_lowering::utils::InliningStrategy> for InliningStrategy {
+    fn from(value: cairo_lang_lowering::utils::InliningStrategy) -> Self {
+        match value {
+            cairo_lang_lowering::utils::InliningStrategy::Default => InliningStrategy::Default,
+            cairo_lang_lowering::utils::InliningStrategy::Avoid => InliningStrategy::Avoid,
+        }
+    }
+}
+
+pub fn collect_main_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
     vec![db.intern_crate(CrateLongId::Real(
         unit.main_component().cairo_package_name(),
     ))]
 }
 
-pub fn collect_all_crate_ids(unit: &CompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
+pub fn collect_all_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
     unit.components
         .iter()
         .map(|component| db.intern_crate(CrateLongId::Real(component.cairo_package_name())))

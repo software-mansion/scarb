@@ -25,6 +25,8 @@ pub fn run(args: PackageArgs, config: &Config) -> Result<()> {
         // Disable dirty repository checks when printing package files.
         allow_dirty: args.list || args.shared_args.allow_dirty,
         verify: !args.shared_args.no_verify,
+        check_metadata: !args.no_metadata,
+        features: args.features.try_into()?,
     };
 
     if args.list {

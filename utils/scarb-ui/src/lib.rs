@@ -22,10 +22,13 @@
 #![warn(rust_2018_idioms)]
 
 use clap::ValueEnum;
+use indicatif::WeakProgressBar;
 pub use indicatif::{
     BinaryBytes, DecimalBytes, FormattedDuration, HumanBytes, HumanCount, HumanDuration,
     HumanFloatCount,
 };
+use std::fmt::Debug;
+use std::sync::{Arc, RwLock};
 
 pub use message::*;
 pub use verbosity::*;
@@ -53,10 +56,29 @@ pub enum OutputFormat {
 /// colour, etc.
 ///
 /// All human-oriented messaging (basically all writes to `stdout`) must go through this object.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Ui {
     verbosity: Verbosity,
     output_format: OutputFormat,
+    state: Arc<RwLock<State>>,
+}
+
+impl Debug for Ui {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Ui")
+            .field("verbosity", &self.verbosity)
+            .field("output_format", &self.output_format)
+            .finish()
+    }
+}
+
+/// An encapsulation of the UI state.
+///
+/// This can be used by `Ui` to store stateful information.
+#[derive(Default)]
+#[non_exhaustive]
+struct State {
+    active_spinner: WeakProgressBar,
 }
 
 impl Ui {
@@ -65,6 +87,7 @@ impl Ui {
         Self {
             verbosity,
             output_format,
+            state: Default::default(),
         }
     }
 
@@ -85,6 +108,11 @@ impl Ui {
         }
     }
 
+    /// Print the message to standard output regardless of the verbosity mode.
+    pub fn force_print<T: Message>(&self, message: T) {
+        self.do_print(message);
+    }
+
     /// Print the message to the standard output only in verbose mode.
     pub fn verbose<T: Message>(&self, message: T) {
         if self.verbosity >= Verbosity::Verbose {
@@ -98,6 +126,12 @@ impl Ui {
     pub fn widget<T: Widget>(&self, widget: T) -> Option<T::Handle> {
         if self.output_format == OutputFormat::Text && self.verbosity >= Verbosity::Normal {
             let handle = widget.text();
+            if let Some(handle) = handle.weak_progress_bar() {
+                self.state
+                    .write()
+                    .expect("cannot lock ui state for writing")
+                    .active_spinner = handle;
+            }
             Some(handle)
         } else {
             None
@@ -112,6 +146,18 @@ impl Ui {
     /// Print an error to the user.
     pub fn error(&self, message: impl AsRef<str>) {
         self.print(TypedMessage::styled("error", "red", message.as_ref()))
+    }
+
+    /// Print a warning to the user.
+    pub fn warn_with_code(&self, code: impl AsRef<str>, message: impl AsRef<str>) {
+        self.print(
+            TypedMessage::styled("warn", "yellow", message.as_ref()).with_code(code.as_ref()),
+        )
+    }
+
+    /// Print an error to the user.
+    pub fn error_with_code(&self, code: impl AsRef<str>, message: impl AsRef<str>) {
+        self.print(TypedMessage::styled("error", "red", message.as_ref()).with_code(code.as_ref()))
     }
 
     /// Nicely format an [`anyhow::Error`] for display to the user, and print it with [`Ui::error`].
@@ -131,9 +177,20 @@ impl Ui {
     }
 
     fn do_print<T: Message>(&self, message: T) {
-        match self.output_format {
+        let print = || match self.output_format {
             OutputFormat::Text => message.print_text(),
             OutputFormat::Json => message.print_json(),
+        };
+        let handle = self
+            .state
+            .read()
+            .expect("cannot lock ui state for reading")
+            .active_spinner
+            .clone();
+        if let Some(pb) = handle.upgrade() {
+            pb.suspend(print);
+        } else {
+            print();
         }
     }
 
@@ -154,5 +211,24 @@ impl Ui {
     /// * `CLICOLOR_FORCE != 0`: ANSI colors should be enabled no matter what.
     pub fn has_colors_enabled(&self) -> bool {
         console::colors_enabled()
+    }
+
+    /// Forces colorization on or off for stdout.
+    ///
+    /// This overrides the default for the current process and changes the return value of
+    /// the [`Ui::has_colors_enabled`] function.
+    pub fn force_colors_enabled_stderr(&self, enable: bool) {
+        console::set_colors_enabled_stderr(enable);
+    }
+
+    /// Returns `true` if colors should be enabled for stderr.
+    ///
+    /// This honors the [clicolors spec](http://bixense.com/clicolors/).
+    ///
+    /// * `CLICOLOR != 0`: ANSI colors are supported and should be used when the program isn't piped.
+    /// * `CLICOLOR == 0`: Don't output ANSI color escape codes.
+    /// * `CLICOLOR_FORCE != 0`: ANSI colors should be enabled no matter what.
+    pub fn has_colors_enabled_stderr(&self) -> bool {
+        console::colors_enabled_stderr()
     }
 }

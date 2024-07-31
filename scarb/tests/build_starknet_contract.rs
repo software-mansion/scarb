@@ -1,7 +1,7 @@
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
-use cairo_lang_starknet::casm_contract_class::CasmContractClass;
-use cairo_lang_starknet::contract_class::ContractClass;
+use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
+use cairo_lang_starknet_classes::contract_class::ContractClass;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
 use predicates::prelude::*;
@@ -36,7 +36,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .build(world);
 
     Scarb::quick_snapbox()
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
+        .arg("build")
         .current_dir(world)
         .assert()
         .success()
@@ -77,6 +77,10 @@ fn compile_starknet_contract() {
 
     t.child("target/dev/hello_Balance.contract_class.json")
         .assert_is_json::<ContractClass>();
+    t.child("target/dev/hello.starknet_artifacts.json")
+        .assert(predicates::str::contains(
+            r#""module_path":"hello::Balance""#,
+        ));
 }
 
 #[test]
@@ -345,12 +349,12 @@ fn compile_starknet_contract_without_starknet_dep() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
+        .arg("check")
         .current_dir(&t)
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        [..] Compiling hello v0.1.0 ([..])
+        [..] Checking hello v0.1.0 ([..])
         warn: package `hello` declares `starknet-contract` target, but does not depend on `starknet` package
         note: this may cause contract compilation to fail with cryptic errors
         help: add dependency on `starknet` to package manifest
@@ -359,63 +363,61 @@ fn compile_starknet_contract_without_starknet_dep() {
             starknet = ">=[..]"
 
         error: Plugin diagnostic: Unsupported attribute.
-         --> [..]/lib.cairo:9:1
+         --> [..]src/lib.cairo:9:1
         #[starknet::contract]
         ^*******************^
 
-
         error: Plugin diagnostic: Unsupported attribute.
-         --> [..]/lib.cairo:13:5
+         --> [..]src/lib.cairo:13:5
             #[storage]
             ^********^
 
         error: Plugin diagnostic: Unsupported attribute.
-         --> [..]/lib.cairo:18:5
+         --> [..]src/lib.cairo:18:5
             #[constructor]
             ^************^
 
         error: Plugin diagnostic: Unsupported attribute.
-         --> [..]/lib.cairo:23:5
+         --> [..]src/lib.cairo:23:5
             #[abi(embed_v0)]
             ^**************^
 
         error: Type not found.
-         --> [..]/lib.cairo:19:30
+         --> [..]src/lib.cairo:19:30
             fn constructor(ref self: ContractState, value_: u128) {
                                      ^***********^
 
-        error: Method `write` not found on type `<missing>`. Did you import the correct trait and impl?
-         --> [..]/lib.cairo:20:20
+        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapWriteAccess::write and StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
+         --> [..]src/lib.cairo:20:20
                 self.value.write(value_);
                            ^***^
 
         error: Type not found.
-         --> [..]/lib.cairo:24:37
+         --> [..]src/lib.cairo:24:37
             impl Balance of super::IBalance<ContractState> {
                                             ^***********^
 
         error: Type not found.
-         --> [..]/lib.cairo:25:23
+         --> [..]src/lib.cairo:25:23
                 fn get(self: @ContractState) -> u128 {
                               ^***********^
 
-        error: Method `read` not found on type `<missing>`. Did you import the correct trait and impl?
-         --> [..]/lib.cairo:26:24
+        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapReadAccess::read and StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
+         --> [..]src/lib.cairo:26:24
                     self.value.read()
                                ^**^
 
         error: Type not found.
-         --> [..]/lib.cairo:28:31
+         --> [..]src/lib.cairo:28:31
                 fn increase(ref self: ContractState, a: u128)  {
                                       ^***********^
 
-        error: Method `write` not found on type `<missing>`. Did you import the correct trait and impl?
-         --> [..]/lib.cairo:29:24
+        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapWriteAccess::write and StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
+         --> [..]src/lib.cairo:29:24
                     self.value.write( self.value.read() + a );
                                ^***^
 
-
-        error: could not compile `hello` due to previous error
+        error: could not check `hello` due to previous error
         "#});
 }
 

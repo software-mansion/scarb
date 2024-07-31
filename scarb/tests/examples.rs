@@ -7,7 +7,7 @@ use snapbox::cmd::Command;
 use scarb_test_support::cargo::cargo_bin;
 use test_for_each_example::test_for_each_example;
 
-#[test_for_each_example]
+#[test_for_each_example(ignore = "dependencies")]
 fn build(example: &Path) {
     Command::new(cargo_bin("scarb"))
         .arg("clean")

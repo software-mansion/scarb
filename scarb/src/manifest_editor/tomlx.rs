@@ -1,7 +1,7 @@
 use anyhow::{ensure, Result};
-use toml_edit::{Document, Item, Table};
+use toml_edit::{DocumentMut, Item, Table};
 
-pub fn get_table_mut<'a>(doc: &'a mut Document, path: &[&str]) -> Result<&'a mut Item> {
+pub fn get_table_mut<'a>(doc: &'a mut DocumentMut, path: &[&str]) -> Result<&'a mut Item> {
     return visit(doc.as_item_mut(), path);
 
     fn visit<'a>(item: &'a mut Item, path: &[&str]) -> Result<&'a mut Item> {

@@ -6,6 +6,10 @@ publish = false
 
 [dependencies]
 cairo-lang-language-server.workspace = true
-cairo-lang-utils.workspace = true
-log.workspace = true
+
+[dev-dependencies]
+assert_fs.workspace = true
+scarb-test-support = { path = "../../utils/scarb-test-support" }
+serde_json.workspace = true
 tokio.workspace = true
+url.workspace = true

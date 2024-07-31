@@ -26,7 +26,7 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
         run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
           path: nextest-archive-${{ matrix.platform.os }}.tar.zst
@@ -49,11 +49,33 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: taiki-e/install-action@nextest
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
       - name: nextest partition ${{ matrix.partition }}/8
         run: cargo nextest run --partition 'count:${{ matrix.partition }}/8' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+
+  test-doc:
+    name: doc tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: run tests
+        run: cargo test --doc
+
+  scarb-metadata-compatibility:
+    name: scarb-metadata compatibility check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.3.0"
+      - run: echo "SCARB_TEST_BIN=$(which scarb)" >> $GITHUB_ENV
+      - name: run tests
+        run: cargo test -p scarb-metadata
 
   check-rust:
     runs-on: ubuntu-latest

@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::args::FmtArgs;
+use crate::args::{EmitTarget, FmtArgs};
 use crate::errors::error_with_exit_code;
 use scarb::core::Config;
 use scarb::ops::{self, FmtAction};
@@ -12,7 +12,7 @@ pub fn run(args: FmtArgs, config: &Config) -> Result<()> {
     let action = if args.check {
         FmtAction::Check
     } else if let Some(emit_target) = args.emit {
-        FmtAction::Emit(emit_target)
+        FmtAction::Emit(emit_target.into())
     } else {
         // Format in place is the default option
         FmtAction::Fix
@@ -35,5 +35,13 @@ pub fn run(args: FmtArgs, config: &Config) -> Result<()> {
         Ok(())
     } else {
         error_with_exit_code(1)
+    }
+}
+
+impl From<EmitTarget> for ops::FmtEmitTarget {
+    fn from(target: EmitTarget) -> Self {
+        match target {
+            EmitTarget::Stdout => ops::FmtEmitTarget::Stdout,
+        }
     }
 }

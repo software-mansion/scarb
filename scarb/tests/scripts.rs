@@ -267,7 +267,7 @@ fn scripts_shell_uses_current_scarb() {
     ProjectBuilder::start()
         .manifest_extra(indoc! {r#"
         [scripts]
-        some_script = "scarb --help"
+        some_script = "scarb -h"
         "#})
         .build(&t);
 

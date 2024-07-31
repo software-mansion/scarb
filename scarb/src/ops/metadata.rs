@@ -8,10 +8,13 @@ use smol_str::SmolStr;
 use scarb_metadata as m;
 use scarb_ui::args::PackagesSource;
 
-use crate::compiler::CompilationUnit;
+use crate::compiler::{
+    CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
+    ProcMacroCompilationUnit,
+};
 use crate::core::{
-    edition_variant, DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId,
-    Target, Workspace,
+    edition_variant, DepKind, DependencyVersionReq, ManifestDependency, Package, PackageId,
+    SourceId, Target, Workspace,
 };
 use crate::ops;
 use crate::version::CommitInfo;
@@ -19,6 +22,7 @@ use crate::version::CommitInfo;
 pub struct MetadataOptions {
     pub version: u64,
     pub no_deps: bool,
+    pub features: ops::FeaturesOpts,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -40,9 +44,9 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
             .collect();
 
         let compilation_units: Vec<m::CompilationUnitMetadata> =
-            ops::generate_compilation_units(&resolve, ws)?
+            ops::generate_compilation_units(&resolve, &opts.features, ws)?
                 .iter()
-                .map(collect_compilation_unit_metadata)
+                .flat_map(collect_compilation_unit_metadata)
                 .collect();
 
         (packages, compilation_units)
@@ -63,7 +67,7 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
         .packages(packages)
         .compilation_units(compilation_units)
         .current_profile(ws.current_profile()?.to_string())
-        .profiles(ws.profile_names()?)
+        .profiles(ws.profile_names())
         .build()
         .unwrap())
 }
@@ -135,6 +139,15 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
 
     let edition = edition_variant(package.manifest.edition);
 
+    let experimental_features: Vec<String> = package
+        .manifest
+        .experimental_features
+        .clone()
+        .unwrap_or_default()
+        .iter()
+        .map(|x| x.to_string())
+        .collect();
+
     m::PackageMetadataBuilder::default()
         .id(wrap_package_id(package.id))
         .name(package.id.name.clone())
@@ -146,6 +159,7 @@ fn collect_package_metadata(package: &Package) -> m::PackageMetadata {
         .dependencies(dependencies)
         .targets(targets)
         .manifest_metadata(manifest_metadata)
+        .experimental_features(experimental_features)
         .build()
         .unwrap()
 }
@@ -161,36 +175,58 @@ fn collect_dependency_metadata(dependency: &ManifestDependency) -> m::Dependency
         .name(dependency.name.to_string())
         .version_req(version_req)
         .source(wrap_source_id(dependency.source_id))
+        .kind(collect_dependency_kind(&dependency.kind))
         .build()
         .unwrap()
 }
 
+fn collect_dependency_kind(kind: &DepKind) -> Option<m::DepKind> {
+    match kind {
+        DepKind::Normal => None,
+        DepKind::Target(kind) => {
+            if kind.is_test() {
+                Some(m::DepKind::Dev)
+            } else {
+                unreachable!("only test target is supported for dep kinds")
+            }
+        }
+    }
+}
+
 fn collect_target_metadata(target: &Target) -> m::TargetMetadata {
+    let mut params = toml_to_json(&target.params);
+    if let Some(group) = target.group_id.as_ref() {
+        params.as_object_mut().unwrap().insert(
+            "group-id".to_string(),
+            serde_json::Value::String(group.to_string()),
+        );
+    }
     m::TargetMetadataBuilder::default()
         .kind(target.kind.to_string())
         .name(target.name.to_string())
         .source_path(target.source_path.clone())
-        .params(toml_to_json(&target.params))
+        .params(params)
         .build()
         .unwrap()
 }
 
 fn collect_compilation_unit_metadata(
     compilation_unit: &CompilationUnit,
+) -> Vec<m::CompilationUnitMetadata> {
+    match compilation_unit {
+        CompilationUnit::Cairo(cu) => cu
+            .rewrite_to_single_source_paths()
+            .into_iter()
+            .map(|cu| collect_cairo_compilation_unit_metadata(&cu))
+            .collect_vec(),
+        CompilationUnit::ProcMacro(cu) => vec![collect_proc_macro_compilation_unit_metadata(cu)],
+    }
+}
+
+fn collect_cairo_compilation_unit_metadata(
+    compilation_unit: &CairoCompilationUnit,
 ) -> m::CompilationUnitMetadata {
-    let components: Vec<m::CompilationUnitComponentMetadata> = compilation_unit
-        .components
-        .iter()
-        .map(|c| {
-            m::CompilationUnitComponentMetadataBuilder::default()
-                .package(wrap_package_id(c.package.id))
-                .name(c.cairo_package_name())
-                .source_path(c.target.source_path.clone())
-                .build()
-                .unwrap()
-        })
-        .sorted_by_key(|c| c.package.clone())
-        .collect();
+    let components = collect_compilation_unit_components(compilation_unit.components.iter());
 
     let cairo_plugins: Vec<m::CompilationUnitCairoPluginMetadata> = compilation_unit
         .cairo_plugins
@@ -222,10 +258,20 @@ fn collect_compilation_unit_metadata(
         .map(|c| c.package.to_string())
         .collect::<Vec<_>>();
 
+    assert_eq!(
+        compilation_unit.main_component().targets.len(),
+        1,
+        "compilation unit should have been rewritten to have a single target"
+    );
+
     m::CompilationUnitMetadataBuilder::default()
         .id(compilation_unit.id())
-        .package(wrap_package_id(compilation_unit.main_package_id))
-        .target(collect_target_metadata(compilation_unit.target()))
+        .package(wrap_package_id(compilation_unit.main_package_id()))
+        .target(collect_target_metadata(
+            // We use first_target, as compilation units with multiple targets
+            // have already been rewritten to single target ones.
+            &compilation_unit.main_component().first_target().clone(),
+        ))
         .components(components)
         .cairo_plugins(cairo_plugins)
         .compiler_config(compiler_config)
@@ -236,6 +282,59 @@ fn collect_compilation_unit_metadata(
         )]))
         .build()
         .unwrap()
+}
+
+fn collect_proc_macro_compilation_unit_metadata(
+    compilation_unit: &ProcMacroCompilationUnit,
+) -> m::CompilationUnitMetadata {
+    let components = collect_compilation_unit_components(compilation_unit.components.iter());
+    assert_eq!(
+        compilation_unit.main_component().targets.len(),
+        1,
+        "proc macro compilation unit should have only one target"
+    );
+    m::CompilationUnitMetadataBuilder::default()
+        .id(compilation_unit.id())
+        .package(wrap_package_id(compilation_unit.main_package_id()))
+        .target(collect_target_metadata(
+            &compilation_unit.main_component().first_target().clone(),
+        ))
+        .components(components)
+        .cairo_plugins(Vec::new())
+        .compiler_config(serde_json::Value::Null)
+        .cfg(Vec::new())
+        .extra(HashMap::new())
+        .build()
+        .unwrap()
+}
+
+fn collect_compilation_unit_components<'a, I>(
+    components: I,
+) -> Vec<m::CompilationUnitComponentMetadata>
+where
+    I: Iterator<Item = &'a CompilationUnitComponent>,
+{
+    components.into_iter()
+        .map(|c| {
+            m::CompilationUnitComponentMetadataBuilder::default()
+                .package(wrap_package_id(c.package.id))
+                .name(c.cairo_package_name())
+                // We use first_target, as compilation units with multiple targets
+                // have already been rewritten to single target ones.
+                .source_path(c.first_target().source_path.clone())
+                .cfg(c.cfg_set.as_ref().map(|cfg_set| cfg_set
+                    .iter()
+                    .map(|cfg| {
+                        serde_json::to_value(cfg)
+                            .and_then(serde_json::from_value::<m::Cfg>)
+                            .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
+                    })
+                    .collect::<Vec<_>>()))
+                .build()
+                .unwrap()
+        })
+        .sorted_by_key(|c| c.package.clone())
+        .collect()
 }
 
 fn collect_app_version_metadata() -> m::VersionInfo {

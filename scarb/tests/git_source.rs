@@ -423,10 +423,12 @@ fn transitive_path_dep() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep0")
+            .dep_cairo_test()
             .lib_cairo("fn hello() -> felt252 { 42 }")
             .build(&t.child("zero"));
         ProjectBuilder::start()
             .name("dep1")
+            .dep_cairo_test()
             .lib_cairo("fn hello() -> felt252 { dep0::hello() }")
             .dep("dep0", Dep.path("../zero"))
             .build(&t.child("one"));
@@ -436,6 +438,7 @@ fn transitive_path_dep() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
+        .dep_cairo_test()
         .dep("dep0", &git_dep)
         .dep("dep1", &git_dep)
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
@@ -458,4 +461,49 @@ fn transitive_path_dep() {
     assert!(pkgs["hello"].starts_with("path+"));
     assert!(pkgs["dep0"].starts_with("git+"));
     assert!(pkgs["dep1"].starts_with("git+"));
+}
+
+#[test]
+fn deps_only_cloned_to_checkouts_once() {
+    let cache_dir = TempDir::new().unwrap().child("c");
+    let git_dep = gitx::new("dep1", |t| {
+        ProjectBuilder::start()
+            .name("dep1")
+            .lib_cairo("fn hello() -> felt252 { 42 }")
+            .build(&t)
+    });
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep1", &git_dep)
+        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .env("SCARB_CACHE", cache_dir.path())
+        .arg("-v")
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]  Updating git repository file://[..]/dep1
+        [..]Running git[EXE] fetch --verbose --force --update-head-ok [..]dep1 +HEAD:refs/remotes/origin/HEAD
+        [..]Running git[EXE] clone --local --verbose --config core.autocrlf=false --recurse-submodules [..].git [..]
+        [..]Running git[EXE] reset --hard [..]
+        "#});
+    fs::remove_file(t.child("Scarb.lock")).unwrap();
+    Scarb::quick_snapbox()
+        .env("SCARB_CACHE", cache_dir.path())
+        .arg("-v")
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]  Updating git repository file://[..]/dep1
+        [..]Running git[EXE] fetch --verbose --force --update-head-ok [..]dep1 +HEAD:refs/remotes/origin/HEAD
+        "#});
 }

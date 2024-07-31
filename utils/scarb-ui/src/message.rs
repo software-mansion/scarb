@@ -42,9 +42,11 @@ pub trait Message {
     where
         Self: Sized,
     {
-        // Silence unused warning without using underscore in variable name,
-        // so that it will not be populated by editors.
-        let _ = ser;
+        Self::skip_structured(ser)
+    }
+
+    #[doc(hidden)]
+    fn skip_structured<S: Serializer>(_ser: S) -> Result<S::Ok, S::Error> {
         Err(serde::ser::Error::custom(JSON_SKIP_MESSAGE))
     }
 

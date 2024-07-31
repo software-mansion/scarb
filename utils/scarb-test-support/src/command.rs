@@ -136,6 +136,7 @@ impl CommandExt for SnapboxCommand {
                 Err(_) => continue,
             }
         }
+        // help: make sure that the command outputs NDJSON (`--json` flag).
         panic!("Failed to deserialize stdout to JSON");
     }
 }

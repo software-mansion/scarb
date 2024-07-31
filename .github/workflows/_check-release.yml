@@ -30,8 +30,8 @@ jobs:
         include:
           - name: linux x86-64
             os: ubuntu-latest
-          - name: macos x86-64
-            os: macos-latest
+          - name: macos aarch64
+            os: macos-14
           - name: windows x86-64
             os: windows-latest
     steps:
@@ -40,3 +40,11 @@ jobs:
           ref: ${{ inputs.ref }}
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --profile=ci --no-fail-fast
+  
+  snforge-init:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: foundry-rs/setup-snfoundry@v3
+      - run: cargo test --profile=ci --package scarb --test snforge_init new_simple -- --ignored

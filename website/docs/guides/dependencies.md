@@ -3,10 +3,9 @@
 Scarb manages dependencies by cloning packages from their Git repositories.
 To add a dependency, simply declare it in your `Scarb.toml`.
 
-::: info
-Using Git repositories as a foundation for package management is not an ideal
-approach. Therefore, we plan to create a proper package registry in long term.
-:::
+> [!NOTE]
+> Using Git repositories as a foundation for package management is not an ideal
+> approach. Therefore, we plan to create a proper package registry in long term.
 
 ## Adding a dependency
 
@@ -58,6 +57,15 @@ fn main() -> felt252 {
 }
 ```
 
+## Development dependencies
+
+You can add a `[dev-dependencies]` section to your Scarb.toml whose format is equivalent to `[dependencies]`:
+
+```toml
+[dev-dependencies]
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+```
+
 ## Adding a dependency via `scarb add`
 
 If you prefer, you can also ask Scarb to edit `Scarb.toml` to add a dependency automagically for you.
@@ -69,6 +77,12 @@ For example, the above example of dependency on `alexandria_math`, can be also a
 scarb add alexandria_math --git https://github.com/keep-starknet-strange/alexandria.git --rev 27fbf5b
 ```
 
+You can add development dependencies similarly by passing `--dev` flag:
+
+```shell
+scarb add --dev alexandria_math --git https://github.com/keep-starknet-strange/alexandria.git --rev 27fbf5b
+```
+
 ## Removing a dependency
 
 To remove a dependency, simply remove related lines from your `Scarb.toml`.
@@ -77,4 +91,10 @@ As a quick shortcut, the `scarb remove` (also available in short `scarb rm`) can
 
 ```shell
 scarb rm alexandria_math
+```
+
+Removing development dependencies, like in `scarb add`, requires passing `--dev` flag:
+
+```shell
+scarb rm --dev alexandria_math
 ```

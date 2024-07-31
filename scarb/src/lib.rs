@@ -36,3 +36,7 @@ pub static DEFAULT_SOURCE_PATH: Lazy<Utf8PathBuf> =
     Lazy::new(|| ["src", "lib.cairo"].iter().collect());
 pub const DEFAULT_README_FILE_NAME: &str = "README.md";
 pub const DEFAULT_LICENSE_FILE_NAME: &str = "LICENSE";
+pub const STARKNET_PLUGIN_NAME: &str = "starknet";
+pub const TEST_PLUGIN_NAME: &str = "cairo_test";
+pub const TEST_ASSERTS_PLUGIN_NAME: &str = "assert_macros";
+pub const CAIRO_RUN_PLUGIN_NAME: &str = "cairo_run";

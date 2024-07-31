@@ -162,7 +162,7 @@ impl<'c> Workspace<'c> {
         Ok(profile)
     }
 
-    pub fn profile_names(&self) -> Result<Vec<String>> {
+    pub fn profile_names(&self) -> Vec<String> {
         let mut names = self
             .profiles
             .iter()
@@ -171,7 +171,8 @@ impl<'c> Workspace<'c> {
         names.push(Profile::DEV.to_string());
         names.push(Profile::RELEASE.to_string());
         names.sort();
-        Ok(names)
+        names.dedup();
+        names
     }
 }
 
@@ -184,6 +185,23 @@ fn check_unique_targets(targets: &Vec<&Target>) -> Result<()> {
                  help: use different target names to resolve the conflict",
                 target.kind,
                 target.name
+            )
+        }
+    }
+    for (kind, group_id) in targets
+        .iter()
+        .filter_map(|target| {
+            target
+                .group_id
+                .clone()
+                .map(|group_id| (target.kind.clone(), group_id))
+        })
+        .unique()
+    {
+        if used.contains(&(kind.as_str(), group_id.as_str())) {
+            bail!(
+                "the group id `{group_id}` of target `{kind}` duplicates target name\n\
+                 help: use different group name to resolve the conflict",
             )
         }
     }

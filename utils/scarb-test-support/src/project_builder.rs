@@ -5,7 +5,7 @@ use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use camino::Utf8PathBuf;
 use semver::Version;
-use toml_edit::{Document, Item, Value};
+use toml_edit::{DocumentMut, Item, Value};
 
 use scarb_build_metadata::CAIRO_VERSION;
 use to_version::ToVersion;
@@ -24,6 +24,7 @@ pub struct ProjectBuilder {
     src: HashMap<Utf8PathBuf, String>,
     deps: Vec<(String, Value)>,
     dev_deps: Vec<(String, Value)>,
+    manifest_package_extra: String,
     manifest_extra: String,
 }
 
@@ -44,6 +45,7 @@ impl ProjectBuilder {
             )]),
             deps: Vec::new(),
             dev_deps: Vec::new(),
+            manifest_package_extra: String::new(),
             manifest_extra: String::new(),
         }
     }
@@ -95,13 +97,26 @@ impl ProjectBuilder {
         self.dep("starknet", Dep.version(CAIRO_VERSION))
     }
 
+    pub fn dep_cairo_test(self) -> Self {
+        self.dev_dep("cairo_test", Dep.version(CAIRO_VERSION))
+    }
+
+    pub fn dep_cairo_run(self) -> Self {
+        self.dep("cairo_run", Dep.version(CAIRO_VERSION))
+    }
+
+    pub fn manifest_package_extra(mut self, extra: impl ToString) -> Self {
+        self.manifest_package_extra = extra.to_string();
+        self
+    }
+
     pub fn manifest_extra(mut self, extra: impl ToString) -> Self {
         self.manifest_extra = extra.to_string();
         self
     }
 
     pub fn render_manifest(&self) -> String {
-        let mut doc = Document::new();
+        let mut doc = DocumentMut::new();
         doc["package"] = toml_edit::table();
         doc["package"]["name"] = Item::Value(Value::from(self.name.clone()));
         doc["package"]["version"] = Item::Value(Value::from(self.version.to_string()));
@@ -111,6 +126,12 @@ impl ProjectBuilder {
         if let Some(cairo_version) = self.cairo_version.as_ref() {
             doc["package"]["cairo-version"] = Item::Value(Value::from(cairo_version.to_string()));
         }
+        let mut manifest = doc.to_string();
+        if !self.manifest_package_extra.is_empty() {
+            manifest.push_str(&self.manifest_package_extra);
+        }
+
+        let mut doc = manifest.parse::<DocumentMut>().unwrap();
         doc["dependencies"] = toml_edit::table();
         for (name, dep) in &self.deps {
             doc["dependencies"][name.clone()] = Item::Value(dep.clone());

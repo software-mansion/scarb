@@ -1,0 +1,35 @@
+[package]
+name = "scarb-doc"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+cairo-lang-compiler.workspace = true
+cairo-lang-defs.workspace = true
+cairo-lang-doc.workspace = true
+cairo-lang-filesystem.workspace = true
+cairo-lang-parser.workspace = true
+cairo-lang-semantic.workspace = true
+cairo-lang-starknet.workspace = true
+cairo-lang-syntax.workspace = true
+cairo-lang-utils.workspace = true
+expect-test.workspace = true
+itertools.workspace = true
+scarb-metadata = { path = "../../scarb-metadata" }
+scarb-ui = { path = "../../utils/scarb-ui" }
+serde.workspace = true
+serde_json.workspace = true
+salsa.workspace = true
+smol_str.workspace = true
+
+[dev-dependencies]
+assert_fs.workspace = true
+indoc.workspace = true
+scarb-test-support = { path = "../../utils/scarb-test-support" }

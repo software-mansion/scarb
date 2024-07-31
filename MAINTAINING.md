@@ -3,7 +3,7 @@
 ## Maintainers
 
 All Scarb maintainers are members of the **[@software-mansion/scarb-maintainers]** GitHub team.
-Current project leader is **[@mkaput]**.
+Current project leader is **[@maciektr]**.
 
 ## Release procedure
 
@@ -36,6 +36,11 @@ You might need to swiftly pause the [Website Deploy] workflow to prevent publish
 > [!IMPORTANT]
 > Make sure `scarb-metadata` crate is [released and published](#scarb-metadata-release-procedure) to [crates.io].
 > Only [StarkNet Crates.io Admins] can do this.
+
+> [!IMPORTANT]
+> If you add or remove a binary target compiled with the release (i.e. create or remove a crate in `extensions` directory),
+> make sure to work with the Homebrew team to upgrade their
+> [Scarb installation formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/s/scarb.rb#L26).
 
 ### Write release notes
 
@@ -164,7 +169,7 @@ Releasing `scarb-ui` crate is also a semi-automated process.
 
 [@software-mansion/scarb-maintainers]: https://github.com/orgs/software-mansion/teams/scarb-maintainers
 
-[@mkaput]: https://github.com/mkaput
+[@maciektr]: https://github.com/maciektr
 
 [website deploy]: https://github.com/software-mansion/scarb/actions/workflows/website-deploy.yml
 

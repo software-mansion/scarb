@@ -2,12 +2,17 @@
 members = [
     "scarb",
     "scarb-metadata",
+    "extensions/scarb-doc",
     "extensions/scarb-cairo-language-server",
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
     "extensions/scarb-snforge-test-collector",
+    "plugins/cairo-lang-macro",
+    "plugins/cairo-lang-macro-attributes",
+    "plugins/cairo-lang-macro-stable",
     "utils/create-output-dir",
     "utils/scarb-build-metadata",
+    "utils/scarb-stable-hash",
     "utils/scarb-test-support",
     "utils/scarb-ui",
     "utils/test-for-each-example",
@@ -16,7 +21,7 @@ members = [
 "resolver" = "2"
 
 [workspace.package]
-version = "2.3.1"
+version = "2.7.0-rc.2"
 edition = "2021"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
@@ -30,43 +35,47 @@ anyhow = "1"
 assert_fs = "1"
 async-trait = "0.1"
 axum = { version = "0.6", features = ["http2"] }
-cairo-felt = "0.9"
-cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-diagnostics = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-debug = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-formatter = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-language-server = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-lowering = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-project = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-runner = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-semantic = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-sierra = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-sierra-generator = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4" }
-cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo.git", rev = "02b6ce71cf1d0ca226ba615ce363d71eb2340df4", features = ["env_logger"] }
+cairo-lang-casm = "2.7.0-rc.2"
+cairo-lang-compiler = "2.7.0-rc.2"
+cairo-lang-debug = "2.7.0-rc.2"
+cairo-lang-defs = "2.7.0-rc.2"
+cairo-lang-diagnostics = "2.7.0-rc.2"
+cairo-lang-doc = "2.7.0-rc.2"
+cairo-lang-filesystem = "2.7.0-rc.2"
+cairo-lang-formatter = "2.7.0-rc.2"
+cairo-lang-language-server = "2.7.0-rc.2"
+cairo-lang-lowering = "2.7.0-rc.2"
+cairo-lang-parser = "2.7.0-rc.2"
+cairo-lang-project = "2.7.0-rc.2"
+cairo-lang-runner = "2.7.0-rc.2"
+cairo-lang-semantic = "2.7.0-rc.2"
+cairo-lang-sierra = "2.7.0-rc.2"
+cairo-lang-sierra-generator = "2.7.0-rc.2"
+cairo-lang-sierra-to-casm = "2.7.0-rc.2"
+cairo-lang-sierra-type-size = "2.7.0-rc.2"
+cairo-lang-starknet = "2.7.0-rc.2"
+cairo-lang-starknet-classes = "2.7.0-rc.2"
+cairo-lang-syntax = "2.7.0-rc.2"
+cairo-lang-test-plugin = "2.7.0-rc.2"
+cairo-lang-test-runner = "2.7.0-rc.2"
+cairo-lang-utils = { version = "2.7.0-rc.2", features = ["env_logger"] }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
-clap-verbosity-flag = "2"
 console = "0.15"
+convert_case = "0.6.0"
 darling = "0.20"
 data-encoding = "2"
 deno_task_shell = ">=0.13"
 derive_builder = ">=0.12"
 directories = "5"
 dunce = "1"
-expect-test = "1.4"
+expect-test = "1.5"
 fs4 = { version = "0.7", features = ["tokio"] }
 fs_extra = "1"
 futures = { version = "0.3", default-features = false, features = ["std", "async-await"] }
 gix = ">=0.55"
+gix-path = "0.10"
 glob = "0.3"
 ignore = "0.4"
 include_dir = "0.7"
@@ -75,6 +84,8 @@ indoc = "2"
 io_tee = "0.1"
 itertools = "0.12"
 libc = "0.2"
+libloading = "0.8.4"
+linkme = "0.3"
 log = "0.4"
 ntest = "0.9"
 num-bigint = { version = "0.4", features = ["rand"] }
@@ -85,14 +96,16 @@ petgraph = "0.6"
 predicates = "3"
 proc-macro2 = "1"
 quote = "1"
-redb = "1.4"
-rayon = "1.8"
+ra_ap_toolchain = "0.0.218"
+rayon = "1.10"
+redb = "2.1.1"
 reqwest = { version = "0.11", features = ["gzip", "brotli", "deflate", "json", "stream"], default-features = false }
+salsa = "0.16.1"
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["serde_derive"] }
 serde-untagged = "0.1"
 serde-value = "0.7"
-serde_json = "1"
+serde_json = { version = "1", features = ["raw_value"] }
 serde_repr = "0.1"
 serde_test = "1"
 sha2 = "0.10"
@@ -100,24 +113,26 @@ similar-asserts = { version = "1", features = ["serde"] }
 smallvec = "1"
 smol_str = { version = "0.2", features = ["serde"] }
 snapbox = { version = "0.4", features = ["cmd", "path"] }
+starknet-types-core = "0.1"
 syn = "2"
 tar = "0.4"
 tempfile = "3"
 test-case = "3"
 thiserror = "1"
 time = "0.3"
-tokio = { version = "1", features = ["macros", "io-util", "rt", "rt-multi-thread", "sync"] }
+tokio = { version = "1", features = ["macros", "io-util", "process", "rt", "rt-multi-thread", "sync"] }
 toml = "0.8"
-toml_edit = { version = "0.21", features = ["serde"] }
+toml_edit = { version = "0.22", features = ["serde"] }
 tower-http = { version = "0.4", features = ["fs"] }
 tracing = "0.1"
+tracing-core = "0.1"
 tracing-log = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 typed-builder = ">=0.17"
 url = { version = "2", features = ["serde"] }
 walkdir = "2"
 which = "5"
-windows-sys = "0.48"
+windows-sys = { version = "0.52", features = ["Win32_Foundation", "Win32_System", "Win32_System_Console"] }
 xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }

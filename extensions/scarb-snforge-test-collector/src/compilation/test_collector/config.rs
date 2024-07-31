@@ -1,22 +1,23 @@
+use crate::felt252::Felt252;
 use anyhow::Result;
-use cairo_felt::Felt252;
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_diagnostics::Severity;
 use cairo_lang_syntax::attribute::structured::{Attribute, AttributeArg, AttributeArgVariant};
 use cairo_lang_syntax::node::ast::{ArgClause, Expr, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::GetIdentifier;
+use cairo_lang_syntax::node::TypedStablePtr;
 use cairo_lang_test_plugin::test_config::{PanicExpectation, TestExpectation};
 use cairo_lang_test_plugin::{try_extract_test_config, TestConfig};
 use cairo_lang_utils::OptionHelper;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use serde::Serialize;
+use std::num::NonZeroU32;
 
-const AVAILABLE_GAS_ATTR: &str = "available_gas";
 const FORK_ATTR: &str = "fork";
 const FUZZER_ATTR: &str = "fuzzer";
-
+const AVAILABLE_GAS_ATTR: &str = "available_gas";
 /// Expectation for a panic case.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum ExpectedPanicValue {
@@ -30,7 +31,9 @@ impl From<PanicExpectation> for ExpectedPanicValue {
     fn from(value: PanicExpectation) -> Self {
         match value {
             PanicExpectation::Any => ExpectedPanicValue::Any,
-            PanicExpectation::Exact(vec) => ExpectedPanicValue::Exact(vec),
+            PanicExpectation::Exact(vec) => {
+                ExpectedPanicValue::Exact(vec.into_iter().map(Felt252::new).collect())
+            }
         }
     }
 }
@@ -70,7 +73,7 @@ pub struct RawForkParams {
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct FuzzerConfig {
-    pub fuzzer_runs: u32,
+    pub fuzzer_runs: NonZeroU32,
     pub fuzzer_seed: u64,
 }
 
@@ -96,9 +99,6 @@ pub fn forge_try_extract_test_config(
     attrs: &[Attribute],
 ) -> Result<Option<SingleTestConfig>, Vec<PluginDiagnostic>> {
     let maybe_test_config = try_extract_test_config(db, attrs.to_vec())?;
-    let available_gas_attr = attrs
-        .iter()
-        .find(|attr| attr.id.as_str() == AVAILABLE_GAS_ATTR);
     let fork_attr = attrs.iter().find(|attr| attr.id.as_str() == FORK_ATTR);
     let fuzzer_attr = attrs.iter().find(|attr| attr.id.as_str() == FUZZER_ATTR);
 
@@ -113,14 +113,6 @@ pub fn forge_try_extract_test_config(
             });
         }
     }
-
-    let available_gas = if available_gas_attr.is_some() {
-        // we do not support it so we can write anything here,
-        // any errors in syntax will be caught by `try_extract_test_config` anyways
-        Some(0)
-    } else {
-        None
-    };
 
     let fork_config = if let Some(attr) = fork_attr {
         if attr.args.is_empty() {
@@ -145,8 +137,9 @@ pub fn forge_try_extract_test_config(
             diagnostics.push(PluginDiagnostic {
                 severity: Severity::Error,
                 stable_ptr: attr.args_stable_ptr.untyped(),
-                message: "Expected fuzzer config must be of the form `runs: <u32>, seed: <u64>`"
-                    .into(),
+                message:
+                    "Expected fuzzer config must be of the form `runs: <NonZeroU32>, seed: <u64>`"
+                        .into(),
             });
         })
     } else {
@@ -159,15 +152,26 @@ pub fn forge_try_extract_test_config(
 
     let result = maybe_test_config.map(
         |TestConfig {
+             mut available_gas,
              expectation,
              ignored,
-             ..
-         }| SingleTestConfig {
-            available_gas,
-            expected_result: expectation.into(),
-            ignored,
-            fork_config,
-            fuzzer_config,
+         }| {
+            // Older versions will crash if the default is passed through
+            let available_gas_attr = attrs
+                .iter()
+                .find(|attr| attr.id.as_str() == AVAILABLE_GAS_ATTR);
+
+            if available_gas_attr.is_none() {
+                available_gas = None
+            }
+
+            SingleTestConfig {
+                available_gas,
+                expected_result: expectation.into(),
+                ignored,
+                fork_config,
+                fuzzer_config,
+            }
         },
     );
     Ok(result)
@@ -179,9 +183,7 @@ fn extract_fork_config(db: &dyn SyntaxGroup, attr: &Attribute) -> Option<RawFork
     }
 
     match &attr.args[0].variant {
-        AttributeArgVariant::Unnamed { value: fork_id, .. } => {
-            extract_fork_config_from_id(fork_id, db)
-        }
+        AttributeArgVariant::Unnamed(fork_id) => extract_fork_config_from_id(fork_id, db),
         _ => extract_fork_config_from_args(db, attr),
     }
 }
@@ -208,11 +210,14 @@ fn extract_fuzzer_config(db: &dyn SyntaxGroup, attr: &Attribute) -> Option<Fuzze
         return None;
     };
 
-    if fuzzer_runs_name != "runs" || fuzzer_seed_name != "seed" {
+    if fuzzer_runs_name.text.as_str() != "runs" || fuzzer_seed_name.text.as_str() != "seed" {
         return None;
     };
 
-    let fuzzer_runs = extract_numeric_value(db, fuzzer_runs)?.to_u32()?;
+    let fuzzer_runs = extract_numeric_value(db, fuzzer_runs)?
+        .to_u32()?
+        .try_into()
+        .ok()?;
     let fuzzer_seed = extract_numeric_value(db, fuzzer_seed)?.to_u64()?;
 
     Some(FuzzerConfig {
@@ -260,7 +265,7 @@ fn extract_fork_config_from_args(db: &dyn SyntaxGroup, attr: &Attribute) -> Opti
         return None;
     };
 
-    if url_arg_name != "url" {
+    if url_arg_name.text.as_str() != "url" {
         return None;
     }
     let Expr::String(url_str) = url else {
@@ -268,7 +273,7 @@ fn extract_fork_config_from_args(db: &dyn SyntaxGroup, attr: &Attribute) -> Opti
     };
     let url = url_str.string_value(db)?;
 
-    if block_id_arg_name != "block_id" {
+    if block_id_arg_name.text.as_str() != "block_id" {
         return None;
     }
     let Expr::FunctionCall(block_id) = block_id else {

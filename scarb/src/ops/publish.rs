@@ -1,4 +1,5 @@
 use anyhow::{ensure, Context, Result};
+use indoc::formatdoc;
 use url::Url;
 
 use scarb_ui::components::Status;
@@ -17,6 +18,16 @@ pub struct PublishOpts {
 #[tracing::instrument(level = "debug", skip(opts, ws))]
 pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) -> Result<()> {
     let package = ws.fetch_package(&package_id)?.clone();
+    ensure!(
+        package.is_publishable(),
+        formatdoc! {
+            r#"
+                publishing disabled for package {package_id}
+                help: set `publish = true` in package manifest
+            "#,
+            package_id = package_id
+        }
+    );
 
     let source_id = SourceId::for_registry(&opts.index_url)?;
     let registry_client = RegistrySource::create_client(source_id, ws.config())?;
