@@ -1,6 +1,16 @@
 # Specifying Dependencies
 
-Your packages can depend on other libraries from Git repositories or subdirectories on your local file system.
+Your packages can depend on other libraries from registries, Git repositories, or subdirectories on your local file system.
+
+## Specifying dependencies from official registry
+
+To depend on a package located in the official registry, you need to specify the package name and the version requirement: 
+
+```toml
+[dependencies]
+alexandria_math = "0.1.0"
+```
+Unlike other dependency types, it is required to specify the version requirement for packages from the official registry.
 
 ## Specifying dependencies from Git repositories
 
@@ -53,7 +63,7 @@ In order to add development dependency, specify it under `[dev-dependencies]` se
 
 ```toml
 [dev-dependencies]
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+alexandria_math = "0.1.0"
 ```
 
 Development dependencies are not used when compiling a package for building, but are used for compiling tests.
@@ -95,6 +105,13 @@ where `y ≥ z` and `x > 0`.
 
 It is possible to further tweak the logic for selecting compatible versions using special operators, though it shouldn't
 be necessary most of the time.
+
+By default, Scarb uses official registry as a package source.
+Therefore, Scarb will look for the package in the official registry if only the `version` key is specified.
+```toml
+[dependencies]
+alexandria_math = { version = "0.1.0" }
+```
 
 ### Caret requirements
 
