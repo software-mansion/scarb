@@ -76,7 +76,7 @@ impl CairoPluginProjectBuilder {
                 publish = false
 
                 [lib]
-                crate-type = ["rlib","cdylib"]
+                crate-type = ["cdylib"]
 
                 [dependencies]
                 cairo-lang-macro = {{ path = {macro_lib_path}}}
