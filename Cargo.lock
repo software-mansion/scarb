@@ -765,10 +765,10 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-macro-attributes"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "quote",
- "scarb-stable-hash",
+ "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 2.0.72",
 ]
 
@@ -4632,7 +4632,7 @@ dependencies = [
  "reqwest",
  "scarb-build-metadata",
  "scarb-metadata 1.12.0",
- "scarb-stable-hash",
+ "scarb-stable-hash 1.0.0",
  "scarb-test-support",
  "scarb-ui",
  "semver",
@@ -4830,6 +4830,16 @@ dependencies = [
 [[package]]
 name = "scarb-stable-hash"
 version = "1.0.0"
+dependencies = [
+ "data-encoding",
+ "xxhash-rust",
+]
+
+[[package]]
+name = "scarb-stable-hash"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1902536b23a05dd165d3992865870aaf1b0650317767cbf171ed2ca5903732a9"
 dependencies = [
  "data-encoding",
  "xxhash-rust",
