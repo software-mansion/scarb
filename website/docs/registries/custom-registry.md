@@ -24,7 +24,7 @@ Index file has a defined structure:
 ```
 
 - `version` - value reserved for versioning the registry interface.
-- `api` - a URL of your registry API. Currently isn't used at all, will be used for things like uploading or yanking a package.
+- `api` - a URL of your registry API. Currently, isn't used at all, will be used for things like uploading or yanking a package.
 - `dl` - a download template URL.
   You can use `{package}` and `{version}` to construct a template that Scarb will populate with the name and version of the package that it needs to download.
   In case of a simple server it could look like `https://your.registry.com/{package}-{version}.tar.zst`.
@@ -34,7 +34,7 @@ Index file has a defined structure:
 
   This prefix is useful when you want to organize a file structure into a deeper but narrower one.
   That's the structure `scarb publish` creates when you use it with local registry.
-  Basically for a package that has name of 4 characters or longer (e.g foobar) the prefix will be `/fo/ob/`, for 3 characters `/3/f` and for 2 and 1 characters just `/2` and `/1` respectively.
+  Basically for a package that has name of 4 characters or longer (e.g. foobar) the prefix will be `/fo/ob/`, for 3 characters `/3/f` and for 2 and 1 characters just `/2` and `/1` respectively.
 
 ### Package index file
 
