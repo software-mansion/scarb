@@ -12,6 +12,12 @@ In general, this allows writing expressions (`macro!()`), attributes (`#[macro]`
 macros (`#[derive(Macro)]`) that transform Cairo code in your package.
 This transformations can be loaded dynamically per compilation unit as dependencies.
 
+### Procedural macro API interface
+
+<BigLink href="https://docs.rs/cairo-lang-macro">
+Go to cairo-lang-macro documentation on docs.rs
+</BigLink>
+
 ## Guide-level explanation
 
 ### Procedural macro user perspective
@@ -125,6 +131,8 @@ These three macro helpers are:
    first for the attribute arguments (`#[macro(arguments)]`) and second for the item the attribute is applied to.
 3. #[`derive_macro`] - Implements a derive macro. Should be used on function that accepts single token stream, the item
    the derive is applied to. Note that derives cannot replace the original item, but rather add new items to the module.
+
+Please review the [`cairo-lang-macro` documentation](https://docs.rs/cairo-lang-macro) for more information.
 
 ### Parsing token streams
 
