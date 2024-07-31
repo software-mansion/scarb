@@ -66,7 +66,8 @@ Currently only Git is supported.
 }
 ```
 
-It contains information about the hash of the commit that the package was created on, together with `path_in_vcs` which describes package relative position to the git working directory root. It will be an empty string if it is the same as package root.
+It contains information about the hash of the commit that the package was created on, together with `path_in_vcs` which describes package relative position to the git working directory root.
+It will be an empty string if it is the same as package root.
 
 ## Package source
 
