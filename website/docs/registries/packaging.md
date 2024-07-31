@@ -4,7 +4,7 @@ When you want to share your package over package registry, it needs to be turned
 The archive will then be uploaded to the registry and downloaded by other users.
 
 Use `scarb package` command to create an archive of your package.
-You can read about package compression algorithm and contents in [Package tarball](/docs/registries/package-tarball) section.
+You can read about package compression algorithm and contents in [Package tarball](./package-tarball) section.
 Basically when you run the command Scarb looks for the source code of your package together with metadata files such as manifest file and put them in an archive in `target/package` directory.
 
 If you are in a Git repository, Scarb will first check if the repo state is clean and error out in case of any changes present in a git working directory.
@@ -26,4 +26,4 @@ The command takes `--index` argument that you can use to pass local directory pa
 scarb publish --index file:///Users/foo/bar
 ```
 
-This is only useful when you are [hosting your own registry](/docs/registries/custom-registry).
+This is only useful when you are [hosting your own registry](./custom-registry).
