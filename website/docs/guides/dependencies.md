@@ -3,9 +3,11 @@
 Scarb manages dependencies by cloning packages from their Git repositories.
 To add a dependency, simply declare it in your `Scarb.toml`.
 
-> [!NOTE]
-> Using Git repositories as a foundation for package management is not an ideal
-> approach. Therefore, we plan to create a proper package registry in long term.
+> [!IMPORTANT]
+> Using Git repositories as a foundation for package management is not the recommended approach anymore. 
+> Instead, [registries](../registries/overview.md) are now the primary way to manage dependencies. 
+> This guide will be updated to reflect the new approach soon.
+> For details on how to specify dependencies from the official registry, see [here](../reference/specifying-dependencies#specifying-dependencies-from-official-registry).
 
 ## Adding a dependency
 
@@ -29,7 +31,8 @@ Actually this is how the OpenZeppelin Contracts for Cairo library is released, s
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc.0" }
 ```
 
-Note, that if you want to add more dependencies, you do not have to add `[dependencies]` for each package separately. For example:
+Note, that if you want to add more dependencies, you do not have to add `[dependencies]` for each package separately.
+For example:
 
 ```toml
 [dependencies]
