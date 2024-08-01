@@ -1,0 +1,11 @@
+[package]
+name = "some_macro"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+cairo-lang-macro = "0.1"
