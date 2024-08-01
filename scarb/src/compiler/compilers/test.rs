@@ -46,8 +46,7 @@ impl Compiler for TestCompiler {
                     .compiler_config
                     .unstable_add_statements_functions_debug_info,
             };
-            let allow_warnings = unit.compiler_config.allow_warnings;
-            compile_test_prepared_db(db, config, main_crate_ids, test_crate_ids, allow_warnings)?
+            compile_test_prepared_db(db, config, main_crate_ids, test_crate_ids)?
         };
 
         {
