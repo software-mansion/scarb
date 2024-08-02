@@ -9,6 +9,9 @@ use scarb_ui::args::PackagesFilter;
 use scarb_doc::generate_packages_information;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 
+use scarb::ops::FeaturesOpts;
+use scarb_ui::args::FeaturesSpec;
+
 const OUTPUT_DIR: &str = "doc";
 
 #[derive(Default, Debug, Clone, clap::ValueEnum)]
@@ -32,6 +35,10 @@ struct Args {
     /// Specifies a format of generated files.
     #[arg(long, value_enum, default_value_t)]
     output_format: OutputFormat,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 fn main_inner() -> Result<()> {
@@ -43,8 +50,10 @@ fn main_inner() -> Result<()> {
         .context("metadata command failed")?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
+    let features_opt: FeaturesOpts = args.features.try_into()?;
 
-    let packages_information = generate_packages_information(&metadata, &metadata_for_packages);
+    let packages_information =
+        generate_packages_information(&metadata, &metadata_for_packages, features_opt)?;
 
     match args.output_format {
         OutputFormat::Json => {

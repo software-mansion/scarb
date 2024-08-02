@@ -372,7 +372,7 @@ fn cairo_compilation_unit_for_target(
     })
 }
 
-fn get_cfg_with_features(
+pub fn get_cfg_with_features(
     mut cfg_set: CfgSet,
     features_manifest: &BTreeMap<FeatureName, Vec<FeatureName>>,
     enabled_features: &FeaturesOpts,

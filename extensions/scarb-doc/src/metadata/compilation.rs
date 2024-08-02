@@ -88,7 +88,7 @@ fn get_crates_config(
         .components
         .iter()
         .map(|component| {
-            let pkg = metadata.get_package(&component.package).unwrap_or_else(|| {
+            let pkg: &PackageMetadata = metadata.get_package(&component.package).unwrap_or_else(|| {
                 panic!(
                     "failed to find = {} package",
                     &component.package.to_string()
