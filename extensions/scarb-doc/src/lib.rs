@@ -51,6 +51,7 @@ pub fn generate_packages_information(
             initial_cfg_set.clone(),
             &features_manifest,
             &enabled_features,
+            false,
         )?;
         let cfg = match cfg_wtih_features {
             Some(cfg_with_features) => cfg_with_features,
