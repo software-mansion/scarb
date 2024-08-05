@@ -85,12 +85,6 @@
   --vp-c-brand-2: var(--swm-c-navy-60);
   --vp-c-brand-3: var(--swm-c-navy-100);
   --vp-c-brand-soft: var(--swm-c-navy-20);
-
-  --vp-c-tip-1: var(--swm-c-blue-120);
-  --vp-c-tip-2: var(--swm-c-blue-140);
-  --vp-c-tip-3: black;
-  --vp-c-tip-soft: var(--swm-c-blue-20);
-  --vp-custom-block-tip-code-bg: var(--swm-c-blue-40);
 }
 
 .dark {
@@ -98,12 +92,6 @@
   --vp-c-brand-2: var(--swm-c-navy-40);
   --vp-c-brand-3: var(--swm-c-navy-80);
   --vp-c-brand-soft: var(--swm-c-navy-120);
-
-  --vp-c-tip-1: var(--swm-c-blue-40);
-  --vp-c-tip-2: var(--swm-c-blue-60);
-  --vp-c-tip-3: var(--swm-c-blue-80);
-  --vp-c-tip-soft: var(--swm-c-blue-140);
-  --vp-custom-block-tip-code-bg: var(--swm-c-blue-120);
 }
 
 :root {

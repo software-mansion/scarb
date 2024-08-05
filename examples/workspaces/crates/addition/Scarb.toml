@@ -3,6 +3,3 @@ name = "addition"
 version.workspace = true
 
 [lib]
-
-[dev-dependencies]
-cairo_test.workspace = true

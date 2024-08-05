@@ -1,6 +1,5 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
-use cairo_lang_sierra::program::VersionedProgram;
 use indoc::indoc;
 use itertools::Itertools;
 use predicates::prelude::*;
@@ -218,19 +217,20 @@ fn compile_dep_not_a_lib() {
         .build(&hello);
 
     Scarb::quick_snapbox()
-        .arg("check")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&hello)
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
             warn: hello v1.0.0 ([..]) ignoring invalid dependency `dep` which is missing a lib or cairo-plugin target
-                Checking hello v1.0.0 ([..])
+               Compiling hello v1.0.0 ([..])
             error: Identifier not found.
              --> [..]/lib.cairo:1:25
             fn hellp() -> felt252 { dep::forty_two() }
                                     ^*^
 
-            error: could not check `hello` due to previous error
+
+            error: could not compile `hello` due to previous error
         "#});
 }
 
@@ -310,7 +310,6 @@ fn compile_test_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
-        .dep_cairo_test()
         .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
         .build(&t);
     t.child("tests").create_dir_all().unwrap();
@@ -337,83 +336,8 @@ fn compile_test_target() {
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
     assert_eq!(
         t.child("target/dev").files(),
-        vec![
-            "hello_integrationtest.test.json",
-            "hello_integrationtest.test.sierra.json",
-            "hello_unittest.test.json",
-            "hello_unittest.test.sierra.json",
-        ]
+        vec!["hello_test1.test.json", "hello_unittest.test.json",]
     );
-
-    t.child("target/dev/hello_integrationtest.test.json")
-        .assert_is_json::<serde_json::Value>();
-    t.child("target/dev/hello_integrationtest.test.sierra.json")
-        .assert_is_json::<VersionedProgram>();
-    let content = t
-        .child("target/dev/hello_integrationtest.test.json")
-        .read_to_string();
-    let json: serde_json::Value = serde_json::from_str(&content).unwrap();
-    let tests = json.get("named_tests").unwrap().as_array().unwrap();
-    assert_eq!(tests.len(), 1);
-
-    t.child("target/dev/hello_unittest.test.json")
-        .assert_is_json::<serde_json::Value>();
-    t.child("target/dev/hello_unittest.test.sierra.json")
-        .assert_is_json::<serde_json::Value>();
-    let content = t
-        .child("target/dev/hello_unittest.test.json")
-        .read_to_string();
-    let json: serde_json::Value = serde_json::from_str(&content).unwrap();
-    let tests = json.get("named_tests").unwrap().as_array().unwrap();
-    assert_eq!(tests.len(), 0);
-}
-
-#[test]
-fn integration_tests_do_not_enable_cfg_in_main_package() {
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .dep_cairo_test()
-        .lib_cairo(indoc! {r#"
-            #[cfg(test)]
-            fn f() -> felt252 { 42 }
-        "#})
-        .build(&t);
-    t.child("tests").create_dir_all().unwrap();
-    t.child("tests/test1.cairo")
-        .write_str(indoc! {r#"
-        #[cfg(test)]
-        mod tests {
-            use hello::f;
-            #[test]
-            fn it_works() {
-                assert(f() == 42, 'it works!');
-            }
-        }
-         "#})
-        .unwrap();
-
-    Scarb::quick_snapbox()
-        .arg("build")
-        .arg("--test")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-            [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
-            [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
-            error: Identifier not found.
-             --> [..]test1.cairo:3:16
-                use hello::f;
-                           ^
-
-            error: Type annotations needed. Failed to infer ?0.
-             --> [..]test1.cairo:6:16
-                    assert(f() == 42, 'it works!');
-                           ^*******^
-
-            error: could not compile `hello_integrationtest` due to previous error
-        "#});
 }
 
 #[test]
@@ -463,52 +387,6 @@ fn detect_single_file_test_targets() {
             ),
             (
                 fsx::canonicalize(t.child("tests/test2.cairo")).unwrap(),
-                r#""integration""#.into()
-            ),
-        ]
-    );
-}
-
-#[test]
-fn autodetect_test_target_non_cairo_files() {
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start().name("hello").build(&t);
-    t.child("tests/test1.cairo").write_str("").unwrap();
-    t.child("tests/Scarb.toml").write_str("").unwrap();
-    let metadata = Scarb::quick_snapbox()
-        .arg("--json")
-        .arg("metadata")
-        .arg("--format-version=1")
-        .current_dir(&t)
-        .stdout_json::<Metadata>();
-    let test_cu: Vec<(PathBuf, String)> = metadata
-        .compilation_units
-        .iter()
-        .filter(|cu| cu.target.kind == "test")
-        .map(|cu| {
-            (
-                cu.target.source_path.clone().into_std_path_buf(),
-                cu.target
-                    .params
-                    .as_object()
-                    .unwrap()
-                    .get("test-type")
-                    .unwrap()
-                    .to_string(),
-            )
-        })
-        .sorted()
-        .collect();
-
-    assert_eq!(
-        test_cu,
-        vec![
-            (
-                fsx::canonicalize(t.child("src/lib.cairo")).unwrap(),
-                r#""unit""#.into()
-            ),
-            (
-                fsx::canonicalize(t.child("tests/test1.cairo")).unwrap(),
                 r#""integration""#.into()
             ),
         ]

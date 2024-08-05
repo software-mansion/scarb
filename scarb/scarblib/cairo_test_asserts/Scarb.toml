@@ -1,8 +1,0 @@
-[package]
-name = "assert_macros"
-version = "0.1.0"
-
-no-core = true
-
-[cairo-plugin]
-builtin = true

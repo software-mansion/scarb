@@ -4,8 +4,7 @@ use scarb::core::{Config, PackageName};
 use scarb::manifest_editor::{EditManifestOptions, Op, RemoveDependency};
 use scarb::{manifest_editor, ops};
 
-use crate::args::{RemoveArgs, RemoveSectionArgs};
-use scarb::manifest_editor::DepType;
+use crate::args::RemoveArgs;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: RemoveArgs, config: &mut Config) -> Result<()> {
@@ -15,7 +14,7 @@ pub fn run(args: RemoveArgs, config: &mut Config) -> Result<()> {
 
     manifest_editor::edit(
         package.manifest_path(),
-        build_ops(args.packages, args.section),
+        build_ops(args.packages),
         EditManifestOptions {
             config,
             dry_run: args.dry_run,
@@ -35,15 +34,9 @@ pub fn run(args: RemoveArgs, config: &mut Config) -> Result<()> {
     Ok(())
 }
 
-fn build_ops(packages: Vec<PackageName>, section: RemoveSectionArgs) -> Vec<Box<dyn Op>> {
-    let dep_type = DepType::from_section(&section);
+fn build_ops(packages: Vec<PackageName>) -> Vec<Box<dyn Op>> {
     packages
         .into_iter()
-        .map(|dep| -> Box<dyn Op> {
-            Box::new(RemoveDependency {
-                dep,
-                dep_type: dep_type.clone(),
-            })
-        })
+        .map(|dep| -> Box<dyn Op> { Box::new(RemoveDependency { dep }) })
         .collect()
 }

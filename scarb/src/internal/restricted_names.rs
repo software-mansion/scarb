@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use crate::{DEFAULT_TESTS_PATH, STARKNET_PLUGIN_NAME, TEST_PLUGIN_NAME};
+use crate::DEFAULT_TESTS_PATH;
 use cairo_lang_filesystem::db::CORELIB_CRATE_NAME;
 
 /// Checks if name is a Cairo keyword
@@ -80,8 +80,8 @@ pub fn is_internal(name: &str) -> bool {
     [
         CORELIB_CRATE_NAME,
         DEFAULT_TESTS_PATH,
-        STARKNET_PLUGIN_NAME,
-        TEST_PLUGIN_NAME,
+        "test_plugin",
+        "starknet",
     ]
     .contains(&name)
 }

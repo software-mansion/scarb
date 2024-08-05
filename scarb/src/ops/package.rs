@@ -15,7 +15,7 @@ use serde::Serialize;
 
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{Config, Package, PackageId, PackageName, TargetKind, Workspace};
+use crate::core::{Package, PackageId, PackageName, TargetKind, Workspace};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
@@ -37,8 +37,6 @@ const RESERVED_FILES: &[&str] = &[
 pub struct PackageOpts {
     pub allow_dirty: bool,
     pub verify: bool,
-    pub check_metadata: bool,
-    pub features: ops::FeaturesOpts,
 }
 
 /// A listing of files to include in the archive, without actually building it yet.
@@ -149,9 +147,7 @@ fn package_one_impl(
         .ui()
         .print(Status::new("Packaging", &pkg_id.to_string()));
 
-    if opts.check_metadata {
-        check_metadata(pkg, ws.config())?;
-    }
+    // TODO(mkaput): Check metadata
 
     let recipe = prepare_archive_recipe(pkg, opts)?;
     let num_files = recipe.len();
@@ -171,8 +167,7 @@ fn package_one_impl(
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
     let mut dst = if opts.verify {
-        run_verify(pkg, dst, ws, opts.features.clone())
-            .context("failed to verify package tarball")?
+        run_verify(pkg, dst, ws).context("failed to verify package tarball")?
     } else {
         dst
     };
@@ -298,12 +293,7 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     Ok(recipe)
 }
 
-fn run_verify(
-    pkg: &Package,
-    tar: FileLockGuard,
-    ws: &Workspace<'_>,
-    features: ops::FeaturesOpts,
-) -> Result<FileLockGuard> {
+fn run_verify(pkg: &Package, tar: FileLockGuard, ws: &Workspace<'_>) -> Result<FileLockGuard> {
     ws.config()
         .ui()
         .print(Status::new("Verifying", &pkg.id.tarball_name()));
@@ -323,10 +313,8 @@ fn run_verify(
     ops::compile(
         ws.members().map(|p| p.id).collect(),
         ops::CompileOpts {
-            include_target_kinds: Vec::new(),
-            exclude_target_kinds: vec![TargetKind::TEST.clone()],
-            include_target_names: Vec::new(),
-            features,
+            include_targets: Vec::new(),
+            exclude_targets: vec![TargetKind::TEST.clone()],
         },
         &ws,
     )?;
@@ -497,49 +485,4 @@ fn tar(
     let encoder = ar.into_inner()?;
     encoder.finish()?;
     Ok(uncompressed_size)
-}
-
-// Checks that the package has some piece of metadata that a human can
-// use to tell what the package is about.
-fn check_metadata(pkg: &Package, config: &Config) -> Result<()> {
-    let md = &pkg.manifest.metadata;
-    let mut missing = vec![];
-
-    trait IsEmpty {
-        fn is_empty(&self) -> bool;
-    }
-    impl IsEmpty for Utf8PathBuf {
-        fn is_empty(&self) -> bool {
-            self.to_string().is_empty()
-        }
-    }
-    macro_rules! lacking {
-        ($( $($field: ident)||* ),*) => {{
-            $(
-                if $(md.$field.as_ref().map_or(true, |s| s.is_empty()))&&* {
-                    $(missing.push(stringify!($field).replace("_", "-"));)*
-                    missing.push(String::from(" "));
-                }
-            )*
-        }}
-    }
-    lacking!(
-        readme,
-        description,
-        license || license_file,
-        documentation || homepage || repository
-    );
-    if !missing.is_empty() {
-        let messages = missing
-            .split(|elem| elem == " ")
-            .filter(|vec| !vec.is_empty())
-            .map(|vec| String::from("manifest has no ") + &*vec.join(" or "))
-            .collect::<Vec<String>>();
-        for message in messages {
-            config.ui().warn(message);
-        }
-        config.ui().print("see https://docs.swmansion.com/scarb/docs/reference/manifest.html#package for more info\n");
-    }
-
-    Ok(())
 }

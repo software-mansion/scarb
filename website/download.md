@@ -71,10 +71,8 @@ Mind that asdf works on macOS and Linux only.
 This plugin needs `bash`, `curl`, `tar` and other generic POSIX utilities.
 Everything should be included by default on your system.
 
-First [install asdf by following the official installation guide](https://asdf-vm.com/guide/getting-started.html).
-Make sure to complete all installation instructions from the guide,
-in particular add asdf to your local shell's configuration.
-Then run the following command to add the `scarb` plugin:
+When you have asdf already [installed](https://asdf-vm.com/guide/getting-started.html),
+run the following command to add the `scarb` plugin:
 
 ```shell
 asdf plugin add scarb

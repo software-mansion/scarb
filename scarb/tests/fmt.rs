@@ -118,24 +118,6 @@ fn simple_format() {
 }
 
 #[test]
-fn simple_format_with_parsing_error() {
-    let code = r"fn main()    ->    {      42      }";
-    let t = build_temp_dir(code);
-    Scarb::quick_snapbox()
-        .args(["fmt", "--no-color"])
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-        error: Missing tokens. Expected a type expression.
-         --> [..]lib.cairo:1:16
-        fn main()    ->    {      42      }
-                       ^
-
-        "#});
-}
-
-#[test]
 fn simple_format_with_filter() {
     let t = build_temp_dir(SIMPLE_ORIGINAL);
     Scarb::quick_snapbox()

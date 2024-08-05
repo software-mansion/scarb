@@ -1,10 +1,10 @@
-use snapbox::cmd::Command as SnapboxCommand;
 use std::io::Read;
 use std::net::TcpListener;
 use std::process::{Child, Command};
 use std::{env, io};
 
 use assert_fs::TempDir;
+#[cfg(unix)]
 use indoc::indoc;
 use scarb_test_support::cargo::cargo_bin;
 
@@ -95,10 +95,7 @@ fn env_variables_are_passed() {
 }
 
 #[test]
-#[cfg_attr(
-    not(target_family = "unix"),
-    ignore = "This test should write a Rust code, because currently it only assumes Unix."
-)]
+#[cfg(unix)]
 fn env_scarb_log_is_passed_verbatim() {
     let t = TempDir::new().unwrap();
     scarb_test_support::filesystem::write_script(
@@ -129,43 +126,6 @@ fn env_scarb_log_is_passed_verbatim() {
         .args(["-vvvv", "env"])
         .env("PATH", path_with_temp_dir(&t))
         .env("SCARB_LOG", "test=filter")
-        .assert()
-        .success();
-}
-
-#[test]
-#[cfg_attr(
-    not(target_family = "unix"),
-    ignore = "This test should write a Rust code, because currently it only assumes Unix."
-)]
-fn can_control_scarb_log_with_cli() {
-    let t = TempDir::new().unwrap();
-    scarb_test_support::filesystem::write_script(
-        "env",
-        indoc! {
-            r#"
-            #!/usr/bin/env bash
-            if [[ "$SCARB_LOG" != "scarb=debug" ]]
-            then
-                echo "Variable SCARB_LOG has incorrect value $SCARB_LOG!"
-                exit 1
-            fi
-            "#
-        },
-        &t,
-    );
-
-    let p = TempDir::new().unwrap();
-    ProjectBuilder::start().build(&p);
-
-    let mut cmd = Scarb::new().std();
-    // Set to "trace" for all tests created with `std()`.
-    cmd.env_remove("SCARB_LOG");
-
-    SnapboxCommand::from_std(cmd)
-        .current_dir(&p)
-        .args(["-vvv", "env"])
-        .env("PATH", path_with_temp_dir(&t))
         .assert()
         .success();
 }
@@ -254,34 +214,4 @@ fn can_list_scarb_directory_scripts() {
     let output = cmd.get_output().stdout.clone();
     let stdout = String::from_utf8(output).unwrap();
     assert!(stdout.contains("hello"))
-}
-
-#[test]
-fn scarb_reads_verbosity_from_env() {
-    let p = TempDir::new().unwrap();
-    ProjectBuilder::start().build(&p);
-    Scarb::quick_snapbox()
-        .current_dir(&p)
-        .arg("check")
-        .env("SCARB_UI_VERBOSITY", "quiet")
-        .assert()
-        .success()
-        .stdout_eq("");
-}
-
-#[test]
-fn cli_verbosity_overrides_env() {
-    let p = TempDir::new().unwrap();
-    ProjectBuilder::start().build(&p);
-    Scarb::quick_snapbox()
-        .current_dir(&p)
-        .arg("check")
-        .arg("--verbose")
-        .env("SCARB_UI_VERBOSITY", "quiet")
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-            [..]Checking pkg0 v1.0.0 ([..]Scarb.toml)
-            [..]Finished checking release target(s) in [..]
-        "#});
 }

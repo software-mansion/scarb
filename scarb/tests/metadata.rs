@@ -2,10 +2,9 @@ use std::collections::BTreeMap;
 
 use assert_fs::prelude::*;
 use indoc::indoc;
-use itertools::Itertools;
 use serde_json::json;
 
-use scarb_metadata::{Cfg, DepKind, ManifestMetadataBuilder, Metadata, PackageMetadata};
+use scarb_metadata::{Cfg, ManifestMetadataBuilder, Metadata, PackageMetadata};
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
@@ -28,18 +27,6 @@ fn packages_and_deps(meta: Metadata) -> BTreeMap<String, Vec<String>> {
                 .map(|d| d.name)
                 .collect::<Vec<_>>();
             (p.name, deps)
-        })
-        .collect::<BTreeMap<_, _>>()
-}
-
-fn units_and_components(meta: Metadata) -> BTreeMap<String, Vec<String>> {
-    meta.compilation_units
-        .iter()
-        .map(|cu| {
-            (
-                cu.target.name.clone(),
-                cu.components.iter().map(|c| c.name.clone()).collect_vec(),
-            )
         })
         .collect::<BTreeMap<_, _>>()
 }
@@ -100,37 +87,71 @@ fn fails_without_format_version() {
 }
 
 fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
-    ProjectBuilder::start()
-        .name("q")
-        .version("1.0.0")
-        .lib_cairo(r"fn f() -> felt252 { 42 }")
-        .dep_cairo_test()
-        .build(&t.child("q"));
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "x"
+            version = "1.0.0"
 
-    ProjectBuilder::start()
-        .name("z")
-        .version("1.0.0")
-        .lib_cairo(r"fn f() -> felt252 { q::f() }")
-        .dep_cairo_test()
-        .dep("q", Dep.path("../q"))
-        .build(&t.child("z"));
+            [dependencies]
+            y = { path = "y" }
+            "#,
+        )
+        .unwrap();
 
-    ProjectBuilder::start()
-        .name("y")
-        .version("1.0.0")
-        .lib_cairo(r"fn f() -> felt252 { z::f() }")
-        .dep_cairo_test()
-        .dep("z", Dep.path("../z"))
-        .dep("q", Dep.path("../q"))
-        .build(&t.child("y"));
+    t.child("src/lib.cairo")
+        .write_str(r"fn f() -> felt252 { y::f() }")
+        .unwrap();
 
-    ProjectBuilder::start()
-        .name("x")
-        .version("1.0.0")
-        .lib_cairo(r"fn f() -> felt252 { y::f() }")
-        .dep_cairo_test()
-        .dep("y", Dep.path("y"))
-        .build(t);
+    t.child("y/Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "y"
+            version = "1.0.0"
+
+            [dependencies]
+            q = { path = "../q" }
+            z = { path = "../z" }
+            "#,
+        )
+        .unwrap();
+
+    t.child("y/src/lib.cairo")
+        .write_str(r"fn f() -> felt252 { z::f() }")
+        .unwrap();
+
+    t.child("z/Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "z"
+            version = "1.0.0"
+
+            [dependencies]
+            q = { path = "../q" }
+            "#,
+        )
+        .unwrap();
+
+    t.child("z/src/lib.cairo")
+        .write_str(r"fn f() -> felt252 { q::f() }")
+        .unwrap();
+
+    t.child("q/Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "q"
+            version = "1.0.0"
+            "#,
+        )
+        .unwrap();
+
+    t.child("q/src/lib.cairo")
+        .write_str(r"fn f() -> felt252 { 42 }")
+        .unwrap();
 }
 
 #[test]
@@ -147,35 +168,35 @@ fn local_dependencies() {
     assert_eq!(
         packages_and_deps(meta),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("cairo_test".to_string(), vec![]),
+            ("core".to_string(), vec![]),
+            ("test_plugin".to_string(), vec![]),
             (
                 "q".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec!["core".to_string(), "test_plugin".to_string()]
             ),
             (
                 "x".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
+                    "test_plugin".to_string(),
                     "y".to_string()
                 ]
             ),
             (
                 "y".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "q".to_string(),
+                    "test_plugin".to_string(),
                     "z".to_string()
                 ]
             ),
             (
                 "z".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "q".to_string(),
+                    "test_plugin".to_string()
                 ]
             ),
         ])
@@ -186,11 +207,9 @@ fn local_dependencies() {
 fn dev_dependencies() {
     let t = assert_fs::TempDir::new().unwrap();
     let q = t.child("q");
-    ProjectBuilder::start().name("q").dep_cairo_test().build(&q);
+    ProjectBuilder::start().name("q").build(&q);
     ProjectBuilder::start()
         .name("x")
-        .dep("q", Dep.path("./q"))
-        .dep_cairo_test()
         .dev_dep("q", Dep.path("./q"))
         .build(&t);
     let meta = Scarb::quick_snapbox()
@@ -201,116 +220,24 @@ fn dev_dependencies() {
         .current_dir(&t)
         .stdout_json::<Metadata>();
     assert_eq!(
-        packages_and_deps(meta.clone()),
+        packages_and_deps(meta),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("cairo_test".to_string(), vec![]),
+            ("core".to_string(), vec![]),
+            ("test_plugin".to_string(), vec![]),
             (
                 "x".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "q".to_string(),
-                    "q".to_string(),
+                    "test_plugin".to_string()
                 ]
             ),
             (
                 "q".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec!["core".to_string(), "test_plugin".to_string()]
             )
         ])
-    );
-    assert_eq!(
-        meta.packages
-            .into_iter()
-            .filter(|p| p.name == "x")
-            .flat_map(|p| {
-                p.dependencies
-                    .into_iter()
-                    .map(|d| (d.name, d.kind))
-                    .collect::<Vec<_>>()
-            })
-            .filter(|(n, _)| n == "q")
-            .collect::<Vec<_>>(),
-        vec![
-            ("q".to_string(), None),
-            ("q".to_string(), Some(DepKind::Dev)),
-        ]
-    );
-}
-
-#[test]
-fn dev_deps_are_not_propagated() {
-    let t = assert_fs::TempDir::new().unwrap();
-
-    let dep1 = t.child("dep1");
-    ProjectBuilder::start()
-        .name("dep1")
-        .dep_cairo_test()
-        .build(&dep1);
-
-    let dep2 = t.child("dep2");
-    ProjectBuilder::start()
-        .name("dep2")
-        .dep_cairo_test()
-        .dev_dep("dep1", &dep1)
-        .build(&dep2);
-
-    let pkg = t.child("pkg");
-    ProjectBuilder::start()
-        .name("x")
-        .dep_cairo_test()
-        .dev_dep("dep2", &dep2)
-        .build(&pkg);
-
-    let metadata = Scarb::quick_snapbox()
-        .arg("--json")
-        .arg("metadata")
-        .arg("--format-version")
-        .arg("1")
-        .current_dir(&pkg)
-        .stdout_json::<Metadata>();
-
-    assert_eq!(
-        packages_and_deps(metadata.clone()),
-        BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("cairo_test".to_string(), vec![]),
-            (
-                "x".to_string(),
-                vec![
-                    "cairo_test".to_string(),
-                    "core".to_string(),
-                    "dep2".to_string(),
-                ]
-            ),
-            (
-                "dep2".to_string(),
-                vec![
-                    "cairo_test".to_string(),
-                    "core".to_string(),
-                    "dep1".to_string(),
-                ]
-            )
-        ])
-    );
-
-    assert_eq!(
-        units_and_components(metadata),
-        BTreeMap::from_iter(vec![
-            ("x".to_string(), vec!["core".to_string(), "x".to_string()]),
-            (
-                "x_unittest".to_string(),
-                vec![
-                    "core".to_string(),
-                    // With dev-deps propagation enabled, this would be included
-                    // "dep1".to_string(),
-                    "dep2".to_string(),
-                    "x".to_string()
-                ]
-            ),
-        ])
-    );
+    )
 }
 
 #[test]
@@ -331,8 +258,8 @@ fn no_dep() {
         BTreeMap::from_iter([(
             "x".to_string(),
             vec![
-                "cairo_test".to_string(),
                 "core".to_string(),
+                "test_plugin".to_string(),
                 "y".to_string()
             ]
         )])
@@ -476,7 +403,7 @@ fn tool_metadata_is_packaged_contained() {
             .collect::<BTreeMap<_, _>>(),
         BTreeMap::from_iter([
             ("core".to_string(), None),
-            ("cairo_test".to_string(), None),
+            ("test_plugin".to_string(), None),
             (
                 "q".to_string(),
                 Some(BTreeMap::from_iter([(
@@ -516,13 +443,11 @@ fn workspace_simple() {
     let pkg1 = t.child("first");
     ProjectBuilder::start()
         .name("first")
-        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .build(&pkg1);
     let pkg2 = t.child("second");
     ProjectBuilder::start()
         .name("second")
-        .dep_cairo_test()
         .manifest_extra("[[test]]")
         // Check paths are relative to manifest file.
         .dep("first", Dep.path("../first"))
@@ -540,18 +465,18 @@ fn workspace_simple() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("cairo_test".to_string(), vec![]),
+            ("core".to_string(), vec![]),
+            ("test_plugin".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec!["core".to_string(), "test_plugin".to_string()]
             ),
             (
                 "second".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
+                    "test_plugin".to_string()
                 ]
             ),
         ])
@@ -562,19 +487,14 @@ fn workspace_simple() {
 fn workspace_with_root() {
     let t = assert_fs::TempDir::new().unwrap().child("test_workspace");
     let pkg1 = t.child("first");
-    ProjectBuilder::start()
-        .name("first")
-        .dep_cairo_test()
-        .build(&pkg1);
+    ProjectBuilder::start().name("first").build(&pkg1);
     let pkg2 = t.child("second");
     ProjectBuilder::start()
         .name("second")
-        .dep_cairo_test()
         .dep("first", Dep.path("../first"))
         .build(&pkg2);
     let root = ProjectBuilder::start()
         .name("some_root")
-        .dep_cairo_test()
         .dep("first", Dep.path("./first"))
         .dep("second", Dep.path("./second"));
     WorkspaceBuilder::start()
@@ -591,29 +511,29 @@ fn workspace_with_root() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
+            ("core".to_string(), vec![]),
             (
                 "some_root".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
                     "second".to_string(),
+                    "test_plugin".to_string()
                 ]
             ),
             (
                 "first".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec!["core".to_string(), "test_plugin".to_string()]
             ),
             (
                 "second".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
+                    "test_plugin".to_string(),
                 ]
             ),
-            ("cairo_test".to_string(), vec![]),
+            ("test_plugin".to_string(), vec![]),
         ])
     )
 }
@@ -625,13 +545,11 @@ fn workspace_as_dep() {
     let pkg1 = first_t.child("first");
     ProjectBuilder::start()
         .name("first")
-        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .build(&pkg1);
     let pkg2 = first_t.child("second");
     ProjectBuilder::start()
         .name("second")
-        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .dep("first", Dep.path("../first"))
         .build(&pkg2);
@@ -648,18 +566,18 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("cairo_test".to_string(), vec![]),
+            ("test_plugin".to_string(), vec![]),
+            ("core".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec!["core".to_string(), "test_plugin".to_string()]
             ),
             (
                 "second".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
+                    "test_plugin".to_string()
                 ]
             ),
         ])
@@ -670,7 +588,6 @@ fn workspace_as_dep() {
     ProjectBuilder::start()
         .name("third")
         .manifest_extra("[[test]]")
-        .dep_cairo_test()
         .dep("first", Dep.path("../../first_workspace"))
         .dep("second", Dep.path("../../first_workspace"))
         .build(&pkg1);
@@ -678,7 +595,6 @@ fn workspace_as_dep() {
     ProjectBuilder::start()
         .name("fourth")
         .manifest_extra("[[test]]")
-        .dep_cairo_test()
         .dep("third", Dep.path("../third"))
         .build(&pkg2);
     WorkspaceBuilder::start()
@@ -694,34 +610,34 @@ fn workspace_as_dep() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("cairo_test".to_string(), vec![]),
+            ("core".to_string(), vec![]),
+            ("test_plugin".to_string(), vec![]),
             (
                 "first".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec!["core".to_string(), "test_plugin".to_string()]
             ),
             (
                 "second".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
+                    "test_plugin".to_string()
                 ]
             ),
             (
                 "third".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
                     "second".to_string(),
+                    "test_plugin".to_string()
                 ]
             ),
             (
                 "fourth".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
+                    "test_plugin".to_string(),
                     "third".to_string()
                 ]
             ),
@@ -736,7 +652,6 @@ fn workspace_package_key_inheritance() {
     let some_dep = t.child("some_dep");
     ProjectBuilder::start()
         .name("some_dep")
-        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .version("0.1.0")
         .build(&some_dep);
@@ -745,14 +660,12 @@ fn workspace_package_key_inheritance() {
     let pkg1 = some_workspace.child("first");
     ProjectBuilder::start()
         .name("first")
-        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .dep("some_dep", Dep.workspace())
         .build(&pkg1);
     let pkg2 = some_workspace.child("second");
     ProjectBuilder::start()
         .name("second")
-        .dep_cairo_test()
         .manifest_extra("[[test]]")
         .dep("first", Dep.path("../first"))
         .build(&pkg2);
@@ -771,27 +684,27 @@ fn workspace_package_key_inheritance() {
     assert_eq!(
         packages_and_deps(metadata),
         BTreeMap::from_iter([
-            ("core".to_string(), vec!["cairo_test".to_string()]),
-            ("cairo_test".to_string(), vec![]),
+            ("core".to_string(), vec![]),
+            ("test_plugin".to_string(), vec![]),
             (
                 "first".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "some_dep".to_string(),
+                    "test_plugin".to_string()
                 ]
             ),
             (
                 "second".to_string(),
                 vec![
-                    "cairo_test".to_string(),
                     "core".to_string(),
                     "first".to_string(),
+                    "test_plugin".to_string()
                 ]
             ),
             (
                 "some_dep".to_string(),
-                vec!["cairo_test".to_string(), "core".to_string(),]
+                vec!["core".to_string(), "test_plugin".to_string()]
             )
         ])
     )
@@ -1266,29 +1179,4 @@ fn includes_edition() {
         }
     }
     panic!("Package not found in metadata!");
-}
-
-#[test]
-fn includes_experimental_features() {
-    let t = assert_fs::TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .version("0.1.0")
-        .manifest_package_extra(r#"experimental-features = ["negative_impls"]"#)
-        .build(&t);
-
-    let metadata = Scarb::quick_snapbox()
-        .arg("--json")
-        .arg("metadata")
-        .arg("--format-version")
-        .arg("1")
-        .current_dir(&t)
-        .stdout_json::<Metadata>();
-
-    assert!(packages_by_name(metadata)
-        .get("hello")
-        .unwrap()
-        .clone()
-        .experimental_features
-        .contains(&String::from("negative_impls")))
 }

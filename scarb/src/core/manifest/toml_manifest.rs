@@ -1,12 +1,11 @@
 use std::borrow::Cow;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::default::Default;
 use std::fs;
 use std::iter::{repeat, zip};
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use cairo_lang_filesystem::db::Edition;
-use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
 use pathdiff::diff_utf8_paths;
@@ -24,18 +23,18 @@ use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Targe
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{
-    DepKind, DependencyVersionReq, InliningStrategy, ManifestBuilder, ManifestCompilerConfig,
-    PackageName, TargetKind, TestTargetProps, TestTargetType,
+    DepKind, DependencyVersionReq, ManifestBuilder, ManifestCompilerConfig, PackageName,
+    TargetKind, TestTargetProps, TestTargetType,
 };
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
-use crate::internal::serdex::{toml_merge, toml_merge_apply_strategy, RelativeUtf8PathBuf};
+use crate::internal::serdex::{toml_merge, RelativeUtf8PathBuf};
 use crate::internal::to_version::ToVersion;
 use crate::{
     DEFAULT_MODULE_MAIN_FILE, DEFAULT_SOURCE_PATH, DEFAULT_TESTS_PATH, MANIFEST_FILE_NAME,
 };
 
-use super::{FeatureName, Manifest};
+use super::Manifest;
 
 /// This type is used to deserialize `Scarb.toml` files.
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -53,7 +52,6 @@ pub struct TomlManifest {
     pub profile: Option<TomlProfilesDefinition>,
     pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
-    pub features: Option<BTreeMap<FeatureName, Vec<FeatureName>>>,
 }
 
 type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, WorkspaceScriptDefinition>;
@@ -186,7 +184,6 @@ pub struct TomlPackage {
     pub name: PackageName,
     pub version: MaybeWorkspaceField<Version>,
     pub edition: Option<MaybeWorkspaceField<Edition>>,
-    pub publish: Option<bool>,
     pub authors: Option<MaybeWorkspaceField<Vec<String>>>,
     pub urls: Option<BTreeMap<String, String>>,
     pub description: Option<MaybeWorkspaceField<String>>,
@@ -200,7 +197,6 @@ pub struct TomlPackage {
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
     pub no_core: Option<bool>,
     pub cairo_version: Option<MaybeWorkspaceField<VersionReq>>,
-    pub experimental_features: Option<Vec<SmolStr>>,
 }
 
 #[derive(Clone, Debug, Serialize, Eq, PartialEq)]
@@ -313,16 +309,6 @@ pub struct TomlCairo {
     pub sierra_replace_ids: Option<bool>,
     /// Do not exit with error on compiler warnings.
     pub allow_warnings: Option<bool>,
-    /// Enable auto gas withdrawal and gas usage check.
-    pub enable_gas: Option<bool>,
-    /// Add a mapping between sierra statement indexes and fully qualified paths of cairo functions
-    /// to debug info. A statement index maps to a vector consisting of a function which caused the
-    /// statement to be generated and all functions that were inlined or generated along the way.
-    /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
-    /// This feature is unstable and is subject to change.
-    pub unstable_add_statements_functions_debug_info: Option<bool>,
-    /// Inlining strategy.
-    pub inlining_strategy: Option<InliningStrategy>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
@@ -457,9 +443,8 @@ impl TomlManifest {
 
         let targets = self.collect_targets(package.name.to_smol_str(), root)?;
 
-        let publish = package.publish.unwrap_or(true);
-
         let summary = Summary::builder()
+            .target_kinds(targets.iter().map(|t| t.kind.clone()).collect())
             .package_id(package_id)
             .dependencies(dependencies)
             .no_core(no_core)
@@ -570,23 +555,15 @@ impl TomlManifest {
             .transpose()?
             .unwrap_or_default();
 
-        // TODO (#1040): add checking for fields that are not present in ExperimentalFeaturesConfig
-        let experimental_features = package.experimental_features.clone();
-
-        let features = self.features.clone().unwrap_or_default();
-        Self::check_features(&features)?;
-
         let manifest = ManifestBuilder::default()
             .summary(summary)
             .targets(targets)
-            .publish(publish)
             .edition(edition)
             .metadata(metadata)
             .compiler_config(compiler_config)
             .scripts(scripts)
-            .experimental_features(experimental_features)
-            .features(features)
             .build()?;
+
         Ok(manifest)
     }
 
@@ -598,7 +575,6 @@ impl TomlManifest {
             self.lib.as_ref(),
             &package_name,
             root,
-            None,
         )?);
 
         targets.extend(Self::collect_target(
@@ -606,7 +582,6 @@ impl TomlManifest {
             self.cairo_plugin.as_ref(),
             &package_name,
             root,
-            None,
         )?);
 
         for (kind, ext_toml) in self
@@ -620,7 +595,6 @@ impl TomlManifest {
                 Some(ext_toml),
                 &package_name,
                 root,
-                None,
             )?);
         }
 
@@ -654,7 +628,6 @@ impl TomlManifest {
                     Some(test_toml),
                     &package_name,
                     root,
-                    None,
                 )?);
             }
         } else if auto_detect {
@@ -671,7 +644,6 @@ impl TomlManifest {
                 Some(&target_config),
                 &package_name,
                 root,
-                None,
             )?);
             // Auto-detect test targets from `tests` directory.
             let tests_path = root.join(DEFAULT_TESTS_PATH);
@@ -690,7 +662,6 @@ impl TomlManifest {
                     Some(&target_config),
                     &package_name,
                     root,
-                    None,
                 )?);
             } else {
                 // Tests directory does not contain `lib.cairo` file.
@@ -701,17 +672,6 @@ impl TomlManifest {
                             continue;
                         }
                         let source_path = entry.path().try_into_utf8()?;
-                        if source_path
-                            .extension()
-                            .map(|ext| ext != CAIRO_FILE_EXTENSION)
-                            .unwrap_or(false)
-                        {
-                            trace!(
-                                "ignoring non-cairo file {} from tests",
-                                source_path.file_name().unwrap_or_default()
-                            );
-                            continue;
-                        }
                         let file_stem = source_path.file_stem().unwrap().to_string();
                         let target_name: SmolStr = format!("{package_name}_{file_stem}").into();
                         let target_config = TomlTarget::<TomlExternalTargetParams> {
@@ -724,7 +684,6 @@ impl TomlManifest {
                             Some(&target_config),
                             &package_name,
                             root,
-                            Some(format!("{package_name}_integrationtest").into()),
                         )?);
                     }
                 }
@@ -738,7 +697,6 @@ impl TomlManifest {
         target: Option<&TomlTarget<T>>,
         default_name: &SmolStr,
         root: &Utf8Path,
-        group_id: Option<SmolStr>,
     ) -> Result<Option<Target>> {
         let default_source_path = root.join(DEFAULT_SOURCE_PATH.as_path());
         let Some(target) = target else {
@@ -761,8 +719,7 @@ impl TomlManifest {
             .transpose()?
             .unwrap_or(default_source_path.to_path_buf());
 
-        let target =
-            Target::try_from_structured_params(kind, name, source_path, group_id, &target.params)?;
+        let target = Target::try_from_structured_params(kind, name, source_path, &target.params)?;
 
         Ok(Some(target))
     }
@@ -841,20 +798,8 @@ impl TomlManifest {
             if let Some(sierra_replace_ids) = cairo.sierra_replace_ids {
                 compiler_config.sierra_replace_ids = sierra_replace_ids;
             }
-            if let Some(inlining_strategy) = cairo.inlining_strategy {
-                compiler_config.inlining_strategy = inlining_strategy;
-            }
             if let Some(allow_warnings) = cairo.allow_warnings {
                 compiler_config.allow_warnings = allow_warnings;
-            }
-            if let Some(enable_gas) = cairo.enable_gas {
-                compiler_config.enable_gas = enable_gas;
-            }
-            if let Some(unstable_add_statements_functions_debug_info) =
-                cairo.unstable_add_statements_functions_debug_info
-            {
-                compiler_config.unstable_add_statements_functions_debug_info =
-                    unstable_add_statements_functions_debug_info;
             }
         }
         Ok(compiler_config)
@@ -886,33 +831,12 @@ impl TomlManifest {
             .transpose()?
             .map(|tool| {
                 if let Some(profile_tool) = &profile_definition.tool {
-                    toml_merge_apply_strategy(&tool, profile_tool)
+                    toml_merge(&tool, profile_tool)
                 } else {
                     Ok(tool)
                 }
             })
             .transpose()
-    }
-
-    fn check_features(features: &BTreeMap<FeatureName, Vec<FeatureName>>) -> Result<()> {
-        let available_features: HashSet<&FeatureName> = features.keys().collect();
-        for (key, vals) in features.iter() {
-            let dependent_features = vals.iter().collect::<HashSet<&FeatureName>>();
-            if dependent_features.contains(key) {
-                bail!("feature `{}` depends on itself", key);
-            }
-            let not_found_features = dependent_features
-                .difference(&available_features)
-                .collect_vec();
-            if !not_found_features.is_empty() {
-                bail!(
-                    "feature `{}` is dependent on `{}` which is not defined",
-                    key,
-                    not_found_features.iter().join(", "),
-                );
-            }
-        }
-        Ok(())
     }
 }
 

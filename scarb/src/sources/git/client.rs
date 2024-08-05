@@ -13,7 +13,6 @@ use std::process::Command;
 
 use anyhow::{anyhow, bail, Context, Result};
 use camino::Utf8PathBuf;
-use tracing::debug;
 
 use scarb_ui::Verbosity;
 
@@ -61,7 +60,8 @@ impl fmt::Debug for GitDatabase {
 
 /// A local checkout of a particular Git commit.
 #[derive(Debug)]
-pub struct GitCheckout {
+pub struct GitCheckout<'d> {
+    pub db: &'d GitDatabase,
     pub location: Utf8PathBuf,
     pub rev: Rev,
 }
@@ -201,30 +201,9 @@ impl GitDatabase {
         exec(&mut cmd, config)
     }
 
-    pub fn copy_to(&self, fs: &Filesystem, rev: Rev, config: &Config) -> Result<GitCheckout> {
-        // If the checkout exists, the rev matches, and is marked ok, use it.
-        // A non-ok checkout can happen if the checkout operation was
-        // interrupted. In that case, the checkout gets deleted and a new
-        // clone is created.
-        if fs.is_ok()
-            && fs
-                .path_existent()
-                .ok()
-                .and_then(|path| gix::discover(path).ok())
-                .and_then(|repo| repo.rev_parse_single("HEAD").ok().map(|r| r.detach()))
-                .map(Rev::from)
-                .map(|real| real == rev)
-                .unwrap_or_default()
-        {
-            debug!("git checkout ready; skipping clone; fs={fs}");
-            return Ok(GitCheckout {
-                location: fs.path_existent()?.to_path_buf(),
-                rev,
-            });
-        }
+    pub fn copy_to(&self, fs: &Filesystem, rev: Rev, config: &Config) -> Result<GitCheckout<'_>> {
         let checkout = GitCheckout::clone(self, fs, rev, config)?;
         checkout.reset(config)?;
-        fs.mark_ok()?;
         Ok(checkout)
     }
 
@@ -278,9 +257,9 @@ impl GitDatabase {
     }
 }
 
-impl GitCheckout {
+impl<'d> GitCheckout<'d> {
     #[tracing::instrument(level = "trace", skip(config))]
-    fn clone(db: &GitDatabase, fs: &Filesystem, rev: Rev, config: &Config) -> Result<Self> {
+    fn clone(db: &'d GitDatabase, fs: &Filesystem, rev: Rev, config: &Config) -> Result<Self> {
         unsafe {
             fs.recreate()?;
         }
@@ -296,7 +275,7 @@ impl GitCheckout {
         cmd.arg(&location);
         exec(&mut cmd, config)?;
 
-        Ok(Self { location, rev })
+        Ok(Self { db, location, rev })
     }
 
     #[tracing::instrument(level = "trace", skip(config))]
@@ -399,7 +378,7 @@ impl PackageRepository {
 }
 
 fn git_command() -> Command {
-    let mut cmd = Command::new(gix_path::env::exe_invocation());
+    let mut cmd = Command::new("git");
 
     // If Scarb is run by Git (for example, the `exec` command in `git rebase`),
     // the GIT_DIR is set by Git and will point to the wrong location (this takes precedence

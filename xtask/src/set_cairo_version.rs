@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use semver::Version;
-use toml_edit::{DocumentMut, InlineTable, Value};
+use toml_edit::{Document, InlineTable, Value};
 use xshell::{cmd, Shell};
 
 use crate::set_scarb_version;
@@ -27,7 +27,7 @@ struct Spec {
 pub fn main(args: Args) -> Result<()> {
     let sh = Shell::new()?;
 
-    let mut cargo_toml = sh.read_file("Cargo.toml")?.parse::<DocumentMut>()?;
+    let mut cargo_toml = sh.read_file("Cargo.toml")?.parse::<Document>()?;
     let deps = &mut cargo_toml["workspace"]["dependencies"]
         .as_table_mut()
         .unwrap();

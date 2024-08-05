@@ -24,7 +24,6 @@ pub fn run(args: InitArgs, config: &Config) -> Result<()> {
             } else {
                 VersionControl::Git
             },
-            snforge: args.snforge,
         },
         config,
     )?;

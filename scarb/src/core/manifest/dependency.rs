@@ -30,19 +30,6 @@ pub enum DepKind {
     Target(TargetKind),
 }
 
-impl DepKind {
-    pub fn is_propagated(&self) -> bool {
-        !self.is_test()
-    }
-
-    pub fn is_test(&self) -> bool {
-        match self {
-            DepKind::Target(kind) => kind.is_test(),
-            _ => false,
-        }
-    }
-}
-
 impl Deref for ManifestDependency {
     type Target = ManifestDependencyInner;
 

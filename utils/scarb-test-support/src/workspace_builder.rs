@@ -1,6 +1,6 @@
 use crate::project_builder::{DepBuilder, ProjectBuilder};
 use assert_fs::prelude::*;
-use toml_edit::{Array, DocumentMut, Item, Value};
+use toml_edit::{Array, Document, Item, Value};
 
 #[derive(Default)]
 pub struct WorkspaceBuilder {
@@ -36,7 +36,7 @@ impl WorkspaceBuilder {
     }
 
     pub fn build(&self, t: &impl PathChild) {
-        let mut doc = DocumentMut::new();
+        let mut doc = Document::new();
         doc["workspace"] = toml_edit::table();
         doc["workspace"]["members"] =
             Item::Value(Value::from(Array::from_iter(self.members.clone())));

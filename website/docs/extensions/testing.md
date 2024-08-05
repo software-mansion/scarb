@@ -26,9 +26,10 @@ From integration tests, you can only reference the main package by package name 
 The integration tests can be either a single module with a `lib.cairo` file in `tests` directory,
 or multiple files with `cairo` extension, each defining a separate test module.
 
-> [!NOTE]
-> For now, the compilation of integration tests with `lib.cairo` file in the `tests` directory will be faster than
-> compilation of integration tests defined in separate files.
+::: info
+Note: For now, the compilation of integration tests with `lib.cairo` file in the `tests` directory will be faster than
+compilation of integration tests defined in separate files.
+:::
 
 ## Using third-party test runners
 

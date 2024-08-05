@@ -1,5 +1,5 @@
 use anyhow::Result;
-use cairo_lang_sierra::program::VersionedProgram;
+use cairo_lang_sierra::program::{ProgramArtifact, VersionedProgram};
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use serde::Serialize;
 
@@ -28,7 +28,7 @@ pub fn compile_tests(
 
 impl TestCompilationTarget {
     fn compile_tests(&self, compilation_unit: &CompilationUnit) -> Result<CompiledTestCrateRaw> {
-        let (program_artifact, test_cases) = collect_tests(
+        let (sierra_program, test_cases) = collect_tests(
             &self.crate_name,
             self.crate_root.as_std_path(),
             &self.lib_content,
@@ -36,7 +36,7 @@ impl TestCompilationTarget {
         )?;
 
         Ok(CompiledTestCrateRaw {
-            sierra_program: program_artifact.into(),
+            sierra_program: VersionedProgram::v1(ProgramArtifact::stripped(sierra_program)),
             test_cases,
             tests_location: self.crate_location.clone(),
         })

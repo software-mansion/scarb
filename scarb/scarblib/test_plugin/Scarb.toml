@@ -1,8 +1,7 @@
 [package]
-name = "cairo_test"
+name = "test_plugin"
 version = "{{ CAIRO_VERSION }}"
 
 no-core = true
 
 [cairo-plugin]
-builtin = true

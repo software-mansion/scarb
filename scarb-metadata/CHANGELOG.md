@@ -4,20 +4,6 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-## 1.12.0 (2024-04-09)
-- Added `cfg` field on `CompilationUnitComponentMetadata`.
-
-## 1.11.1 (2024-02-06)
-- Fix backward compatibility of `experimental_features` field deserialization.
-- Added `profile`, `dev` and `release` arguments to `MetadataCommand`.
-
-## 1.11.0 (2024-01-31)
-- Added `experimental_features` field to `PackageMetadata`.
-- Added `inherit_stdout` and `json` flags to `MetadataCommand`. Scarb output is now textual by default.   
-
-## 1.10.0 (2023-12-13)
-- Added `kind` field to `DependencyMetadata`.
-
 ## 1.9.0 (2023-11-09)
 - Added `edition` field to `PackageMetadata`.
 

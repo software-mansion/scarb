@@ -8,7 +8,7 @@ use itertools::Itertools;
 use smol_str::SmolStr;
 
 use crate::compiler::compilers::{LibCompiler, StarknetContractCompiler, TestCompiler};
-use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
+use crate::compiler::{CompilationUnit, Compiler};
 use crate::core::Workspace;
 
 pub struct CompilerRepository {
@@ -43,11 +43,11 @@ impl CompilerRepository {
 
     pub fn compile(
         &self,
-        unit: CairoCompilationUnit,
+        unit: CompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
-        let target_kind = &unit.main_component().target_kind();
+        let target_kind = &unit.target().kind;
         let Some(compiler) = self.compilers.get(target_kind.as_str()) else {
             bail!("unknown compiler for target `{target_kind}`");
         };

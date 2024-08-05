@@ -1,6 +1,5 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
-import * as syntaxes from "./syntaxes.mjs";
 
 const base = "/scarb/";
 const absoluteBase = `https://docs.swmansion.com${base}`;
@@ -41,7 +40,6 @@ const sidebar = {
           ],
         },
         p("Language server", "/docs/extensions/cairo-language-server"),
-        p("Expand", "/docs/extensions/expand"),
       ],
     },
     {
@@ -152,14 +150,6 @@ export default withMermaid(
       ["meta", { property: "og:image:type", content: "image/png" }],
       ["meta", { property: "og:image:width", content: "1280" }],
       ["meta", { property: "og:image:height", content: "640" }],
-      [
-        "script",
-        {
-          "data-goatcounter": "https://gc-scarb.swmtest.xyz/count",
-          async: true,
-          src: `${base}count.js`,
-        },
-      ],
     ],
 
     lastUpdated: true,
@@ -205,10 +195,6 @@ export default withMermaid(
 
     sitemap: {
       hostname: absoluteBase,
-    },
-
-    markdown: {
-      languages: [syntaxes.cairo],
     },
   }),
 );

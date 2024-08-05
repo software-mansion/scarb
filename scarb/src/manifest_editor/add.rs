@@ -1,9 +1,8 @@
 use std::mem;
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, ensure, Result};
 use camino::{Utf8Path, Utf8PathBuf};
-use indoc::formatdoc;
-use toml_edit::{value, DocumentMut, Entry, InlineTable, Item};
+use toml_edit::{value, Document, Entry, InlineTable, Item};
 use url::Url;
 
 use crate::core::{GitReference, PackageName};
@@ -11,7 +10,7 @@ use crate::internal::fsx;
 use crate::sources::canonical_url::CanonicalUrl;
 
 use super::tomlx::get_table_mut;
-use super::{DepId, DepType, Op, OpCtx};
+use super::{DepId, Op, OpCtx};
 
 #[derive(Clone, Debug, Default)]
 pub struct AddDependency {
@@ -21,7 +20,6 @@ pub struct AddDependency {
     pub branch: Option<String>,
     pub tag: Option<String>,
     pub rev: Option<String>,
-    pub dep_type: DepType,
 }
 
 struct Dep {
@@ -50,8 +48,8 @@ struct GitSource {
 
 impl Op for AddDependency {
     #[tracing::instrument(level = "trace", skip(doc, ctx))]
-    fn apply_to(self: Box<Self>, doc: &mut DocumentMut, ctx: OpCtx<'_>) -> Result<()> {
-        let tab = get_table_mut(doc, &[self.dep_type.toml_section_str()])?;
+    fn apply_to(self: Box<Self>, doc: &mut Document, ctx: OpCtx<'_>) -> Result<()> {
+        let tab = get_table_mut(doc, &["dependencies"])?;
 
         let dep = Dep::resolve(*self, ctx)?;
 
@@ -131,16 +129,12 @@ impl Dep {
                 DefaultBranch
             };
 
-            let git = CanonicalUrl::new(&Url::parse(&git).with_context(|| {
-                formatdoc!(
-                    r#"
-                    invalid URL provided: {git}
-                    help: use an absolute URL to the Git repository
-                    "#,
-                )
-            })?)
-            .map(|git_url| git_url.as_str().to_string())
-            .unwrap_or(git);
+            let git = match Url::parse(&git) {
+                Ok(url) => CanonicalUrl::new(&url)
+                    .map(|git_url| git_url.as_str().to_string())
+                    .unwrap_or(git),
+                Err(_) => git,
+            };
 
             Box::new(GitSource {
                 version,

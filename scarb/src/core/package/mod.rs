@@ -70,10 +70,6 @@ impl Package {
         self.manifest.targets.iter().any(Target::is_cairo_plugin)
     }
 
-    pub fn is_publishable(&self) -> bool {
-        self.manifest.publish
-    }
-
     pub fn classify(&self) -> PackageClass {
         if self.is_cairo_plugin() {
             PackageClass::CairoPlugin

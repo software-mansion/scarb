@@ -47,7 +47,14 @@ const Download = defineClientComponent(() => import("./home/Download.vue"));
       >, while designing this tool.
     </p>
     <p>
-      Feel free chat with us on our channel on
+      Feel free to join
+      <a
+        href="https://github.com/software-mansion/scarb/discussions"
+        rel="noreferrer"
+        target="_blank"
+        >discussions on GitHub</a
+      >
+      or chat with us on our channel on
       <a href="https://t.me/+G_YxIv-XTFlhNWU0" rel="noreferrer" target="_blank"
         >Telegram</a
       >

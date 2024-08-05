@@ -44,9 +44,10 @@ Lockfiles contain exact specifications of all packages from full tree of depende
 dependencies etc.).
 Scarb lockfiles can easily be reviewed by the user.
 
-> [!IMPORTANT]
-> Lockfiles should be committed to version control system (e.g. a Git repository),
-> allowing for full tracking of concrete version changes.
+::: info
+Lockfiles should be committed to version control system (e.g. a Git repository),
+allowing for full tracking of concrete version changes.
+:::
 
 ## Lockfile format
 

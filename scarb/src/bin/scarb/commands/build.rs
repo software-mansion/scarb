@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::args::BuildArgs;
-use scarb::core::Config;
+use scarb::core::{Config, TargetKind};
 use scarb::ops;
 use scarb::ops::CompileOpts;
 
@@ -14,6 +14,14 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         .into_iter()
         .map(|p| p.id)
         .collect::<Vec<_>>();
-    let opts = CompileOpts::try_new(args.features, args.test, args.target_names)?;
+    let (include_targets, exclude_targets): (Vec<TargetKind>, Vec<TargetKind>) = if args.test {
+        (vec![TargetKind::TEST.clone()], Vec::new())
+    } else {
+        (Vec::new(), vec![TargetKind::TEST.clone()])
+    };
+    let opts = CompileOpts {
+        include_targets,
+        exclude_targets,
+    };
     ops::compile(packages, opts, &ws)
 }

@@ -15,15 +15,11 @@ flowchart TD
     subgraph BUILTIN_CMDS ["Built-in commands"]
         direction LR
         BLD[scarb build]
-        CHK[scarb check]
-        UPD[scarb update]
-        FTH[scarb fetch]
-        FMT[scarb fmt]
         CLN[scarb clean]
-        CAC[scarb cache]
+        FMT[scarb fmt]
+        RUN[scarb run]
         NEW[scarb init/new]
         UPD[scarb add/rm/update]
-        PUB[scarb package/publish]
         MET[scarb metadata]
         CMD[scarb commands]
         MAN[scarb manifest-path]
@@ -31,8 +27,6 @@ flowchart TD
     subgraph EXT_CMDS ["External subcommands system"]
         direction LR
         CAIRO_LS["Cairo Language Server"]
-        CAIRO_RUN["scarb run"]
-        SCARB_DOC["scarb doc"]
         SNFORGE["scarb test\n(can redirect to either snforge,\ncairo-test or other runner)"]
     end
 ```
@@ -80,13 +74,11 @@ classDiagram
         - compilers
     }
     class CairoPluginRepository {
-        - built-in compiler macro plugins
+        - compiler macro plugins
     }
     class StarknetContractCompiler {
     }
     class LibCompiler {
-    }
-    class TestCompiler {
     }
     class Workspace~'c~ {
         + members() Iter~Package~
@@ -115,12 +107,10 @@ classDiagram
         + String name
         + VersionReq
         + SourceId
-        + DepKind
     }
     class Target {
         + TargetKind
         + String name
-        + Optional group_id
         + BTreeMap&lt;String, *> params
     }
     class CompilationUnit {
@@ -154,7 +144,6 @@ classDiagram
     CompilationUnit ..> Target : is created from
     CodegenRepository *-- StarknetContractCompiler 
     CodegenRepository *-- LibCompiler 
-    CodegenRepository *-- TestCompiler 
 ```
 
 ### Sources and the internal registry
@@ -169,15 +158,15 @@ classDiagram
     }
     class PathSource
     class GitSource
-    class RegistrySource
-    class StandardLibSource {
-        /embedded/
+    class StandardLibSource
+    class RegistrySource {
+        <<Future>>
     }
 
     PathSource ..|> Source
     GitSource ..|> Source
-    RegistrySource ..|> Source
     StandardLibSource ..|> Source
+    RegistrySource ..|> Source
 ```
 
 A _source_ is an object that finds and downloads remote packages based on names and versions.
@@ -187,8 +176,9 @@ There are various `Source` implementation for different methods of downloading p
 1. `PathSource` simply provides an ability to operate on packages from local file system.
 2. `GitSource` downloads packages from Git repositories.
 3. `RegistrySource` downloads packages from package registries.
-4. `StandardLibSource` unpacks packages embedded into the Scarb binary itself.
 4. And more...
+
+**CURRENTLY ONLY PATH AND GIT SOURCES ARE IMPLEMENTED.**
 
 The `Registry` object gathers all `Source` objects in a single mapping, and provides a unified interface for querying
 _any_ package, no matter of its source.
@@ -212,7 +202,9 @@ internally.
 
 ### Lockfile
 
-See Scarb documentation.
+**THIS IS NOT IMPLEMENTED YET.**
+
+      TODO(mkaput): Write this section.
 
 ## Scarb Compiler
 
@@ -282,12 +274,11 @@ Plugins appropriate to be used for building a specific package are applied to th
 When using Scarb as a library, Cairo plugins can be defined with configuration builder. 
 If not specified otherwise, Scarb comes with predefined StarkNet Cairo plugin, that can be used for StarkNet contracts
 compilation.
+In the future, Scarb will also provide a way to define Cairo plugins as package dependencies.
 
-### Procedural Macros 
+**The mechanism for requiring Cairo plugins as package dependencies or compiling them in Scarb runtime is not implemented yet.**
 
-Procedural macros provide a mechanism for defining custom macros as package dependencies.
-The package with macro source code definition will be pulled and compiled by Scarb.
-Please see [the design document](design/01-proc-macro.md) for more information.
+Please see [the RFC document](https://github.com/software-mansion/scarb/discussions/227) for more information.
 
 ### RootDatabase management within the compiler
 

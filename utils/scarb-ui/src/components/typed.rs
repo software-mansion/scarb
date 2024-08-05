@@ -12,9 +12,6 @@ pub struct TypedMessage<'a> {
     r#type: &'a str,
     message: &'a str,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    code: Option<&'a str>,
-
     #[serde(skip)]
     type_style: Option<&'a str>,
     #[serde(skip)]
@@ -29,7 +26,6 @@ impl<'a> TypedMessage<'a> {
             message,
             type_style: Some(type_style),
             skip_type_for_text: false,
-            code: None,
         }
     }
 
@@ -47,19 +43,6 @@ impl<'a> TypedMessage<'a> {
             message,
             type_style: None,
             skip_type_for_text: true,
-            code: None,
-        }
-    }
-
-    /// Sometimes, a message may be associated with a short machine-readable descriptor.
-    /// For example, some compilers associate numerical *codes* with various kinds of errors
-    /// that can be produced.
-    /// The optional `code` field allows carrying this information.
-    /// This will be shown as suffix in text mode, and as a `code` field in structured mode.
-    pub fn with_code(self, code: &'a str) -> Self {
-        Self {
-            code: Some(code),
-            ..self
         }
     }
 }
@@ -74,11 +57,7 @@ impl<'a> Message for TypedMessage<'a> {
                 self.type_style
                     .map(Style::from_dotted_str)
                     .unwrap_or_default()
-                    .apply_to(format!(
-                        "{}{}",
-                        self.r#type,
-                        self.code.map(|c| format!("[{c}]")).unwrap_or_default()
-                    )),
+                    .apply_to(self.r#type),
                 self.message
             )
         }

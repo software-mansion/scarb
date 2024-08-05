@@ -1,22 +1,14 @@
 use assert_fs::TempDir;
 use snapbox::cmd::{cargo_bin, Command};
-use std::env;
-use std::path::PathBuf;
 
 use scarb_metadata::MetadataCommand;
-
-fn scarb_bin() -> PathBuf {
-    env::var_os("SCARB_TEST_BIN")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| cargo_bin("scarb"))
-}
 
 #[test]
 fn empty_project() {
     let t = TempDir::new().unwrap();
 
     let result = MetadataCommand::new()
-        .scarb_path(scarb_bin())
+        .scarb_path(cargo_bin("scarb"))
         .current_dir(t.path())
         .inherit_stderr()
         .exec();
@@ -33,7 +25,7 @@ fn sample_project() {
     init_project(&t);
 
     MetadataCommand::new()
-        .scarb_path(scarb_bin())
+        .scarb_path(cargo_bin("scarb"))
         .current_dir(t.path())
         .inherit_stderr()
         .exec()
@@ -46,7 +38,7 @@ fn no_deps() {
     init_project(&t);
 
     MetadataCommand::new()
-        .scarb_path(scarb_bin())
+        .scarb_path(cargo_bin("scarb"))
         .no_deps()
         .current_dir(t.path())
         .inherit_stderr()
@@ -60,7 +52,7 @@ fn manifest_path() {
     init_project(&t);
 
     MetadataCommand::new()
-        .scarb_path(scarb_bin())
+        .scarb_path(cargo_bin("scarb"))
         .manifest_path(t.join("Scarb.toml").as_path())
         .inherit_stderr()
         .exec()
@@ -68,7 +60,7 @@ fn manifest_path() {
 }
 
 fn init_project(t: &TempDir) {
-    Command::new(scarb_bin())
+    Command::new(cargo_bin("scarb"))
         .args(["init", "--name", "hello"])
         .current_dir(t)
         .assert()

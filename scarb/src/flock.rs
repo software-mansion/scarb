@@ -148,9 +148,8 @@ pub struct AdvisoryLock<'f> {
     config: &'f Config,
 }
 
-pub struct AdvisoryLockGuard {
-    _inner: Arc<FileLockGuard>,
-}
+#[derive(Debug)]
+pub struct AdvisoryLockGuard(Arc<FileLockGuard>);
 
 impl<'f> AdvisoryLock<'f> {
     /// Acquires this advisory lock in an async manner.
@@ -173,9 +172,7 @@ impl<'f> AdvisoryLock<'f> {
                 arc
             }
         };
-        Ok(AdvisoryLockGuard {
-            _inner: file_lock_arc,
-        })
+        Ok(AdvisoryLockGuard(file_lock_arc))
     }
 }
 

@@ -12,7 +12,6 @@ pub fn read_lockfile(ws: &Workspace<'_>) -> Result<Lockfile> {
         .read(true)
         .write(true)
         .create(true)
-        .truncate(false)
         .open(ws.lockfile_path())
         .context("failed to open lockfile")?;
 

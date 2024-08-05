@@ -31,25 +31,7 @@ fn can_build_release() {
         .args(["--release", "build"])
         .current_dir(&t)
         .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-            [..]Compiling hello v1.0.0 ([..])
-            warn: artefacts produced by this build may be hard to utilize due to the build configuration
-            please make sure your build configuration is correct
-            help: if you want to use your build with a specialized tool that runs Sierra code (for
-            instance with a test framework like Forge), please make sure all required dependencies
-            are specified in your package manifest.
-            help: if you want to compile a Starknet contract, make sure to use the `starknet-contract`
-            target, by adding following excerpt to your package manifest
-            -> Scarb.toml
-                [[target.starknet-contract]]
-            help: if you want to read the generated Sierra code yourself, consider enabling
-            the debug names, by adding the following excerpt to your package manifest.
-            -> Scarb.toml
-                [cairo]
-                sierra-replace-ids = true
-            [..]Finished release target(s) in [..]
-        "#});
+        .success();
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "release"]);
     assert_eq!(t.child("target/release").files(), vec!["hello.sierra.json"]);
@@ -58,16 +40,7 @@ fn can_build_release() {
 #[test]
 fn defaults_to_dev() {
     let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .manifest_extra(indoc! {r#"
-            [profile.release]
-            inherits = "dev"
-            
-            [profile.dev]
-            inherits = "dev"
-        "#})
-        .build(&t);
+    ProjectBuilder::start().name("hello").build(&t);
 
     let metadata = Scarb::quick_snapbox()
         .args(["--json", "metadata", "--format-version", "1"])
@@ -317,7 +290,7 @@ fn can_use_shortcuts_in_scripts() {
 }
 
 #[test]
-fn compiler_config_defaults_in_dev() {
+fn sierra_replace_ids_defaults_true_in_dev() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
 
@@ -335,14 +308,6 @@ fn compiler_config_defaults_in_dev() {
             .unwrap()
             .as_bool()
             .unwrap());
-        assert_eq!(
-            compiler_config
-                .get("inlining_strategy")
-                .unwrap()
-                .as_str()
-                .unwrap(),
-            "default"
-        );
     }
 }
 
@@ -384,7 +349,6 @@ fn compiler_config_set_for_all_profiles() {
             r#"
             [cairo]
             sierra-replace-ids = true
-            inlining-strategy = "avoid"
 
             [profile.some-profile]
             "#,
@@ -405,14 +369,6 @@ fn compiler_config_set_for_all_profiles() {
             .unwrap()
             .as_bool()
             .unwrap());
-        assert_eq!(
-            compiler_config
-                .get("inlining_strategy")
-                .unwrap()
-                .as_str()
-                .unwrap(),
-            "avoid"
-        );
     }
 
     let metadata = Scarb::quick_snapbox()
@@ -429,14 +385,6 @@ fn compiler_config_set_for_all_profiles() {
             .unwrap()
             .as_bool()
             .unwrap());
-        assert_eq!(
-            compiler_config
-                .get("inlining_strategy")
-                .unwrap()
-                .as_str()
-                .unwrap(),
-            "avoid"
-        );
     }
 
     let metadata = Scarb::quick_snapbox()
@@ -460,14 +408,6 @@ fn compiler_config_set_for_all_profiles() {
             .unwrap()
             .as_bool()
             .unwrap());
-        assert_eq!(
-            compiler_config
-                .get("inlining_strategy")
-                .unwrap()
-                .as_str()
-                .unwrap(),
-            "avoid"
-        );
     }
 }
 
@@ -652,11 +592,7 @@ fn profile_overrides_tool() {
 
             [profile.release.tool.snforge]
             some-key = "some-other-value"
-
-            [profile.newprof]
-            inherits = "release"
         "#})
-        .dep_cairo_test()
         .build(&t);
     let metadata = Scarb::quick_snapbox()
         .args(["--json", "metadata", "--format-version", "1"])
@@ -665,12 +601,8 @@ fn profile_overrides_tool() {
 
     assert_eq!(metadata.current_profile, "dev".to_string());
     assert_eq!(metadata.packages.len(), 3);
-    let package = metadata
-        .packages
-        .iter()
-        .find(|pkg| pkg.name.starts_with("hello"))
-        .cloned()
-        .unwrap();
+
+    let package = metadata.packages[1].clone();
     assert_eq!(
         package
             .manifest_metadata
@@ -686,24 +618,14 @@ fn profile_overrides_tool() {
     );
 
     let metadata = Scarb::quick_snapbox()
-        .args([
-            "--json",
-            "--profile=newprof",
-            "metadata",
-            "--format-version",
-            "1",
-        ])
+        .args(["--json", "--release", "metadata", "--format-version", "1"])
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
-    assert_eq!(metadata.current_profile, "newprof".to_string());
+    assert_eq!(metadata.current_profile, "release".to_string());
     assert_eq!(metadata.packages.len(), 3);
-    let package = metadata
-        .packages
-        .iter()
-        .find(|pkg| pkg.name.starts_with("hello"))
-        .cloned()
-        .unwrap();
+
+    let package = metadata.packages[1].clone();
     assert_eq!(
         package
             .manifest_metadata
@@ -716,60 +638,5 @@ fn profile_overrides_tool() {
             .as_str()
             .unwrap(),
         "some-other-value"
-    );
-}
-
-#[test]
-fn tools_can_be_merged_recursively() {
-    let t = TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .manifest_extra(indoc! {r#"
-            [tool.something.a]
-            key = "value"
-
-            [profile.release]
-            inherits = "dev"
-
-            [profile.release.tool.something]
-            merge-strategy = "merge"
-            b = "some-value"
-        "#})
-        .build(&t);
-
-    let metadata = Scarb::quick_snapbox()
-        .args([
-            "--json",
-            "--profile=release",
-            "metadata",
-            "--format-version",
-            "1",
-        ])
-        .current_dir(&t)
-        .stdout_json::<Metadata>();
-    let package = metadata
-        .packages
-        .iter()
-        .find(|pkg| pkg.name.starts_with("hello"))
-        .cloned()
-        .unwrap();
-    assert_eq!(
-        package
-            .manifest_metadata
-            .tool
-            .unwrap()
-            .get("something")
-            .unwrap()
-            .as_object()
-            .unwrap()
-            .get("a")
-            .unwrap()
-            .as_object()
-            .unwrap()
-            .get("key")
-            .unwrap()
-            .as_str()
-            .unwrap(),
-        "value"
     );
 }

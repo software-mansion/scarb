@@ -7,10 +7,7 @@ use itertools::Itertools;
 use crate::core::{edition_variant, Config, PackageName};
 use crate::internal::fsx;
 use crate::internal::restricted_names;
-use crate::subcommands::get_env_vars;
 use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
-use scarb_build_metadata::SCARB_VERSION;
-use std::process::{Command, Stdio};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum VersionControl {
@@ -23,7 +20,6 @@ pub struct InitOptions {
     pub path: Utf8PathBuf,
     pub name: Option<PackageName>,
     pub vcs: VersionControl,
-    pub snforge: bool,
 }
 
 #[derive(Debug)]
@@ -50,7 +46,6 @@ pub fn new_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
             path: opts.path.clone(),
             name: name.clone(),
             version_control: opts.vcs,
-            snforge: opts.snforge,
         },
         config,
     )
@@ -72,7 +67,6 @@ pub fn init_package(opts: InitOptions, config: &Config) -> Result<NewResult> {
             path: opts.path,
             name: name.clone(),
             version_control: opts.vcs,
-            snforge: opts.snforge,
         },
         config,
     )
@@ -119,7 +113,6 @@ struct MkOpts {
     path: Utf8PathBuf,
     name: PackageName,
     version_control: VersionControl,
-    snforge: bool,
 }
 
 fn mk(
@@ -127,14 +120,13 @@ fn mk(
         path,
         name,
         version_control,
-        snforge,
     }: MkOpts,
     config: &Config,
 ) -> Result<()> {
     // Create project directory in case we are called from `new` op.
     fsx::create_dir_all(&path)?;
 
-    let canonical_path = fsx::canonicalize_utf8(&path).unwrap_or(path.clone());
+    let canonical_path = fsx::canonicalize_utf8(&path).unwrap_or(path);
 
     init_vcs(&canonical_path, version_control)?;
     write_vcs_ignore(&canonical_path, config, version_control)?;
@@ -142,15 +134,6 @@ fn mk(
     // Create the `Scarb.toml` file.
     let manifest_path = canonical_path.join(MANIFEST_FILE_NAME);
     let edition = edition_variant(Edition::latest());
-    let dev_deps = if snforge {
-        String::new()
-    } else {
-        formatdoc! {r#"
-
-            [dev-dependencies]
-            cairo_test = "{SCARB_VERSION}"
-        "#}
-    };
     fsx::write(
         &manifest_path,
         formatdoc! {r#"
@@ -162,7 +145,7 @@ fn mk(
             # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
             [dependencies]
-        "#} + &dev_deps,
+        "#},
     )?;
 
     // Create hello world source files (with respective parent directories) if none exist.
@@ -173,20 +156,22 @@ fn mk(
         fsx::write(
             source_path,
             indoc! {r#"
-                fn main() -> u32 {
+                fn main() -> felt252 {
                     fib(16)
                 }
 
-                fn fib(mut n: u32) -> u32 {
-                    let mut a: u32 = 0;
-                    let mut b: u32 = 1;
-                    while n != 0 {
+                fn fib(mut n: felt252) -> felt252 {
+                    let mut a: felt252 = 0;
+                    let mut b: felt252 = 1;
+                    loop {
+                        if n == 0 {
+                            break a;
+                        }
                         n = n - 1;
                         let temp = b;
                         b = a + b;
                         a = temp;
-                    };
-                    a
+                    }
                 }
 
                 #[cfg(test)]
@@ -209,27 +194,6 @@ fn mk(
             {err:?}
         "#})
     }
-
-    if snforge {
-        init_snforge(name, canonical_path, config)?;
-    }
-
-    Ok(())
-}
-
-fn init_snforge(name: PackageName, target_dir: Utf8PathBuf, config: &Config) -> Result<()> {
-    let target_dir = target_dir.parent().context("package must have a parent")?;
-    let mut process = Command::new("snforge")
-        .arg("init")
-        .arg(name.as_str())
-        .current_dir(target_dir)
-        .envs(get_env_vars(config, None)?)
-        .stderr(Stdio::inherit())
-        .stdout(Stdio::inherit())
-        .spawn()
-        .context("failed to spawn snforge")?;
-
-    process.wait().context("failed to execute snforge")?;
 
     Ok(())
 }

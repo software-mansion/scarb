@@ -15,7 +15,7 @@ use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::LocalRegistry;
 use test_for_each_example::test_for_each_example;
 
-#[test_for_each_example(ignore = "dependencies")]
+#[test_for_each_example]
 fn create_lockfile_simple(example: &Path) {
     let t = TempDir::new().unwrap();
 

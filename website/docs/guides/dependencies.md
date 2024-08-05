@@ -31,8 +31,7 @@ Actually this is how the OpenZeppelin Contracts for Cairo library is released, s
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.7.0-rc.0" }
 ```
 
-Note, that if you want to add more dependencies, you do not have to add `[dependencies]` for each package separately.
-For example:
+Note, that if you want to add more dependencies, you do not have to add `[dependencies]` for each package separately. For example:
 
 ```toml
 [dependencies]

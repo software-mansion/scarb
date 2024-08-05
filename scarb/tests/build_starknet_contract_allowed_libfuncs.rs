@@ -39,9 +39,7 @@ fn default_behaviour() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        // NOTE: we cannot use `check` here, because without full compilation
-        // we cannot predict what libfuncs would be generated
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .success()
@@ -73,7 +71,7 @@ fn check_true() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .success()
@@ -105,10 +103,7 @@ fn check_false() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        // NOTE: we cannot use `check` here, because without full compilation
-        // we cannot predict what libfuncs would be generated
-        // Also, `check` subcommand would not check if the libfuncs warning doesn't appear
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .success()
@@ -139,9 +134,7 @@ fn deny_true() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        // NOTE: we cannot use `check` here, because without full compilation
-        // we cannot predict what libfuncs would be generated
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .failure()
@@ -170,9 +163,7 @@ fn pass_named_list() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        // NOTE: we cannot use `check` here, because without full compilation
-        // we cannot predict what libfuncs would be generated
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .success()
@@ -197,9 +188,7 @@ fn unknown_list_name() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        // NOTE: we cannot use `check` here, because without full compilation
-        // we cannot predict what libfuncs would be generated
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .failure()
@@ -233,9 +222,7 @@ fn list_path() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        // NOTE: we cannot use `check` here, because without full compilation
-        // we cannot predict what libfuncs would be generated
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .success()
@@ -263,9 +250,7 @@ fn list_path_does_not_exist() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        // NOTE: we cannot use `check` here, because without full compilation
-        // we cannot predict what libfuncs would be generated
-        .arg("build")
+        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
         .current_dir(&t)
         .assert()
         .failure()

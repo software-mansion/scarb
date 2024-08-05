@@ -8,20 +8,17 @@ authors.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+assert_fs.workspace = true
 cairo-lang-runner.workspace = true
 cairo-lang-sierra.workspace = true
 camino.workspace = true
 clap.workspace = true
 indoc.workspace = true
-num-bigint.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde.workspace = true
 serde_json.workspace = true
-starknet-types-core.workspace = true
-thiserror.workspace = true
 
 [dev-dependencies]
 scarb-test-support = { path = "../../utils/scarb-test-support" }
 snapbox.workspace = true
-assert_fs.workspace = true

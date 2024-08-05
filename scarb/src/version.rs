@@ -132,7 +132,7 @@ pub fn get() -> VersionInfo {
     };
 
     static SIERRA_VERSION: Lazy<String> = Lazy::new(|| {
-        cairo_lang_starknet_classes::compiler_version::current_sierra_version_id().to_string()
+        cairo_lang_starknet::compiler_version::current_sierra_version_id().to_string()
     });
 
     let sierra = SierraVersionInfo {

@@ -213,7 +213,6 @@ fn edit_records(records_path: &Path, func: impl FnOnce(&mut IndexRecords)) -> Re
         .read(true)
         .write(true)
         .create(true)
-        .truncate(false)
         .open(records_path)
         .context("failed to open file")?;
 

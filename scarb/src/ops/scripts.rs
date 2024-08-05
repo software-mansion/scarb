@@ -25,8 +25,7 @@ pub fn execute_script(
         (
             "scarb".to_string(),
             Rc::new(ExecutableCommand::new(
-                "scarb".to_string(),
-                ws.config().app_exe()?.to_path_buf(),
+                ws.config().app_exe()?.display().to_string(),
             )) as Rc<dyn ShellCommand>,
         ),
     ]);
