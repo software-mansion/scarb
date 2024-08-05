@@ -1,8 +1,10 @@
 //! Run `UPDATE_EXPECT=1 cargo test` to fix the tests.
 
+use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
 use expect_test::expect_file;
 use indoc::indoc;
+use multizip;
 use std::fs;
 use std::iter::zip;
 use walkdir::WalkDir;
@@ -11,107 +13,35 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx;
 use scarb_test_support::project_builder::ProjectBuilder;
 
-const CODE: &str = indoc! {
-    r#"
-        //! Fibonacci sequence calculator
+const EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH: &str = "tests/data/hello_world_no_features";
+const EXPECTED_ROOT_PACKAGE_WITH_FEATURES_PATH: &str = "tests/data/hello_world_with_features";
+const EXPECTED_ROOT_PACKAGE_WITHOUT_FEATURES_PATH: &str = "tests/data/hello_world_without_features";
+const EXPECTED_SUB_PACKAGE_NO_FEATURES_PATH: &str =
+    "tests/data/hello_world_sub_package_no_features";
+const EXPECTED_SUB_PACKAGE_WITH_FEATURES_PATH: &str =
+    "tests/data/hello_world_sub_package_with_features";
+const EXPECTED_SUB_PACKAGE_WITHOUT_FEATURES_PATH: &str =
+    "tests/data/hello_world_sub_package_without_features";
 
+const TARGET_ROOT_PACKAGE_PATH: &str = "target/doc/hello_world";
+const TARGET_SUB_PACKAGE_PATH: &str = "target/doc/hello_world_sub_package";
 
-        /// Main function that calculates the 16th Fibonacci number
-        fn main() -> u32 {
-            fib(16)
-        }
+const ROOT_PACKAGE_NAME: &str = "hello_world";
+const SUB_PACKAGE_NAME: &str = "hello_world_sub_package";
 
-        /// use into_trait
-        use core::traits::Into as into_trait;
-        use core::traits::TryInto;
+const FEATURE_NAME: &str = "test_feature";
 
-        /// FOO constant with value 42
-        const FOO: u32 = 42;
-
-        /// Calculate the nth Fibonacci number
-        ///
-        /// # Arguments
-        /// * `n` - The index of the Fibonacci number to calculate
-        ///
-        fn fib(mut n: u32) -> u32 {
-            let mut a: u32 = 0;
-            let mut b: u32 = 1;
-            while n != 0 {
-                n = n - 1;
-                let temp = b;
-                b = a + b;
-                a = temp;
-            };
-            a
-        }
-
-        /// Pair type alias for a tuple of two u32 values
-        type Pair = (u32, u32);
-
-        /// Color enum with Red, Green, and Blue variants
-        enum Color {
-            /// Red color
-            Red: (),
-            /// Green color
-            Green: (),
-            /// Blue color
-            Blue: (),
-        }
-
-        /// Shape trait for objects that have an area
-        trait Shape<T> {
-            /// Constant for the shape type
-            const SHAPE_CONST: felt252;
-
-            /// Type alias for a pair of shapes
-            type ShapePair;
-
-            /// Calculate the area of the shape
-            fn area(self: T) -> u32;
-        }
-
-        /// Circle struct with radius field
-        #[derive(Drop, Serde, PartialEq)]
-        struct Circle {
-            /// Radius of the circle
-            radius: u32,
-        }
-
-        /// Implementation of the Shape trait for Circle
-        impl CircleShape of Shape<Circle> {
-            /// Type alias for a pair of circles
-            type ShapePair = (Circle, Circle);
-
-            /// Shape constant
-            const SHAPE_CONST: felt252 = 'xyz';
-
-            /// Implementation of the area method for Circle
-            fn area(self: Circle) -> u32 {
-                3 * self.radius * self.radius
-            }
-        }
-
-        /// Tests module
-        mod tests {
-            /// Imported fib function from the parent module
-            use super::fib as fib_function;
-
-            /// Really
-            #[test]
-            /// works.
-            fn it_works() {
-                assert(fib_function(16) == 987, 'it works!');
-            }
-        }
-    "#
-};
+const FIBONACCI_CODE_WITHOUT_FEATURE: &str = include_str!("code/code_1.cairo");
+const FIBONACCI_CODE_WITH_FEATURE: &str = include_str!("code/code_4.cairo");
+const COMMON_CODE_WITHOUT_FEATURE: &str = include_str!("code/code_2.cairo");
+const COMMON_CODE_WITH_FEATURE: &str = include_str!("code/code_3.cairo");
 
 #[test]
 fn json_output() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
-        .name("hello_world")
-        .lib_cairo(CODE)
+        .name(ROOT_PACKAGE_NAME)
+        .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -131,8 +61,8 @@ fn json_output() {
 fn markdown_output() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
-        .name("hello_world")
-        .lib_cairo(CODE)
+        .name(ROOT_PACKAGE_NAME)
+        .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -143,8 +73,8 @@ fn markdown_output() {
         .success();
 
     for (dir_entry_1, dir_entry_2) in zip(
-        WalkDir::new("tests/data/hello_world").sort_by_file_name(),
-        WalkDir::new(t.path().join("target/doc/hello_world")).sort_by_file_name(),
+        WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(t.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
     ) {
         let dir_entry_1 = dir_entry_1.unwrap();
         let dir_entry_2 = dir_entry_2.unwrap();
@@ -155,6 +85,436 @@ fn markdown_output() {
             let content = fs::read_to_string(dir_entry_2.path()).unwrap();
 
             let expect_file = expect_file![fsx::canonicalize(dir_entry_1.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+    }
+}
+
+#[test]
+fn test_workspace_no_features() {
+    let root_dir = TempDir::new().unwrap();
+    let child_dir = root_dir.child(SUB_PACKAGE_NAME);
+    fs::create_dir(child_dir.path()).expect("Couldn't create a sub package directory.");
+
+    ProjectBuilder::start()
+        .name(ROOT_PACKAGE_NAME)
+        .manifest_extra(format!(
+            indoc! {r#"
+            [workspace]
+            members = ["{}"]
+            "#},
+            SUB_PACKAGE_NAME
+        ))
+        .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
+        .build(&root_dir);
+
+    ProjectBuilder::start()
+        .name(SUB_PACKAGE_NAME)
+        .lib_cairo(COMMON_CODE_WITHOUT_FEATURE)
+        .build(&child_dir);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args(["--output-format", "markdown", "--workspace"])
+        .current_dir(&root_dir)
+        .assert()
+        .success();
+
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+        WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
+        WalkDir::new(EXPECTED_SUB_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
+    ) {
+        let root_dir_entry_expected = dir_entry_1.unwrap();
+        let root_dir_entry = dir_entry_2.unwrap();
+        let sub_package_dir_entry_expected = dir_entry_3.unwrap();
+        let sub_package_dir = dir_entry_4.unwrap();
+
+        if root_dir_entry_expected.file_type().is_file() {
+            assert!(root_dir_entry.file_type().is_file());
+
+            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
+
+            let expect_file =
+                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+
+        if sub_package_dir_entry_expected.file_type().is_file() {
+            assert!(sub_package_dir.file_type().is_file());
+
+            let content = fs::read_to_string(sub_package_dir.path()).unwrap();
+
+            let expect_file =
+                expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+    }
+}
+
+#[test]
+fn test_workspace_without_features_in_manifest() {
+    let root_dir = TempDir::new().unwrap();
+    let child_dir = root_dir.child(SUB_PACKAGE_NAME);
+    fs::create_dir(child_dir.path()).expect("Couldn't create a sub package directory.");
+
+    ProjectBuilder::start()
+        .name(ROOT_PACKAGE_NAME)
+        .manifest_extra(format!(
+            indoc! {r#"
+            [workspace]
+            members = ["{}"]
+            "#},
+            SUB_PACKAGE_NAME
+        ))
+        .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
+        .build(&root_dir);
+
+    ProjectBuilder::start()
+        .name(SUB_PACKAGE_NAME)
+        .lib_cairo(COMMON_CODE_WITHOUT_FEATURE)
+        .build(&child_dir);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args([
+            "--output-format",
+            "markdown",
+            "--workspace",
+            "--features",
+            FEATURE_NAME,
+        ])
+        .current_dir(&root_dir)
+        .assert()
+        .success();
+
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+        WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
+        WalkDir::new(EXPECTED_SUB_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
+    ) {
+        let root_dir_entry_expected = dir_entry_1.unwrap();
+        let root_dir_entry = dir_entry_2.unwrap();
+        let sub_package_dir_entry_expected = dir_entry_3.unwrap();
+        let sub_package_dir = dir_entry_4.unwrap();
+
+        if root_dir_entry_expected.file_type().is_file() {
+            assert!(root_dir_entry.file_type().is_file());
+
+            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
+
+            let expect_file =
+                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+
+        if sub_package_dir_entry_expected.file_type().is_file() {
+            assert!(sub_package_dir.file_type().is_file());
+
+            let content = fs::read_to_string(sub_package_dir.path()).unwrap();
+
+            let expect_file =
+                expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+    }
+}
+
+#[test]
+fn a() {
+    let root_dir = TempDir::new().unwrap();
+
+    let root_project = ProjectBuilder::start()
+        .name(ROOT_PACKAGE_NAME)
+        .manifest_extra(format!(
+            indoc! {r#"
+            [features]
+            test_feature = []
+
+            [workspace]
+            members = ["{}"]
+            "#},
+            SUB_PACKAGE_NAME
+        ))
+        .lib_cairo(FIBONACCI_CODE_WITH_FEATURE);
+
+    root_project.build(&root_dir);
+    let manifest = root_project.render_manifest();
+    println!("{}", manifest);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args([
+            // "--workspace",
+            "--features",
+            "test_feature",
+            // "--output-format",
+            // "markdown",
+        ])
+        .current_dir(&root_dir)
+        .assert()
+        .success();
+
+    // let content = fs::read_to_string(
+    //     root_dir
+    //         .path()
+    //         .join("target/doc/hello_world/src/SUMMARY.md"),
+    // );
+    // println!("{}", content.unwrap());
+    // for dir_entry in WalkDir::new(root_dir.path()).sort_by_file_name() {
+
+    // }
+
+    for (dir_entry_1, dir_entry_2, dir_entry3) in multizip::zip3(
+        WalkDir::new(EXPECTED_ROOT_PACKAGE_WITH_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
+        WalkDir::new(root_dir.path()).sort_by_file_name(),
+        // WalkDir::new(EXPECTED_SUB_PACKAGE_WITH_FEATURES_PATH).sort_by_file_name(),
+        // WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
+    ) {
+        println!("{}", dir_entry3.unwrap().path().display());
+        let root_dir_entry_expected = dir_entry_1.unwrap();
+        let root_dir_entry = dir_entry_2.unwrap();
+        // let sub_package_dir_entry_expected = dir_entry_3.unwrap();
+        // let sub_package_dir = dir_entry_4.unwrap();
+
+        if root_dir_entry_expected.file_type().is_file() {
+            assert!(root_dir_entry.file_type().is_file());
+
+            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
+
+            let expect_file =
+                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+
+        // if sub_package_dir_entry_expected.file_type().is_file() {
+        //     assert!(sub_package_dir.file_type().is_file());
+
+        //     let content = fs::read_to_string(sub_package_dir.path()).unwrap();
+
+        //     let expect_file =
+        //         expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
+        //     expect_file.assert_eq(&content);
+        // }
+    }
+}
+
+#[test]
+fn test_workspace_with_working_feature_in_root_and_sub_package() {
+    let root_dir = TempDir::new().unwrap();
+    // let child_dir = root_dir.child(SUB_PACKAGE_NAME);
+    // fs::create_dir(child_dir.path()).expect("Couldn't create a sub package directory.");
+
+    let root_project = ProjectBuilder::start()
+        .name(ROOT_PACKAGE_NAME)
+        .manifest_extra(format!(
+            indoc! {r#"
+            [features]
+            test_feature = []
+
+            [workspace]
+            members = ["{}"]
+            "#},
+            SUB_PACKAGE_NAME
+        ))
+        .lib_cairo(FIBONACCI_CODE_WITH_FEATURE);
+
+    let manifest = root_project.render_manifest();
+    println!("{}", manifest);
+    root_project.build(&root_dir);
+
+    // ProjectBuilder::start()
+    //     .name(SUB_PACKAGE_NAME)
+    //     .manifest_extra(indoc! {r#"
+    //         [features]
+    //         default = ["test_feature"]
+    //         test_feature = []
+    //         "#})
+    //     .lib_cairo(COMMON_CODE_WITH_FEATURE)
+    //     .build(&child_dir);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args([
+            // "--workspace",
+            "--features",
+            "test_feature",
+            // "--output-format",
+            // "markdown",
+        ])
+        .current_dir(&root_dir)
+        .assert()
+        .success();
+
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+        WalkDir::new(EXPECTED_ROOT_PACKAGE_WITH_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
+        WalkDir::new(EXPECTED_SUB_PACKAGE_WITH_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
+    ) {
+        let root_dir_entry_expected = dir_entry_1.unwrap();
+        let root_dir_entry = dir_entry_2.unwrap();
+        // let sub_package_dir_entry_expected = dir_entry_3.unwrap();
+        // let sub_package_dir = dir_entry_4.unwrap();
+
+        if root_dir_entry_expected.file_type().is_file() {
+            assert!(root_dir_entry.file_type().is_file());
+
+            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
+
+            let expect_file =
+                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+
+        // if sub_package_dir_entry_expected.file_type().is_file() {
+        //     assert!(sub_package_dir.file_type().is_file());
+
+        //     let content = fs::read_to_string(sub_package_dir.path()).unwrap();
+
+        //     let expect_file =
+        //         expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
+        //     expect_file.assert_eq(&content);
+        // }
+    }
+}
+
+#[test]
+fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code() {
+    let root_dir = TempDir::new().unwrap();
+    let child_dir = root_dir.child(SUB_PACKAGE_NAME);
+    fs::create_dir(child_dir.path()).expect("Couldn't create a sub package directory.");
+
+    ProjectBuilder::start()
+        .name(ROOT_PACKAGE_NAME)
+        .manifest_extra(format!(
+            indoc! {r#"
+            [workspace]
+            members = ["{}"]
+            "#},
+            SUB_PACKAGE_NAME
+        ))
+        .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
+        .build(&root_dir);
+
+    ProjectBuilder::start()
+        .name(SUB_PACKAGE_NAME)
+        .lib_cairo(COMMON_CODE_WITH_FEATURE)
+        .build(&child_dir);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args([
+            "--output-format",
+            "markdown",
+            "--workspace",
+            "--features",
+            FEATURE_NAME,
+        ])
+        .current_dir(&root_dir)
+        .assert()
+        .success();
+
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+        WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
+        WalkDir::new(EXPECTED_SUB_PACKAGE_WITHOUT_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
+    ) {
+        let root_dir_entry_expected = dir_entry_1.unwrap();
+        let root_dir_entry = dir_entry_2.unwrap();
+        let sub_package_dir_entry_expected = dir_entry_3.unwrap();
+        let sub_package_dir = dir_entry_4.unwrap();
+
+        if root_dir_entry_expected.file_type().is_file() {
+            assert!(root_dir_entry.file_type().is_file());
+
+            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
+
+            let expect_file =
+                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+
+        if sub_package_dir_entry_expected.file_type().is_file() {
+            assert!(sub_package_dir.file_type().is_file());
+
+            let content = fs::read_to_string(sub_package_dir.path()).unwrap();
+
+            let expect_file =
+                expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+    }
+}
+
+#[test]
+fn test_workspace_without_features_in_manifest_and_present_in_root_package_code() {
+    let root_dir = TempDir::new().unwrap();
+    let child_dir = root_dir.child(SUB_PACKAGE_NAME);
+    fs::create_dir(child_dir.path()).expect("Couldn't create a sub package directory.");
+
+    ProjectBuilder::start()
+        .name(ROOT_PACKAGE_NAME)
+        .manifest_extra(format!(
+            indoc! {r#"
+            [workspace]
+            members = ["{}"]
+            "#},
+            SUB_PACKAGE_NAME
+        ))
+        .lib_cairo(FIBONACCI_CODE_WITH_FEATURE)
+        .build(&root_dir);
+
+    ProjectBuilder::start()
+        .name(SUB_PACKAGE_NAME)
+        .lib_cairo(COMMON_CODE_WITH_FEATURE)
+        .build(&child_dir);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args([
+            "--output-format",
+            "markdown",
+            "--workspace",
+            "--features",
+            FEATURE_NAME,
+        ])
+        .current_dir(&root_dir)
+        .assert()
+        .success();
+
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+        WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
+        WalkDir::new(EXPECTED_SUB_PACKAGE_WITHOUT_FEATURES_PATH).sort_by_file_name(),
+        WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
+    ) {
+        let root_dir_entry_expected = dir_entry_1.unwrap();
+        let root_dir_entry = dir_entry_2.unwrap();
+        let sub_package_dir_entry_expected = dir_entry_3.unwrap();
+        let sub_package_dir = dir_entry_4.unwrap();
+
+        if root_dir_entry_expected.file_type().is_file() {
+            assert!(root_dir_entry.file_type().is_file());
+
+            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
+
+            let expect_file =
+                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
+            expect_file.assert_eq(&content);
+        }
+
+        if sub_package_dir_entry_expected.file_type().is_file() {
+            assert!(sub_package_dir.file_type().is_file());
+
+            let content = fs::read_to_string(sub_package_dir.path()).unwrap();
+
+            let expect_file =
+                expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
             expect_file.assert_eq(&content);
         }
     }

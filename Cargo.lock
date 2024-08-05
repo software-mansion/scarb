@@ -3629,6 +3629,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b52c1b33ff98142aecea13138bd399b68aa7ab5d9546c300988c345004001eea"
 
 [[package]]
+name = "multizip"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1fe13b118613c2f83085b3d0957ac6c4f1039270d8dd732285a948c280cb95e"
+
+[[package]]
 name = "native-tls"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4764,6 +4770,7 @@ dependencies = [
  "expect-test",
  "indoc",
  "itertools 0.12.1",
+ "multizip",
  "salsa",
  "scarb",
  "scarb-metadata 1.12.0",

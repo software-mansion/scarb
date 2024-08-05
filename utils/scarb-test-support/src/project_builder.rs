@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fs;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use assert_fs::fixture::ChildPath;
