@@ -14,6 +14,10 @@ Next step is the package verification.
 After creating an initial archive, Scarb will attempt to unpack it and compile to check for any corruptions in the packaging process.
 If you want to speed up the package process you can disable this step using the `--no-verify` flag.
 
+> [!WARNING]
+> This is a dangerous operation as it can lead to uploading a corrupted package to the registry.
+> Please use with caution.
+
 After successfully passing the whole process, the `{name}-{version}.tar.zst` archive waits in the `target/package` directory for being uploaded, where both `name` and `version` correspond to the values in `Scarb.toml`.
 
 ## Publishing the package
