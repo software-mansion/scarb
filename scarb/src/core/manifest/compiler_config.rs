@@ -26,6 +26,12 @@ pub struct ManifestCompilerConfig {
     /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
     /// This feature is unstable and is subject to change.
     pub unstable_add_statements_functions_debug_info: bool,
+    /// Add a mapping between sierra statement indexes and lines in cairo code
+    /// to debug info. A statement index maps to a vector consisting of a line which caused the
+    /// statement to be generated and all lines that were inlined or generated along the way.
+    /// Used by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
+    /// This feature is unstable and is subject to change.
+    pub unstable_add_statements_code_locations_debug_info: bool,
     // Inlining strategy.
     pub inlining_strategy: InliningStrategy,
 }
@@ -47,6 +53,7 @@ impl DefaultForProfile for ManifestCompilerConfig {
             allow_warnings: true,
             enable_gas: true,
             unstable_add_statements_functions_debug_info: false,
+            unstable_add_statements_code_locations_debug_info: false,
             inlining_strategy: InliningStrategy::default(),
         }
     }
@@ -60,6 +67,9 @@ impl From<ManifestCompilerConfig> for TomlCairo {
             enable_gas: Some(config.enable_gas),
             unstable_add_statements_functions_debug_info: Some(
                 config.unstable_add_statements_functions_debug_info,
+            ),
+            unstable_add_statements_code_locations_debug_info: Some(
+                config.unstable_add_statements_code_locations_debug_info,
             ),
             inlining_strategy: Some(config.inlining_strategy),
         }

@@ -45,8 +45,11 @@ impl Compiler for TestCompiler {
                 add_statements_functions: unit
                     .compiler_config
                     .unstable_add_statements_functions_debug_info,
+                add_statements_code_locations: unit
+                    .compiler_config
+                    .unstable_add_statements_code_locations_debug_info,
             };
-            compile_test_prepared_db(db, config, main_crate_ids, test_crate_ids)?
+            compile_test_prepared_db(db, config, main_crate_ids, test_crate_ids, false)?
         };
 
         {

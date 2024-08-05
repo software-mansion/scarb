@@ -143,16 +143,34 @@ pub fn collect_tests(
         .context("Compilation failed without any diagnostics")
         .context("Failed to get sierra program")?;
 
-    let debug_annotations = if compilation_unit.unstable_add_statements_functions_debug_info() {
-        Some(Annotations::from(
-            sierra_program
-                .debug_info
-                .statements_locations
-                .extract_statements_functions(db),
-        ))
-    } else {
-        None
-    };
+    let mut debug_annotations: Option<Annotations> = None;
+
+    if compilation_unit.unstable_add_statements_functions_debug_info() {
+        if let Some(annotations) = &mut debug_annotations {
+            annotations.extend(
+                Annotations::from(
+                    sierra_program
+                        .debug_info
+                        .statements_locations
+                        .extract_statements_functions(db),
+                )
+            );
+        }
+    }
+
+    if compilation_unit.unstable_add_statements_code_locations_debug_info() {
+        if let Some(annotations) = &mut debug_annotations {
+            annotations.extend(
+                Annotations::from(
+                    sierra_program
+                        .debug_info
+                        .statements_locations
+                        .extract_statements_source_code_locations(db),
+                    )
+            );
+        }
+    }
+
     let debug_info = debug_annotations.map(|annotations| DebugInfo {
         type_names: Default::default(),
         executables: Default::default(),
