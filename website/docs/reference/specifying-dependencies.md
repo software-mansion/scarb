@@ -3,13 +3,15 @@
 Your packages can depend on other libraries from registries, Git repositories, or subdirectories on your local file system.
 
 ## Specifying dependencies from official registry
+
 You can see the list of available packages in the official [scarbs.xyz](https://scarbs.xyz) registry by visiting the website.
-To depend on a package located in the registry, you need to specify the package name and the version requirement: 
+To depend on a package located in the registry, you need to specify the package name and the version requirement:
 
 ```toml
 [dependencies]
 alexandria_math = "0.1.0"
 ```
+
 Unlike other dependency types, it is required to specify the version requirement for packages from the registry.
 
 ## Specifying dependencies from Git repositories
@@ -108,6 +110,7 @@ be necessary most of the time.
 
 By default, Scarb uses the official registry as a package source.
 Therefore, Scarb will look for the package in the official registry if only the `version` key is specified.
+
 ```toml
 [dependencies]
 alexandria_math = { version = "0.1.0" }
