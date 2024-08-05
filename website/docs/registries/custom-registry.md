@@ -1,6 +1,6 @@
 # Hosting a registry
 
-Although official registry is in development, we want you to have an option to host your own.
+Although Scarb uses the official [scarbs.xyz](https://scarbs.xyz) registry by default, we provide you with the option to host your own.
 You just need to implement an interface imposed by Scarb.
 
 ## Basic package registry
