@@ -1,14 +1,13 @@
+use assert_fs::prelude::*;
+use assert_fs::TempDir;
+use serde::de::DeserializeOwned;
+use snapbox::cmd::Command as SnapboxCommand;
 use std::ffi::OsString;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
+use std::sync::LazyLock;
 use std::{fs, iter};
-
-use assert_fs::prelude::*;
-use assert_fs::TempDir;
-use once_cell::sync::Lazy;
-use serde::de::DeserializeOwned;
-use snapbox::cmd::Command as SnapboxCommand;
 
 use crate::cargo::cargo_bin;
 use scarb::core::Config;
@@ -55,12 +54,13 @@ impl Scarb {
         cmd.env("SCARB_LOG", self.log);
         cmd.env("SCARB_CACHE", self.cache.path());
         cmd.env("SCARB_CONFIG", self.config.path());
+        cmd.env("SCARB_INIT_TEST_RUNNER", "cairo-test");
         cmd
     }
 
     pub fn isolate_from_extensions(self) -> Self {
         // NOTE: We keep TempDir instance in static, so that it'll be dropped when program ends.
-        static ISOLATE: Lazy<(PathBuf, TempDir)> = Lazy::new(|| {
+        static ISOLATE: LazyLock<(PathBuf, TempDir)> = LazyLock::new(|| {
             let t = TempDir::new().unwrap();
             let source_bin = cargo_bin("scarb");
             let output_bin = t.child(source_bin.file_name().unwrap()).to_path_buf();
@@ -136,6 +136,7 @@ impl CommandExt for SnapboxCommand {
                 Err(_) => continue,
             }
         }
+        // help: make sure that the command outputs NDJSON (`--json` flag).
         panic!("Failed to deserialize stdout to JSON");
     }
 }

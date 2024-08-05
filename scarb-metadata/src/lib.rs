@@ -119,7 +119,6 @@ fn profiles_default() -> Vec<String> {
 #[cfg_attr(feature = "builder", builder(setter(into)))]
 #[non_exhaustive]
 pub struct Metadata {
-    // NOTE: This field must always be first! `MetadataCommand` is assuming this.
     /// The metadata format version.
     ///
     /// This struct will not deserialize if version does not match.
@@ -231,10 +230,22 @@ pub struct PackageMetadata {
     #[serde(flatten)]
     pub manifest_metadata: ManifestMetadata,
 
+    /// Compiler experimental features allowed for this package.
+    #[serde(default)]
+    pub experimental_features: Vec<String>,
+
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
+}
+
+/// Dependency kind.
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum DepKind {
+    /// Development dependency.
+    Dev,
 }
 
 /// Scarb package dependency specification.
@@ -252,6 +263,8 @@ pub struct DependencyMetadata {
     pub version_req: VersionReq,
     /// Package source.
     pub source: SourceId,
+    /// Dependency kind. None denotes normal dependency.
+    pub kind: Option<DepKind>,
 
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]
@@ -338,6 +351,11 @@ pub struct CompilationUnitComponentMetadata {
     pub name: String,
     /// Path to the root Cairo source file.
     pub source_path: Utf8PathBuf,
+    /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this component.
+    ///
+    /// If not specified, the one from `CompilationUnit` will be used.
+    #[serde(default)]
+    pub cfg: Option<Vec<Cfg>>,
 
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]

@@ -1,11 +1,10 @@
-use std::fmt;
-use std::path::Path;
-
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
-use once_cell::sync::Lazy;
 use serde_json::json;
+use std::fmt;
+use std::path::Path;
+use std::sync::LazyLock;
 use tokio::runtime;
 
 use crate::registry::local::LocalRegistry;
@@ -13,7 +12,7 @@ use crate::simple_http_server::SimpleHttpServer;
 
 // Keep a global multi-threading runtime to contain all running servers in one shared
 // thread pool, while maintaining synchronous nature of tests.
-static RUNTIME: Lazy<runtime::Runtime> = Lazy::new(|| {
+static RUNTIME: LazyLock<runtime::Runtime> = LazyLock::new(|| {
     runtime::Builder::new_multi_thread()
         .worker_threads(1)
         .enable_all()
@@ -45,7 +44,7 @@ impl HttpRegistry {
         });
         local
             .t
-            .child("config.json")
+            .child("api/v1/index/config.json")
             .write_str(&serde_json::to_string(&config).unwrap())
             .unwrap();
 

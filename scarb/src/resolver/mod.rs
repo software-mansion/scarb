@@ -3,13 +3,14 @@ use std::collections::HashMap;
 use anyhow::{bail, Result};
 use indoc::{formatdoc, indoc};
 use petgraph::graphmap::DiGraphMap;
-use scarb_ui::Ui;
+use std::collections::HashSet;
 
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::resolver::{DependencyEdge, Resolve};
 use crate::core::{
-    DepKind, DependencyVersionReq, ManifestDependency, PackageId, Summary, TargetKind,
+    DepKind, DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, Summary,
+    TargetKind,
 };
 
 /// Builds the list of all packages required to build the first argument.
@@ -36,11 +37,14 @@ pub async fn resolve(
     summaries: &[Summary],
     registry: &dyn Registry,
     lockfile: Lockfile,
-    ui: Ui,
 ) -> Result<Resolve> {
     // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
 
+    let main_packages = summaries
+        .iter()
+        .map(|sum| sum.package_id)
+        .collect::<HashSet<PackageId>>();
     let mut packages: HashMap<_, _> = HashMap::from_iter(
         summaries
             .iter()
@@ -59,7 +63,10 @@ pub async fn resolve(
         for package_id in queue {
             graph.add_node(package_id);
 
-            for dep in summaries[&package_id].clone().full_dependencies() {
+            let summary = summaries[&package_id].clone();
+            let dep_filter =
+                DependencyFilter::propagation(main_packages.contains(&summary.package_id));
+            for dep in summary.filtered_full_dependencies(dep_filter) {
                 let dep = rewrite_dependency_source_id(registry, &package_id, dep).await?;
 
                 let locked_package_id = lockfile.packages_matching(dep.clone());
@@ -80,15 +87,6 @@ pub async fn resolve(
                     DepKind::Target(target_kind) => Some(target_kind),
                 };
                 let dep = dep_summary.package_id;
-
-                if !(dep_summary.target_kinds.contains(&TargetKind::CAIRO_PLUGIN)
-                    || dep_summary.target_kinds.contains(&TargetKind::LIB))
-                {
-                    ui.warn(format!(
-                        "{} ignoring invalid dependency `{}` which is missing a lib or cairo-plugin target",
-                        package_id, dep.name
-                    ));
-                }
 
                 if let Some(existing) = packages.get(dep.name.as_ref()) {
                     if existing.source_id != dep.source_id {
@@ -129,7 +127,8 @@ pub async fn resolve(
     // Detect incompatibilities and bail in case ones are found.
     let mut incompatibilities = Vec::new();
     for from_package in graph.nodes() {
-        for manifest_dependency in summaries[&from_package].full_dependencies() {
+        let dep_filter = DependencyFilter::propagation(main_packages.contains(&from_package));
+        for manifest_dependency in summaries[&from_package].filtered_full_dependencies(dep_filter) {
             let to_package = packages[&manifest_dependency.name];
             if !manifest_dependency.matches_package_id(to_package) {
                 let message = format!(
@@ -205,8 +204,6 @@ mod tests {
     use anyhow::Result;
     use indoc::indoc;
     use itertools::Itertools;
-    use scarb_ui::Verbosity::Verbose;
-    use scarb_ui::{OutputFormat, Ui};
     use semver::Version;
     use similar_asserts::assert_serde_eq;
     use tokio::runtime::Builder;
@@ -290,8 +287,7 @@ mod tests {
             .collect_vec();
 
         let lockfile = Lockfile::new(locks.iter().cloned());
-        let ui = Ui::new(Verbose, OutputFormat::Text);
-        runtime.block_on(super::resolve(&summaries, &registry, lockfile, ui))
+        runtime.block_on(super::resolve(&summaries, &registry, lockfile))
     }
 
     fn package_id<S: AsRef<str>>(name: S) -> PackageId {
@@ -453,8 +449,8 @@ mod tests {
             // TODO(#2): Expected result is commented out.
             // Ok(pkgs![
             //     "bar v1.1.1",
-            //     "baz v1.8.0",
-            //     "foo v2.9.0"
+            //     "baz v1.7.1",
+            //     "foo v2.7.0"
             // ]),
             Err(indoc! {"
             Version solving failed:

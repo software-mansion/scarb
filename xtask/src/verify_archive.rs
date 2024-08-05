@@ -43,7 +43,7 @@ pub fn main(args: Args) -> Result<()> {
 
     let workdir = sh.create_temp_dir()?;
     sh.change_dir(workdir.path());
-    cmd!(sh, "{scarb} new smoke_test").run()?;
+    cmd!(sh, "{scarb} new smoke_test --test-runner=cairo-test").run()?;
     sh.change_dir(workdir.path().join("smoke_test"));
     cmd!(sh, "{scarb} build").run()?;
     cmd!(sh, "{scarb} test").run()?;

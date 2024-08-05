@@ -4,10 +4,11 @@ use std::str::FromStr;
 
 use anyhow::{Context, Result};
 use camino::Utf8Path;
-use toml_edit::Document;
+use toml_edit::DocumentMut;
 
 pub use add::AddDependency;
 pub use dep_id::DepId;
+pub use dep_type::{DepType, SectionArgs};
 pub use remove::RemoveDependency;
 
 use crate::core::Config;
@@ -15,11 +16,12 @@ use crate::internal::fsx;
 
 mod add;
 mod dep_id;
+mod dep_type;
 mod remove;
 mod tomlx;
 
 pub trait Op {
-    fn apply_to(self: Box<Self>, doc: &mut Document, ctx: OpCtx<'_>) -> Result<()>;
+    fn apply_to(self: Box<Self>, doc: &mut DocumentMut, ctx: OpCtx<'_>) -> Result<()>;
 }
 
 pub struct OpCtx<'c> {
@@ -42,7 +44,7 @@ pub fn edit(
     let manifest_path = fsx::canonicalize_utf8(manifest_path)?;
 
     let original_raw_manifest = fsx::read_to_string(&manifest_path)?;
-    let mut doc = Document::from_str(&original_raw_manifest)
+    let mut doc = DocumentMut::from_str(&original_raw_manifest)
         .with_context(|| format!("failed to read manifest at: {manifest_path}"))?;
 
     for op in ops {

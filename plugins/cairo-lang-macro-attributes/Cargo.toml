@@ -1,0 +1,20 @@
+[package]
+name = "cairo-lang-macro-attributes"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+categories = ["development-tools"]
+description = "Cairo procedural macro interface primitives."
+homepage.workspace = true
+keywords = ["scarb"]
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote.workspace = true
+syn = { workspace = true, features = ["full", "extra-traits"] }
+scarb-stable-hash = "1"

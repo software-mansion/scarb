@@ -7,23 +7,51 @@ use std::ffi::OsString;
 
 use anyhow::Result;
 use camino::Utf8PathBuf;
-use clap::{CommandFactory, Parser, Subcommand};
-use scarb::ops::EmitTarget;
+use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use smol_str::SmolStr;
-use tracing::level_filters::LevelFilter;
-use tracing_log::AsTrace;
 use url::Url;
 
 use scarb::compiler::Profile;
 use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
+use scarb::manifest_editor::SectionArgs;
 use scarb::version;
-use scarb_ui::args::PackagesFilter;
+use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use scarb_ui::OutputFormat;
 
 /// The Cairo package manager.
 #[derive(Parser, Clone, Debug)]
-#[command(author, version = version::get().short(), long_version = version::get().long())]
+#[command(
+    author,
+    version = version::get().short(),
+    long_version = version::get().long(),
+    help_template = "\
+{name} {version}
+{author-with-newline}{about-with-newline}
+Use -h for short descriptions and --help for more details.
+
+{before-help}{usage-heading} {usage}
+
+{all-args}{after-help}
+",
+    long_about = "Scarb is the Cairo package manager. It downloads your package's dependencies, compiles your \
+    projects, and works as an entry point for other tooling to work with your code.",
+    after_help = "Read the docs: https://docs.swmansion.com/scarb/",
+    after_long_help = "\
+Read the docs:
+- Scarb Book: https://docs.swmansion.com/scarb/docs.html
+- Cairo Book: https://book.cairo-lang.org/
+- Starknet Book: https://book.starknet.io/
+- Starknet Documentation: https://docs.starknet.io/
+
+Join the community:
+- Follow us on @swmansionxyz: https://twitter.com/swmansionxyz
+- Chat on Telegram: https://t.me/+1pMLtrNj5NthZWJk
+- Socialize on Starknet's Discord: https://discord.gg/KZWaFtPZJf
+
+Report bugs: https://github.com/software-mansion/scarb/issues/new/choose\
+",
+)]
 pub struct ScarbArgs {
     /// Path to Scarb.toml.
     #[arg(long, env = "SCARB_MANIFEST_PATH", hide_short_help = true)]
@@ -31,7 +59,7 @@ pub struct ScarbArgs {
 
     /// Logging verbosity.
     #[command(flatten)]
-    pub verbose: clap_verbosity_flag::Verbosity,
+    pub verbose: VerbositySpec,
 
     /// Print machine-readable output in NDJSON format.
     #[arg(long)]
@@ -87,18 +115,6 @@ impl ScarbArgs {
         }
     }
 
-    /// Get [`ui::Verbosity`] out of these arguments.
-    pub fn ui_verbosity(&self) -> scarb_ui::Verbosity {
-        let filter = self.verbose.log_level_filter().as_trace();
-        if filter >= LevelFilter::WARN {
-            scarb_ui::Verbosity::Verbose
-        } else if filter > LevelFilter::OFF {
-            scarb_ui::Verbosity::Normal
-        } else {
-            scarb_ui::Verbosity::Quiet
-        }
-    }
-
     pub fn get_builtin_subcommands() -> BTreeMap<String, Option<String>> {
         Self::command()
             .get_subcommands()
@@ -132,9 +148,13 @@ pub enum Command {
     Remove(RemoveArgs),
     /// Compile current project.
     Build(BuildArgs),
+    /// Expand macros.
+    Expand(ExpandArgs),
     /// Manipulate packages cache.
     #[clap(subcommand)]
     Cache(CacheSubcommand),
+    /// Analyze the current package and report errors, but don't build Sierra files.
+    Check(BuildArgs),
     /// Remove generated artifacts.
     Clean,
     /// List installed commands.
@@ -182,6 +202,11 @@ pub enum Command {
     External(Vec<OsString>),
 }
 
+#[derive(ValueEnum, Clone, Debug)]
+pub enum EmitTarget {
+    Stdout,
+}
+
 /// Arguments accepted by the `build` command.
 #[derive(Parser, Clone, Debug)]
 pub struct BuildArgs {
@@ -191,6 +216,41 @@ pub struct BuildArgs {
     /// Build tests.
     #[arg(short, long, default_value_t = false)]
     pub test: bool,
+
+    /// Comma separated list of target names to compile.
+    #[arg(long, value_delimiter = ',', env = "SCARB_TARGET_NAMES")]
+    pub target_names: Vec<String>,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
+}
+
+/// Arguments accepted by the `expand` command.
+#[derive(Parser, Clone, Debug)]
+pub struct ExpandArgs {
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
+
+    /// Specify the target to expand by target kind.
+    #[arg(long)]
+    pub target_kind: Option<String>,
+
+    /// Specify the target to expand by target name.
+    #[arg(long)]
+    pub target_name: Option<String>,
+
+    /// Do not attempt formatting.
+    #[arg(long, default_value_t = false)]
+    pub ugly: bool,
+
+    /// Emit the expanded file to stdout
+    #[arg(short, long)]
+    pub emit: Option<EmitTarget>,
 }
 
 /// Arguments accepted by the `run` command.
@@ -203,9 +263,19 @@ pub struct ScriptsRunnerArgs {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
+    /// Run the script in workspace root only.
+    #[arg(long, default_value_t = false)]
+    pub workspace_root: bool,
+
     /// Arguments to pass to executed script.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,
+}
+
+#[derive(ValueEnum, Clone, Debug)]
+pub enum TestRunner {
+    StarknetFoundry,
+    CairoTest,
 }
 
 /// Arguments accepted by the `init` command.
@@ -218,6 +288,10 @@ pub struct InitArgs {
     /// Do not initialize a new Git repository.
     #[arg(long)]
     pub no_vcs: bool,
+
+    /// Test runner to use. Starts interactive session if not specified.
+    #[arg(long, env = "SCARB_INIT_TEST_RUNNER")]
+    pub test_runner: Option<TestRunner>,
 }
 
 /// Arguments accepted by the `metadata` command.
@@ -229,6 +303,10 @@ pub struct MetadataArgs {
     /// Output information only about the workspace members and don't fetch dependencies.
     #[arg(long)]
     pub no_deps: bool,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Arguments accepted by the `new` command.
@@ -277,6 +355,10 @@ pub struct AddArgs {
     /// _Source_ section.
     #[command(flatten, next_help_heading = "Source")]
     pub source: AddSourceArgs,
+
+    /// _Section_ section.
+    #[command(flatten, next_help_heading = "Section")]
+    pub section: AddSectionArgs,
 }
 
 /// _Source_ section of [`AddArgs`].
@@ -297,6 +379,24 @@ pub struct AddSourceArgs {
     pub git_ref: GitRefGroup,
 }
 
+/// _Section_ section of [`AddArgs`].
+#[derive(Parser, Clone, Debug)]
+pub struct AddSectionArgs {
+    /// Add as development dependency.
+    ///
+    /// Dev-dependencies are only used when compiling tests.
+    ///
+    /// These dependencies are not propagated to other packages which depend on this package.
+    #[arg(long)]
+    pub dev: bool,
+}
+
+impl SectionArgs for AddSectionArgs {
+    fn dev(&self) -> bool {
+        self.dev
+    }
+}
+
 /// Arguments accepted by the `remove` command.
 #[derive(Parser, Clone, Debug)]
 pub struct RemoveArgs {
@@ -310,6 +410,24 @@ pub struct RemoveArgs {
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+
+    /// _Section_ section.
+    #[command(flatten, next_help_heading = "Section")]
+    pub section: RemoveSectionArgs,
+}
+
+/// _Section_ section of [`RemoveArgs`].
+#[derive(Parser, Clone, Debug)]
+pub struct RemoveSectionArgs {
+    /// Remove as development dependency.
+    #[arg(long)]
+    pub dev: bool,
+}
+
+impl SectionArgs for RemoveSectionArgs {
+    fn dev(&self) -> bool {
+        self.dev
+    }
 }
 
 /// Arguments accepted by the `test` command.
@@ -321,6 +439,10 @@ pub struct TestArgs {
     /// Arguments for the test program.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Arguments accepted by both the `package` and the `publish` command.
@@ -342,11 +464,19 @@ pub struct PackageArgs {
     #[arg(short, long)]
     pub list: bool,
 
+    /// Ignore warnings about a lack of human-usable metadata
+    #[arg(long)]
+    pub no_metadata: bool,
+
     #[clap(flatten)]
     pub shared_args: PackageSharedArgs,
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Arguments accepted by the `publish` command.
@@ -361,6 +491,10 @@ pub struct PublishArgs {
 
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 }
 
 /// Git reference specification arguments.

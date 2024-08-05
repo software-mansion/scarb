@@ -5,7 +5,7 @@ use anyhow::{anyhow, Context, Result};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use toml_edit::Document;
+use toml_edit::DocumentMut;
 use typed_builder::TypedBuilder;
 
 use crate::core::{Checksum, ManifestDependency, PackageId, PackageName, Resolve, SourceId};
@@ -103,9 +103,9 @@ impl Lockfile {
             .map(|p| p.try_into())
     }
 
-    fn body(&self) -> Result<Document> {
+    fn body(&self) -> Result<DocumentMut> {
         let doc = toml_edit::ser::to_string_pretty(self)?;
-        let mut doc = doc.parse::<Document>()?;
+        let mut doc = doc.parse::<DocumentMut>()?;
 
         for packages in doc["package"].as_array_of_tables_mut().iter_mut() {
             for pkg in packages.iter_mut() {
@@ -220,7 +220,7 @@ mod tests {
             [[package]]
             name = "first"
             version = "1.0.0"
-            source = "registry+https://there-is-no-default-registry-yet.com/"
+            source = "registry+https://scarbs.xyz/"
             checksum = "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
             dependencies = [
              "fourth",
@@ -229,7 +229,7 @@ mod tests {
             [[package]]
             name = "fourth"
             version = "80.0.85"
-            source = "registry+https://there-is-no-default-registry-yet.com/"
+            source = "registry+https://scarbs.xyz/"
             dependencies = [
              "third",
             ]

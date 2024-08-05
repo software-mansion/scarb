@@ -6,7 +6,8 @@ use camino::Utf8PathBuf;
 use scarb::core::Config;
 use scarb::ops::{self, VersionControl};
 
-use crate::args::InitArgs;
+use crate::args::{InitArgs, TestRunner};
+use crate::interactive::get_or_ask_for_test_runner;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: InitArgs, config: &Config) -> Result<()> {
@@ -24,6 +25,10 @@ pub fn run(args: InitArgs, config: &Config) -> Result<()> {
             } else {
                 VersionControl::Git
             },
+            snforge: matches!(
+                get_or_ask_for_test_runner(args.test_runner)?,
+                TestRunner::StarknetFoundry
+            ),
         },
         config,
     )?;

@@ -1,11 +1,10 @@
 //! Version information about Scarb and Cairo.
 
+use indoc::formatdoc;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Write;
-
-use indoc::formatdoc;
-use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 
 use scarb_build_metadata::{
     CommitHash, CAIRO_COMMIT_HASH, CAIRO_VERSION, SCARB_COMMIT_DATE, SCARB_COMMIT_HASH,
@@ -131,8 +130,8 @@ pub fn get() -> VersionInfo {
         }
     };
 
-    static SIERRA_VERSION: Lazy<String> = Lazy::new(|| {
-        cairo_lang_starknet::compiler_version::current_sierra_version_id().to_string()
+    static SIERRA_VERSION: LazyLock<String> = LazyLock::new(|| {
+        cairo_lang_starknet_classes::compiler_version::current_sierra_version_id().to_string()
     });
 
     let sierra = SierraVersionInfo {

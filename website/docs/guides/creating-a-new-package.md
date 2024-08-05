@@ -1,4 +1,13 @@
+<script setup>
+import { data as rel } from "../../github.data";
+import {data as constants} from "../../constants.data";
+</script>
+
 # Creating a New Package
+
+> [!TIP]
+> At any time, you can review projects hosted in
+> [example directory](https://github.com/software-mansion/scarb/tree/main/examples) from Scarb repository.
 
 To start a new package with Scarb, use `scarb new`:
 
@@ -18,11 +27,11 @@ As the result of running `scarb new`, Scarb has created two files:
 
 Let's take a closer look at `Scarb.toml`:
 
-```toml
+```toml-vue
 [package]
 name = "hello_world"
 version = "0.1.0"
-edition = "2023_10"
+edition = "{{ constants.edition }}"
 
 [dependencies]
 ```
@@ -53,4 +62,53 @@ $ scarb build
     Finished release target(s) in 2 seconds
 ```
 
-This will create a Sierra code of your program in `target/release/hello_world.sierra.json`.
+This will create a Sierra code of your program in `target/dev/hello_world.sierra.json`.
+
+## Creating a Starknet package
+
+To compile Starknet contracts, you need to add `starknet-contract` target and a `starknet` dependency to your manifest:
+
+```toml-vue
+[package]
+name = "hello_world"
+version = "0.1.0"
+edition = "{{ constants.edition }}"
+
+[dependencies]
+starknet = "{{ rel.stable.starknetPackageVersionReq }}"
+
+[[target.starknet-contract]]
+```
+
+The target definition will let Scarb know, that it should produce Starknet contract artifacts.
+The `starknet` dependency tells Scarb to use a Starknet plugin during compilation of your contract.
+
+Then, you can replace the `src/lib.cairo` file with your Starknet contract source code.
+To compile it, simply run the same `build` command as you would for a regular Cairo package:
+
+```shell
+$ scarb build
+   Compiling hello_world v0.1.0 (/path/to/package/hello_world/Scarb.toml)
+    Finished release target(s) in 2 seconds
+```
+
+This will create a Sierra contract class artifact of your program in `target/dev/hello_world.contract_class.json`
+that can be deployed to Starknet network.
+
+### Creating a Starknet Foundry project
+
+If you intend to use Starknet Foundry to test your contracts, you can create a Starknet Foundry project by
+running:
+
+```shell
+scarb new hello_world --snforge
+```
+
+This will create a Starknet package, with `snforge` already set up as your test runner. You can then execute `snforge` tests by
+simply running:
+
+```shell
+scarb test
+```
+
+You can also build your package, like a regular Starknet package.

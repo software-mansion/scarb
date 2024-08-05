@@ -5,11 +5,12 @@ use anyhow::{anyhow, bail, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
 use scarb_ui::args::PackagesSource;
+use smol_str::SmolStr;
 
 use crate::compiler::Profile;
 use crate::core::config::Config;
 use crate::core::package::Package;
-use crate::core::{PackageId, Target};
+use crate::core::{PackageId, ScriptDefinition, Target};
 use crate::flock::Filesystem;
 use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME};
 
@@ -22,6 +23,7 @@ pub struct Workspace<'c> {
     members: BTreeMap<PackageId, Package>,
     manifest_path: Utf8PathBuf,
     profiles: Vec<Profile>,
+    scripts: BTreeMap<SmolStr, ScriptDefinition>,
     root_package: Option<PackageId>,
     target_dir: Filesystem,
 }
@@ -33,6 +35,7 @@ impl<'c> Workspace<'c> {
         root_package: Option<PackageId>,
         config: &'c Config,
         profiles: Vec<Profile>,
+        scripts: BTreeMap<SmolStr, ScriptDefinition>,
     ) -> Result<Self> {
         let targets = packages
             .iter()
@@ -58,6 +61,7 @@ impl<'c> Workspace<'c> {
             root_package,
             target_dir,
             members: packages,
+            scripts,
         })
     }
 
@@ -75,6 +79,7 @@ impl<'c> Workspace<'c> {
             root_package,
             config,
             profiles,
+            BTreeMap::new(),
         )
     }
 
@@ -162,7 +167,7 @@ impl<'c> Workspace<'c> {
         Ok(profile)
     }
 
-    pub fn profile_names(&self) -> Result<Vec<String>> {
+    pub fn profile_names(&self) -> Vec<String> {
         let mut names = self
             .profiles
             .iter()
@@ -171,7 +176,16 @@ impl<'c> Workspace<'c> {
         names.push(Profile::DEV.to_string());
         names.push(Profile::RELEASE.to_string());
         names.sort();
-        Ok(names)
+        names.dedup();
+        names
+    }
+
+    pub fn scripts(&self) -> &BTreeMap<SmolStr, ScriptDefinition> {
+        &self.scripts
+    }
+
+    pub fn script(&self, name: &SmolStr) -> Option<&ScriptDefinition> {
+        self.scripts.get(name)
     }
 }
 
@@ -184,6 +198,23 @@ fn check_unique_targets(targets: &Vec<&Target>) -> Result<()> {
                  help: use different target names to resolve the conflict",
                 target.kind,
                 target.name
+            )
+        }
+    }
+    for (kind, group_id) in targets
+        .iter()
+        .filter_map(|target| {
+            target
+                .group_id
+                .clone()
+                .map(|group_id| (target.kind.clone(), group_id))
+        })
+        .unique()
+    {
+        if used.contains(&(kind.as_str(), group_id.as_str())) {
+            bail!(
+                "the group id `{group_id}` of target `{kind}` duplicates target name\n\
+                 help: use different group name to resolve the conflict",
             )
         }
     }

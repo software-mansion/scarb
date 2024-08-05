@@ -1,12 +1,13 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_test_plugin::compile_test_prepared_db;
+use cairo_lang_sierra::program::VersionedProgram;
+use cairo_lang_test_plugin::{compile_test_prepared_db, TestsCompilationConfig};
 use tracing::trace_span;
 
 use crate::compiler::helpers::{
     build_compiler_config, collect_all_crate_ids, collect_main_crate_ids, write_json,
 };
-use crate::compiler::{CompilationUnit, Compiler};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, SourceId, TargetKind, Workspace};
 
 pub struct TestCompiler;
@@ -18,7 +19,7 @@ impl Compiler for TestCompiler {
 
     fn compile(
         &self,
-        unit: CompilationUnit,
+        unit: CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -39,18 +40,29 @@ impl Compiler for TestCompiler {
 
         let test_compilation = {
             let _ = trace_span!("compile_test").enter();
-            compile_test_prepared_db(db, starknet, main_crate_ids, test_crate_ids)?
+            let config = TestsCompilationConfig {
+                starknet,
+                add_statements_functions: unit
+                    .compiler_config
+                    .unstable_add_statements_functions_debug_info,
+            };
+            compile_test_prepared_db(db, config, main_crate_ids, test_crate_ids)?
         };
 
         {
             let _ = trace_span!("serialize_test").enter();
-            let file_name = format!("{}.test.json", unit.target().name);
+
+            let sierra_program: VersionedProgram = test_compilation.sierra_program.clone().into();
+            let file_name = format!("{}.test.sierra.json", unit.main_component().target_name());
+            write_json(&file_name, "output file", &target_dir, ws, &sierra_program)?;
+
+            let file_name = format!("{}.test.json", unit.main_component().target_name());
             write_json(
                 &file_name,
                 "output file",
                 &target_dir,
                 ws,
-                &test_compilation,
+                &test_compilation.metadata,
             )?;
         }
 

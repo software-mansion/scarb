@@ -15,6 +15,8 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
         package_opts: PackageOpts {
             allow_dirty: args.shared_args.allow_dirty,
             verify: !args.shared_args.no_verify,
+            check_metadata: true,
+            features: args.features.try_into()?,
         },
     };
 

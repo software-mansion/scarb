@@ -1,15 +1,12 @@
-use std::collections::HashSet;
 use std::ops::Deref;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
-use once_cell::sync::Lazy;
 use typed_builder::TypedBuilder;
 
 #[cfg(doc)]
 use crate::core::Manifest;
 use crate::core::{
-    Checksum, DepKind, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId,
-    TargetKind,
+    Checksum, DepKind, DependencyVersionReq, ManifestDependency, PackageId, PackageName,
 };
 
 /// Subset of a [`Manifest`] that contains only the most important information about a package.
@@ -27,7 +24,6 @@ pub struct SummaryInner {
     pub package_id: PackageId,
     #[builder(default)]
     pub dependencies: Vec<ManifestDependency>,
-    pub target_kinds: HashSet<TargetKind>,
     #[builder(default = false)]
     pub no_core: bool,
     #[builder(default)]
@@ -62,8 +58,16 @@ impl Summary {
         self.dependencies.iter().chain(self.implicit_dependencies())
     }
 
+    pub fn filtered_full_dependencies(
+        &self,
+        dep_filter: DependencyFilter,
+    ) -> impl Iterator<Item = &ManifestDependency> {
+        self.full_dependencies()
+            .filter(move |dep| dep_filter.filter(dep))
+    }
+
     pub fn implicit_dependencies(&self) -> impl Iterator<Item = &ManifestDependency> {
-        static CORE_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| {
+        static CORE_DEPENDENCY: LazyLock<ManifestDependency> = LazyLock::new(|| {
             // NOTE: Pin `core` to exact version, because we know that's the only one we have.
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
             ManifestDependency::builder()
@@ -71,27 +75,10 @@ impl Summary {
                 .version_req(DependencyVersionReq::exact(&cairo_version))
                 .build()
         });
-
-        static TEST_PLUGIN_DEPENDENCY: Lazy<ManifestDependency> = Lazy::new(|| {
-            // NOTE: Pin test plugin to exact version, because we know that's the only one we have.
-            let cairo_version = crate::version::get().cairo.version.parse().unwrap();
-            ManifestDependency::builder()
-                .kind(DepKind::Target(TargetKind::TEST))
-                .name(PackageName::TEST_PLUGIN)
-                .source_id(SourceId::default())
-                .version_req(DependencyVersionReq::exact(&cairo_version))
-                .build()
-        });
-
         let mut deps: Vec<&ManifestDependency> = Vec::new();
-
         if !self.no_core {
             deps.push(&CORE_DEPENDENCY);
-            if self.target_kinds.contains(&TargetKind::TEST) {
-                deps.push(&TEST_PLUGIN_DEPENDENCY);
-            }
         }
-
         deps.into_iter()
     }
 
@@ -101,5 +88,20 @@ impl Summary {
         self.dependencies
             .iter()
             .filter(|dep| dep.kind == DepKind::Normal)
+    }
+}
+
+#[derive(Default)]
+pub struct DependencyFilter {
+    pub do_propagate: bool,
+}
+
+impl DependencyFilter {
+    pub fn propagation(do_propagate: bool) -> Self {
+        Self { do_propagate }
+    }
+
+    pub fn filter(&self, dep: &ManifestDependency) -> bool {
+        self.do_propagate || dep.kind.is_propagated()
     }
 }

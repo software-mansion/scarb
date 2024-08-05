@@ -4,7 +4,7 @@ import { data as rel } from "../../../github.data";
 
 # Starknet Contract Target
 
-The `starknet-contract` target allows to build the package as a [Starknet Contract](https://docs.starknet.io/documentation/getting_started/intro/).
+The `starknet-contract` target allows to build the package as a [Starknet Contract](https://book.cairo-lang.org/ch99-00-starknet-smart-contracts.html).
 It searches for all contract classes in the package, and builds a separate compiled JSON file each found class.
 Generated file will be named with following pattern: `[target name]_[contract name].contract_class.json`.
 
@@ -52,12 +52,12 @@ starknet = "{{ rel.stable.starknetPackageVersionReq }}"
 ## Sierra contract class generation
 
 The enabled by default property `sierra` determines whether this target builds a Sierra
-[Contract Class](https://docs.starknet.io/documentation/architecture_and_concepts/Contracts/contract-classes/) file.
+[Contract Class](https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/contract-classes/) file.
 
 ## CASM contract class generation
 
 Historically, contract classes have been defined in terms of Cairo assembly, or CASM for short (the class definition also included more information needed for execution, e.g., hint data).
-The novelty of Cairo 1.0 is the introduction of Sierra, an intermediate layer between Cairo 1.0 and CASM.
+The novelty of Cairo is the introduction of Sierra, an intermediate layer between Cairo and CASM.
 
 When executing a contract on Starknet, the Sequencer downloads a [Contract Class] which contains Sierra bytecode.
 It is a role of the Sequencer to compile it to CASM, which is a language that you can physically execute and generate proof of such execution.
@@ -136,6 +136,7 @@ Version 1 of this file has a structure like this:
       "id": "<opaque>",
       "package_name": "mypackage",
       "contract_name": "Contract2",
+      "module_path": "mypackage::path::to::module::Contract2",
       "artifacts": {
         "sierra": "mypackage_Contract2.contract_class.json",
         "casm": null
@@ -145,6 +146,7 @@ Version 1 of this file has a structure like this:
       "id": "<opaque>",
       "package_name": "mypackage",
       "contract_name": "Contract1",
+      "module_path": "mypackage::Contract1",
       "artifacts": {
         "sierra": "mypackage_Contract1.contract_class.json",
         "casm": null
@@ -157,6 +159,7 @@ Version 1 of this file has a structure like this:
 - `id` is an identifier of the item in `"contracts"` list. Use it to reference items, as it has the highest chance of being a unique value.
 - `package_name` is the name of the package in which the contract has been implemented.
 - `contract_name` is the name of the contract module.
+- `module_path` is the module path of compiled contract.
 - `artifacts` paths are relative to this file path.
   Depending on the targets defined in `[[target.starknet-contract]]` section of the `Scarb.toml`,
   some of the values might be `null`.

@@ -27,8 +27,9 @@ pub use crate::internal::fsx::is_executable;
 /// child process. If the child terminates then we'll reap them in Cargo pretty quickly, and if
 /// the child handles the signal then we won't terminate (and we shouldn't!) until the process
 /// itself later exits.
-#[tracing::instrument(level = "debug")]
+#[tracing::instrument(level = "debug", skip_all)]
 pub fn exec_replace(cmd: &mut Command) -> Result<()> {
+    debug!("{}", shlex_join(cmd));
     imp::exec_replace(cmd)
 }
 
@@ -86,9 +87,28 @@ mod imp {
     }
 }
 
-/// Runs the process, waiting for completion, and mapping non-success exit codes to an error.
 #[tracing::instrument(level = "trace", skip_all)]
 pub fn exec(cmd: &mut Command, config: &Config) -> Result<()> {
+    exec_piping(
+        cmd,
+        config,
+        |line: &str| {
+            debug!("{line}");
+        },
+        |line: &str| {
+            debug!("{line}");
+        },
+    )
+}
+
+/// Runs the process, waiting for completion, and mapping non-success exit codes to an error.
+#[tracing::instrument(level = "trace", skip_all)]
+pub fn exec_piping(
+    cmd: &mut Command,
+    config: &Config,
+    stdout_callback: impl Fn(&str) + Send,
+    stderr_callback: impl Fn(&str) + Send,
+) -> Result<()> {
     let cmd_str = shlex_join(cmd);
 
     config.ui().verbose(Status::new("Running", &cmd_str));
@@ -111,7 +131,7 @@ pub fn exec(cmd: &mut Command, config: &Config) -> Result<()> {
             let span = debug_span!("out");
             move || {
                 let mut stdout = stdout;
-                pipe_to_logs(&span, &mut stdout);
+                pipe(&span, &mut stdout, stdout_callback);
             }
         });
 
@@ -120,7 +140,7 @@ pub fn exec(cmd: &mut Command, config: &Config) -> Result<()> {
             let span = debug_span!("err");
             move || {
                 let mut stderr = stderr;
-                pipe_to_logs(&span, &mut stderr);
+                pipe(&span, &mut stderr, stderr_callback);
             }
         });
 
@@ -134,12 +154,12 @@ pub fn exec(cmd: &mut Command, config: &Config) -> Result<()> {
         }
     });
 
-    fn pipe_to_logs(span: &Span, stream: &mut dyn Read) {
+    fn pipe(span: &Span, stream: &mut dyn Read, callback: impl Fn(&str)) {
         let _enter = span.enter();
         let stream = BufReader::with_capacity(128, stream);
         for line in stream.lines() {
             match line {
-                Ok(line) => debug!("{line}"),
+                Ok(line) => callback(line.as_str()),
                 Err(err) => warn!("{err:?}"),
             }
         }

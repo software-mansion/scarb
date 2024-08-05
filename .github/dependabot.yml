@@ -18,9 +18,12 @@ updates:
           - "*"
         exclude-patterns:
           - "cairo-lang-*"
+          - "cairo-felt"
+          - "starknet-types-core"
           - "deno_task_shell"
           - "gix"
           - "semver"
+          - "salsa"
 
   - package-ecosystem: "github-actions"
     directory: "/"

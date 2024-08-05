@@ -1,3 +1,7 @@
+<script setup>
+import {data as constants} from "../../constants.data";
+</script>
+
 # The Manifest Format
 
 The `Scarb.toml` file, present in each package, is called its _manifest_.
@@ -20,6 +24,17 @@ authors = ["Alice <a@example.com>", "Bob <b@example.com>"]
 ```
 
 The only required fields are [`name`](#name) and [`version`](#version).
+If publishing to a registry, it's recommended to fill in additional fields:
+
+- [`license` or `license_file`](#license-and-license-file)
+- [`description`](#description)
+- [`homepage`](#homepage)
+- [`documentation`](#documentation)
+- [`repository`](#repository)
+- [`readme`](#readme)
+
+It would also be a good idea to include some [`keywords`](#keywords) and [`categories`](#ca), though they are not
+required.
 
 ### `name`
 
@@ -47,9 +62,9 @@ The edition key is an optional key that affects which Cairo edition your package
 The editions allow newer Cairo compiler versions to introduce opt-in features that may break existing code.
 Setting the edition key in `[package]` will affect all targets in the package, including test suites etc.
 
-```toml
+```toml-vue
 [package]
-edition = '2023_01'
+edition = "{{ constants.edition }}"
 ```
 
 Most manifests have the edition field filled in automatically by `scarb new` with the latest available edition.
@@ -114,10 +129,11 @@ information about the package.
 readme = "README.md"
 ```
 
-If no value is specified for this field, and a file named `README.md`, `README.txt` or `README` exists in the package root,
-then the name of that file will be used.
+If no value is specified for this field, and a file named `README.md`, `README.txt` or `README` exists in the package
+root, then the name of that file will be used.
 You can suppress this behavior by setting this field to false.
-If the field is set to true, a default value of `README.md` will be assumed, unless file named `README.txt` or `README` exists in the package root, in which case it will be used instead.
+If the field is set to true, a default value of `README.md` will be assumed, unless file named `README.txt` or `README`
+exists in the package root, in which case it will be used instead.
 
 ### `homepage`
 
@@ -195,7 +211,20 @@ Keys are human-readable link names, and values are URLs.
 "We're hiring" = "https://swmansion.com/careers/"
 ```
 
+### `experimental-features`
+
+This field is responsible for setting experimental flags to be used on the package for the compiler.
+
+```toml
+[package]
+experimental-features = ["negative_impls"]
+```
+
 ## `[dependencies]`
+
+See [Specifying Dependencies](./specifying-dependencies) page.
+
+## `[dev-dependencies]`
 
 See [Specifying Dependencies](./specifying-dependencies) page.
 
@@ -236,6 +265,48 @@ By default, this flag is enabled.
 allow-warnings = false
 ```
 
+### `enable-gas`
+
+If enabled, during the project compilation Scarb will not add any instructions related to gas usage calculation.
+By default, this flag is enabled.
+
+```toml
+[cairo]
+enable-gas = false
+```
+
+This flag cannot be disabled while compiling the `starknet-contract` target.
+
+### `inlining-strategy`
+
+This field is responsible for setting the inlining strategy to be used by compiler when building the package.
+The possible values are `default` or `avoid`.
+If `avoid` strategy is set, the compiler will only inline function annotated with `#[inline(always)]` attribute.
+
+> [!WARNING]
+> Using the `avoid` strategy may result in a slower execution of the compiled code and significantly larger artefacts
+> size.
+> Please use with caution, only if your tooling requires that.
+> You can use profile settings overwriting, for more granular control of which builds use the avoid strategy.
+
+### `unstable-add-statements-functions-debug-info`
+
+> [!WARNING]
+> This is highly experimental and unstable feature intended to be used
+> by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
+> It may slow down the compilation - it is advised not to use it for other purposes than mentioned in
+> [cairo-profiler](https://github.com/software-mansion/cairo-profiler) documentation.
+
+If enabled, during the project compilation Scarb will a add mapping between Sierra statement indexes and vectors of
+fully qualified paths of Cairo functions to debug info. A statement index maps to a vector consisting of a function
+which caused the statement to be generated and all functions that were inlined or generated along the way.
+By default, this flag is disabled.
+
+```toml
+[cairo]
+unstable-add-statements-functions-debug-info = true
+```
+
 ## `[profile]`
 
 See [Profiles](./profiles) page.
@@ -262,3 +333,7 @@ Each field can accept any valid toml value including a table.
 ## `[workspace]`
 
 See [Workspaces](./workspaces) page.
+
+## `[features]`
+
+See [Features](./conditional-compilation#features) page.

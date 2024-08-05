@@ -1,30 +1,33 @@
-use std::collections::HashSet;
-use std::fmt::Write;
-use std::iter::zip;
-
 use anyhow::{bail, ensure, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use cairo_lang_defs::ids::NamedLanguageElementId;
+use cairo_lang_filesystem::db::{AsFilesGroupMut, FilesGroup};
+use cairo_lang_filesystem::flag::Flag;
+use cairo_lang_filesystem::ids::{CrateId, CrateLongId, FlagId};
 use cairo_lang_semantic::db::SemanticGroup;
-use cairo_lang_starknet::allowed_libfuncs::{
-    validate_compatible_sierra_version, AllowedLibfuncsError, ListSelector,
-    BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST,
-};
-use cairo_lang_starknet::casm_contract_class::CasmContractClass;
+use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::{find_contracts, ContractDeclaration};
-use cairo_lang_starknet::contract_class::{compile_prepared_db, ContractClass};
+use cairo_lang_starknet_classes::allowed_libfuncs::{
+    AllowedLibfuncsError, ListSelector, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST,
+};
+use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
+use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_utils::{Upcast, UpcastMut};
 use indoc::{formatdoc, writedoc};
 use itertools::{izip, Itertools};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+use std::collections::HashSet;
+use std::fmt::Write;
+use std::iter::zip;
 use tracing::{debug, trace, trace_span};
 
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
-use crate::compiler::{CompilationUnit, Compiler};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use crate::internal::serdex::RelativeUtf8PathBuf;
-use crate::internal::stable_hash::short_hash;
+use scarb_stable_hash::short_hash;
+use scarb_ui::Ui;
 
 const CAIRO_PATH_SEPARATOR: &str = "::";
 const GLOB_PATH_SELECTOR: &str = "*";
@@ -164,15 +167,22 @@ struct ContractArtifacts {
     id: String,
     package_name: PackageName,
     contract_name: String,
+    module_path: String,
     artifacts: ContractArtifact,
 }
 
 impl ContractArtifacts {
-    fn new(package_name: &PackageName, contract_name: &str, contract_path: &str) -> Self {
+    fn new(
+        package_name: &PackageName,
+        contract_name: &str,
+        contract_path: &str,
+        module_path: &str,
+    ) -> Self {
         Self {
             id: short_hash((&package_name, &contract_path)),
             package_name: package_name.clone(),
             contract_name: contract_name.to_owned(),
+            module_path: module_path.to_owned(),
             artifacts: ContractArtifact::default(),
         }
     }
@@ -184,6 +194,8 @@ struct ContractArtifact {
     casm: Option<String>,
 }
 
+const AUTO_WITHDRAW_GAS_FLAG: &str = "add_withdraw_gas";
+
 impl Compiler for StarknetContractCompiler {
     fn target_kind(&self) -> TargetKind {
         TargetKind::STARKNET_CONTRACT.clone()
@@ -191,11 +203,11 @@ impl Compiler for StarknetContractCompiler {
 
     fn compile(
         &self,
-        unit: CompilationUnit,
+        unit: CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
-        let props: Props = unit.target().props()?;
+        let props: Props = unit.main_component().target_props()?;
         if !props.sierra && !props.casm {
             ws.config().ui().warn(
                 "both Sierra and CASM Starknet contract targets have been disabled, \
@@ -203,10 +215,12 @@ impl Compiler for StarknetContractCompiler {
             );
         }
 
+        ensure_gas_enabled(db)?;
+
         if let Some(external_contracts) = props.build_external_contracts.clone() {
             for path in external_contracts.iter() {
                 ensure!(path.0.matches(GLOB_PATH_SELECTOR).count() <= 1,
-                    "external contract path {} has multiple global path selectors, only one '*' selector is allowed",
+                    "external contract path `{}` has multiple global path selectors, only one '*' selector is allowed",
                     path.0);
             }
         }
@@ -219,6 +233,7 @@ impl Compiler for StarknetContractCompiler {
 
         let contracts = find_project_contracts(
             db.upcast_mut(),
+            ws.config().ui(),
             main_crate_ids,
             props.build_external_contracts.clone(),
         )?;
@@ -246,6 +261,7 @@ impl Compiler for StarknetContractCompiler {
                     let casm_class = CasmContractClass::from_contract_class(
                         class.clone(),
                         props.casm_add_pythonic_hints,
+                        usize::MAX,
                     )
                     .with_context(|| {
                         format!("{contract_name}: failed to compile Sierra contract to CASM")
@@ -260,7 +276,7 @@ impl Compiler for StarknetContractCompiler {
         let mut artifacts = StarknetArtifacts::default();
         let mut file_stem_calculator = ContractFileStemCalculator::new(contract_paths);
 
-        let target_name = &unit.target().name;
+        let target_name = &unit.main_component().target_name();
         for (decl, class, casm_class) in izip!(contracts, classes, casm_classes) {
             let contract_name = decl.submodule_id.name(db.upcast_mut());
             let contract_path = decl.module_id().full_path(db.upcast_mut());
@@ -275,6 +291,7 @@ impl Compiler for StarknetContractCompiler {
                 &package_name,
                 &contract_name,
                 contract_selector.full_path().as_str(),
+                &decl.module_id().full_path(db.upcast_mut()),
             );
 
             if props.sierra {
@@ -307,8 +324,20 @@ impl Compiler for StarknetContractCompiler {
     }
 }
 
+fn ensure_gas_enabled(db: &mut RootDatabase) -> Result<()> {
+    let flag = FlagId::new(db.as_files_group_mut(), AUTO_WITHDRAW_GAS_FLAG);
+    let flag = db.get_flag(flag);
+    ensure!(
+        flag.map(|f| matches!(*f, Flag::AddWithdrawGas(true)))
+            .unwrap_or(false),
+        "the target starknet contract compilation requires gas to be enabled"
+    );
+    Ok(())
+}
+
 fn find_project_contracts(
     mut db: &dyn SemanticGroup,
+    ui: Ui,
     main_crate_ids: Vec<CrateId>,
     external_contracts: Option<Vec<ContractSelector>>,
 ) -> Result<Vec<ContractDeclaration>> {
@@ -336,15 +365,31 @@ fn find_project_contracts(
                 .into_iter()
                 .filter(|decl| {
                     let contract_path = decl.module_id().full_path(db.upcast());
-                    external_contracts.iter().any(|selector| {
-                        if selector.is_wildcard() {
-                            contract_path.starts_with(&selector.partial_path())
-                        } else {
-                            contract_path == selector.full_path()
-                        }
-                    })
+                    external_contracts
+                        .iter()
+                        .any(|selector| contract_matches(selector, contract_path.as_str()))
                 })
                 .collect();
+
+            let never_matched = external_contracts
+                .iter()
+                .filter(|selector| {
+                    !filtered_contracts.iter().any(|decl| {
+                        let contract_path = decl.module_id().full_path(db.upcast());
+                        contract_matches(selector, contract_path.as_str())
+                    })
+                })
+                .collect_vec();
+            if !never_matched.is_empty() {
+                let never_matched = never_matched
+                    .iter()
+                    .map(|selector| selector.full_path())
+                    .collect_vec()
+                    .join("`, `");
+                ui.warn(format!(
+                    "external contracts not found for selectors: `{never_matched}`"
+                ));
+            }
 
             filtered_contracts
         } else {
@@ -358,12 +403,20 @@ fn find_project_contracts(
         .collect())
 }
 
+fn contract_matches(selector: &ContractSelector, contract_path: &str) -> bool {
+    if selector.is_wildcard() {
+        contract_path.starts_with(&selector.partial_path())
+    } else {
+        contract_path == selector.full_path()
+    }
+}
+
 fn check_allowed_libfuncs(
     props: &Props,
     contracts: &[&ContractDeclaration],
     classes: &[ContractClass],
     db: &RootDatabase,
-    unit: &CompilationUnit,
+    unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     if !props.allowed_libfuncs {
@@ -382,7 +435,7 @@ fn check_allowed_libfuncs(
 
     let mut found_disallowed = false;
     for (decl, class) in zip(contracts, classes) {
-        match validate_compatible_sierra_version(class, list_selector.clone()) {
+        match class.validate_version_compatible(list_selector.clone()) {
             Ok(()) => {}
 
             Err(AllowedLibfuncsError::UnsupportedLibfunc {

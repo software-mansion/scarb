@@ -10,7 +10,8 @@ test = "snforge"
 exit_first = true
 
 [workspace.dependencies]
-starknet = "2.3.1"
+cairo_test = "2.7.0"
+starknet = "2.7.0"
 
 [workspace.package]
 version = "0.1.0"
@@ -29,5 +30,8 @@ snforge.workspace = true
 starknet.workspace = true
 fibonacci = { path = "crates/fibonacci" }
 addition = { path = "crates/addition" }
+
+[dev-dependencies]
+cairo_test.workspace = true
 
 [[target.starknet-contract]]

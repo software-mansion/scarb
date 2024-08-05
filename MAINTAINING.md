@@ -3,7 +3,7 @@
 ## Maintainers
 
 All Scarb maintainers are members of the **[@software-mansion/scarb-maintainers]** GitHub team.
-Current project leader is **[@mkaput]**.
+Current project leader is **[@maciektr]**.
 
 ## Release procedure
 
@@ -36,6 +36,11 @@ You might need to swiftly pause the [Website Deploy] workflow to prevent publish
 > [!IMPORTANT]
 > Make sure `scarb-metadata` crate is [released and published](#scarb-metadata-release-procedure) to [crates.io].
 > Only [StarkNet Crates.io Admins] can do this.
+
+> [!IMPORTANT]
+> If you add or remove a binary target compiled with the release (i.e. create or remove a crate in `extensions` directory),
+> make sure to work with the Homebrew team to upgrade their
+> [Scarb installation formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/s/scarb.rb#L26).
 
 ### Write release notes
 
@@ -162,9 +167,25 @@ Releasing `scarb-ui` crate is also a semi-automated process.
 5. Push it.
 6. Run `cargo publish -p scarb-ui`.
 
+## `cairo-lang-macro` release procedure
+
+Releasing `cairo-lang-macro` crate is also a semi-automated process.
+
+1. Make sure correct version is present in:
+    1. `plugins/cairo-lang-macro/Cargo.toml`
+    2. `Cargo.lock`
+       You will probably have to commit changes and then tag newly created commit.
+2. Make sure all changes to crates `cairo-lang-macro-attributes`, `cairo-lang-macro-stable`, `scarb-stable-hasher` are
+   released to crates.io as well.
+3. Make sure you create it on a green commit (CI is passing), this is not verified!
+4. Run `cargo publish -p cairo-lang-macro --dry-run` to verify that everything is fine.
+5. Create a tag on `main` named `cairo-lang-macro/vX.Y.Z`.
+6. Push it.
+7. Run `cargo publish -p cairo-lang-macro`.
+
 [@software-mansion/scarb-maintainers]: https://github.com/orgs/software-mansion/teams/scarb-maintainers
 
-[@mkaput]: https://github.com/mkaput
+[@maciektr]: https://github.com/maciektr
 
 [website deploy]: https://github.com/software-mansion/scarb/actions/workflows/website-deploy.yml
 

@@ -1,0 +1,22 @@
+[package]
+name = "cairo-lang-macro"
+version = "0.1.0"
+edition.workspace = true
+
+authors.workspace = true
+categories = ["development-tools"]
+description = "Cairo procedural macro interface primitives."
+homepage.workspace = true
+keywords = ["scarb"]
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+
+[dependencies]
+cairo-lang-macro-attributes = "0.1"
+cairo-lang-macro-stable = "1"
+linkme.workspace = true
+
+[dev-dependencies]
+serde.workspace = true
+serde_json.workspace = true

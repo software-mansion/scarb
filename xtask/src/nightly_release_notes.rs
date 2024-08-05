@@ -28,11 +28,14 @@ pub fn main(_: Args) -> Result<()> {
         .unwrap()
         .iter()
         .find(|node| {
-            node.get("id")
+            let repr = node.get("id")
                 .unwrap()
                 .as_str()
-                .unwrap()
-                .starts_with("scarb ")
+                .unwrap();
+            // The first condition for Rust >= 1.77
+            // (After the PackageId spec stabilization)
+            // The second condition for Rust < 1.77
+            repr.contains("scarb#") || repr.starts_with("scarb ")
         })
         .unwrap()
         .get("deps")

@@ -12,10 +12,9 @@ camino.workspace = true
 clap.workspace = true
 data-encoding.workspace = true
 dunce.workspace = true
-hyper = "*"  # Link whatever comes with reqwest.
+hyper = "0.14"
 indoc.workspace = true
 itertools.workspace = true
-once_cell.workspace = true
 scarb = { path = "../../scarb" }
 scarb-build-metadata = { path = "../scarb-build-metadata" }
 scarb-ui = { path = "../scarb-ui" }

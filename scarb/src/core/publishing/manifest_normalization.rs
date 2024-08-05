@@ -47,6 +47,7 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
         profile: None,
         scripts: None,
         tool,
+        features: None,
     })
 }
 
@@ -57,6 +58,7 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
         name: summary.package_id.name.clone(),
         version: MaybeWorkspace::Defined(summary.package_id.version.clone()),
         edition: Some(MaybeWorkspace::Defined(pkg.manifest.edition)),
+        publish: (!pkg.manifest.publish).then_some(false),
         authors: metadata.authors.clone().map(MaybeWorkspace::Defined),
         urls: metadata.urls.clone(),
         description: metadata.description.clone().map(MaybeWorkspace::Defined),
@@ -75,6 +77,7 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
         repository: metadata.repository.clone().map(MaybeWorkspace::Defined),
         no_core: summary.no_core.then_some(true),
         cairo_version: metadata.cairo_version.clone().map(MaybeWorkspace::Defined),
+        experimental_features: pkg.manifest.experimental_features.clone(),
     })
 }
 

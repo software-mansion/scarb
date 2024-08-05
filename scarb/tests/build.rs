@@ -1,12 +1,17 @@
+use std::collections::HashMap;
 use std::fs;
 
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use cairo_lang_sierra::program::{StatementIdx, VersionedProgram};
+use cairo_lang_starknet_classes::contract_class::ContractClass;
 use indoc::indoc;
 use predicates::prelude::*;
 
 use scarb_build_metadata::CAIRO_VERSION;
-use scarb_test_support::command::Scarb;
+use scarb_metadata::Metadata;
+use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::contracts::BALANCE_CONTRACT;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
@@ -69,19 +74,18 @@ fn compile_with_syntax_error() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
+        .arg("check")
         .current_dir(&t)
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-               Compiling hello v0.1.0 ([..]Scarb.toml)
-            error: Skipped tokens. Expected: Const/Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum/TypeAlias/InlineMacro or an attribute.
+                Checking hello v0.1.0 ([..]Scarb.toml)
+            error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
              --> [..]/lib.cairo:1:1
             not_a_keyword
             ^***********^
 
-
-            error: could not compile `hello` due to previous error
+            error: could not check `hello` due to previous error
         "#});
 }
 
@@ -96,14 +100,14 @@ fn compile_with_syntax_error_json() {
 
     Scarb::quick_snapbox()
         .arg("--json")
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test, if --json is available for check.
+        .arg("check")
         .current_dir(&t)
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-            {"status":"compiling","message":"hello v0.1.0 ([..]Scarb.toml)"}
-            {"type":"diagnostic","message":"error: Skipped tokens. Expected: Const/Module/Use/FreeFunction/ExternFunction/ExternType/Trait/Impl/Struct/Enum/TypeAlias/InlineMacro or an attribute./n --> [..]/lib.cairo:1:1/nnot_a_keyword/n^***********^/n/n"}
-            {"type":"error","message":"could not compile `hello` due to previous error"}
+            {"status":"checking","message":"hello v0.1.0 ([..]Scarb.toml)"}
+            {"type":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute./n --> [..]/lib.cairo:1:1/nnot_a_keyword/n^***********^/n"}
+            {"type":"error","message":"could not check `hello` due to previous error"}
         "#});
 }
 
@@ -272,18 +276,21 @@ fn compile_with_incompatible_cairo_version() {
             [package]
             name = "hello"
             version = "0.1.0"
-            cairo-version = "3.0.0"
+            cairo-version = "33.33.0"
             "#,
         )
         .unwrap();
     Scarb::quick_snapbox()
-        .arg("build") // TODO(#137): Change build to check for faster and lighter test.
+        .arg("check")
         .current_dir(&t)
         .assert()
         .code(1)
         .stdout_matches(indoc! {r#"
-            error: Package hello. Required Cairo version isn't compatible with current version. Should be: ^3.0.0 is: [..]
-            error: For each package, the required Cairo version must match the current Cairo version.
+            error: the required Cairo version of package hello is not compatible with current version
+            Cairo version required: ^33.33.0
+            Cairo version of Scarb: [..]
+
+            error: the required Cairo version of each package must match the current Cairo version
         "#});
 }
 
@@ -531,7 +538,7 @@ fn sierra_replace_ids() {
     t.child("target/dev/hello.sierra.json").assert(
         predicates::str::contains(r#""debug_name":"hello::example""#)
             .and(predicates::str::contains(
-                r#""debug_name":"felt252_const<42>""#,
+                r#""debug_name":"Const<felt252, 42>""#,
             ))
             .and(predicates::str::contains(
                 r#""debug_name":"store_temp<felt252>""#,
@@ -622,18 +629,11 @@ fn workspace_as_dep() {
     );
     second_t.child("target/dev/third.sierra.json").assert(
         predicates::str::contains(r#""debug_name":"third::example""#)
-            .and(predicates::str::contains(r#""debug_name":"third::hello""#))
-            .and(predicates::str::contains(
-                r#""debug_name":"withdraw_gas_all""#,
-            )),
+            .and(predicates::str::contains(r#""debug_name":"third::hello""#)),
     );
-    second_t.child("target/dev/third.sierra.json").assert(
-        predicates::str::contains(r#""debug_name":"second::fib""#)
-            .and(predicates::str::contains(r#""debug_name":"jump""#))
-            .and(predicates::str::contains(
-                r#""debug_name":"get_builtin_costs""#,
-            )),
-    );
+    second_t
+        .child("target/dev/third.sierra.json")
+        .assert(predicates::str::contains(r#""debug_name":"second::fib""#));
 }
 
 #[test]
@@ -684,7 +684,7 @@ fn edition_must_exist() {
                    |
                  4 | edition = "2021"
                    |           ^^^^^^
-                 unknown variant `2021`, expected one of `2023_01`, `2023_10`, `2023_11`
+                 unknown variant `2021`, expected one of `2023_01`, `2023_10`, `2023_11`, `2024_07`
         "#});
 }
 
@@ -719,7 +719,6 @@ fn dev_dep_used_outside_tests() {
              --> [..]/src/lib.cairo[..]
             use q::dev_dep_function;
                 ^
-
 
             error: could not compile `x` due to previous error
         "#});
@@ -760,6 +759,48 @@ fn dev_dep_inside_test() {
 }
 
 #[test]
+fn build_test_without_compiling_tests_from_dependencies() {
+    let t = TempDir::new().unwrap();
+    let q = t.child("q");
+    ProjectBuilder::start()
+        .name("q")
+        .lib_cairo(indoc! {r#"
+            fn dev_dep_function() -> felt252 { 42 }
+
+            #[cfg(test)]
+            mod tests {
+                use missing::func;
+            }
+        "#})
+        .build(&q);
+    ProjectBuilder::start()
+        .name("x")
+        .dev_dep("q", &q)
+        .lib_cairo(indoc! {r#"
+            #[cfg(test)]
+            mod tests {
+                use q::dev_dep_function;
+
+                fn it_works() {
+                    dev_dep_function();
+                }
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling test(x_unittest) x v1.0.0 ([..])
+            [..]  Finished release target(s) in [..]
+        "#});
+}
+
+#[test]
 fn warnings_allowed_by_default() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -779,13 +820,12 @@ fn warnings_allowed_by_default() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
-        warning: Unused variable. Consider ignoring by prefixing with `_`.
+        warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
             let a = 41;
                 ^
 
-
-            Finished release target(s) in [..] seconds
+            Finished release target(s) in [..]
         "#});
 }
 
@@ -813,12 +853,347 @@ fn warnings_can_be_disallowed() {
         .failure()
         .stdout_matches(indoc! {r#"
         [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
-        warning: Unused variable. Consider ignoring by prefixing with `_`.
+        warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
          --> [..]lib.cairo:2:9
             let a = 41;
                 ^
 
-
         error: could not compile [..] due to previous error
         "#});
+}
+
+#[test]
+fn error_codes_shown_in_json_output() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .lib_cairo(indoc! {r#"
+        fn hello() -> felt252 {
+            let a = 41;
+            let b = 42;
+            b
+        }
+    "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            {"status":"compiling","message":"[..] v1.0.0 ([..]Scarb.toml)"}
+            {"type":"warn","message":"Unused variable. Consider ignoring by prefixing with `_`./n --> [..]lib.cairo:2:9/n    let a = 41;/n        ^/n","code":"E0001"}
+            {"status":"finished","message":"release target(s) in [..]"}
+        "#});
+}
+
+#[test]
+fn can_compile_no_core_package() {
+    let t = TempDir::new().unwrap();
+    // Find path to corelib.
+    ProjectBuilder::start().name("hello").build(&t);
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let core = metadata.packages.iter().find(|p| p.name == "core").unwrap();
+    let core = core.root.clone();
+    // Compile corelib.
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(core)
+        .assert()
+        .success();
+}
+
+#[test]
+fn gas_enabled_by_default() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn main() -> u32 {
+                fib(16)
+            }
+
+            fn fib(mut n: u32) -> u32 {
+                let mut a: u32 = 0;
+                let mut b: u32 = 1;
+                while n != 0 {
+                    n = n - 1;
+                    let temp = b;
+                    b = a + b;
+                    a = temp;
+                };
+                a
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::str::contains(r#""withdraw_gas""#));
+}
+
+#[test]
+fn can_disable_gas() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        // Note: Compiling to CASM will fail on gas validation in `calc_metadata`
+        // unless `calc_metadata_ap_change_only` is used.
+        .lib_cairo(indoc! {r#"
+            fn foo(mut shape: Span<usize>) -> usize {
+                let mut result: usize = 1;
+
+                loop {
+                    match shape.pop_front() {
+                        Option::Some(item) => { result *= *item; },
+                        Option::None => { break; }
+                    };
+                };
+
+                result
+            }
+
+            fn main() -> usize {
+                foo(array![1, 2].span())
+            }
+        "#})
+        .manifest_extra(indoc! {r#"
+            [lib]
+            casm = true
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+    t.child("target/dev/hello.sierra.json")
+        .assert(predicates::str::contains(r#""withdraw_gas""#).not());
+}
+
+#[test]
+fn cannot_disable_gas_for_starknet_contract() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_starknet()
+        .lib_cairo(BALANCE_CONTRACT)
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: the target starknet contract compilation requires gas to be enabled
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn add_statements_functions_debug_info() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r##"
+            #[starknet::interface]
+            pub trait IHelloStarknet<TContractState> {
+                fn increase_balance(ref self: TContractState, amount: felt252);
+                fn get_balance(self: @TContractState) -> felt252;
+            }
+
+            #[starknet::contract]
+            mod HelloStarknet {
+                #[storage]
+                struct Storage {
+                    balance: felt252,
+                }
+
+                #[abi(embed_v0)]
+                impl HelloStarknetImpl of super::IHelloStarknet<ContractState> {
+                    fn increase_balance(ref self: ContractState, amount: felt252) {
+                        assert(amount != 0, 'Amount cannot be 0');
+                        self.balance.write(self.balance.read() + amount);
+                    }
+
+                    fn get_balance(self: @ContractState) -> felt252 {
+                        self.balance.read()
+                    }
+                }
+            }
+
+            fn foo(mut shape: Span<usize>) -> usize {
+                let mut result: usize = 1;
+
+                loop {
+                    match shape.pop_front() {
+                        Option::Some(item) => { result *= *item; },
+                        Option::None => { break; }
+                    };
+                };
+
+                result
+            }
+
+            fn main() -> usize {
+                foo(array![1, 2].span())
+            }
+        "##})
+        .manifest_extra(indoc! {r#"
+            [lib]
+            casm = true
+
+            [[target.starknet-contract]]
+            casm = true
+
+            [cairo]
+            unstable-add-statements-functions-debug-info = true
+        "#})
+        .dep_starknet()
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lib_sierra_string = t.child("target/dev/hello.sierra.json").read_to_string();
+    let contract_sierra_string = t
+        .child("target/dev/hello_HelloStarknet.contract_class.json")
+        .read_to_string();
+    let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
+    let contract_sierra = serde_json::from_str::<ContractClass>(&contract_sierra_string).unwrap();
+
+    let debug_info = lib_sierra
+        .into_v1()
+        .unwrap()
+        .debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-profiler")
+        .expect("Expected cairo-profiler annotations to exist")
+        .get("statements_functions")
+        .expect("Expected statements_functions info to exist");
+    assert!(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
+        "Expected statements_functions info to be a map"
+    );
+
+    let debug_info = contract_sierra
+        .sierra_program_debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-profiler")
+        .expect("Expected cairo-profiler annotations to exist")
+        .get("statements_functions")
+        .expect("Expected statements_functions info to exist");
+    assert!(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
+        "Expected statements_functions info to be a map"
+    );
+}
+
+#[test]
+fn add_statements_functions_debug_info_to_tests() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r##"
+            #[starknet::interface]
+            pub trait IHelloStarknet<TContractState> {
+                fn increase_balance(ref self: TContractState, amount: felt252);
+                fn get_balance(self: @TContractState) -> felt252;
+            }
+
+            #[starknet::contract]
+            mod HelloStarknet {
+                #[storage]
+                struct Storage {
+                    balance: felt252,
+                }
+
+                #[abi(embed_v0)]
+                impl HelloStarknetImpl of super::IHelloStarknet<ContractState> {
+                    fn increase_balance(ref self: ContractState, amount: felt252) {
+                        assert(amount != 0, 'Amount cannot be 0');
+                        self.balance.write(self.balance.read() + amount);
+                    }
+
+                    fn get_balance(self: @ContractState) -> felt252 {
+                        self.balance.read()
+                    }
+                }
+            }
+
+            fn foo(mut shape: Span<usize>) -> usize {
+                let mut result: usize = 1;
+
+                loop {
+                    match shape.pop_front() {
+                        Option::Some(item) => { result *= *item; },
+                        Option::None => { break; }
+                    };
+                };
+
+                result
+            }
+
+            fn main() -> usize {
+                foo(array![1, 2].span())
+            }
+        "##})
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+
+            [cairo]
+            unstable-add-statements-functions-debug-info = true
+        "#})
+        .dep_starknet()
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lib_sierra_string = t
+        .child("target/dev/hello_unittest.test.sierra.json")
+        .read_to_string();
+    let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
+
+    let debug_info = lib_sierra
+        .into_v1()
+        .unwrap()
+        .debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-profiler")
+        .expect("Expected cairo-profiler annotations to exist")
+        .get("statements_functions")
+        .expect("Expected statements_functions info to exist");
+    assert!(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
+        "Expected statements_functions info to be a map"
+    );
 }
