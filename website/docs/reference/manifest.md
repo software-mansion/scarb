@@ -307,8 +307,8 @@ If `avoid` strategy is set, the compiler will only inline function annotated wit
 > [!WARNING]
 > This is highly experimental and unstable feature intended to be used
 > by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
-> It may slow down the compilation - it is advised not to use it for other purposes than mentioned in
-> [cairo-profiler](https://github.com/software-mansion/cairo-profiler) documentation.
+> It may slow down the compilation - it is advised not to use it for other purposes than running
+> [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
 
 If enabled, during the project compilation Scarb will a add mapping between Sierra statement indexes and vectors of
 fully qualified paths of Cairo functions to debug info. A statement index maps to a vector consisting of a function
@@ -318,6 +318,24 @@ By default, this flag is disabled.
 ```toml
 [cairo]
 unstable-add-statements-functions-debug-info = true
+```
+
+### `unstable-add-statements-code-locations-debug-info`
+
+> [!WARNING]
+> This is highly experimental and unstable feature intended to be used
+> by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
+> It may slow down the compilation - it is advised not to use it for other purposes than running
+> [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
+
+If enabled, during the project compilation Scarb will add a mapping between Sierra statement indexes and locations in
+the code to debug info. A statement index maps to a vector consisting of code fragment which caused the statement to be
+generated and all code fragments that were inlined or generated along the way.
+By default, this flag is disabled.
+
+```toml
+[cairo]
+unstable-add-statements-code-locations-debug-info = true
 ```
 
 ## `[profile]`

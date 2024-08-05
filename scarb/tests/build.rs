@@ -15,6 +15,8 @@ use scarb_test_support::contracts::BALANCE_CONTRACT;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use serde::Deserialize;
+use serde::Serialize;
 
 #[test]
 fn compile_simple() {
@@ -1209,6 +1211,129 @@ fn add_statements_functions_debug_info() {
     );
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct SourceCodeLocation {
+    pub line: usize,
+    pub col: usize,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SourceCodeSpan {
+    pub start: SourceCodeLocation,
+    pub end: SourceCodeLocation,
+}
+
+#[test]
+fn add_statements_code_locations_debug_info() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r##"
+            #[starknet::interface]
+            pub trait IHelloStarknet<TContractState> {
+                fn increase_balance(ref self: TContractState, amount: felt252);
+                fn get_balance(self: @TContractState) -> felt252;
+            }
+
+            #[starknet::contract]
+            mod HelloStarknet {
+                #[storage]
+                struct Storage {
+                    balance: felt252,
+                }
+
+                #[abi(embed_v0)]
+                impl HelloStarknetImpl of super::IHelloStarknet<ContractState> {
+                    fn increase_balance(ref self: ContractState, amount: felt252) {
+                        assert(amount != 0, 'Amount cannot be 0');
+                        self.balance.write(self.balance.read() + amount);
+                    }
+
+                    fn get_balance(self: @ContractState) -> felt252 {
+                        self.balance.read()
+                    }
+                }
+            }
+
+            fn foo(mut shape: Span<usize>) -> usize {
+                let mut result: usize = 1;
+
+                loop {
+                    match shape.pop_front() {
+                        Option::Some(item) => { result *= *item; },
+                        Option::None => { break; }
+                    };
+                };
+
+                result
+            }
+
+            fn main() -> usize {
+                foo(array![1, 2].span())
+            }
+        "##})
+        .manifest_extra(indoc! {r#"
+            [lib]
+            casm = true
+
+            [[target.starknet-contract]]
+            casm = true
+
+            [cairo]
+            unstable-add-statements-code-locations-debug-info = true
+        "#})
+        .dep_starknet()
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lib_sierra_string = t.child("target/dev/hello.sierra.json").read_to_string();
+    let contract_sierra_string = t
+        .child("target/dev/hello_HelloStarknet.contract_class.json")
+        .read_to_string();
+    let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
+    let contract_sierra = serde_json::from_str::<ContractClass>(&contract_sierra_string).unwrap();
+
+    let debug_info = lib_sierra
+        .into_v1()
+        .unwrap()
+        .debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-coverage")
+        .expect("Expected cairo-coverage annotations to exist")
+        .get("statements_code_locations")
+        .expect("Expected statements_code_locations info to exist");
+    assert!(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+            mappings.clone()
+        )
+        .is_ok(),
+        "Expected statements_code_locations info to be a map"
+    );
+
+    let debug_info = contract_sierra
+        .sierra_program_debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-coverage")
+        .expect("Expected cairo-coverage annotations to exist")
+        .get("statements_code_locations")
+        .expect("Expected statements_code_locations info to exist");
+    assert!(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+            mappings.clone()
+        )
+        .is_ok(),
+        "Expected statements_code_locations info to be a map"
+    );
+}
+
 #[test]
 fn add_statements_functions_debug_info_to_tests() {
     let t = TempDir::new().unwrap();
@@ -1292,5 +1417,94 @@ fn add_statements_functions_debug_info_to_tests() {
     assert!(
         serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
         "Expected statements_functions info to be a map"
+    );
+}
+
+#[test]
+fn add_statements_code_locations_debug_info_to_tests() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r##"
+            #[starknet::interface]
+            pub trait IHelloStarknet<TContractState> {
+                fn increase_balance(ref self: TContractState, amount: felt252);
+                fn get_balance(self: @TContractState) -> felt252;
+            }
+
+            #[starknet::contract]
+            mod HelloStarknet {
+                #[storage]
+                struct Storage {
+                    balance: felt252,
+                }
+
+                #[abi(embed_v0)]
+                impl HelloStarknetImpl of super::IHelloStarknet<ContractState> {
+                    fn increase_balance(ref self: ContractState, amount: felt252) {
+                        assert(amount != 0, 'Amount cannot be 0');
+                        self.balance.write(self.balance.read() + amount);
+                    }
+
+                    fn get_balance(self: @ContractState) -> felt252 {
+                        self.balance.read()
+                    }
+                }
+            }
+
+            fn foo(mut shape: Span<usize>) -> usize {
+                let mut result: usize = 1;
+
+                loop {
+                    match shape.pop_front() {
+                        Option::Some(item) => { result *= *item; },
+                        Option::None => { break; }
+                    };
+                };
+
+                result
+            }
+
+            fn main() -> usize {
+                foo(array![1, 2].span())
+            }
+        "##})
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+
+            [cairo]
+            unstable-add-statements-code-locations-debug-info = true
+        "#})
+        .dep_starknet()
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lib_sierra_string = t
+        .child("target/dev/hello_unittest.test.sierra.json")
+        .read_to_string();
+    let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
+
+    let debug_info = lib_sierra
+        .into_v1()
+        .unwrap()
+        .debug_info
+        .expect("Expected debug info to exist");
+    let mappings = debug_info
+        .annotations
+        .get("github.com/software-mansion/cairo-coverage")
+        .expect("Expected cairo-coverage annotations to exist")
+        .get("statements_code_locations")
+        .expect("Expected statements_code_locations info to exist");
+    assert!(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+            mappings.clone()
+        )
+        .is_ok(),
+        "Expected statements_code_locations info to be a map"
     );
 }
