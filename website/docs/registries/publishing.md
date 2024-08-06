@@ -1,7 +1,7 @@
 # Publishing your package
 
-When you want to share your package over package registry, it needs to be turned into an archive first.
-The archive will then be uploaded to the registry, where it can be downloaded by other users.
+To share your package, it needs to be packaged into an archive and uploaded to the registry.
+Once uploaded, it will be available for other users to download.
 
 ## Packaging the package
 
