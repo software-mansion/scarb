@@ -166,6 +166,15 @@ impl CompilationUnit<'_> {
             .unwrap_or(false)
     }
 
+    pub fn unstable_add_statements_code_locations_debug_info(&self) -> bool {
+        self.unit_metadata
+            .compiler_config
+            .as_object()
+            .and_then(|config| config.get("unstable_add_statements_code_locations_debug_info"))
+            .and_then(|value| value.as_bool())
+            .unwrap_or(false)
+    }
+
     pub fn main_package_source_root(&self) -> Utf8PathBuf {
         self.main_package_metadata.source_root().to_path_buf()
     }

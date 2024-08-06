@@ -321,6 +321,12 @@ pub struct TomlCairo {
     /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
     /// This feature is unstable and is subject to change.
     pub unstable_add_statements_functions_debug_info: Option<bool>,
+    /// Add a mapping between sierra statement indexes and lines in cairo code
+    /// to debug info. A statement index maps to a vector consisting of a line which caused the
+    /// statement to be generated and all lines that were inlined or generated along the way.
+    /// Used by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
+    /// This feature is unstable and is subject to change.
+    pub unstable_add_statements_code_locations_debug_info: Option<bool>,
     /// Inlining strategy.
     pub inlining_strategy: Option<InliningStrategy>,
 }
@@ -855,6 +861,12 @@ impl TomlManifest {
             {
                 compiler_config.unstable_add_statements_functions_debug_info =
                     unstable_add_statements_functions_debug_info;
+            }
+            if let Some(unstable_add_statements_code_locations_debug_info) =
+                cairo.unstable_add_statements_code_locations_debug_info
+            {
+                compiler_config.unstable_add_statements_code_locations_debug_info =
+                    unstable_add_statements_code_locations_debug_info;
             }
         }
         Ok(compiler_config)

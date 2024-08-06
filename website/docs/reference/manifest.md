@@ -307,6 +307,22 @@ By default, this flag is disabled.
 unstable-add-statements-functions-debug-info = true
 ```
 
+### `unstable-add-statements-code-locations-debug-info`
+
+> [!WARNING]
+> This is highly experimental and unstable feature intended to be used
+> by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
+> It may slow down the compilation - it is advised not to use it for other purposes than mentioned in
+> [cairo-coverage](https://github.com/software-mansion/cairo-coverage) documentation.
+
+If enabled, during the project compilation Scarb will a add mapping between Sierra statement indexes and locations in the code to debug info. A statement index maps to a vector consisting of code fragment which caused the statement to be generated and all code fragments that were inlined or generated along the way.
+By default, this flag is disabled.
+
+```toml
+[cairo]
+unstable-add-statements-code-locations-debug-info = true
+```
+
 ## `[profile]`
 
 See [Profiles](./profiles) page.

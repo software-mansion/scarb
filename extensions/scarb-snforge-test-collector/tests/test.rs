@@ -1,6 +1,7 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use cairo_lang_sierra::program::StatementIdx;
+use cairo_lang_sierra_generator::statements_code_locations::SourceCodeSpan;
 use std::collections::HashMap;
 
 use scarb_test_support::fsx::ChildPathEx;
@@ -471,6 +472,42 @@ fn generates_statements_functions_mappings() {
         ["github.com/software-mansion/cairo-profiler"]["statements_functions"];
 
     assert!(serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok());
+}
+
+#[test]
+fn generates_statements_code_locations_mappings() {
+    let t = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("forge_test")
+        .lib_cairo(SIMPLE_TEST)
+        .manifest_extra(indoc! {r#"
+        [cairo]
+        unstable-add-statements-code-locations-debug-info = true
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("snforge-test-collector")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let snforge_sierra = t
+        .child("target/dev/snforge/forge_test.snforge_sierra.json")
+        .read_to_string();
+
+    let json: Value = serde_json::from_str(&snforge_sierra).unwrap();
+
+    let mappings = &json[0]["sierra_program"]["debug_info"]["annotations"]
+        ["github.com/software-mansion/cairo-coverage"]["statements_code_locations"];
+
+    assert!(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+            mappings.clone()
+        )
+        .is_ok()
+    );
 }
 
 #[test]
