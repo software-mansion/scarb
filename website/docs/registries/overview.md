@@ -11,11 +11,6 @@ Please note that the official registry is still in development.
 You can already use it to discover and [add](#adding-dependencies) packages to your projects.
 [Publishing](#packaging-and-publishing) packages is currently limited, but if there are any other packages you would like to be available - please reach out to us on [Telegram](https://t.me/scarbs_xyz) or [Discord](https://discord.gg/7YXj4Z2).
 
-## Custom registry
-
-Although Scarb uses the official registry by default,
-you can [host your own](./custom-registry) registry or search for and [use](./custom-registry#using-custom-registry) a community-hosted one instead.
-
 ## Adding dependencies
 
 If you want to add a package from the official registry as a dependency, you can read about it [here](./../reference/specifying-dependencies#specifying-dependencies-from-official-registry).
@@ -23,3 +18,8 @@ If you want to add a package from the official registry as a dependency, you can
 ## Packaging and publishing
 
 If you are interested in learning about the packaging and publishing process, you can read about it [here](./packaging).
+
+## Custom registry
+
+Although Scarb uses the official registry by default,
+you can [host your own](./custom-registry) registry or search for and [use](./custom-registry#using-custom-registry) a community-hosted one instead.
