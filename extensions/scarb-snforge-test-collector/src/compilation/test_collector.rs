@@ -147,27 +147,23 @@ pub fn collect_tests(
 
     if compilation_unit.unstable_add_statements_functions_debug_info() {
         if let Some(annotations) = &mut debug_annotations {
-            annotations.extend(
-                Annotations::from(
-                    sierra_program
-                        .debug_info
-                        .statements_locations
-                        .extract_statements_functions(db),
-                )
-            );
+            annotations.extend(Annotations::from(
+                sierra_program
+                    .debug_info
+                    .statements_locations
+                    .extract_statements_functions(db),
+            ));
         }
     }
 
     if compilation_unit.unstable_add_statements_code_locations_debug_info() {
         if let Some(annotations) = &mut debug_annotations {
-            annotations.extend(
-                Annotations::from(
-                    sierra_program
-                        .debug_info
-                        .statements_locations
-                        .extract_statements_source_code_locations(db),
-                    )
-            );
+            annotations.extend(Annotations::from(
+                sierra_program
+                    .debug_info
+                    .statements_locations
+                    .extract_statements_source_code_locations(db),
+            ));
         }
     }
 

@@ -1,6 +1,7 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use cairo_lang_sierra::program::StatementIdx;
+use cairo_lang_sierra_generator::statements_code_locations::SourceCodeSpan;
 use std::collections::HashMap;
 
 use scarb_test_support::fsx::ChildPathEx;
@@ -501,7 +502,12 @@ fn generates_statements_code_locations_mappings() {
     let mappings = &json[0]["sierra_program"]["debug_info"]["annotations"]
         ["github.com/software-mansion/cairo-coverage"]["statements_code_locations"];
 
-    assert!(serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok());
+    assert!(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+            mappings.clone()
+        )
+        .is_ok()
+    );
 }
 
 #[test]

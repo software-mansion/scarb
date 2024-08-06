@@ -57,7 +57,7 @@ pub fn build_compiler_config<'c>(
             .unstable_add_statements_functions_debug_info,
         add_statements_code_locations: unit
             .compiler_config
-            .unstable_add_statements_code_locations_debug_info, 
+            .unstable_add_statements_code_locations_debug_info,
         ..CompilerConfig::default()
     }
 }

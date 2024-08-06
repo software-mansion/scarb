@@ -15,6 +15,8 @@ use scarb_test_support::contracts::BALANCE_CONTRACT;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
+use serde::Deserialize;
+use serde::Serialize;
 
 #[test]
 fn compile_simple() {
@@ -1112,6 +1114,18 @@ fn add_statements_functions_debug_info() {
     );
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct SourceCodeLocation {
+    pub line: usize,
+    pub col: usize,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SourceCodeSpan {
+    pub start: SourceCodeLocation,
+    pub end: SourceCodeLocation,
+}
+
 #[test]
 fn add_statements_code_locations_debug_info() {
     let t = TempDir::new().unwrap();
@@ -1198,7 +1212,10 @@ fn add_statements_code_locations_debug_info() {
         .get("statements_code_locations")
         .expect("Expected statements_code_locations info to exist");
     assert!(
-        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+            mappings.clone()
+        )
+        .is_ok(),
         "Expected statements_code_locations info to be a map"
     );
 
@@ -1212,7 +1229,10 @@ fn add_statements_code_locations_debug_info() {
         .get("statements_code_locations")
         .expect("Expected statements_code_locations info to exist");
     assert!(
-        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+            mappings.clone()
+        )
+        .is_ok(),
         "Expected statements_code_locations info to be a map"
     );
 }
@@ -1384,7 +1404,10 @@ fn add_statements_code_locations_debug_info_to_tests() {
         .get("statements_functions")
         .expect("Expected statements_functions info to exist");
     assert!(
-        serde_json::from_value::<HashMap<StatementIdx, Vec<String>>>(mappings.clone()).is_ok(),
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+            mappings.clone()
+        )
+        .is_ok(),
         "Expected statements_functions info to be a map"
     );
 }
