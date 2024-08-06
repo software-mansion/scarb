@@ -13,10 +13,12 @@ alexandria_math = "0.1.0"
 ```
 
 Alternatively, you can specify the version requirement with the `version` key:
+
 ```toml
 [dependencies]
 alexandria_math = { version = "0.1.0" }
 ```
+
 The two formats above are equivalent.
 
 Unlike other dependency types, it is required to specify the version requirement for packages from the registry.
