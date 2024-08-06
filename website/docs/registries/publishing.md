@@ -27,7 +27,7 @@ After successfully completing the whole process, the `{name}-{version}.tar.zst` 
 > [!WARNING]
 > Currently, packages can only be published to a local [custom registry](./custom-registry.md).
 > Publishing packages over HTTP is not yet supported.
-> 
+>
 > If you're interested in making your package available in the official [scarbs.xyz](https://scarbs.xyz) registry,
 > please reach out to us on [Telegram](https://t.me/scarbs_xyz) or [Discord](https://discord.gg/7YXj4Z2).
 
