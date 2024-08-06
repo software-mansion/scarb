@@ -17,7 +17,7 @@ If you want to add a package from the official registry as a dependency, you can
 
 ## Packaging and publishing
 
-If you are interested in learning about the packaging and publishing process, you can read about it [here](./packaging).
+If you are interested in learning about the packaging and publishing process, you can read about it [here](./publishing).
 
 ## Custom registry
 

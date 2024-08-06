@@ -73,7 +73,7 @@ const sidebar = {
       text: "Registries",
       items: [
         p("Overview", "/docs/registries/overview"),
-        p("Packaging", "/docs/registries/packaging"),
+        p("Publishing", "/docs/registries/publishing"),
         p("Package tarball", "/docs/registries/package-tarball"),
         p("Custom registry", "/docs/registries/custom-registry"),
       ],

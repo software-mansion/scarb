@@ -72,7 +72,7 @@ An entry consists of the `v` key that describes the version, a `deps` array desc
 ### Package archive
 
 The last type of files that needs to be served are the package archives.
-These are the outputs of the `scarb package` command, as described in the [Packaging](./packaging) section.
+These are the outputs of the `scarb package` command, as described in the [Packaging](./publishing) section.
 
 ## Using custom registry
 

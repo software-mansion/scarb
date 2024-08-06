@@ -1,7 +1,9 @@
-# Packaging your project
+# Publishing your package
 
 When you want to share your package over package registry, it needs to be turned into an archive first.
 The archive will then be uploaded to the registry, where it can be downloaded by other users.
+
+## Packaging the package
 
 Use the `scarb package` command to create an archive of your package.
 You can read about the package compression algorithm and contents in the [Package tarball](./package-tarball) section.
