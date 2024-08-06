@@ -8,7 +8,9 @@ While Scarb supports alternative ways to host packages, registries make it easy 
 
 Currently, the default way to host packages is via the official [scarbs.xyz](https://scarbs.xyz) registry.
 Please note that the official registry is still in development.
+
 You can already use it to discover and [add](#adding-dependencies) packages to your projects.
+
 [Publishing](#packaging-and-publishing) packages is currently limited, but if there are any other packages you would like to be available - please reach out to us on [Telegram](https://t.me/scarbs_xyz) or [Discord](https://discord.gg/7YXj4Z2).
 
 ## Adding dependencies
