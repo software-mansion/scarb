@@ -24,12 +24,16 @@ After successfully completing the whole process, the `{name}-{version}.tar.zst` 
 
 ## Publishing the package
 
+> [!WARNING]
+> Currently, packages can only be published to a local [custom registry](./custom-registry.md).
+> Publishing packages over HTTP is not yet supported.
+> 
+> If you're interested in making your package available in the official [scarbs.xyz](https://scarbs.xyz) registry,
+> please reach out to us on [Telegram](https://t.me/scarbs_xyz) or [Discord](https://discord.gg/7YXj4Z2).
+
 To upload your package, you can use the `scarb publish` command.
-Publishing your package over HTTP is not yet supported, therefore, the only way to upload the package is to use a local registry.
 The command takes the `--index` argument that you can use to pass the local directory path where you want to store the packages.
 
 ```shell
 scarb publish --index file:///Users/foo/bar
 ```
-
-This is only useful when you are [hosting your own registry](./custom-registry).
