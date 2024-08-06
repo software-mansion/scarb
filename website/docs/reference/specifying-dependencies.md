@@ -12,6 +12,13 @@ To depend on a package located in the registry, you need to specify the package 
 alexandria_math = "0.1.0"
 ```
 
+Alternatively, you can specify the version requirement with the `version` key:
+```toml
+[dependencies]
+alexandria_math = { version = "0.1.0" }
+```
+The two formats above are equivalent.
+
 Unlike other dependency types, it is required to specify the version requirement for packages from the registry.
 
 ## Specifying dependencies from Git repositories
@@ -107,14 +114,6 @@ where `y ≥ z` and `x > 0`.
 
 It is possible to further tweak the logic for selecting compatible versions using special operators, though it shouldn't
 be necessary most of the time.
-
-By default, Scarb uses the official registry as a package source.
-Therefore, Scarb will look for the package in the official registry if only the `version` key is specified.
-
-```toml
-[dependencies]
-alexandria_math = { version = "0.1.0" }
-```
 
 ### Caret requirements
 
