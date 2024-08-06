@@ -21,6 +21,7 @@ use cairo_lang_sierra::extensions::NamedType;
 use cairo_lang_sierra::ids::GenericTypeId;
 use cairo_lang_sierra::program::{GenericArg, ProgramArtifact};
 use cairo_lang_sierra_generator::db::SierraGenGroup;
+use cairo_lang_sierra_generator::program_generator::SierraProgramWithDebug;
 use cairo_lang_sierra_generator::replace_ids::replace_sierra_ids_in_program;
 use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_test_plugin::test_plugin_suite;
@@ -143,29 +144,8 @@ pub fn collect_tests(
         .context("Compilation failed without any diagnostics")
         .context("Failed to get sierra program")?;
 
-    let mut debug_annotations: Option<Annotations> = None;
-
-    if compilation_unit.unstable_add_statements_functions_debug_info() {
-        if let Some(annotations) = &mut debug_annotations {
-            annotations.extend(Annotations::from(
-                sierra_program
-                    .debug_info
-                    .statements_locations
-                    .extract_statements_functions(db),
-            ));
-        }
-    }
-
-    if compilation_unit.unstable_add_statements_code_locations_debug_info() {
-        if let Some(annotations) = &mut debug_annotations {
-            annotations.extend(Annotations::from(
-                sierra_program
-                    .debug_info
-                    .statements_locations
-                    .extract_statements_source_code_locations(db),
-            ));
-        }
-    }
+    let debug_annotations: Option<Annotations> =
+        maybe_build_debug_annotations(compilation_unit, &sierra_program, db);
 
     let debug_info = debug_annotations.map(|annotations| DebugInfo {
         type_names: Default::default(),
@@ -220,6 +200,36 @@ pub fn collect_tests(
         },
         collected_tests,
     ))
+}
+
+fn maybe_build_debug_annotations(
+    compilation_unit: &CompilationUnit,
+    sierra_program: &Arc<SierraProgramWithDebug>,
+    db: &mut RootDatabase,
+) -> Option<Annotations> {
+    if !compilation_unit.unstable_add_statements_functions_debug_info()
+        && !compilation_unit.unstable_add_statements_code_locations_debug_info()
+    {
+        return None;
+    };
+    let mut debug_annotations: Annotations = Annotations::default();
+    if compilation_unit.unstable_add_statements_functions_debug_info() {
+        debug_annotations.extend(Annotations::from(
+            sierra_program
+                .debug_info
+                .statements_locations
+                .extract_statements_functions(db),
+        ));
+    }
+    if compilation_unit.unstable_add_statements_code_locations_debug_info() {
+        debug_annotations.extend(Annotations::from(
+            sierra_program
+                .debug_info
+                .statements_locations
+                .extract_statements_source_code_locations(db),
+        ));
+    }
+    Some(debug_annotations)
 }
 
 fn build_test_details(function_finder: &FunctionFinder, test_name: &str) -> Result<TestDetails> {

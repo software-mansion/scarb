@@ -26,9 +26,9 @@ pub struct ManifestCompilerConfig {
     /// Used by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
     /// This feature is unstable and is subject to change.
     pub unstable_add_statements_functions_debug_info: bool,
-    /// Add a mapping between sierra statement indexes and lines in cairo code
-    /// to debug info. A statement index maps to a vector consisting of a line which caused the
-    /// statement to be generated and all lines that were inlined or generated along the way.
+    /// Add a mapping between sierra statement indexes and code location in cairo code
+    /// to debug info. A statement index maps to a vector consisting of a code location which caused the
+    /// statement to be generated and all code location that were inlined or generated along the way.
     /// Used by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
     /// This feature is unstable and is subject to change.
     pub unstable_add_statements_code_locations_debug_info: bool,
