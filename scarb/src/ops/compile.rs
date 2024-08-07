@@ -106,7 +106,7 @@ where
     let packages = get_test_package_ids(packages, ws);
     let compilation_units = ops::generate_compilation_units(&resolve, &opts.features, ws)?
         .into_iter()
-        .filter(|cu: &CompilationUnit| {
+        .filter(|cu| {
             let is_excluded = opts
                 .exclude_target_kinds
                 .contains(&cu.main_component().target_kind());

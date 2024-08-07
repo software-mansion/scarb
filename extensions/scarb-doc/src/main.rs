@@ -45,7 +45,6 @@ fn main_inner() -> Result<()> {
     let args = Args::parse();
 
     let mut metadata_command = MetadataCommand::new();
-    // They are always the same, scarb doc or scarb-doc
     let metadata = metadata_command
         .inherit_stderr()
         .exec()

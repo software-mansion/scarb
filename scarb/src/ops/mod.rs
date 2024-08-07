@@ -4,7 +4,6 @@
 
 pub use cache::*;
 pub use clean::*;
-pub use compile::FeaturesOpts;
 pub use compile::*;
 pub use expand::*;
 pub use fmt::*;

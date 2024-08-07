@@ -43,8 +43,8 @@ impl ScarbDocDatabase {
 
         init_files_group(&mut db);
 
-        let intial_cfg = Self::initial_cfg_set();
-        db.set_cfg_set(intial_cfg.into());
+        let initial_cfg = Self::initial_cfg_set();
+        db.set_cfg_set(initial_cfg.into());
         let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
             .into_iter()
             .fold(PluginSuite::default(), |mut acc, suite| {
