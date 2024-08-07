@@ -88,12 +88,13 @@ fn get_crates_config(
         .components
         .iter()
         .map(|component| {
-            let pkg: &PackageMetadata = metadata.get_package(&component.package).unwrap_or_else(|| {
-                panic!(
-                    "failed to find = {} package",
-                    &component.package.to_string()
-                )
-            });
+            let pkg: &PackageMetadata =
+                metadata.get_package(&component.package).unwrap_or_else(|| {
+                    panic!(
+                        "failed to find = {} package",
+                        &component.package.to_string()
+                    )
+                });
             (
                 SmolStr::from(&component.name),
                 get_crate_settings_for_package(

@@ -59,10 +59,11 @@ pub fn generate_packages_information(
         };
 
         let project_config = get_project_config(metadata, package_metadata);
+
         let crate_ = generate_language_elements_tree_for_package(
             package_metadata.name.clone(),
-            project_config,
-            cfg,
+            project_config.clone(),
+            cfg.clone(),
         );
 
         packages_information.push(PackageInformation {
@@ -79,9 +80,10 @@ pub fn generate_packages_information(
 fn generate_language_elements_tree_for_package(
     package_name: String,
     project_config: ProjectConfig,
-    cfg: CfgSet,
+    features_cfg: CfgSet,
 ) -> Crate {
-    let db = ScarbDocDatabase::new(Some(project_config), cfg);
+    let db: ScarbDocDatabase =
+        ScarbDocDatabase::new(&package_name, Some(project_config), features_cfg);
 
     let main_crate_id = db.intern_crate(CrateLongId::Real(package_name.into()));
 

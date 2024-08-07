@@ -44,14 +44,15 @@ struct Args {
 fn main_inner() -> Result<()> {
     let args = Args::parse();
 
-    let metadata = MetadataCommand::new()
+    let mut metadata_command = MetadataCommand::new();
+    // They are always the same, scarb doc or scarb-doc
+    let metadata = metadata_command
         .inherit_stderr()
         .exec()
         .context("metadata command failed")?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
     let features_opt: FeaturesOpts = args.features.try_into()?;
-
     let packages_information =
         generate_packages_information(&metadata, &metadata_for_packages, features_opt)?;
 
