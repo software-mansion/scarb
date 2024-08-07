@@ -250,7 +250,7 @@ fn insert_lib_entrypoint_content_into_db(
     let module_id = ModuleId::CrateRoot(main_crate_id);
     let file_id = db.module_main_file(module_id).unwrap();
     db.as_files_group_mut()
-        .override_file_content(file_id, Some(Arc::new(lib_content.to_string())));
+        .override_file_content(file_id, Some(Arc::from(lib_content)));
 
     main_crate_id
 }
