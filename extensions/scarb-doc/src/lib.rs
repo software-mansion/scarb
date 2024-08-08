@@ -41,10 +41,9 @@ pub fn generate_packages_information(
         let authors = package_metadata.manifest_metadata.authors.clone();
 
         let features_manifest: BTreeMap<FeatureName, Vec<FeatureName>> =
-            match TomlManifest::read_from_path(&package_metadata.manifest_path)?.features {
-                Some(features_manifest) => features_manifest,
-                None => BTreeMap::new(),
-            };
+            TomlManifest::read_from_path(&package_metadata.manifest_path)?
+                .features
+                .unwrap_or_default();
 
         let initial_cfg_set = initial_cfg_set();
         let cfg_wtih_features = get_cfg_with_features(

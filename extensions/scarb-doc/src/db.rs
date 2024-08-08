@@ -82,12 +82,9 @@ impl ScarbDocDatabase {
         let root_crate_id = self.intern_crate(CrateLongId::Real(package_name.into()));
         let root_crate_config = self.crate_config(root_crate_id);
 
-        match root_crate_config {
-            Some(mut crate_config) => {
-                crate_config.settings.cfg_set = Some(features_cfg);
-                self.set_crate_config(root_crate_id, Some(crate_config.clone()));
-            }
-            None => (),
+        if let Some(mut crate_config) = root_crate_config {
+            crate_config.settings.cfg_set = Some(features_cfg);
+            self.set_crate_config(root_crate_id, Some(crate_config.clone()));
         }
     }
 

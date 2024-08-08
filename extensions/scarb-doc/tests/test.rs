@@ -4,7 +4,6 @@ use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
 use expect_test::expect_file;
 use indoc::indoc;
-use multizip;
 use std::fs;
 use std::iter::zip;
 use walkdir::WalkDir;
