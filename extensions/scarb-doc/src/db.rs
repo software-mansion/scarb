@@ -5,8 +5,9 @@ use cairo_lang_defs::db::{DefsDatabase, DefsGroup};
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
-    init_files_group, AsFilesGroupMut, FilesDatabase, FilesGroup, CORELIB_CRATE_NAME,
+    init_files_group, AsFilesGroupMut, FilesDatabase, FilesGroup, FilesGroupEx, CORELIB_CRATE_NAME,
 };
+use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_parser::db::{ParserDatabase, ParserGroup};
 use cairo_lang_semantic::db::{SemanticDatabase, SemanticGroup};
 use cairo_lang_semantic::inline_macros::get_default_plugin_suite;
@@ -31,14 +32,19 @@ pub struct ScarbDocDatabase {
 }
 
 impl ScarbDocDatabase {
-    pub fn new(project_config: Option<ProjectConfig>) -> Self {
+    pub fn new(
+        package_name: &String,
+        project_config: Option<ProjectConfig>,
+        features_cfg: CfgSet,
+    ) -> Self {
         let mut db = Self {
             storage: Default::default(),
         };
 
         init_files_group(&mut db);
 
-        db.set_cfg_set(Self::initial_cfg_set().into());
+        let initial_cfg = Self::initial_cfg_set();
+        db.set_cfg_set(initial_cfg.into());
         let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
             .into_iter()
             .fold(PluginSuite::default(), |mut acc, suite| {
@@ -52,11 +58,11 @@ impl ScarbDocDatabase {
             db.apply_project_config(config);
         }
 
-        db
-    }
+        if !features_cfg.is_empty() {
+            db.insert_features_cfg_into_root_crate(package_name, features_cfg);
+        }
 
-    fn initial_cfg_set() -> CfgSet {
-        CfgSet::from_iter([Cfg::name("doc")])
+        db
     }
 
     fn apply_plugin_suite(&mut self, plugin_suite: PluginSuite) {
@@ -70,6 +76,20 @@ impl ScarbDocDatabase {
         if let Some(corelib) = &config.corelib {
             update_crate_root(self, &config, CORELIB_CRATE_NAME.into(), corelib.clone());
         }
+    }
+
+    fn insert_features_cfg_into_root_crate(&mut self, package_name: &String, features_cfg: CfgSet) {
+        let root_crate_id = self.intern_crate(CrateLongId::Real(package_name.into()));
+        let root_crate_config = self.crate_config(root_crate_id);
+
+        if let Some(mut crate_config) = root_crate_config {
+            crate_config.settings.cfg_set = Some(features_cfg);
+            self.set_crate_config(root_crate_id, Some(crate_config.clone()));
+        }
+    }
+
+    fn initial_cfg_set() -> CfgSet {
+        CfgSet::from_iter([Cfg::name("doc")])
     }
 }
 

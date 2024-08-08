@@ -3447,7 +3447,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.5",
 ]
 
 [[package]]
@@ -3621,6 +3621,12 @@ name = "monch"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b52c1b33ff98142aecea13138bd399b68aa7ab5d9546c300988c345004001eea"
+
+[[package]]
+name = "multizip"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1fe13b118613c2f83085b3d0957ac6c4f1039270d8dd732285a948c280cb95e"
 
 [[package]]
 name = "native-tls"
@@ -4758,7 +4764,9 @@ dependencies = [
  "expect-test",
  "indoc",
  "itertools 0.12.1",
+ "multizip",
  "salsa",
+ "scarb",
  "scarb-metadata 1.12.0",
  "scarb-test-support",
  "scarb-ui",

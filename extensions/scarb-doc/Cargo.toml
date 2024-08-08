@@ -26,6 +26,7 @@ indoc.workspace = true
 itertools.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
+scarb = { path = "../../scarb" }
 serde.workspace = true
 serde_json.workspace = true
 salsa.workspace = true
@@ -35,3 +36,4 @@ smol_str.workspace = true
 assert_fs.workspace = true
 scarb-test-support = { path = "../../utils/scarb-test-support" }
 walkdir.workspace = true
+multizip = "0.1.0"
