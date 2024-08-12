@@ -26,7 +26,6 @@ indoc.workspace = true
 itertools.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
-scarb = { path = "../../scarb" }
 serde.workspace = true
 serde_json.workspace = true
 salsa.workspace = true
