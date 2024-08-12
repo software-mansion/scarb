@@ -11,7 +11,7 @@ use scarb_ui::components::Status;
 use scarb_ui::HumanDuration;
 
 use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin, ScarbDatabase};
-use crate::compiler::helpers::build_compiler_config;
+use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
 use crate::core::{
@@ -193,8 +193,9 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         CompilationUnit::ProcMacro(unit) => proc_macro::check_unit(unit, ws),
         CompilationUnit::Cairo(unit) => {
             let ScarbDatabase { db, .. } = build_scarb_root_database(&unit, ws)?;
+            let main_crate_ids = collect_main_crate_ids(&unit, &db);
             check_starknet_dependency(&unit, ws, &db, &package_name);
-            let mut compiler_config = build_compiler_config(&unit, ws);
+            let mut compiler_config = build_compiler_config(&unit, &main_crate_ids, ws);
             compiler_config
                 .diagnostics_reporter
                 .ensure(&db)

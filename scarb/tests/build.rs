@@ -863,6 +863,57 @@ fn warnings_can_be_disallowed() {
 }
 
 #[test]
+fn does_not_show_warnings_from_deps() {
+    let t = TempDir::new().unwrap();
+    let first = t.child("first");
+    let second = t.child("second");
+    ProjectBuilder::start()
+        .name("first")
+        .lib_cairo(indoc! {r#"
+        fn hello() -> felt252 {
+            let a = 41;
+            let b = 42;
+            b
+        }
+        "#})
+        .manifest_extra(indoc! {r#"
+        [cairo]
+        allow-warnings = false
+        "#})
+        .build(&first);
+    ProjectBuilder::start()
+        .name("second")
+        .lib_cairo(indoc! {r#"
+            fn hello() -> felt252 { 42 }
+        "#})
+        .dep("first", &first)
+        .manifest_extra(indoc! {r#"
+        [cairo]
+        allow-warnings = false
+        "#})
+        .build(&second);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&first)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling [..] v1.0.0 ([..]Scarb.toml)
+        warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
+         --> [..]lib.cairo:2:9
+            let a = 41;
+                ^
+
+        error: could not compile [..] due to previous error
+        "#});
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&second)
+        .assert()
+        .success();
+}
+
+#[test]
 fn error_codes_shown_in_json_output() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
