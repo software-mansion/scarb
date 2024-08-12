@@ -32,7 +32,8 @@ impl Compiler for TestCompiler {
                 && plugin.package.id.source_id == SourceId::for_std()
         });
 
-        let diagnostics_reporter = build_compiler_config(&unit, ws).diagnostics_reporter;
+        let diagnostics_reporter =
+            build_compiler_config(&unit, &main_crate_ids, ws).diagnostics_reporter;
 
         diagnostics_reporter
             .with_crates(&main_crate_ids)
