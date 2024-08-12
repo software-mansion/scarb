@@ -36,4 +36,3 @@ smol_str.workspace = true
 assert_fs.workspace = true
 scarb-test-support = { path = "../../utils/scarb-test-support" }
 walkdir.workspace = true
-multizip = "0.1.0"

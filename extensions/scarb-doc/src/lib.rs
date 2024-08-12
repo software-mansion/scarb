@@ -45,24 +45,15 @@ pub fn generate_packages_information(
                 .features
                 .unwrap_or_default();
 
-        let initial_cfg_set = initial_cfg_set();
-        let cfg_wtih_features = get_cfg_with_features(
-            initial_cfg_set.clone(),
-            &features_manifest,
-            &enabled_features,
-            false,
-        )?;
-        let cfg = match cfg_wtih_features {
-            Some(cfg_with_features) => cfg_with_features,
-            None => initial_cfg_set,
-        };
+        let cfg_with_features =
+            get_cfg_with_features(CfgSet::new(), &features_manifest, &enabled_features, false)?
+                .unwrap();
 
-        let project_config = get_project_config(metadata, package_metadata);
+        let project_config = get_project_config(metadata, package_metadata, cfg_with_features);
 
         let crate_ = generate_language_elements_tree_for_package(
             package_metadata.name.clone(),
-            project_config.clone(),
-            cfg.clone(),
+            project_config,
         );
 
         packages_information.push(PackageInformation {
@@ -79,16 +70,10 @@ pub fn generate_packages_information(
 fn generate_language_elements_tree_for_package(
     package_name: String,
     project_config: ProjectConfig,
-    features_cfg: CfgSet,
 ) -> Crate {
-    let db: ScarbDocDatabase =
-        ScarbDocDatabase::new(&package_name, Some(project_config), features_cfg);
+    let db = ScarbDocDatabase::new(Some(project_config));
 
     let main_crate_id = db.intern_crate(CrateLongId::Real(package_name.into()));
 
     Crate::new(&db, main_crate_id)
-}
-
-fn initial_cfg_set() -> CfgSet {
-    CfgSet::from_iter([Cfg::name("doc")])
 }

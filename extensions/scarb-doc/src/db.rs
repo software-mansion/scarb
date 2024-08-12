@@ -32,19 +32,14 @@ pub struct ScarbDocDatabase {
 }
 
 impl ScarbDocDatabase {
-    pub fn new(
-        package_name: &String,
-        project_config: Option<ProjectConfig>,
-        features_cfg: CfgSet,
-    ) -> Self {
+    pub fn new(project_config: Option<ProjectConfig>) -> Self {
         let mut db = Self {
             storage: Default::default(),
         };
 
         init_files_group(&mut db);
 
-        let initial_cfg = Self::initial_cfg_set();
-        db.set_cfg_set(initial_cfg.into());
+        db.set_cfg_set(Self::initial_cfg_set().into());
         let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
             .into_iter()
             .fold(PluginSuite::default(), |mut acc, suite| {
@@ -58,11 +53,11 @@ impl ScarbDocDatabase {
             db.apply_project_config(config);
         }
 
-        if !features_cfg.is_empty() {
-            db.insert_features_cfg_into_root_crate(package_name, features_cfg);
-        }
-
         db
+    }
+
+    fn initial_cfg_set() -> CfgSet {
+        CfgSet::from_iter([Cfg::name("doc")])
     }
 
     fn apply_plugin_suite(&mut self, plugin_suite: PluginSuite) {
@@ -76,20 +71,6 @@ impl ScarbDocDatabase {
         if let Some(corelib) = &config.corelib {
             update_crate_root(self, &config, CORELIB_CRATE_NAME.into(), corelib.clone());
         }
-    }
-
-    fn insert_features_cfg_into_root_crate(&mut self, package_name: &String, features_cfg: CfgSet) {
-        let root_crate_id = self.intern_crate(CrateLongId::Real(package_name.into()));
-        let root_crate_config = self.crate_config(root_crate_id);
-
-        if let Some(mut crate_config) = root_crate_config {
-            crate_config.settings.cfg_set = Some(features_cfg);
-            self.set_crate_config(root_crate_id, Some(crate_config.clone()));
-        }
-    }
-
-    fn initial_cfg_set() -> CfgSet {
-        CfgSet::from_iter([Cfg::name("doc")])
     }
 }
 

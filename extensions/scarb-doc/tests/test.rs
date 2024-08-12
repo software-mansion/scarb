@@ -8,6 +8,7 @@ use std::fs;
 use std::iter::zip;
 use walkdir::WalkDir;
 
+use itertools::multizip;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx;
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -119,12 +120,12 @@ fn test_workspace_no_features() {
         .assert()
         .success();
 
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
         WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
         WalkDir::new(EXPECTED_SUB_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    ) {
+    )) {
         let root_dir_entry_expected = dir_entry_1.unwrap();
         let root_dir_entry = dir_entry_2.unwrap();
         let sub_package_dir_entry_expected = dir_entry_3.unwrap();
@@ -188,12 +189,12 @@ fn test_workspace_without_features_in_manifest() {
         .assert()
         .success();
 
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
         WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
         WalkDir::new(EXPECTED_SUB_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    ) {
+    )) {
         let root_dir_entry_expected = dir_entry_1.unwrap();
         let root_dir_entry = dir_entry_2.unwrap();
         let sub_package_dir_entry_expected = dir_entry_3.unwrap();
@@ -268,12 +269,12 @@ fn test_workspace_with_working_feature_in_root_and_sub_package() {
         .assert()
         .success();
 
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
         WalkDir::new(EXPECTED_ROOT_PACKAGE_WITH_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
         WalkDir::new(EXPECTED_SUB_PACKAGE_WITH_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    ) {
+    )) {
         let root_dir_entry_expected = dir_entry_1.unwrap();
         let root_dir_entry = dir_entry_2.unwrap();
         let sub_package_dir_entry_expected = dir_entry_3.unwrap();
@@ -341,12 +342,12 @@ fn test_workspace_with_working_feature_in_root_only() {
         .assert()
         .success();
 
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
         WalkDir::new(EXPECTED_ROOT_PACKAGE_WITH_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
         WalkDir::new(EXPECTED_SUB_PACKAGE_WITHOUT_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    ) {
+    )) {
         let root_dir_entry_expected = dir_entry_1.unwrap();
         let root_dir_entry = dir_entry_2.unwrap();
         let sub_package_dir_entry_expected = dir_entry_3.unwrap();
@@ -418,12 +419,12 @@ fn test_workspace_with_working_feature_in_sub_package_only() {
         .assert()
         .success();
 
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
         WalkDir::new(EXPECTED_ROOT_PACKAGE_WITHOUT_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
         WalkDir::new(EXPECTED_SUB_PACKAGE_WITH_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    ) {
+    )) {
         let root_dir_entry_expected = dir_entry_1.unwrap();
         let root_dir_entry = dir_entry_2.unwrap();
         let sub_package_dir_entry_expected = dir_entry_3.unwrap();
@@ -487,12 +488,12 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
         .assert()
         .success();
 
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
         WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
         WalkDir::new(EXPECTED_SUB_PACKAGE_WITHOUT_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    ) {
+    )) {
         let root_dir_entry_expected = dir_entry_1.unwrap();
         let root_dir_entry = dir_entry_2.unwrap();
         let sub_package_dir_entry_expected = dir_entry_3.unwrap();
@@ -556,12 +557,12 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         .assert()
         .success();
 
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip::zip4(
+    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
         WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
         WalkDir::new(EXPECTED_SUB_PACKAGE_WITHOUT_FEATURES_PATH).sort_by_file_name(),
         WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    ) {
+    )) {
         let root_dir_entry_expected = dir_entry_1.unwrap();
         let root_dir_entry = dir_entry_2.unwrap();
         let sub_package_dir_entry_expected = dir_entry_3.unwrap();

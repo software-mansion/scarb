@@ -36,7 +36,7 @@ struct Args {
     #[arg(long, value_enum, default_value_t)]
     output_format: OutputFormat,
 
-    /// Specify features to enable.
+    /// Specifies features to enable.
     #[command(flatten)]
     pub features: FeaturesSpec,
 }
@@ -44,8 +44,7 @@ struct Args {
 fn main_inner() -> Result<()> {
     let args = Args::parse();
 
-    let mut metadata_command = MetadataCommand::new();
-    let metadata = metadata_command
+    let metadata = MetadataCommand::new()
         .inherit_stderr()
         .exec()
         .context("metadata command failed")?;
