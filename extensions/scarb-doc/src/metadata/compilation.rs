@@ -18,12 +18,11 @@ const CORELIB_CRATE_NAME: &str = "core";
 pub fn get_project_config(
     metadata: &Metadata,
     package_metadata: &PackageMetadata,
-    cfg_with_features: CfgSet,
 ) -> ProjectConfig {
     let compilation_unit_metadata = package_compilation_unit(metadata, package_metadata.id.clone());
     let corelib = get_corelib(compilation_unit_metadata);
     let dependencies = get_dependencies(compilation_unit_metadata);
-    let crates_config = get_crates_config(metadata, compilation_unit_metadata, cfg_with_features);
+    let crates_config = get_crates_config(metadata, compilation_unit_metadata);
     ProjectConfig {
         base_path: package_metadata.root.clone().into(),
         corelib: Some(Directory::Real(corelib.source_root().into())),
@@ -84,7 +83,6 @@ fn get_dependencies(
 fn get_crates_config(
     metadata: &Metadata,
     compilation_unit_metadata: &CompilationUnitMetadata,
-    cfg_with_features: CfgSet,
 ) -> AllCratesConfig {
     let crates_config: OrderedHashMap<SmolStr, CrateSettings> = compilation_unit_metadata
         .components
@@ -96,18 +94,14 @@ fn get_crates_config(
                     &component.package.to_string()
                 )
             });
-            let mut crate_settings = get_crate_settings_for_package(
-                pkg,
-                component.cfg.as_ref().map(|cfg_vec| build_cfg_set(cfg_vec)),
-            );
 
-            if component.package == compilation_unit_metadata.package
-                && !cfg_with_features.is_empty()
-            {
-                crate_settings.cfg_set = Some(cfg_with_features.clone());
-            }
-
-            (SmolStr::from(&component.name), crate_settings)
+            (
+                SmolStr::from(&component.name),
+                get_crate_settings_for_package(
+                    pkg,
+                    component.cfg.as_ref().map(|cfg_vec| build_cfg_set(cfg_vec)),
+                ),
+            )
         })
         .collect();
 

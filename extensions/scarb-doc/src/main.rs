@@ -4,12 +4,11 @@ use scarb_doc::docs_generation::markdown::MarkdownContent;
 use scarb_doc::metadata::get_target_dir;
 
 use scarb_metadata::MetadataCommand;
-use scarb_ui::args::PackagesFilter;
+use scarb_ui::args::{PackagesFilter, ToEnvVars};
 
 use scarb_doc::generate_packages_information;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 
-use scarb::ops::FeaturesOpts;
 use scarb_ui::args::FeaturesSpec;
 
 const OUTPUT_DIR: &str = "doc";
@@ -44,15 +43,15 @@ struct Args {
 fn main_inner() -> Result<()> {
     let args = Args::parse();
 
+    // args.features.to_env_vars();
     let metadata = MetadataCommand::new()
         .inherit_stderr()
+        .envs(args.features.to_env_vars())
         .exec()
         .context("metadata command failed")?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
-    let features_opt: FeaturesOpts = args.features.try_into()?;
-    let packages_information =
-        generate_packages_information(&metadata, &metadata_for_packages, features_opt)?;
+    let packages_information = generate_packages_information(&metadata, &metadata_for_packages)?;
 
     match args.output_format {
         OutputFormat::Json => {

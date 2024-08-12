@@ -324,7 +324,6 @@ fn cairo_compilation_unit_for_target(
                         cfg_set.clone(),
                         &package.manifest.features,
                         enabled_features,
-                        true,
                     )?
                 } else {
                     no_test_cfg_set.clone()
@@ -373,14 +372,12 @@ fn cairo_compilation_unit_for_target(
     })
 }
 
-pub fn get_cfg_with_features(
+fn get_cfg_with_features(
     mut cfg_set: CfgSet,
     features_manifest: &BTreeMap<FeatureName, Vec<FeatureName>>,
     enabled_features: &FeaturesOpts,
-    // When generating docs, we don't want to be strict whether a package has defined features in manifest.
-    force_manifest_features_check: bool,
 ) -> Result<Option<CfgSet>> {
-    if features_manifest.is_empty() && force_manifest_features_check {
+    if features_manifest.is_empty() {
         match &enabled_features.features {
             FeaturesSelector::Features(features) if !features.is_empty() => {
                 bail!(
@@ -429,7 +426,7 @@ pub fn get_cfg_with_features(
         .difference(&available_features)
         .collect_vec();
 
-    if !not_found_features.is_empty() && force_manifest_features_check {
+    if !not_found_features.is_empty() {
         bail!("unknown features: {}", not_found_features.iter().join(", "));
     }
 

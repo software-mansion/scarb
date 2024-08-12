@@ -15,13 +15,10 @@ use scarb_test_support::project_builder::ProjectBuilder;
 
 const EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH: &str = "tests/data/hello_world_no_features";
 const EXPECTED_ROOT_PACKAGE_WITH_FEATURES_PATH: &str = "tests/data/hello_world_with_features";
-const EXPECTED_ROOT_PACKAGE_WITHOUT_FEATURES_PATH: &str = "tests/data/hello_world_without_features";
 const EXPECTED_SUB_PACKAGE_NO_FEATURES_PATH: &str =
     "tests/data/hello_world_sub_package_no_features";
 const EXPECTED_SUB_PACKAGE_WITH_FEATURES_PATH: &str =
     "tests/data/hello_world_sub_package_with_features";
-const EXPECTED_SUB_PACKAGE_WITHOUT_FEATURES_PATH: &str =
-    "tests/data/hello_world_sub_package_without_features";
 
 const TARGET_ROOT_PACKAGE_PATH: &str = "target/doc/hello_world";
 const TARGET_SUB_PACKAGE_PATH: &str = "target/doc/hello_world_sub_package";
@@ -187,39 +184,7 @@ fn test_workspace_without_features_in_manifest() {
         ])
         .current_dir(&root_dir)
         .assert()
-        .success();
-
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
-        WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
-        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
-        WalkDir::new(EXPECTED_SUB_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
-        WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    )) {
-        let root_dir_entry_expected = dir_entry_1.unwrap();
-        let root_dir_entry = dir_entry_2.unwrap();
-        let sub_package_dir_entry_expected = dir_entry_3.unwrap();
-        let sub_package_dir = dir_entry_4.unwrap();
-
-        if root_dir_entry_expected.file_type().is_file() {
-            assert!(root_dir_entry.file_type().is_file());
-
-            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
-
-            let expect_file =
-                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
-            expect_file.assert_eq(&content);
-        }
-
-        if sub_package_dir_entry_expected.file_type().is_file() {
-            assert!(sub_package_dir.file_type().is_file());
-
-            let content = fs::read_to_string(sub_package_dir.path()).unwrap();
-
-            let expect_file =
-                expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
-            expect_file.assert_eq(&content);
-        }
-    }
+        .failure();
 }
 
 #[test]
@@ -340,39 +305,7 @@ fn test_workspace_with_working_feature_in_root_only() {
         ])
         .current_dir(&root_dir)
         .assert()
-        .success();
-
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
-        WalkDir::new(EXPECTED_ROOT_PACKAGE_WITH_FEATURES_PATH).sort_by_file_name(),
-        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
-        WalkDir::new(EXPECTED_SUB_PACKAGE_WITHOUT_FEATURES_PATH).sort_by_file_name(),
-        WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    )) {
-        let root_dir_entry_expected = dir_entry_1.unwrap();
-        let root_dir_entry = dir_entry_2.unwrap();
-        let sub_package_dir_entry_expected = dir_entry_3.unwrap();
-        let sub_package_dir = dir_entry_4.unwrap();
-
-        if root_dir_entry_expected.file_type().is_file() {
-            assert!(root_dir_entry.file_type().is_file());
-
-            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
-
-            let expect_file =
-                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
-            expect_file.assert_eq(&content);
-        }
-
-        if sub_package_dir_entry_expected.file_type().is_file() {
-            assert!(sub_package_dir.file_type().is_file());
-
-            let content = fs::read_to_string(sub_package_dir.path()).unwrap();
-
-            let expect_file =
-                expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
-            expect_file.assert_eq(&content);
-        }
-    }
+        .failure();
 }
 
 #[test]
@@ -417,39 +350,7 @@ fn test_workspace_with_working_feature_in_sub_package_only() {
         ])
         .current_dir(&root_dir)
         .assert()
-        .success();
-
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
-        WalkDir::new(EXPECTED_ROOT_PACKAGE_WITHOUT_FEATURES_PATH).sort_by_file_name(),
-        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
-        WalkDir::new(EXPECTED_SUB_PACKAGE_WITH_FEATURES_PATH).sort_by_file_name(),
-        WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    )) {
-        let root_dir_entry_expected = dir_entry_1.unwrap();
-        let root_dir_entry = dir_entry_2.unwrap();
-        let sub_package_dir_entry_expected = dir_entry_3.unwrap();
-        let sub_package_dir = dir_entry_4.unwrap();
-
-        if root_dir_entry_expected.file_type().is_file() {
-            assert!(root_dir_entry.file_type().is_file());
-
-            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
-
-            let expect_file =
-                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
-            expect_file.assert_eq(&content);
-        }
-
-        if sub_package_dir_entry_expected.file_type().is_file() {
-            assert!(sub_package_dir.file_type().is_file());
-
-            let content = fs::read_to_string(sub_package_dir.path()).unwrap();
-
-            let expect_file =
-                expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
-            expect_file.assert_eq(&content);
-        }
-    }
+        .failure();
 }
 
 #[test]
@@ -486,39 +387,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
         ])
         .current_dir(&root_dir)
         .assert()
-        .success();
-
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
-        WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
-        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
-        WalkDir::new(EXPECTED_SUB_PACKAGE_WITHOUT_FEATURES_PATH).sort_by_file_name(),
-        WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    )) {
-        let root_dir_entry_expected = dir_entry_1.unwrap();
-        let root_dir_entry = dir_entry_2.unwrap();
-        let sub_package_dir_entry_expected = dir_entry_3.unwrap();
-        let sub_package_dir = dir_entry_4.unwrap();
-
-        if root_dir_entry_expected.file_type().is_file() {
-            assert!(root_dir_entry.file_type().is_file());
-
-            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
-
-            let expect_file =
-                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
-            expect_file.assert_eq(&content);
-        }
-
-        if sub_package_dir_entry_expected.file_type().is_file() {
-            assert!(sub_package_dir.file_type().is_file());
-
-            let content = fs::read_to_string(sub_package_dir.path()).unwrap();
-
-            let expect_file =
-                expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
-            expect_file.assert_eq(&content);
-        }
-    }
+        .failure();
 }
 
 #[test]
@@ -555,37 +424,5 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         ])
         .current_dir(&root_dir)
         .assert()
-        .success();
-
-    for (dir_entry_1, dir_entry_2, dir_entry_3, dir_entry_4) in multizip((
-        WalkDir::new(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH).sort_by_file_name(),
-        WalkDir::new(root_dir.path().join(TARGET_ROOT_PACKAGE_PATH)).sort_by_file_name(),
-        WalkDir::new(EXPECTED_SUB_PACKAGE_WITHOUT_FEATURES_PATH).sort_by_file_name(),
-        WalkDir::new(root_dir.path().join(TARGET_SUB_PACKAGE_PATH)).sort_by_file_name(),
-    )) {
-        let root_dir_entry_expected = dir_entry_1.unwrap();
-        let root_dir_entry = dir_entry_2.unwrap();
-        let sub_package_dir_entry_expected = dir_entry_3.unwrap();
-        let sub_package_dir = dir_entry_4.unwrap();
-
-        if root_dir_entry_expected.file_type().is_file() {
-            assert!(root_dir_entry.file_type().is_file());
-
-            let content = fs::read_to_string(root_dir_entry.path()).unwrap();
-
-            let expect_file =
-                expect_file![fsx::canonicalize(root_dir_entry_expected.path()).unwrap()];
-            expect_file.assert_eq(&content);
-        }
-
-        if sub_package_dir_entry_expected.file_type().is_file() {
-            assert!(sub_package_dir.file_type().is_file());
-
-            let content = fs::read_to_string(sub_package_dir.path()).unwrap();
-
-            let expect_file =
-                expect_file![fsx::canonicalize(sub_package_dir_entry_expected.path()).unwrap()];
-            expect_file.assert_eq(&content);
-        }
-    }
+        .failure();
 }
