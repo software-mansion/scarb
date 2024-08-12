@@ -14,6 +14,7 @@ const OUTPUT_DIR: &str = "doc";
 #[derive(Default, Debug, Clone, clap::ValueEnum)]
 enum OutputFormat {
     /// Generates documentation in Markdown format.
+    /// Generated files are fully compatible with mdBook.
     #[default]
     Markdown,
     /// Saves information collected from packages in JSON format instead of generating
