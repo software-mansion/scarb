@@ -221,6 +221,7 @@ fn get_crate_settings_for_package(
         edition,
         cfg_set,
         experimental_features,
+        version: Some(package.version.clone()),
     }
 }
 
