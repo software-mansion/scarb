@@ -43,7 +43,7 @@ const sidebar = {
         p("Language server", "/docs/extensions/cairo-language-server"),
         p("Expand", "/docs/extensions/expand"),
         p(
-          "Documentation generation",
+          "Generating documentation",
           "/docs/extensions/documentation-generation",
         ),
       ],
