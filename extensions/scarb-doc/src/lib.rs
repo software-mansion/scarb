@@ -29,7 +29,7 @@ pub struct AdditionalMetadata {
 pub fn generate_packages_information(
     metadata: &Metadata,
     metadata_for_packages: &[PackageMetadata],
-) -> Result<Vec<PackageInformation>, anyhow::Error> {
+) -> Vec<PackageInformation> {
     let mut packages_information = vec![];
     for package_metadata in metadata_for_packages {
         let authors = package_metadata.manifest_metadata.authors.clone();
@@ -49,7 +49,7 @@ pub fn generate_packages_information(
             },
         });
     }
-    Ok(packages_information)
+    packages_information
 }
 
 fn generate_language_elements_tree_for_package(

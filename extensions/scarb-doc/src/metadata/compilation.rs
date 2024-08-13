@@ -94,7 +94,6 @@ fn get_crates_config(
                     &component.package.to_string()
                 )
             });
-
             (
                 SmolStr::from(&component.name),
                 get_crate_settings_for_package(

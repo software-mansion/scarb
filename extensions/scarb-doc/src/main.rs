@@ -43,7 +43,6 @@ struct Args {
 fn main_inner() -> Result<()> {
     let args = Args::parse();
 
-    // args.features.to_env_vars();
     let metadata = MetadataCommand::new()
         .inherit_stderr()
         .envs(args.features.to_env_vars())
@@ -51,7 +50,7 @@ fn main_inner() -> Result<()> {
         .context("metadata command failed")?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
-    let packages_information = generate_packages_information(&metadata, &metadata_for_packages)?;
+    let packages_information = generate_packages_information(&metadata, &metadata_for_packages);
 
     match args.output_format {
         OutputFormat::Json => {

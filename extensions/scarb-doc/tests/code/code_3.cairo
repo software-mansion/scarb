@@ -8,6 +8,7 @@
 ///     }
 /// ```
 #[cfg(feature: 'test_feature')]
+/// This is a under feature attribute comment.
 fn test() {
     println!("test");
 }

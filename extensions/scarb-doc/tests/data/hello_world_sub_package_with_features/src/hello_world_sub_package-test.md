@@ -8,6 +8,7 @@ Can invoke it like that:
         test();
     }
 ```
+This is a under feature attribute comment.
 
 
 Fully qualified path: `hello_world_sub_package::test`
