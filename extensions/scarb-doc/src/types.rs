@@ -1,7 +1,9 @@
 // TODO(drknzz): Remove when not needed.
 #![allow(dead_code)]
 
-use itertools::Itertools;
+use cairo_lang_semantic::items::visibility::Visibility;
+use cairo_lang_utils::Upcast;
+use smol_str::SmolStr;
 use serde::Serialize;
 
 use cairo_lang_defs::db::DefsGroup;
@@ -17,7 +19,7 @@ use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
-use cairo_lang_syntax::node::ast;
+use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 
 use crate::db::ScarbDocDatabase;
 
@@ -27,10 +29,31 @@ pub struct Crate {
 }
 
 impl Crate {
-    pub fn new(db: &ScarbDocDatabase, crate_id: CrateId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, crate_id: CrateId, include_private_items: bool) -> Self {
         Self {
-            root_module: Module::new(db, ModuleId::CrateRoot(crate_id)),
+            root_module: Module::new(db, ModuleId::CrateRoot(crate_id), include_private_items),
         }
+    }
+}
+
+fn is_visible_in_module3(db: &ScarbDocDatabase, module_id: ModuleId, test: &dyn TopLevelLanguageElementId) -> bool {
+    match db.module_item_info_by_name(module_id, test.name(db.upcast())).unwrap() {
+        Some(module_item_info) => module_item_info.visibility == Visibility::Public,
+        None => false
+    }
+}
+
+fn is_visible_in_module2(db: &ScarbDocDatabase, module_id: ModuleId, test: &dyn TopLevelLanguageElementId) -> bool {
+    match db.module_item_info_by_name(module_id, test.name(db.upcast())).unwrap() {
+        Some(module_item_info) => module_item_info.visibility == Visibility::Public,
+        None => false
+    }
+}
+
+fn is_visible_in_module(db: &ScarbDocDatabase, module_id: ModuleId, element_name: SmolStr) -> bool {
+    match db.module_item_info_by_name(module_id, element_name).unwrap() {
+        Some(module_item_info) => module_item_info.visibility == Visibility::Public,
+        None => false
     }
 }
 
@@ -54,7 +77,7 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn new(db: &ScarbDocDatabase, module_id: ModuleId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, module_id: ModuleId, include_private_items: bool) -> Self {
         // FIXME(#1438): compiler doesn't support fetching root crate doc
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData {
@@ -70,27 +93,39 @@ impl Module {
             ),
         };
 
+        let is_visible_in_module3 = |args: &&(&dyn TopLevelLanguageElementId, &TypedSyntaxNode)| {
+            let (id, _) = *args;
+            match db.module_item_info_by_name(module_id, id.name(db.upcast())).unwrap() {
+                Some(module_item_info) => module_item_info.visibility == Visibility::Public,
+                None => false
+            }
+        };
+
         let module_constants = db.module_constants(module_id).unwrap();
         let constants = module_constants
             .iter()
+            .filter(is_visible_in_module3)
             .map(|(id, _)| Constant::new(db, *id))
             .collect();
 
         let module_free_functions = db.module_free_functions(module_id).unwrap();
         let free_functions = module_free_functions
             .iter()
+            .filter(|(id, _)| is_visible_in_module(db, module_id, id.name(db.upcast())))
             .map(|(id, _)| FreeFunction::new(db, *id))
             .collect();
 
         let module_structs = db.module_structs(module_id).unwrap();
         let structs = module_structs
             .iter()
+            .filter(|(id, _)| is_visible_in_module(db, module_id, id.name(db.upcast())))
             .map(|(id, _)| Struct::new(db, *id))
             .collect();
 
         let module_enums = db.module_enums(module_id).unwrap();
         let enums = module_enums
             .iter()
+            .filter(|(id, _)| is_visible_in_module(db, module_id, id.name(db.upcast())))
             .map(|(id, _)| Enum::new(db, *id))
             .collect();
 
@@ -133,7 +168,7 @@ impl Module {
         let module_submodules = db.module_submodules(module_id).unwrap();
         let submodules = module_submodules
             .iter()
-            .map(|(id, _)| Self::new(db, ModuleId::Submodule(*id)))
+            .map(|(id, _)| Self::new(db, ModuleId::Submodule(*id), include_private_items))
             .collect();
 
         Self {
@@ -255,6 +290,7 @@ pub struct Struct {
 impl Struct {
     pub fn new(db: &ScarbDocDatabase, id: StructId) -> Self {
         let members = db.struct_members(id).unwrap();
+        db.module_item_info_by_name(id, id.name(db.upcast()));
 
         let item_data = ItemData::new_without_signature(
             db,
@@ -293,7 +329,7 @@ impl Member {
     pub fn new(db: &ScarbDocDatabase, id: MemberId, struct_full_path: String) -> Self {
         let node = id.stable_ptr(db);
         let stable_location = StableLocation::new(node.0);
-
+        db.
         let name = id.name(db).into();
         // TODO(#1438): Replace with `id.full_path(db)` after it is fixed in the compiler.
         let full_path = format!("{}::{}", struct_full_path, name);
@@ -775,6 +811,7 @@ impl ExternFunction {
 // TODO(#1428): This function is temporarily copied until further modifications in cairo compiler are done.
 fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) -> Option<String> {
     let doc = stable_location.syntax_node(db).get_text(db.upcast());
+    stable_location.syntax_node(db).get_terminal_token(db).expect("fs").
     let doc = doc
         .lines()
         .take_while_ref(|line| {

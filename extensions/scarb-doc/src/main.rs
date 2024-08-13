@@ -33,6 +33,10 @@ struct Args {
     /// Specifies a format of generated files.
     #[arg(long, value_enum, default_value_t)]
     output_format: OutputFormat,
+
+    /// Generates documentation also for private items.
+    #[arg(long, default_value_t = false, env = "DOCUMENT_PRIVATE_ITEMS")]
+    document_private_items: bool,
 }
 
 fn main_inner() -> Result<()> {
@@ -55,6 +59,10 @@ fn main_inner() -> Result<()> {
         }
         OutputFormat::Markdown => {
             for pkg_information in packages_information {
+                println!(
+                    "pkg info: {:?}\n",
+                    serde_json::to_string(&pkg_information.crate_)
+                );
                 let pkg_output_dir = output_dir.join(&pkg_information.metadata.name);
 
                 MarkdownContent::from_crate(&pkg_information)

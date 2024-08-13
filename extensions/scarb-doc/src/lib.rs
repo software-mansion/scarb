@@ -33,6 +33,7 @@ pub fn generate_packages_information(
     let mut packages_information = vec![];
     for package_metadata in metadata_for_packages {
         let authors = package_metadata.manifest_metadata.authors.clone();
+        println!("package metadata: {:?}\n", package_metadata);
 
         let project_config = get_project_config(metadata, package_metadata);
         let crate_ = generate_language_elements_tree_for_package(
@@ -59,5 +60,5 @@ fn generate_language_elements_tree_for_package(
 
     let main_crate_id = db.intern_crate(CrateLongId::Real(package_name.into()));
 
-    Crate::new(&db, main_crate_id)
+    Crate::new(&db, main_crate_id, false)
 }
