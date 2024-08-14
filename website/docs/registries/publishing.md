@@ -3,7 +3,7 @@
 To share your package, it needs to be packaged into an archive and uploaded to the registry.
 Once uploaded, it will be available for other users to download.
 
-## Packaging your project
+## Packaging your package
 
 Use the `scarb package` command to create an archive of your package.
 You can read about the package compression algorithm and contents in the [Package tarball](./package-tarball) section.

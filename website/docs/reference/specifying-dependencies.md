@@ -2,9 +2,10 @@
 
 Your packages can depend on other libraries from registries, Git repositories, or subdirectories on your local file system.
 
-## Specifying dependencies from official registry
+## Specifying dependencies from registries
 
-You can see the list of available packages in the official [scarbs.xyz](https://scarbs.xyz) registry by visiting the website.
+Scarb supports the official cairo package registry [scarbs.xyz](https://scarbs.xyz) by default.
+You can see the list of available packages by visiting the website.
 To depend on a package located in the registry, you need to specify the package name and the version requirement:
 
 ```toml
@@ -22,6 +23,13 @@ alexandria_math = { version = "0.1.0" }
 The two formats above are equivalent.
 
 Unlike other dependency types, it is required to specify the version requirement for packages from the registry.
+
+To use a custom, non-official registry you need to specify its url address as well:
+
+```toml
+[dependencies]
+alexandria_math = { registry = "https://example.com/", version = "0.1.0" }
+```
 
 ## Specifying dependencies from Git repositories
 
