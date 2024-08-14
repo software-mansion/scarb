@@ -158,12 +158,12 @@ fn do_expand(
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let ScarbDatabase { db, .. } = build_scarb_root_database(compilation_unit, ws)?;
-    let mut compiler_config = build_compiler_config(compilation_unit, ws);
-    // Report diagnostics, but do not fail.
-    let _ = compiler_config.diagnostics_reporter.check(&db);
     let main_crate_id = db.intern_crate(CrateLongId::Real(
         compilation_unit.main_component().cairo_package_name(),
     ));
+    let mut compiler_config = build_compiler_config(compilation_unit, &[main_crate_id], ws);
+    // Report diagnostics, but do not fail.
+    let _ = compiler_config.diagnostics_reporter.check(&db);
     let main_module = ModuleId::CrateRoot(main_crate_id);
     let module_file = db
         .module_main_file(main_module)
