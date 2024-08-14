@@ -64,3 +64,7 @@ After running `scarb doc`, inside the target directory, you will see the generat
 - The `book.toml` which contains contains settings for describing how to build your book.
 
 Running `scarb doc --output-format json` will result in a single JSON file inside the target directory with collected documentation inside.
+
+## Cairo code highlighting using mdBook
+
+By default, mdBook generated documentation doesn't support Cairo code highlighting. To make it work, just replace the generated `book/highlight.js` with [this](https://github.com/software-mansion/scarb/tree/main/extensions/scarb-doc/theme) one.
