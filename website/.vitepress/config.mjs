@@ -75,7 +75,12 @@ const sidebar = {
     },
     {
       text: "Registries",
-      items: [p("Package tarball", "/docs/registries/package-tarball")],
+      items: [
+        p("Overview", "/docs/registries/overview"),
+        p("Publishing", "/docs/registries/publishing"),
+        p("Package tarball", "/docs/registries/package-tarball"),
+        p("Custom registry", "/docs/registries/custom-registry"),
+      ],
     },
     {
       text: "Appendices",

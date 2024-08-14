@@ -61,6 +61,13 @@ starknet = "{{ rel.stable.starknetPackageVersionReq }}"
 
 ### In manifest
 
+Add dependency hosted on the official [scarbs.xyz](https://scarbs.xyz) registry:
+
+```toml
+[dependencies]
+alexandria_math = "0.1.0"
+```
+
 Add dependency hosted on a Git repository:
 
 ```toml
@@ -88,6 +95,12 @@ alexandria_math = { path = "../path-to-alexandria-checkout/alexandria" }
 > You can add development dependencies in `[dev-dependencies]` section.
 
 ### Via `scarb add`
+
+Add dependency from the official [scarbs.xyz](https://scarbs.xyz) registry:
+
+```shell
+scarb add alexandria_math@0.1.0
+```
 
 Add dependency hosted on a Git repository:
 
