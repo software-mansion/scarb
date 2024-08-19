@@ -3,7 +3,7 @@
 
 use cairo_lang_semantic::items::visibility::Visibility;
 use cairo_lang_utils::Upcast;
-use smol_str::SmolStr;
+use itertools::Itertools;
 use serde::Serialize;
 
 use cairo_lang_defs::db::DefsGroup;
@@ -19,7 +19,7 @@ use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
-use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
+use cairo_lang_syntax::node::ast;
 
 use crate::db::ScarbDocDatabase;
 
@@ -36,24 +36,17 @@ impl Crate {
     }
 }
 
-fn is_visible_in_module3(db: &ScarbDocDatabase, module_id: ModuleId, test: &dyn TopLevelLanguageElementId) -> bool {
-    match db.module_item_info_by_name(module_id, test.name(db.upcast())).unwrap() {
+fn is_visible_in_module(
+    db: &ScarbDocDatabase,
+    module_id: ModuleId,
+    element_id: &dyn TopLevelLanguageElementId,
+) -> bool {
+    match db
+        .module_item_info_by_name(module_id, element_id.name(db.upcast()))
+        .unwrap()
+    {
         Some(module_item_info) => module_item_info.visibility == Visibility::Public,
-        None => false
-    }
-}
-
-fn is_visible_in_module2(db: &ScarbDocDatabase, module_id: ModuleId, test: &dyn TopLevelLanguageElementId) -> bool {
-    match db.module_item_info_by_name(module_id, test.name(db.upcast())).unwrap() {
-        Some(module_item_info) => module_item_info.visibility == Visibility::Public,
-        None => false
-    }
-}
-
-fn is_visible_in_module(db: &ScarbDocDatabase, module_id: ModuleId, element_name: SmolStr) -> bool {
-    match db.module_item_info_by_name(module_id, element_name).unwrap() {
-        Some(module_item_info) => module_item_info.visibility == Visibility::Public,
-        None => false
+        None => false,
     }
 }
 
@@ -93,81 +86,87 @@ impl Module {
             ),
         };
 
-        let is_visible_in_module3 = |args: &&(&dyn TopLevelLanguageElementId, &TypedSyntaxNode)| {
-            let (id, _) = *args;
-            match db.module_item_info_by_name(module_id, id.name(db.upcast())).unwrap() {
-                Some(module_item_info) => module_item_info.visibility == Visibility::Public,
-                None => false
+        let should_include_item = |id: &dyn TopLevelLanguageElementId| {
+            if include_private_items {
+                return true;
             }
+            is_visible_in_module(db, module_id, id)
         };
 
         let module_constants = db.module_constants(module_id).unwrap();
         let constants = module_constants
             .iter()
-            .filter(is_visible_in_module3)
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| Constant::new(db, *id))
             .collect();
 
         let module_free_functions = db.module_free_functions(module_id).unwrap();
         let free_functions = module_free_functions
             .iter()
-            .filter(|(id, _)| is_visible_in_module(db, module_id, id.name(db.upcast())))
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| FreeFunction::new(db, *id))
             .collect();
 
         let module_structs = db.module_structs(module_id).unwrap();
         let structs = module_structs
             .iter()
-            .filter(|(id, _)| is_visible_in_module(db, module_id, id.name(db.upcast())))
-            .map(|(id, _)| Struct::new(db, *id))
+            .filter(|(id, _)| should_include_item(*id))
+            .map(|(id, _)| Struct::new(db, *id, module_id, include_private_items))
             .collect();
 
         let module_enums = db.module_enums(module_id).unwrap();
         let enums = module_enums
             .iter()
-            .filter(|(id, _)| is_visible_in_module(db, module_id, id.name(db.upcast())))
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| Enum::new(db, *id))
             .collect();
 
         let module_type_aliases = db.module_type_aliases(module_id).unwrap();
         let type_aliases = module_type_aliases
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| TypeAlias::new(db, *id))
             .collect();
 
         let module_impl_aliases = db.module_impl_aliases(module_id).unwrap();
         let impl_aliases = module_impl_aliases
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| ImplAlias::new(db, *id))
             .collect();
 
         let module_traits = db.module_traits(module_id).unwrap();
         let traits = module_traits
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| Trait::new(db, *id))
             .collect();
 
         let module_impls = db.module_impls(module_id).unwrap();
         let impls = module_impls
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| Impl::new(db, *id))
             .collect();
 
         let module_extern_types = db.module_extern_types(module_id).unwrap();
         let extern_types = module_extern_types
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| ExternType::new(db, *id))
             .collect();
 
         let module_extern_functions = db.module_extern_functions(module_id).unwrap();
         let extern_functions = module_extern_functions
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| ExternFunction::new(db, *id))
             .collect();
 
         let module_submodules = db.module_submodules(module_id).unwrap();
         let submodules = module_submodules
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| Self::new(db, ModuleId::Submodule(*id), include_private_items))
             .collect();
 
@@ -288,9 +287,13 @@ pub struct Struct {
 }
 
 impl Struct {
-    pub fn new(db: &ScarbDocDatabase, id: StructId) -> Self {
+    pub fn new(
+        db: &ScarbDocDatabase,
+        id: StructId,
+        module_id: ModuleId,
+        include_private_items: bool,
+    ) -> Self {
         let members = db.struct_members(id).unwrap();
-        db.module_item_info_by_name(id, id.name(db.upcast()));
 
         let item_data = ItemData::new_without_signature(
             db,
@@ -300,6 +303,9 @@ impl Struct {
 
         let members = members
             .iter()
+            .filter(|(_, semantic_member)| {
+                include_private_items || is_visible_in_module(db, module_id, &semantic_member.id)
+            })
             .map(|(_name, semantic_member)| {
                 Member::new(db, semantic_member.id, item_data.full_path.clone())
             })
@@ -329,7 +335,7 @@ impl Member {
     pub fn new(db: &ScarbDocDatabase, id: MemberId, struct_full_path: String) -> Self {
         let node = id.stable_ptr(db);
         let stable_location = StableLocation::new(node.0);
-        db.
+
         let name = id.name(db).into();
         // TODO(#1438): Replace with `id.full_path(db)` after it is fixed in the compiler.
         let full_path = format!("{}::{}", struct_full_path, name);
@@ -811,7 +817,6 @@ impl ExternFunction {
 // TODO(#1428): This function is temporarily copied until further modifications in cairo compiler are done.
 fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) -> Option<String> {
     let doc = stable_location.syntax_node(db).get_text(db.upcast());
-    stable_location.syntax_node(db).get_terminal_token(db).expect("fs").
     let doc = doc
         .lines()
         .take_while_ref(|line| {
