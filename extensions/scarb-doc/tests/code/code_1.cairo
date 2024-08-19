@@ -24,7 +24,7 @@ struct PrivateStructure {
     private_field: felt252
 }
 
-/// Public enum
+/// Public enum 
 pub enum PublicEnum {
     /// Public enum variant
     PUBLIC_VARIANT
@@ -160,7 +160,7 @@ pub mod PublicParent {
 }
 
 /// Private parent module
-pub mod PrivateParent {
+mod PrivateParent {
     /// Parent public function
     pub fn parent_public_function() {
         println!("parent_public_function");

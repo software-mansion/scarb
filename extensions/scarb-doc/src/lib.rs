@@ -34,11 +34,10 @@ pub fn generate_packages_information(
     let mut packages_information = vec![];
     for package_metadata in metadata_for_packages {
         let authors = package_metadata.manifest_metadata.authors.clone();
-        let edition = if let Some(edition) = &package_metadata.edition {
-            Some(edition_from_string(edition).unwrap())
-        } else {
-            None
-        };
+        let edition = package_metadata
+            .edition
+            .as_ref()
+            .map(|edition| edition_from_string(edition).unwrap());
 
         let should_ignore_visibility = match edition {
             Some(edition) => edition.ignore_visibility(),

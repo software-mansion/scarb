@@ -49,7 +49,11 @@ fn main_inner() -> Result<()> {
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
 
-    let packages_information = generate_packages_information(&metadata, &metadata_for_packages, args.document_private_items);
+    let packages_information = generate_packages_information(
+        &metadata,
+        &metadata_for_packages,
+        args.document_private_items,
+    );
 
     match args.output_format {
         OutputFormat::Json => {
@@ -59,10 +63,6 @@ fn main_inner() -> Result<()> {
         }
         OutputFormat::Markdown => {
             for pkg_information in packages_information {
-                println!(
-                    "pkg info: {:?}\n",
-                    serde_json::to_string(&pkg_information.crate_)
-                );
                 let pkg_output_dir = output_dir.join(&pkg_information.metadata.name);
 
                 MarkdownContent::from_crate(&pkg_information)
