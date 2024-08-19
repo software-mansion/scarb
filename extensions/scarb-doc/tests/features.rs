@@ -116,7 +116,7 @@ fn test_workspace_without_features_in_manifest() {
         note: to use features, you need to define [features] section in Scarb.toml
 
         stderr:
-            
+        
         error: process did not exit successfully: exit code: 1
         "#});
 
@@ -324,7 +324,7 @@ fn test_workspace_with_working_feature_in_sub_package_only() {
         stdout:
         error: no features in manifest
         note: to use features, you need to define [features] section in Scarb.toml
-
+        
         stderr:
 
         "#});
@@ -371,7 +371,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
             note: to use features, you need to define [features] section in Scarb.toml
     
             stderr:
-                
+            
             error: process did not exit successfully: exit code: 1
             "#});
 
@@ -430,7 +430,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         note: to use features, you need to define [features] section in Scarb.toml
 
         stderr:
-            
+        
         error: process did not exit successfully: exit code: 1
         "#});
 
