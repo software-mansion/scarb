@@ -101,11 +101,11 @@ If you intend to use Starknet Foundry to test your contracts, you can create a S
 running:
 
 ```shell
-scarb new hello_world --snforge
+scarb new hello_world --test-runner=starknet-foundry
 ```
 
-This will create a Starknet package, with `snforge` already set up as your test runner. You can then execute `snforge` tests by
-simply running:
+This will create a Starknet package, with `snforge` already set up as your test runner. You can then execute `snforge`
+tests by simply running:
 
 ```shell
 scarb test
