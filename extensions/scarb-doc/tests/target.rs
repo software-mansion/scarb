@@ -1,4 +1,3 @@
-
 use expect_test::expect_file;
 use indoc::formatdoc;
 use scarb_test_support::fsx;
@@ -74,7 +73,7 @@ impl TargetChecker {
             }
         }
     }
-    
+
     fn check_if_directory(path: &str) -> bool {
         match fs::metadata(path) {
             Ok(metadata) => {
