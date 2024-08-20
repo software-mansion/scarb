@@ -1,6 +1,5 @@
 use expect_test::expect_file;
 use indoc::formatdoc;
-use itertools::Itertools;
 use scarb_test_support::fsx;
 use std::{fs, iter::zip};
 use walkdir::WalkDir;
@@ -33,17 +32,21 @@ impl TargetChecker {
             panic!("error: expected target directory was not set.");
         }
 
-        let actual_len = match self.actual.iter().try_len() {
-            Ok(length) => length,
-            Err(_) => self.actual.iter().count(),
-        };
+        let actual_files: Vec<_> = self
+            .actual
+            .unwrap()
+            .into_iter()
+            .filter_map(Result::ok)
+            .collect();
 
-        let expected_len = match self.expected.iter().try_len() {
-            Ok(length) => length,
-            Err(_) => self.expected.iter().count(),
-        };
+        let expected_files: Vec<_> = self
+            .expected
+            .unwrap()
+            .into_iter()
+            .filter_map(Result::ok)
+            .collect();
 
-        if actual_len != expected_len {
+        if actual_files.len() != expected_files.len() {
             panic!(
                 "{}",
                 formatdoc! {
@@ -52,29 +55,20 @@ impl TargetChecker {
                     actual: {actual}
                     expected: {expected}
                     ",
-                    actual = actual_len,
-                    expected = expected_len
+                    actual = actual_files.len(),
+                    expected = expected_files.len()
                 }
             );
         };
 
-        for (actual_dir_entry, expected_dir_entry) in
-            zip(self.actual.unwrap(), self.expected.unwrap())
-        {
-            let expected_entry = expected_dir_entry.unwrap();
-            let actual_entry = actual_dir_entry.unwrap();
-            println!(
-                "{} and {}",
-                expected_entry.path().to_str().unwrap(),
-                actual_entry.path().to_str().unwrap()
-            );
+        for (actual_dir_entry, expected_dir_entry) in zip(actual_files, expected_files) {
+            if expected_dir_entry.file_type().is_file() {
+                assert!(actual_dir_entry.file_type().is_file());
 
-            if expected_entry.file_type().is_file() {
-                assert!(actual_entry.file_type().is_file());
+                let content = fs::read_to_string(actual_dir_entry.path()).unwrap();
 
-                let content = fs::read_to_string(actual_entry.path()).unwrap();
-
-                let expect_file = expect_file![fsx::canonicalize(expected_entry.path()).unwrap()];
+                let expect_file =
+                    expect_file![fsx::canonicalize(expected_dir_entry.path()).unwrap()];
                 expect_file.assert_eq(&content);
             }
         }
