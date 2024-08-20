@@ -1,7 +1,7 @@
 // TODO(drknzz): Remove when not needed.
 #![allow(dead_code)]
 
-use cairo_lang_semantic::items::visibility::{self, Visibility};
+use cairo_lang_semantic::items::visibility;
 use cairo_lang_utils::Upcast;
 use itertools::Itertools;
 use serde::Serialize;
@@ -53,7 +53,6 @@ fn is_visible_in_module(
             cotaining_module_id,
             root_module_id,
         ),
-        // Some(module_item_info) => module_item_info.visibility == Visibility::Public,
         None => false,
     }
 }

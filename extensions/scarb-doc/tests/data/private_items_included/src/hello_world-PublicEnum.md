@@ -1,6 +1,6 @@
 # PublicEnum
 
-Public enum 
+Public enum
 
 
 Fully qualified path: `hello_world::PublicEnum`
