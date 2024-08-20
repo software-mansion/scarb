@@ -1,7 +1,7 @@
 // TODO(drknzz): Remove when not needed.
 #![allow(dead_code)]
 
-use cairo_lang_semantic::items::visibility::Visibility;
+use cairo_lang_semantic::items::visibility::{self, Visibility};
 use cairo_lang_utils::Upcast;
 use itertools::Itertools;
 use serde::Serialize;
@@ -30,22 +30,30 @@ pub struct Crate {
 
 impl Crate {
     pub fn new(db: &ScarbDocDatabase, crate_id: CrateId, include_private_items: bool) -> Self {
+        let root_module_id = ModuleId::CrateRoot(crate_id);
         Self {
-            root_module: Module::new(db, ModuleId::CrateRoot(crate_id), include_private_items),
+            root_module: Module::new(db, root_module_id, root_module_id, include_private_items),
         }
     }
 }
 
 fn is_visible_in_module(
     db: &ScarbDocDatabase,
-    module_id: ModuleId,
+    root_module_id: ModuleId,
     element_id: &dyn TopLevelLanguageElementId,
 ) -> bool {
+    let cotaining_module_id = element_id.parent_module(db);
     match db
-        .module_item_info_by_name(module_id, element_id.name(db.upcast()))
+        .module_item_info_by_name(cotaining_module_id, element_id.name(db.upcast()))
         .unwrap()
     {
-        Some(module_item_info) => module_item_info.visibility == Visibility::Public,
+        Some(module_item_info) => visibility::peek_visible_in(
+            db,
+            module_item_info.visibility,
+            cotaining_module_id,
+            root_module_id,
+        ),
+        // Some(module_item_info) => module_item_info.visibility == Visibility::Public,
         None => false,
     }
 }
@@ -70,7 +78,12 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn new(db: &ScarbDocDatabase, module_id: ModuleId, include_private_items: bool) -> Self {
+    pub fn new(
+        db: &ScarbDocDatabase,
+        root_module_id: ModuleId,
+        module_id: ModuleId,
+        include_private_items: bool,
+    ) -> Self {
         // FIXME(#1438): compiler doesn't support fetching root crate doc
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData {
@@ -90,7 +103,7 @@ impl Module {
             if include_private_items {
                 return true;
             }
-            is_visible_in_module(db, module_id, id)
+            is_visible_in_module(db, root_module_id, id)
         };
 
         let module_constants = db.module_constants(module_id).unwrap();
@@ -111,7 +124,7 @@ impl Module {
         let structs = module_structs
             .iter()
             .filter(|(id, _)| should_include_item(*id))
-            .map(|(id, _)| Struct::new(db, *id, module_id, include_private_items))
+            .map(|(id, _)| Struct::new(db, *id, root_module_id, include_private_items))
             .collect();
 
         let module_enums = db.module_enums(module_id).unwrap();
@@ -167,7 +180,14 @@ impl Module {
         let submodules = module_submodules
             .iter()
             .filter(|(id, _)| should_include_item(*id))
-            .map(|(id, _)| Self::new(db, ModuleId::Submodule(*id), include_private_items))
+            .map(|(id, _)| {
+                Self::new(
+                    db,
+                    root_module_id,
+                    ModuleId::Submodule(*id),
+                    include_private_items,
+                )
+            })
             .collect();
 
         Self {
@@ -290,7 +310,7 @@ impl Struct {
     pub fn new(
         db: &ScarbDocDatabase,
         id: StructId,
-        module_id: ModuleId,
+        root_module_id: ModuleId,
         include_private_items: bool,
     ) -> Self {
         let members = db.struct_members(id).unwrap();
@@ -304,7 +324,8 @@ impl Struct {
         let members = members
             .iter()
             .filter(|(_, semantic_member)| {
-                include_private_items || is_visible_in_module(db, module_id, &semantic_member.id)
+                include_private_items
+                    || is_visible_in_module(db, root_module_id, &semantic_member.id)
             })
             .map(|(_name, semantic_member)| {
                 Member::new(db, semantic_member.id, item_data.full_path.clone())

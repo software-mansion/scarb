@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use assert_fs::TempDir;
 use scarb_test_support::{command::Scarb, project_builder::ProjectBuilder};
 
@@ -41,7 +43,7 @@ fn document_private_items_flag() {
 }
 
 #[test]
-fn include_private_items_with_old_ediiton() {
+fn include_private_items_with_old_edition() {
     let root_dir = TempDir::new().unwrap();
     ProjectBuilder::start()
         .edition(EDITION_INCLUDING_PRIVATE_ITEMS)
@@ -68,7 +70,7 @@ fn include_private_items_with_old_ediiton() {
 }
 
 #[test]
-fn ignore_private_items_with_new_eiditon() {
+fn ignore_private_items_with_new_edition() {
     let root_dir = TempDir::new().unwrap();
     ProjectBuilder::start()
         .edition(EDITION_IGNORING_PRIVATE_ITEMS)
@@ -90,6 +92,10 @@ fn ignore_private_items_with_new_eiditon() {
                 .to_str()
                 .unwrap(),
         )
-        .expected(EXPECTED_PRIVATE_ITEMS_EXCLUDED_PATH)
+        .expected(
+            Path::new(EXPECTED_PRIVATE_ITEMS_EXCLUDED_PATH)
+                .to_str()
+                .unwrap(),
+        )
         .assert_all_files_match();
 }
