@@ -47,6 +47,7 @@ pub fn generate_packages_information(
         let should_document_private_items = should_ignore_visibility || document_private_items;
 
         let project_config = get_project_config(metadata, package_metadata);
+
         let crate_ = generate_language_elements_tree_for_package(
             package_metadata.name.clone(),
             project_config,

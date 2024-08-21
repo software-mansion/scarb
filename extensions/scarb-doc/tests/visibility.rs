@@ -12,7 +12,7 @@ const EXPECTED_PRIVATE_ITEMS_EXCLUDED_PATH: &str = "tests/data/private_items_exc
 const EDITION_INCLUDING_PRIVATE_ITEMS: &str = "2023_01";
 const EDITION_IGNORING_PRIVATE_ITEMS: &str = "2023_11";
 
-const VISIBILITY_EXAMPLE_CODE: &str = include_str!("code/code_1.cairo");
+const VISIBILITY_EXAMPLE_CODE: &str = include_str!("code/code_5.cairo");
 
 #[test]
 fn document_private_items_flag() {

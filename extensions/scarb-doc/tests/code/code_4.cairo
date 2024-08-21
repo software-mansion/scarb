@@ -12,6 +12,17 @@ use core::traits::TryInto;
 /// FOO constant with value 42
 const FOO: u32 = 42;
 
+/// Function that prints "test" to stdout with endline.
+/// Can invoke it like that:
+/// ```cairo
+///     fn main() {
+///         test();
+///     }
+/// ```
+#[cfg(feature: "test_feature")]
+fn test() {
+    println!("test");
+}
 /// Calculate the nth Fibonacci number
 ///
 /// # Arguments
