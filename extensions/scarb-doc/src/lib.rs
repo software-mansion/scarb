@@ -35,6 +35,7 @@ pub fn generate_packages_information(
         let authors = package_metadata.manifest_metadata.authors.clone();
 
         let project_config = get_project_config(metadata, package_metadata);
+
         let crate_ = generate_language_elements_tree_for_package(
             package_metadata.name.clone(),
             project_config,
