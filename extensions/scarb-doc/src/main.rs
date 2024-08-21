@@ -35,7 +35,7 @@ struct Args {
     output_format: OutputFormat,
 
     /// Generates documentation also for private items.
-    #[arg(long, default_value_t = false, env = "DOCUMENT_PRIVATE_ITEMS")]
+    #[arg(long, default_value_t = false)]
     document_private_items: bool,
 }
 
