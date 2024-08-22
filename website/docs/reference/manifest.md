@@ -70,6 +70,17 @@ edition = "{{ constants.edition }}"
 Most manifests have the edition field filled in automatically by `scarb new` with the latest available edition.
 If the edition field is not present in Scarb.toml, then the default edition is assumed.
 
+### `publish`
+
+The publish field is an optional key that determines whether the package can be packaged and published to a registry.
+Setting this field to false will prevent the package from being packaged or published.
+If the publish field is not present, then it is assumed to be true.
+
+```toml
+[package]
+publish = false
+```
+
 ### `cairo-version`
 
 The `cairo-version` field is an optional key that tells Scarb what version of the Cairo language and compiler your
