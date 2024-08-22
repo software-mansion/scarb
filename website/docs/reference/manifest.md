@@ -36,6 +36,8 @@ If publishing to a registry, it's recommended to fill in additional fields:
 It would also be a good idea to include some [`keywords`](#keywords) and [`categories`](#ca), though they are not
 required.
 
+If package is not intended to be published, it is recommended to set [`publish`](#publish) field to false.
+
 ### `name`
 
 The package name is a valid Cairo identifier used to refer to the package.
