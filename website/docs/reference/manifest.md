@@ -74,8 +74,8 @@ If the edition field is not present in Scarb.toml, then the default edition is a
 
 ### `publish`
 
-The publish field is an optional key that determines whether the package can be packaged and published to a registry.
-Setting this field to false will prevent the package from being packaged or published.
+The publish field is an optional key that determines whether the package can be published to a registry.
+Setting this field to false will prevent the package from being published.
 If the publish field is not present, then it is assumed to be true.
 
 ```toml
