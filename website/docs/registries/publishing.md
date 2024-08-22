@@ -37,3 +37,12 @@ The command takes the `--index` argument that you can use to pass the local dire
 ```shell
 scarb publish --index file:///Users/foo/bar
 ```
+
+## Preventing package from being published
+
+If you want to prevent your package from being published, you can add the `publish = false` in `Scarb.toml`.
+
+```toml
+[package]
+publish = false
+```
