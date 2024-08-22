@@ -36,6 +36,8 @@ If publishing to a registry, it's recommended to fill in additional fields:
 It would also be a good idea to include some [`keywords`](#keywords) and [`categories`](#ca), though they are not
 required.
 
+If package is not intended to be published, it is recommended to set [`publish`](#publish) field to false.
+
 ### `name`
 
 The package name is a valid Cairo identifier used to refer to the package.
@@ -69,6 +71,17 @@ edition = "{{ constants.edition }}"
 
 Most manifests have the edition field filled in automatically by `scarb new` with the latest available edition.
 If the edition field is not present in Scarb.toml, then the default edition is assumed.
+
+### `publish`
+
+The publish field is an optional key that determines whether the package can be published to a registry.
+Setting this field to false will prevent the package from being published.
+If the publish field is not present, then it is assumed to be true.
+
+```toml
+[package]
+publish = false
+```
 
 ### `cairo-version`
 
