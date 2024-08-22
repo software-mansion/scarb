@@ -583,11 +583,10 @@ impl ProcMacroHostPlugin {
         for crate_id in db.crates() {
             let crate_modules = db.crate_modules(crate_id);
             for module in crate_modules.iter() {
-                let file_infos = db.module_generated_file_infos(*module);
+                let file_infos = db.module_generated_file_aux_data(*module);
                 if let Ok(file_infos) = file_infos {
-                    for file_info in file_infos.iter().flatten() {
+                    for file_info in file_infos.iter() {
                         let aux_data = file_info
-                            .aux_data
                             .as_ref()
                             .and_then(|ad| ad.as_any().downcast_ref::<EmittedAuxData>());
                         if let Some(aux_data) = aux_data {

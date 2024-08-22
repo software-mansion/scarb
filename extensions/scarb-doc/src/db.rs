@@ -1,12 +1,13 @@
 use cairo_lang_compiler::project::{
     update_crate_root, update_crate_roots_from_project_config, ProjectConfig,
 };
-use cairo_lang_defs::db::{DefsDatabase, DefsGroup};
+use cairo_lang_defs::db::{ext_as_virtual_impl, DefsDatabase, DefsGroup};
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
-    init_files_group, AsFilesGroupMut, FilesDatabase, FilesGroup, CORELIB_CRATE_NAME,
+    init_files_group, AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup, CORELIB_CRATE_NAME,
 };
+use cairo_lang_filesystem::ids::VirtualFile;
 use cairo_lang_parser::db::{ParserDatabase, ParserGroup};
 use cairo_lang_semantic::db::{SemanticDatabase, SemanticGroup};
 use cairo_lang_semantic::inline_macros::get_default_plugin_suite;
@@ -74,6 +75,12 @@ impl ScarbDocDatabase {
 }
 
 impl salsa::Database for ScarbDocDatabase {}
+
+impl ExternalFiles for ScarbDocDatabase {
+    fn ext_as_virtual(&self, external_id: salsa::InternId) -> VirtualFile {
+        ext_as_virtual_impl(self.upcast(), external_id)
+    }
+}
 
 impl salsa::ParallelDatabase for ScarbDocDatabase {
     fn snapshot(&self) -> salsa::Snapshot<Self> {
