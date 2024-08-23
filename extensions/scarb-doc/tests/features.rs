@@ -15,8 +15,8 @@ const EXPECTED_SUB_PACKAGE_NO_FEATURES_PATH: &str =
 const EXPECTED_SUB_PACKAGE_WITH_FEATURES_PATH: &str =
     "tests/data/hello_world_sub_package_with_features";
 
-mod target;
-use target::TargetChecker;
+mod markdown_target;
+use markdown_target::MarkdownTargetChecker;
 
 const FEATURE_NAME: &str = "test_feature";
 
@@ -46,12 +46,12 @@ fn test_workspace_no_features() {
 
     Scarb::quick_snapbox()
         .arg("doc")
-        .args(["--output-format", "markdown", "--workspace"])
+        .args(["--workspace"])
         .current_dir(&root_dir)
         .assert()
         .success();
 
-    TargetChecker::default()
+    MarkdownTargetChecker::default()
         .actual(
             root_dir
                 .path()
@@ -62,7 +62,7 @@ fn test_workspace_no_features() {
         .expected(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH)
         .assert_all_files_match();
 
-    TargetChecker::default()
+    MarkdownTargetChecker::default()
         .actual(
             root_dir
                 .path()
@@ -177,7 +177,7 @@ fn test_workspace_with_working_feature_in_root_and_sub_package() {
         .assert()
         .success();
 
-    TargetChecker::default()
+    MarkdownTargetChecker::default()
         .actual(
             root_dir
                 .path()
@@ -188,7 +188,7 @@ fn test_workspace_with_working_feature_in_root_and_sub_package() {
         .expected(EXPECTED_ROOT_PACKAGE_WITH_FEATURES_PATH)
         .assert_all_files_match();
 
-    TargetChecker::default()
+    MarkdownTargetChecker::default()
         .actual(
             root_dir
                 .path()

@@ -1,13 +1,8 @@
-use std::path::Path;
-
 use assert_fs::TempDir;
 use scarb_test_support::{command::Scarb, project_builder::ProjectBuilder};
 
-mod target;
-use target::TargetChecker;
-
-const EXPECTED_PRIVATE_ITEMS_INCLUDED_PATH: &str = "tests/data/private_items_included";
-const EXPECTED_PRIVATE_ITEMS_EXCLUDED_PATH: &str = "tests/data/private_items_excluded";
+mod json_target;
+use json_target::JsonTargetChecker;
 
 const EDITION_INCLUDING_PRIVATE_ITEMS: &str = "2023_01";
 const EDITION_IGNORING_PRIVATE_ITEMS: &str = "2023_11";
@@ -25,21 +20,15 @@ fn document_private_items_flag() {
 
     Scarb::quick_snapbox()
         .arg("doc")
-        .args(["--document-private-items"])
+        .args(["--document-private-items", "--output-format", "json"])
         .current_dir(&root_dir)
         .assert()
         .success();
 
-    TargetChecker::default()
-        .actual(
-            root_dir
-                .path()
-                .join("target/doc/hello_world")
-                .to_str()
-                .unwrap(),
-        )
-        .expected(EXPECTED_PRIVATE_ITEMS_INCLUDED_PATH)
-        .assert_all_files_match();
+    JsonTargetChecker::default()
+        .actual(&root_dir.path().join("target/doc/output.json"))
+        .expected("./data/json_private_items_included.json")
+        .assert_files_match();
 }
 
 #[test]
@@ -53,20 +42,15 @@ fn include_private_items_with_old_edition() {
 
     Scarb::quick_snapbox()
         .arg("doc")
+        .args(["--output-format", "json"])
         .current_dir(&root_dir)
         .assert()
         .success();
 
-    TargetChecker::default()
-        .actual(
-            root_dir
-                .path()
-                .join("target/doc/hello_world")
-                .to_str()
-                .unwrap(),
-        )
-        .expected(EXPECTED_PRIVATE_ITEMS_INCLUDED_PATH)
-        .assert_all_files_match();
+    JsonTargetChecker::default()
+        .actual(&root_dir.path().join("target/doc/output.json"))
+        .expected("./data/json_private_items_included.json")
+        .assert_files_match();
 }
 
 #[test]
@@ -80,22 +64,13 @@ fn ignore_private_items_with_new_edition() {
 
     Scarb::quick_snapbox()
         .arg("doc")
+        .args(["--output-format", "json"])
         .current_dir(&root_dir)
         .assert()
         .success();
 
-    TargetChecker::default()
-        .actual(
-            root_dir
-                .path()
-                .join("target/doc/hello_world")
-                .to_str()
-                .unwrap(),
-        )
-        .expected(
-            Path::new(EXPECTED_PRIVATE_ITEMS_EXCLUDED_PATH)
-                .to_str()
-                .unwrap(),
-        )
-        .assert_all_files_match();
+    JsonTargetChecker::default()
+        .actual(&root_dir.path().join("target/doc/output.json"))
+        .expected("./data/json_private_items_excluded.json")
+        .assert_files_match();
 }
