@@ -8,7 +8,7 @@ Calculate the nth Fibonacci number
 
 Fully qualified path: `hello_world::fib`
 
-```rust
+```cairo
 fn fib(mut n: u32) -> u32
 ```
 

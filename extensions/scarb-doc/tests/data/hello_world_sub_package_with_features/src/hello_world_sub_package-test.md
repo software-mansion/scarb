@@ -13,7 +13,7 @@ This is a under feature attribute comment.
 
 Fully qualified path: `hello_world_sub_package::test`
 
-```rust
+```cairo
 fn test()
 ```
 

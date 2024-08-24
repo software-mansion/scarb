@@ -143,7 +143,7 @@ accept token streams.
 
 Example:
 
-```rust
+```cairo
 use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
 use cairo_lang_parser::{SimpleParserDatabase};
 
@@ -184,7 +184,7 @@ crate-type = ["cdylib"]
 cairo-lang-macro = "0.1.0"
 ```
 
-```rust
+```cairo
 // src/lib.rs
 use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
 
@@ -320,7 +320,7 @@ pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
 
 Alongside the new TokenStream, a procedural macro can emit auxiliary data, encoded as an arbitrary JSON.
 
-```rust
+```cairo
 use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process};
 use serde::{Serialize, Deserialize};
 
@@ -344,7 +344,7 @@ will be executed as the last step of the project build, after the Cairo code is 
 Your procedural macro can defined multiple post-process callbacks, in which case they all will be executed in an
 undefined order.
 
-```rust
+```cairo
 #[post_process]
 pub fn callback(context: PostProcessContext) {
     let aux_data = context.aux_data.into_iter()

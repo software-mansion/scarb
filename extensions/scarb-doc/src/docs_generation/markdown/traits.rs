@@ -215,7 +215,7 @@ fn generate_markdown_from_item_data(doc_item: &impl DocItem, header_level: usize
     if let Some(sig) = &doc_item.signature() {
         if !sig.is_empty() {
             // TODO(#1457) add cairo support to mdbook
-            writeln!(&mut markdown, "```rust\n{sig}\n```\n").unwrap();
+            writeln!(&mut markdown, "```cairo\n{sig}\n```\n").unwrap();
         }
     }
 

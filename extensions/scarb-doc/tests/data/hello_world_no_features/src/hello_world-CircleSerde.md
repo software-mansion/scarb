@@ -2,7 +2,7 @@
 
 Fully qualified path: `hello_world::CircleSerde`
 
-```rust
+```cairo
 impl CircleSerde of core::serde::Serde<Circle>
 ```
 
@@ -12,7 +12,7 @@ impl CircleSerde of core::serde::Serde<Circle>
 
 Fully qualified path: `hello_world::CircleSerde::serialize`
 
-```rust
+```cairo
 fn serialize(self: @Circle, ref output: core::array::Array<felt252>)
 ```
 
@@ -21,7 +21,7 @@ fn serialize(self: @Circle, ref output: core::array::Array<felt252>)
 
 Fully qualified path: `hello_world::CircleSerde::deserialize`
 
-```rust
+```cairo
 fn deserialize(ref serialized: core::array::Span<felt252>) -> core::option::Option<Circle>
 ```
 

@@ -153,7 +153,7 @@ version = "0.1.0"
 [cairo-plugin]
 ```
 
-```rust
+```cairo
 use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
 
 /// The entry point of procedural macro implementation.

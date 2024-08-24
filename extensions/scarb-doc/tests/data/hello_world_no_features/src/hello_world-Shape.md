@@ -5,7 +5,7 @@ Shape trait for objects that have an area
 
 Fully qualified path: `hello_world::Shape`
 
-```rust
+```cairo
 trait Shape<T>
 ```
 
@@ -28,7 +28,7 @@ Calculate the area of the shape
 
 Fully qualified path: `Shape::area`
 
-```rust
+```cairo
 fn area(self: T) -> u32
 ```
 

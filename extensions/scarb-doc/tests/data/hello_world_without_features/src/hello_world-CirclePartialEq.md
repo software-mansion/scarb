@@ -2,7 +2,7 @@
 
 Fully qualified path: `hello_world::CirclePartialEq`
 
-```rust
+```cairo
 impl CirclePartialEq of core::traits::PartialEq<Circle>
 ```
 
@@ -12,7 +12,7 @@ impl CirclePartialEq of core::traits::PartialEq<Circle>
 
 Fully qualified path: `hello_world::CirclePartialEq::eq`
 
-```rust
+```cairo
 fn eq(lhs: @Circle, rhs: @Circle) -> bool
 ```
 

@@ -6,7 +6,7 @@ works.
 
 Fully qualified path: `hello_world::tests::it_works`
 
-```rust
+```cairo
 fn it_works()
 ```
 

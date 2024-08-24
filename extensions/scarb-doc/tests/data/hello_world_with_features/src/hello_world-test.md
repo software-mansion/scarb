@@ -11,7 +11,7 @@ Can invoke it like that:
 
 Fully qualified path: `hello_world::test`
 
-```rust
+```cairo
 fn test()
 ```
 
