@@ -70,8 +70,8 @@ classDiagram
         - app dirs, like config, cache, PATH, etc.
         - target directory handle
         - ui
-        - logging configuration 
-        - cairo plugins 
+        - logging configuration
+        - cairo plugins
         - current profile
         - global locks
         - tokio runtime
@@ -152,9 +152,9 @@ classDiagram
     WorkspaceResolve *-- Package
     CompilationUnit ..> WorkspaceResolve : is created from
     CompilationUnit ..> Target : is created from
-    CodegenRepository *-- StarknetContractCompiler 
-    CodegenRepository *-- LibCompiler 
-    CodegenRepository *-- TestCompiler 
+    CodegenRepository *-- StarknetContractCompiler
+    CodegenRepository *-- LibCompiler
+    CodegenRepository *-- TestCompiler
 ```
 
 ### Sources and the internal registry
@@ -188,7 +188,7 @@ There are various `Source` implementation for different methods of downloading p
 2. `GitSource` downloads packages from Git repositories.
 3. `RegistrySource` downloads packages from package registries.
 4. `StandardLibSource` unpacks packages embedded into the Scarb binary itself.
-4. And more...
+5. And more...
 
 The `Registry` object gathers all `Source` objects in a single mapping, and provides a unified interface for querying
 _any_ package, no matter of its source.
@@ -238,15 +238,14 @@ overwritten.
 
 ### Targets
 
-Compilation targets are defined in the `Package` manifest. 
+Compilation targets are defined in the `Package` manifest.
 Each target corresponds to source files which can be compiled into a package, and the way how the package is compiled.
 Packages can have a built-in library target, and/or more externally defined targets.
 When building a package, each target of this package will use exactly the same set of dependencies during compilation.
 By default, if the manifest does not list any targets, Scarb will assume the library target with its default parameters.
 
-Each compilation target consists of target kind, source path and parameters table. 
+Each compilation target consists of target kind, source path and parameters table.
 When building a project, compilation targets are used to construct compilation units.
-
 
 ### CodegenRepository
 
@@ -258,32 +257,33 @@ Scarb defines preconfigured Cairo compiler instances as structs implementing the
 You can see `StarknetContractCompiler` as an example of such implementation.
 
 The CompilerRepository is used to manage the variety of preconfigured Cairo compilers available to Scarb.
-Each compiler is identified by the target kind that uses it for compilation. 
+Each compiler is identified by the target kind that uses it for compilation.
 At any time, there can be only one compiler registered for a specific compilation target kind.
 When building a project, Scarb retrieves appropriate compiler implementation from CodegenRepository by target kind.
 The compiler will later be used to compile the project into the target output.
 
 ### Compilation units
+
 Please see [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/compilation-model.html) for more information.
 
 ### CairoPluginRepository
 
-Thanks to the Cairo compiler architecture, the compilation process can be altered in certain ways by use of 
+Thanks to the Cairo compiler architecture, the compilation process can be altered in certain ways by use of
 the `MacroPlugin` interface.
 Within Scarb, this functionality is exposed to users as Cairo plugins.  
-Cairo plugin is a special Scarb package that defines a cairo-plugin target and provides additional interface for 
-instantiating compiler Semantic plugins. 
+Cairo plugin is a special Scarb package that defines a cairo-plugin target and provides additional interface for
+instantiating compiler Semantic plugins.
 The Cairo plugins can be used in Scarb to expand the capabilities of the Cairo compiler, empowering users to implement
-extensions that would only be possible in the compiler codebase before. 
+extensions that would only be possible in the compiler codebase before.
 
 Within Scarb, Cairo plugins are managed through `CairoPluginRepository`, residing in Scarb configuration object.
 The plugin repository stores references to all Cairo plugins that are available during the compilation process.
-Plugins appropriate to be used for building a specific package are applied to the compiler database before the compilation. 
-When using Scarb as a library, Cairo plugins can be defined with configuration builder. 
+Plugins appropriate to be used for building a specific package are applied to the compiler database before the compilation.
+When using Scarb as a library, Cairo plugins can be defined with configuration builder.
 If not specified otherwise, Scarb comes with predefined StarkNet Cairo plugin, that can be used for StarkNet contracts
 compilation.
 
-### Procedural Macros 
+### Procedural Macros
 
 Procedural macros provide a mechanism for defining custom macros as package dependencies.
 The package with macro source code definition will be pulled and compiled by Scarb.
@@ -292,29 +292,27 @@ Please see [the design document](design/01-proc-macro.md) for more information.
 ### RootDatabase management within the compiler
 
 Cairo compiler relies on the `RootDatabase` for management of the compilation state.
-When compiling a single compilation unit, Scarb creates and configures the database, and passes it to the Cairo compiler. 
+When compiling a single compilation unit, Scarb creates and configures the database, and passes it to the Cairo compiler.
 The compilation of each unit uses a separate database instance, which is then dropped after the compilation is finished.
-The database is initialized with Cairo project configuration, obtained from the Scarb compilation unit, conditional 
-compilation parameters (see [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/conditional-compilation.html) 
+The database is initialized with Cairo project configuration, obtained from the Scarb compilation unit, conditional
+compilation parameters (see [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/conditional-compilation.html)
 for more information) and active Cairo plugins.
 
 ### Profiles implementation
 
-Profiles provide a way to alter the compiler settings from the Scarb manifest file. 
-Please see the [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/profiles.html) for general information 
-about profile use cases and syntax. 
+Profiles provide a way to alter the compiler settings from the Scarb manifest file.
+Please see the [scarb documentation](https://docs.swmansion.com/scarb/docs/reference/profiles.html) for general information
+about profile use cases and syntax.
 
-Overrides imposed by profile definition are applied towards the appropriate settings while converting `TomlManifest` 
+Overrides imposed by profile definition are applied towards the appropriate settings while converting `TomlManifest`
 (serialization of Scarb manifest file) into the `Manifest` object.  
 First, profile definition is read from manifest file, including appropriate profile inheritance attributes.
 The full definition of current profile is obtained by merging the parent profile definition with overrides from manifest.
-Then, the definition is used to override appropriate setting, e.g. Cairo compiler configuration by merging appropriate 
+Then, the definition is used to override appropriate setting, e.g. Cairo compiler configuration by merging appropriate
 profile definition sections onto the default configuration.
 
 The merging mentioned above is implemented as a merger of two plain `toml::Value` objects.
 
 [pubgrub-algo-docs]: https://nex3.medium.com/pubgrub-2fb6470504f
-
 [pubgrub-crate]: https://github.com/pubgrub-rs/pubgrub
-
 [cairo]: https://cairo-lang.org

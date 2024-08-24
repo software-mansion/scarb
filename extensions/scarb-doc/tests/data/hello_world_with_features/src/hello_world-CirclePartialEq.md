@@ -15,5 +15,3 @@ Fully qualified path: `hello_world::CirclePartialEq::eq`
 ```cairo
 fn eq(lhs: @Circle, rhs: @Circle) -> bool
 ```
-
-

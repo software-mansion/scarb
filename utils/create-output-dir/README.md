@@ -15,7 +15,5 @@ All notable changes to this project are documented on the [GitHub releases] page
 This crate is an extract from [`cargo-util`][cargo-util], developed by the Rust project contributors.
 
 [cargo-util]: https://crates.io/crates/cargo-util
-
 [cargo-util-fn]: https://docs.rs/cargo-util/latest/cargo_util/paths/fn.create_dir_all_excluded_from_backups_atomic.html
-
 [github releases]: https://github.com/software-mansion/scarb/releases

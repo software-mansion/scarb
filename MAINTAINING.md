@@ -64,9 +64,9 @@ We take an inspiration from the awesome release notes that [Visual Studio Code][
 Welcome to the release notes for Scarb vX.Y.Z!
 This release is all about blahblah
 
-* **Blah blah** - Why this blah is so much blah.
-* **Even more blah blah** - Everything is awesome.
-    * **Sometimes some sub-blah is cool** - Yeah.
+- **Blah blah** - Why this blah is so much blah.
+- **Even more blah blah** - Everything is awesome.
+  - **Sometimes some sub-blah is cool** - Yeah.
 
 ## Highlight Point Title
 
@@ -142,10 +142,12 @@ Post the same message as posted on the Telegram to the `#scarb` channel on Stark
 Releasing `scarb-metadata` crate is also a semi-automated process.
 
 1. Make sure correct version is present in:
-    1. `scarb-metadata/Cargo.toml`
-    2. `Cargo.lock`
+
+   1. `scarb-metadata/Cargo.toml`
+   2. `Cargo.lock`
 
    You will probably have to commit changes and then tag newly created commit.
+
 2. Make sure you create it on a green commit (CI is passing), this is not verified!
 3. Run `cargo publish -p scarb-metadata --dry-run` to verify that everything is fine.
 4. Create a tag on `main` named `scarb-metadata/vX.Y.Z`.
@@ -157,10 +159,12 @@ Releasing `scarb-metadata` crate is also a semi-automated process.
 Releasing `scarb-ui` crate is also a semi-automated process.
 
 1. Make sure correct version is present in:
+
    1. `scarb-ui/Cargo.toml`
    2. `Cargo.lock`
 
    You will probably have to commit changes and then tag newly created commit.
+
 2. Make sure you create it on a green commit (CI is passing), this is not verified!
 3. Run `cargo publish -p scarb-ui --dry-run` to verify that everything is fine.
 4. Create a tag on `main` named `scarb-ui/vX.Y.Z`.
@@ -172,9 +176,9 @@ Releasing `scarb-ui` crate is also a semi-automated process.
 Releasing `cairo-lang-macro` crate is also a semi-automated process.
 
 1. Make sure correct version is present in:
-    1. `plugins/cairo-lang-macro/Cargo.toml`
-    2. `Cargo.lock`
-       You will probably have to commit changes and then tag newly created commit.
+   1. `plugins/cairo-lang-macro/Cargo.toml`
+   2. `Cargo.lock`
+      You will probably have to commit changes and then tag newly created commit.
 2. Make sure all changes to crates `cairo-lang-macro-attributes`, `cairo-lang-macro-stable`, `scarb-stable-hasher` are
    released to crates.io as well.
 3. Make sure you create it on a green commit (CI is passing), this is not verified!
@@ -184,17 +188,10 @@ Releasing `cairo-lang-macro` crate is also a semi-automated process.
 7. Run `cargo publish -p cairo-lang-macro`.
 
 [@software-mansion/scarb-maintainers]: https://github.com/orgs/software-mansion/teams/scarb-maintainers
-
 [@maciektr]: https://github.com/maciektr
-
 [website deploy]: https://github.com/software-mansion/scarb/actions/workflows/website-deploy.yml
-
 [release]: https://github.com/software-mansion/scarb/actions/workflows/release.yml
-
 [vscode-relnotes]: https://code.visualstudio.com/updates
-
 [scarb project]: https://github.com/orgs/software-mansion/projects/4
-
 [crates.io]: https://crates.io
-
 [StarkNet Crates.io Admins]: https://github.com/orgs/software-mansion/teams/starknet-crates-io-admins

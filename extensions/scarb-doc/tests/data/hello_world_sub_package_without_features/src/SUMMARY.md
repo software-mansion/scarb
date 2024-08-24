@@ -7,4 +7,3 @@
 - [Free functions](./free_functions.md)
 
   - [main](./hello_world_sub_package-main.md)
-

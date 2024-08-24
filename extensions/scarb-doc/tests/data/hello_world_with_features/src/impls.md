@@ -7,4 +7,3 @@
 - [CircleSerde](./hello_world-CircleSerde.md)
 
 - [CirclePartialEq](./hello_world-CirclePartialEq.md)
-

@@ -7,9 +7,9 @@ Scarb manages your dependencies, compiles your projects and works as an extensib
 
 All information about Scarb is available on project's [website](https://docs.swmansion.com/scarb/).
 
-* [Installation](https://docs.swmansion.com/scarb/download.html)
-* [Cheat sheet](https://docs.swmansion.com/scarb/docs/cheatsheet.html)
-* [Documentation](https://docs.swmansion.com/scarb/docs.html)
+- [Installation](https://docs.swmansion.com/scarb/download.html)
+- [Cheat sheet](https://docs.swmansion.com/scarb/docs/cheatsheet.html)
+- [Documentation](https://docs.swmansion.com/scarb/docs.html)
 
 ## Changelog
 
@@ -49,9 +49,6 @@ This product includes modified portions of code of [Cargo], developed by the Rus
 This product includes modified portions of code of [hex_solver], developed by Six Colors AB.
 
 [Cairo]: https://www.cairo-lang.org/
-
 [Cargo]: https://github.com/rust-lang/cargo
-
 [github releases]: https://github.com/software-mansion/scarb/releases
-
 [hex_solver]: https://github.com/hexpm/hex_solver

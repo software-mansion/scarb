@@ -2,13 +2,13 @@
 
 Scarb is actively developed and open for contributions!
 
-*Want to get started?*
+_Want to get started?_
 Grab any unassigned issue labeled with [`help-wanted`](https://github.com/software-mansion/scarb/labels/help%20wanted)!
 
-*Looking for some easy warmup tasks?*
+_Looking for some easy warmup tasks?_
 Check out issues labeled with [`good-first-issue`](https://github.com/software-mansion/scarb/labels/good%20first%20issue)!
 
-*Need some guidance?*
+_Need some guidance?_
 Reach out to other developers on [Telegram](https://t.me/+1pMLtrNj5NthZWJk)!
 
 ## Environment setup
@@ -60,6 +60,7 @@ use [`git commit --fixup`](https://git-scm.com/docs/git-commit/2.32.0#Documentat
 to push further changes to your commits.
 
 ### Typos
+
 Our policy is to not accept PRs that only fix typos in the documentation and code. We appreciate your effort, but we
 encourage you to focus on bugs and features instead.
 
