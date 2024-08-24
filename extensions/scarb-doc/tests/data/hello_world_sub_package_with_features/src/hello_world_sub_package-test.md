@@ -1,6 +1,5 @@
 # test
 
-Sub-package code (with feature)
 Function that prints "test" to stdout with endline.
 Can invoke it like that:
 ```cairo

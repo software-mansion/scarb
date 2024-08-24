@@ -1,6 +1,5 @@
 # main
 
-Fibonacci sequence calculator
 Main function that calculates the 16th Fibonacci number
 
 
