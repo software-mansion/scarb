@@ -41,7 +41,10 @@ impl Resolve {
     /// * Asserts that `root_package` is a node in this graph.
     pub fn solution_of(&self, root_package: PackageId, target_kind: &TargetKind) -> Vec<PackageId> {
         assert!(&self.graph.contains_node(root_package));
-        let filtered_graph = EdgeFiltered::from_fn(&self.graph, move |(_node_a, _node_b, edge)| {
+        let filtered_graph = EdgeFiltered::from_fn(&self.graph, move |(node_a, _node_b, edge)| {
+            if target_kind == &TargetKind::TEST && node_a != root_package {
+                return false;
+            }
             edge.accepts_target(target_kind.clone())
         });
         Dfs::new(&filtered_graph, root_package)
