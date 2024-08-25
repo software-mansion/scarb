@@ -56,9 +56,9 @@ impl Compiler for LibCompiler {
 
         let target_dir = unit.target_dir(ws);
 
-        let main_crate_ids = collect_main_crate_ids(&unit, db);
+        let compiler_config = build_compiler_config(&unit, ws);
 
-        let compiler_config = build_compiler_config(&unit, &main_crate_ids, ws);
+        let main_crate_ids = collect_main_crate_ids(&unit, db);
 
         validate_compiler_config(db, &compiler_config, &unit, ws);
 

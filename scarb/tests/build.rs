@@ -863,6 +863,52 @@ fn warnings_can_be_disallowed() {
 }
 
 #[test]
+fn does_show_errors_from_deps() {
+    let t = TempDir::new().unwrap();
+    let first = t.child("first");
+    let second = t.child("second");
+    ProjectBuilder::start()
+        .name("first")
+        .lib_cairo(indoc! {r#"
+        fn hello() -> felt252 {
+            ;
+            12
+        }
+        "#})
+        .manifest_extra(indoc! {r#"
+        [cairo]
+        allow-warnings = false
+        "#})
+        .build(&first);
+    ProjectBuilder::start()
+        .name("second")
+        .lib_cairo(indoc! {r#"
+            fn hello() -> felt252 { 42 }
+        "#})
+        .dep("first", &first)
+        .manifest_extra(indoc! {r#"
+        [cairo]
+        allow-warnings = false
+        "#})
+        .build(&second);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&second)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling second v1.0.0 ([..]Scarb.toml)
+            error: Skipped tokens. Expected: statement.
+             --> [..]lib.cairo:2:5
+                ;
+                ^
+            
+            error: could not compile `second` due to previous error
+        "#});
+}
+
+#[test]
+#[ignore = "fix(maciektr): hide warnings from dependencies"]
 fn does_not_show_warnings_from_deps() {
     let t = TempDir::new().unwrap();
     let first = t.child("first");
