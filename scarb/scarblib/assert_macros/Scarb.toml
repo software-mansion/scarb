@@ -1,6 +1,6 @@
 [package]
 name = "assert_macros"
-version = "0.1.0"
+version = "{{ CAIRO_VERSION }}"
 
 no-core = true
 

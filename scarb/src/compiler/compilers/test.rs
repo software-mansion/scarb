@@ -32,8 +32,7 @@ impl Compiler for TestCompiler {
                 && plugin.package.id.source_id == SourceId::for_std()
         });
 
-        let diagnostics_reporter =
-            build_compiler_config(&unit, &main_crate_ids, ws).diagnostics_reporter;
+        let diagnostics_reporter = build_compiler_config(&unit, ws).diagnostics_reporter;
 
         diagnostics_reporter
             .with_crates(&main_crate_ids)
@@ -46,6 +45,7 @@ impl Compiler for TestCompiler {
                 add_statements_functions: unit
                     .compiler_config
                     .unstable_add_statements_functions_debug_info,
+                add_statements_code_locations: false,
             };
             let allow_warnings = unit.compiler_config.allow_warnings;
             compile_test_prepared_db(db, config, main_crate_ids, test_crate_ids, allow_warnings)?
