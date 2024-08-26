@@ -908,7 +908,6 @@ fn does_show_errors_from_deps() {
 }
 
 #[test]
-#[ignore = "fix(maciektr): hide warnings from dependencies"]
 fn does_not_show_warnings_from_deps() {
     let t = TempDir::new().unwrap();
     let first = t.child("first");
