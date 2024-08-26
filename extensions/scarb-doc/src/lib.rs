@@ -41,7 +41,7 @@ pub fn generate_packages_information(
 
         let should_ignore_visibility = match edition {
             Some(edition) => edition.ignore_visibility(),
-            None => Edition::latest().ignore_visibility(),
+            None => Edition::default().ignore_visibility(),
         };
 
         let should_document_private_items = should_ignore_visibility || document_private_items;
