@@ -54,7 +54,7 @@
             {
               "item_data": {
                 "name": "main",
-                "doc": "Fibonacci sequence calculator\nMain function that calculates the 16th Fibonacci number\n",
+                "doc": "Main function that calculates the 16th Fibonacci number\n",
                 "signature": "fn main() -> u32",
                 "full_path": "hello_world::main"
               }
