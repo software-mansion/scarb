@@ -1,5 +1,8 @@
 //! Various utility functions helpful for interacting with Cairo compiler.
 
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
+use crate::core::{InliningStrategy, Workspace};
+use crate::flock::Filesystem;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
@@ -7,17 +10,21 @@ use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use itertools::Itertools;
 use serde::Serialize;
 use std::io::{BufWriter, Write};
 
-use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
-use crate::core::{InliningStrategy, Workspace};
-use crate::flock::Filesystem;
-
 pub fn build_compiler_config<'c>(
+    db: &RootDatabase,
     unit: &CairoCompilationUnit,
+    main_crate_ids: &[CrateId],
     ws: &Workspace<'c>,
 ) -> CompilerConfig<'c> {
+    let ignore_warnings_crates = db
+        .crates()
+        .into_iter()
+        .filter(|crate_id| !main_crate_ids.contains(crate_id))
+        .collect_vec();
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
 
@@ -43,7 +50,8 @@ pub fn build_compiler_config<'c>(
                 }
             };
         }
-    });
+    })
+    .with_ignore_warnings_crates(&ignore_warnings_crates);
     CompilerConfig {
         diagnostics_reporter: if unit.compiler_config.allow_warnings {
             diagnostics_reporter.allow_warnings()
