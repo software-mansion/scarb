@@ -1,3 +1,5 @@
+use std::thread;
+
 use anyhow::{anyhow, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
@@ -23,7 +25,7 @@ pub struct CompileOpts {
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn compile(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) -> Result<()> {
-    process(packages, opts, ws, compile_unit, None)
+    process(packages, opts, ws, compile_unit_isolated, None)
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -93,6 +95,24 @@ where
         .print(Status::new("Finished", &formatted_message));
 
     Ok(())
+}
+
+// FIXME(maciektr): Remove this when Cairo will fix their issue upstream.
+// NOTE: This is untested! Compiling such large Cairo files takes horribly long time.
+/// Run compiler in a new thread which has significantly increased stack size.
+/// The Cairo compiler tends to consume too much stack space in some specific cases.
+/// It does not seem to consume infinite amounts though, so we try to confine it in arbitrarily
+/// chosen big memory chunk.
+fn compile_unit_isolated(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+    thread::scope(|s| {
+        thread::Builder::new()
+            .name(format!("scarb compile {}", unit.id()))
+            .stack_size(128 * 1024 * 1024)
+            .spawn_scoped(s, || compile_unit(unit, ws))
+            .expect("Failed to spawn compiler thread.")
+            .join()
+            .expect("Compiler thread has panicked.")
+    })
 }
 
 fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
