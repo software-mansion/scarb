@@ -314,6 +314,72 @@ fn dev_deps_are_not_propagated() {
 }
 
 #[test]
+fn dev_deps_are_not_propagated_for_ws_members() {
+    let t = assert_fs::TempDir::new().unwrap();
+
+    let dep1 = t.child("dep1");
+    ProjectBuilder::start()
+        .name("dep1")
+        .dep_cairo_test()
+        .build(&dep1);
+
+    let dep2 = t.child("dep2");
+    ProjectBuilder::start()
+        .name("dep2")
+        .dep_cairo_test()
+        .dev_dep("dep1", &dep1)
+        .build(&dep2);
+
+    let pkg = t.child("pkg");
+    ProjectBuilder::start()
+        .name("x")
+        .dep_cairo_test()
+        .dep("dep2", &dep2)
+        .build(&pkg);
+
+    WorkspaceBuilder::start()
+        .add_member("dep2")
+        .add_member("pkg")
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        units_and_components(metadata),
+        BTreeMap::from_iter(vec![
+            (
+                "dep2".to_string(),
+                vec!["core".to_string(), "dep2".to_string()]
+            ),
+            (
+                "dep2_unittest".to_string(),
+                vec!["core".to_string(), "dep1".to_string(), "dep2".to_string()]
+            ),
+            (
+                "x".to_string(),
+                vec!["core".to_string(), "dep2".to_string(), "x".to_string()]
+            ),
+            (
+                "x_unittest".to_string(),
+                vec![
+                    "core".to_string(),
+                    // With dev-deps propagation enabled, this would be included
+                    // "dep1".to_string(),
+                    "dep2".to_string(),
+                    "x".to_string()
+                ]
+            ),
+        ])
+    );
+}
+
+#[test]
 fn no_dep() {
     let t = assert_fs::TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
