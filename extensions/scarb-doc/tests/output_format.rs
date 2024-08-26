@@ -1,13 +1,13 @@
 //! Run `UPDATE_EXPECT=1 cargo test` to fix the tests.
 
-use std::fs;
-
 use assert_fs::TempDir;
-use expect_test::expect_file;
 use scarb_test_support::{command::Scarb, project_builder::ProjectBuilder};
 
-mod target;
-use target::TargetChecker;
+mod markdown_target;
+use markdown_target::MarkdownTargetChecker;
+
+mod json_target;
+use json_target::JsonTargetChecker;
 
 const EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH: &str = "tests/data/hello_world_no_features";
 
@@ -28,10 +28,10 @@ fn json_output() {
         .assert()
         .success();
 
-    let serialized_crates = fs::read_to_string(t.path().join("target/doc/output.json"))
-        .expect("Failed to read from file");
-    let expected = expect_file!["./data/json_output_test_data.json"];
-    expected.assert_eq(&serialized_crates);
+    JsonTargetChecker::default()
+        .actual(&t.path().join("target/doc/output.json"))
+        .expected("./data/json_output_test_data.json")
+        .assert_files_match();
 }
 
 #[test]
@@ -49,7 +49,7 @@ fn markdown_output() {
         .assert()
         .success();
 
-    TargetChecker::default()
+    MarkdownTargetChecker::default()
         .actual(t.path().join("target/doc/hello_world").to_str().unwrap())
         .expected(EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH)
         .assert_all_files_match();

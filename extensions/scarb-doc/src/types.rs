@@ -1,6 +1,8 @@
 // TODO(drknzz): Remove when not needed.
 #![allow(dead_code)]
 
+use cairo_lang_semantic::items::visibility;
+use cairo_lang_utils::Upcast;
 use itertools::Itertools;
 use serde::Serialize;
 
@@ -27,10 +29,31 @@ pub struct Crate {
 }
 
 impl Crate {
-    pub fn new(db: &ScarbDocDatabase, crate_id: CrateId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, crate_id: CrateId, include_private_items: bool) -> Self {
+        let root_module_id = ModuleId::CrateRoot(crate_id);
         Self {
-            root_module: Module::new(db, ModuleId::CrateRoot(crate_id)),
+            root_module: Module::new(db, root_module_id, root_module_id, include_private_items),
         }
+    }
+}
+
+fn is_visible_in_module(
+    db: &ScarbDocDatabase,
+    root_module_id: ModuleId,
+    element_id: &dyn TopLevelLanguageElementId,
+) -> bool {
+    let cotaining_module_id = element_id.parent_module(db);
+    match db
+        .module_item_info_by_name(cotaining_module_id, element_id.name(db.upcast()))
+        .unwrap()
+    {
+        Some(module_item_info) => visibility::peek_visible_in(
+            db,
+            module_item_info.visibility,
+            cotaining_module_id,
+            root_module_id,
+        ),
+        None => false,
     }
 }
 
@@ -54,7 +77,12 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn new(db: &ScarbDocDatabase, module_id: ModuleId) -> Self {
+    pub fn new(
+        db: &ScarbDocDatabase,
+        root_module_id: ModuleId,
+        module_id: ModuleId,
+        include_private_items: bool,
+    ) -> Self {
         // FIXME(#1438): compiler doesn't support fetching root crate doc
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData {
@@ -70,70 +98,95 @@ impl Module {
             ),
         };
 
+        let should_include_item = |id: &dyn TopLevelLanguageElementId| {
+            if include_private_items {
+                return true;
+            }
+            is_visible_in_module(db, root_module_id, id)
+        };
+
         let module_constants = db.module_constants(module_id).unwrap();
         let constants = module_constants
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| Constant::new(db, *id))
             .collect();
 
         let module_free_functions = db.module_free_functions(module_id).unwrap();
         let free_functions = module_free_functions
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| FreeFunction::new(db, *id))
             .collect();
 
         let module_structs = db.module_structs(module_id).unwrap();
         let structs = module_structs
             .iter()
-            .map(|(id, _)| Struct::new(db, *id))
+            .filter(|(id, _)| should_include_item(*id))
+            .map(|(id, _)| Struct::new(db, *id, root_module_id, include_private_items))
             .collect();
 
         let module_enums = db.module_enums(module_id).unwrap();
         let enums = module_enums
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| Enum::new(db, *id))
             .collect();
 
         let module_type_aliases = db.module_type_aliases(module_id).unwrap();
         let type_aliases = module_type_aliases
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| TypeAlias::new(db, *id))
             .collect();
 
         let module_impl_aliases = db.module_impl_aliases(module_id).unwrap();
         let impl_aliases = module_impl_aliases
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| ImplAlias::new(db, *id))
             .collect();
 
         let module_traits = db.module_traits(module_id).unwrap();
         let traits = module_traits
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| Trait::new(db, *id))
             .collect();
 
         let module_impls = db.module_impls(module_id).unwrap();
         let impls = module_impls
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| Impl::new(db, *id))
             .collect();
 
         let module_extern_types = db.module_extern_types(module_id).unwrap();
         let extern_types = module_extern_types
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| ExternType::new(db, *id))
             .collect();
 
         let module_extern_functions = db.module_extern_functions(module_id).unwrap();
         let extern_functions = module_extern_functions
             .iter()
+            .filter(|(id, _)| should_include_item(*id))
             .map(|(id, _)| ExternFunction::new(db, *id))
             .collect();
 
         let module_submodules = db.module_submodules(module_id).unwrap();
         let submodules = module_submodules
             .iter()
-            .map(|(id, _)| Self::new(db, ModuleId::Submodule(*id)))
+            .filter(|(id, _)| should_include_item(*id))
+            .map(|(id, _)| {
+                Self::new(
+                    db,
+                    root_module_id,
+                    ModuleId::Submodule(*id),
+                    include_private_items,
+                )
+            })
             .collect();
 
         Self {
@@ -253,7 +306,12 @@ pub struct Struct {
 }
 
 impl Struct {
-    pub fn new(db: &ScarbDocDatabase, id: StructId) -> Self {
+    pub fn new(
+        db: &ScarbDocDatabase,
+        id: StructId,
+        root_module_id: ModuleId,
+        include_private_items: bool,
+    ) -> Self {
         let members = db.struct_members(id).unwrap();
 
         let item_data = ItemData::new_without_signature(
@@ -264,6 +322,10 @@ impl Struct {
 
         let members = members
             .iter()
+            .filter(|(_, semantic_member)| {
+                include_private_items
+                    || is_visible_in_module(db, root_module_id, &semantic_member.id)
+            })
             .map(|(_name, semantic_member)| {
                 Member::new(db, semantic_member.id, item_data.full_path.clone())
             })

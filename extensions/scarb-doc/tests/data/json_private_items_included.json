@@ -1,0 +1,2651 @@
+{
+  "format_version": 1,
+  "packages_information": [
+    {
+      "crate_": {
+        "root_module": {
+          "item_data": {
+            "name": "hello_world",
+            "doc": null,
+            "signature": null,
+            "full_path": "hello_world"
+          },
+          "submodules": [
+            {
+              "item_data": {
+                "name": "PublicParent",
+                "doc": "Public parent module\n",
+                "signature": null,
+                "full_path": "hello_world::PublicParent"
+              },
+              "submodules": [
+                {
+                  "item_data": {
+                    "name": "PublicChild",
+                    "doc": "Public child module\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicParent::PublicChild"
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [
+                    {
+                      "item_data": {
+                        "name": "child_public_function",
+                        "doc": "Child public function\n",
+                        "signature": "pub fn child_public_function()",
+                        "full_path": "hello_world::PublicParent::PublicChild::child_public_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_public_crate_function",
+                        "doc": "Child crate public function\n",
+                        "signature": "pub(crate) fn child_public_crate_function()",
+                        "full_path": "hello_world::PublicParent::PublicChild::child_public_crate_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_private_function",
+                        "doc": "Child private function\n",
+                        "signature": "fn child_private_function()",
+                        "full_path": "hello_world::PublicParent::PublicChild::child_private_function"
+                      }
+                    }
+                  ],
+                  "structs": [
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildStructure",
+                        "doc": "Child public struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildStructure",
+                        "doc": "Child public crate struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildStructure",
+                        "doc": "Child private struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicChild::PrivateChildStructure"
+                      }
+                    }
+                  ],
+                  "enums": [
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildEnum",
+                        "doc": "Child public enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildEnum",
+                        "doc": "Child public crate enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PRIVATE_VARIANT",
+                            "doc": "Private enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicChild::PrivateChildEnum::PRIVATE_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildEnum",
+                        "doc": "Child private enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicChild::PrivateChildEnum"
+                      }
+                    }
+                  ],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": []
+                },
+                {
+                  "item_data": {
+                    "name": "PublicCrateChild",
+                    "doc": "Public crate child module\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicParent::PublicCrateChild"
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [
+                    {
+                      "item_data": {
+                        "name": "child_public_function",
+                        "doc": "Child public function\n",
+                        "signature": "pub fn child_public_function()",
+                        "full_path": "hello_world::PublicParent::PublicCrateChild::child_public_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_public_crate_function",
+                        "doc": "Child crate public function\n",
+                        "signature": "pub(crate) fn child_public_crate_function()",
+                        "full_path": "hello_world::PublicParent::PublicCrateChild::child_public_crate_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_private_function",
+                        "doc": "Child private function\n",
+                        "signature": "fn child_private_function()",
+                        "full_path": "hello_world::PublicParent::PublicCrateChild::child_private_function"
+                      }
+                    }
+                  ],
+                  "structs": [
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildStructure",
+                        "doc": "Child public struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildStructure",
+                        "doc": "Child public crate struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildStructure",
+                        "doc": "Child private struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildStructure"
+                      }
+                    }
+                  ],
+                  "enums": [
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildEnum",
+                        "doc": "Child public enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildEnum",
+                        "doc": "Child public crate enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PRIVATE_VARIANT",
+                            "doc": "Private enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildEnum::PRIVATE_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildEnum",
+                        "doc": "Child private enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicCrateChild::PrivateChildEnum"
+                      }
+                    }
+                  ],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": []
+                },
+                {
+                  "item_data": {
+                    "name": "PrivateChild",
+                    "doc": "Private child module\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicParent::PrivateChild"
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [
+                    {
+                      "item_data": {
+                        "name": "child_public_function",
+                        "doc": "Child public function\n",
+                        "signature": "pub fn child_public_function()",
+                        "full_path": "hello_world::PublicParent::PrivateChild::child_public_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_public_crate_function",
+                        "doc": "Child crate public function\n",
+                        "signature": "pub(crate) fn child_public_crate_function()",
+                        "full_path": "hello_world::PublicParent::PrivateChild::child_public_crate_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_private_function",
+                        "doc": "Child private function\n",
+                        "signature": "fn child_private_function()",
+                        "full_path": "hello_world::PublicParent::PrivateChild::child_private_function"
+                      }
+                    }
+                  ],
+                  "structs": [
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildStructure",
+                        "doc": "Child public struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PrivateChild::PublicChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildStructure",
+                        "doc": "Child public crate struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildStructure",
+                        "doc": "Child private struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildStructure"
+                      }
+                    }
+                  ],
+                  "enums": [
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildEnum",
+                        "doc": "Child public enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PrivateChild::PublicChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildEnum",
+                        "doc": "Child public crate enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PrivateChild::PublicCrateChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PRIVATE_VARIANT",
+                            "doc": "Private enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildEnum::PRIVATE_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildEnum",
+                        "doc": "Child private enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PrivateChild::PrivateChildEnum"
+                      }
+                    }
+                  ],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": []
+                }
+              ],
+              "constants": [],
+              "free_functions": [
+                {
+                  "item_data": {
+                    "name": "parent_public_function",
+                    "doc": "Parent public function\n",
+                    "signature": "pub fn parent_public_function()",
+                    "full_path": "hello_world::PublicParent::parent_public_function"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "parent_public_crate_function",
+                    "doc": "Parent public crate function\n",
+                    "signature": "pub(crate) fn parent_public_crate_function()",
+                    "full_path": "hello_world::PublicParent::parent_public_crate_function"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "parent_private_function",
+                    "doc": "Parent private function\n",
+                    "signature": "fn parent_private_function()",
+                    "full_path": "hello_world::PublicParent::parent_private_function"
+                  }
+                }
+              ],
+              "structs": [
+                {
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "public_field",
+                        "doc": "Public struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicParentStructure::public_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "public_crate_field",
+                        "doc": "Public crate struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicParentStructure::public_crate_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "private_field",
+                        "doc": "Private struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicParentStructure::private_field"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicParentStructure",
+                    "doc": "Parent public struct\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicParent::PublicParentStructure"
+                  }
+                },
+                {
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "public_field",
+                        "doc": "Public struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicCrateParentStructure::public_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "public_crate_field",
+                        "doc": "Public crate struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicCrateParentStructure::public_crate_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "private_field",
+                        "doc": "Private struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicCrateParentStructure::private_field"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicCrateParentStructure",
+                    "doc": "Parent publi crate struct\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicParent::PublicCrateParentStructure"
+                  }
+                },
+                {
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "public_field",
+                        "doc": "Public struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PrivateParentStructure::public_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "public_crate_field",
+                        "doc": "Public crate struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PrivateParentStructure::public_crate_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "private_field",
+                        "doc": "Private struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PrivateParentStructure::private_field"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PrivateParentStructure",
+                    "doc": "Parent private struct\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicParent::PrivateParentStructure"
+                  }
+                }
+              ],
+              "enums": [
+                {
+                  "variants": [
+                    {
+                      "item_data": {
+                        "name": "PUBLIC_VARIANT",
+                        "doc": "Public enum variant",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicParentEnum::PUBLIC_VARIANT"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicParentEnum",
+                    "doc": "Parent public enum\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicParent::PublicParentEnum"
+                  }
+                },
+                {
+                  "variants": [
+                    {
+                      "item_data": {
+                        "name": "PUBLIC_VARIANT",
+                        "doc": "Public enum variant",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PublicCrateParentEnum::PUBLIC_VARIANT"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicCrateParentEnum",
+                    "doc": "Parent public crate enum\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicParent::PublicCrateParentEnum"
+                  }
+                },
+                {
+                  "variants": [
+                    {
+                      "item_data": {
+                        "name": "PRIVATE_VARIANT",
+                        "doc": "Private enum variant",
+                        "signature": null,
+                        "full_path": "hello_world::PublicParent::PrivateParentEnum::PRIVATE_VARIANT"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PrivateParentEnum",
+                    "doc": "Parent private enum\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicParent::PrivateParentEnum"
+                  }
+                }
+              ],
+              "type_aliases": [],
+              "impl_aliases": [],
+              "traits": [],
+              "impls": [],
+              "extern_types": [],
+              "extern_functions": []
+            },
+            {
+              "item_data": {
+                "name": "PublicCrateParent",
+                "doc": "Public crate parent module\n",
+                "signature": null,
+                "full_path": "hello_world::PublicCrateParent"
+              },
+              "submodules": [
+                {
+                  "item_data": {
+                    "name": "PublicChild",
+                    "doc": "Public child module\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateParent::PublicChild"
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [
+                    {
+                      "item_data": {
+                        "name": "child_public_function",
+                        "doc": "Child public function\n",
+                        "signature": "pub fn child_public_function()",
+                        "full_path": "hello_world::PublicCrateParent::PublicChild::child_public_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_public_crate_function",
+                        "doc": "Child crate public function\n",
+                        "signature": "pub(crate) fn child_public_crate_function()",
+                        "full_path": "hello_world::PublicCrateParent::PublicChild::child_public_crate_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_private_function",
+                        "doc": "Child private function\n",
+                        "signature": "fn child_private_function()",
+                        "full_path": "hello_world::PublicCrateParent::PublicChild::child_private_function"
+                      }
+                    }
+                  ],
+                  "structs": [
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildStructure",
+                        "doc": "Child public struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildStructure",
+                        "doc": "Child public crate struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildStructure",
+                        "doc": "Child private struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildStructure"
+                      }
+                    }
+                  ],
+                  "enums": [
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildEnum",
+                        "doc": "Child public enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildEnum",
+                        "doc": "Child public crate enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PRIVATE_VARIANT",
+                            "doc": "Private enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildEnum::PRIVATE_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildEnum",
+                        "doc": "Child private enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicChild::PrivateChildEnum"
+                      }
+                    }
+                  ],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": []
+                },
+                {
+                  "item_data": {
+                    "name": "PublicCrateChild",
+                    "doc": "Public crate child module\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateParent::PublicCrateChild"
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [
+                    {
+                      "item_data": {
+                        "name": "child_public_function",
+                        "doc": "Child public function\n",
+                        "signature": "pub fn child_public_function()",
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateChild::child_public_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_public_crate_function",
+                        "doc": "Child crate public function\n",
+                        "signature": "pub(crate) fn child_public_crate_function()",
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateChild::child_public_crate_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_private_function",
+                        "doc": "Child private function\n",
+                        "signature": "fn child_private_function()",
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateChild::child_private_function"
+                      }
+                    }
+                  ],
+                  "structs": [
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildStructure",
+                        "doc": "Child public struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildStructure",
+                        "doc": "Child public crate struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildStructure",
+                        "doc": "Child private struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildStructure"
+                      }
+                    }
+                  ],
+                  "enums": [
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildEnum",
+                        "doc": "Child public enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildEnum",
+                        "doc": "Child public crate enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PRIVATE_VARIANT",
+                            "doc": "Private enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildEnum::PRIVATE_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildEnum",
+                        "doc": "Child private enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PrivateChildEnum"
+                      }
+                    }
+                  ],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": []
+                },
+                {
+                  "item_data": {
+                    "name": "PrivateChild",
+                    "doc": "Private child module\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateParent::PrivateChild"
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [
+                    {
+                      "item_data": {
+                        "name": "child_public_function",
+                        "doc": "Child public function\n",
+                        "signature": "pub fn child_public_function()",
+                        "full_path": "hello_world::PublicCrateParent::PrivateChild::child_public_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_public_crate_function",
+                        "doc": "Child crate public function\n",
+                        "signature": "pub(crate) fn child_public_crate_function()",
+                        "full_path": "hello_world::PublicCrateParent::PrivateChild::child_public_crate_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_private_function",
+                        "doc": "Child private function\n",
+                        "signature": "fn child_private_function()",
+                        "full_path": "hello_world::PublicCrateParent::PrivateChild::child_private_function"
+                      }
+                    }
+                  ],
+                  "structs": [
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildStructure",
+                        "doc": "Child public struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildStructure",
+                        "doc": "Child public crate struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildStructure",
+                        "doc": "Child private struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildStructure"
+                      }
+                    }
+                  ],
+                  "enums": [
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildEnum",
+                        "doc": "Child public enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildEnum",
+                        "doc": "Child public crate enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PrivateChild::PublicCrateChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PRIVATE_VARIANT",
+                            "doc": "Private enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildEnum::PRIVATE_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildEnum",
+                        "doc": "Child private enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PrivateChild::PrivateChildEnum"
+                      }
+                    }
+                  ],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": []
+                }
+              ],
+              "constants": [],
+              "free_functions": [
+                {
+                  "item_data": {
+                    "name": "parent_public_function",
+                    "doc": "Parent public function\n",
+                    "signature": "pub fn parent_public_function()",
+                    "full_path": "hello_world::PublicCrateParent::parent_public_function"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "parent_public_crate_function",
+                    "doc": "Parent public crate function\n",
+                    "signature": "pub(crate) fn parent_public_crate_function()",
+                    "full_path": "hello_world::PublicCrateParent::parent_public_crate_function"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "parent_private_function",
+                    "doc": "Parent private function\n",
+                    "signature": "fn parent_private_function()",
+                    "full_path": "hello_world::PublicCrateParent::parent_private_function"
+                  }
+                }
+              ],
+              "structs": [
+                {
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "public_field",
+                        "doc": "Public struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicParentStructure::public_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "public_crate_field",
+                        "doc": "Public crate struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicParentStructure::public_crate_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "private_field",
+                        "doc": "Private struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicParentStructure::private_field"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicParentStructure",
+                    "doc": "Parent public struct\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateParent::PublicParentStructure"
+                  }
+                },
+                {
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "public_field",
+                        "doc": "Public struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure::public_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "public_crate_field",
+                        "doc": "Public crate struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure::public_crate_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "private_field",
+                        "doc": "Private struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure::private_field"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicCrateParentStructure",
+                    "doc": "Parent public struct\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure"
+                  }
+                },
+                {
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "public_field",
+                        "doc": "Public struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PrivateParentStructure::public_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "public_crate_field",
+                        "doc": "Public crate struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PrivateParentStructure::public_crate_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "private_field",
+                        "doc": "Private struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PrivateParentStructure::private_field"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PrivateParentStructure",
+                    "doc": "Parent private struct\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateParent::PrivateParentStructure"
+                  }
+                }
+              ],
+              "enums": [
+                {
+                  "variants": [
+                    {
+                      "item_data": {
+                        "name": "PUBLIC_VARIANT",
+                        "doc": "Public enum variant",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicParentEnum::PUBLIC_VARIANT"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicParentEnum",
+                    "doc": "Parent public enum\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateParent::PublicParentEnum"
+                  }
+                },
+                {
+                  "variants": [
+                    {
+                      "item_data": {
+                        "name": "PUBLIC_VARIANT",
+                        "doc": "Public enum variant",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PublicCrateParentEnum::PUBLIC_VARIANT"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicCrateParentEnum",
+                    "doc": "Parent public crate enum\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateParent::PublicCrateParentEnum"
+                  }
+                },
+                {
+                  "variants": [
+                    {
+                      "item_data": {
+                        "name": "PRIVATE_VARIANT",
+                        "doc": "Private enum variant",
+                        "signature": null,
+                        "full_path": "hello_world::PublicCrateParent::PrivateParentEnum::PRIVATE_VARIANT"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PrivateParentEnum",
+                    "doc": "Parent private enum\n",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateParent::PrivateParentEnum"
+                  }
+                }
+              ],
+              "type_aliases": [],
+              "impl_aliases": [],
+              "traits": [],
+              "impls": [],
+              "extern_types": [],
+              "extern_functions": []
+            },
+            {
+              "item_data": {
+                "name": "PrivateParent",
+                "doc": "Private parent module\n",
+                "signature": null,
+                "full_path": "hello_world::PrivateParent"
+              },
+              "submodules": [
+                {
+                  "item_data": {
+                    "name": "PublicChild",
+                    "doc": "Public child module\n",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateParent::PublicChild"
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [
+                    {
+                      "item_data": {
+                        "name": "child_public_function",
+                        "doc": "Child public function\n",
+                        "signature": "pub fn child_public_function()",
+                        "full_path": "hello_world::PrivateParent::PublicChild::child_public_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_public_crate_function",
+                        "doc": "Child crate public function\n",
+                        "signature": "pub(crate) fn child_public_crate_function()",
+                        "full_path": "hello_world::PrivateParent::PublicChild::child_public_crate_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_private_function",
+                        "doc": "Child private function\n",
+                        "signature": "fn child_private_function()",
+                        "full_path": "hello_world::PrivateParent::PublicChild::child_private_function"
+                      }
+                    }
+                  ],
+                  "structs": [
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildStructure",
+                        "doc": "Child public struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildStructure",
+                        "doc": "Child public crate struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildStructure",
+                        "doc": "Child private struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildStructure"
+                      }
+                    }
+                  ],
+                  "enums": [
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildEnum",
+                        "doc": "Child public enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicChild::PublicChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildEnum",
+                        "doc": "Child public crate enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PRIVATE_VARIANT",
+                            "doc": "Private enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildEnum::PRIVATE_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildEnum",
+                        "doc": "Child private enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicChild::PrivateChildEnum"
+                      }
+                    }
+                  ],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": []
+                },
+                {
+                  "item_data": {
+                    "name": "PublicCrateChild",
+                    "doc": "Public crate child module\n",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateParent::PublicCrateChild"
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [
+                    {
+                      "item_data": {
+                        "name": "child_public_function",
+                        "doc": "Child public function\n",
+                        "signature": "pub fn child_public_function()",
+                        "full_path": "hello_world::PrivateParent::PublicCrateChild::child_public_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_public_crate_function",
+                        "doc": "Child crate public function\n",
+                        "signature": "pub(crate) fn child_public_crate_function()",
+                        "full_path": "hello_world::PrivateParent::PublicCrateChild::child_public_crate_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_private_function",
+                        "doc": "Child private function\n",
+                        "signature": "fn child_private_function()",
+                        "full_path": "hello_world::PrivateParent::PublicCrateChild::child_private_function"
+                      }
+                    }
+                  ],
+                  "structs": [
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildStructure",
+                        "doc": "Child public struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildStructure",
+                        "doc": "Child public crate struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildStructure",
+                        "doc": "Child private struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildStructure"
+                      }
+                    }
+                  ],
+                  "enums": [
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildEnum",
+                        "doc": "Child public enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildEnum",
+                        "doc": "Child public crate enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PRIVATE_VARIANT",
+                            "doc": "Private enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildEnum::PRIVATE_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildEnum",
+                        "doc": "Child private enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicCrateChild::PrivateChildEnum"
+                      }
+                    }
+                  ],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": []
+                },
+                {
+                  "item_data": {
+                    "name": "PrivateChild",
+                    "doc": "Private child module\n",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateParent::PrivateChild"
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [
+                    {
+                      "item_data": {
+                        "name": "child_public_function",
+                        "doc": "Child public function\n",
+                        "signature": "pub fn child_public_function()",
+                        "full_path": "hello_world::PrivateParent::PrivateChild::child_public_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_public_crate_function",
+                        "doc": "Child crate public function\n",
+                        "signature": "pub(crate) fn child_public_crate_function()",
+                        "full_path": "hello_world::PrivateParent::PrivateChild::child_public_crate_function"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "child_private_function",
+                        "doc": "Child private function\n",
+                        "signature": "fn child_private_function()",
+                        "full_path": "hello_world::PrivateParent::PrivateChild::child_private_function"
+                      }
+                    }
+                  ],
+                  "structs": [
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildStructure",
+                        "doc": "Child public struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildStructure",
+                        "doc": "Child public crate struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildStructure"
+                      }
+                    },
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "public_field",
+                            "doc": "Public struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildStructure::public_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "public_crate_field",
+                            "doc": "Public crate struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildStructure::public_crate_field"
+                          }
+                        },
+                        {
+                          "item_data": {
+                            "name": "private_field",
+                            "doc": "Private struct field",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildStructure::private_field"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildStructure",
+                        "doc": "Child private struct\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildStructure"
+                      }
+                    }
+                  ],
+                  "enums": [
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicChildEnum",
+                        "doc": "Child public enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PrivateChild::PublicChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PUBLIC_VARIANT",
+                            "doc": "Public enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PublicCrateChildEnum",
+                        "doc": "Child public crate enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PrivateChild::PublicCrateChildEnum"
+                      }
+                    },
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "PRIVATE_VARIANT",
+                            "doc": "Private enum variant",
+                            "signature": null,
+                            "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildEnum::PRIVATE_VARIANT"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "PrivateChildEnum",
+                        "doc": "Child private enum\n",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PrivateChild::PrivateChildEnum"
+                      }
+                    }
+                  ],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": []
+                }
+              ],
+              "constants": [],
+              "free_functions": [
+                {
+                  "item_data": {
+                    "name": "parent_public_function",
+                    "doc": "Parent public function\n",
+                    "signature": "pub fn parent_public_function()",
+                    "full_path": "hello_world::PrivateParent::parent_public_function"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "parent_public_crate_function",
+                    "doc": "Parent public crate function\n",
+                    "signature": "pub(crate) fn parent_public_crate_function()",
+                    "full_path": "hello_world::PrivateParent::parent_public_crate_function"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "parent_private_function",
+                    "doc": "Parent private function\n",
+                    "signature": "fn parent_private_function()",
+                    "full_path": "hello_world::PrivateParent::parent_private_function"
+                  }
+                }
+              ],
+              "structs": [
+                {
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "public_field",
+                        "doc": "Public struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicParentStructure::public_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "public_crate_field",
+                        "doc": "Public crate struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicParentStructure::public_crate_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "private_field",
+                        "doc": "Private struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicParentStructure::private_field"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicParentStructure",
+                    "doc": "Parent public struct\n",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateParent::PublicParentStructure"
+                  }
+                },
+                {
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "public_field",
+                        "doc": "Public struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicCrateParentStructure::public_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "public_crate_field",
+                        "doc": "Public crate struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicCrateParentStructure::public_crate_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "private_field",
+                        "doc": "Private struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicCrateParentStructure::private_field"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicCrateParentStructure",
+                    "doc": "Parent public struct\n",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateParent::PublicCrateParentStructure"
+                  }
+                },
+                {
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "public_field",
+                        "doc": "Public struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PrivateParentStructure::public_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "public_crate_field",
+                        "doc": "Public crate struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PrivateParentStructure::public_crate_field"
+                      }
+                    },
+                    {
+                      "item_data": {
+                        "name": "private_field",
+                        "doc": "Private struct field",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PrivateParentStructure::private_field"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PrivateParentStructure",
+                    "doc": "Parent private struct\n",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateParent::PrivateParentStructure"
+                  }
+                }
+              ],
+              "enums": [
+                {
+                  "variants": [
+                    {
+                      "item_data": {
+                        "name": "PUBLIC_VARIANT",
+                        "doc": "Public enum variant",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicParentEnum::PUBLIC_VARIANT"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicParentEnum",
+                    "doc": "Parent public enum\n",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateParent::PublicParentEnum"
+                  }
+                },
+                {
+                  "variants": [
+                    {
+                      "item_data": {
+                        "name": "PUBLIC_VARIANT",
+                        "doc": "Public enum variant",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PublicCrateParentEnum::PUBLIC_VARIANT"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PublicCrateParentEnum",
+                    "doc": "Parent public crate enum\n",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateParent::PublicCrateParentEnum"
+                  }
+                },
+                {
+                  "variants": [
+                    {
+                      "item_data": {
+                        "name": "PRIVATE_VARIANT",
+                        "doc": "Private enum variant",
+                        "signature": null,
+                        "full_path": "hello_world::PrivateParent::PrivateParentEnum::PRIVATE_VARIANT"
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "PrivateParentEnum",
+                    "doc": "Parent private enum\n",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateParent::PrivateParentEnum"
+                  }
+                }
+              ],
+              "type_aliases": [],
+              "impl_aliases": [],
+              "traits": [],
+              "impls": [],
+              "extern_types": [],
+              "extern_functions": []
+            }
+          ],
+          "constants": [],
+          "free_functions": [
+            {
+              "item_data": {
+                "name": "public_function",
+                "doc": "Public function\n",
+                "signature": "pub fn public_function()",
+                "full_path": "hello_world::public_function"
+              }
+            },
+            {
+              "item_data": {
+                "name": "public_crate_function",
+                "doc": "Public crate function\n",
+                "signature": "pub(crate) fn public_crate_function()",
+                "full_path": "hello_world::public_crate_function"
+              }
+            },
+            {
+              "item_data": {
+                "name": "private_function",
+                "doc": "Private function\n",
+                "signature": "fn private_function()",
+                "full_path": "hello_world::private_function"
+              }
+            },
+            {
+              "item_data": {
+                "name": "main",
+                "doc": null,
+                "signature": "fn main()",
+                "full_path": "hello_world::main"
+              }
+            }
+          ],
+          "structs": [
+            {
+              "members": [
+                {
+                  "item_data": {
+                    "name": "public_field",
+                    "doc": "Public struct field",
+                    "signature": null,
+                    "full_path": "hello_world::PublicStructure::public_field"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "public_crate_field",
+                    "doc": "Public crate struct field",
+                    "signature": null,
+                    "full_path": "hello_world::PublicStructure::public_crate_field"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "private_field",
+                    "doc": "Private struct field",
+                    "signature": null,
+                    "full_path": "hello_world::PublicStructure::private_field"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "PublicStructure",
+                "doc": "Public struct\n",
+                "signature": null,
+                "full_path": "hello_world::PublicStructure"
+              }
+            },
+            {
+              "members": [
+                {
+                  "item_data": {
+                    "name": "public_field",
+                    "doc": "Public struct field",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateStructure::public_field"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "public_crate_field",
+                    "doc": "Public crate struct field",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateStructure::public_crate_field"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "private_field",
+                    "doc": "Private struct field",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateStructure::private_field"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "PublicCrateStructure",
+                "doc": "Public crate struct\n",
+                "signature": null,
+                "full_path": "hello_world::PublicCrateStructure"
+              }
+            },
+            {
+              "members": [
+                {
+                  "item_data": {
+                    "name": "public_field",
+                    "doc": "Public struct field",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateStructure::public_field"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "public_crate_field",
+                    "doc": "Public crate struct field",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateStructure::public_crate_field"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "private_field",
+                    "doc": "Private struct field",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateStructure::private_field"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "PrivateStructure",
+                "doc": "Private struct\n",
+                "signature": null,
+                "full_path": "hello_world::PrivateStructure"
+              }
+            }
+          ],
+          "enums": [
+            {
+              "variants": [
+                {
+                  "item_data": {
+                    "name": "PUBLIC_VARIANT",
+                    "doc": "Public enum variant",
+                    "signature": null,
+                    "full_path": "hello_world::PublicEnum::PUBLIC_VARIANT"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "PublicEnum",
+                "doc": "Public enum\n",
+                "signature": null,
+                "full_path": "hello_world::PublicEnum"
+              }
+            },
+            {
+              "variants": [
+                {
+                  "item_data": {
+                    "name": "PUBLIC_VARIANT",
+                    "doc": "Public enum variant",
+                    "signature": null,
+                    "full_path": "hello_world::PublicCrateEnum::PUBLIC_VARIANT"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "PublicCrateEnum",
+                "doc": "Public crate enum\n",
+                "signature": null,
+                "full_path": "hello_world::PublicCrateEnum"
+              }
+            },
+            {
+              "variants": [
+                {
+                  "item_data": {
+                    "name": "PRIVATE_VARIANT",
+                    "doc": "Private enum variant",
+                    "signature": null,
+                    "full_path": "hello_world::PrivateEnum::PRIVATE_VARIANT"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "PrivateEnum",
+                "doc": "Private enum\n",
+                "signature": null,
+                "full_path": "hello_world::PrivateEnum"
+              }
+            }
+          ],
+          "type_aliases": [],
+          "impl_aliases": [],
+          "traits": [],
+          "impls": [],
+          "extern_types": [],
+          "extern_functions": []
+        }
+      },
+      "metadata": {
+        "name": "hello_world",
+        "authors": null
+      }
+    }
+  ]
+}

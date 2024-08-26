@@ -39,6 +39,10 @@ struct Args {
     /// Specifies features to enable.
     #[command(flatten)]
     pub features: FeaturesSpec,
+
+    /// Generates documentation also for private items.
+    #[arg(long, default_value_t = false)]
+    document_private_items: bool,
 }
 
 fn main_inner() -> Result<()> {
@@ -51,7 +55,12 @@ fn main_inner() -> Result<()> {
         .context("metadata command failed")?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
-    let packages_information = generate_packages_information(&metadata, &metadata_for_packages);
+
+    let packages_information = generate_packages_information(
+        &metadata,
+        &metadata_for_packages,
+        args.document_private_items,
+    );
 
     match args.output_format {
         OutputFormat::Json => {

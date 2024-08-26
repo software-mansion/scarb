@@ -5,12 +5,12 @@ use std::{fs, iter::zip};
 use walkdir::WalkDir;
 
 #[derive(Default)]
-pub struct TargetChecker {
+pub struct MarkdownTargetChecker {
     actual: Option<WalkDir>,
     expected: Option<WalkDir>,
 }
 
-impl TargetChecker {
+impl MarkdownTargetChecker {
     pub fn actual(mut self, path: &str) -> Self {
         assert!(Self::check_if_directory(path));
         self.actual = Some(WalkDir::new(path).sort_by_file_name());
