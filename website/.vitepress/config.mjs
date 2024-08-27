@@ -90,6 +90,7 @@ const sidebar = {
           "https://github.com/software-mansion/scarb/tree/main/examples",
         ),
         p("Scarb vs Cargo", "/docs/scarb-vs-cargo"),
+        p("Troubleshooting", "/docs/troubleshooting"),
       ],
     },
   ],
