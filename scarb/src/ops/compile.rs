@@ -5,6 +5,7 @@ use cairo_lang_utils::Upcast;
 use indoc::formatdoc;
 use itertools::Itertools;
 use smol_str::{SmolStr, ToSmolStr};
+use std::thread;
 
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
@@ -150,7 +151,20 @@ where
     Ok(())
 }
 
+/// Run compiler in a new thread.
+/// The stack size of created threads can be altered with `RUST_MIN_STACK` env variable.
 pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
+    thread::scope(|s| {
+        thread::Builder::new()
+            .name(format!("scarb compile {}", unit.id()))
+            .spawn_scoped(s, || compile_unit_inner(unit, ws))
+            .expect("Failed to spawn compiler thread.")
+            .join()
+            .expect("Compiler thread has panicked.")
+    })
+}
+
+fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package_name = unit.main_package_id().name.clone();
 
     ws.config()
