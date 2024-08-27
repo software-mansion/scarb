@@ -1,4 +1,3 @@
-#[cfg(test)]
 mod tests {
     use array::ArrayTrait;
     use core::result::ResultTrait;
