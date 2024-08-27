@@ -256,11 +256,18 @@ fn dev_deps_are_not_propagated() {
         .dev_dep("dep1", &dep1)
         .build(&dep2);
 
+    let dep3 = t.child("dep3");
+    ProjectBuilder::start()
+        .name("dep3")
+        .dep_cairo_test()
+        .dep("dep2", &dep2)
+        .build(&dep3);
+
     let pkg = t.child("pkg");
     ProjectBuilder::start()
         .name("x")
         .dep_cairo_test()
-        .dev_dep("dep2", &dep2)
+        .dev_dep("dep3", &dep3)
         .build(&pkg);
 
     let metadata = Scarb::quick_snapbox()
@@ -281,7 +288,7 @@ fn dev_deps_are_not_propagated() {
                 vec![
                     "cairo_test".to_string(),
                     "core".to_string(),
-                    "dep2".to_string(),
+                    "dep3".to_string(),
                 ]
             ),
             (
@@ -290,6 +297,14 @@ fn dev_deps_are_not_propagated() {
                     "cairo_test".to_string(),
                     "core".to_string(),
                     "dep1".to_string(),
+                ]
+            ),
+            (
+                "dep3".to_string(),
+                vec![
+                    "cairo_test".to_string(),
+                    "core".to_string(),
+                    "dep2".to_string(),
                 ]
             )
         ])
@@ -306,6 +321,7 @@ fn dev_deps_are_not_propagated() {
                     // With dev-deps propagation enabled, this would be included
                     // "dep1".to_string(),
                     "dep2".to_string(),
+                    "dep3".to_string(),
                     "x".to_string()
                 ]
             ),

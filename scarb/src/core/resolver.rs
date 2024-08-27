@@ -42,10 +42,7 @@ impl Resolve {
     pub fn solution_of(&self, root_package: PackageId, target_kind: &TargetKind) -> Vec<PackageId> {
         assert!(&self.graph.contains_node(root_package));
         let filtered_graph = EdgeFiltered::from_fn(&self.graph, move |(node_a, _node_b, edge)| {
-            if target_kind == &TargetKind::TEST && node_a != root_package {
-                return false;
-            }
-            edge.accepts_target(target_kind.clone())
+            edge.accepts_target(target_kind.clone(), node_a == root_package)
         });
         Dfs::new(&filtered_graph, root_package)
             .iter(&filtered_graph)
@@ -71,10 +68,15 @@ impl DependencyEdge {
         Self::default()
     }
 
-    pub fn accepts_target(&self, target_kind: TargetKind) -> bool {
-        // Empty target lists accepts all target kinds.
-        // Represents `[dependencies]` table from manifest file.
-        self.0.is_empty() || self.0.iter().any(|name| target_kind == *name)
+    pub fn accepts_target(&self, target_kind: TargetKind, is_root: bool) -> bool {
+        if self.0.is_empty() {
+            // Empty target lists accepts all target kinds.
+            // Represents `[dependencies]` table from manifest file.
+            return true;
+        }
+        // For `TargetKind::TEST`, we should not consider the root package dependencies.
+        (is_root || target_kind != TargetKind::TEST)
+            && self.0.iter().any(|name| target_kind == *name)
     }
 
     pub fn extend(self, target_kind: Option<TargetKind>) -> Self {
