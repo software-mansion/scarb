@@ -33,11 +33,11 @@ Scarb is under active development! Expect a lot of new features to appear soon! 
 - [x] `Scarb.lock`
 - [x] `scarb update`
 - [x] `scarb check`
-- [ ] Standardized `test` target 🏗️
-- [ ] Package registry 🏗️
+- [x] Standardized `test` target
+- [x] Package registry
 - [ ] PubGrub implementation for version resolution 🏗️
-- [ ] Dynamic loading of custom Cairo compiler plugins as Scarb packages 🏗️
-- [ ] `scarb doc` 🏗️
+- [x] Dynamic loading of custom Cairo compiler plugins as Scarb packages
+- [x] `scarb doc`
 - [ ] Dynamic loading of custom targets aka code generators
 - [ ] Dependency overrides
 - [ ] Signing & notarization of Windows & macOS binaries
