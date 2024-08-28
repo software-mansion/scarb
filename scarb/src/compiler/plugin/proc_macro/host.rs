@@ -249,7 +249,7 @@ impl ProcMacroHostPlugin {
                         let mut args_builder = PatchBuilder::new(db, item_ast);
                         args_builder.add_node(attr.arguments(db).as_syntax_node());
                         let args = TokenStream::new(args_builder.build().0);
-                        expansion = Some((found, args));
+                        expansion = Some((found, args, attr.stable_ptr().untyped()));
                         // Do not add the attribute for found expansion.
                         continue;
                     } else {
@@ -260,8 +260,16 @@ impl ProcMacroHostPlugin {
             builder.add_node(attr.as_syntax_node());
         }
         match (expansion, last) {
-            (Some((expansion, args)), true) => AttrExpansionFound::Last { expansion, args },
-            (Some((expansion, args)), false) => AttrExpansionFound::Some { expansion, args },
+            (Some((expansion, args, stable_ptr)), true) => AttrExpansionFound::Last {
+                expansion,
+                args,
+                stable_ptr,
+            },
+            (Some((expansion, args, stable_ptr)), false) => AttrExpansionFound::Some {
+                expansion,
+                args,
+                stable_ptr,
+            },
             (None, _) => AttrExpansionFound::None,
         }
     }
@@ -639,13 +647,20 @@ impl MacroPlugin for ProcMacroHostPlugin {
         let (input, body) = self.parse_attribute(db, item_ast.clone());
 
         if let Some(result) = match input {
-            AttrExpansionFound::Last { expansion, args } => Some((expansion, args, true)),
-            AttrExpansionFound::Some { expansion, args } => Some((expansion, args, false)),
+            AttrExpansionFound::Last {
+                expansion,
+                args,
+                stable_ptr,
+            } => Some((expansion, args, stable_ptr, true)),
+            AttrExpansionFound::Some {
+                expansion,
+                args,
+                stable_ptr,
+            } => Some((expansion, args, stable_ptr, false)),
             AttrExpansionFound::None => None,
         }
-        .map(|(expansion, args, last)| {
+        .map(|(expansion, args, stable_ptr, last)| {
             let token_stream = body.with_metadata(stream_metadata.clone());
-            let stable_ptr = item_ast.clone().stable_ptr().untyped();
             let span = item_ast.as_syntax_node().span(db);
             self.expand_attribute(expansion, last, args, token_stream, span, stable_ptr)
         }) {
@@ -694,11 +709,13 @@ enum AttrExpansionFound {
     Some {
         expansion: ProcMacroId,
         args: TokenStream,
+        stable_ptr: SyntaxStablePtrId,
     },
     None,
     Last {
         expansion: ProcMacroId,
         args: TokenStream,
+        stable_ptr: SyntaxStablePtrId,
     },
 }
 

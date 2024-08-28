@@ -377,6 +377,60 @@ fn can_emit_plugin_error() {
 }
 
 #[test]
+fn diags_from_generated_code_mapped_correctly() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let diag = Diagnostic::error("Some error from macro.");
+            ProcMacroResult::new(token_stream)
+                 .with_diagnostics(diag.into())
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+        #[cfg(target: 'lib')]
+        #[some]
+        fn test_increase_balance() {
+            i_don_exist();
+        }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Plugin diagnostic: Some error from macro.
+             --> [..]lib.cairo:2:1
+            #[some]
+            ^*****^
+            
+            error: Function not found.
+             --> [..]lib.cairo:4:5
+                i_don_exist();
+                ^*********^
+            
+            error: could not compile `hello` due to previous error
+    "#});
+}
+
+#[test]
 fn can_remove_original_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
