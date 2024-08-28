@@ -165,6 +165,65 @@ impl ProcMacroHostPlugin {
     ) -> (AttrExpansionFound, TokenStream) {
         let mut item_builder = PatchBuilder::new(db, &item_ast);
         let input = match item_ast.clone() {
+            ast::ModuleItem::Trait(trait_ast) => {
+                let attrs = trait_ast.attributes(db).elements(db);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
+                item_builder.add_node(trait_ast.visibility(db).as_syntax_node());
+                item_builder.add_node(trait_ast.trait_kw(db).as_syntax_node());
+                item_builder.add_node(trait_ast.name(db).as_syntax_node());
+                item_builder.add_node(trait_ast.generic_params(db).as_syntax_node());
+                item_builder.add_node(trait_ast.body(db).as_syntax_node());
+                expansion
+            }
+            ast::ModuleItem::Impl(impl_ast) => {
+                let attrs = impl_ast.attributes(db).elements(db);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
+                item_builder.add_node(impl_ast.visibility(db).as_syntax_node());
+                item_builder.add_node(impl_ast.impl_kw(db).as_syntax_node());
+                item_builder.add_node(impl_ast.name(db).as_syntax_node());
+                item_builder.add_node(impl_ast.generic_params(db).as_syntax_node());
+                item_builder.add_node(impl_ast.of_kw(db).as_syntax_node());
+                item_builder.add_node(impl_ast.trait_path(db).as_syntax_node());
+                item_builder.add_node(impl_ast.body(db).as_syntax_node());
+                expansion
+            }
+            ast::ModuleItem::Module(module_ast) => {
+                let attrs = module_ast.attributes(db).elements(db);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
+                item_builder.add_node(module_ast.visibility(db).as_syntax_node());
+                item_builder.add_node(module_ast.module_kw(db).as_syntax_node());
+                item_builder.add_node(module_ast.name(db).as_syntax_node());
+                item_builder.add_node(module_ast.body(db).as_syntax_node());
+                expansion
+            }
+            ast::ModuleItem::FreeFunction(free_func_ast) => {
+                let attrs = free_func_ast.attributes(db).elements(db);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
+                item_builder.add_node(free_func_ast.visibility(db).as_syntax_node());
+                item_builder.add_node(free_func_ast.declaration(db).as_syntax_node());
+                item_builder.add_node(free_func_ast.body(db).as_syntax_node());
+                expansion
+            }
+            ast::ModuleItem::ExternFunction(extern_func_ast) => {
+                let attrs = extern_func_ast.attributes(db).elements(db);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
+                item_builder.add_node(extern_func_ast.visibility(db).as_syntax_node());
+                item_builder.add_node(extern_func_ast.extern_kw(db).as_syntax_node());
+                item_builder.add_node(extern_func_ast.declaration(db).as_syntax_node());
+                item_builder.add_node(extern_func_ast.semicolon(db).as_syntax_node());
+                expansion
+            }
+            ast::ModuleItem::ExternType(extern_type_ast) => {
+                let attrs = extern_type_ast.attributes(db).elements(db);
+                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
+                item_builder.add_node(extern_type_ast.visibility(db).as_syntax_node());
+                item_builder.add_node(extern_type_ast.extern_kw(db).as_syntax_node());
+                item_builder.add_node(extern_type_ast.type_kw(db).as_syntax_node());
+                item_builder.add_node(extern_type_ast.name(db).as_syntax_node());
+                item_builder.add_node(extern_type_ast.generic_params(db).as_syntax_node());
+                item_builder.add_node(extern_type_ast.semicolon(db).as_syntax_node());
+                expansion
+            }
             ast::ModuleItem::Struct(struct_ast) => {
                 let attrs = struct_ast.attributes(db).elements(db);
                 let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
@@ -187,34 +246,6 @@ impl ProcMacroHostPlugin {
                 item_builder.add_node(enum_ast.lbrace(db).as_syntax_node());
                 item_builder.add_node(enum_ast.variants(db).as_syntax_node());
                 item_builder.add_node(enum_ast.rbrace(db).as_syntax_node());
-                expansion
-            }
-            ast::ModuleItem::ExternType(extern_type_ast) => {
-                let attrs = extern_type_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
-                item_builder.add_node(extern_type_ast.visibility(db).as_syntax_node());
-                item_builder.add_node(extern_type_ast.extern_kw(db).as_syntax_node());
-                item_builder.add_node(extern_type_ast.type_kw(db).as_syntax_node());
-                item_builder.add_node(extern_type_ast.name(db).as_syntax_node());
-                item_builder.add_node(extern_type_ast.generic_params(db).as_syntax_node());
-                item_builder.add_node(extern_type_ast.semicolon(db).as_syntax_node());
-                expansion
-            }
-            ast::ModuleItem::ExternFunction(extern_func_ast) => {
-                let attrs = extern_func_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
-                item_builder.add_node(extern_func_ast.visibility(db).as_syntax_node());
-                item_builder.add_node(extern_func_ast.extern_kw(db).as_syntax_node());
-                item_builder.add_node(extern_func_ast.declaration(db).as_syntax_node());
-                item_builder.add_node(extern_func_ast.semicolon(db).as_syntax_node());
-                expansion
-            }
-            ast::ModuleItem::FreeFunction(free_func_ast) => {
-                let attrs = free_func_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
-                item_builder.add_node(free_func_ast.visibility(db).as_syntax_node());
-                item_builder.add_node(free_func_ast.declaration(db).as_syntax_node());
-                item_builder.add_node(free_func_ast.body(db).as_syntax_node());
                 expansion
             }
             _ => AttrExpansionFound::None,
