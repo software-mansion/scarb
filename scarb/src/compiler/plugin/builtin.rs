@@ -112,7 +112,7 @@ impl CairoPlugin for BuiltinTestAssertsPlugin {
     fn id(&self) -> PackageId {
         PackageId::new(
             PackageName::TEST_ASSERTS_PLUGIN,
-            semver::Version::new(0, 1, 0),
+            crate::version::get().cairo.version.to_version().unwrap(),
             SourceId::for_std(),
         )
     }
