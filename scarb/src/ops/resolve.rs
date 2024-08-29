@@ -102,7 +102,7 @@ pub fn resolve_workspace_with_opts(
                     ManifestDependency::builder()
                         .kind(DepKind::Target(TargetKind::TEST))
                         .name(PackageName::TEST_ASSERTS_PLUGIN)
-                        .version_req(DependencyVersionReq::exact(&semver::Version::new(0, 1, 0)))
+                        .version_req(version_req.clone())
                         .source_id(SourceId::for_std())
                         .build(),
                 ],
