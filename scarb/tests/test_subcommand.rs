@@ -73,3 +73,23 @@ fn errors_when_missing_script_and_cairo_test() {
         error: no such command: `cairo-test`
         "#});
 }
+
+#[test]
+fn assert_macros_available() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .dev_dep_builtin("assert_macros")
+        .dep_cairo_test()
+        .lib_cairo(indoc! {r#"
+            #[test]
+            fn some() {
+                assert_eq!(1, 1);
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .args(["build", "--test"])
+        .current_dir(&t)
+        .assert()
+        .success();
+}

@@ -93,16 +93,24 @@ impl ProjectBuilder {
         self
     }
 
-    pub fn dep_starknet(self) -> Self {
-        self.dep("starknet", Dep.version(CAIRO_VERSION))
+    pub fn dep_builtin(self, name: impl ToString) -> Self {
+        self.dep(name, Dep.version(CAIRO_VERSION))
     }
 
-    pub fn dep_cairo_test(self) -> Self {
-        self.dev_dep("cairo_test", Dep.version(CAIRO_VERSION))
+    pub fn dev_dep_builtin(self, name: impl ToString) -> Self {
+        self.dev_dep(name, Dep.version(CAIRO_VERSION))
     }
 
     pub fn dep_cairo_run(self) -> Self {
-        self.dep("cairo_run", Dep.version(CAIRO_VERSION))
+        self.dep_builtin("cairo_run")
+    }
+
+    pub fn dep_starknet(self) -> Self {
+        self.dep_builtin("starknet")
+    }
+
+    pub fn dep_cairo_test(self) -> Self {
+        self.dev_dep_builtin("cairo_test")
     }
 
     pub fn manifest_package_extra(mut self, extra: impl ToString) -> Self {
