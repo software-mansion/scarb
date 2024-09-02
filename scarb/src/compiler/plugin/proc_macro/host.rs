@@ -23,7 +23,7 @@ use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::attribute::structured::{
     Attribute, AttributeArgVariant, AttributeStructurize,
 };
-use cairo_lang_syntax::node::ast::{Expr, MaybeTraitBody, PathSegment};
+use cairo_lang_syntax::node::ast::{Expr, ImplItem, MaybeImplBody, MaybeTraitBody, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
@@ -192,6 +192,91 @@ impl ProcMacroHostPlugin {
                             let mut func_builder = PatchBuilder::new(db, func);
                             let attrs = func.attributes(db).elements(db);
                             let found = self.parse_attrs(db, &mut func_builder, attrs, func);
+                            func_builder.add_node(func.declaration(db).as_syntax_node());
+                            func_builder.add_node(func.body(db).as_syntax_node());
+                            let token_stream = TokenStream::new(func_builder.build().0);
+                            let (input, args, stable_ptr) = match found {
+                                AttrExpansionFound::Last {
+                                    expansion,
+                                    args,
+                                    stable_ptr,
+                                } => {
+                                    all_none = false;
+                                    (expansion, args, stable_ptr)
+                                }
+                                AttrExpansionFound::Some {
+                                    expansion,
+                                    args,
+                                    stable_ptr,
+                                } => {
+                                    all_none = false;
+                                    (expansion, args, stable_ptr)
+                                }
+                                AttrExpansionFound::None => {
+                                    item_builder.add_node(func.as_syntax_node());
+                                    continue;
+                                }
+                            };
+
+                            let result = self.instance(input.package_id).generate_code(
+                                input.expansion.name.clone(),
+                                args.clone(),
+                                token_stream.clone(),
+                            );
+
+                            let expanded = context.register_result(
+                                token_stream.to_string(),
+                                input,
+                                result,
+                                stable_ptr,
+                            );
+                            item_builder.add_modified(RewriteNode::Mapped {
+                                origin: func.as_syntax_node().span(db),
+                                node: Box::new(RewriteNode::Text(expanded.to_string())),
+                            });
+                        }
+
+                        item_builder.add_node(body.rbrace(db).as_syntax_node());
+
+                        if all_none {
+                            InnerAttrExpansionResult::None
+                        } else {
+                            let (code, mappings) = item_builder.build();
+                            InnerAttrExpansionResult::Some(context.into_result(code, mappings))
+                        }
+                    }
+                }
+            }
+
+            ast::ModuleItem::Impl(impl_ast) => {
+                item_builder.add_node(impl_ast.attributes(db).as_syntax_node());
+                item_builder.add_node(impl_ast.visibility(db).as_syntax_node());
+                item_builder.add_node(impl_ast.impl_kw(db).as_syntax_node());
+                item_builder.add_node(impl_ast.name(db).as_syntax_node());
+                item_builder.add_node(impl_ast.generic_params(db).as_syntax_node());
+                item_builder.add_node(impl_ast.of_kw(db).as_syntax_node());
+                item_builder.add_node(impl_ast.trait_path(db).as_syntax_node());
+
+                match impl_ast.body(db) {
+                    MaybeImplBody::None(terminal) => {
+                        item_builder.add_node(terminal.as_syntax_node());
+                        InnerAttrExpansionResult::None
+                    }
+                    MaybeImplBody::Some(body) => {
+                        let mut all_none = true;
+                        item_builder.add_node(body.lbrace(db).as_syntax_node());
+
+                        let items = body.items(db);
+                        for item in items.elements(db) {
+                            let ImplItem::Function(func) = item else {
+                                item_builder.add_node(item.as_syntax_node());
+                                continue;
+                            };
+
+                            let mut func_builder = PatchBuilder::new(db, &func);
+                            let attrs = func.attributes(db).elements(db);
+                            let found = self.parse_attrs(db, &mut func_builder, attrs, &func);
+                            func_builder.add_node(func.visibility(db).as_syntax_node());
                             func_builder.add_node(func.declaration(db).as_syntax_node());
                             func_builder.add_node(func.body(db).as_syntax_node());
                             let token_stream = TokenStream::new(func_builder.build().0);
