@@ -1,12 +1,18 @@
+use std::env;
+use std::path::Path;
 use std::str::FromStr;
+use std::time::Duration;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use async_trait::async_trait;
 use futures::StreamExt;
 use reqwest::header::{
-    HeaderMap, HeaderName, HeaderValue, ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED,
+    HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH,
+    LAST_MODIFIED,
 };
-use reqwest::{Response, StatusCode};
+use reqwest::multipart::{Form, Part};
+use reqwest::{Body, Response, StatusCode};
+use tokio::fs::File as TokioFile;
 use tokio::io;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::sync::OnceCell;
@@ -15,14 +21,13 @@ use tracing::{debug, trace, warn};
 use scarb_ui::components::Status;
 
 use crate::core::registry::client::{
-    CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
+    CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource, RegistryUpload,
 };
 use crate::core::registry::index::{IndexConfig, IndexRecords};
 use crate::core::{Config, Package, PackageId, PackageName, SourceId};
 use crate::flock::{FileLockGuard, Filesystem};
 
 // TODO(mkaput): Progressbar.
-// TODO(mkaput): Request timeout.
 
 /// Remote registry served by the HTTP-based registry API.
 pub struct HttpRegistryClient<'c> {
@@ -146,12 +151,78 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
     }
 
     async fn supports_publish(&self) -> Result<bool> {
-        // TODO(mkaput): Publishing to HTTP registries is not implemented yet.
-        Ok(false)
+        let index_config = self.index_config.load().await?;
+        match index_config.upload {
+            Some(_) => Ok(true),
+            None => Ok(false),
+        }
     }
 
-    async fn publish(&self, _package: Package, _tarball: FileLockGuard) -> Result<()> {
-        todo!("Publishing to HTTP registries is not implemented yet.")
+    async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
+        let path = tarball.path();
+        ensure!(
+            Path::new(&path).exists(),
+            "cannot upload package - file does not exist at path: {}",
+            &tarball.path()
+        );
+
+        let file = TokioFile::open(&path).await?;
+        let metadata = file.metadata().await?;
+        ensure!(
+            metadata.len() < 5 * 1024 * 1024,
+            "package size ({} B) is too large (max 5MB allowed)",
+            &metadata.len()
+        );
+
+        let auth_token =
+            env::var("SCARB_AUTH_TOKEN").map_err(|_| anyhow!("Missing authentication token."))?;
+        let index_config = self.index_config.load().await?;
+
+        let file_part = Part::stream(Body::from(file))
+            .file_name(format!("{}_{}", &package.id.name, &package.id.version));
+        let form = Form::new().part("file", file_part);
+
+        let response = self
+            .config
+            .online_http()?
+            .post(
+                index_config
+                    .upload
+                    .clone()
+                    .ok_or_else(|| anyhow!("Upload URL is missing"))?,
+            )
+            .header(AUTHORIZATION, auth_token)
+            .multipart(form)
+            .timeout(Duration::from_secs(60))
+            .send()
+            .await?;
+
+        match response.status() {
+            StatusCode::UNAUTHORIZED => Err(RegistryUpload::Unauthorized)
+                .map_err(|_| anyhow!("Invalid authentication token.")),
+            StatusCode::FORBIDDEN => Err(RegistryUpload::CannotPublish)
+                .map_err(|_| anyhow!("Missing upload permissions or not the package owner.")),
+            StatusCode::BAD_REQUEST => Err(RegistryUpload::VersionExists).map_err(|_| {
+                anyhow!(
+                    "Package {} version {} already exists.",
+                    &package.id.name,
+                    &package.id.version
+                )
+            }),
+            StatusCode::UNPROCESSABLE_ENTITY => {
+                Err(RegistryUpload::Corrupted).map_err(|_| anyhow!("File corrupted during upload."))
+            }
+            StatusCode::OK => Ok(RegistryUpload::Success),
+            _ => Err(RegistryUpload::Failed).map_err(|_| {
+                anyhow!(
+                    "Upload failed with an unexpected error (trace-id: {:?})",
+                    response
+                        .headers()
+                        .get("x-cloud-trace-context")
+                        .map_or("unknown", |v| v.to_str().unwrap_or("invalid trace-id"))
+                )
+            }),
+        }
     }
 }
 

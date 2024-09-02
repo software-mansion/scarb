@@ -483,7 +483,7 @@ pub struct PackageArgs {
 #[derive(Parser, Clone, Debug)]
 pub struct PublishArgs {
     /// Registry index URL to upload the package to.
-    #[arg(long, value_name = "URL")]
+    #[arg(long, value_name = "URL", default_value = "https://scarbs.xyz/")]
     pub index: Url,
 
     #[clap(flatten)]

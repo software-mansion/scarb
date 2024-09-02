@@ -33,6 +33,23 @@ pub enum RegistryDownload<T> {
     Download(T),
 }
 
+/// Result from uploading files to a registry.
+#[derive(Debug)]
+pub enum RegistryUpload {
+    /// Missing or invalid authentication token.
+    Unauthorized,
+    /// Missing upload permissions or not the package owner.
+    CannotPublish,
+    /// Package version already exists.
+    VersionExists,
+    /// File corrupted during upload.
+    Corrupted,
+    /// Upload failed for other reasons.
+    Failed,
+    /// Upload successful.
+    Success,
+}
+
 pub type CreateScratchFileCallback = Box<dyn FnOnce(&Config) -> Result<FileLockGuard> + Send>;
 
 #[async_trait]
@@ -88,10 +105,5 @@ pub trait RegistryClient: Send + Sync {
     /// The `package` argument must correspond to just packaged `tarball` file.
     /// The client is free to use information within `package` to send to the registry.
     /// Package source is not required to match the registry the package is published to.
-    async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<()> {
-        // Silence clippy warnings without using _ in argument names.
-        let _ = package;
-        let _ = tarball;
-        unreachable!("This registry does not support publishing.")
-    }
+    async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload>;
 }

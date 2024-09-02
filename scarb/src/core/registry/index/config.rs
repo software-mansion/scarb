@@ -1,5 +1,6 @@
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 use crate::core::registry::index::{BaseUrl, TemplateUrl};
 
@@ -12,6 +13,7 @@ use crate::core::registry::index::{BaseUrl, TemplateUrl};
 ///   "version": 1,
 ///   "api": "https://example.com/api/v1",
 ///   "dl": "https://example.com/api/v1/download/{package}/{version}",
+///   "upload": "https://example.com/api/v1/packages/new",
 ///   "index": "https://example.com/index/{prefix}/{package}.json"
 /// }
 /// ```
@@ -41,6 +43,11 @@ pub struct IndexConfig {
     /// Usually, this is a location where `config.json` lies, as the rest of index files resides
     /// alongside config.
     pub index: TemplateUrl,
+
+    /// Upload endpoint for all packages.
+    ///
+    /// If this is `None`, the registry does not support package uploads.
+    pub upload: Option<Url>,
 }
 
 impl IndexConfig {
@@ -77,6 +84,7 @@ mod tests {
         let expected = IndexConfig {
             version: Default::default(),
             api: Some("https://example.com/api/v1/".parse().unwrap()),
+            upload: Some("https://example.com/api/v1/packages/new".parse().unwrap()),
             dl: TemplateUrl::new("https://example.com/api/v1/download/{package}/{version}"),
             index: TemplateUrl::new("https://example.com/index/{prefix}/{package}.json"),
         };
@@ -85,6 +93,7 @@ mod tests {
             r#"{
               "version": 1,
               "api": "https://example.com/api/v1",
+              "upload": "https://example.com/api/v1/packages/new",
               "dl": "https://example.com/api/v1/download/{package}/{version}",
               "index": "https://example.com/index/{prefix}/{package}.json"
             }"#,
