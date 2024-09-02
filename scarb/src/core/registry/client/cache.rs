@@ -145,7 +145,7 @@ impl<'c> RegistryClientCache<'c> {
             let tarball_name = package.tarball_name();
             let file = self
                 .dl_fs
-                .open_rw(&tarball_name, &tarball_name, self.config)?;
+                .open_ro(&tarball_name, &tarball_name, self.config)?;
             let checksum = self.get_record_maybe_uncached(package).await?.checksum;
             return Ok((file, checksum));
         }
