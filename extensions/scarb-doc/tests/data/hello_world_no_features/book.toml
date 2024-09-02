@@ -14,3 +14,6 @@ runnable = false
 [output.html.fold]
 enable = true
 level = 0
+
+[output.html.code.hidelines]
+cairo = "#"
