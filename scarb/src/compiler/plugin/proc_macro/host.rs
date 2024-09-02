@@ -4,7 +4,7 @@ use crate::compiler::plugin::proc_macro::{
 use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Result};
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
-use cairo_lang_defs::patcher::PatchBuilder;
+use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, GeneratedFileAuxData, MacroPlugin, MacroPluginMetadata,
     PluginGeneratedFile, PluginResult,
@@ -14,7 +14,8 @@ use cairo_lang_diagnostics::ToOption;
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
 use cairo_lang_filesystem::span::{TextOffset, TextSpan, TextWidth};
 use cairo_lang_macro::{
-    AuxData, Diagnostic, FullPathMarker, Severity, TokenStream, TokenStreamMetadata,
+    AuxData, Diagnostic, FullPathMarker, ProcMacroResult, Severity, TokenStream,
+    TokenStreamMetadata,
 };
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
@@ -22,7 +23,7 @@ use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::attribute::structured::{
     Attribute, AttributeArgVariant, AttributeStructurize,
 };
-use cairo_lang_syntax::node::ast::{Expr, PathSegment};
+use cairo_lang_syntax::node::ast::{Expr, MaybeTraitBody, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
@@ -155,6 +156,101 @@ impl ProcMacroHostPlugin {
         })
     }
 
+    fn expand_inner_attr(
+        &self,
+        db: &dyn SyntaxGroup,
+        item_ast: ast::ModuleItem,
+    ) -> InnerAttrExpansionResult {
+        let mut context = InnerAttrExpansionContext::new(self);
+        let mut item_builder = PatchBuilder::new(db, &item_ast);
+
+        match item_ast.clone() {
+            ast::ModuleItem::Trait(trait_ast) => {
+                item_builder.add_node(trait_ast.attributes(db).as_syntax_node());
+                item_builder.add_node(trait_ast.visibility(db).as_syntax_node());
+                item_builder.add_node(trait_ast.trait_kw(db).as_syntax_node());
+                item_builder.add_node(trait_ast.name(db).as_syntax_node());
+                item_builder.add_node(trait_ast.generic_params(db).as_syntax_node());
+
+                // Parser attributes for inner functions.
+                match trait_ast.body(db) {
+                    MaybeTraitBody::None(terminal) => {
+                        item_builder.add_node(terminal.as_syntax_node());
+                        InnerAttrExpansionResult::None
+                    }
+                    MaybeTraitBody::Some(body) => {
+                        let mut all_none = true;
+                        item_builder.add_node(body.lbrace(db).as_syntax_node());
+
+                        let item_list = body.items(db);
+                        for item in item_list.elements(db).iter() {
+                            let ast::TraitItem::Function(func) = item else {
+                                item_builder.add_node(item.as_syntax_node());
+                                continue;
+                            };
+
+                            let mut func_builder = PatchBuilder::new(db, func);
+                            let attrs = func.attributes(db).elements(db);
+                            let found = self.parse_attrs(db, &mut func_builder, attrs, func);
+                            func_builder.add_node(func.declaration(db).as_syntax_node());
+                            func_builder.add_node(func.body(db).as_syntax_node());
+                            let token_stream = TokenStream::new(func_builder.build().0);
+                            let (input, args, stable_ptr) = match found {
+                                AttrExpansionFound::Last {
+                                    expansion,
+                                    args,
+                                    stable_ptr,
+                                } => {
+                                    all_none = false;
+                                    (expansion, args, stable_ptr)
+                                }
+                                AttrExpansionFound::Some {
+                                    expansion,
+                                    args,
+                                    stable_ptr,
+                                } => {
+                                    all_none = false;
+                                    (expansion, args, stable_ptr)
+                                }
+                                AttrExpansionFound::None => {
+                                    item_builder.add_node(func.as_syntax_node());
+                                    continue;
+                                }
+                            };
+
+                            let result = self.instance(input.package_id).generate_code(
+                                input.expansion.name.clone(),
+                                args.clone(),
+                                token_stream.clone(),
+                            );
+
+                            let expanded = context.register_result(
+                                token_stream.to_string(),
+                                input,
+                                result,
+                                stable_ptr,
+                            );
+                            item_builder.add_modified(RewriteNode::Mapped {
+                                origin: func.as_syntax_node().span(db),
+                                node: Box::new(RewriteNode::Text(expanded.to_string())),
+                            });
+                        }
+
+                        item_builder.add_node(body.rbrace(db).as_syntax_node());
+
+                        if all_none {
+                            InnerAttrExpansionResult::None
+                        } else {
+                            let (code, mappings) = item_builder.build();
+                            InnerAttrExpansionResult::Some(context.into_result(code, mappings))
+                        }
+                    }
+                }
+            }
+            _ => InnerAttrExpansionResult::None,
+        }
+    }
+
     /// Find first attribute procedural macros that should be expanded.
     ///
     /// Remove the attribute from the code.
@@ -259,8 +355,13 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         builder: &mut PatchBuilder<'_>,
         attrs: Vec<ast::Attribute>,
-        item_ast: &ast::ModuleItem,
+        origin: &impl TypedSyntaxNode,
     ) -> AttrExpansionFound {
+        // This function parses attributes of the item,
+        // checking if those attributes correspond to a procedural macro that should be fired.
+        // The proc macro attribute found is removed from attributes list,
+        // while other attributes are appended to the `PathBuilder` passed as an argument.
+
         // Note this function does not affect the executable attributes,
         // as it only pulls `ExpansionKind::Attr` from the plugin.
         // This means that executable attributes will neither be removed from the item,
@@ -277,7 +378,7 @@ impl ProcMacroHostPlugin {
                 ));
                 if let Some(found) = found {
                     if expansion.is_none() {
-                        let mut args_builder = PatchBuilder::new(db, item_ast);
+                        let mut args_builder = PatchBuilder::new(db, origin);
                         args_builder.add_node(attr.arguments(db).as_syntax_node());
                         let args = TokenStream::new(args_builder.build().0);
                         expansion = Some((found, args, attr.stable_ptr().untyped()));
@@ -472,7 +573,7 @@ impl ProcMacroHostPlugin {
             };
         }
 
-        let file_name = format!("proc_macro_{}", input.expansion.name);
+        let file_name = format!("proc_{}", input.expansion.name);
         let content = result.token_stream.to_string();
         PluginResult {
             code: Some(PluginGeneratedFile {
@@ -488,7 +589,7 @@ impl ProcMacroHostPlugin {
                 aux_data: result.aux_data.map(|new_aux_data| {
                     DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
                         new_aux_data.into(),
-                        ProcMacroId::new(input.package_id, input.expansion.clone()),
+                        input,
                     )))
                 }),
             }),
@@ -663,6 +764,74 @@ impl ProcMacroHostPlugin {
     }
 }
 
+struct InnerAttrExpansionContext<'a> {
+    host: &'a ProcMacroHostPlugin,
+    // Metadata returned for expansions.
+    diagnostics: Vec<PluginDiagnostic>,
+    aux_data: EmittedAuxData,
+    any_changed: bool,
+}
+
+impl<'a> InnerAttrExpansionContext<'a> {
+    pub fn new<'b: 'a>(host: &'b ProcMacroHostPlugin) -> Self {
+        Self {
+            diagnostics: Vec::new(),
+            aux_data: EmittedAuxData::default(),
+            any_changed: false,
+            host,
+        }
+    }
+
+    pub fn register_result(
+        &mut self,
+        original: String,
+        input: ProcMacroId,
+        result: ProcMacroResult,
+        stable_ptr: SyntaxStablePtrId,
+    ) -> String {
+        let expanded = result.token_stream.to_string();
+        let changed = expanded.as_str() != original;
+
+        if changed {
+            self.host
+                .register_full_path_markers(input.package_id, result.full_path_markers.clone());
+        }
+
+        self.diagnostics
+            .extend(into_cairo_diagnostics(result.diagnostics, stable_ptr));
+
+        if let Some(new_aux_data) = result.aux_data {
+            self.aux_data
+                .push(ProcMacroAuxData::new(new_aux_data.into(), input));
+        }
+
+        self.any_changed = self.any_changed || changed;
+
+        expanded
+    }
+    pub fn into_result(self, expanded: String, code_mappings: Vec<CodeMapping>) -> PluginResult {
+        PluginResult {
+            code: Some(PluginGeneratedFile {
+                name: "proc_attr_inner".into(),
+                content: expanded,
+                aux_data: if self.aux_data.is_empty() {
+                    None
+                } else {
+                    Some(DynGeneratedFileAuxData::new(self.aux_data))
+                },
+                code_mappings,
+            }),
+            diagnostics: self.diagnostics,
+            remove_original_item: true,
+        }
+    }
+}
+
+enum InnerAttrExpansionResult {
+    None,
+    Some(PluginResult),
+}
+
 impl MacroPlugin for ProcMacroHostPlugin {
     fn generate_code(
         &self,
@@ -671,6 +840,12 @@ impl MacroPlugin for ProcMacroHostPlugin {
         _metadata: &MacroPluginMetadata<'_>,
     ) -> PluginResult {
         let stream_metadata = Self::calculate_metadata(db, item_ast.clone());
+
+        // Handle inner functions.
+        if let InnerAttrExpansionResult::Some(result) = self.expand_inner_attr(db, item_ast.clone())
+        {
+            return result;
+        }
 
         // Expand first attribute.
         // Note that we only expand the first attribute, as we assume that the rest of the attributes

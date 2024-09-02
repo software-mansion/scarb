@@ -1434,3 +1434,63 @@ fn can_be_expanded() {
         expanded,
     );
 }
+
+#[test]
+fn can_expand_trait_inner_func_attrr() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream};
+
+            #[attribute_macro]
+            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+                ProcMacroResult::new(TokenStream::new(
+                    token_stream.to_string()
+                    .replace("hello", "world")
+                    .replace("12", "34")
+                ))
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                #[some]
+                fn hello(self: @T) -> u32 {
+                    12
+                }
+            }
+
+            #[derive(Drop)]
+            struct SomeStruct {}
+
+            impl SomeImpl of Hello<SomeStruct> {}
+
+            fn main() -> u32 {
+                let a = SomeStruct {};
+                a.world()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished release target(s) in [..]
+            [..]Running hello
+            Run completed successfully, returning [34]
+        "#});
+}
