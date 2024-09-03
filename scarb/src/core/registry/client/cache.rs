@@ -154,7 +154,7 @@ impl<'c> RegistryClientCache<'c> {
             let dl_fs = self.dl_fs.clone();
             move |config: &Config| {
                 let tarball_name = package.tarball_name();
-                dl_fs.open_rw(&tarball_name, &tarball_name, config)
+                dl_fs.create_rw(&tarball_name, &tarball_name, config)
             }
         });
 

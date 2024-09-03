@@ -25,7 +25,7 @@ fn locking_build_artifacts() {
 
     thread::scope(|s| {
         let ws = scarb::ops::read_workspace(config.manifest_path(), &config).unwrap();
-        let lock = ws.target_dir().child(config.profile().to_string()).open_rw(
+        let lock = ws.target_dir().child(config.profile().to_string()).create_rw(
             "hello.sierra.json",
             "artifact",
             &config,

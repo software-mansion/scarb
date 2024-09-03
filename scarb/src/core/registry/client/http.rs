@@ -304,7 +304,7 @@ impl<'c> IndexConfigManager<'c> {
     async fn save_in_cache(&self, index_config: &IndexConfig) -> Result<()> {
         let mut file = self
             .cache_fs
-            .open_rw(&self.cache_file_name, &self.cache_file_name, self.config)?
+            .create_rw(&self.cache_file_name, &self.cache_file_name, self.config)?
             .into_async();
         let json = serde_json::to_vec(index_config)?;
         file.write_all(&json).await?;

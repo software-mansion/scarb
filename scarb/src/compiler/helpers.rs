@@ -109,7 +109,7 @@ pub fn write_json(
     ws: &Workspace<'_>,
     value: impl Serialize,
 ) -> Result<()> {
-    let file = target_dir.open_rw(file_name, description, ws.config())?;
+    let file = target_dir.create_rw(file_name, description, ws.config())?;
     let file = BufWriter::new(&*file);
     serde_json::to_writer(file, &value)
         .with_context(|| format!("failed to serialize {file_name}"))?;
@@ -123,7 +123,7 @@ pub fn write_string(
     ws: &Workspace<'_>,
     value: impl ToString,
 ) -> Result<()> {
-    let mut file = target_dir.open_rw(file_name, description, ws.config())?;
+    let mut file = target_dir.create_rw(file_name, description, ws.config())?;
     file.write_all(value.to_string().as_bytes())?;
     Ok(())
 }
