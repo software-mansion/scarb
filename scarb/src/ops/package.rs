@@ -163,7 +163,7 @@ fn package_one_impl(
     let target_dir = ws.target_dir().child("package");
 
     let mut dst =
-        target_dir.open_rw(format!(".{filename}"), "package scratch space", ws.config())?;
+        target_dir.create_rw(format!(".{filename}"), "package scratch space", ws.config())?;
 
     dst.set_len(0)
         .with_context(|| format!("failed to truncate: {filename}"))?;
