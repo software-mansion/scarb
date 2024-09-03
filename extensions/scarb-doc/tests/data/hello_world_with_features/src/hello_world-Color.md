@@ -11,6 +11,7 @@ Fully qualified path: `hello_world::Color`
 
 Red color
 
+
 Fully qualified path: `hello_world::Color::Red`
 
 
@@ -18,12 +19,14 @@ Fully qualified path: `hello_world::Color::Red`
 
 Green color
 
+
 Fully qualified path: `hello_world::Color::Green`
 
 
 ### Blue
 
 Blue color
+
 
 Fully qualified path: `hello_world::Color::Blue`
 

@@ -3,7 +3,7 @@
 Calculate the nth Fibonacci number
 
 # Arguments
-* `n` - The index of the Fibonacci number to calculate
+* `n` - The index of the Fibonacci number to calculate This function is amazing :o.
 
 
 Fully qualified path: `hello_world::fib`

@@ -28,6 +28,7 @@ const SHAPE_CONST: felt252 = 'xyz';
 ### area
 
 Implementation of the area method for Circle
+This function is amazing :o.
 
 
 Fully qualified path: `hello_world::CircleShape::area`

@@ -6,7 +6,11 @@
         "root_module": {
           "item_data": {
             "name": "hello_world",
-            "doc": null,
+            "doc": {
+              "prefix_comments": null,
+              "inner_comments": null,
+              "module_level_comments": "Fibonacci sequence calculator\n"
+            },
             "signature": null,
             "full_path": "hello_world"
           },
@@ -14,7 +18,11 @@
             {
               "item_data": {
                 "name": "tests",
-                "doc": "Tests module\n",
+                "doc": {
+                  "prefix_comments": "Tests module\n",
+                  "inner_comments": "This module is kinda amazing, ngl.\n",
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::tests"
               },
@@ -24,7 +32,11 @@
                 {
                   "item_data": {
                     "name": "it_works",
-                    "doc": "Really\nworks.\n",
+                    "doc": {
+                      "prefix_comments": "Really\nworks.\n",
+                      "inner_comments": "I do confirm, it works.\n",
+                      "module_level_comments": null
+                    },
                     "signature": "fn it_works()",
                     "full_path": "hello_world::tests::it_works"
                   }
@@ -44,7 +56,11 @@
             {
               "item_data": {
                 "name": "FOO",
-                "doc": "FOO constant with value 42\n",
+                "doc": {
+                  "prefix_comments": "FOO constant with value 42\nAnother comment for the const.\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "const FOO: u32 = 42;",
                 "full_path": "hello_world::FOO"
               }
@@ -54,7 +70,11 @@
             {
               "item_data": {
                 "name": "main",
-                "doc": "Main function that calculates the 16th Fibonacci number\n",
+                "doc": {
+                  "prefix_comments": "Main function that calculates the 16th Fibonacci number\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "fn main() -> u32",
                 "full_path": "hello_world::main"
               }
@@ -62,7 +82,11 @@
             {
               "item_data": {
                 "name": "fib",
-                "doc": "Calculate the nth Fibonacci number\n\n# Arguments\n* `n` - The index of the Fibonacci number to calculate\n",
+                "doc": {
+                  "prefix_comments": "Calculate the nth Fibonacci number\n\n# Arguments\n* `n` - The index of the Fibonacci number to calculate\n",
+                  "inner_comments": "This function is amazing :o.\n",
+                  "module_level_comments": null
+                },
                 "signature": "fn fib(mut n: u32) -> u32",
                 "full_path": "hello_world::fib"
               }
@@ -74,7 +98,11 @@
                 {
                   "item_data": {
                     "name": "radius",
-                    "doc": "Radius of the circle",
+                    "doc": {
+                      "prefix_comments": "Radius of the circle\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::Circle::radius"
                   }
@@ -82,7 +110,11 @@
               ],
               "item_data": {
                 "name": "Circle",
-                "doc": "Circle struct with radius field\n",
+                "doc": {
+                  "prefix_comments": "Circle struct with radius field\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::Circle"
               }
@@ -94,7 +126,11 @@
                 {
                   "item_data": {
                     "name": "Red",
-                    "doc": "Red color",
+                    "doc": {
+                      "prefix_comments": "Red color\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::Color::Red"
                   }
@@ -102,7 +138,11 @@
                 {
                   "item_data": {
                     "name": "Green",
-                    "doc": "Green color",
+                    "doc": {
+                      "prefix_comments": "Green color\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::Color::Green"
                   }
@@ -110,7 +150,11 @@
                 {
                   "item_data": {
                     "name": "Blue",
-                    "doc": "Blue color",
+                    "doc": {
+                      "prefix_comments": "Blue color\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::Color::Blue"
                   }
@@ -118,7 +162,11 @@
               ],
               "item_data": {
                 "name": "Color",
-                "doc": "Color enum with Red, Green, and Blue variants\n",
+                "doc": {
+                  "prefix_comments": "Color enum with Red, Green, and Blue variants\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::Color"
               }
@@ -128,7 +176,11 @@
             {
               "item_data": {
                 "name": "Pair",
-                "doc": "Pair type alias for a tuple of two u32 values\n",
+                "doc": {
+                  "prefix_comments": "Pair type alias for a tuple of two u32 values\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "type Pair = (u32, u32);",
                 "full_path": "hello_world::Pair"
               }
@@ -141,7 +193,11 @@
                 {
                   "item_data": {
                     "name": "SHAPE_CONST",
-                    "doc": "Constant for the shape type\n",
+                    "doc": {
+                      "prefix_comments": "Constant for the shape type\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "",
                     "full_path": "hello_world::Shape::SHAPE_CONST"
                   }
@@ -151,7 +207,11 @@
                 {
                   "item_data": {
                     "name": "ShapePair",
-                    "doc": "Type alias for a pair of shapes\n",
+                    "doc": {
+                      "prefix_comments": "Type alias for a pair of shapes\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "",
                     "full_path": "hello_world::Shape::ShapePair"
                   }
@@ -161,7 +221,11 @@
                 {
                   "item_data": {
                     "name": "area",
-                    "doc": "Calculate the area of the shape\n",
+                    "doc": {
+                      "prefix_comments": "Calculate the area of the shape\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "fn area(self: T) -> u32",
                     "full_path": "Shape::area"
                   }
@@ -169,7 +233,11 @@
               ],
               "item_data": {
                 "name": "Shape",
-                "doc": "Shape trait for objects that have an area\n",
+                "doc": {
+                  "prefix_comments": "Shape trait for objects that have an area\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "trait Shape<T>",
                 "full_path": "hello_world::Shape"
               }
@@ -181,7 +249,11 @@
                 {
                   "item_data": {
                     "name": "ShapePair",
-                    "doc": "Type alias for a pair of circles\n",
+                    "doc": {
+                      "prefix_comments": "Type alias for a pair of circles\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "type ShapePair = (Circle, Circle);",
                     "full_path": "hello_world::CircleShape::ShapePair"
                   }
@@ -191,7 +263,11 @@
                 {
                   "item_data": {
                     "name": "SHAPE_CONST",
-                    "doc": "Shape constant\n",
+                    "doc": {
+                      "prefix_comments": "Shape constant\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "const SHAPE_CONST: felt252 = 'xyz';",
                     "full_path": "hello_world::CircleShape::SHAPE_CONST"
                   }
@@ -201,7 +277,11 @@
                 {
                   "item_data": {
                     "name": "area",
-                    "doc": "Implementation of the area method for Circle\n",
+                    "doc": {
+                      "prefix_comments": "Implementation of the area method for Circle\nThis function is amazing :o.\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "fn area(self: Circle) -> u32",
                     "full_path": "hello_world::CircleShape::area"
                   }
@@ -209,7 +289,11 @@
               ],
               "item_data": {
                 "name": "CircleShape",
-                "doc": "Implementation of the Shape trait for Circle\n",
+                "doc": {
+                  "prefix_comments": "Implementation of the Shape trait for Circle\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "impl CircleShape of Shape<Circle>",
                 "full_path": "hello_world::CircleShape"
               }
@@ -220,7 +304,11 @@
               "impl_functions": [],
               "item_data": {
                 "name": "CircleDrop",
-                "doc": null,
+                "doc": {
+                  "prefix_comments": null,
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "impl CircleDrop of core::traits::Drop<Circle>;",
                 "full_path": "hello_world::CircleDrop"
               }
@@ -232,7 +320,11 @@
                 {
                   "item_data": {
                     "name": "serialize",
-                    "doc": null,
+                    "doc": {
+                      "prefix_comments": null,
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "fn serialize(self: @Circle, ref output: core::array::Array<felt252>)",
                     "full_path": "hello_world::CircleSerde::serialize"
                   }
@@ -240,7 +332,11 @@
                 {
                   "item_data": {
                     "name": "deserialize",
-                    "doc": null,
+                    "doc": {
+                      "prefix_comments": null,
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "fn deserialize(ref serialized: core::array::Span<felt252>) -> core::option::Option<Circle>",
                     "full_path": "hello_world::CircleSerde::deserialize"
                   }
@@ -248,7 +344,11 @@
               ],
               "item_data": {
                 "name": "CircleSerde",
-                "doc": null,
+                "doc": {
+                  "prefix_comments": null,
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "impl CircleSerde of core::serde::Serde<Circle>",
                 "full_path": "hello_world::CircleSerde"
               }
@@ -260,7 +360,11 @@
                 {
                   "item_data": {
                     "name": "eq",
-                    "doc": null,
+                    "doc": {
+                      "prefix_comments": null,
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "fn eq(lhs: @Circle, rhs: @Circle) -> bool",
                     "full_path": "hello_world::CirclePartialEq::eq"
                   }
@@ -268,7 +372,11 @@
               ],
               "item_data": {
                 "name": "CirclePartialEq",
-                "doc": null,
+                "doc": {
+                  "prefix_comments": null,
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "impl CirclePartialEq of core::traits::PartialEq<Circle>",
                 "full_path": "hello_world::CirclePartialEq"
               }

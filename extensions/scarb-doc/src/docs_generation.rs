@@ -3,6 +3,7 @@ use crate::types::{
     ImplFunction, ImplType, Member, Module, Struct, Trait, TraitConstant, TraitFunction, TraitType,
     TypeAlias, Variant,
 };
+use cairo_lang_doc::db::Documentation;
 
 pub mod markdown;
 
@@ -109,7 +110,7 @@ trait DocItem {
     const HEADER: &'static str;
 
     fn name(&self) -> &str;
-    fn doc(&self) -> &Option<String>;
+    fn doc(&self) -> &Documentation;
     fn signature(&self) -> &Option<String>;
     fn full_path(&self) -> &str;
 }
@@ -123,7 +124,7 @@ macro_rules! impl_doc_item {
                 &self.item_data.name
             }
 
-            fn doc(&self) -> &Option<String> {
+            fn doc(&self) -> &Documentation {
                 &self.item_data.doc
             }
 

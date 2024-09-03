@@ -3,11 +3,9 @@
 
 use cairo_lang_semantic::items::visibility;
 use cairo_lang_utils::Upcast;
-use itertools::Itertools;
 use serde::Serialize;
 
 use cairo_lang_defs::db::DefsGroup;
-use cairo_lang_defs::diagnostic_utils::StableLocation;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LookupItemId,
@@ -15,7 +13,7 @@ use cairo_lang_defs::ids::{
     TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
     VariantId,
 };
-use cairo_lang_doc::db::DocGroup;
+use cairo_lang_doc::db::{DocGroup, Documentation};
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
@@ -87,7 +85,7 @@ impl Module {
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData {
                 name: crate_id.name(db).to_string(),
-                doc: None,
+                doc: db.get_item_documentation(DocumentableItemId::Crate(crate_id)),
                 signature: None,
                 full_path: module_id.full_path(db),
             },
@@ -210,7 +208,7 @@ impl Module {
 #[derive(Serialize, Clone)]
 pub struct ItemData {
     pub name: String,
-    pub doc: Option<String>,
+    pub doc: Documentation,
     pub signature: Option<String>,
     pub full_path: String,
 }
@@ -224,7 +222,7 @@ impl ItemData {
         Self {
             name: id.name(db).into(),
             doc: db.get_item_documentation(documentable_item_id),
-            signature: Some(db.get_item_signature(documentable_item_id)),
+            signature: db.get_item_signature(documentable_item_id),
             full_path: id.full_path(db),
         }
     }
@@ -354,7 +352,6 @@ pub struct Member {
 impl Member {
     pub fn new(db: &ScarbDocDatabase, id: MemberId, struct_full_path: String) -> Self {
         let node = id.stable_ptr(db);
-        let stable_location = StableLocation::new(node.0);
 
         let name = id.name(db).into();
         // TODO(#1438): Replace with `id.full_path(db)` after it is fixed in the compiler.
@@ -362,7 +359,7 @@ impl Member {
 
         let item_data = ItemData {
             name,
-            doc: get_item_documentation(db, &stable_location),
+            doc: db.get_item_documentation(DocumentableItemId::Member(id)),
             signature: None,
             full_path,
         };
@@ -424,7 +421,6 @@ pub struct Variant {
 impl Variant {
     pub fn new(db: &ScarbDocDatabase, id: VariantId, enum_full_path: String) -> Self {
         let node = id.stable_ptr(db);
-        let stable_location = StableLocation::new(node.0);
 
         let name = id.name(db).into();
         // TODO(#1438): Replace with `id.full_path(db)` after it is fixed in the compiler.
@@ -432,7 +428,7 @@ impl Variant {
 
         let item_data = ItemData {
             name,
-            doc: get_item_documentation(db, &stable_location),
+            doc: db.get_item_documentation(DocumentableItemId::Variant(id)),
             signature: None,
             full_path,
         };
@@ -832,29 +828,4 @@ impl ExternFunction {
             ),
         }
     }
-}
-
-// TODO(#1428): This function is temporarily copied until further modifications in cairo compiler are done.
-fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) -> Option<String> {
-    let doc = stable_location.syntax_node(db).get_text(db.upcast());
-    let doc = doc
-        .lines()
-        .take_while_ref(|line| {
-            !line
-                .trim_start()
-                .chars()
-                .next()
-                .map_or(false, |c| c.is_alphabetic())
-        })
-        .filter_map(|line| {
-            let dedent = line.trim_start();
-            for prefix in ["///", "//!"] {
-                if let Some(content) = dedent.strip_prefix(prefix) {
-                    return Some(content.strip_prefix(' ').unwrap_or(content));
-                }
-            }
-            None
-        })
-        .collect::<Vec<&str>>();
-    (!doc.is_empty()).then(|| doc.join("\n"))
 }

@@ -1,7 +1,7 @@
 # it_works
 
 Really
-works.
+works. I do confirm, it works.
 
 
 Fully qualified path: `hello_world::tests::it_works`

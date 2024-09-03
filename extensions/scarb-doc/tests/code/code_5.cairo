@@ -1,3 +1,5 @@
+//! Visiblity testing example code.
+
 /// Public function
 pub fn public_function() {
     println!("public_function");

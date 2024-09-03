@@ -11,6 +11,7 @@ Fully qualified path: `hello_world::Circle`
 
 Radius of the circle
 
+
 Fully qualified path: `hello_world::Circle::radius`
 
 

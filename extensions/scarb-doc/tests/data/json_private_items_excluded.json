@@ -6,7 +6,11 @@
         "root_module": {
           "item_data": {
             "name": "hello_world",
-            "doc": null,
+            "doc": {
+              "prefix_comments": null,
+              "inner_comments": null,
+              "module_level_comments": "Visiblity testing example code.\n"
+            },
             "signature": null,
             "full_path": "hello_world"
           },
@@ -14,7 +18,11 @@
             {
               "item_data": {
                 "name": "PublicParent",
-                "doc": "Public parent module\n",
+                "doc": {
+                  "prefix_comments": "Public parent module\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::PublicParent"
               },
@@ -22,7 +30,11 @@
                 {
                   "item_data": {
                     "name": "PublicChild",
-                    "doc": "Public child module\n",
+                    "doc": {
+                      "prefix_comments": "Public child module\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicParent::PublicChild"
                   },
@@ -32,7 +44,11 @@
                     {
                       "item_data": {
                         "name": "child_public_function",
-                        "doc": "Child public function\n",
+                        "doc": {
+                          "prefix_comments": "Child public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub fn child_public_function()",
                         "full_path": "hello_world::PublicParent::PublicChild::child_public_function"
                       }
@@ -40,7 +56,11 @@
                     {
                       "item_data": {
                         "name": "child_public_crate_function",
-                        "doc": "Child crate public function\n",
+                        "doc": {
+                          "prefix_comments": "Child crate public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub(crate) fn child_public_crate_function()",
                         "full_path": "hello_world::PublicParent::PublicChild::child_public_crate_function"
                       }
@@ -51,7 +71,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicChildStructure",
-                        "doc": "Child public struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure"
                       }
@@ -60,7 +84,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicCrateChildStructure",
-                        "doc": "Child public crate struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure"
                       }
@@ -72,7 +100,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
@@ -80,7 +112,11 @@
                       ],
                       "item_data": {
                         "name": "PublicChildEnum",
-                        "doc": "Child public enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum"
                       }
@@ -90,7 +126,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
@@ -98,7 +138,11 @@
                       ],
                       "item_data": {
                         "name": "PublicCrateChildEnum",
-                        "doc": "Child public crate enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildEnum"
                       }
@@ -114,7 +158,11 @@
                 {
                   "item_data": {
                     "name": "PublicCrateChild",
-                    "doc": "Public crate child module\n",
+                    "doc": {
+                      "prefix_comments": "Public crate child module\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicParent::PublicCrateChild"
                   },
@@ -124,7 +172,11 @@
                     {
                       "item_data": {
                         "name": "child_public_function",
-                        "doc": "Child public function\n",
+                        "doc": {
+                          "prefix_comments": "Child public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub fn child_public_function()",
                         "full_path": "hello_world::PublicParent::PublicCrateChild::child_public_function"
                       }
@@ -132,7 +184,11 @@
                     {
                       "item_data": {
                         "name": "child_public_crate_function",
-                        "doc": "Child crate public function\n",
+                        "doc": {
+                          "prefix_comments": "Child crate public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub(crate) fn child_public_crate_function()",
                         "full_path": "hello_world::PublicParent::PublicCrateChild::child_public_crate_function"
                       }
@@ -143,7 +199,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicChildStructure",
-                        "doc": "Child public struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure"
                       }
@@ -152,7 +212,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicCrateChildStructure",
-                        "doc": "Child public crate struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure"
                       }
@@ -164,7 +228,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
@@ -172,7 +240,11 @@
                       ],
                       "item_data": {
                         "name": "PublicChildEnum",
-                        "doc": "Child public enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildEnum"
                       }
@@ -182,7 +254,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
@@ -190,7 +266,11 @@
                       ],
                       "item_data": {
                         "name": "PublicCrateChildEnum",
-                        "doc": "Child public crate enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildEnum"
                       }
@@ -209,7 +289,11 @@
                 {
                   "item_data": {
                     "name": "parent_public_function",
-                    "doc": "Parent public function\n",
+                    "doc": {
+                      "prefix_comments": "Parent public function\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "pub fn parent_public_function()",
                     "full_path": "hello_world::PublicParent::parent_public_function"
                   }
@@ -217,7 +301,11 @@
                 {
                   "item_data": {
                     "name": "parent_public_crate_function",
-                    "doc": "Parent public crate function\n",
+                    "doc": {
+                      "prefix_comments": "Parent public crate function\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "pub(crate) fn parent_public_crate_function()",
                     "full_path": "hello_world::PublicParent::parent_public_crate_function"
                   }
@@ -228,7 +316,11 @@
                   "members": [],
                   "item_data": {
                     "name": "PublicParentStructure",
-                    "doc": "Parent public struct\n",
+                    "doc": {
+                      "prefix_comments": "Parent public struct\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicParent::PublicParentStructure"
                   }
@@ -237,7 +329,11 @@
                   "members": [],
                   "item_data": {
                     "name": "PublicCrateParentStructure",
-                    "doc": "Parent publi crate struct\n",
+                    "doc": {
+                      "prefix_comments": "Parent publi crate struct\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicParent::PublicCrateParentStructure"
                   }
@@ -249,7 +345,11 @@
                     {
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
-                        "doc": "Public enum variant",
+                        "doc": {
+                          "prefix_comments": "Public enum variant\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
@@ -257,7 +357,11 @@
                   ],
                   "item_data": {
                     "name": "PublicParentEnum",
-                    "doc": "Parent public enum\n",
+                    "doc": {
+                      "prefix_comments": "Parent public enum\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicParent::PublicParentEnum"
                   }
@@ -267,7 +371,11 @@
                     {
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
-                        "doc": "Public enum variant",
+                        "doc": {
+                          "prefix_comments": "Public enum variant\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
@@ -275,7 +383,11 @@
                   ],
                   "item_data": {
                     "name": "PublicCrateParentEnum",
-                    "doc": "Parent public crate enum\n",
+                    "doc": {
+                      "prefix_comments": "Parent public crate enum\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicParent::PublicCrateParentEnum"
                   }
@@ -291,7 +403,11 @@
             {
               "item_data": {
                 "name": "PublicCrateParent",
-                "doc": "Public crate parent module\n",
+                "doc": {
+                  "prefix_comments": "Public crate parent module\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::PublicCrateParent"
               },
@@ -299,7 +415,11 @@
                 {
                   "item_data": {
                     "name": "PublicChild",
-                    "doc": "Public child module\n",
+                    "doc": {
+                      "prefix_comments": "Public child module\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicCrateParent::PublicChild"
                   },
@@ -309,7 +429,11 @@
                     {
                       "item_data": {
                         "name": "child_public_function",
-                        "doc": "Child public function\n",
+                        "doc": {
+                          "prefix_comments": "Child public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub fn child_public_function()",
                         "full_path": "hello_world::PublicCrateParent::PublicChild::child_public_function"
                       }
@@ -317,7 +441,11 @@
                     {
                       "item_data": {
                         "name": "child_public_crate_function",
-                        "doc": "Child crate public function\n",
+                        "doc": {
+                          "prefix_comments": "Child crate public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub(crate) fn child_public_crate_function()",
                         "full_path": "hello_world::PublicCrateParent::PublicChild::child_public_crate_function"
                       }
@@ -328,7 +456,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicChildStructure",
-                        "doc": "Child public struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure"
                       }
@@ -337,7 +469,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicCrateChildStructure",
-                        "doc": "Child public crate struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure"
                       }
@@ -349,7 +485,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
@@ -357,7 +497,11 @@
                       ],
                       "item_data": {
                         "name": "PublicChildEnum",
-                        "doc": "Child public enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildEnum"
                       }
@@ -367,7 +511,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
@@ -375,7 +523,11 @@
                       ],
                       "item_data": {
                         "name": "PublicCrateChildEnum",
-                        "doc": "Child public crate enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildEnum"
                       }
@@ -391,7 +543,11 @@
                 {
                   "item_data": {
                     "name": "PublicCrateChild",
-                    "doc": "Public crate child module\n",
+                    "doc": {
+                      "prefix_comments": "Public crate child module\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicCrateParent::PublicCrateChild"
                   },
@@ -401,7 +557,11 @@
                     {
                       "item_data": {
                         "name": "child_public_function",
-                        "doc": "Child public function\n",
+                        "doc": {
+                          "prefix_comments": "Child public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub fn child_public_function()",
                         "full_path": "hello_world::PublicCrateParent::PublicCrateChild::child_public_function"
                       }
@@ -409,7 +569,11 @@
                     {
                       "item_data": {
                         "name": "child_public_crate_function",
-                        "doc": "Child crate public function\n",
+                        "doc": {
+                          "prefix_comments": "Child crate public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub(crate) fn child_public_crate_function()",
                         "full_path": "hello_world::PublicCrateParent::PublicCrateChild::child_public_crate_function"
                       }
@@ -420,7 +584,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicChildStructure",
-                        "doc": "Child public struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure"
                       }
@@ -429,7 +597,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicCrateChildStructure",
-                        "doc": "Child public crate struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure"
                       }
@@ -441,7 +613,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
@@ -449,7 +625,11 @@
                       ],
                       "item_data": {
                         "name": "PublicChildEnum",
-                        "doc": "Child public enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildEnum"
                       }
@@ -459,7 +639,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
@@ -467,7 +651,11 @@
                       ],
                       "item_data": {
                         "name": "PublicCrateChildEnum",
-                        "doc": "Child public crate enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildEnum"
                       }
@@ -486,7 +674,11 @@
                 {
                   "item_data": {
                     "name": "parent_public_function",
-                    "doc": "Parent public function\n",
+                    "doc": {
+                      "prefix_comments": "Parent public function\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "pub fn parent_public_function()",
                     "full_path": "hello_world::PublicCrateParent::parent_public_function"
                   }
@@ -494,7 +686,11 @@
                 {
                   "item_data": {
                     "name": "parent_public_crate_function",
-                    "doc": "Parent public crate function\n",
+                    "doc": {
+                      "prefix_comments": "Parent public crate function\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "pub(crate) fn parent_public_crate_function()",
                     "full_path": "hello_world::PublicCrateParent::parent_public_crate_function"
                   }
@@ -505,7 +701,11 @@
                   "members": [],
                   "item_data": {
                     "name": "PublicParentStructure",
-                    "doc": "Parent public struct\n",
+                    "doc": {
+                      "prefix_comments": "Parent public struct\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicCrateParent::PublicParentStructure"
                   }
@@ -514,7 +714,11 @@
                   "members": [],
                   "item_data": {
                     "name": "PublicCrateParentStructure",
-                    "doc": "Parent public struct\n",
+                    "doc": {
+                      "prefix_comments": "Parent public struct\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure"
                   }
@@ -526,7 +730,11 @@
                     {
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
-                        "doc": "Public enum variant",
+                        "doc": {
+                          "prefix_comments": "Public enum variant\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
@@ -534,7 +742,11 @@
                   ],
                   "item_data": {
                     "name": "PublicParentEnum",
-                    "doc": "Parent public enum\n",
+                    "doc": {
+                      "prefix_comments": "Parent public enum\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicCrateParent::PublicParentEnum"
                   }
@@ -544,7 +756,11 @@
                     {
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
-                        "doc": "Public enum variant",
+                        "doc": {
+                          "prefix_comments": "Public enum variant\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
@@ -552,7 +768,11 @@
                   ],
                   "item_data": {
                     "name": "PublicCrateParentEnum",
-                    "doc": "Parent public crate enum\n",
+                    "doc": {
+                      "prefix_comments": "Parent public crate enum\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicCrateParent::PublicCrateParentEnum"
                   }
@@ -568,7 +788,11 @@
             {
               "item_data": {
                 "name": "PrivateParent",
-                "doc": "Private parent module\n",
+                "doc": {
+                  "prefix_comments": "Private parent module\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::PrivateParent"
               },
@@ -576,7 +800,11 @@
                 {
                   "item_data": {
                     "name": "PublicChild",
-                    "doc": "Public child module\n",
+                    "doc": {
+                      "prefix_comments": "Public child module\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PrivateParent::PublicChild"
                   },
@@ -586,7 +814,11 @@
                     {
                       "item_data": {
                         "name": "child_public_function",
-                        "doc": "Child public function\n",
+                        "doc": {
+                          "prefix_comments": "Child public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub fn child_public_function()",
                         "full_path": "hello_world::PrivateParent::PublicChild::child_public_function"
                       }
@@ -594,7 +826,11 @@
                     {
                       "item_data": {
                         "name": "child_public_crate_function",
-                        "doc": "Child crate public function\n",
+                        "doc": {
+                          "prefix_comments": "Child crate public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub(crate) fn child_public_crate_function()",
                         "full_path": "hello_world::PrivateParent::PublicChild::child_public_crate_function"
                       }
@@ -605,7 +841,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicChildStructure",
-                        "doc": "Child public struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure"
                       }
@@ -614,7 +854,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicCrateChildStructure",
-                        "doc": "Child public crate struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure"
                       }
@@ -626,7 +870,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PrivateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
@@ -634,7 +882,11 @@
                       ],
                       "item_data": {
                         "name": "PublicChildEnum",
-                        "doc": "Child public enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicChild::PublicChildEnum"
                       }
@@ -644,7 +896,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
@@ -652,7 +908,11 @@
                       ],
                       "item_data": {
                         "name": "PublicCrateChildEnum",
-                        "doc": "Child public crate enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildEnum"
                       }
@@ -668,7 +928,11 @@
                 {
                   "item_data": {
                     "name": "PublicCrateChild",
-                    "doc": "Public crate child module\n",
+                    "doc": {
+                      "prefix_comments": "Public crate child module\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PrivateParent::PublicCrateChild"
                   },
@@ -678,7 +942,11 @@
                     {
                       "item_data": {
                         "name": "child_public_function",
-                        "doc": "Child public function\n",
+                        "doc": {
+                          "prefix_comments": "Child public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub fn child_public_function()",
                         "full_path": "hello_world::PrivateParent::PublicCrateChild::child_public_function"
                       }
@@ -686,7 +954,11 @@
                     {
                       "item_data": {
                         "name": "child_public_crate_function",
-                        "doc": "Child crate public function\n",
+                        "doc": {
+                          "prefix_comments": "Child crate public function\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": "pub(crate) fn child_public_crate_function()",
                         "full_path": "hello_world::PrivateParent::PublicCrateChild::child_public_crate_function"
                       }
@@ -697,7 +969,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicChildStructure",
-                        "doc": "Child public struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure"
                       }
@@ -706,7 +982,11 @@
                       "members": [],
                       "item_data": {
                         "name": "PublicCrateChildStructure",
-                        "doc": "Child public crate struct\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate struct\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure"
                       }
@@ -718,7 +998,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
@@ -726,7 +1010,11 @@
                       ],
                       "item_data": {
                         "name": "PublicChildEnum",
-                        "doc": "Child public enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildEnum"
                       }
@@ -736,7 +1024,11 @@
                         {
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
-                            "doc": "Public enum variant",
+                            "doc": {
+                              "prefix_comments": "Public enum variant\n",
+                              "inner_comments": null,
+                              "module_level_comments": null
+                            },
                             "signature": null,
                             "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
@@ -744,7 +1036,11 @@
                       ],
                       "item_data": {
                         "name": "PublicCrateChildEnum",
-                        "doc": "Child public crate enum\n",
+                        "doc": {
+                          "prefix_comments": "Child public crate enum\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildEnum"
                       }
@@ -763,7 +1059,11 @@
                 {
                   "item_data": {
                     "name": "parent_public_function",
-                    "doc": "Parent public function\n",
+                    "doc": {
+                      "prefix_comments": "Parent public function\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "pub fn parent_public_function()",
                     "full_path": "hello_world::PrivateParent::parent_public_function"
                   }
@@ -771,7 +1071,11 @@
                 {
                   "item_data": {
                     "name": "parent_public_crate_function",
-                    "doc": "Parent public crate function\n",
+                    "doc": {
+                      "prefix_comments": "Parent public crate function\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": "pub(crate) fn parent_public_crate_function()",
                     "full_path": "hello_world::PrivateParent::parent_public_crate_function"
                   }
@@ -782,7 +1086,11 @@
                   "members": [],
                   "item_data": {
                     "name": "PublicParentStructure",
-                    "doc": "Parent public struct\n",
+                    "doc": {
+                      "prefix_comments": "Parent public struct\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PrivateParent::PublicParentStructure"
                   }
@@ -791,7 +1099,11 @@
                   "members": [],
                   "item_data": {
                     "name": "PublicCrateParentStructure",
-                    "doc": "Parent public struct\n",
+                    "doc": {
+                      "prefix_comments": "Parent public struct\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PrivateParent::PublicCrateParentStructure"
                   }
@@ -803,7 +1115,11 @@
                     {
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
-                        "doc": "Public enum variant",
+                        "doc": {
+                          "prefix_comments": "Public enum variant\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
@@ -811,7 +1127,11 @@
                   ],
                   "item_data": {
                     "name": "PublicParentEnum",
-                    "doc": "Parent public enum\n",
+                    "doc": {
+                      "prefix_comments": "Parent public enum\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PrivateParent::PublicParentEnum"
                   }
@@ -821,7 +1141,11 @@
                     {
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
-                        "doc": "Public enum variant",
+                        "doc": {
+                          "prefix_comments": "Public enum variant\n",
+                          "inner_comments": null,
+                          "module_level_comments": null
+                        },
                         "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
@@ -829,7 +1153,11 @@
                   ],
                   "item_data": {
                     "name": "PublicCrateParentEnum",
-                    "doc": "Parent public crate enum\n",
+                    "doc": {
+                      "prefix_comments": "Parent public crate enum\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PrivateParent::PublicCrateParentEnum"
                   }
@@ -848,7 +1176,11 @@
             {
               "item_data": {
                 "name": "public_function",
-                "doc": "Public function\n",
+                "doc": {
+                  "prefix_comments": "Public function\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "pub fn public_function()",
                 "full_path": "hello_world::public_function"
               }
@@ -856,7 +1188,11 @@
             {
               "item_data": {
                 "name": "public_crate_function",
-                "doc": "Public crate function\n",
+                "doc": {
+                  "prefix_comments": "Public crate function\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "pub(crate) fn public_crate_function()",
                 "full_path": "hello_world::public_crate_function"
               }
@@ -864,7 +1200,11 @@
             {
               "item_data": {
                 "name": "private_function",
-                "doc": "Private function\n",
+                "doc": {
+                  "prefix_comments": "Private function\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "fn private_function()",
                 "full_path": "hello_world::private_function"
               }
@@ -872,7 +1212,11 @@
             {
               "item_data": {
                 "name": "main",
-                "doc": null,
+                "doc": {
+                  "prefix_comments": null,
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": "fn main()",
                 "full_path": "hello_world::main"
               }
@@ -883,7 +1227,11 @@
               "members": [],
               "item_data": {
                 "name": "PublicStructure",
-                "doc": "Public struct\n",
+                "doc": {
+                  "prefix_comments": "Public struct\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::PublicStructure"
               }
@@ -892,7 +1240,11 @@
               "members": [],
               "item_data": {
                 "name": "PublicCrateStructure",
-                "doc": "Public crate struct\n",
+                "doc": {
+                  "prefix_comments": "Public crate struct\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::PublicCrateStructure"
               }
@@ -901,7 +1253,11 @@
               "members": [],
               "item_data": {
                 "name": "PrivateStructure",
-                "doc": "Private struct\n",
+                "doc": {
+                  "prefix_comments": "Private struct\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::PrivateStructure"
               }
@@ -913,7 +1269,11 @@
                 {
                   "item_data": {
                     "name": "PUBLIC_VARIANT",
-                    "doc": "Public enum variant",
+                    "doc": {
+                      "prefix_comments": "Public enum variant\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicEnum::PUBLIC_VARIANT"
                   }
@@ -921,7 +1281,11 @@
               ],
               "item_data": {
                 "name": "PublicEnum",
-                "doc": "Public enum\n",
+                "doc": {
+                  "prefix_comments": "Public enum\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::PublicEnum"
               }
@@ -931,7 +1295,11 @@
                 {
                   "item_data": {
                     "name": "PUBLIC_VARIANT",
-                    "doc": "Public enum variant",
+                    "doc": {
+                      "prefix_comments": "Public enum variant\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PublicCrateEnum::PUBLIC_VARIANT"
                   }
@@ -939,7 +1307,11 @@
               ],
               "item_data": {
                 "name": "PublicCrateEnum",
-                "doc": "Public crate enum\n",
+                "doc": {
+                  "prefix_comments": "Public crate enum\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::PublicCrateEnum"
               }
@@ -949,7 +1321,11 @@
                 {
                   "item_data": {
                     "name": "PRIVATE_VARIANT",
-                    "doc": "Private enum variant",
+                    "doc": {
+                      "prefix_comments": "Private enum variant\n",
+                      "inner_comments": null,
+                      "module_level_comments": null
+                    },
                     "signature": null,
                     "full_path": "hello_world::PrivateEnum::PRIVATE_VARIANT"
                   }
@@ -957,7 +1333,11 @@
               ],
               "item_data": {
                 "name": "PrivateEnum",
-                "doc": "Private enum\n",
+                "doc": {
+                  "prefix_comments": "Private enum\n",
+                  "inner_comments": null,
+                  "module_level_comments": null
+                },
                 "signature": null,
                 "full_path": "hello_world::PrivateEnum"
               }

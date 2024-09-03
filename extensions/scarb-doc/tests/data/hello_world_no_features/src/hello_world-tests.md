@@ -1,6 +1,6 @@
 # tests
 
-Tests module
+Tests module This module is kinda amazing, ngl.
 
 
 Fully qualified path: `hello_world::tests`

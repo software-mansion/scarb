@@ -1,4 +1,4 @@
-use itertools::Itertools;
+use itertools::{chain, Itertools};
 use std::fmt::Write;
 
 use crate::docs_generation::{DocItem, PrimitiveDocItem, TopLevelDocItem};
@@ -198,11 +198,28 @@ fn generate_markdown_from_item_data(doc_item: &impl DocItem, header_level: usize
     let mut markdown = String::new();
 
     let header = str::repeat("#", header_level);
+    let sub_header = str::repeat("#", header_level + 2);
 
     writeln!(&mut markdown, "{header} {}\n", doc_item.name()).unwrap();
 
-    if let Some(doc) = doc_item.doc() {
-        writeln!(&mut markdown, "{doc}\n").unwrap();
+    let documentation = doc_item.doc();
+
+    if let Some(module_level_doc) = &documentation.module_level_comments {
+        writeln!(&mut markdown, "{sub_header} {}\n", module_level_doc).unwrap();
+    }
+
+    match (
+        &documentation.prefix_comments,
+        &documentation.inner_comments,
+    ) {
+        (None, None) => (),
+        (prefix, inner) => {
+            let common_docs = chain!(prefix, inner)
+                .map(|comment| comment.trim_end().to_string())
+                .collect::<Vec<_>>()
+                .join(" ");
+            writeln!(&mut markdown, "{common_docs}\n\n").unwrap();
+        }
     }
 
     writeln!(

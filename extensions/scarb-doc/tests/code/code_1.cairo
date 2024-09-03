@@ -10,6 +10,7 @@ use core::traits::Into as into_trait;
 use core::traits::TryInto;
 
 /// FOO constant with value 42
+//! Another comment for the const.
 const FOO: u32 = 42;
 
 /// Calculate the nth Fibonacci number
@@ -18,6 +19,7 @@ const FOO: u32 = 42;
 /// * `n` - The index of the Fibonacci number to calculate
 ///
 fn fib(mut n: u32) -> u32 {
+    //! This function is amazing :o.
     let mut a: u32 = 0;
     let mut b: u32 = 1;
     while n != 0 {
@@ -70,6 +72,7 @@ impl CircleShape of Shape<Circle> {
     const SHAPE_CONST: felt252 = 'xyz';
 
     /// Implementation of the area method for Circle
+    //! This function is amazing :o.
     fn area(self: Circle) -> u32 {
         3 * self.radius * self.radius
     }
@@ -77,6 +80,7 @@ impl CircleShape of Shape<Circle> {
 
 /// Tests module
 mod tests {
+    //! This module is kinda amazing, ngl.
     /// Imported fib function from the parent module
     use super::fib as fib_function;
 
@@ -84,6 +88,7 @@ mod tests {
     #[test]
     /// works.
     fn it_works() {
+        //! I do confirm, it works.
         assert(fib_function(16) == 987, 'it works!');
     }
 }
