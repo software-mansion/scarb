@@ -1,6 +1,3 @@
-// TODO(drknzz): Remove when not needed.
-#![allow(dead_code)]
-
 use cairo_lang_semantic::items::visibility;
 use cairo_lang_utils::Upcast;
 use itertools::Itertools;
