@@ -309,6 +309,15 @@ fn caching() {
         .success()
         .stdout_eq("");
 
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .env("SCARB_CACHE", cache_dir.path())
+        .current_dir(&t)
+        .timeout(Duration::from_secs(10))
+        .assert()
+        .success()
+        .stdout_eq("");
+
     let expected = expect![[r#"
         GET /api/v1/index/config.json
         accept: */*
@@ -352,6 +361,19 @@ fn caching() {
         content-type: application/octet-stream
         etag: ...
         last-modified: ...
+
+        ###
+
+        GET /index/3/b/bar.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        if-none-match: ...
+        user-agent: ...
+
+        304 Not Modified
+        content-length: 0
+        etag: ...
 
         ###
 

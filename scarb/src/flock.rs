@@ -164,7 +164,7 @@ impl<'f> AdvisoryLock<'f> {
         let file_lock_arc = match slot.upgrade() {
             Some(arc) => arc,
             None => {
-                let arc = Arc::new(self.filesystem.open_rw(
+                let arc = Arc::new(self.filesystem.create_rw(
                     &self.path,
                     &self.description,
                     self.config,
@@ -249,7 +249,7 @@ impl Filesystem {
     ///
     /// The returned file can be accessed to look at the path and also has read/write access to
     /// the underlying file.
-    pub fn open_rw(
+    pub fn create_rw(
         &self,
         path: impl AsRef<Utf8Path>,
         description: &str,

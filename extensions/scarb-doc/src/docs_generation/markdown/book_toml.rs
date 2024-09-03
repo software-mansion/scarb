@@ -4,7 +4,7 @@ use crate::AdditionalMetadata;
 
 pub fn generate_book_toml_content(package_metadata: &AdditionalMetadata) -> String {
     formatdoc! {
-        r#"
+        r##"
             [book]
             authors = {:?}
             language = "en"
@@ -21,7 +21,10 @@ pub fn generate_book_toml_content(package_metadata: &AdditionalMetadata) -> Stri
             [output.html.fold]
             enable = true
             level = 0
-        "#,
+
+            [output.html.code.hidelines]
+            cairo = "#"
+        "##,
         package_metadata.authors.clone().unwrap_or_else(|| vec!["<unknown>".to_string()]),
         package_metadata.name
     }
