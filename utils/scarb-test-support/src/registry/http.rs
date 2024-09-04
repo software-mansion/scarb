@@ -22,23 +22,24 @@ static RUNTIME: LazyLock<runtime::Runtime> = LazyLock::new(|| {
 
 pub struct HttpRegistry {
     local: LocalRegistry,
-    url: String,
+    pub url: String,
 
     // This needs to be stored here so that it's dropped properly.
     server: SimpleHttpServer,
 }
 
 impl HttpRegistry {
-    pub fn serve() -> Self {
+    pub fn serve(post_status: Option<u16>) -> Self {
         let local = LocalRegistry::create();
         let server = {
             let _guard = RUNTIME.enter();
-            SimpleHttpServer::serve(local.t.path().to_owned())
+            SimpleHttpServer::serve(local.t.path().to_owned(), post_status)
         };
         let url = server.url();
 
         let config = json!({
             "version": 1,
+            "upload": format!("{url}api/v1/packages/new"),
             "dl": format!("{url}{{package}}-{{version}}.tar.zst"),
             "index": format!("{url}index/{{prefix}}/{{package}}.json")
         });
@@ -47,7 +48,6 @@ impl HttpRegistry {
             .child("api/v1/index/config.json")
             .write_str(&serde_json::to_string(&config).unwrap())
             .unwrap();
-
         Self { local, url, server }
     }
 

@@ -14,7 +14,8 @@ use axum::http::StatusCode;
 use axum::http::{HeaderMap, HeaderValue};
 use axum::middleware;
 use axum::middleware::Next;
-use axum::response::Response;
+use axum::response::{IntoResponse, Response};
+use axum::routing::post;
 use axum::Router;
 use data_encoding::HEXLOWER;
 use itertools::Itertools;
@@ -45,7 +46,7 @@ pub struct HttpLog {
 }
 
 impl SimpleHttpServer {
-    pub fn serve(dir: PathBuf) -> Self {
+    pub fn serve(dir: PathBuf, post_status: Option<u16>) -> Self {
         let (ct, ctrx) = tokio::sync::oneshot::channel::<()>();
 
         let print_logs = Arc::new(AtomicBool::new(false));
@@ -53,6 +54,10 @@ impl SimpleHttpServer {
 
         let app = Router::new()
             .fallback_service(ServeDir::new(dir))
+            .route(
+                "/api/v1/packages/new",
+                post(move || post_handler(post_status)),
+            )
             .layer(middleware::from_fn(set_etag))
             .layer(middleware::from_fn_with_state(
                 (logs.clone(), print_logs.clone()),
@@ -100,6 +105,13 @@ impl Drop for SimpleHttpServer {
     fn drop(&mut self) {
         let _ = self.ct.take().map(|ct| ct.send(()));
     }
+}
+
+async fn post_handler(post_status: Option<u16>) -> impl IntoResponse {
+    let status_code = post_status
+        .and_then(|code| StatusCode::from_u16(code).ok())
+        .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+    (status_code, "POST request received")
 }
 
 async fn logger<B>(
@@ -204,7 +216,9 @@ impl fmt::Display for HttpLog {
             .sorted_by_key(|(k, _)| k.as_str())
             .map(|(k, v)| (k, String::from_utf8_lossy(v.as_bytes())))
             .map(|(k, v)| match *k {
-                HOST | IF_NONE_MATCH | IF_MODIFIED_SINCE | USER_AGENT => (k, "...".into()),
+                HOST | IF_NONE_MATCH | IF_MODIFIED_SINCE | USER_AGENT | CONTENT_TYPE => {
+                    (k, "...".into())
+                }
                 _ => (k, v),
             })
             .try_for_each(|(k, v)| writeln!(f, "{k}: {v}"))?;

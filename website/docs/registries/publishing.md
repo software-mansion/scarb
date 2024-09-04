@@ -1,7 +1,38 @@
 # Publishing your package
 
-To share your package, it needs to be packaged into an archive and uploaded to the registry.
-Once uploaded, it will be available for other users to download.
+To share your package, it must be packaged into an archive and uploaded to the registry.
+Once uploaded, it will be available for other users to download and use.
+
+## Publishing the package
+
+To upload your package, use the scarb publish command. By default, this command will publish your package to the official [scarbs.xyz](https://scarbs.xyz) registry. The publish command automatically [packages and verifies](#packaging-your-package) your package, so there is no need to run `scarb package` beforehand.
+
+To publish your package to a registry that supports package publishing, you need to authenticate using an API token with the `publish` scope. First, log in to the registry and generate this API token. Scarb will use the token to authenticate and complete the publishing process. The token must be provided via the ``SCARB_AUTH_TOKEN` environment variable.
+
+```shell
+SCARB_AUTH_TOKEN=scrb_mytoken scarb publish
+```
+
+> [!NOTE]
+> In case of any problems with publishing of your package to the registry
+> please reach out to us on [Telegram](https://t.me/scarbs_xyz) or [Discord](https://discord.gg/7YXj4Z2).
+
+### Publishing to a custom registrty
+
+You can also publish your package to a custom registry by using the --index argument. This allows you to specify the path to a local directory where you want to store your packages.
+
+```shell
+scarb publish --index file:///Users/foo/bar
+```
+
+## Preventing package from being published
+
+If you want to prevent your package from being published, you can add the `publish = false` in `Scarb.toml`.
+
+```toml
+[package]
+publish = false
+```
 
 ## Packaging your package
 
@@ -21,28 +52,3 @@ If you want to speed up the packaging process, you can disable this step using t
 > Please use with caution.
 
 After successfully completing the whole process, the `{name}-{version}.tar.zst` archive waits in the `target/package` directory for being uploaded, where both `name` and `version` correspond to the values in `Scarb.toml`.
-
-## Publishing the package
-
-> [!WARNING]
-> Currently, packages can only be published to a local [custom registry](./custom-registry.md).
-> Publishing packages over HTTP is not yet supported.
->
-> If you're interested in making your package available in the official [scarbs.xyz](https://scarbs.xyz) registry,
-> please reach out to us on [Telegram](https://t.me/scarbs_xyz) or [Discord](https://discord.gg/7YXj4Z2).
-
-To upload your package, you can use the `scarb publish` command.
-The command takes the `--index` argument that you can use to pass the local directory path where you want to store the packages.
-
-```shell
-scarb publish --index file:///Users/foo/bar
-```
-
-## Preventing package from being published
-
-If you want to prevent your package from being published, you can add the `publish = false` in `Scarb.toml`.
-
-```toml
-[package]
-publish = false
-```

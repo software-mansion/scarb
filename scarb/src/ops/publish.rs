@@ -57,7 +57,7 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
             Ok(RegistryUpload::Success) => {
                 ws.config().ui().print(Status::new(
                     "Published",
-                    format!("{} to {}", &dest_package_id, &opts.index_url).as_str(),
+                    format!("{}", &dest_package_id).as_str(),
                 ));
                 Ok(())
             }

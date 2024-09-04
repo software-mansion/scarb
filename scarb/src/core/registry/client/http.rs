@@ -202,13 +202,8 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
                 .map_err(|_| anyhow!("Invalid authentication token.")),
             StatusCode::FORBIDDEN => Err(RegistryUpload::CannotPublish)
                 .map_err(|_| anyhow!("Missing upload permissions or not the package owner.")),
-            StatusCode::BAD_REQUEST => Err(RegistryUpload::VersionExists).map_err(|_| {
-                anyhow!(
-                    "Package {} version {} already exists.",
-                    &package.id.name,
-                    &package.id.version
-                )
-            }),
+            StatusCode::BAD_REQUEST => Err(RegistryUpload::VersionExists)
+                .map_err(|_| anyhow!("Package {} already exists.", &package.id)),
             StatusCode::UNPROCESSABLE_ENTITY => {
                 Err(RegistryUpload::Corrupted).map_err(|_| anyhow!("File corrupted during upload."))
             }
