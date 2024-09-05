@@ -159,11 +159,17 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
     }
 
     async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
-        let path = tarball.path();
+        let auth_token =
+            env::var("SCARB_AUTH_TOKEN").map_err(|_| anyhow!("Missing authentication token."))?;
+
+        let path = tarball.path().to_owned();
+        // we need to drop, because windows file locking is very strict
+        drop(tarball);
+
         ensure!(
             Path::new(&path).exists(),
             "cannot upload package - file does not exist at path: {}",
-            &tarball.path()
+            &path
         );
 
         let file = TokioFile::open(&path).await?;
@@ -174,8 +180,6 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
             &metadata.len()
         );
 
-        let auth_token =
-            env::var("SCARB_AUTH_TOKEN").map_err(|_| anyhow!("Missing authentication token."))?;
         let index_config = self.index_config.load().await?;
 
         let file_part = Part::stream(Body::from(file))
