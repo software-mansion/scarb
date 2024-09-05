@@ -176,8 +176,8 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
         let metadata = file.metadata().await?;
         ensure!(
             metadata.len() < 5 * 1024 * 1024,
-            "package size ({} B) is too large (max 5MB allowed)",
-            &metadata.len()
+            "package cannot be larger than `5` MB: found `{}`",
+             &metadata.len()/1024/1024
         );
 
         let index_config = self.index_config.load().await?;
