@@ -160,7 +160,7 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
 
     async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
         let auth_token =
-            env::var("SCARB_AUTH_TOKEN").map_err(|_| anyhow!("Missing authentication token."))?;
+            env::var("SCARB_REGISTRY_AUTH_TOKEN").map_err(|_| anyhow!("missing authentication token"))?;
 
         let path = tarball.path().to_owned();
         // we need to drop, because windows file locking is very strict
@@ -193,7 +193,7 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
                 index_config
                     .upload
                     .clone()
-                    .ok_or_else(|| anyhow!("Upload URL is missing"))?,
+                    .ok_or_else(|| anyhow!("upload URL is missing"))?,
             )
             .header(AUTHORIZATION, auth_token)
             .multipart(form)
@@ -203,18 +203,18 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
 
         match response.status() {
             StatusCode::UNAUTHORIZED => Err(RegistryUpload::Unauthorized)
-                .map_err(|_| anyhow!("Invalid authentication token.")),
+                .map_err(|_| anyhow!("invalid authentication token")),
             StatusCode::FORBIDDEN => Err(RegistryUpload::CannotPublish)
-                .map_err(|_| anyhow!("Missing upload permissions or not the package owner.")),
+                .map_err(|_| anyhow!("missing upload permissions or not the package owner")),
             StatusCode::BAD_REQUEST => Err(RegistryUpload::VersionExists)
-                .map_err(|_| anyhow!("Package {} already exists.", &package.id)),
+                .map_err(|_| anyhow!("package `{}` already exists", &package.id)),
             StatusCode::UNPROCESSABLE_ENTITY => {
-                Err(RegistryUpload::Corrupted).map_err(|_| anyhow!("File corrupted during upload."))
+                Err(RegistryUpload::Corrupted).map_err(|_| anyhow!("file corrupted during upload"))
             }
             StatusCode::OK => Ok(RegistryUpload::Success),
             _ => Err(RegistryUpload::Failed).map_err(|_| {
                 anyhow!(
-                    "Upload failed with an unexpected error (trace-id: {:?})",
+                    "upload failed with an unexpected error (trace-id: {:?})",
                     response
                         .headers()
                         .get("x-cloud-trace-context")

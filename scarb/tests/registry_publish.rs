@@ -25,7 +25,7 @@ fn publish() {
         .arg("--index")
         .arg(&registry.url)
         .arg("--no-verify")
-        .env("SCARB_AUTH_TOKEN", "scrb_supersecrettoken")
+        .env("SCARB_REGISTRY_AUTH_TOKEN", "scrb_supersecrettoken")
         .current_dir(&t)
         .timeout(Duration::from_secs(60))
         .assert()
@@ -107,7 +107,7 @@ fn auth_token_missing() {
         [..]
         [..] Packaged [..]
         [..] Uploading bar v1.0.0 (registry+http[..])
-        error: Missing authentication token.
+        error: missing authentication token
         "#});
 }
 
@@ -128,7 +128,7 @@ fn invalid_auth_token() {
         .arg("--index")
         .arg(&registry.url)
         .arg("--no-verify")
-        .env("SCARB_AUTH_TOKEN", "scrb_supersecrettoken")
+        .env("SCARB_REGISTRY_AUTH_TOKEN", "scrb_supersecrettoken")
         .current_dir(&t)
         .timeout(Duration::from_secs(60))
         .assert()
@@ -143,7 +143,7 @@ fn invalid_auth_token() {
         [..]
         [..] Packaged [..]
         [..] Uploading bar v1.0.0 (registry+http[..])
-        error: Invalid authentication token.
+        error: invalid authentication token
         "#});
 
     let expected = expect![["
@@ -196,7 +196,7 @@ fn missing_upload_permission() {
         .arg("--index")
         .arg(&registry.url)
         .arg("--no-verify")
-        .env("SCARB_AUTH_TOKEN", "scrb_supersecrettoken")
+        .env("SCARB_REGISTRY_AUTH_TOKEN", "scrb_supersecrettoken")
         .current_dir(&t)
         .timeout(Duration::from_secs(60))
         .assert()
@@ -211,7 +211,7 @@ fn missing_upload_permission() {
         [..]
         [..] Packaged [..]
         [..] Uploading bar v1.0.0 (registry+http[..])
-        error: Missing upload permissions or not the package owner.
+        error: missing upload permissions or not the package owner
         "#});
 
     let expected = expect![["
@@ -264,7 +264,7 @@ fn version_exists() {
         .arg("--index")
         .arg(&registry.url)
         .arg("--no-verify")
-        .env("SCARB_AUTH_TOKEN", "scrb_supersecrettoken")
+        .env("SCARB_REGISTRY_AUTH_TOKEN", "scrb_supersecrettoken")
         .current_dir(&t)
         .timeout(Duration::from_secs(60))
         .assert()
@@ -279,7 +279,7 @@ fn version_exists() {
         [..]
         [..] Packaged [..]
         [..] Uploading bar v1.0.0 (registry+http[..])
-        error: Package bar v1.0.0 ([..]) already exists.
+        error: package `bar v1.0.0 ([..])` already exists
         "#});
 
     let expected = expect![["
@@ -332,7 +332,7 @@ fn file_corrupted() {
         .arg("--index")
         .arg(&registry.url)
         .arg("--no-verify")
-        .env("SCARB_AUTH_TOKEN", "scrb_supersecrettoken")
+        .env("SCARB_REGISTRY_AUTH_TOKEN", "scrb_supersecrettoken")
         .current_dir(&t)
         .timeout(Duration::from_secs(60))
         .assert()
@@ -347,7 +347,7 @@ fn file_corrupted() {
         [..]
         [..] Packaged [..]
         [..] Uploading bar v1.0.0 (registry+http[..])
-        error: File corrupted during upload.
+        error: file corrupted during upload
         "#});
 
     let expected = expect![["
@@ -402,7 +402,7 @@ fn unexpected_error() {
         .arg("--index")
         .arg(&registry.url)
         .arg("--no-verify")
-        .env("SCARB_AUTH_TOKEN", "scrb_supersecrettoken")
+        .env("SCARB_REGISTRY_AUTH_TOKEN", "scrb_supersecrettoken")
         .current_dir(&t)
         .timeout(Duration::from_secs(60))
         .assert()
@@ -417,7 +417,7 @@ fn unexpected_error() {
         [..]
         [..] Packaged [..]
         [..] Uploading bar v1.0.0 (registry+http[..])
-        error: Upload failed with an unexpected error (trace-id: [..])
+        error: upload failed with an unexpected error (trace-id: [..])
         "#});
 
     let expected = expect![["
