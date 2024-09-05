@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use camino::Utf8Path;
 use itertools::{chain, Itertools};
 use std::fs;
@@ -9,6 +9,7 @@ use crate::docs_generation::markdown::traits::{
     generate_markdown_list_for_top_level_subitems, TopLevelMarkdownDocItem,
 };
 use crate::docs_generation::{collect_all_top_level_items, TopLevelItems};
+use crate::errors::{IODirectoryCreationError, IOWriteError};
 use crate::types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Module, Struct,
     Trait, TypeAlias,
@@ -126,17 +127,17 @@ impl MarkdownContent {
     pub fn save(self, output_dir: &Utf8Path) -> Result<()> {
         let source_directory_path = output_dir.join(SOURCE_DIRECTORY);
         fs::create_dir_all(&source_directory_path)
-            .context("failed to create directory for docs")?;
+            .map_err(|e| IODirectoryCreationError::new(e, "generated documentation"))?;
 
         fs::write(output_dir.join(BOOK_TOML_FILENAME), self.book_toml)
-            .context("failed to write book.toml content to a file")?;
+            .map_err(|e| IOWriteError::new(e, "book.toml"))?;
 
         fs::write(source_directory_path.join(SUMMARY_FILENAME), self.summary)
-            .context("failed to write summary content to a file")?;
+            .map_err(|e| IOWriteError::new(e, "summary"))?;
 
         for (filename, file_content) in self.doc_files {
-            fs::write(source_directory_path.join(filename), file_content)
-                .context("failed to write content to a doc file")?;
+            fs::write(source_directory_path.join(filename.clone()), file_content)
+                .map_err(|e| IOWriteError::new(e, filename.as_ref()))?;
         }
 
         Ok(())

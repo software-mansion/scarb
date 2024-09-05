@@ -1,3 +1,4 @@
+use anyhow::Result;
 use cairo_lang_compiler::project::ProjectConfig;
 use cairo_lang_filesystem::db::{Edition, FilesGroup};
 use cairo_lang_filesystem::ids::CrateLongId;
@@ -10,6 +11,7 @@ use types::Crate;
 
 pub mod db;
 pub mod docs_generation;
+pub mod errors;
 pub mod metadata;
 pub mod types;
 pub mod versioned_json_output;
@@ -30,7 +32,7 @@ pub fn generate_packages_information(
     metadata: &Metadata,
     metadata_for_packages: &[PackageMetadata],
     document_private_items: bool,
-) -> Vec<PackageInformation> {
+) -> Result<Vec<PackageInformation>> {
     let mut packages_information = vec![];
     for package_metadata in metadata_for_packages {
         let authors = package_metadata.manifest_metadata.authors.clone();
@@ -46,7 +48,7 @@ pub fn generate_packages_information(
 
         let should_document_private_items = should_ignore_visibility || document_private_items;
 
-        let project_config = get_project_config(metadata, package_metadata);
+        let project_config = get_project_config(metadata, package_metadata)?;
 
         let crate_ = generate_language_elements_tree_for_package(
             package_metadata.name.clone(),
@@ -62,7 +64,7 @@ pub fn generate_packages_information(
             },
         });
     }
-    packages_information
+    Ok(packages_information)
 }
 
 fn generate_language_elements_tree_for_package(

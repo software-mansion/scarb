@@ -30,6 +30,7 @@ serde.workspace = true
 serde_json.workspace = true
 salsa.workspace = true
 smol_str.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 assert_fs.workspace = true

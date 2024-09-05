@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use scarb_doc::docs_generation::markdown::MarkdownContent;
+use scarb_doc::errors::MetadataCommandError;
 use scarb_doc::metadata::get_target_dir;
 
 use scarb_metadata::MetadataCommand;
@@ -52,7 +53,7 @@ fn main_inner() -> Result<()> {
         .inherit_stderr()
         .envs(args.features.to_env_vars())
         .exec()
-        .context("metadata command failed")?;
+        .map_err(|e| MetadataCommandError::from(e))?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
 
@@ -60,13 +61,11 @@ fn main_inner() -> Result<()> {
         &metadata,
         &metadata_for_packages,
         args.document_private_items,
-    );
+    )?;
 
     match args.output_format {
         OutputFormat::Json => {
-            VersionedJsonOutput::new(packages_information)
-                .save_to_file(&output_dir)
-                .context("failed to write output of scarb doc to a file")?;
+            VersionedJsonOutput::new(packages_information).save_to_file(&output_dir)?
         }
         OutputFormat::Markdown => {
             for pkg_information in packages_information {
