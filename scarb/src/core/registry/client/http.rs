@@ -159,8 +159,8 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
     }
 
     async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
-        let auth_token =
-            env::var("SCARB_REGISTRY_AUTH_TOKEN").map_err(|_| anyhow!("missing authentication token"))?;
+        let auth_token = env::var("SCARB_REGISTRY_AUTH_TOKEN")
+            .map_err(|_| anyhow!("missing authentication token"))?;
 
         let path = tarball.path().to_owned();
         // we need to drop, because windows file locking is very strict
@@ -177,7 +177,7 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
         ensure!(
             metadata.len() < 5 * 1024 * 1024,
             "package cannot be larger than `5` MB: found `{}`",
-             &metadata.len()/1024/1024
+            &metadata.len() / 1024 / 1024
         );
 
         let index_config = self.index_config.load().await?;
