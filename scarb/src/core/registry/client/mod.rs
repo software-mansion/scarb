@@ -36,16 +36,8 @@ pub enum RegistryDownload<T> {
 /// Result from uploading files to a registry.
 #[derive(Debug)]
 pub enum RegistryUpload {
-    /// Missing or invalid authentication token.
-    Unauthorized,
-    /// Missing upload permissions or not the package owner.
-    CannotPublish,
-    /// Package version already exists.
-    VersionExists,
-    /// File corrupted during upload.
-    Corrupted,
-    /// Upload failed for other reasons.
-    Failed,
+    /// Upload failed.
+    Failure(anyhow::Error),
     /// Upload successful.
     Success,
 }

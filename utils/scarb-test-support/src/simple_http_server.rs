@@ -19,6 +19,7 @@ use axum::routing::post;
 use axum::Router;
 use data_encoding::HEXLOWER;
 use itertools::Itertools;
+use serde_json::json;
 use sha2::digest::FixedOutput;
 use sha2::Digest;
 use tokio::sync::Mutex;
@@ -45,8 +46,14 @@ pub struct HttpLog {
     pub res_headers: HeaderMap,
 }
 
+#[derive(Clone)]
+pub struct HttpPostResponse {
+    pub code: u16,
+    pub message: String,
+}
+
 impl SimpleHttpServer {
-    pub fn serve(dir: PathBuf, post_status: Option<u16>) -> Self {
+    pub fn serve(dir: PathBuf, post_response: Option<HttpPostResponse>) -> Self {
         let (ct, ctrx) = tokio::sync::oneshot::channel::<()>();
 
         let print_logs = Arc::new(AtomicBool::new(false));
@@ -56,7 +63,7 @@ impl SimpleHttpServer {
             .fallback_service(ServeDir::new(dir))
             .route(
                 "/api/v1/packages/new",
-                post(move || post_handler(post_status)),
+                post(move || post_handler(post_response.clone())),
             )
             .layer(middleware::from_fn(set_etag))
             .layer(middleware::from_fn_with_state(
@@ -107,11 +114,23 @@ impl Drop for SimpleHttpServer {
     }
 }
 
-async fn post_handler(post_status: Option<u16>) -> impl IntoResponse {
-    let status_code = post_status
-        .and_then(|code| StatusCode::from_u16(code).ok())
-        .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-    (status_code, "POST request received")
+async fn post_handler(post_response: Option<HttpPostResponse>) -> impl IntoResponse {
+    let (status_code, message) = match post_response {
+        Some(response) => (
+            StatusCode::from_u16(response.code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
+            response.message,
+        ),
+        None => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "POST request received".to_string(),
+        ),
+    };
+    let json_response = json!({
+        "status": status_code.as_u16(),
+        "error": message
+    });
+
+    (status_code, json_response.to_string())
 }
 
 async fn logger<B>(

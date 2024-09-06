@@ -188,34 +188,34 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
             .send()
             .await?;
 
-        match response.status() {
-            StatusCode::UNAUTHORIZED => Err(RegistryUpload::Unauthorized)
-                .map_err(|_| anyhow!("invalid authentication token")),
-            StatusCode::FORBIDDEN => Err(RegistryUpload::CannotPublish)
-                .map_err(|_| anyhow!("missing upload permissions or not the package owner")),
-            StatusCode::BAD_REQUEST => Err(RegistryUpload::VersionExists)
-                .map_err(|_| anyhow!("package `{}` already exists", &package.id)),
-            StatusCode::UNPROCESSABLE_ENTITY => {
-                Err(RegistryUpload::Corrupted).map_err(|_| anyhow!("file corrupted during upload"))
-            }
-            StatusCode::OK => Ok(RegistryUpload::Success),
-            _ => {
-                let trace_id = response
-                    .headers()
+        let result = match response.status() {
+            StatusCode::OK => RegistryUpload::Success,
+            status => {
+                let headers = response.headers().clone();
+                let error_body: serde_json::Value = response.json().await?;
+                let error_message = error_body
+                    .get("error")
+                    .and_then(|e| e.as_str())
+                    .unwrap_or("missing error field in the registry response");
+
+                let trace_id = headers
                     .get("x-cloud-trace-context")
                     .and_then(|v| v.to_str().ok());
 
                 let error_message = match trace_id {
                     Some(id) => format!(
-                        "upload failed with an unexpected error (trace-id: {:?})",
-                        id
+                        "upload failed with status code: `{}`, `{}` (trace-id: {:?})",
+                        status, error_message, id
                     ),
-                    None => "upload failed with an unexpected error".to_string(),
+                    None => format!(
+                        "upload failed with status code: `{}`, `{}`",
+                        status, error_message,
+                    ),
                 };
-
-                Err(RegistryUpload::Failed).map_err(|_| anyhow!(error_message))
+                RegistryUpload::Failure(anyhow!(error_message))
             }
-        }
+        };
+        Ok(result)
     }
 }
 

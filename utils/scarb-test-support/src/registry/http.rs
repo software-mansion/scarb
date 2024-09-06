@@ -8,7 +8,7 @@ use std::sync::LazyLock;
 use tokio::runtime;
 
 use crate::registry::local::LocalRegistry;
-use crate::simple_http_server::SimpleHttpServer;
+use crate::simple_http_server::{HttpPostResponse, SimpleHttpServer};
 
 // Keep a global multi-threading runtime to contain all running servers in one shared
 // thread pool, while maintaining synchronous nature of tests.
@@ -29,11 +29,11 @@ pub struct HttpRegistry {
 }
 
 impl HttpRegistry {
-    pub fn serve(post_status: Option<u16>) -> Self {
+    pub fn serve(post_response: Option<HttpPostResponse>) -> Self {
         let local = LocalRegistry::create();
         let server = {
             let _guard = RUNTIME.enter();
-            SimpleHttpServer::serve(local.t.path().to_owned(), post_status)
+            SimpleHttpServer::serve(local.t.path().to_owned(), post_response)
         };
         let url = server.url();
 

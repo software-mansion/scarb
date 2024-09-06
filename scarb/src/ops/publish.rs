@@ -61,6 +61,7 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
                 ));
                 Ok(())
             }
+            Ok(RegistryUpload::Failure(e)) => Err(e),
             _ => upload.map(|_| ()),
         }
 
