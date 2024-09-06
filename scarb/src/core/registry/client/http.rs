@@ -12,7 +12,6 @@ use reqwest::header::{
 };
 use reqwest::multipart::{Form, Part};
 use reqwest::{Body, Response, StatusCode};
-use tokio::fs::File as TokioFile;
 use tokio::io;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::sync::OnceCell;
@@ -162,17 +161,14 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
         let auth_token = env::var("SCARB_REGISTRY_AUTH_TOKEN")
             .map_err(|_| anyhow!("missing authentication token"))?;
 
-        let path = tarball.path().to_owned();
-        // we need to drop, because windows file locking is very strict
-        drop(tarball);
-
+        let path = tarball.path();
         ensure!(
-            Path::new(&path).exists(),
+            Path::new(path).exists(),
             "cannot upload package - file does not exist at path: {}",
-            &path
+            path
         );
 
-        let file = TokioFile::open(&path).await?;
+        let file = tarball.into_async().into_file();
         let metadata = file.metadata().await?;
         ensure!(
             metadata.len() < 5 * 1024 * 1024,
