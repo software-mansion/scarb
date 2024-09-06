@@ -190,7 +190,7 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
                 index_config
                     .upload
                     .clone()
-                    .ok_or_else(|| anyhow!("upload URL is missing"))?,
+                    .ok_or_else(|| anyhow!("failed to fetch registry upload url"))?,
             )
             .header(AUTHORIZATION, auth_token)
             .multipart(form)
