@@ -191,7 +191,7 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
                     .clone()
                     .ok_or_else(|| anyhow!("failed to fetch registry upload url"))?,
             )
-            .header(AUTHORIZATION, auth_token)
+            .header(AUTHORIZATION, format!("Bearer {}", auth_token))
             .multipart(form)
             .timeout(Duration::from_secs(60))
             .send()
