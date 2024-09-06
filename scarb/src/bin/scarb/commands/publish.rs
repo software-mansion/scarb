@@ -1,5 +1,8 @@
 use anyhow::Result;
+use std::str::FromStr;
+use url::Url;
 
+use scarb::core::registry::DEFAULT_REGISTRY_INDEX;
 use scarb::core::Config;
 use scarb::ops::{self, PackageOpts, PublishOpts};
 
@@ -11,7 +14,7 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
     let package = args.packages_filter.match_one(&ws)?;
     let index = match args.index {
         Some(index) => index,
-        None => package.id.source_id.url.clone(),
+        None => Url::from_str(DEFAULT_REGISTRY_INDEX)?,
     };
 
     let ops = PublishOpts {
