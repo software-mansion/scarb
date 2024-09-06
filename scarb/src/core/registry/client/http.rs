@@ -1,7 +1,6 @@
 use std::env;
 use std::path::Path;
 use std::str::FromStr;
-use std::time::Duration;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use async_trait::async_trait;
@@ -193,7 +192,6 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
             )
             .header(AUTHORIZATION, format!("Bearer {}", auth_token))
             .multipart(form)
-            .timeout(Duration::from_secs(60))
             .send()
             .await?;
 
