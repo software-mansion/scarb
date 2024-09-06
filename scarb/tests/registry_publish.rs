@@ -62,7 +62,7 @@ fn publish() {
     POST /api/v1/packages/new
     accept: */*
     accept-encoding: gzip, br, deflate
-    authorization: scrb_supersecrettoken
+    authorization: Bearer scrb_supersecrettoken
     content-type: ...
     host: ...
     transfer-encoding: chunked
@@ -165,7 +165,7 @@ fn invalid_auth_token() {
     POST /api/v1/packages/new
     accept: */*
     accept-encoding: gzip, br, deflate
-    authorization: scrb_supersecrettoken
+    authorization: Bearer scrb_supersecrettoken
     content-type: ...
     host: ...
     transfer-encoding: chunked
@@ -233,7 +233,7 @@ fn missing_upload_permission() {
     POST /api/v1/packages/new
     accept: */*
     accept-encoding: gzip, br, deflate
-    authorization: scrb_supersecrettoken
+    authorization: Bearer scrb_supersecrettoken
     content-type: ...
     host: ...
     transfer-encoding: chunked
@@ -301,7 +301,7 @@ fn version_exists() {
     POST /api/v1/packages/new
     accept: */*
     accept-encoding: gzip, br, deflate
-    authorization: scrb_supersecrettoken
+    authorization: Bearer scrb_supersecrettoken
     content-type: ...
     host: ...
     transfer-encoding: chunked
@@ -369,7 +369,7 @@ fn file_corrupted() {
     POST /api/v1/packages/new
     accept: */*
     accept-encoding: gzip, br, deflate
-    authorization: scrb_supersecrettoken
+    authorization: Bearer scrb_supersecrettoken
     content-type: ...
     host: ...
     transfer-encoding: chunked
@@ -439,7 +439,7 @@ fn unexpected_error() {
     POST /api/v1/packages/new
     accept: */*
     accept-encoding: gzip, br, deflate
-    authorization: scrb_supersecrettoken
+    authorization: Bearer scrb_supersecrettoken
     content-type: ...
     host: ...
     transfer-encoding: chunked
