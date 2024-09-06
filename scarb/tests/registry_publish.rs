@@ -107,7 +107,7 @@ fn auth_token_missing() {
         [..]
         [..] Packaged [..]
         [..] Uploading bar v1.0.0 (registry+http[..])
-        error: missing authentication token
+        error: missing authentication token. help: make sure SCARB_RELEASE_AUTH_TOKEN environment variable is set
         "#});
 }
 
@@ -417,7 +417,7 @@ fn unexpected_error() {
         [..]
         [..] Packaged [..]
         [..] Uploading bar v1.0.0 (registry+http[..])
-        error: upload failed with an unexpected error (trace-id: [..])
+        error: upload failed with an unexpected error
         "#});
 
     let expected = expect![["
