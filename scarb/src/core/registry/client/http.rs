@@ -150,11 +150,7 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
     }
 
     async fn supports_publish(&self) -> Result<bool> {
-        let index_config = self.index_config.load().await?;
-        match index_config.upload {
-            Some(_) => Ok(true),
-            None => Ok(false),
-        }
+        Ok(self.index_config.load().await?.upload.is_some())
     }
 
     async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
