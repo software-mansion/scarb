@@ -158,9 +158,12 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
     }
 
     async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
-        let auth_token = env::var("SCARB_REGISTRY_AUTH_TOKEN")
-            .map_err(|_| anyhow!("missing authentication token. \
-            help: make sure SCARB_RELEASE_AUTH_TOKEN environment variable is set"))?;
+        let auth_token = env::var("SCARB_REGISTRY_AUTH_TOKEN").map_err(|_| {
+            anyhow!(
+                "missing authentication token. \
+            help: make sure SCARB_RELEASE_AUTH_TOKEN environment variable is set"
+            )
+        })?;
 
         let path = tarball.path();
         ensure!(
@@ -209,15 +212,22 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
                 Err(RegistryUpload::Corrupted).map_err(|_| anyhow!("file corrupted during upload"))
             }
             StatusCode::OK => Ok(RegistryUpload::Success),
-            _ => Err(RegistryUpload::Failed).map_err(|_| {
-                anyhow!(
-                    "upload failed with an unexpected error (trace-id: {:?})",
-                    response
-                        .headers()
-                        .get("x-cloud-trace-context")
-                        .map_or("unknown", |v| v.to_str().unwrap_or("invalid trace-id"))
-                )
-            }),
+            _ => {
+                let trace_id = response
+                    .headers()
+                    .get("x-cloud-trace-context")
+                    .and_then(|v| v.to_str().ok());
+
+                let error_message = match trace_id {
+                    Some(id) => format!(
+                        "upload failed with an unexpected error (trace-id: {:?})",
+                        id
+                    ),
+                    None => "upload failed with an unexpected error".to_string(),
+                };
+
+                Err(RegistryUpload::Failed).map_err(|_| anyhow!(error_message))
+            }
         }
     }
 }
