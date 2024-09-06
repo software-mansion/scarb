@@ -167,10 +167,10 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
             path
         );
 
-        let file = tarball.into_async().into_file();
+        let file = tarball.into_async();
         let index_config = self.index_config.load().await?;
 
-        let file_part = Part::stream(Body::from(file))
+        let file_part = Part::stream(Body::from(file.try_clone().await?))
             .file_name(format!("{}_{}", &package.id.name, &package.id.version));
         let form = Form::new().part("file", file_part);
 
