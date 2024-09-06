@@ -107,7 +107,7 @@ fn auth_token_missing() {
         [..]
         [..] Packaged [..]
         [..] Uploading bar v1.0.0 (registry+http[..])
-        error: missing authentication token. help: make sure SCARB_RELEASE_AUTH_TOKEN environment variable is set
+        error: missing authentication token. help: make sure SCARB_REGISTRY_AUTH_TOKEN environment variable is set
         "#});
 }
 

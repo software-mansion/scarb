@@ -157,7 +157,7 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
         let auth_token = env::var("SCARB_REGISTRY_AUTH_TOKEN").map_err(|_| {
             anyhow!(
                 "missing authentication token. \
-            help: make sure SCARB_RELEASE_AUTH_TOKEN environment variable is set"
+            help: make sure SCARB_REGISTRY_AUTH_TOKEN environment variable is set"
             )
         })?;
 
