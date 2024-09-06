@@ -101,7 +101,9 @@ impl AsyncFileLockGuard {
     }
 
     pub fn into_file(mut self) -> tokio::fs::File {
-        self.file.take().expect("failed to take ownership of the file")
+        self.file
+            .take()
+            .expect("failed to take ownership of the file")
     }
 
     pub async fn into_sync(mut self) -> FileLockGuard {

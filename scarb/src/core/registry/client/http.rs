@@ -159,7 +159,8 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
 
     async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
         let auth_token = env::var("SCARB_REGISTRY_AUTH_TOKEN")
-            .map_err(|_| anyhow!("missing authentication token"))?;
+            .map_err(|_| anyhow!("missing authentication token. \
+            help: make sure SCARB_RELEASE_AUTH_TOKEN environment variable is set"))?;
 
         let path = tarball.path();
         ensure!(
