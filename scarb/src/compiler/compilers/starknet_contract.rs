@@ -1,5 +1,6 @@
 use anyhow::{bail, ensure, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_filesystem::db::{AsFilesGroupMut, FilesGroup};
 use cairo_lang_filesystem::flag::Flag;
@@ -25,6 +26,7 @@ use tracing::{debug, trace, trace_span};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
+use crate::flock::Filesystem;
 use crate::internal::serdex::RelativeUtf8PathBuf;
 use scarb_stable_hash::short_hash;
 use scarb_ui::Ui;
@@ -37,7 +39,7 @@ pub struct StarknetContractCompiler;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-struct Props {
+pub struct Props {
     pub sierra: bool,
     pub casm: bool,
     pub casm_add_pythonic_hints: bool,
@@ -70,7 +72,7 @@ pub enum SerdeListSelector {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-struct ContractSelector(String);
+pub struct ContractSelector(String);
 
 impl ContractSelector {
     fn package(&self) -> PackageName {
@@ -231,25 +233,17 @@ impl Compiler for StarknetContractCompiler {
 
         let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
 
-        let contracts = find_project_contracts(
-            db.upcast_mut(),
-            ws.config().ui(),
+        let Compiled {
+            contract_paths,
+            contracts,
+            classes,
+        } = get_compiled_contracts(
             main_crate_ids,
             props.build_external_contracts.clone(),
+            compiler_config,
+            db,
+            ws,
         )?;
-
-        let contract_paths = contracts
-            .iter()
-            .map(|decl| decl.module_id().full_path(db.upcast_mut()))
-            .collect::<Vec<_>>();
-        trace!(contracts = ?contract_paths);
-
-        let contracts = contracts.iter().collect::<Vec<_>>();
-
-        let classes = {
-            let _ = trace_span!("compile_starknet").enter();
-            compile_prepared_db(db, &contracts, compiler_config)?
-        };
 
         check_allowed_libfuncs(&props, &contracts, &classes, db, &unit, ws)?;
 
@@ -273,10 +267,44 @@ impl Compiler for StarknetContractCompiler {
             classes.iter().map(|_| None).collect()
         };
 
+        let target_name = &unit.main_component().target_name();
+
+        let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props);
+        writer.write(contract_paths, &contracts, &classes, &casm_classes, db, ws)?;
+
+        Ok(())
+    }
+}
+
+pub struct ArtifactsWriter {
+    sierra: bool,
+    casm: bool,
+    target_dir: Filesystem,
+    target_name: SmolStr,
+}
+
+impl ArtifactsWriter {
+    pub fn new(target_name: SmolStr, target_dir: Filesystem, props: Props) -> Self {
+        Self {
+            sierra: props.sierra,
+            casm: props.casm,
+            target_dir,
+            target_name,
+        }
+    }
+
+    pub fn write(
+        self,
+        contract_paths: Vec<String>,
+        contracts: &Vec<ContractDeclaration>,
+        classes: &[ContractClass],
+        casm_classes: &[Option<CasmContractClass>],
+        db: &mut RootDatabase,
+        ws: &Workspace<'_>,
+    ) -> Result<()> {
         let mut artifacts = StarknetArtifacts::default();
         let mut file_stem_calculator = ContractFileStemCalculator::new(contract_paths);
 
-        let target_name = &unit.main_component().target_name();
         for (decl, class, casm_class) in izip!(contracts, classes, casm_classes) {
             let contract_name = decl.submodule_id.name(db.upcast_mut());
             let contract_path = decl.module_id().full_path(db.upcast_mut());
@@ -285,7 +313,7 @@ impl Compiler for StarknetContractCompiler {
             let package_name = contract_selector.package();
             let contract_stem = file_stem_calculator.get_stem(contract_selector.full_path());
 
-            let file_stem = format!("{target_name}_{contract_stem}");
+            let file_stem = format!("{}_{contract_stem}", self.target_name);
 
             let mut artifact = ContractArtifacts::new(
                 &package_name,
@@ -294,17 +322,18 @@ impl Compiler for StarknetContractCompiler {
                 &decl.module_id().full_path(db.upcast_mut()),
             );
 
-            if props.sierra {
+            if self.sierra {
                 let file_name = format!("{file_stem}.contract_class.json");
-                write_json(&file_name, "output file", &target_dir, ws, &class)?;
+                write_json(&file_name, "output file", &self.target_dir, ws, class)?;
                 artifact.artifacts.sierra = Some(file_name);
             }
 
-            // if props.casm
-            if let Some(casm_class) = casm_class {
-                let file_name = format!("{file_stem}.compiled_contract_class.json");
-                write_json(&file_name, "output file", &target_dir, ws, &casm_class)?;
-                artifact.artifacts.casm = Some(file_name);
+            if self.casm {
+                if let Some(casm_class) = casm_class {
+                    let file_name = format!("{file_stem}.compiled_contract_class.json");
+                    write_json(&file_name, "output file", &self.target_dir, ws, casm_class)?;
+                    artifact.artifacts.casm = Some(file_name);
+                }
             }
 
             artifacts.contracts.push(artifact);
@@ -313,15 +342,52 @@ impl Compiler for StarknetContractCompiler {
         artifacts.finish();
 
         write_json(
-            &format!("{}.starknet_artifacts.json", target_name),
+            &format!("{}.starknet_artifacts.json", self.target_name),
             "starknet artifacts file",
-            &target_dir,
+            &self.target_dir,
             ws,
             &artifacts,
         )?;
 
         Ok(())
     }
+}
+
+pub struct Compiled {
+    contract_paths: Vec<String>,
+    contracts: Vec<ContractDeclaration>,
+    classes: Vec<ContractClass>,
+}
+
+pub fn get_compiled_contracts(
+    main_crate_ids: Vec<CrateId>,
+    build_external_contracts: Option<Vec<ContractSelector>>,
+    compiler_config: CompilerConfig<'_>,
+    db: &mut RootDatabase,
+    ws: &Workspace<'_>,
+) -> Result<Compiled> {
+    let contracts = find_project_contracts(
+        db.upcast_mut(),
+        ws.config().ui(),
+        main_crate_ids,
+        build_external_contracts,
+    )?;
+
+    let contract_paths = contracts
+        .iter()
+        .map(|decl| decl.module_id().full_path(db.upcast_mut()))
+        .collect::<Vec<_>>();
+    trace!(contracts = ?contract_paths);
+
+    let classes = {
+        let _ = trace_span!("compile_starknet").enter();
+        compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
+    };
+    Ok(Compiled {
+        contract_paths,
+        contracts,
+        classes,
+    })
 }
 
 fn ensure_gas_enabled(db: &mut RootDatabase) -> Result<()> {
@@ -413,7 +479,7 @@ fn contract_matches(selector: &ContractSelector, contract_path: &str) -> bool {
 
 fn check_allowed_libfuncs(
     props: &Props,
-    contracts: &[&ContractDeclaration],
+    contracts: &[ContractDeclaration],
     classes: &[ContractClass],
     db: &RootDatabase,
     unit: &CairoCompilationUnit,
