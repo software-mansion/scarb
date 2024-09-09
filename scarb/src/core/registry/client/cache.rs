@@ -14,6 +14,8 @@ use crate::core::registry::client::{
     CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
 };
 use crate::core::registry::index::{IndexRecord, IndexRecords};
+#[allow(unused_imports)]
+use crate::core::PackageName;
 use crate::core::{Checksum, Config, ManifestDependency, PackageId, SourceId};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::fsx;

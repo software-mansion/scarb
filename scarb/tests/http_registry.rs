@@ -12,7 +12,7 @@ use scarb_test_support::registry::http::HttpRegistry;
 
 #[test]
 fn usage() {
-    let mut registry = HttpRegistry::serve();
+    let mut registry = HttpRegistry::serve(None);
     registry.publish(|t| {
         ProjectBuilder::start()
             .name("bar")
@@ -89,7 +89,7 @@ fn usage() {
 
 #[test]
 fn publish_verified() {
-    let mut registry = HttpRegistry::serve();
+    let mut registry = HttpRegistry::serve(None);
     registry.publish_verified(|t| {
         ProjectBuilder::start()
             .name("bar")
@@ -166,7 +166,7 @@ fn publish_verified() {
 
 #[test]
 fn not_found() {
-    let mut registry = HttpRegistry::serve();
+    let mut registry = HttpRegistry::serve(None);
     registry.publish(|t| {
         // Publish a package so that the directory hierarchy is created.
         // Note, however, that we declare a dependency on baZ.
@@ -228,7 +228,7 @@ fn not_found() {
 
 #[test]
 fn missing_config_json() {
-    let registry = HttpRegistry::serve();
+    let registry = HttpRegistry::serve(None);
     fs::remove_file(registry.child("api/v1/index/config.json")).unwrap();
 
     let t = TempDir::new().unwrap();
@@ -270,7 +270,7 @@ fn missing_config_json() {
 fn caching() {
     let cache_dir = TempDir::new().unwrap();
 
-    let mut registry = HttpRegistry::serve();
+    let mut registry = HttpRegistry::serve(None);
     registry.publish(|t| {
         ProjectBuilder::start()
             .name("bar")

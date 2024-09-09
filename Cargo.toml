@@ -100,7 +100,7 @@ quote = "1"
 ra_ap_toolchain = "0.0.218"
 rayon = "1.10"
 redb = "2.1.2"
-reqwest = { version = "0.11", features = ["gzip", "brotli", "deflate", "json", "stream"], default-features = false }
+reqwest = { version = "0.11", features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"], default-features = false }
 salsa = { package = "rust-analyzer-salsa", version = "0.17.0-pre.6" }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["serde_derive"] }
