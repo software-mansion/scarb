@@ -354,9 +354,9 @@ impl ArtifactsWriter {
 }
 
 pub struct Compiled {
-    contract_paths: Vec<String>,
-    contracts: Vec<ContractDeclaration>,
-    classes: Vec<ContractClass>,
+    pub contract_paths: Vec<String>,
+    pub contracts: Vec<ContractDeclaration>,
+    pub classes: Vec<ContractClass>,
 }
 
 pub fn get_compiled_contracts(
@@ -390,7 +390,7 @@ pub fn get_compiled_contracts(
     })
 }
 
-fn ensure_gas_enabled(db: &mut RootDatabase) -> Result<()> {
+pub fn ensure_gas_enabled(db: &mut RootDatabase) -> Result<()> {
     let flag = FlagId::new(db.as_files_group_mut(), AUTO_WITHDRAW_GAS_FLAG);
     let flag = db.get_flag(flag);
     ensure!(
