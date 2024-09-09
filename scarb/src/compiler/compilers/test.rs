@@ -26,16 +26,18 @@ impl Compiler for TestCompiler {
         let target_dir = unit.target_dir(ws);
 
         let test_crate_ids = collect_main_crate_ids(&unit, db);
-        let all_crate_ids = collect_all_crate_ids(&unit, db);
+        let main_crate_ids = collect_all_crate_ids(&unit, db);
         let starknet = unit.cairo_plugins.iter().any(|plugin| {
             plugin.package.id.name == PackageName::STARKNET
                 && plugin.package.id.source_id == SourceId::for_std()
         });
 
-        let mut diagnostics_reporter =
-            build_compiler_config(db, &unit, &test_crate_ids, ws).diagnostics_reporter;
+        let diagnostics_reporter =
+            build_compiler_config(db, &unit, &main_crate_ids, ws).diagnostics_reporter;
 
-        diagnostics_reporter.ensure(db)?;
+        diagnostics_reporter
+            .with_crates(&main_crate_ids)
+            .ensure(db)?;
 
         let test_compilation = {
             let _ = trace_span!("compile_test").enter();
@@ -48,13 +50,8 @@ impl Compiler for TestCompiler {
                     .compiler_config
                     .unstable_add_statements_code_locations_debug_info,
             };
-            compile_test_prepared_db(
-                db,
-                config,
-                all_crate_ids,
-                test_crate_ids,
-                diagnostics_reporter,
-            )?
+            let allow_warnings = unit.compiler_config.allow_warnings;
+            compile_test_prepared_db(db, config, main_crate_ids, test_crate_ids, allow_warnings)?
         };
 
         {
