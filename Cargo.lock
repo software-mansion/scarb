@@ -4703,6 +4703,7 @@ dependencies = [
  "assert_fs",
  "cairo-lang-compiler",
  "cairo-lang-defs",
+ "cairo-lang-diagnostics",
  "cairo-lang-doc",
  "cairo-lang-filesystem",
  "cairo-lang-parser",

@@ -1,7 +1,11 @@
 use anyhow::Result;
+use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_compiler::project::ProjectConfig;
+use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Maybe, Severity};
 use cairo_lang_filesystem::db::{Edition, FilesGroup};
 use cairo_lang_filesystem::ids::CrateLongId;
+use cairo_lang_utils::Upcast;
+use errors::DiagnosticError;
 use scarb_metadata::{Metadata, PackageMetadata};
 use serde::Serialize;
 
@@ -16,13 +20,13 @@ pub mod metadata;
 pub mod types;
 pub mod versioned_json_output;
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct PackageInformation {
     pub crate_: Crate,
     pub metadata: AdditionalMetadata,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct AdditionalMetadata {
     pub name: String,
     pub authors: Option<Vec<String>>,
@@ -39,7 +43,8 @@ pub fn generate_packages_information(
         let edition = package_metadata
             .edition
             .as_ref()
-            .map(|edition| edition_from_string(edition).unwrap());
+            .map(|edition| edition_from_string(edition))
+            .transpose()?;
 
         let should_ignore_visibility = match edition {
             Some(edition) => edition.ignore_visibility(),
@@ -54,7 +59,8 @@ pub fn generate_packages_information(
             package_metadata.name.clone(),
             project_config,
             should_document_private_items,
-        );
+        )
+        .map_err(|_| DiagnosticError(package_metadata.name.clone()))?;
 
         packages_information.push(PackageInformation {
             crate_,
@@ -71,12 +77,46 @@ fn generate_language_elements_tree_for_package(
     package_name: String,
     project_config: ProjectConfig,
     document_private_items: bool,
-) -> Crate {
-    let db = ScarbDocDatabase::new(Some(project_config));
+) -> Maybe<Crate> {
+    let db = ScarbDocDatabase::new(Some(project_config))?;
 
-    let main_crate_id = db.intern_crate(CrateLongId::Real(package_name.into()));
+    let main_crate_id = db.db.intern_crate(CrateLongId::Real(package_name.into()));
+
+    let mut diagnostics_reporter = setup_diagnostics_reporter();
+
+    diagnostics_reporter.ensure(&db.db);
 
     Crate::new(&db, main_crate_id, document_private_items)
+}
+
+fn setup_diagnostics_reporter() -> DiagnosticsReporter {
+    DiagnosticsReporter::callback({
+        |entry: FormattedDiagnosticEntry| {
+            let msg = entry
+                .message()
+                .strip_suffix('\n')
+                .unwrap_or(entry.message());
+            match entry.severity() {
+                Severity::Error => {
+                    if let Some(code) = entry.error_code() {
+                        // config.ui().error_with_code(code.as_str(), msg)
+                        eprintln!("{} {}", code.as_str(), msg);
+                    } else {
+                        eprintln!("{}", msg);
+                    }
+                }
+                Severity::Warning => {
+                    if let Some(code) = entry.error_code() {
+                        // config.ui().warn_with_code(code.as_str(), msg)
+                        eprintln!("{} {}", code.as_str(), msg);
+                    } else {
+                        // config.ui().warn(msg)
+                        eprintln!("{}", msg);
+                    }
+                }
+            };
+        }
+    });
 }
 
 pub fn edition_from_string(edition_str: &str) -> Result<Edition, serde_json::Error> {

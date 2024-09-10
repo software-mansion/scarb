@@ -21,6 +21,7 @@ cairo-lang-semantic.workspace = true
 cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-utils.workspace = true
+cairo-lang-diagnostics.workspace = true
 expect-test.workspace = true
 indoc.workspace = true
 itertools.workspace = true

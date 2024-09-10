@@ -29,6 +29,10 @@ pub struct MissingCompilationUnitForPackage(pub String);
 #[error("metadata command failed")]
 pub struct MetadataCommandError(#[from] ScarbMetadataCommandFail);
 
+#[derive(Debug, Error)]
+#[error("could not compile {0} due to previous error")]
+pub struct DiagnosticError(pub String);
+
 pub struct IODirectoryCreationError {
     inner_error: IOError,
     directory_purpose: String,

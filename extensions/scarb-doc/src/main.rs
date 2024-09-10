@@ -57,11 +57,15 @@ fn main_inner() -> Result<()> {
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
 
-    let packages_information = generate_packages_information(
+    let packages_information_result = generate_packages_information(
         &metadata,
         &metadata_for_packages,
         args.document_private_items,
-    )?;
+    );
+
+    println!("{:?}", &packages_information_result.is_err());
+
+    let packages_information = packages_information_result?;
 
     match args.output_format {
         OutputFormat::Json => {
