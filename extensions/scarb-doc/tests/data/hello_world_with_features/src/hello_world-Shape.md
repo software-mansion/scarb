@@ -2,7 +2,6 @@
 
 Shape trait for objects that have an area
 
-
 Fully qualified path: `hello_world::Shape`
 
 ```rust
@@ -15,7 +14,6 @@ trait Shape<T>
 
 Constant for the shape type
 
-
 Fully qualified path: `hello_world::Shape::SHAPE_CONST`
 
 
@@ -24,7 +22,6 @@ Fully qualified path: `hello_world::Shape::SHAPE_CONST`
 ### area
 
 Calculate the area of the shape
-
 
 Fully qualified path: `Shape::area`
 
@@ -38,7 +35,6 @@ fn area(self: T) -> u32
 ### ShapePair
 
 Type alias for a pair of shapes
-
 
 Fully qualified path: `hello_world::Shape::ShapePair`
 
