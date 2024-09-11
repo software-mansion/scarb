@@ -753,7 +753,9 @@ impl TomlManifest {
 
         if let Some(source_path) = &target.source_path {
             ensure!(
-                kind == TargetKind::TEST || source_path == DEFAULT_SOURCE_PATH.as_path(),
+                kind == TargetKind::TEST
+                    || kind == TargetKind::CAIRO_PLUGIN
+                    || source_path == DEFAULT_SOURCE_PATH.as_path(),
                 "`{kind}` target cannot specify custom `source-path`"
             );
         }

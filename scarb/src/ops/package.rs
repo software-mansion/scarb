@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs::File;
-use std::io::{Seek, SeekFrom, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
@@ -13,6 +13,7 @@ use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
 use serde::Serialize;
 
+use crate::compiler::plugin::proc_macro::compilation::{package_package, SharedLibraryProvider};
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
 use crate::core::{Config, Package, PackageId, PackageName, TargetKind, Workspace};
@@ -153,7 +154,7 @@ fn package_one_impl(
         check_metadata(pkg, ws.config())?;
     }
 
-    let recipe = prepare_archive_recipe(pkg, opts)?;
+    let recipe = prepare_archive_recipe(pkg, opts, &ws)?;
     let num_files = recipe.len();
 
     // Package up and test a temporary tarball and only move it to the final location if it actually
@@ -205,17 +206,24 @@ fn list_one_impl(
     ws: &Workspace<'_>,
 ) -> Result<Vec<Utf8PathBuf>> {
     let pkg = ws.fetch_package(&pkg_id)?;
-    let recipe = prepare_archive_recipe(pkg, opts)?;
+    let recipe = prepare_archive_recipe(pkg, opts, ws)?;
     Ok(recipe.into_iter().map(|f| f.path).collect())
 }
 
-fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRecipe> {
+fn prepare_archive_recipe(
+    pkg: &Package,
+    opts: &PackageOpts,
+    ws: &Workspace<'_>,
+) -> Result<ArchiveRecipe> {
     ensure!(
-        pkg.manifest.targets.iter().any(|x| x.is_lib()),
+        pkg.manifest
+            .targets
+            .iter()
+            .any(|x| x.is_lib() || x.is_cairo_plugin()),
         formatdoc!(
             r#"
-            cannot archive package `{package_name}` without a `lib` target
-            help: add `[lib]` section to package manifest
+            cannot archive package `{package_name}` without a `lib` or `cairo_plugin` target
+            help: add `[lib]` or `[cairo_plugin]` section to package manifest
              --> Scarb.toml
             +   [lib]
             "#,
@@ -244,6 +252,27 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
     recipe.push(ArchiveFile {
         path: ORIGINAL_MANIFEST_FILE_NAME.into(),
         contents: ArchiveFileContents::OnDisk(pkg.manifest_path().to_owned()),
+    });
+
+    // todo(macros package): package Cargo.toml, run this only for macros
+    package_package(&pkg, ws)?;
+
+    //todo(macros_package): this works, but we must have a way to get the paths from metdata
+    // substituting for crate name won't work oob because lack of _ -> - conversion
+    recipe.push(ArchiveFile {
+        path: "Cargo.orig.toml".into(),
+        contents: ArchiveFileContents::OnDisk("/<path/to/crate>/snforge-scarb-plugin/Cargo.toml".into()),
+    });
+
+    recipe.push(ArchiveFile {
+        path: "Cargo.toml".into(),
+        contents: ArchiveFileContents::OnDisk(
+            format!(
+                "{}/package/snforge-scarb-plugin-0.1.0/Cargo.toml",
+                &pkg.target_path(ws.config()).path_unchecked().to_path_buf()
+            )
+            .parse()?,
+        ),
     });
 
     // Add README file
@@ -319,7 +348,6 @@ fn run_verify(
         .block_on(async { PackageSourceStore::extract_to(pkg.id, tar, &fs, ws.config()).await })?;
 
     let ws = ops::read_workspace(&path.join(MANIFEST_FILE_NAME), ws.config())?;
-
     ops::compile(
         ws.members().map(|p| p.id).collect(),
         ops::CompileOpts {
@@ -330,7 +358,6 @@ fn run_verify(
         },
         &ws,
     )?;
-
     Ok(lock)
 }
 
