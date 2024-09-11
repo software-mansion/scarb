@@ -85,7 +85,7 @@ fn generate_language_elements_tree_for_package(
 ) -> Maybe<Crate> {
     let main_crate_id = db.get_main_crate_id();
 
-    Crate::new(&db, main_crate_id, document_private_items)
+    Crate::new(db, main_crate_id, document_private_items)
 }
 
 fn setup_diagnostics_reporter<'a>(

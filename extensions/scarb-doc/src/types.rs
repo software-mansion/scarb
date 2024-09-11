@@ -201,13 +201,13 @@ impl Module {
 /// G - A closure (as a function), which generates an item based on the item's ID.
 /// J - Type representing an item ast type.
 /// K - Type of generated item.
-fn filter_map_item_id_to_item<T: ?Sized, F, G, K, J>(
+fn filter_map_item_id_to_item<T, F, G, K, J>(
     items: Arc<OrderedHashMap<T, J>>,
     should_include_item_function: F,
     generate_item_function: G,
 ) -> Result<Vec<K>, DiagnosticAdded>
 where
-    T: Copy + TopLevelLanguageElementId,
+    T: Copy + TopLevelLanguageElementId + ?Sized,
     F: Fn(&dyn TopLevelLanguageElementId) -> Result<bool, DiagnosticAdded>,
     G: Fn(T) -> Maybe<K>,
 {
@@ -543,11 +543,10 @@ impl Trait {
             id,
             LookupItemId::ModuleItem(ModuleItemId::Trait(id)).into(),
         );
-        let full_path_to_trait = item_data
-            .full_path
-            .strip_suffix(item_data.name.as_str())
-            .unwrap()
-            .to_string();
+        let full_path_to_trait = match item_data.full_path.strip_suffix(item_data.name.as_str()) {
+            Some(full_path) => full_path.to_string(),
+            None => return Err(DiagnosticAdded),
+        };
 
         let trait_constants = db.trait_constants(id)?;
         let trait_constants = trait_constants
@@ -692,11 +691,10 @@ impl Impl {
             id,
             LookupItemId::ModuleItem(ModuleItemId::Impl(id)).into(),
         );
-        let full_path_to_impl = item_data
-            .full_path
-            .strip_suffix(item_data.name.as_str())
-            .unwrap()
-            .to_string();
+        let full_path_to_impl = match item_data.full_path.strip_suffix(item_data.name.as_str()) {
+            Some(full_path) => full_path.to_string(),
+            None => return Err(DiagnosticAdded),
+        };
 
         let impl_types = db.impl_types(id)?;
         let impl_types = impl_types

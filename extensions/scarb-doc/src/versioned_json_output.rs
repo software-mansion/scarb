@@ -30,9 +30,8 @@ impl VersionedJsonOutput {
 
         let output_path = output_dir.join(JSON_OUTPUT_FILENAME);
 
-        let output = serde_json::to_string_pretty(&self)
-            .map_err(|e| PackagesSerializationError::from(e))?
-            + "\n";
+        let output =
+            serde_json::to_string_pretty(&self).map_err(PackagesSerializationError::from)? + "\n";
 
         fs::write(output_path, output).map_err(|e| IOWriteError::new(e, "json documentation"))?;
 

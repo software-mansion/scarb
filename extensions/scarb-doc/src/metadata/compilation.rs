@@ -91,7 +91,7 @@ fn get_crates_config(
     metadata: &Metadata,
     compilation_unit_metadata: &CompilationUnitMetadata,
 ) -> Result<AllCratesConfig> {
-    let crates_config: Result<OrderedHashMap<SmolStr, CrateSettings>> = compilation_unit_metadata
+    let crates_config: OrderedHashMap<SmolStr, CrateSettings> = compilation_unit_metadata
         .components
         .iter()
         .map(|component| {
@@ -105,7 +105,7 @@ fn get_crates_config(
             match (pkg, cfg_result) {
                 (Some(pkg), Ok(cfg_set)) => Ok((
                     SmolStr::from(&component.name),
-                    get_crate_settings_for_package(pkg, cfg_set),
+                    get_crate_settings_for_package(pkg, cfg_set)?,
                 )),
                 (None, _) => {
                     bail!(MissingPackageError(component.package.to_string()))
@@ -113,32 +113,25 @@ fn get_crates_config(
                 (_, Err(e)) => bail!(e),
             }
         })
-        .collect();
+        .collect::<Result<OrderedHashMap<SmolStr, CrateSettings>>>()?;
 
-    if let Err(error) = crates_config {
-        return Err(error);
-    }
-
-    match crates_config {
-        Ok(crates_config) => Ok(AllCratesConfig {
-            override_map: crates_config,
-            ..Default::default()
-        }),
-        Err(error) => Err(error),
-    }
+    Ok(AllCratesConfig {
+        override_map: crates_config,
+        ..Default::default()
+    })
 }
 
 fn get_crate_settings_for_package(
     package: &PackageMetadata,
     cfg_set: Option<CfgSet>,
-) -> CrateSettings {
+) -> Result<CrateSettings> {
     let edition = package
         .edition
         .clone()
-        .map_or(Edition::default(), |edition| {
+        .map_or(Ok(Edition::default()), |edition| {
             let edition_value = serde_json::Value::String(edition);
-            serde_json::from_value(edition_value).unwrap()
-        });
+            serde_json::from_value(edition_value)
+        })?;
 
     let experimental_features = ExperimentalFeaturesConfig {
         negative_impls: package
@@ -149,12 +142,12 @@ fn get_crate_settings_for_package(
             .contains(&String::from("coupons")),
     };
 
-    CrateSettings {
+    Ok(CrateSettings {
         edition,
         cfg_set,
         experimental_features,
         version: Some(package.version.clone()),
-    }
+    })
 }
 
 fn build_cfg_set(cfg: &[scarb_metadata::Cfg]) -> Result<CfgSet, CfgParseError> {
@@ -162,7 +155,7 @@ fn build_cfg_set(cfg: &[scarb_metadata::Cfg]) -> Result<CfgSet, CfgParseError> {
         .map(|cfg| {
             serde_json::to_value(cfg)
                 .and_then(serde_json::from_value::<Cfg>)
-                .map_err(|e| CfgParseError::from(e))
+                .map_err(CfgParseError::from)
         })
         .collect::<Result<CfgSet, CfgParseError>>()
 }

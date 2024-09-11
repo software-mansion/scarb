@@ -53,7 +53,7 @@ fn main_inner() -> Result<()> {
         .inherit_stderr()
         .envs(args.features.to_env_vars())
         .exec()
-        .map_err(|e| MetadataCommandError::from(e))?;
+        .map_err(MetadataCommandError::from)?;
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
 
@@ -73,7 +73,7 @@ fn main_inner() -> Result<()> {
             for pkg_information in packages_information {
                 let pkg_output_dir = output_dir.join(&pkg_information.metadata.name);
 
-                MarkdownContent::from_crate(&pkg_information)
+                MarkdownContent::from_crate(&pkg_information)?
                     .save(&pkg_output_dir)
                     .with_context(|| {
                         format!(
