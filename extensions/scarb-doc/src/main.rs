@@ -63,8 +63,6 @@ fn main_inner() -> Result<()> {
         args.document_private_items,
     );
 
-    println!("{:?}", &packages_information_result.is_err());
-
     let packages_information = packages_information_result?;
 
     match args.output_format {

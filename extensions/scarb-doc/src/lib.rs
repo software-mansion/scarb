@@ -1,12 +1,11 @@
 use anyhow::Result;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
-use cairo_lang_compiler::project::ProjectConfig;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Maybe, Severity};
 use cairo_lang_filesystem::db::{Edition, FilesGroup};
-use cairo_lang_filesystem::ids::CrateLongId;
-use cairo_lang_utils::Upcast;
 use errors::DiagnosticError;
-use scarb_metadata::{Metadata, PackageMetadata};
+use itertools::Itertools;
+use scarb_metadata::{CompilationUnitMetadata, Metadata, PackageMetadata};
+use scarb_ui::{OutputFormat, Ui};
 use serde::Serialize;
 
 use crate::db::ScarbDocDatabase;
@@ -55,12 +54,19 @@ pub fn generate_packages_information(
 
         let project_config = get_project_config(metadata, package_metadata)?;
 
-        let crate_ = generate_language_elements_tree_for_package(
-            package_metadata.name.clone(),
-            project_config,
-            should_document_private_items,
-        )
-        .map_err(|_| DiagnosticError(package_metadata.name.clone()))?;
+        let db = ScarbDocDatabase::new(Some(project_config), package_metadata.name.clone());
+
+        let package_compilation_unit = metadata
+            .compilation_units
+            .iter()
+            .find(|unit| unit.package == package_metadata.id);
+
+        let mut diagnostics_reporter = setup_diagnostics_reporter(&db, package_compilation_unit);
+        diagnostics_reporter.ensure(&db)?;
+
+        let crate_ =
+            generate_language_elements_tree_for_package(&db, should_document_private_items)
+                .map_err(|_| DiagnosticError(package_metadata.name.clone()))?;
 
         packages_information.push(PackageInformation {
             crate_,
@@ -74,24 +80,28 @@ pub fn generate_packages_information(
 }
 
 fn generate_language_elements_tree_for_package(
-    package_name: String,
-    project_config: ProjectConfig,
+    db: &ScarbDocDatabase,
     document_private_items: bool,
 ) -> Maybe<Crate> {
-    let db = ScarbDocDatabase::new(Some(project_config))?;
-
-    let main_crate_id = db.db.intern_crate(CrateLongId::Real(package_name.into()));
-
-    let mut diagnostics_reporter = setup_diagnostics_reporter();
-
-    diagnostics_reporter.ensure(&db.db);
+    let main_crate_id = db.get_main_crate_id();
 
     Crate::new(&db, main_crate_id, document_private_items)
 }
 
-fn setup_diagnostics_reporter() -> DiagnosticsReporter {
-    DiagnosticsReporter::callback({
-        |entry: FormattedDiagnosticEntry| {
+fn setup_diagnostics_reporter<'a>(
+    db: &ScarbDocDatabase,
+    package_compilation_unit: Option<&CompilationUnitMetadata>,
+) -> DiagnosticsReporter<'a> {
+    let ui = Ui::new(scarb_ui::Verbosity::default(), OutputFormat::default());
+    let main_crate_id = db.get_main_crate_id();
+    let ignore_warnings_crates = db
+        .crates()
+        .into_iter()
+        .filter(|crate_id| crate_id != &main_crate_id)
+        .collect_vec();
+
+    let diagnostics_reporter = DiagnosticsReporter::callback({
+        move |entry: FormattedDiagnosticEntry| {
             let msg = entry
                 .message()
                 .strip_suffix('\n')
@@ -99,24 +109,42 @@ fn setup_diagnostics_reporter() -> DiagnosticsReporter {
             match entry.severity() {
                 Severity::Error => {
                     if let Some(code) = entry.error_code() {
-                        // config.ui().error_with_code(code.as_str(), msg)
-                        eprintln!("{} {}", code.as_str(), msg);
+                        ui.error_with_code(code.as_str(), msg);
                     } else {
-                        eprintln!("{}", msg);
+                        ui.error(msg)
                     }
                 }
                 Severity::Warning => {
                     if let Some(code) = entry.error_code() {
-                        // config.ui().warn_with_code(code.as_str(), msg)
-                        eprintln!("{} {}", code.as_str(), msg);
+                        ui.warn_with_code(code.as_str(), msg)
                     } else {
-                        // config.ui().warn(msg)
-                        eprintln!("{}", msg);
+                        ui.warn(msg)
                     }
                 }
             };
         }
-    });
+    })
+    .with_ignore_warnings_crates(&ignore_warnings_crates);
+
+    // We check whether the warnings are allowed during compilation.
+    match package_compilation_unit {
+        Some(package_compilation_unit) => {
+            if allows_warnings(package_compilation_unit) {
+                return diagnostics_reporter.allow_warnings();
+            }
+            diagnostics_reporter
+        }
+        None => diagnostics_reporter,
+    }
+}
+
+fn allows_warnings(compulation_unit: &CompilationUnitMetadata) -> bool {
+    compulation_unit
+        .compiler_config
+        .as_object()
+        .and_then(|config| config.get("allow_warnings"))
+        .and_then(|value| value.as_bool())
+        .unwrap_or(true)
 }
 
 pub fn edition_from_string(edition_str: &str) -> Result<Edition, serde_json::Error> {

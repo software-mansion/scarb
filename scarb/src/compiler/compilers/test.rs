@@ -39,6 +39,9 @@ impl Compiler for TestCompiler {
             .with_crates(&main_crate_ids)
             .ensure(db)?;
 
+        let diagnostics_reporter =
+            build_compiler_config(db, &unit, &main_crate_ids, ws).diagnostics_reporter;
+
         let test_compilation = {
             let _ = trace_span!("compile_test").enter();
             let config = TestsCompilationConfig {
@@ -50,8 +53,13 @@ impl Compiler for TestCompiler {
                     .compiler_config
                     .unstable_add_statements_code_locations_debug_info,
             };
-            let allow_warnings = unit.compiler_config.allow_warnings;
-            compile_test_prepared_db(db, config, main_crate_ids, test_crate_ids, allow_warnings)?
+            compile_test_prepared_db(
+                db,
+                config,
+                main_crate_ids,
+                test_crate_ids,
+                diagnostics_reporter,
+            )?
         };
 
         {

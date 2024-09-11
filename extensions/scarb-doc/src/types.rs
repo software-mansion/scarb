@@ -3,9 +3,9 @@
 
 use std::sync::Arc;
 
-use anyhow::{bail, Error, Result};
+use anyhow::Result;
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
-use cairo_lang_semantic::items::{constant, impl_alias, visibility};
+use cairo_lang_semantic::items::visibility;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use cairo_lang_utils::Upcast;
 use itertools::Itertools;
@@ -24,7 +24,7 @@ use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
-use cairo_lang_syntax::node::ast::{self, ItemConstant};
+use cairo_lang_syntax::node::ast::{self};
 
 use crate::db::ScarbDocDatabase;
 
