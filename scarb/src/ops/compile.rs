@@ -62,11 +62,24 @@ pub struct CompileOpts {
 }
 
 impl CompileOpts {
-    pub fn try_new(features: FeaturesSpec, test: bool, target_names: Vec<String>) -> Result<Self> {
+    pub fn try_new(
+        features: FeaturesSpec,
+        test: bool,
+        target_names: Vec<String>,
+        target_kinds: Vec<String>,
+    ) -> Result<Self> {
         let (include_targets, exclude_targets): (Vec<TargetKind>, Vec<TargetKind>) = if test {
             (vec![TargetKind::TEST.clone()], Vec::new())
         } else {
             (Vec::new(), vec![TargetKind::TEST.clone()])
+        };
+        let include_targets = if !target_kinds.is_empty() {
+            target_kinds
+                .into_iter()
+                .map(TargetKind::try_new)
+                .collect::<Result<Vec<TargetKind>>>()?
+        } else {
+            include_targets
         };
         Ok(Self {
             include_target_kinds: include_targets,

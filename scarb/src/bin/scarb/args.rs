@@ -221,6 +221,15 @@ pub struct BuildArgs {
     #[arg(long, value_delimiter = ',', env = "SCARB_TARGET_NAMES")]
     pub target_names: Vec<String>,
 
+    /// Comma separated list of target kinds to compile.
+    #[arg(
+        long,
+        value_delimiter = ',',
+        env = "SCARB_TARGET_KINDS",
+        conflicts_with_all = ["target_names", "test"]
+    )]
+    pub target_kinds: Vec<String>,
+
     /// Specify features to enable.
     #[command(flatten)]
     pub features: FeaturesSpec,
