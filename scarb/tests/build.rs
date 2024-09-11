@@ -958,6 +958,12 @@ fn does_not_show_warnings_from_deps() {
         .current_dir(&second)
         .assert()
         .success();
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&second)
+        .assert()
+        .success();
 }
 
 #[test]

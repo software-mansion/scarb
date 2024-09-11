@@ -484,7 +484,7 @@ pub struct PackageArgs {
 pub struct PublishArgs {
     /// Registry index URL to upload the package to.
     #[arg(long, value_name = "URL")]
-    pub index: Url,
+    pub index: Option<Url>,
 
     #[clap(flatten)]
     pub shared_args: PackageSharedArgs,

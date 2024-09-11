@@ -52,7 +52,7 @@ fn main() -> Result<()> {
 
         // artifact saved to `{target_dir}/{profile_name}/{package_name}.sierra.json`
         let output_path =
-            snforge_target_dir.join(&format!("{}.snforge_sierra.json", package_metadata.name));
+            snforge_target_dir.join(format!("{}.snforge_sierra.json", package_metadata.name));
         let output_file = File::options()
             .create(true)
             .write(true)

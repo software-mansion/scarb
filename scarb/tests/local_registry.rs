@@ -161,6 +161,7 @@ fn publish() {
             [..]  Finished release target(s) in [..]
             [..]  Packaged [..]
             [..] Uploading {name} v{version} (registry+file://[..]/index/)
+            [..] Published {name} v{version} (registry+file://[..]/index/)
             "#});
     };
 

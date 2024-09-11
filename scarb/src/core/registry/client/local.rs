@@ -12,7 +12,7 @@ use tracing::trace;
 use url::Url;
 
 use crate::core::registry::client::{
-    CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
+    CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource, RegistryUpload,
 };
 use crate::core::registry::index::{IndexDependency, IndexRecord, IndexRecords, TemplateUrl};
 use crate::core::{Checksum, Config, Digest, Package, PackageId, PackageName, Summary};
@@ -151,7 +151,7 @@ impl RegistryClient for LocalRegistryClient<'_> {
         Ok(true)
     }
 
-    async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<()> {
+    async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
         let summary = package.manifest.summary.clone();
         let records_path = self.records_path(&summary.package_id.name);
         let dl_path = self.dl_path(summary.package_id);
@@ -167,7 +167,7 @@ fn publish_impl(
     tarball: FileLockGuard,
     records_path: PathBuf,
     dl_path: PathBuf,
-) -> Result<(), Error> {
+) -> Result<RegistryUpload, Error> {
     let checksum = Digest::recommended().update_read(tarball.deref())?.finish();
     let tarball_path = tarball.path().to_owned();
 
@@ -189,7 +189,7 @@ fn publish_impl(
     })
     .with_context(|| format!("failed to edit records file: {}", records_path.display()))?;
 
-    Ok(())
+    Ok(RegistryUpload::Success)
 }
 
 fn build_record(summary: Summary, checksum: Checksum) -> IndexRecord {

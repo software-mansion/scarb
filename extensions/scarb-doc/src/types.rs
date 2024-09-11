@@ -1,8 +1,3 @@
-// TODO(drknzz): Remove when not needed.
-// #![allow(dead_code)]
-
-use std::sync::Arc;
-
 use anyhow::Result;
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
 use cairo_lang_semantic::items::visibility;

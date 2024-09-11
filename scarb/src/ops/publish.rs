@@ -4,6 +4,7 @@ use url::Url;
 
 use scarb_ui::components::Status;
 
+use crate::core::registry::client::RegistryUpload;
 use crate::core::{PackageId, SourceId, Workspace};
 use crate::ops;
 use crate::sources::RegistrySource;
@@ -51,10 +52,19 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
         .print(Status::new("Uploading", &dest_package_id.to_string()));
 
     ws.config().tokio_handle().block_on(async {
-        registry_client.publish(package, tarball).await
+        let upload = registry_client.publish(package, tarball).await;
+        match upload {
+            Ok(RegistryUpload::Success) => {
+                ws.config().ui().print(Status::new(
+                    "Published",
+                    format!("{}", &dest_package_id).as_str(),
+                ));
+                Ok(())
+            }
+            Ok(RegistryUpload::Failure(e)) => Err(e),
+            _ => upload.map(|_| ()),
+        }
 
         // TODO(mkaput): Wait for publish here.
-    })?;
-
-    Ok(())
+    })
 }

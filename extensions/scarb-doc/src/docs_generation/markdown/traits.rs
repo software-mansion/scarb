@@ -216,7 +216,7 @@ fn generate_markdown_from_item_data(
 
     if let Some(sig) = &doc_item.signature() {
         if !sig.is_empty() {
-            // TODO(#1457) add cairo support to mdbook
+            // TODO(#1525) add cairo support to mdbook
             writeln!(&mut markdown, "```rust\n{sig}\n```\n")?;
         }
     }

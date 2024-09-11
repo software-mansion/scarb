@@ -14,10 +14,12 @@ use axum::http::StatusCode;
 use axum::http::{HeaderMap, HeaderValue};
 use axum::middleware;
 use axum::middleware::Next;
-use axum::response::Response;
+use axum::response::{IntoResponse, Response};
+use axum::routing::post;
 use axum::Router;
 use data_encoding::HEXLOWER;
 use itertools::Itertools;
+use serde_json::json;
 use sha2::digest::FixedOutput;
 use sha2::Digest;
 use tokio::sync::Mutex;
@@ -44,8 +46,14 @@ pub struct HttpLog {
     pub res_headers: HeaderMap,
 }
 
+#[derive(Clone)]
+pub struct HttpPostResponse {
+    pub code: u16,
+    pub message: String,
+}
+
 impl SimpleHttpServer {
-    pub fn serve(dir: PathBuf) -> Self {
+    pub fn serve(dir: PathBuf, post_response: Option<HttpPostResponse>) -> Self {
         let (ct, ctrx) = tokio::sync::oneshot::channel::<()>();
 
         let print_logs = Arc::new(AtomicBool::new(false));
@@ -53,6 +61,10 @@ impl SimpleHttpServer {
 
         let app = Router::new()
             .fallback_service(ServeDir::new(dir))
+            .route(
+                "/api/v1/packages/new",
+                post(move || post_handler(post_response.clone())),
+            )
             .layer(middleware::from_fn(set_etag))
             .layer(middleware::from_fn_with_state(
                 (logs.clone(), print_logs.clone()),
@@ -100,6 +112,25 @@ impl Drop for SimpleHttpServer {
     fn drop(&mut self) {
         let _ = self.ct.take().map(|ct| ct.send(()));
     }
+}
+
+async fn post_handler(post_response: Option<HttpPostResponse>) -> impl IntoResponse {
+    let (status_code, message) = match post_response {
+        Some(response) => (
+            StatusCode::from_u16(response.code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
+            response.message,
+        ),
+        None => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "POST request received".to_string(),
+        ),
+    };
+    let json_response = json!({
+        "status": status_code.as_u16(),
+        "error": message
+    });
+
+    (status_code, json_response.to_string())
 }
 
 async fn logger<B>(
@@ -204,7 +235,9 @@ impl fmt::Display for HttpLog {
             .sorted_by_key(|(k, _)| k.as_str())
             .map(|(k, v)| (k, String::from_utf8_lossy(v.as_bytes())))
             .map(|(k, v)| match *k {
-                HOST | IF_NONE_MATCH | IF_MODIFIED_SINCE | USER_AGENT => (k, "...".into()),
+                HOST | IF_NONE_MATCH | IF_MODIFIED_SINCE | USER_AGENT | CONTENT_TYPE => {
+                    (k, "...".into())
+                }
                 _ => (k, v),
             })
             .try_for_each(|(k, v)| writeln!(f, "{k}: {v}"))?;

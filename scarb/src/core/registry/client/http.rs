@@ -1,12 +1,16 @@
+use std::env;
+use std::path::Path;
 use std::str::FromStr;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use async_trait::async_trait;
 use futures::StreamExt;
 use reqwest::header::{
-    HeaderMap, HeaderName, HeaderValue, ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED,
+    HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH,
+    LAST_MODIFIED,
 };
-use reqwest::{Response, StatusCode};
+use reqwest::multipart::{Form, Part};
+use reqwest::{Body, Response, StatusCode};
 use tokio::io;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::sync::OnceCell;
@@ -15,14 +19,13 @@ use tracing::{debug, trace, warn};
 use scarb_ui::components::Status;
 
 use crate::core::registry::client::{
-    CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
+    CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource, RegistryUpload,
 };
 use crate::core::registry::index::{IndexConfig, IndexRecords};
 use crate::core::{Config, Package, PackageId, PackageName, SourceId};
 use crate::flock::{FileLockGuard, Filesystem};
 
 // TODO(mkaput): Progressbar.
-// TODO(mkaput): Request timeout.
 
 /// Remote registry served by the HTTP-based registry API.
 pub struct HttpRegistryClient<'c> {
@@ -146,12 +149,73 @@ impl<'c> RegistryClient for HttpRegistryClient<'c> {
     }
 
     async fn supports_publish(&self) -> Result<bool> {
-        // TODO(mkaput): Publishing to HTTP registries is not implemented yet.
-        Ok(false)
+        Ok(self.index_config.load().await?.upload.is_some())
     }
 
-    async fn publish(&self, _package: Package, _tarball: FileLockGuard) -> Result<()> {
-        todo!("Publishing to HTTP registries is not implemented yet.")
+    async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
+        let auth_token = env::var("SCARB_REGISTRY_AUTH_TOKEN").map_err(|_| {
+            anyhow!(
+                "missing authentication token. \
+            help: make sure SCARB_REGISTRY_AUTH_TOKEN environment variable is set"
+            )
+        })?;
+
+        let path = tarball.path();
+        ensure!(
+            Path::new(path).exists(),
+            "cannot upload package - file does not exist at path: {}",
+            path
+        );
+
+        let file = tarball.into_async();
+        let index_config = self.index_config.load().await?;
+
+        let file_part = Part::stream(Body::from(file.try_clone().await?))
+            .file_name(format!("{}_{}", &package.id.name, &package.id.version));
+        let form = Form::new().part("file", file_part);
+
+        let response = self
+            .config
+            .online_http()?
+            .post(
+                index_config
+                    .upload
+                    .clone()
+                    .ok_or_else(|| anyhow!("failed to fetch registry upload url"))?,
+            )
+            .header(AUTHORIZATION, format!("Bearer {}", auth_token))
+            .multipart(form)
+            .send()
+            .await?;
+
+        let result = match response.status() {
+            StatusCode::OK => RegistryUpload::Success,
+            status => {
+                let headers = response.headers().clone();
+                let error_body: serde_json::Value = response.json().await?;
+                let error_message = error_body
+                    .get("error")
+                    .and_then(|e| e.as_str())
+                    .unwrap_or("missing error field in the registry response");
+
+                let trace_id = headers
+                    .get("x-cloud-trace-context")
+                    .and_then(|v| v.to_str().ok());
+
+                let error_message = match trace_id {
+                    Some(id) => format!(
+                        "upload failed with status code: `{}`, `{}` (trace-id: {:?})",
+                        status, error_message, id
+                    ),
+                    None => format!(
+                        "upload failed with status code: `{}`, `{}`",
+                        status, error_message,
+                    ),
+                };
+                RegistryUpload::Failure(anyhow!(error_message))
+            }
+        };
+        Ok(result)
     }
 }
 

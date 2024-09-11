@@ -6,7 +6,8 @@ Scarb is actively developed and open for contributions!
 Grab any unassigned issue labeled with [`help-wanted`](https://github.com/software-mansion/scarb/labels/help%20wanted)!
 
 *Looking for some easy warmup tasks?*
-Check out issues labeled with [`good-first-issue`](https://github.com/software-mansion/scarb/labels/good%20first%20issue)!
+Check out issues labeled with [
+`good-first-issue`](https://github.com/software-mansion/scarb/labels/good%20first%20issue)!
 
 *Need some guidance?*
 Reach out to other developers on [Telegram](https://t.me/+1pMLtrNj5NthZWJk)!
@@ -17,7 +18,8 @@ Latest stable Rust is the only thing you really need.
 It is recommended to use [rustup](https://rustup.rs/) for getting it.
 
 If you wish to work on Scarb's website, you will need [Node.js](https://nodejs.org/).
-We recommend to install it using [asdf](https://asdf-vm.com/) (via [nodejs](https://github.com/asdf-vm/asdf-nodejs) plugin).
+We recommend to install it using [asdf](https://asdf-vm.com/) (via [nodejs](https://github.com/asdf-vm/asdf-nodejs)
+plugin).
 
 ## Contributing
 
@@ -56,12 +58,30 @@ Each commit should pass lints and tests.
 Then, set up a stack of pull requests, separate PR for each commit, and pointing to the previous one.
 
 While your PR is being reviewed on, you can push merge commits and
-use [`git commit --fixup`](https://git-scm.com/docs/git-commit/2.32.0#Documentation/git-commit.txt---fixupamendrewordltcommitgt)
+use [
+`git commit --fixup`](https://git-scm.com/docs/git-commit/2.32.0#Documentation/git-commit.txt---fixupamendrewordltcommitgt)
 to push further changes to your commits.
 
 ### Typos
+
 Our policy is to not accept PRs that only fix typos in the documentation and code. We appreciate your effort, but we
 encourage you to focus on bugs and features instead.
+
+## Tips
+
+### Testing custom Cairo compiler changes
+
+Sometimes you may happen to work on a feature to the Cairo compiler, and you would like to test how it works in Scarb
+(for example, if you are working on Starknet Foundry).
+
+We have a script that edits the `Cargo.toml` file to use a local checkout of the Cairo compiler.
+To use this tool, run:
+
+```shell
+cargo xtask set-cairo-version --path ../path/to/cairo
+```
+
+And then you can `cargo build` Scarb with your custom Cairo compiler changes.
 
 ---
 

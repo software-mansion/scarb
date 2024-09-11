@@ -11,7 +11,7 @@ Please note that the official registry is still in development.
 
 You can already use it to discover and [add](#adding-dependencies) packages to your projects.
 
-[Publishing](#packaging-and-publishing) packages is currently limited, but if there are any other packages you would like to be available - please reach out to us on [Telegram](https://t.me/scarbs_xyz) or [Discord](https://discord.gg/7YXj4Z2).
+To learn more about publishing packages to the registry, please visit section dedicated to [publishing](#packaging-and-publishing).
 
 ## Adding dependencies
 

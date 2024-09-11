@@ -8,7 +8,7 @@ use std::sync::LazyLock;
 use tokio::runtime;
 
 use crate::registry::local::LocalRegistry;
-use crate::simple_http_server::SimpleHttpServer;
+use crate::simple_http_server::{HttpPostResponse, SimpleHttpServer};
 
 // Keep a global multi-threading runtime to contain all running servers in one shared
 // thread pool, while maintaining synchronous nature of tests.
@@ -22,23 +22,24 @@ static RUNTIME: LazyLock<runtime::Runtime> = LazyLock::new(|| {
 
 pub struct HttpRegistry {
     local: LocalRegistry,
-    url: String,
+    pub url: String,
 
     // This needs to be stored here so that it's dropped properly.
     server: SimpleHttpServer,
 }
 
 impl HttpRegistry {
-    pub fn serve() -> Self {
+    pub fn serve(post_response: Option<HttpPostResponse>) -> Self {
         let local = LocalRegistry::create();
         let server = {
             let _guard = RUNTIME.enter();
-            SimpleHttpServer::serve(local.t.path().to_owned())
+            SimpleHttpServer::serve(local.t.path().to_owned(), post_response)
         };
         let url = server.url();
 
         let config = json!({
             "version": 1,
+            "upload": format!("{url}api/v1/packages/new"),
             "dl": format!("{url}{{package}}-{{version}}.tar.zst"),
             "index": format!("{url}index/{{prefix}}/{{package}}.json")
         });
@@ -47,7 +48,6 @@ impl HttpRegistry {
             .child("api/v1/index/config.json")
             .write_str(&serde_json::to_string(&config).unwrap())
             .unwrap();
-
         Self { local, url, server }
     }
 

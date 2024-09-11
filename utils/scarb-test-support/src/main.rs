@@ -43,7 +43,7 @@ fn hang_on_tcp(args: HangOnTcpArgs) -> Result<()> {
 
 #[tokio::main]
 async fn http_server() -> Result<()> {
-    let http = SimpleHttpServer::serve(env::current_dir().unwrap());
+    let http = SimpleHttpServer::serve(env::current_dir().unwrap(), None);
     http.print_logs(true);
     println!("🚀 {}", http.url());
     println!("Press enter to continue...");

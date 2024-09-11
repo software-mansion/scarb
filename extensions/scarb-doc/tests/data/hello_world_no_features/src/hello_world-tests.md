@@ -2,7 +2,6 @@
 
 Tests module
 
-
 Fully qualified path: `hello_world::tests`
 
 ## Free functions
