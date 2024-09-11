@@ -48,7 +48,7 @@ fn can_build_release() {
             -> Scarb.toml
                 [cairo]
                 sierra-replace-ids = true
-            [..]Finished release target(s) in [..]
+            [..]Finished `release` profile target(s) in [..]
         "#});
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "release"]);

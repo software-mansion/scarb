@@ -54,7 +54,7 @@ fn default_behaviour() {
             [[target.starknet-contract]]
             allowed-libfuncs-list.name = "experimental"
 
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -86,7 +86,7 @@ fn check_true() {
             [[target.starknet-contract]]
             allowed-libfuncs-list.name = "experimental"
 
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -114,7 +114,7 @@ fn check_false() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -178,7 +178,7 @@ fn pass_named_list() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -244,7 +244,7 @@ fn list_path() {
         warn: libfunc `revoke_ap_tracking` is not allowed in the libfuncs list `[..]testing_list.json`
          --> contract: ExperimentalLibfunc
 
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 

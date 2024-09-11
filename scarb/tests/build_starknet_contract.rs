@@ -42,7 +42,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -64,7 +64,7 @@ fn compile_starknet_contract() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     assert_eq!(
@@ -105,7 +105,7 @@ fn compile_starknet_contract_to_casm() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     assert_eq!(
@@ -156,7 +156,7 @@ fn compile_many_contracts() {
         [..] Compiling lib(hello) hello v0.1.0 ([..])
         [..] Compiling starknet-contract(a) hello v0.1.0 ([..])
         [..] Compiling starknet-contract(b) hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     assert_eq!(
@@ -216,7 +216,7 @@ fn compile_same_name_contracts() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     assert_eq!(
@@ -259,7 +259,7 @@ fn casm_add_pythonic_hints() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/hello_Balance.compiled_contract_class.json")
