@@ -204,7 +204,7 @@ fn filter_map_item_id_to_item<T, F, G, K, J>(
     generate_item_function: G,
 ) -> Result<Vec<K>, DiagnosticAdded>
 where
-    T: Copy + TopLevelLanguageElementId + ?Sized,
+    T: Copy + TopLevelLanguageElementId,
     F: Fn(&dyn TopLevelLanguageElementId) -> Result<bool, DiagnosticAdded>,
     G: Fn(T) -> Maybe<K>,
 {

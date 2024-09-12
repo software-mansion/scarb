@@ -37,11 +37,6 @@ impl Compiler for TestCompiler {
 
         diagnostics_reporter.ensure(db)?;
 
-        let mut diagnostics_reporter =
-            build_compiler_config(db, &unit, &test_crate_ids, ws).diagnostics_reporter;
-
-        diagnostics_reporter.ensure(db)?;
-
         let test_compilation = {
             let _ = trace_span!("compile_test").enter();
             let config = TestsCompilationConfig {
