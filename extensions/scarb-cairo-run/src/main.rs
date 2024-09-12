@@ -58,6 +58,12 @@ struct Args {
     /// or `[1, 2, [3, 4, 5]]` to `fn main(t: (u64, u64), v: Array<u64>)`.
     #[arg(default_value = "[]")]
     arguments: deserialization::Args,
+
+    /// Path to the JSON file containing program arguments.
+    ///
+    /// It specified, `[ARGUMENTS]` CLI parameter will be ignored.
+    #[arg(long)]
+    arguments_file: Option<Utf8PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -76,6 +82,14 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
     let package = args.packages_filter.match_one(&metadata)?;
 
     let available_gas = GasLimit::parse(args.available_gas).with_metadata(&metadata, &package)?;
+
+    let program_args = match args.arguments_file {
+        Some(path) => serde_json::from_str::<deserialization::Args>(
+            &fs::read_to_string(path.clone())
+                .with_context(|| format!("failed to read arguments from file: {path}"))?,
+        )?,
+        None => args.arguments,
+    };
 
     if !args.no_build {
         let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
@@ -126,7 +140,7 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
     let result = runner
         .run_function_with_starknet_context(
             main_function(&runner, &sierra_program, args.function.as_deref())?,
-            &args.arguments,
+            &program_args,
             available_gas.value(),
             StarknetState::default(),
         )
