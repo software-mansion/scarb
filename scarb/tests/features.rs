@@ -6,6 +6,7 @@ use indoc::indoc;
 use scarb_metadata::{Cfg, Metadata};
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 fn build_example_program(t: &TempDir) {
     ProjectBuilder::start()
@@ -362,4 +363,50 @@ fn features_metadata_feature_in_compilation_units() {
     assert!(
         main_component_cfg.is_some_and(|cfg| cfg.contains(&Cfg::KV("feature".into(), "x".into())))
     );
+}
+
+#[test]
+fn features_in_workspace_success() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+            y = []
+            "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn f() -> felt252 { 21 }
+
+            #[cfg(feature: 'y')]
+            fn f() -> felt252 { 59 }
+
+            fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .build(&t.child("first"));
+    ProjectBuilder::start()
+        .name("second")
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 {
+                12
+            }
+        "#})
+        .build(&t.child("second"));
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        .arg("--package")
+        .arg("first")
+        .arg("--features")
+        .arg("x")
+        .current_dir(&t)
+        .assert()
+        .success();
 }
