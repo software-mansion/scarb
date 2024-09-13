@@ -36,12 +36,35 @@ fn test_diagnostics_error() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    let snapbox = Scarb::quick_snapbox()
         .arg("doc")
         .current_dir(&t)
         .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
+        .failure();
+
+    #[cfg(windows)]
+    snapbox.stdout_matches(indoc! {r#"
+              error: Identifier not found.
+               [..]
+                wrong code
+                ^***^
+    
+              error: Missing semicolon
+               [..]
+                wrong code
+                     ^
+    
+              error: Identifier not found.
+               [..]
+                wrong code
+                      ^**^
+    
+              error: Compilation failed.
+              error: process did not exit successfully: exit code: 1
+            "#});
+
+    #[cfg(not(windows))]
+    snapbox.stdout_matches(indoc! {r#"
           error: Identifier not found.
            [..]
             wrong code
@@ -111,12 +134,25 @@ fn test_diagnostics_not_allowed_warnings() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    let snapbox = Scarb::quick_snapbox()
         .arg("doc")
         .current_dir(&t)
         .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
+        .failure();
+
+    #[cfg(windows)]
+    snapbox.stdout_matches(indoc! {r#"
+            warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
+             [..]
+              let a = 5;
+                  ^
+            
+            error: Compilation failed.
+            error: process did not exit successfully: exit code: 1
+        "#});
+
+    #[cfg(not(windows))]
+    snapbox.stdout_matches(indoc! {r#"
             warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
              [..]
               let a = 5;
