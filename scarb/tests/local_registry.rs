@@ -158,7 +158,7 @@ fn publish() {
             [..]
             [..] Verifying {name}-{version}.tar.zst
             [..] Compiling {name} v{version} ([..])
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
             [..]  Packaged [..]
             [..] Uploading {name} v{version} (registry+file://[..]/index/)
             [..] Published {name} v{version} (registry+file://[..]/index/)

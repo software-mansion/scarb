@@ -59,7 +59,7 @@ Let's compile it:
 ```shell
 $ scarb build
    Compiling hello_world v0.1.0 (/path/to/package/hello_world/Scarb.toml)
-    Finished release target(s) in 2 seconds
+    Finished `dev` profile target(s) in 2 seconds
 ```
 
 This will create a Sierra code of your program in `target/dev/hello_world.sierra.json`.
@@ -89,7 +89,7 @@ To compile it, simply run the same `build` command as you would for a regular Ca
 ```shell
 $ scarb build
    Compiling hello_world v0.1.0 (/path/to/package/hello_world/Scarb.toml)
-    Finished release target(s) in 2 seconds
+    Finished `dev` profile target(s) in 2 seconds
 ```
 
 This will create a Sierra contract class artifact of your program in `target/dev/hello_world.contract_class.json`

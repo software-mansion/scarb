@@ -103,7 +103,7 @@ fn compile_with_custom_lib_target() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/not_hello.casm")
@@ -146,7 +146,7 @@ fn compile_with_named_default_lib_target() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/not_hello.sierra.json")
@@ -190,7 +190,7 @@ fn compile_with_lib_target_in_target_array() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/not_hello.sierra.json")

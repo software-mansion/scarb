@@ -67,7 +67,7 @@ fn locking_build_artifacts() {
             indoc! {r#"
             [..] Compiling hello v0.1.0 ([..])
             [..]  Blocking waiting for file lock on output file
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
             "#},
             stdout_acc,
         );

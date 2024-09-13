@@ -22,7 +22,7 @@ fn check_simple() {
         .assert()
         .stdout_matches(indoc! { r#"
         [..]Checking hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished checking release target(s) in [..]
+        [..]Finished checking `dev` profile target(s) in [..]
         "#
         })
         .success();

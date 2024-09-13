@@ -27,7 +27,7 @@ $ scarb build
    Compiling alexandria_searching v0.1.0 (/path/to/package/alexandria/src/searching/Scarb.toml)
    Compiling alexandria_sorting v0.1.0 (/path/to/package/alexandria/src/sorting/Scarb.toml)
    Compiling alexandria_storage v0.2.0 (/path/to/package/alexandria/src/storage/Scarb.toml)
-    Finished release target(s) in 5 seconds
+    Finished `dev` profile target(s) in 5 seconds
 ```
 
 This will fetch all the dependencies and then build them, along with the package.
@@ -46,5 +46,5 @@ $ scarb check
     Checking alexandria_searching v0.1.0 (/path/to/package/alexandria/src/searching/Scarb.toml)
     Checking alexandria_sorting v0.1.0 (/path/to/package/alexandria/src/sorting/Scarb.toml)
     Checking alexandria_storage v0.2.0 (/path/to/package/alexandria/src/storage/Scarb.toml)
-    Finished checking release target(s) in 4 seconds
+    Finished checking `dev` profile target(s) in 4 seconds
 ```

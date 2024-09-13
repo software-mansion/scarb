@@ -140,9 +140,10 @@ where
     }
 
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
+    let profile = ws.current_profile()?;
     let formatted_message = match operation_type {
-        Some(op) => format!("{op} release target(s) in {elapsed_time}"),
-        None => format!("release target(s) in {elapsed_time}"),
+        Some(op) => format!("{op} `{profile}` profile target(s) in {elapsed_time}"),
+        None => format!("`{profile}` profile target(s) in {elapsed_time}"),
     };
     ws.config()
         .ui()
