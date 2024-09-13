@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use std::collections::HashMap;
 use std::fmt::Write;
 
 use crate::docs_generation::{DocItem, PrimitiveDocItem, TopLevelDocItem};
@@ -14,12 +15,27 @@ pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
         format!("{}.md", self.full_path().replace("::", "-"))
     }
 
-    fn md_ref(&self) -> String {
-        format!("[{}](./{})", self.name(), self.filename())
+    fn parent_path(&self) -> String {
+        let mut path_tree_elements: Vec<_> = self.full_path().split("::").collect();
+        path_tree_elements.pop();
+        path_tree_elements.join("::")
     }
 
-    fn generate_markdown_list_item(&self) -> String {
-        format!("- {}\n", self.md_ref())
+    fn md_ref(&self, display_parent_path: bool) -> String {
+        if display_parent_path {
+            format!(
+                "[{}  ({})](./{})",
+                self.name(),
+                self.parent_path(),
+                self.filename(),
+            )
+        } else {
+            format!("[{}](./{})", self.name(), self.filename())
+        }
+    }
+
+    fn generate_markdown_list_item(&self, display_parent_path: bool) -> String {
+        format!("- {}\n", self.md_ref(display_parent_path))
     }
 }
 
@@ -153,6 +169,26 @@ impl MarkdownDocItem for Trait {
     }
 }
 
+pub fn mark_items_if_duplicated_name<'a, T: TopLevelMarkdownDocItem + 'a>(
+    items: &'a [&'a T],
+) -> Vec<(&&'a T, bool)> {
+    let mut names_counter = HashMap::<String, u32>::new();
+    for item in items {
+        *names_counter.entry(item.name().to_string()).or_insert(0) += 1;
+    }
+
+    items
+        .iter()
+        .map(|item| {
+            let is_duplicated = match names_counter.get(item.name()) {
+                Some(value) => *value > 1,
+                _ => false,
+            };
+            (item, is_duplicated)
+        })
+        .collect::<Vec<_>>()
+}
+
 pub fn generate_markdown_list_for_top_level_subitems<T: TopLevelMarkdownDocItem>(
     subitems: &[&T],
     header_level: usize,
@@ -163,8 +199,14 @@ pub fn generate_markdown_list_for_top_level_subitems<T: TopLevelMarkdownDocItem>
         let header = str::repeat("#", header_level);
 
         writeln!(&mut markdown, "{header} {}\n", T::HEADER).unwrap();
-        for item in subitems {
-            writeln!(&mut markdown, "{}", item.generate_markdown_list_item()).unwrap();
+        let marked_duplicated_items = mark_items_if_duplicated_name(subitems);
+        for (item, is_duplicated) in marked_duplicated_items {
+            writeln!(
+                &mut markdown,
+                "{}",
+                item.generate_markdown_list_item(is_duplicated)
+            )
+            .unwrap();
         }
     }
 
