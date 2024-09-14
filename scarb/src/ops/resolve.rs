@@ -173,7 +173,12 @@ pub fn generate_compilation_units(
     ws: &Workspace<'_>,
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
-    for member in ws.members().filter(|member| !member.is_cairo_plugin()) {
+    let members = ws
+        .members()
+        .filter(|member| !member.is_cairo_plugin())
+        .collect_vec();
+    validate_features(&members, enabled_features)?;
+    for member in members {
         units.extend(generate_cairo_compilation_units(
             &member,
             resolve,
@@ -205,6 +210,25 @@ pub fn generate_compilation_units(
     );
 
     Ok(units)
+}
+
+fn validate_features(members: &[Package], enabled_features: &FeaturesOpts) -> Result<()> {
+    // Check if any member has features defined.
+    if let FeaturesSelector::Features(features) = &enabled_features.features {
+        for feature in features {
+            if !members
+                .iter()
+                .any(|member| member.manifest.features.contains_key(feature))
+            {
+                bail!(
+                    "none of selected packages contains `{}` feature\n\
+                    note: to use features, you need to define [features] section in Scarb.toml",
+                    feature
+                );
+            }
+        }
+    }
+    Ok(())
 }
 
 fn generate_cairo_compilation_units(
@@ -377,25 +401,15 @@ fn get_cfg_with_features(
     features_manifest: &BTreeMap<FeatureName, Vec<FeatureName>>,
     enabled_features: &FeaturesOpts,
 ) -> Result<Option<CfgSet>> {
-    if features_manifest.is_empty() {
-        match &enabled_features.features {
-            FeaturesSelector::Features(features) if !features.is_empty() => {
-                bail!(
-                    "no features in manifest\n\
-                    note: to use features, you need to define [features] section in Scarb.toml",
-                )
-            }
-            _ => {
-                return Ok(None);
-            }
-        }
-    }
     let available_features: HashSet<FeatureName> = features_manifest.keys().cloned().collect();
-
     let mut selected_features: HashSet<FeatureName> = match &enabled_features.features {
         FeaturesSelector::AllFeatures => available_features.clone(),
         FeaturesSelector::Features(features) => {
-            let mut features: HashSet<FeatureName> = features.iter().cloned().collect();
+            let features: HashSet<FeatureName> = features.iter().cloned().collect();
+            let mut features: HashSet<FeatureName> = features
+                .intersection(&available_features)
+                .cloned()
+                .collect();
             if !enabled_features.no_default_features {
                 features.extend(
                     features_manifest

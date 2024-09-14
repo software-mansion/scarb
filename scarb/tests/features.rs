@@ -202,7 +202,10 @@ fn features_unknown_feature() {
         .arg("z")
         .current_dir(&t)
         .assert()
-        .stdout_matches("error: unknown features: z\n")
+        .stdout_matches(indoc! {r#"
+            error: none of selected packages contains `z` feature
+            note: to use features, you need to define [features] section in Scarb.toml
+        "#})
         .failure();
 }
 
@@ -217,7 +220,7 @@ fn features_fail_missing_manifest() {
         .current_dir(&t)
         .assert()
         .stdout_matches(indoc! {r#"
-            error: no features in manifest
+            error: none of selected packages contains `x` feature
             note: to use features, you need to define [features] section in Scarb.toml
         "#})
         .failure();
