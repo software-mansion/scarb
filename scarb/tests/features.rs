@@ -457,5 +457,9 @@ fn features_in_workspace_validated() {
         .arg("x")
         .current_dir(&t)
         .assert()
-        .failure();
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: none of selected packages contains `x` feature
+            note: to use features, you need to define [features] section in Scarb.toml
+        "#});
 }

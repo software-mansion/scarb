@@ -212,7 +212,7 @@ pub fn generate_compilation_units(
     Ok(units)
 }
 
-fn validate_features(members: &[Package], enabled_features: &FeaturesOpts) -> Result<()> {
+pub fn validate_features(members: &[Package], enabled_features: &FeaturesOpts) -> Result<()> {
     // Check if any member has features defined.
     if let FeaturesSelector::Features(features) = &enabled_features.features {
         for feature in features {

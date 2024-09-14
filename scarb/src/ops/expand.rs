@@ -3,7 +3,7 @@ use crate::compiler::helpers::{build_compiler_config, write_string};
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
 use crate::core::{Package, PackageId, TargetKind, Workspace};
 use crate::ops;
-use crate::ops::{get_test_package_ids, FeaturesOpts};
+use crate::ops::{get_test_package_ids, validate_features, FeaturesOpts};
 use anyhow::{bail, Context, Result};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{LanguageElementId, ModuleId, ModuleItemId};
@@ -38,6 +38,8 @@ pub struct ExpandOpts {
 }
 
 pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<()> {
+    validate_features(&[package.clone()], &opts.features)?;
+
     let package_name = package.id.name.to_string();
     let resolve = ops::resolve_workspace(ws)?;
     let compilation_units = ops::generate_compilation_units(&resolve, &opts.features, ws)?;
