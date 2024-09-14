@@ -413,3 +413,49 @@ fn features_in_workspace_success() {
         .assert()
         .success();
 }
+
+#[test]
+fn features_in_workspace_validated() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+            y = []
+            "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn f() -> felt252 { 21 }
+
+            #[cfg(feature: 'y')]
+            fn f() -> felt252 { 59 }
+
+            fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .build(&t.child("first"));
+    ProjectBuilder::start()
+        .name("second")
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 {
+                12
+            }
+        "#})
+        .build(&t.child("second"));
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        .arg("--package")
+        .arg("second")
+        .arg("--features")
+        .arg("x")
+        .current_dir(&t)
+        .assert()
+        .failure();
+}
