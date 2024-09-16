@@ -163,6 +163,7 @@ impl ProcMacroHostPlugin {
     ) -> InnerAttrExpansionResult {
         let mut context = InnerAttrExpansionContext::new(self);
         let mut item_builder = PatchBuilder::new(db, &item_ast);
+        let mut all_none = true;
 
         match item_ast.clone() {
             ast::ModuleItem::Trait(trait_ast) => {
@@ -179,7 +180,6 @@ impl ProcMacroHostPlugin {
                         InnerAttrExpansionResult::None
                     }
                     MaybeTraitBody::Some(body) => {
-                        let mut all_none = true;
                         item_builder.add_node(body.lbrace(db).as_syntax_node());
 
                         let item_list = body.items(db);
@@ -195,45 +195,16 @@ impl ProcMacroHostPlugin {
                             func_builder.add_node(func.declaration(db).as_syntax_node());
                             func_builder.add_node(func.body(db).as_syntax_node());
                             let token_stream = TokenStream::new(func_builder.build().0);
-                            let (input, args, stable_ptr) = match found {
-                                AttrExpansionFound::Last {
-                                    expansion,
-                                    args,
-                                    stable_ptr,
-                                } => {
-                                    all_none = false;
-                                    (expansion, args, stable_ptr)
-                                }
-                                AttrExpansionFound::Some {
-                                    expansion,
-                                    args,
-                                    stable_ptr,
-                                } => {
-                                    all_none = false;
-                                    (expansion, args, stable_ptr)
-                                }
-                                AttrExpansionFound::None => {
-                                    item_builder.add_node(func.as_syntax_node());
-                                    continue;
-                                }
-                            };
 
-                            let result = self.instance(input.package_id).generate_code(
-                                input.expansion.name.clone(),
-                                args.clone(),
-                                token_stream.clone(),
-                            );
-
-                            let expanded = context.register_result(
-                                token_stream.to_string(),
-                                input,
-                                result,
-                                stable_ptr,
-                            );
-                            item_builder.add_modified(RewriteNode::Mapped {
-                                origin: func.as_syntax_node().span(db),
-                                node: Box::new(RewriteNode::Text(expanded.to_string())),
-                            });
+                            all_none = all_none
+                                && self.do_expand_inner_attr(
+                                    db,
+                                    &mut context,
+                                    &mut item_builder,
+                                    found,
+                                    func,
+                                    token_stream,
+                                );
                         }
 
                         item_builder.add_node(body.rbrace(db).as_syntax_node());
@@ -263,7 +234,6 @@ impl ProcMacroHostPlugin {
                         InnerAttrExpansionResult::None
                     }
                     MaybeImplBody::Some(body) => {
-                        let mut all_none = true;
                         item_builder.add_node(body.lbrace(db).as_syntax_node());
 
                         let items = body.items(db);
@@ -280,45 +250,15 @@ impl ProcMacroHostPlugin {
                             func_builder.add_node(func.declaration(db).as_syntax_node());
                             func_builder.add_node(func.body(db).as_syntax_node());
                             let token_stream = TokenStream::new(func_builder.build().0);
-                            let (input, args, stable_ptr) = match found {
-                                AttrExpansionFound::Last {
-                                    expansion,
-                                    args,
-                                    stable_ptr,
-                                } => {
-                                    all_none = false;
-                                    (expansion, args, stable_ptr)
-                                }
-                                AttrExpansionFound::Some {
-                                    expansion,
-                                    args,
-                                    stable_ptr,
-                                } => {
-                                    all_none = false;
-                                    (expansion, args, stable_ptr)
-                                }
-                                AttrExpansionFound::None => {
-                                    item_builder.add_node(func.as_syntax_node());
-                                    continue;
-                                }
-                            };
-
-                            let result = self.instance(input.package_id).generate_code(
-                                input.expansion.name.clone(),
-                                args.clone(),
-                                token_stream.clone(),
-                            );
-
-                            let expanded = context.register_result(
-                                token_stream.to_string(),
-                                input,
-                                result,
-                                stable_ptr,
-                            );
-                            item_builder.add_modified(RewriteNode::Mapped {
-                                origin: func.as_syntax_node().span(db),
-                                node: Box::new(RewriteNode::Text(expanded.to_string())),
-                            });
+                            all_none = all_none
+                                && self.do_expand_inner_attr(
+                                    db,
+                                    &mut context,
+                                    &mut item_builder,
+                                    found,
+                                    &func,
+                                    token_stream,
+                                );
                         }
 
                         item_builder.add_node(body.rbrace(db).as_syntax_node());
@@ -334,6 +274,54 @@ impl ProcMacroHostPlugin {
             }
             _ => InnerAttrExpansionResult::None,
         }
+    }
+
+    fn do_expand_inner_attr(
+        &self,
+        db: &dyn SyntaxGroup,
+        context: &mut InnerAttrExpansionContext<'_>,
+        item_builder: &mut PatchBuilder<'_>,
+        found: AttrExpansionFound,
+        func: &impl TypedSyntaxNode,
+        token_stream: TokenStream,
+    ) -> bool {
+        let mut all_none = true;
+        let (input, args, stable_ptr) = match found {
+            AttrExpansionFound::Last {
+                expansion,
+                args,
+                stable_ptr,
+            } => {
+                all_none = false;
+                (expansion, args, stable_ptr)
+            }
+            AttrExpansionFound::Some {
+                expansion,
+                args,
+                stable_ptr,
+            } => {
+                all_none = false;
+                (expansion, args, stable_ptr)
+            }
+            AttrExpansionFound::None => {
+                item_builder.add_node(func.as_syntax_node());
+                return all_none;
+            }
+        };
+
+        let result = self.instance(input.package_id).generate_code(
+            input.expansion.name.clone(),
+            args.clone(),
+            token_stream.clone(),
+        );
+
+        let expanded = context.register_result(token_stream.to_string(), input, result, stable_ptr);
+        item_builder.add_modified(RewriteNode::Mapped {
+            origin: func.as_syntax_node().span(db),
+            node: Box::new(RewriteNode::Text(expanded.to_string())),
+        });
+
+        all_none
     }
 
     /// Find first attribute procedural macros that should be expanded.

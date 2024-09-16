@@ -1489,7 +1489,7 @@ fn can_expand_trait_inner_func_attrr() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [34]
         "#});
@@ -1598,7 +1598,7 @@ fn can_expand_impl_inner_func_attrr() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 1 test
             test hello::tests::test_flow ... ok (gas usage est.: [..])
