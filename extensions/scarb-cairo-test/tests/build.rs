@@ -46,7 +46,7 @@ fn can_test_without_gas() {
         .success()
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 1 test
             test hello::tests::test_foo ... ok
@@ -97,7 +97,7 @@ fn can_print_test_resources() {
         .success()
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 1 test
             test hello::tests::it_works ... ok (gas usage est.: [..])
@@ -149,7 +149,7 @@ fn features_test_build_success() {
         .stdout_matches(indoc! {r#"
             [..]Running cairo-test hello
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 1 test
             test hello::tests::it_works ... ok[..]
@@ -234,7 +234,7 @@ fn integration_tests() {
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 2 tests
             test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 42440)
@@ -281,7 +281,7 @@ fn warn_if_cairo_test_plugin_missing() {
             ```
 
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 0 tests
             test result: ok. 0 passed; 0 failed; 0 ignored; 0 filtered out;
@@ -333,7 +333,7 @@ fn can_choose_test_kind_to_run() {
         .success()
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 1 test
             test hello::tests::it_works ... ok (gas usage est.: 42440)
@@ -349,7 +349,7 @@ fn can_choose_test_kind_to_run() {
         .success()
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 2 tests
             test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 42440)

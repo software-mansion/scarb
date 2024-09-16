@@ -47,7 +47,7 @@ $ scarb build
     Updating git repository https://github.com/keep-starknet-strange/alexandria
     Updating git repository https://github.com/OpenZeppelin/cairo-contracts
    Compiling hello_world v0.1.0 (/path/to/package/hello_world/Scarb.toml)
-    Finished release target(s) in 4 seconds
+    Finished `dev` profile target(s) in 4 seconds
 ```
 
 You can now use the `alexandria_math` package in `src/lib.cairo`:

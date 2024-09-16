@@ -103,7 +103,7 @@ fn compile_with_custom_lib_target() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/not_hello.casm")
@@ -146,7 +146,7 @@ fn compile_with_named_default_lib_target() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/not_hello.sierra.json")
@@ -190,7 +190,7 @@ fn compile_with_lib_target_in_target_array() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/not_hello.sierra.json")
@@ -563,4 +563,164 @@ fn detect_lib_test_target() {
             ),
         ]
     );
+}
+
+#[test]
+fn can_choose_target_by_name() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_cairo_test()
+        .dep_starknet()
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
+        .build(&t);
+    t.child("tests").create_dir_all().unwrap();
+    t.child("tests/test1.cairo")
+        .write_str(indoc! {r#"
+        #[cfg(test)]
+        mod tests {
+            use hello::f;
+            #[test]
+            fn it_works() {
+                assert(f() == 42, 'it works!');
+            }
+        }
+         "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--target-names=hello")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec!["hello.sierra.json", "hello.starknet_artifacts.json",]
+    );
+}
+
+#[test]
+fn can_choose_target_by_kind() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_cairo_test()
+        .dep_starknet()
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
+        .build(&t);
+    t.child("tests").create_dir_all().unwrap();
+    t.child("tests/test1.cairo")
+        .write_str(indoc! {r#"
+        #[cfg(test)]
+        mod tests {
+            use hello::f;
+            #[test]
+            fn it_works() {
+                assert(f() == 42, 'it works!');
+            }
+        }
+         "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--target-kinds=lib")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
+    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra.json"]);
+}
+
+#[test]
+fn cannot_use_both_test_and_target_kind() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_cairo_test()
+        .dep_starknet()
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .arg("--target-kinds=lib")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stderr_matches(indoc! {r#"
+            error: the argument '--test' cannot be used with '--target-kinds <TARGET_KINDS>'
+
+            Usage: scarb[EXE] build --test
+
+            For more information, try '--help'.
+        "#});
+}
+
+#[test]
+fn cannot_use_both_target_names_and_target_kind() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_cairo_test()
+        .dep_starknet()
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--target-names=hello")
+        .arg("--target-kinds=lib")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stderr_matches(indoc! {r#"
+            error: the argument '--target-names <TARGET_NAMES>' cannot be used with '--target-kinds <TARGET_KINDS>'
+
+            Usage: scarb[EXE] build --target-names <TARGET_NAMES>
+
+            For more information, try '--help'.
+        "#});
+}
+
+#[test]
+fn can_use_test_and_target_names() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_cairo_test()
+        .dep_starknet()
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        .arg("--test")
+        .arg("--target-names=hello")
+        .current_dir(&t)
+        .assert()
+        .success();
 }

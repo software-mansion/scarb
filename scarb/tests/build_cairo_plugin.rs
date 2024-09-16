@@ -142,7 +142,7 @@ fn compile_cairo_plugin() {
     assert!(stdout.contains("Compiling some v1.0.0"));
     let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
     let (last, lines) = lines.split_last().unwrap();
-    assert_matches(r#"[..] Finished release target(s) in [..]"#, last);
+    assert_matches(r#"[..] Finished `dev` profile target(s) in [..]"#, last);
     let (last, _lines) = lines.split_last().unwrap();
     // Line from Cargo output
     assert_matches(
@@ -171,7 +171,10 @@ fn check_cairo_plugin() {
     assert!(stdout.contains("Checking some v1.0.0"));
     let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
     let (last, lines) = lines.split_last().unwrap();
-    assert_matches(r#"[..] Finished checking release target(s) in [..]"#, last);
+    assert_matches(
+        r#"[..] Finished checking `dev` profile target(s) in [..]"#,
+        last,
+    );
     let (last, _lines) = lines.split_last().unwrap();
     // Line from Cargo output
     assert_matches(
@@ -226,7 +229,7 @@ fn can_use_json_output() {
     );
     let (last, lines) = lines.split_last().unwrap();
     assert_matches(
-        r#"{"status":"finished","message":"checking release target(s) in [..]"}"#,
+        r#"{"status":"finished","message":"checking `dev` profile target(s) in [..]"}"#,
         last,
     );
     // Line from Cargo.
@@ -326,7 +329,7 @@ fn can_emit_plugin_warning() {
             #[some]
             ^*****^
 
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -470,7 +473,7 @@ fn can_remove_original_node() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [34]
         "#});
@@ -516,7 +519,7 @@ fn can_replace_original_node() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [34]
         "#});
@@ -588,7 +591,7 @@ fn can_return_aux_data_from_plugin() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [SomeMacroDataFormat { msg: "Hello from some macro!" }]
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -638,7 +641,7 @@ fn can_read_token_stream_metadata() {
                     "[..]",
                 ),
             }
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -729,7 +732,7 @@ fn can_define_multiple_macros() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [121]
         "#});
@@ -932,7 +935,7 @@ fn can_resolve_full_path_markers() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [FullPathMarker { key: "some-key", full_path: "hello::main" }]
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -970,7 +973,7 @@ fn can_implement_inline_macro() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [34]
         "#});
@@ -1089,7 +1092,7 @@ fn can_implement_derive_macro() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [32]
         "#});
@@ -1169,7 +1172,7 @@ fn can_use_both_derive_and_attr() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [32]
         "#});
@@ -1220,7 +1223,7 @@ fn can_read_attribute_args() {
                 first: "aaa",
                 second: "bbb",
             )
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -1258,7 +1261,7 @@ fn can_create_executable_attribute() {
         .stdout_matches(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
     let sierra = project
         .child("target")

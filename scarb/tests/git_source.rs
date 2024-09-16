@@ -37,7 +37,7 @@ fn compile_simple_git_dep() {
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep1
         [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     assert_eq!(t.child("target/dev").files(), vec!["hello.sierra.json"]);
@@ -229,7 +229,7 @@ fn stale_cached_version() {
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
         [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/hello.sierra.json")
@@ -245,7 +245,7 @@ fn stale_cached_version() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/hello.sierra.json")
@@ -267,7 +267,7 @@ fn stale_cached_version() {
         .stdout_matches(indoc! {r#"
         [..]  Updating git repository file://[..]/dep
         [..] Compiling hello v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/hello.sierra.json")
