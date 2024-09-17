@@ -1,16 +1,17 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use cairo_lang_sierra::program::VersionedProgram;
-use indoc::indoc;
+use cairo_lang_starknet_classes::contract_class::ContractClass;
+use indoc::{formatdoc, indoc};
 use itertools::Itertools;
 use predicates::prelude::*;
 use scarb_metadata::Metadata;
-use std::path::PathBuf;
-
 use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::contracts::{BALANCE_CONTRACT, FORTY_TWO_CONTRACT, HELLO_CONTRACT};
 use scarb_test_support::fsx;
 use scarb_test_support::fsx::ChildPathEx;
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use std::path::PathBuf;
 
 #[test]
 fn compile_with_duplicate_targets_1() {
@@ -723,4 +724,176 @@ fn can_use_test_and_target_names() {
         .current_dir(&t)
         .assert()
         .success();
+}
+
+#[test]
+fn test_target_builds_contracts() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            sierra = true
+
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .dep_cairo_test()
+        .lib_cairo(indoc! {r#"
+            pub mod balance;
+            pub mod forty_two;
+        "#})
+        .src("src/balance.cairo", BALANCE_CONTRACT)
+        .src("src/forty_two.cairo", FORTY_TWO_CONTRACT)
+        .build(&t);
+
+    t.child("tests/contract_test.cairo")
+        .write_str(
+            formatdoc! {r#"
+        #[cfg(test)]
+        mod tests {{
+
+            {HELLO_CONTRACT}
+
+            use array::ArrayTrait;
+            use core::result::ResultTrait;
+            use core::traits::Into;
+            use option::OptionTrait;
+            use starknet::syscalls::deploy_syscall;
+            use traits::TryInto;
+
+            use hello::balance::{{Balance, IBalance, IBalanceDispatcher, IBalanceDispatcherTrait}};
+
+            #[test]
+            fn test_flow() {{
+                let calldata = array![100];
+                let (address0, _) = deploy_syscall(
+                    Balance::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+                )
+                    .unwrap();
+                let mut contract0 = IBalanceDispatcher {{ contract_address: address0 }};
+
+                let calldata = array![200];
+                let (address1, _) = deploy_syscall(
+                    Balance::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+                )
+                    .unwrap();
+                let mut contract1 = IBalanceDispatcher {{ contract_address: address1 }};
+
+                assert_eq!(@contract0.get(), @100, "contract0.get() == 100");
+                assert_eq!(@contract1.get(), @200, "contract1.get() == 200");
+                @contract1.increase(200);
+                assert_eq!(@contract0.get(), @100, "contract0.get() == 100");
+                assert_eq!(@contract1.get(), @400, "contract1.get() == 400");
+            }}
+        }}
+    "#}
+            .as_str(),
+        )
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling test(hello_unittest) hello v0.1.0 ([..]Scarb.toml)
+        [..]Compiling test(hello_integrationtest) hello_integrationtest v0.1.0 ([..]Scarb.toml)
+        [..]  Finished `dev` profile target(s) in [..]
+        "#});
+
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec![
+            "hello_integrationtest.starknet_artifacts.json",
+            "hello_integrationtest.test.json",
+            "hello_integrationtest.test.sierra.json",
+            "hello_integrationtest_Balance.contract_class.json",
+            "hello_integrationtest_FortyTwo.contract_class.json",
+            "hello_integrationtest_HelloContract.contract_class.json",
+            "hello_unittest.starknet_artifacts.json",
+            "hello_unittest.test.json",
+            "hello_unittest.test.sierra.json",
+            "hello_unittest_Balance.contract_class.json",
+            "hello_unittest_FortyTwo.contract_class.json"
+        ]
+    );
+
+    for json in [
+        "hello_integrationtest_Balance.contract_class.json",
+        "hello_integrationtest_FortyTwo.contract_class.json",
+        "hello_integrationtest_HelloContract.contract_class.json",
+        "hello_unittest_Balance.contract_class.json",
+        "hello_unittest_FortyTwo.contract_class.json",
+    ] {
+        t.child("target/dev")
+            .child(json)
+            .assert_is_json::<ContractClass>();
+    }
+
+    t.child("target/dev/hello_integrationtest.starknet_artifacts.json")
+        .assert_is_json::<serde_json::Value>();
+    t.child("target/dev/hello_unittest.starknet_artifacts.json")
+        .assert_is_json::<serde_json::Value>();
+}
+
+#[test]
+fn test_target_builds_external() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .dep_cairo_test()
+        .lib_cairo(HELLO_CONTRACT)
+        .build(&t.child("first"));
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            sierra = true
+
+            [[target.starknet-contract]]
+            build-external-contracts = ["first::*"]
+        "#})
+        .dep("first", Dep.path("../first"))
+        .dep_starknet()
+        .dep_cairo_test()
+        .build(&t.child("hello"));
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(t.child("hello"))
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling test(hello_unittest) hello v0.1.0 ([..]Scarb.toml)
+        [..]  Finished `dev` profile target(s) in [..]
+        "#});
+
+    assert_eq!(
+        t.child("hello/target/dev").files(),
+        vec![
+            "hello_unittest.starknet_artifacts.json",
+            "hello_unittest.test.json",
+            "hello_unittest.test.sierra.json",
+            "hello_unittest_HelloContract.contract_class.json"
+        ]
+    );
+
+    t.child("hello/target/dev/hello_unittest_HelloContract.contract_class.json")
+        .assert_is_json::<ContractClass>();
+
+    t.child("hello/target/dev/hello_unittest.starknet_artifacts.json")
+        .assert_is_json::<serde_json::Value>();
 }

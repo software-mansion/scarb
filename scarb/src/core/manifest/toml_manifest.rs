@@ -669,6 +669,8 @@ impl TomlManifest {
                 .iter()
                 .filter(|target| target.kind == TargetKind::STARKNET_CONTRACT)
                 .filter_map(|target| target.params.get("build-external-contracts"))
+                .filter_map(|value| value.as_array())
+                .flatten()
                 .filter_map(|value| value.as_str().map(ToString::to_string))
                 .sorted()
                 .dedup()
