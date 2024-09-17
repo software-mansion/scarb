@@ -145,3 +145,9 @@ lto = true
 [profile.ci]
 inherits = "test"
 strip = "debuginfo"
+
+[profile.ci.package."rust-analyzer-salsa"]
+opt-level = 3
+
+[profile.ci.package."tokio"]
+opt-level = 3
