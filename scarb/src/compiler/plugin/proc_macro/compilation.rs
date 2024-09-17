@@ -64,6 +64,10 @@ pub fn fetch_package(package: &Package, ws: &Workspace<'_>) -> Result<()> {
     run_cargo(CargoAction::Fetch, package, ws)
 }
 
+pub fn package_package(package: &Package, ws: &Workspace<'_>) -> Result<()> {
+    run_cargo(CargoAction::Package, package, ws)
+}
+
 fn run_cargo(action: CargoAction, package: &Package, ws: &Workspace<'_>) -> Result<()> {
     let cmd = CargoCommand {
         action,
@@ -85,6 +89,7 @@ enum CargoAction {
     Build,
     Check,
     Fetch,
+    Package,
 }
 
 struct CargoCommand {
@@ -125,9 +130,15 @@ impl From<CargoCommand> for Command {
             CargoAction::Fetch => cmd.arg("fetch"),
             CargoAction::Build => cmd.arg("build"),
             CargoAction::Check => cmd.arg("check"),
+            CargoAction::Package => cmd.arg("package"),
         };
         match args.action {
             CargoAction::Fetch => (),
+            // todo(macros package): make sure rust compilation is not being run twice if there is no '--no-verify' flag in here
+            CargoAction::Package => {
+                cmd.arg("--target-dir");
+                cmd.arg(args.target_dir);
+            }
             _ => {
                 cmd.arg("--release");
                 cmd.arg("--message-format");
