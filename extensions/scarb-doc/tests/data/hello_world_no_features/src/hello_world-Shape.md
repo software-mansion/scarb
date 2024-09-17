@@ -16,6 +16,10 @@ Constant for the shape type
 
 Fully qualified path: `hello_world::Shape::SHAPE_CONST`
 
+```rust
+const SHAPE_CONST: felt252;
+```
+
 
 ## Trait functions
 
@@ -37,5 +41,9 @@ fn area(self: T) -> u32
 Type alias for a pair of shapes
 
 Fully qualified path: `hello_world::Shape::ShapePair`
+
+```rust
+type ShapePair;
+```
 
 
