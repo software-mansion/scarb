@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
@@ -6,8 +7,9 @@ use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+use toml::Value;
 
-use crate::core::{TargetKind, TomlExternalTargetParams};
+use crate::core::{TargetKind, TomlExternalTargetParams, TomlTarget};
 use crate::internal::serdex::toml_merge;
 
 /// See [`TargetInner`] for public fields reference.
@@ -98,6 +100,23 @@ impl Target {
         P: Default + Serialize + Deserialize<'de>,
     {
         toml_merge(&P::default(), &self.params)
+    }
+
+    pub fn to_toml_target(&self) -> TomlTarget<TomlExternalTargetParams> {
+        let inner = &self.0;
+
+        let mut external_params: TomlExternalTargetParams = BTreeMap::new();
+        if let Value::Table(ref table) = inner.params {
+            for (key, value) in table {
+                external_params.insert(SmolStr::new(key), value.clone());
+            }
+        }
+
+        TomlTarget {
+            name: Some(inner.name.clone()),
+            source_path: None,
+            params: external_params,
+        }
     }
 }
 
