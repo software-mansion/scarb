@@ -4,17 +4,18 @@ use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{compile_test_prepared_db, TestsCompilationConfig};
+use itertools::Itertools;
 use tracing::trace_span;
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
 use crate::compiler::compilers::{
-    ensure_gas_enabled, get_compiled_contracts, ArtifactsWriter, Compiled,
+    ensure_gas_enabled, get_compiled_contracts, ArtifactsWriter, Compiled, ContractSelector,
 };
 use crate::compiler::helpers::{
     build_compiler_config, collect_all_crate_ids, collect_main_crate_ids, write_json,
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
-use crate::core::{PackageName, SourceId, TargetKind, Workspace};
+use crate::core::{PackageName, SourceId, TargetKind, TestTargetProps, Workspace};
 use crate::flock::Filesystem;
 
 pub struct TestCompiler;
@@ -96,7 +97,14 @@ fn compile_contracts(
 ) -> Result<()> {
     ensure_gas_enabled(db)?;
     let target_name = unit.main_component().target_name();
-    let props = StarknetContractProps::default();
+    let test_props: TestTargetProps = unit.main_component().target_props()?;
+    let external_contracts = test_props
+        .build_external_contracts
+        .map(|contracts| contracts.into_iter().map(ContractSelector).collect_vec());
+    let props = StarknetContractProps {
+        build_external_contracts: external_contracts,
+        ..StarknetContractProps::default()
+    };
     let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
     let Compiled {
         contract_paths,

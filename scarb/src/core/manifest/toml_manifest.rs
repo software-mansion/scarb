@@ -640,18 +640,18 @@ impl TomlManifest {
 
         // Skip autodetect for cairo plugins.
         let auto_detect = !targets.iter().any(Target::is_cairo_plugin);
-        targets.extend(self.collect_test_targets(package_name.clone(), root, auto_detect)?);
+        self.collect_test_targets(&mut targets, package_name.clone(), root, auto_detect)?;
 
         Ok(targets)
     }
 
     fn collect_test_targets(
         &self,
+        targets: &mut Vec<Target>,
         package_name: SmolStr,
         root: &Utf8Path,
         auto_detect: bool,
-    ) -> Result<Vec<Target>> {
-        let mut targets = Vec::new();
+    ) -> Result<()> {
         if let Some(test) = self.test.as_ref() {
             // Read test targets from manifest file.
             for test_toml in test {
@@ -665,12 +665,22 @@ impl TomlManifest {
             }
         } else if auto_detect {
             // Auto-detect test target.
+            let external_contracts = targets
+                .iter()
+                .filter(|target| target.kind == TargetKind::STARKNET_CONTRACT)
+                .filter_map(|target| target.params.get("build-external-contracts"))
+                .filter_map(|value| value.as_str().map(ToString::to_string))
+                .sorted()
+                .dedup()
+                .collect_vec();
             let source_path = self.lib.as_ref().and_then(|l| l.source_path.clone());
             let target_name: SmolStr = format!("{package_name}_unittest").into();
             let target_config = TomlTarget::<TomlExternalTargetParams> {
                 name: Some(target_name),
                 source_path,
-                params: TestTargetProps::default().try_into()?,
+                params: TestTargetProps::default()
+                    .with_build_external_contracts(external_contracts.clone())
+                    .try_into()?,
             };
             targets.extend(Self::collect_target::<TomlExternalTargetParams>(
                 TargetKind::TEST,
@@ -681,16 +691,23 @@ impl TomlManifest {
             )?);
             // Auto-detect test targets from `tests` directory.
             let tests_path = root.join(DEFAULT_TESTS_PATH);
+            let integration_target_config = |target_name, source_path| {
+                let result: Result<TomlTarget<TomlExternalTargetParams>> =
+                    Ok(TomlTarget::<TomlExternalTargetParams> {
+                        name: Some(target_name),
+                        source_path: Some(source_path),
+                        params: TestTargetProps::new(TestTargetType::Integration)
+                            .with_build_external_contracts(external_contracts.clone())
+                            .try_into()?,
+                    });
+                result
+            };
             if tests_path.join(DEFAULT_MODULE_MAIN_FILE).exists() {
                 // Tests directory contains `lib.cairo` file.
                 // Treat whole tests directory as single module.
                 let source_path = tests_path.join(DEFAULT_MODULE_MAIN_FILE);
                 let target_name: SmolStr = format!("{package_name}_{DEFAULT_TESTS_PATH}").into();
-                let target_config = TomlTarget::<TomlExternalTargetParams> {
-                    name: Some(target_name),
-                    source_path: Some(source_path),
-                    params: TestTargetProps::new(TestTargetType::Integration).try_into()?,
-                };
+                let target_config = integration_target_config(target_name, source_path)?;
                 targets.extend(Self::collect_target::<TomlExternalTargetParams>(
                     TargetKind::TEST,
                     Some(&target_config),
@@ -720,11 +737,7 @@ impl TomlManifest {
                         }
                         let file_stem = source_path.file_stem().unwrap().to_string();
                         let target_name: SmolStr = format!("{package_name}_{file_stem}").into();
-                        let target_config = TomlTarget::<TomlExternalTargetParams> {
-                            name: Some(target_name),
-                            source_path: Some(source_path),
-                            params: TestTargetProps::new(TestTargetType::Integration).try_into()?,
-                        };
+                        let target_config = integration_target_config(target_name, source_path)?;
                         targets.extend(Self::collect_target(
                             TargetKind::TEST,
                             Some(&target_config),
@@ -736,7 +749,7 @@ impl TomlManifest {
                 }
             }
         };
-        Ok(targets)
+        Ok(())
     }
 
     fn collect_target<T: Serialize>(

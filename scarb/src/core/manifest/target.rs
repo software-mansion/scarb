@@ -114,11 +114,22 @@ impl Hash for TargetInner {
 #[serde(rename_all = "kebab-case")]
 pub struct TestTargetProps {
     pub test_type: TestTargetType,
+    pub build_external_contracts: Option<Vec<String>>,
 }
 
 impl TestTargetProps {
     pub fn new(test_type: TestTargetType) -> Self {
-        Self { test_type }
+        Self {
+            test_type,
+            build_external_contracts: Default::default(),
+        }
+    }
+
+    pub fn with_build_external_contracts(self, external: Vec<String>) -> Self {
+        Self {
+            build_external_contracts: Some(external),
+            ..self
+        }
     }
 }
 
