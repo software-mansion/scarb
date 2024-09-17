@@ -112,7 +112,7 @@ fn test_workspace_without_features_in_manifest() {
         error: metadata command failed: `scarb metadata` exited with error
 
         stdout:
-        error: none of selected packages contains `test_feature` feature
+        error: none of the selected packages contains `test_feature` feature
         note: to use features, you need to define [features] section in Scarb.toml
 
         stderr:
@@ -125,7 +125,7 @@ fn test_workspace_without_features_in_manifest() {
         error: metadata command failed: `scarb metadata` exited with error
 
         stdout:
-        error: none of selected packages contains `test_feature` feature
+        error: none of the selected packages contains `test_feature` feature
         note: to use features, you need to define [features] section in Scarb.toml
 
         stderr:
@@ -317,7 +317,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
             error: metadata command failed: `scarb metadata` exited with error
     
             stdout:
-            error: none of selected packages contains `test_feature` feature
+            error: none of the selected packages contains `test_feature` feature
             note: to use features, you need to define [features] section in Scarb.toml
     
             stderr:
@@ -330,7 +330,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
             error: metadata command failed: `scarb metadata` exited with error
     
             stdout:
-            error: none of selected packages contains `test_feature` feature
+            error: none of the selected packages contains `test_feature` feature
             note: to use features, you need to define [features] section in Scarb.toml
     
             stderr:
@@ -376,7 +376,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         error: metadata command failed: `scarb metadata` exited with error
 
         stdout:
-        error: none of selected packages contains `test_feature` feature
+        error: none of the selected packages contains `test_feature` feature
         note: to use features, you need to define [features] section in Scarb.toml
 
         stderr:
@@ -389,7 +389,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         error: metadata command failed: `scarb metadata` exited with error
 
         stdout:
-        error: none of selected packages contains `test_feature` feature
+        error: none of the selected packages contains `test_feature` feature
         note: to use features, you need to define [features] section in Scarb.toml
 
         stderr:

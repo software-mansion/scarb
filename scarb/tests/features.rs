@@ -203,7 +203,7 @@ fn features_unknown_feature() {
         .current_dir(&t)
         .assert()
         .stdout_matches(indoc! {r#"
-            error: none of selected packages contains `z` feature
+            error: none of the selected packages contains `z` feature
             note: to use features, you need to define [features] section in Scarb.toml
         "#})
         .failure();
@@ -220,7 +220,7 @@ fn features_fail_missing_manifest() {
         .current_dir(&t)
         .assert()
         .stdout_matches(indoc! {r#"
-            error: none of selected packages contains `x` feature
+            error: none of the selected packages contains `x` feature
             note: to use features, you need to define [features] section in Scarb.toml
         "#})
         .failure();
@@ -459,7 +459,7 @@ fn features_in_workspace_validated() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: none of selected packages contains `x` feature
+            error: none of the selected packages contains `x` feature
             note: to use features, you need to define [features] section in Scarb.toml
         "#});
 }

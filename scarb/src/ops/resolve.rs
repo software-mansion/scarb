@@ -221,7 +221,7 @@ pub fn validate_features(members: &[Package], enabled_features: &FeaturesOpts) -
                 .any(|member| member.manifest.features.contains_key(feature))
             {
                 bail!(
-                    "none of selected packages contains `{}` feature\n\
+                    "none of the selected packages contains `{}` feature\n\
                     note: to use features, you need to define [features] section in Scarb.toml",
                     feature
                 );
