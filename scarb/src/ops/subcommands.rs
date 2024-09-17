@@ -13,7 +13,7 @@ use scarb_ui::components::Status;
 
 use crate::core::{Config, Package, ScriptDefinition, Workspace};
 use crate::internal::fsx::is_executable;
-use crate::ops::{self, FeaturesOpts};
+use crate::ops;
 use crate::process::exec_replace;
 use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV};
 
@@ -57,8 +57,6 @@ pub fn execute_test_subcommand(
         SCARB_MANIFEST_PATH_ENV.into(),
         package.manifest_path().to_string(),
     )]);
-    // Validate features opts.
-    let _: FeaturesOpts = features.clone().try_into()?;
     env.extend(features.to_env_vars());
     if let Some(script_definition) = package.manifest.scripts.get("test") {
         debug!("using `test` script: {script_definition}");
