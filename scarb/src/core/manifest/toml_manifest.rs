@@ -682,6 +682,12 @@ impl TomlManifest {
                     .with_build_external_contracts(external_contracts.clone())
                     .try_into()?,
             };
+            let external_contracts = external_contracts
+                .into_iter()
+                .chain(vec![format!("{package_name}::*")])
+                .sorted()
+                .dedup()
+                .collect_vec();
             targets.extend(Self::collect_target::<TomlExternalTargetParams>(
                 TargetKind::TEST,
                 Some(&target_config),

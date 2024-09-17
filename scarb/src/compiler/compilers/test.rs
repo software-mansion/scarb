@@ -57,8 +57,8 @@ impl Compiler for TestCompiler {
             compile_test_prepared_db(
                 db,
                 config,
-                all_crate_ids.clone(),
-                test_crate_ids,
+                all_crate_ids,
+                test_crate_ids.clone(),
                 diagnostics_reporter,
             )?
         };
@@ -81,7 +81,7 @@ impl Compiler for TestCompiler {
         }
 
         if starknet {
-            compile_contracts(all_crate_ids, target_dir, unit, db, ws)?;
+            compile_contracts(test_crate_ids, target_dir, unit, db, ws)?;
         }
 
         Ok(())
