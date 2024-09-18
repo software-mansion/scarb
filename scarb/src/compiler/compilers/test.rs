@@ -9,7 +9,8 @@ use tracing::trace_span;
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
 use crate::compiler::compilers::{
-    ensure_gas_enabled, get_compiled_contracts, ArtifactsWriter, Compiled, ContractSelector,
+    ensure_gas_enabled, get_compiled_contracts, ArtifactsWriter, CompiledContracts,
+    ContractSelector,
 };
 use crate::compiler::helpers::{
     build_compiler_config, collect_all_crate_ids, collect_main_crate_ids, write_json,
@@ -81,6 +82,8 @@ impl Compiler for TestCompiler {
         }
 
         if starknet {
+            // Note: this will only search for contracts in the main CU component and
+            // `build-external-contracts`. It will not collect contracts from all dependencies.
             compile_contracts(test_crate_ids, target_dir, unit, db, ws)?;
         }
 
@@ -106,7 +109,7 @@ fn compile_contracts(
         ..StarknetContractProps::default()
     };
     let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
-    let Compiled {
+    let CompiledContracts {
         contract_paths,
         contracts,
         classes,

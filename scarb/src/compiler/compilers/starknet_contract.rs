@@ -233,7 +233,7 @@ impl Compiler for StarknetContractCompiler {
 
         let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
 
-        let Compiled {
+        let CompiledContracts {
             contract_paths,
             contracts,
             classes,
@@ -353,7 +353,7 @@ impl ArtifactsWriter {
     }
 }
 
-pub struct Compiled {
+pub struct CompiledContracts {
     pub contract_paths: Vec<String>,
     pub contracts: Vec<ContractDeclaration>,
     pub classes: Vec<ContractClass>,
@@ -365,7 +365,7 @@ pub fn get_compiled_contracts(
     compiler_config: CompilerConfig<'_>,
     db: &mut RootDatabase,
     ws: &Workspace<'_>,
-) -> Result<Compiled> {
+) -> Result<CompiledContracts> {
     let contracts = find_project_contracts(
         db.upcast_mut(),
         ws.config().ui(),
@@ -383,7 +383,7 @@ pub fn get_compiled_contracts(
         let _ = trace_span!("compile_starknet").enter();
         compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
     };
-    Ok(Compiled {
+    Ok(CompiledContracts {
         contract_paths,
         contracts,
         classes,
