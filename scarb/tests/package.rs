@@ -1221,7 +1221,7 @@ fn ignore_whitelist_pattern() {
 }
 
 #[test]
-fn no_lib_target() {
+fn no_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("foo")
@@ -1239,8 +1239,8 @@ fn no_lib_target() {
         .failure()
         .stdout_matches(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
-        error: cannot archive package `foo` without a `lib` target
-        help: add `[lib]` section to package manifest
+        error: cannot archive package `foo` without a `lib` or `cairo_plugin` target
+        help: add `[lib]` or `[cairo_plugin]` section to package manifest
          --> Scarb.toml
         +   [lib]
         "#});
