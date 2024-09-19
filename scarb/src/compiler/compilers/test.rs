@@ -32,10 +32,8 @@ impl Compiler for TestCompiler {
                 && plugin.package.id.source_id == SourceId::for_std()
         });
 
-        let mut diagnostics_reporter =
+        let diagnostics_reporter =
             build_compiler_config(db, &unit, &test_crate_ids, ws).diagnostics_reporter;
-
-        diagnostics_reporter.ensure(db)?;
 
         let test_compilation = {
             let _ = trace_span!("compile_test").enter();
