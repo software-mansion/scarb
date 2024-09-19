@@ -6,6 +6,7 @@ pub mod fsx;
 pub mod gitx;
 pub mod manifest_edit;
 pub mod project_builder;
+pub mod cairo_plugin_project_builder;
 pub mod registry;
 pub mod simple_http_server;
 pub mod workspace_builder;
