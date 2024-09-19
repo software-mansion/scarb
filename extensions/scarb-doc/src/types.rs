@@ -567,7 +567,6 @@ impl TraitConstant {
     pub fn new(db: &ScarbDocDatabase, id: TraitConstantId, full_path_to_trait: String) -> Self {
         let node = id.stable_ptr(db);
 
-        // FIXME(#1437): compiler returns empty string for a signature
         let mut item_data = ItemData::new(
             db,
             id,
@@ -598,7 +597,6 @@ impl TraitType {
     pub fn new(db: &ScarbDocDatabase, id: TraitTypeId, full_path_to_trait: String) -> Self {
         let node = id.stable_ptr(db);
 
-        // FIXME(#1437): compiler returns empty string for a signature
         let mut item_data = ItemData::new(
             db,
             id,

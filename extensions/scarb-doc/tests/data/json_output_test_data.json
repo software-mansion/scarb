@@ -142,7 +142,7 @@
                   "item_data": {
                     "name": "SHAPE_CONST",
                     "doc": "Constant for the shape type",
-                    "signature": "",
+                    "signature": "const SHAPE_CONST: felt252;",
                     "full_path": "hello_world::Shape::SHAPE_CONST"
                   }
                 }
@@ -152,7 +152,7 @@
                   "item_data": {
                     "name": "ShapePair",
                     "doc": "Type alias for a pair of shapes",
-                    "signature": "",
+                    "signature": "type ShapePair;",
                     "full_path": "hello_world::Shape::ShapePair"
                   }
                 }
