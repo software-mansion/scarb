@@ -120,7 +120,8 @@ fn compile_contracts(
         db,
         ws,
     )?;
-    let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props);
+    let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props)
+        .with_extension_prefix("test".to_string());
     let casm_classes: Vec<Option<CasmContractClass>> = classes.iter().map(|_| None).collect();
     writer.write(contract_paths, &contracts, &classes, &casm_classes, db, ws)?;
     Ok(())

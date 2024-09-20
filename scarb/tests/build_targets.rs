@@ -808,35 +808,35 @@ fn test_target_builds_contracts() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
-            "hello_integrationtest.starknet_artifacts.json",
             "hello_integrationtest.test.json",
             "hello_integrationtest.test.sierra.json",
-            "hello_integrationtest_Balance.contract_class.json",
-            "hello_integrationtest_FortyTwo.contract_class.json",
-            "hello_integrationtest_HelloContract.contract_class.json",
-            "hello_unittest.starknet_artifacts.json",
+            "hello_integrationtest.test.starknet_artifacts.json",
+            "hello_integrationtest_Balance.test.contract_class.json",
+            "hello_integrationtest_FortyTwo.test.contract_class.json",
+            "hello_integrationtest_HelloContract.test.contract_class.json",
             "hello_unittest.test.json",
             "hello_unittest.test.sierra.json",
-            "hello_unittest_Balance.contract_class.json",
-            "hello_unittest_FortyTwo.contract_class.json"
+            "hello_unittest.test.starknet_artifacts.json",
+            "hello_unittest_Balance.test.contract_class.json",
+            "hello_unittest_FortyTwo.test.contract_class.json"
         ]
     );
 
     for json in [
-        "hello_integrationtest_Balance.contract_class.json",
-        "hello_integrationtest_FortyTwo.contract_class.json",
-        "hello_integrationtest_HelloContract.contract_class.json",
-        "hello_unittest_Balance.contract_class.json",
-        "hello_unittest_FortyTwo.contract_class.json",
+        "hello_integrationtest_Balance.test.contract_class.json",
+        "hello_integrationtest_FortyTwo.test.contract_class.json",
+        "hello_integrationtest_HelloContract.test.contract_class.json",
+        "hello_unittest_Balance.test.contract_class.json",
+        "hello_unittest_FortyTwo.test.contract_class.json",
     ] {
         t.child("target/dev")
             .child(json)
             .assert_is_json::<ContractClass>();
     }
 
-    t.child("target/dev/hello_integrationtest.starknet_artifacts.json")
+    t.child("target/dev/hello_integrationtest.test.starknet_artifacts.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/dev/hello_unittest.starknet_artifacts.json")
+    t.child("target/dev/hello_unittest.test.starknet_artifacts.json")
         .assert_is_json::<serde_json::Value>();
 }
 
@@ -884,16 +884,16 @@ fn test_target_builds_external() {
     assert_eq!(
         t.child("hello/target/dev").files(),
         vec![
-            "hello_unittest.starknet_artifacts.json",
             "hello_unittest.test.json",
             "hello_unittest.test.sierra.json",
-            "hello_unittest_HelloContract.contract_class.json"
+            "hello_unittest.test.starknet_artifacts.json",
+            "hello_unittest_HelloContract.test.contract_class.json"
         ]
     );
 
-    t.child("hello/target/dev/hello_unittest_HelloContract.contract_class.json")
+    t.child("hello/target/dev/hello_unittest_HelloContract.test.contract_class.json")
         .assert_is_json::<ContractClass>();
 
-    t.child("hello/target/dev/hello_unittest.starknet_artifacts.json")
+    t.child("hello/target/dev/hello_unittest.test.starknet_artifacts.json")
         .assert_is_json::<serde_json::Value>();
 }

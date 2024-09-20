@@ -77,6 +77,7 @@ pub struct ArtifactsWriter {
     casm: bool,
     target_dir: Filesystem,
     target_name: SmolStr,
+    extension_prefix: Option<String>,
 }
 
 impl ArtifactsWriter {
@@ -86,6 +87,14 @@ impl ArtifactsWriter {
             casm: props.casm,
             target_dir,
             target_name,
+            extension_prefix: None,
+        }
+    }
+
+    pub fn with_extension_prefix(self, prefix: String) -> Self {
+        Self {
+            extension_prefix: Some(prefix),
+            ..self
         }
     }
 
@@ -100,6 +109,10 @@ impl ArtifactsWriter {
     ) -> anyhow::Result<()> {
         let mut artifacts = StarknetArtifacts::default();
         let mut file_stem_calculator = ContractFileStemCalculator::new(contract_paths);
+        let extension_prefix = self
+            .extension_prefix
+            .map(|ext| format!(".{ext}"))
+            .unwrap_or_default();
 
         for (declaration, class, casm_class) in izip!(contracts, classes, casm_classes) {
             let contract_name = declaration.submodule_id.name(db.upcast_mut());
@@ -119,14 +132,15 @@ impl ArtifactsWriter {
             );
 
             if self.sierra {
-                let file_name = format!("{file_stem}.contract_class.json");
+                let file_name = format!("{file_stem}{extension_prefix}.contract_class.json");
                 write_json(&file_name, "output file", &self.target_dir, ws, class)?;
                 artifact.artifacts.sierra = Some(file_name);
             }
 
             if self.casm {
                 if let Some(casm_class) = casm_class {
-                    let file_name = format!("{file_stem}.compiled_contract_class.json");
+                    let file_name =
+                        format!("{file_stem}{extension_prefix}.compiled_contract_class.json");
                     write_json(&file_name, "output file", &self.target_dir, ws, casm_class)?;
                     artifact.artifacts.casm = Some(file_name);
                 }
@@ -138,7 +152,10 @@ impl ArtifactsWriter {
         artifacts.finish();
 
         write_json(
-            &format!("{}.starknet_artifacts.json", self.target_name),
+            &format!(
+                "{}{extension_prefix}.starknet_artifacts.json",
+                self.target_name
+            ),
             "starknet artifacts file",
             &self.target_dir,
             ws,
