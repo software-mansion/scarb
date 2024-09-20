@@ -51,14 +51,14 @@ struct ContractArtifacts {
 
 impl ContractArtifacts {
     fn new(
-        package_name: &PackageName,
+        package_name: PackageName,
         contract_name: &str,
         contract_path: &str,
         module_path: &str,
     ) -> Self {
         Self {
             id: short_hash((&package_name, &contract_path)),
-            package_name: package_name.clone(),
+            package_name,
             contract_name: contract_name.to_owned(),
             module_path: module_path.to_owned(),
             artifacts: ContractArtifact::default(),
@@ -101,9 +101,9 @@ impl ArtifactsWriter {
         let mut artifacts = StarknetArtifacts::default();
         let mut file_stem_calculator = ContractFileStemCalculator::new(contract_paths);
 
-        for (decl, class, casm_class) in izip!(contracts, classes, casm_classes) {
-            let contract_name = decl.submodule_id.name(db.upcast_mut());
-            let contract_path = decl.module_id().full_path(db.upcast_mut());
+        for (declaration, class, casm_class) in izip!(contracts, classes, casm_classes) {
+            let contract_name = declaration.submodule_id.name(db.upcast_mut());
+            let contract_path = declaration.module_id().full_path(db.upcast_mut());
 
             let contract_selector = ContractSelector(contract_path);
             let package_name = contract_selector.package();
@@ -112,10 +112,10 @@ impl ArtifactsWriter {
             let file_stem = format!("{}_{contract_stem}", self.target_name);
 
             let mut artifact = ContractArtifacts::new(
-                &package_name,
+                package_name,
                 &contract_name,
                 contract_selector.full_path().as_str(),
-                &decl.module_id().full_path(db.upcast_mut()),
+                &declaration.module_id().full_path(db.upcast_mut()),
             );
 
             if self.sierra {
