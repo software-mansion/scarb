@@ -6,7 +6,7 @@
         "root_module": {
           "item_data": {
             "name": "hello_world",
-            "doc": null,
+            "doc": "Fibonacci sequence calculator\n",
             "signature": null,
             "full_path": "hello_world"
           },
@@ -75,7 +75,7 @@
                   "item_data": {
                     "name": "radius",
                     "doc": "Radius of the circle",
-                    "signature": null,
+                    "signature": " radius: u32",
                     "full_path": "hello_world::Circle::radius"
                   }
                 }
@@ -95,7 +95,7 @@
                   "item_data": {
                     "name": "Red",
                     "doc": "Red color",
-                    "signature": null,
+                    "signature": "",
                     "full_path": "hello_world::Color::Red"
                   }
                 },
@@ -103,7 +103,7 @@
                   "item_data": {
                     "name": "Green",
                     "doc": "Green color",
-                    "signature": null,
+                    "signature": "",
                     "full_path": "hello_world::Color::Green"
                   }
                 },
@@ -111,7 +111,7 @@
                   "item_data": {
                     "name": "Blue",
                     "doc": "Blue color",
-                    "signature": null,
+                    "signature": "",
                     "full_path": "hello_world::Color::Blue"
                   }
                 }
@@ -163,7 +163,7 @@
                     "name": "area",
                     "doc": "Calculate the area of the shape",
                     "signature": "fn area(self: T) -> u32",
-                    "full_path": "Shape::area"
+                    "full_path": "hello_world::Shape::area"
                   }
                 }
               ],
