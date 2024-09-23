@@ -19,7 +19,7 @@ use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
 use crate::ops;
-use crate::ops::get_test_package_ids;
+use crate::ops::{get_test_package_ids, validate_features};
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -115,7 +115,11 @@ where
     F: FnMut(CompilationUnit, &Workspace<'_>) -> Result<()>,
 {
     let resolve = ops::resolve_workspace(ws)?;
-
+    let packages_to_process = ws
+        .members()
+        .filter(|p| packages.contains(&p.id))
+        .collect_vec();
+    validate_features(&packages_to_process, &opts.features)?;
     // Add test compilation units to build
     let packages = get_test_package_ids(packages, ws);
     let compilation_units = ops::generate_compilation_units(&resolve, &opts.features, ws)?
