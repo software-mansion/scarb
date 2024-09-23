@@ -1,5 +1,8 @@
 # hello_world
 
+Fibonacci sequence calculator
+
+
 Fully qualified path: `hello_world`
 
 ## Modules

@@ -27,7 +27,7 @@ const SHAPE_CONST: felt252;
 
 Calculate the area of the shape
 
-Fully qualified path: `Shape::area`
+Fully qualified path: `hello_world::Shape::area`
 
 ```rust
 fn area(self: T) -> u32
