@@ -2,11 +2,11 @@ use assert_fs::fixture::PathChild;
 use assert_fs::TempDir;
 use cairo_lang_sierra::program::VersionedProgram;
 use indoc::indoc;
+use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::assert_matches;
-use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 
 #[test]
 fn compile_cairo_plugin() {

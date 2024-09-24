@@ -1,11 +1,11 @@
-use std::sync::LazyLock;
-use std::path::PathBuf;
-use camino::Utf8PathBuf;
-use assert_fs::fixture::{FileWriteStr, PathChild};
-use std::collections::HashMap;
-use indoc::{formatdoc, indoc};
 use crate::fsx;
 use crate::project_builder::ProjectBuilder;
+use assert_fs::fixture::{FileWriteStr, PathChild};
+use camino::Utf8PathBuf;
+use indoc::{formatdoc, indoc};
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::sync::LazyLock;
 
 static CAIRO_LANG_MACRO_PATH: LazyLock<String> = LazyLock::new(|| {
     let path = fsx::canonicalize(
