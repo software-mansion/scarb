@@ -212,20 +212,28 @@ fn list_one_impl(
     Ok(recipe.into_iter().map(|f| f.path).collect())
 }
 
-fn get_cargo_package_name(cargo_toml_path: Utf8PathBuf) -> String {
+fn get_crate_archive_basename(cargo_toml_path: Utf8PathBuf) -> String {
     let cargo_toml: toml::Value =
         toml::from_str(&fs::read_to_string(cargo_toml_path).expect("Could not read `Cargo.toml`."))
             .expect("Could not convert `Cargo.toml` to toml.");
 
-    let package_name = cargo_toml
+    let package_section = cargo_toml
         .get("package")
-        .expect("Could not get package section from `Cargo.toml`.")
+        .expect("Could not get package section from `Cargo.toml`.");
+
+    let package_name = package_section
         .get("name")
         .expect("Could not get name field from `Cargo.toml`.")
         .as_str()
         .unwrap();
 
-    package_name.to_string()
+    let package_version = package_section
+        .get("version")
+        .expect("Could not get version field from `Cargo.toml`.")
+        .as_str()
+        .unwrap();
+
+    format!("{}-{}", package_name, package_version)
 }
 
 fn prepare_archive_recipe(
@@ -282,10 +290,8 @@ fn prepare_archive_recipe(
             contents: ArchiveFileContents::OnDisk(
                 pkg.target_path(ws.config())
                     .into_child("package")
-                    .into_child(format!(
-                        "{}-{}",
-                        get_cargo_package_name(pkg.root().join(CARGO_MANIFEST_FILE_NAME)),
-                        pkg.id.version
+                    .into_child(get_crate_archive_basename(
+                        pkg.root().join(CARGO_MANIFEST_FILE_NAME),
                     ))
                     .into_child(CARGO_MANIFEST_FILE_NAME)
                     .path_unchecked()
