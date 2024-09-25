@@ -173,7 +173,7 @@ fn package_one_impl(
 
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
-    let mut dst = if opts.verify {
+    let mut dst = if opts.verify && !pkg.is_builtin() {
         run_verify(pkg, dst, ws, opts.features.clone())
             .context("failed to verify package tarball")?
     } else {
@@ -280,7 +280,12 @@ fn prepare_archive_recipe(
         contents: ArchiveFileContents::OnDisk(pkg.manifest_path().to_owned()),
     });
 
-    if pkg.manifest.targets.iter().any(|x| x.is_cairo_plugin()) {
+    if pkg
+        .manifest
+        .targets
+        .iter()
+        .any(|x| x.is_cairo_plugin() && !x.is_builtin())
+    {
         // Package crate with Cargo.
         package_package(pkg, opts, ws)?;
 
