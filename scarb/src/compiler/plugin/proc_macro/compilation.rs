@@ -136,12 +136,11 @@ impl<'c> From<CargoCommand<'c>> for Command {
             CargoAction::Check => cmd.arg("check"),
             CargoAction::Package(_) => cmd.arg("package"),
         };
+        if args.config.offline() {
+            cmd.arg("--offline");
+        }
         match args.action {
-            CargoAction::Fetch => {
-                if args.config.offline() {
-                    cmd.arg("--offline");
-                }
-            }
+            CargoAction::Fetch => (),
             CargoAction::Package(ref opts) => {
                 cmd.arg("--target-dir");
                 cmd.arg(args.target_dir);
@@ -154,9 +153,7 @@ impl<'c> From<CargoCommand<'c>> for Command {
                 if opts.allow_dirty {
                     cmd.arg("--allow-dirty");
                 }
-                if args.config.offline() {
-                    cmd.arg("--offline");
-                }
+
             }
             _ => {
                 cmd.arg("--release");
@@ -165,9 +162,6 @@ impl<'c> From<CargoCommand<'c>> for Command {
                 cmd.arg(output_format.to_string());
                 cmd.arg("--target-dir");
                 cmd.arg(args.target_dir);
-                if args.config.offline() {
-                    cmd.arg("--offline");
-                }
             }
         }
         cmd
