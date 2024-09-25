@@ -70,6 +70,10 @@ impl Package {
         self.manifest.targets.iter().any(Target::is_cairo_plugin)
     }
 
+    pub fn is_builtin(&self) -> bool {
+        self.manifest.targets.iter().any(Target::is_builtin)
+    }
+
     pub fn is_publishable(&self) -> bool {
         self.manifest.publish
     }

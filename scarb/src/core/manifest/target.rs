@@ -85,6 +85,13 @@ impl Target {
         self.kind == TargetKind::CAIRO_PLUGIN
     }
 
+    pub fn is_builtin(&self) -> bool {
+        self.params
+            .get("builtin")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+    }
+
     pub fn is_test(&self) -> bool {
         self.kind == TargetKind::TEST
     }
