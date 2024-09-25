@@ -108,23 +108,6 @@ impl Target {
     {
         toml_merge(&P::default(), &self.params)
     }
-
-    pub fn to_toml_target(&self) -> TomlTarget<TomlExternalTargetParams> {
-        let inner = &self.0;
-
-        let mut external_params: TomlExternalTargetParams = BTreeMap::new();
-        if let Value::Table(ref table) = inner.params {
-            for (key, value) in table {
-                external_params.insert(SmolStr::new(key), value.clone());
-            }
-        }
-
-        TomlTarget {
-            name: Some(inner.name.clone()),
-            source_path: None,
-            params: external_params,
-        }
-    }
 }
 
 impl Hash for TargetInner {
