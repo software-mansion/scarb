@@ -242,10 +242,7 @@ fn prepare_archive_recipe(
     ws: &Workspace<'_>,
 ) -> Result<ArchiveRecipe> {
     ensure!(
-        pkg.manifest
-            .targets
-            .iter()
-            .any(|x| x.is_lib() || x.is_cairo_plugin()),
+        pkg.is_lib() || pkg.is_cairo_plugin(),
         formatdoc!(
             r#"
             cannot archive package `{package_name}` without a `lib` or `cairo_plugin` target
@@ -280,12 +277,7 @@ fn prepare_archive_recipe(
         contents: ArchiveFileContents::OnDisk(pkg.manifest_path().to_owned()),
     });
 
-    if pkg
-        .manifest
-        .targets
-        .iter()
-        .any(|x| x.is_cairo_plugin() && !x.is_builtin())
-    {
+    if pkg.is_cairo_plugin() && !pkg.is_builtin() {
         // Package crate with Cargo.
         package_package(pkg, opts, ws)?;
 
