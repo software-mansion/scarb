@@ -2,6 +2,7 @@
 
 Color enum with Red, Green, and Blue variants
 
+
 Fully qualified path: `hello_world::Color`
 
 ## Variants

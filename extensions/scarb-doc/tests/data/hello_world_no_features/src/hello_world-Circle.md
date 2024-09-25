@@ -2,6 +2,7 @@
 
 Circle struct with radius field
 
+
 Fully qualified path: `hello_world::Circle`
 
 ## Members

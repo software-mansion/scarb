@@ -14,7 +14,7 @@
             {
               "item_data": {
                 "name": "tests",
-                "doc": "Tests module",
+                "doc": "Tests module\n",
                 "signature": null,
                 "full_path": "hello_world::tests"
               },
@@ -24,7 +24,7 @@
                 {
                   "item_data": {
                     "name": "it_works",
-                    "doc": "Really",
+                    "doc": "Really\nworks.\n",
                     "signature": "fn it_works()",
                     "full_path": "hello_world::tests::it_works"
                   }
@@ -44,7 +44,7 @@
             {
               "item_data": {
                 "name": "FOO",
-                "doc": "FOO constant with value 42",
+                "doc": "FOO constant with value 42\n",
                 "signature": "const FOO: u32 = 42;",
                 "full_path": "hello_world::FOO"
               }
@@ -54,7 +54,7 @@
             {
               "item_data": {
                 "name": "main",
-                "doc": "Main function that calculates the 16th Fibonacci number",
+                "doc": "Main function that calculates the 16th Fibonacci number\n",
                 "signature": "fn main() -> u32",
                 "full_path": "hello_world::main"
               }
@@ -62,7 +62,7 @@
             {
               "item_data": {
                 "name": "fib",
-                "doc": "Calculate the nth Fibonacci number  # Arguments * `n` - The index of the Fibonacci number to calculate",
+                "doc": "Calculate the nth Fibonacci number\n\n# Arguments\n* `n` - The index of the Fibonacci number to calculate\n",
                 "signature": "fn fib(mut n: u32) -> u32",
                 "full_path": "hello_world::fib"
               }
@@ -82,7 +82,7 @@
               ],
               "item_data": {
                 "name": "Circle",
-                "doc": "Circle struct with radius field",
+                "doc": "Circle struct with radius field\n",
                 "signature": null,
                 "full_path": "hello_world::Circle"
               }
@@ -118,7 +118,7 @@
               ],
               "item_data": {
                 "name": "Color",
-                "doc": "Color enum with Red, Green, and Blue variants",
+                "doc": "Color enum with Red, Green, and Blue variants\n",
                 "signature": null,
                 "full_path": "hello_world::Color"
               }
@@ -128,7 +128,7 @@
             {
               "item_data": {
                 "name": "Pair",
-                "doc": "Pair type alias for a tuple of two u32 values",
+                "doc": "Pair type alias for a tuple of two u32 values\n",
                 "signature": "type Pair = (u32, u32);",
                 "full_path": "hello_world::Pair"
               }
@@ -141,8 +141,8 @@
                 {
                   "item_data": {
                     "name": "SHAPE_CONST",
-                    "doc": "Constant for the shape type",
-                    "signature": "const SHAPE_CONST: felt252;",
+                    "doc": "Constant for the shape type\n",
+                    "signature": "",
                     "full_path": "hello_world::Shape::SHAPE_CONST"
                   }
                 }
@@ -151,8 +151,8 @@
                 {
                   "item_data": {
                     "name": "ShapePair",
-                    "doc": "Type alias for a pair of shapes",
-                    "signature": "type ShapePair;",
+                    "doc": "Type alias for a pair of shapes\n",
+                    "signature": "",
                     "full_path": "hello_world::Shape::ShapePair"
                   }
                 }
@@ -161,7 +161,7 @@
                 {
                   "item_data": {
                     "name": "area",
-                    "doc": "Calculate the area of the shape",
+                    "doc": "Calculate the area of the shape\n",
                     "signature": "fn area(self: T) -> u32",
                     "full_path": "Shape::area"
                   }
@@ -169,7 +169,7 @@
               ],
               "item_data": {
                 "name": "Shape",
-                "doc": "Shape trait for objects that have an area",
+                "doc": "Shape trait for objects that have an area\n",
                 "signature": "trait Shape<T>",
                 "full_path": "hello_world::Shape"
               }
@@ -181,7 +181,7 @@
                 {
                   "item_data": {
                     "name": "ShapePair",
-                    "doc": "Type alias for a pair of circles",
+                    "doc": "Type alias for a pair of circles\n",
                     "signature": "type ShapePair = (Circle, Circle);",
                     "full_path": "hello_world::CircleShape::ShapePair"
                   }
@@ -191,7 +191,7 @@
                 {
                   "item_data": {
                     "name": "SHAPE_CONST",
-                    "doc": "Shape constant",
+                    "doc": "Shape constant\n",
                     "signature": "const SHAPE_CONST: felt252 = 'xyz';",
                     "full_path": "hello_world::CircleShape::SHAPE_CONST"
                   }
@@ -201,7 +201,7 @@
                 {
                   "item_data": {
                     "name": "area",
-                    "doc": "Implementation of the area method for Circle",
+                    "doc": "Implementation of the area method for Circle\n",
                     "signature": "fn area(self: Circle) -> u32",
                     "full_path": "hello_world::CircleShape::area"
                   }
@@ -209,7 +209,7 @@
               ],
               "item_data": {
                 "name": "CircleShape",
-                "doc": "Implementation of the Shape trait for Circle",
+                "doc": "Implementation of the Shape trait for Circle\n",
                 "signature": "impl CircleShape of Shape<Circle>",
                 "full_path": "hello_world::CircleShape"
               }
