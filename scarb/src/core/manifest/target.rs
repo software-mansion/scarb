@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
@@ -7,9 +6,8 @@ use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
-use toml::Value;
 
-use crate::core::{TargetKind, TomlExternalTargetParams, TomlTarget};
+use crate::core::{TargetKind, TomlExternalTargetParams};
 use crate::internal::serdex::toml_merge;
 
 /// See [`TargetInner`] for public fields reference.
