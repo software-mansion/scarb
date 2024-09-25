@@ -250,7 +250,6 @@ fn cairo_plugin() {
             "Scarb.toml",
             "Cargo.orig.toml",
             "Cargo.toml",
-            "Cargo.lock",
             "src/lib.rs",
         ])
         .file_eq("VERSION", "1")
