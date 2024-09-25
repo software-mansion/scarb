@@ -153,7 +153,6 @@ impl<'c> From<CargoCommand<'c>> for Command {
                 if opts.allow_dirty {
                     cmd.arg("--allow-dirty");
                 }
-
             }
             _ => {
                 cmd.arg("--release");

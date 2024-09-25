@@ -4,6 +4,7 @@ use anyhow::{bail, Result};
 use camino::Utf8PathBuf;
 use indoc::formatdoc;
 
+use crate::core::{TomlCairoPluginTargetParams, TomlTarget};
 use crate::{
     core::{
         DepKind, DependencyVersionReq, DetailedTomlDependency, ManifestDependency, MaybeWorkspace,
@@ -29,9 +30,7 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
             .collect()
     });
 
-    let cairo_plugin = pkg
-        .target(&TargetKind::CAIRO_PLUGIN)
-        .map(|target| target.to_toml_target());
+    let cairo_plugin = generate_cairo_plugin(pkg);
 
     Ok(TomlManifest {
         package,
@@ -144,4 +143,17 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
             None
         },
     })))
+}
+
+fn generate_cairo_plugin(pkg: &Package) -> Option<TomlTarget<TomlCairoPluginTargetParams>> {
+    let target = pkg.target(&TargetKind::CAIRO_PLUGIN)?;
+    let params = target.props::<TomlCairoPluginTargetParams>().ok()?;
+
+    Some(TomlTarget {
+        name: Some(target.name.clone()),
+        source_path: None,
+        params: TomlCairoPluginTargetParams {
+            builtin: params.builtin.and_then(|b| b.then_some(true)),
+        },
+    })
 }
