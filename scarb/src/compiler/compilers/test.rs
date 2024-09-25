@@ -1,10 +1,12 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_filesystem::db::FilesGroup;
+use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{compile_test_prepared_db, TestsCompilationConfig};
 use itertools::Itertools;
+use smol_str::ToSmolStr;
 use tracing::trace_span;
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
@@ -12,9 +14,7 @@ use crate::compiler::compilers::{
     ensure_gas_enabled, get_compiled_contracts, ArtifactsWriter, CompiledContracts,
     ContractSelector,
 };
-use crate::compiler::helpers::{
-    build_compiler_config, collect_all_crate_ids, collect_main_crate_ids, write_json,
-};
+use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, SourceId, TargetKind, TestTargetProps, Workspace};
 use crate::flock::Filesystem;
@@ -33,9 +33,13 @@ impl Compiler for TestCompiler {
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_dir = unit.target_dir(ws);
+        let build_external_contracts = external_contracts_selectors(&unit)?;
 
         let test_crate_ids = collect_main_crate_ids(&unit, db);
-        let all_crate_ids = collect_all_crate_ids(&unit, db);
+        // Search for all contracts in deps specified with `build-external-contracts`.
+        let all_crate_ids =
+            get_contract_crate_ids(&build_external_contracts, test_crate_ids.clone(), db);
+
         let starknet = unit.cairo_plugins.iter().any(|plugin| {
             plugin.package.id.name == PackageName::STARKNET
                 && plugin.package.id.source_id == SourceId::for_std()
@@ -58,7 +62,7 @@ impl Compiler for TestCompiler {
             compile_test_prepared_db(
                 db,
                 config,
-                all_crate_ids,
+                all_crate_ids.clone(),
                 test_crate_ids.clone(),
                 diagnostics_reporter,
             )?
@@ -84,7 +88,14 @@ impl Compiler for TestCompiler {
         if starknet {
             // Note: this will only search for contracts in the main CU component and
             // `build-external-contracts`. It will not collect contracts from all dependencies.
-            compile_contracts(test_crate_ids, target_dir, unit, db, ws)?;
+            compile_contracts(
+                test_crate_ids,
+                build_external_contracts,
+                target_dir,
+                unit,
+                db,
+                ws,
+            )?;
         }
 
         Ok(())
@@ -93,6 +104,7 @@ impl Compiler for TestCompiler {
 
 fn compile_contracts(
     main_crate_ids: Vec<CrateId>,
+    build_external_contracts: Option<Vec<ContractSelector>>,
     target_dir: Filesystem,
     unit: CairoCompilationUnit,
     db: &mut RootDatabase,
@@ -100,12 +112,8 @@ fn compile_contracts(
 ) -> Result<()> {
     ensure_gas_enabled(db)?;
     let target_name = unit.main_component().target_name();
-    let test_props: TestTargetProps = unit.main_component().target_props()?;
-    let external_contracts = test_props
-        .build_external_contracts
-        .map(|contracts| contracts.into_iter().map(ContractSelector).collect_vec());
     let props = StarknetContractProps {
-        build_external_contracts: external_contracts,
+        build_external_contracts,
         ..StarknetContractProps::default()
     };
     let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
@@ -125,4 +133,34 @@ fn compile_contracts(
     let casm_classes: Vec<Option<CasmContractClass>> = classes.iter().map(|_| None).collect();
     writer.write(contract_paths, &contracts, &classes, &casm_classes, db, ws)?;
     Ok(())
+}
+
+fn external_contracts_selectors(
+    unit: &CairoCompilationUnit,
+) -> Result<Option<Vec<ContractSelector>>> {
+    let test_props: TestTargetProps = unit.main_component().target_props()?;
+    Ok(test_props
+        .build_external_contracts
+        .map(|contracts| contracts.into_iter().map(ContractSelector).collect_vec()))
+}
+
+fn get_contract_crate_ids(
+    build_external_contracts: &Option<Vec<ContractSelector>>,
+    test_crate_ids: Vec<CrateId>,
+    db: &mut RootDatabase,
+) -> Vec<CrateId> {
+    let mut all_crate_ids = build_external_contracts
+        .as_ref()
+        .map(|external_contracts| {
+            external_contracts
+                .iter()
+                .map(|selector| selector.package())
+                .sorted()
+                .unique()
+                .map(|package_name| db.intern_crate(CrateLongId::Real(package_name.to_smolstr())))
+                .collect_vec()
+        })
+        .unwrap_or_default();
+    all_crate_ids.extend(test_crate_ids);
+    all_crate_ids
 }
