@@ -1,7 +1,6 @@
 use crate::compiler::ProcMacroCompilationUnit;
 use crate::core::{Config, Package, Workspace};
 use crate::flock::Filesystem;
-use crate::ops::PackageOpts;
 use crate::process::exec_piping;
 use anyhow::Result;
 use camino::Utf8PathBuf;
@@ -65,12 +64,8 @@ pub fn fetch_package(package: &Package, ws: &Workspace<'_>) -> Result<()> {
     run_cargo(CargoAction::Fetch, package, ws)
 }
 
-pub fn package_package(package: &Package, opts: &PackageOpts, ws: &Workspace<'_>) -> Result<()> {
-    if opts.verify {
-        run_cargo(CargoAction::Package, package, ws)
-    } else {
-        run_cargo(CargoAction::PackageNoVerify, package, ws)
-    }
+pub fn package_package(package: &Package, ws: &Workspace<'_>) -> Result<()> {
+    run_cargo(CargoAction::Package, package, ws)
 }
 
 fn run_cargo(action: CargoAction, package: &Package, ws: &Workspace<'_>) -> Result<()> {
@@ -95,7 +90,6 @@ enum CargoAction {
     Check,
     Fetch,
     Package,
-    PackageNoVerify,
 }
 
 struct CargoCommand {
@@ -137,7 +131,6 @@ impl From<CargoCommand> for Command {
             CargoAction::Build => cmd.arg("build"),
             CargoAction::Check => cmd.arg("check"),
             CargoAction::Package => cmd.arg("package"),
-            CargoAction::PackageNoVerify => cmd.arg("package"),
         };
         match args.action {
             CargoAction::Fetch => (),
@@ -145,11 +138,6 @@ impl From<CargoCommand> for Command {
             CargoAction::Package => {
                 cmd.arg("--target-dir");
                 cmd.arg(args.target_dir);
-            }
-            CargoAction::PackageNoVerify => {
-                cmd.arg("--target-dir");
-                cmd.arg(args.target_dir);
-                cmd.arg("--no-verify");
             }
             _ => {
                 cmd.arg("--release");
