@@ -282,7 +282,7 @@ fn prepare_archive_recipe(
 
     if pkg.manifest.targets.iter().any(|x| x.is_cairo_plugin()) {
         // Package crate with Cargo.
-        package_package(pkg, ws)?;
+        package_package(pkg, opts, ws)?;
 
         // Add normalized Cargo.toml file.
         recipe.push(ArchiveFile {

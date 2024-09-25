@@ -1,6 +1,7 @@
 use crate::compiler::ProcMacroCompilationUnit;
 use crate::core::{Config, Package, Workspace};
 use crate::flock::Filesystem;
+use crate::ops::PackageOpts;
 use crate::process::exec_piping;
 use anyhow::Result;
 use camino::Utf8PathBuf;
@@ -64,8 +65,8 @@ pub fn fetch_package(package: &Package, ws: &Workspace<'_>) -> Result<()> {
     run_cargo(CargoAction::Fetch, package, ws)
 }
 
-pub fn package_package(package: &Package, ws: &Workspace<'_>) -> Result<()> {
-    run_cargo(CargoAction::Package, package, ws)
+pub fn package_package(package: &Package, opts: &PackageOpts, ws: &Workspace<'_>) -> Result<()> {
+    run_cargo(CargoAction::Package(opts.clone()), package, ws)
 }
 
 fn run_cargo(action: CargoAction, package: &Package, ws: &Workspace<'_>) -> Result<()> {
@@ -77,6 +78,7 @@ fn run_cargo(action: CargoAction, package: &Package, ws: &Workspace<'_>) -> Resu
             .target_path(ws.config())
             .path_unchecked()
             .to_path_buf(),
+        config: ws.config(),
     };
     {
         let _ = trace_span!("proc_macro").enter();
@@ -85,18 +87,20 @@ fn run_cargo(action: CargoAction, package: &Package, ws: &Workspace<'_>) -> Resu
     Ok(())
 }
 
+#[derive(Clone)]
 enum CargoAction {
     Build,
     Check,
     Fetch,
-    Package,
+    Package(PackageOpts),
 }
 
-struct CargoCommand {
+struct CargoCommand<'c> {
     current_dir: Utf8PathBuf,
     target_dir: Utf8PathBuf,
     output_format: OutputFormat,
     action: CargoAction,
+    config: &'c Config,
 }
 
 enum CargoOutputFormat {
@@ -122,22 +126,37 @@ impl From<OutputFormat> for CargoOutputFormat {
     }
 }
 
-impl From<CargoCommand> for Command {
-    fn from(args: CargoCommand) -> Self {
+impl<'c> From<CargoCommand<'c>> for Command {
+    fn from(args: CargoCommand<'c>) -> Self {
         let mut cmd = Command::new(Tool::Cargo.path());
         cmd.current_dir(args.current_dir);
         match args.action {
             CargoAction::Fetch => cmd.arg("fetch"),
             CargoAction::Build => cmd.arg("build"),
             CargoAction::Check => cmd.arg("check"),
-            CargoAction::Package => cmd.arg("package"),
+            CargoAction::Package(_) => cmd.arg("package"),
         };
         match args.action {
-            CargoAction::Fetch => (),
-            // todo(macros package): make sure rust compilation is not being run twice if there is no '--no-verify' flag in here
-            CargoAction::Package => {
+            CargoAction::Fetch => {
+                if args.config.offline() {
+                    cmd.arg("--offline");
+                }
+            }
+            CargoAction::Package(ref opts) => {
                 cmd.arg("--target-dir");
                 cmd.arg(args.target_dir);
+                if !opts.check_metadata {
+                    cmd.arg("--no-metadata");
+                }
+                if !opts.verify {
+                    cmd.arg("--no-verify");
+                }
+                if opts.allow_dirty {
+                    cmd.arg("--allow-dirty");
+                }
+                if args.config.offline() {
+                    cmd.arg("--offline");
+                }
             }
             _ => {
                 cmd.arg("--release");
@@ -146,6 +165,9 @@ impl From<CargoCommand> for Command {
                 cmd.arg(output_format.to_string());
                 cmd.arg("--target-dir");
                 cmd.arg(args.target_dir);
+                if args.config.offline() {
+                    cmd.arg("--offline");
+                }
             }
         }
         cmd
