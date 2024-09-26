@@ -500,7 +500,7 @@ fn cairo_plugin() {
         [..] Packaging some v1.0.0 [..]
         [..] Verifying some-1.0.0.tar.zst
         [..] Compiling some v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         [..]  Packaged [..] files, [..] ([..] compressed)
         "#});
 
