@@ -69,9 +69,8 @@ command.
 With script-based override for the `scarb test` command, it is possible to perform arbitrary actions before and after
 the test runner itself.
 This trick also allows running multiple test runners in the project.
-For example, to run a custom end-to-end test suite using a popular [pytest](https://pytest.org/),
-[Starknet Devnet](https://0xspaceshard.github.io/starknet-devnet/) and [Starknet.py](https://starknetpy.rtfd.io/)
-combination, type the following:
+For example, to run a custom test suite using [pytest](https://pytest.org/) after the `cairo-test` one, type the
+following:
 
 ```toml
 [scripts]
