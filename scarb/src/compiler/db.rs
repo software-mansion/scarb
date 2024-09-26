@@ -152,7 +152,19 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                 .filter(|component_as_dependency| {
                     dependencies_summary.iter().any(|dependency_summary| {
                         dependency_summary.name == component_as_dependency.package.id.name
-                    })
+                    }) ||
+                        // This is a hacky way of accommodating integration test components,
+                        // which need to depend on the tested package.
+                        component_as_dependency
+                        .package
+                        .manifest
+                        .targets
+                        .iter()
+                        .filter(|target| target.kind.is_test())
+                        .any(|target| {
+                            target.group_id.clone().unwrap_or(target.name.clone())
+                                == component.package.id.name.to_smol_str()
+                        })
                 })
                 .map(|compilation_unit_component| {
                     (
