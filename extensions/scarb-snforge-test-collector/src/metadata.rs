@@ -1,6 +1,8 @@
 use anyhow::{anyhow, ensure, Context, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
-use cairo_lang_filesystem::db::{CrateSettings, Edition, ExperimentalFeaturesConfig};
+use cairo_lang_filesystem::db::{
+    CrateSettings, DependencySettings, Edition, ExperimentalFeaturesConfig,
+};
 use cairo_lang_project::AllCratesConfig;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use camino::{Utf8Path, Utf8PathBuf};
@@ -134,6 +136,7 @@ impl CompilationUnit<'_> {
                 (
                     SmolStr::from(&component.name),
                     get_crate_settings_for_package(
+                        &self.metadata.packages,
                         pkg,
                         component.cfg.as_ref().map(|cfg_vec| build_cfg_set(cfg_vec)),
                     ),
@@ -192,6 +195,7 @@ impl CompilationUnit<'_> {
             .expect("Main package not found in metadata");
 
         get_crate_settings_for_package(
+            &self.metadata.packages,
             package,
             self.main_package_metadata
                 .cfg
@@ -206,6 +210,7 @@ impl CompilationUnit<'_> {
 }
 
 fn get_crate_settings_for_package(
+    packages: &[PackageMetadata],
     package: &PackageMetadata,
     cfg_set: Option<CfgSet>,
 ) -> CrateSettings {
@@ -226,10 +231,30 @@ fn get_crate_settings_for_package(
             .contains(&String::from("coupons")),
     };
 
+    let dependencies = package
+        .dependencies
+        .iter()
+        .map(|dependency| {
+            let version = packages
+                .iter()
+                .find(|package| package.name == dependency.name)
+                .unwrap()
+                .version
+                .clone();
+            (
+                dependency.name.clone(),
+                DependencySettings {
+                    version: Some(version),
+                },
+            )
+        })
+        .collect();
+
     CrateSettings {
         edition,
         cfg_set,
         experimental_features,
+        dependencies,
         version: Some(package.version.clone()),
     }
 }
