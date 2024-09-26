@@ -6,7 +6,9 @@ use std::path::PathBuf;
 
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
-use cairo_lang_filesystem::db::{CrateSettings, Edition, ExperimentalFeaturesConfig};
+use cairo_lang_filesystem::db::{
+    CrateSettings, DependencySettings, Edition, ExperimentalFeaturesConfig,
+};
 use cairo_lang_filesystem::ids::Directory;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use itertools::Itertools;
@@ -131,10 +133,17 @@ fn get_crate_settings_for_package(
             .contains(&String::from("coupons")),
     };
 
+    let dependencies = package
+        .dependencies
+        .iter()
+        .map(|d| (d.name.clone(), DependencySettings { version: None }))
+        .collect();
+
     CrateSettings {
         edition,
         cfg_set,
         experimental_features,
+        dependencies,
         version: Some(package.version.clone()),
     }
 }

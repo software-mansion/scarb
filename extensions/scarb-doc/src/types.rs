@@ -1,16 +1,13 @@
 use cairo_lang_semantic::items::visibility;
 use cairo_lang_utils::Upcast;
-use itertools::Itertools;
 use serde::Serialize;
 
 use cairo_lang_defs::db::DefsGroup;
-use cairo_lang_defs::diagnostic_utils::StableLocation;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LookupItemId,
-    MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId, StructId,
-    TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
-    VariantId,
+    MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, StructId, TopLevelLanguageElementId,
+    TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId, VariantId,
 };
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
@@ -769,29 +766,4 @@ impl ExternFunction {
             ),
         }
     }
-}
-
-// TODO(#1428): This function is temporarily copied until further modifications in cairo compiler are done.
-fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) -> Option<String> {
-    let doc = stable_location.syntax_node(db).get_text(db.upcast());
-    let doc = doc
-        .lines()
-        .take_while_ref(|line| {
-            !line
-                .trim_start()
-                .chars()
-                .next()
-                .map_or(false, |c| c.is_alphabetic())
-        })
-        .filter_map(|line| {
-            let dedent = line.trim_start();
-            for prefix in ["///", "//!"] {
-                if let Some(content) = dedent.strip_prefix(prefix) {
-                    return Some(content.strip_prefix(' ').unwrap_or(content));
-                }
-            }
-            None
-        })
-        .collect::<Vec<&str>>();
-    (!doc.is_empty()).then(|| doc.join("\n"))
 }
