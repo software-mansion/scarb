@@ -24,7 +24,7 @@ fn can_run_default_main_function() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished release target(s) in [..]
+        [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
         Run completed successfully, returning [42]
         "#});
@@ -50,7 +50,7 @@ fn can_run_default_main_function_with_plugin() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished release target(s) in [..]
+        [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
         Run completed successfully, returning [42]
         "#});
@@ -77,7 +77,7 @@ fn no_entrypoint_fails() {
             .failure(),
         indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished release target(s) in [..]
+        [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
         error: Function with suffix `::main` to run not found.
         "#},
@@ -109,7 +109,7 @@ fn no_debug_build_fails() {
             .failure(),
         indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished release target(s) in [..]
+        [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
         error: Function with suffix `::main` to run not found.
         "#},
@@ -142,7 +142,7 @@ fn can_run_executable() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished release target(s) in [..]
+        [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
         Run completed successfully, returning [42]
         "#});
@@ -174,7 +174,7 @@ fn ambiguous_executables_will_fail() {
             .failure(),
         indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished release target(s) in [..]
+        [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
         error: multiple executable functions found
         please choose a function to run from the list:
@@ -214,7 +214,7 @@ fn ambiguous_executables_will_fail_no_debug_names() {
         // Note that we cannot list available executables, as we don't know their debug names.
         indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished release target(s) in [..]
+        [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
         error: multiple executable functions found
         please only mark a single function as executable or enable debug ids and choose function by name
@@ -296,7 +296,7 @@ fn cannot_choose_non_executable_if_any_present() {
             .failure(),
         indoc! {r#"
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             error: Function with suffix `::a` to run not found.
         "#},
@@ -335,7 +335,7 @@ fn can_choose_executable_to_run() {
         .success()
         .stdout_matches(indoc! {r#"
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [42]
         "#});
@@ -363,7 +363,7 @@ fn choose_not_existing_function() {
             .failure(),
         indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished release target(s) in [..]
+        [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
         [..]error: Function with suffix `::b` to run not found.
     "#},

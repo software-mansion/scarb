@@ -282,6 +282,6 @@ fn cli_verbosity_overrides_env() {
         .success()
         .stdout_matches(indoc! {r#"
             [..]Checking pkg0 v1.0.0 ([..]Scarb.toml)
-            [..]Finished checking release target(s) in [..]
+            [..]Finished checking `dev` profile target(s) in [..]
         "#});
 }

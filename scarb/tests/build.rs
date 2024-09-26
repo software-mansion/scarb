@@ -405,7 +405,7 @@ fn compile_multiple_packages() {
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling fib v1.0.0 ([..]Scarb.toml)
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/fib.sierra.json")
@@ -489,7 +489,7 @@ fn compile_with_nested_deps() {
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling x v1.0.0 ([..]Scarb.toml)
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/x.sierra.json")
@@ -756,7 +756,7 @@ fn dev_dep_inside_test() {
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling x v1.0.0 ([..])
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -798,7 +798,7 @@ fn build_test_without_compiling_tests_from_dependencies() {
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling test(x_unittest) x v1.0.0 ([..])
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -827,7 +827,7 @@ fn warnings_allowed_by_default() {
             let a = 41;
                 ^
 
-            Finished release target(s) in [..]
+            Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -988,7 +988,7 @@ fn error_codes_shown_in_json_output() {
         .stdout_matches(indoc! {r#"
             {"status":"compiling","message":"[..] v1.0.0 ([..]Scarb.toml)"}
             {"type":"warn","message":"Unused variable. Consider ignoring by prefixing with `_`./n --> [..]lib.cairo:2:9/n    let a = 41;/n        ^/n","code":"E0001"}
-            {"status":"finished","message":"release target(s) in [..]"}
+            {"status":"finished","message":"`dev` profile target(s) in [..]"}
         "#});
 }
 

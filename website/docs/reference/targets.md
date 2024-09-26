@@ -6,7 +6,22 @@ Packages can have a built-in library target, and/or more externally defined targ
 Note, that dependencies adhere to packages and are independent of targets of the package.
 When building a package, each target of this package will use exactly the same set of dependencies during compilation.
 The list of targets can be configured in `Scarb.toml`.
-By default, if the manifest does not list any targets, Scarb will assume the library target with its default parameters.
+
+## Overriding default targets
+
+If the manifest does not list any targets, Scarb will assume the **library** target with its default parameters.
+
+Specifying **any** target in the manifest file means that the default target will no longer be added.
+
+In particular, this means that in order to use a package with contracts as a dependency, user must define
+both `starknet-contract` and `lib` targets, like in the example below.
+
+```toml
+[lib]
+
+[[target.starknet-contract]]
+
+```
 
 ## Library
 
@@ -27,8 +42,10 @@ sierra-text = false  # Enable textual Sierra codegen.
 ```
 
 By default, the library target builds unprocessed Sierra code in JSON form for the package.
-When either the `casm` or `sierra-text` option is enabled, Scarb can automatically compile the Sierra code down to CASM or textual Sierra, respectively.
-While textual Sierra may be practical for debugging or similar tasks, relying on it in a production environment could lead to unexpected behavior.
+When either the `casm` or `sierra-text` option is enabled, Scarb can automatically compile the Sierra code down to CASM
+or textual Sierra, respectively.
+While textual Sierra may be practical for debugging or similar tasks, relying on it in a production environment could
+lead to unexpected behavior.
 
 ## Test targets
 

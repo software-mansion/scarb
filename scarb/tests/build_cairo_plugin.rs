@@ -29,7 +29,7 @@ fn compile_cairo_plugin() {
     assert!(stdout.contains("Compiling some v1.0.0"));
     let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
     let (last, lines) = lines.split_last().unwrap();
-    assert_matches(r#"[..] Finished release target(s) in [..]"#, last);
+    assert_matches(r#"[..] Finished `dev` profile target(s) in [..]"#, last);
     let (last, _lines) = lines.split_last().unwrap();
     // Line from Cargo output
     assert_matches(
@@ -58,7 +58,10 @@ fn check_cairo_plugin() {
     assert!(stdout.contains("Checking some v1.0.0"));
     let lines = stdout.lines().map(ToString::to_string).collect::<Vec<_>>();
     let (last, lines) = lines.split_last().unwrap();
-    assert_matches(r#"[..] Finished checking release target(s) in [..]"#, last);
+    assert_matches(
+        r#"[..] Finished checking `dev` profile target(s) in [..]"#,
+        last,
+    );
     let (last, _lines) = lines.split_last().unwrap();
     // Line from Cargo output
     assert_matches(
@@ -113,7 +116,7 @@ fn can_use_json_output() {
     );
     let (last, lines) = lines.split_last().unwrap();
     assert_matches(
-        r#"{"status":"finished","message":"checking release target(s) in [..]"}"#,
+        r#"{"status":"finished","message":"checking `dev` profile target(s) in [..]"}"#,
         last,
     );
     // Line from Cargo.
@@ -213,7 +216,7 @@ fn can_emit_plugin_warning() {
             #[some]
             ^*****^
 
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -357,7 +360,7 @@ fn can_remove_original_node() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [34]
         "#});
@@ -403,7 +406,7 @@ fn can_replace_original_node() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [34]
         "#});
@@ -475,7 +478,7 @@ fn can_return_aux_data_from_plugin() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [SomeMacroDataFormat { msg: "Hello from some macro!" }]
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -525,7 +528,7 @@ fn can_read_token_stream_metadata() {
                     "[..]",
                 ),
             }
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -616,7 +619,7 @@ fn can_define_multiple_macros() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [121]
         "#});
@@ -819,7 +822,7 @@ fn can_resolve_full_path_markers() {
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [FullPathMarker { key: "some-key", full_path: "hello::main" }]
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -857,7 +860,7 @@ fn can_implement_inline_macro() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [34]
         "#});
@@ -976,7 +979,7 @@ fn can_implement_derive_macro() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [32]
         "#});
@@ -1056,7 +1059,7 @@ fn can_use_both_derive_and_attr() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [32]
         "#});
@@ -1107,7 +1110,7 @@ fn can_read_attribute_args() {
                 first: "aaa",
                 second: "bbb",
             )
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -1145,7 +1148,7 @@ fn can_create_executable_attribute() {
         .stdout_matches(indoc! {r#"
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished release target(s) in [..]
+            [..]Finished `dev` profile target(s) in [..]
         "#});
     let sierra = project
         .child("target")
@@ -1317,4 +1320,176 @@ fn can_be_expanded() {
         "#},
         expanded,
     );
+}
+
+#[test]
+fn can_expand_trait_inner_func_attrr() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream};
+
+            #[attribute_macro]
+            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+                ProcMacroResult::new(TokenStream::new(
+                    token_stream.to_string()
+                    .replace("hello", "world")
+                    .replace("12", "34")
+                ))
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                #[some]
+                fn hello(self: @T) -> u32 {
+                    12
+                }
+            }
+
+            #[derive(Drop)]
+            struct SomeStruct {}
+
+            impl SomeImpl of Hello<SomeStruct> {}
+
+            fn main() -> u32 {
+                let a = SomeStruct {};
+                a.world()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Running hello
+            Run completed successfully, returning [34]
+        "#});
+}
+
+#[test]
+fn can_expand_impl_inner_func_attrr() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream};
+
+            #[attribute_macro]
+            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+                ProcMacroResult::new(TokenStream::new(
+                    token_stream.to_string()
+                    .replace("1", "2")
+                ))
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep_cairo_test()
+        .dep("some", &t)
+        .manifest_extra(indoc! {r#"
+            [[target.starknet-contract]]
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[starknet::interface]
+            trait IHello<T> {
+                fn get(self: @T) -> u128;
+                fn increase(ref self: T);
+            }
+
+            #[starknet::contract]
+            mod Hello {
+                use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+                use starknet::get_contract_address;
+                use super::IHello;
+
+                #[storage]
+                struct Storage {
+                    counter: u128
+                }
+
+                #[constructor]
+                fn constructor(ref self: ContractState, value_: u128) {
+                    self.counter.write(value_);
+                }
+
+                #[abi(embed_v0)]
+                impl IncImpl of IHello<ContractState> {
+                    fn get(self: @ContractState) -> u128 {
+                        self.counter.read()
+                    }
+
+                    #[some]
+                    fn increase(ref self: ContractState)  {
+                        self.counter.write( self.counter.read() + 1 );
+                    }
+                }
+            }
+
+            #[cfg(test)]
+            mod tests {
+                use array::ArrayTrait;
+                use core::result::ResultTrait;
+                use core::traits::Into;
+                use option::OptionTrait;
+                use starknet::syscalls::deploy_syscall;
+                use traits::TryInto;
+
+                use super::{IHello, Hello, IHelloDispatcher, IHelloDispatcherTrait};
+
+                #[test]
+                fn test_flow() {
+                    let calldata = array![100];
+                    let (address0, _) = deploy_syscall(
+                        Hello::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false
+                    ).unwrap();
+
+                    let mut contract0 = IHelloDispatcher { contract_address: address0 };
+
+                    assert_eq!(@contract0.get(), @100, "contract0.get() == 100");
+                    @contract0.increase();
+                    assert_eq!(@contract0.get(), @102, "contract0.get() == 102");
+                }
+            }
+
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-test")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            testing hello ...
+            running 1 test
+            test hello::tests::test_flow ... ok (gas usage est.: [..])
+            test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
+
+        "#});
 }

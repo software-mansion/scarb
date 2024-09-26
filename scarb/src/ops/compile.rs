@@ -19,7 +19,7 @@ use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
 use crate::ops;
-use crate::ops::get_test_package_ids;
+use crate::ops::{get_test_package_ids, validate_features};
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -62,11 +62,24 @@ pub struct CompileOpts {
 }
 
 impl CompileOpts {
-    pub fn try_new(features: FeaturesSpec, test: bool, target_names: Vec<String>) -> Result<Self> {
+    pub fn try_new(
+        features: FeaturesSpec,
+        test: bool,
+        target_names: Vec<String>,
+        target_kinds: Vec<String>,
+    ) -> Result<Self> {
         let (include_targets, exclude_targets): (Vec<TargetKind>, Vec<TargetKind>) = if test {
             (vec![TargetKind::TEST.clone()], Vec::new())
         } else {
             (Vec::new(), vec![TargetKind::TEST.clone()])
+        };
+        let include_targets = if !target_kinds.is_empty() {
+            target_kinds
+                .into_iter()
+                .map(TargetKind::try_new)
+                .collect::<Result<Vec<TargetKind>>>()?
+        } else {
+            include_targets
         };
         Ok(Self {
             include_target_kinds: include_targets,
@@ -102,7 +115,11 @@ where
     F: FnMut(CompilationUnit, &Workspace<'_>) -> Result<()>,
 {
     let resolve = ops::resolve_workspace(ws)?;
-
+    let packages_to_process = ws
+        .members()
+        .filter(|p| packages.contains(&p.id))
+        .collect_vec();
+    validate_features(&packages_to_process, &opts.features)?;
     // Add test compilation units to build
     let packages = get_test_package_ids(packages, ws);
     let compilation_units = ops::generate_compilation_units(&resolve, &opts.features, ws)?
@@ -140,9 +157,10 @@ where
     }
 
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
+    let profile = ws.current_profile()?;
     let formatted_message = match operation_type {
-        Some(op) => format!("{op} release target(s) in {elapsed_time}"),
-        None => format!("release target(s) in {elapsed_time}"),
+        Some(op) => format!("{op} `{profile}` profile target(s) in {elapsed_time}"),
+        None => format!("`{profile}` profile target(s) in {elapsed_time}"),
     };
     ws.config()
         .ui()

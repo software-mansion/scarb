@@ -181,7 +181,7 @@ fn simple() {
         [..] Packaging foo v1.0.0 [..]
         [..] Verifying foo-1.0.0.tar.zst
         [..] Compiling foo v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         [..]  Packaged [..] files, [..] ([..] compressed)
         "#});
 
@@ -1472,7 +1472,7 @@ fn package_without_publish_metadata() {
 
         [..] Verifying foo-1.0.0.tar.zst
         [..] Compiling foo v1.0.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         [..]  Packaged [..] files, [..] ([..] compressed)
         "#});
 }

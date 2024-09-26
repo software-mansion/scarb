@@ -4,7 +4,7 @@ use url::Url;
 
 use scarb::core::registry::DEFAULT_REGISTRY_INDEX;
 use scarb::core::Config;
-use scarb::ops::{self, PackageOpts, PublishOpts};
+use scarb::ops::{self, validate_features, PackageOpts, PublishOpts};
 
 use crate::args::PublishArgs;
 
@@ -17,13 +17,15 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
         None => Url::from_str(DEFAULT_REGISTRY_INDEX)?,
     };
 
+    let features_opts = args.features.try_into()?;
+    validate_features(&[package.clone()], &features_opts)?;
     let ops = PublishOpts {
         index_url: index,
         package_opts: PackageOpts {
             allow_dirty: args.shared_args.allow_dirty,
             verify: !args.shared_args.no_verify,
             check_metadata: true,
-            features: args.features.try_into()?,
+            features: features_opts,
         },
     };
 

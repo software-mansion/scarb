@@ -95,13 +95,6 @@ pub fn collect_main_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) ->
     ))]
 }
 
-pub fn collect_all_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
-    unit.components
-        .iter()
-        .map(|component| db.intern_crate(CrateLongId::Real(component.cairo_package_name())))
-        .collect()
-}
-
 pub fn write_json(
     file_name: &str,
     description: &str,

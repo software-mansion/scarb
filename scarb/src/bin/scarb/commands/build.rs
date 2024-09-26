@@ -14,6 +14,11 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         .into_iter()
         .map(|p| p.id)
         .collect::<Vec<_>>();
-    let opts = CompileOpts::try_new(args.features, args.test, args.target_names)?;
+    let opts = CompileOpts::try_new(
+        args.features,
+        args.test,
+        args.target_names,
+        args.target_kinds,
+    )?;
     ops::compile(packages, opts, &ws)
 }

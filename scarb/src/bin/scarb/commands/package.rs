@@ -2,11 +2,12 @@ use std::collections::BTreeMap;
 
 use anyhow::Result;
 use camino::Utf8PathBuf;
+use itertools::Itertools;
 use serde::Serializer;
 
 use scarb::core::{Config, PackageName};
 use scarb::ops;
-use scarb::ops::PackageOpts;
+use scarb::ops::{validate_features, PackageOpts};
 use scarb_ui::Message;
 
 use crate::args::PackageArgs;
@@ -18,16 +19,19 @@ pub fn run(args: PackageArgs, config: &Config) -> Result<()> {
         .packages_filter
         .match_many(&ws)?
         .into_iter()
-        .map(|p| p.id)
-        .collect::<Vec<_>>();
+        .collect_vec();
 
+    let features_opts = args.features.try_into()?;
+    validate_features(&packages, &features_opts)?;
     let opts = PackageOpts {
         // Disable dirty repository checks when printing package files.
         allow_dirty: args.list || args.shared_args.allow_dirty,
         verify: !args.shared_args.no_verify,
         check_metadata: !args.no_metadata,
-        features: args.features.try_into()?,
+        features: features_opts,
     };
+
+    let packages = packages.into_iter().map(|p| p.id).collect_vec();
 
     if args.list {
         let result = ops::package_list(&packages, &opts, &ws)?;
