@@ -10,6 +10,7 @@ use cairo_lang_filesystem::db::{
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smol_str::SmolStr;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 use tracing::trace;
 
@@ -145,7 +146,7 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                 .collect();
 
             // We iterate over all of the compilation unit components to get dependency's version.
-            let dependencies = unit
+            let mut dependencies: BTreeMap<String, DependencySettings> = unit
                 .components
                 .iter()
                 .filter(|component_as_dependency| {
@@ -162,6 +163,15 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                     )
                 })
                 .collect();
+
+            // Adds itself to dependencies
+            dependencies.insert(
+                component.package.id.name.to_string(),
+                DependencySettings {
+                    version: Some(component.package.id.version.clone()),
+                },
+            );
+
             (
                 component.cairo_package_name(),
                 CrateSettings {
