@@ -14,7 +14,7 @@ trait Shape<T>
 
 Constant for the shape type
 
-Fully qualified path: `hello_world::Shape::SHAPE_CONST`
+Fully qualified path: `hello_world::hello_world::Shape::SHAPE_CONST`
 
 ```rust
 const SHAPE_CONST: felt252;
@@ -27,7 +27,7 @@ const SHAPE_CONST: felt252;
 
 Calculate the area of the shape
 
-Fully qualified path: `Shape::area`
+Fully qualified path: `hello_world::Shape::area`
 
 ```rust
 fn area(self: T) -> u32
@@ -40,7 +40,7 @@ fn area(self: T) -> u32
 
 Type alias for a pair of shapes
 
-Fully qualified path: `hello_world::Shape::ShapePair`
+Fully qualified path: `hello_world::hello_world::Shape::ShapePair`
 
 ```rust
 type ShapePair;

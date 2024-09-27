@@ -4,16 +4,19 @@ use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfig
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
-use cairo_lang_filesystem::db::{AsFilesGroupMut, CrateSettings, FilesGroup, FilesGroupEx};
+use cairo_lang_filesystem::db::{
+    AsFilesGroupMut, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
+};
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smol_str::SmolStr;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 use tracing::trace;
 
 use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
-use crate::core::Workspace;
+use crate::core::{ManifestDependency, Workspace};
 use crate::DEFAULT_MODULE_MAIN_FILE;
 
 pub struct ScarbDatabase {
@@ -134,12 +137,60 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
         .map(|component| {
             let experimental_features = component.package.manifest.experimental_features.clone();
             let experimental_features = experimental_features.unwrap_or_default();
+            // Those are direct dependencies of the component.
+            let dependencies_summary: Vec<&ManifestDependency> = component
+                .package
+                .manifest
+                .summary
+                .full_dependencies()
+                .collect();
+
+            // We iterate over all of the compilation unit components to get dependency's version.
+            let mut dependencies: BTreeMap<String, DependencySettings> = unit
+                .components
+                .iter()
+                .filter(|component_as_dependency| {
+                    dependencies_summary.iter().any(|dependency_summary| {
+                        dependency_summary.name == component_as_dependency.package.id.name
+                    }) ||
+                        // This is a hacky way of accommodating integration test components,
+                        // which need to depend on the tested package.
+                        component_as_dependency
+                        .package
+                        .manifest
+                        .targets
+                        .iter()
+                        .filter(|target| target.kind.is_test())
+                        .any(|target| {
+                            target.group_id.clone().unwrap_or(target.name.clone())
+                                == component.package.id.name.to_smol_str()
+                        })
+                })
+                .map(|compilation_unit_component| {
+                    (
+                        compilation_unit_component.package.id.name.to_string(),
+                        DependencySettings {
+                            version: Some(compilation_unit_component.package.id.version.clone()),
+                        },
+                    )
+                })
+                .collect();
+
+            // Adds itself to dependencies
+            dependencies.insert(
+                component.package.id.name.to_string(),
+                DependencySettings {
+                    version: Some(component.package.id.version.clone()),
+                },
+            );
+
             (
                 component.cairo_package_name(),
                 CrateSettings {
                     edition: component.package.manifest.edition,
                     cfg_set: component.cfg_set.clone(),
                     version: Some(component.package.id.version.clone()),
+                    dependencies,
                     // TODO (#1040): replace this with a macro
                     experimental_features: cairo_lang_filesystem::db::ExperimentalFeaturesConfig {
                         negative_impls: experimental_features
