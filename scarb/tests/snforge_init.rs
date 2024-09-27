@@ -32,8 +32,9 @@ fn new_simple() {
     assert_eq!(deps.len(), 1);
     assert!(deps.contains_key("starknet"));
     let deps = toml_manifest.dev_dependencies.unwrap();
-    assert_eq!(deps.len(), 1);
+    assert_eq!(deps.len(), 2);
     assert!(deps.contains_key("snforge_std"));
+    assert!(deps.contains_key("assert_macros"));
     assert_eq!(
         toml_manifest
             .scripts
