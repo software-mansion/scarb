@@ -127,22 +127,6 @@ impl Module {
             use_crates,
         ) = extract_items_from_module_uses(module_uses_items);
 
-        println!(
-            "consts: {:?}\nfree funcs:{:?}\nstructs{:?}\nenums:{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n{:?}\n",
-            use_constants,
-            use_free_functions,
-            use_structs,
-            use_enums,
-            use_module_type_aliases,
-            use_impl_aliases,
-            use_traits,
-            use_impl_defs,
-            use_extern_types,
-            use_extern_functions,
-            use_submodules,
-            use_crates
-        );
-
         let module_constants = db.module_constants(module_id).unwrap();
         let constants = chain!(module_constants.keys(), use_constants.iter())
             .filter(|id| should_include_item(*id))
