@@ -61,11 +61,11 @@ pub fn check_unit(unit: ProcMacroCompilationUnit, ws: &Workspace<'_>) -> Result<
     run_cargo(CargoAction::Check, &package, ws)
 }
 
-pub fn fetch_package(package: &Package, ws: &Workspace<'_>) -> Result<()> {
+pub fn fetch_crate(package: &Package, ws: &Workspace<'_>) -> Result<()> {
     run_cargo(CargoAction::Fetch, package, ws)
 }
 
-pub fn package_package(package: &Package, opts: &PackageOpts, ws: &Workspace<'_>) -> Result<()> {
+pub fn package_crate(package: &Package, opts: &PackageOpts, ws: &Workspace<'_>) -> Result<()> {
     run_cargo(CargoAction::Package(opts.clone()), package, ws)
 }
 

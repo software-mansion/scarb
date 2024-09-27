@@ -14,7 +14,7 @@ use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
 use serde::Serialize;
 
-use crate::compiler::plugin::proc_macro::compilation::{package_package, SharedLibraryProvider};
+use crate::compiler::plugin::proc_macro::compilation::{package_crate, SharedLibraryProvider};
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
 use crate::core::{Config, Package, PackageId, PackageName, TargetKind, Workspace};
@@ -279,7 +279,7 @@ fn prepare_archive_recipe(
 
     if pkg.is_cairo_plugin() && !pkg.is_builtin() {
         // Package crate with Cargo.
-        package_package(pkg, opts, ws)?;
+        package_crate(pkg, opts, ws)?;
 
         // Add normalized Cargo.toml file.
         recipe.push(ArchiveFile {
