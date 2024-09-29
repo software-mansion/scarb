@@ -3,18 +3,19 @@ use crate::core::{Config, Package, Workspace};
 use crate::flock::Filesystem;
 use crate::ops::PackageOpts;
 use crate::process::exec_piping;
+use crate::CARGO_MANIFEST_FILE_NAME;
 use anyhow::Result;
 use camino::Utf8PathBuf;
+use cargo_metadata::MetadataCommand;
 use libloading::library_filename;
 use ra_ap_toolchain::Tool;
 use scarb_ui::{Message, OutputFormat};
 use serde::{Serialize, Serializer};
 use serde_json::value::RawValue;
 use std::fmt::Display;
+use std::fs;
 use std::process::Command;
 use tracing::trace_span;
-use cargo_metadata::MetadataCommand;
-use std::fs;
 
 pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
 
@@ -63,7 +64,9 @@ pub fn check_unit(unit: ProcMacroCompilationUnit, ws: &Workspace<'_>) -> Result<
     run_cargo(CargoAction::Check, &package, ws)
 }
 
-fn get_cargo_package_name(cargo_toml_path: Utf8PathBuf) -> String {
+fn get_cargo_package_name(package: &Package) -> String {
+    let cargo_toml_path = package.root().join(CARGO_MANIFEST_FILE_NAME);
+
     let cargo_toml: toml::Value =
         toml::from_str(&fs::read_to_string(cargo_toml_path).expect("Could not read `Cargo.toml`."))
             .expect("Could not convert `Cargo.toml` to toml.");
@@ -81,11 +84,15 @@ fn get_cargo_package_name(cargo_toml_path: Utf8PathBuf) -> String {
     package_name.to_string()
 }
 
-fn get_cargo_package_version(cargo_toml_path: Utf8PathBuf, cargo_package_name: &str) -> Result<String> {
+fn get_cargo_package_version(package: &Package) -> String {
+    let cargo_toml_path = package.root().join(CARGO_MANIFEST_FILE_NAME);
+
     let metadata = MetadataCommand::new()
         .manifest_path(cargo_toml_path)
         .exec()
         .expect("Could not get Cargo metadata");
+
+    let cargo_package_name = get_cargo_package_name(package);
 
     let package = metadata
         .packages
@@ -93,14 +100,14 @@ fn get_cargo_package_version(cargo_toml_path: Utf8PathBuf, cargo_package_name: &
         .find(|pkg| pkg.name == cargo_package_name)
         .unwrap_or_else(|| panic!("Could not get `{cargo_package_name}` package from metadata."));
 
-    Ok(package.version.to_string())
+    package.version.to_string()
 }
 
-pub fn get_crate_archive_basename(cargo_toml_path: Utf8PathBuf) -> String {
-    let name = get_cargo_package_name(cargo_toml_path.to_owned());
-    let version = get_cargo_package_version(cargo_toml_path, &name).expect("Could not get package version.");
+pub fn get_crate_archive_basename(package: &Package) -> String {
+    let package_name = get_cargo_package_name(package);
+    let package_version = get_cargo_package_version(package);
 
-    format!("{}-{}", name, version)
+    format!("{}-{}", package_name, package_version)
 }
 
 pub fn fetch_crate(package: &Package, ws: &Workspace<'_>) -> Result<()> {

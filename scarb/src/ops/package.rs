@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
 
-use anyhow::{bail, Context, ensure, Result};
+use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc, writedoc};
 
@@ -13,18 +13,18 @@ use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
 use serde::Serialize;
 
-use crate::compiler::plugin::proc_macro::compilation::{package_crate, SharedLibraryProvider};
+use crate::compiler::plugin::proc_macro::compilation::{
+    get_crate_archive_basename, package_crate, SharedLibraryProvider,
+};
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{Config, is_builtin, Package, PackageId, PackageName, TargetKind, Workspace};
+use crate::core::{is_builtin, Config, Package, PackageId, PackageName, TargetKind, Workspace};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
-    CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME,
-    ops, VCS_INFO_FILE_NAME,
+    ops, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
+    MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME,
 };
-
-use crate::compiler::plugin::proc_macro::compilation;
 
 const VERSION: u8 = 1;
 const VERSION_FILE_NAME: &str = "VERSION";
@@ -264,9 +264,7 @@ fn prepare_archive_recipe(
             contents: ArchiveFileContents::OnDisk(
                 pkg.target_path(ws.config())
                     .into_child("package")
-                    .into_child(compilation::get_crate_archive_basename(
-                        pkg.root().join(CARGO_MANIFEST_FILE_NAME),
-                    ))
+                    .into_child(get_crate_archive_basename(pkg))
                     .into_child(CARGO_MANIFEST_FILE_NAME)
                     .path_unchecked()
                     .to_path_buf(),
