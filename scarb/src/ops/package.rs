@@ -25,6 +25,8 @@ use crate::{
     MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME,
 };
 
+use cargo_metadata::MetadataCommand;
+
 const VERSION: u8 = 1;
 const VERSION_FILE_NAME: &str = "VERSION";
 const ORIGINAL_MANIFEST_FILE_NAME: &str = "Scarb.orig.toml";
@@ -212,7 +214,7 @@ fn list_one_impl(
     Ok(recipe.into_iter().map(|f| f.path).collect())
 }
 
-fn get_crate_archive_basename(cargo_toml_path: Utf8PathBuf) -> String {
+fn get_cargo_package_name(cargo_toml_path: Utf8PathBuf) -> String {
     let cargo_toml: toml::Value =
         toml::from_str(&fs::read_to_string(cargo_toml_path).expect("Could not read `Cargo.toml`."))
             .expect("Could not convert `Cargo.toml` to toml.");
@@ -227,13 +229,28 @@ fn get_crate_archive_basename(cargo_toml_path: Utf8PathBuf) -> String {
         .as_str()
         .unwrap();
 
-    let package_version = package_section
-        .get("version")
-        .expect("Could not get version field from `Cargo.toml`.")
-        .as_str()
-        .unwrap();
+    package_name.to_string()
+}
 
-    format!("{}-{}", package_name, package_version)
+fn get_cargo_package_version(cargo_package_name: &str) -> Result<String> {
+    let metadata = MetadataCommand::new()
+        .exec()
+        .expect("Could not get Cargo metadata");
+
+    let package = metadata
+        .packages
+        .iter()
+        .find(|pkg| pkg.name == cargo_package_name)
+        .unwrap_or_else(|| panic!("Could not get `{cargo_package_name}` package from metadata."));
+
+    Ok(package.version.to_string())
+}
+
+fn get_crate_archive_basename(cargo_toml_path: Utf8PathBuf) -> String {
+    let name = get_cargo_package_name(cargo_toml_path);
+    let version = get_cargo_package_version(&name).unwrap();
+
+    format!("{}-{}", name, version)
 }
 
 fn prepare_archive_recipe(
