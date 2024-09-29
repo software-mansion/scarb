@@ -17,7 +17,7 @@ use serde::Serialize;
 use crate::compiler::plugin::proc_macro::compilation::{package_crate, SharedLibraryProvider};
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{Config, Package, PackageId, PackageName, TargetKind, Workspace};
+use crate::core::{is_builtin, Config, Package, PackageId, PackageName, TargetKind, Workspace};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
@@ -173,7 +173,7 @@ fn package_one_impl(
 
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
-    let mut dst = if opts.verify && !pkg.is_builtin() {
+    let mut dst = if opts.verify && !pkg.manifest.targets.iter().any(is_builtin) {
         run_verify(pkg, dst, ws, opts.features.clone())
             .context("failed to verify package tarball")?
     } else {
@@ -277,7 +277,7 @@ fn prepare_archive_recipe(
         contents: ArchiveFileContents::OnDisk(pkg.manifest_path().to_owned()),
     });
 
-    if pkg.is_cairo_plugin() && !pkg.is_builtin() {
+    if pkg.is_cairo_plugin() && !pkg.manifest.targets.iter().any(is_builtin) {
         // Package crate with Cargo.
         package_crate(pkg, opts, ws)?;
 

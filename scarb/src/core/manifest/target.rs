@@ -83,13 +83,6 @@ impl Target {
         self.kind == TargetKind::CAIRO_PLUGIN
     }
 
-    pub fn is_builtin(&self) -> bool {
-        self.params
-            .get("builtin")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false)
-    }
-
     pub fn is_test(&self) -> bool {
         self.kind == TargetKind::TEST
     }
@@ -154,4 +147,12 @@ impl TryInto<TomlExternalTargetParams> for TestTargetProps {
     fn try_into(self) -> Result<TomlExternalTargetParams, Self::Error> {
         Ok(toml::Value::try_into(toml::Value::try_from(self)?)?)
     }
+}
+
+pub fn is_builtin(target: &Target) -> bool {
+    target
+        .params
+        .get("builtin")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
 }
