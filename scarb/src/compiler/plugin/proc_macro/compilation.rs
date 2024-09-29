@@ -13,6 +13,8 @@ use serde_json::value::RawValue;
 use std::fmt::Display;
 use std::process::Command;
 use tracing::trace_span;
+use cargo_metadata::MetadataCommand;
+use std::fs;
 
 pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
 
@@ -59,6 +61,46 @@ pub fn compile_unit(unit: ProcMacroCompilationUnit, ws: &Workspace<'_>) -> Resul
 pub fn check_unit(unit: ProcMacroCompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package = unit.components.first().unwrap().package.clone();
     run_cargo(CargoAction::Check, &package, ws)
+}
+
+fn get_cargo_package_name(cargo_toml_path: Utf8PathBuf) -> String {
+    let cargo_toml: toml::Value =
+        toml::from_str(&fs::read_to_string(cargo_toml_path).expect("Could not read `Cargo.toml`."))
+            .expect("Could not convert `Cargo.toml` to toml.");
+
+    let package_section = cargo_toml
+        .get("package")
+        .expect("Could not get package section from `Cargo.toml`.");
+
+    let package_name = package_section
+        .get("name")
+        .expect("Could not get name field from `Cargo.toml`.")
+        .as_str()
+        .unwrap();
+
+    package_name.to_string()
+}
+
+fn get_cargo_package_version(cargo_toml_path: Utf8PathBuf, cargo_package_name: &str) -> Result<String> {
+    let metadata = MetadataCommand::new()
+        .manifest_path(cargo_toml_path)
+        .exec()
+        .expect("Could not get Cargo metadata");
+
+    let package = metadata
+        .packages
+        .iter()
+        .find(|pkg| pkg.name == cargo_package_name)
+        .unwrap_or_else(|| panic!("Could not get `{cargo_package_name}` package from metadata."));
+
+    Ok(package.version.to_string())
+}
+
+pub fn get_crate_archive_basename(cargo_toml_path: Utf8PathBuf) -> String {
+    let name = get_cargo_package_name(cargo_toml_path.to_owned());
+    let version = get_cargo_package_version(cargo_toml_path, &name).expect("Could not get package version.");
+
+    format!("{}-{}", name, version)
 }
 
 pub fn fetch_crate(package: &Package, ws: &Workspace<'_>) -> Result<()> {

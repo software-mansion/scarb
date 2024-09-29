@@ -1,9 +1,8 @@
 use std::collections::BTreeMap;
-use std::fs;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{bail, Context, ensure, Result};
 use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc, writedoc};
 
@@ -17,15 +16,15 @@ use serde::Serialize;
 use crate::compiler::plugin::proc_macro::compilation::{package_crate, SharedLibraryProvider};
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{is_builtin, Config, Package, PackageId, PackageName, TargetKind, Workspace};
+use crate::core::{Config, is_builtin, Package, PackageId, PackageName, TargetKind, Workspace};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
-    ops, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
-    MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME,
+    CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME,
+    ops, VCS_INFO_FILE_NAME,
 };
 
-use cargo_metadata::MetadataCommand;
+use crate::compiler::plugin::proc_macro::compilation;
 
 const VERSION: u8 = 1;
 const VERSION_FILE_NAME: &str = "VERSION";
@@ -214,45 +213,6 @@ fn list_one_impl(
     Ok(recipe.into_iter().map(|f| f.path).collect())
 }
 
-fn get_cargo_package_name(cargo_toml_path: Utf8PathBuf) -> String {
-    let cargo_toml: toml::Value =
-        toml::from_str(&fs::read_to_string(cargo_toml_path).expect("Could not read `Cargo.toml`."))
-            .expect("Could not convert `Cargo.toml` to toml.");
-
-    let package_section = cargo_toml
-        .get("package")
-        .expect("Could not get package section from `Cargo.toml`.");
-
-    let package_name = package_section
-        .get("name")
-        .expect("Could not get name field from `Cargo.toml`.")
-        .as_str()
-        .unwrap();
-
-    package_name.to_string()
-}
-
-fn get_cargo_package_version(cargo_package_name: &str) -> Result<String> {
-    let metadata = MetadataCommand::new()
-        .exec()
-        .expect("Could not get Cargo metadata");
-
-    let package = metadata
-        .packages
-        .iter()
-        .find(|pkg| pkg.name == cargo_package_name)
-        .unwrap_or_else(|| panic!("Could not get `{cargo_package_name}` package from metadata."));
-
-    Ok(package.version.to_string())
-}
-
-fn get_crate_archive_basename(cargo_toml_path: Utf8PathBuf) -> String {
-    let name = get_cargo_package_name(cargo_toml_path);
-    let version = get_cargo_package_version(&name).unwrap();
-
-    format!("{}-{}", name, version)
-}
-
 fn prepare_archive_recipe(
     pkg: &Package,
     opts: &PackageOpts,
@@ -304,7 +264,7 @@ fn prepare_archive_recipe(
             contents: ArchiveFileContents::OnDisk(
                 pkg.target_path(ws.config())
                     .into_child("package")
-                    .into_child(get_crate_archive_basename(
+                    .into_child(compilation::get_crate_archive_basename(
                         pkg.root().join(CARGO_MANIFEST_FILE_NAME),
                     ))
                     .into_child(CARGO_MANIFEST_FILE_NAME)
