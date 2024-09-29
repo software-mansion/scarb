@@ -143,7 +143,7 @@
                     "name": "SHAPE_CONST",
                     "doc": "Constant for the shape type",
                     "signature": "const SHAPE_CONST: felt252;",
-                    "full_path": "hello_world::Shape::SHAPE_CONST"
+                    "full_path": "hello_world::hello_world::Shape::SHAPE_CONST"
                   }
                 }
               ],
@@ -153,7 +153,7 @@
                     "name": "ShapePair",
                     "doc": "Type alias for a pair of shapes",
                     "signature": "type ShapePair;",
-                    "full_path": "hello_world::Shape::ShapePair"
+                    "full_path": "hello_world::hello_world::Shape::ShapePair"
                   }
                 }
               ],
@@ -163,7 +163,7 @@
                     "name": "area",
                     "doc": "Calculate the area of the shape",
                     "signature": "fn area(self: T) -> u32",
-                    "full_path": "Shape::area"
+                    "full_path": "hello_world::Shape::area"
                   }
                 }
               ],
@@ -183,7 +183,7 @@
                     "name": "ShapePair",
                     "doc": "Type alias for a pair of circles",
                     "signature": "type ShapePair = (Circle, Circle);",
-                    "full_path": "hello_world::CircleShape::ShapePair"
+                    "full_path": "hello_world::hello_world::CircleShape::ShapePair"
                   }
                 }
               ],
@@ -193,7 +193,7 @@
                     "name": "SHAPE_CONST",
                     "doc": "Shape constant",
                     "signature": "const SHAPE_CONST: felt252 = 'xyz';",
-                    "full_path": "hello_world::CircleShape::SHAPE_CONST"
+                    "full_path": "hello_world::hello_world::CircleShape::SHAPE_CONST"
                   }
                 }
               ],
