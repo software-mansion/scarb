@@ -41,7 +41,7 @@ impl SharedLibraryProvider for Package {
     }
 
     fn shared_lib_path(&self, config: &Config) -> Utf8PathBuf {
-        let lib_name = library_filename(self.id.name.to_string());
+        let lib_name = library_filename(get_cargo_package_name(self));
         let lib_name = lib_name
             .into_string()
             .expect("library name must be valid UTF-8");
