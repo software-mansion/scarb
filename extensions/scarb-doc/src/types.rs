@@ -7,9 +7,9 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LanguageElementId,
-    LookupItemId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId,
-    StructId, TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId,
-    TraitTypeId, VariantId,
+    LookupItemId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, StructId,
+    TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
+    VariantId,
 };
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
