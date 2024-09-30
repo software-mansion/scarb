@@ -11,10 +11,47 @@ use json_target::JsonTargetChecker;
 #[test]
 fn test_reexports() {
     let root_dir = TempDir::new().unwrap();
-    let child_dir = root_dir.child("packages/sub_package");
+    let child_dir = root_dir.child("sub_package");
+
+    ProjectBuilder::start()
+        .name("sub_package")
+        .lib_cairo(indoc! {r#"
+            pub fn display() {
+                println!("Hello from the inner module!");
+            }
+            pub const ABC: u32 = 44;
+  
+            pub type Type = u32;
+  
+            pub struct TestStruct {
+                abc: u32
+            }
+  
+            pub enum TestEnum {
+                Var1
+            }
+  
+            pub trait TestTrait {
+                fn test() -> ();
+            }
+  
+            pub impl TestImpl of TestTrait {
+                fn test() {
+                    println!("test");
+                }
+            }
+  
+            pub extern fn extern_function() -> u32 nopanic;
+  
+            pub extern type ExternalType;
+  
+            pub mod inside_sub_module {}
+          "#})
+        .build(&child_dir);
 
     let root = ProjectBuilder::start()
         .name("hello_world")
+        .dep("sub_package", &child_dir)
         .lib_cairo(indoc! {r#"
           pub use sub_package as package;
 
@@ -78,42 +115,6 @@ fn test_reexports() {
         .package(root)
         .build(&root_dir);
 
-    ProjectBuilder::start()
-        .name("sub_package")
-        .lib_cairo(indoc! {r#"
-          pub fn display() {
-              println!("Hello from the inner module!");
-          }
-          pub const ABC: u32 = 44;
-
-          pub type Type = u32;
-
-          pub struct TestStruct {
-              abc: u32
-          }
-
-          pub enum TestEnum {
-              Var1
-          }
-
-          pub trait TestTrait {
-              fn test() -> ();
-          }
-
-          pub impl TestImpl of TestTrait {
-              fn test() {
-                  println!("test");
-              }
-          }
-
-          pub extern fn extern_function() -> u32 nopanic;
-
-          pub extern type ExternalType;
-
-          pub mod inside_sub_module {}
-        "#})
-        .build(&child_dir);
-
     Scarb::quick_snapbox()
         .arg("doc")
         .args(["--output-format", "json"])
@@ -122,7 +123,7 @@ fn test_reexports() {
         .success();
 
     JsonTargetChecker::default()
-        .actual(&root_dir.path().join("target/doc/hello_world"))
+        .actual(&root_dir.path().join("target/doc/output.json"))
         .expected("./data/json_reexports.json")
         .assert_files_match();
 }

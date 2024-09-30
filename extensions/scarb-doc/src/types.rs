@@ -4,17 +4,16 @@ use cairo_lang_semantic::items::visibility::{self, Visibility};
 use cairo_lang_semantic::resolve::ResolvedGenericItem;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_utils::Upcast;
-use itertools::{chain, Itertools};
+use itertools::chain;
 use serde::Serialize;
 
 use cairo_lang_defs::db::DefsGroup;
-use cairo_lang_defs::diagnostic_utils::StableLocation;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, GenericTypeId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LanguageElementId,
     LookupItemId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId,
     StructId, SubmoduleId, TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId,
-    TraitItemId, TraitTypeId, UseId, VariantId,
+    TraitItemId, TraitTypeId, VariantId,
 };
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
@@ -23,6 +22,21 @@ use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_syntax::node::{ast, SyntaxNode};
 
 use crate::db::ScarbDocDatabase;
+
+type ModuleUsesItems = (
+    Vec<ConstantId>,
+    Vec<FreeFunctionId>,
+    Vec<StructId>,
+    Vec<EnumId>,
+    Vec<ModuleTypeAliasId>,
+    Vec<ImplAliasId>,
+    Vec<TraitId>,
+    Vec<ImplDefId>,
+    Vec<ExternTypeId>,
+    Vec<ExternFunctionId>,
+    Vec<SubmoduleId>,
+    Vec<CrateId>,
+);
 
 #[derive(Serialize, Clone)]
 pub struct Crate {
@@ -192,57 +206,6 @@ impl Module {
             .filter(|id| should_include_item(*id))
             .map(|id| ExternFunction::new(db, *id))
             .collect();
-
-        let module_uses = db.module_uses(module_id).unwrap();
-        module_uses
-            .iter()
-            .filter(|(use_id, _)| should_include_item(*use_id))
-            .for_each(|(use_id, _)| {
-                let used_item = db.use_resolved_item(*use_id).unwrap();
-                match used_item {
-                    ResolvedGenericItem::Module(ModuleId::CrateRoot(module_id)) => {
-                        println!("crate {:?}", module_id.name(db.upcast()))
-                    }
-                    ResolvedGenericItem::Module(ModuleId::Submodule(id)) => {
-                        println!("submodule {:?}", ModuleId::Submodule(id).name(db.upcast()))
-                    }
-                    _ => (),
-                }
-            });
-
-        // module_uses
-        //     .iter()
-        //     .filter(|(use_id, _)| should_include_item(*use_id))
-        //     .for_each(|(use_id, _)| {
-        //         let used_item = db.use_resolved_item(*use_id).unwrap();
-        //         match used_item {
-        //             ResolvedGenericItem::Module(ModuleId::Submodule(module_id)) => {
-        //                 println!("submodule");
-        //             }
-        //             _ => (),
-        //         }
-        //     });
-
-        // let resolved_modules_from_uses = module_uses.iter().filter_map(|(use_id, _)| {
-        //     if !should_include_item(use_id) {
-        //         return None;
-        //     }
-        //     let item = db.use_resolved_item(*use_id).unwrap();
-        //     match item {
-        //         ResolvedGenericItem::Module(module_id) => Some(module_id),
-        //         _ => None,
-        //     }
-        // });
-        // .filter(|id| should_include_item(*id))
-        // .map(|id| {
-        //     Self::new(
-        //         db,
-        //         root_module_id,
-        //         ModuleId::Submodule(*id),
-        //         include_private_items,
-        //     )
-        // })
-        // .collect();
 
         let module_submodules = db.module_submodules(module_id).unwrap();
         let mut submodules: Vec<Module> = chain!(module_submodules.keys(), use_submodules.iter())
@@ -874,22 +837,7 @@ impl ExternFunction {
     }
 }
 
-fn extract_items_from_module_uses(
-    module_use_items: Vec<ResolvedGenericItem>,
-) -> (
-    Vec<ConstantId>,
-    Vec<FreeFunctionId>,
-    Vec<StructId>,
-    Vec<EnumId>,
-    Vec<ModuleTypeAliasId>,
-    Vec<ImplAliasId>,
-    Vec<TraitId>,
-    Vec<ImplDefId>,
-    Vec<ExternTypeId>,
-    Vec<ExternFunctionId>,
-    Vec<SubmoduleId>,
-    Vec<CrateId>,
-) {
+fn extract_items_from_module_uses(module_use_items: Vec<ResolvedGenericItem>) -> ModuleUsesItems {
     let mut constants = Vec::new();
     let mut free_functions = Vec::new();
     let mut structs = Vec::new();

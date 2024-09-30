@@ -21,6 +21,170 @@
               "submodules": [
                 {
                   "item_data": {
+                    "name": "inner_module",
+                    "doc": null,
+                    "signature": null,
+                    "full_path": "hello_world::sub_module::inner_module"
+                  },
+                  "submodules": [
+                    {
+                      "item_data": {
+                        "name": "inside_inner_module",
+                        "doc": null,
+                        "signature": null,
+                        "full_path": "hello_world::sub_module::inner_module::inside_inner_module"
+                      },
+                      "submodules": [],
+                      "constants": [],
+                      "free_functions": [],
+                      "structs": [],
+                      "enums": [],
+                      "type_aliases": [],
+                      "impl_aliases": [],
+                      "traits": [],
+                      "impls": [],
+                      "extern_types": [],
+                      "extern_functions": []
+                    }
+                  ],
+                  "constants": [
+                    {
+                      "item_data": {
+                        "name": "ABC",
+                        "doc": null,
+                        "signature": "pub const ABC: u32 = 44;",
+                        "full_path": "hello_world::sub_module::inner_module::ABC"
+                      }
+                    }
+                  ],
+                  "free_functions": [
+                    {
+                      "item_data": {
+                        "name": "display",
+                        "doc": null,
+                        "signature": "pub fn display()",
+                        "full_path": "hello_world::sub_module::inner_module::display"
+                      }
+                    }
+                  ],
+                  "structs": [
+                    {
+                      "members": [
+                        {
+                          "item_data": {
+                            "name": "abc",
+                            "doc": null,
+                            "signature": " abc: u32",
+                            "full_path": "hello_world::sub_module::inner_module::TestStruct::abc"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "TestStruct",
+                        "doc": null,
+                        "signature": null,
+                        "full_path": "hello_world::sub_module::inner_module::TestStruct"
+                      }
+                    }
+                  ],
+                  "enums": [
+                    {
+                      "variants": [
+                        {
+                          "item_data": {
+                            "name": "Var1",
+                            "doc": null,
+                            "signature": "",
+                            "full_path": "hello_world::sub_module::inner_module::TestEnum::Var1"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "TestEnum",
+                        "doc": null,
+                        "signature": null,
+                        "full_path": "hello_world::sub_module::inner_module::TestEnum"
+                      }
+                    }
+                  ],
+                  "type_aliases": [
+                    {
+                      "item_data": {
+                        "name": "Type",
+                        "doc": null,
+                        "signature": "pub type Type = u32;",
+                        "full_path": "hello_world::sub_module::inner_module::Type"
+                      }
+                    }
+                  ],
+                  "impl_aliases": [],
+                  "traits": [
+                    {
+                      "trait_constants": [],
+                      "trait_types": [],
+                      "trait_functions": [
+                        {
+                          "item_data": {
+                            "name": "test",
+                            "doc": null,
+                            "signature": "fn test() -> ()",
+                            "full_path": "hello_world::sub_module::inner_module::TestTrait::test"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "TestTrait",
+                        "doc": null,
+                        "signature": "pub trait TestTrait",
+                        "full_path": "hello_world::sub_module::inner_module::TestTrait"
+                      }
+                    }
+                  ],
+                  "impls": [
+                    {
+                      "impl_types": [],
+                      "impl_constants": [],
+                      "impl_functions": [
+                        {
+                          "item_data": {
+                            "name": "test",
+                            "doc": null,
+                            "signature": "fn test()",
+                            "full_path": "hello_world::sub_module::inner_module::TestImpl::test"
+                          }
+                        }
+                      ],
+                      "item_data": {
+                        "name": "TestImpl",
+                        "doc": null,
+                        "signature": "pub impl TestImpl of TestTrait",
+                        "full_path": "hello_world::sub_module::inner_module::TestImpl"
+                      }
+                    }
+                  ],
+                  "extern_types": [
+                    {
+                      "item_data": {
+                        "name": "ExternalType",
+                        "doc": null,
+                        "signature": "pub extern type ExternalType;",
+                        "full_path": "hello_world::sub_module::inner_module::ExternalType"
+                      }
+                    }
+                  ],
+                  "extern_functions": [
+                    {
+                      "item_data": {
+                        "name": "extern_function",
+                        "doc": null,
+                        "signature": "pub extern fn extern_function() -> u32 nopanic;",
+                        "full_path": "hello_world::sub_module::inner_module::extern_function"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "item_data": {
                     "name": "inside_inner_module",
                     "doc": null,
                     "signature": null,
@@ -61,7 +225,16 @@
               ],
               "structs": [
                 {
-                  "members": [],
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "abc",
+                        "doc": null,
+                        "signature": " abc: u32",
+                        "full_path": "hello_world::sub_module::inner_module::TestStruct::abc"
+                      }
+                    }
+                  ],
                   "item_data": {
                     "name": "TestStruct",
                     "doc": null,
@@ -78,7 +251,7 @@
                         "name": "Var1",
                         "doc": null,
                         "signature": "",
-                        "full_path": "hello_world::sub_module::inner_module::Var1"
+                        "full_path": "hello_world::sub_module::inner_module::TestEnum::Var1"
                       }
                     }
                   ],
@@ -111,7 +284,7 @@
                         "name": "test",
                         "doc": null,
                         "signature": "fn test() -> ()",
-                        "full_path": "TestTrait::test"
+                        "full_path": "hello_world::sub_module::inner_module::TestTrait::test"
                       }
                     }
                   ],
@@ -216,7 +389,16 @@
               ],
               "structs": [
                 {
-                  "members": [],
+                  "members": [
+                    {
+                      "item_data": {
+                        "name": "abc",
+                        "doc": null,
+                        "signature": " abc: u32",
+                        "full_path": "sub_package::TestStruct::abc"
+                      }
+                    }
+                  ],
                   "item_data": {
                     "name": "TestStruct",
                     "doc": null,
@@ -233,7 +415,7 @@
                         "name": "Var1",
                         "doc": null,
                         "signature": "",
-                        "full_path": "sub_package::Var1"
+                        "full_path": "sub_package::TestEnum::Var1"
                       }
                     }
                   ],
@@ -266,7 +448,7 @@
                         "name": "test",
                         "doc": null,
                         "signature": "fn test() -> ()",
-                        "full_path": "TestTrait::test"
+                        "full_path": "sub_package::TestTrait::test"
                       }
                     }
                   ],
