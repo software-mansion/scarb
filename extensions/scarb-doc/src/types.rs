@@ -1,7 +1,8 @@
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::items::us::SemanticUseEx;
-use cairo_lang_semantic::items::visibility;
+use cairo_lang_semantic::items::visibility::{self, Visibility};
 use cairo_lang_semantic::resolve::ResolvedGenericItem;
+use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_utils::Upcast;
 use itertools::{chain, Itertools};
 use serde::Serialize;
@@ -10,16 +11,16 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::diagnostic_utils::StableLocation;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, GenericTypeId, ImplAliasId,
-    ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LookupItemId,
-    MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, StructId, SubmoduleId,
-    TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
-    UseId, VariantId,
+    ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LanguageElementId,
+    LookupItemId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId,
+    StructId, SubmoduleId, TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId,
+    TraitItemId, TraitTypeId, UseId, VariantId,
 };
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
-use cairo_lang_syntax::node::ast;
+use cairo_lang_syntax::node::{ast, SyntaxNode};
 
 use crate::db::ScarbDocDatabase;
 
@@ -93,10 +94,10 @@ impl Module {
         };
 
         let should_include_item = |id: &dyn TopLevelLanguageElementId| {
-            if include_private_items {
-                return true;
-            }
-            is_visible_in_module(db, root_module_id, id)
+            let syntax_node = id.stable_location(db.upcast()).syntax_node(db.upcast());
+
+            (include_private_items || is_visible_in_module(db, root_module_id, id))
+                && !is_doc_hidden_attr(db, &syntax_node)
         };
 
         let module_uses_items: Vec<ResolvedGenericItem> = db
@@ -104,7 +105,12 @@ impl Module {
             .unwrap()
             .iter()
             .filter_map(|(use_id, _)| {
-                if should_include_item(use_id) {
+                let visibility = db
+                    .module_item_info_by_name(module_id, use_id.name(db))
+                    .unwrap()
+                    .unwrap()
+                    .visibility;
+                if visibility == Visibility::Public {
                     Some(db.use_resolved_item(*use_id).unwrap())
                 } else {
                     None
@@ -283,6 +289,10 @@ impl Module {
     }
 }
 
+fn is_doc_hidden_attr(db: &ScarbDocDatabase, syntax_node: &SyntaxNode) -> bool {
+    syntax_node.has_attr_with_arg(db, "doc", "hidden")
+}
+
 #[derive(Serialize, Clone)]
 pub struct ItemData {
     pub name: String,
@@ -404,12 +414,16 @@ impl Struct {
             id,
             LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
         );
-
         let members = members
             .iter()
             .filter(|(_, semantic_member)| {
-                include_private_items
-                    || is_visible_in_module(db, root_module_id, &semantic_member.id)
+                let syntax_node = &semantic_member
+                    .id
+                    .stable_location(db.upcast())
+                    .syntax_node(db.upcast());
+                (include_private_items
+                    || is_visible_in_module(db, root_module_id, &semantic_member.id))
+                    && !is_doc_hidden_attr(db, syntax_node)
             })
             .map(|(_name, semantic_member)| Member::new(db, semantic_member.id))
             .collect::<Vec<_>>();

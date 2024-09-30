@@ -387,7 +387,7 @@ fn compile_starknet_contract_without_starknet_dep() {
             fn constructor(ref self: ContractState, value_: u128) {
                                      ^***********^
 
-        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapWriteAccess::write and StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
+        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapWriteAccess::write and core::starknet::storage::StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:20:20
                 self.value.write(value_);
                            ^***^
@@ -402,7 +402,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                 fn get(self: @ContractState) -> u128 {
                               ^***********^
 
-        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapReadAccess::read and StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
+        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapReadAccess::read and core::starknet::storage::StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:26:24
                     self.value.read()
                                ^**^
@@ -412,7 +412,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                 fn increase(ref self: ContractState, a: u128)  {
                                       ^***********^
 
-        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapWriteAccess::write and StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
+        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapWriteAccess::write and core::starknet::storage::StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:29:24
                     self.value.write( self.value.read() + a );
                                ^***^
