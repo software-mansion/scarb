@@ -2,6 +2,7 @@ use scarb_metadata::{
     CompilationUnitComponentMetadata, CompilationUnitMetadata, Metadata, PackageId, PackageMetadata,
 };
 use smol_str::{SmolStr, ToSmolStr};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
@@ -99,6 +100,8 @@ fn get_crates_config(
             (
                 SmolStr::from(&component.name),
                 get_crate_settings_for_package(
+                    &metadata.packages,
+                    &compilation_unit_metadata.components,
                     pkg,
                     component.cfg.as_ref().map(|cfg_vec| build_cfg_set(cfg_vec)),
                 ),
@@ -113,6 +116,8 @@ fn get_crates_config(
 }
 
 fn get_crate_settings_for_package(
+    packages: &[PackageMetadata],
+    compilation_unit_metadata_components: &[CompilationUnitComponentMetadata],
     package: &PackageMetadata,
     cfg_set: Option<CfgSet>,
 ) -> CrateSettings {
@@ -133,11 +138,33 @@ fn get_crate_settings_for_package(
             .contains(&String::from("coupons")),
     };
 
-    let dependencies = package
+    let mut dependencies: BTreeMap<String, DependencySettings> = package
         .dependencies
         .iter()
-        .map(|d| (d.name.clone(), DependencySettings { version: None }))
+        .filter_map(|dependency| {
+            compilation_unit_metadata_components
+                .iter()
+                .find(|compilation_unit_metadata_component| {
+                    compilation_unit_metadata_component.name == dependency.name
+                })
+                .map(|compilation_unit_metadata_component| {
+                    let version = packages
+                        .iter()
+                        .find(|package| package.name == compilation_unit_metadata_component.name)
+                        .map(|package| package.version.clone());
+
+                    (dependency.name.clone(), DependencySettings { version })
+                })
+        })
         .collect();
+
+    // Adds itself to dependencies
+    dependencies.insert(
+        package.name.clone(),
+        DependencySettings {
+            version: Some(package.version.clone()),
+        },
+    );
 
     CrateSettings {
         edition,

@@ -1,0 +1,41 @@
+{
+  "format_version": 1,
+  "packages_information": [
+    {
+      "crate_": {
+        "root_module": {
+          "item_data": {
+            "name": "hello_world",
+            "doc": null,
+            "signature": null,
+            "full_path": "hello_world"
+          },
+          "submodules": [],
+          "constants": [],
+          "free_functions": [
+            {
+              "item_data": {
+                "name": "main",
+                "doc": "main",
+                "signature": "fn main()",
+                "full_path": "hello_world::main"
+              }
+            }
+          ],
+          "structs": [],
+          "enums": [],
+          "type_aliases": [],
+          "impl_aliases": [],
+          "traits": [],
+          "impls": [],
+          "extern_types": [],
+          "extern_functions": []
+        }
+      },
+      "metadata": {
+        "name": "hello_world",
+        "authors": null
+      }
+    }
+  ]
+}
