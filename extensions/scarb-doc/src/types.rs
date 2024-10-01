@@ -23,21 +23,6 @@ use cairo_lang_syntax::node::{ast, SyntaxNode};
 
 use crate::db::ScarbDocDatabase;
 
-type ModuleUsesItems = (
-    Vec<ConstantId>,
-    Vec<FreeFunctionId>,
-    Vec<StructId>,
-    Vec<EnumId>,
-    Vec<ModuleTypeAliasId>,
-    Vec<ImplAliasId>,
-    Vec<TraitId>,
-    Vec<ImplDefId>,
-    Vec<ExternTypeId>,
-    Vec<ExternFunctionId>,
-    Vec<SubmoduleId>,
-    Vec<CrateId>,
-);
-
 #[derive(Serialize, Clone)]
 pub struct Crate {
     pub root_module: Module,
@@ -91,6 +76,95 @@ pub struct Module {
     pub extern_functions: Vec<ExternFunction>,
 }
 
+struct ModulePubUses {
+    pub use_constants: Vec<ConstantId>,
+    pub use_free_functions: Vec<FreeFunctionId>,
+    pub use_structs: Vec<StructId>,
+    pub use_enums: Vec<EnumId>,
+    pub use_module_type_aliases: Vec<ModuleTypeAliasId>,
+    pub use_impl_aliases: Vec<ImplAliasId>,
+    pub use_traits: Vec<TraitId>,
+    pub use_impl_defs: Vec<ImplDefId>,
+    pub use_extern_types: Vec<ExternTypeId>,
+    pub use_extern_functions: Vec<ExternFunctionId>,
+    pub use_submodules: Vec<SubmoduleId>,
+    pub use_crates: Vec<CrateId>,
+}
+
+impl ModulePubUses {
+    pub fn new(db: &ScarbDocDatabase, module_id: ModuleId) -> Self {
+        let module_use_items: Vec<ResolvedGenericItem> = db
+            .module_uses(module_id)
+            .unwrap()
+            .iter()
+            .filter_map(|(use_id, _)| {
+                let visibility = db
+                    .module_item_info_by_name(module_id, use_id.name(db))
+                    .unwrap()
+                    .unwrap()
+                    .visibility;
+                if visibility == Visibility::Public {
+                    Some(db.use_resolved_item(*use_id).unwrap())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        let mut use_constants = Vec::new();
+        let mut use_free_functions = Vec::new();
+        let mut use_structs = Vec::new();
+        let mut use_enums = Vec::new();
+        let mut use_module_type_aliases = Vec::new();
+        let mut use_impl_aliases = Vec::new();
+        let mut use_traits = Vec::new();
+        let mut use_impl_defs = Vec::new();
+        let mut use_extern_types = Vec::new();
+        let mut use_extern_functions = Vec::new();
+        let mut use_submodules = Vec::new();
+        let mut use_crates = Vec::new();
+
+        for item in module_use_items {
+            match item {
+                ResolvedGenericItem::GenericConstant(id) => use_constants.push(id),
+                ResolvedGenericItem::GenericFunction(GenericFunctionId::Free(id)) => {
+                    use_free_functions.push(id)
+                }
+                ResolvedGenericItem::GenericType(GenericTypeId::Struct(id)) => use_structs.push(id),
+                ResolvedGenericItem::GenericType(GenericTypeId::Enum(id)) => use_enums.push(id),
+                ResolvedGenericItem::GenericTypeAlias(id) => use_module_type_aliases.push(id),
+                ResolvedGenericItem::GenericImplAlias(id) => use_impl_aliases.push(id),
+                ResolvedGenericItem::Trait(id) => use_traits.push(id),
+                ResolvedGenericItem::Impl(id) => use_impl_defs.push(id),
+                ResolvedGenericItem::GenericType(GenericTypeId::Extern(id)) => {
+                    use_extern_types.push(id)
+                }
+                ResolvedGenericItem::GenericFunction(GenericFunctionId::Extern(id)) => {
+                    use_extern_functions.push(id)
+                }
+                ResolvedGenericItem::Module(ModuleId::Submodule(id)) => use_submodules.push(id),
+                ResolvedGenericItem::Module(ModuleId::CrateRoot(id)) => use_crates.push(id),
+                _ => (),
+            }
+        }
+
+        Self {
+            use_constants,
+            use_free_functions,
+            use_structs,
+            use_enums,
+            use_module_type_aliases,
+            use_impl_aliases,
+            use_traits,
+            use_impl_defs,
+            use_extern_types,
+            use_extern_functions,
+            use_submodules,
+            use_crates,
+        }
+    }
+}
+
 impl Module {
     pub fn new(
         db: &ScarbDocDatabase,
@@ -114,113 +188,101 @@ impl Module {
                 && !is_doc_hidden_attr(db, &syntax_node)
         };
 
-        let module_uses_items: Vec<ResolvedGenericItem> = db
-            .module_uses(module_id)
-            .unwrap()
-            .iter()
-            .filter_map(|(use_id, _)| {
-                let visibility = db
-                    .module_item_info_by_name(module_id, use_id.name(db))
-                    .unwrap()
-                    .unwrap()
-                    .visibility;
-                if visibility == Visibility::Public {
-                    Some(db.use_resolved_item(*use_id).unwrap())
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        let (
-            use_constants,
-            use_free_functions,
-            use_structs,
-            use_enums,
-            use_module_type_aliases,
-            use_impl_aliases,
-            use_traits,
-            use_impl_defs,
-            use_extern_types,
-            use_extern_functions,
-            use_submodules,
-            use_crates,
-        ) = extract_items_from_module_uses(module_uses_items);
+        let module_pubuses = ModulePubUses::new(db, module_id);
 
         let module_constants = db.module_constants(module_id).unwrap();
-        let constants = chain!(module_constants.keys(), use_constants.iter())
+        let constants = chain!(module_constants.keys(), module_pubuses.use_constants.iter())
             .filter(|id| should_include_item(*id))
             .map(|id| Constant::new(db, *id))
             .collect();
 
         let module_free_functions = db.module_free_functions(module_id).unwrap();
-        let free_functions = chain!(module_free_functions.keys(), use_free_functions.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| FreeFunction::new(db, *id))
-            .collect();
+        let free_functions = chain!(
+            module_free_functions.keys(),
+            module_pubuses.use_free_functions.iter()
+        )
+        .filter(|id| should_include_item(*id))
+        .map(|id| FreeFunction::new(db, *id))
+        .collect();
 
         let module_structs = db.module_structs(module_id).unwrap();
-        let structs = chain!(module_structs.keys(), use_structs.iter())
+        let structs = chain!(module_structs.keys(), module_pubuses.use_structs.iter())
             .filter(|id| should_include_item(*id))
             .map(|id| Struct::new(db, *id, root_module_id, include_private_items))
             .collect();
 
         let module_enums = db.module_enums(module_id).unwrap();
-        let enums = chain!(module_enums.keys(), use_enums.iter())
+        let enums = chain!(module_enums.keys(), module_pubuses.use_enums.iter())
             .filter(|id| should_include_item(*id))
             .map(|id| Enum::new(db, *id))
             .collect();
 
         let module_type_aliases = db.module_type_aliases(module_id).unwrap();
-        let type_aliases = chain!(module_type_aliases.keys(), use_module_type_aliases.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| TypeAlias::new(db, *id))
-            .collect();
+        let type_aliases = chain!(
+            module_type_aliases.keys(),
+            module_pubuses.use_module_type_aliases.iter()
+        )
+        .filter(|id| should_include_item(*id))
+        .map(|id| TypeAlias::new(db, *id))
+        .collect();
 
         let module_impl_aliases = db.module_impl_aliases(module_id).unwrap();
-        let impl_aliases = chain!(module_impl_aliases.keys(), use_impl_aliases.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| ImplAlias::new(db, *id))
-            .collect();
+        let impl_aliases = chain!(
+            module_impl_aliases.keys(),
+            module_pubuses.use_impl_aliases.iter()
+        )
+        .filter(|id| should_include_item(*id))
+        .map(|id| ImplAlias::new(db, *id))
+        .collect();
 
         let module_traits = db.module_traits(module_id).unwrap();
-        let traits = chain!(module_traits.keys(), use_traits.iter())
+        let traits = chain!(module_traits.keys(), module_pubuses.use_traits.iter())
             .filter(|id| should_include_item(*id))
             .map(|id| Trait::new(db, *id))
             .collect();
 
         let module_impls = db.module_impls(module_id).unwrap();
-        let impls = chain!(module_impls.keys(), use_impl_defs.iter())
+        let impls = chain!(module_impls.keys(), module_pubuses.use_impl_defs.iter())
             .filter(|id| should_include_item(*id))
             .map(|id| Impl::new(db, *id))
             .collect();
 
         let module_extern_types = db.module_extern_types(module_id).unwrap();
-        let extern_types = chain!(module_extern_types.keys(), use_extern_types.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| ExternType::new(db, *id))
-            .collect();
+        let extern_types = chain!(
+            module_extern_types.keys(),
+            module_pubuses.use_extern_types.iter()
+        )
+        .filter(|id| should_include_item(*id))
+        .map(|id| ExternType::new(db, *id))
+        .collect();
 
         let module_extern_functions = db.module_extern_functions(module_id).unwrap();
-        let extern_functions = chain!(module_extern_functions.keys(), use_extern_functions.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| ExternFunction::new(db, *id))
-            .collect();
+        let extern_functions = chain!(
+            module_extern_functions.keys(),
+            module_pubuses.use_extern_functions.iter()
+        )
+        .filter(|id| should_include_item(*id))
+        .map(|id| ExternFunction::new(db, *id))
+        .collect();
 
         let module_submodules = db.module_submodules(module_id).unwrap();
-        let mut submodules: Vec<Module> = chain!(module_submodules.keys(), use_submodules.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| {
-                Self::new(
-                    db,
-                    root_module_id,
-                    ModuleId::Submodule(*id),
-                    include_private_items,
-                )
-            })
-            .collect();
+        let mut submodules: Vec<Module> = chain!(
+            module_submodules.keys(),
+            module_pubuses.use_submodules.iter()
+        )
+        .filter(|id| should_include_item(*id))
+        .map(|id| {
+            Self::new(
+                db,
+                root_module_id,
+                ModuleId::Submodule(*id),
+                include_private_items,
+            )
+        })
+        .collect();
 
-        let reexported_crates_as_modules: Vec<Module> = use_crates
+        let reexported_crates_as_modules: Vec<Module> = module_pubuses
+            .use_crates
             .iter()
             .map(|id| {
                 Self::new(
@@ -835,56 +897,4 @@ impl ExternFunction {
             ),
         }
     }
-}
-
-fn extract_items_from_module_uses(module_use_items: Vec<ResolvedGenericItem>) -> ModuleUsesItems {
-    let mut constants = Vec::new();
-    let mut free_functions = Vec::new();
-    let mut structs = Vec::new();
-    let mut enums = Vec::new();
-    let mut module_type_aliases = Vec::new();
-    let mut impl_aliases = Vec::new();
-    let mut traits = Vec::new();
-    let mut impl_defs = Vec::new();
-    let mut extern_types = Vec::new();
-    let mut extern_functions = Vec::new();
-    let mut submodules = Vec::new();
-    let mut crates = Vec::new();
-
-    for item in module_use_items {
-        match item {
-            ResolvedGenericItem::GenericConstant(id) => constants.push(id),
-            ResolvedGenericItem::GenericFunction(GenericFunctionId::Free(id)) => {
-                free_functions.push(id)
-            }
-            ResolvedGenericItem::GenericType(GenericTypeId::Struct(id)) => structs.push(id),
-            ResolvedGenericItem::GenericType(GenericTypeId::Enum(id)) => enums.push(id),
-            ResolvedGenericItem::GenericTypeAlias(id) => module_type_aliases.push(id),
-            ResolvedGenericItem::GenericImplAlias(id) => impl_aliases.push(id),
-            ResolvedGenericItem::Trait(id) => traits.push(id),
-            ResolvedGenericItem::Impl(id) => impl_defs.push(id),
-            ResolvedGenericItem::GenericType(GenericTypeId::Extern(id)) => extern_types.push(id),
-            ResolvedGenericItem::GenericFunction(GenericFunctionId::Extern(id)) => {
-                extern_functions.push(id)
-            }
-            ResolvedGenericItem::Module(ModuleId::Submodule(id)) => submodules.push(id),
-            ResolvedGenericItem::Module(ModuleId::CrateRoot(id)) => crates.push(id),
-            _ => (),
-        }
-    }
-
-    (
-        constants,
-        free_functions,
-        structs,
-        enums,
-        module_type_aliases,
-        impl_aliases,
-        traits,
-        impl_defs,
-        extern_types,
-        extern_functions,
-        submodules,
-        crates,
-    )
 }
