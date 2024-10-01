@@ -36,7 +36,7 @@ fn valid_number_of_args() {
         .success()
         .stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]/Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello
             Run completed successfully, returning [987]
         "#});
@@ -65,7 +65,7 @@ fn can_deserialize_big_number() {
         .success()
         .stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]/Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello
             Run completed successfully, returning [1129815197211541481934112806673325772687763881719835256646064516195041515616]
         "#});
@@ -87,7 +87,7 @@ fn invalid_number_of_args() {
     #[cfg(windows)]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]/Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello
             error: failed to run the function
 
@@ -98,7 +98,7 @@ fn invalid_number_of_args() {
     #[cfg(not(windows))]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]/Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello
             error: failed to run the function
 
@@ -123,7 +123,7 @@ fn array_instead_of_felt() {
     #[cfg(windows)]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello
             error: failed to run the function
 
@@ -134,7 +134,7 @@ fn array_instead_of_felt() {
     #[cfg(not(windows))]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello
             error: failed to run the function
 
@@ -219,7 +219,7 @@ fn struct_deserialization() {
         .success()
         .stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]/Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello
             Run completed successfully, returning [1, 2, 3, 15]
         "#});
@@ -267,7 +267,7 @@ fn invalid_struct_deserialization() {
     #[cfg(windows)]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello
             error: failed to run the function
 
@@ -278,7 +278,7 @@ fn invalid_struct_deserialization() {
     #[cfg(not(windows))]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello
             error: failed to run the function
 
@@ -309,7 +309,7 @@ fn can_accept_nested_array() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]   Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]    Finished release target(s) in [..]
+        [..]    Finished `dev` profile target(s) in [..]
         [..]     Running hello
         [..][0, 1, [[17], [1, 15, 3], [42]]]
         [..]Run completed successfully, returning []

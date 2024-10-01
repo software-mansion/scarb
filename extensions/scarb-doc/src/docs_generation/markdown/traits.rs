@@ -1,5 +1,6 @@
 use anyhow::Result;
 use itertools::Itertools;
+use std::collections::HashMap;
 use std::fmt::Write;
 
 use crate::docs_generation::{DocItem, PrimitiveDocItem, TopLevelDocItem};
@@ -15,12 +16,15 @@ pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
         format!("{}.md", self.full_path().replace("::", "-"))
     }
 
-    fn md_ref(&self) -> String {
-        format!("[{}](./{})", self.name(), self.filename())
+    fn md_ref(&self, relative_path: Option<String>) -> String {
+        match relative_path {
+            Some(path) => format!("[{}](./{})", path, self.filename()),
+            None => format!("[{}](./{})", self.name(), self.filename()),
+        }
     }
 
-    fn generate_markdown_list_item(&self) -> String {
-        format!("- {}\n", self.md_ref())
+    fn generate_markdown_list_item(&self, relative_path: Option<String>) -> String {
+        format!("- {}\n", self.md_ref(relative_path))
     }
 }
 
@@ -154,6 +158,65 @@ impl MarkdownDocItem for Trait {
     }
 }
 
+/// Takes items, and appends for each of them a path, that was trimmed based on the common prefix of all of the items,
+/// cthat share the same name.
+pub fn mark_duplicated_item_with_relative_path<'a, T: TopLevelMarkdownDocItem + 'a>(
+    items: &'a [&'a T],
+) -> Vec<(&&'a T, Option<String>)> {
+    let mut paths_for_item_name = HashMap::<String, Vec<String>>::new();
+    for item in items {
+        paths_for_item_name
+            .entry(item.name().to_string())
+            .or_default()
+            .push(item.name().to_string());
+    }
+
+    let common_path_prefix_lengths_for_item: HashMap<String, usize> = paths_for_item_name
+        .iter()
+        .filter(|(_, paths)| paths.len() > 1)
+        .map(|(name, paths)| {
+            let splitted_paths: Vec<Vec<String>> = paths
+                .iter()
+                .map(|path| path.split("::").map(|val| val.to_string()).collect())
+                .collect();
+
+            let min_len = splitted_paths
+                .iter()
+                .map(|vec| vec.len())
+                .min()
+                .unwrap_or(0);
+
+            let mut prefix_len = min_len;
+            for i in 0..min_len {
+                let first = &splitted_paths[0][i];
+                if !splitted_paths.iter().all(|vec| &vec[i] == first) {
+                    prefix_len = i;
+                    break;
+                }
+            }
+
+            (name.clone(), prefix_len)
+        })
+        .collect();
+
+    items
+        .iter()
+        .map(|item| {
+            let relative_path =
+                common_path_prefix_lengths_for_item
+                    .get(item.name())
+                    .map(|common_prefix_length| {
+                        item.full_path()
+                            .split("::")
+                            .skip(*common_prefix_length)
+                            .collect::<Vec<_>>()
+                            .join("::")
+                    });
+            (item, relative_path)
+        })
+        .collect::<Vec<_>>()
+}
+
 pub fn generate_markdown_list_for_top_level_subitems<T: TopLevelMarkdownDocItem>(
     subitems: &[&T],
     header_level: usize,
@@ -164,8 +227,13 @@ pub fn generate_markdown_list_for_top_level_subitems<T: TopLevelMarkdownDocItem>
         let header = str::repeat("#", header_level);
 
         writeln!(&mut markdown, "{header} {}\n", T::HEADER)?;
-        for item in subitems {
-            writeln!(&mut markdown, "{}", item.generate_markdown_list_item())?;
+        let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
+        for (item, relative_path) in items_with_relative_path {
+            writeln!(
+                &mut markdown,
+                "{}",
+                item.generate_markdown_list_item(relative_path)
+            )?;
         }
     }
 

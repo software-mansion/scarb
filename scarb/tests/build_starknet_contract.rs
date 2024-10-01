@@ -42,7 +42,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -64,7 +64,7 @@ fn compile_starknet_contract() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     assert_eq!(
@@ -105,7 +105,7 @@ fn compile_starknet_contract_to_casm() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     assert_eq!(
@@ -156,7 +156,7 @@ fn compile_many_contracts() {
         [..] Compiling lib(hello) hello v0.1.0 ([..])
         [..] Compiling starknet-contract(a) hello v0.1.0 ([..])
         [..] Compiling starknet-contract(b) hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     assert_eq!(
@@ -216,7 +216,7 @@ fn compile_same_name_contracts() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     assert_eq!(
@@ -259,7 +259,7 @@ fn casm_add_pythonic_hints() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        [..]  Finished release target(s) in [..]
+        [..]  Finished `dev` profile target(s) in [..]
         "#});
 
     t.child("target/dev/hello_Balance.compiled_contract_class.json")
@@ -387,7 +387,7 @@ fn compile_starknet_contract_without_starknet_dep() {
             fn constructor(ref self: ContractState, value_: u128) {
                                      ^***********^
 
-        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapWriteAccess::write and StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
+        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapWriteAccess::write and core::starknet::storage::StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:20:20
                 self.value.write(value_);
                            ^***^
@@ -402,7 +402,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                 fn get(self: @ContractState) -> u128 {
                               ^***********^
 
-        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapReadAccess::read and StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
+        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapReadAccess::read and core::starknet::storage::StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:26:24
                     self.value.read()
                                ^**^
@@ -412,7 +412,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                 fn increase(ref self: ContractState, a: u128)  {
                                       ^***********^
 
-        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: StorageMapWriteAccess::write and StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
+        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapWriteAccess::write and core::starknet::storage::StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:29:24
                     self.value.write( self.value.read() + a );
                                ^***^

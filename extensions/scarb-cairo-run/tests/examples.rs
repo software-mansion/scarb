@@ -27,7 +27,7 @@ fn scarb_build_is_called() {
         .success()
         .stdout_matches(indoc! {r#"
                Compiling hello_world v0.1.0 ([..]/Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello_world
             Run completed successfully, returning [987]
         "#});
@@ -94,7 +94,7 @@ fn can_limit_gas() {
         .success()
         .stdout_matches(indoc! {r#"
                Compiling hello_world v0.1.0 ([..]/Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello_world
             Run completed successfully, returning [987]
             Remaining gas: 58060
@@ -128,7 +128,7 @@ fn can_disable_gas() {
     #[cfg(windows)]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello_world v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello_world
             error: program requires gas counter, please provide `--available-gas` argument
             error: process did not exit successfully: exit code: 1
@@ -136,7 +136,7 @@ fn can_disable_gas() {
     #[cfg(not(windows))]
     snapbox.stdout_matches(indoc! {r#"
                Compiling hello_world v0.1.0 ([..]Scarb.toml)
-                Finished release target(s) in [..]
+                Finished `dev` profile target(s) in [..]
                  Running hello_world
             error: program requires gas counter, please provide `--available-gas` argument
         "#});

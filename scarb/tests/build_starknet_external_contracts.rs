@@ -41,7 +41,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -220,7 +220,7 @@ fn build_external_full_path() {
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
         "#});
     assert_eq!(
         world.child("target/dev").files(),
@@ -384,7 +384,7 @@ fn compile_multiple_with_glob_subpath() {
         .success()
         .stdout_matches(indoc! {r#"
             [..] Compiling x v1.0.0 ([..]Scarb.toml)
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -482,7 +482,7 @@ fn will_warn_about_unmatched_paths() {
         .stdout_matches(indoc! {r#"
             [..] Compiling world v0.1.0 ([..]/Scarb.toml)
             warn: external contracts not found for selectors: `hello::lorem::mopsum::*`
-            [..]  Finished release target(s) in [..]
+            [..]  Finished `dev` profile target(s) in [..]
         "#});
     assert_eq!(
         world.child("target/dev").files(),

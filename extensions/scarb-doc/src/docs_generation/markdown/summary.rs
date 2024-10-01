@@ -5,6 +5,8 @@ use crate::docs_generation::markdown::traits::TopLevelMarkdownDocItem;
 use crate::docs_generation::markdown::BASE_HEADER_LEVEL;
 use crate::docs_generation::TopLevelItems;
 
+use super::traits::mark_duplicated_item_with_relative_path;
+
 pub fn generate_summary_file_content(top_level_items: &TopLevelItems) -> Result<String> {
     let header = str::repeat("#", BASE_HEADER_LEVEL);
 
@@ -51,8 +53,13 @@ fn generate_markdown_list_summary_for_top_level_subitems<T: TopLevelMarkdownDocI
             T::HEADER,
             T::ITEMS_SUMMARY_FILENAME
         )?;
-        for item in subitems {
-            writeln!(&mut markdown, "  {}", item.generate_markdown_list_item())?;
+        let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
+        for (item, relative_path) in items_with_relative_path {
+            writeln!(
+                &mut markdown,
+                "  {}",
+                item.generate_markdown_list_item(relative_path)
+            )?;
         }
     }
 
