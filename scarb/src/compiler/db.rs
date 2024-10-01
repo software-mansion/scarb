@@ -6,6 +6,7 @@ use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{
     AsFilesGroupMut, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
+    CORELIB_CRATE_NAME,
 };
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
@@ -174,7 +175,9 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                     (
                         compilation_unit_component.package.id.name.to_string(),
                         DependencySettings {
-                            version: Some(compilation_unit_component.package.id.version.clone()),
+                            version: (compilation_unit_component.package.id.name.to_string()
+                                != *CORELIB_CRATE_NAME)
+                                .then_some(compilation_unit_component.package.id.version.clone()),
                         },
                     )
                 })
@@ -184,7 +187,8 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
             dependencies.insert(
                 component.package.id.name.to_string(),
                 DependencySettings {
-                    version: Some(component.package.id.version.clone()),
+                    version: (component.package.id.name.to_string() != *CORELIB_CRATE_NAME)
+                        .then_some(component.package.id.version.clone()),
                 },
             );
 
