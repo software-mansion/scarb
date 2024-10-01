@@ -89,8 +89,12 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
         .collect();
 
     for component in components {
-        let crate_name = component.cairo_package_name();
-        let crate_id = db.intern_crate(CrateLongId::Real(crate_name));
+        let name = component.cairo_package_name();
+        let version = component.package.id.version.clone();
+        let crate_id = db.intern_crate(CrateLongId::Real {
+            name,
+            version: Some(version),
+        });
         let file_stems = component
             .targets
             .iter()

@@ -105,6 +105,7 @@ impl Compiler for StarknetContractCompiler {
             main_crate_ids,
             props.build_external_contracts.clone(),
             compiler_config,
+            &unit,
             db,
             ws,
         )?;
@@ -150,12 +151,14 @@ pub fn get_compiled_contracts(
     main_crate_ids: Vec<CrateId>,
     build_external_contracts: Option<Vec<ContractSelector>>,
     compiler_config: CompilerConfig<'_>,
+    unit: &CairoCompilationUnit,
     db: &mut RootDatabase,
     ws: &Workspace<'_>,
 ) -> Result<CompiledContracts> {
     let contracts = find_project_contracts(
         db.upcast_mut(),
         ws.config().ui(),
+        unit,
         main_crate_ids,
         build_external_contracts,
     )?;
@@ -180,6 +183,7 @@ pub fn get_compiled_contracts(
 fn find_project_contracts(
     mut db: &dyn SemanticGroup,
     ui: Ui,
+    unit: &CairoCompilationUnit,
     main_crate_ids: Vec<CrateId>,
     external_contracts: Option<Vec<ContractSelector>>,
 ) -> Result<Vec<ContractDeclaration>> {
@@ -197,9 +201,14 @@ fn find_project_contracts(
                 .iter()
                 .map(|selector| selector.package().into())
                 .unique()
-                .map(|package_name: SmolStr| {
+                .map(|name: SmolStr| {
+                    let version = unit
+                        .components()
+                        .iter()
+                        .find(|component| component.package.id.name.to_smol_str() == name)
+                        .map(|component| component.package.id.version.clone());
                     db.upcast_mut()
-                        .intern_crate(CrateLongId::Real(package_name))
+                        .intern_crate(CrateLongId::Real { name, version })
                 })
                 .collect::<Vec<_>>();
             let contracts = find_contracts(db, crate_ids.as_ref());

@@ -90,9 +90,12 @@ impl From<cairo_lang_lowering::utils::InliningStrategy> for InliningStrategy {
 }
 
 pub fn collect_main_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
-    vec![db.intern_crate(CrateLongId::Real(
-        unit.main_component().cairo_package_name(),
-    ))]
+    let name = unit.main_component().cairo_package_name();
+    let version = unit.main_component().package.id.version.clone();
+    vec![db.intern_crate(CrateLongId::Real {
+        name,
+        version: Some(version),
+    })]
 }
 
 pub fn write_json(
