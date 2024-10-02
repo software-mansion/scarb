@@ -405,7 +405,9 @@ fn format_specific_file() {
 
     // Create two files: one to be formatted and one to be left alone
     t.child("src/lib.cairo").write_str(SIMPLE_ORIGINAL).unwrap();
-    t.child("src/other.cairo").write_str(SIMPLE_ORIGINAL).unwrap();
+    t.child("src/other.cairo")
+        .write_str(SIMPLE_ORIGINAL)
+        .unwrap();
 
     // Format only the lib.cairo file
     Scarb::quick_snapbox()
