@@ -33,6 +33,7 @@ num-traits.workspace = true
 rayon.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
+semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 smol_str.workspace = true

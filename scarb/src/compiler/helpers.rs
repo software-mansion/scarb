@@ -8,7 +8,7 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
-use cairo_lang_filesystem::db::FilesGroup;
+use cairo_lang_filesystem::db::{FilesGroup, CORELIB_CRATE_NAME};
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use itertools::Itertools;
 use serde::Serialize;
@@ -90,9 +90,12 @@ impl From<cairo_lang_lowering::utils::InliningStrategy> for InliningStrategy {
 }
 
 pub fn collect_main_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
-    vec![db.intern_crate(CrateLongId::Real(
-        unit.main_component().cairo_package_name(),
-    ))]
+    let name = unit.main_component().cairo_package_name();
+    let version = unit.main_component().package.id.version.clone();
+    vec![db.intern_crate(CrateLongId::Real {
+        version: (name != CORELIB_CRATE_NAME).then_some(version),
+        name,
+    })]
 }
 
 pub fn write_json(
