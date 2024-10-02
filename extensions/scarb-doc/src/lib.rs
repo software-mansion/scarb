@@ -54,7 +54,7 @@ pub fn generate_packages_information(
 
         let project_config = get_project_config(metadata, package_metadata)?;
 
-        let db = ScarbDocDatabase::new(Some(project_config), package_metadata.name.clone());
+        let db = ScarbDocDatabase::new(Some(project_config), package_metadata);
 
         let package_compilation_unit = metadata
             .compilation_units

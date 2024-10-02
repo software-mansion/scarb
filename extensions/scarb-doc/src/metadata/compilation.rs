@@ -166,7 +166,9 @@ fn get_crate_settings_for_package(
                         .iter()
                         .find(|package| package.name == compilation_unit_metadata_component.name)
                         .map(|package| package.version.clone());
-
+                    let version = (dependency.name == *CORELIB_CRATE_NAME)
+                        .then_some(version)
+                        .flatten();
                     (dependency.name.clone(), DependencySettings { version })
                 })
         })
@@ -176,7 +178,7 @@ fn get_crate_settings_for_package(
     dependencies.insert(
         package.name.clone(),
         DependencySettings {
-            version: Some(package.version.clone()),
+            version: (package.name != *CORELIB_CRATE_NAME).then_some(package.version.clone()),
         },
     );
 
