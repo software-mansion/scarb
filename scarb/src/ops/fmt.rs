@@ -85,7 +85,10 @@ fn format_single_file(
     ws: &Workspace<'_>,
     all_correct: &AtomicBool,
 ) -> Result<bool> {
-    let config = FormatterConfig::default();
+    let mut config = FormatterConfig::default();
+    if let Some(overrides) = package.tool_metadata("fmt") {
+        config = toml_merge(&config, overrides)?;
+    }
     let fmt = CairoFormatter::new(config);
 
     let success = match &opts.action {
