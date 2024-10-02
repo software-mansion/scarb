@@ -34,6 +34,7 @@ pub struct FmtOptions {
     pub action: FmtAction,
     pub packages: Vec<PackageId>,
     pub color: bool,
+    pub target_file: Option<PathBuf>,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -41,6 +42,10 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
     ws.config().ui().force_colors_enabled(opts.color);
 
     let all_correct = AtomicBool::new(true);
+
+    if let Some(target_file) = &opts.target_file {
+        return format_single_file(target_file, &opts, ws, &all_correct);
+    }
 
     for package_id in opts.packages.iter() {
         let package = ws.fetch_package(package_id)?;
@@ -64,6 +69,28 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
 
     let result = all_correct.load(Ordering::Acquire);
     Ok(result)
+}
+
+fn format_single_file(
+    target_file: &Path,
+    opts: &FmtOptions,
+    ws: &Workspace<'_>,
+    all_correct: &AtomicBool,
+) -> Result<bool> {
+    let config = FormatterConfig::default();
+    let fmt = CairoFormatter::new(config);
+
+    let success = match &opts.action {
+        FmtAction::Fix => format_file_in_place(&fmt, opts, ws, target_file),
+        FmtAction::Check => check_file_formatting(&fmt, opts, ws, target_file),
+        FmtAction::Emit(target) => emit_formatted_file(&fmt, target, ws, target_file),
+    };
+
+    if !success {
+        all_correct.store(false, Ordering::Release);
+    }
+
+    Ok(all_correct.load(Ordering::Acquire))
 }
 
 struct PathFormatter<'t> {

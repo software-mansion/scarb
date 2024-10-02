@@ -178,33 +178,33 @@ fn format_with_import_sorting() {
         .write_str(indoc! {"\
             use openzeppelin::introspection::interface;
             use openzeppelin::introspection::first;
-            
+
             #[starknet::contract]
             mod SRC5 {
                 use openzeppelin::introspection::interface;
                 use openzeppelin::introspection::{interface, AB};
-            
+
                 #[storage]
                 struct Storage {
                     supported_interfaces: LegacyMap<felt252, bool>
                 }
-            
+
                 use openzeppelin::introspection::first;
-            
+
                 mod A {}
                 mod G;
                 mod F;
-            
+
                 #[abi(embed_v0)]
                 impl SRC5Impl of interface::ISRC5<ContractState> {
                     fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
                         true
                     }
                 }
-            
+
                 use A;
                 use starknet::ArrayTrait;
-            
+
                 mod Inner {
                     use C;
                     use B;
@@ -227,7 +227,7 @@ fn format_with_import_sorting() {
        +use openzeppelin::introspection::first;
         use openzeppelin::introspection::interface;
        -use openzeppelin::introspection::first;
-       
+
         #[starknet::contract]
         mod SRC5 {
        +    mod F;
@@ -239,25 +239,25 @@ fn format_with_import_sorting() {
             use openzeppelin::introspection::interface;
             use openzeppelin::introspection::{interface, AB};
        +    use starknet::ArrayTrait;
-       
+
             #[storage]
             struct Storage {
        @@ -11,11 +18,7 @@
                 supported_interfaces: LegacyMap<felt252, bool>
             }
-       
+
        -    use openzeppelin::introspection::first;
        -
             mod A {}
        -    mod G;
        -    mod F;
-       
+
             #[abi(embed_v0)]
             impl SRC5Impl of interface::ISRC5<ContractState> {
        @@ -24,11 +27,8 @@
                 }
             }
-       
+
        -    use A;
        -    use starknet::ArrayTrait;
        -
@@ -267,7 +267,7 @@ fn format_with_import_sorting() {
        -        use B;
             }
         }
-       
+
        "});
 }
 
@@ -397,4 +397,29 @@ fn workspace_emit_with_root() {
     assert_eq!(content, SIMPLE_ORIGINAL);
     let content = t.child("second/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
+}
+
+#[test]
+fn format_specific_file() {
+    let t = build_temp_dir(SIMPLE_ORIGINAL);
+
+    // Create two files: one to be formatted and one to be left alone
+    t.child("src/lib.cairo").write_str(SIMPLE_ORIGINAL).unwrap();
+    t.child("src/other.cairo").write_str(SIMPLE_ORIGINAL).unwrap();
+
+    // Format only the lib.cairo file
+    Scarb::quick_snapbox()
+        .arg("fmt")
+        .arg("src/lib.cairo")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    // Check that lib.cairo was formatted
+    let lib_content = t.child("src/lib.cairo").read_to_string();
+    assert_eq!(lib_content, SIMPLE_FORMATTED);
+
+    // Check that other.cairo was not formatted
+    let other_content = t.child("src/other.cairo").read_to_string();
+    assert_eq!(other_content, SIMPLE_ORIGINAL);
 }

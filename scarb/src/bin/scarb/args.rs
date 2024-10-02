@@ -4,6 +4,7 @@
 
 use std::collections::BTreeMap;
 use std::ffi::OsString;
+use std::path::PathBuf;
 
 use anyhow::Result;
 use camino::Utf8PathBuf;
@@ -341,6 +342,8 @@ pub struct FmtArgs {
     /// Specify package(s) to format.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
+    #[clap(value_name = "TARGET")]
+    pub target: Option<PathBuf>,
 }
 
 /// Arguments accepted by the `add` command.
