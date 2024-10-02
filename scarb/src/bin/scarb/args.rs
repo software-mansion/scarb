@@ -342,8 +342,9 @@ pub struct FmtArgs {
     /// Specify package(s) to format.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
-    #[clap(value_name = "TARGET")]
-    pub target: Option<PathBuf>,
+    /// Path to a file or directory to format. If provided, only this file or directory will be formatted.
+    #[clap(value_name = "PATH")]
+    pub target_path: Option<Utf8PathBuf>,
 }
 
 /// Arguments accepted by the `add` command.

@@ -6,6 +6,7 @@ use anyhow::Result;
 use cairo_lang_diagnostics::Severity;
 use cairo_lang_formatter::cairo_formatter::FormattingError;
 use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
+use camino::Utf8PathBuf;
 use ignore::WalkState::{Continue, Skip};
 use ignore::{DirEntry, Error, ParallelVisitor, ParallelVisitorBuilder, WalkState};
 use tracing::{info, warn};
@@ -34,7 +35,7 @@ pub struct FmtOptions {
     pub action: FmtAction,
     pub packages: Vec<PackageId>,
     pub color: bool,
-    pub target_file: Option<PathBuf>,
+    pub target_path: Option<Utf8PathBuf>,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -43,8 +44,10 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
 
     let all_correct = AtomicBool::new(true);
 
-    if let Some(target_file) = &opts.target_file {
-        return format_single_file(target_file, &opts, ws, &all_correct);
+    if let Some(target_path) = &opts.target_path {
+        if target_path.is_file() {
+            return format_single_file(target_path, &opts, ws, &all_correct);
+        }
     }
 
     for package_id in opts.packages.iter() {
@@ -56,7 +59,12 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
         }
         let fmt = CairoFormatter::new(config);
 
-        let walk = fmt.walk(package.root().as_std_path());
+        let walk = if let Some(target_path) = &opts.target_path {
+            fmt.walk(target_path.as_std_path())
+        } else {
+            fmt.walk(package.root().as_std_path())
+        };
+
         let mut builder = PathFormatterBuilder {
             ws,
             fmt: &fmt,
@@ -72,7 +80,7 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
 }
 
 fn format_single_file(
-    target_file: &Path,
+    target_file: &Utf8PathBuf,
     opts: &FmtOptions,
     ws: &Workspace<'_>,
     all_correct: &AtomicBool,
@@ -81,9 +89,9 @@ fn format_single_file(
     let fmt = CairoFormatter::new(config);
 
     let success = match &opts.action {
-        FmtAction::Fix => format_file_in_place(&fmt, opts, ws, target_file),
-        FmtAction::Check => check_file_formatting(&fmt, opts, ws, target_file),
-        FmtAction::Emit(target) => emit_formatted_file(&fmt, target, ws, target_file),
+        FmtAction::Fix => format_file_in_place(&fmt, opts, ws, target_file.as_std_path()),
+        FmtAction::Check => check_file_formatting(&fmt, opts, ws, target_file.as_std_path()),
+        FmtAction::Emit(target) => emit_formatted_file(&fmt, target, ws, target_file.as_std_path()),
     };
 
     if !success {
@@ -188,10 +196,7 @@ pub trait Emittable {
 impl Emittable for FmtEmitTarget {
     fn emit(&self, ws: &Workspace<'_>, formatted: &str) {
         match self {
-            Self::Stdout => ws
-                .config()
-                .ui()
-                .print(format!("{}", formatted)),
+            Self::Stdout => ws.config().ui().print(format!("{}", formatted)),
         }
     }
 }

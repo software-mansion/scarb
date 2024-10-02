@@ -29,7 +29,7 @@ pub fn run(args: FmtArgs, config: &Config) -> Result<()> {
             packages,
             action,
             color: !args.no_color,
-            target_file: args.target,
+            target_path: args.target_path,
         },
         &ws,
     )? {
