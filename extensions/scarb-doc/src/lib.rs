@@ -62,14 +62,17 @@ pub fn generate_packages_information(
             .find(|unit| unit.package == package_metadata.id);
 
         let mut diagnostics_reporter = setup_diagnostics_reporter(&db, package_compilation_unit);
-        diagnostics_reporter.ensure(&db)?;
 
         let crate_ =
             generate_language_elements_tree_for_package(&db, should_document_private_items)
-                .map_err(|_| DiagnosticError(package_metadata.name.clone()))?;
+                .map_err(|_| DiagnosticError(package_metadata.name.clone()));
+
+        if crate_.is_err() {
+            diagnostics_reporter.ensure(&db)?;
+        }
 
         packages_information.push(PackageInformation {
-            crate_,
+            crate_: crate_?,
             metadata: AdditionalMetadata {
                 name: package_metadata.name.clone(),
                 authors,

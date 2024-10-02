@@ -23,7 +23,7 @@ fn test_diagnostics_success() {
 }
 
 #[test]
-fn test_diagnostics_error() {
+fn test_diagnostics_with_error_code() {
     let t = TempDir::new().unwrap();
 
     ProjectBuilder::start()
@@ -36,52 +36,11 @@ fn test_diagnostics_error() {
         "#})
         .build(&t);
 
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("doc")
         .current_dir(&t)
         .assert()
-        .failure();
-
-    #[cfg(windows)]
-    snapbox.stdout_matches(indoc! {r#"
-              error: Identifier not found.
-               [..]
-                wrong code
-                ^***^
-    
-              error: Missing semicolon
-               [..]
-                wrong code
-                     ^
-    
-              error: Identifier not found.
-               [..]
-                wrong code
-                      ^**^
-    
-              error: Compilation failed.
-              error: process did not exit successfully: exit code: 1
-            "#});
-
-    #[cfg(not(windows))]
-    snapbox.stdout_matches(indoc! {r#"
-          error: Identifier not found.
-           [..]
-            wrong code
-            ^***^
-
-          error: Missing semicolon
-           [..]
-            wrong code
-                 ^
-
-          error: Identifier not found.
-           [..]
-            wrong code
-                  ^**^
-
-          error: Compilation failed.
-        "#});
+        .success();
 }
 
 #[test]
@@ -106,14 +65,7 @@ fn test_diagnostics_allowed_warnings() {
         .arg("doc")
         .current_dir(&t)
         .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-            warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
-             [..]
-              let a = 5;
-                  ^
-            
-        "#});
+        .success();
 }
 
 #[test]
@@ -134,30 +86,9 @@ fn test_diagnostics_not_allowed_warnings() {
         "#})
         .build(&t);
 
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("doc")
         .current_dir(&t)
         .assert()
-        .failure();
-
-    #[cfg(windows)]
-    snapbox.stdout_matches(indoc! {r#"
-            warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
-             [..]
-              let a = 5;
-                  ^
-            
-            error: Compilation failed.
-            error: process did not exit successfully: exit code: 1
-        "#});
-
-    #[cfg(not(windows))]
-    snapbox.stdout_matches(indoc! {r#"
-            warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
-             [..]
-              let a = 5;
-                  ^
-            
-            error: Compilation failed.
-        "#});
+        .success();
 }
