@@ -9,10 +9,11 @@ use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
 use camino::Utf8PathBuf;
 use ignore::WalkState::{Continue, Skip};
 use ignore::{DirEntry, Error, ParallelVisitor, ParallelVisitorBuilder, WalkState};
+use scarb_ui::Message;
 use tracing::{info, warn};
 
 use crate::core::workspace::Workspace;
-use crate::core::PackageId;
+use crate::core::{Package, PackageId};
 use crate::internal::serdex::toml_merge;
 
 #[derive(Debug, Clone)]
@@ -46,37 +47,54 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
 
     if let Some(target_path) = &opts.target_path {
         if target_path.is_file() {
-            return format_single_file(target_path, &opts, ws, &all_correct);
+            format_single_file(target_path, &opts, ws, &all_correct)?;
+            return Ok(all_correct.load(Ordering::Acquire));
         }
-    }
+        let pkg = ws.members().find(|member| target_path.starts_with(member.root()));
 
+        if let Some(pkg) = pkg {
+            format_package(&pkg, &opts, ws, &all_correct)?;
+            return Ok(all_correct.load(Ordering::Acquire));
+        } else {
+            return Err(anyhow::anyhow!("File {:?} is not part of the workspace.", target_path));
+        };
+    };
     for package_id in opts.packages.iter() {
         let package = ws.fetch_package(package_id)?;
-
-        let mut config = FormatterConfig::default();
-        if let Some(overrides) = package.tool_metadata("fmt") {
-            config = toml_merge(&config, overrides)?;
-        }
-        let fmt = CairoFormatter::new(config);
-
-        let walk = if let Some(target_path) = &opts.target_path {
-            fmt.walk(target_path.as_std_path())
-        } else {
-            fmt.walk(package.root().as_std_path())
-        };
-
-        let mut builder = PathFormatterBuilder {
-            ws,
-            fmt: &fmt,
-            opts: &opts,
-            all_correct: &all_correct,
-            selected_packages: vec![package.id],
-        };
-        walk.build_parallel().visit(&mut builder);
+        format_package(package, &opts, ws, &all_correct)?;
     }
 
-    let result = all_correct.load(Ordering::Acquire);
-    Ok(result)
+    Ok(all_correct.load(Ordering::Acquire))
+}
+
+fn format_package(
+    package: &Package,
+    opts: &FmtOptions,
+    ws: &Workspace<'_>,
+    all_correct: &AtomicBool,
+) -> Result<()> {
+    let mut config = FormatterConfig::default();
+    if let Some(overrides) = package.tool_metadata("fmt") {
+        config = toml_merge(&config, overrides)?;
+    }
+    let fmt = CairoFormatter::new(config);
+
+    let walk = if let Some(target_path) = &opts.target_path {
+        fmt.walk(target_path.as_std_path())
+    } else {
+        fmt.walk(package.root().as_std_path())
+    };
+
+    let mut builder = PathFormatterBuilder {
+        ws,
+        fmt: &fmt,
+        opts,
+        all_correct,
+        selected_packages: vec![package.id],
+    };
+    walk.build_parallel().visit(&mut builder);
+
+    Ok(())
 }
 
 fn format_single_file(
@@ -85,8 +103,14 @@ fn format_single_file(
     ws: &Workspace<'_>,
     all_correct: &AtomicBool,
 ) -> Result<bool> {
+    let target_file = target_file.canonicalize_utf8()?;
+    let pkg = ws
+        .members()
+        .find(|member| target_file.starts_with(member.root()))
+        .ok_or_else(|| anyhow::anyhow!("File {:?} is not part of the workspace.", target_file))?;
+
     let mut config = FormatterConfig::default();
-    if let Some(overrides) = package.tool_metadata("fmt") {
+    if let Some(overrides) = pkg.tool_metadata("fmt") {
         config = toml_merge(&config, overrides)?;
     }
     let fmt = CairoFormatter::new(config);
@@ -191,6 +215,15 @@ fn check_file_formatting(
         }
     }
 }
+struct TextWithNewline(String);
+impl Message for TextWithNewline {
+    fn print_text(self)
+    where
+        Self: Sized,
+    {
+        print!("{}", self.0);
+    }
+}
 
 pub trait Emittable {
     fn emit(&self, ws: &Workspace<'_>, formatted: &str);
@@ -199,7 +232,7 @@ pub trait Emittable {
 impl Emittable for FmtEmitTarget {
     fn emit(&self, ws: &Workspace<'_>, formatted: &str) {
         match self {
-            Self::Stdout => ws.config().ui().print(format!("{}", formatted)),
+            Self::Stdout => ws.config().ui().print(TextWithNewline(format!("{}", formatted))),
         }
     }
 }
@@ -211,7 +244,10 @@ fn emit_formatted_file(
     path: &Path,
 ) -> bool {
     match fmt.format_to_string(&path) {
-        Ok(FormatOutcome::Identical(_)) => true,
+        Ok(FormatOutcome::Identical(original)) => {
+            target.emit(ws, &original);
+            true
+        }
         Ok(FormatOutcome::DiffFound(diff)) => {
             target.emit(ws, &diff.formatted);
             false

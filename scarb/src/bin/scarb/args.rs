@@ -4,7 +4,6 @@
 
 use std::collections::BTreeMap;
 use std::ffi::OsString;
-use std::path::PathBuf;
 
 use anyhow::Result;
 use camino::Utf8PathBuf;
