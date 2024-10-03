@@ -53,7 +53,9 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
         }
 
         let absolute_path = canonicalize(path)?;
-        let pkg = ws.members().find(|member| absolute_path.starts_with(member.root()));
+        let pkg = ws
+            .members()
+            .find(|member| absolute_path.starts_with(member.root()));
         if let Some(pkg) = pkg {
             format_package(&pkg, &opts, ws, &all_correct)?;
             return Ok(all_correct.load(Ordering::Acquire));
