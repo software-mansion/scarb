@@ -74,7 +74,7 @@
                           "item_data": {
                             "name": "abc",
                             "doc": null,
-                            "signature": " abc: u32",
+                            "signature": "abc: u32",
                             "full_path": "hello_world::sub_module::inner_module::TestStruct::abc"
                           }
                         }
@@ -82,7 +82,7 @@
                       "item_data": {
                         "name": "TestStruct",
                         "doc": null,
-                        "signature": null,
+                        "signature": "pub struct TestStruct {\n    abc: u32\n}",
                         "full_path": "hello_world::sub_module::inner_module::TestStruct"
                       }
                     }
@@ -94,7 +94,7 @@
                           "item_data": {
                             "name": "Var1",
                             "doc": null,
-                            "signature": "",
+                            "signature": "Var1",
                             "full_path": "hello_world::sub_module::inner_module::TestEnum::Var1"
                           }
                         }
@@ -102,7 +102,7 @@
                       "item_data": {
                         "name": "TestEnum",
                         "doc": null,
-                        "signature": null,
+                        "signature": "pub enum TestEnum {\n    Var1\n}",
                         "full_path": "hello_world::sub_module::inner_module::TestEnum"
                       }
                     }
@@ -167,7 +167,7 @@
                       "item_data": {
                         "name": "ExternalType",
                         "doc": null,
-                        "signature": "pub extern type ExternalType;",
+                        "signature": "pub extern type ExternalType",
                         "full_path": "hello_world::sub_module::inner_module::ExternalType"
                       }
                     }
@@ -230,7 +230,7 @@
                       "item_data": {
                         "name": "abc",
                         "doc": null,
-                        "signature": " abc: u32",
+                        "signature": "abc: u32",
                         "full_path": "hello_world::sub_module::inner_module::TestStruct::abc"
                       }
                     }
@@ -238,7 +238,7 @@
                   "item_data": {
                     "name": "TestStruct",
                     "doc": null,
-                    "signature": null,
+                    "signature": "pub struct TestStruct {\n    abc: u32\n}",
                     "full_path": "hello_world::sub_module::inner_module::TestStruct"
                   }
                 }
@@ -250,7 +250,7 @@
                       "item_data": {
                         "name": "Var1",
                         "doc": null,
-                        "signature": "",
+                        "signature": "Var1",
                         "full_path": "hello_world::sub_module::inner_module::TestEnum::Var1"
                       }
                     }
@@ -258,7 +258,7 @@
                   "item_data": {
                     "name": "TestEnum",
                     "doc": null,
-                    "signature": null,
+                    "signature": "pub enum TestEnum {\n    Var1\n}",
                     "full_path": "hello_world::sub_module::inner_module::TestEnum"
                   }
                 }
@@ -323,7 +323,7 @@
                   "item_data": {
                     "name": "ExternalType",
                     "doc": null,
-                    "signature": "pub extern type ExternalType;",
+                    "signature": "pub extern type ExternalType",
                     "full_path": "hello_world::sub_module::inner_module::ExternalType"
                   }
                 }
@@ -394,7 +394,7 @@
                       "item_data": {
                         "name": "abc",
                         "doc": null,
-                        "signature": " abc: u32",
+                        "signature": "abc: u32",
                         "full_path": "sub_package::TestStruct::abc"
                       }
                     }
@@ -402,7 +402,7 @@
                   "item_data": {
                     "name": "TestStruct",
                     "doc": null,
-                    "signature": null,
+                    "signature": "pub struct TestStruct {\n    abc: u32\n}",
                     "full_path": "sub_package::TestStruct"
                   }
                 }
@@ -414,7 +414,7 @@
                       "item_data": {
                         "name": "Var1",
                         "doc": null,
-                        "signature": "",
+                        "signature": "Var1",
                         "full_path": "sub_package::TestEnum::Var1"
                       }
                     }
@@ -422,7 +422,7 @@
                   "item_data": {
                     "name": "TestEnum",
                     "doc": null,
-                    "signature": null,
+                    "signature": "pub enum TestEnum {\n    Var1\n}",
                     "full_path": "sub_package::TestEnum"
                   }
                 }
@@ -487,7 +487,7 @@
                   "item_data": {
                     "name": "ExternalType",
                     "doc": null,
-                    "signature": "pub extern type ExternalType;",
+                    "signature": "pub extern type ExternalType",
                     "full_path": "sub_package::ExternalType"
                   }
                 }
