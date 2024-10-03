@@ -14,6 +14,7 @@ use tracing::{info, warn};
 
 use crate::core::workspace::Workspace;
 use crate::core::{Package, PackageId};
+use crate::internal::fsx::canonicalize;
 use crate::internal::serdex::toml_merge;
 
 #[derive(Debug, Clone)]
@@ -50,8 +51,9 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
             format_single_file(path, &opts, ws, &all_correct)?;
             return Ok(all_correct.load(Ordering::Acquire));
         }
-        let pkg = ws.members().find(|member| path.starts_with(member.root()));
 
+        let absolute_path = canonicalize(path)?;
+        let pkg = ws.members().find(|member| absolute_path.starts_with(member.root()));
         if let Some(pkg) = pkg {
             format_package(&pkg, &opts, ws, &all_correct)?;
             return Ok(all_correct.load(Ordering::Acquire));
@@ -98,16 +100,16 @@ fn format_package(
 }
 
 fn format_single_file(
-    target_file: &Utf8PathBuf,
+    file: &Utf8PathBuf,
     opts: &FmtOptions,
     ws: &Workspace<'_>,
     all_correct: &AtomicBool,
 ) -> Result<bool> {
-    let target_file = target_file.canonicalize_utf8()?;
+    let absolute_file_path = canonicalize(file)?;
     let pkg = ws
         .members()
-        .find(|member| target_file.starts_with(member.root()))
-        .ok_or_else(|| anyhow::anyhow!("file {:?} is not part of the workspace.", target_file))?;
+        .find(|member| absolute_file_path.starts_with(member.root()))
+        .ok_or_else(|| anyhow::anyhow!("file {:?} is not part of the workspace.", file))?;
 
     let mut config = FormatterConfig::default();
     if let Some(overrides) = pkg.tool_metadata("fmt") {
@@ -116,13 +118,13 @@ fn format_single_file(
     let fmt = CairoFormatter::new(config);
 
     let success = match &opts.action {
-        FmtAction::Fix => format_file_in_place(&fmt, opts, ws, target_file.as_std_path()),
-        FmtAction::Check => check_file_formatting(&fmt, opts, ws, target_file.as_std_path()),
+        FmtAction::Fix => format_file_in_place(&fmt, opts, ws, absolute_file_path.as_path()),
+        FmtAction::Check => check_file_formatting(&fmt, opts, ws, absolute_file_path.as_path()),
         FmtAction::Emit(target) => emit_formatted_file(
             &fmt,
             target,
             ws,
-            target_file.as_std_path(),
+            absolute_file_path.as_path(),
             EmitMode::WithoutPath,
         ),
     };
@@ -251,7 +253,7 @@ impl Emittable for FmtEmitTarget {
             (Self::Stdout, EmitMode::WithoutPath) => ws
                 .config()
                 .ui()
-                .print(TextWithNewline(format!("{}", formatted))),
+                .print(TextWithNewline(formatted.to_string())),
         }
     }
 }

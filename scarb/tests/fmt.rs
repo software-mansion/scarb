@@ -70,7 +70,7 @@ fn simple_emit_invalid() {
         .assert()
         .failure()
         .stdout_eq(format!(
-            "{}:\n{}\n",
+            "{}:\n\n{}",
             fsx::canonicalize(t.child("src/lib.cairo"))
                 .unwrap()
                 .display(),
@@ -356,7 +356,7 @@ fn workspace_emit_with_root() {
         .assert()
         .failure()
         .stdout_eq(format!(
-            "{}:\n{}\n",
+            "{}:\n\n{}",
             fsx::canonicalize(t.child("src/lib.cairo"))
                 .unwrap()
                 .display(),
@@ -376,7 +376,7 @@ fn workspace_emit_with_root() {
         .assert()
         .failure()
         .stdout_eq(format!(
-            "{}:\n{}\n{}:\n{}\n{}:\n{}\n",
+            "{}:\n\n{}{}:\n\n{}{}:\n\n{}",
             fsx::canonicalize(t.child("first/src/lib.cairo"))
                 .unwrap()
                 .display(),
@@ -424,4 +424,49 @@ fn format_specific_file() {
     // Check that other.cairo was not formatted
     let other_content = t.child("src/other.cairo").read_to_string();
     assert_eq!(other_content, SIMPLE_ORIGINAL);
+}
+
+#[test]
+fn format_all_files_in_path() {
+    let t = TempDir::new().unwrap();
+
+    // Create a Scarb.toml file
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "test_package"
+            version = "0.1.0"
+            "#,
+        )
+        .unwrap();
+
+    // Create multiple Cairo files with unformatted content
+    for i in 1..=3 {
+        t.child(format!("src/fmt/file{}.cairo", i))
+            .write_str(SIMPLE_ORIGINAL)
+            .unwrap();
+    }
+
+    t.child("src/no_fmt/file.cairo")
+        .write_str(SIMPLE_ORIGINAL)
+        .unwrap();
+
+    // Run the formatter on the src directory
+    Scarb::quick_snapbox()
+        .arg("fmt")
+        .arg("src/fmt")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    // Check that all files in the src directory were formatted
+    for i in 1..=3 {
+        let content = t.child(format!("src/fmt/file{}.cairo", i)).read_to_string();
+        assert_eq!(content, SIMPLE_FORMATTED);
+    }
+
+    // Check that the file in the no_fmt directory was not formatted
+    let content = t.child("src/no_fmt/file.cairo").read_to_string();
+    assert_eq!(content, SIMPLE_ORIGINAL);
 }
