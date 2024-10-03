@@ -50,13 +50,18 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
             format_single_file(target_path, &opts, ws, &all_correct)?;
             return Ok(all_correct.load(Ordering::Acquire));
         }
-        let pkg = ws.members().find(|member| target_path.starts_with(member.root()));
+        let pkg = ws
+            .members()
+            .find(|member| target_path.starts_with(member.root()));
 
         if let Some(pkg) = pkg {
             format_package(&pkg, &opts, ws, &all_correct)?;
             return Ok(all_correct.load(Ordering::Acquire));
         } else {
-            return Err(anyhow::anyhow!("File {:?} is not part of the workspace.", target_path));
+            return Err(anyhow::anyhow!(
+                "File {:?} is not part of the workspace.",
+                target_path
+            ));
         };
     };
     for package_id in opts.packages.iter() {
@@ -118,7 +123,12 @@ fn format_single_file(
     let success = match &opts.action {
         FmtAction::Fix => format_file_in_place(&fmt, opts, ws, target_file.as_std_path()),
         FmtAction::Check => check_file_formatting(&fmt, opts, ws, target_file.as_std_path()),
-        FmtAction::Emit(target) => emit_formatted_file(&fmt, target, ws, target_file.as_std_path()),
+        FmtAction::Emit(target) => emit_formatted_file(
+            &fmt,
+            target,
+            ws,
+            target_file.as_std_path(),
+        ),
     };
 
     if !success {
@@ -226,13 +236,17 @@ impl Message for TextWithNewline {
 }
 
 pub trait Emittable {
-    fn emit(&self, ws: &Workspace<'_>, formatted: &str);
+    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str);
 }
 
 impl Emittable for FmtEmitTarget {
-    fn emit(&self, ws: &Workspace<'_>, formatted: &str) {
+    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str) {
         match self {
-            Self::Stdout => ws.config().ui().print(TextWithNewline(format!("{}", formatted))),
+            Self::Stdout => ws.config().ui().print(TextWithNewline(format!(
+                "{}:\n\n{}",
+                path.display(),
+                formatted
+            ))),
         }
     }
 }
@@ -245,11 +259,11 @@ fn emit_formatted_file(
 ) -> bool {
     match fmt.format_to_string(&path) {
         Ok(FormatOutcome::Identical(original)) => {
-            target.emit(ws, &original);
+            target.emit(ws, path, &original);
             true
         }
         Ok(FormatOutcome::DiffFound(diff)) => {
-            target.emit(ws, &diff.formatted);
+            target.emit(ws, path, &diff.formatted);
             false
         }
         Err(parsing_error) => {
@@ -305,7 +319,9 @@ impl<'t> ParallelVisitor for PathFormatter<'t> {
         let success = match &self.opts.action {
             FmtAction::Fix => format_file_in_place(self.fmt, self.opts, self.ws, path),
             FmtAction::Check => check_file_formatting(self.fmt, self.opts, self.ws, path),
-            FmtAction::Emit(target) => emit_formatted_file(self.fmt, target, self.ws, path),
+            FmtAction::Emit(target) => {
+                emit_formatted_file(self.fmt, target, self.ws, path)
+            }
         };
 
         if !success {
