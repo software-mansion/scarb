@@ -1,20 +1,21 @@
-use std::sync::Arc;
-
 use anyhow::Result;
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
-use cairo_lang_semantic::items::visibility;
+use cairo_lang_semantic::items::functions::GenericFunctionId;
+use cairo_lang_semantic::items::us::SemanticUseEx;
+use cairo_lang_semantic::items::visibility::{self, Visibility};
+use cairo_lang_semantic::resolve::ResolvedGenericItem;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
-use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use cairo_lang_utils::Upcast;
+use itertools::chain;
 use serde::Serialize;
 
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
-    ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
+    ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, GenericTypeId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LanguageElementId,
-    LookupItemId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, StructId,
-    TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
-    VariantId,
+    LookupItemId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId,
+    StructId, SubmoduleId, TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId,
+    TraitItemId, TraitTypeId, VariantId,
 };
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
@@ -81,6 +82,95 @@ pub struct Module {
     pub extern_functions: Vec<ExternFunction>,
 }
 
+struct ModulePubUses {
+    pub use_constants: Vec<ConstantId>,
+    pub use_free_functions: Vec<FreeFunctionId>,
+    pub use_structs: Vec<StructId>,
+    pub use_enums: Vec<EnumId>,
+    pub use_module_type_aliases: Vec<ModuleTypeAliasId>,
+    pub use_impl_aliases: Vec<ImplAliasId>,
+    pub use_traits: Vec<TraitId>,
+    pub use_impl_defs: Vec<ImplDefId>,
+    pub use_extern_types: Vec<ExternTypeId>,
+    pub use_extern_functions: Vec<ExternFunctionId>,
+    pub use_submodules: Vec<SubmoduleId>,
+    pub use_crates: Vec<CrateId>,
+}
+
+impl ModulePubUses {
+    pub fn new(db: &ScarbDocDatabase, module_id: ModuleId) -> Self {
+        let module_use_items: Vec<ResolvedGenericItem> = db
+            .module_uses(module_id)
+            .unwrap()
+            .iter()
+            .filter_map(|(use_id, _)| {
+                let visibility = db
+                    .module_item_info_by_name(module_id, use_id.name(db))
+                    .unwrap()
+                    .unwrap()
+                    .visibility;
+                if visibility == Visibility::Public {
+                    Some(db.use_resolved_item(*use_id).unwrap())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        let mut use_constants = Vec::new();
+        let mut use_free_functions = Vec::new();
+        let mut use_structs = Vec::new();
+        let mut use_enums = Vec::new();
+        let mut use_module_type_aliases = Vec::new();
+        let mut use_impl_aliases = Vec::new();
+        let mut use_traits = Vec::new();
+        let mut use_impl_defs = Vec::new();
+        let mut use_extern_types = Vec::new();
+        let mut use_extern_functions = Vec::new();
+        let mut use_submodules = Vec::new();
+        let mut use_crates = Vec::new();
+
+        for item in module_use_items {
+            match item {
+                ResolvedGenericItem::GenericConstant(id) => use_constants.push(id),
+                ResolvedGenericItem::GenericFunction(GenericFunctionId::Free(id)) => {
+                    use_free_functions.push(id)
+                }
+                ResolvedGenericItem::GenericType(GenericTypeId::Struct(id)) => use_structs.push(id),
+                ResolvedGenericItem::GenericType(GenericTypeId::Enum(id)) => use_enums.push(id),
+                ResolvedGenericItem::GenericTypeAlias(id) => use_module_type_aliases.push(id),
+                ResolvedGenericItem::GenericImplAlias(id) => use_impl_aliases.push(id),
+                ResolvedGenericItem::Trait(id) => use_traits.push(id),
+                ResolvedGenericItem::Impl(id) => use_impl_defs.push(id),
+                ResolvedGenericItem::GenericType(GenericTypeId::Extern(id)) => {
+                    use_extern_types.push(id)
+                }
+                ResolvedGenericItem::GenericFunction(GenericFunctionId::Extern(id)) => {
+                    use_extern_functions.push(id)
+                }
+                ResolvedGenericItem::Module(ModuleId::Submodule(id)) => use_submodules.push(id),
+                ResolvedGenericItem::Module(ModuleId::CrateRoot(id)) => use_crates.push(id),
+                _ => (),
+            }
+        }
+
+        Self {
+            use_constants,
+            use_free_functions,
+            use_structs,
+            use_enums,
+            use_module_type_aliases,
+            use_impl_aliases,
+            use_traits,
+            use_impl_defs,
+            use_extern_types,
+            use_extern_functions,
+            use_submodules,
+            use_crates,
+        }
+    }
+}
+
 impl Module {
     pub fn new(
         db: &ScarbDocDatabase,
@@ -88,14 +178,8 @@ impl Module {
         root_module_id: ModuleId,
         include_private_items: bool,
     ) -> Maybe<Self> {
-        // FIXME(#1438): compiler doesn't support fetching root crate doc
         let item_data = match module_id {
-            ModuleId::CrateRoot(crate_id) => ItemData {
-                name: crate_id.name(db).to_string(),
-                doc: db.get_item_documentation(DocumentableItemId::Crate(crate_id)),
-                signature: None,
-                full_path: module_id.full_path(db),
-            },
+            ModuleId::CrateRoot(crate_id) => ItemData::new_crate(db, crate_id),
             ModuleId::Submodule(submodule_id) => ItemData::new_without_signature(
                 db,
                 submodule_id,
@@ -112,69 +196,124 @@ impl Module {
             )
         };
 
+        let module_pubuses = ModulePubUses::new(db, module_id);
+
         let module_constants = db.module_constants(module_id)?;
-        let constants = filter_map_item_id_to_item(module_constants, should_include_item, |id| {
-            Ok(Constant::new(db, id))
-        })?;
+        let constants = filter_map_item_id_to_item(
+            chain!(module_constants.keys(), module_pubuses.use_constants.iter()),
+            should_include_item,
+            |id| Ok(Constant::new(db, *id)),
+        )?;
 
         let module_free_functions = db.module_free_functions(module_id)?;
-        let free_functions =
-            filter_map_item_id_to_item(module_free_functions, should_include_item, |id| {
-                Ok(FreeFunction::new(db, id))
-            })?;
+        let free_functions = filter_map_item_id_to_item(
+            chain!(
+                module_free_functions.keys(),
+                module_pubuses.use_free_functions.iter()
+            ),
+            should_include_item,
+            |id| Ok(FreeFunction::new(db, *id)),
+        )?;
 
         let module_structs = db.module_structs(module_id)?;
-        let structs = filter_map_item_id_to_item(module_structs, should_include_item, |id| {
-            Struct::new(db, id, root_module_id, include_private_items)
-        })?;
+        let structs = filter_map_item_id_to_item(
+            chain!(module_structs.keys(), module_pubuses.use_structs.iter()),
+            should_include_item,
+            |id| Struct::new(db, *id, root_module_id, include_private_items),
+        )?;
 
         let module_enums = db.module_enums(module_id)?;
-        let enums =
-            filter_map_item_id_to_item(module_enums, should_include_item, |id| Enum::new(db, id))?;
+        let enums = filter_map_item_id_to_item(
+            chain!(module_enums.keys(), module_pubuses.use_enums.iter()),
+            should_include_item,
+            |id| Enum::new(db, *id),
+        )?;
 
         let module_type_aliases = db.module_type_aliases(module_id)?;
-        let type_aliases =
-            filter_map_item_id_to_item(module_type_aliases, should_include_item, |id| {
-                Ok(TypeAlias::new(db, id))
-            })?;
+        let type_aliases = filter_map_item_id_to_item(
+            chain!(
+                module_type_aliases.keys(),
+                module_pubuses.use_module_type_aliases.iter()
+            ),
+            should_include_item,
+            |id| Ok(TypeAlias::new(db, *id)),
+        )?;
 
         let module_impl_aliases = db.module_impl_aliases(module_id)?;
-        let impl_aliases =
-            filter_map_item_id_to_item(module_impl_aliases, should_include_item, |id| {
-                Ok(ImplAlias::new(db, id))
-            })?;
+        let impl_aliases = filter_map_item_id_to_item(
+            chain!(
+                module_impl_aliases.keys(),
+                module_pubuses.use_impl_aliases.iter()
+            ),
+            should_include_item,
+            |id| Ok(ImplAlias::new(db, *id)),
+        )?;
 
         let module_traits = db.module_traits(module_id)?;
-        let traits = filter_map_item_id_to_item(module_traits, should_include_item, |id| {
-            Trait::new(db, id)
-        })?;
+        let traits = filter_map_item_id_to_item(
+            chain!(module_traits.keys(), module_pubuses.use_traits.iter()),
+            should_include_item,
+            |id| Trait::new(db, *id),
+        )?;
 
         let module_impls = db.module_impls(module_id)?;
-        let impls =
-            filter_map_item_id_to_item(module_impls, should_include_item, |id| Impl::new(db, id))?;
+        let impls = filter_map_item_id_to_item(
+            chain!(module_impls.keys(), module_pubuses.use_impl_defs.iter()),
+            should_include_item,
+            |id| Impl::new(db, *id),
+        )?;
 
         let module_extern_types = db.module_extern_types(module_id)?;
-        let extern_types =
-            filter_map_item_id_to_item(module_extern_types, should_include_item, |id| {
-                Ok(ExternType::new(db, id))
-            })?;
+        let extern_types = filter_map_item_id_to_item(
+            chain!(
+                module_extern_types.keys(),
+                module_pubuses.use_extern_types.iter()
+            ),
+            should_include_item,
+            |id| Ok(ExternType::new(db, *id)),
+        )?;
 
         let module_extern_functions = db.module_extern_functions(module_id)?;
-        let extern_functions =
-            filter_map_item_id_to_item(module_extern_functions, should_include_item, |id| {
-                Ok(ExternFunction::new(db, id))
-            })?;
+        let extern_functions = filter_map_item_id_to_item(
+            chain!(
+                module_extern_functions.keys(),
+                module_pubuses.use_extern_functions.iter()
+            ),
+            should_include_item,
+            |id| Ok(ExternFunction::new(db, *id)),
+        )?;
 
         let module_submodules = db.module_submodules(module_id)?;
-        let submodules: Vec<Module> =
-            filter_map_item_id_to_item(module_submodules, should_include_item, |id| {
+        let mut submodules: Vec<Module> = filter_map_item_id_to_item(
+            chain!(
+                module_submodules.keys(),
+                module_pubuses.use_submodules.iter()
+            ),
+            should_include_item,
+            |id| {
                 Module::new(
                     db,
-                    ModuleId::Submodule(id),
+                    ModuleId::Submodule(*id),
                     root_module_id,
                     include_private_items,
                 )
-            })?;
+            },
+        )?;
+
+        let reexported_crates_as_modules: Vec<Module> = module_pubuses
+            .use_crates
+            .iter()
+            .map(|id| {
+                Module::new(
+                    db,
+                    ModuleId::CrateRoot(*id),
+                    root_module_id,
+                    include_private_items,
+                )
+            })
+            .collect::<Maybe<_>>()?;
+
+        submodules.extend(reexported_crates_as_modules);
 
         Ok(Self {
             module_id,
@@ -200,26 +339,24 @@ impl Module {
 /// T - Type representing ID of an item. Accepts any kind of `TopLevelLanguageElementId`.
 /// F - function that checks whether the id should be included in the result Vector.
 /// G - A closure (as a function), which generates an item based on the item's ID.
-/// J - Type representing an item ast type.
 /// K - Type of generated item.
-fn filter_map_item_id_to_item<T, F, G, K, J>(
-    items: Arc<OrderedHashMap<T, J>>,
+fn filter_map_item_id_to_item<'a, T, F, G, K>(
+    items: impl Iterator<Item = &'a T>,
     should_include_item_function: F,
     generate_item_function: G,
 ) -> Result<Vec<K>, DiagnosticAdded>
 where
-    T: Copy + TopLevelLanguageElementId,
-    F: Fn(&dyn TopLevelLanguageElementId) -> Result<bool, DiagnosticAdded>,
-    G: Fn(T) -> Maybe<K>,
+    T: 'a + Copy + TopLevelLanguageElementId,
+    F: Fn(&'a dyn TopLevelLanguageElementId) -> Result<bool, DiagnosticAdded>,
+    G: Fn(&'a T) -> Maybe<K>,
 {
     items
-        .iter()
-        .filter_map(|(id, _)| match should_include_item_function(id) {
+        .filter_map(|id| match should_include_item_function(id) {
             Ok(result) => {
                 if !result {
                     return None;
                 }
-                Some(Ok(generate_item_function(*id)))
+                Some(Ok(generate_item_function(id)))
             }
             Err(a) => Some(Err(a)),
         })
@@ -262,6 +399,15 @@ impl ItemData {
             doc: db.get_item_documentation(documentable_item_id),
             signature: None,
             full_path: id.full_path(db),
+        }
+    }
+
+    pub fn new_crate(db: &ScarbDocDatabase, id: CrateId) -> Self {
+        Self {
+            name: id.name(db).into(),
+            doc: db.get_item_documentation(DocumentableItemId::Crate(id)),
+            signature: None,
+            full_path: ModuleId::CrateRoot(id).full_path(db),
         }
     }
 }
