@@ -36,7 +36,7 @@ pub struct FmtOptions {
     pub action: FmtAction,
     pub packages: Vec<PackageId>,
     pub color: bool,
-    pub target_path: Option<Utf8PathBuf>,
+    pub path: Option<Utf8PathBuf>,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -45,20 +45,18 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
 
     let all_correct = AtomicBool::new(true);
 
-    if let Some(target_path) = &opts.target_path {
-        if target_path.is_file() {
-            format_single_file(target_path, &opts, ws, &all_correct)?;
+    if let Some(path) = &opts.path {
+        if path.is_file() {
+            format_single_file(path, &opts, ws, &all_correct)?;
             return Ok(all_correct.load(Ordering::Acquire));
         }
-        let pkg = ws
-            .members()
-            .find(|member| target_path.starts_with(member.root()));
+        let pkg = ws.members().find(|member| path.starts_with(member.root()));
 
         if let Some(pkg) = pkg {
             format_package(&pkg, &opts, ws, &all_correct)?;
             return Ok(all_correct.load(Ordering::Acquire));
         } else {
-            anyhow::bail!("path {:?} is not part of the workspace.", target_path);
+            anyhow::bail!("path {:?} is not part of the workspace.", path);
         };
     };
     for package_id in opts.packages.iter() {
@@ -81,8 +79,8 @@ fn format_package(
     }
     let fmt = CairoFormatter::new(config);
 
-    let walk = if let Some(target_path) = &opts.target_path {
-        fmt.walk(target_path.as_std_path())
+    let walk = if let Some(path) = &opts.path {
+        fmt.walk(path.as_std_path())
     } else {
         fmt.walk(package.root().as_std_path())
     };

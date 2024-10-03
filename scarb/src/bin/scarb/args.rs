@@ -343,7 +343,7 @@ pub struct FmtArgs {
     pub packages_filter: PackagesFilter,
     /// Path to a file or directory to format. If provided, only this file or directory will be formatted.
     #[clap(value_name = "PATH")]
-    pub target_path: Option<Utf8PathBuf>,
+    pub path: Option<Utf8PathBuf>,
 }
 
 /// Arguments accepted by the `add` command.
