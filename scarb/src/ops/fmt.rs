@@ -58,10 +58,7 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
             format_package(&pkg, &opts, ws, &all_correct)?;
             return Ok(all_correct.load(Ordering::Acquire));
         } else {
-            return Err(anyhow::anyhow!(
-                "File {:?} is not part of the workspace.",
-                target_path
-            ));
+            anyhow::bail!("path {:?} is not part of the workspace.", target_path);
         };
     };
     for package_id in opts.packages.iter() {
@@ -112,7 +109,7 @@ fn format_single_file(
     let pkg = ws
         .members()
         .find(|member| target_file.starts_with(member.root()))
-        .ok_or_else(|| anyhow::anyhow!("File {:?} is not part of the workspace.", target_file))?;
+        .ok_or_else(|| anyhow::anyhow!("file {:?} is not part of the workspace.", target_file))?;
 
     let mut config = FormatterConfig::default();
     if let Some(overrides) = pkg.tool_metadata("fmt") {
@@ -128,6 +125,7 @@ fn format_single_file(
             target,
             ws,
             target_file.as_std_path(),
+            EmitMode::WithoutPath,
         ),
     };
 
@@ -235,18 +233,27 @@ impl Message for TextWithNewline {
     }
 }
 
+pub enum EmitMode {
+    WithPath,
+    WithoutPath,
+}
+
 pub trait Emittable {
-    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str);
+    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str, emit_mode: EmitMode);
 }
 
 impl Emittable for FmtEmitTarget {
-    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str) {
-        match self {
-            Self::Stdout => ws.config().ui().print(TextWithNewline(format!(
+    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str, emit_mode: EmitMode) {
+        match (self, emit_mode) {
+            (Self::Stdout, EmitMode::WithPath) => ws.config().ui().print(TextWithNewline(format!(
                 "{}:\n\n{}",
                 path.display(),
                 formatted
             ))),
+            (Self::Stdout, EmitMode::WithoutPath) => ws
+                .config()
+                .ui()
+                .print(TextWithNewline(format!("{}", formatted))),
         }
     }
 }
@@ -256,14 +263,15 @@ fn emit_formatted_file(
     target: &dyn Emittable,
     ws: &Workspace<'_>,
     path: &Path,
+    emit_mode: EmitMode,
 ) -> bool {
     match fmt.format_to_string(&path) {
         Ok(FormatOutcome::Identical(original)) => {
-            target.emit(ws, path, &original);
+            target.emit(ws, path, &original, emit_mode);
             true
         }
         Ok(FormatOutcome::DiffFound(diff)) => {
-            target.emit(ws, path, &diff.formatted);
+            target.emit(ws, path, &diff.formatted, emit_mode);
             false
         }
         Err(parsing_error) => {
@@ -320,7 +328,7 @@ impl<'t> ParallelVisitor for PathFormatter<'t> {
             FmtAction::Fix => format_file_in_place(self.fmt, self.opts, self.ws, path),
             FmtAction::Check => check_file_formatting(self.fmt, self.opts, self.ws, path),
             FmtAction::Emit(target) => {
-                emit_formatted_file(self.fmt, target, self.ws, path)
+                emit_formatted_file(self.fmt, target, self.ws, path, EmitMode::WithPath)
             }
         };
 
