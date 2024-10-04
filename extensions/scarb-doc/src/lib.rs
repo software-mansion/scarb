@@ -61,7 +61,8 @@ pub fn generate_packages_information(
             .iter()
             .find(|unit| unit.package == package_metadata.id);
 
-        let mut diagnostics_reporter = setup_diagnostics_reporter(&db, package_compilation_unit);
+        let mut diagnostics_reporter =
+            setup_diagnostics_reporter(&db, package_compilation_unit).skip_lowering_diagnostics();
 
         let crate_ =
             generate_language_elements_tree_for_package(&db, should_document_private_items)
