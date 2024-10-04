@@ -1,10 +1,11 @@
-use std::fmt::Display;
 use std::vec::IntoIter;
 
 mod conversion;
 mod expansions;
+mod token;
 
 pub use expansions::*;
+pub use token::*;
 
 /// Result of procedural macro code generation.
 #[derive(Debug)]
@@ -13,76 +14,6 @@ pub struct ProcMacroResult {
     pub aux_data: Option<AuxData>,
     pub diagnostics: Vec<Diagnostic>,
     pub full_path_markers: Vec<String>,
-}
-
-/// An abstract stream of Cairo tokens.
-///
-/// This is both input and part of an output of a procedural macro.
-#[derive(Debug, Default, Clone)]
-pub struct TokenStream {
-    value: String,
-    metadata: TokenStreamMetadata,
-}
-
-/// Metadata of [`TokenStream`].
-///
-/// This struct can be used to describe the origin of the [`TokenStream`].
-#[derive(Debug, Default, Clone)]
-pub struct TokenStreamMetadata {
-    /// The path to the file from which the [`TokenStream`] has been created.
-    pub original_file_path: Option<String>,
-    /// ID of the file from which the [`TokenStream`] has been created.
-    ///
-    /// It is guaranteed, that the `file_id` will be unique for each file.
-    pub file_id: Option<String>,
-}
-
-impl TokenStream {
-    #[doc(hidden)]
-    pub fn new(value: String) -> Self {
-        Self {
-            value,
-            metadata: TokenStreamMetadata::default(),
-        }
-    }
-
-    #[doc(hidden)]
-    pub fn empty() -> Self {
-        Self::new("".to_string())
-    }
-
-    #[doc(hidden)]
-    pub fn with_metadata(mut self, metadata: TokenStreamMetadata) -> Self {
-        self.metadata = metadata;
-        self
-    }
-
-    /// Get `[TokenStreamMetadata`] associated with this [`TokenStream`].
-    ///
-    /// The metadata struct can be used to describe the [`TokenStream`] origin.
-    pub fn metadata(&self) -> &TokenStreamMetadata {
-        &self.metadata
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.to_string().is_empty()
-    }
-}
-
-impl Display for TokenStream {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
-
-impl TokenStreamMetadata {
-    #[doc(hidden)]
-    pub fn new(file_path: impl ToString, file_id: impl ToString) -> Self {
-        Self {
-            original_file_path: Some(file_path.to_string()),
-            file_id: Some(file_id.to_string()),
-        }
-    }
 }
 
 /// **Auxiliary data** returned by procedural macro code generation.

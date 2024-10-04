@@ -1,5 +1,5 @@
 use crate::compiler::plugin::proc_macro::{
-    Expansion, ExpansionKind, FromSyntaxNode, ProcMacroInstance,
+    Expansion, ExpansionKind, FromTypedSyntaxNode, ProcMacroInstance,
 };
 use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Result};
@@ -37,6 +37,8 @@ use std::fmt::Debug;
 use std::sync::{Arc, OnceLock, RwLock};
 use std::vec::IntoIter;
 use tracing::{debug, trace_span};
+
+use super::TokenStreamBuilder;
 
 const FULL_PATH_MARKER_KEY: &str = "macro::full_path_marker";
 const DERIVE_ATTR: &str = "derive";
@@ -194,7 +196,7 @@ impl ProcMacroHostPlugin {
                             let found = self.parse_attrs(db, &mut func_builder, attrs, func);
                             func_builder.add_node(func.declaration(db).as_syntax_node());
                             func_builder.add_node(func.body(db).as_syntax_node());
-                            let token_stream = TokenStream::new(func_builder.build().0);
+                            let token_stream = TokenStream::new();
 
                             all_none = all_none
                                 && self.do_expand_inner_attr(
@@ -525,8 +527,12 @@ impl ProcMacroHostPlugin {
     ) -> Option<PluginResult> {
         let stable_ptr = item_ast.clone().stable_ptr().untyped();
         let span = item_ast.as_syntax_node().span(db);
-        let token_stream =
-            TokenStream::from_syntax_node(db, &item_ast).with_metadata(stream_metadata.clone());
+        let token_stream = TokenStreamBuilder::new(db)
+            .add_node(&item_ast)
+            .with_metadata(stream_metadata.clone())
+            .build();
+        // let token_stream = TokenStream::from_typed_syntax_node(db, &item_ast)
+        //     .with_metadata(stream_metadata.clone());
 
         let mut aux_data = EmittedAuxData::default();
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
@@ -1037,7 +1043,8 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
     ) -> InlinePluginResult {
         let origin = CodeOrigin::Span(syntax.as_syntax_node().span(db));
         let stable_ptr = syntax.clone().stable_ptr().untyped();
-        let token_stream = TokenStream::from_syntax_node(db, syntax);
+        // let token_stream = TokenStream::from_typed_syntax_node(db, syntax);
+        let token_stream = TokenStreamBuilder::new(db).add_node(syntax).build();
         let result = self.instance().generate_code(
             self.expansion.name.clone(),
             TokenStream::empty(),
