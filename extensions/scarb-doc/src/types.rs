@@ -483,7 +483,7 @@ impl Struct {
     ) -> Maybe<Self> {
         let members = db.struct_members(id)?;
 
-        let item_data = ItemData::new_without_signature(
+        let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
@@ -557,7 +557,7 @@ pub struct Enum {
 impl Enum {
     pub fn new(db: &ScarbDocDatabase, id: EnumId) -> Maybe<Self> {
         let variants = db.enum_variants(id)?;
-        let item_data = ItemData::new_without_signature(
+        let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Enum(id)).into(),
