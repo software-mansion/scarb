@@ -3,16 +3,18 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use cairo_lang_sierra::program::VersionedProgram;
+use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{compile_test_prepared_db, TestsCompilationConfig};
+use cairo_lang_utils::UpcastMut;
 use itertools::Itertools;
 use smol_str::ToSmolStr;
 use tracing::trace_span;
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
 use crate::compiler::compilers::{
-    ensure_gas_enabled, get_compiled_contracts, ArtifactsWriter, CompiledContracts,
-    ContractSelector,
+    ensure_gas_enabled, find_project_contracts, get_compiled_contracts, ArtifactsWriter,
+    CompiledContracts, ContractSelector,
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
@@ -45,6 +47,18 @@ impl Compiler for TestCompiler {
                 && plugin.package.id.source_id == SourceId::for_std()
         });
 
+        let contracts = if starknet {
+            find_project_contracts(
+                db.upcast_mut(),
+                ws.config().ui(),
+                &unit,
+                test_crate_ids.clone(),
+                build_external_contracts.clone(),
+            )?
+        } else {
+            Vec::new()
+        };
+
         let diagnostics_reporter =
             build_compiler_config(db, &unit, &test_crate_ids, ws).diagnostics_reporter;
 
@@ -58,14 +72,11 @@ impl Compiler for TestCompiler {
                 add_statements_code_locations: unit
                     .compiler_config
                     .unstable_add_statements_code_locations_debug_info,
+                contract_crate_ids: starknet.then_some(all_crate_ids),
+                executable_crate_ids: None,
+                contract_declarations: starknet.then_some(contracts.clone()),
             };
-            compile_test_prepared_db(
-                db,
-                config,
-                all_crate_ids.clone(),
-                test_crate_ids.clone(),
-                diagnostics_reporter,
-            )?
+            compile_test_prepared_db(db, config, test_crate_ids.clone(), diagnostics_reporter)?
         };
 
         {
@@ -90,6 +101,7 @@ impl Compiler for TestCompiler {
             // `build-external-contracts`. It will not collect contracts from all dependencies.
             compile_contracts(
                 test_crate_ids,
+                contracts,
                 build_external_contracts,
                 target_dir,
                 unit,
@@ -104,6 +116,7 @@ impl Compiler for TestCompiler {
 
 fn compile_contracts(
     main_crate_ids: Vec<CrateId>,
+    contracts: Vec<ContractDeclaration>,
     build_external_contracts: Option<Vec<ContractSelector>>,
     target_dir: Filesystem,
     unit: CairoCompilationUnit,
@@ -121,14 +134,7 @@ fn compile_contracts(
         contract_paths,
         contracts,
         classes,
-    } = get_compiled_contracts(
-        main_crate_ids,
-        props.build_external_contracts.clone(),
-        compiler_config,
-        &unit,
-        db,
-        ws,
-    )?;
+    } = get_compiled_contracts(contracts, compiler_config, db)?;
     let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props)
         .with_extension_prefix("test".to_string());
     let casm_classes: Vec<Option<CasmContractClass>> = classes.iter().map(|_| None).collect();

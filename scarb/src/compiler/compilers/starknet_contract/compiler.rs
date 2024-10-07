@@ -97,18 +97,19 @@ impl Compiler for StarknetContractCompiler {
 
         let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
 
+        let contracts = find_project_contracts(
+            db.upcast_mut(),
+            ws.config().ui(),
+            &unit,
+            main_crate_ids.clone(),
+            props.build_external_contracts.clone(),
+        )?;
+
         let CompiledContracts {
             contract_paths,
             contracts,
             classes,
-        } = get_compiled_contracts(
-            main_crate_ids,
-            props.build_external_contracts.clone(),
-            compiler_config,
-            &unit,
-            db,
-            ws,
-        )?;
+        } = get_compiled_contracts(contracts, compiler_config, db)?;
 
         check_allowed_libfuncs(&props, &contracts, &classes, db, &unit, ws)?;
 
@@ -148,21 +149,10 @@ pub struct CompiledContracts {
 }
 
 pub fn get_compiled_contracts(
-    main_crate_ids: Vec<CrateId>,
-    build_external_contracts: Option<Vec<ContractSelector>>,
+    contracts: Vec<ContractDeclaration>,
     compiler_config: CompilerConfig<'_>,
-    unit: &CairoCompilationUnit,
     db: &mut RootDatabase,
-    ws: &Workspace<'_>,
 ) -> Result<CompiledContracts> {
-    let contracts = find_project_contracts(
-        db.upcast_mut(),
-        ws.config().ui(),
-        unit,
-        main_crate_ids,
-        build_external_contracts,
-    )?;
-
     let contract_paths = contracts
         .iter()
         .map(|decl| decl.module_id().full_path(db.upcast_mut()))
@@ -180,7 +170,7 @@ pub fn get_compiled_contracts(
     })
 }
 
-fn find_project_contracts(
+pub fn find_project_contracts(
     mut db: &dyn SemanticGroup,
     ui: Ui,
     unit: &CairoCompilationUnit,
