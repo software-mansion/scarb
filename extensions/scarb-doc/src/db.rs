@@ -7,7 +7,8 @@ use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
     init_files_group, AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup, CORELIB_CRATE_NAME,
 };
-use cairo_lang_filesystem::ids::VirtualFile;
+use cairo_lang_filesystem::ids::{CrateId, CrateLongId, VirtualFile};
+use cairo_lang_lowering::db::{LoweringDatabase, LoweringGroup};
 use cairo_lang_parser::db::{ParserDatabase, ParserGroup};
 use cairo_lang_semantic::db::{SemanticDatabase, SemanticGroup};
 use cairo_lang_semantic::inline_macros::get_default_plugin_suite;
@@ -17,6 +18,8 @@ use cairo_lang_syntax::node::db::{SyntaxDatabase, SyntaxGroup};
 use cairo_lang_utils::Upcast;
 
 use salsa;
+use scarb_metadata::PackageMetadata;
+use semver::Version;
 
 /// The Cairo compiler Salsa database tailored for scarb-doc usage.
 #[salsa::database(
@@ -25,27 +28,32 @@ use salsa;
     SyntaxDatabase,
     DefsDatabase,
     SemanticDatabase,
-    DocDatabase
+    DocDatabase,
+    LoweringDatabase
 )]
 pub struct ScarbDocDatabase {
     storage: salsa::Storage<Self>,
+    main_package_name: String,
+    main_package_version: Version,
 }
 
 impl ScarbDocDatabase {
-    pub fn new(project_config: Option<ProjectConfig>) -> Self {
-        let mut db = Self {
-            storage: Default::default(),
-        };
-
-        init_files_group(&mut db);
-
-        db.set_cfg_set(Self::initial_cfg_set().into());
+    pub fn new(project_config: Option<ProjectConfig>, main_package: &PackageMetadata) -> Self {
         let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
             .into_iter()
             .fold(PluginSuite::default(), |mut acc, suite| {
                 acc.add(suite);
                 acc
             });
+        let mut db = Self {
+            storage: Default::default(),
+            main_package_name: main_package.name.clone(),
+            main_package_version: main_package.version.clone(),
+        };
+
+        init_files_group(&mut db);
+
+        db.set_cfg_set(Self::initial_cfg_set().into());
 
         db.apply_plugin_suite(plugin_suite);
 
@@ -54,6 +62,13 @@ impl ScarbDocDatabase {
         }
 
         db
+    }
+
+    pub fn get_main_crate_id(&self) -> CrateId {
+        self.intern_crate(CrateLongId::Real {
+            name: self.main_package_name.clone().into(),
+            version: Some(self.main_package_version.clone()),
+        })
     }
 
     fn initial_cfg_set() -> CfgSet {
@@ -86,6 +101,8 @@ impl salsa::ParallelDatabase for ScarbDocDatabase {
     fn snapshot(&self) -> salsa::Snapshot<Self> {
         salsa::Snapshot::new(ScarbDocDatabase {
             storage: self.storage.snapshot(),
+            main_package_name: self.main_package_name.clone(),
+            main_package_version: self.main_package_version.clone(),
         })
     }
 }
@@ -128,6 +145,12 @@ impl Upcast<dyn SemanticGroup> for ScarbDocDatabase {
 
 impl Upcast<dyn DocGroup> for ScarbDocDatabase {
     fn upcast(&self) -> &(dyn DocGroup + 'static) {
+        self
+    }
+}
+
+impl Upcast<dyn LoweringGroup> for ScarbDocDatabase {
+    fn upcast(&self) -> &(dyn LoweringGroup + 'static) {
         self
     }
 }

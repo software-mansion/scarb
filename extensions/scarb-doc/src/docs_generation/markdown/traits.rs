@@ -1,3 +1,4 @@
+use anyhow::Result;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt::Write;
@@ -48,112 +49,112 @@ impl_top_level_markdown_doc_item!(Trait, "traits.md");
 impl_top_level_markdown_doc_item!(TypeAlias, "type_aliases.md");
 
 pub trait MarkdownDocItem: DocItem {
-    fn generate_markdown(&self, header_level: usize) -> String;
+    fn generate_markdown(&self, header_level: usize) -> Result<String>;
 }
 
 impl<T> MarkdownDocItem for T
 where
     T: PrimitiveDocItem,
 {
-    fn generate_markdown(&self, header_level: usize) -> String {
+    fn generate_markdown(&self, header_level: usize) -> Result<String> {
         generate_markdown_from_item_data(self, header_level)
     }
 }
 
 impl MarkdownDocItem for Enum {
-    fn generate_markdown(&self, header_level: usize) -> String {
-        let mut markdown = generate_markdown_from_item_data(self, header_level);
+    fn generate_markdown(&self, header_level: usize) -> Result<String> {
+        let mut markdown = generate_markdown_from_item_data(self, header_level)?;
 
-        markdown += &generate_markdown_for_subitems(&self.variants, header_level);
+        markdown += &generate_markdown_for_subitems(&self.variants, header_level)?;
 
-        markdown
+        Ok(markdown)
     }
 }
 
 impl MarkdownDocItem for Impl {
-    fn generate_markdown(&self, header_level: usize) -> String {
-        let mut markdown = generate_markdown_from_item_data(self, header_level);
+    fn generate_markdown(&self, header_level: usize) -> Result<String> {
+        let mut markdown = generate_markdown_from_item_data(self, header_level)?;
 
-        markdown += &generate_markdown_for_subitems(&self.impl_constants, header_level);
-        markdown += &generate_markdown_for_subitems(&self.impl_functions, header_level);
-        markdown += &generate_markdown_for_subitems(&self.impl_types, header_level);
+        markdown += &generate_markdown_for_subitems(&self.impl_constants, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.impl_functions, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.impl_types, header_level)?;
 
-        markdown
+        Ok(markdown)
     }
 }
 
 impl MarkdownDocItem for Module {
-    fn generate_markdown(&self, header_level: usize) -> String {
-        let mut markdown = generate_markdown_from_item_data(self, header_level);
+    fn generate_markdown(&self, header_level: usize) -> Result<String> {
+        let mut markdown = generate_markdown_from_item_data(self, header_level)?;
 
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.submodules.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.constants.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.free_functions.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.structs.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.enums.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.type_aliases.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.impl_aliases.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.traits.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.impls.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.extern_types.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.extern_functions.iter().collect_vec(),
             header_level + 1,
-        );
+        )?;
 
-        markdown
+        Ok(markdown)
     }
 }
 
 impl MarkdownDocItem for Struct {
-    fn generate_markdown(&self, header_level: usize) -> String {
-        let mut markdown = generate_markdown_from_item_data(self, header_level);
+    fn generate_markdown(&self, header_level: usize) -> Result<String> {
+        let mut markdown = generate_markdown_from_item_data(self, header_level)?;
 
-        markdown += &generate_markdown_for_subitems(&self.members, header_level);
+        markdown += &generate_markdown_for_subitems(&self.members, header_level)?;
 
-        markdown
+        Ok(markdown)
     }
 }
 
 impl MarkdownDocItem for Trait {
-    fn generate_markdown(&self, header_level: usize) -> String {
-        let mut markdown = generate_markdown_from_item_data(self, header_level);
+    fn generate_markdown(&self, header_level: usize) -> Result<String> {
+        let mut markdown = generate_markdown_from_item_data(self, header_level)?;
 
-        markdown += &generate_markdown_for_subitems(&self.trait_constants, header_level);
-        markdown += &generate_markdown_for_subitems(&self.trait_functions, header_level);
-        markdown += &generate_markdown_for_subitems(&self.trait_types, header_level);
+        markdown += &generate_markdown_for_subitems(&self.trait_constants, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.trait_functions, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.trait_types, header_level)?;
 
-        markdown
+        Ok(markdown)
     }
 }
 
@@ -219,74 +220,74 @@ pub fn mark_duplicated_item_with_relative_path<'a, T: TopLevelMarkdownDocItem + 
 pub fn generate_markdown_list_for_top_level_subitems<T: TopLevelMarkdownDocItem>(
     subitems: &[&T],
     header_level: usize,
-) -> String {
+) -> Result<String> {
     let mut markdown = String::new();
 
     if !subitems.is_empty() {
         let header = str::repeat("#", header_level);
 
-        writeln!(&mut markdown, "{header} {}\n", T::HEADER).unwrap();
+        writeln!(&mut markdown, "{header} {}\n", T::HEADER)?;
         let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
         for (item, relative_path) in items_with_relative_path {
             writeln!(
                 &mut markdown,
                 "{}",
                 item.generate_markdown_list_item(relative_path)
-            )
-            .unwrap();
+            )?;
         }
     }
 
-    markdown
+    Ok(markdown)
 }
 
 fn generate_markdown_for_subitems<T: MarkdownDocItem + PrimitiveDocItem>(
     subitems: &[T],
     header_level: usize,
-) -> String {
+) -> Result<String> {
     let mut markdown = String::new();
 
     if !subitems.is_empty() {
         let header = str::repeat("#", header_level + 1);
 
-        writeln!(&mut markdown, "{header} {}\n", T::HEADER).unwrap();
+        writeln!(&mut markdown, "{header} {}\n", T::HEADER)?;
         for item in subitems {
             writeln!(
                 &mut markdown,
                 "{}",
-                item.generate_markdown(header_level + 2)
-            )
-            .unwrap();
+                item.generate_markdown(header_level + 2)?
+            )?;
         }
     }
 
-    markdown
+    Ok(markdown)
 }
 
-fn generate_markdown_from_item_data(doc_item: &impl DocItem, header_level: usize) -> String {
+fn generate_markdown_from_item_data(
+    doc_item: &impl DocItem,
+    header_level: usize,
+) -> Result<String> {
     let mut markdown = String::new();
 
     let header = str::repeat("#", header_level);
 
-    writeln!(&mut markdown, "{header} {}\n", doc_item.name()).unwrap();
+    writeln!(&mut markdown, "{header} {}\n", doc_item.name())?;
 
     if let Some(doc) = doc_item.doc() {
-        writeln!(&mut markdown, "{doc}\n").unwrap();
+        writeln!(&mut markdown, "{doc}\n")?;
     }
 
     writeln!(
         &mut markdown,
         "Fully qualified path: `{}`\n",
         doc_item.full_path()
-    )
-    .unwrap();
+    )?;
 
     if let Some(sig) = &doc_item.signature() {
         if !sig.is_empty() {
             // TODO(#1525) add cairo support to mdbook
-            writeln!(&mut markdown, "```rust\n{sig}\n```\n").unwrap();
+            writeln!(&mut markdown, "```rust\n{sig}\n```\n")?;
         }
     }
 
-    markdown
+    Ok(markdown)
 }

@@ -24,7 +24,7 @@
                 {
                   "item_data": {
                     "name": "it_works",
-                    "doc": "Really",
+                    "doc": "Really works.",
                     "signature": "fn it_works()",
                     "full_path": "hello_world::tests::it_works"
                   }

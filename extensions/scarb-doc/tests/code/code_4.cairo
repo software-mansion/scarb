@@ -92,7 +92,6 @@ mod tests {
     use super::fib as fib_function;
 
     /// Really
-    #[test]
     /// works.
     fn it_works() {
         assert(fib_function(16) == 987, 'it works!');
