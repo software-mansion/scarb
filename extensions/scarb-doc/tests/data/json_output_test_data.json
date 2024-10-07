@@ -163,7 +163,7 @@
                     "name": "area",
                     "doc": "Calculate the area of the shape",
                     "signature": "fn area(self: T) -> u32",
-                    "full_path": "hello_world::Shape::area"
+                    "full_path": "Shape::area"
                   }
                 }
               ],

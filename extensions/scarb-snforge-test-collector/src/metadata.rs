@@ -1,8 +1,6 @@
 use anyhow::{anyhow, ensure, Context, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
-use cairo_lang_filesystem::db::{
-    CrateSettings, DependencySettings, Edition, ExperimentalFeaturesConfig,
-};
+use cairo_lang_filesystem::db::{CrateSettings, Edition, ExperimentalFeaturesConfig};
 use cairo_lang_project::AllCratesConfig;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use camino::{Utf8Path, Utf8PathBuf};
@@ -12,7 +10,6 @@ use scarb_metadata::{
 };
 use serde_json::json;
 use smol_str::{SmolStr, ToSmolStr};
-use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 pub fn compilation_unit_for_package<'a>(
@@ -137,8 +134,6 @@ impl CompilationUnit<'_> {
                 (
                     SmolStr::from(&component.name),
                     get_crate_settings_for_package(
-                        &self.metadata.packages,
-                        &self.unit_metadata.components,
                         pkg,
                         component.cfg.as_ref().map(|cfg_vec| build_cfg_set(cfg_vec)),
                     ),
@@ -197,8 +192,6 @@ impl CompilationUnit<'_> {
             .expect("Main package not found in metadata");
 
         get_crate_settings_for_package(
-            &self.metadata.packages,
-            &self.unit_metadata.components,
             package,
             self.main_package_metadata
                 .cfg
@@ -213,8 +206,6 @@ impl CompilationUnit<'_> {
 }
 
 fn get_crate_settings_for_package(
-    packages: &[PackageMetadata],
-    compilation_unit_metadata_components: &[CompilationUnitComponentMetadata],
     package: &PackageMetadata,
     cfg_set: Option<CfgSet>,
 ) -> CrateSettings {
@@ -235,39 +226,10 @@ fn get_crate_settings_for_package(
             .contains(&String::from("coupons")),
     };
 
-    let mut dependencies: BTreeMap<String, DependencySettings> = package
-        .dependencies
-        .iter()
-        .filter_map(|dependency| {
-            compilation_unit_metadata_components
-                .iter()
-                .find(|compilation_unit_metadata_component| {
-                    compilation_unit_metadata_component.name == dependency.name
-                })
-                .map(|compilation_unit_metadata_component| {
-                    let version = packages
-                        .iter()
-                        .find(|package| package.name == compilation_unit_metadata_component.name)
-                        .map(|package| package.version.clone());
-
-                    (dependency.name.clone(), DependencySettings { version })
-                })
-        })
-        .collect();
-
-    // Adds itself to dependencies
-    dependencies.insert(
-        package.name.clone(),
-        DependencySettings {
-            version: Some(package.version.clone()),
-        },
-    );
-
     CrateSettings {
         edition,
         cfg_set,
         experimental_features,
-        dependencies,
         version: Some(package.version.clone()),
     }
 }
