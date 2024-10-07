@@ -2,6 +2,7 @@
 
 Implementation of the Shape trait for Circle
 
+
 Fully qualified path: `hello_world::CircleShape`
 
 ```rust
@@ -14,7 +15,8 @@ impl CircleShape of Shape<Circle>
 
 Shape constant
 
-Fully qualified path: `hello_world::hello_world::CircleShape::SHAPE_CONST`
+
+Fully qualified path: `hello_world::CircleShape::SHAPE_CONST`
 
 ```rust
 const SHAPE_CONST: felt252 = 'xyz';
@@ -26,6 +28,7 @@ const SHAPE_CONST: felt252 = 'xyz';
 ### area
 
 Implementation of the area method for Circle
+
 
 Fully qualified path: `hello_world::CircleShape::area`
 
@@ -40,7 +43,8 @@ fn area(self: Circle) -> u32
 
 Type alias for a pair of circles
 
-Fully qualified path: `hello_world::hello_world::CircleShape::ShapePair`
+
+Fully qualified path: `hello_world::CircleShape::ShapePair`
 
 ```rust
 type ShapePair = (Circle, Circle);

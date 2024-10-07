@@ -16,7 +16,7 @@
             {
               "item_data": {
                 "name": "main",
-                "doc": "main",
+                "doc": "main\n",
                 "signature": "fn main()",
                 "full_path": "hello_world::main"
               }
