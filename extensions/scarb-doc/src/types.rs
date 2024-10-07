@@ -1,15 +1,17 @@
 use cairo_lang_semantic::items::visibility;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_utils::Upcast;
+use itertools::Itertools;
 use serde::Serialize;
 
 use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::diagnostic_utils::StableLocation;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, ImplAliasId,
     ImplConstantDefId, ImplDefId, ImplFunctionId, ImplItemId, ImplTypeDefId, LanguageElementId,
-    LookupItemId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, StructId,
-    TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId, TraitTypeId,
-    VariantId,
+    LookupItemId, MemberId, ModuleId, ModuleItemId, ModuleTypeAliasId, NamedLanguageElementId,
+    StructId, TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId, TraitItemId,
+    TraitTypeId, VariantId,
 };
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
@@ -79,10 +81,11 @@ impl Module {
         module_id: ModuleId,
         include_private_items: bool,
     ) -> Self {
+        // FIXME(#1438): compiler doesn't support fetching root crate doc
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData {
                 name: crate_id.name(db).to_string(),
-                doc: db.get_item_documentation(DocumentableItemId::Crate(crate_id)),
+                doc: None,
                 signature: None,
                 full_path: module_id.full_path(db),
             },
@@ -329,7 +332,9 @@ impl Struct {
                     || is_visible_in_module(db, root_module_id, &semantic_member.id))
                     && !is_doc_hidden_attr(db, syntax_node)
             })
-            .map(|(_name, semantic_member)| Member::new(db, semantic_member.id))
+            .map(|(_name, semantic_member)| {
+                Member::new(db, semantic_member.id, item_data.full_path.clone())
+            })
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
@@ -353,13 +358,25 @@ pub struct Member {
 }
 
 impl Member {
-    pub fn new(db: &ScarbDocDatabase, id: MemberId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: MemberId, struct_full_path: String) -> Self {
         let node = id.stable_ptr(db);
+        let stable_location = StableLocation::new(node.0);
+
+        let name = id.name(db).into();
+        // TODO(#1438): Replace with `id.full_path(db)` after it is fixed in the compiler.
+        let full_path = format!("{}::{}", struct_full_path, name);
+
+        let item_data = ItemData {
+            name,
+            doc: get_item_documentation(db, &stable_location),
+            signature: None,
+            full_path,
+        };
 
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Member(id)),
+            item_data,
         }
     }
 }
@@ -387,7 +404,7 @@ impl Enum {
 
         let variants = variants
             .iter()
-            .map(|(_name, variant_id)| Variant::new(db, *variant_id))
+            .map(|(_name, variant_id)| Variant::new(db, *variant_id, item_data.full_path.clone()))
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
@@ -411,13 +428,25 @@ pub struct Variant {
 }
 
 impl Variant {
-    pub fn new(db: &ScarbDocDatabase, id: VariantId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: VariantId, enum_full_path: String) -> Self {
         let node = id.stable_ptr(db);
+        let stable_location = StableLocation::new(node.0);
+
+        let name = id.name(db).into();
+        // TODO(#1438): Replace with `id.full_path(db)` after it is fixed in the compiler.
+        let full_path = format!("{}::{}", enum_full_path, name);
+
+        let item_data = ItemData {
+            name,
+            doc: get_item_documentation(db, &stable_location),
+            signature: None,
+            full_path,
+        };
 
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Variant(id)),
+            item_data,
         }
     }
 }
@@ -493,17 +522,26 @@ impl Trait {
             id,
             LookupItemId::ModuleItem(ModuleItemId::Trait(id)).into(),
         );
+        let full_path_to_trait = item_data
+            .full_path
+            .strip_suffix(item_data.name.as_str())
+            .unwrap()
+            .to_string();
 
         let trait_constants = db.trait_constants(id).unwrap();
         let trait_constants = trait_constants
             .iter()
-            .map(|(_name, trait_constant_id)| TraitConstant::new(db, *trait_constant_id))
+            .map(|(_name, trait_constant_id)| {
+                TraitConstant::new(db, *trait_constant_id, full_path_to_trait.clone())
+            })
             .collect::<Vec<_>>();
 
         let trait_types = db.trait_types(id).unwrap();
         let trait_types = trait_types
             .iter()
-            .map(|(_name, trait_type_id)| TraitType::new(db, *trait_type_id))
+            .map(|(_name, trait_type_id)| {
+                TraitType::new(db, *trait_type_id, full_path_to_trait.clone())
+            })
             .collect::<Vec<_>>();
 
         let trait_functions = db.trait_functions(id).unwrap();
@@ -535,17 +573,21 @@ pub struct TraitConstant {
 }
 
 impl TraitConstant {
-    pub fn new(db: &ScarbDocDatabase, id: TraitConstantId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitConstantId, full_path_to_trait: String) -> Self {
         let node = id.stable_ptr(db);
+
+        let mut item_data = ItemData::new(
+            db,
+            id,
+            LookupItemId::TraitItem(TraitItemId::Constant(id)).into(),
+        );
+        // TODO(#1438): introduce proper fix in compiler
+        item_data.full_path = full_path_to_trait + &item_data.full_path;
 
         Self {
             id,
             node,
-            item_data: ItemData::new(
-                db,
-                id,
-                LookupItemId::TraitItem(TraitItemId::Constant(id)).into(),
-            ),
+            item_data,
         }
     }
 }
@@ -561,17 +603,21 @@ pub struct TraitType {
 }
 
 impl TraitType {
-    pub fn new(db: &ScarbDocDatabase, id: TraitTypeId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitTypeId, full_path_to_trait: String) -> Self {
         let node = id.stable_ptr(db);
+
+        let mut item_data = ItemData::new(
+            db,
+            id,
+            LookupItemId::TraitItem(TraitItemId::Type(id)).into(),
+        );
+        // TODO(#1438): introduce proper fix in compiler
+        item_data.full_path = full_path_to_trait + &item_data.full_path;
 
         Self {
             id,
             node,
-            item_data: ItemData::new(
-                db,
-                id,
-                LookupItemId::TraitItem(TraitItemId::Type(id)).into(),
-            ),
+            item_data,
         }
     }
 }
@@ -623,17 +669,22 @@ impl Impl {
             id,
             LookupItemId::ModuleItem(ModuleItemId::Impl(id)).into(),
         );
+        let full_path_to_impl = item_data
+            .full_path
+            .strip_suffix(item_data.name.as_str())
+            .unwrap()
+            .to_string();
 
         let impl_types = db.impl_types(id).unwrap();
         let impl_types = impl_types
             .iter()
-            .map(|(id, _)| ImplType::new(db, *id))
+            .map(|(id, _)| ImplType::new(db, *id, full_path_to_impl.clone()))
             .collect::<Vec<_>>();
 
         let impl_constants = db.impl_constants(id).unwrap();
         let impl_constants = impl_constants
             .iter()
-            .map(|(id, _)| ImplConstant::new(db, *id))
+            .map(|(id, _)| ImplConstant::new(db, *id, full_path_to_impl.clone()))
             .collect::<Vec<_>>();
 
         let impl_functions = db.impl_functions(id).unwrap();
@@ -665,13 +716,18 @@ pub struct ImplType {
 }
 
 impl ImplType {
-    pub fn new(db: &ScarbDocDatabase, id: ImplTypeDefId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplTypeDefId, full_path_to_impl: String) -> Self {
         let node = id.stable_ptr(db);
+
+        let mut item_data =
+            ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id)).into());
+        // TODO(#1438): introduce proper fix in compiler
+        item_data.full_path = full_path_to_impl + &item_data.full_path;
 
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id)).into()),
+            item_data,
         }
     }
 }
@@ -687,17 +743,21 @@ pub struct ImplConstant {
 }
 
 impl ImplConstant {
-    pub fn new(db: &ScarbDocDatabase, id: ImplConstantDefId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplConstantDefId, full_path_to_impl: String) -> Self {
         let node = id.stable_ptr(db);
+
+        let mut item_data = ItemData::new(
+            db,
+            id,
+            LookupItemId::ImplItem(ImplItemId::Constant(id)).into(),
+        );
+        // TODO(#1438): introduce proper fix in compiler
+        item_data.full_path = full_path_to_impl + &item_data.full_path;
 
         Self {
             id,
             node,
-            item_data: ItemData::new(
-                db,
-                id,
-                LookupItemId::ImplItem(ImplItemId::Constant(id)).into(),
-            ),
+            item_data,
         }
     }
 }
@@ -776,4 +836,29 @@ impl ExternFunction {
             ),
         }
     }
+}
+
+// TODO(#1428): This function is temporarily copied until further modifications in cairo compiler are done.
+fn get_item_documentation(db: &dyn DefsGroup, stable_location: &StableLocation) -> Option<String> {
+    let doc = stable_location.syntax_node(db).get_text(db.upcast());
+    let doc = doc
+        .lines()
+        .take_while_ref(|line| {
+            !line
+                .trim_start()
+                .chars()
+                .next()
+                .map_or(false, |c| c.is_alphabetic())
+        })
+        .filter_map(|line| {
+            let dedent = line.trim_start();
+            for prefix in ["///", "//!"] {
+                if let Some(content) = dedent.strip_prefix(prefix) {
+                    return Some(content.strip_prefix(' ').unwrap_or(content));
+                }
+            }
+            None
+        })
+        .collect::<Vec<&str>>();
+    (!doc.is_empty()).then(|| doc.join("\n"))
 }

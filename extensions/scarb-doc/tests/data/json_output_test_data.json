@@ -6,7 +6,7 @@
         "root_module": {
           "item_data": {
             "name": "hello_world",
-            "doc": "Fibonacci sequence calculator\n",
+            "doc": null,
             "signature": null,
             "full_path": "hello_world"
           },
@@ -75,7 +75,7 @@
                   "item_data": {
                     "name": "radius",
                     "doc": "Radius of the circle",
-                    "signature": " radius: u32",
+                    "signature": null,
                     "full_path": "hello_world::Circle::radius"
                   }
                 }
@@ -95,7 +95,7 @@
                   "item_data": {
                     "name": "Red",
                     "doc": "Red color",
-                    "signature": "",
+                    "signature": null,
                     "full_path": "hello_world::Color::Red"
                   }
                 },
@@ -103,7 +103,7 @@
                   "item_data": {
                     "name": "Green",
                     "doc": "Green color",
-                    "signature": "",
+                    "signature": null,
                     "full_path": "hello_world::Color::Green"
                   }
                 },
@@ -111,7 +111,7 @@
                   "item_data": {
                     "name": "Blue",
                     "doc": "Blue color",
-                    "signature": "",
+                    "signature": null,
                     "full_path": "hello_world::Color::Blue"
                   }
                 }
@@ -143,7 +143,7 @@
                     "name": "SHAPE_CONST",
                     "doc": "Constant for the shape type",
                     "signature": "const SHAPE_CONST: felt252;",
-                    "full_path": "hello_world::Shape::SHAPE_CONST"
+                    "full_path": "hello_world::hello_world::Shape::SHAPE_CONST"
                   }
                 }
               ],
@@ -153,7 +153,7 @@
                     "name": "ShapePair",
                     "doc": "Type alias for a pair of shapes",
                     "signature": "type ShapePair;",
-                    "full_path": "hello_world::Shape::ShapePair"
+                    "full_path": "hello_world::hello_world::Shape::ShapePair"
                   }
                 }
               ],
@@ -183,7 +183,7 @@
                     "name": "ShapePair",
                     "doc": "Type alias for a pair of circles",
                     "signature": "type ShapePair = (Circle, Circle);",
-                    "full_path": "hello_world::CircleShape::ShapePair"
+                    "full_path": "hello_world::hello_world::CircleShape::ShapePair"
                   }
                 }
               ],
@@ -193,7 +193,7 @@
                     "name": "SHAPE_CONST",
                     "doc": "Shape constant",
                     "signature": "const SHAPE_CONST: felt252 = 'xyz';",
-                    "full_path": "hello_world::CircleShape::SHAPE_CONST"
+                    "full_path": "hello_world::hello_world::CircleShape::SHAPE_CONST"
                   }
                 }
               ],

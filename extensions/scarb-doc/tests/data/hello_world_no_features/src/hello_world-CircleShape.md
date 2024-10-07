@@ -14,7 +14,7 @@ impl CircleShape of Shape<Circle>
 
 Shape constant
 
-Fully qualified path: `hello_world::CircleShape::SHAPE_CONST`
+Fully qualified path: `hello_world::hello_world::CircleShape::SHAPE_CONST`
 
 ```rust
 const SHAPE_CONST: felt252 = 'xyz';
@@ -40,7 +40,7 @@ fn area(self: Circle) -> u32
 
 Type alias for a pair of circles
 
-Fully qualified path: `hello_world::CircleShape::ShapePair`
+Fully qualified path: `hello_world::hello_world::CircleShape::ShapePair`
 
 ```rust
 type ShapePair = (Circle, Circle);

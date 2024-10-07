@@ -73,7 +73,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -91,7 +91,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -165,7 +165,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -183,7 +183,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -250,7 +250,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": "",
+                        "signature": null,
                         "full_path": "hello_world::PublicParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -268,7 +268,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": "",
+                        "signature": null,
                         "full_path": "hello_world::PublicParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -350,7 +350,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -368,7 +368,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -442,7 +442,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -460,7 +460,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -527,7 +527,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": "",
+                        "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -545,7 +545,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": "",
+                        "signature": null,
                         "full_path": "hello_world::PublicCrateParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -627,7 +627,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PrivateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -645,7 +645,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -719,7 +719,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -737,7 +737,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": "",
+                            "signature": null,
                             "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -804,7 +804,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": "",
+                        "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -822,7 +822,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": "",
+                        "signature": null,
                         "full_path": "hello_world::PrivateParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -914,7 +914,7 @@
                   "item_data": {
                     "name": "PUBLIC_VARIANT",
                     "doc": "Public enum variant",
-                    "signature": "",
+                    "signature": null,
                     "full_path": "hello_world::PublicEnum::PUBLIC_VARIANT"
                   }
                 }
@@ -932,7 +932,7 @@
                   "item_data": {
                     "name": "PUBLIC_VARIANT",
                     "doc": "Public enum variant",
-                    "signature": "",
+                    "signature": null,
                     "full_path": "hello_world::PublicCrateEnum::PUBLIC_VARIANT"
                   }
                 }
@@ -950,7 +950,7 @@
                   "item_data": {
                     "name": "PRIVATE_VARIANT",
                     "doc": "Private enum variant",
-                    "signature": "",
+                    "signature": null,
                     "full_path": "hello_world::PrivateEnum::PRIVATE_VARIANT"
                   }
                 }

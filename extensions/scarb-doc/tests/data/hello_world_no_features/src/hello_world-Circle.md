@@ -12,8 +12,4 @@ Radius of the circle
 
 Fully qualified path: `hello_world::Circle::radius`
 
-```rust
- radius: u32
-```
-
 
