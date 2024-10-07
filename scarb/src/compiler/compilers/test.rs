@@ -37,7 +37,7 @@ impl Compiler for TestCompiler {
 
         let test_crate_ids = collect_main_crate_ids(&unit, db);
         // Search for all contracts in deps specified with `build-external-contracts`.
-        let all_crate_ids =
+        let main_crate_ids =
             get_contract_crate_ids(&build_external_contracts, test_crate_ids.clone(), db);
 
         let starknet = unit.cairo_plugins.iter().any(|plugin| {
@@ -47,6 +47,10 @@ impl Compiler for TestCompiler {
 
         let diagnostics_reporter =
             build_compiler_config(db, &unit, &test_crate_ids, ws).diagnostics_reporter;
+
+        diagnostics_reporter
+            .with_crates(&main_crate_ids)
+            .ensure(db)?;
 
         let test_compilation = {
             let _ = trace_span!("compile_test").enter();
@@ -59,12 +63,13 @@ impl Compiler for TestCompiler {
                     .compiler_config
                     .unstable_add_statements_code_locations_debug_info,
             };
+            let allow_warnings = unit.compiler_config.allow_warnings;
             compile_test_prepared_db(
                 db,
                 config,
-                all_crate_ids.clone(),
+                main_crate_ids,
                 test_crate_ids.clone(),
-                diagnostics_reporter,
+                allow_warnings,
             )?
         };
 
