@@ -6,7 +6,6 @@ use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{
     AsFilesGroupMut, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
-    CORELIB_CRATE_NAME,
 };
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
@@ -90,12 +89,8 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
         .collect();
 
     for component in components {
-        let name = component.cairo_package_name();
-        let version = component.package.id.version.clone();
-        let crate_id = db.intern_crate(CrateLongId::Real {
-            name,
-            version: Some(version),
-        });
+        let crate_name = component.cairo_package_name();
+        let crate_id = db.intern_crate(CrateLongId::Real(crate_name));
         let file_stems = component
             .targets
             .iter()
@@ -175,9 +170,7 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                     (
                         compilation_unit_component.package.id.name.to_string(),
                         DependencySettings {
-                            version: (compilation_unit_component.package.id.name.to_string()
-                                != *CORELIB_CRATE_NAME)
-                                .then_some(compilation_unit_component.package.id.version.clone()),
+                            version: Some(compilation_unit_component.package.id.version.clone()),
                         },
                     )
                 })
@@ -187,8 +180,7 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
             dependencies.insert(
                 component.package.id.name.to_string(),
                 DependencySettings {
-                    version: (component.package.id.name.to_string() != *CORELIB_CRATE_NAME)
-                        .then_some(component.package.id.version.clone()),
+                    version: Some(component.package.id.version.clone()),
                 },
             );
 

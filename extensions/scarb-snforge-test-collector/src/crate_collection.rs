@@ -1,7 +1,6 @@
 use crate::metadata::CompilationUnit;
 use anyhow::{anyhow, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
-use semver::Version;
 use serde::Serialize;
 use walkdir::WalkDir;
 
@@ -17,14 +16,12 @@ pub enum CrateLocation {
 pub struct TestCompilationTarget {
     pub crate_root: Utf8PathBuf,
     pub crate_name: String,
-    pub crate_version: Version,
     pub crate_location: CrateLocation,
     pub lib_content: String,
 }
 
 pub fn collect_test_compilation_targets(
     package_name: &str,
-    package_version: Version,
     package_path: &Utf8Path,
     compilation_unit: &CompilationUnit,
 ) -> Result<Vec<TestCompilationTarget>> {
@@ -32,7 +29,6 @@ pub fn collect_test_compilation_targets(
     let mut compilation_targets = vec![TestCompilationTarget {
         crate_root: compilation_unit.main_package_source_root(),
         crate_name: package_name.to_string(),
-        crate_version: package_version.clone(),
         crate_location: CrateLocation::Lib,
         lib_content: std::fs::read_to_string(package_source_file_path)
             .with_context(|| format!("failed to read = {package_source_file_path}"))?,
@@ -42,7 +38,6 @@ pub fn collect_test_compilation_targets(
     if tests_dir_path.exists() {
         compilation_targets.push(TestCompilationTarget {
             crate_name: "tests".to_string(),
-            crate_version: package_version,
             crate_location: CrateLocation::Tests,
             lib_content: get_or_create_test_lib_content(tests_dir_path.as_path())?,
             crate_root: tests_dir_path,

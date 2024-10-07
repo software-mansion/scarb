@@ -38,7 +38,7 @@ impl Compiler for TestCompiler {
         let test_crate_ids = collect_main_crate_ids(&unit, db);
         // Search for all contracts in deps specified with `build-external-contracts`.
         let all_crate_ids =
-            get_contract_crate_ids(&build_external_contracts, test_crate_ids.clone(), &unit, db);
+            get_contract_crate_ids(&build_external_contracts, test_crate_ids.clone(), db);
 
         let starknet = unit.cairo_plugins.iter().any(|plugin| {
             plugin.package.id.name == PackageName::STARKNET
@@ -125,7 +125,6 @@ fn compile_contracts(
         main_crate_ids,
         props.build_external_contracts.clone(),
         compiler_config,
-        &unit,
         db,
         ws,
     )?;
@@ -148,7 +147,6 @@ fn external_contracts_selectors(
 fn get_contract_crate_ids(
     build_external_contracts: &Option<Vec<ContractSelector>>,
     test_crate_ids: Vec<CrateId>,
-    unit: &CairoCompilationUnit,
     db: &mut RootDatabase,
 ) -> Vec<CrateId> {
     let mut all_crate_ids = build_external_contracts
@@ -159,15 +157,7 @@ fn get_contract_crate_ids(
                 .map(|selector| selector.package())
                 .sorted()
                 .unique()
-                .map(|package_name| {
-                    let version = unit
-                        .components()
-                        .iter()
-                        .find(|component| component.package.id.name == package_name)
-                        .map(|component| component.package.id.version.clone());
-                    let name = package_name.to_smolstr();
-                    db.intern_crate(CrateLongId::Real { name, version })
-                })
+                .map(|package_name| db.intern_crate(CrateLongId::Real(package_name.to_smolstr())))
                 .collect_vec()
         })
         .unwrap_or_default();

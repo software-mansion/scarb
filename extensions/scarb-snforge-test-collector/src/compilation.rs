@@ -30,7 +30,6 @@ impl TestCompilationTarget {
     fn compile_tests(&self, compilation_unit: &CompilationUnit) -> Result<CompiledTestCrateRaw> {
         let (program_artifact, test_cases) = collect_tests(
             &self.crate_name,
-            self.crate_version.clone(),
             self.crate_root.as_std_path(),
             &self.lib_content,
             compilation_unit,

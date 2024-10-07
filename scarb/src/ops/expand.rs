@@ -160,12 +160,9 @@ fn do_expand(
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let ScarbDatabase { db, .. } = build_scarb_root_database(compilation_unit, ws)?;
-    let name = compilation_unit.main_component().cairo_package_name();
-    let version = compilation_unit.main_component().package.id.version.clone();
-    let main_crate_id = db.intern_crate(CrateLongId::Real {
-        name,
-        version: Some(version),
-    });
+    let main_crate_id = db.intern_crate(CrateLongId::Real(
+        compilation_unit.main_component().cairo_package_name(),
+    ));
     let mut compiler_config = build_compiler_config(&db, compilation_unit, &[main_crate_id], ws);
     // Report diagnostics, but do not fail.
     let _ = compiler_config.diagnostics_reporter.check(&db);

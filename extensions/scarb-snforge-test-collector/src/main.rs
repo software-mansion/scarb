@@ -44,7 +44,6 @@ fn main() -> Result<()> {
 
         let compilation_targets = collect_test_compilation_targets(
             &package_metadata.name,
-            package_metadata.version.clone(),
             &package_metadata.root,
             &compilation_unit,
         )?;
