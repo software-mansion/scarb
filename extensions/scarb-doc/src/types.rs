@@ -434,7 +434,7 @@ impl Struct {
     ) -> Self {
         let members = db.struct_members(id).unwrap();
 
-        let item_data = ItemData::new(
+        let item_data = ItemData::new_without_signature(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
@@ -500,7 +500,7 @@ pub struct Enum {
 impl Enum {
     pub fn new(db: &ScarbDocDatabase, id: EnumId) -> Self {
         let variants = db.enum_variants(id).unwrap();
-        let item_data = ItemData::new(
+        let item_data = ItemData::new_without_signature(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Enum(id)).into(),
