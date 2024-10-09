@@ -18,7 +18,7 @@ use crate::compiler::plugin::proc_macro::compilation::{
 };
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{Config, Package, PackageId, PackageName, TargetKind, Workspace, Target};
+use crate::core::{Config, Package, PackageId, PackageName, Target, TargetKind, Workspace};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
