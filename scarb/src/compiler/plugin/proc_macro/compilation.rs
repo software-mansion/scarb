@@ -85,10 +85,8 @@ fn get_cargo_package_name(package: &Package) -> String {
 }
 
 fn get_cargo_library_name(package: &Package) -> String {
-    let cargo_toml_path = package.root().join(CARGO_MANIFEST_FILE_NAME);
-
     let metadata = MetadataCommand::new()
-        .manifest_path(cargo_toml_path)
+        .current_dir(package.root())
         .exec()
         .expect("Could not get Cargo metadata");
 
@@ -108,10 +106,8 @@ fn get_cargo_library_name(package: &Package) -> String {
 }
 
 fn get_cargo_package_version(package: &Package) -> String {
-    let cargo_toml_path = package.root().join(CARGO_MANIFEST_FILE_NAME);
-
     let metadata = MetadataCommand::new()
-        .manifest_path(cargo_toml_path)
+        .current_dir(package.root())
         .exec()
         .expect("Could not get Cargo metadata");
 
