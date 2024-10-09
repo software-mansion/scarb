@@ -98,9 +98,11 @@ fn get_cargo_library_name(package: &Package) -> String {
         .find(|pkg| pkg.name == cargo_package_name)
         .unwrap_or_else(|| panic!("Could not get `{cargo_package_name}` package from metadata."));
 
-    let cdylib_target = package.targets.iter().find(|target| {
-        target.kind.contains(&"cdylib".to_string())
-    }).expect("No target of `cdylib` kind found in package");
+    let cdylib_target = package
+        .targets
+        .iter()
+        .find(|target| target.kind.contains(&"cdylib".to_string()))
+        .expect("No target of `cdylib` kind found in package");
 
     cdylib_target.name.clone()
 }
