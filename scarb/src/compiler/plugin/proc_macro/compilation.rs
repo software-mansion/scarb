@@ -41,7 +41,7 @@ impl SharedLibraryProvider for Package {
     }
 
     fn shared_lib_path(&self, config: &Config) -> Utf8PathBuf {
-        let lib_name = library_filename(get_cargo_package_name(self));
+        let lib_name = library_filename(get_cargo_library_name(self));
         let lib_name = lib_name
             .into_string()
             .expect("library name must be valid UTF-8");
@@ -82,6 +82,29 @@ fn get_cargo_package_name(package: &Package) -> String {
         .unwrap();
 
     package_name.to_string()
+}
+
+fn get_cargo_library_name(package: &Package) -> String {
+    let cargo_toml_path = package.root().join(CARGO_MANIFEST_FILE_NAME);
+
+    let metadata = MetadataCommand::new()
+        .manifest_path(cargo_toml_path)
+        .exec()
+        .expect("Could not get Cargo metadata");
+
+    let cargo_package_name = get_cargo_package_name(package);
+
+    let package = metadata
+        .packages
+        .iter()
+        .find(|pkg| pkg.name == cargo_package_name)
+        .unwrap_or_else(|| panic!("Could not get `{cargo_package_name}` package from metadata."));
+
+    let cdylib_target = package.targets.iter().find(|target| {
+        target.kind.contains(&"cdylib".to_string())
+    }).expect("No target of `cdylib` kind found in package");
+
+    cdylib_target.name.clone()
 }
 
 fn get_cargo_package_version(package: &Package) -> String {
