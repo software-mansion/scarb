@@ -222,8 +222,8 @@ fn prepare_archive_recipe(
         pkg.is_lib() || pkg.is_cairo_plugin(),
         formatdoc!(
             r#"
-            cannot archive package `{package_name}` without a `lib` or `cairo_plugin` target
-            help: add `[lib]` or `[cairo_plugin]` section to package manifest
+            cannot archive package `{package_name}` without a `lib` or `cairo-plugin` target
+            help: consider adding `[lib]` section to package manifest
              --> Scarb.toml
             +   [lib]
             "#,

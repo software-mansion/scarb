@@ -1389,8 +1389,8 @@ fn no_target() {
         .failure()
         .stdout_matches(indoc! {r#"
         [..] Packaging foo v1.0.0 [..]
-        error: cannot archive package `foo` without a `lib` or `cairo_plugin` target
-        help: add `[lib]` or `[cairo_plugin]` section to package manifest
+        error: cannot archive package `foo` without a `lib` or `cairo-plugin` target
+        help: consider adding `[lib]` section to package manifest
          --> Scarb.toml
         +   [lib]
         "#});
