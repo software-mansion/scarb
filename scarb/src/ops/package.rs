@@ -258,13 +258,25 @@ fn prepare_archive_recipe(
         // Package crate with Cargo.
         package_crate(pkg, opts, ws)?;
 
+        let crate_archive_basename = get_crate_archive_basename(pkg);
+        if crate_archive_basename != pkg.id.tarball_basename() {
+            ws.config().ui().warn(formatdoc!(
+                r#"
+                package name or version mismatch between cargo and scarb manifest
+                cargo: `{cargo_basename}`, scarb: `{scarb_basename}`
+                "#,
+                cargo_basename = crate_archive_basename,
+                scarb_basename = pkg.id.tarball_basename(),
+            ));
+        }
+
         // Add normalized Cargo.toml file.
         recipe.push(ArchiveFile {
             path: CARGO_MANIFEST_FILE_NAME.into(),
             contents: ArchiveFileContents::OnDisk(
                 pkg.target_path(ws.config())
                     .into_child("package")
-                    .into_child(get_crate_archive_basename(pkg))
+                    .into_child(crate_archive_basename)
                     .into_child(CARGO_MANIFEST_FILE_NAME)
                     .path_unchecked()
                     .to_path_buf(),

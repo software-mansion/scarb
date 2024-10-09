@@ -498,6 +498,9 @@ fn cairo_plugin() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Packaging some v1.0.0 [..]
+        [..]warn: package name or version mismatch between cargo and scarb manifest
+        [..]cargo: `some-0.1.0`, scarb: `some-1.0.0`
+
         [..] Verifying some-1.0.0.tar.zst
         [..] Compiling some v1.0.0 ([..])
         [..]  Finished `dev` profile target(s) in [..]
