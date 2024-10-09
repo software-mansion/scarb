@@ -18,7 +18,7 @@ use crate::compiler::plugin::proc_macro::compilation::{
 };
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{is_builtin, Config, Package, PackageId, PackageName, TargetKind, Workspace};
+use crate::core::{Config, Package, PackageId, PackageName, TargetKind, Workspace, Target};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
@@ -139,6 +139,14 @@ fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Optio
     } else {
         Ok(None)
     }
+}
+
+fn is_builtin(target: &Target) -> bool {
+    target
+        .params
+        .get("builtin")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
 }
 
 #[tracing::instrument(level = "trace", skip(opts, ws))]
