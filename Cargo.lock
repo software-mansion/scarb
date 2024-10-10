@@ -752,6 +752,8 @@ dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-macro-attributes 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-macro-stable 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-parser",
+ "cairo-lang-syntax",
  "itertools 0.12.1",
  "linkme",
  "serde",

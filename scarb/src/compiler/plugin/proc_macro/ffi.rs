@@ -1,16 +1,13 @@
 use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Context, Result};
-use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_macro::{
     ExpansionKind as SharedExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult,
-    Token, TokenStream,
+    TokenStream,
 };
 use cairo_lang_macro_stable::{
     StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
     StableResultWrapper, StableTokenStream,
 };
-use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_syntax::node::{SyntaxNode, TypedSyntaxNode};
 use camino::Utf8PathBuf;
 use itertools::Itertools;
 use libloading::{Library, Symbol};

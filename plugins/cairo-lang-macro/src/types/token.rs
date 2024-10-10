@@ -1,9 +1,12 @@
 use std::fmt::Display;
 
-use cairo_lang_filesystem::span::TextSpan;
+use cairo_lang_filesystem::span::{TextOffset, TextSpan, TextWidth};
+use cairo_lang_parser::utils::SimpleParserDatabase;
+use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Token {
     span: TextSpan,
     content: String,
@@ -13,6 +16,10 @@ impl Token {
     pub fn new(content: String, span: TextSpan) -> Self {
         Self { content, span }
     }
+
+    pub fn from_syntax_node(db: &dyn SyntaxGroup, node: SyntaxNode) -> Self {
+        Token::new(node.get_text(db), node.span(db))
+    }
 }
 
 /// An abstract stream of Cairo tokens.
@@ -20,8 +27,8 @@ impl Token {
 /// This is both input and part of an output of a procedural macro.
 #[derive(Debug, Default, Clone)]
 pub struct TokenStream {
-    tokens: Vec<Token>,
-    metadata: TokenStreamMetadata,
+    pub tokens: Vec<Token>,
+    pub metadata: TokenStreamMetadata,
 }
 
 /// Metadata of [`TokenStream`].
@@ -42,6 +49,33 @@ impl TokenStream {
     pub fn new(tokens: Vec<Token>) -> Self {
         Self {
             tokens,
+            metadata: TokenStreamMetadata::default(),
+        }
+    }
+
+    pub fn from_string(str: String) -> Self {
+        let db = SimpleParserDatabase::default();
+        let node = db.parse_virtual(str.clone());
+
+        let tokens = match node {
+            Ok(node) => {
+                let nodes = node.get_node_tree_leaves(&db);
+                nodes
+                    .iter()
+                    .map(|node| Token::from_syntax_node(&db, node.clone()))
+                    .collect()
+            }
+            Err(_) => vec![Token::new(
+                str.clone(),
+                TextSpan {
+                    start: TextOffset::default(),
+                    end: TextOffset::default().add_width(TextWidth::from_str(&str)),
+                },
+            )],
+        };
+
+        Self {
+            tokens: tokens,
             metadata: TokenStreamMetadata::default(),
         }
     }
