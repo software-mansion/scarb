@@ -266,7 +266,7 @@ fn prepare_archive_recipe(
         // Package crate with Cargo.
         package_crate(pkg, opts, ws)?;
 
-        let crate_archive_basename = get_crate_archive_basename(pkg);
+        let crate_archive_basename = get_crate_archive_basename(pkg)?;
         if crate_archive_basename != pkg.id.tarball_basename() {
             ws.config().ui().warn(formatdoc!(
                 r#"

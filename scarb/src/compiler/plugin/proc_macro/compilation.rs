@@ -4,7 +4,7 @@ use crate::flock::Filesystem;
 use crate::ops::PackageOpts;
 use crate::process::exec_piping;
 use crate::CARGO_MANIFEST_FILE_NAME;
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
 use camino::Utf8PathBuf;
 use cargo_metadata::MetadataCommand;
 use libloading::library_filename;
@@ -41,7 +41,8 @@ impl SharedLibraryProvider for Package {
     }
 
     fn shared_lib_path(&self, config: &Config) -> Utf8PathBuf {
-        let lib_name = library_filename(get_cargo_library_name(self));
+        let lib_name = get_cargo_library_name(self).expect("could not resolve library name");
+        let lib_name = library_filename(lib_name);
         let lib_name = lib_name
             .into_string()
             .expect("library name must be valid UTF-8");
@@ -64,71 +65,72 @@ pub fn check_unit(unit: ProcMacroCompilationUnit, ws: &Workspace<'_>) -> Result<
     run_cargo(CargoAction::Check, &package, ws)
 }
 
-fn get_cargo_package_name(package: &Package) -> String {
+fn get_cargo_package_name(package: &Package) -> Result<String> {
     let cargo_toml_path = package.root().join(CARGO_MANIFEST_FILE_NAME);
 
-    let cargo_toml: toml::Value =
-        toml::from_str(&fs::read_to_string(cargo_toml_path).expect("Could not read `Cargo.toml`."))
-            .expect("Could not convert `Cargo.toml` to toml.");
+    let cargo_toml: toml::Value = toml::from_str(
+        &fs::read_to_string(cargo_toml_path).context("could not read `Cargo.toml`")?,
+    )
+    .context("could not convert `Cargo.toml` to toml")?;
 
     let package_section = cargo_toml
         .get("package")
-        .expect("Could not get package section from `Cargo.toml`.");
+        .ok_or_else(|| anyhow!("could not get `package` section from Cargo.toml"))?;
 
     let package_name = package_section
         .get("name")
-        .expect("Could not get name field from `Cargo.toml`.")
+        .ok_or_else(|| anyhow!("could not get `name` field from Cargo.toml"))?
         .as_str()
-        .unwrap();
+        .ok_or_else(|| anyhow!("could not convert package name to string"))?;
 
-    package_name.to_string()
+    Ok(package_name.to_string())
 }
 
-fn get_cargo_library_name(package: &Package) -> String {
+fn get_cargo_library_name(package: &Package) -> Result<String> {
     let metadata = MetadataCommand::new()
         .current_dir(package.root())
         .exec()
-        .expect("Could not get Cargo metadata");
+        .context("could not get Cargo metadata")?;
 
-    let cargo_package_name = get_cargo_package_name(package);
+    let cargo_package_name = get_cargo_package_name(package)?;
 
     let package = metadata
         .packages
         .iter()
         .find(|pkg| pkg.name == cargo_package_name)
-        .unwrap_or_else(|| panic!("Could not get `{cargo_package_name}` package from metadata."));
+        .ok_or_else(|| anyhow!("could not get `{cargo_package_name}` package from metadata"))?;
 
     let cdylib_target = package
         .targets
         .iter()
         .find(|target| target.kind.contains(&"cdylib".to_string()))
-        .expect("No target of `cdylib` kind found in package");
+        .ok_or_else(|| anyhow!("no target of `cdylib` kind found in package"))?;
 
-    cdylib_target.name.clone()
+    Ok(cdylib_target.name.clone())
 }
 
-fn get_cargo_package_version(package: &Package) -> String {
+fn get_cargo_package_version(package: &Package) -> Result<String> {
     let metadata = MetadataCommand::new()
         .current_dir(package.root())
         .exec()
-        .expect("Could not get Cargo metadata");
+        .context("could not get Cargo metadata")?;
 
-    let cargo_package_name = get_cargo_package_name(package);
+    let cargo_package_name = get_cargo_package_name(package)?;
 
     let package = metadata
         .packages
         .iter()
         .find(|pkg| pkg.name == cargo_package_name)
-        .unwrap_or_else(|| panic!("Could not get `{cargo_package_name}` package from metadata."));
+        .ok_or_else(|| anyhow!("could not get `{cargo_package_name}` package from metadata"))?;
 
-    package.version.to_string()
+    Ok(package.version.to_string())
 }
 
-pub fn get_crate_archive_basename(package: &Package) -> String {
-    let package_name = get_cargo_package_name(package);
-    let package_version = get_cargo_package_version(package);
+pub fn get_crate_archive_basename(package: &Package) -> Result<String> {
+    let package_name = get_cargo_package_name(package)?;
+    let package_version = get_cargo_package_version(package)?;
 
-    format!("{}-{}", package_name, package_version)
+    Ok(format!("{}-{}", package_name, package_version))
 }
 
 pub fn fetch_crate(package: &Package, ws: &Workspace<'_>) -> Result<()> {
