@@ -7,6 +7,7 @@ use crate::CARGO_MANIFEST_FILE_NAME;
 use anyhow::{anyhow, Context, Result};
 use camino::Utf8PathBuf;
 use cargo_metadata::MetadataCommand;
+use indoc::formatdoc;
 use libloading::library_filename;
 use ra_ap_toolchain::Tool;
 use scarb_ui::{Message, OutputFormat};
@@ -15,7 +16,6 @@ use serde_json::value::RawValue;
 use std::fmt::Display;
 use std::fs;
 use std::process::Command;
-use indoc::formatdoc;
 use tracing::trace_span;
 
 pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
@@ -42,7 +42,8 @@ impl SharedLibraryProvider for Package {
     }
 
     fn shared_lib_path(&self, config: &Config) -> Utf8PathBuf {
-        let lib_name = get_cargo_library_name(self, config).expect("could not resolve library name");
+        let lib_name =
+            get_cargo_library_name(self, config).expect("could not resolve library name");
         let lib_name = library_filename(lib_name);
         let lib_name = lib_name
             .into_string()
