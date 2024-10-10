@@ -272,7 +272,7 @@ fn prepare_archive_recipe(
                 r#"
                 package name or version differs between Cargo manifest and Scarb manifest
                 Scarb manifest: `{scarb_basename}`, Cargo manifest: `{cargo_basename}`
-                this might become an error in future Scarb releases 
+                this might become an error in future Scarb releases
                 "#,
                 cargo_basename = crate_archive_basename,
                 scarb_basename = pkg.id.tarball_basename(),
