@@ -31,7 +31,7 @@ pub fn fetch_cairo_plugin(package: &Package, ws: &Workspace<'_>) -> Result<()> {
     let props: CairoPluginProps = target.props()?;
     // No need to fetch for buildin plugins.
     if !props.builtin {
-        proc_macro::fetch_package(package, ws)?;
+        proc_macro::fetch_crate(package, ws)?;
     }
     Ok(())
 }
