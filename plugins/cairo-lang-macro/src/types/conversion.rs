@@ -96,7 +96,7 @@ impl TokenStream {
     /// # Safety
     #[doc(hidden)]
     pub fn into_stable(self) -> StableTokenStream {
-        let cstr = CString::new(self.value).unwrap();
+        let cstr = CString::new(serde_json::to_string(&self.tokens).unwrap()).unwrap();
         StableTokenStream {
             value: cstr.into_raw(),
             metadata: self.metadata.into_stable(),
@@ -111,7 +111,7 @@ impl TokenStream {
     #[doc(hidden)]
     pub unsafe fn from_stable(token_stream: &StableTokenStream) -> Self {
         Self {
-            value: from_raw_cstr(token_stream.value),
+            tokens: serde_json::from_str(&from_raw_cstr(token_stream.value)).unwrap(),
             metadata: TokenStreamMetadata::from_stable(&token_stream.metadata),
         }
     }
@@ -125,7 +125,7 @@ impl TokenStream {
     #[doc(hidden)]
     pub unsafe fn from_owned_stable(token_stream: StableTokenStream) -> Self {
         Self {
-            value: from_raw_cstring(token_stream.value),
+            tokens: serde_json::from_str(&from_raw_cstr(token_stream.value)).unwrap(),
             metadata: TokenStreamMetadata::from_owned_stable(token_stream.metadata),
         }
     }

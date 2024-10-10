@@ -489,7 +489,7 @@ fn can_replace_original_node() {
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
+            let token_stream = TokenStream::from_string(
                 token_stream
                     .to_string()
                     .replace("12", "34")
@@ -655,7 +655,7 @@ fn can_define_multiple_macros() {
 
         #[attribute_macro]
         pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
+            let token_stream = TokenStream::from_string(
                 token_stream
                     .to_string()
                     .replace("12", "34")
@@ -666,7 +666,7 @@ fn can_define_multiple_macros() {
 
         #[attribute_macro]
         pub fn world(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
+            let token_stream = TokenStream::from_string(
                 token_stream
                     .to_string()
                     .replace("56", "78")
@@ -690,7 +690,7 @@ fn can_define_multiple_macros() {
 
         #[attribute_macro]
         pub fn beautiful(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
+            let token_stream = TokenStream::from_string(
                 token_stream
                     .to_string()
                     .replace("90", "09")
@@ -901,7 +901,7 @@ fn can_resolve_full_path_markers() {
                 token_stream.to_string().replace("12", "34")
             );
 
-            ProcMacroResult::new(TokenStream::new(code))
+            ProcMacroResult::new(TokenStream::from_string(code))
                 .with_full_path_markers(full_path_markers)
         }
 
@@ -949,7 +949,7 @@ fn can_implement_inline_macro() {
 
         #[inline_macro]
         pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(TokenStream::new("34".to_string()))
+            ProcMacroResult::new(TokenStream::from_string("34".to_string()))
         }
         "##})
         .build(&t);
@@ -1048,7 +1048,7 @@ fn can_implement_derive_macro() {
                     .trim()
                     .to_string();
 
-                let token_stream = TokenStream::new(indoc::formatdoc!{r#"
+                let token_stream = TokenStream::from_string(indoc::formatdoc!{r#"
                     impl SomeImpl of Hello<{name}> {{
                         fn world(self: @{name}) -> u32 {{
                             32
@@ -1108,7 +1108,7 @@ fn can_use_both_derive_and_attr() {
 
             #[attribute_macro]
             pub fn first_attribute(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                ProcMacroResult::new(TokenStream::new(
+                ProcMacroResult::new(TokenStream::from_string(
                     token_stream.to_string()
                     .replace("SomeType", "OtherType")
                 ))
@@ -1116,17 +1116,17 @@ fn can_use_both_derive_and_attr() {
 
             #[attribute_macro]
             pub fn second_attribute(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                let token_stream = TokenStream::new(
+                let token_stream = TokenStream::from_string(
                     token_stream.to_string().replace("OtherType", "RenamedStruct")
                 );
-                ProcMacroResult::new(TokenStream::new(
+                ProcMacroResult::new(TokenStream::from_string(
                     format!("#[derive(Drop)]\n{token_stream}")
                 ))
             }
 
             #[derive_macro]
             pub fn custom_derive(_token_stream: TokenStream) -> ProcMacroResult {
-                ProcMacroResult::new(TokenStream::new(
+                ProcMacroResult::new(TokenStream::from_string(
                     indoc::formatdoc!{r#"
                     impl SomeImpl of Hello<RenamedStruct> {{
                         fn world(self: @RenamedStruct) -> u32 {{
@@ -1336,7 +1336,7 @@ fn can_be_expanded() {
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
+            let token_stream = TokenStream::from_string(
                 token_stream
                     .to_string()
                     .replace("12", "34")
@@ -1359,7 +1359,7 @@ fn can_be_expanded() {
                 .trim()
                 .to_string();
 
-            let token_stream = TokenStream::new(indoc::formatdoc!{r#"
+            let token_stream = TokenStream::from_string(indoc::formatdoc!{r#"
                 impl SomeImpl of Hello<{name}> {{
                     fn world(self: @{name}) -> u32 {{
                         32
@@ -1445,7 +1445,7 @@ fn can_expand_trait_inner_func_attrr() {
 
             #[attribute_macro]
             pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                ProcMacroResult::new(TokenStream::new(
+                ProcMacroResult::new(TokenStream::from_string(
                     token_stream.to_string()
                     .replace("hello", "world")
                     .replace("12", "34")
@@ -1505,7 +1505,7 @@ fn can_expand_impl_inner_func_attrr() {
 
             #[attribute_macro]
             pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                ProcMacroResult::new(TokenStream::new(
+                ProcMacroResult::new(TokenStream::from_string(
                     token_stream.to_string()
                     .replace("1", "2")
                 ))
