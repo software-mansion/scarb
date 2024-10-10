@@ -6,12 +6,15 @@ use anyhow::Result;
 use cairo_lang_diagnostics::Severity;
 use cairo_lang_formatter::cairo_formatter::FormattingError;
 use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
+use camino::Utf8PathBuf;
 use ignore::WalkState::{Continue, Skip};
 use ignore::{DirEntry, Error, ParallelVisitor, ParallelVisitorBuilder, WalkState};
+use scarb_ui::Message;
 use tracing::{info, warn};
 
 use crate::core::workspace::Workspace;
-use crate::core::PackageId;
+use crate::core::{Package, PackageId};
+use crate::internal::fsx::canonicalize;
 use crate::internal::serdex::toml_merge;
 
 #[derive(Debug, Clone)]
@@ -34,6 +37,7 @@ pub struct FmtOptions {
     pub action: FmtAction,
     pub packages: Vec<PackageId>,
     pub color: bool,
+    pub path: Option<Utf8PathBuf>,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -42,28 +46,96 @@ pub fn format(opts: FmtOptions, ws: &Workspace<'_>) -> Result<bool> {
 
     let all_correct = AtomicBool::new(true);
 
+    if let Some(path) = &opts.path {
+        if path.is_file() {
+            format_single_file(path, &opts, ws, &all_correct)?;
+            return Ok(all_correct.load(Ordering::Acquire));
+        }
+
+        let absolute_path = canonicalize(path)?;
+        let pkg = ws
+            .members()
+            .find(|member| absolute_path.starts_with(member.root()));
+        if let Some(pkg) = pkg {
+            format_package(&pkg, &opts, ws, &all_correct)?;
+            return Ok(all_correct.load(Ordering::Acquire));
+        } else {
+            anyhow::bail!("path {:?} is not part of the workspace.", path);
+        };
+    };
     for package_id in opts.packages.iter() {
         let package = ws.fetch_package(package_id)?;
-
-        let mut config = FormatterConfig::default();
-        if let Some(overrides) = package.tool_metadata("fmt") {
-            config = toml_merge(&config, overrides)?;
-        }
-        let fmt = CairoFormatter::new(config);
-
-        let walk = fmt.walk(package.root().as_std_path());
-        let mut builder = PathFormatterBuilder {
-            ws,
-            fmt: &fmt,
-            opts: &opts,
-            all_correct: &all_correct,
-            selected_packages: vec![package.id],
-        };
-        walk.build_parallel().visit(&mut builder);
+        format_package(package, &opts, ws, &all_correct)?;
     }
 
-    let result = all_correct.load(Ordering::Acquire);
-    Ok(result)
+    Ok(all_correct.load(Ordering::Acquire))
+}
+
+fn format_package(
+    package: &Package,
+    opts: &FmtOptions,
+    ws: &Workspace<'_>,
+    all_correct: &AtomicBool,
+) -> Result<()> {
+    let mut config = FormatterConfig::default();
+    if let Some(overrides) = package.tool_metadata("fmt") {
+        config = toml_merge(&config, overrides)?;
+    }
+    let fmt = CairoFormatter::new(config);
+
+    let walk = if let Some(path) = &opts.path {
+        fmt.walk(path.as_std_path())
+    } else {
+        fmt.walk(package.root().as_std_path())
+    };
+
+    let mut builder = PathFormatterBuilder {
+        ws,
+        fmt: &fmt,
+        opts,
+        all_correct,
+        selected_packages: vec![package.id],
+    };
+    walk.build_parallel().visit(&mut builder);
+
+    Ok(())
+}
+
+fn format_single_file(
+    file: &Utf8PathBuf,
+    opts: &FmtOptions,
+    ws: &Workspace<'_>,
+    all_correct: &AtomicBool,
+) -> Result<bool> {
+    let absolute_file_path = canonicalize(file)?;
+    let pkg = ws
+        .members()
+        .find(|member| absolute_file_path.starts_with(member.root()))
+        .ok_or_else(|| anyhow::anyhow!("file {:?} is not part of the workspace.", file))?;
+
+    let mut config = FormatterConfig::default();
+    if let Some(overrides) = pkg.tool_metadata("fmt") {
+        config = toml_merge(&config, overrides)?;
+    }
+    let fmt = CairoFormatter::new(config);
+
+    let success = match &opts.action {
+        FmtAction::Fix => format_file_in_place(&fmt, opts, ws, absolute_file_path.as_path()),
+        FmtAction::Check => check_file_formatting(&fmt, opts, ws, absolute_file_path.as_path()),
+        FmtAction::Emit(target) => emit_formatted_file(
+            &fmt,
+            target,
+            ws,
+            absolute_file_path.as_path(),
+            EmitMode::WithoutPath,
+        ),
+    };
+
+    if !success {
+        all_correct.store(false, Ordering::Release);
+    }
+
+    Ok(all_correct.load(Ordering::Acquire))
 }
 
 struct PathFormatter<'t> {
@@ -153,18 +225,37 @@ fn check_file_formatting(
         }
     }
 }
+struct TextWithNewline(String);
+impl Message for TextWithNewline {
+    fn print_text(self)
+    where
+        Self: Sized,
+    {
+        print!("{}", self.0);
+    }
+}
+
+pub enum EmitMode {
+    WithPath,
+    WithoutPath,
+}
 
 pub trait Emittable {
-    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str);
+    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str, emit_mode: EmitMode);
 }
 
 impl Emittable for FmtEmitTarget {
-    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str) {
-        match self {
-            Self::Stdout => ws
+    fn emit(&self, ws: &Workspace<'_>, path: &Path, formatted: &str, emit_mode: EmitMode) {
+        match (self, emit_mode) {
+            (Self::Stdout, EmitMode::WithPath) => ws.config().ui().print(TextWithNewline(format!(
+                "{}:\n\n{}",
+                path.display(),
+                formatted
+            ))),
+            (Self::Stdout, EmitMode::WithoutPath) => ws
                 .config()
                 .ui()
-                .print(format!("{}:\n{}", path.display(), formatted)),
+                .print(TextWithNewline(formatted.to_string())),
         }
     }
 }
@@ -174,11 +265,15 @@ fn emit_formatted_file(
     target: &dyn Emittable,
     ws: &Workspace<'_>,
     path: &Path,
+    emit_mode: EmitMode,
 ) -> bool {
     match fmt.format_to_string(&path) {
-        Ok(FormatOutcome::Identical(_)) => true,
+        Ok(FormatOutcome::Identical(original)) => {
+            target.emit(ws, path, &original, emit_mode);
+            true
+        }
         Ok(FormatOutcome::DiffFound(diff)) => {
-            target.emit(ws, path, &diff.formatted);
+            target.emit(ws, path, &diff.formatted, emit_mode);
             false
         }
         Err(parsing_error) => {
@@ -234,7 +329,9 @@ impl<'t> ParallelVisitor for PathFormatter<'t> {
         let success = match &self.opts.action {
             FmtAction::Fix => format_file_in_place(self.fmt, self.opts, self.ws, path),
             FmtAction::Check => check_file_formatting(self.fmt, self.opts, self.ws, path),
-            FmtAction::Emit(target) => emit_formatted_file(self.fmt, target, self.ws, path),
+            FmtAction::Emit(target) => {
+                emit_formatted_file(self.fmt, target, self.ws, path, EmitMode::WithPath)
+            }
         };
 
         if !success {
