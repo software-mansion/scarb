@@ -6,6 +6,7 @@ use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
+/// Representation of most atomic struct that is passed within host<->macro communication.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Token {
     span: TextSpan,
@@ -55,6 +56,8 @@ impl TokenStream {
 
     pub fn from_string(str: String) -> Self {
         let db = SimpleParserDatabase::default();
+        // Sometimes this will return an error, when the user pass the simple literal value like "34".
+        // In this case, we create the Token manually with its span.
         let node = db.parse_virtual(str.clone());
 
         let tokens = match node {
@@ -75,7 +78,7 @@ impl TokenStream {
         };
 
         Self {
-            tokens: tokens,
+            tokens,
             metadata: TokenStreamMetadata::default(),
         }
     }

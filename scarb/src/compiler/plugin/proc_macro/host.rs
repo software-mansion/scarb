@@ -190,13 +190,10 @@ impl ProcMacroHostPlugin {
                             };
 
                             let mut token_stream_builder = TokenStreamBuilder::new(db);
-                            // let mut func_builder = PatchBuilder::new(db, func);
                             let attrs = func.attributes(db).elements(db);
                             let found = self.parse_attrs(db, &mut token_stream_builder, attrs);
                             token_stream_builder.add_node(func.declaration(db).as_syntax_node());
                             token_stream_builder.add_node(func.body(db).as_syntax_node());
-                            // func_builder.add_node(func.declaration(db).as_syntax_node());
-                            // func_builder.add_node(func.body(db).as_syntax_node());
                             let token_stream = token_stream_builder.build();
 
                             all_none = all_none
@@ -246,16 +243,12 @@ impl ProcMacroHostPlugin {
                                 continue;
                             };
 
-                            // let mut func_builder = PatchBuilder::new(db, &func);
                             let mut token_stream_builder = TokenStreamBuilder::new(db);
                             let attrs = func.attributes(db).elements(db);
                             let found = self.parse_attrs(db, &mut token_stream_builder, attrs);
                             token_stream_builder.add_node(func.visibility(db).as_syntax_node());
                             token_stream_builder.add_node(func.declaration(db).as_syntax_node());
                             token_stream_builder.add_node(func.body(db).as_syntax_node());
-                            // func_builder.add_node(func.visibility(db).as_syntax_node());
-                            // func_builder.add_node(func.declaration(db).as_syntax_node());
-                            // func_builder.add_node(func.body(db).as_syntax_node());
                             let token_stream = token_stream_builder.build();
                             all_none = all_none
                                 && self.do_expand_inner_attr(
@@ -339,7 +332,6 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         item_ast: ast::ModuleItem,
     ) -> (AttrExpansionFound, TokenStream) {
-        // let mut item_builder = PatchBuilder::new(db, &item_ast);
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         let input = match item_ast.clone() {
             ast::ModuleItem::Trait(trait_ast) => {

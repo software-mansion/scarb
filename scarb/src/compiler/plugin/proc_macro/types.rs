@@ -1,6 +1,8 @@
 use cairo_lang_macro::{Token, TokenStream, TokenStreamMetadata};
 use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
 
+/// Helps creating TokenStream based on multiple SyntaxNodes, 
+/// which aren't descendants or ascendants of each other inside the SyntaxTree.
 pub struct TokenStreamBuilder<'a> {
     db: &'a dyn SyntaxGroup,
     nodes: Vec<SyntaxNode>,
