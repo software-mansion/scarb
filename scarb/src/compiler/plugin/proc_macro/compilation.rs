@@ -25,7 +25,7 @@ pub trait SharedLibraryProvider {
     /// Location of Cargo `target` directory.
     fn target_path(&self, config: &Config) -> Filesystem;
     /// Location of the shared library for the package.
-    fn shared_lib_path(&self, config: &Config) -> Utf8PathBuf;
+    fn shared_lib_path(&self, config: &Config) -> Result<Utf8PathBuf>;
 }
 
 impl SharedLibraryProvider for Package {
@@ -41,19 +41,20 @@ impl SharedLibraryProvider for Package {
             .into_child("target")
     }
 
-    fn shared_lib_path(&self, config: &Config) -> Utf8PathBuf {
+    fn shared_lib_path(&self, config: &Config) -> Result<Utf8PathBuf> {
         let lib_name =
-            get_cargo_library_name(self, config).expect("could not resolve library name");
+            get_cargo_library_name(self, config).context("could not resolve library name")?;
         let lib_name = library_filename(lib_name);
         let lib_name = lib_name
             .into_string()
             .expect("library name must be valid UTF-8");
         // Defines the shared library path inside the target directory, as:
         // `/(..)/target/release/[lib]<package_name>.[so|dll|dylib]`
-        self.target_path(config)
+        Ok(self
+            .target_path(config)
             .into_child(PROC_MACRO_BUILD_PROFILE)
             .path_unchecked()
-            .join(lib_name)
+            .join(lib_name))
     }
 }
 
