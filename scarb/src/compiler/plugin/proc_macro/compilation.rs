@@ -15,6 +15,7 @@ use serde_json::value::RawValue;
 use std::fmt::Display;
 use std::fs;
 use std::process::Command;
+use indoc::formatdoc;
 use tracing::trace_span;
 
 pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
@@ -41,7 +42,7 @@ impl SharedLibraryProvider for Package {
     }
 
     fn shared_lib_path(&self, config: &Config) -> Utf8PathBuf {
-        let lib_name = get_cargo_library_name(self).expect("could not resolve library name");
+        let lib_name = get_cargo_library_name(self, config).expect("could not resolve library name");
         let lib_name = library_filename(lib_name);
         let lib_name = lib_name
             .into_string()
@@ -86,13 +87,25 @@ fn get_cargo_package_name(package: &Package) -> Result<String> {
     Ok(package_name.to_string())
 }
 
-fn get_cargo_library_name(package: &Package) -> Result<String> {
+fn get_cargo_library_name(package: &Package, config: &Config) -> Result<String> {
     let metadata = MetadataCommand::new()
         .current_dir(package.root())
         .exec()
         .context("could not get Cargo metadata")?;
 
     let cargo_package_name = get_cargo_package_name(package)?;
+
+    if cargo_package_name != package.id.name.to_string() {
+        config.ui().warn(formatdoc!(
+            r#"
+            package name differs between Cargo and Scarb manifest
+            cargo: `{cargo_name}`, scarb: `{scarb_name}`
+            this might become an error in future Scarb releases
+            "#,
+            cargo_name = cargo_package_name,
+            scarb_name = package.id.name,
+        ));
+    }
 
     let package = metadata
         .packages
