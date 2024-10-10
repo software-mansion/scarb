@@ -270,8 +270,9 @@ fn prepare_archive_recipe(
         if crate_archive_basename != pkg.id.tarball_basename() {
             ws.config().ui().warn(formatdoc!(
                 r#"
-                package name or version mismatch between cargo and scarb manifest
-                cargo: `{cargo_basename}`, scarb: `{scarb_basename}`
+                package name or version differs between Cargo manifest and Scarb manifest
+                Scarb manifest: `{scarb_basename}`, Cargo manifest: `{cargo_basename}`
+                this might become an error in future Scarb releases 
                 "#,
                 cargo_basename = crate_archive_basename,
                 scarb_basename = pkg.id.tarball_basename(),
