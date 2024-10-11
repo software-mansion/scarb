@@ -11,7 +11,7 @@ use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_utils::UpcastMut;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 use std::iter::zip;
 use tracing::{debug, trace, trace_span};
 
@@ -192,13 +192,16 @@ pub fn find_project_contracts(
                 .map(|selector| selector.package().into())
                 .unique()
                 .map(|name: SmolStr| {
-                    let version = unit
+                    let discriminator = unit
                         .components()
                         .iter()
                         .find(|component| component.package.id.name.to_smol_str() == name)
-                        .map(|component| component.package.id.version.clone());
-                    db.upcast_mut()
-                        .intern_crate(CrateLongId::Real { name, version })
+                        .map(|component| component.package.id.version.clone())
+                        .map(|v| v.to_smolstr());
+                    db.upcast_mut().intern_crate(CrateLongId::Real {
+                        name,
+                        discriminator,
+                    })
                 })
                 .collect::<Vec<_>>();
             let contracts = find_contracts(db, crate_ids.as_ref());

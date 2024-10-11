@@ -18,7 +18,7 @@ use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
 use cairo_lang_utils::Upcast;
 use scarb_ui::Message;
 use serde::{Serialize, Serializer};
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 use std::collections::{BTreeMap, HashSet};
 
 #[derive(Debug, Clone, Default)]
@@ -164,7 +164,7 @@ fn do_expand(
     let version = compilation_unit.main_component().package.id.version.clone();
     let main_crate_id = db.intern_crate(CrateLongId::Real {
         name,
-        version: Some(version),
+        discriminator: Some(version).map(|v| v.to_smolstr()),
     });
     let mut compiler_config = build_compiler_config(&db, compilation_unit, &[main_crate_id], ws);
     // Report diagnostics, but do not fail.
