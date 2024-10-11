@@ -185,20 +185,20 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                 .collect();
 
             // Adds itself to dependencies
-            if component.first_target().kind.is_test() {
+            let is_integration_test = if component.first_target().kind.is_test() {
                 let props: Option<TestTargetProps> = component.first_target().props().ok();
-                let is_integration_test = props
+                props
                     .map(|props| props.test_type == TestTargetType::Integration)
-                    .unwrap_or_default();
-                if !is_integration_test {
-                    dependencies.insert(
-                        component.package.id.name.to_string(),
-                        DependencySettings {
-                            version: (component.package.id.name.to_string() != *CORELIB_CRATE_NAME)
-                                .then_some(component.package.id.version.clone()),
-                        },
-                    );
-                }
+                    .unwrap_or_default()
+            } else { false };
+            if !is_integration_test {
+                dependencies.insert(
+                    component.package.id.name.to_string(),
+                    DependencySettings {
+                        version: (component.package.id.name.to_string() != *CORELIB_CRATE_NAME)
+                            .then_some(component.package.id.version.clone()),
+                    },
+                );
             }
 
             (
