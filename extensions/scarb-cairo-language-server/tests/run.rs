@@ -77,6 +77,16 @@ async fn run() {
         read(&mut stdout).await,
         json!({
             "jsonrpc": "2.0",
+            "id": 1,
+            "method": "client/registerCapability",
+            "params": {"registrations": []}
+        })
+    );
+
+    assert_eq!(
+        read(&mut stdout).await,
+        json!({
+            "jsonrpc": "2.0",
             "id": 2,
             "result": null,
         })
