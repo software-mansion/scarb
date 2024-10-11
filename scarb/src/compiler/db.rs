@@ -10,7 +10,7 @@ use cairo_lang_filesystem::db::{
 };
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use tracing::trace;
@@ -94,7 +94,7 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
         let version = component.package.id.version.clone();
         let crate_id = db.intern_crate(CrateLongId::Real {
             name,
-            version: Some(version),
+            discriminator: Some(version).map(|v| v.to_smolstr()),
         });
         let file_stems = component
             .targets
@@ -176,9 +176,10 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                     (
                         compilation_unit_component.package.id.name.to_string(),
                         DependencySettings {
-                            version: (compilation_unit_component.package.id.name.to_string()
+                            discriminator: (compilation_unit_component.package.id.name.to_string()
                                 != *CORELIB_CRATE_NAME)
-                                .then_some(compilation_unit_component.package.id.version.clone()),
+                                .then_some(compilation_unit_component.package.id.version.clone())
+                                .map(|v| v.to_smolstr()),
                         },
                     )
                 })
@@ -195,8 +196,8 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                 dependencies.insert(
                     component.package.id.name.to_string(),
                     DependencySettings {
-                        version: (component.package.id.name.to_string() != *CORELIB_CRATE_NAME)
-                            .then_some(component.package.id.version.clone()),
+                        discriminator: (component.package.id.name.to_string() != *CORELIB_CRATE_NAME)
+                            .then_some(component.package.id.version.clone()).map(|v| v.to_smolstr()),
                     },
                 );
             }

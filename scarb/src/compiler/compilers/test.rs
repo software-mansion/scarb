@@ -166,13 +166,17 @@ fn get_contract_crate_ids(
                 .sorted()
                 .unique()
                 .map(|package_name| {
-                    let version = unit
+                    let discriminator = unit
                         .components()
                         .iter()
                         .find(|component| component.package.id.name == package_name)
-                        .map(|component| component.package.id.version.clone());
+                        .map(|component| component.package.id.version.clone())
+                        .map(|v| v.to_smolstr());
                     let name = package_name.to_smolstr();
-                    db.intern_crate(CrateLongId::Real { name, version })
+                    db.intern_crate(CrateLongId::Real {
+                        name,
+                        discriminator,
+                    })
                 })
                 .collect_vec()
         })
