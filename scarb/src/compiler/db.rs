@@ -17,7 +17,7 @@ use tracing::trace;
 
 use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
-use crate::core::{ManifestDependency, Workspace};
+use crate::core::{ManifestDependency, TestTargetProps, TestTargetType, Workspace};
 use crate::DEFAULT_MODULE_MAIN_FILE;
 
 pub struct ScarbDatabase {
@@ -169,6 +169,7 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                         .any(|target| {
                             target.group_id.clone().unwrap_or(target.name.clone())
                                 == component.package.id.name.to_smol_str()
+                            && component_as_dependency.cairo_package_name() != component.cairo_package_name()
                         })
                 })
                 .map(|compilation_unit_component| {
@@ -184,13 +185,21 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                 .collect();
 
             // Adds itself to dependencies
-            dependencies.insert(
-                component.package.id.name.to_string(),
-                DependencySettings {
-                    version: (component.package.id.name.to_string() != *CORELIB_CRATE_NAME)
-                        .then_some(component.package.id.version.clone()),
-                },
-            );
+            let is_integration_test = if component.first_target().kind.is_test() {
+                let props: Option<TestTargetProps> = component.first_target().props().ok();
+                props
+                    .map(|props| props.test_type == TestTargetType::Integration)
+                    .unwrap_or_default()
+            } else { false };
+            if !is_integration_test {
+                dependencies.insert(
+                    component.package.id.name.to_string(),
+                    DependencySettings {
+                        version: (component.package.id.name.to_string() != *CORELIB_CRATE_NAME)
+                            .then_some(component.package.id.version.clone()),
+                    },
+                );
+            }
 
             (
                 component.cairo_package_name(),
