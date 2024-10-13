@@ -156,12 +156,12 @@ pub fn get_crate_archive_basename(package: &Package) -> Result<String> {
 }
 
 pub fn unpack_crate(package: &Package, config: &Config) -> Result<()> {
-    let crate_archive_basename = get_crate_archive_basename(package)?;
-    let crate_archive_name = format!("{}.crate", crate_archive_basename);
+    let archive_basename = get_crate_archive_basename(package)?;
+    let archive_name = format!("{}.crate", archive_basename);
 
     let tar = package.target_path(config).into_child("package").open_ro(
-        &crate_archive_name,
-        &crate_archive_name,
+        &archive_name,
+        &archive_name,
         config,
     )?;
 
@@ -171,7 +171,7 @@ pub fn unpack_crate(package: &Package, config: &Config) -> Result<()> {
 
     tar.deref().seek(SeekFrom::Start(0))?;
     let f = GzDecoder::new(tar.deref());
-    let dst = tar.parent().join(&crate_archive_basename);
+    let dst = tar.parent().join(&archive_basename);
     if dst.exists() {
         fsx::remove_dir_all(&dst)?;
     }
