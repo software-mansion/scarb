@@ -1,12 +1,14 @@
 use crate::compiler::ProcMacroCompilationUnit;
 use crate::core::{Config, Package, Workspace};
 use crate::flock::Filesystem;
+use crate::internal::fsx;
 use crate::ops::PackageOpts;
 use crate::process::exec_piping;
 use crate::CARGO_MANIFEST_FILE_NAME;
 use anyhow::{anyhow, Context, Result};
 use camino::Utf8PathBuf;
 use cargo_metadata::MetadataCommand;
+use flate2::read::GzDecoder;
 use indoc::formatdoc;
 use libloading::library_filename;
 use ra_ap_toolchain::Tool;
@@ -15,7 +17,10 @@ use serde::{Serialize, Serializer};
 use serde_json::value::RawValue;
 use std::fmt::Display;
 use std::fs;
+use std::io::{Seek, SeekFrom};
+use std::ops::Deref;
 use std::process::Command;
+use tar::Archive;
 use tracing::trace_span;
 
 pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
@@ -148,6 +153,33 @@ pub fn get_crate_archive_basename(package: &Package) -> Result<String> {
     let package_version = get_cargo_package_version(package)?;
 
     Ok(format!("{}-{}", package_name, package_version))
+}
+
+pub fn unpack_crate(package: &Package, config: &Config) -> Result<()> {
+    let crate_archive_basename = get_crate_archive_basename(package)?;
+    let crate_archive_name = format!("{}.crate", crate_archive_basename);
+
+    let tar =
+        package
+            .target_path(config)
+            .into_child("package")
+            .open_ro(&crate_archive_name, &crate_archive_name, config)?;
+
+    // The following implementation has been copied from the `Cargo` codebase with slight modifications only.
+    // The original implementation can be found here:
+    // https://github.com/rust-lang/cargo/blob/a4600184b8d6619ed0b5a0a19946dbbe97e1d739/src/cargo/ops/cargo_package.rs#L1110
+
+    tar.deref().seek(SeekFrom::Start(0))?;
+    let f = GzDecoder::new(tar.deref());
+    let dst = tar.parent().join(&crate_archive_basename);
+    if dst.exists() {
+        fsx::remove_dir_all(&dst)?;
+    }
+    let mut archive = Archive::new(f);
+    archive.set_preserve_mtime(false); // Don't set modified time to avoid filesystem errors
+    archive.unpack(dst.parent().unwrap())?;
+
+    Ok(())
 }
 
 pub fn fetch_crate(package: &Package, ws: &Workspace<'_>) -> Result<()> {

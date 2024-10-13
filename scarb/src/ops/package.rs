@@ -1,13 +1,10 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
-use std::ops::Deref;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
-use flate2::read::GzDecoder;
 use indoc::{formatdoc, indoc, writedoc};
-use tar::Archive;
 
 use crate::core::registry::package_source_store::PackageSourceStore;
 use crate::sources::client::PackageRepository;
@@ -17,13 +14,13 @@ use scarb_ui::{HumanBytes, HumanCount};
 use serde::Serialize;
 
 use crate::compiler::plugin::proc_macro::compilation::{
-    get_crate_archive_basename, package_crate, SharedLibraryProvider,
+    get_crate_archive_basename, package_crate, unpack_crate, SharedLibraryProvider,
 };
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
 use crate::core::{Config, Package, PackageId, PackageName, Target, TargetKind, Workspace};
 use crate::flock::{FileLockGuard, Filesystem};
-use crate::internal::{fsx, restricted_names};
+use crate::internal::restricted_names;
 use crate::{
     ops, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
     MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME,
@@ -284,28 +281,7 @@ fn prepare_archive_recipe(
 
         // Unpack .crate file to make normalized Cargo.toml available.
         if !opts.verify {
-            let crate_archive_name = format!("{}.crate", crate_archive_basename);
-            let tar = pkg.target_path(ws.config()).into_child("package").open_ro(
-                &crate_archive_name,
-                &crate_archive_name,
-                ws.config(),
-            )?;
-
-            // The following implementation has been copied from the `Cargo` codebase with slight modifications only.
-            // The original implementation can be found here:
-            // https://github.com/rust-lang/cargo/blob/a4600184b8d6619ed0b5a0a19946dbbe97e1d739/src/cargo/ops/cargo_package.rs#L1110
-
-            tar.deref().seek(SeekFrom::Start(0))?;
-            let f = GzDecoder::new(tar.deref());
-            let dst = tar.parent().join(&crate_archive_basename);
-            if dst.exists() {
-                fsx::remove_dir_all(&dst)?;
-            }
-            let mut archive = Archive::new(f);
-            // We don't need to set the Modified Time, as it's not relevant to verification
-            // and it errors on filesystems that don't support setting a modified timestamp
-            archive.set_preserve_mtime(false);
-            archive.unpack(dst.parent().unwrap())?;
+            unpack_crate(pkg, ws.config())?;
         }
 
         // Add normalized Cargo.toml file.
