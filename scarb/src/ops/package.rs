@@ -279,7 +279,7 @@ fn prepare_archive_recipe(
             ));
         }
 
-        // Unpack .crate file to make normalized Cargo.toml available.
+        // Unpack .crate to make normalized Cargo.toml available.
         if !opts.verify {
             unpack_crate(pkg, ws.config())?;
         }
