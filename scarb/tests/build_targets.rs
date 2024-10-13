@@ -418,6 +418,75 @@ fn integration_tests_do_not_enable_cfg_in_main_package() {
 }
 
 #[test]
+fn features_enabled_in_integration_tests() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_cairo_test()
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn f() -> felt252 { 21 }
+
+            fn main() -> felt252 {
+                0
+            }
+        "#})
+        .build(&t);
+
+    t.child("tests/test_feature.cairo")
+        .write_str(indoc! {r#"
+            #[cfg(test)]
+            mod tests {
+                use hello::f;
+
+                #[test]
+                fn test_feature_function() {
+                    assert(f() == 42, 'it works!');
+                }
+            }
+        "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
+            [..] Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..])
+            error: Identifier not found.
+             --> [..]test_feature.cairo:3:16
+                use hello::f;
+                           ^
+
+            error: Type annotations needed. Failed to infer ?0.
+             --> [..]test_feature.cairo:7:16
+                    assert(f() == 42, 'it works!');
+                           ^*******^
+
+            error: could not compile `hello_integrationtest` due to previous error
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .arg("--features")
+        .arg("x")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/hello_integrationtest.test.json")
+        .assert(predicates::path::exists());
+}
+
+#[test]
 fn detect_single_file_test_targets() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);
