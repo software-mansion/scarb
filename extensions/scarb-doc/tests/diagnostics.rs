@@ -130,7 +130,7 @@ fn test_diagnostics_error() {
 
     #[cfg(windows)]
       snapbox.stdout_matches(indoc! {r#"
-      error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
+    error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
      --> [..]
     }
     ^
