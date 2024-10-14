@@ -4603,6 +4603,7 @@ dependencies = [
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
  "camino",
+ "cargo_metadata",
  "clap",
  "convert_case",
  "create-output-dir",

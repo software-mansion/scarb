@@ -13,19 +13,23 @@ use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
 use serde::Serialize;
 
+use crate::compiler::plugin::proc_macro::compilation::{
+    get_crate_archive_basename, package_crate, SharedLibraryProvider,
+};
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{Config, Package, PackageId, PackageName, TargetKind, Workspace};
+use crate::core::{Config, Package, PackageId, PackageName, Target, TargetKind, Workspace};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
-    ops, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME,
-    VCS_INFO_FILE_NAME,
+    ops, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
+    MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME,
 };
 
 const VERSION: u8 = 1;
 const VERSION_FILE_NAME: &str = "VERSION";
 const ORIGINAL_MANIFEST_FILE_NAME: &str = "Scarb.orig.toml";
+const ORIGINAL_CARGO_MANIFEST_FILE_NAME: &str = "Cargo.orig.toml";
 
 const RESERVED_FILES: &[&str] = &[
     VERSION_FILE_NAME,
@@ -137,6 +141,14 @@ fn extract_vcs_info(repo: PackageRepository, opts: &PackageOpts) -> Result<Optio
     }
 }
 
+fn is_builtin(target: &Target) -> bool {
+    target
+        .params
+        .get("builtin")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+}
+
 #[tracing::instrument(level = "trace", skip(opts, ws))]
 fn package_one_impl(
     pkg_id: PackageId,
@@ -153,7 +165,7 @@ fn package_one_impl(
         check_metadata(pkg, ws.config())?;
     }
 
-    let recipe = prepare_archive_recipe(pkg, opts)?;
+    let recipe = prepare_archive_recipe(pkg, opts, ws)?;
     let num_files = recipe.len();
 
     // Package up and test a temporary tarball and only move it to the final location if it actually
@@ -170,7 +182,7 @@ fn package_one_impl(
 
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
-    let mut dst = if opts.verify {
+    let mut dst = if opts.verify && !pkg.manifest.targets.iter().any(is_builtin) {
         run_verify(pkg, dst, ws, opts.features.clone())
             .context("failed to verify package tarball")?
     } else {
@@ -205,17 +217,21 @@ fn list_one_impl(
     ws: &Workspace<'_>,
 ) -> Result<Vec<Utf8PathBuf>> {
     let pkg = ws.fetch_package(&pkg_id)?;
-    let recipe = prepare_archive_recipe(pkg, opts)?;
+    let recipe = prepare_archive_recipe(pkg, opts, ws)?;
     Ok(recipe.into_iter().map(|f| f.path).collect())
 }
 
-fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRecipe> {
+fn prepare_archive_recipe(
+    pkg: &Package,
+    opts: &PackageOpts,
+    ws: &Workspace<'_>,
+) -> Result<ArchiveRecipe> {
     ensure!(
-        pkg.manifest.targets.iter().any(|x| x.is_lib()),
+        pkg.is_lib() || pkg.is_cairo_plugin(),
         formatdoc!(
             r#"
-            cannot archive package `{package_name}` without a `lib` target
-            help: add `[lib]` section to package manifest
+            cannot archive package `{package_name}` without a `lib` or `cairo-plugin` target
+            help: consider adding `[lib]` section to package manifest
              --> Scarb.toml
             +   [lib]
             "#,
@@ -245,6 +261,43 @@ fn prepare_archive_recipe(pkg: &Package, opts: &PackageOpts) -> Result<ArchiveRe
         path: ORIGINAL_MANIFEST_FILE_NAME.into(),
         contents: ArchiveFileContents::OnDisk(pkg.manifest_path().to_owned()),
     });
+
+    if pkg.is_cairo_plugin() && !pkg.manifest.targets.iter().any(is_builtin) {
+        // Package crate with Cargo.
+        package_crate(pkg, opts, ws)?;
+
+        let crate_archive_basename = get_crate_archive_basename(pkg)?;
+        if crate_archive_basename != pkg.id.tarball_basename() {
+            ws.config().ui().warn(formatdoc!(
+                r#"
+                package name or version differs between Cargo manifest and Scarb manifest
+                Scarb manifest: `{scarb_basename}`, Cargo manifest: `{cargo_basename}`
+                this might become an error in future Scarb releases
+                "#,
+                cargo_basename = crate_archive_basename,
+                scarb_basename = pkg.id.tarball_basename(),
+            ));
+        }
+
+        // Add normalized Cargo.toml file.
+        recipe.push(ArchiveFile {
+            path: CARGO_MANIFEST_FILE_NAME.into(),
+            contents: ArchiveFileContents::OnDisk(
+                pkg.target_path(ws.config())
+                    .into_child("package")
+                    .into_child(crate_archive_basename)
+                    .into_child(CARGO_MANIFEST_FILE_NAME)
+                    .path_unchecked()
+                    .to_path_buf(),
+            ),
+        });
+
+        // Add original Cargo.toml file.
+        recipe.push(ArchiveFile {
+            path: ORIGINAL_CARGO_MANIFEST_FILE_NAME.into(),
+            contents: ArchiveFileContents::OnDisk(pkg.root().join(CARGO_MANIFEST_FILE_NAME)),
+        });
+    }
 
     // Add README file
     if let Some(readme) = &pkg.manifest.metadata.readme {
@@ -319,7 +372,6 @@ fn run_verify(
         .block_on(async { PackageSourceStore::extract_to(pkg.id, tar, &fs, ws.config()).await })?;
 
     let ws = ops::read_workspace(&path.join(MANIFEST_FILE_NAME), ws.config())?;
-
     ops::compile(
         ws.members().map(|p| p.id).collect(),
         ops::CompileOpts {
@@ -330,7 +382,6 @@ fn run_verify(
         },
         &ws,
     )?;
-
     Ok(lock)
 }
 
