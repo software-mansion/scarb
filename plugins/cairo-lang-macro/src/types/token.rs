@@ -1,8 +1,14 @@
 use std::fmt::Display;
 
-use cairo_lang_filesystem::span::{TextOffset, TextSpan, TextWidth};
-use cairo_lang_parser::utils::SimpleParserDatabase;
+use cairo_lang_diagnostics::DiagnosticsBuilder;
+use cairo_lang_filesystem::{
+    ids::{FileKind, FileLongId, VirtualFile},
+    span::TextSpan,
+};
+use cairo_lang_parser::{parser::Parser, utils::SimpleParserDatabase};
+use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
+use cairo_lang_utils::Intern;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
@@ -68,13 +74,28 @@ impl TokenStream {
                     .map(|node| Token::from_syntax_node(&db, node.clone()))
                     .collect()
             }
-            Err(_) => vec![Token::new(
-                str.clone(),
-                TextSpan {
-                    start: TextOffset::default(),
-                    end: TextOffset::default().add_width(TextWidth::from_str(&str)),
-                },
-            )],
+            Err(_) => {
+                let virtual_file = FileLongId::Virtual(VirtualFile {
+                    parent: Default::default(),
+                    name: Default::default(),
+                    content: Default::default(),
+                    code_mappings: Default::default(),
+                    kind: FileKind::Module,
+                })
+                .intern(&db);
+                let expr_node = Parser::parse_file_expr(
+                    &db,
+                    &mut DiagnosticsBuilder::default(),
+                    virtual_file,
+                    &str,
+                )
+                .as_syntax_node();
+                let nodes = expr_node.tokens(&db);
+                nodes
+                    .iter()
+                    .map(|node| Token::from_syntax_node(&db, node.clone()))
+                    .collect()
+            }
         };
 
         Self {
