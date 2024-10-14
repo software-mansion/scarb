@@ -62,7 +62,9 @@ impl Debug for ProcMacroInstance {
 impl ProcMacroInstance {
     /// Load shared library
     pub fn try_new(package: Package, config: &Config) -> Result<Self> {
-        let lib_path = package.shared_lib_path(config);
+        let lib_path = package
+            .shared_lib_path(config)
+            .context("could not resolve shared library path")?;
         let plugin = unsafe { Plugin::try_new(lib_path.to_path_buf())? };
         Ok(Self {
             expansions: unsafe { Self::load_expansions(&plugin, package.id)? },
