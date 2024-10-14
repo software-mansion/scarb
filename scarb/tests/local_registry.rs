@@ -63,10 +63,12 @@ fn not_found() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: failed to lookup for `baz ^1 (registry+file://[..])` in registry: registry+file://[..]
+        error: cannot get dependencies of `foo@0.1.0`
 
         Caused by:
-            package not found in registry: baz ^1 (registry+file://[..])
+            0: failed to lookup for `baz ^1 (registry+file://[..])` in registry: registry+file://[..]
+            1: failed to lookup for `baz ^1 (registry+file://[..])` in registry: registry+file://[..]
+            2: package not found in registry: baz ^1 (registry+file://[..])
         "#});
 }
 
@@ -90,10 +92,12 @@ fn empty_registry() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: failed to lookup for `baz ^1 (registry+file://[..])` in registry: registry+file://[..]
+        error: cannot get dependencies of `foo@0.1.0`
 
         Caused by:
-            package not found in registry: baz ^1 (registry+file://[..])
+            0: failed to lookup for `baz ^1 (registry+file://[..])` in registry: registry+file://[..]
+            1: failed to lookup for `baz ^1 (registry+file://[..])` in registry: registry+file://[..]
+            2: package not found in registry: baz ^1 (registry+file://[..])
         "#});
 }
 
@@ -117,10 +121,12 @@ fn url_pointing_to_file() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: failed to load source: registry+file://[..]
+        error: cannot get dependencies of `foo@0.1.0`
 
         Caused by:
-            local registry path is not a directory: [..]
+            0: failed to load source: registry+file://[..]
+            1: failed to load source: registry+file://[..]
+            2: local registry path is not a directory: [..]
         "#});
 
     // Prevent the temp directory from being deleted until this point.

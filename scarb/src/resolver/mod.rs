@@ -1,9 +1,9 @@
-use anyhow::Result;
-
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::Summary;
+use anyhow::Result;
+use tokio::runtime::Handle;
 
 mod algorithm;
 mod primitive;
@@ -28,12 +28,14 @@ mod primitive;
 ///
 /// * `ui` - an [`Ui`] instance used to show warnings to the user.
 #[tracing::instrument(level = "trace", skip_all)]
-pub async fn resolve(
+pub async fn resolve<'c>(
     summaries: &[Summary],
     registry: &dyn Registry,
     lockfile: Lockfile,
+    handle: &'c Handle,
 ) -> Result<Resolve> {
-    primitive::resolve(summaries, registry, lockfile).await
+    // primitive::resolve(summaries, registry, lockfile, handle).await
+    algorithm::resolve(summaries, registry, lockfile, handle).await
 }
 
 #[cfg(test)]
@@ -126,7 +128,12 @@ mod tests {
             .collect_vec();
 
         let lockfile = Lockfile::new(locks.iter().cloned());
-        runtime.block_on(super::resolve(&summaries, &registry, lockfile))
+        runtime.block_on(super::resolve(
+            &summaries,
+            &registry,
+            lockfile,
+            runtime.handle(),
+        ))
     }
 
     fn package_id<S: AsRef<str>>(name: S) -> PackageId {
@@ -253,20 +260,7 @@ mod tests {
                 ("baz v1.0.0", []),
             ],
             &[deps![("foo", "*")]],
-            // TODO(#2): Expected result is commented out.
-            // Ok(pkgs![
-            //     "bar v1.0.0",
-            //     "baz v1.0.0",
-            //     "foo v1.0.0"
-            // ]),
-            Err(indoc! {"
-            Version solving failed:
-            - bar v2.0.0 cannot use baz v1.0.0, because bar requires baz ^2.0.0
-
-            Scarb does not have real version solving algorithm yet.
-            Perhaps in the future this conflict could be resolved, but currently,
-            please upgrade your dependencies to use latest versions of their dependencies.
-            "}),
+            Ok(pkgs!["bar v1.0.0", "baz v1.0.0", "foo v1.0.0"]),
         )
     }
 
@@ -285,20 +279,7 @@ mod tests {
                 ("baz v2.1.0", []),
             ],
             &[deps![("bar", "~1.1.0"), ("foo", "~2.7")]],
-            // TODO(#2): Expected result is commented out.
-            // Ok(pkgs![
-            //     "bar v1.1.1",
-            //     "baz v1.7.1",
-            //     "foo v2.7.0"
-            // ]),
-            Err(indoc! {"
-            Version solving failed:
-            - foo v2.7.0 cannot use baz v2.1.0, because foo requires baz ~1.7.1
-
-            Scarb does not have real version solving algorithm yet.
-            Perhaps in the future this conflict could be resolved, but currently,
-            please upgrade your dependencies to use latest versions of their dependencies.
-            "}),
+            Ok(pkgs!["bar v1.1.1", "baz v1.7.1", "foo v2.7.0"]),
         )
     }
 
@@ -339,12 +320,10 @@ mod tests {
             ],
             &[deps![("top1", "1"), ("top2", "1")]],
             Err(indoc! {"
-            Version solving failed:
-            - top2 v1.0.0 cannot use foo v1.0.0, because top2 requires foo ^2.0.0
-
-            Scarb does not have real version solving algorithm yet.
-            Perhaps in the future this conflict could be resolved, but currently,
-            please upgrade your dependencies to use latest versions of their dependencies.
+            version solving failed:
+            Because there is no version of top2 in >1.0.0, <2.0.0 and top2 1.0.0 depends on foo >=2.0.0, <3.0.0, top2 >=1.0.0, <2.0.0 depends on foo >=2.0.0, <3.0.0.
+            And because top1 1.0.0 depends on foo >=1.0.0, <2.0.0 and there is no version of top1 in >1.0.0, <2.0.0, top1 >=1.0.0, <2.0.0, top2 >=1.0.0, <2.0.0 are incompatible.
+            And because root_1 1.0.0 depends on top1 >=1.0.0, <2.0.0 and root_1 1.0.0 depends on top2 >=1.0.0, <2.0.0, root_1 1.0.0 is forbidden.
             "}),
         )
     }
@@ -354,7 +333,7 @@ mod tests {
         check(
             registry![],
             &[deps![("foo", "1.0.0")]],
-            Err(r#"MockRegistry/query: cannot find foo ^1.0.0"#),
+            Err(r#"MockRegistry/query: cannot find foo`"#),
         )
     }
 
@@ -363,7 +342,7 @@ mod tests {
         check(
             registry![("foo v2.0.0", []),],
             &[deps![("foo", "1.0.0")]],
-            Err(r#"cannot find package foo"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -372,7 +351,7 @@ mod tests {
         check(
             registry![("foo v1.0.0", []),],
             &[deps![("foo", "1.0.0", "git+https://example.git/foo.git")]],
-            Err(r#"MockRegistry/query: cannot find foo ^1.0.0 (git+https://example.git/foo.git)"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -388,7 +367,7 @@ mod tests {
                 ("b v3.8.14", []),
             ],
             &[deps![("a", "~3.6"), ("b", "~3.6")]],
-            Err(r#"cannot find package a"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -408,7 +387,7 @@ mod tests {
                 ("b v3.8.5", [("d", "2.9.0")]),
             ],
             &[deps![("a", "~3.6"), ("c", "~1.1"), ("b", "~3.6")]],
-            Err(r#"cannot find package a"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -431,7 +410,7 @@ mod tests {
                 ),
             ],
             &[deps![("e", "~1.0"), ("a", "~3.7"), ("b", "~3.7")]],
-            Err(r#"cannot find package e"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -532,7 +511,7 @@ mod tests {
             registry![("foo v1.0.0", []),],
             &[deps![("foo", "2.0.0"),]],
             locks![("foo v1.0.0", [])],
-            Err("cannot find package foo"),
+            Err("cannot get dependencies of `root_1@1.0.0`"),
         );
     }
 

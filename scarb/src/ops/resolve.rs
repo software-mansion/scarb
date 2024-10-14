@@ -129,11 +129,19 @@ pub fn resolve_workspace_with_opts(
                 read_lockfile(ws)?
             };
 
-            let resolve = resolver::resolve(&members_summaries, &patched, lockfile).await?;
+            let registry = Box::new(patched);
+            let registry: Box<dyn Registry> = Box::new(*registry);
+            let resolve = resolver::resolve(
+                &members_summaries,
+                &*registry,
+                lockfile,
+                ws.config().tokio_handle(),
+            )
+            .await?;
 
             write_lockfile(Lockfile::from_resolve(&resolve), ws)?;
 
-            let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
+            let packages = collect_packages_from_resolve_graph(&resolve, &*registry).await?;
 
             packages
                 .values()

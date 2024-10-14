@@ -165,6 +165,7 @@ fn fetch_with_nested_paths() {
     Scarb::quick_snapbox()
         .arg("fetch")
         .current_dir(&t)
+        .timeout(std::time::Duration::from_secs(60 * 1))
         .assert()
         .success();
 }
