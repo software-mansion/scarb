@@ -18,8 +18,6 @@ use cairo_lang_syntax::node::db::{SyntaxDatabase, SyntaxGroup};
 use cairo_lang_utils::Upcast;
 
 use salsa;
-use scarb_metadata::PackageMetadata;
-use semver::Version;
 
 /// The Cairo compiler Salsa database tailored for scarb-doc usage.
 #[salsa::database(
@@ -33,12 +31,10 @@ use semver::Version;
 )]
 pub struct ScarbDocDatabase {
     storage: salsa::Storage<Self>,
-    main_package_name: String,
-    main_package_version: Version,
 }
 
 impl ScarbDocDatabase {
-    pub fn new(project_config: Option<ProjectConfig>, main_package: &PackageMetadata) -> Self {
+    pub fn new(project_config: Option<ProjectConfig>) -> Self {
         let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
             .into_iter()
             .fold(PluginSuite::default(), |mut acc, suite| {
@@ -47,8 +43,6 @@ impl ScarbDocDatabase {
             });
         let mut db = Self {
             storage: Default::default(),
-            main_package_name: main_package.name.clone(),
-            main_package_version: main_package.version.clone(),
         };
 
         init_files_group(&mut db);
@@ -94,8 +88,6 @@ impl salsa::ParallelDatabase for ScarbDocDatabase {
     fn snapshot(&self) -> salsa::Snapshot<Self> {
         salsa::Snapshot::new(ScarbDocDatabase {
             storage: self.storage.snapshot(),
-            main_package_name: self.main_package_name.clone(),
-            main_package_version: self.main_package_version.clone(),
         })
     }
 }

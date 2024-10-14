@@ -14,7 +14,7 @@ pub struct PackagesSerializationError(#[from] SerdeError);
 pub struct MissingPackageError(pub String);
 
 #[derive(Debug, Error)]
-#[error("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")]
+#[error("cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`")]
 pub struct CfgParseError(#[from] SerdeError);
 
 #[derive(Debug, Error)]

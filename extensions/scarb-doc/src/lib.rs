@@ -2,7 +2,7 @@ use crate::db::ScarbDocDatabase;
 use crate::metadata::compilation::get_project_config;
 use anyhow::Result;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
-use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Maybe, Severity};
+use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
 use cairo_lang_filesystem::{
     db::{Edition, FilesGroup},
     ids::{CrateId, CrateLongId},
@@ -57,7 +57,7 @@ pub fn generate_packages_information(
 
         let project_config = get_project_config(metadata, package_metadata)?;
 
-        let db = ScarbDocDatabase::new(Some(project_config), package_metadata);
+        let db = ScarbDocDatabase::new(Some(project_config));
 
         let main_crate_id = db.intern_crate(CrateLongId::Real {
             name: package_metadata.name.clone().into(),
@@ -73,12 +73,8 @@ pub fn generate_packages_information(
             setup_diagnostics_reporter(&db, main_crate_id, package_compilation_unit)
                 .skip_lowering_diagnostics();
 
-        let crate_ = generate_language_elements_tree_for_package(
-            &db,
-            main_crate_id,
-            should_document_private_items,
-        )
-        .map_err(|_| DiagnosticError(package_metadata.name.clone()));
+        let crate_ = Crate::new(&db, main_crate_id, should_document_private_items)
+            .map_err(|_| DiagnosticError(package_metadata.name.clone()));
 
         if crate_.is_err() {
             diagnostics_reporter.ensure(&db)?;
@@ -93,16 +89,6 @@ pub fn generate_packages_information(
         });
     }
     Ok(packages_information)
-}
-
-fn generate_language_elements_tree_for_package(
-    db: &ScarbDocDatabase,
-    main_crate_id: CrateId,
-    document_private_items: bool,
-) -> Maybe<Crate> {
-    // let main_crate_id = db.get_main_crate_id();
-
-    Crate::new(db, main_crate_id, document_private_items)
 }
 
 fn setup_diagnostics_reporter<'a>(

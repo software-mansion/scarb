@@ -1573,9 +1573,9 @@ checksum = "e8566979429cf69b49a5c740c60791108e86440e8be149bbea4fe54d2c32d6e2"
 
 [[package]]
 name = "deno_task_shell"
-version = "0.18.0"
+version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec1b0c646a53492068b6675af74cecbef486e670be2c0cdd06e7e636d167e50f"
+checksum = "4f444918f7102c1a5a143e9d57809e499fb4d365070519bf2e8bdb16d586af2a"
 dependencies = [
  "anyhow",
  "futures",
@@ -3851,9 +3851,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.20.0"
+version = "1.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33ea5043e58958ee56f3e15a90aee535795cd7dfd319846288d93c5b57d85cbe"
+checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
 
 [[package]]
 name = "oorandom"
@@ -4757,7 +4757,6 @@ dependencies = [
  "scarb-metadata 1.12.0",
  "scarb-test-support",
  "scarb-ui",
- "semver",
  "serde",
  "serde_json",
  "smol_str",
