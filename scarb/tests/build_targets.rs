@@ -540,8 +540,26 @@ fn features_enabled_in_integration_tests() {
         .assert()
         .success();
 
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec![
+            "hello_integrationtest.test.json",
+            "hello_integrationtest.test.sierra.json",
+            "hello_unittest.test.json",
+            "hello_unittest.test.sierra.json",
+        ]
+    );
+
     t.child("target/dev/hello_integrationtest.test.json")
-        .assert(predicates::path::exists());
+        .assert_is_json::<serde_json::Value>();
+    t.child("target/dev/hello_integrationtest.test.sierra.json")
+        .assert_is_json::<VersionedProgram>();
+    let content = t
+        .child("target/dev/hello_integrationtest.test.json")
+        .read_to_string();
+    let json: serde_json::Value = serde_json::from_str(&content).unwrap();
+    let tests = json.get("named_tests").unwrap().as_array().unwrap();
+    assert_eq!(tests.len(), 1);
 }
 
 #[test]
