@@ -5,7 +5,7 @@ use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::{self, Visibility};
 use cairo_lang_semantic::resolve::ResolvedGenericItem;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
-use cairo_lang_utils::Upcast;
+use cairo_lang_utils::{LookupIntern, Upcast};
 use itertools::chain;
 use serde::Serialize;
 
@@ -21,9 +21,11 @@ use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
+use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
+use cairo_lang_semantic::{ConcreteTypeId, GenericArgumentId, TypeLongId};
 use cairo_lang_syntax::node::{
     ast::{self},
-    SyntaxNode,
+    SyntaxNode, TypedSyntaxNode,
 };
 
 use crate::db::ScarbDocDatabase;
@@ -257,8 +259,53 @@ impl Module {
         )?;
 
         let module_impls = db.module_impls(module_id)?;
+        let hide_impls_for_hidden_traits = |impl_def_id: &&ImplDefId| {
+            // Hide impls for hidden traits and hidden trait generic args.
+            // Example: `HiddenTrait<*>` or `NotHiddenTrait<HiddenStruct>` (e.g. Drop<HiddenStruct>).
+            // We still keep impls, if any trait generic argument is not hidden.
+            let Ok(trait_id) = db.impl_def_trait(**impl_def_id) else {
+                return true;
+            };
+            let Ok(item_trait) = db.module_trait_by_id(trait_id) else {
+                return true;
+            };
+            let all_generic_args_are_hidden = db
+                .impl_def_concrete_trait(**impl_def_id)
+                .ok()
+                .map(|concrete_trait_id| {
+                    let args = concrete_trait_id.generic_args(db.upcast());
+                    if args.is_empty() {
+                        return false;
+                    }
+                    args.into_iter()
+                        .filter_map(|arg_id| {
+                            let GenericArgumentId::Type(type_id) = arg_id else {
+                                return None;
+                            };
+                            let TypeLongId::Concrete(concrete_type_id) = type_id.lookup_intern(db)
+                            else {
+                                return None;
+                            };
+                            let concrete_id: &dyn SemanticQueryAttrs = match &concrete_type_id {
+                                ConcreteTypeId::Struct(struct_id) => struct_id,
+                                ConcreteTypeId::Enum(enum_id) => enum_id,
+                                ConcreteTypeId::Extern(extern_type_id) => extern_type_id,
+                            };
+                            is_doc_hidden_attr_semantic(db, concrete_id).ok()
+                        })
+                        .all(|x| x)
+                })
+                .unwrap_or(false);
+
+            let trait_is_hidden = item_trait
+                .map(|item_trait| is_doc_hidden_attr(db, &item_trait.as_syntax_node()))
+                .unwrap_or(false);
+
+            !(all_generic_args_are_hidden || trait_is_hidden)
+        };
         let impls = filter_map_item_id_to_item(
-            chain!(module_impls.keys(), module_pubuses.use_impl_defs.iter()),
+            chain!(module_impls.keys(), module_pubuses.use_impl_defs.iter())
+                .filter(hide_impls_for_hidden_traits),
             should_include_item,
             |id| Impl::new(db, *id),
         )?;
@@ -367,7 +414,14 @@ fn is_doc_hidden_attr(db: &ScarbDocDatabase, syntax_node: &SyntaxNode) -> bool {
     syntax_node.has_attr_with_arg(db, "doc", "hidden")
 }
 
-#[derive(Serialize, Clone)]
+fn is_doc_hidden_attr_semantic(
+    db: &dyn SemanticGroup,
+    node: &dyn SemanticQueryAttrs,
+) -> Maybe<bool> {
+    node.has_attr_with_arg(db, "doc", "hidden")
+}
+
+#[derive(Debug, Serialize, Clone)]
 pub struct ItemData {
     pub name: String,
     pub doc: Option<String>,
