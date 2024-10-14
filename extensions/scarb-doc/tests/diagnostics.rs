@@ -176,7 +176,7 @@ fn test_diagnostics_error() {
           ^********^
 
     error: Compilation failed.
-      error: process did not exit successfully: exit code: 1
+    error: process did not exit successfully: exit code: 1
       "#});
 
     #[cfg(not(windows))]
