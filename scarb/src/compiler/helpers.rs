@@ -12,6 +12,7 @@ use cairo_lang_filesystem::db::{FilesGroup, CORELIB_CRATE_NAME};
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use itertools::Itertools;
 use serde::Serialize;
+use smol_str::ToSmolStr;
 use std::io::{BufWriter, Write};
 
 pub fn build_compiler_config<'c>(
@@ -93,7 +94,9 @@ pub fn collect_main_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) ->
     let name = unit.main_component().cairo_package_name();
     let version = unit.main_component().package.id.version.clone();
     vec![db.intern_crate(CrateLongId::Real {
-        version: (name != CORELIB_CRATE_NAME).then_some(version),
+        discriminator: (name != CORELIB_CRATE_NAME)
+            .then_some(version)
+            .map(|v| v.to_smolstr()),
         name,
     })]
 }

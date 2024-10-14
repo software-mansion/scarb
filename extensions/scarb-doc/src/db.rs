@@ -7,7 +7,7 @@ use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
     init_files_group, AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup, CORELIB_CRATE_NAME,
 };
-use cairo_lang_filesystem::ids::{CrateId, CrateLongId, VirtualFile};
+use cairo_lang_filesystem::ids::VirtualFile;
 use cairo_lang_lowering::db::{LoweringDatabase, LoweringGroup};
 use cairo_lang_parser::db::{ParserDatabase, ParserGroup};
 use cairo_lang_semantic::db::{SemanticDatabase, SemanticGroup};
@@ -62,13 +62,6 @@ impl ScarbDocDatabase {
         }
 
         db
-    }
-
-    pub fn get_main_crate_id(&self) -> CrateId {
-        self.intern_crate(CrateLongId::Real {
-            name: self.main_package_name.clone().into(),
-            version: Some(self.main_package_version.clone()),
-        })
     }
 
     fn initial_cfg_set() -> CfgSet {

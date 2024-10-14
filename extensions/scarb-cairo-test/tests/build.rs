@@ -237,12 +237,12 @@ fn integration_tests() {
             [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 2 tests
-            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 42440)
-            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 42440)
+            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 40740)
+            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 40740)
             test result: ok. 2 passed; 0 failed; 0 ignored; 0 filtered out;
 
             running 1 test
-            test hello::tests::it_works ... ok (gas usage est.: 42440)
+            test hello::tests::it_works ... ok (gas usage est.: 40740)
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
 
         "#});
@@ -336,7 +336,7 @@ fn can_choose_test_kind_to_run() {
             [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 1 test
-            test hello::tests::it_works ... ok (gas usage est.: 42440)
+            test hello::tests::it_works ... ok (gas usage est.: 40740)
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
 
         "#});
@@ -352,8 +352,8 @@ fn can_choose_test_kind_to_run() {
             [..]Finished `dev` profile target(s) in [..]
             testing hello ...
             running 2 tests
-            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 42440)
-            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 42440)
+            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 40740)
+            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 40740)
             test result: ok. 2 passed; 0 failed; 0 ignored; 0 filtered out;
             
         "#});

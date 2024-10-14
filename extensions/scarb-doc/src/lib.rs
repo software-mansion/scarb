@@ -1,15 +1,18 @@
+use crate::db::ScarbDocDatabase;
+use crate::metadata::compilation::get_project_config;
 use anyhow::Result;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Maybe, Severity};
-use cairo_lang_filesystem::db::{Edition, FilesGroup};
+use cairo_lang_filesystem::{
+    db::{Edition, FilesGroup},
+    ids::{CrateId, CrateLongId},
+};
 use errors::DiagnosticError;
 use itertools::Itertools;
 use scarb_metadata::{CompilationUnitMetadata, Metadata, PackageMetadata};
 use scarb_ui::{OutputFormat, Ui};
 use serde::Serialize;
-
-use crate::db::ScarbDocDatabase;
-use crate::metadata::compilation::get_project_config;
+use smol_str::ToSmolStr;
 use types::Crate;
 
 pub mod db;
@@ -56,17 +59,26 @@ pub fn generate_packages_information(
 
         let db = ScarbDocDatabase::new(Some(project_config), package_metadata);
 
+        let main_crate_id = db.intern_crate(CrateLongId::Real {
+            name: package_metadata.name.clone().into(),
+            discriminator: Some(package_metadata.version.clone()).map(|v| v.to_smolstr()),
+        });
+
         let package_compilation_unit = metadata
             .compilation_units
             .iter()
             .find(|unit| unit.package == package_metadata.id);
 
         let mut diagnostics_reporter =
-            setup_diagnostics_reporter(&db, package_compilation_unit).skip_lowering_diagnostics();
+            setup_diagnostics_reporter(&db, main_crate_id, package_compilation_unit)
+                .skip_lowering_diagnostics();
 
-        let crate_ =
-            generate_language_elements_tree_for_package(&db, should_document_private_items)
-                .map_err(|_| DiagnosticError(package_metadata.name.clone()));
+        let crate_ = generate_language_elements_tree_for_package(
+            &db,
+            main_crate_id,
+            should_document_private_items,
+        )
+        .map_err(|_| DiagnosticError(package_metadata.name.clone()));
 
         if crate_.is_err() {
             diagnostics_reporter.ensure(&db)?;
@@ -85,19 +97,21 @@ pub fn generate_packages_information(
 
 fn generate_language_elements_tree_for_package(
     db: &ScarbDocDatabase,
+    main_crate_id: CrateId,
     document_private_items: bool,
 ) -> Maybe<Crate> {
-    let main_crate_id = db.get_main_crate_id();
+    // let main_crate_id = db.get_main_crate_id();
 
     Crate::new(db, main_crate_id, document_private_items)
 }
 
 fn setup_diagnostics_reporter<'a>(
     db: &ScarbDocDatabase,
+    main_crate_id: CrateId,
     package_compilation_unit: Option<&CompilationUnitMetadata>,
 ) -> DiagnosticsReporter<'a> {
     let ui = Ui::new(scarb_ui::Verbosity::default(), OutputFormat::default());
-    let main_crate_id = db.get_main_crate_id();
+
     let ignore_warnings_crates = db
         .crates()
         .into_iter()
