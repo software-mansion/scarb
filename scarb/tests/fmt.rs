@@ -220,55 +220,37 @@ fn format_with_import_sorting() {
         .assert()
         .failure()
         .stdout_matches(indoc! {"\
-        Diff in [..]/src/lib.cairo:
-        --- original
-       +++ modified
-       @@ -1,10 +1,17 @@
-       +use openzeppelin::introspection::first;
-        use openzeppelin::introspection::interface;
-       -use openzeppelin::introspection::first;
+            Diff in file [..]lib.cairo:
+             --- original
+            +++ modified
+            @@ -1,5 +1,5 @@
+            +use openzeppelin::introspection::first;
+             use openzeppelin::introspection::interface;
+            -use openzeppelin::introspection::first;
 
-        #[starknet::contract]
-        mod SRC5 {
-       +    mod F;
-       +    mod G;
-       +
-       +    use A;
-       +
-       +    use openzeppelin::introspection::first;
-            use openzeppelin::introspection::interface;
-            use openzeppelin::introspection::{interface, AB};
-       +    use starknet::ArrayTrait;
+             #[starknet::contract]
+             mod SRC5 {
+            @@ -14,8 +14,8 @@
+                 use openzeppelin::introspection::first;
 
-            #[storage]
-            struct Storage {
-       @@ -11,11 +18,7 @@
-                supported_interfaces: LegacyMap<felt252, bool>
-            }
+                 mod A {}
+            +    mod F;
+                 mod G;
+            -    mod F;
 
-       -    use openzeppelin::introspection::first;
-       -
-            mod A {}
-       -    mod G;
-       -    mod F;
+                 #[abi(embed_v0)]
+                 impl SRC5Impl of interface::ISRC5<ContractState> {
+            @@ -28,7 +28,7 @@
+                 use starknet::ArrayTrait;
 
-            #[abi(embed_v0)]
-            impl SRC5Impl of interface::ISRC5<ContractState> {
-       @@ -24,11 +27,8 @@
-                }
-            }
+                 mod Inner {
+            -        use C;
+                     use B;
+            +        use C;
+                 }
+             }
 
-       -    use A;
-       -    use starknet::ArrayTrait;
-       -
-            mod Inner {
-       +        use B;
-                use C;
-       -        use B;
-            }
-        }
-
-       "});
+        "});
 }
 
 #[test]

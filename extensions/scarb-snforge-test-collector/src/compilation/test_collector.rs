@@ -28,7 +28,7 @@ use cairo_lang_test_plugin::test_plugin_suite;
 use itertools::Itertools;
 use semver::Version;
 use serde::Serialize;
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -268,7 +268,7 @@ fn insert_lib_entrypoint_content_into_db(
 ) -> CrateId {
     let main_crate_id = db.intern_crate(CrateLongId::Real {
         name: SmolStr::from(crate_name),
-        version: Some(crate_version),
+        discriminator: Some(crate_version.to_smolstr()),
     });
     db.set_crate_config(
         main_crate_id,

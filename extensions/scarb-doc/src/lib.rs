@@ -1,11 +1,11 @@
+use crate::db::ScarbDocDatabase;
+use crate::metadata::compilation::get_project_config;
 use cairo_lang_compiler::project::ProjectConfig;
 use cairo_lang_filesystem::db::{Edition, FilesGroup};
 use cairo_lang_filesystem::ids::CrateLongId;
 use scarb_metadata::{Metadata, PackageMetadata};
 use serde::Serialize;
-
-use crate::db::ScarbDocDatabase;
-use crate::metadata::compilation::get_project_config;
+use smol_str::ToSmolStr;
 use types::Crate;
 
 pub mod db;
@@ -74,7 +74,7 @@ fn generate_language_elements_tree_for_package(
 
     let main_crate_id = db.intern_crate(CrateLongId::Real {
         name: package.name.clone().into(),
-        version: Some(package.version.clone()),
+        discriminator: Some(package.version.clone()).map(|v| v.to_smolstr()),
     });
 
     Crate::new(&db, main_crate_id, document_private_items)
