@@ -70,7 +70,6 @@ impl TokenStream {
             Ok(node) => {
                 let nodes = node.tokens(&db);
                 nodes
-                    .iter()
                     .map(|node| Token::from_syntax_node(&db, node.clone()))
                     .collect()
             }
@@ -92,7 +91,6 @@ impl TokenStream {
                 .as_syntax_node();
                 let nodes = expr_node.tokens(&db);
                 nodes
-                    .iter()
                     .map(|node| Token::from_syntax_node(&db, node.clone()))
                     .collect()
             }

@@ -30,9 +30,7 @@ impl<'a> TokenStreamBuilder<'a> {
         let mut result: Vec<Token> = Vec::default();
         for node in self.nodes.iter() {
             let leaves = node.tokens(self.db);
-            let tokens = leaves
-                .iter()
-                .map(|node| Token::from_syntax_node(self.db, node.clone()));
+            let tokens = leaves.map(|node| Token::from_syntax_node(self.db, node.clone()));
             result.extend(tokens);
         }
 
