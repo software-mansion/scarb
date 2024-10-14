@@ -8,6 +8,7 @@ use cairo_lang_filesystem::db::{
     init_files_group, AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup, CORELIB_CRATE_NAME,
 };
 use cairo_lang_filesystem::ids::VirtualFile;
+use cairo_lang_lowering::db::{LoweringDatabase, LoweringGroup};
 use cairo_lang_parser::db::{ParserDatabase, ParserGroup};
 use cairo_lang_semantic::db::{SemanticDatabase, SemanticGroup};
 use cairo_lang_semantic::inline_macros::get_default_plugin_suite;
@@ -25,7 +26,8 @@ use salsa;
     SyntaxDatabase,
     DefsDatabase,
     SemanticDatabase,
-    DocDatabase
+    DocDatabase,
+    LoweringDatabase
 )]
 pub struct ScarbDocDatabase {
     storage: salsa::Storage<Self>,
@@ -33,6 +35,12 @@ pub struct ScarbDocDatabase {
 
 impl ScarbDocDatabase {
     pub fn new(project_config: Option<ProjectConfig>) -> Self {
+        let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
+            .into_iter()
+            .fold(PluginSuite::default(), |mut acc, suite| {
+                acc.add(suite);
+                acc
+            });
         let mut db = Self {
             storage: Default::default(),
         };
@@ -40,12 +48,6 @@ impl ScarbDocDatabase {
         init_files_group(&mut db);
 
         db.set_cfg_set(Self::initial_cfg_set().into());
-        let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
-            .into_iter()
-            .fold(PluginSuite::default(), |mut acc, suite| {
-                acc.add(suite);
-                acc
-            });
 
         db.apply_plugin_suite(plugin_suite);
 
@@ -128,6 +130,12 @@ impl Upcast<dyn SemanticGroup> for ScarbDocDatabase {
 
 impl Upcast<dyn DocGroup> for ScarbDocDatabase {
     fn upcast(&self) -> &(dyn DocGroup + 'static) {
+        self
+    }
+}
+
+impl Upcast<dyn LoweringGroup> for ScarbDocDatabase {
+    fn upcast(&self) -> &(dyn LoweringGroup + 'static) {
         self
     }
 }

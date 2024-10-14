@@ -4740,8 +4740,10 @@ dependencies = [
  "assert_fs",
  "cairo-lang-compiler",
  "cairo-lang-defs",
+ "cairo-lang-diagnostics",
  "cairo-lang-doc",
  "cairo-lang-filesystem",
+ "cairo-lang-lowering",
  "cairo-lang-parser",
  "cairo-lang-semantic",
  "cairo-lang-starknet",
@@ -4759,6 +4761,7 @@ dependencies = [
  "serde",
  "serde_json",
  "smol_str",
+ "thiserror",
  "walkdir",
 ]
 
