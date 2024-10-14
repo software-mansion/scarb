@@ -91,6 +91,7 @@ fn get_cargo_package_name(package: &Package) -> Result<String> {
 
 fn get_cargo_library_name(package: &Package, config: &Config) -> Result<String> {
     let metadata = MetadataCommand::new()
+        .cargo_path(Tool::Cargo.path())
         .current_dir(package.root())
         .exec()
         .context("could not get Cargo metadata")?;
@@ -126,6 +127,7 @@ fn get_cargo_library_name(package: &Package, config: &Config) -> Result<String> 
 
 fn get_cargo_package_version(package: &Package) -> Result<String> {
     let metadata = MetadataCommand::new()
+        .cargo_path(Tool::Cargo.path())
         .current_dir(package.root())
         .exec()
         .context("could not get Cargo metadata")?;
@@ -233,9 +235,6 @@ impl<'c> From<CargoCommand<'c>> for Command {
                 cmd.arg(args.target_dir);
                 if !opts.check_metadata {
                     cmd.arg("--no-metadata");
-                }
-                if !opts.verify {
-                    cmd.arg("--no-verify");
                 }
                 if opts.allow_dirty {
                     cmd.arg("--allow-dirty");
