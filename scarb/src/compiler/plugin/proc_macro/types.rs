@@ -1,7 +1,7 @@
 use cairo_lang_macro::{Token, TokenStream, TokenStreamMetadata};
 use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
 
-/// Helps creating TokenStream based on multiple SyntaxNodes, 
+/// Helps creating TokenStream based on multiple SyntaxNodes,
 /// which aren't descendants or ascendants of each other inside the SyntaxTree.
 pub struct TokenStreamBuilder<'a> {
     db: &'a dyn SyntaxGroup,
@@ -29,7 +29,7 @@ impl<'a> TokenStreamBuilder<'a> {
     pub fn build(self) -> TokenStream {
         let mut result: Vec<Token> = Vec::default();
         for node in self.nodes.iter() {
-            let leaves = node.get_node_tree_leaves(self.db);
+            let leaves = node.tokens(self.db);
             let tokens = leaves
                 .iter()
                 .map(|node| Token::from_syntax_node(self.db, node.clone()));

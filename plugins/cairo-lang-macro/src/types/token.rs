@@ -62,7 +62,7 @@ impl TokenStream {
 
         let tokens = match node {
             Ok(node) => {
-                let nodes = node.get_node_tree_leaves(&db);
+                let nodes = node.tokens(&db);
                 nodes
                     .iter()
                     .map(|node| Token::from_syntax_node(&db, node.clone()))
