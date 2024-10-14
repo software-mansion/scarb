@@ -429,7 +429,7 @@ fn features_enabled_in_integration_tests() {
         "#})
         .lib_cairo(indoc! {r#"
             #[cfg(feature: 'x')]
-            fn f() -> felt252 { 21 }
+            fn f() -> felt252 { 42 }
 
             fn main() -> felt252 {
                 0
@@ -437,7 +437,7 @@ fn features_enabled_in_integration_tests() {
         "#})
         .build(&t);
 
-    t.child("tests/test_feature.cairo")
+    t.child("tests/test1.cairo")
         .write_str(indoc! {r#"
             #[cfg(test)]
             mod tests {
@@ -461,12 +461,12 @@ fn features_enabled_in_integration_tests() {
             [..] Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..] Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..])
             error: Identifier not found.
-             --> [..]test_feature.cairo:3:16
+             --> [..]test1.cairo:3:16
                 use hello::f;
                            ^
 
             error: Type annotations needed. Failed to infer ?0.
-             --> [..]test_feature.cairo:7:16
+             --> [..]test1.cairo:7:16
                     assert(f() == 42, 'it works!');
                            ^*******^
 
