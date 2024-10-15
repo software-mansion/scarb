@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use xshell::{cmd, Shell};
-use crate::get_cairo_version::{get_cairo_version, get_cairo_compiler_package_id};
+
 use crate::get_nightly_version::nightly_version;
 
 #[derive(Parser)]
@@ -19,16 +19,46 @@ pub fn main(_: Args) -> Result<()> {
     let cargo_metadata = cmd!(sh, "cargo metadata -q --format-version 1").read()?;
     let cargo_metadata = serde_json::from_str::<serde_json::Value>(&cargo_metadata)?;
 
-    let cairo_compiler_package_id = get_cairo_compiler_package_id(&cargo_metadata);
+    let cairo_compiler_package_id = cargo_metadata
+        .get("resolve")
+        .unwrap()
+        .get("nodes")
+        .unwrap()
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|node| {
+            let repr = node.get("id")
+                .unwrap()
+                .as_str()
+                .unwrap();
+            // The first condition for Rust >= 1.77
+            // (After the PackageId spec stabilization)
+            // The second condition for Rust < 1.77
+            repr.contains("scarb#") || repr.starts_with("scarb ")
+        })
+        .unwrap()
+        .get("deps")
+        .unwrap()
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|dep| dep.get("name").unwrap() == "cairo_lang_compiler")
+        .unwrap()
+        .get("pkg")
+        .unwrap()
+        .as_str()
+        .unwrap();
+
     let cairo_package = cargo_metadata
         .get("packages")
         .unwrap()
         .as_array()
         .unwrap()
         .iter()
-        .find(|pkg| pkg.get("id").unwrap() == cairo_compiler_package_id.as_str())
+        .find(|pkg| pkg.get("id").unwrap() == cairo_compiler_package_id)
         .unwrap();
-    let cairo_version = get_cairo_version(&cargo_metadata, &cairo_compiler_package_id);
+    let cairo_version = cairo_package.get("version").unwrap().as_str().unwrap();
     let cairo_commit = commit_from_source(cairo_package.get("source").unwrap().as_str().unwrap());
 
     let scarb_source_commit = source_commit("software-mansion/scarb", Some(&scarb_commit));
