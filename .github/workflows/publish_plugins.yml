@@ -8,8 +8,6 @@ jobs:
   publish:
     name: Publish plugins
     runs-on: ubuntu-latest
-    env:
-      SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_REGISTRY_AUTH_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -18,31 +16,29 @@ jobs:
         with:
           scarb-version: ${{ github.ref_name }}
 
-      - name: Get Cairo version
-        id: cairo-version
-        run: echo "CAIRO_VERSION=$(cargo xtask get-cairo-version)" >> $GITHUB_OUTPUT
-
-      - name: Set Cairo version for plugins
-        working-directory: scarb/scarblib
+      - name: Init Scarb to cache plugins
+        id: scarb-init
         run: |
           set -eo pipefail
-          for package_dir in *; do
-            if [ -d "$package_dir" ]; then
-              if [ -f "$package_dir/Scarb.toml" ]; then
-                sed -i '' "s/{{ CAIRO_VERSION }}/${{ steps.cairo-version.outputs.CAIRO_VERSION }}/g" "$package_dir/Scarb.toml"
-                echo "Updated Scarb.toml in $package_dir"
-              fi
-            fi
-          done
+          mkdir -p $HOME/pkg
+          pushd $HOME/pkg
+          scarb init --no-vcs
+          echo "CAIRO_VERSION=$(scarb metadata --format-version 1 | jq -r '.app_version_info.cairo.version')" >> $GITHUB_OUTPUT
+          popd
+        env:
+          SCARB_INIT_TEST_RUNNER: cairo-test
 
-      - name: Publish plugins
-        working-directory: scarb/scarblib
+      - name: Publish plugins from cache
         run: |
           set -eo pipefail
-          for package_dir in *; do
-            if [ -d "$package_dir" ]; then
-              pushd "$package_dir"
-              scarb publish
-              popd
-            fi
-          done
+          pushd $HOME/.cache/scarb/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}
+            for package_dir in *; do
+                if [ -d "$package_dir" ] && [ "$package_dir" != "core" ]; then
+                  pushd "$package_dir"
+                  scarb publish --no-verify
+                  popd
+                fi
+            done
+        env:
+          SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_REGISTRY_AUTH_TOKEN }}
+
