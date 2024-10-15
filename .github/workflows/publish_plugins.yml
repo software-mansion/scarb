@@ -1,0 +1,48 @@
+name: Publish Built-in Plugins
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  publish:
+    name: Publish plugins
+    runs-on: ubuntu-latest
+    env:
+      SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_REGISTRY_AUTH_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: ${{ github.ref_name }}
+
+      - name: Get Cairo version
+        id: cairo-version
+        run: echo "CAIRO_VERSION=$(cargo xtask get-cairo-version)" >> $GITHUB_OUTPUT
+
+      - name: Set Cairo version for plugins
+        working-directory: scarb/scarblib
+        run: |
+          set -eo pipefail
+          for package_dir in *; do
+            if [ -d "$package_dir" ]; then
+              if [ -f "$package_dir/Scarb.toml" ]; then
+                sed -i '' "s/{{ CAIRO_VERSION }}/${{ steps.cairo-version.outputs.CAIRO_VERSION }}/g" "$package_dir/Scarb.toml"
+                echo "Updated Scarb.toml in $package_dir"
+              fi
+            fi
+          done
+
+      - name: Publish plugins
+        working-directory: scarb/scarblib
+        run: |
+          set -eo pipefail
+          for package_dir in *; do
+            if [ -d "$package_dir" ]; then
+              pushd "$package_dir"
+              scarb publish
+              popd
+            fi
+          done
