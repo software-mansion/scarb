@@ -159,11 +159,10 @@ pub fn unpack_crate(package: &Package, config: &Config) -> Result<()> {
     let archive_basename = get_crate_archive_basename(package)?;
     let archive_name = format!("{}.crate", archive_basename);
 
-    let tar = package.target_path(config).into_child("package").open_ro(
-        &archive_name,
-        &archive_name,
-        config,
-    )?;
+    let tar = package
+        .target_path(config)
+        .into_child("package")
+        .open_ro_exclusive(&archive_name, &archive_name, config)?;
 
     // The following implementation has been copied from the `Cargo` codebase with slight modifications only.
     // The original implementation can be found here:
