@@ -35,10 +35,9 @@ jobs:
             for package_dir in *; do
                 if [ -d "$package_dir" ] && [ "$package_dir" != "core" ]; then
                   pushd "$package_dir"
-                  scarb publish --no-verify
+                  scarb publish --index https://scarbs.dev --no-verify
                   popd
                 fi
             done
         env:
           SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_REGISTRY_AUTH_TOKEN }}
-
