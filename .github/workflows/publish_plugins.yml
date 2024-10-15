@@ -32,6 +32,7 @@ jobs:
       - name: Publish plugins from cache
         run: |
           set -eo pipefail
+          tree -a $HOME/.cache/scarb/
           pushd $HOME/.cache/scarb/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}
             for package_dir in *; do
                 if [ -d "$package_dir" ] && [ "$package_dir" != "core" ]; then
