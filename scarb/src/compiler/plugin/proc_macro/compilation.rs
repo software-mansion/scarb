@@ -265,6 +265,7 @@ impl<'c> From<CargoCommand<'c>> for Command {
             CargoAction::Package(ref opts) => {
                 cmd.arg("--target-dir");
                 cmd.arg(args.target_dir);
+                cmd.arg("--no-verify");
                 if !opts.check_metadata {
                     cmd.arg("--no-metadata");
                 }
