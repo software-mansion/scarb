@@ -85,6 +85,7 @@ walkdir.workspace = true
 which.workspace = true
 windows-sys.workspace = true
 zstd.workspace = true
+cargo_metadata.workspace = true
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]
 reqwest = { workspace = true, default-features = true }

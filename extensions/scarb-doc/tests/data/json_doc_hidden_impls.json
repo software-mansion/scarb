@@ -1,0 +1,88 @@
+{
+  "format_version": 1,
+  "packages_information": [
+    {
+      "crate_": {
+        "root_module": {
+          "item_data": {
+            "name": "hello_world",
+            "doc": null,
+            "signature": null,
+            "full_path": "hello_world"
+          },
+          "submodules": [],
+          "constants": [],
+          "free_functions": [],
+          "structs": [
+            {
+              "members": [],
+              "item_data": {
+                "name": "VisibleStruct",
+                "doc": null,
+                "signature": "struct VisibleStruct {}",
+                "full_path": "hello_world::VisibleStruct"
+              }
+            }
+          ],
+          "enums": [],
+          "type_aliases": [],
+          "impl_aliases": [],
+          "traits": [
+            {
+              "trait_constants": [],
+              "trait_types": [],
+              "trait_functions": [],
+              "item_data": {
+                "name": "VisibleTrait",
+                "doc": null,
+                "signature": "trait VisibleTrait<T>",
+                "full_path": "hello_world::VisibleTrait"
+              }
+            },
+            {
+              "trait_constants": [],
+              "trait_types": [],
+              "trait_functions": [],
+              "item_data": {
+                "name": "SecondVisibleTrait",
+                "doc": null,
+                "signature": "trait SecondVisibleTrait<T, Y>",
+                "full_path": "hello_world::SecondVisibleTrait"
+              }
+            }
+          ],
+          "impls": [
+            {
+              "impl_types": [],
+              "impl_constants": [],
+              "impl_functions": [],
+              "item_data": {
+                "name": "VisibleImpl",
+                "doc": null,
+                "signature": "impl VisibleImpl of VisibleTrait<VisibleStruct>",
+                "full_path": "hello_world::VisibleImpl"
+              }
+            },
+            {
+              "impl_types": [],
+              "impl_constants": [],
+              "impl_functions": [],
+              "item_data": {
+                "name": "SecondVisibleImpl",
+                "doc": null,
+                "signature": "impl SecondVisibleImpl of SecondVisibleTrait<HiddenStruct, VisibleStruct>",
+                "full_path": "hello_world::SecondVisibleImpl"
+              }
+            }
+          ],
+          "extern_types": [],
+          "extern_functions": []
+        }
+      },
+      "metadata": {
+        "name": "hello_world",
+        "authors": null
+      }
+    }
+  ]
+}

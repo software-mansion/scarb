@@ -45,3 +45,48 @@ fn test_doc_hidden() {
         .expected("./data/json_doc_hidden.json")
         .assert_files_match();
 }
+
+#[test]
+fn hides_impls_of_private_traits() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+          #[doc(hidden)
+          struct HiddenStuct {}
+
+          #[doc(hidden)]
+          trait HiddenTrait<T> {}
+
+          struct VisibleStruct {}
+
+          trait VisibleTrait<T> {}
+
+          impl VisibleImpl of VisibleTrait<VisibleStruct> {}
+
+          impl FirstHiddenImpl of HiddenTrait<HiddenStruct> {}
+          impl SecondHiddenImpl of HiddenTrait<VisibleStruct> {}
+          impl ThirdHiddenImpl of VisibleTrait<HiddenStruct> {}
+
+          #[doc(hidden)]
+          impl FourthHiddenImpl of VisibleTrait<VisibleStruct> {}
+
+          trait SecondVisibleTrait<T,Y> {}
+
+          impl SecondVisibleImpl of SecondVisibleTrait<HiddenStruct, VisibleStruct> {}
+          impl FifthHiddenImpl of SecondVisibleTrait<HiddenStruct, HiddenStruct> {}
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args(["--document-private-items", "--output-format", "json"])
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    JsonTargetChecker::default()
+        .actual(&t.path().join("target/doc/output.json"))
+        .expected("./data/json_doc_hidden_impls.json")
+        .assert_files_match();
+}

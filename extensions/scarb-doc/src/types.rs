@@ -1,9 +1,11 @@
+use anyhow::Result;
+use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::{self, Visibility};
 use cairo_lang_semantic::resolve::ResolvedGenericItem;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
-use cairo_lang_utils::Upcast;
+use cairo_lang_utils::{LookupIntern, Upcast};
 use itertools::chain;
 use serde::Serialize;
 
@@ -19,7 +21,12 @@ use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
-use cairo_lang_syntax::node::{ast, SyntaxNode};
+use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
+use cairo_lang_semantic::{ConcreteTypeId, GenericArgumentId, TypeLongId};
+use cairo_lang_syntax::node::{
+    ast::{self},
+    SyntaxNode, TypedSyntaxNode,
+};
 
 use crate::db::ScarbDocDatabase;
 
@@ -29,11 +36,15 @@ pub struct Crate {
 }
 
 impl Crate {
-    pub fn new(db: &ScarbDocDatabase, crate_id: CrateId, include_private_items: bool) -> Self {
+    pub fn new(
+        db: &ScarbDocDatabase,
+        crate_id: CrateId,
+        include_private_items: bool,
+    ) -> Maybe<Self> {
         let root_module_id = ModuleId::CrateRoot(crate_id);
-        Self {
-            root_module: Module::new(db, root_module_id, root_module_id, include_private_items),
-        }
+        Ok(Self {
+            root_module: Module::new(db, root_module_id, root_module_id, include_private_items)?,
+        })
     }
 }
 
@@ -41,19 +52,16 @@ fn is_visible_in_module(
     db: &ScarbDocDatabase,
     root_module_id: ModuleId,
     element_id: &dyn TopLevelLanguageElementId,
-) -> bool {
+) -> Maybe<bool> {
     let cotaining_module_id = element_id.parent_module(db);
-    match db
-        .module_item_info_by_name(cotaining_module_id, element_id.name(db.upcast()))
-        .unwrap()
-    {
-        Some(module_item_info) => visibility::peek_visible_in(
+    match db.module_item_info_by_name(cotaining_module_id, element_id.name(db.upcast()))? {
+        Some(module_item_info) => Ok(visibility::peek_visible_in(
             db,
             module_item_info.visibility,
             cotaining_module_id,
             root_module_id,
-        ),
-        None => false,
+        )),
+        None => Ok(false),
     }
 }
 
@@ -168,10 +176,10 @@ impl ModulePubUses {
 impl Module {
     pub fn new(
         db: &ScarbDocDatabase,
-        root_module_id: ModuleId,
         module_id: ModuleId,
+        root_module_id: ModuleId,
         include_private_items: bool,
-    ) -> Self {
+    ) -> Maybe<Self> {
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData::new_crate(db, crate_id),
             ModuleId::Submodule(submodule_id) => ItemData::new_without_signature(
@@ -184,119 +192,177 @@ impl Module {
         let should_include_item = |id: &dyn TopLevelLanguageElementId| {
             let syntax_node = id.stable_location(db.upcast()).syntax_node(db.upcast());
 
-            (include_private_items || is_visible_in_module(db, root_module_id, id))
-                && !is_doc_hidden_attr(db, &syntax_node)
+            Ok(
+                (include_private_items || is_visible_in_module(db, root_module_id, id)?)
+                    && !is_doc_hidden_attr(db, &syntax_node),
+            )
         };
 
         let module_pubuses = ModulePubUses::new(db, module_id);
 
-        let module_constants = db.module_constants(module_id).unwrap();
-        let constants = chain!(module_constants.keys(), module_pubuses.use_constants.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| Constant::new(db, *id))
-            .collect();
+        let module_constants = db.module_constants(module_id)?;
+        let constants = filter_map_item_id_to_item(
+            chain!(module_constants.keys(), module_pubuses.use_constants.iter()),
+            should_include_item,
+            |id| Ok(Constant::new(db, *id)),
+        )?;
 
-        let module_free_functions = db.module_free_functions(module_id).unwrap();
-        let free_functions = chain!(
-            module_free_functions.keys(),
-            module_pubuses.use_free_functions.iter()
-        )
-        .filter(|id| should_include_item(*id))
-        .map(|id| FreeFunction::new(db, *id))
-        .collect();
+        let module_free_functions = db.module_free_functions(module_id)?;
+        let free_functions = filter_map_item_id_to_item(
+            chain!(
+                module_free_functions.keys(),
+                module_pubuses.use_free_functions.iter()
+            ),
+            should_include_item,
+            |id| Ok(FreeFunction::new(db, *id)),
+        )?;
 
-        let module_structs = db.module_structs(module_id).unwrap();
-        let structs = chain!(module_structs.keys(), module_pubuses.use_structs.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| Struct::new(db, *id, root_module_id, include_private_items))
-            .collect();
+        let module_structs = db.module_structs(module_id)?;
+        let structs = filter_map_item_id_to_item(
+            chain!(module_structs.keys(), module_pubuses.use_structs.iter()),
+            should_include_item,
+            |id| Struct::new(db, *id, root_module_id, include_private_items),
+        )?;
 
-        let module_enums = db.module_enums(module_id).unwrap();
-        let enums = chain!(module_enums.keys(), module_pubuses.use_enums.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| Enum::new(db, *id))
-            .collect();
+        let module_enums = db.module_enums(module_id)?;
+        let enums = filter_map_item_id_to_item(
+            chain!(module_enums.keys(), module_pubuses.use_enums.iter()),
+            should_include_item,
+            |id| Enum::new(db, *id),
+        )?;
 
-        let module_type_aliases = db.module_type_aliases(module_id).unwrap();
-        let type_aliases = chain!(
-            module_type_aliases.keys(),
-            module_pubuses.use_module_type_aliases.iter()
-        )
-        .filter(|id| should_include_item(*id))
-        .map(|id| TypeAlias::new(db, *id))
-        .collect();
+        let module_type_aliases = db.module_type_aliases(module_id)?;
+        let type_aliases = filter_map_item_id_to_item(
+            chain!(
+                module_type_aliases.keys(),
+                module_pubuses.use_module_type_aliases.iter()
+            ),
+            should_include_item,
+            |id| Ok(TypeAlias::new(db, *id)),
+        )?;
 
-        let module_impl_aliases = db.module_impl_aliases(module_id).unwrap();
-        let impl_aliases = chain!(
-            module_impl_aliases.keys(),
-            module_pubuses.use_impl_aliases.iter()
-        )
-        .filter(|id| should_include_item(*id))
-        .map(|id| ImplAlias::new(db, *id))
-        .collect();
+        let module_impl_aliases = db.module_impl_aliases(module_id)?;
+        let impl_aliases = filter_map_item_id_to_item(
+            chain!(
+                module_impl_aliases.keys(),
+                module_pubuses.use_impl_aliases.iter()
+            ),
+            should_include_item,
+            |id| Ok(ImplAlias::new(db, *id)),
+        )?;
 
-        let module_traits = db.module_traits(module_id).unwrap();
-        let traits = chain!(module_traits.keys(), module_pubuses.use_traits.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| Trait::new(db, *id))
-            .collect();
+        let module_traits = db.module_traits(module_id)?;
+        let traits = filter_map_item_id_to_item(
+            chain!(module_traits.keys(), module_pubuses.use_traits.iter()),
+            should_include_item,
+            |id| Trait::new(db, *id),
+        )?;
 
-        let module_impls = db.module_impls(module_id).unwrap();
-        let impls = chain!(module_impls.keys(), module_pubuses.use_impl_defs.iter())
-            .filter(|id| should_include_item(*id))
-            .map(|id| Impl::new(db, *id))
-            .collect();
+        let module_impls = db.module_impls(module_id)?;
+        let hide_impls_for_hidden_traits = |impl_def_id: &&ImplDefId| {
+            // Hide impls for hidden traits and hidden trait generic args.
+            // Example: `HiddenTrait<*>` or `NotHiddenTrait<HiddenStruct>` (e.g. Drop<HiddenStruct>).
+            // We still keep impls, if any trait generic argument is not hidden.
+            let Ok(trait_id) = db.impl_def_trait(**impl_def_id) else {
+                return true;
+            };
+            let Ok(item_trait) = db.module_trait_by_id(trait_id) else {
+                return true;
+            };
+            let all_generic_args_are_hidden = db
+                .impl_def_concrete_trait(**impl_def_id)
+                .ok()
+                .map(|concrete_trait_id| {
+                    let args = concrete_trait_id.generic_args(db.upcast());
+                    if args.is_empty() {
+                        return false;
+                    }
+                    args.into_iter()
+                        .filter_map(|arg_id| {
+                            let GenericArgumentId::Type(type_id) = arg_id else {
+                                return None;
+                            };
+                            let TypeLongId::Concrete(concrete_type_id) = type_id.lookup_intern(db)
+                            else {
+                                return None;
+                            };
+                            let concrete_id: &dyn SemanticQueryAttrs = match &concrete_type_id {
+                                ConcreteTypeId::Struct(struct_id) => struct_id,
+                                ConcreteTypeId::Enum(enum_id) => enum_id,
+                                ConcreteTypeId::Extern(extern_type_id) => extern_type_id,
+                            };
+                            is_doc_hidden_attr_semantic(db, concrete_id).ok()
+                        })
+                        .all(|x| x)
+                })
+                .unwrap_or(false);
 
-        let module_extern_types = db.module_extern_types(module_id).unwrap();
-        let extern_types = chain!(
-            module_extern_types.keys(),
-            module_pubuses.use_extern_types.iter()
-        )
-        .filter(|id| should_include_item(*id))
-        .map(|id| ExternType::new(db, *id))
-        .collect();
+            let trait_is_hidden = item_trait
+                .map(|item_trait| is_doc_hidden_attr(db, &item_trait.as_syntax_node()))
+                .unwrap_or(false);
 
-        let module_extern_functions = db.module_extern_functions(module_id).unwrap();
-        let extern_functions = chain!(
-            module_extern_functions.keys(),
-            module_pubuses.use_extern_functions.iter()
-        )
-        .filter(|id| should_include_item(*id))
-        .map(|id| ExternFunction::new(db, *id))
-        .collect();
+            !(all_generic_args_are_hidden || trait_is_hidden)
+        };
+        let impls = filter_map_item_id_to_item(
+            chain!(module_impls.keys(), module_pubuses.use_impl_defs.iter())
+                .filter(hide_impls_for_hidden_traits),
+            should_include_item,
+            |id| Impl::new(db, *id),
+        )?;
 
-        let module_submodules = db.module_submodules(module_id).unwrap();
-        let mut submodules: Vec<Module> = chain!(
-            module_submodules.keys(),
-            module_pubuses.use_submodules.iter()
-        )
-        .filter(|id| should_include_item(*id))
-        .map(|id| {
-            Self::new(
-                db,
-                root_module_id,
-                ModuleId::Submodule(*id),
-                include_private_items,
-            )
-        })
-        .collect();
+        let module_extern_types = db.module_extern_types(module_id)?;
+        let extern_types = filter_map_item_id_to_item(
+            chain!(
+                module_extern_types.keys(),
+                module_pubuses.use_extern_types.iter()
+            ),
+            should_include_item,
+            |id| Ok(ExternType::new(db, *id)),
+        )?;
+
+        let module_extern_functions = db.module_extern_functions(module_id)?;
+        let extern_functions = filter_map_item_id_to_item(
+            chain!(
+                module_extern_functions.keys(),
+                module_pubuses.use_extern_functions.iter()
+            ),
+            should_include_item,
+            |id| Ok(ExternFunction::new(db, *id)),
+        )?;
+
+        let module_submodules = db.module_submodules(module_id)?;
+        let mut submodules: Vec<Module> = filter_map_item_id_to_item(
+            chain!(
+                module_submodules.keys(),
+                module_pubuses.use_submodules.iter()
+            ),
+            should_include_item,
+            |id| {
+                Module::new(
+                    db,
+                    ModuleId::Submodule(*id),
+                    root_module_id,
+                    include_private_items,
+                )
+            },
+        )?;
 
         let reexported_crates_as_modules: Vec<Module> = module_pubuses
             .use_crates
             .iter()
             .map(|id| {
-                Self::new(
+                Module::new(
                     db,
-                    root_module_id,
                     ModuleId::CrateRoot(*id),
+                    root_module_id,
                     include_private_items,
                 )
             })
-            .collect();
+            .collect::<Maybe<_>>()?;
 
         submodules.extend(reexported_crates_as_modules);
 
-        Self {
+        Ok(Self {
             module_id,
             item_data,
             submodules,
@@ -310,15 +376,52 @@ impl Module {
             impls,
             extern_types,
             extern_functions,
-        }
+        })
     }
+}
+
+/// Takes the HashMap of items (returned from db query), filter them based on the `should_include_item_function` returned value,
+/// and then generates an item based on its ID with function `generate_item_function`.
+/// Generic types:
+/// T - Type representing ID of an item. Accepts any kind of `TopLevelLanguageElementId`.
+/// F - function that checks whether the id should be included in the result Vector.
+/// G - A closure (as a function), which generates an item based on the item's ID.
+/// K - Type of generated item.
+fn filter_map_item_id_to_item<'a, T, F, G, K>(
+    items: impl Iterator<Item = &'a T>,
+    should_include_item_function: F,
+    generate_item_function: G,
+) -> Result<Vec<K>, DiagnosticAdded>
+where
+    T: 'a + Copy + TopLevelLanguageElementId,
+    F: Fn(&'a dyn TopLevelLanguageElementId) -> Result<bool, DiagnosticAdded>,
+    G: Fn(&'a T) -> Maybe<K>,
+{
+    items
+        .filter_map(|id| match should_include_item_function(id) {
+            Ok(result) => {
+                if !result {
+                    return None;
+                }
+                Some(Ok(generate_item_function(id)))
+            }
+            Err(a) => Some(Err(a)),
+        })
+        .collect::<Maybe<Maybe<Vec<K>>>>()?
 }
 
 fn is_doc_hidden_attr(db: &ScarbDocDatabase, syntax_node: &SyntaxNode) -> bool {
     syntax_node.has_attr_with_arg(db, "doc", "hidden")
 }
 
-#[derive(Serialize, Clone)]
+fn is_doc_hidden_attr_semantic(
+    db: &dyn SemanticGroup,
+    node: &dyn SemanticQueryAttrs,
+) -> Maybe<bool> {
+    node.has_attr_with_arg(db, "doc", "hidden")
+}
+
+#[derive(Debug, Serialize, Clone)]
 pub struct ItemData {
     pub name: String,
     pub doc: Option<String>,
@@ -431,8 +534,8 @@ impl Struct {
         id: StructId,
         root_module_id: ModuleId,
         include_private_items: bool,
-    ) -> Self {
-        let members = db.struct_members(id).unwrap();
+    ) -> Maybe<Self> {
+        let members = db.struct_members(id)?;
 
         let item_data = ItemData::new(
             db,
@@ -441,25 +544,33 @@ impl Struct {
         );
         let members = members
             .iter()
-            .filter(|(_, semantic_member)| {
-                let syntax_node = &semantic_member
-                    .id
-                    .stable_location(db.upcast())
-                    .syntax_node(db.upcast());
-                (include_private_items
-                    || is_visible_in_module(db, root_module_id, &semantic_member.id))
-                    && !is_doc_hidden_attr(db, syntax_node)
+            .filter_map(|(_, semantic_member)| {
+                match is_visible_in_module(db, root_module_id, &semantic_member.id) {
+                    Ok(visible) => {
+                        let syntax_node = &semantic_member
+                            .id
+                            .stable_location(db.upcast())
+                            .syntax_node(db.upcast());
+                        if (include_private_items || visible)
+                            && !is_doc_hidden_attr(db, syntax_node)
+                        {
+                            Some(Ok(Member::new(db, semantic_member.id)))
+                        } else {
+                            None
+                        }
+                    }
+                    Err(e) => Some(Err(e)),
+                }
             })
-            .map(|(_name, semantic_member)| Member::new(db, semantic_member.id))
-            .collect::<Vec<_>>();
+            .collect::<Maybe<Vec<_>>>()?;
 
         let node = id.stable_ptr(db);
-        Self {
+        Ok(Self {
             id,
             node,
             members,
             item_data,
-        }
+        })
     }
 }
 
@@ -498,8 +609,8 @@ pub struct Enum {
 }
 
 impl Enum {
-    pub fn new(db: &ScarbDocDatabase, id: EnumId) -> Self {
-        let variants = db.enum_variants(id).unwrap();
+    pub fn new(db: &ScarbDocDatabase, id: EnumId) -> Maybe<Self> {
+        let variants = db.enum_variants(id)?;
         let item_data = ItemData::new(
             db,
             id,
@@ -512,12 +623,12 @@ impl Enum {
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
-        Self {
+        Ok(Self {
             id,
             node,
             variants,
             item_data,
-        }
+        })
     }
 }
 
@@ -608,40 +719,40 @@ pub struct Trait {
 }
 
 impl Trait {
-    pub fn new(db: &ScarbDocDatabase, id: TraitId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitId) -> Maybe<Self> {
         let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Trait(id)).into(),
         );
 
-        let trait_constants = db.trait_constants(id).unwrap();
+        let trait_constants = db.trait_constants(id)?;
         let trait_constants = trait_constants
             .iter()
             .map(|(_name, trait_constant_id)| TraitConstant::new(db, *trait_constant_id))
             .collect::<Vec<_>>();
 
-        let trait_types = db.trait_types(id).unwrap();
+        let trait_types = db.trait_types(id)?;
         let trait_types = trait_types
             .iter()
             .map(|(_name, trait_type_id)| TraitType::new(db, *trait_type_id))
             .collect::<Vec<_>>();
 
-        let trait_functions = db.trait_functions(id).unwrap();
+        let trait_functions = db.trait_functions(id)?;
         let trait_functions = trait_functions
             .iter()
             .map(|(_name, trait_function_id)| TraitFunction::new(db, *trait_function_id))
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
-        Self {
+        Ok(Self {
             id,
             node,
             trait_constants,
             trait_types,
             trait_functions,
             item_data,
-        }
+        })
     }
 }
 
@@ -738,40 +849,40 @@ pub struct Impl {
 }
 
 impl Impl {
-    pub fn new(db: &ScarbDocDatabase, id: ImplDefId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplDefId) -> Maybe<Self> {
         let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Impl(id)).into(),
         );
 
-        let impl_types = db.impl_types(id).unwrap();
+        let impl_types = db.impl_types(id)?;
         let impl_types = impl_types
             .iter()
             .map(|(id, _)| ImplType::new(db, *id))
             .collect::<Vec<_>>();
 
-        let impl_constants = db.impl_constants(id).unwrap();
+        let impl_constants = db.impl_constants(id)?;
         let impl_constants = impl_constants
             .iter()
             .map(|(id, _)| ImplConstant::new(db, *id))
             .collect::<Vec<_>>();
 
-        let impl_functions = db.impl_functions(id).unwrap();
+        let impl_functions = db.impl_functions(id)?;
         let impl_functions = impl_functions
             .iter()
             .map(|(_name, id)| ImplFunction::new(db, *id))
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
-        Self {
+        Ok(Self {
             id,
             node,
             impl_types,
             impl_constants,
             impl_functions,
             item_data,
-        }
+        })
     }
 }
 
