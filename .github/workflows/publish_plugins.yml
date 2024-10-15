@@ -15,7 +15,7 @@ jobs:
 
       - uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: ${{ github.ref_name }}
+          scarb-version: nightly-2024-10-15
 
       - name: Init Scarb to cache plugins
         id: scarb-init
