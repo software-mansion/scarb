@@ -170,7 +170,7 @@ pub fn unpack_crate(package: &Package, config: &Config) -> Result<()> {
 
     tar.deref().seek(SeekFrom::Start(0))?;
     let f = GzDecoder::new(tar.deref());
-    let dst = tar.parent().join(&archive_basename);
+    let dst = tar.parent().unwrap().join(&archive_basename);
     if dst.exists() {
         fsx::remove_dir_all(&dst)?;
     }

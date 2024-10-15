@@ -37,8 +37,8 @@ impl FileLockGuard {
         self.path.as_path()
     }
 
-    pub fn parent(&self) -> &Utf8Path {
-        self.path.parent().unwrap()
+    pub fn parent(&self) -> Option<&Utf8Path> {
+        self.path.parent()
     }
 
     pub fn lock_kind(&self) -> FileLockKind {
