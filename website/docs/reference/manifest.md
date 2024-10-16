@@ -302,6 +302,20 @@ If `avoid` strategy is set, the compiler will only inline function annotated wit
 > Please use with caution, only if your tooling requires that.
 > You can use profile settings overwriting, for more granular control of which builds use the avoid strategy.
 
+### `add-redeposit-gas`
+
+> [!WARNING]
+> This is experimental and unstable flag intended to be used for Cairo compiler research.
+> It is advised not to use it for other purposes than that.
+
+If enabled, during the project compilation Scarb will add redeposit gas libfunc calls in some locations.
+By default, this flag is disabled.
+
+```toml
+[cairo]
+add-redeposit-gas = true
+```
+
 ### `unstable-add-statements-functions-debug-info`
 
 > [!WARNING]
