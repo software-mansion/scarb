@@ -27,7 +27,6 @@ jobs:
           pushd $HOME/pkg
           scarb init --no-vcs
           echo "CAIRO_VERSION=$(scarb metadata --format-version 1 | jq -r '.app_version_info.cairo.version')" >> $GITHUB_OUTPUT
-          popd
         env:
           SCARB_INIT_TEST_RUNNER: cairo-test
 
@@ -42,20 +41,24 @@ jobs:
 
       - name: Publish starknet
         if: steps.check-plugins.outputs.starknet_exists != 'true'
-        working-directory: $HOME/.cache/scarb/registry/std/7a2cdc90b/starknet
-        run: scarb publish --index https://scarbs.dev --no-verify
+        run: |
+          pushd $HOME/.cache/scarb/registry/std/7a2cdc90b/starknet
+          scarb publish --index https://scarbs.dev --no-verify
 
       - name: Publish cairo_run
         if: steps.check-plugins.outputs.cairo_run_exists != 'true'
-        working-directory: $HOME/.cache/scarb/registry/std/7a2cdc90b/cairo_run
-        run: scarb publish --index https://scarbs.dev --no-verify
+        run: |
+          pushd $HOME/.cache/scarb/registry/std/7a2cdc90b/cairo_run
+          scarb publish --index https://scarbs.dev --no-verify
 
       - name: Publish cairo_test
         if: steps.check-plugins.outputs.cairo_test_exists != 'true'
-        working-directory: $HOME/.cache/scarb/registry/std/7a2cdc90b/test_plugin
-        run: scarb publish --index https://scarbs.dev --no-verify
+        run: |
+          pushd $HOME/.cache/scarb/registry/std/7a2cdc90b/test_plugin
+          scarb publish --index https://scarbs.dev --no-verify
 
       - name: Publish assert_macros
         if: steps.check-plugins.outputs.assert_macros_exists != 'true'
-        working-directory: $HOME/.cache/scarb/registry/std/7a2cdc90b/assert_macros
-        run: scarb publish --index https://scarbs.dev --no-verify
+        run: |
+          pushd $HOME/.cache/scarb/registry/std/7a2cdc90b/assert_macros
+          scarb publish --index https://scarbs.dev --no-verify
