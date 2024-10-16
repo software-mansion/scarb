@@ -377,7 +377,11 @@ fn cairo_compilation_unit_for_target(
         components.push(CompilationUnitComponent::try_new(
             member.clone(),
             vec![target],
-            no_test_cfg_set,
+            get_cfg_with_features(
+                no_test_cfg_set.unwrap_or(CfgSet::new()),
+                &member.manifest.features,
+                enabled_features,
+            )?,
         )?);
 
         // Set test package as main package for this compilation unit.
