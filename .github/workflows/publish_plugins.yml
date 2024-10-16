@@ -38,7 +38,7 @@ jobs:
           echo "assert_macros_exists=$(curl -s https://scarbs.dev/api/v1/index/as/se/assert_macros.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
           echo "cairo_run_exists=$(curl -s https://scarbs.dev/api/v1/index/ca/ir/cairo_run.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
           echo "starknet_exists=$(curl -s https://scarbs.dev/api/v1/index/st/ar/starknet.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
-          echo "cairo_test_exists=$(curl -s https://scarbs.dev/api/v1/index/te/st/test_plugin.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
+          echo "cairo_test_exists=$(curl -s https://scarbs.dev/api/v1/index/ca/ir/cairo_test.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
 
       - name: Publish starknet
         if: steps.check-plugins.outputs.starknet_exists != 'true'
