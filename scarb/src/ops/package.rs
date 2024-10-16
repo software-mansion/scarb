@@ -14,7 +14,7 @@ use scarb_ui::{HumanBytes, HumanCount};
 use serde::Serialize;
 
 use crate::compiler::plugin::proc_macro::compilation::{
-    get_crate_archive_basename, package_crate, SharedLibraryProvider,
+    get_crate_archive_basename, package_crate, unpack_crate, SharedLibraryProvider,
 };
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
@@ -278,6 +278,9 @@ fn prepare_archive_recipe(
                 scarb_basename = pkg.id.tarball_basename(),
             ));
         }
+
+        // Unpack .crate to make normalized Cargo.toml available.
+        unpack_crate(pkg, ws.config())?;
 
         // Add normalized Cargo.toml file.
         recipe.push(ArchiveFile {
