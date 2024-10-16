@@ -26,7 +26,6 @@ jobs:
           pushd $HOME/pkg
           scarb init --no-vcs
           echo "CAIRO_VERSION=$(scarb metadata --format-version 1 | jq -r '.app_version_info.cairo.version')" >> $GITHUB_OUTPUT
-          popd
         env:
           SCARB_INIT_TEST_RUNNER: cairo-test
 
@@ -44,25 +43,21 @@ jobs:
         run: |
           pushd $HOME/.cache/scarb/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/starknet
           scarb publish --no-verify
-          popd
 
       - name: Publish cairo_run
         if: steps.check-plugins.outputs.cairo_run_exists != 'true'
         run: |
           pushd $HOME/.cache/scarb/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/cairo_run
           scarb publish --no-verify
-          popd
 
       - name: Publish cairo_test
         if: steps.check-plugins.outputs.cairo_test_exists != 'true'
         run: |
           pushd $HOME/.cache/scarb/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/test_plugin
           scarb publish --no-verify
-          popd
 
       - name: Publish assert_macros
         if: steps.check-plugins.outputs.assert_macros_exists != 'true'
         run: |
           pushd $HOME/.cache/scarb/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/assert_macros
           scarb publish --no-verify
-          popd
