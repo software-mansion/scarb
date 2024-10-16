@@ -145,7 +145,7 @@ Example:
 
 ```rust
 use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
-use cairo_lang_parser::{SimpleParserDatabase};
+use cairo_lang_parser::utils::SimpleParserDatabase;
 
 #[inline_macro]
 pub fn some(token_stream: TokenStream) -> ProcMacroResult {
