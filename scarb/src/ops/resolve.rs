@@ -1,7 +1,7 @@
 use crate::compiler::plugin::{fetch_cairo_plugin, CairoPluginProps};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
-    CompilationUnitComponent, ProcMacroCompilationUnit, Profile,
+    CompilationUnitComponent, CompilationUnitComponentId, ProcMacroCompilationUnit, Profile,
 };
 use crate::core::lockfile::Lockfile;
 use crate::core::package::{Package, PackageClass, PackageId};
@@ -26,6 +26,7 @@ use futures::TryFutureExt;
 use indoc::formatdoc;
 use itertools::Itertools;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::iter::zip;
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -389,6 +390,61 @@ fn cairo_compilation_unit_for_target(
     } else {
         member.id
     };
+
+    // Collect dependencies for the components.
+    let dependencies_for_components: Vec<_> = components
+        .iter()
+        .map(|component| {
+            // Those are direct dependencies of the component.
+            let dependencies_summary: Vec<&ManifestDependency> = component
+                .package
+                .manifest
+                .summary
+                .full_dependencies()
+                .collect();
+
+            // We iterate over all the compilation unit components to get dependency's version.
+            let mut dependencies: Vec<CompilationUnitComponentId> = components
+                .iter()
+                .filter(|component_as_dependency| {
+                    dependencies_summary.iter().any(|dependency_summary| {
+                        dependency_summary.name == component_as_dependency.package.id.name
+                    }) ||
+                        // This is a hacky way of accommodating integration test components,
+                        // which need to depend on the tested package.
+                        component_as_dependency
+                            .package
+                            .manifest
+                            .targets
+                            .iter()
+                            .filter(|target| target.kind.is_test())
+                            .any(|target| {
+                                target.group_id.clone().unwrap_or(target.name.clone())
+                                    == component.package.id.name.to_smol_str()
+                                    && component_as_dependency.cairo_package_name() != component.cairo_package_name()
+                            })
+                })
+                .map(|compilation_unit_component| compilation_unit_component.id.clone()
+                )
+                .collect();
+
+            // Adds itself to dependencies
+            let is_integration_test = if component.first_target().kind.is_test() {
+                let props: Option<TestTargetProps> = component.first_target().props().ok();
+                props
+                    .map(|props| props.test_type == TestTargetType::Integration)
+                    .unwrap_or_default()
+            } else { false };
+            if !is_integration_test {
+                dependencies.push(component.id.clone());
+            }
+
+            dependencies
+        }).collect();
+
+    for (component, dependencies) in zip(&mut components, dependencies_for_components) {
+        component.dependencies = dependencies;
+    }
 
     Ok(CairoCompilationUnit {
         main_package_id,
