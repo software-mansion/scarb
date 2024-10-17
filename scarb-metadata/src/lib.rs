@@ -401,7 +401,7 @@ pub struct CompilationUnitComponentDependencyMetadata {
     ///
     /// This should directly translate to a `discriminator` field in Cairo compiler terminology,
     /// except that it should be `None` for `core` crate **only**.
-    pub id: String,
+    pub id: CompilationUnitComponentId,
 
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]
