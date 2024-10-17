@@ -12,7 +12,7 @@ The publish command automatically [packages and verifies](#packaging-your-packag
 To publish your package to a registry that supports package publishing, you need to authenticate using an API token with the `publish` scope.
 First, log in to the registry and [in the dashboard](https://scarbs.xyz/dashboard) generate the API token.
 Scarb will use the token to authenticate and complete the publishing process.
-The token must be provided via the ``SCARB_REGISTRY_AUTH_TOKEN` environment variable.
+The token must be provided via the `SCARB_REGISTRY_AUTH_TOKEN` environment variable.
 
 ```shell
 SCARB_REGISTRY_AUTH_TOKEN=scrb_mytoken scarb publish
