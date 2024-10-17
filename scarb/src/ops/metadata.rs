@@ -10,7 +10,7 @@ use scarb_ui::args::PackagesSource;
 
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
-    ProcMacroCompilationUnit,
+    CompilationUnitComponentId, ProcMacroCompilationUnit,
 };
 use crate::core::{
     edition_variant, DepKind, DependencyVersionReq, ManifestDependency, Package, PackageId,
@@ -330,6 +330,7 @@ where
                             .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
                     })
                     .collect::<Vec<_>>()))
+                .id(wrap_compilation_unit_component_id(&c.id))
                 .dependencies(
                     Some(
                         c.dependencies
@@ -395,6 +396,14 @@ fn wrap_package_id(id: PackageId) -> m::PackageId {
 fn wrap_source_id(id: SourceId) -> m::SourceId {
     m::SourceId {
         repr: id.to_pretty_url(),
+    }
+}
+
+fn wrap_compilation_unit_component_id(
+    id: &CompilationUnitComponentId,
+) -> m::CompilationUnitComponentId {
+    m::CompilationUnitComponentId {
+        repr: id.to_discriminator(),
     }
 }
 
