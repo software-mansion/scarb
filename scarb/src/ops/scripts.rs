@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
+use std::process::ExitCode;
 use std::rc::Rc;
 
 use anyhow::Result;
@@ -56,6 +57,9 @@ pub fn execute_script(
     ));
 
     if exit_code != 0 {
+        let exit_code: ExitCode = u8::try_from(exit_code)
+            .map(Into::into)
+            .unwrap_or(ExitCode::FAILURE);
         Err(ScriptExecutionError::new(exit_code).into())
     } else {
         Ok(())
