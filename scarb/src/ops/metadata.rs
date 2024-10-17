@@ -330,6 +330,18 @@ where
                             .expect("Cairo's `Cfg` must serialize identically as Scarb Metadata's `Cfg`.")
                     })
                     .collect::<Vec<_>>()))
+                .dependencies(
+                    Some(
+                        c.dependencies
+                            .iter()
+                            .map(|component_id|
+                                m::CompilationUnitComponentDependencyMetadataBuilder::default()
+                                    .id(component_id.to_discriminator())
+                                    .build().
+                                    unwrap()
+                            ).collect()
+                    )
+                )
                 .build()
                 .unwrap()
         })
