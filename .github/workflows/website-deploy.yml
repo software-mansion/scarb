@@ -41,7 +41,7 @@ jobs:
       - name: Apply custom highlighting
         run: | 
           curl -o highlight.js https://raw.githubusercontent.com/software-mansion/scarb/main/extensions/scarb-doc/theme/highlight.js
-          cp highlight.js ./target/doc/core/highlight.js
+          cp highlight.js ./core/target/doc/core/highlight.js
       - uses: actions/upload-artifact@v4
         with:
           name: corelib-docs
