@@ -32,7 +32,9 @@ jobs:
         env:
           SCARB_INIT_TEST_RUNNER: cairo-test
       - name: Extract corelib from Scarb cache
-        run: cp -r $(scarb cache path)/registry/std/${{ steps.scarb-init.outputs.CAIRO_VERSION_PATH }}/core/* ./core
+        run: |
+          mkdir -p core
+          cp -r $(scarb cache path)/registry/std/${{ steps.scarb-init.outputs.CAIRO_VERSION_PATH }}/core/* ./core
       - name: Generate corelib docs with `scarb doc`
         run: cargo doc --all-features
         working-directory: ./core
