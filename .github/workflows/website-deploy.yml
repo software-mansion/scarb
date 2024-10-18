@@ -18,10 +18,14 @@ concurrency:
 jobs:
   build-corelib-docs:
     runs-on: ubuntu-latest
+    env:
+      MDBOOK_VERSION: 0.4.31
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: software-mansion/setup-scarb@v1
+      - name: Install mdBook
+        run: cargo install --version ${MDBOOK_VERSION} mdbook
       - name: Init Scarb to cache corelib
         id: scarb-init
         run: |
@@ -35,8 +39,11 @@ jobs:
         run: |
           mkdir -p core
           cp -r $(scarb cache path)/registry/std/${{ steps.scarb-init.outputs.CAIRO_VERSION_PATH }}/core/* ./core
-      - name: Generate corelib docs with `scarb doc`
-        run: scarb doc --all-features
+      - name: Generate and build corelib docs
+        run: |
+          scarb doc --all-features
+          pushd target/doc/core
+          mdbook build
         working-directory: ./core
       - name: Apply custom highlighting
         run: | 
@@ -45,7 +52,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: corelib-docs
-          path: ./core/target/doc/core
+          path: ./core/target/doc/core/book
 
   build:
     runs-on: ubuntu-latest
