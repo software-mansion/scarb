@@ -3,9 +3,9 @@
 #![deny(rustdoc::private_intra_doc_links)]
 #![warn(rust_2018_idioms)]
 #![doc = concat!(
-"Structured access to the output of `scarb metadata --format-version ",
-env!("CARGO_PKG_VERSION_MAJOR"),
-"`.
+    "Structured access to the output of `scarb metadata --format-version ",
+    env!("CARGO_PKG_VERSION_MAJOR"),
+    "`.
 ")]
 //! Usually used by Scarb extensions and other developer tools.
 //!
@@ -110,7 +110,7 @@ impl fmt::Display for CompilationUnitId {
 /// It is possible to inspect the `repr` field if the need arises,
 /// but its precise format is an implementation detail and is subject to change.
 ///
-/// [`Metadata`] can be indexed by [`CompilationUnitComponentId`].
+/// [`CompilationUnitMetadata`] can be indexed by [`CompilationUnitComponentId`].
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(transparent)]
 pub struct CompilationUnitComponentId {
@@ -571,5 +571,16 @@ impl CompilationUnitComponentMetadata {
         self.source_path
             .parent()
             .expect("Source path is guaranteed to point to a file.")
+    }
+}
+
+impl<'a> Index<&'a CompilationUnitComponentId> for CompilationUnitMetadata {
+    type Output = CompilationUnitComponentMetadata;
+
+    fn index(&self, idx: &'a CompilationUnitComponentId) -> &Self::Output {
+        self.components
+            .iter()
+            .find(|p| p.id.as_ref() == Some(idx))
+            .unwrap_or_else(|| panic!("no compilation unit with this ID: {idx}"))
     }
 }
