@@ -418,6 +418,151 @@ fn integration_tests_do_not_enable_cfg_in_main_package() {
 }
 
 #[test]
+fn integration_tests_cannot_use_itself_by_target_name() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_cairo_test()
+        .lib_cairo(indoc! {r#"
+            fn hello_world() -> felt252 { 42 }
+        "#})
+        .build(&t);
+    t.child("tests").create_dir_all().unwrap();
+    t.child("tests/test1.cairo")
+        .write_str(indoc! {r#"
+        pub fn hello() -> felt252 { 12 }
+        pub fn beautiful() -> felt252 { 34 }
+        pub fn world() -> felt252 { 56 }
+
+        mod tests {
+            use hello_integrationtest::test1::world;
+            use hello_tests::test1::beautiful;
+            use crate::test1::hello;
+
+            #[test]
+            fn test_1() {
+                assert(world() == 12, '');
+            }
+        }
+        "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
+            [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
+            error: Identifier not found.
+             --> [..]test1.cairo:6:9
+                use hello_integrationtest::test1::world;
+                    ^*******************^
+
+            error: Identifier not found.
+             --> [..]test1.cairo:7:9
+                use hello_tests::test1::beautiful;
+                    ^*********^
+
+            error: Type annotations needed. Failed to infer ?0.
+             --> [..]test1.cairo:12:16
+                    assert(world() == 12, '');
+                           ^***********^
+
+            error: could not compile `hello_integrationtest` due to previous error
+        "#});
+}
+
+#[test]
+fn features_enabled_in_integration_tests() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_cairo_test()
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn f() -> felt252 { 42 }
+
+            fn main() -> felt252 {
+                0
+            }
+        "#})
+        .build(&t);
+
+    t.child("tests/test1.cairo")
+        .write_str(indoc! {r#"
+            #[cfg(test)]
+            mod tests {
+                use hello::f;
+
+                #[test]
+                fn test_feature_function() {
+                    assert(f() == 42, 'it works!');
+                }
+            }
+        "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
+            [..] Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..])
+            error: Identifier not found.
+             --> [..]test1.cairo:3:16
+                use hello::f;
+                           ^
+
+            error: Type annotations needed. Failed to infer ?0.
+             --> [..]test1.cairo:7:16
+                    assert(f() == 42, 'it works!');
+                           ^*******^
+
+            error: could not compile `hello_integrationtest` due to previous error
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .arg("--features")
+        .arg("x")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec![
+            "hello_integrationtest.test.json",
+            "hello_integrationtest.test.sierra.json",
+            "hello_unittest.test.json",
+            "hello_unittest.test.sierra.json",
+        ]
+    );
+
+    t.child("target/dev/hello_integrationtest.test.json")
+        .assert_is_json::<serde_json::Value>();
+    t.child("target/dev/hello_integrationtest.test.sierra.json")
+        .assert_is_json::<VersionedProgram>();
+    let content = t
+        .child("target/dev/hello_integrationtest.test.json")
+        .read_to_string();
+    let json: serde_json::Value = serde_json::from_str(&content).unwrap();
+    let tests = json.get("named_tests").unwrap().as_array().unwrap();
+    assert_eq!(tests.len(), 1);
+}
+
+#[test]
 fn detect_single_file_test_targets() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start().name("hello").build(&t);

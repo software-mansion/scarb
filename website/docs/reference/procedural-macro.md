@@ -145,7 +145,7 @@ Example:
 
 ```rust
 use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
-use cairo_lang_parser::{SimpleParserDatabase};
+use cairo_lang_parser::utils::SimpleParserDatabase;
 
 #[inline_macro]
 pub fn some(token_stream: TokenStream) -> ProcMacroResult {
@@ -205,7 +205,7 @@ pub fn some(token_stream: TokenStream) -> ProcMacroResult {
   resolution through Scarb dependencies system (same as regular packages).
 - The procedural macro source code will be compiled on Scarb users system only.
 - Enabling this target means that the package does not contain any Cairo code.
-- This target is be _exclusive_:
+- This target is _exclusive_:
   - It blocks defining other targets for the package, not even `lib`.
   - It will also not be possible to declare dependencies, or specify Cairo compiler settings, it won't make sense for
     these packages.

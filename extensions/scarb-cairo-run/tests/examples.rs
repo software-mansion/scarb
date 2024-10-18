@@ -97,7 +97,7 @@ fn can_limit_gas() {
                 Finished `dev` profile target(s) in [..]
                  Running hello_world
             Run completed successfully, returning [987]
-            Remaining gas: 58060
+            Remaining gas: 59760
         "#});
 }
 

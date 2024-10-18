@@ -37,6 +37,10 @@ impl FileLockGuard {
         self.path.as_path()
     }
 
+    pub fn parent(&self) -> Option<&Utf8Path> {
+        self.path.parent()
+    }
+
     pub fn lock_kind(&self) -> FileLockKind {
         self.lock_kind
     }
@@ -288,6 +292,31 @@ impl Filesystem {
             path.as_ref(),
             OpenOptions::new().read(true),
             FileLockKind::Shared,
+            description,
+            config,
+        )
+    }
+
+    /// Opens exclusive access to a [`File`], returning the locked version of it.
+    ///
+    /// This function will fail if `path` doesn't already exist, but if it does then it will
+    /// acquire an exclusive lock on `path`.
+    /// If the process must block waiting for the lock, the `description` annotated with _blocking_
+    /// status message is printed to [`Config::ui`].
+    ///
+    /// The returned file can be accessed to look at the path and also has read
+    /// access to the underlying file.
+    /// Any writes to the file will return an error.
+    pub fn open_ro_exclusive(
+        &self,
+        path: impl AsRef<Utf8Path>,
+        description: &str,
+        config: &Config,
+    ) -> Result<FileLockGuard> {
+        self.open(
+            path.as_ref(),
+            OpenOptions::new().read(true),
+            FileLockKind::Exclusive,
             description,
             config,
         )

@@ -29,4 +29,20 @@ RUST_MIN_STACK=134217728 scarb build
 Please note that this is a workaround and not a permanent solution.
 If you encounter this issue, please report it to the compiler team at [Cairo issues].
 
+## Procedural macros undefined symbol
+
+When compiling a project that uses procedural macros, if you encounter an error message like this:
+
+```
+undefined symbol: __start_linkm2_MACRO_DEFINITIONS_SLICE
+```
+
+You can try following workarounds:
+
+1. Make sure that you have a stable Cargo release installed. You can check the installed version by
+   running `cargo --version`.
+2. If the error still persists on stable Cargo release, please try running build with
+   either `RUSTFLAGS="-C link-dead-code"` or `RUSTFLAGS="-C link-args=-znostart-stop-gc"` flags. You can submit the
+   flags to the compiler by pasting them before the `scarb build` command in your terminal.
+
 [Cairo issues]: https://github.com/starkware-libs/cairo/issues/

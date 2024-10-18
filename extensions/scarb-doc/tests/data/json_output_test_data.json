@@ -6,7 +6,7 @@
         "root_module": {
           "item_data": {
             "name": "hello_world",
-            "doc": null,
+            "doc": "Fibonacci sequence calculator\n",
             "signature": null,
             "full_path": "hello_world"
           },
@@ -24,7 +24,7 @@
                 {
                   "item_data": {
                     "name": "it_works",
-                    "doc": "Really",
+                    "doc": "Really works.",
                     "signature": "fn it_works()",
                     "full_path": "hello_world::tests::it_works"
                   }
@@ -75,7 +75,7 @@
                   "item_data": {
                     "name": "radius",
                     "doc": "Radius of the circle",
-                    "signature": null,
+                    "signature": "radius: u32",
                     "full_path": "hello_world::Circle::radius"
                   }
                 }
@@ -83,7 +83,7 @@
               "item_data": {
                 "name": "Circle",
                 "doc": "Circle struct with radius field",
-                "signature": null,
+                "signature": "#[derive(Drop, Serde, PartialEq)]\nstruct Circle {\n    radius: u32,\n}",
                 "full_path": "hello_world::Circle"
               }
             }
@@ -95,7 +95,7 @@
                   "item_data": {
                     "name": "Red",
                     "doc": "Red color",
-                    "signature": null,
+                    "signature": "Red : ( )",
                     "full_path": "hello_world::Color::Red"
                   }
                 },
@@ -103,7 +103,7 @@
                   "item_data": {
                     "name": "Green",
                     "doc": "Green color",
-                    "signature": null,
+                    "signature": "Green : ( )",
                     "full_path": "hello_world::Color::Green"
                   }
                 },
@@ -111,7 +111,7 @@
                   "item_data": {
                     "name": "Blue",
                     "doc": "Blue color",
-                    "signature": null,
+                    "signature": "Blue : ( )",
                     "full_path": "hello_world::Color::Blue"
                   }
                 }
@@ -119,7 +119,7 @@
               "item_data": {
                 "name": "Color",
                 "doc": "Color enum with Red, Green, and Blue variants",
-                "signature": null,
+                "signature": "enum Color {\n    Red: (),\n    Green: (),\n    Blue: (),\n}",
                 "full_path": "hello_world::Color"
               }
             }
@@ -163,7 +163,7 @@
                     "name": "area",
                     "doc": "Calculate the area of the shape",
                     "signature": "fn area(self: T) -> u32",
-                    "full_path": "Shape::area"
+                    "full_path": "hello_world::Shape::area"
                   }
                 }
               ],

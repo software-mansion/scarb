@@ -26,8 +26,9 @@ use cairo_lang_sierra_generator::replace_ids::replace_sierra_ids_in_program;
 use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_test_plugin::test_plugin_suite;
 use itertools::Itertools;
+use semver::Version;
 use serde::Serialize;
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -88,6 +89,7 @@ pub struct TestDetails {
 
 pub fn collect_tests(
     crate_name: &str,
+    crate_version: Version,
     crate_root: &Path,
     lib_content: &str,
     compilation_unit: &CompilationUnit,
@@ -119,6 +121,7 @@ pub fn collect_tests(
     let main_crate_id = insert_lib_entrypoint_content_into_db(
         db,
         crate_name,
+        crate_version,
         crate_root,
         lib_content,
         main_package_crate_settings,
@@ -258,11 +261,15 @@ fn build_diagnostics_reporter(compilation_unit: &CompilationUnit) -> Diagnostics
 fn insert_lib_entrypoint_content_into_db(
     db: &mut RootDatabase,
     crate_name: &str,
+    crate_version: Version,
     crate_root: &Path,
     lib_content: &str,
     main_package_crate_settings: CrateSettings,
 ) -> CrateId {
-    let main_crate_id = db.intern_crate(CrateLongId::Real(SmolStr::from(crate_name)));
+    let main_crate_id = db.intern_crate(CrateLongId::Real {
+        name: SmolStr::from(crate_name),
+        discriminator: Some(crate_version.to_smolstr()),
+    });
     db.set_crate_config(
         main_crate_id,
         Some(CrateConfiguration {

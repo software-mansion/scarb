@@ -1,5 +1,8 @@
-use crate::PackageInformation;
-use anyhow::{Context, Result};
+use crate::{
+    errors::{IODirectoryCreationError, IOWriteError, PackagesSerializationError},
+    PackageInformation,
+};
+use anyhow::Result;
 use camino::Utf8Path;
 use serde::Serialize;
 use std::fs;
@@ -23,15 +26,14 @@ impl VersionedJsonOutput {
 
     pub fn save_to_file(&self, output_dir: &Utf8Path) -> Result<()> {
         fs::create_dir_all(output_dir)
-            .context("failed to create output directory for scarb doc")?;
+            .map_err(|e| IODirectoryCreationError::new(e, "generated documentation"))?;
 
         let output_path = output_dir.join(JSON_OUTPUT_FILENAME);
 
-        let output = serde_json::to_string_pretty(&self)
-            .expect("failed to serialize information about crates")
-            + "\n";
+        let output =
+            serde_json::to_string_pretty(&self).map_err(PackagesSerializationError::from)? + "\n";
 
-        fs::write(output_path, output)?;
+        fs::write(output_path, output).map_err(|e| IOWriteError::new(e, "json documentation"))?;
 
         Ok(())
     }

@@ -1513,3 +1513,71 @@ fn add_statements_code_locations_debug_info_to_tests() {
         "Expected statements_code_locations info to be a map"
     );
 }
+
+#[test]
+fn can_import_from_self_by_name() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn fib(mut n: u32) -> u32 {
+                let mut a: u32 = 0;
+                let mut b: u32 = 1;
+                while n != 0 {
+                    n = n - 1;
+                    let temp = b;
+                    b = a + b;
+                    a = temp;
+                };
+                a
+            }
+            
+            mod some {
+                use hello::fib;
+                
+                fn main() -> u32 {
+                    fib(16)
+                }
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+}
+
+#[test]
+fn can_build_with_add_redeposit_gas() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn main() -> u32 {
+                fib(16)
+            }
+
+            fn fib(mut n: u32) -> u32 {
+                let mut a: u32 = 0;
+                let mut b: u32 = 1;
+                while n != 0 {
+                    n = n - 1;
+                    let temp = b;
+                    b = a + b;
+                    a = temp;
+                };
+                a
+            }
+        "#})
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            add-redeposit-gas = true
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+}

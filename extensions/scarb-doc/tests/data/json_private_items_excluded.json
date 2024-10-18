@@ -52,7 +52,7 @@
                       "item_data": {
                         "name": "PublicChildStructure",
                         "doc": "Child public struct",
-                        "signature": null,
+                        "signature": "pub struct PublicChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PublicParent::PublicChild::PublicChildStructure"
                       }
                     },
@@ -61,7 +61,7 @@
                       "item_data": {
                         "name": "PublicCrateChildStructure",
                         "doc": "Child public crate struct",
-                        "signature": null,
+                        "signature": "pub(crate) struct PublicCrateChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildStructure"
                       }
                     }
@@ -73,7 +73,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -81,7 +81,7 @@
                       "item_data": {
                         "name": "PublicChildEnum",
                         "doc": "Child public enum",
-                        "signature": null,
+                        "signature": "pub enum PublicChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PublicParent::PublicChild::PublicChildEnum"
                       }
                     },
@@ -91,7 +91,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -99,7 +99,7 @@
                       "item_data": {
                         "name": "PublicCrateChildEnum",
                         "doc": "Child public crate enum",
-                        "signature": null,
+                        "signature": "pub(crate) enum PublicCrateChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PublicParent::PublicChild::PublicCrateChildEnum"
                       }
                     }
@@ -144,7 +144,7 @@
                       "item_data": {
                         "name": "PublicChildStructure",
                         "doc": "Child public struct",
-                        "signature": null,
+                        "signature": "pub struct PublicChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildStructure"
                       }
                     },
@@ -153,7 +153,7 @@
                       "item_data": {
                         "name": "PublicCrateChildStructure",
                         "doc": "Child public crate struct",
-                        "signature": null,
+                        "signature": "pub(crate) struct PublicCrateChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildStructure"
                       }
                     }
@@ -165,7 +165,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -173,7 +173,7 @@
                       "item_data": {
                         "name": "PublicChildEnum",
                         "doc": "Child public enum",
-                        "signature": null,
+                        "signature": "pub enum PublicChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PublicParent::PublicCrateChild::PublicChildEnum"
                       }
                     },
@@ -183,7 +183,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -191,7 +191,7 @@
                       "item_data": {
                         "name": "PublicCrateChildEnum",
                         "doc": "Child public crate enum",
-                        "signature": null,
+                        "signature": "pub(crate) enum PublicCrateChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PublicParent::PublicCrateChild::PublicCrateChildEnum"
                       }
                     }
@@ -229,7 +229,7 @@
                   "item_data": {
                     "name": "PublicParentStructure",
                     "doc": "Parent public struct",
-                    "signature": null,
+                    "signature": "pub struct PublicParentStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                     "full_path": "hello_world::PublicParent::PublicParentStructure"
                   }
                 },
@@ -238,7 +238,7 @@
                   "item_data": {
                     "name": "PublicCrateParentStructure",
                     "doc": "Parent publi crate struct",
-                    "signature": null,
+                    "signature": "pub(crate) struct PublicCrateParentStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                     "full_path": "hello_world::PublicParent::PublicCrateParentStructure"
                   }
                 }
@@ -250,7 +250,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": null,
+                        "signature": "PUBLIC_VARIANT",
                         "full_path": "hello_world::PublicParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -258,7 +258,7 @@
                   "item_data": {
                     "name": "PublicParentEnum",
                     "doc": "Parent public enum",
-                    "signature": null,
+                    "signature": "pub enum PublicParentEnum {\n    PUBLIC_VARIANT\n}",
                     "full_path": "hello_world::PublicParent::PublicParentEnum"
                   }
                 },
@@ -268,7 +268,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": null,
+                        "signature": "PUBLIC_VARIANT",
                         "full_path": "hello_world::PublicParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -276,7 +276,7 @@
                   "item_data": {
                     "name": "PublicCrateParentEnum",
                     "doc": "Parent public crate enum",
-                    "signature": null,
+                    "signature": "pub(crate) enum PublicCrateParentEnum {\n    PUBLIC_VARIANT\n}",
                     "full_path": "hello_world::PublicParent::PublicCrateParentEnum"
                   }
                 }
@@ -329,7 +329,7 @@
                       "item_data": {
                         "name": "PublicChildStructure",
                         "doc": "Child public struct",
-                        "signature": null,
+                        "signature": "pub struct PublicChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildStructure"
                       }
                     },
@@ -338,7 +338,7 @@
                       "item_data": {
                         "name": "PublicCrateChildStructure",
                         "doc": "Child public crate struct",
-                        "signature": null,
+                        "signature": "pub(crate) struct PublicCrateChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildStructure"
                       }
                     }
@@ -350,7 +350,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -358,7 +358,7 @@
                       "item_data": {
                         "name": "PublicChildEnum",
                         "doc": "Child public enum",
-                        "signature": null,
+                        "signature": "pub enum PublicChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PublicCrateParent::PublicChild::PublicChildEnum"
                       }
                     },
@@ -368,7 +368,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -376,7 +376,7 @@
                       "item_data": {
                         "name": "PublicCrateChildEnum",
                         "doc": "Child public crate enum",
-                        "signature": null,
+                        "signature": "pub(crate) enum PublicCrateChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PublicCrateParent::PublicChild::PublicCrateChildEnum"
                       }
                     }
@@ -421,7 +421,7 @@
                       "item_data": {
                         "name": "PublicChildStructure",
                         "doc": "Child public struct",
-                        "signature": null,
+                        "signature": "pub struct PublicChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildStructure"
                       }
                     },
@@ -430,7 +430,7 @@
                       "item_data": {
                         "name": "PublicCrateChildStructure",
                         "doc": "Child public crate struct",
-                        "signature": null,
+                        "signature": "pub(crate) struct PublicCrateChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildStructure"
                       }
                     }
@@ -442,7 +442,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -450,7 +450,7 @@
                       "item_data": {
                         "name": "PublicChildEnum",
                         "doc": "Child public enum",
-                        "signature": null,
+                        "signature": "pub enum PublicChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicChildEnum"
                       }
                     },
@@ -460,7 +460,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -468,7 +468,7 @@
                       "item_data": {
                         "name": "PublicCrateChildEnum",
                         "doc": "Child public crate enum",
-                        "signature": null,
+                        "signature": "pub(crate) enum PublicCrateChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PublicCrateParent::PublicCrateChild::PublicCrateChildEnum"
                       }
                     }
@@ -506,7 +506,7 @@
                   "item_data": {
                     "name": "PublicParentStructure",
                     "doc": "Parent public struct",
-                    "signature": null,
+                    "signature": "pub struct PublicParentStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                     "full_path": "hello_world::PublicCrateParent::PublicParentStructure"
                   }
                 },
@@ -515,7 +515,7 @@
                   "item_data": {
                     "name": "PublicCrateParentStructure",
                     "doc": "Parent public struct",
-                    "signature": null,
+                    "signature": "pub(crate) struct PublicCrateParentStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                     "full_path": "hello_world::PublicCrateParent::PublicCrateParentStructure"
                   }
                 }
@@ -527,7 +527,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": null,
+                        "signature": "PUBLIC_VARIANT",
                         "full_path": "hello_world::PublicCrateParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -535,7 +535,7 @@
                   "item_data": {
                     "name": "PublicParentEnum",
                     "doc": "Parent public enum",
-                    "signature": null,
+                    "signature": "pub enum PublicParentEnum {\n    PUBLIC_VARIANT\n}",
                     "full_path": "hello_world::PublicCrateParent::PublicParentEnum"
                   }
                 },
@@ -545,7 +545,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": null,
+                        "signature": "PUBLIC_VARIANT",
                         "full_path": "hello_world::PublicCrateParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -553,7 +553,7 @@
                   "item_data": {
                     "name": "PublicCrateParentEnum",
                     "doc": "Parent public crate enum",
-                    "signature": null,
+                    "signature": "pub(crate) enum PublicCrateParentEnum {\n    PUBLIC_VARIANT\n}",
                     "full_path": "hello_world::PublicCrateParent::PublicCrateParentEnum"
                   }
                 }
@@ -606,7 +606,7 @@
                       "item_data": {
                         "name": "PublicChildStructure",
                         "doc": "Child public struct",
-                        "signature": null,
+                        "signature": "pub struct PublicChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PrivateParent::PublicChild::PublicChildStructure"
                       }
                     },
@@ -615,7 +615,7 @@
                       "item_data": {
                         "name": "PublicCrateChildStructure",
                         "doc": "Child public crate struct",
-                        "signature": null,
+                        "signature": "pub(crate) struct PublicCrateChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildStructure"
                       }
                     }
@@ -627,7 +627,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PrivateParent::PublicChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -635,7 +635,7 @@
                       "item_data": {
                         "name": "PublicChildEnum",
                         "doc": "Child public enum",
-                        "signature": null,
+                        "signature": "pub enum PublicChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PrivateParent::PublicChild::PublicChildEnum"
                       }
                     },
@@ -645,7 +645,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -653,7 +653,7 @@
                       "item_data": {
                         "name": "PublicCrateChildEnum",
                         "doc": "Child public crate enum",
-                        "signature": null,
+                        "signature": "pub(crate) enum PublicCrateChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PrivateParent::PublicChild::PublicCrateChildEnum"
                       }
                     }
@@ -698,7 +698,7 @@
                       "item_data": {
                         "name": "PublicChildStructure",
                         "doc": "Child public struct",
-                        "signature": null,
+                        "signature": "pub struct PublicChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildStructure"
                       }
                     },
@@ -707,7 +707,7 @@
                       "item_data": {
                         "name": "PublicCrateChildStructure",
                         "doc": "Child public crate struct",
-                        "signature": null,
+                        "signature": "pub(crate) struct PublicCrateChildStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                         "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildStructure"
                       }
                     }
@@ -719,7 +719,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -727,7 +727,7 @@
                       "item_data": {
                         "name": "PublicChildEnum",
                         "doc": "Child public enum",
-                        "signature": null,
+                        "signature": "pub enum PublicChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicChildEnum"
                       }
                     },
@@ -737,7 +737,7 @@
                           "item_data": {
                             "name": "PUBLIC_VARIANT",
                             "doc": "Public enum variant",
-                            "signature": null,
+                            "signature": "PUBLIC_VARIANT",
                             "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildEnum::PUBLIC_VARIANT"
                           }
                         }
@@ -745,7 +745,7 @@
                       "item_data": {
                         "name": "PublicCrateChildEnum",
                         "doc": "Child public crate enum",
-                        "signature": null,
+                        "signature": "pub(crate) enum PublicCrateChildEnum {\n    PUBLIC_VARIANT\n}",
                         "full_path": "hello_world::PrivateParent::PublicCrateChild::PublicCrateChildEnum"
                       }
                     }
@@ -783,7 +783,7 @@
                   "item_data": {
                     "name": "PublicParentStructure",
                     "doc": "Parent public struct",
-                    "signature": null,
+                    "signature": "pub struct PublicParentStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                     "full_path": "hello_world::PrivateParent::PublicParentStructure"
                   }
                 },
@@ -792,7 +792,7 @@
                   "item_data": {
                     "name": "PublicCrateParentStructure",
                     "doc": "Parent public struct",
-                    "signature": null,
+                    "signature": "pub(crate) struct PublicCrateParentStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                     "full_path": "hello_world::PrivateParent::PublicCrateParentStructure"
                   }
                 }
@@ -804,7 +804,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": null,
+                        "signature": "PUBLIC_VARIANT",
                         "full_path": "hello_world::PrivateParent::PublicParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -812,7 +812,7 @@
                   "item_data": {
                     "name": "PublicParentEnum",
                     "doc": "Parent public enum",
-                    "signature": null,
+                    "signature": "pub enum PublicParentEnum {\n    PUBLIC_VARIANT\n}",
                     "full_path": "hello_world::PrivateParent::PublicParentEnum"
                   }
                 },
@@ -822,7 +822,7 @@
                       "item_data": {
                         "name": "PUBLIC_VARIANT",
                         "doc": "Public enum variant",
-                        "signature": null,
+                        "signature": "PUBLIC_VARIANT",
                         "full_path": "hello_world::PrivateParent::PublicCrateParentEnum::PUBLIC_VARIANT"
                       }
                     }
@@ -830,7 +830,7 @@
                   "item_data": {
                     "name": "PublicCrateParentEnum",
                     "doc": "Parent public crate enum",
-                    "signature": null,
+                    "signature": "pub(crate) enum PublicCrateParentEnum {\n    PUBLIC_VARIANT\n}",
                     "full_path": "hello_world::PrivateParent::PublicCrateParentEnum"
                   }
                 }
@@ -884,7 +884,7 @@
               "item_data": {
                 "name": "PublicStructure",
                 "doc": "Public struct",
-                "signature": null,
+                "signature": "pub struct PublicStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                 "full_path": "hello_world::PublicStructure"
               }
             },
@@ -893,7 +893,7 @@
               "item_data": {
                 "name": "PublicCrateStructure",
                 "doc": "Public crate struct",
-                "signature": null,
+                "signature": "pub(crate) struct PublicCrateStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                 "full_path": "hello_world::PublicCrateStructure"
               }
             },
@@ -902,7 +902,7 @@
               "item_data": {
                 "name": "PrivateStructure",
                 "doc": "Private struct",
-                "signature": null,
+                "signature": "struct PrivateStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252\n}",
                 "full_path": "hello_world::PrivateStructure"
               }
             }
@@ -914,7 +914,7 @@
                   "item_data": {
                     "name": "PUBLIC_VARIANT",
                     "doc": "Public enum variant",
-                    "signature": null,
+                    "signature": "PUBLIC_VARIANT",
                     "full_path": "hello_world::PublicEnum::PUBLIC_VARIANT"
                   }
                 }
@@ -922,7 +922,7 @@
               "item_data": {
                 "name": "PublicEnum",
                 "doc": "Public enum",
-                "signature": null,
+                "signature": "pub enum PublicEnum {\n    PUBLIC_VARIANT\n}",
                 "full_path": "hello_world::PublicEnum"
               }
             },
@@ -932,7 +932,7 @@
                   "item_data": {
                     "name": "PUBLIC_VARIANT",
                     "doc": "Public enum variant",
-                    "signature": null,
+                    "signature": "PUBLIC_VARIANT",
                     "full_path": "hello_world::PublicCrateEnum::PUBLIC_VARIANT"
                   }
                 }
@@ -940,7 +940,7 @@
               "item_data": {
                 "name": "PublicCrateEnum",
                 "doc": "Public crate enum",
-                "signature": null,
+                "signature": "pub(crate) enum PublicCrateEnum {\n    PUBLIC_VARIANT\n}",
                 "full_path": "hello_world::PublicCrateEnum"
               }
             },
@@ -950,7 +950,7 @@
                   "item_data": {
                     "name": "PRIVATE_VARIANT",
                     "doc": "Private enum variant",
-                    "signature": null,
+                    "signature": "PRIVATE_VARIANT",
                     "full_path": "hello_world::PrivateEnum::PRIVATE_VARIANT"
                   }
                 }
@@ -958,7 +958,7 @@
               "item_data": {
                 "name": "PrivateEnum",
                 "doc": "Private enum",
-                "signature": null,
+                "signature": "enum PrivateEnum {\n    PRIVATE_VARIANT,\n}",
                 "full_path": "hello_world::PrivateEnum"
               }
             }

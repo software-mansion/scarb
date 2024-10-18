@@ -20,6 +20,8 @@ pub struct ManifestCompilerConfig {
     pub allow_warnings: bool,
     /// Enable auto gas withdrawal and gas usage check.
     pub enable_gas: bool,
+    /// Add a call to the redeposits_gas libfunc in a bunch of places.
+    pub add_redeposit_gas: bool,
     /// Add a mapping between sierra statement indexes and fully qualified paths of cairo functions
     /// to debug info. A statement index maps to a vector consisting of a function which caused the
     /// statement to be generated and all functions that were inlined or generated along the way.
@@ -52,6 +54,7 @@ impl DefaultForProfile for ManifestCompilerConfig {
             sierra_replace_ids: profile.is_dev(),
             allow_warnings: true,
             enable_gas: true,
+            add_redeposit_gas: false,
             unstable_add_statements_functions_debug_info: false,
             unstable_add_statements_code_locations_debug_info: false,
             inlining_strategy: InliningStrategy::default(),
@@ -65,6 +68,7 @@ impl From<ManifestCompilerConfig> for TomlCairo {
             sierra_replace_ids: Some(config.sierra_replace_ids),
             allow_warnings: Some(config.allow_warnings),
             enable_gas: Some(config.enable_gas),
+            add_redeposit_gas: Some(config.add_redeposit_gas),
             unstable_add_statements_functions_debug_info: Some(
                 config.unstable_add_statements_functions_debug_info,
             ),

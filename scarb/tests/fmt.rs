@@ -70,7 +70,7 @@ fn simple_emit_invalid() {
         .assert()
         .failure()
         .stdout_eq(format!(
-            "{}:\n{}\n",
+            "{}:\n\n{}",
             fsx::canonicalize(t.child("src/lib.cairo"))
                 .unwrap()
                 .display(),
@@ -178,33 +178,33 @@ fn format_with_import_sorting() {
         .write_str(indoc! {"\
             use openzeppelin::introspection::interface;
             use openzeppelin::introspection::first;
-            
+
             #[starknet::contract]
             mod SRC5 {
                 use openzeppelin::introspection::interface;
                 use openzeppelin::introspection::{interface, AB};
-            
+
                 #[storage]
                 struct Storage {
                     supported_interfaces: LegacyMap<felt252, bool>
                 }
-            
+
                 use openzeppelin::introspection::first;
-            
+
                 mod A {}
                 mod G;
                 mod F;
-            
+
                 #[abi(embed_v0)]
                 impl SRC5Impl of interface::ISRC5<ContractState> {
                     fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
                         true
                     }
                 }
-            
+
                 use A;
                 use starknet::ArrayTrait;
-            
+
                 mod Inner {
                     use C;
                     use B;
@@ -220,55 +220,37 @@ fn format_with_import_sorting() {
         .assert()
         .failure()
         .stdout_matches(indoc! {"\
-        Diff in [..]/src/lib.cairo:
-        --- original
-       +++ modified
-       @@ -1,10 +1,17 @@
-       +use openzeppelin::introspection::first;
-        use openzeppelin::introspection::interface;
-       -use openzeppelin::introspection::first;
-       
-        #[starknet::contract]
-        mod SRC5 {
-       +    mod F;
-       +    mod G;
-       +
-       +    use A;
-       +
-       +    use openzeppelin::introspection::first;
-            use openzeppelin::introspection::interface;
-            use openzeppelin::introspection::{interface, AB};
-       +    use starknet::ArrayTrait;
-       
-            #[storage]
-            struct Storage {
-       @@ -11,11 +18,7 @@
-                supported_interfaces: LegacyMap<felt252, bool>
-            }
-       
-       -    use openzeppelin::introspection::first;
-       -
-            mod A {}
-       -    mod G;
-       -    mod F;
-       
-            #[abi(embed_v0)]
-            impl SRC5Impl of interface::ISRC5<ContractState> {
-       @@ -24,11 +27,8 @@
-                }
-            }
-       
-       -    use A;
-       -    use starknet::ArrayTrait;
-       -
-            mod Inner {
-       +        use B;
-                use C;
-       -        use B;
-            }
-        }
-       
-       "});
+            Diff in file [..]lib.cairo:
+             --- original
+            +++ modified
+            @@ -1,5 +1,5 @@
+            +use openzeppelin::introspection::first;
+             use openzeppelin::introspection::interface;
+            -use openzeppelin::introspection::first;
+
+             #[starknet::contract]
+             mod SRC5 {
+            @@ -14,8 +14,8 @@
+                 use openzeppelin::introspection::first;
+
+                 mod A {}
+            +    mod F;
+                 mod G;
+            -    mod F;
+
+                 #[abi(embed_v0)]
+                 impl SRC5Impl of interface::ISRC5<ContractState> {
+            @@ -28,7 +28,7 @@
+                 use starknet::ArrayTrait;
+
+                 mod Inner {
+            -        use C;
+                     use B;
+            +        use C;
+                 }
+             }
+
+        "});
 }
 
 #[test]
@@ -356,7 +338,7 @@ fn workspace_emit_with_root() {
         .assert()
         .failure()
         .stdout_eq(format!(
-            "{}:\n{}\n",
+            "{}:\n\n{}",
             fsx::canonicalize(t.child("src/lib.cairo"))
                 .unwrap()
                 .display(),
@@ -376,7 +358,7 @@ fn workspace_emit_with_root() {
         .assert()
         .failure()
         .stdout_eq(format!(
-            "{}:\n{}\n{}:\n{}\n{}:\n{}\n",
+            "{}:\n\n{}{}:\n\n{}{}:\n\n{}",
             fsx::canonicalize(t.child("first/src/lib.cairo"))
                 .unwrap()
                 .display(),
@@ -396,5 +378,77 @@ fn workspace_emit_with_root() {
     let content = t.child("first/src/lib.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
     let content = t.child("second/src/lib.cairo").read_to_string();
+    assert_eq!(content, SIMPLE_ORIGINAL);
+}
+
+#[test]
+fn format_specific_file() {
+    let t = build_temp_dir(SIMPLE_ORIGINAL);
+
+    // Create two files: one to be formatted and one to be left alone
+    t.child("src/lib.cairo").write_str(SIMPLE_ORIGINAL).unwrap();
+    t.child("src/other.cairo")
+        .write_str(SIMPLE_ORIGINAL)
+        .unwrap();
+
+    // Format only the lib.cairo file
+    Scarb::quick_snapbox()
+        .arg("fmt")
+        .arg("src/lib.cairo")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    // Check that lib.cairo was formatted
+    let lib_content = t.child("src/lib.cairo").read_to_string();
+    assert_eq!(lib_content, SIMPLE_FORMATTED);
+
+    // Check that other.cairo was not formatted
+    let other_content = t.child("src/other.cairo").read_to_string();
+    assert_eq!(other_content, SIMPLE_ORIGINAL);
+}
+
+#[test]
+fn format_all_files_in_path() {
+    let t = TempDir::new().unwrap();
+
+    // Create a Scarb.toml file
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "test_package"
+            version = "0.1.0"
+            "#,
+        )
+        .unwrap();
+
+    // Create multiple Cairo files with unformatted content
+    for i in 1..=3 {
+        t.child(format!("src/fmt/file{}.cairo", i))
+            .write_str(SIMPLE_ORIGINAL)
+            .unwrap();
+    }
+
+    t.child("src/no_fmt/file.cairo")
+        .write_str(SIMPLE_ORIGINAL)
+        .unwrap();
+
+    // Run the formatter on the src directory
+    Scarb::quick_snapbox()
+        .arg("fmt")
+        .arg("src/fmt")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    // Check that all files in the src directory were formatted
+    for i in 1..=3 {
+        let content = t.child(format!("src/fmt/file{}.cairo", i)).read_to_string();
+        assert_eq!(content, SIMPLE_FORMATTED);
+    }
+
+    // Check that the file in the no_fmt directory was not formatted
+    let content = t.child("src/no_fmt/file.cairo").read_to_string();
     assert_eq!(content, SIMPLE_ORIGINAL);
 }
