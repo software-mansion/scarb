@@ -1,0 +1,63 @@
+name: Publish Built-in Plugins
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  publish:
+    name: Publish plugins
+    runs-on: ubuntu-latest
+    env:
+      SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_REGISTRY_AUTH_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: ${{ github.ref_name }}
+
+      - name: Init Scarb to cache plugins
+        id: scarb-init
+        run: |
+          set -eo pipefail
+          mkdir -p $HOME/pkg
+          pushd $HOME/pkg
+          scarb init --no-vcs
+          echo "CAIRO_VERSION=$(scarb metadata --format-version 1 | jq -r '.app_version_info.cairo.version')" >> $GITHUB_OUTPUT
+        env:
+          SCARB_INIT_TEST_RUNNER: cairo-test
+
+      - name: Check if plugin versions exist in the registry
+        id: check-plugins
+        run: |
+          set -eo pipefail
+          echo "assert_macros_exists=$(curl -s https://scarbs.xyz/api/v1/index/as/se/assert_macros.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
+          echo "cairo_run_exists=$(curl -s https://scarbs.xyz/api/v1/index/ca/ir/cairo_run.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
+          echo "starknet_exists=$(curl -s https://scarbs.xyz/api/v1/index/st/ar/starknet.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
+          echo "cairo_test_exists=$(curl -s https://scarbs.xyz/api/v1/index/ca/ir/cairo_test.json | jq --arg version "${{ steps.scarb-init.outputs.CAIRO_VERSION }}" '[.[] | select(.v == $version)] | length > 0')" >> $GITHUB_OUTPUT
+
+      - name: Publish starknet
+        if: steps.check-plugins.outputs.starknet_exists != 'true'
+        run: |
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/starknet
+          scarb publish
+
+      - name: Publish cairo_run
+        if: steps.check-plugins.outputs.cairo_run_exists != 'true'
+        run: |
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/cairo_run
+          scarb publish
+
+      - name: Publish cairo_test
+        if: steps.check-plugins.outputs.cairo_test_exists != 'true'
+        run: |
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/test_plugin
+          scarb publish
+
+      - name: Publish assert_macros
+        if: steps.check-plugins.outputs.assert_macros_exists != 'true'
+        run: |
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/assert_macros
+          scarb publish
