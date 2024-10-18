@@ -41,23 +41,23 @@ jobs:
       - name: Publish starknet
         if: steps.check-plugins.outputs.starknet_exists != 'true'
         run: |
-          pushd $HOME/.cache/scarb/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/starknet
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/starknet
           scarb publish
 
       - name: Publish cairo_run
         if: steps.check-plugins.outputs.cairo_run_exists != 'true'
         run: |
-          pushd $HOME/.cache/scarb/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/cairo_run
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/cairo_run
           scarb publish
 
       - name: Publish cairo_test
         if: steps.check-plugins.outputs.cairo_test_exists != 'true'
         run: |
-          pushd $HOME/.cache/scarb/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/test_plugin
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/test_plugin
           scarb publish
 
       - name: Publish assert_macros
         if: steps.check-plugins.outputs.assert_macros_exists != 'true'
         run: |
-          pushd $HOME/.cache/scarb/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/assert_macros
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/assert_macros
           scarb publish
