@@ -36,7 +36,7 @@ jobs:
           mkdir -p core
           cp -r $(scarb cache path)/registry/std/${{ steps.scarb-init.outputs.CAIRO_VERSION_PATH }}/core/* ./core
       - name: Generate corelib docs with `scarb doc`
-        run: cargo doc --all-features
+        run: scarb doc --all-features
         working-directory: ./core
       - name: Apply custom highlighting
         run: | 
