@@ -75,12 +75,16 @@ pub struct ProcMacroCompilationUnit {
 #[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct CompilationUnitComponent {
+    /// Unique id identifying this component.
+    pub id: CompilationUnitComponentId,
     /// The Scarb [`Package`] to be built.
     pub package: Package,
     /// Information about the specific target to build, out of the possible targets in `package`.
     pub targets: Vec<Target>,
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this component.
     pub cfg_set: Option<CfgSet>,
+    /// Dependencies of this component.
+    pub dependencies: Vec<CompilationUnitComponentId>,
 }
 
 /// Information about a single package that is a compiler plugin to load for [`CompilationUnit`].
@@ -90,6 +94,20 @@ pub struct CompilationUnitCairoPlugin {
     /// The Scarb plugin [`Package`] to load.
     pub package: Package,
     pub builtin: bool,
+}
+
+/// Unique identifier of the compilation unit component.
+/// Currently, a compilation unit can be uniquely identified by [`PackageId`] only.
+/// It may be not sufficient in the future depending on changes to the compilation model.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct CompilationUnitComponentId {
+    pub package_id: PackageId,
+}
+
+impl CompilationUnitComponentId {
+    pub fn to_discriminator(&self) -> String {
+        self.package_id.to_serialized_string()
+    }
 }
 
 pub trait CompilationUnitAttributes {
@@ -288,9 +306,13 @@ impl CompilationUnitComponent {
             );
         }
         Ok(Self {
+            id: CompilationUnitComponentId {
+                package_id: package.id,
+            },
             package,
             targets,
             cfg_set,
+            dependencies: vec![],
         })
     }
 
