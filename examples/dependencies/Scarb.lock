@@ -4,10 +4,10 @@ version = 1
 [[package]]
 name = "alexandria_data_structures"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git#3356bf0c5c1a089167d7d3c28d543e195325e596"
 
 [[package]]
 name = "alexandria_math"
+checksum = "sha256:b62fc4b9bfbd9310a47d2e595d2c8f468354266be0827aeea9b465d9984908de"
 version = "0.2.0"
 source = "git+https://github.com/keep-starknet-strange/alexandria.git#3356bf0c5c1a089167d7d3c28d543e195325e596"
 dependencies = [

@@ -191,10 +191,11 @@ fn not_found() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
+        error: failed to lookup for `baz * (registry+http://[..])` in registry: registry+http://[..]
 
         Caused by:
-            package not found in registry: baz ^1 (registry+http://[..])
+            0: failed to lookup for `baz * (registry+http://[..])` in registry: registry+http://[..]
+            1: package not found in registry: baz * (registry+http://[..])
         "#});
 
     let expected = expect![["
@@ -245,11 +246,12 @@ fn missing_config_json() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-        error: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
+        error: failed to lookup for `baz * (registry+http://[..])` in registry: registry+http://[..]
 
         Caused by:
-            0: failed to fetch registry config
-            1: HTTP status client error (404 Not Found) for url (http://[..]/config.json)
+            0: failed to lookup for `baz * (registry+http://[..])` in registry: registry+http://[..]
+            1: failed to fetch registry config
+            2: HTTP status client error (404 Not Found) for url (http://[..]/config.json)
         "#});
 
     let expected = expect![["

@@ -41,7 +41,8 @@ fn https_something_happens() {
             error: failed to clone into: [..]
 
             Caused by:
-                process did not exit successfully: exit [..]: 128
+                0: failed to clone into: [..]
+                1: process did not exit successfully: exit [..]: 128
             "#});
     });
 }
@@ -76,7 +77,8 @@ fn ssh_something_happens() {
             error: failed to clone into: [..]
 
             Caused by:
-                process did not exit successfully: exit [..]: 128
+                0: failed to clone into: [..]
+                1: process did not exit successfully: exit [..]: 128
             "#});
     });
 }

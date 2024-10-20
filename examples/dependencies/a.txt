@@ -1,0 +1,334 @@
+[scarb/src/resolver/algorithm/mod.rs:120:31] Request::Package(package) = Package(
+    PubGrubPackage {
+        name: PackageName(dependencies),
+        source_id: SourceId(
+            "file:///Users/maciektr/Projects/scarb/examples/dependencies/Scarb.toml",
+            Path,
+        ),
+    },
+)
+[scarb/src/resolver/algorithm/mod.rs:125:35] Request::Package(package) = Package(
+    PubGrubPackage {
+        name: PackageName(alexandria_math),
+        source_id: SourceId(
+            "https://github.com/keep-starknet-strange/alexandria.git",
+            Git(
+                GitSourceSpec {
+                    reference: DefaultBranch,
+                    precise: None,
+                },
+            ),
+        ),
+    },
+)
+[scarb/src/resolver/algorithm/mod.rs:125:35] Request::Package(package) = Package(
+    PubGrubPackage {
+        name: PackageName(cairo_test),
+        source_id: SourceId(
+            "https://scarbs.xyz/",
+            Registry,
+        ),
+    },
+)
+[scarb/src/resolver/algorithm/mod.rs:125:35] Request::Package(package) = Package(
+    PubGrubPackage {
+        name: PackageName(core),
+        source_id: SourceId(
+            "https://scarbs.xyz/",
+            Registry,
+        ),
+    },
+)
+[scarb/src/resolver/algorithm/mod.rs:77:43] package = PubGrubPackage {
+    name: PackageName(dependencies),
+    source_id: SourceId(
+        "file:///Users/maciektr/Projects/scarb/examples/dependencies/Scarb.toml",
+        Path,
+    ),
+}
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(dependencies * (/Users/maciektr/Projects/scarb/examples/dependencies/Scarb.toml))
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(dependencies 0.1.0 /Users/maciektr/Projects/scarb/examples/dependencies/Scarb.toml), dependencies: [ManifestDependency(alexandria_math * (git+https://github.com/keep-starknet-strange/alexandria.git)), ManifestDependency(cairo_test ^2.8.0)], no_core: false, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/provider.rs:168:36] Request::Package(package) = Package(
+    PubGrubPackage {
+        name: PackageName(alexandria_math),
+        source_id: SourceId(
+            "https://github.com/keep-starknet-strange/alexandria.git",
+            Git(
+                GitSourceSpec {
+                    reference: DefaultBranch,
+                    precise: Some(
+                        "3356bf0c5c1a089167d7d3c28d543e195325e596",
+                    ),
+                },
+            ),
+        ),
+    },
+)
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(alexandria_math * (git+https://github.com/keep-starknet-strange/alexandria.git#3356bf0c5c1a089167d7d3c28d543e195325e596))
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Waiting(Notify { state: 0, waiters: Mutex(Mutex { data: LinkedList { head: None, tail: None }, poisoned: false, .. }) })",
+)
+[scarb/src/resolver/algorithm/mod.rs:77:43] package = PubGrubPackage {
+    name: PackageName(cairo_test),
+    source_id: SourceId(
+        "https://scarbs.xyz/",
+        Registry,
+    ),
+}
+[scarb/src/resolver/algorithm/mod.rs:77:43] package = PubGrubPackage {
+    name: PackageName(core),
+    source_id: SourceId(
+        "https://scarbs.xyz/",
+        Registry,
+    ),
+}
+[scarb/src/resolver/algorithm/mod.rs:77:43] package = PubGrubPackage {
+    name: PackageName(alexandria_math),
+    source_id: SourceId(
+        "https://github.com/keep-starknet-strange/alexandria.git",
+        Git(
+            GitSourceSpec {
+                reference: DefaultBranch,
+                precise: Some(
+                    "3356bf0c5c1a089167d7d3c28d543e195325e596",
+                ),
+            },
+        ),
+    ),
+}
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(cairo_test ^2.8.0)
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(cairo_test 2.8.4 std), dependencies: [], no_core: true, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(core =2.8.4)
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(core 2.8.4 std), dependencies: [ManifestDependency(cairo_test ^2.8.4)], no_core: true, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/provider.rs:272:32] Request::Package(package.clone()) = Package(
+    PubGrubPackage {
+        name: PackageName(core),
+        source_id: SourceId(
+            "scarb:/std",
+            Std,
+        ),
+    },
+)
+[scarb/src/resolver/algorithm/provider.rs:272:32] Request::Package(package.clone()) = Package(
+    PubGrubPackage {
+        name: PackageName(cairo_test),
+        source_id: SourceId(
+            "scarb:/std",
+            Std,
+        ),
+    },
+)
+[scarb/src/resolver/algorithm/mod.rs:77:43] package = PubGrubPackage {
+    name: PackageName(core),
+    source_id: SourceId(
+        "scarb:/std",
+        Std,
+    ),
+}
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(core * (std))
+[scarb/src/resolver/algorithm/mod.rs:77:43] package = PubGrubPackage {
+    name: PackageName(cairo_test),
+    source_id: SourceId(
+        "scarb:/std",
+        Std,
+    ),
+}
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(core 2.8.4 std), dependencies: [ManifestDependency(cairo_test ^2.8.4)], no_core: true, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(cairo_test * (std))
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(cairo_test 2.8.4 std), dependencies: [], no_core: true, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(alexandria_math * (git+https://github.com/keep-starknet-strange/alexandria.git#3356bf0c5c1a089167d7d3c28d543e195325e596))
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(alexandria_math 0.2.0 git+https://github.com/keep-starknet-strange/alexandria.git#3356bf0c5c1a089167d7d3c28d543e195325e596), dependencies: [ManifestDependency(alexandria_data_structures * (/Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml))], no_core: false, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/provider.rs:168:36] Request::Package(package) = Package(
+    PubGrubPackage {
+        name: PackageName(alexandria_data_structures),
+        source_id: SourceId(
+            "file:///Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml",
+            Path,
+        ),
+    },
+)
+[scarb/src/resolver/algorithm/provider.rs:235:13] dependency = ManifestDependency(alexandria_data_structures * (/Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml))
+[scarb/src/resolver/algorithm/provider.rs:235:13] &rewritten_dep = ManifestDependency(alexandria_data_structures * (git+https://github.com/keep-starknet-strange/alexandria.git#3356bf0c5c1a089167d7d3c28d543e195325e596))
+[scarb/src/resolver/algorithm/mod.rs:77:43] package = PubGrubPackage {
+    name: PackageName(alexandria_data_structures),
+    source_id: SourceId(
+        "file:///Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml",
+        Path,
+    ),
+}
+[scarb/src/resolver/algorithm/provider.rs:241:17] &orig = Found(
+    [
+        Summary(
+            SummaryInner {
+                package_id: PackageId(alexandria_data_structures 0.1.0 /Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml),
+                dependencies: [],
+                no_core: false,
+                checksum: None,
+            },
+        ),
+    ],
+)
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(alexandria_data_structures * (/Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml))
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(alexandria_data_structures 0.1.0 /Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml), dependencies: [], no_core: false, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(alexandria_data_structures * (git+https://github.com/keep-starknet-strange/alexandria.git#3356bf0c5c1a089167d7d3c28d543e195325e596))
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(alexandria_data_structures 0.1.0 /Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml), dependencies: [], no_core: false, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(core =2.8.4)
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(core 2.8.4 std), dependencies: [ManifestDependency(cairo_test ^2.8.4)], no_core: true, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(alexandria_data_structures * (/Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml))
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(alexandria_data_structures 0.1.0 /Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml), dependencies: [], no_core: false, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/provider.rs:179:9] &dependency = ManifestDependency(core =2.8.4)
+[scarb/src/resolver/algorithm/provider.rs:186:9] x.map(|x| format!("{:?}", x.value())) = Some(
+    "Filled(Found([Summary(SummaryInner { package_id: PackageId(core 2.8.4 std), dependencies: [ManifestDependency(cairo_test ^2.8.4)], no_core: true, checksum: None })]))",
+)
+[scarb/src/resolver/algorithm/mod.rs:179:17] &solution = {
+    PubGrubPackage {
+        name: PackageName(cairo_test),
+        source_id: SourceId(
+            "scarb:/std",
+            Std,
+        ),
+    }: Version {
+        major: 2,
+        minor: 8,
+        patch: 4,
+    },
+    PubGrubPackage {
+        name: PackageName(alexandria_math),
+        source_id: SourceId(
+            "https://github.com/keep-starknet-strange/alexandria.git",
+            Git(
+                GitSourceSpec {
+                    reference: DefaultBranch,
+                    precise: Some(
+                        "3356bf0c5c1a089167d7d3c28d543e195325e596",
+                    ),
+                },
+            ),
+        ),
+    }: Version {
+        major: 0,
+        minor: 2,
+        patch: 0,
+    },
+    PubGrubPackage {
+        name: PackageName(alexandria_data_structures),
+        source_id: SourceId(
+            "file:///Users/maciektr/Library/Caches/com.swmansion.scarb/registry/git/checkouts/alexandria-oen34onnk9gr0/3356bf0/src/data_structures/Scarb.toml",
+            Path,
+        ),
+    }: Version {
+        major: 0,
+        minor: 1,
+        patch: 0,
+    },
+    PubGrubPackage {
+        name: PackageName(dependencies),
+        source_id: SourceId(
+            "file:///Users/maciektr/Projects/scarb/examples/dependencies/Scarb.toml",
+            Path,
+        ),
+    }: Version {
+        major: 0,
+        minor: 1,
+        patch: 0,
+    },
+    PubGrubPackage {
+        name: PackageName(core),
+        source_id: SourceId(
+            "scarb:/std",
+            Std,
+        ),
+    }: Version {
+        major: 2,
+        minor: 8,
+        patch: 4,
+    },
+}
+[scarb/src/resolver/algorithm/mod.rs:77:43] package = PubGrubPackage {
+    name: PackageName(alexandria_math),
+    source_id: SourceId(
+        "https://github.com/keep-starknet-strange/alexandria.git",
+        Git(
+            GitSourceSpec {
+                reference: DefaultBranch,
+                precise: None,
+            },
+        ),
+    ),
+}
+[scarb/src/core/resolver.rs:122:9] &lockfile = Lockfile {
+    version: V1,
+    packages: {
+        PackageLock {
+            name: PackageName(alexandria_data_structures),
+            version: Version {
+                major: 0,
+                minor: 1,
+                patch: 0,
+            },
+            source: None,
+            checksum: None,
+            dependencies: {},
+        },
+        PackageLock {
+            name: PackageName(alexandria_math),
+            version: Version {
+                major: 0,
+                minor: 2,
+                patch: 0,
+            },
+            source: Some(
+                SourceId(
+                    "https://github.com/keep-starknet-strange/alexandria.git",
+                    Git(
+                        GitSourceSpec {
+                            reference: DefaultBranch,
+                            precise: Some(
+                                "3356bf0c5c1a089167d7d3c28d543e195325e596",
+                            ),
+                        },
+                    ),
+                ),
+            ),
+            checksum: Some(
+                Checksum(sha256:b62fc4b9bfbd9310a47d2e595d2c8f468354266be0827aeea9b465d9984908de),
+            ),
+            dependencies: {
+                PackageName(alexandria_data_structures),
+            },
+        },
+        PackageLock {
+            name: PackageName(dependencies),
+            version: Version {
+                major: 0,
+                minor: 1,
+                patch: 0,
+            },
+            source: None,
+            checksum: None,
+            dependencies: {
+                PackageName(alexandria_math),
+            },
+        },
+    },
+}
