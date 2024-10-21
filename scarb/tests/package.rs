@@ -1454,6 +1454,29 @@ fn package_without_verification() {
 }
 
 #[test]
+fn package_cairo_plugin_without_verification() {
+    let t = TempDir::new().unwrap();
+    CairoPluginProjectBuilder::default().build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--no-verify")
+        .arg("--no-metadata")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging some v1.0.0 [..]
+        [..]warn: package name or version differs between Cargo manifest and Scarb manifest
+        [..]Scarb manifest: `some-1.0.0`, Cargo manifest: `some-0.1.0`
+        [..]this might become an error in future Scarb releases
+
+        [..]  Packaged [..]
+        "#});
+}
+
+#[test]
 fn package_without_publish_metadata() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()

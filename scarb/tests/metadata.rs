@@ -1374,3 +1374,61 @@ fn includes_experimental_features() {
         .experimental_features
         .contains(&String::from("negative_impls")))
 }
+
+#[test]
+fn add_redeposit_gas_disabled_by_default() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let add_redeposit_gas = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| cu.target.name.clone() == "hello")
+        .map(|cu| cu.compiler_config.get("add_redeposit_gas").unwrap())
+        .unwrap()
+        .as_bool()
+        .unwrap();
+    assert!(!add_redeposit_gas);
+}
+
+#[test]
+fn can_enable_add_redeposit_gas() {
+    let t = assert_fs::TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_package_extra(indoc! {r#"
+            [cairo]
+            add-redeposit-gas = true
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let add_redeposit_gas = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| cu.target.name.clone() == "hello")
+        .map(|cu| cu.compiler_config.get("add_redeposit_gas").unwrap())
+        .unwrap()
+        .as_bool()
+        .unwrap();
+    assert!(add_redeposit_gas);
+}
