@@ -17,7 +17,7 @@ use tracing::trace;
 
 use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
-use crate::core::{ManifestDependency, TestTargetProps, TestTargetType, Workspace};
+use crate::core::Workspace;
 use crate::DEFAULT_MODULE_MAIN_FILE;
 
 pub struct ScarbDatabase {
@@ -145,65 +145,24 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
         .map(|component| {
             let experimental_features = component.package.manifest.experimental_features.clone();
             let experimental_features = experimental_features.unwrap_or_default();
-            // Those are direct dependencies of the component.
-            let dependencies_summary: Vec<&ManifestDependency> = component
-                .package
-                .manifest
-                .summary
-                .full_dependencies()
-                .collect();
 
-            // We iterate over all of the compilation unit components to get dependency's version.
-            let mut dependencies: BTreeMap<String, DependencySettings> = unit
-                .components
+            let dependencies: BTreeMap<String, DependencySettings> = component
+                .dependencies
                 .iter()
-                .filter(|component_as_dependency| {
-                    dependencies_summary.iter().any(|dependency_summary| {
-                        dependency_summary.name == component_as_dependency.package.id.name
-                    }) ||
-                        // This is a hacky way of accommodating integration test components,
-                        // which need to depend on the tested package.
-                        component_as_dependency
-                        .package
-                        .manifest
-                        .targets
-                        .iter()
-                        .filter(|target| target.kind.is_test())
-                        .any(|target| {
-                            target.group_id.clone().unwrap_or(target.name.clone())
-                                == component.package.id.name.to_smol_str()
-                            && component_as_dependency.cairo_package_name() != component.cairo_package_name()
-                        })
-                })
-                .map(|compilation_unit_component| {
+                .map(|compilation_unit_component_id| {
+                    let compilation_unit_component = unit.components.iter().find(|component| component.id == *compilation_unit_component_id)
+                        .expect("Dependency of a component is guaranteed to exist in compilation unit components");
                     (
                         compilation_unit_component.package.id.name.to_string(),
                         DependencySettings {
                             discriminator: (compilation_unit_component.package.id.name.to_string()
                                 != *CORELIB_CRATE_NAME)
-                                .then_some(compilation_unit_component.package.id.version.clone())
-                                .map(|v| v.to_smolstr()),
+                                .then_some(compilation_unit_component.id.clone())
+                                .map(|v| v.to_discriminator().to_smolstr()),
                         },
                     )
                 })
                 .collect();
-
-            // Adds itself to dependencies
-            let is_integration_test = if component.first_target().kind.is_test() {
-                let props: Option<TestTargetProps> = component.first_target().props().ok();
-                props
-                    .map(|props| props.test_type == TestTargetType::Integration)
-                    .unwrap_or_default()
-            } else { false };
-            if !is_integration_test {
-                dependencies.insert(
-                    component.package.id.name.to_string(),
-                    DependencySettings {
-                        discriminator: (component.package.id.name.to_string() != *CORELIB_CRATE_NAME)
-                            .then_some(component.package.id.version.clone()).map(|v| v.to_smolstr()),
-                    },
-                );
-            }
 
             (
                 component.cairo_package_name(),
