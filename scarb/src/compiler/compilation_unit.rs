@@ -105,8 +105,16 @@ pub struct CompilationUnitComponentId {
 }
 
 impl CompilationUnitComponentId {
-    pub fn to_discriminator(&self) -> String {
-        self.package_id.to_serialized_string()
+    pub fn to_metadata_component_id(&self) -> scarb_metadata::CompilationUnitComponentId {
+        self.package_id.to_serialized_string().into()
+    }
+
+    pub fn to_discriminator(&self) -> Option<String> {
+        if self.package_id.is_core() {
+            None
+        } else {
+            Some(self.package_id.to_serialized_string())
+        }
     }
 }
 

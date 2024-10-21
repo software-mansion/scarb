@@ -6,7 +6,6 @@ use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{
     AsFilesGroupMut, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
-    CORELIB_CRATE_NAME,
 };
 use cairo_lang_filesystem::ids::{CrateLongId, Directory};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
@@ -151,14 +150,11 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                 .iter()
                 .map(|compilation_unit_component_id| {
                     let compilation_unit_component = unit.components.iter().find(|component| component.id == *compilation_unit_component_id)
-                        .expect("Dependency of a component is guaranteed to exist in compilation unit components");
+                        .expect("dependency of a component is guaranteed to exist in compilation unit components");
                     (
                         compilation_unit_component.package.id.name.to_string(),
                         DependencySettings {
-                            discriminator: (compilation_unit_component.package.id.name.to_string()
-                                != *CORELIB_CRATE_NAME)
-                                .then_some(compilation_unit_component.id.clone())
-                                .map(|v| v.to_discriminator().to_smolstr()),
+                            discriminator: compilation_unit_component.id.to_discriminator().map(Into::into)
                         },
                     )
                 })

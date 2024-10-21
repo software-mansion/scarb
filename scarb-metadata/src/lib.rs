@@ -382,6 +382,11 @@ pub struct CompilationUnitComponentMetadata {
     pub cfg: Option<Vec<Cfg>>,
     /// Identifier of this component. It is unique in its compilation unit.
     pub id: Option<CompilationUnitComponentId>,
+    /// Identifier of this component as a dependency.
+    /// This directly translates to a `discriminator` field in Cairo compiler terminology.
+    /// If [`CompilationUnitComponentMetadata.id`] is [`Some`]
+    /// then this field is [`None`] for `core` crate **only**.
+    pub discriminator: Option<String>,
     /// Dependencies of this component.
     pub dependencies: Option<Vec<CompilationUnitComponentDependencyMetadata>>,
 
@@ -397,10 +402,7 @@ pub struct CompilationUnitComponentMetadata {
 #[cfg_attr(feature = "builder", builder(setter(into)))]
 #[non_exhaustive]
 pub struct CompilationUnitComponentDependencyMetadata {
-    /// Id of a component from the same compilation unit that this dependency refers to.
-    ///
-    /// This should directly translate to a `discriminator` field in Cairo compiler terminology,
-    /// except that it should be `None` for `core` crate **only**.
+    /// An id of a component from the same compilation unit that this dependency refers to.
     pub id: CompilationUnitComponentId,
 
     /// Additional data not captured by deserializer.
