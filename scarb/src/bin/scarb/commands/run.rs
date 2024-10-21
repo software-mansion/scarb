@@ -1,3 +1,5 @@
+use crate::args::ScriptsRunnerArgs;
+use crate::errors::ErrorWithExitCode;
 use anyhow::{anyhow, Result};
 use indoc::formatdoc;
 use itertools::Itertools;
@@ -10,9 +12,7 @@ use smol_str::SmolStr;
 use std::collections::BTreeMap;
 use std::ffi::OsString;
 use std::fmt::Write;
-
-use crate::args::ScriptsRunnerArgs;
-use crate::errors::ErrorWithExitCode;
+use std::process::ExitCode;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: ScriptsRunnerArgs, config: &Config) -> Result<()> {
@@ -79,8 +79,9 @@ fn build_exit_error(errors: Vec<anyhow::Error>) -> Result<()> {
                 err.downcast_ref::<ScriptExecutionError>()
                     .map(|err| err.exit_code)
             })
-            .find(|exit_code| *exit_code != 0)
-            .unwrap_or(1);
+            .take(1)
+            .collect_vec();
+        let exit_code = exit_code.first().cloned().unwrap_or(ExitCode::FAILURE);
         let msg = errors
             .into_iter()
             .map(|err| err.to_string())
