@@ -30,7 +30,7 @@ pub struct ProcMacroResult {
 /// For instance, auxiliary data can be serialized as JSON.
 ///
 /// ```
-/// use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream, attribute_macro, post_process, PostProcessContext};
+/// use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan, attribute_macro, post_process, PostProcessContext};
 /// use serde::{Serialize, Deserialize};
 /// #[derive(Debug, Serialize, Deserialize)]
 /// struct SomeAuxDataFormat {
@@ -39,11 +39,15 @@ pub struct ProcMacroResult {
 ///
 /// #[attribute_macro]
 /// pub fn some_macro(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-///     let token_stream = TokenStream::from_string(
-///         token_stream.to_string()
-///         // Remove macro call to avoid infinite loop.
-///         .replace("#[some]", "")
-///     );
+///     // Remove macro call to avoid infinite loop.
+///     let code = token_stream.to_string().replace("#[some]", "");
+///     let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+///       code.clone(),
+///       TextSpan {
+///         start: 0,
+///         end: code.len(),
+///       },
+///     ))]);
 ///     let value = SomeAuxDataFormat { some_message: "Hello from some macro!".to_string() };
 ///     let value = serde_json::to_string(&value).unwrap();
 ///     let value: Vec<u8> = value.into_bytes();
