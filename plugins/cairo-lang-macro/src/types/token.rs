@@ -1,40 +1,41 @@
 use std::fmt::Display;
 
-use cairo_lang_diagnostics::DiagnosticsBuilder;
-use cairo_lang_filesystem::{
-    ids::{FileKind, FileLongId, VirtualFile},
-    span::TextSpan,
-};
-use cairo_lang_parser::{parser::Parser, utils::SimpleParserDatabase};
-use cairo_lang_syntax::node::TypedSyntaxNode;
-use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
-use cairo_lang_utils::Intern;
 use itertools::Itertools;
-use serde::{Deserialize, Serialize};
+use smol_str::{SmolStr, ToSmolStr};
+
+#[derive(Debug, Default, Clone)]
+pub struct TextSpan {
+    pub start: usize,
+    pub end: usize,
+}
 
 /// Representation of most atomic struct that is passed within host<->macro communication.
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone)]
 pub struct Token {
-    span: TextSpan,
-    content: String,
+    pub span: TextSpan,
+    pub content: SmolStr,
+}
+
+#[derive(Debug, Clone)]
+pub enum TokenTree {
+    Ident(Token),
 }
 
 impl Token {
     pub fn new(content: String, span: TextSpan) -> Self {
-        Self { content, span }
-    }
-
-    pub fn from_syntax_node(db: &dyn SyntaxGroup, node: SyntaxNode) -> Self {
-        Token::new(node.get_text(db), node.span(db))
+        Self {
+            content: content.to_smolstr(),
+            span,
+        }
     }
 }
 
 /// An abstract stream of Cairo tokens.
 ///
 /// This is both input and part of an output of a procedural macro.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct TokenStream {
-    pub tokens: Vec<Token>,
+    pub tokens: Vec<TokenTree>,
     pub metadata: TokenStreamMetadata,
 }
 
@@ -53,49 +54,7 @@ pub struct TokenStreamMetadata {
 
 impl TokenStream {
     #[doc(hidden)]
-    pub fn new(tokens: Vec<Token>) -> Self {
-        Self {
-            tokens,
-            metadata: TokenStreamMetadata::default(),
-        }
-    }
-
-    pub fn from_string(str: String) -> Self {
-        let db = SimpleParserDatabase::default();
-        // Sometimes this will return an error, when the user pass the simple literal value like "34".
-        // In this case, we create the Token manually with its span.
-        let node = db.parse_virtual(str.clone());
-
-        let tokens = match node {
-            Ok(node) => {
-                let nodes = node.tokens(&db);
-                nodes
-                    .map(|node| Token::from_syntax_node(&db, node.clone()))
-                    .collect()
-            }
-            Err(_) => {
-                let virtual_file = FileLongId::Virtual(VirtualFile {
-                    parent: Default::default(),
-                    name: Default::default(),
-                    content: Default::default(),
-                    code_mappings: Default::default(),
-                    kind: FileKind::Module,
-                })
-                .intern(&db);
-                let expr_node = Parser::parse_file_expr(
-                    &db,
-                    &mut DiagnosticsBuilder::default(),
-                    virtual_file,
-                    &str,
-                )
-                .as_syntax_node();
-                let nodes = expr_node.tokens(&db);
-                nodes
-                    .map(|node| Token::from_syntax_node(&db, node.clone()))
-                    .collect()
-            }
-        };
-
+    pub fn new(tokens: Vec<TokenTree>) -> Self {
         Self {
             tokens,
             metadata: TokenStreamMetadata::default(),
@@ -132,7 +91,11 @@ impl Display for TokenStream {
             "{}",
             self.tokens
                 .iter()
-                .map(|token| token.content.clone())
+                .map(|token| {
+                    match token {
+                        TokenTree::Ident(token) => token.content.clone(),
+                    }
+                })
                 .join("")
         )
     }

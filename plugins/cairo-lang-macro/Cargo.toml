@@ -14,12 +14,8 @@ repository.workspace = true
 
 [dependencies]
 cairo-lang-macro-attributes = "0.1"
-cairo-lang-macro-stable = "1"
-cairo-lang-filesystem.workspace = true
-cairo-lang-parser.workspace = true
-cairo-lang-syntax.workspace = true
-cairo-lang-diagnostics.workspace = true
-cairo-lang-utils.workspace = true
+cairo-lang-macro-stable = { path = "../cairo-lang-macro-stable" }
+smol_str.workspace = true
 linkme.workspace = true
 itertools.workspace = true
 serde.workspace = true
