@@ -1,4 +1,5 @@
 use std::env;
+use std::process::ExitCode;
 use std::str::FromStr;
 
 use anyhow::{Error, Result};
@@ -19,7 +20,7 @@ mod commands;
 mod errors;
 mod interactive;
 
-fn main() {
+fn main() -> ExitCode {
     let args = ScarbArgs::parse();
 
     // Pre-create Ui used in logging & error reporting, because we will move `args` to `cli_main`.
@@ -39,25 +40,27 @@ fn main() {
         .init();
 
     if let Err(err) = cli_main(args) {
-        exit_with_error(err, &ui);
+        return exit_with_error(err, &ui);
     }
+
+    ExitCode::SUCCESS
 }
 
-fn exit_with_error(err: Error, ui: &Ui) {
+fn exit_with_error(err: Error, ui: &Ui) -> ExitCode {
     debug!("exit_with_error; err={:?}", err);
 
     if let Some(ErrorWithExitCode { source, exit_code }) = err.downcast_ref::<ErrorWithExitCode>() {
         if let Some(source_err) = source {
             ui.anyhow(source_err);
         }
-        std::process::exit(*exit_code);
+        *exit_code
     } else if let Some(ScriptExecutionError { exit_code }) =
         err.downcast_ref::<ScriptExecutionError>()
     {
-        std::process::exit(*exit_code);
+        *exit_code
     } else {
         ui.anyhow(&err);
-        std::process::exit(1);
+        ExitCode::FAILURE
     }
 }
 
