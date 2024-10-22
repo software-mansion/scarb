@@ -297,6 +297,41 @@ fn compile_with_incompatible_cairo_version() {
 }
 
 #[test]
+fn compile_ignore_cairo_version() {
+    let t = TempDir::new().unwrap();
+    t.child("Scarb.toml")
+        .write_str(
+            r#"
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            cairo-version = "33.33.0"
+            "#,
+        )
+        .unwrap();
+    t.child("src/lib.cairo")
+        .write_str("fn example() -> felt252 { 42 }")
+        .unwrap();
+    Scarb::quick_snapbox()
+        .args(["check", "--ignore-cairo-version"])
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            warn: the required Cairo version of package hello is not compatible with current version
+            Cairo version required: ^33.33.0
+            Cairo version of Scarb: [..]
+
+            warn: the required Cairo version of package hello is not compatible with current version
+            Cairo version required: ^33.33.0
+            Cairo version of Scarb: [..]
+
+            [..] Checking hello v0.1.0 ([..]Scarb.toml)
+            [..] Finished checking `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
 fn compile_with_compatible_cairo_version() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
