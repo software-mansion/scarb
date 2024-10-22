@@ -7,8 +7,8 @@ on:
         description: "Dry run"
         type: boolean
         default: true
-  schedule:
-    - cron: '0 0 * * 3,6'
+#  schedule:
+#    - cron: '0 0 * * 3,6'
 
 concurrency:
   group: ${{ github.workflow }}
@@ -183,7 +183,7 @@ jobs:
             {
               "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }
-            
+  
 
   notify_failed_check:
     runs-on: ubuntu-latest
