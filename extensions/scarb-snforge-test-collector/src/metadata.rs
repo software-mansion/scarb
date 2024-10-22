@@ -1,7 +1,8 @@
 use anyhow::{anyhow, ensure, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
-    CrateSettings, DependencySettings, Edition, ExperimentalFeaturesConfig, CORELIB_CRATE_NAME,
+    CrateIdentifier, CrateSettings, DependencySettings, Edition, ExperimentalFeaturesConfig,
+    CORELIB_CRATE_NAME,
 };
 use cairo_lang_project::AllCratesConfig;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
@@ -11,7 +12,7 @@ use scarb_metadata::{
     CompilationUnitComponentMetadata, CompilationUnitMetadata, Metadata, PackageMetadata,
 };
 use serde_json::json;
-use smol_str::{SmolStr, ToSmolStr};
+use smol_str::ToSmolStr;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
@@ -92,15 +93,14 @@ pub struct CompilationUnit<'a> {
 }
 
 impl CompilationUnit<'_> {
-    pub fn dependencies(&self) -> OrderedHashMap<SmolStr, PathBuf> {
+    pub fn dependencies(&self) -> OrderedHashMap<CrateIdentifier, PathBuf> {
         let dependencies = self
             .unit_metadata
             .components
             .iter()
-            .filter(|du| &du.name != "core")
             .map(|cu| {
                 (
-                    cu.name.to_smolstr(),
+                    cu.id.as_ref().unwrap().into(),
                     cu.source_root().to_owned().into_std_path_buf(),
                 )
             })
@@ -110,7 +110,7 @@ impl CompilationUnit<'_> {
     }
 
     pub fn crates_config_for_compilation_unit(&self) -> AllCratesConfig {
-        let crates_config: OrderedHashMap<SmolStr, CrateSettings> = self
+        let crates_config: OrderedHashMap<CrateIdentifier, CrateSettings> = self
             .unit_metadata
             .components
             .iter()
@@ -125,7 +125,7 @@ impl CompilationUnit<'_> {
                         )
                     });
                 (
-                    SmolStr::from(&component.name),
+                    component.id.as_ref().unwrap().into(),
                     get_crate_settings_for_package(
                         &self.metadata.packages,
                         &self.unit_metadata.components,

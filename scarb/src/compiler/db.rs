@@ -5,12 +5,13 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{
-    AsFilesGroupMut, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
+    AsFilesGroupMut, CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
 };
 use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
-use smol_str::{SmolStr, ToSmolStr};
+use smol_str::SmolStr;
 use std::collections::BTreeMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
 
@@ -93,10 +94,9 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
 
     for component in components {
         let name = component.cairo_package_name();
-        let version = component.package.id.version.clone();
         let crate_id = db.intern_crate(CrateLongId::Real {
             name,
-            discriminator: Some(version).map(|v| v.to_smolstr()),
+            discriminator: component.id.to_discriminator(),
         });
         let file_stems = component
             .targets
@@ -126,19 +126,18 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
 }
 
 fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
-    let crate_roots = unit
+    let crate_roots: OrderedHashMap<CrateIdentifier, PathBuf> = unit
         .components
         .iter()
-        .filter(|component| !component.package.id.is_core())
         .map(|component| {
             (
-                component.cairo_package_name(),
+                component.id.to_crate_identifier(),
                 component.first_target().source_root().into(),
             )
         })
         .collect();
 
-    let crates_config: OrderedHashMap<SmolStr, CrateSettings> = unit
+    let crates_config: OrderedHashMap<CrateIdentifier, CrateSettings> = unit
         .components
         .iter()
         .map(|component| {

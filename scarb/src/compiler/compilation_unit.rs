@@ -6,11 +6,13 @@ use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::CrateIdentifier;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use smol_str::{SmolStr, ToSmolStr};
+use smol_str::SmolStr;
 use typed_builder::TypedBuilder;
 
 use crate::compiler::Profile;
-use crate::core::{ManifestCompilerConfig, Package, PackageId, Target, TargetKind, Workspace};
+use crate::core::{
+    ManifestCompilerConfig, Package, PackageId, PackageName, Target, TargetKind, Workspace,
+};
 use crate::flock::Filesystem;
 use scarb_stable_hash::StableHasher;
 
@@ -111,15 +113,15 @@ impl CompilationUnitComponentId {
     }
 
     pub fn to_discriminator(&self) -> Option<SmolStr> {
-        if self.package_id.is_core() {
+        if self.package_id.name == PackageName::CORE {
             None
         } else {
-            Some(self.to_crate_identifier())
+            Some(self.to_crate_identifier().into())
         }
     }
 
     pub fn to_crate_identifier(&self) -> CrateIdentifier {
-        self.package_id.to_serialized_string().to_smolstr()
+        self.package_id.to_serialized_string().into()
     }
 }
 

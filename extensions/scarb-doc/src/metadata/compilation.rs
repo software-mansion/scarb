@@ -1,7 +1,7 @@
 use scarb_metadata::{
     CompilationUnitComponentMetadata, CompilationUnitMetadata, Metadata, PackageId, PackageMetadata,
 };
-use smol_str::{SmolStr, ToSmolStr};
+use smol_str::ToSmolStr;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
@@ -9,7 +9,7 @@ use anyhow::{bail, Result};
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
-    CrateSettings, DependencySettings, Edition, ExperimentalFeaturesConfig,
+    CrateIdentifier, CrateSettings, DependencySettings, Edition, ExperimentalFeaturesConfig,
 };
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use itertools::Itertools;
@@ -61,14 +61,14 @@ fn package_compilation_unit(
 
 fn get_dependencies(
     compilation_unit_metadata: &CompilationUnitMetadata,
-) -> OrderedHashMap<SmolStr, PathBuf> {
+) -> OrderedHashMap<CrateIdentifier, PathBuf> {
     compilation_unit_metadata
         .components
         .iter()
         .filter(|du| du.name != CORELIB_CRATE_NAME)
         .map(|cu| {
             (
-                cu.name.to_smolstr(),
+                cu.name.as_str().into(),
                 cu.source_root().to_owned().into_std_path_buf(),
             )
         })
@@ -79,7 +79,7 @@ fn get_crates_config(
     metadata: &Metadata,
     compilation_unit_metadata: &CompilationUnitMetadata,
 ) -> Result<AllCratesConfig> {
-    let crates_config: OrderedHashMap<SmolStr, CrateSettings> = compilation_unit_metadata
+    let crates_config = compilation_unit_metadata
         .components
         .iter()
         .map(|component| {
@@ -92,7 +92,7 @@ fn get_crates_config(
 
             match (pkg, cfg_result) {
                 (Some(pkg), Ok(cfg_set)) => Ok((
-                    SmolStr::from(&component.name),
+                    component.name.as_str().into(),
                     get_crate_settings_for_package(
                         &metadata.packages,
                         &compilation_unit_metadata.components,
@@ -106,7 +106,7 @@ fn get_crates_config(
                 (_, Err(e)) => bail!(e),
             }
         })
-        .collect::<Result<OrderedHashMap<SmolStr, CrateSettings>>>()?;
+        .collect::<Result<OrderedHashMap<CrateIdentifier, CrateSettings>>>()?;
 
     Ok(AllCratesConfig {
         override_map: crates_config,
