@@ -3,9 +3,10 @@ use std::hash::{Hash, Hasher};
 
 use anyhow::{ensure, Result};
 use cairo_lang_filesystem::cfg::CfgSet;
+use cairo_lang_filesystem::db::CrateIdentifier;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 use typed_builder::TypedBuilder;
 
 use crate::compiler::Profile;
@@ -109,12 +110,16 @@ impl CompilationUnitComponentId {
         self.package_id.to_serialized_string().into()
     }
 
-    pub fn to_discriminator(&self) -> Option<String> {
+    pub fn to_discriminator(&self) -> Option<SmolStr> {
         if self.package_id.is_core() {
             None
         } else {
-            Some(self.package_id.to_serialized_string())
+            Some(self.to_crate_identifier())
         }
+    }
+
+    pub fn to_crate_identifier(&self) -> CrateIdentifier {
+        self.package_id.to_serialized_string().to_smolstr()
     }
 }
 

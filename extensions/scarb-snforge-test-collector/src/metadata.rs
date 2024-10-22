@@ -1,4 +1,4 @@
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, ensure, Result};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
     CrateSettings, DependencySettings, Edition, ExperimentalFeaturesConfig, CORELIB_CRATE_NAME,
@@ -107,16 +107,6 @@ impl CompilationUnit<'_> {
             .collect();
 
         dependencies
-    }
-
-    pub fn corelib_path(&self) -> Result<PathBuf> {
-        let corelib = self
-            .unit_metadata
-            .components
-            .iter()
-            .find(|du| du.name == "core")
-            .context("Corelib could not be found")?;
-        Ok(PathBuf::from(corelib.source_root()))
     }
 
     pub fn crates_config_for_compilation_unit(&self) -> AllCratesConfig {
@@ -272,6 +262,7 @@ fn get_crate_settings_for_package(
     );
 
     CrateSettings {
+        name: Some(package.name.to_smolstr()),
         edition,
         cfg_set,
         experimental_features,

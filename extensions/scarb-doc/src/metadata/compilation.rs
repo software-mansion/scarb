@@ -5,19 +5,16 @@ use smol_str::{SmolStr, ToSmolStr};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-use anyhow::{bail, Error, Result};
+use anyhow::{bail, Result};
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
     CrateSettings, DependencySettings, Edition, ExperimentalFeaturesConfig,
 };
-use cairo_lang_filesystem::ids::Directory;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use itertools::Itertools;
 
-use crate::errors::{
-    CfgParseError, MissingCompilationUnitForPackage, MissingCorelibError, MissingPackageError,
-};
+use crate::errors::{CfgParseError, MissingCompilationUnitForPackage, MissingPackageError};
 
 const LIB_TARGET_KIND: &str = "lib";
 const STARKNET_TARGET_KIND: &str = "starknet-contract";
@@ -29,12 +26,10 @@ pub fn get_project_config(
 ) -> Result<ProjectConfig> {
     let compilation_unit_metadata =
         package_compilation_unit(metadata, package_metadata.id.clone())?;
-    let corelib = get_corelib(compilation_unit_metadata)?;
     let dependencies = get_dependencies(compilation_unit_metadata);
     let crates_config = get_crates_config(metadata, compilation_unit_metadata)?;
     Ok(ProjectConfig {
         base_path: package_metadata.root.clone().into(),
-        corelib: Some(Directory::Real(corelib.source_root().into())),
         content: ProjectConfigContent {
             crate_roots: dependencies,
             crates_config,
@@ -62,16 +57,6 @@ fn package_compilation_unit(
         })
         .ok_or(MissingCompilationUnitForPackage(package_id.to_string()))
         .copied()
-}
-
-fn get_corelib(
-    compilation_unit_metadata: &CompilationUnitMetadata,
-) -> Result<&CompilationUnitComponentMetadata> {
-    compilation_unit_metadata
-        .components
-        .iter()
-        .find(|du| du.name == CORELIB_CRATE_NAME)
-        .ok_or(Error::new(MissingCorelibError))
 }
 
 fn get_dependencies(
@@ -189,6 +174,7 @@ fn get_crate_settings_for_package(
     );
 
     Ok(CrateSettings {
+        name: Some(package.name.to_smolstr()),
         edition,
         cfg_set,
         experimental_features,

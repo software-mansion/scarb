@@ -331,7 +331,7 @@ where
                     })
                     .collect::<Vec<_>>()))
                 .id(Some(c.id.to_metadata_component_id()))
-                .discriminator(c.id.to_discriminator())
+                .discriminator(c.id.to_discriminator().map(Into::into))
                 .dependencies(
                     Some(
                         c.dependencies

@@ -96,7 +96,6 @@ pub fn collect_tests(
 ) -> Result<(ProgramArtifact, Vec<TestCaseRaw>)> {
     let project_config = ProjectConfig {
         base_path: crate_root.into(),
-        corelib: Some(Directory::Real(compilation_unit.corelib_path()?)),
         content: ProjectConfigContent {
             crate_roots: compilation_unit.dependencies(),
             crates_config: compilation_unit.crates_config_for_compilation_unit(),

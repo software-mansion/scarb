@@ -7,7 +7,7 @@ use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{
     AsFilesGroupMut, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
 };
-use cairo_lang_filesystem::ids::{CrateLongId, Directory};
+use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smol_str::{SmolStr, ToSmolStr};
 use std::collections::BTreeMap;
@@ -154,15 +154,16 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                     (
                         compilation_unit_component.package.id.name.to_string(),
                         DependencySettings {
-                            discriminator: compilation_unit_component.id.to_discriminator().map(Into::into)
+                            discriminator: compilation_unit_component.id.to_discriminator()
                         },
                     )
                 })
                 .collect();
 
             (
-                component.cairo_package_name(),
+                component.id.to_crate_identifier(),
                 CrateSettings {
+                    name: Some(component.cairo_package_name()),
                     edition: component.package.manifest.edition,
                     cfg_set: component.cfg_set.clone(),
                     version: Some(component.package.id.version.clone()),
@@ -182,10 +183,6 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
         ..Default::default()
     };
 
-    let corelib = unit
-        .core_package_component()
-        .map(|core| Directory::Real(core.first_target().source_root().into()));
-
     let content = ProjectConfigContent {
         crate_roots,
         crates_config,
@@ -193,7 +190,6 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
 
     let project_config = ProjectConfig {
         base_path: unit.main_component().package.root().into(),
-        corelib,
         content,
     };
 
