@@ -3,6 +3,7 @@ use clap::Parser;
 use scarb_doc::docs_generation::markdown::MarkdownContent;
 use scarb_doc::errors::MetadataCommandError;
 use scarb_doc::metadata::get_target_dir;
+use std::process::ExitCode;
 
 use scarb_metadata::MetadataCommand;
 use scarb_ui::args::{PackagesFilter, ToEnvVars};
@@ -88,13 +89,13 @@ fn main_inner() -> Result<()> {
     Ok(())
 }
 
-fn main() {
+fn main() -> ExitCode {
     match main_inner() {
-        Ok(()) => std::process::exit(0),
+        Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             scarb_ui::Ui::new(scarb_ui::Verbosity::Normal, scarb_ui::OutputFormat::Text)
                 .error(format!("{error:#}"));
-            std::process::exit(1);
+            ExitCode::FAILURE
         }
     }
 }
