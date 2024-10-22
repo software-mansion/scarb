@@ -4595,6 +4595,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "priority-queue"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "714c75db297bc88a63783ffc6ab9f830698a6705aa0201416931759ef4c8183d"
+dependencies = [
+ "autocfg",
+ "equivalent",
+ "indexmap 2.7.0",
+]
+
+[[package]]
 name = "proc-macro-crate"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4622,6 +4633,19 @@ dependencies = [
  "human_format",
  "log",
  "parking_lot",
+]
+
+[[package]]
+name = "pubgrub"
+version = "0.2.1"
+source = "git+https://github.com/software-mansion-labs/pubgrub.git?branch=dev#cdae1729d7c47a6194a499d674ccdc96ce0838f1"
+dependencies = [
+ "indexmap 2.7.0",
+ "log",
+ "priority-queue",
+ "rustc-hash",
+ "thiserror 1.0.69",
+ "version-ranges",
 ]
 
 [[package]]
@@ -5100,9 +5124,11 @@ dependencies = [
  "libloading",
  "ntest",
  "once_cell",
+ "once_map",
  "pathdiff",
  "petgraph",
  "predicates",
+ "pubgrub",
  "ra_ap_toolchain",
  "redb",
  "reqwest",
@@ -5113,6 +5139,7 @@ dependencies = [
  "scarb-test-support",
  "scarb-ui",
  "semver",
+ "semver-pubgrub",
  "serde",
  "serde-untagged",
  "serde-value",
@@ -5130,6 +5157,7 @@ dependencies = [
  "test-for-each-example",
  "thiserror 2.0.9",
  "tokio",
+ "tokio-stream",
  "toml",
  "toml_edit 0.22.22",
  "tracing",
@@ -5429,6 +5457,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3cb6eb87a131f756572d7fb904f6e7b68633f09cca868c5df1c4b8d1a694bbba"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "semver-pubgrub"
+version = "0.1.0"
+source = "git+https://github.com/software-mansion-labs/semver-pubgrub.git#6c78141d940cda6d8e69aea794c2bf30cc3402df"
+dependencies = [
+ "pubgrub",
+ "semver",
 ]
 
 [[package]]
@@ -6189,6 +6226,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-stream"
+version = "0.1.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eca58d7bba4a75707817a2c44174253f9236b2d5fbd055602e9d5c07c139a047"
+dependencies = [
+ "futures-core",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
 name = "tokio-util"
 version = "0.7.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6539,6 +6587,14 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
+
+[[package]]
+name = "version-ranges"
+version = "0.1.0"
+source = "git+https://github.com/software-mansion-labs/pubgrub.git?branch=dev#cdae1729d7c47a6194a499d674ccdc96ce0838f1"
+dependencies = [
+ "smallvec",
+]
 
 [[package]]
 name = "version_check"
