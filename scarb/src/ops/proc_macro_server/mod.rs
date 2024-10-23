@@ -3,7 +3,10 @@ use anyhow::{anyhow, Result};
 use connection::Connection;
 use json_rpc::{ErrResponse, Handler};
 use proc_macro_server_api::{
-    methods::{defined_macros::DefinedMacros, expand::ExpandAttribute},
+    methods::{
+        defined_macros::DefinedMacros,
+        expand::{ExpandAttribute, ExpandDerive},
+    },
     Method, RpcResponse,
 };
 use serde_json::Value;
@@ -32,6 +35,9 @@ pub fn start_proc_macro_server(proc_macros: ProcMacroHost) -> Result<()> {
                         }
                         ExpandAttribute::METHOD => {
                             run_handler::<ExpandAttribute>(proc_macros.clone(), request.value)
+                        }
+                        ExpandDerive::METHOD => {
+                            run_handler::<ExpandDerive>(proc_macros.clone(), request.value)
                         }
                         _ => Err(anyhow!("method not found")),
                     };
