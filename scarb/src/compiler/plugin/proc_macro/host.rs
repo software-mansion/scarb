@@ -946,7 +946,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
     fn declared_attributes(&self) -> Vec<String> {
         self.macros
             .iter()
-            .flat_map(|m| m.declared_attributes())
+            .flat_map(|m| m.declared_attributes_and_executables())
             .chain(vec![FULL_PATH_MARKER_KEY.to_string()])
             .collect()
     }
@@ -1100,5 +1100,9 @@ impl ProcMacroHost {
 
     pub fn into_plugin(self) -> Result<ProcMacroHostPlugin> {
         ProcMacroHostPlugin::try_new(self.macros)
+    }
+
+    pub fn macros(&self) -> &[Arc<ProcMacroInstance>] {
+        &self.macros
     }
 }
