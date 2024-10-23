@@ -223,13 +223,19 @@ fn format_with_import_sorting() {
             Diff in file [..]lib.cairo:
              --- original
             +++ modified
-            @@ -1,5 +1,5 @@
+            @@ -1,10 +1,10 @@
             +use openzeppelin::introspection::first;
              use openzeppelin::introspection::interface;
             -use openzeppelin::introspection::first;
 
              #[starknet::contract]
              mod SRC5 {
+            +    use openzeppelin::introspection::{AB, interface};
+                 use openzeppelin::introspection::interface;
+            -    use openzeppelin::introspection::{interface, AB};
+
+                 #[storage]
+                 struct Storage {
             @@ -14,8 +14,8 @@
                  use openzeppelin::introspection::first;
 
@@ -244,9 +250,9 @@ fn format_with_import_sorting() {
                  use starknet::ArrayTrait;
 
                  mod Inner {
-            -        use C;
-                     use B;
-            +        use C;
+            +        use B;
+                     use C;
+            -        use B;
                  }
              }
 
