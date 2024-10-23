@@ -2,7 +2,10 @@ use crate::compiler::plugin::proc_macro::ProcMacroHost;
 use anyhow::{anyhow, Result};
 use connection::Connection;
 use json_rpc::{ErrResponse, Handler};
-use proc_macro_server_api::{methods::defined_macros::DefinedMacros, Method, RpcResponse};
+use proc_macro_server_api::{
+    methods::{defined_macros::DefinedMacros, expand::ExpandAttribute},
+    Method, RpcResponse,
+};
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -26,6 +29,9 @@ pub fn start_proc_macro_server(proc_macros: ProcMacroHost) -> Result<()> {
                     let response = match request.method.as_str() {
                         DefinedMacros::METHOD => {
                             run_handler::<DefinedMacros>(proc_macros.clone(), request.value)
+                        }
+                        ExpandAttribute::METHOD => {
+                            run_handler::<ExpandAttribute>(proc_macros.clone(), request.value)
                         }
                         _ => Err(anyhow!("method not found")),
                     };
