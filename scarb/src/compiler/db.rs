@@ -151,7 +151,7 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                     let compilation_unit_component = unit.components.iter().find(|component| component.id == *compilation_unit_component_id)
                         .expect("dependency of a component is guaranteed to exist in compilation unit components");
                     (
-                        compilation_unit_component.package.id.name.to_string(),
+                        compilation_unit_component.cairo_package_name().to_string(),
                         DependencySettings {
                             discriminator: compilation_unit_component.id.to_discriminator()
                         },

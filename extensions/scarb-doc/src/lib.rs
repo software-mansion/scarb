@@ -70,7 +70,7 @@ pub fn generate_packages_information(
             .expect("main component is guaranteed to exist in compilation unit");
 
         let main_crate_id = db.intern_crate(CrateLongId::Real {
-            name: package_metadata.name.clone().into(),
+            name: main_component.name.to_smolstr(),
             discriminator: main_component
                 .discriminator
                 .as_ref()

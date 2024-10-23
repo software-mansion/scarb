@@ -3,7 +3,6 @@ use scarb_metadata::{
     CompilationUnitMetadata, Metadata, PackageId, PackageMetadata,
 };
 use smol_str::ToSmolStr;
-use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
@@ -25,12 +24,12 @@ pub fn get_project_config(
     package: &PackageMetadata,
     unit: &CompilationUnitMetadata,
 ) -> Result<ProjectConfig> {
-    let dependencies = get_dependencies(unit);
+    let crate_roots = get_crate_roots(unit);
     let crates_config = get_crates_config(metadata, unit)?;
     Ok(ProjectConfig {
         base_path: package.root.clone().into(),
         content: ProjectConfigContent {
-            crate_roots: dependencies,
+            crate_roots,
             crates_config,
         },
     })
@@ -58,7 +57,7 @@ pub fn get_relevant_compilation_unit(
         .copied()
 }
 
-fn get_dependencies(
+fn get_crate_roots(
     compilation_unit_metadata: &CompilationUnitMetadata,
 ) -> OrderedHashMap<CrateIdentifier, PathBuf> {
     compilation_unit_metadata
@@ -91,7 +90,7 @@ fn get_crates_config(
             match (package, cfg_result) {
                 (Some(package), Ok(cfg_set)) => Ok((
                     component.id.as_ref().unwrap().into(),
-                    get_crate_settings_for_component(component, unit, package, metadata, cfg_set)?,
+                    get_crate_settings_for_component(component, unit, package, cfg_set)?,
                 )),
                 (None, _) => {
                     bail!(MissingPackageError(component.package.to_string()))
@@ -111,7 +110,6 @@ fn get_crate_settings_for_component(
     component: &CompilationUnitComponentMetadata,
     unit: &CompilationUnitMetadata,
     package: &PackageMetadata,
-    metadata: &Metadata,
     cfg_set: Option<CfgSet>,
 ) -> Result<CrateSettings> {
     let edition = package
@@ -131,7 +129,7 @@ fn get_crate_settings_for_component(
             .contains(&String::from("coupons")),
     };
 
-    let dependencies: BTreeMap<String, DependencySettings> = component
+    let dependencies = component
         .dependencies
         .as_ref()
         .unwrap()
@@ -139,9 +137,8 @@ fn get_crate_settings_for_component(
         .map(|CompilationUnitComponentDependencyMetadata {id, .. } | {
             let dependency_component = unit.components.iter().find(|component| component.id.as_ref().unwrap() == id)
                 .expect("dependency of a component is guaranteed to exist in compilation unit components");
-            let package = metadata.get_package(&dependency_component.package).unwrap();
             (
-                package.name.clone(),
+                dependency_component.name.clone(),
                 DependencySettings {
                     discriminator: dependency_component.discriminator.as_ref().map(ToSmolStr::to_smolstr)
                 },
@@ -150,7 +147,7 @@ fn get_crate_settings_for_component(
         .collect();
 
     Ok(CrateSettings {
-        name: Some(package.name.to_smolstr()),
+        name: Some(component.name.to_smolstr()),
         edition,
         cfg_set,
         experimental_features,
