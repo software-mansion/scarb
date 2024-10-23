@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::resolver::DependencyEdge;
@@ -16,7 +18,6 @@ pub async fn resolve(
     registry: &dyn Registry,
     lockfile: Lockfile,
 ) -> anyhow::Result<Resolve> {
-    // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
 
     let main_packages = summaries
