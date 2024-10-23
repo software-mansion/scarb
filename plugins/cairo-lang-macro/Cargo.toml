@@ -16,7 +16,10 @@ repository.workspace = true
 cairo-lang-macro-attributes = "0.1"
 cairo-lang-macro-stable = "1"
 linkme.workspace = true
+serde = { workspace = true, optional = true }
 
 [dev-dependencies]
-serde.workspace = true
 serde_json.workspace = true
+
+[features]
+serde = ["dep:serde"]
