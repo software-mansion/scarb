@@ -4823,49 +4823,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scarb-snforge-test-collector"
-version = "2.8.4"
-dependencies = [
- "anyhow",
- "assert_fs",
- "cairo-lang-compiler",
- "cairo-lang-debug",
- "cairo-lang-defs",
- "cairo-lang-diagnostics",
- "cairo-lang-filesystem",
- "cairo-lang-lowering",
- "cairo-lang-project",
- "cairo-lang-semantic",
- "cairo-lang-sierra",
- "cairo-lang-sierra-generator",
- "cairo-lang-sierra-type-size",
- "cairo-lang-starknet",
- "cairo-lang-syntax",
- "cairo-lang-test-plugin",
- "cairo-lang-utils",
- "camino",
- "clap",
- "create-output-dir",
- "fs4",
- "indoc",
- "itertools 0.12.1",
- "num-bigint",
- "num-traits 0.2.19",
- "rayon",
- "scarb-metadata 1.12.0",
- "scarb-test-support",
- "scarb-ui",
- "semver",
- "serde",
- "serde_json",
- "smol_str",
- "snapbox",
- "starknet-types-core",
- "thiserror",
- "walkdir",
-]
-
-[[package]]
 name = "scarb-stable-hash"
 version = "1.0.0"
 dependencies = [
