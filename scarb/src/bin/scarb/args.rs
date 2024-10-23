@@ -178,6 +178,8 @@ pub enum Command {
         codes of selected packages. Resulting files will be placed in `target/package` directory.
     ")]
     Package(PackageArgs),
+    /// Start proc macro server.
+    ProcMacroServer,
     /// Upload a package to the registry.
     #[command(after_help = "\
         This command will create distributable, compressed `.tar.zst` archive containing source \
