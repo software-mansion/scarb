@@ -134,6 +134,15 @@ impl ProcMacroInstance {
             .collect()
     }
 
+    pub fn inline_macros(&self) -> Vec<String> {
+        self.get_expansions()
+            .iter()
+            .filter(|e| e.kind == ExpansionKind::Inline)
+            .map(|e| e.name.clone())
+            .map(Into::into)
+            .collect()
+    }
+
     /// Apply expansion to token stream.
     ///
     /// This function implements the actual calls to functions from the dynamic library.
