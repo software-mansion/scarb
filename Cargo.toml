@@ -6,7 +6,6 @@ members = [
     "extensions/scarb-cairo-language-server",
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
-    "extensions/scarb-snforge-test-collector",
     "plugins/cairo-lang-macro",
     "plugins/cairo-lang-macro-attributes",
     "plugins/cairo-lang-macro-stable",
