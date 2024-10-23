@@ -293,6 +293,7 @@ fn compile_with_incompatible_cairo_version() {
             Cairo version of Scarb: [..]
 
             error: the required Cairo version of each package must match the current Cairo version
+            help: pass `--ignore-cairo-version` to ignore Cairo version mismatch
         "#});
 }
 
