@@ -1,0 +1,14 @@
+[package]
+name = "scarb-proc-macro-server-types"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[dependencies]
+cairo-lang-macro = { path = "../../plugins/cairo-lang-macro", features = ["serde"], version = "0.1.0"}
+serde.workspace = true
+serde_json.workspace = true
