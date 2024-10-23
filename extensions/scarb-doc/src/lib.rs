@@ -10,7 +10,7 @@ use cairo_lang_filesystem::{
 use errors::DiagnosticError;
 use itertools::Itertools;
 use scarb_metadata::{CompilationUnitMetadata, Metadata, PackageMetadata};
-use scarb_ui::{OutputFormat, Ui};
+use scarb_ui::Ui;
 use serde::Serialize;
 use smol_str::ToSmolStr;
 use types::Crate;
@@ -38,6 +38,7 @@ pub fn generate_packages_information(
     metadata: &Metadata,
     metadata_for_packages: &[PackageMetadata],
     document_private_items: bool,
+    ui: Ui,
 ) -> Result<Vec<PackageInformation>> {
     let mut packages_information = vec![];
     for package_metadata in metadata_for_packages {
@@ -70,7 +71,7 @@ pub fn generate_packages_information(
             .find(|unit| unit.package == package_metadata.id);
 
         let mut diagnostics_reporter =
-            setup_diagnostics_reporter(&db, main_crate_id, package_compilation_unit)
+            setup_diagnostics_reporter(&db, main_crate_id, package_compilation_unit, &ui)
                 .skip_lowering_diagnostics();
 
         let crate_ = Crate::new(&db, main_crate_id, should_document_private_items)
@@ -95,9 +96,8 @@ fn setup_diagnostics_reporter<'a>(
     db: &ScarbDocDatabase,
     main_crate_id: CrateId,
     package_compilation_unit: Option<&CompilationUnitMetadata>,
+    ui: &'a Ui,
 ) -> DiagnosticsReporter<'a> {
-    let ui = Ui::new(scarb_ui::Verbosity::default(), OutputFormat::default());
-
     let ignore_warnings_crates = db
         .crates()
         .into_iter()
