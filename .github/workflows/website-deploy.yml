@@ -32,13 +32,13 @@ jobs:
           mkdir -p $HOME/pkg
           pushd $HOME/pkg
           scarb init --no-vcs
-          echo "CAIRO_VERSION_PATH=$(scarb metadata --format-version 1 | jq -r '.app_version_info.cairo | if .commit_info != null then .commit_info.short_commit_hash else "v\(.version)" end')" >> $GITHUB_OUTPUT
+          echo "CORELIB_PATH=$(scarb metadata --format-version 1 | jq -r '.packages[] | select(.name == "core") | .root')" >> $GITHUB_OUTPUT
         env:
           SCARB_INIT_TEST_RUNNER: cairo-test
       - name: Extract corelib from Scarb cache
         run: |
           mkdir -p core
-          cp -r $(scarb cache path)/registry/std/${{ steps.scarb-init.outputs.CAIRO_VERSION_PATH }}/core/* ./core
+          cp -r ${{ steps.scarb-init.outputs.CORELIB_PATH }}/* ./core
       - name: Generate and build corelib docs
         run: |
           scarb doc --all-features
