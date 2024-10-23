@@ -1101,4 +1101,8 @@ impl ProcMacroHost {
     pub fn into_plugin(self) -> Result<ProcMacroHostPlugin> {
         ProcMacroHostPlugin::try_new(self.macros)
     }
+
+    pub fn macros(&self) -> &[Arc<ProcMacroInstance>] {
+        &self.macros
+    }
 }
