@@ -423,6 +423,8 @@ fn is_doc_hidden_attr_semantic(
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ItemData {
+    #[serde(skip_serializing)]
+    pub id: DocumentableItemId,
     pub name: String,
     pub doc: Option<String>,
     pub signature: Option<String>,
@@ -436,6 +438,7 @@ impl ItemData {
         documentable_item_id: DocumentableItemId,
     ) -> Self {
         Self {
+            id: documentable_item_id,
             name: id.name(db).into(),
             doc: db.get_item_documentation(documentable_item_id),
             signature: Some(db.get_item_signature(documentable_item_id)),
@@ -449,6 +452,7 @@ impl ItemData {
         documentable_item_id: DocumentableItemId,
     ) -> Self {
         Self {
+            id: documentable_item_id,
             name: id.name(db).into(),
             doc: db.get_item_documentation(documentable_item_id),
             signature: None,
@@ -457,9 +461,11 @@ impl ItemData {
     }
 
     pub fn new_crate(db: &ScarbDocDatabase, id: CrateId) -> Self {
+        let documentable_id = DocumentableItemId::Crate(id);
         Self {
+            id: documentable_id,
             name: id.name(db).into(),
-            doc: db.get_item_documentation(DocumentableItemId::Crate(id)),
+            doc: db.get_item_documentation(documentable_id),
             signature: None,
             full_path: ModuleId::CrateRoot(id).full_path(db),
         }
