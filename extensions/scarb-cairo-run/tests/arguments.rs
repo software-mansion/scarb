@@ -72,6 +72,7 @@ fn can_deserialize_big_number() {
 }
 
 #[test]
+#[ignore = "number of args validation removed in cairo-lang-runner cairo#6489"]
 fn invalid_number_of_args() {
     let t = TempDir::new().unwrap();
     setup_fib_three_felt_args(&t);
@@ -128,7 +129,7 @@ fn array_instead_of_felt() {
             error: failed to run the function
 
             Caused by:
-                Function param 2 only partially contains argument 2.
+                Operation failed: 14:0 - 1, offsets cant be negative
             error: process did not exit successfully: exit code: 1
         "#});
     #[cfg(not(windows))]
@@ -139,7 +140,7 @@ fn array_instead_of_felt() {
             error: failed to run the function
 
             Caused by:
-                Function param 2 only partially contains argument 2.
+                Operation failed: 14:0 - 1, offsets cant be negative
         "#});
 }
 
@@ -272,7 +273,7 @@ fn invalid_struct_deserialization() {
             error: failed to run the function
 
             Caused by:
-                Function expects arguments of size 3 and received 2 instead.
+                Couldn't compute operand op1. Unknown value for memory cell 1:12
             error: process did not exit successfully: exit code: 1
         "#});
     #[cfg(not(windows))]
@@ -283,7 +284,7 @@ fn invalid_struct_deserialization() {
             error: failed to run the function
 
             Caused by:
-                Function expects arguments of size 3 and received 2 instead.
+                Couldn't compute operand op1. Unknown value for memory cell 1:12
         "#});
 }
 
