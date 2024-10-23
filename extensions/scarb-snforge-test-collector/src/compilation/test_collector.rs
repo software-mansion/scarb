@@ -267,7 +267,7 @@ fn insert_lib_entrypoint_content_into_db(
 ) -> CrateId {
     let main_crate_id = db.intern_crate(CrateLongId::Real {
         name: SmolStr::from(crate_name),
-        discriminator: Some(crate_version.to_smolstr()),
+        discriminator: Some(crate_version.to_smolstr()), // FIXME essa
     });
     db.set_crate_config(
         main_crate_id,

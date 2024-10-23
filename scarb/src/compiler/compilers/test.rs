@@ -170,8 +170,7 @@ fn get_contract_crate_ids(
                         .components()
                         .iter()
                         .find(|component| component.package.id.name == package_name)
-                        .map(|component| component.package.id.version.clone())
-                        .map(|v| v.to_smolstr());
+                        .and_then(|component| component.id.to_discriminator());
                     let name = package_name.to_smolstr();
                     db.intern_crate(CrateLongId::Real {
                         name,

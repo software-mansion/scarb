@@ -1,5 +1,5 @@
 use crate::db::ScarbDocDatabase;
-use crate::metadata::compilation::get_project_config;
+use crate::metadata::compilation::{get_project_config, get_relevant_compilation_unit};
 use anyhow::Result;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
@@ -55,13 +55,25 @@ pub fn generate_packages_information(
 
         let should_document_private_items = should_ignore_visibility || document_private_items;
 
-        let project_config = get_project_config(metadata, package_metadata)?;
+        let compilation_unit_metadata =
+            get_relevant_compilation_unit(metadata, package_metadata.id.clone())?;
+        let project_config =
+            get_project_config(metadata, package_metadata, compilation_unit_metadata)?;
 
         let db = ScarbDocDatabase::new(Some(project_config));
 
+        let main_component = compilation_unit_metadata
+            .components
+            .iter()
+            .find(|component| component.package == compilation_unit_metadata.package)
+            .expect("main component is guaranteed to exist in compilation unit");
+
         let main_crate_id = db.intern_crate(CrateLongId::Real {
             name: package_metadata.name.clone().into(),
-            discriminator: Some(package_metadata.version.clone()).map(|v| v.to_smolstr()),
+            discriminator: main_component
+                .discriminator
+                .as_ref()
+                .map(ToSmolStr::to_smolstr),
         });
 
         let package_compilation_unit = metadata

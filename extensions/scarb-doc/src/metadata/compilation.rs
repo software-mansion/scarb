@@ -1,5 +1,6 @@
 use scarb_metadata::{
-    CompilationUnitComponentMetadata, CompilationUnitMetadata, Metadata, PackageId, PackageMetadata,
+    CompilationUnitComponentDependencyMetadata, CompilationUnitComponentMetadata,
+    CompilationUnitMetadata, Metadata, PackageId, PackageMetadata,
 };
 use smol_str::ToSmolStr;
 use std::collections::BTreeMap;
@@ -18,18 +19,16 @@ use crate::errors::{CfgParseError, MissingCompilationUnitForPackage, MissingPack
 
 const LIB_TARGET_KIND: &str = "lib";
 const STARKNET_TARGET_KIND: &str = "starknet-contract";
-const CORELIB_CRATE_NAME: &str = "core";
 
 pub fn get_project_config(
     metadata: &Metadata,
-    package_metadata: &PackageMetadata,
+    package: &PackageMetadata,
+    unit: &CompilationUnitMetadata,
 ) -> Result<ProjectConfig> {
-    let compilation_unit_metadata =
-        package_compilation_unit(metadata, package_metadata.id.clone())?;
-    let dependencies = get_dependencies(compilation_unit_metadata);
-    let crates_config = get_crates_config(metadata, compilation_unit_metadata)?;
+    let dependencies = get_dependencies(unit);
+    let crates_config = get_crates_config(metadata, unit)?;
     Ok(ProjectConfig {
-        base_path: package_metadata.root.clone().into(),
+        base_path: package.root.clone().into(),
         content: ProjectConfigContent {
             crate_roots: dependencies,
             crates_config,
@@ -37,7 +36,7 @@ pub fn get_project_config(
     })
 }
 
-fn package_compilation_unit(
+pub fn get_relevant_compilation_unit(
     metadata: &Metadata,
     package_id: PackageId,
 ) -> Result<&CompilationUnitMetadata, MissingCompilationUnitForPackage> {
@@ -65,10 +64,9 @@ fn get_dependencies(
     compilation_unit_metadata
         .components
         .iter()
-        .filter(|du| du.name != CORELIB_CRATE_NAME)
         .map(|cu| {
             (
-                cu.name.as_str().into(),
+                cu.id.as_ref().unwrap().into(),
                 cu.source_root().to_owned().into_std_path_buf(),
             )
         })
@@ -77,28 +75,23 @@ fn get_dependencies(
 
 fn get_crates_config(
     metadata: &Metadata,
-    compilation_unit_metadata: &CompilationUnitMetadata,
+    unit: &CompilationUnitMetadata,
 ) -> Result<AllCratesConfig> {
-    let crates_config = compilation_unit_metadata
+    let crates_config = unit
         .components
         .iter()
         .map(|component| {
-            let pkg = metadata.get_package(&component.package);
+            let package = metadata.get_package(&component.package);
             let cfg_result = component
                 .cfg
                 .as_ref()
                 .map(|cfg_vec| build_cfg_set(cfg_vec))
                 .transpose();
 
-            match (pkg, cfg_result) {
-                (Some(pkg), Ok(cfg_set)) => Ok((
-                    component.name.as_str().into(),
-                    get_crate_settings_for_package(
-                        &metadata.packages,
-                        &compilation_unit_metadata.components,
-                        pkg,
-                        cfg_set,
-                    )?,
+            match (package, cfg_result) {
+                (Some(package), Ok(cfg_set)) => Ok((
+                    component.id.as_ref().unwrap().into(),
+                    get_crate_settings_for_component(component, unit, package, metadata, cfg_set)?,
                 )),
                 (None, _) => {
                     bail!(MissingPackageError(component.package.to_string()))
@@ -114,10 +107,11 @@ fn get_crates_config(
     })
 }
 
-fn get_crate_settings_for_package(
-    packages: &[PackageMetadata],
-    compilation_unit_metadata_components: &[CompilationUnitComponentMetadata],
+fn get_crate_settings_for_component(
+    component: &CompilationUnitComponentMetadata,
+    unit: &CompilationUnitMetadata,
     package: &PackageMetadata,
+    metadata: &Metadata,
     cfg_set: Option<CfgSet>,
 ) -> Result<CrateSettings> {
     let edition = package
@@ -137,41 +131,23 @@ fn get_crate_settings_for_package(
             .contains(&String::from("coupons")),
     };
 
-    let mut dependencies: BTreeMap<String, DependencySettings> = package
+    let dependencies: BTreeMap<String, DependencySettings> = component
         .dependencies
+        .as_ref()
+        .unwrap()
         .iter()
-        .filter_map(|dependency| {
-            compilation_unit_metadata_components
-                .iter()
-                .find(|compilation_unit_metadata_component| {
-                    compilation_unit_metadata_component.name == dependency.name
-                })
-                .map(|compilation_unit_metadata_component| {
-                    let version = packages
-                        .iter()
-                        .find(|package| package.name == compilation_unit_metadata_component.name)
-                        .map(|package| package.version.clone());
-                    let discriminator = (dependency.name != *CORELIB_CRATE_NAME)
-                        .then_some(version)
-                        .flatten()
-                        .map(|v| v.to_smolstr());
-                    (
-                        dependency.name.clone(),
-                        DependencySettings { discriminator },
-                    )
-                })
+        .map(|CompilationUnitComponentDependencyMetadata {id, .. } | {
+            let dependency_component = unit.components.iter().find(|component| component.id.as_ref().unwrap() == id)
+                .expect("dependency of a component is guaranteed to exist in compilation unit components");
+            let package = metadata.get_package(&dependency_component.package).unwrap();
+            (
+                package.name.clone(),
+                DependencySettings {
+                    discriminator: dependency_component.discriminator.as_ref().map(ToSmolStr::to_smolstr)
+                },
+            )
         })
         .collect();
-
-    // Adds itself to dependencies
-    dependencies.insert(
-        package.name.clone(),
-        DependencySettings {
-            discriminator: (package.name != *CORELIB_CRATE_NAME)
-                .then_some(package.version.clone())
-                .map(|v| v.to_smolstr()),
-        },
-    );
 
     Ok(CrateSettings {
         name: Some(package.name.to_smolstr()),

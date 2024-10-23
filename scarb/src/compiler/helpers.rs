@@ -8,11 +8,10 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
-use cairo_lang_filesystem::db::{FilesGroup, CORELIB_CRATE_NAME};
+use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use itertools::Itertools;
 use serde::Serialize;
-use smol_str::ToSmolStr;
 use std::io::{BufWriter, Write};
 
 pub fn build_compiler_config<'c>(
@@ -91,12 +90,10 @@ impl From<cairo_lang_lowering::utils::InliningStrategy> for InliningStrategy {
 }
 
 pub fn collect_main_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
-    let name = unit.main_component().cairo_package_name();
-    let version = unit.main_component().package.id.version.clone();
+    let main_component = unit.main_component();
+    let name = main_component.cairo_package_name();
     vec![db.intern_crate(CrateLongId::Real {
-        discriminator: (name != CORELIB_CRATE_NAME)
-            .then_some(version)
-            .map(|v| v.to_smolstr()),
+        discriminator: main_component.id.to_discriminator(),
         name,
     })]
 }
