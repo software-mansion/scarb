@@ -5,7 +5,7 @@ use json_rpc::{ErrResponse, Handler};
 use proc_macro_server_api::{
     methods::{
         defined_macros::DefinedMacros,
-        expand::{ExpandAttribute, ExpandDerive},
+        expand::{ExpandAttribute, ExpandDerive, ExpandInline},
     },
     Method, RpcResponse,
 };
@@ -38,6 +38,9 @@ pub fn start_proc_macro_server(proc_macros: ProcMacroHost) -> Result<()> {
                         }
                         ExpandDerive::METHOD => {
                             run_handler::<ExpandDerive>(proc_macros.clone(), request.value)
+                        }
+                        ExpandInline::METHOD => {
+                            run_handler::<ExpandInline>(proc_macros.clone(), request.value)
                         }
                         _ => Err(anyhow!("method not found")),
                     };
