@@ -4209,6 +4209,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "proc-macro-server-api"
+version = "2.8.4"
+dependencies = [
+ "cairo-lang-macro",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4635,6 +4644,7 @@ dependencies = [
  "clap",
  "convert_case",
  "create-output-dir",
+ "crossbeam-channel",
  "data-encoding",
  "deno_task_shell",
  "derive_builder",
@@ -4661,6 +4671,7 @@ dependencies = [
  "pathdiff",
  "petgraph",
  "predicates",
+ "proc-macro-server-api",
  "ra_ap_toolchain",
  "redb",
  "reqwest",
