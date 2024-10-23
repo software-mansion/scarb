@@ -95,7 +95,9 @@ impl TokenStream {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub fn into_stable(self) -> StableTokenStream {
+    pub fn into_stable(mut self) -> StableTokenStream {
+        // Remove 0 bytes so conversion will always work.
+        self.value.retain(|c| c != '\0');
         let cstr = CString::new(self.value).unwrap();
         StableTokenStream {
             value: cstr.into_raw(),
