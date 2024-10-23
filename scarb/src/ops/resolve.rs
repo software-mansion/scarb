@@ -614,12 +614,10 @@ fn check_cairo_version_compatibility(
             _ => true,
         });
     if !matching_version && !ignore_mismatch {
-        bail!(
-            formatdoc!{ r"
+        bail!(formatdoc! { r"
                 the required Cairo version of each package must match the current Cairo version
                 help: pass `--ignore-cairo-version` to ignore Cairo version mismatch
-            "}
-        )
+            "})
     }
     Ok(())
 }
