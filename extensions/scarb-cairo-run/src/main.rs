@@ -1,6 +1,3 @@
-use std::env;
-use std::fs;
-
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use cairo_lang_runner::short_string::as_cairo_short_string;
 use cairo_lang_runner::{RunResultStarknet, RunResultValue, SierraCasmRunner, StarknetState};
@@ -10,6 +7,9 @@ use camino::Utf8PathBuf;
 use clap::Parser;
 use indoc::formatdoc;
 use serde::Serializer;
+use std::env;
+use std::fs;
+use std::process::ExitCode;
 
 use scarb_metadata::{
     CompilationUnitMetadata, Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand,
@@ -66,14 +66,14 @@ struct Args {
     arguments_file: Option<Utf8PathBuf>,
 }
 
-fn main() -> Result<()> {
+fn main() -> ExitCode {
     let args: Args = Args::parse();
     let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
     if let Err(err) = main_inner(&ui, args) {
         ui.anyhow(&err);
-        std::process::exit(1);
+        return ExitCode::FAILURE;
     }
-    Ok(())
+    ExitCode::SUCCESS
 }
 
 fn main_inner(ui: &Ui, args: Args) -> Result<()> {
