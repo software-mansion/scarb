@@ -5,9 +5,10 @@ mod conversion;
 mod expansions;
 
 pub use expansions::*;
+use serde::{Deserialize, Serialize};
 
 /// Result of procedural macro code generation.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ProcMacroResult {
     pub token_stream: TokenStream,
     pub aux_data: Option<AuxData>,
@@ -18,7 +19,7 @@ pub struct ProcMacroResult {
 /// An abstract stream of Cairo tokens.
 ///
 /// This is both input and part of an output of a procedural macro.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct TokenStream {
     value: String,
     metadata: TokenStreamMetadata,
@@ -27,7 +28,7 @@ pub struct TokenStream {
 /// Metadata of [`TokenStream`].
 ///
 /// This struct can be used to describe the origin of the [`TokenStream`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct TokenStreamMetadata {
     /// The path to the file from which the [`TokenStream`] has been created.
     pub original_file_path: Option<String>,
@@ -158,7 +159,7 @@ impl From<AuxData> for Vec<u8> {
 }
 
 /// Diagnostic returned by the procedural macro.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Diagnostic {
     /// A human addressed message associated with the [`Diagnostic`].
     ///
@@ -176,7 +177,7 @@ pub struct Diagnostic {
 /// This should be roughly equivalent to the severity of Cairo diagnostics.
 ///
 /// The appropriate action for each diagnostic kind will be taken by `Scarb`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Severity {
     /// An error has occurred.
     ///
