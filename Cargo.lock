@@ -5000,6 +5000,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "scarb-proc-macro-server-types"
+version = "0.1.0"
+dependencies = [
+ "cairo-lang-macro",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "scarb-stable-hash"
 version = "1.0.0"
 dependencies = [
