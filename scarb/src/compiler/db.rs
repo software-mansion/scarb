@@ -10,7 +10,6 @@ use cairo_lang_filesystem::db::{
 use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smol_str::SmolStr;
-use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
@@ -137,14 +136,14 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
         })
         .collect();
 
-    let crates_config: OrderedHashMap<CrateIdentifier, CrateSettings> = unit
+    let crates_config = unit
         .components
         .iter()
         .map(|component| {
             let experimental_features = component.package.manifest.experimental_features.clone();
             let experimental_features = experimental_features.unwrap_or_default();
 
-            let dependencies: BTreeMap<String, DependencySettings> = component
+            let dependencies = component
                 .dependencies
                 .iter()
                 .map(|compilation_unit_component_id| {

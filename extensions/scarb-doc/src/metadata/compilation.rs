@@ -65,7 +65,10 @@ fn get_crate_roots(
         .iter()
         .map(|cu| {
             (
-                cu.id.as_ref().unwrap().into(),
+                cu.id
+                    .as_ref()
+                    .expect("component is expected to have an id")
+                    .into(),
                 cu.source_root().to_owned().into_std_path_buf(),
             )
         })
@@ -89,7 +92,11 @@ fn get_crates_config(
 
             match (package, cfg_result) {
                 (Some(package), Ok(cfg_set)) => Ok((
-                    component.id.as_ref().unwrap().into(),
+                    component
+                        .id
+                        .as_ref()
+                        .expect("component is expected to have an id")
+                        .into(),
                     get_crate_settings_for_component(component, unit, package, cfg_set)?,
                 )),
                 (None, _) => {
@@ -132,10 +139,11 @@ fn get_crate_settings_for_component(
     let dependencies = component
         .dependencies
         .as_ref()
-        .unwrap()
+        .expect("dependencies are expected to exist")
         .iter()
-        .map(|CompilationUnitComponentDependencyMetadata {id, .. } | {
-            let dependency_component = unit.components.iter().find(|component| component.id.as_ref().unwrap() == id)
+        .map(|CompilationUnitComponentDependencyMetadata { id, .. }| {
+            let dependency_component = unit.components.iter()
+                .find(|component| component.id.as_ref().expect("component is expected to have an id") == id)
                 .expect("dependency of a component is guaranteed to exist in compilation unit components");
             (
                 dependency_component.name.clone(),
