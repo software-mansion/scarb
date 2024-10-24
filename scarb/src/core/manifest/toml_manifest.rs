@@ -585,7 +585,9 @@ impl TomlManifest {
             .map(|edition| edition.resolve("edition", || inheritable_package.edition()))
             .transpose()?
             .unwrap_or_else(|| {
-                config.ui().warn("`edition` field not set in `[package]` section");
+                if !targets.iter().any(Target::is_cairo_plugin) {
+                    config.ui().warn("`edition` field not set in `[package]` section");
+                }
                 Edition::default()
             });
 
