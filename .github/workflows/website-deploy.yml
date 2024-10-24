@@ -23,9 +23,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: software-mansion/setup-scarb@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Install mdBook
         run: cargo install --version ${MDBOOK_VERSION} mdbook
+      - uses: software-mansion/setup-scarb@v1
       - name: Init Scarb to cache corelib
         id: scarb-init
         run: |
