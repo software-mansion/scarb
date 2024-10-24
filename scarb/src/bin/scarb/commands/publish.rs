@@ -26,6 +26,7 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
             verify: !args.shared_args.no_verify,
             check_metadata: true,
             features: features_opts,
+            ignore_cairo_version: args.ignore_cairo_version,
         },
     };
 

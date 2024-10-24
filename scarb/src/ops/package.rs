@@ -43,6 +43,7 @@ pub struct PackageOpts {
     pub verify: bool,
     pub check_metadata: bool,
     pub features: ops::FeaturesOpts,
+    pub ignore_cairo_version: bool,
 }
 
 /// A listing of files to include in the archive, without actually building it yet.
@@ -183,8 +184,14 @@ fn package_one_impl(
     let uncompressed_size = tar(pkg_id, recipe, &mut dst, ws)?;
 
     let mut dst = if opts.verify && !pkg.manifest.targets.iter().any(is_builtin) {
-        run_verify(pkg, dst, ws, opts.features.clone())
-            .context("failed to verify package tarball")?
+        run_verify(
+            pkg,
+            dst,
+            ws,
+            opts.features.clone(),
+            opts.ignore_cairo_version,
+        )
+        .context("failed to verify package tarball")?
     } else {
         dst
     };
@@ -359,6 +366,7 @@ fn run_verify(
     tar: FileLockGuard,
     ws: &Workspace<'_>,
     features: ops::FeaturesOpts,
+    ignore_cairo_version: bool,
 ) -> Result<FileLockGuard> {
     ws.config()
         .ui()
@@ -382,6 +390,7 @@ fn run_verify(
             exclude_target_kinds: vec![TargetKind::TEST.clone()],
             include_target_names: Vec::new(),
             features,
+            ignore_cairo_version,
         },
         &ws,
     )?;
