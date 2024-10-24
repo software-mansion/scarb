@@ -1,5 +1,8 @@
+use std::collections::HashSet;
+
 use anyhow::Result;
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
+use cairo_lang_doc::types::DocumentationCommentToken;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::{self, Visibility};
@@ -30,8 +33,10 @@ use cairo_lang_syntax::node::{
 
 use crate::db::ScarbDocDatabase;
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct Crate {
+    #[serde(skip)]
+    pub included_items: HashSet<DocumentableItemId>,
     pub root_module: Module,
 }
 
@@ -42,8 +47,11 @@ impl Crate {
         include_private_items: bool,
     ) -> Maybe<Self> {
         let root_module_id = ModuleId::CrateRoot(crate_id);
+        let root_module = Module::new(db, root_module_id, root_module_id, include_private_items)?;
+        let included_items = root_module.get_all_item_ids();
         Ok(Self {
-            root_module: Module::new(db, root_module_id, root_module_id, include_private_items)?,
+            root_module,
+            included_items: included_items,
         })
     }
 }
@@ -65,9 +73,8 @@ fn is_visible_in_module(
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct Module {
-    #[serde(skip)]
     pub module_id: ModuleId,
     pub item_data: ItemData,
 
@@ -378,6 +385,79 @@ impl Module {
             extern_functions,
         })
     }
+
+    /// Recursivly traverses all the module and gets all the item [DocumentableItemId]s.
+    pub fn get_all_item_ids(&self) -> HashSet<DocumentableItemId> {
+        let mut ids: HashSet<DocumentableItemId> = HashSet::default();
+        ids.insert(self.item_data.id);
+        self.constants.iter().for_each(|item| {
+            ids.insert(item.item_data.id);
+        });
+        self.free_functions.iter().for_each(|item| {
+            ids.insert(item.item_data.id);
+        });
+        self.type_aliases.iter().for_each(|item| {
+            ids.insert(item.item_data.id);
+        });
+        self.impl_aliases.iter().for_each(|item| {
+            ids.insert(item.item_data.id);
+        });
+        self.free_functions.iter().for_each(|item| {
+            ids.insert(item.item_data.id);
+        });
+        self.extern_types.iter().for_each(|item| {
+            ids.insert(item.item_data.id);
+        });
+        self.extern_functions.iter().for_each(|item| {
+            ids.insert(item.item_data.id);
+        });
+
+        self.structs.iter().for_each(|struct_| {
+            ids.insert(struct_.item_data.id);
+            struct_.members.iter().for_each(|item| {
+                ids.insert(item.item_data.id);
+            })
+        });
+
+        self.enums.iter().for_each(|enum_| {
+            ids.insert(enum_.item_data.id);
+            enum_.variants.iter().for_each(|item| {
+                ids.insert(item.item_data.id);
+            });
+        });
+
+        self.traits.iter().for_each(|trait_| {
+            ids.insert(trait_.item_data.id);
+            trait_.trait_constants.iter().for_each(|item| {
+                ids.insert(item.item_data.id);
+            });
+            trait_.trait_functions.iter().for_each(|item| {
+                ids.insert(item.item_data.id);
+            });
+            trait_.trait_types.iter().for_each(|item| {
+                ids.insert(item.item_data.id);
+            });
+        });
+
+        self.impls.iter().for_each(|impl_| {
+            ids.insert(impl_.item_data.id);
+            impl_.impl_constants.iter().for_each(|item| {
+                ids.insert(item.item_data.id);
+            });
+            impl_.impl_functions.iter().for_each(|item| {
+                ids.insert(item.item_data.id);
+            });
+            impl_.impl_types.iter().for_each(|item| {
+                ids.insert(item.item_data.id);
+            });
+        });
+
+        self.submodules.iter().for_each(|sub_module| {
+            ids.extend(sub_module.get_all_item_ids());
+        });
+
+        ids
+    }
 }
 
 /// Takes the HashMap of items (returned from db query), filter them based on the `should_include_item_function` returned value,
@@ -421,12 +501,12 @@ fn is_doc_hidden_attr_semantic(
     node.has_attr_with_arg(db, "doc", "hidden")
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct ItemData {
     #[serde(skip_serializing)]
     pub id: DocumentableItemId,
     pub name: String,
-    pub doc: Option<String>,
+    pub doc: Option<Vec<DocumentationCommentToken>>,
     pub signature: Option<String>,
     pub full_path: String,
 }
@@ -440,7 +520,7 @@ impl ItemData {
         Self {
             id: documentable_item_id,
             name: id.name(db).into(),
-            doc: db.get_item_documentation(documentable_item_id),
+            doc: db.get_item_documentation_as_tokens(documentable_item_id),
             signature: Some(db.get_item_signature(documentable_item_id)),
             full_path: id.full_path(db),
         }
@@ -454,7 +534,7 @@ impl ItemData {
         Self {
             id: documentable_item_id,
             name: id.name(db).into(),
-            doc: db.get_item_documentation(documentable_item_id),
+            doc: db.get_item_documentation_as_tokens(documentable_item_id),
             signature: None,
             full_path: id.full_path(db),
         }
@@ -465,14 +545,14 @@ impl ItemData {
         Self {
             id: documentable_id,
             name: id.name(db).into(),
-            doc: db.get_item_documentation(documentable_id),
+            doc: db.get_item_documentation_as_tokens(documentable_id),
             signature: None,
             full_path: ModuleId::CrateRoot(id).full_path(db),
         }
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct Constant {
     #[serde(skip)]
     pub id: ConstantId,
@@ -497,7 +577,7 @@ impl Constant {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct FreeFunction {
     #[serde(skip)]
     pub id: FreeFunctionId,
@@ -522,7 +602,7 @@ impl FreeFunction {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct Struct {
     #[serde(skip)]
     pub id: StructId,
@@ -580,7 +660,7 @@ impl Struct {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct Member {
     #[serde(skip)]
     pub id: MemberId,
@@ -602,7 +682,7 @@ impl Member {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct Enum {
     #[serde(skip)]
     pub id: EnumId,
@@ -638,7 +718,7 @@ impl Enum {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct Variant {
     #[serde(skip)]
     pub id: VariantId,
@@ -660,7 +740,7 @@ impl Variant {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct TypeAlias {
     #[serde(skip)]
     pub id: ModuleTypeAliasId,
@@ -685,7 +765,7 @@ impl TypeAlias {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct ImplAlias {
     #[serde(skip)]
     pub id: ImplAliasId,
@@ -710,7 +790,7 @@ impl ImplAlias {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct Trait {
     #[serde(skip)]
     pub id: TraitId,
@@ -762,7 +842,7 @@ impl Trait {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct TraitConstant {
     #[serde(skip)]
     pub id: TraitConstantId,
@@ -788,7 +868,7 @@ impl TraitConstant {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct TraitType {
     #[serde(skip)]
     pub id: TraitTypeId,
@@ -814,7 +894,7 @@ impl TraitType {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct TraitFunction {
     #[serde(skip)]
     pub id: TraitFunctionId,
@@ -840,7 +920,7 @@ impl TraitFunction {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct Impl {
     #[serde(skip)]
     pub id: ImplDefId,
@@ -892,7 +972,7 @@ impl Impl {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct ImplType {
     #[serde(skip)]
     pub id: ImplTypeDefId,
@@ -914,7 +994,7 @@ impl ImplType {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct ImplConstant {
     #[serde(skip)]
     pub id: ImplConstantDefId,
@@ -940,7 +1020,7 @@ impl ImplConstant {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct ImplFunction {
     #[serde(skip)]
     pub id: ImplFunctionId,
@@ -966,7 +1046,7 @@ impl ImplFunction {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct ExternType {
     #[serde(skip)]
     pub id: ExternTypeId,
@@ -991,7 +1071,7 @@ impl ExternType {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Clone)]
 pub struct ExternFunction {
     #[serde(skip)]
     pub id: ExternFunctionId,
