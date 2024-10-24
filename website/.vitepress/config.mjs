@@ -62,6 +62,10 @@ const sidebar = {
         p("Scripts", "/docs/reference/scripts"),
         p("Specifying dependencies", "/docs/reference/specifying-dependencies"),
         p("Targets", "/docs/reference/targets"),
+        p(
+          "Corelib documentation",
+          "https://docs.swmansion.com/scarb/corelib/index.html",
+        ),
       ],
     },
     {
