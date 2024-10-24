@@ -1,11 +1,9 @@
-use cairo_lang_compiler::project::{
-    update_crate_root, update_crate_roots_from_project_config, ProjectConfig,
-};
+use cairo_lang_compiler::project::{update_crate_roots_from_project_config, ProjectConfig};
 use cairo_lang_defs::db::{ext_as_virtual_impl, DefsDatabase, DefsGroup};
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
-    init_files_group, AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup, CORELIB_CRATE_NAME,
+    init_files_group, AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup,
 };
 use cairo_lang_filesystem::ids::VirtualFile;
 use cairo_lang_lowering::db::{LoweringDatabase, LoweringGroup};
@@ -70,9 +68,6 @@ impl ScarbDocDatabase {
 
     fn apply_project_config(&mut self, config: ProjectConfig) {
         update_crate_roots_from_project_config(self, &config);
-        if let Some(corelib) = &config.corelib {
-            update_crate_root(self, &config, CORELIB_CRATE_NAME.into(), corelib.clone());
-        }
     }
 }
 
