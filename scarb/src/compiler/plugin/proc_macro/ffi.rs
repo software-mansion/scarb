@@ -133,7 +133,7 @@ impl ProcMacroInstance {
         attr: TokenStream,
         token_stream: TokenStream,
     ) -> ProcMacroResult {
-        // This must be manually freed with call to from_owned_stable.
+        // This must be manually freed with call to `free_owned_stable`.
         let stable_token_stream = token_stream.into_stable();
         let stable_attr = attr.into_stable();
         // Allocate proc macro name.
@@ -147,8 +147,8 @@ impl ProcMacroInstance {
         // Free the memory allocated by the `stable_token_stream`.
         // This will call `CString::from_raw` under the hood, to take ownership.
         unsafe {
-            TokenStream::from_owned_stable(stable_result.input);
-            TokenStream::from_owned_stable(stable_result.input_attr);
+            TokenStream::free_owned_stable(stable_result.input);
+            TokenStream::free_owned_stable(stable_result.input_attr);
         };
         // Create Rust representation of the result.
         // Note, that the memory still needs to be freed on the allocator side!
@@ -173,7 +173,7 @@ impl ProcMacroInstance {
         // Actual call to FFI interface for aux data callback.
         let context = (self.plugin.vtable.post_process_callback)(context);
         // Free the allocated memory.
-        let _ = unsafe { PostProcessContext::from_owned_stable(context) };
+        unsafe { PostProcessContext::free_owned_stable(context) };
     }
 
     pub fn doc(&self, item_name: SmolStr) -> Option<String> {
