@@ -938,7 +938,6 @@ fn can_implement_derive_macro() {
             #[derive_macro]
             pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
                 let name = token_stream
-                    .clone()
                     .to_string()
                     .lines()
                     .find(|l| l.starts_with("struct"))
@@ -1278,7 +1277,6 @@ fn can_be_expanded() {
         #[derive_macro]
         pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
             let name = token_stream
-                .clone()
                 .to_string()
                 .lines()
                 .find(|l| l.starts_with("struct"))
