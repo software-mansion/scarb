@@ -37,7 +37,7 @@ impl ProjectBuilder {
         Self {
             name: format!("pkg{n}"),
             version: Version::new(1, n, 0),
-            edition: None,
+            edition: "2023_01".to_string().into(),
             cairo_version: None,
             src: HashMap::from_iter([(
                 Utf8PathBuf::from("src/lib.cairo"),

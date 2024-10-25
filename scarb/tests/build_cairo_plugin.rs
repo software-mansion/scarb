@@ -194,6 +194,7 @@ fn can_emit_plugin_warning() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
+        .edition("2023_01")
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
             #[some]
@@ -240,6 +241,7 @@ fn can_emit_plugin_error() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
+        .edition("2023_01")
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
             #[some]
@@ -597,6 +599,7 @@ fn can_define_multiple_macros() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
+        .edition("2023_01")
         .dep_starknet()
         .dep("some", &t)
         .dep("other", &w)
@@ -1130,6 +1133,7 @@ fn can_create_executable_attribute() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
+        .edition("2023_01")
         .dep_starknet()
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
@@ -1404,6 +1408,7 @@ fn can_expand_impl_inner_func_attrr() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
+        .edition("2023_01")
         .dep_starknet()
         .dep_cairo_test()
         .dep("some", &t)

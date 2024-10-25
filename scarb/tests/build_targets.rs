@@ -22,6 +22,7 @@ fn compile_with_duplicate_targets_1() {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
 
             [[target.example]]
 
@@ -52,6 +53,7 @@ fn compile_with_duplicate_targets_2() {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
 
             [[target.example]]
             name = "x"
@@ -84,6 +86,7 @@ fn compile_with_custom_lib_target() {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
 
             [lib]
             name = "not_hello"
@@ -130,6 +133,7 @@ fn compile_with_named_default_lib_target() {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
 
             [lib]
             name = "not_hello"
@@ -173,6 +177,7 @@ fn compile_with_lib_target_in_target_array() {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
 
             [[target.lib]]
             name = "not_hello"

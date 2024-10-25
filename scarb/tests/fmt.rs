@@ -43,6 +43,7 @@ fn simple_check_invalid() {
         .assert()
         .failure()
         .stdout_matches(indoc! {"\
+            warn: `edition` field not set in `[package]` section
             Diff in [..]/src/lib.cairo:
              --- original
             +++ modified
@@ -70,7 +71,8 @@ fn simple_emit_invalid() {
         .assert()
         .failure()
         .stdout_eq(format!(
-            "{}:\n\n{}",
+            "{}\n{}:\n\n{}",
+            "warn: `edition` field not set in `[package]` section",
             fsx::canonicalize(t.child("src/lib.cairo"))
                 .unwrap()
                 .display(),
@@ -127,6 +129,7 @@ fn simple_format_with_parsing_error() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
+        warn: `edition` field not set in `[package]` section
         error: Missing tokens. Expected a type expression.
          --> [..]lib.cairo:1:16
         fn main()    ->    {      42      }
@@ -143,7 +146,10 @@ fn simple_format_with_filter() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq("error: package `world` not found in workspace\n");
+        .stdout_eq(indoc! {r#"
+            warn: `edition` field not set in `[package]` section
+            error: package `world` not found in workspace
+        "#});
 
     assert!(t.child("src/lib.cairo").is_file());
     let content = t.child("src/lib.cairo").read_to_string();
@@ -169,6 +175,7 @@ fn format_with_import_sorting() {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
             [tool.fmt]
             sort-module-level-items = true
             "#,
