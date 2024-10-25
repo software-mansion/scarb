@@ -177,7 +177,6 @@ fn fetch_with_short_ssh_git() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .edition("2023_01")
         .dep("dep", Dep.with("git", "git@github.com:a/dep"))
         .lib_cairo("fn world() -> felt252 { dep1::hello() }")
         .build(&t);

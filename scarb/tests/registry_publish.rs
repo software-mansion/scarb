@@ -96,7 +96,6 @@ fn auth_token_missing() {
     ProjectBuilder::start()
         .name("bar")
         .version("1.0.0")
-        .edition("2023_01")
         .lib_cairo(r#"fn f() -> felt252 { 0 }"#)
         .build(&t);
 
