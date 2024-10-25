@@ -8,7 +8,6 @@ use anyhow::{anyhow, bail, ensure, Context, Result};
 use cairo_lang_filesystem::db::Edition;
 use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
 use camino::{Utf8Path, Utf8PathBuf};
-use indoc::formatdoc;
 use itertools::Itertools;
 use pathdiff::diff_utf8_paths;
 use semver::{Version, VersionReq};
@@ -586,7 +585,9 @@ impl TomlManifest {
             .transpose()?
             .unwrap_or_else(|| {
                 if !targets.iter().any(Target::is_cairo_plugin) {
-                    config.ui().warn("`edition` field not set in `[package]` section");
+                    config
+                        .ui()
+                        .warn("`edition` field not set in `[package]` section");
                 }
                 Edition::default()
             });
