@@ -1,6 +1,8 @@
 use anyhow::Result;
+use cairo_lang_doc::documentable_item::DocumentableItemId;
 use camino::Utf8Path;
 use itertools::chain;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 
 use crate::docs_generation::markdown::book_toml::generate_book_toml_content;
@@ -11,10 +13,11 @@ use crate::docs_generation::markdown::traits::{
 use crate::docs_generation::{collect_all_top_level_items, TopLevelItems};
 use crate::errors::{IODirectoryCreationError, IOWriteError};
 use crate::types::{
-    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Module, Struct,
-    Trait, TypeAlias,
+    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, IncludedItems, Module, Struct, Trait, TypeAlias
 };
 use crate::PackageInformation;
+
+use super::DocItem;
 
 mod book_toml;
 mod summary;
@@ -23,7 +26,7 @@ mod traits;
 const BASE_HEADER_LEVEL: usize = 1;
 const SOURCE_DIRECTORY: &str = "src";
 const BOOK_TOML_FILENAME: &str = "book.toml";
-const SUMMARY_FILENAME: &str = "SUMMARY.md";
+pub const SUMMARY_FILENAME: &str = "SUMMARY.md";
 
 type Filename = String;
 
@@ -36,6 +39,7 @@ pub struct MarkdownContent {
 impl MarkdownContent {
     pub fn from_crate(package_information: &PackageInformation) -> Result<Self> {
         let top_level_items = collect_all_top_level_items(&package_information.crate_);
+        let included_items = &package_information.crate_.included_items;
 
         let summary_file_content = generate_summary_file_content(&top_level_items)?;
         let TopLevelItems {
@@ -53,17 +57,17 @@ impl MarkdownContent {
         } = top_level_items;
 
         let docs_for_top_level_items = chain!(
-            generate_top_level_docs_contents(&modules)?,
-            generate_top_level_docs_contents(&constants)?,
-            generate_top_level_docs_contents(&free_functions)?,
-            generate_top_level_docs_contents(&structs)?,
-            generate_top_level_docs_contents(&enums)?,
-            generate_top_level_docs_contents(&type_aliases)?,
-            generate_top_level_docs_contents(&impl_aliases)?,
-            generate_top_level_docs_contents(&traits)?,
-            generate_top_level_docs_contents(&impls)?,
-            generate_top_level_docs_contents(&extern_types)?,
-            generate_top_level_docs_contents(&extern_functions)?,
+            generate_top_level_docs_contents(&modules, included_items)?,
+            generate_top_level_docs_contents(&constants, included_items)?,
+            generate_top_level_docs_contents(&free_functions, included_items)?,
+            generate_top_level_docs_contents(&structs, included_items)?,
+            generate_top_level_docs_contents(&enums, included_items)?,
+            generate_top_level_docs_contents(&type_aliases, included_items)?,
+            generate_top_level_docs_contents(&impl_aliases, included_items)?,
+            generate_top_level_docs_contents(&traits, included_items)?,
+            generate_top_level_docs_contents(&impls, included_items)?,
+            generate_top_level_docs_contents(&extern_types, included_items)?,
+            generate_top_level_docs_contents(&extern_functions, included_items)?,
         )
         .collect::<Vec<(String, String)>>();
 
@@ -149,12 +153,13 @@ impl MarkdownContent {
 
 fn generate_top_level_docs_contents(
     items: &[&impl TopLevelMarkdownDocItem],
+    included_items: &IncludedItems,
 ) -> Result<Vec<(Filename, String)>> {
     items
         .iter()
         .map(|item| {
             let filename = item.filename();
-            item.generate_markdown(BASE_HEADER_LEVEL)
+            item.generate_markdown(included_items, BASE_HEADER_LEVEL)
                 .map(|markdown| (filename, markdown))
         })
         .collect()
