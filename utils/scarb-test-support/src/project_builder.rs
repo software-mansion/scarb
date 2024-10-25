@@ -65,6 +65,11 @@ impl ProjectBuilder {
         self
     }
 
+    pub fn no_edition(mut self) -> Self {
+        self.edition = None;
+        self
+    }
+
     pub fn cairo_version(mut self, cairo_version: impl ToVersion) -> Self {
         self.cairo_version = Some(cairo_version.to_version().unwrap());
         self

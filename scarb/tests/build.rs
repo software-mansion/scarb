@@ -346,6 +346,27 @@ fn compile_with_invalid_non_numeric_dep_version() {
 }
 
 #[test]
+fn compile_with_unset_edition() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .no_edition()
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            warn: `edition` field not set in `[package]` section
+            [..] Compiling hello v0.1.0 ([..]Scarb.toml)
+            [..]  Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
 fn compile_multiple_packages() {
     let t = TempDir::new().unwrap();
 
