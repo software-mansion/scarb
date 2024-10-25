@@ -3,8 +3,7 @@ use crate::types::{
     ImplFunction, ImplType, Member, Module, Struct, Trait, TraitConstant, TraitFunction, TraitType,
     TypeAlias, Variant,
 };
-use cairo_lang_doc::{documentable_item::DocumentableItemId, types::DocumentationCommentToken};
-use std::collections::HashSet;
+use cairo_lang_doc::types::DocumentationCommentToken;
 
 pub mod markdown;
 
@@ -115,7 +114,6 @@ trait DocItem {
     fn doc(&self) -> &Option<Vec<DocumentationCommentToken>>;
     fn signature(&self) -> &Option<String>;
     fn full_path(&self) -> &str;
-    fn parent_full_path(&self) -> &Option<String>;
 }
 
 macro_rules! impl_doc_item {
@@ -137,10 +135,6 @@ macro_rules! impl_doc_item {
 
             fn full_path(&self) -> &str {
                 &self.item_data.full_path
-            }
-
-            fn parent_full_path(&self) -> &Option<String> {
-                &self.item_data.parent_full_path
             }
         }
     };

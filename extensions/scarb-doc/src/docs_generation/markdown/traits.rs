@@ -3,9 +3,8 @@ use cairo_lang_defs::ids::{ImplItemId, LookupItemId, TraitItemId};
 use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_doc::types::{CommentLinkToken, DocumentationCommentToken};
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fmt::Write;
-use std::hash::Hash;
 
 use crate::docs_generation::{DocItem, PrimitiveDocItem, TopLevelDocItem};
 use crate::types::{
@@ -378,7 +377,11 @@ fn resolve_markdown_file_path_from_link(
                 {
                     match resolved_item.parent_full_path.clone() {
                         Some(parent_path) => {
-                            format!("{}#{}", path_to_file_link(&parent_path), resolved_item.name)
+                            format!(
+                                "{}#{}",
+                                path_to_file_link(&parent_path),
+                                resolved_item.name.to_lowercase()
+                            )
                         }
                         // Only root_module / crate doesn't have the parent.
                         _ => SUMMARY_FILENAME.to_string(),

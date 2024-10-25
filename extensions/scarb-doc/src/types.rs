@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use anyhow::Result;
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
@@ -39,7 +39,7 @@ pub type IncludedItems = HashMap<DocumentableItemId, ItemData>;
 #[derive(Serialize, Clone)]
 pub struct Crate {
     #[serde(skip)]
-    pub included_items: IncludedItems,
+    pub included_items: HashMap<DocumentableItemId, ItemData>,
     pub root_module: Module,
 }
 
@@ -60,7 +60,7 @@ impl Crate {
         let included_items = root_module.get_all_item_ids();
         Ok(Self {
             root_module,
-            included_items: included_items,
+            included_items,
         })
     }
 }
@@ -411,7 +411,7 @@ impl Module {
     }
 
     /// Recursivly traverses all the module and gets all the item [DocumentableItemId]s.
-    pub fn get_all_item_ids(&self) -> IncludedItems {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
         let mut ids: HashMap<DocumentableItemId, ItemData> = HashMap::default();
 
         ids.insert(self.item_data.id, self.item_data.clone());

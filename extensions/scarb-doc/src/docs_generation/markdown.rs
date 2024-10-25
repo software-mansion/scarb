@@ -1,8 +1,6 @@
 use anyhow::Result;
-use cairo_lang_doc::documentable_item::DocumentableItemId;
 use camino::Utf8Path;
 use itertools::chain;
-use std::collections::{HashMap, HashSet};
 use std::fs;
 
 use crate::docs_generation::markdown::book_toml::generate_book_toml_content;
@@ -13,11 +11,10 @@ use crate::docs_generation::markdown::traits::{
 use crate::docs_generation::{collect_all_top_level_items, TopLevelItems};
 use crate::errors::{IODirectoryCreationError, IOWriteError};
 use crate::types::{
-    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, IncludedItems, Module, Struct, Trait, TypeAlias
+    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, IncludedItems,
+    Module, Struct, Trait, TypeAlias,
 };
 use crate::PackageInformation;
-
-use super::DocItem;
 
 mod book_toml;
 mod summary;

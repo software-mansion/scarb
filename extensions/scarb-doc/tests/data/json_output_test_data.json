@@ -6,7 +6,7 @@
         "root_module": {
           "item_data": {
             "name": "hello_world",
-            "doc": "Fibonacci sequence calculator\n",
+            "doc": "Fibonacci sequence calculator",
             "signature": null,
             "full_path": "hello_world"
           },
