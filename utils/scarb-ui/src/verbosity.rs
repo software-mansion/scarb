@@ -99,6 +99,8 @@ mod tests {
         assert_eq!(Verbosity::from_env_var("SOME_ENV_VAR").unwrap(), Quiet);
         env::set_var("SOME_ENV_VAR", "verbose");
         assert_eq!(Verbosity::from_env_var("SOME_ENV_VAR").unwrap(), Verbose);
+        env::set_var("SOME_ENV_VAR", "no-warnings");
+        assert_eq!(Verbosity::from_env_var("SOME_ENV_VAR").unwrap(), NoWarnings);
         assert!(Verbosity::from_env_var("SOME_ENV_VAR_THAT_DOESNT_EXIST").is_err());
     }
 }
