@@ -14,6 +14,10 @@ pub enum Verbosity {
     ///
     /// String representation: `quiet`.
     Quiet,
+    /// Avoid printing warnings to standard output.
+    ///
+    /// String representation: `no-warnings`.
+    NoWarnings,
     /// Default verbosity level.
     ///
     /// String representation: `normal`.
@@ -29,6 +33,7 @@ impl Display for Verbosity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Quiet => write!(f, "quiet"),
+            Self::NoWarnings => write!(f, "no-warnings"),
             Self::Normal => write!(f, "normal"),
             Self::Verbose => write!(f, "verbose"),
         }
@@ -41,6 +46,7 @@ impl FromStr for Verbosity {
     fn from_str(s: &str) -> Result<Self> {
         match s {
             "quiet" => Ok(Verbosity::Quiet),
+            "no-warnings" => Ok(Verbosity::NoWarnings),
             "normal" => Ok(Verbosity::Normal),
             "verbose" => Ok(Verbosity::Verbose),
             "" => bail!("empty string cannot be used as verbosity level"),
@@ -69,7 +75,8 @@ mod tests {
     #[test]
     fn verbosity_ord() {
         use Verbosity::*;
-        assert!(Quiet < Normal);
+        assert!(Quiet < NoWarnings);
+        assert!(NoWarnings < Normal);
         assert!(Normal < Verbose);
     }
 
@@ -77,6 +84,10 @@ mod tests {
     fn verbosity_from_str() {
         use Verbosity::*;
         assert_eq!(Quiet.to_string().parse::<Verbosity>().unwrap(), Quiet);
+        assert_eq!(
+            NoWarnings.to_string().parse::<Verbosity>().unwrap(),
+            NoWarnings
+        );
         assert_eq!(Normal.to_string().parse::<Verbosity>().unwrap(), Normal);
         assert_eq!(Verbose.to_string().parse::<Verbosity>().unwrap(), Verbose);
     }
