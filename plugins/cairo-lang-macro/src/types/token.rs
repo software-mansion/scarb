@@ -3,7 +3,7 @@ use std::fmt::Display;
 /// An abstract stream of Cairo tokens.
 ///
 /// This is both input and part of an output of a procedural macro.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct TokenStream {
     pub tokens: Vec<TokenTree>,
     pub metadata: TokenStreamMetadata,
