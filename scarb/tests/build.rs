@@ -360,7 +360,7 @@ fn compile_with_unset_edition() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            warn: `edition` field not set in `[package]` section
+            warn: `edition` field not set in `[package]` section for package `hello`
             [..] Compiling hello v0.1.0 ([..]Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
         "#});
