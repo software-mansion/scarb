@@ -308,14 +308,15 @@ impl ProcMacroHostPlugin {
                 return all_none;
             }
         };
+        let original = token_stream.to_string();
 
         let result = self.instance(input.package_id).generate_code(
             input.expansion.name.clone(),
-            args.clone(),
-            token_stream.clone(),
+            args,
+            token_stream,
         );
 
-        let expanded = context.register_result(token_stream.to_string(), input, result, stable_ptr);
+        let expanded = context.register_result(original, input, result, stable_ptr);
         item_builder.add_modified(RewriteNode::Mapped {
             origin: func.as_syntax_node().span(db),
             node: Box::new(RewriteNode::Text(expanded.to_string())),
@@ -526,7 +527,6 @@ impl ProcMacroHostPlugin {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         token_stream_builder.add_node(item_ast.as_syntax_node());
         token_stream_builder.with_metadata(stream_metadata.clone());
-        let token_stream = token_stream_builder.build();
         let mut aux_data = EmittedAuxData::default();
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
 
@@ -536,10 +536,11 @@ impl ProcMacroHostPlugin {
 
         let mut derived_code = PatchBuilder::new(db, &item_ast);
         for derive in derives {
+            let token_stream = token_stream_builder.build();
             let result = self.instance(derive.package_id).generate_code(
                 derive.expansion.name.clone(),
                 TokenStream::empty(),
-                token_stream.clone(),
+                token_stream,
             );
 
             // Register diagnostics.
@@ -597,10 +598,11 @@ impl ProcMacroHostPlugin {
         token_stream: TokenStream,
         stable_ptr: SyntaxStablePtrId,
     ) -> PluginResult {
+        let original = token_stream.to_string();
         let result = self.instance(input.package_id).generate_code(
             input.expansion.name.clone(),
-            args.clone(),
-            token_stream.clone(),
+            args,
+            token_stream,
         );
 
         // Handle token stream.
@@ -626,10 +628,7 @@ impl ProcMacroHostPlugin {
         // In essence, `code: None, remove_original_item: false` means `ProcMacroHost` will not be
         // called again for this AST item.
         // This optimization limits the number of generated nodes a bit.
-        if last
-            && result.aux_data.is_none()
-            && token_stream.to_string() == result.token_stream.to_string()
-        {
+        if last && result.aux_data.is_none() && original == result.token_stream.to_string() {
             return PluginResult {
                 code: None,
                 remove_original_item: false,
@@ -1035,7 +1034,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         );
         // Handle diagnostics.
         let diagnostics = into_cairo_diagnostics(result.diagnostics, stable_ptr);
-        let token_stream = result.token_stream.clone();
+        let token_stream = result.token_stream;
         if token_stream.is_empty() {
             // Remove original code
             InlinePluginResult {

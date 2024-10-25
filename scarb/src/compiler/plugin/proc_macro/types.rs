@@ -26,7 +26,7 @@ impl<'a> TokenStreamBuilder<'a> {
         self.metadata = Some(metadata);
     }
 
-    pub fn build(self) -> TokenStream {
+    pub fn build(&self) -> TokenStream {
         let mut result: Vec<TokenTree> = Vec::default();
         for node in self.nodes.iter() {
             let leaves = node.tokens(self.db);
@@ -35,7 +35,7 @@ impl<'a> TokenStreamBuilder<'a> {
             result.extend(tokens);
         }
 
-        match self.metadata {
+        match self.metadata.as_ref() {
             Some(metadata) => TokenStream::new(result.clone()).with_metadata(metadata.clone()),
             None => TokenStream::new(result.clone()),
         }
