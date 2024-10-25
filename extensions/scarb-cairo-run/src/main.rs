@@ -233,7 +233,7 @@ struct Summary {
     result: RunResultStarknet,
     print_full_memory: bool,
     gas_defined: bool,
-    detailed_resources: bool
+    detailed_resources: bool,
 }
 
 impl Message for Summary {
@@ -301,9 +301,9 @@ impl Message for Summary {
 }
 
 fn sort_by_value<'a, K, V, M>(map: M) -> Vec<(&'a K, &'a V)>
-    where
-        M: IntoIterator<Item = (&'a K, &'a V)>,
-        V: Ord,
+where
+    M: IntoIterator<Item = (&'a K, &'a V)>,
+    V: Ord,
 {
     let mut sorted: Vec<_> = map.into_iter().collect();
     sorted.sort_by(|a, b| b.1.cmp(a.1));
@@ -311,9 +311,9 @@ fn sort_by_value<'a, K, V, M>(map: M) -> Vec<(&'a K, &'a V)>
 }
 
 fn format_items<K, V>(items: &[(K, V)]) -> String
-    where
-        K: std::fmt::Debug,
-        V: std::fmt::Display,
+where
+    K: std::fmt::Debug,
+    V: std::fmt::Display,
 {
     items
         .iter()
