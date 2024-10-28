@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 1.13.0 (2024-10-28)
+- Add `CompilationUnitComponentId`.
+- Add `id` field on `CompilationUnitComponentMetadata`.
+- Add `CompilationUnitComponentDependencyMetadata`.
+- Add `dependencies` field to `CompilationUnitComponentMetadata`. 
+- Add `discriminator` field to `CompilationUnitComponentMetadata`
+
 ## 1.12.0 (2024-04-09)
 - Added `cfg` field on `CompilationUnitComponentMetadata`.
 
