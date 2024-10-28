@@ -16,6 +16,7 @@ fn registry_with_version() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -24,6 +25,7 @@ fn registry_with_version() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -40,6 +42,7 @@ fn registry_with_caret_version_req() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -48,6 +51,7 @@ fn registry_with_caret_version_req() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -64,6 +68,7 @@ fn registry_without_version() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .failure()
         .stdout_matches(indoc! {r#"
@@ -80,11 +85,13 @@ fn no_dependencies_section() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .output(indoc! {r#"
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = "1.0.0"
@@ -100,6 +107,7 @@ fn dry_run() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -128,11 +136,13 @@ fn path() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .output(indoc! {r#"
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = { path = "../dep" }
@@ -158,11 +168,13 @@ fn path_version() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .output(indoc! {r#"
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = { version = "1.0.0", path = "../dep" }
@@ -188,11 +200,13 @@ fn runs_resolver_if_network_is_allowed() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .output(indoc! {r#"
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = { version = "1.0.0", path = "../dep" }
@@ -212,11 +226,13 @@ fn git() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .output(indoc! {r#"
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = { git = "https://example.com/" }
@@ -232,11 +248,13 @@ fn git_version() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .output(indoc! {r#"
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = { version = "1.0.0", git = "https://example.com/" }
@@ -256,11 +274,13 @@ fn git_spec(what: &str) {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .output(formatdoc! {r#"
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = {{ git = "https://example.com/", {what} = "abcd" }}
@@ -276,6 +296,7 @@ fn overwrite_registry_version() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = "1.0.0"
@@ -284,6 +305,7 @@ fn overwrite_registry_version() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = "2.0.0"
@@ -299,6 +321,7 @@ fn overwrite_registry_version_simplifies() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = { version = "1.0.0" }
@@ -307,6 +330,7 @@ fn overwrite_registry_version_simplifies() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = "2.0.0"
@@ -338,6 +362,7 @@ fn overwrite_change_source_from_path_to_git() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = { version = "1.2.3", path = "../dep" }
@@ -346,6 +371,7 @@ fn overwrite_change_source_from_path_to_git() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = { version = "1.2.3", git = "https://example.com/", branch = "abc" }
@@ -361,6 +387,7 @@ fn should_sort_if_already_sorted() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -371,6 +398,7 @@ fn should_sort_if_already_sorted() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -386,6 +414,7 @@ fn should_sort_if_already_sorted() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -397,6 +426,7 @@ fn should_sort_if_already_sorted() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -413,6 +443,7 @@ fn should_sort_if_already_sorted() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -425,6 +456,7 @@ fn should_sort_if_already_sorted() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -445,6 +477,7 @@ fn should_not_sort_if_already_unsorted() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -455,6 +488,7 @@ fn should_not_sort_if_already_unsorted() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -473,11 +507,13 @@ fn add_dev_dep() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .output(indoc! {r#"
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dev-dependencies]
             foo = "1.0.0"
@@ -493,6 +529,7 @@ fn add_git_dep_with_invalid_url() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .failure()
         .stdout_matches(indoc! {r#"

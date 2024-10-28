@@ -24,6 +24,7 @@ fn build_temp_dir(data: &str) -> TempDir {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
             "#,
         )
         .unwrap();
@@ -169,6 +170,7 @@ fn format_with_import_sorting() {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
             [tool.fmt]
             sort-module-level-items = true
             "#,
