@@ -1,3 +1,4 @@
+use bumpalo::Bump;
 use std::fmt::Display;
 
 /// An abstract stream of Cairo tokens.
@@ -7,6 +8,7 @@ use std::fmt::Display;
 pub struct TokenStream {
     pub tokens: Vec<TokenTree>,
     pub metadata: TokenStreamMetadata,
+    pub(crate) bump: Bump,
 }
 
 /// A single token or a delimited sequence of token trees.
@@ -27,7 +29,7 @@ pub struct TextSpan {
 /// The most atomic item, of Cairo code representation, when passed between macro and host.
 #[derive(Debug, Default, Clone)]
 pub struct Token {
-    pub content: String,
+    pub content: &'static str,
     pub span: TextSpan,
 }
 
@@ -46,16 +48,26 @@ pub struct TokenStreamMetadata {
 
 impl TokenStream {
     #[doc(hidden)]
-    pub fn new(tokens: Vec<TokenTree>) -> Self {
+    pub fn empty() -> Self {
         Self {
-            tokens,
+            tokens: Vec::new(),
             metadata: TokenStreamMetadata::default(),
+            bump: Bump::new(),
         }
     }
 
-    #[doc(hidden)]
-    pub fn empty() -> Self {
-        Self::new(Vec::default())
+    /// Intern str into an arena allocator owned by this `TokenStream`.
+    ///
+    /// # Safety
+    pub unsafe fn intern(&self, value: &str) -> &'static str {
+        let interned = self.bump.alloc_str(value);
+        // UNSAFE: These mem::transmute call removes lifetime parameter.
+        let interned: &'static str = std::mem::transmute(interned);
+        interned
+    }
+
+    pub fn extend(&mut self, tokens: Vec<TokenTree>) {
+        self.tokens.extend(tokens);
     }
 
     #[doc(hidden)]
@@ -81,7 +93,7 @@ impl Display for TokenStream {
         for token in &self.tokens {
             match token {
                 TokenTree::Ident(token) => {
-                    write!(f, "{}", token.content.clone())?;
+                    write!(f, "{}", token.content)?;
                 }
             }
         }
@@ -112,7 +124,13 @@ impl TextSpan {
 }
 
 impl Token {
-    pub fn new(content: String, span: TextSpan) -> Self {
+    pub fn new_in(
+        content: impl AsRef<str>,
+        span: TextSpan,
+        token_stream: &mut TokenStream,
+    ) -> Self {
+        // We use `TokenStream::intern` to copy cstr content into a bump allocator.
+        let content = unsafe { token_stream.intern(content.as_ref()) };
         Self { content, span }
     }
 }

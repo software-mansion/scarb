@@ -27,28 +27,41 @@ impl<'a> TokenStreamBuilder<'a> {
     }
 
     pub fn build(&self) -> TokenStream {
+        let mut token_stream = TokenStream::empty();
         let mut result: Vec<TokenTree> = Vec::default();
         for node in self.nodes.iter() {
             let leaves = node.tokens(self.db);
-            let tokens =
-                leaves.map(|node| TokenTree::Ident(self.token_from_syntax_node(node.clone())));
+            let tokens = leaves
+                .map(|node| self.token_from_syntax_node(node.clone()))
+                .map(|OwnedToken { content, span }| {
+                    // Call to `TokenStream::intern` will copy `content` into an arena allocator
+                    // associated with this `TokenStream`.
+                    let content = unsafe { token_stream.intern(content.as_str()) };
+                    Token { content, span }
+                })
+                .map(TokenTree::Ident);
             result.extend(tokens);
         }
-
+        token_stream.extend(result);
         match self.metadata.as_ref() {
-            Some(metadata) => TokenStream::new(result.clone()).with_metadata(metadata.clone()),
-            None => TokenStream::new(result.clone()),
+            Some(metadata) => token_stream.with_metadata(metadata.clone()),
+            None => token_stream,
         }
     }
 
-    pub fn token_from_syntax_node(&self, node: SyntaxNode) -> Token {
+    fn token_from_syntax_node(&self, node: SyntaxNode) -> OwnedToken {
         let span = node.span(self.db).to_str_range();
-        Token::new(
-            node.get_text(self.db),
-            TextSpan {
+        OwnedToken {
+            content: node.get_text(self.db),
+            span: TextSpan {
                 start: span.start,
                 end: span.end,
             },
-        )
+        }
     }
+}
+
+struct OwnedToken {
+    pub content: String,
+    pub span: TextSpan,
 }
