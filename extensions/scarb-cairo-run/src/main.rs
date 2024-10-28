@@ -45,7 +45,7 @@ struct Args {
 
     /// Print detailed resources.
     #[arg(long, default_value_t = false)]
-    print_detailed_resources: bool,
+    print_resource_usage: bool,
 
     /// Do not rebuild the package.
     #[arg(long, default_value_t = false)]
@@ -154,7 +154,7 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
         result,
         print_full_memory: args.print_full_memory,
         gas_defined: available_gas.is_defined(),
-        detailed_resources: args.print_detailed_resources,
+        detailed_resources: args.print_resource_usage,
     });
 
     Ok(())
