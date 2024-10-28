@@ -110,9 +110,17 @@ pub unsafe extern "C" fn expand(
             }
         })
         .expect("procedural macro not found");
+    let token_stream = shorten_token_stream(token_stream);
+    let attr_token_stream = shorten_token_stream(attr_token_stream);
     let result = match fun {
-        ExpansionFunc::Attr(fun) => fun(attr_token_stream, token_stream),
-        ExpansionFunc::Other(fun) => fun(token_stream),
+        ExpansionFunc::Attr(fun) => {
+            let fun = shorten_attr_expansion(fun);
+            fun(attr_token_stream, token_stream)
+        }
+        ExpansionFunc::Other(fun) => {
+            let fun = shorten_expansion(fun);
+            fun(token_stream)
+        }
     };
     let result: StableProcMacroResult = result.into_stable();
     cairo_lang_macro_stable::StableResultWrapper {
@@ -120,6 +128,27 @@ pub unsafe extern "C" fn expand(
         input_attr: stable_attr,
         output: result,
     }
+}
+
+unsafe fn shorten_token_stream<'b>(r: TokenStream<'static>) -> TokenStream<'b> {
+    std::mem::transmute::<TokenStream<'static>, TokenStream<'b>>(r)
+}
+unsafe fn shorten_attr_expansion<'b>(
+    r: fn(TokenStream<'static>, TokenStream<'static>) -> ProcMacroResult<'static>,
+) -> fn(TokenStream<'b>, TokenStream<'b>) -> ProcMacroResult<'b> {
+    std::mem::transmute::<
+        fn(TokenStream<'static>, TokenStream<'static>) -> ProcMacroResult<'static>,
+        fn(TokenStream<'b>, TokenStream<'b>) -> ProcMacroResult<'b>,
+    >(r)
+}
+
+unsafe fn shorten_expansion<'b>(
+    r: fn(TokenStream<'static>) -> ProcMacroResult<'static>,
+) -> fn(TokenStream<'b>) -> ProcMacroResult<'b> {
+    std::mem::transmute::<
+        fn(TokenStream<'static>) -> ProcMacroResult<'static>,
+        fn(TokenStream<'b>) -> ProcMacroResult<'b>,
+    >(r)
 }
 
 /// Free the memory allocated for the [`StableProcMacroResult`].
