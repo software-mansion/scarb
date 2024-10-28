@@ -34,6 +34,7 @@ anyhow = "1"
 assert_fs = "1"
 async-trait = "0.1"
 axum = { version = "0.6", features = ["http2"] }
+bumpalo = "3"
 cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo", rev = "1f0db2fbb40064b267d8a0fae3ed4ea612123d23" }
 cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo", rev = "1f0db2fbb40064b267d8a0fae3ed4ea612123d23" }
 cairo-lang-debug = { git = "https://github.com/starkware-libs/cairo", rev = "1f0db2fbb40064b267d8a0fae3ed4ea612123d23" }

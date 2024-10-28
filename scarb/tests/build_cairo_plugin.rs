@@ -377,10 +377,13 @@ fn can_replace_original_node() {
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
             let new_token_string = token_stream.to_string().replace("12", "34");
-            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
-                new_token_string.clone(),
+            let mut token_stream = TokenStream::empty();
+            let tokens = vec![TokenTree::Ident(Token::new_in(
+                new_token_string.as_str(),
                 TextSpan { start: 0, end: new_token_string.len() },
-            ))]);
+                &mut token_stream
+            ))];
+            token_stream.extend(tokens);
             ProcMacroResult::new(token_stream)
         }
         "##})
@@ -546,10 +549,13 @@ fn can_define_multiple_macros() {
         #[attribute_macro]
         pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
             let new_token_string = token_stream.to_string().replace("12", "34");
-            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
-                new_token_string.clone(),
+            let mut token_stream = TokenStream::empty();
+            let tokens = vec![TokenTree::Ident(Token::new_in(
+                new_token_string.as_str(),
                 TextSpan { start: 0, end: new_token_string.len() },
-            ))]);
+                &mut token_stream
+            ))];
+            token_stream.extend(tokens);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
         }
@@ -557,10 +563,13 @@ fn can_define_multiple_macros() {
         #[attribute_macro]
         pub fn world(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
             let new_token_string = token_stream.to_string().replace("56", "78");
-            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
-                new_token_string.clone(),
+            let mut token_stream = TokenStream::empty();
+            let tokens = vec![TokenTree::Ident(Token::new_in(
+                new_token_string.as_str(),
                 TextSpan { start: 0, end: new_token_string.len() },
-            ))]);
+                &mut token_stream
+            ))];
+            token_stream.extend(tokens);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
         }
@@ -581,10 +590,13 @@ fn can_define_multiple_macros() {
         #[attribute_macro]
         pub fn beautiful(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
             let new_token_string = token_stream.to_string().replace("90", "09");
-            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
-                new_token_string.clone(),
+            let mut token_stream = TokenStream::empty();
+            let tokens = vec![TokenTree::Ident(Token::new_in(
+                new_token_string.as_str(),
                 TextSpan { start: 0, end: new_token_string.len() },
-            ))]);
+                &mut token_stream
+            ))];
+            token_stream.extend(tokens);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
         }
@@ -791,14 +803,14 @@ fn can_resolve_full_path_markers() {
                 token_stream.to_string().replace("12", "34")
             );
 
-            ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
-              code.clone(),
-                TextSpan {
-                  start: 0,
-                  end: code.len(),
-                },
-              ))])
-            ).with_full_path_markers(full_path_markers)
+            let mut token_stream = TokenStream::empty();
+            let tokens = vec![TokenTree::Ident(Token::new_in(
+                code.as_str(),
+                TextSpan { start: 0, end: code.len() },
+                &mut token_stream
+            ))];
+            token_stream.extend(tokens);
+            ProcMacroResult::new(token_stream).with_full_path_markers(full_path_markers)
         }
 
         #[post_process]
@@ -845,13 +857,15 @@ fn can_implement_inline_macro() {
 
         #[inline_macro]
         pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
-              "34".to_string(),
-              TextSpan {
-                  start: 0,
-                  end: 2,
-              },
-            ))]))
+            let code = "34".to_string();
+            let mut token_stream = TokenStream::empty();
+            let tokens = vec![TokenTree::Ident(Token::new_in(
+                code.as_str(),
+                TextSpan { start: 0, end: code.len() },
+                &mut token_stream
+            ))];
+            token_stream.extend(tokens);
+            ProcMacroResult::new(token_stream)
         }
         "##})
         .build(&t);
@@ -938,7 +952,6 @@ fn can_implement_derive_macro() {
             #[derive_macro]
             pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
                 let name = token_stream
-                    .clone()
                     .to_string()
                     .lines()
                     .find(|l| l.starts_with("struct"))
@@ -958,14 +971,13 @@ fn can_implement_derive_macro() {
                     }}
                 "#};  
 
-                let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
-                  code.clone(),
-                    TextSpan {
-                        start: 0,
-                        end: code.len(),
-                    },
-                ))]);
-
+                let mut token_stream = TokenStream::empty();
+                let tokens = vec![TokenTree::Ident(Token::new_in(
+                    code.as_str(),
+                    TextSpan { start: 0, end: code.len() },
+                    &mut token_stream
+                ))];
+                token_stream.extend(tokens);
                 ProcMacroResult::new(token_stream)
             }
         "##})
@@ -1018,35 +1030,30 @@ fn can_use_both_derive_and_attr() {
 
             #[attribute_macro]
             pub fn first_attribute(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                let new_token_string = token_stream.to_string().replace("SomeType", "OtherType");
-                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
-                  new_token_string.clone(),
-                    TextSpan {
-                        start: 0,
-                        end: new_token_string.len(),
-                    },
-                ))]))
+                let new_token_stream = token_stream.to_string().replace("SomeType", "OtherType");
+                let mut token_stream = TokenStream::empty();
+                let tokens = vec![TokenTree::Ident(Token::new_in(
+                    new_token_stream.as_str(),
+                    TextSpan { start: 0, end: new_token_stream.len() },
+                    &mut token_stream
+                ))];
+                token_stream.extend(tokens);
+                ProcMacroResult::new(token_stream)
             }
 
             #[attribute_macro]
             pub fn second_attribute(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
                 let code = token_stream.to_string().replace("OtherType", "RenamedStruct");
-                let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
-                  code.clone(),
-                    TextSpan {
-                        start: 0,
-                        end: code.len(),
-                    },
-                ))]);
+                let code = format!("#[derive(Drop)]\n{code}");
 
-                let result_string = format!("#[derive(Drop)]\n{token_stream}");
-                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
-                  result_string.clone(),
-                    TextSpan {
-                        start: 0,
-                        end: result_string.len(),
-                    },
-                ))]))
+                let mut token_stream = TokenStream::empty();
+                let tokens = vec![TokenTree::Ident(Token::new_in(
+                    code.as_str(),
+                    TextSpan { start: 0, end: code.len() },
+                    &mut token_stream
+                ))];
+                token_stream.extend(tokens);
+                ProcMacroResult::new(token_stream)
             }
 
             #[derive_macro]
@@ -1059,13 +1066,14 @@ fn can_use_both_derive_and_attr() {
                     }}
                     "#};
 
-                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
-                  code.clone(),
-                    TextSpan {
-                        start: 0,
-                        end: code.len(),
-                    },
-                ))]))
+                let mut token_stream = TokenStream::empty();
+                let tokens = vec![TokenTree::Ident(Token::new_in(
+                    code.as_str(),
+                    TextSpan { start: 0, end: code.len() },
+                    &mut token_stream
+                ))];
+                token_stream.extend(tokens);
+                ProcMacroResult::new(token_stream)
             }
         "##})
         .add_dep(r#"indoc = "*""#)
@@ -1268,17 +1276,19 @@ fn can_be_expanded() {
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
             let new_token_string = token_stream.to_string().replace("12", "34");
-            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
-                new_token_string.clone(),
+            let mut token_stream = TokenStream::empty();
+            let tokens = vec![TokenTree::Ident(Token::new_in(
+                new_token_string.as_str(),
                 TextSpan { start: 0, end: new_token_string.len() },
-            ))]);
+                &mut token_stream
+            ))];
+            token_stream.extend(tokens);
             ProcMacroResult::new(token_stream)
         }
 
         #[derive_macro]
         pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
             let name = token_stream
-                .clone()
                 .to_string()
                 .lines()
                 .find(|l| l.starts_with("struct"))
@@ -1298,11 +1308,13 @@ fn can_be_expanded() {
                 }}
             "#};
 
-            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
-                code.clone(),
+            let mut token_stream = TokenStream::empty();
+            let tokens = vec![TokenTree::Ident(Token::new_in(
+                code.as_str(),
                 TextSpan { start: 0, end: code.len() },
-            ))]);
-
+                &mut token_stream
+            ))];
+            token_stream.extend(tokens);
             ProcMacroResult::new(token_stream)
         }
         "##})
@@ -1384,10 +1396,14 @@ fn can_expand_trait_inner_func_attrr() {
                 let new_token_string = token_stream.to_string()
                     .replace("hello", "world")
                     .replace("12", "34");
-                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
-                  new_token_string.clone(),
-                  TextSpan { start: 0, end: new_token_string.len() },
-                ))]))
+            let mut token_stream = TokenStream::empty();
+            let tokens = vec![TokenTree::Ident(Token::new_in(
+                new_token_string.as_str(),
+                TextSpan { start: 0, end: new_token_string.len() },
+                &mut token_stream
+            ))];
+            token_stream.extend(tokens);
+            ProcMacroResult::new(token_stream)
             }
         "##})
         .build(&t);
@@ -1444,10 +1460,14 @@ fn can_expand_impl_inner_func_attrr() {
             #[attribute_macro]
             pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
                 let new_token_string = token_stream.to_string().replace("1", "2");
-                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
-                    new_token_string.clone(),
+                let mut token_stream = TokenStream::empty();
+                let tokens = vec![TokenTree::Ident(Token::new_in(
+                    new_token_string.as_str(),
                     TextSpan { start: 0, end: new_token_string.len() },
-                ))]))
+                    &mut token_stream
+                ))];
+                token_stream.extend(tokens);
+                ProcMacroResult::new(token_stream)
             }
         "##})
         .build(&t);

@@ -41,14 +41,13 @@ pub struct ProcMacroResult {
 /// pub fn some_macro(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
 ///     // Remove macro call to avoid infinite loop.
 ///     let code = token_stream.to_string().replace("#[some]", "");
-///     let token_stream = TokenStream::new(vec![
-///         TokenTree::Ident(
-///             Token::new(
-///                 code.clone(),
-///                 TextSpan::new(0, code.len())
-///             )
-///         )
-///     ]);
+///     let mut token_stream = TokenStream::empty();
+///     let tokens = vec![TokenTree::Ident(Token::new_in(
+///         code.as_str(),
+///         TextSpan { start: 0, end: code.len() },
+///         &mut token_stream
+///     ))];
+///     token_stream.extend(tokens);
 ///     let value = SomeAuxDataFormat { some_message: "Hello from some macro!".to_string() };
 ///     let value = serde_json::to_string(&value).unwrap();
 ///     let value: Vec<u8> = value.into_bytes();

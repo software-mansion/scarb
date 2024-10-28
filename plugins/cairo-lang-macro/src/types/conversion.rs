@@ -123,11 +123,11 @@ impl Token {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_stable(token: &StableToken) -> Self {
-        Self {
-            content: from_raw_cstr(token.content),
-            span: TextSpan::from_stable(&token.span),
-        }
+    pub unsafe fn from_stable(token: &StableToken, token_stream: &mut TokenStream) -> Self {
+        // This only creates a `&str` to value from `StableToken`.
+        let content = shared_from_raw_cstr(token.content);
+        let span = TextSpan::from_stable(&token.span);
+        Self::new_in(content, span, token_stream)
     }
 
     /// Take the ownership of memory under the pointer and drop it.
@@ -158,9 +158,12 @@ impl TokenTree {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_stable(token_tree: &StableTokenTree) -> Self {
+    pub unsafe fn from_stable(
+        token_tree: &StableTokenTree,
+        token_stream: &mut TokenStream,
+    ) -> Self {
         match token_tree {
-            StableTokenTree::Ident(token) => Self::Ident(Token::from_stable(token)),
+            StableTokenTree::Ident(token) => Self::Ident(Token::from_stable(token, token_stream)),
         }
     }
 
@@ -185,16 +188,21 @@ impl TokenStream {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub fn into_stable(self) -> StableTokenStream {
+    pub fn into_stable(mut self) -> StableTokenStream {
         let tokens = self
             .tokens
             .into_iter()
             .map(|token| token.into_stable())
             .collect::<Vec<_>>();
-        StableTokenStream {
+        let result = StableTokenStream {
             tokens: StableSlice::new(tokens),
             metadata: self.metadata.into_stable(),
-        }
+        };
+        // This will deallocate whole arena at once.
+        // This will not call `drop` implementation on allocated items,
+        // but the allocated memory will be freed.
+        self.bump.reset();
+        result
     }
 
     /// Convert to native Rust representation, without taking the ownership of the string.
@@ -205,14 +213,14 @@ impl TokenStream {
     #[doc(hidden)]
     pub unsafe fn from_stable(token_stream: &StableTokenStream) -> Self {
         let (ptr, n) = token_stream.tokens.raw_parts();
+        let metadata = TokenStreamMetadata::from_stable(&token_stream.metadata);
+        let mut token_stream = Self::empty();
         let tokens = slice::from_raw_parts(ptr, n)
             .iter()
-            .map(|token_tree| TokenTree::from_stable(token_tree))
+            .map(|token_tree| TokenTree::from_stable(token_tree, &mut token_stream))
             .collect::<Vec<_>>();
-        Self {
-            tokens,
-            metadata: TokenStreamMetadata::from_stable(&token_stream.metadata),
-        }
+        token_stream.extend(tokens);
+        token_stream.with_metadata(metadata)
     }
 
     /// Take the ownership of memory under the pointer and drop it.
@@ -549,5 +557,16 @@ unsafe fn from_raw_cstr(raw: *mut c_char) -> String {
     } else {
         let cstr = CStr::from_ptr(raw);
         cstr.to_string_lossy().to_string()
+    }
+}
+
+// Note that this will not free the underlying memory.
+// You still need to free the memory by calling `CString::from_raw`.
+unsafe fn shared_from_raw_cstr<'a>(raw: *mut c_char) -> &'a str {
+    if raw.is_null() {
+        ""
+    } else {
+        let cstr = CStr::from_ptr(raw);
+        cstr.to_str().expect("this must be a valid string")
     }
 }
