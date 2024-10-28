@@ -281,9 +281,9 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         context: &mut InnerAttrExpansionContext<'_>,
         item_builder: &mut PatchBuilder<'_>,
-        found: AttrExpansionFound,
+        found: AttrExpansionFound<'_>,
         func: &impl TypedSyntaxNode,
-        token_stream: TokenStream,
+        token_stream: TokenStream<'_>,
     ) -> bool {
         let mut all_none = true;
         let (input, args, stable_ptr) = match found {
@@ -332,7 +332,7 @@ impl ProcMacroHostPlugin {
         &self,
         db: &dyn SyntaxGroup,
         item_ast: ast::ModuleItem,
-    ) -> (AttrExpansionFound, TokenStream) {
+    ) -> (AttrExpansionFound<'_>, TokenStream<'_>) {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         let input = match item_ast.clone() {
             ast::ModuleItem::Trait(trait_ast) => {
@@ -429,7 +429,7 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         builder: &mut TokenStreamBuilder<'_>,
         attrs: Vec<ast::Attribute>,
-    ) -> AttrExpansionFound {
+    ) -> AttrExpansionFound<'_> {
         // This function parses attributes of the item,
         // checking if those attributes correspond to a procedural macro that should be fired.
         // The proc macro attribute found is removed from attributes list,
@@ -594,8 +594,8 @@ impl ProcMacroHostPlugin {
         &self,
         input: ProcMacroId,
         last: bool,
-        args: TokenStream,
-        token_stream: TokenStream,
+        args: TokenStream<'_>,
+        token_stream: TokenStream<'_>,
         stable_ptr: SyntaxStablePtrId,
     ) -> PluginResult {
         let original = token_stream.to_string();
@@ -848,7 +848,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
         &mut self,
         original: String,
         input: ProcMacroId,
-        result: ProcMacroResult,
+        result: ProcMacroResult<'_>,
         stable_ptr: SyntaxStablePtrId,
     ) -> String {
         let expanded = result.token_stream.to_string();
@@ -972,16 +972,16 @@ impl MacroPlugin for ProcMacroHostPlugin {
     }
 }
 
-enum AttrExpansionFound {
+enum AttrExpansionFound<'a> {
     Some {
         expansion: ProcMacroId,
-        args: TokenStream,
+        args: TokenStream<'a>,
         stable_ptr: SyntaxStablePtrId,
     },
     None,
     Last {
         expansion: ProcMacroId,
-        args: TokenStream,
+        args: TokenStream<'a>,
         stable_ptr: SyntaxStablePtrId,
     },
 }

@@ -26,9 +26,9 @@ impl<'a> TokenStreamBuilder<'a> {
         self.metadata = Some(metadata);
     }
 
-    pub fn build(&self) -> TokenStream {
+    pub fn build<'b>(&self) -> TokenStream<'b> {
         let mut token_stream = TokenStream::empty();
-        let mut result: Vec<TokenTree> = Vec::default();
+        let mut result: Vec<TokenTree<'b>> = Vec::default();
         for node in self.nodes.iter() {
             let leaves = node.tokens(self.db);
             let tokens = leaves

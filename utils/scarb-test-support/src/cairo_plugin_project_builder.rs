@@ -101,7 +101,7 @@ impl Default for CairoPluginProjectBuilder {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             ProcMacroResult::new(token_stream)
         }
         "#};

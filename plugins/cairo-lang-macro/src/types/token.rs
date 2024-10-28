@@ -5,16 +5,16 @@ use std::fmt::Display;
 ///
 /// This is both input and part of an output of a procedural macro.
 #[derive(Debug)]
-pub struct TokenStream {
-    pub tokens: Vec<TokenTree>,
+pub struct TokenStream<'a> {
+    pub tokens: Vec<TokenTree<'a>>,
     pub metadata: TokenStreamMetadata,
     pub(crate) bump: Bump,
 }
 
 /// A single token or a delimited sequence of token trees.
 #[derive(Debug, Clone)]
-pub enum TokenTree {
-    Ident(Token),
+pub enum TokenTree<'a> {
+    Ident(Token<'a>),
 }
 
 /// A range of text offsets that form a span (like text selection).
@@ -28,8 +28,8 @@ pub struct TextSpan {
 ///
 /// The most atomic item, of Cairo code representation, when passed between macro and host.
 #[derive(Debug, Default, Clone)]
-pub struct Token {
-    pub content: &'static str,
+pub struct Token<'a> {
+    pub content: &'a str,
     pub span: TextSpan,
 }
 
@@ -48,7 +48,7 @@ pub struct TokenStreamMetadata {
     pub edition: Option<String>,
 }
 
-impl TokenStream {
+impl<'a> TokenStream<'a> {
     #[doc(hidden)]
     pub fn empty() -> Self {
         Self {
@@ -68,7 +68,7 @@ impl TokenStream {
         interned
     }
 
-    pub fn extend(&mut self, tokens: Vec<TokenTree>) {
+    pub fn extend(&mut self, tokens: Vec<TokenTree<'a>>) {
         self.tokens.extend(tokens);
     }
 
@@ -90,7 +90,7 @@ impl TokenStream {
     }
 }
 
-impl Display for TokenStream {
+impl Display for TokenStream<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for token in &self.tokens {
             match token {
@@ -114,8 +114,8 @@ impl TokenStreamMetadata {
     }
 }
 
-impl TokenTree {
-    pub fn from_ident(token: Token) -> Self {
+impl<'a> TokenTree<'a> {
+    pub fn from_ident(token: Token<'a>) -> Self {
         Self::Ident(token)
     }
 }
@@ -126,7 +126,7 @@ impl TextSpan {
     }
 }
 
-impl Token {
+impl<'a> Token<'a> {
     pub fn new_in(
         content: impl AsRef<str>,
         span: TextSpan,

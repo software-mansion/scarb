@@ -183,7 +183,7 @@ fn can_emit_plugin_warning() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             let diag = Diagnostic::warn("Some warning from macro.");
             ProcMacroResult::new(token_stream)
                 .with_diagnostics(diag.into())
@@ -229,7 +229,7 @@ fn can_emit_plugin_error() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             let diag = Diagnostic::error("Some error from macro.");
             ProcMacroResult::new(token_stream)
                 .with_diagnostics(diag.into())
@@ -275,7 +275,7 @@ fn diags_from_generated_code_mapped_correctly() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             let diag = Diagnostic::error("Some error from macro.");
             ProcMacroResult::new(token_stream)
                  .with_diagnostics(diag.into())
@@ -329,7 +329,7 @@ fn can_remove_original_node() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, _: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, _: TokenStream<'a>) -> ProcMacroResult<'a> {
             ProcMacroResult::new(TokenStream::empty())
         }
         "#})
@@ -375,7 +375,7 @@ fn can_replace_original_node() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             let new_token_string = token_stream.to_string().replace("12", "34");
             let mut token_stream = TokenStream::empty();
             let tokens = vec![TokenTree::Ident(Token::new_in(
@@ -430,7 +430,7 @@ fn can_return_aux_data_from_plugin() {
         }
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             let value = SomeMacroDataFormat { msg: "Hello from some macro!".to_string() };
             let value = serde_json::to_string(&value).unwrap();
             let value: Vec<u8> = value.into_bytes();
@@ -494,7 +494,7 @@ fn can_read_token_stream_metadata() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             println!("{:#?}", token_stream.metadata());
             ProcMacroResult::new(token_stream)
         }
@@ -547,7 +547,7 @@ fn can_define_multiple_macros() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn hello<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             let new_token_string = token_stream.to_string().replace("12", "34");
             let mut token_stream = TokenStream::empty();
             let tokens = vec![TokenTree::Ident(Token::new_in(
@@ -561,7 +561,7 @@ fn can_define_multiple_macros() {
         }
 
         #[attribute_macro]
-        pub fn world(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn world<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             let new_token_string = token_stream.to_string().replace("56", "78");
             let mut token_stream = TokenStream::empty();
             let tokens = vec![TokenTree::Ident(Token::new_in(
@@ -588,7 +588,7 @@ fn can_define_multiple_macros() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
-        pub fn beautiful(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn beautiful<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             let new_token_string = token_stream.to_string().replace("90", "09");
             let mut token_stream = TokenStream::empty();
             let tokens = vec![TokenTree::Ident(Token::new_in(
@@ -649,12 +649,12 @@ fn cannot_duplicate_macros() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn hello<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             ProcMacroResult::new(token_stream)
         }
 
         #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn hello<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             ProcMacroResult::new(token_stream)
         }
         "##})
@@ -689,12 +689,12 @@ fn cannot_duplicate_macros_across_packages() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn hello<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             ProcMacroResult::new(token_stream)
         }
 
         #[attribute_macro]
-        pub fn world(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn world<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             ProcMacroResult::new(token_stream)
         }
         "#})
@@ -707,7 +707,7 @@ fn cannot_duplicate_macros_across_packages() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn hello<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             ProcMacroResult::new(token_stream)
         }
         "#})
@@ -751,7 +751,7 @@ fn cannot_use_undefined_macro() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn hello<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             ProcMacroResult::new(token_stream)
         }
         "##})
@@ -795,7 +795,7 @@ fn can_resolve_full_path_markers() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, post_process, PostProcessContext, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             let full_path_markers = vec!["some-key".to_string()];
 
             let code = format!(
@@ -1029,7 +1029,7 @@ fn can_use_both_derive_and_attr() {
             use cairo_lang_macro::{derive_macro, attribute_macro, ProcMacroResult, TokenStream, TokenTree, TextSpan, Token};
 
             #[attribute_macro]
-            pub fn first_attribute(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            pub fn first_attribute<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
                 let new_token_stream = token_stream.to_string().replace("SomeType", "OtherType");
                 let mut token_stream = TokenStream::empty();
                 let tokens = vec![TokenTree::Ident(Token::new_in(
@@ -1042,7 +1042,7 @@ fn can_use_both_derive_and_attr() {
             }
 
             #[attribute_macro]
-            pub fn second_attribute(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            pub fn second_attribute<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
                 let code = token_stream.to_string().replace("OtherType", "RenamedStruct");
                 let code = format!("#[derive(Drop)]\n{code}");
 
@@ -1126,7 +1126,7 @@ fn can_read_attribute_args() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
-        pub fn some(attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             println!("{}", attr);
             ProcMacroResult::new(token_stream)
         }
@@ -1233,7 +1233,7 @@ fn executable_name_cannot_clash_attr() {
         executable_attribute!("some");
 
         #[attribute_macro]
-        fn some(_args: TokenStream, input: TokenStream) -> ProcMacroResult {
+        fn some<'a>(_args: TokenStream<'a>, input: TokenStream<'a>) -> ProcMacroResult<'a> {
             ProcMacroResult::new(input)
         }
         "##})
@@ -1274,7 +1274,7 @@ fn can_be_expanded() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, derive_macro, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
             let new_token_string = token_stream.to_string().replace("12", "34");
             let mut token_stream = TokenStream::empty();
             let tokens = vec![TokenTree::Ident(Token::new_in(
@@ -1392,7 +1392,7 @@ fn can_expand_trait_inner_func_attrr() {
             use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
 
             #[attribute_macro]
-            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
                 let new_token_string = token_stream.to_string()
                     .replace("hello", "world")
                     .replace("12", "34");
@@ -1458,7 +1458,7 @@ fn can_expand_impl_inner_func_attrr() {
             use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream, Token, TokenTree, TextSpan};
 
             #[attribute_macro]
-            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>) -> ProcMacroResult<'a> {
                 let new_token_string = token_stream.to_string().replace("1", "2");
                 let mut token_stream = TokenStream::empty();
                 let tokens = vec![TokenTree::Ident(Token::new_in(

@@ -130,9 +130,9 @@ impl ProcMacroInstance {
     pub(crate) fn generate_code(
         &self,
         item_name: SmolStr,
-        attr: TokenStream,
-        token_stream: TokenStream,
-    ) -> ProcMacroResult {
+        attr: TokenStream<'_>,
+        token_stream: TokenStream<'_>,
+    ) -> ProcMacroResult<'_> {
         // This must be manually freed with call to from_owned_stable.
         let stable_token_stream = token_stream.into_stable();
         let stable_attr = attr.into_stable();

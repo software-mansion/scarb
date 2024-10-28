@@ -13,7 +13,7 @@ use std::num::NonZeroU8;
 use std::ptr::NonNull;
 use std::slice;
 
-impl ProcMacroResult {
+impl<'a> ProcMacroResult<'a> {
     /// Convert to FFI-safe representation.
     ///
     /// # Safety
@@ -106,7 +106,7 @@ impl TextSpan {
     }
 }
 
-impl Token {
+impl<'a> Token<'a> {
     /// Convert to FFI-safe representation.
     #[doc(hidden)]
     pub fn into_stable(self) -> StableToken {
@@ -143,7 +143,7 @@ impl Token {
     }
 }
 
-impl TokenTree {
+impl<'a> TokenTree<'a> {
     /// Convert to FFI-safe representation.
     #[doc(hidden)]
     pub fn into_stable(self) -> StableTokenTree {
@@ -183,7 +183,7 @@ impl TokenTree {
     }
 }
 
-impl TokenStream {
+impl<'a> TokenStream<'a> {
     /// Convert to FFI-safe representation.
     ///
     /// # Safety

@@ -40,8 +40,8 @@ pub struct ExpansionDefinition {
 
 #[derive(Clone)]
 pub enum ExpansionFunc {
-    Attr(fn(TokenStream, TokenStream) -> ProcMacroResult),
-    Other(fn(TokenStream) -> ProcMacroResult),
+    Attr(fn(TokenStream<'static>, TokenStream<'static>) -> ProcMacroResult<'static>),
+    Other(fn(TokenStream<'static>) -> ProcMacroResult<'static>),
 }
 
 /// Distributed slice for storing procedural macro code expansion capabilities.
@@ -204,6 +204,6 @@ pub unsafe extern "C" fn free_doc(doc: *mut c_char) {
 /// This macro implementation does not produce any changes.
 /// Can be exposed as a placeholder macro for the internal purposes.
 #[doc(hidden)]
-pub fn no_op_attr(_attr: TokenStream, input: TokenStream) -> ProcMacroResult {
+pub fn no_op_attr<'a>(_attr: TokenStream, input: TokenStream<'a>) -> ProcMacroResult<'a> {
     ProcMacroResult::new(input)
 }
