@@ -13,6 +13,7 @@ readme = "README.md"
 repository.workspace = true
 
 [dependencies]
+bumpalo.workspace = true
 cairo-lang-macro-attributes = "0.1"
 cairo-lang-macro-stable = { path = "../cairo-lang-macro-stable" }
 linkme.workspace = true

@@ -1,18 +1,19 @@
+use bumpalo::Bump;
 use std::fmt::Display;
 
 /// An abstract stream of Cairo tokens.
 ///
 /// This is both input and part of an output of a procedural macro.
 #[derive(Debug)]
-pub struct TokenStream {
-    pub tokens: Vec<TokenTree>,
+pub struct TokenStream<'a> {
+    pub tokens: Vec<TokenTree<'a>>,
     pub metadata: TokenStreamMetadata,
 }
 
 /// A single token or a delimited sequence of token trees.
 #[derive(Debug, Clone)]
-pub enum TokenTree {
-    Ident(Token),
+pub enum TokenTree<'a> {
+    Ident(Token<'a>),
 }
 
 /// A range of text offsets that form a span (like text selection).
@@ -26,9 +27,31 @@ pub struct TextSpan {
 ///
 /// The most atomic item, of Cairo code representation, when passed between macro and host.
 #[derive(Debug, Default, Clone)]
-pub struct Token {
-    pub content: String,
+pub struct Token<'a> {
+    pub content: &'a str,
     pub span: TextSpan,
+}
+
+pub struct AllocationContext {
+    bump: Bump,
+}
+
+impl AllocationContext {
+    pub fn intern(&self, value: &str) -> &str {
+        self.bump.alloc_str(value)
+    }
+}
+
+impl Default for AllocationContext {
+    fn default() -> Self {
+        Self { bump: Bump::new() }
+    }
+}
+
+impl Drop for AllocationContext {
+    fn drop(&mut self) {
+        self.bump.reset();
+    }
 }
 
 /// Metadata of [`TokenStream`].
@@ -46,9 +69,9 @@ pub struct TokenStreamMetadata {
     pub edition: Option<String>,
 }
 
-impl TokenStream {
+impl<'a> TokenStream<'a> {
     #[doc(hidden)]
-    pub fn new(tokens: Vec<TokenTree>) -> Self {
+    pub fn new(tokens: Vec<TokenTree<'a>>) -> Self {
         Self {
             tokens,
             metadata: TokenStreamMetadata::default(),
@@ -74,16 +97,16 @@ impl TokenStream {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.to_string().is_empty()
+        self.tokens.is_empty()
     }
 }
 
-impl Display for TokenStream {
+impl Display for TokenStream<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for token in &self.tokens {
             match token {
                 TokenTree::Ident(token) => {
-                    write!(f, "{}", token.content.clone())?;
+                    write!(f, "{}", token.content)?;
                 }
             }
         }
@@ -102,8 +125,8 @@ impl TokenStreamMetadata {
     }
 }
 
-impl TokenTree {
-    pub fn from_ident(token: Token) -> Self {
+impl<'a> TokenTree<'a> {
+    pub fn from_ident(token: Token<'a>) -> Self {
         Self::Ident(token)
     }
 }
@@ -111,11 +134,5 @@ impl TokenTree {
 impl TextSpan {
     pub fn new(start: usize, end: usize) -> TextSpan {
         TextSpan { start, end }
-    }
-}
-
-impl Token {
-    pub fn new(content: String, span: TextSpan) -> Self {
-        Self { content, span }
     }
 }

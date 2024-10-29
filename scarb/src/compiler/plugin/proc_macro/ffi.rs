@@ -1,8 +1,8 @@
 use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Context, Result};
 use cairo_lang_macro::{
-    ExpansionKind as SharedExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult,
-    TokenStream,
+    AllocationContext, ExpansionKind as SharedExpansionKind, FullPathMarker, PostProcessContext,
+    ProcMacroResult, TokenStream,
 };
 use cairo_lang_macro_stable::{
     StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
@@ -127,12 +127,13 @@ impl ProcMacroInstance {
     ///
     /// Please be aware that the memory management of values passing the FFI-barrier is tricky.
     /// The memory must be freed on the same side of the barrier, where the allocation was made.
-    pub(crate) fn generate_code(
+    pub(crate) fn generate_code<'a>(
         &self,
         item_name: SmolStr,
-        attr: TokenStream,
-        token_stream: TokenStream,
-    ) -> ProcMacroResult {
+        attr: TokenStream<'_>,
+        token_stream: TokenStream<'_>,
+        result_ctx: &'a AllocationContext,
+    ) -> ProcMacroResult<'a> {
         // This must be manually freed with call to `free_owned_stable`.
         let stable_token_stream = token_stream.into_stable();
         let stable_attr = attr.into_stable();
@@ -152,7 +153,7 @@ impl ProcMacroInstance {
         };
         // Create Rust representation of the result.
         // Note, that the memory still needs to be freed on the allocator side!
-        let result = unsafe { ProcMacroResult::from_stable(&stable_result.output) };
+        let result = unsafe { ProcMacroResult::from_stable(&stable_result.output, result_ctx) };
         // Call FFI interface to free the `stable_result` that has been allocated by previous call.
         (self.plugin.vtable.free_result)(stable_result.output);
         // Return obtained result.

@@ -1,4 +1,6 @@
-use cairo_lang_macro::{TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree};
+use cairo_lang_macro::{
+    AllocationContext, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
+};
 use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
 
 /// Helps creating TokenStream based on multiple SyntaxNodes,
@@ -9,7 +11,7 @@ pub struct TokenStreamBuilder<'a> {
     metadata: Option<TokenStreamMetadata>,
 }
 
-impl<'a> TokenStreamBuilder<'a> {
+impl<'a, 'b> TokenStreamBuilder<'a> {
     pub fn new(db: &'a dyn SyntaxGroup) -> Self {
         Self {
             db,
@@ -26,12 +28,12 @@ impl<'a> TokenStreamBuilder<'a> {
         self.metadata = Some(metadata);
     }
 
-    pub fn build(&self) -> TokenStream {
-        let mut result: Vec<TokenTree> = Vec::default();
+    pub fn build(&self, ctx: &'b AllocationContext) -> TokenStream<'b> {
+        let mut result: Vec<TokenTree<'b>> = Vec::default();
         for node in self.nodes.iter() {
             let leaves = node.tokens(self.db);
             let tokens =
-                leaves.map(|node| TokenTree::Ident(self.token_from_syntax_node(node.clone())));
+                leaves.map(|node| TokenTree::Ident(self.token_from_syntax_node(node.clone(), ctx)));
             result.extend(tokens);
         }
 
@@ -41,14 +43,20 @@ impl<'a> TokenStreamBuilder<'a> {
         }
     }
 
-    pub fn token_from_syntax_node(&self, node: SyntaxNode) -> Token {
+    pub fn token_from_syntax_node(
+        &self,
+        node: SyntaxNode,
+        ctx: &'b AllocationContext,
+    ) -> Token<'b> {
         let span = node.span(self.db).to_str_range();
-        Token::new(
-            node.get_text(self.db),
-            TextSpan {
+        let content = node.get_text(self.db);
+        let content = ctx.intern(content.as_str());
+        Token {
+            content,
+            span: TextSpan {
                 start: span.start,
                 end: span.end,
             },
-        )
+        }
     }
 }

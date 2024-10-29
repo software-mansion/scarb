@@ -40,8 +40,8 @@ pub struct ExpansionDefinition {
 
 #[derive(Clone)]
 pub enum ExpansionFunc {
-    Attr(fn(TokenStream, TokenStream) -> ProcMacroResult),
-    Other(fn(TokenStream) -> ProcMacroResult),
+    Attr(fn(TokenStream<'static>, TokenStream<'static>) -> ProcMacroResult<'static>),
+    Other(fn(TokenStream<'static>) -> ProcMacroResult<'static>),
 }
 
 /// Distributed slice for storing procedural macro code expansion capabilities.
@@ -97,8 +97,9 @@ pub unsafe extern "C" fn expand(
     stable_attr: cairo_lang_macro_stable::StableTokenStream,
     stable_token_stream: cairo_lang_macro_stable::StableTokenStream,
 ) -> cairo_lang_macro_stable::StableResultWrapper {
-    let token_stream = TokenStream::from_stable(&stable_token_stream);
-    let attr_token_stream = TokenStream::from_stable(&stable_attr);
+    let ctx = AllocationContext::default();
+    let token_stream = TokenStream::from_stable(&stable_token_stream, &ctx);
+    let attr_token_stream = TokenStream::from_stable(&stable_attr, &ctx);
     let item_name = CStr::from_ptr(item_name).to_string_lossy().to_string();
     let fun = MACRO_DEFINITIONS_SLICE
         .iter()
@@ -111,8 +112,14 @@ pub unsafe extern "C" fn expand(
         })
         .expect("procedural macro not found");
     let result = match fun {
-        ExpansionFunc::Attr(fun) => fun(attr_token_stream, token_stream),
-        ExpansionFunc::Other(fun) => fun(token_stream),
+        ExpansionFunc::Attr(fun) => {
+            let fun = shorten_attr_expansion(fun);
+            fun(attr_token_stream, token_stream)
+        }
+        ExpansionFunc::Other(fun) => {
+            let fun = shorten_expansion(fun);
+            fun(token_stream)
+        }
     };
     let result: StableProcMacroResult = result.into_stable();
     cairo_lang_macro_stable::StableResultWrapper {
@@ -120,6 +127,24 @@ pub unsafe extern "C" fn expand(
         input_attr: stable_attr,
         output: result,
     }
+}
+
+unsafe fn shorten_attr_expansion<'b>(
+    r: fn(TokenStream<'static>, TokenStream<'static>) -> ProcMacroResult<'static>,
+) -> fn(TokenStream<'b>, TokenStream<'b>) -> ProcMacroResult<'b> {
+    std::mem::transmute::<
+        fn(TokenStream<'static>, TokenStream<'static>) -> ProcMacroResult<'static>,
+        fn(TokenStream<'b>, TokenStream<'b>) -> ProcMacroResult<'b>,
+    >(r)
+}
+
+unsafe fn shorten_expansion<'b>(
+    r: fn(TokenStream<'static>) -> ProcMacroResult<'static>,
+) -> fn(TokenStream<'b>) -> ProcMacroResult<'b> {
+    std::mem::transmute::<
+        fn(TokenStream<'static>) -> ProcMacroResult<'static>,
+        fn(TokenStream<'b>) -> ProcMacroResult<'b>,
+    >(r)
 }
 
 /// Free the memory allocated for the [`StableProcMacroResult`].
@@ -204,6 +229,6 @@ pub unsafe extern "C" fn free_doc(doc: *mut c_char) {
 /// This macro implementation does not produce any changes.
 /// Can be exposed as a placeholder macro for the internal purposes.
 #[doc(hidden)]
-pub fn no_op_attr(_attr: TokenStream, input: TokenStream) -> ProcMacroResult {
+pub fn no_op_attr<'a>(_attr: TokenStream<'a>, input: TokenStream<'a>) -> ProcMacroResult<'a> {
     ProcMacroResult::new(input)
 }

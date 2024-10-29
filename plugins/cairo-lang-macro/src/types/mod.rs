@@ -9,8 +9,8 @@ pub use token::*;
 
 /// Result of procedural macro code generation.
 #[derive(Debug)]
-pub struct ProcMacroResult {
-    pub token_stream: TokenStream,
+pub struct ProcMacroResult<'a> {
+    pub token_stream: TokenStream<'a>,
     pub aux_data: Option<AuxData>,
     pub diagnostics: Vec<Diagnostic>,
     pub full_path_markers: Vec<String>,
@@ -200,9 +200,9 @@ impl Extend<Diagnostic> for Diagnostics {
     }
 }
 
-impl ProcMacroResult {
+impl<'a> ProcMacroResult<'a> {
     /// Create new [`ProcMacroResult`], empty diagnostics set.
-    pub fn new(token_stream: TokenStream) -> Self {
+    pub fn new(token_stream: TokenStream<'a>) -> Self {
         Self {
             token_stream,
             aux_data: Default::default(),
