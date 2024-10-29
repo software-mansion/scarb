@@ -1,6 +1,7 @@
 use crate::{
-    AuxData, Diagnostic, ExpansionDefinition, FullPathMarker, PostProcessContext, ProcMacroResult,
-    Severity, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
+    AllocationContext, AuxData, Diagnostic, ExpansionDefinition, FullPathMarker,
+    PostProcessContext, ProcMacroResult, Severity, TextSpan, Token, TokenStream,
+    TokenStreamMetadata, TokenTree,
 };
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
@@ -43,7 +44,7 @@ impl ProcMacroResult {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_stable(result: &StableProcMacroResult) -> Self {
+    pub unsafe fn from_stable_in(result: &StableProcMacroResult, ctx: &AllocationContext) -> Self {
         let (ptr, n) = result.diagnostics.raw_parts();
         let diagnostics = slice::from_raw_parts(ptr, n)
             .iter()
@@ -55,7 +56,7 @@ impl ProcMacroResult {
             .map(|m| from_raw_cstr(*m))
             .collect::<Vec<_>>();
         ProcMacroResult {
-            token_stream: TokenStream::from_stable(&result.token_stream),
+            token_stream: TokenStream::from_stable_in(&result.token_stream, ctx),
             diagnostics,
             full_path_markers,
             aux_data: AuxData::from_stable(&result.aux_data),
@@ -123,9 +124,11 @@ impl Token {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_stable(token: &StableToken) -> Self {
+    pub unsafe fn from_stable_in(token: &StableToken, ctx: &AllocationContext) -> Self {
+        let content = shared_from_raw_cstr(token.content);
+        let content = ctx.intern(content);
         Self {
-            content: from_raw_cstr(token.content),
+            content,
             span: TextSpan::from_stable(&token.span),
         }
     }
@@ -158,9 +161,9 @@ impl TokenTree {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_stable(token_tree: &StableTokenTree) -> Self {
+    pub unsafe fn from_stable_in(token_tree: &StableTokenTree, ctx: &AllocationContext) -> Self {
         match token_tree {
-            StableTokenTree::Ident(token) => Self::Ident(Token::from_stable(token)),
+            StableTokenTree::Ident(token) => Self::Ident(Token::from_stable_in(token, ctx)),
         }
     }
 
@@ -203,11 +206,14 @@ impl TokenStream {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_stable(token_stream: &StableTokenStream) -> Self {
+    pub unsafe fn from_stable_in(
+        token_stream: &StableTokenStream,
+        ctx: &AllocationContext,
+    ) -> Self {
         let (ptr, n) = token_stream.tokens.raw_parts();
         let tokens = slice::from_raw_parts(ptr, n)
             .iter()
-            .map(|token_tree| TokenTree::from_stable(token_tree))
+            .map(|token_tree| TokenTree::from_stable_in(token_tree, ctx))
             .collect::<Vec<_>>();
         Self {
             tokens,
@@ -549,5 +555,16 @@ unsafe fn from_raw_cstr(raw: *mut c_char) -> String {
     } else {
         let cstr = CStr::from_ptr(raw);
         cstr.to_string_lossy().to_string()
+    }
+}
+
+// Note that this will not free the underlying memory.
+// You still need to free the memory by calling `CString::from_raw`.
+unsafe fn shared_from_raw_cstr<'a>(raw: *mut c_char) -> &'a str {
+    if raw.is_null() {
+        ""
+    } else {
+        let cstr = CStr::from_ptr(raw);
+        cstr.to_str().expect("this must be a valid string")
     }
 }

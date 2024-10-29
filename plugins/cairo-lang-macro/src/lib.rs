@@ -18,12 +18,14 @@
 pub use cairo_lang_macro_attributes::*;
 #[doc(hidden)]
 pub use linkme;
+use std::cell::OnceCell;
 
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
     StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
 };
 use std::ffi::{c_char, CStr, CString};
+use std::rc::Rc;
 
 mod types;
 
@@ -40,8 +42,8 @@ pub struct ExpansionDefinition {
 
 #[derive(Clone)]
 pub enum ExpansionFunc {
-    Attr(fn(TokenStream, TokenStream) -> ProcMacroResult),
-    Other(fn(TokenStream) -> ProcMacroResult),
+    Attr(fn(TokenStream, TokenStream, &AllocationContext) -> ProcMacroResult),
+    Other(fn(TokenStream, &AllocationContext) -> ProcMacroResult),
 }
 
 /// Distributed slice for storing procedural macro code expansion capabilities.
@@ -82,6 +84,8 @@ pub unsafe extern "C" fn free_expansions_list(list: StableExpansionsList) {
     });
 }
 
+thread_local!(static CONTEXT: OnceCell<Rc<AllocationContext>> = const { OnceCell::new() });
+
 /// The code expansion callback.
 ///
 /// This function needs to be accessible through the FFI interface,
@@ -97,29 +101,32 @@ pub unsafe extern "C" fn expand(
     stable_attr: cairo_lang_macro_stable::StableTokenStream,
     stable_token_stream: cairo_lang_macro_stable::StableTokenStream,
 ) -> cairo_lang_macro_stable::StableResultWrapper {
-    let token_stream = TokenStream::from_stable(&stable_token_stream);
-    let attr_token_stream = TokenStream::from_stable(&stable_attr);
-    let item_name = CStr::from_ptr(item_name).to_string_lossy().to_string();
-    let fun = MACRO_DEFINITIONS_SLICE
-        .iter()
-        .find_map(|m| {
-            if m.name == item_name.as_str() {
-                Some(m.fun.clone())
-            } else {
-                None
-            }
-        })
-        .expect("procedural macro not found");
-    let result = match fun {
-        ExpansionFunc::Attr(fun) => fun(attr_token_stream, token_stream),
-        ExpansionFunc::Other(fun) => fun(token_stream),
-    };
-    let result: StableProcMacroResult = result.into_stable();
-    cairo_lang_macro_stable::StableResultWrapper {
-        input: stable_token_stream,
-        input_attr: stable_attr,
-        output: result,
-    }
+    CONTEXT.with(|ctx| {
+        let ctx = ctx.get_or_init(|| Rc::new(AllocationContext::default()));
+        let token_stream = TokenStream::from_stable_in(&stable_token_stream, ctx);
+        let attr_token_stream = TokenStream::from_stable_in(&stable_attr, ctx);
+        let item_name = CStr::from_ptr(item_name).to_string_lossy().to_string();
+        let fun = MACRO_DEFINITIONS_SLICE
+            .iter()
+            .find_map(|m| {
+                if m.name == item_name.as_str() {
+                    Some(m.fun.clone())
+                } else {
+                    None
+                }
+            })
+            .expect("procedural macro not found");
+        let result = match fun {
+            ExpansionFunc::Attr(fun) => fun(attr_token_stream, token_stream, ctx),
+            ExpansionFunc::Other(fun) => fun(token_stream, ctx),
+        };
+        let result: StableProcMacroResult = result.into_stable();
+        cairo_lang_macro_stable::StableResultWrapper {
+            input: stable_token_stream,
+            input_attr: stable_attr,
+            output: result,
+        }
+    })
 }
 
 /// Free the memory allocated for the [`StableProcMacroResult`].
@@ -204,6 +211,10 @@ pub unsafe extern "C" fn free_doc(doc: *mut c_char) {
 /// This macro implementation does not produce any changes.
 /// Can be exposed as a placeholder macro for the internal purposes.
 #[doc(hidden)]
-pub fn no_op_attr(_attr: TokenStream, input: TokenStream) -> ProcMacroResult {
+pub fn no_op_attr(
+    _attr: TokenStream,
+    input: TokenStream,
+    _ctx: &AllocationContext,
+) -> ProcMacroResult {
     ProcMacroResult::new(input)
 }

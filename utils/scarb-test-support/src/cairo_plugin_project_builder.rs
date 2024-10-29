@@ -98,10 +98,10 @@ impl Default for CairoPluginProjectBuilder {
     fn default() -> Self {
         let default_name = "some";
         let default_code = indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AllocationContext};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some<'a>(_attr: TokenStream<'a>, token_stream: TokenStream<'a>, _ctx: &'a AllocationContext) -> ProcMacroResult<'a> {
             ProcMacroResult::new(token_stream)
         }
         "#};

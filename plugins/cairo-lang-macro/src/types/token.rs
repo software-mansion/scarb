@@ -1,17 +1,80 @@
+use crate::CONTEXT;
+use bumpalo::Bump;
 use std::fmt::Display;
+use std::hash::{Hash, Hasher};
+use std::ops::Deref;
+use std::rc::Rc;
 
 /// An abstract stream of Cairo tokens.
 ///
 /// This is both input and part of an output of a procedural macro.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(try_from = "de::TokenStream"))]
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct TokenStream {
     pub tokens: Vec<TokenTree>,
     pub metadata: TokenStreamMetadata,
 }
 
+#[cfg(feature = "serde")]
+mod de {
+    use crate::{AllocationContext, TextSpan, TokenStreamMetadata};
+    use std::fmt::{Display, Formatter};
+
+    #[derive(serde::Serialize, serde::Deserialize)]
+    pub struct TokenStream {
+        pub tokens: Vec<TokenTree>,
+        pub metadata: TokenStreamMetadata,
+    }
+
+    #[derive(serde::Serialize, serde::Deserialize)]
+    pub enum TokenTree {
+        Ident(Token),
+    }
+
+    #[derive(serde::Serialize, serde::Deserialize)]
+    pub struct Token {
+        pub content: String,
+        pub span: TextSpan,
+    }
+
+    pub struct Error {}
+
+    impl Display for Error {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            f.write_str("deserialization error")
+        }
+    }
+
+    impl TryFrom<TokenStream> for crate::TokenStream {
+        type Error = Error;
+
+        fn try_from(value: TokenStream) -> Result<Self, Self::Error> {
+            let ctx = AllocationContext::default();
+            let tokens = value
+                .tokens
+                .into_iter()
+                .map(|token| match token {
+                    TokenTree::Ident(token) => {
+                        let content = ctx.intern(token.content.as_str());
+                        let token = crate::Token {
+                            content,
+                            span: token.span,
+                        };
+                        crate::TokenTree::Ident(token)
+                    }
+                })
+                .collect::<Vec<_>>();
+            Ok(Self {
+                tokens,
+                metadata: value.metadata,
+            })
+        }
+    }
+}
+
 /// A single token or a delimited sequence of token trees.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TokenTree {
     Ident(Token),
@@ -34,11 +97,105 @@ pub struct TextSpan {
 /// A single Cairo token.
 ///
 /// The most atomic item, of Cairo code representation, when passed between macro and host.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct Token {
-    pub content: String,
+    pub content: InternedStr,
     pub span: TextSpan,
+}
+
+#[derive(Debug, Clone)]
+pub struct InternedStr {
+    ptr: *const str,
+    // Holding a rc to the underlying buffer, so that ptr will always point to valid memory.
+    _bump: Rc<BumpWrap>,
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for InternedStr {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(self.as_ref())
+    }
+}
+
+impl PartialEq for InternedStr {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_ref().eq(other.as_ref())
+    }
+}
+
+impl Eq for InternedStr {}
+
+impl Hash for InternedStr {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.as_ref().hash(state);
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct BumpWrap(pub Bump);
+
+impl InternedStr {
+    pub fn as_bytes(&self) -> &[u8] {
+        let ptr: &str = unsafe { &*self.ptr };
+        ptr.as_bytes()
+    }
+}
+
+impl AsRef<str> for InternedStr {
+    fn as_ref(&self) -> &str {
+        self.deref()
+    }
+}
+
+impl Deref for InternedStr {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.ptr }
+    }
+}
+
+impl InternedStr {
+    pub fn new_in(s: &str, bump: Rc<BumpWrap>) -> Self {
+        let allocated = bump.0.alloc_str(s);
+        let ptr = allocated as *const str;
+        Self { ptr, _bump: bump }
+    }
+}
+
+impl Default for InternedStr {
+    fn default() -> Self {
+        Self {
+            ptr: "" as *const str,
+            _bump: Rc::default(),
+        }
+    }
+}
+
+pub struct AllocationContext {
+    bump: Rc<BumpWrap>,
+}
+
+impl AllocationContext {
+    pub fn intern(&self, value: &str) -> InternedStr {
+        InternedStr::new_in(value, self.bump.clone())
+    }
+}
+
+impl Default for AllocationContext {
+    fn default() -> Self {
+        Self {
+            bump: Rc::new(BumpWrap(Bump::new())),
+        }
+    }
+}
+
+impl Drop for BumpWrap {
+    fn drop(&mut self) {
+        // println!("dropped");
+        self.0.reset();
+    }
 }
 
 /// Metadata of [`TokenStream`].
@@ -85,7 +242,7 @@ impl TokenStream {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.to_string().is_empty()
+        self.tokens.is_empty()
     }
 }
 
@@ -94,7 +251,7 @@ impl Display for TokenStream {
         for token in &self.tokens {
             match token {
                 TokenTree::Ident(token) => {
-                    write!(f, "{}", token.content.clone())?;
+                    write!(f, "{}", token.content.as_ref())?;
                 }
             }
         }
@@ -126,7 +283,12 @@ impl TextSpan {
 }
 
 impl Token {
-    pub fn new(content: String, span: TextSpan) -> Self {
-        Self { content, span }
+    pub fn new(content: impl AsRef<str>, span: TextSpan) -> Self {
+        CONTEXT.with(|ctx| {
+            let ctx = ctx.get_or_init(|| Rc::new(AllocationContext::default()));
+            let ctx = ctx.clone();
+            let content = ctx.intern(content.as_ref());
+            Self { content, span }
+        })
     }
 }

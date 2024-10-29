@@ -486,7 +486,17 @@ fn workspace() {
 #[test]
 fn cairo_plugin() {
     let t = TempDir::new().unwrap();
-    CairoPluginProjectBuilder::default().build(&t);
+    // Note this will be packaged with `cairo-lang-macro` from crates, not the local one.
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+            #[attribute_macro]
+            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+                ProcMacroResult::new(token_stream)
+            }
+        "#})
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
