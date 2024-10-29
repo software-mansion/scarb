@@ -641,7 +641,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "itertools 0.12.1",
- "regex",
+ "pulldown-cmark",
  "rust-analyzer-salsa",
  "smol_str",
 ]
@@ -715,7 +715,7 @@ dependencies = [
  "lsp-types",
  "rust-analyzer-salsa",
  "rustc-hash",
- "scarb-metadata 1.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "scarb-metadata 1.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_json",
  "smol_str",
@@ -840,7 +840,6 @@ dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-utils",
  "serde",
- "smol_str",
  "thiserror",
  "toml",
 ]
@@ -856,6 +855,7 @@ dependencies = [
  "cairo-lang-lowering",
  "cairo-lang-sierra",
  "cairo-lang-sierra-ap-change",
+ "cairo-lang-sierra-gas",
  "cairo-lang-sierra-generator",
  "cairo-lang-sierra-to-casm",
  "cairo-lang-sierra-type-size",
@@ -2015,6 +2015,15 @@ checksum = "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
 dependencies = [
  "typenum",
  "version_check",
+]
+
+[[package]]
+name = "getopts"
+version = "0.2.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14dbbfd5c71d70241ecf9e6f13737f7b5ce823821063188d7e46c41d371eebd5"
+dependencies = [
+ "unicode-width",
 ]
 
 [[package]]
@@ -4159,6 +4168,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulldown-cmark"
+version = "0.12.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f86ba2052aebccc42cbbb3ed234b8b13ce76f75c3551a303cb2bcffcff12bb14"
+dependencies = [
+ "bitflags 2.5.0",
+ "getopts",
+ "memchr",
+ "pulldown-cmark-escape",
+ "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark-escape"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "007d8adb5ddab6f8e3f491ac63566a7d5002cc7ed73901f72057943fa71ae1ae"
+
+[[package]]
 name = "quote"
 version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4241,9 +4269,9 @@ dependencies = [
 
 [[package]]
 name = "redb"
-version = "2.1.4"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "074373f3e7e5d27d8741d19512232adb47be8622d3daef3a45bcae72050c3d2a"
+checksum = "84b1de48a7cf7ba193e81e078d17ee2b786236eed1d3f7c60f8a09545efc4925"
 dependencies = [
  "libc",
 ]
@@ -4596,7 +4624,7 @@ dependencies = [
  "redb",
  "reqwest",
  "scarb-build-metadata",
- "scarb-metadata 1.12.0",
+ "scarb-metadata 1.13.0",
  "scarb-stable-hash 1.0.0",
  "scarb-test-support",
  "scarb-ui",
@@ -4662,7 +4690,7 @@ dependencies = [
  "clap",
  "indoc",
  "num-bigint",
- "scarb-metadata 1.12.0",
+ "scarb-metadata 1.13.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -4684,7 +4712,7 @@ dependencies = [
  "camino",
  "clap",
  "indoc",
- "scarb-metadata 1.12.0",
+ "scarb-metadata 1.13.0",
  "scarb-test-support",
  "scarb-ui",
  "serde_json",
@@ -4715,7 +4743,7 @@ dependencies = [
  "indoc",
  "itertools 0.12.1",
  "rust-analyzer-salsa",
- "scarb-metadata 1.12.0",
+ "scarb-metadata 1.13.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -4727,7 +4755,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-metadata"
-version = "1.12.0"
+version = "1.13.0"
 dependencies = [
  "assert_fs",
  "cairo-lang-filesystem",
@@ -4742,58 +4770,15 @@ dependencies = [
 
 [[package]]
 name = "scarb-metadata"
-version = "1.12.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "170ebce1774a85568646ba4096827f898306665187eebd9282fee313e316518d"
+checksum = "1a8b71f63999dbb6d269fbc6fd61310016ab3a160fb13e52a6511a2b904359f0"
 dependencies = [
  "camino",
  "semver",
  "serde",
  "serde_json",
  "thiserror",
-]
-
-[[package]]
-name = "scarb-snforge-test-collector"
-version = "2.8.4"
-dependencies = [
- "anyhow",
- "assert_fs",
- "cairo-lang-compiler",
- "cairo-lang-debug",
- "cairo-lang-defs",
- "cairo-lang-diagnostics",
- "cairo-lang-filesystem",
- "cairo-lang-lowering",
- "cairo-lang-project",
- "cairo-lang-semantic",
- "cairo-lang-sierra",
- "cairo-lang-sierra-generator",
- "cairo-lang-sierra-type-size",
- "cairo-lang-starknet",
- "cairo-lang-syntax",
- "cairo-lang-test-plugin",
- "cairo-lang-utils",
- "camino",
- "clap",
- "create-output-dir",
- "fs4",
- "indoc",
- "itertools 0.12.1",
- "num-bigint",
- "num-traits 0.2.19",
- "rayon",
- "scarb-metadata 1.12.0",
- "scarb-test-support",
- "scarb-ui",
- "semver",
- "serde",
- "serde_json",
- "smol_str",
- "snapbox",
- "starknet-types-core",
- "thiserror",
- "walkdir",
 ]
 
 [[package]]
@@ -4851,7 +4836,7 @@ dependencies = [
  "clap",
  "console",
  "indicatif",
- "scarb-metadata 1.12.0",
+ "scarb-metadata 1.13.0",
  "serde",
  "serde_json",
  "test-case",

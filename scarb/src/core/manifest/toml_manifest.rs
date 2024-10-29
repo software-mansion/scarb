@@ -24,8 +24,8 @@ use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Targe
 use crate::core::package::PackageId;
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{
-    DepKind, DependencyVersionReq, InliningStrategy, ManifestBuilder, ManifestCompilerConfig,
-    PackageName, TargetKind, TestTargetProps, TestTargetType,
+    Config, DepKind, DependencyVersionReq, InliningStrategy, ManifestBuilder,
+    ManifestCompilerConfig, PackageName, TargetKind, TestTargetProps, TestTargetType,
 };
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
@@ -407,6 +407,7 @@ impl TomlManifest {
         source_id: SourceId,
         profile: Profile,
         workspace_manifest: Option<&TomlManifest>,
+        config: &Config,
     ) -> Result<Manifest> {
         let root = manifest_path
             .parent()
@@ -582,7 +583,15 @@ impl TomlManifest {
             .clone()
             .map(|edition| edition.resolve("edition", || inheritable_package.edition()))
             .transpose()?
-            .unwrap_or_default();
+            .unwrap_or_else(|| {
+                if !targets.iter().any(Target::is_cairo_plugin) {
+                    config.ui().warn(format!(
+                        "`edition` field not set in `[package]` section for package `{}`",
+                        package_id.name
+                    ));
+                }
+                Edition::default()
+            });
 
         // TODO (#1040): add checking for fields that are not present in ExperimentalFeaturesConfig
         let experimental_features = package.experimental_features.clone();

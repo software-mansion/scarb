@@ -240,9 +240,9 @@ fn features_fail_incorrect_manifest() {
             error: failed to parse manifest at: [..]/Scarb.toml
 
             Caused by:
-                TOML parse error at line 8, column 1
+                TOML parse error at line 9, column 1
                   |
-                8 | 8x = []
+                9 | 8x = []
                   | ^^
                 the name `8x` cannot be used as a package name, names cannot start with a digit
         "#})

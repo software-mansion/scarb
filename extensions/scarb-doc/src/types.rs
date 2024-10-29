@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
-use cairo_lang_doc::types::DocumentationCommentToken;
+use cairo_lang_doc::parser::DocumentationCommentToken;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::{self, Visibility};

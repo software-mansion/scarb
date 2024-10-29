@@ -1,7 +1,7 @@
 use anyhow::Result;
 use cairo_lang_defs::ids::{ImplItemId, LookupItemId, TraitItemId};
 use cairo_lang_doc::documentable_item::DocumentableItemId;
-use cairo_lang_doc::types::{CommentLinkToken, DocumentationCommentToken};
+use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt::Write;

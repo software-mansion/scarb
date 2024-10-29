@@ -3,7 +3,7 @@ use crate::types::{
     ImplFunction, ImplType, Member, Module, Struct, Trait, TraitConstant, TraitFunction, TraitType,
     TypeAlias, Variant,
 };
-use cairo_lang_doc::types::DocumentationCommentToken;
+use cairo_lang_doc::parser::DocumentationCommentToken;
 
 pub mod markdown;
 

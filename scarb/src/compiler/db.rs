@@ -5,19 +5,18 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{
-    AsFilesGroupMut, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
-    CORELIB_CRATE_NAME,
+    AsFilesGroupMut, CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
 };
-use cairo_lang_filesystem::ids::{CrateLongId, Directory};
+use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
-use smol_str::{SmolStr, ToSmolStr};
-use std::collections::BTreeMap;
+use smol_str::SmolStr;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
 
 use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
-use crate::core::{ManifestDependency, TestTargetProps, TestTargetType, Workspace};
+use crate::core::Workspace;
 use crate::DEFAULT_MODULE_MAIN_FILE;
 
 pub struct ScarbDatabase {
@@ -94,10 +93,9 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
 
     for component in components {
         let name = component.cairo_package_name();
-        let version = component.package.id.version.clone();
         let crate_id = db.intern_crate(CrateLongId::Real {
             name,
-            discriminator: Some(version).map(|v| v.to_smolstr()),
+            discriminator: component.id.to_discriminator(),
         });
         let file_stems = component
             .targets
@@ -127,87 +125,43 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
 }
 
 fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
-    let crate_roots = unit
+    let crate_roots: OrderedHashMap<CrateIdentifier, PathBuf> = unit
         .components
         .iter()
-        .filter(|component| !component.package.id.is_core())
         .map(|component| {
             (
-                component.cairo_package_name(),
+                component.id.to_crate_identifier(),
                 component.first_target().source_root().into(),
             )
         })
         .collect();
 
-    let crates_config: OrderedHashMap<SmolStr, CrateSettings> = unit
+    let crates_config = unit
         .components
         .iter()
         .map(|component| {
             let experimental_features = component.package.manifest.experimental_features.clone();
             let experimental_features = experimental_features.unwrap_or_default();
-            // Those are direct dependencies of the component.
-            let dependencies_summary: Vec<&ManifestDependency> = component
-                .package
-                .manifest
-                .summary
-                .full_dependencies()
-                .collect();
 
-            // We iterate over all of the compilation unit components to get dependency's version.
-            let mut dependencies: BTreeMap<String, DependencySettings> = unit
-                .components
+            let dependencies = component
+                .dependencies
                 .iter()
-                .filter(|component_as_dependency| {
-                    dependencies_summary.iter().any(|dependency_summary| {
-                        dependency_summary.name == component_as_dependency.package.id.name
-                    }) ||
-                        // This is a hacky way of accommodating integration test components,
-                        // which need to depend on the tested package.
-                        component_as_dependency
-                        .package
-                        .manifest
-                        .targets
-                        .iter()
-                        .filter(|target| target.kind.is_test())
-                        .any(|target| {
-                            target.group_id.clone().unwrap_or(target.name.clone())
-                                == component.package.id.name.to_smol_str()
-                            && component_as_dependency.cairo_package_name() != component.cairo_package_name()
-                        })
-                })
-                .map(|compilation_unit_component| {
+                .map(|compilation_unit_component_id| {
+                    let compilation_unit_component = unit.components.iter().find(|component| component.id == *compilation_unit_component_id)
+                        .expect("dependency of a component is guaranteed to exist in compilation unit components");
                     (
-                        compilation_unit_component.package.id.name.to_string(),
+                        compilation_unit_component.cairo_package_name().to_string(),
                         DependencySettings {
-                            discriminator: (compilation_unit_component.package.id.name.to_string()
-                                != *CORELIB_CRATE_NAME)
-                                .then_some(compilation_unit_component.package.id.version.clone())
-                                .map(|v| v.to_smolstr()),
+                            discriminator: compilation_unit_component.id.to_discriminator()
                         },
                     )
                 })
                 .collect();
 
-            // Adds itself to dependencies
-            let is_integration_test = if component.first_target().kind.is_test() {
-                let props: Option<TestTargetProps> = component.first_target().props().ok();
-                props
-                    .map(|props| props.test_type == TestTargetType::Integration)
-                    .unwrap_or_default()
-            } else { false };
-            if !is_integration_test {
-                dependencies.insert(
-                    component.package.id.name.to_string(),
-                    DependencySettings {
-                        discriminator: (component.package.id.name.to_string() != *CORELIB_CRATE_NAME)
-                            .then_some(component.package.id.version.clone()).map(|v| v.to_smolstr()),
-                    },
-                );
-            }
-
             (
-                component.cairo_package_name(),
+                component.id.to_crate_identifier(),
                 CrateSettings {
+                    name: Some(component.cairo_package_name()),
                     edition: component.package.manifest.edition,
                     cfg_set: component.cfg_set.clone(),
                     version: Some(component.package.id.version.clone()),
@@ -227,10 +181,6 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
         ..Default::default()
     };
 
-    let corelib = unit
-        .core_package_component()
-        .map(|core| Directory::Real(core.first_target().source_root().into()));
-
     let content = ProjectConfigContent {
         crate_roots,
         crates_config,
@@ -238,7 +188,6 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
 
     let project_config = ProjectConfig {
         base_path: unit.main_component().package.root().into(),
-        corelib,
         content,
     };
 

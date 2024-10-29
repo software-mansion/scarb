@@ -37,7 +37,7 @@ impl ProjectBuilder {
         Self {
             name: format!("pkg{n}"),
             version: Version::new(1, n, 0),
-            edition: None,
+            edition: "2023_01".to_string().into(),
             cairo_version: None,
             src: HashMap::from_iter([(
                 Utf8PathBuf::from("src/lib.cairo"),
@@ -62,6 +62,11 @@ impl ProjectBuilder {
 
     pub fn edition(mut self, edition: impl ToString) -> Self {
         self.edition = Some(edition.to_string());
+        self
+    }
+
+    pub fn no_edition(mut self) -> Self {
+        self.edition = None;
         self
     }
 
