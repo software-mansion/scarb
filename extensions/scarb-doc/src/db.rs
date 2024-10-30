@@ -1,5 +1,5 @@
 use cairo_lang_compiler::project::{update_crate_roots_from_project_config, ProjectConfig};
-use cairo_lang_defs::db::{ext_as_virtual_impl, DefsDatabase, DefsGroup};
+use cairo_lang_defs::db::{try_ext_as_virtual_impl, DefsDatabase, DefsGroup};
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
@@ -74,8 +74,8 @@ impl ScarbDocDatabase {
 impl salsa::Database for ScarbDocDatabase {}
 
 impl ExternalFiles for ScarbDocDatabase {
-    fn ext_as_virtual(&self, external_id: salsa::InternId) -> VirtualFile {
-        ext_as_virtual_impl(self.upcast(), external_id)
+    fn try_ext_as_virtual(&self, external_id: salsa::InternId) -> Option<VirtualFile> {
+        try_ext_as_virtual_impl(self.upcast(), external_id)
     }
 }
 
