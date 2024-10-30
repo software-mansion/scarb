@@ -11,7 +11,7 @@ pub struct TokenStream<'a> {
 }
 
 /// A single token or a delimited sequence of token trees.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum TokenTree<'a> {
     Ident(Token<'a>),
 }
@@ -26,19 +26,33 @@ pub struct TextSpan {
 /// A single Cairo token.
 ///
 /// The most atomic item, of Cairo code representation, when passed between macro and host.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug)]
 pub struct Token<'a> {
-    pub content: &'a str,
+    pub content: InternedStr<'a>,
     pub span: TextSpan,
 }
 
+#[derive(Debug)]
+pub struct InternedStr<'a>(&'a str);
+
+impl InternedStr<'_> {
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
+impl AsRef<str> for InternedStr<'_> {
+    fn as_ref(&self) -> &str {
+        self.0
+    }
+}
 pub struct AllocationContext {
     bump: Bump,
 }
 
 impl AllocationContext {
-    pub fn intern(&self, value: &str) -> &str {
-        self.bump.alloc_str(value)
+    pub fn intern(&self, value: &str) -> InternedStr {
+        InternedStr(self.bump.alloc_str(value))
     }
 }
 
@@ -106,7 +120,7 @@ impl Display for TokenStream<'_> {
         for token in &self.tokens {
             match token {
                 TokenTree::Ident(token) => {
-                    write!(f, "{}", token.content)?;
+                    write!(f, "{}", token.content.as_ref())?;
                 }
             }
         }

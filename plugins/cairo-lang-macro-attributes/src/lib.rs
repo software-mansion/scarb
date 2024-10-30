@@ -86,7 +86,7 @@ fn macro_helper(input: TokenStream, kind: impl ToTokens, func: impl ToTokens) ->
                 name: #original_item_name,
                 doc: #doc,
                 kind: #kind,
-                fun: #func(#item_name),
+                fun: lengthen_expansion_func(#func(#item_name)),
             };
     };
     TokenStream::from(expanded)

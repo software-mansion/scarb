@@ -38,8 +38,8 @@ impl<'a, 'b> TokenStreamBuilder<'a> {
         }
 
         match self.metadata.as_ref() {
-            Some(metadata) => TokenStream::new(result.clone()).with_metadata(metadata.clone()),
-            None => TokenStream::new(result.clone()),
+            Some(metadata) => TokenStream::new(result).with_metadata(metadata.clone()),
+            None => TokenStream::new(result),
         }
     }
 

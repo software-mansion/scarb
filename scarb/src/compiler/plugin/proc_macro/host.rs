@@ -598,7 +598,7 @@ impl ProcMacroHostPlugin {
             for token in result.token_stream.tokens {
                 match token {
                     TokenTree::Ident(token) => {
-                        derived_code.add_str(token.content);
+                        derived_code.add_str(token.content.as_ref());
                     }
                 }
             }

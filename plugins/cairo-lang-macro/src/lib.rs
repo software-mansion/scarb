@@ -35,13 +35,13 @@ pub struct ExpansionDefinition {
     pub name: &'static str,
     pub doc: &'static str,
     pub kind: ExpansionKind,
-    pub fun: ExpansionFunc,
+    pub fun: ExpansionFunc<'static>,
 }
 
 #[derive(Clone)]
-pub enum ExpansionFunc {
-    Attr(fn(TokenStream<'static>, TokenStream<'static>) -> ProcMacroResult<'static>),
-    Other(fn(TokenStream<'static>) -> ProcMacroResult<'static>),
+pub enum ExpansionFunc<'a> {
+    Attr(fn(TokenStream<'a>, TokenStream<'a>, &'a AllocationContext) -> ProcMacroResult<'a>),
+    Other(fn(TokenStream<'a>, &'a AllocationContext) -> ProcMacroResult<'a>),
 }
 
 /// Distributed slice for storing procedural macro code expansion capabilities.
@@ -111,14 +111,13 @@ pub unsafe extern "C" fn expand(
             }
         })
         .expect("procedural macro not found");
+    let fun = shorten_expansion_func(fun);
     let result = match fun {
         ExpansionFunc::Attr(fun) => {
-            let fun = shorten_attr_expansion(fun);
-            fun(attr_token_stream, token_stream)
+            fun(attr_token_stream, token_stream, &ctx)
         }
         ExpansionFunc::Other(fun) => {
-            let fun = shorten_expansion(fun);
-            fun(token_stream)
+            fun(token_stream, &ctx)
         }
     };
     let result: StableProcMacroResult = result.into_stable();
@@ -129,22 +128,13 @@ pub unsafe extern "C" fn expand(
     }
 }
 
-unsafe fn shorten_attr_expansion<'b>(
-    r: fn(TokenStream<'static>, TokenStream<'static>) -> ProcMacroResult<'static>,
-) -> fn(TokenStream<'b>, TokenStream<'b>) -> ProcMacroResult<'b> {
-    std::mem::transmute::<
-        fn(TokenStream<'static>, TokenStream<'static>) -> ProcMacroResult<'static>,
-        fn(TokenStream<'b>, TokenStream<'b>) -> ProcMacroResult<'b>,
-    >(r)
+unsafe fn shorten_expansion_func<'b>(r: ExpansionFunc<'static>) -> ExpansionFunc<'b> {
+    std::mem::transmute::<ExpansionFunc<'static>, ExpansionFunc<'b>>(r)
 }
 
-unsafe fn shorten_expansion<'b>(
-    r: fn(TokenStream<'static>) -> ProcMacroResult<'static>,
-) -> fn(TokenStream<'b>) -> ProcMacroResult<'b> {
-    std::mem::transmute::<
-        fn(TokenStream<'static>) -> ProcMacroResult<'static>,
-        fn(TokenStream<'b>) -> ProcMacroResult<'b>,
-    >(r)
+/// # Safety
+pub unsafe fn lengthen_expansion_func<'b>(r: ExpansionFunc<'b>) -> ExpansionFunc<'static> {
+    std::mem::transmute::<ExpansionFunc<'b>, ExpansionFunc<'static>>(r)
 }
 
 /// Free the memory allocated for the [`StableProcMacroResult`].
