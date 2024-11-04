@@ -1,5 +1,5 @@
 use crate::db::ScarbDocDatabase;
-use crate::metadata::compilation::get_project_config;
+use crate::metadata::compilation::{get_project_config, get_relevant_compilation_unit};
 use anyhow::Result;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
@@ -10,7 +10,7 @@ use cairo_lang_filesystem::{
 use errors::DiagnosticError;
 use itertools::Itertools;
 use scarb_metadata::{CompilationUnitMetadata, Metadata, PackageMetadata};
-use scarb_ui::{OutputFormat, Ui};
+use scarb_ui::Ui;
 use serde::Serialize;
 use smol_str::ToSmolStr;
 use types::Crate;
@@ -38,6 +38,7 @@ pub fn generate_packages_information(
     metadata: &Metadata,
     metadata_for_packages: &[PackageMetadata],
     document_private_items: bool,
+    ui: Ui,
 ) -> Result<Vec<PackageInformation>> {
     let mut packages_information = vec![];
     for package_metadata in metadata_for_packages {
@@ -55,13 +56,25 @@ pub fn generate_packages_information(
 
         let should_document_private_items = should_ignore_visibility || document_private_items;
 
-        let project_config = get_project_config(metadata, package_metadata)?;
+        let compilation_unit_metadata =
+            get_relevant_compilation_unit(metadata, package_metadata.id.clone())?;
+        let project_config =
+            get_project_config(metadata, package_metadata, compilation_unit_metadata)?;
 
         let db = ScarbDocDatabase::new(Some(project_config));
 
+        let main_component = compilation_unit_metadata
+            .components
+            .iter()
+            .find(|component| component.package == compilation_unit_metadata.package)
+            .expect("main component is guaranteed to exist in compilation unit");
+
         let main_crate_id = db.intern_crate(CrateLongId::Real {
-            name: package_metadata.name.clone().into(),
-            discriminator: Some(package_metadata.version.clone()).map(|v| v.to_smolstr()),
+            name: main_component.name.to_smolstr(),
+            discriminator: main_component
+                .discriminator
+                .as_ref()
+                .map(ToSmolStr::to_smolstr),
         });
 
         let package_compilation_unit = metadata
@@ -70,7 +83,7 @@ pub fn generate_packages_information(
             .find(|unit| unit.package == package_metadata.id);
 
         let mut diagnostics_reporter =
-            setup_diagnostics_reporter(&db, main_crate_id, package_compilation_unit)
+            setup_diagnostics_reporter(&db, main_crate_id, package_compilation_unit, &ui)
                 .skip_lowering_diagnostics();
 
         let crate_ = Crate::new(&db, main_crate_id, should_document_private_items)
@@ -95,9 +108,8 @@ fn setup_diagnostics_reporter<'a>(
     db: &ScarbDocDatabase,
     main_crate_id: CrateId,
     package_compilation_unit: Option<&CompilationUnitMetadata>,
+    ui: &'a Ui,
 ) -> DiagnosticsReporter<'a> {
-    let ui = Ui::new(scarb_ui::Verbosity::default(), OutputFormat::default());
-
     let ignore_warnings_crates = db
         .crates()
         .into_iter()

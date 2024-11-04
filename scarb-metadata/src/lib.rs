@@ -37,7 +37,7 @@ mod command;
 mod version_pin;
 
 /// An "opaque" identifier for a package.
-/// It is possible to inspect the `repr` field, if the need arises,
+/// It is possible to inspect the `repr` field if the need arises,
 /// but its precise format is an implementation detail and is subject to change.
 ///
 /// [`Metadata`] can be indexed by [`PackageId`].
@@ -61,7 +61,7 @@ impl fmt::Display for PackageId {
 }
 
 /// An "opaque" identifier for a source.
-/// It is possible to inspect the `repr` field, if the need arises,
+/// It is possible to inspect the `repr` field if the need arises,
 /// but its precise format is an implementation detail and is subject to change.
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(transparent)]
@@ -83,7 +83,7 @@ impl fmt::Display for SourceId {
 }
 
 /// An "opaque" identifier for a compilation unit.
-/// It is possible to inspect the `repr` field, if the need arises,
+/// It is possible to inspect the `repr` field if the need arises,
 /// but its precise format is an implementation detail and is subject to change.
 ///
 /// [`Metadata`] can be indexed by [`CompilationUnitId`].
@@ -101,6 +101,30 @@ impl From<String> for CompilationUnitId {
 }
 
 impl fmt::Display for CompilationUnitId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.repr, f)
+    }
+}
+
+/// An "opaque" identifier for a compilation unit component.
+/// It is possible to inspect the `repr` field if the need arises,
+/// but its precise format is an implementation detail and is subject to change.
+///
+/// [`CompilationUnitMetadata`] can be indexed by [`CompilationUnitComponentId`].
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[serde(transparent)]
+pub struct CompilationUnitComponentId {
+    /// The underlying string representation of the ID.
+    pub repr: String,
+}
+
+impl From<String> for CompilationUnitComponentId {
+    fn from(repr: String) -> Self {
+        Self { repr }
+    }
+}
+
+impl fmt::Display for CompilationUnitComponentId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.repr, f)
     }
@@ -356,6 +380,30 @@ pub struct CompilationUnitComponentMetadata {
     /// If not specified, the one from `CompilationUnit` will be used.
     #[serde(default)]
     pub cfg: Option<Vec<Cfg>>,
+    /// Identifier of this component. It is unique in its compilation unit.
+    pub id: Option<CompilationUnitComponentId>,
+    /// Identifier of this component as a dependency.
+    /// This directly translates to a `discriminator` field in Cairo compiler terminology.
+    /// If [`CompilationUnitComponentMetadata.id`] is [`Some`]
+    /// then this field is [`None`] for `core` crate **only**.
+    pub discriminator: Option<String>,
+    /// Dependencies of this component.
+    pub dependencies: Option<Vec<CompilationUnitComponentDependencyMetadata>>,
+
+    /// Additional data not captured by deserializer.
+    #[cfg_attr(feature = "builder", builder(default))]
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
+}
+
+/// Information about dependency of a component of a compilation unit.
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "builder", derive(Builder))]
+#[cfg_attr(feature = "builder", builder(setter(into)))]
+#[non_exhaustive]
+pub struct CompilationUnitComponentDependencyMetadata {
+    /// An id of a component from the same compilation unit that this dependency refers to.
+    pub id: CompilationUnitComponentId,
 
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]
@@ -525,5 +573,16 @@ impl CompilationUnitComponentMetadata {
         self.source_path
             .parent()
             .expect("Source path is guaranteed to point to a file.")
+    }
+}
+
+impl<'a> Index<&'a CompilationUnitComponentId> for CompilationUnitMetadata {
+    type Output = CompilationUnitComponentMetadata;
+
+    fn index(&self, idx: &'a CompilationUnitComponentId) -> &Self::Output {
+        self.components
+            .iter()
+            .find(|p| p.id.as_ref() == Some(idx))
+            .unwrap_or_else(|| panic!("no compilation unit with this ID: {idx}"))
     }
 }

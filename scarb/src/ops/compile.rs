@@ -4,12 +4,11 @@ use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use cairo_lang_utils::Upcast;
 use indoc::formatdoc;
 use itertools::Itertools;
-use smol_str::{SmolStr, ToSmolStr};
-use std::thread;
-
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use scarb_ui::HumanDuration;
+use smol_str::{SmolStr, ToSmolStr};
+use std::thread;
 
 use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin, ScarbDatabase};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};

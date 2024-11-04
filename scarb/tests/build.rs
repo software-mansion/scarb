@@ -278,6 +278,7 @@ fn compile_with_incompatible_cairo_version() {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
             cairo-version = "33.33.0"
             "#,
         )
@@ -377,6 +378,27 @@ fn compile_with_invalid_non_numeric_dep_version() {
 }
 
 #[test]
+fn compile_with_unset_edition() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .no_edition()
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            warn: `edition` field not set in `[package]` section for package `hello`
+            [..] Compiling hello v0.1.0 ([..]Scarb.toml)
+            [..]  Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
 fn compile_multiple_packages() {
     let t = TempDir::new().unwrap();
 
@@ -386,6 +408,7 @@ fn compile_multiple_packages() {
             [package]
             name = "fib"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             decrement = { path = "decrement" }
@@ -418,6 +441,7 @@ fn compile_multiple_packages() {
             [package]
             name = "decrement"
             version = "1.0.0"
+            edition = "2023_01"
             "#,
         )
         .unwrap();
@@ -454,6 +478,7 @@ fn compile_with_nested_deps() {
             [package]
             name = "x"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             y = { path = "y" }
@@ -471,6 +496,7 @@ fn compile_with_nested_deps() {
             [package]
             name = "y"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             q = { path = "../q" }
@@ -489,6 +515,7 @@ fn compile_with_nested_deps() {
             [package]
             name = "z"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             q = { path = "../q" }
@@ -506,6 +533,7 @@ fn compile_with_nested_deps() {
             [package]
             name = "q"
             version = "1.0.0"
+            edition = "2023_01"
             "#,
         )
         .unwrap();

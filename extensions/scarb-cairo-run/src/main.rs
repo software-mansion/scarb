@@ -1,6 +1,3 @@
-use std::env;
-use std::fs;
-
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use cairo_lang_runner::short_string::as_cairo_short_string;
 use cairo_lang_runner::{RunResultStarknet, RunResultValue, SierraCasmRunner, StarknetState};
@@ -10,6 +7,9 @@ use camino::Utf8PathBuf;
 use clap::Parser;
 use indoc::formatdoc;
 use serde::Serializer;
+use std::env;
+use std::fs;
+use std::process::ExitCode;
 
 use scarb_metadata::{
     CompilationUnitMetadata, Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand,
@@ -43,6 +43,10 @@ struct Args {
     #[arg(long, default_value_t = false)]
     print_full_memory: bool,
 
+    /// Print detailed resources.
+    #[arg(long, default_value_t = false)]
+    print_resource_usage: bool,
+
     /// Do not rebuild the package.
     #[arg(long, default_value_t = false)]
     no_build: bool,
@@ -66,14 +70,14 @@ struct Args {
     arguments_file: Option<Utf8PathBuf>,
 }
 
-fn main() -> Result<()> {
+fn main() -> ExitCode {
     let args: Args = Args::parse();
     let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
     if let Err(err) = main_inner(&ui, args) {
         ui.anyhow(&err);
-        std::process::exit(1);
+        return ExitCode::FAILURE;
     }
-    Ok(())
+    ExitCode::SUCCESS
 }
 
 fn main_inner(ui: &Ui, args: Args) -> Result<()> {
@@ -150,6 +154,7 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
         result,
         print_full_memory: args.print_full_memory,
         gas_defined: available_gas.is_defined(),
+        detailed_resources: args.print_resource_usage,
     });
 
     Ok(())
@@ -228,6 +233,7 @@ struct Summary {
     result: RunResultStarknet,
     print_full_memory: bool,
     gas_defined: bool,
+    detailed_resources: bool,
 }
 
 impl Message for Summary {
@@ -272,6 +278,18 @@ impl Message for Summary {
             }
             println!("]");
         }
+
+        if self.detailed_resources {
+            let resources = self.result.used_resources.basic_resources;
+            let sorted_builtins = sort_by_value(&resources.builtin_instance_counter);
+            let sorted_syscalls = sort_by_value(&self.result.used_resources.syscalls);
+
+            println!("Resources:");
+            println!("\tsteps: {}", resources.n_steps);
+            println!("\tmemory holes: {}", resources.n_memory_holes);
+            println!("\tbuiltins: ({})", format_items(&sorted_builtins));
+            println!("\tsyscalls: ({})", format_items(&sorted_syscalls));
+        }
     }
 
     fn structured<S: Serializer>(self, _ser: S) -> Result<S::Ok, S::Error>
@@ -280,6 +298,28 @@ impl Message for Summary {
     {
         todo!("JSON output is not implemented yet for this command")
     }
+}
+
+fn sort_by_value<'a, K, V, M>(map: M) -> Vec<(&'a K, &'a V)>
+where
+    M: IntoIterator<Item = (&'a K, &'a V)>,
+    V: Ord,
+{
+    let mut sorted: Vec<_> = map.into_iter().collect();
+    sorted.sort_by(|a, b| b.1.cmp(a.1));
+    sorted
+}
+
+fn format_items<K, V>(items: &[(K, V)]) -> String
+where
+    K: std::fmt::Debug,
+    V: std::fmt::Display,
+{
+    items
+        .iter()
+        .map(|(key, value)| format!("{key:?}: {value}"))
+        .collect::<Vec<String>>()
+        .join(", ")
 }
 
 enum GasLimit {

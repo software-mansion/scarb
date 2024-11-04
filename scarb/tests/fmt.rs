@@ -24,6 +24,7 @@ fn build_temp_dir(data: &str) -> TempDir {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
             "#,
         )
         .unwrap();
@@ -169,6 +170,7 @@ fn format_with_import_sorting() {
             [package]
             name = "hello"
             version = "0.1.0"
+            edition = "2023_01"
             [tool.fmt]
             sort-module-level-items = true
             "#,
@@ -219,38 +221,44 @@ fn format_with_import_sorting() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches(indoc! {"\
+        .stdout_matches(indoc! {"
             Diff in file [..]lib.cairo:
              --- original
             +++ modified
-            @@ -1,5 +1,5 @@
+            @@ -1,10 +1,10 @@
             +use openzeppelin::introspection::first;
              use openzeppelin::introspection::interface;
             -use openzeppelin::introspection::first;
-
+            
              #[starknet::contract]
              mod SRC5 {
+                 use openzeppelin::introspection::interface;
+            -    use openzeppelin::introspection::{interface, AB};
+            +    use openzeppelin::introspection::{AB, interface};
+            
+                 #[storage]
+                 struct Storage {
             @@ -14,8 +14,8 @@
                  use openzeppelin::introspection::first;
-
+            
                  mod A {}
             +    mod F;
                  mod G;
             -    mod F;
-
+            
                  #[abi(embed_v0)]
                  impl SRC5Impl of interface::ISRC5<ContractState> {
             @@ -28,7 +28,7 @@
                  use starknet::ArrayTrait;
-
+            
                  mod Inner {
-            -        use C;
-                     use B;
-            +        use C;
+            +        use B;
+                     use C;
+            -        use B;
                  }
              }
-
-        "});
+            
+       "});
 }
 
 #[test]

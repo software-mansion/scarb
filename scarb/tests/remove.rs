@@ -10,6 +10,7 @@ fn remove_one() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = "1.0.0"
@@ -20,6 +21,7 @@ fn remove_one() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = "1.0.0"
@@ -37,6 +39,7 @@ fn multiple_deps() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = "1.0.0"
@@ -47,6 +50,7 @@ fn multiple_deps() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             foo = "1.0.0"
@@ -63,6 +67,7 @@ fn undefined_dep() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             dep = "1.0.0"
@@ -83,6 +88,7 @@ fn no_dependencies_section() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
         "#})
         .failure()
         .stdout_matches(indoc! {r#"    Removing dep from dependencies
@@ -99,6 +105,7 @@ fn dry_run() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -107,6 +114,7 @@ fn dry_run() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dependencies]
             bar = "1.0.0"
@@ -125,6 +133,7 @@ fn remove_dev_dep() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dev-dependencies]
             dep = "1.0.0"
@@ -135,6 +144,7 @@ fn remove_dev_dep() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dev-dependencies]
             dep = "1.0.0"
@@ -152,6 +162,7 @@ fn remove_undefined_dev_dep() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dev-dependencies]
             dep = "1.0.0"
@@ -161,6 +172,7 @@ fn remove_undefined_dev_dep() {
             [package]
             name = "hello"
             version = "1.0.0"
+            edition = "2023_01"
 
             [dev-dependencies]
             dep = "1.0.0"

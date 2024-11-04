@@ -3,14 +3,16 @@ use clap::Parser;
 use scarb_doc::docs_generation::markdown::MarkdownContent;
 use scarb_doc::errors::MetadataCommandError;
 use scarb_doc::metadata::get_target_dir;
+use std::process::ExitCode;
 
 use scarb_metadata::MetadataCommand;
-use scarb_ui::args::{PackagesFilter, ToEnvVars};
+use scarb_ui::args::{PackagesFilter, ToEnvVars, VerbositySpec};
 
 use scarb_doc::generate_packages_information;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 
 use scarb_ui::args::FeaturesSpec;
+use scarb_ui::Ui;
 
 const OUTPUT_DIR: &str = "doc";
 
@@ -37,18 +39,20 @@ struct Args {
     #[arg(long, value_enum, default_value_t)]
     output_format: OutputFormat,
 
+    /// Generates documentation also for private items.
+    #[arg(long, default_value_t = false)]
+    document_private_items: bool,
+
     /// Specifies features to enable.
     #[command(flatten)]
     pub features: FeaturesSpec,
 
-    /// Generates documentation also for private items.
-    #[arg(long, default_value_t = false)]
-    document_private_items: bool,
+    /// Logging verbosity.
+    #[command(flatten)]
+    pub verbose: VerbositySpec,
 }
 
-fn main_inner() -> Result<()> {
-    let args = Args::parse();
-
+fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let metadata = MetadataCommand::new()
         .inherit_stderr()
         .envs(args.features.to_env_vars())
@@ -57,13 +61,12 @@ fn main_inner() -> Result<()> {
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
 
-    let packages_information_result = generate_packages_information(
+    let packages_information = generate_packages_information(
         &metadata,
         &metadata_for_packages,
         args.document_private_items,
-    );
-
-    let packages_information = packages_information_result?;
+        ui,
+    )?;
 
     match args.output_format {
         OutputFormat::Json => {
@@ -88,13 +91,14 @@ fn main_inner() -> Result<()> {
     Ok(())
 }
 
-fn main() {
-    match main_inner() {
-        Ok(()) => std::process::exit(0),
+fn main() -> ExitCode {
+    let args = Args::parse();
+    let ui = Ui::new(args.verbose.clone().into(), scarb_ui::OutputFormat::Text);
+    match main_inner(args, ui.clone()) {
+        Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
-            scarb_ui::Ui::new(scarb_ui::Verbosity::Normal, scarb_ui::OutputFormat::Text)
-                .error(format!("{error:#}"));
-            std::process::exit(1);
+            ui.error(format!("{error:#}"));
+            ExitCode::FAILURE
         }
     }
 }
