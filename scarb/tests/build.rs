@@ -323,6 +323,10 @@ fn compile_ignore_cairo_version() {
             Cairo version required: ^33.33.0
             Cairo version of Scarb: [..]
 
+            warn: the required Cairo version of package hello is not compatible with current version
+            Cairo version required: ^33.33.0
+            Cairo version of Scarb: [..]
+
             [..] Checking hello v0.1.0 ([..]Scarb.toml)
             [..] Finished checking `dev` profile target(s) in [..]
         "#});
