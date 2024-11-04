@@ -541,7 +541,12 @@ impl<'a> PackageSolutionCollector<'a> {
         assert!(!packages.is_empty());
         assert_eq!(packages[0].id, self.member.id);
 
-        check_cairo_version_compatibility(&packages, self.ws, ignore_cairo_version)?;
+        check_cairo_version_compatibility(
+            &packages,
+            self.ws,
+            &mut self.warnings,
+            ignore_cairo_version,
+        )?;
 
         // Print warnings for dependencies that are not usable.
         let other = classes.remove(&PackageClass::Other).unwrap_or_default();
@@ -587,6 +592,7 @@ fn build_cfg_set(target: &Target) -> CfgSet {
 fn check_cairo_version_compatibility(
     packages: &[Package],
     ws: &Workspace<'_>,
+    warnings: &mut HashSet<String>,
     ignore_mismatch: bool,
 ) -> Result<()> {
     let current_version = crate::version::get().cairo.version.to_version().unwrap();
@@ -605,7 +611,7 @@ fn check_cairo_version_compatibility(
                     current_version
                 );
                 if ignore_mismatch {
-                    ws.config().ui().warn(msg);
+                    warnings.insert(msg);
                 } else {
                     ws.config().ui().error(msg);
                 }
