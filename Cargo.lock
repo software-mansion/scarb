@@ -5044,6 +5044,7 @@ dependencies = [
  "itertools 0.12.1",
  "scarb",
  "scarb-build-metadata",
+ "scarb-proc-macro-server-types",
  "scarb-ui",
  "semver",
  "serde",
