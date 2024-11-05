@@ -320,6 +320,7 @@ fn compile_ignore_cairo_version() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `edition` field not set in `[package]` section for package `hello`
             warn: the required Cairo version of package hello is not compatible with current version
             Cairo version required: ^33.33.0
             Cairo version of Scarb: [..]
