@@ -103,7 +103,7 @@ impl Ui {
 
     /// Print the message to standard output if not in quiet verbosity mode.
     pub fn print<T: Message>(&self, message: T) {
-        if self.verbosity >= Verbosity::Normal {
+        if self.verbosity > Verbosity::Quiet {
             self.do_print(message);
         }
     }
