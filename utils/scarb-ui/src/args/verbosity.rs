@@ -74,22 +74,18 @@ impl VerbositySpec {
     }
 
     fn integer_verbosity(&self) -> i8 {
-        if self.no_warnings {
+        let int_level = if self.no_warnings {
             -1
         } else {
-            let int_level = if self.no_warnings {
-                -1
-            } else {
-                (self.verbose as i8) - (self.quiet as i8 * 2)
-            };
+            (self.verbose as i8) - (self.quiet as i8 * 2)
+        };
 
-            if self.is_present() {
-                int_level
-            } else {
-                self.verbosity
-                    .map(Verbosity::level_value)
-                    .unwrap_or(int_level)
-            }
+        if self.is_present() {
+            int_level
+        } else {
+            self.verbosity
+                .map(Verbosity::level_value)
+                .unwrap_or(int_level)
         }
     }
 }
