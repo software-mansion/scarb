@@ -16,6 +16,7 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         .collect::<Vec<_>>();
     let opts = CompileOpts::try_new(
         args.features,
+        args.ignore_cairo_version,
         args.test,
         args.target_names,
         args.target_kinds,

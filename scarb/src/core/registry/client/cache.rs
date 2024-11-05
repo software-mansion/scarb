@@ -17,7 +17,7 @@ use crate::core::registry::index::{IndexRecord, IndexRecords};
 #[allow(unused_imports)]
 use crate::core::PackageName;
 use crate::core::{Checksum, Config, ManifestDependency, PackageId, SourceId};
-use crate::flock::{FileLockGuard, Filesystem};
+use crate::flock::{AdvisoryLockGuard, FileLockGuard, Filesystem};
 use crate::internal::fsx;
 
 // FIXME(mkaput): Avoid creating database if inner client does not trigger cache writes.
@@ -180,11 +180,13 @@ impl<'c> RegistryClientCache<'c> {
             .get_or_try_init(|| async {
                 let ui = self.config.ui();
                 let fs = self.config.dirs().registry_dir().into_child("cache");
-                let db_path = fs
-                    .path_existent()?
-                    .join(format!("{}.v1.redb", self.source_id.ident()));
-
-                CacheDatabase::create(&db_path, ui)
+                let filename = format!("{}.v1.redb", self.source_id.ident());
+                let db_path = fs.path_existent()?.join(filename.clone());
+                let lock = fs
+                    .advisory_lock(format!("{filename}.lock"), "registry db cache", self.config)
+                    .acquire_async()
+                    .await?;
+                CacheDatabase::create(&db_path, lock, ui)
             })
             .await
     }
@@ -259,11 +261,12 @@ impl<'c> RegistryClientCache<'c> {
 struct CacheDatabase {
     db: redb::Database,
     ui: Ui,
+    _lock: AdvisoryLockGuard,
 }
 
 impl CacheDatabase {
-    #[tracing::instrument(level = "trace", skip(ui))]
-    fn create(path: &Utf8Path, ui: Ui) -> Result<Self> {
+    #[tracing::instrument(level = "trace", skip(ui, lock))]
+    fn create(path: &Utf8Path, lock: AdvisoryLockGuard, ui: Ui) -> Result<Self> {
         fn create(path: &Utf8Path, ui: &Ui) -> Result<redb::Database> {
             // We do need to repair the database in case of corruption, because this is just
             // a cache, and we can always re-download the data from the registry.
@@ -298,7 +301,11 @@ impl CacheDatabase {
             Ok(db)
         })?;
 
-        Ok(Self { db, ui })
+        Ok(Self {
+            db,
+            ui,
+            _lock: lock,
+        })
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
