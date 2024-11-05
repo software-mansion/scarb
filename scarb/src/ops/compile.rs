@@ -58,11 +58,13 @@ pub struct CompileOpts {
     pub exclude_target_kinds: Vec<TargetKind>,
     pub include_target_names: Vec<SmolStr>,
     pub features: FeaturesOpts,
+    pub ignore_cairo_version: bool,
 }
 
 impl CompileOpts {
     pub fn try_new(
         features: FeaturesSpec,
+        ignore_cairo_version: bool,
         test: bool,
         target_names: Vec<String>,
         target_kinds: Vec<String>,
@@ -88,6 +90,7 @@ impl CompileOpts {
                 .map(|v| v.to_smolstr())
                 .collect_vec(),
             features: features.try_into()?,
+            ignore_cairo_version,
         })
     }
 }
@@ -121,35 +124,36 @@ where
     validate_features(&packages_to_process, &opts.features)?;
     // Add test compilation units to build
     let packages = get_test_package_ids(packages, ws);
-    let compilation_units = ops::generate_compilation_units(&resolve, &opts.features, ws)?
-        .into_iter()
-        .filter(|cu| {
-            let is_excluded = opts
-                .exclude_target_kinds
-                .contains(&cu.main_component().target_kind());
-            let is_included = opts.include_target_kinds.is_empty()
-                || opts
-                    .include_target_kinds
+    let compilation_units =
+        ops::generate_compilation_units(&resolve, &opts.features, opts.ignore_cairo_version, ws)?
+            .into_iter()
+            .filter(|cu| {
+                let is_excluded = opts
+                    .exclude_target_kinds
                     .contains(&cu.main_component().target_kind());
-            let is_included = is_included
-                && (opts.include_target_names.is_empty()
-                    || cu
-                        .main_component()
-                        .targets
-                        .iter()
-                        .any(|t| opts.include_target_names.contains(&t.name)));
-            let is_selected = packages.contains(&cu.main_package_id());
-            let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
-            is_cairo_plugin || (is_selected && is_included && !is_excluded)
-        })
-        .sorted_by_key(|cu| {
-            if matches!(cu, CompilationUnit::ProcMacro(_)) {
-                0
-            } else {
-                1
-            }
-        })
-        .collect::<Vec<_>>();
+                let is_included = opts.include_target_kinds.is_empty()
+                    || opts
+                        .include_target_kinds
+                        .contains(&cu.main_component().target_kind());
+                let is_included = is_included
+                    && (opts.include_target_names.is_empty()
+                        || cu
+                            .main_component()
+                            .targets
+                            .iter()
+                            .any(|t| opts.include_target_names.contains(&t.name)));
+                let is_selected = packages.contains(&cu.main_package_id());
+                let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
+                is_cairo_plugin || (is_selected && is_included && !is_excluded)
+            })
+            .sorted_by_key(|cu| {
+                if matches!(cu, CompilationUnit::ProcMacro(_)) {
+                    0
+                } else {
+                    1
+                }
+            })
+            .collect::<Vec<_>>();
 
     for unit in compilation_units {
         operation(unit, ws)?;

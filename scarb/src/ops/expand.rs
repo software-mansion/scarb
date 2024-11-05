@@ -31,6 +31,7 @@ pub enum ExpandEmitTarget {
 #[derive(Clone, Debug)]
 pub struct ExpandOpts {
     pub features: FeaturesOpts,
+    pub ignore_cairo_version: bool,
     pub target_kind: Option<TargetKind>,
     pub target_name: Option<SmolStr>,
     pub ugly: bool,
@@ -42,7 +43,8 @@ pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<
 
     let package_name = package.id.name.to_string();
     let resolve = ops::resolve_workspace(ws)?;
-    let compilation_units = ops::generate_compilation_units(&resolve, &opts.features, ws)?;
+    let compilation_units =
+        ops::generate_compilation_units(&resolve, &opts.features, opts.ignore_cairo_version, ws)?;
 
     // Compile procedural macros.
     compilation_units

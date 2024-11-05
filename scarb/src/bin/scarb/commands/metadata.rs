@@ -15,6 +15,7 @@ pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {
         version: args.format_version,
         no_deps: args.no_deps,
         features,
+        ignore_cairo_version: args.ignore_cairo_version,
     };
 
     let metadata = ops::collect_metadata(&opts, &ws)?;

@@ -12,6 +12,7 @@ pub fn run(args: ExpandArgs, config: &Config) -> Result<()> {
     let package = args.packages_filter.match_one(&ws)?;
     let opts = ExpandOpts {
         features: args.features.try_into()?,
+        ignore_cairo_version: args.ignore_cairo_version,
         ugly: args.ugly,
         target_name: args.target_name.map(|n| n.to_smolstr()),
         target_kind: args.target_kind.map(TargetKind::try_new).transpose()?,
