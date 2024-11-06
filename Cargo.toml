@@ -10,6 +10,7 @@ members = [
     "plugins/cairo-lang-macro-attributes",
     "plugins/cairo-lang-macro-stable",
     "utils/create-output-dir",
+    "utils/scarb-proc-macro-server-types",
     "utils/scarb-build-metadata",
     "utils/scarb-stable-hash",
     "utils/scarb-test-support",
