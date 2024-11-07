@@ -18,6 +18,24 @@ pub struct RpcResponse {
     pub error: Option<ResponseError>,
 }
 
+impl RpcResponse {
+    /// Converts this response into a [`Result`], containing either the successful result
+    /// or the error that occurred during the RPC request.
+    ///
+    /// # Returns
+    /// * `Ok(serde_json::Value)` if the RPC request was successful and contains a result.
+    /// * `Err(ResponseError)` if the RPC request failed and contains an error.
+    pub fn into_result(self) -> Result<serde_json::Value, ResponseError> {
+        match (self.result, self.error) {
+            (_, Some(error)) => Err(error),
+            (Some(response), None) => Ok(response),
+            (None, None) => Err(ResponseError {
+                message: "`RpcResponse` is missing both `result` and `error`.".to_string(),
+            }),
+        }
+    }
+}
+
 /// Describes errors that occurred during an RPC operation.
 ///
 /// Provides an error message detailing what went wrong during the request.
