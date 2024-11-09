@@ -8,6 +8,7 @@ use crossbeam_channel::{Receiver, Sender};
 use methods::Handler;
 use scarb_proc_macro_server_types::jsonrpc::{ResponseError, RpcRequest, RpcResponse};
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacros;
+use scarb_proc_macro_server_types::methods::expand::ExpandAttribute;
 use scarb_proc_macro_server_types::methods::Method;
 use serde_json::Value;
 
@@ -70,6 +71,9 @@ fn handle_requests(
 fn route_request(proc_macros: Arc<ProcMacroHost>, request: RpcRequest) -> Result<Value> {
     match request.method.as_str() {
         DefinedMacros::METHOD => run_handler::<DefinedMacros>(proc_macros.clone(), request.value),
+        ExpandAttribute::METHOD => {
+            run_handler::<ExpandAttribute>(proc_macros.clone(), request.value)
+        }
         _ => Err(anyhow!("method not found")),
     }
 }
