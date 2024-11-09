@@ -5,6 +5,8 @@ use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacros;
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacrosParams;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttribute;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttributeParams;
+use scarb_proc_macro_server_types::methods::expand::ExpandDerive;
+use scarb_proc_macro_server_types::methods::expand::ExpandDeriveParams;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::proc_macro_server::ProcMacroClient;
 use scarb_test_support::proc_macro_server::SIMPLE_MACROS;
@@ -86,5 +88,41 @@ fn expand_attribute() {
     assert_eq!(
         response.token_stream,
         TokenStream::new("fn very_new_name(){}".to_string())
+    );
+}
+
+#[test]
+fn expand_derive() {
+    let t = TempDir::new().unwrap();
+    let plugin_package = t.child("some");
+
+    CairoPluginProjectBuilder::default()
+        .lib_rs(SIMPLE_MACROS)
+        .build(&plugin_package);
+
+    let project = t.child("test_package");
+
+    ProjectBuilder::start()
+        .name("test_package")
+        .version("1.0.0")
+        .lib_cairo("")
+        .dep("some", plugin_package)
+        .build(&project);
+
+    let mut proc_macro_server = ProcMacroClient::new(&project);
+
+    let item = TokenStream::new("fn some_test_fn(){}".to_string());
+
+    let response = proc_macro_server
+        .request_and_wait::<ExpandDerive>(ExpandDeriveParams {
+            derives: vec!["some_derive".to_string()],
+            item,
+        })
+        .unwrap();
+
+    assert_eq!(response.diagnostics, vec![]);
+    assert_eq!(
+        response.token_stream,
+        TokenStream::new("impl SomeImpl of SomeTrait {}".to_string())
     );
 }
