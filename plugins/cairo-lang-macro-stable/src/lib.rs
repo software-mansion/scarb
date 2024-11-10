@@ -9,7 +9,8 @@ pub mod ffi;
 #[derive(Debug)]
 pub struct StableToken {
     pub span: StableTextSpan,
-    pub content: *mut c_char,
+    pub ptr: *const u8,
+    pub len: usize,
 }
 
 #[repr(C)]
@@ -44,6 +45,7 @@ pub type StableExpansionsList = StableSlice<StableExpansion>;
 pub struct StableTokenStream {
     pub tokens: StableSlice<StableTokenTree>,
     pub metadata: StableTokenStreamMetadata,
+    pub size_hint: usize,
 }
 
 /// Token stream metadata.

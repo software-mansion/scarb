@@ -90,7 +90,7 @@ fn expand_attribute() {
             attr: "rename_to_very_new_name".to_string(),
             args: TokenStream::empty(),
             item: TokenStream::new(vec![TokenTree::Ident(Token::new(
-                "fn some_test_fn(){}".to_string(),
+                "fn some_test_fn(){}",
                 TextSpan::default(),
             ))]),
         })
@@ -124,7 +124,7 @@ fn expand_derive() {
     let mut proc_macro_server = ProcMacroClient::new(&project);
 
     let item = TokenStream::new(vec![TokenTree::Ident(Token::new(
-        "fn some_test_fn(){}".to_string(),
+        "fn some_test_fn(){}",
         TextSpan::default(),
     ))]);
 
@@ -181,7 +181,7 @@ fn expand_inline() {
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
             name: "replace_all_15_with_25".to_string(),
             args: TokenStream::new(vec![TokenTree::Ident(Token::new(
-                "struct A { field: 15 , other_field: macro_call!(12)}".to_string(),
+                "struct A { field: 15 , other_field: macro_call!(12)}",
                 TextSpan::default(),
             ))]),
         })
