@@ -338,3 +338,59 @@ impl Token {
         Self { content, span }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{AllocationContext, TextSpan, Token, TokenStream, TokenTree};
+
+    #[test]
+    pub fn can_serde_empty_token_stream() {
+        let original = TokenStream::empty();
+        let serialized = serde_json::to_string(&original).unwrap();
+        let derived: TokenStream = serde_json::from_str(serialized.as_str()).unwrap();
+        assert_eq!(original, derived);
+        let val: serde_json::Value = serde_json::from_str(serialized.as_str()).unwrap();
+        assert_eq!(
+            val,
+            serde_json::json!({
+                "tokens": [],
+                "metadata": {
+                    "original_file_path": null,
+                    "file_id": null,
+                    "edition": null
+                }
+            })
+        );
+    }
+
+    #[test]
+    pub fn can_serde_token_stream() {
+        let ctx = AllocationContext::default();
+        let original = TokenStream::new(vec![
+            TokenTree::Ident(Token::new_in("first", TextSpan::new(0, 1), &ctx)),
+            TokenTree::Ident(Token::new_in("second", TextSpan::new(2, 3), &ctx)),
+            TokenTree::Ident(Token::new_in("third", TextSpan::new(4, 5), &ctx)),
+            TokenTree::Ident(Token::new_in("fourth", TextSpan::new(6, 7), &ctx)),
+        ]);
+        let serialized = serde_json::to_string(&original).unwrap();
+        let derived: TokenStream = serde_json::from_str(serialized.as_str()).unwrap();
+        assert_eq!(original, derived);
+        let val: serde_json::Value = serde_json::from_str(serialized.as_str()).unwrap();
+        assert_eq!(
+            val,
+            serde_json::json!({
+                "tokens": [
+                    {"Ident": {"content": "first", "span": {"start": 0, "end": 1}}},
+                    {"Ident": {"content": "second", "span": {"start": 2, "end": 3}}},
+                    {"Ident": {"content": "third", "span": {"start": 4, "end": 5}}},
+                    {"Ident": {"content": "fourth", "span": {"start": 6, "end": 7}}},
+                ],
+                "metadata": {
+                    "original_file_path": null,
+                    "file_id": null,
+                    "edition": null
+                }
+            })
+        );
+    }
+}
