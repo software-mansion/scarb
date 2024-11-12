@@ -170,3 +170,30 @@ pub fn executable_attribute(input: TokenStream) -> TokenStream {
     };
     TokenStream::from(expanded)
 }
+
+const NO_OP_ATTR_PREFIX: &str = "__no_op_attr_";
+
+#[proc_macro]
+pub fn no_op_attribute(input: TokenStream) -> TokenStream {
+    let input: LitStr = parse_macro_input!(input as LitStr);
+    let callback_link = format!("NO_OP_ATTR_DESERIALIZE{}", input.value().to_uppercase());
+    let callback_link = syn::Ident::new(&callback_link, input.span());
+    let item_name = format!("{}{}", NO_OP_ATTR_PREFIX, input.value());
+    let org_name = syn::Ident::new(&item_name, input.span());
+
+    let expanded = quote! {
+        fn #org_name() {
+            // No-op function to prevent name conflicts.
+        }
+
+        #[::cairo_lang_macro::linkme::distributed_slice(::cairo_lang_macro::MACRO_DEFINITIONS_SLICE)]
+        #[linkme(crate = ::cairo_lang_macro::linkme)]
+        static #callback_link: ::cairo_lang_macro::ExpansionDefinition = ::cairo_lang_macro::ExpansionDefinition {
+            name: #item_name,
+            doc: "",
+            kind: ::cairo_lang_macro::ExpansionKind::Attr,
+            fun: ::cairo_lang_macro::ExpansionFunc::Attr(::cairo_lang_macro::no_op_attr),
+        };
+    };
+    TokenStream::from(expanded)
+}
