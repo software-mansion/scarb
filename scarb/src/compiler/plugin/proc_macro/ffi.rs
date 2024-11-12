@@ -40,6 +40,7 @@ impl FromSyntaxNode for TokenStream {
 }
 
 const EXEC_ATTR_PREFIX: &str = "__exec_attr_";
+const NO_OP_ATTR_PREFIX: &str = "__no_op_attr_";
 
 /// Representation of a single procedural macro.
 ///
@@ -110,7 +111,7 @@ impl ProcMacroInstance {
     pub fn declared_attributes_and_executables(&self) -> Vec<String> {
         self.get_expansions()
             .iter()
-            .filter(|e| e.kind == ExpansionKind::Attr || e.kind == ExpansionKind::Executable)
+            .filter(|e| e.kind == ExpansionKind::Attr || e.kind == ExpansionKind::Executable || e.kind == ExpansionKind::NoOp)
             .map(|e| e.name.clone())
             .map(Into::into)
             .collect()
@@ -235,6 +236,7 @@ pub enum ExpansionKind {
     Derive,
     Inline,
     Executable,
+    NoOp,
 }
 
 impl From<SharedExpansionKind> for ExpansionKind {
@@ -275,6 +277,13 @@ impl Expansion {
             return Self {
                 name: SmolStr::new(name),
                 kind: ExpansionKind::Executable,
+            };
+        }
+        if name.starts_with(NO_OP_ATTR_PREFIX) {
+            let name = name.strip_prefix(NO_OP_ATTR_PREFIX).unwrap();
+            return Self {
+                name: SmolStr::new(name),
+                kind: ExpansionKind::NoOp,
             };
         }
         Self {
