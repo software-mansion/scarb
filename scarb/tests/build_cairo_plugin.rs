@@ -1194,7 +1194,7 @@ fn can_create_no_op_attribute() {
         "#})
         .build(&project);
 
-Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("cairo-run")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")

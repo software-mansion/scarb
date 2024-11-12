@@ -111,7 +111,11 @@ impl ProcMacroInstance {
     pub fn declared_attributes_and_executables(&self) -> Vec<String> {
         self.get_expansions()
             .iter()
-            .filter(|e| e.kind == ExpansionKind::Attr || e.kind == ExpansionKind::Executable || e.kind == ExpansionKind::NoOp)
+            .filter(|e| {
+                e.kind == ExpansionKind::Attr
+                    || e.kind == ExpansionKind::Executable
+                    || e.kind == ExpansionKind::NoOp
+            })
             .map(|e| e.name.clone())
             .map(Into::into)
             .collect()
