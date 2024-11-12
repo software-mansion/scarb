@@ -1171,6 +1171,46 @@ fn can_create_executable_attribute() {
 }
 
 #[test]
+fn can_create_no_op_attribute() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::no_op_attribute;
+
+            no_op_attribute!("some");
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 42 }
+        "#})
+        .build(&project);
+
+Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Running hello
+            Run completed successfully, returning [42]
+        "#});
+}
+
+#[test]
 fn executable_name_cannot_clash_attr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
