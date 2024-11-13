@@ -144,7 +144,7 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
     let result = runner
         .run_function_with_starknet_context(
             main_function(&runner, &sierra_program, args.function.as_deref())?,
-            &program_args,
+            program_args.into(),
             available_gas.value(),
             StarknetState::default(),
         )
