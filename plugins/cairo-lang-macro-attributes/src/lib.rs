@@ -146,7 +146,11 @@ fn hide_name(mut item: ItemFn) -> ItemFn {
 
 fn create_attribute(input: TokenStream, attr_prefix: &str, callback_prefix: &str) -> TokenStream {
     let input: LitStr = parse_macro_input!(input as LitStr);
-    let callback_link = format!("{}_DESERIALIZE{}", callback_prefix.to_uppercase(), input.value().to_uppercase());
+    let callback_link = format!(
+        "{}_DESERIALIZE{}",
+        callback_prefix.to_uppercase(),
+        input.value().to_uppercase()
+    );
     let callback_link = syn::Ident::new(&callback_link, input.span());
     let item_name = format!("{}{}", attr_prefix, input.value());
     let org_name = syn::Ident::new(&item_name, input.span());
