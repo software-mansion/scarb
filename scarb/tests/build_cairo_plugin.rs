@@ -564,6 +564,9 @@ fn can_read_token_stream_metadata() {
                 file_id: Some(
                     "[..]",
                 ),
+                edition: Some(
+                    "[..]",
+                ),
             }
             [..]Finished `dev` profile target(s) in [..]
         "#});

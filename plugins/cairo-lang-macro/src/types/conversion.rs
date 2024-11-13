@@ -238,13 +238,17 @@ impl TokenStreamMetadata {
     pub fn into_stable(self) -> StableTokenStreamMetadata {
         let original_file_path = self
             .original_file_path
-            .and_then(|path| NonNull::new(CString::new(path).unwrap().into_raw()));
+            .and_then(|value| NonNull::new(CString::new(value).unwrap().into_raw()));
         let file_id = self
             .file_id
-            .and_then(|path| NonNull::new(CString::new(path).unwrap().into_raw()));
+            .and_then(|value| NonNull::new(CString::new(value).unwrap().into_raw()));
+        let edition = self
+            .edition
+            .and_then(|value| NonNull::new(CString::new(value).unwrap().into_raw()));
         StableTokenStreamMetadata {
             original_file_path,
             file_id,
+            edition,
         }
     }
 
@@ -259,9 +263,11 @@ impl TokenStreamMetadata {
             .original_file_path
             .map(|raw| from_raw_cstr(raw.as_ptr()));
         let file_id = metadata.file_id.map(|raw| from_raw_cstr(raw.as_ptr()));
+        let edition = metadata.edition.map(|raw| from_raw_cstr(raw.as_ptr()));
         Self {
             original_file_path,
             file_id,
+            edition,
         }
     }
 
@@ -277,6 +283,9 @@ impl TokenStreamMetadata {
             free_raw_cstring(raw.as_ptr());
         }
         if let Some(raw) = metadata.file_id {
+            free_raw_cstring(raw.as_ptr());
+        }
+        if let Some(raw) = metadata.edition {
             free_raw_cstring(raw.as_ptr());
         }
     }
