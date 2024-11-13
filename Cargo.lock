@@ -793,7 +793,7 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-macro"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cairo-lang-macro-attributes 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-macro-stable",
