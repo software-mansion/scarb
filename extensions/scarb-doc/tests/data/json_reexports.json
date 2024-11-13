@@ -82,7 +82,7 @@
                       "item_data": {
                         "name": "TestStruct",
                         "doc": null,
-                        "signature": "pub struct TestStruct {\n    abc: u32\n}",
+                        "signature": "pub struct TestStruct {\n    abc: u32,\n}",
                         "full_path": "hello_world::sub_module::inner_module::TestStruct"
                       }
                     }
@@ -102,7 +102,7 @@
                       "item_data": {
                         "name": "TestEnum",
                         "doc": null,
-                        "signature": "pub enum TestEnum {\n    Var1\n}",
+                        "signature": "pub enum TestEnum {\n    Var1,\n}",
                         "full_path": "hello_world::sub_module::inner_module::TestEnum"
                       }
                     }
@@ -238,7 +238,7 @@
                   "item_data": {
                     "name": "TestStruct",
                     "doc": null,
-                    "signature": "pub struct TestStruct {\n    abc: u32\n}",
+                    "signature": "pub struct TestStruct {\n    abc: u32,\n}",
                     "full_path": "hello_world::sub_module::inner_module::TestStruct"
                   }
                 }
@@ -258,7 +258,7 @@
                   "item_data": {
                     "name": "TestEnum",
                     "doc": null,
-                    "signature": "pub enum TestEnum {\n    Var1\n}",
+                    "signature": "pub enum TestEnum {\n    Var1,\n}",
                     "full_path": "hello_world::sub_module::inner_module::TestEnum"
                   }
                 }
@@ -402,7 +402,7 @@
                   "item_data": {
                     "name": "TestStruct",
                     "doc": null,
-                    "signature": "pub struct TestStruct {\n    abc: u32\n}",
+                    "signature": "pub struct TestStruct {\n    abc: u32,\n}",
                     "full_path": "sub_package::TestStruct"
                   }
                 }
@@ -422,7 +422,7 @@
                   "item_data": {
                     "name": "TestEnum",
                     "doc": null,
-                    "signature": "pub enum TestEnum {\n    Var1\n}",
+                    "signature": "pub enum TestEnum {\n    Var1,\n}",
                     "full_path": "sub_package::TestEnum"
                   }
                 }
