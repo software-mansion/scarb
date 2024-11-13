@@ -2,7 +2,7 @@ use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, ProcMacroInstance, TokenStreamBuilder,
 };
-use crate::core::{Config, Package, PackageId};
+use crate::core::{edition_variant, Config, Package, PackageId};
 use anyhow::{ensure, Context, Result};
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
@@ -12,6 +12,7 @@ use cairo_lang_defs::plugin::{
 };
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_diagnostics::ToOption;
+use cairo_lang_filesystem::db::Edition;
 use cairo_lang_filesystem::ids::CodeMapping;
 use cairo_lang_macro::{
     AuxData, Diagnostic, FullPathMarker, ProcMacroResult, Severity, TokenStream,
@@ -845,11 +846,16 @@ impl ProcMacroHostPlugin {
             .or_insert(markers);
     }
 
-    fn calculate_metadata(db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> TokenStreamMetadata {
+    fn calculate_metadata(
+        db: &dyn SyntaxGroup,
+        item_ast: ast::ModuleItem,
+        edition: Edition,
+    ) -> TokenStreamMetadata {
         let stable_ptr = item_ast.clone().stable_ptr().untyped();
         let file_path = stable_ptr.file_id(db).full_path(db.upcast());
         let file_id = short_hash(file_path.clone());
-        TokenStreamMetadata::new(file_path, file_id)
+        let edition = edition_variant(edition);
+        TokenStreamMetadata::new(file_path, file_id, edition)
     }
 }
 
@@ -939,9 +945,9 @@ impl MacroPlugin for ProcMacroHostPlugin {
         &self,
         db: &dyn SyntaxGroup,
         item_ast: ast::ModuleItem,
-        _metadata: &MacroPluginMetadata<'_>,
+        metadata: &MacroPluginMetadata<'_>,
     ) -> PluginResult {
-        let stream_metadata = Self::calculate_metadata(db, item_ast.clone());
+        let stream_metadata = Self::calculate_metadata(db, item_ast.clone(), metadata.edition);
 
         // Handle inner functions.
         if let InnerAttrExpansionResult::Some(result) = self.expand_inner_attr(db, item_ast.clone())
