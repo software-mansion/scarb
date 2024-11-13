@@ -1,12 +1,12 @@
 use crate::{
     AuxData, Diagnostic, ExpansionDefinition, FullPathMarker, PostProcessContext, ProcMacroResult,
-    Severity, TokenStream, TokenStreamMetadata,
+    Severity, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
 };
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
     StableAuxData, StableDiagnostic, StableExpansion, StableFullPathMarker,
-    StablePostProcessContext, StableProcMacroResult, StableSeverity, StableTokenStream,
-    StableTokenStreamMetadata,
+    StablePostProcessContext, StableProcMacroResult, StableSeverity, StableTextSpan, StableToken,
+    StableTokenStream, StableTokenStreamMetadata, StableTokenTree,
 };
 use std::ffi::{c_char, CStr, CString};
 use std::num::NonZeroU8;
@@ -90,15 +90,120 @@ impl ProcMacroResult {
     }
 }
 
+impl TextSpan {
+    /// Convert to FFI-safe representation.
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableTextSpan {
+        StableTextSpan {
+            start: self.start,
+            end: self.end,
+        }
+    }
+
+    #[doc(hidden)]
+    pub fn from_stable(span: &StableTextSpan) -> Self {
+        Self {
+            start: span.start,
+            end: span.end,
+        }
+    }
+
+    #[doc(hidden)]
+    pub fn from_owned_stable(span: StableTextSpan) -> Self {
+        Self {
+            start: span.start,
+            end: span.end,
+        }
+    }
+}
+
+impl Token {
+    /// Convert to FFI-safe representation.
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableToken {
+        let cstr = CString::new(self.content.as_bytes()).unwrap();
+        StableToken {
+            span: self.span.into_stable(),
+            content: cstr.into_raw(),
+        }
+    }
+
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_stable(token: &StableToken) -> Self {
+        Self {
+            content: from_raw_cstr(token.content),
+            span: TextSpan::from_stable(&token.span),
+        }
+    }
+
+    /// Convert to native Rust representation, with taking the ownership of the string.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_owned_stable(token: StableToken) -> Self {
+        Self {
+            content: from_raw_cstring(token.content),
+            span: TextSpan::from_owned_stable(token.span),
+        }
+    }
+}
+
+impl TokenTree {
+    /// Convert to FFI-safe representation.
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableTokenTree {
+        match self {
+            Self::Ident(token) => StableTokenTree::Ident(token.into_stable()),
+        }
+    }
+
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_stable(token_tree: &StableTokenTree) -> Self {
+        match token_tree {
+            StableTokenTree::Ident(token) => Self::Ident(Token::from_stable(token)),
+        }
+    }
+
+    /// Convert to native Rust representation, with taking the ownership of the string.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_owned_stable(token_tree: StableTokenTree) -> Self {
+        match token_tree {
+            StableTokenTree::Ident(token) => Self::Ident(Token::from_owned_stable(token)),
+        }
+    }
+}
+
 impl TokenStream {
     /// Convert to FFI-safe representation.
     ///
     /// # Safety
     #[doc(hidden)]
     pub fn into_stable(self) -> StableTokenStream {
-        let cstr = CString::new(self.value).unwrap();
+        let tokens = self
+            .tokens
+            .into_iter()
+            .map(|token| token.into_stable())
+            .collect::<Vec<_>>();
         StableTokenStream {
-            value: cstr.into_raw(),
+            tokens: StableSlice::new(tokens),
             metadata: self.metadata.into_stable(),
         }
     }
@@ -110,8 +215,13 @@ impl TokenStream {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn from_stable(token_stream: &StableTokenStream) -> Self {
+        let (ptr, n) = token_stream.tokens.raw_parts();
+        let tokens = slice::from_raw_parts(ptr, n)
+            .iter()
+            .map(|token_tree| TokenTree::from_stable(token_tree))
+            .collect::<Vec<_>>();
         Self {
-            value: from_raw_cstr(token_stream.value),
+            tokens,
             metadata: TokenStreamMetadata::from_stable(&token_stream.metadata),
         }
     }
@@ -124,8 +234,13 @@ impl TokenStream {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn from_owned_stable(token_stream: StableTokenStream) -> Self {
+        let tokens = token_stream.tokens.into_owned();
+        let tokens = tokens
+            .into_iter()
+            .map(|token_tree| TokenTree::from_owned_stable(token_tree))
+            .collect::<Vec<_>>();
         Self {
-            value: from_raw_cstring(token_stream.value),
+            tokens,
             metadata: TokenStreamMetadata::from_owned_stable(token_stream.metadata),
         }
     }
