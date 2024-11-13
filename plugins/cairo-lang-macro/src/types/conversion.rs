@@ -39,7 +39,7 @@ impl ProcMacroResult {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -62,31 +62,22 @@ impl ProcMacroResult {
         }
     }
 
-    /// Convert to native Rust representation, with taking the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(result: StableProcMacroResult) -> Self {
-        let diagnostics = result.diagnostics.into_owned();
-        let diagnostics = diagnostics
-            .into_iter()
-            .map(|d| Diagnostic::from_owned_stable(d))
-            .collect::<Vec<_>>();
-        let full_path_markers = result
-            .full_path_markers
-            .into_owned()
-            .iter()
-            .map(|m| from_raw_cstring(*m))
-            .collect::<Vec<_>>();
-        ProcMacroResult {
-            token_stream: TokenStream::from_owned_stable(result.token_stream),
-            aux_data: AuxData::from_owned_stable(result.aux_data),
-            diagnostics,
-            full_path_markers,
+    pub unsafe fn free_owned_stable(result: StableProcMacroResult) {
+        for diagnostic in result.diagnostics.into_owned() {
+            Diagnostic::free_owned_stable(diagnostic);
         }
+        for marker in result.full_path_markers.into_owned() {
+            free_raw_cstring(marker)
+        }
+        TokenStream::free_owned_stable(result.token_stream);
+        AuxData::free_owned_stable(result.aux_data);
     }
 }
 
@@ -100,6 +91,7 @@ impl TextSpan {
         }
     }
 
+    /// Convert to native Rust representation, without taking the ownership.
     #[doc(hidden)]
     pub fn from_stable(span: &StableTextSpan) -> Self {
         Self {
@@ -109,11 +101,8 @@ impl TextSpan {
     }
 
     #[doc(hidden)]
-    pub fn from_owned_stable(span: StableTextSpan) -> Self {
-        Self {
-            start: span.start,
-            end: span.end,
-        }
+    pub fn free_owned_stable(span: StableTextSpan) {
+        let _ = span;
     }
 }
 
@@ -130,7 +119,7 @@ impl Token {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -141,18 +130,16 @@ impl Token {
         }
     }
 
-    /// Convert to native Rust representation, with taking the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(token: StableToken) -> Self {
-        Self {
-            content: from_raw_cstring(token.content),
-            span: TextSpan::from_owned_stable(token.span),
-        }
+    pub unsafe fn free_owned_stable(token: StableToken) {
+        free_raw_cstring(token.content);
+        TextSpan::free_owned_stable(token.span);
     }
 }
 
@@ -167,7 +154,7 @@ impl TokenTree {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -177,16 +164,18 @@ impl TokenTree {
         }
     }
 
-    /// Convert to native Rust representation, with taking the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(token_tree: StableTokenTree) -> Self {
+    pub unsafe fn free_owned_stable(token_tree: StableTokenTree) {
         match token_tree {
-            StableTokenTree::Ident(token) => Self::Ident(Token::from_owned_stable(token)),
+            StableTokenTree::Ident(token) => {
+                Token::free_owned_stable(token);
+            }
         }
     }
 }
@@ -210,7 +199,7 @@ impl TokenStream {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -226,23 +215,18 @@ impl TokenStream {
         }
     }
 
-    /// Convert to native Rust representation, with taking the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(token_stream: StableTokenStream) -> Self {
-        let tokens = token_stream.tokens.into_owned();
-        let tokens = tokens
-            .into_iter()
-            .map(|token_tree| TokenTree::from_owned_stable(token_tree))
-            .collect::<Vec<_>>();
-        Self {
-            tokens,
-            metadata: TokenStreamMetadata::from_owned_stable(token_stream.metadata),
+    pub unsafe fn free_owned_stable(token_stream: StableTokenStream) {
+        for token_tree in token_stream.tokens.into_owned() {
+            TokenTree::free_owned_stable(token_tree);
         }
+        TokenStreamMetadata::free_owned_stable(token_stream.metadata);
     }
 }
 
@@ -266,7 +250,7 @@ impl TokenStreamMetadata {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -281,21 +265,19 @@ impl TokenStreamMetadata {
         }
     }
 
-    /// Convert to native Rust representation, with taking the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(metadata: StableTokenStreamMetadata) -> Self {
-        let original_file_path = metadata
-            .original_file_path
-            .map(|raw| from_raw_cstring(raw.as_ptr()));
-        let file_id = metadata.file_id.map(|raw| from_raw_cstring(raw.as_ptr()));
-        Self {
-            original_file_path,
-            file_id,
+    pub unsafe fn free_owned_stable(metadata: StableTokenStreamMetadata) {
+        if let Some(raw) = metadata.original_file_path {
+            free_raw_cstring(raw.as_ptr());
+        }
+        if let Some(raw) = metadata.file_id {
+            free_raw_cstring(raw.as_ptr());
         }
     }
 }
@@ -324,7 +306,7 @@ impl AuxData {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -339,18 +321,20 @@ impl AuxData {
         }
     }
 
-    /// Convert to native Rust representation, with taking the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(aux_data: StableAuxData) -> Option<Self> {
+    pub unsafe fn free_owned_stable(aux_data: StableAuxData) {
         match aux_data {
-            StableAuxData::None => None,
-            StableAuxData::Some(raw) => Some(Self::new(raw.into_owned())),
-        }
+            StableAuxData::None => {}
+            StableAuxData::Some(raw) => {
+                let _ = raw.into_owned();
+            }
+        };
     }
 }
 
@@ -368,7 +352,7 @@ impl Diagnostic {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -379,18 +363,15 @@ impl Diagnostic {
         }
     }
 
-    /// Convert to native Rust representation, with taking the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(diagnostic: StableDiagnostic) -> Self {
-        Self {
-            message: from_raw_cstring(diagnostic.message),
-            severity: Severity::from_stable(&diagnostic.severity),
-        }
+    pub unsafe fn free_owned_stable(diagnostic: StableDiagnostic) {
+        free_raw_cstring(diagnostic.message);
     }
 }
 
@@ -429,7 +410,7 @@ impl ExpansionDefinition {
         }
     }
 
-    /// Take the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
@@ -437,7 +418,7 @@ impl ExpansionDefinition {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn free_owned(expansion: StableExpansion) {
-        let _ = from_raw_cstring(expansion.name);
+        free_raw_cstring(expansion.name);
     }
 }
 
@@ -455,7 +436,7 @@ impl FullPathMarker {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -466,18 +447,16 @@ impl FullPathMarker {
         }
     }
 
-    /// Convert to native Rust representation, with taking the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(marker: StableFullPathMarker) -> Self {
-        Self {
-            key: from_raw_cstring(marker.key),
-            full_path: from_raw_cstring(marker.full_path),
-        }
+    pub unsafe fn free_owned_stable(marker: StableFullPathMarker) {
+        free_raw_cstring(marker.key);
+        free_raw_cstring(marker.full_path);
     }
 }
 
@@ -507,7 +486,7 @@ impl PostProcessContext {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -528,41 +507,28 @@ impl PostProcessContext {
         }
     }
 
-    /// Convert to native Rust representation, with taking the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(diagnostic: StablePostProcessContext) -> Self {
-        let aux_data = diagnostic
-            .aux_data
-            .into_owned()
-            .into_iter()
-            .filter_map(|a| AuxData::from_owned_stable(a))
-            .collect::<Vec<_>>();
-        let full_path_markers = diagnostic
-            .full_path_markers
-            .into_owned()
-            .into_iter()
-            .map(|m| FullPathMarker::from_owned_stable(m))
-            .collect::<Vec<_>>();
-        Self {
-            aux_data,
-            full_path_markers,
+    pub unsafe fn free_owned_stable(diagnostic: StablePostProcessContext) {
+        for aux_data in diagnostic.aux_data.into_owned() {
+            AuxData::free_owned_stable(aux_data)
+        }
+        for marker in diagnostic.full_path_markers.into_owned() {
+            FullPathMarker::free_owned_stable(marker);
         }
     }
 }
 
-// Create a string from a raw pointer to a c_char.
+// Create a c-string from a raw pointer to a c_char, and drop it immediately.
 // Note that this will free the underlying memory.
-unsafe fn from_raw_cstring(raw: *mut c_char) -> String {
-    if raw.is_null() {
-        String::default()
-    } else {
-        let cstr = CString::from_raw(raw);
-        cstr.to_string_lossy().to_string()
+unsafe fn free_raw_cstring(raw: *mut c_char) {
+    if !raw.is_null() {
+        let _ = CString::from_raw(raw);
     }
 }
 
