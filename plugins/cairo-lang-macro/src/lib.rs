@@ -134,7 +134,7 @@ pub unsafe extern "C" fn expand(
 #[doc(hidden)]
 #[no_mangle]
 pub unsafe extern "C" fn free_result(result: StableProcMacroResult) {
-    ProcMacroResult::from_owned_stable(result);
+    ProcMacroResult::free_owned_stable(result);
 }
 
 /// Distributed slice for storing auxiliary data collection callback pointers.
