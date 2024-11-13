@@ -23,8 +23,8 @@ cairo-lang-executable.workspace = true
 cairo-lang-filesystem.workspace = true
 cairo-lang-formatter.workspace = true
 cairo-lang-lowering.workspace = true
-cairo-lang-macro = "0.1"
-cairo-lang-macro-stable = "1"
+cairo-lang-macro = { path = "../plugins/cairo-lang-macro" }
+cairo-lang-macro-stable = { path = "../plugins/cairo-lang-macro-stable" }
 cairo-lang-parser.workspace = true
 cairo-lang-semantic.workspace = true
 cairo-lang-sierra-to-casm.workspace = true
