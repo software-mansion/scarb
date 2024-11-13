@@ -192,6 +192,7 @@ impl TextSpan {
         }
     }
 
+    /// Convert to native Rust representation, without taking the ownership.
     #[doc(hidden)]
     pub fn from_stable(span: &StableTextSpan) -> Self {
         Self {
@@ -201,11 +202,8 @@ impl TextSpan {
     }
 
     #[doc(hidden)]
-    pub fn from_owned_stable(span: StableTextSpan) -> Self {
-        Self {
-            start: span.start,
-            end: span.end,
-        }
+    pub fn free_owned_stable(span: StableTextSpan) {
+        let _ = span;
     }
 }
 
@@ -222,7 +220,7 @@ impl Token {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -233,18 +231,16 @@ impl Token {
         }
     }
 
-    /// Convert to native Rust representation, with taking the ownership of the string.
+    /// Take the ownership of memory under the pointer and drop it.
     ///
     /// Useful when you need to free the allocated memory.
     /// Only use on the same side of FFI-barrier, where the memory has been allocated.
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(token: StableToken) -> Self {
-        Self {
-            content: from_raw_cstring(token.content),
-            span: TextSpan::from_owned_stable(token.span),
-        }
+    pub unsafe fn free_owned_stable(token: StableToken) {
+        free_raw_cstring(token.content);
+        TextSpan::free_owned_stable(token.span);
     }
 }
 
@@ -259,7 +255,7 @@ impl TokenTree {
 
     /// Convert to native Rust representation, without taking the ownership of the string.
     ///
-    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -380,9 +376,11 @@ impl TokenTree {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_owned_stable(token_tree: StableTokenTree) -> Self {
+    pub unsafe fn free_owned_stable(token_tree: StableTokenTree) {
         match token_tree {
-            StableTokenTree::Ident(token) => Self::Ident(Token::from_owned_stable(token)),
+            StableTokenTree::Ident(token) => {
+                Token::free_owned_stable(token);
+            }
         }
     }
 }
