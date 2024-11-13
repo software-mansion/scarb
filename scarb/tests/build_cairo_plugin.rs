@@ -407,15 +407,15 @@ fn can_replace_original_node() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
-                token_stream
-                    .to_string()
-                    .replace("12", "34")
-            );
+            let new_token_string = token_stream.to_string().replace("12", "34");
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                new_token_string.clone(),
+                TextSpan { start: 0, end: new_token_string.len() },
+            ))]);
             ProcMacroResult::new(token_stream)
         }
         "##})
@@ -575,26 +575,26 @@ fn can_define_multiple_macros() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
         pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
-                token_stream
-                    .to_string()
-                    .replace("12", "34")
-            );
+            let new_token_string = token_stream.to_string().replace("12", "34");
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                new_token_string.clone(),
+                TextSpan { start: 0, end: new_token_string.len() },
+            ))]);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
         }
 
         #[attribute_macro]
         pub fn world(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
-                token_stream
-                    .to_string()
-                    .replace("56", "78")
-            );
+            let new_token_string = token_stream.to_string().replace("56", "78");
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                new_token_string.clone(),
+                TextSpan { start: 0, end: new_token_string.len() },
+            ))]);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
         }
@@ -610,15 +610,15 @@ fn can_define_multiple_macros() {
     CairoPluginProjectBuilder::default()
         .name("other")
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
         pub fn beautiful(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
-                token_stream
-                    .to_string()
-                    .replace("90", "09")
-            );
+            let new_token_string = token_stream.to_string().replace("90", "09");
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                new_token_string.clone(),
+                TextSpan { start: 0, end: new_token_string.len() },
+            ))]);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
         }
@@ -816,7 +816,7 @@ fn can_resolve_full_path_markers() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, post_process, PostProcessContext};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, post_process, PostProcessContext, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
@@ -827,8 +827,14 @@ fn can_resolve_full_path_markers() {
                 token_stream.to_string().replace("12", "34")
             );
 
-            ProcMacroResult::new(TokenStream::new(code))
-                .with_full_path_markers(full_path_markers)
+            ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+              code.clone(),
+                TextSpan {
+                  start: 0,
+                  end: code.len(),
+                },
+              ))])
+            ).with_full_path_markers(full_path_markers)
         }
 
         #[post_process]
@@ -871,12 +877,18 @@ fn can_implement_inline_macro() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan};
 
         #[inline_macro]
         pub fn some(token_stream: TokenStream) -> ProcMacroResult {
             assert_eq!(token_stream.to_string(), "()");
-            ProcMacroResult::new(TokenStream::new("34".to_string()))
+            ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+              "34".to_string(),
+              TextSpan {
+                  start: 0,
+                  end: 2,
+              },
+            ))]))
         }
         "##})
         .build(&t);
@@ -963,7 +975,7 @@ fn can_implement_derive_macro() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-            use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream};
+            use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
 
             #[derive_macro]
             pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
@@ -980,13 +992,21 @@ fn can_implement_derive_macro() {
                     .trim()
                     .to_string();
 
-                let token_stream = TokenStream::new(indoc::formatdoc!{r#"
+                let code = indoc::formatdoc!{r#"
                     impl SomeImpl of Hello<{name}> {{
                         fn world(self: @{name}) -> u32 {{
                             32
                         }}
                     }}
-                "#});
+                "#};  
+
+                let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  code.clone(),
+                    TextSpan {
+                        start: 0,
+                        end: code.len(),
+                    },
+                ))]);
 
                 ProcMacroResult::new(token_stream)
             }
@@ -1038,37 +1058,58 @@ fn can_use_both_derive_and_attr() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-            use cairo_lang_macro::{derive_macro, attribute_macro, ProcMacroResult, TokenStream};
+            use cairo_lang_macro::{derive_macro, attribute_macro, ProcMacroResult, TokenStream, TokenTree, TextSpan, Token};
 
             #[attribute_macro]
             pub fn first_attribute(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                ProcMacroResult::new(TokenStream::new(
-                    token_stream.to_string()
-                    .replace("SomeType", "OtherType")
-                ))
+                let new_token_string = token_stream.to_string().replace("SomeType", "OtherType");
+                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  new_token_string.clone(),
+                    TextSpan {
+                        start: 0,
+                        end: new_token_string.len(),
+                    },
+                ))]))
             }
 
             #[attribute_macro]
             pub fn second_attribute(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                let token_stream = TokenStream::new(
-                    token_stream.to_string().replace("OtherType", "RenamedStruct")
-                );
-                ProcMacroResult::new(TokenStream::new(
-                    format!("#[derive(Drop)]\n{token_stream}")
-                ))
+                let code = token_stream.to_string().replace("OtherType", "RenamedStruct");
+                let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  code.clone(),
+                    TextSpan {
+                        start: 0,
+                        end: code.len(),
+                    },
+                ))]);
+
+                let result_string = format!("#[derive(Drop)]\n{token_stream}");
+                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  result_string.clone(),
+                    TextSpan {
+                        start: 0,
+                        end: result_string.len(),
+                    },
+                ))]))
             }
 
             #[derive_macro]
             pub fn custom_derive(_token_stream: TokenStream) -> ProcMacroResult {
-                ProcMacroResult::new(TokenStream::new(
-                    indoc::formatdoc!{r#"
+                let code = indoc::formatdoc!{r#"
                     impl SomeImpl of Hello<RenamedStruct> {{
                         fn world(self: @RenamedStruct) -> u32 {{
                             32
                         }}
                     }}
-                    "#}
-                ))
+                    "#};
+
+                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  code.clone(),
+                    TextSpan {
+                        start: 0,
+                        end: code.len(),
+                    },
+                ))]))
             }
         "##})
         .add_dep(r#"indoc = "*""#)
@@ -1268,15 +1309,15 @@ fn can_be_expanded() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, derive_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, derive_macro, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream = TokenStream::new(
-                token_stream
-                    .to_string()
-                    .replace("12", "34")
-            );
+            let new_token_string = token_stream.to_string().replace("12", "34");
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                new_token_string.clone(),
+                TextSpan { start: 0, end: new_token_string.len() },
+            ))]);
             ProcMacroResult::new(token_stream)
         }
 
@@ -1295,13 +1336,18 @@ fn can_be_expanded() {
                 .trim()
                 .to_string();
 
-            let token_stream = TokenStream::new(indoc::formatdoc!{r#"
+            let code = indoc::formatdoc!{r#"
                 impl SomeImpl of Hello<{name}> {{
                     fn world(self: @{name}) -> u32 {{
                         32
                     }}
                 }}
-            "#});
+            "#};
+
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                code.clone(),
+                TextSpan { start: 0, end: code.len() },
+            ))]);
 
             ProcMacroResult::new(token_stream)
         }
@@ -1377,15 +1423,17 @@ fn can_expand_trait_inner_func_attrr() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-            use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream};
+            use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
 
             #[attribute_macro]
             pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                ProcMacroResult::new(TokenStream::new(
-                    token_stream.to_string()
+                let new_token_string = token_stream.to_string()
                     .replace("hello", "world")
-                    .replace("12", "34")
-                ))
+                    .replace("12", "34");
+                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  new_token_string.clone(),
+                  TextSpan { start: 0, end: new_token_string.len() },
+                ))]))
             }
         "##})
         .build(&t);
@@ -1439,14 +1487,15 @@ fn can_expand_impl_inner_func_attrr() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-            use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream};
+            use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream, Token, TokenTree, TextSpan};
 
             #[attribute_macro]
             pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                ProcMacroResult::new(TokenStream::new(
-                    token_stream.to_string()
-                    .replace("1", "2")
-                ))
+                let new_token_string = token_stream.to_string().replace("1", "2");
+                ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
+                    new_token_string.clone(),
+                    TextSpan { start: 0, end: new_token_string.len() },
+                ))]))
             }
         "##})
         .build(&t);

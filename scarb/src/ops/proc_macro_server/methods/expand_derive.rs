@@ -10,7 +10,7 @@ use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind, ProcMacroHos
 
 impl Handler for ExpandDerive {
     fn handle(proc_macro_host: Arc<ProcMacroHost>, params: Self::Params) -> Result<Self::Response> {
-        let mut derived_code = String::new();
+        let mut derived_code = TokenStream::empty();
         let mut all_diagnostics = vec![];
 
         for derive in params.derives {
@@ -30,11 +30,11 @@ impl Handler for ExpandDerive {
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);
             // Add generated code.
-            derived_code.push_str(&result.token_stream.to_string());
+            derived_code.tokens.extend(result.token_stream.tokens);
         }
 
         Ok(ProcMacroResult {
-            token_stream: TokenStream::new(derived_code),
+            token_stream: derived_code,
             diagnostics: all_diagnostics,
         })
     }
