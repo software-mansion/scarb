@@ -895,7 +895,7 @@ name = "cairo-lang-macro"
 version = "0.1.1"
 dependencies = [
  "cairo-lang-macro-attributes 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cairo-lang-macro-stable 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-macro-stable 1.0.0",
  "linkme",
  "serde",
  "serde_json",
@@ -5425,8 +5425,8 @@ dependencies = [
  "cairo-lang-filesystem 2.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-formatter 2.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-lowering 2.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cairo-lang-macro 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cairo-lang-macro-stable 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-macro 0.1.1",
+ "cairo-lang-macro-stable 1.0.0",
  "cairo-lang-parser 2.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-semantic 2.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-sierra 2.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -5634,7 +5634,7 @@ dependencies = [
 name = "scarb-proc-macro-server-types"
 version = "0.1.0"
 dependencies = [
- "cairo-lang-macro 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-macro 0.1.1",
  "serde",
  "serde_json",
 ]
