@@ -53,6 +53,8 @@ pub struct TokenStreamMetadata {
     ///
     /// It is guaranteed, that the `file_id` will be unique for each file.
     pub file_id: Option<String>,
+    /// Cairo edition defined for the token stream.
+    pub edition: Option<String>,
 }
 
 impl TokenStream {
@@ -102,10 +104,11 @@ impl Display for TokenStream {
 
 impl TokenStreamMetadata {
     #[doc(hidden)]
-    pub fn new(file_path: impl ToString, file_id: impl ToString) -> Self {
+    pub fn new(file_path: impl ToString, file_id: impl ToString, edition: impl ToString) -> Self {
         Self {
             original_file_path: Some(file_path.to_string()),
             file_id: Some(file_id.to_string()),
+            edition: Some(edition.to_string()),
         }
     }
 }
