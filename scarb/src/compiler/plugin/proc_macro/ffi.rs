@@ -1,6 +1,5 @@
 use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Context, Result};
-use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_macro::{
     ExpansionKind as SharedExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult,
     TokenStream,
@@ -9,8 +8,6 @@ use cairo_lang_macro_stable::{
     StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
     StableResultWrapper, StableTokenStream,
 };
-use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_syntax::node::TypedSyntaxNode;
 use camino::Utf8PathBuf;
 use itertools::Itertools;
 use libloading::{Library, Symbol};
@@ -26,18 +23,6 @@ use libloading::os::unix::Symbol as RawSymbol;
 #[cfg(windows)]
 use libloading::os::windows::Symbol as RawSymbol;
 use smol_str::SmolStr;
-
-pub trait FromSyntaxNode {
-    fn from_syntax_node(db: &dyn SyntaxGroup, node: &impl TypedSyntaxNode) -> Self;
-}
-
-impl FromSyntaxNode for TokenStream {
-    fn from_syntax_node(db: &dyn SyntaxGroup, node: &impl TypedSyntaxNode) -> Self {
-        let mut builder = PatchBuilder::new(db, node);
-        builder.add_node(node.as_syntax_node());
-        Self::new(builder.build().0)
-    }
-}
 
 const EXEC_ATTR_PREFIX: &str = "__exec_attr_";
 
