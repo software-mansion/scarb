@@ -1,10 +1,29 @@
 use crate::ffi::{StableOption, StableSlice};
-use std::ffi::CStr;
 use std::num::NonZeroU8;
 use std::os::raw::c_char;
 use std::ptr::NonNull;
 
 pub mod ffi;
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct StableToken {
+    pub span: StableTextSpan,
+    pub content: *mut c_char,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct StableTextSpan {
+    pub start: usize,
+    pub end: usize,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum StableTokenTree {
+    Ident(StableToken),
+}
 
 #[repr(C)]
 #[derive(Debug)]
@@ -23,7 +42,7 @@ pub type StableExpansionsList = StableSlice<StableExpansion>;
 #[repr(C)]
 #[derive(Debug)]
 pub struct StableTokenStream {
-    pub value: *mut c_char,
+    pub tokens: StableSlice<StableTokenTree>,
     pub metadata: StableTokenStreamMetadata,
 }
 
@@ -74,17 +93,6 @@ pub struct StableResultWrapper {
     pub input: StableTokenStream,
     pub input_attr: StableTokenStream,
     pub output: StableProcMacroResult,
-}
-
-impl StableTokenStream {
-    /// Convert to String.
-    ///
-    /// # Safety
-    pub unsafe fn to_string(&self) -> String {
-        // Note that this does not deallocate the c-string.
-        // The memory must still be freed with `CString::from_raw`.
-        CStr::from_ptr(self.value).to_string_lossy().to_string()
-    }
 }
 
 #[repr(C)]
