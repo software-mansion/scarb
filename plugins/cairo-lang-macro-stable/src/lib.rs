@@ -54,6 +54,7 @@ pub struct StableTokenStream {
 pub struct StableTokenStreamMetadata {
     pub original_file_path: Option<NonNull<c_char>>,
     pub file_id: Option<NonNull<c_char>>,
+    pub edition: Option<NonNull<c_char>>,
 }
 
 /// Auxiliary data returned by the procedural macro.
