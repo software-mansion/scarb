@@ -1,6 +1,6 @@
 use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
-use cairo_lang_macro::TokenStream;
+use cairo_lang_macro::{TextSpan, Token, TokenStream, TokenTree};
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacros;
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacrosParams;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttribute;
@@ -58,7 +58,14 @@ fn expand_attribute() {
 
             let output = input.replace(name, "very_new_name");
 
-            ProcMacroResult::new(TokenStream::new(output))
+            let span = TextSpan { start: 0, end: output.len() };
+            ProcMacroResult::new(
+                TokenStream::new(vec![
+                    TokenTree::Ident(
+                        Token::new(output, span)
+                    )
+                ])
+            )
         }}
     "##;
 
@@ -82,14 +89,17 @@ fn expand_attribute() {
         .request_and_wait::<ExpandAttribute>(ExpandAttributeParams {
             attr: "rename_to_very_new_name".to_string(),
             args: TokenStream::empty(),
-            item: TokenStream::new("fn some_test_fn(){}".to_string()),
+            item: TokenStream::new(vec![TokenTree::Ident(Token::new(
+                "fn some_test_fn(){}".to_string(),
+                TextSpan::default(),
+            ))]),
         })
         .unwrap();
 
     assert_eq!(response.diagnostics, vec![]);
     assert_eq!(
-        response.token_stream,
-        TokenStream::new("fn very_new_name(){}".to_string())
+        response.token_stream.to_string(),
+        "fn very_new_name(){}".to_string()
     );
 }
 
@@ -113,7 +123,10 @@ fn expand_derive() {
 
     let mut proc_macro_server = ProcMacroClient::new(&project);
 
-    let item = TokenStream::new("fn some_test_fn(){}".to_string());
+    let item = TokenStream::new(vec![TokenTree::Ident(Token::new(
+        "fn some_test_fn(){}".to_string(),
+        TextSpan::default(),
+    ))]);
 
     let response = proc_macro_server
         .request_and_wait::<ExpandDerive>(ExpandDeriveParams {
@@ -124,8 +137,8 @@ fn expand_derive() {
 
     assert_eq!(response.diagnostics, vec![]);
     assert_eq!(
-        response.token_stream,
-        TokenStream::new("impl SomeImpl of SomeTrait {}".to_string())
+        response.token_stream.to_string(),
+        "impl SomeImpl of SomeTrait {}".to_string()
     );
 }
 
@@ -137,7 +150,15 @@ fn expand_inline() {
     let replace_all_15_with_25 = r#"
         #[inline_macro]
         pub fn replace_all_15_with_25(token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(TokenStream::new(token_stream.to_string().replace("15", "25")))
+            let content = token_stream.to_string().replace("15", "25");
+            let span = TextSpan { start: 0, end: content.len() };
+            ProcMacroResult::new(
+                TokenStream::new(vec![
+                    TokenTree::Ident(
+                        Token::new(content, span)
+                    )
+                ])
+            )
         }
     "#;
 
@@ -159,15 +180,16 @@ fn expand_inline() {
     let response = proc_macro_server
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
             name: "replace_all_15_with_25".to_string(),
-            args: TokenStream::new(
+            args: TokenStream::new(vec![TokenTree::Ident(Token::new(
                 "struct A { field: 15 , other_field: macro_call!(12)}".to_string(),
-            ),
+                TextSpan::default(),
+            ))]),
         })
         .unwrap();
 
     assert_eq!(response.diagnostics, vec![]);
     assert_eq!(
-        response.token_stream,
-        TokenStream::new("struct A { field: 25 , other_field: macro_call!(12)}".to_string())
+        response.token_stream.to_string(),
+        "struct A { field: 25 , other_field: macro_call!(12)}".to_string()
     );
 }

@@ -19,7 +19,7 @@ use std::process::Stdio;
 pub const SIMPLE_MACROS: &str = r#"
 use cairo_lang_macro::{
     ProcMacroResult,
-    TokenStream,
+    TokenStream, TokenTree, Token, TextSpan,
     attribute_macro,
     inline_macro,
     derive_macro,
@@ -40,7 +40,15 @@ pub fn inline_some(token_stream: TokenStream) -> ProcMacroResult {
 
 #[derive_macro]
 fn some_derive(_token_stream: TokenStream)-> ProcMacroResult {
-    ProcMacroResult::new(TokenStream::new("impl SomeImpl of SomeTrait {}".to_string()))
+    let content = "impl SomeImpl of SomeTrait {}".to_string();
+    let span = TextSpan { start: 0, end: content.len() };
+    ProcMacroResult::new(
+        TokenStream::new(vec![
+            TokenTree::Ident(
+                Token::new(content, span)
+            )
+        ])
+    )
 }
 "#;
 
