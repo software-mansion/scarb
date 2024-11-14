@@ -112,7 +112,7 @@ impl Token {
     pub fn into_stable(self) -> StableToken {
         let cstr = CString::new(self.content.as_bytes()).unwrap();
         StableToken {
-            span: self.span.into_stable(),
+            span: self.span.map(|span| span.into_stable()),
             content: cstr.into_raw(),
         }
     }
@@ -126,7 +126,7 @@ impl Token {
     pub unsafe fn from_stable(token: &StableToken) -> Self {
         Self {
             content: from_raw_cstr(token.content),
-            span: TextSpan::from_stable(&token.span),
+            span: token.span.as_ref().map(TextSpan::from_stable),
         }
     }
 
@@ -139,7 +139,9 @@ impl Token {
     #[doc(hidden)]
     pub unsafe fn free_owned_stable(token: StableToken) {
         free_raw_cstring(token.content);
-        TextSpan::free_owned_stable(token.span);
+        if let Some(span) = token.span {
+            TextSpan::free_owned_stable(span);
+        }
     }
 }
 

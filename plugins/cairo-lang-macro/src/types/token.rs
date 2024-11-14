@@ -38,7 +38,7 @@ pub struct TextSpan {
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct Token {
     pub content: String,
-    pub span: TextSpan,
+    pub span: Option<TextSpan>,
 }
 
 /// Metadata of [`TokenStream`].
@@ -123,7 +123,7 @@ impl TextSpan {
 }
 
 impl Token {
-    pub fn new(content: String, span: TextSpan) -> Self {
+    pub fn new(content: String, span: Option<TextSpan>) -> Self {
         Self { content, span }
     }
 }

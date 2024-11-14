@@ -91,7 +91,7 @@ fn expand_attribute() {
             args: TokenStream::empty(),
             item: TokenStream::new(vec![TokenTree::Ident(Token::new(
                 "fn some_test_fn(){}".to_string(),
-                TextSpan::default(),
+                Some(TextSpan::default()),
             ))]),
         })
         .unwrap();
@@ -125,7 +125,7 @@ fn expand_derive() {
 
     let item = TokenStream::new(vec![TokenTree::Ident(Token::new(
         "fn some_test_fn(){}".to_string(),
-        TextSpan::default(),
+        Some(TextSpan::default()),
     ))]);
 
     let response = proc_macro_server
@@ -182,7 +182,7 @@ fn expand_inline() {
             name: "replace_all_15_with_25".to_string(),
             args: TokenStream::new(vec![TokenTree::Ident(Token::new(
                 "struct A { field: 15 , other_field: macro_call!(12)}".to_string(),
-                TextSpan::default(),
+                Some(TextSpan::default()),
             ))]),
         })
         .unwrap();

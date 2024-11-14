@@ -45,10 +45,10 @@ impl<'a> TokenStreamBuilder<'a> {
         let span = node.span(self.db).to_str_range();
         Token::new(
             node.get_text(self.db),
-            TextSpan {
+            Some(TextSpan {
                 start: span.start,
                 end: span.end,
-            },
+            }),
         )
     }
 }

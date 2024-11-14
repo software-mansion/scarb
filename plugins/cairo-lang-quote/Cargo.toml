@@ -1,0 +1,22 @@
+[package]
+name = "cairo-lang-quote"
+version = "0.1.0"
+edition.workspace = true
+
+authors.workspace = true
+categories = ["development-tools"]
+description = "Cairo procedural macro helper for constructing procedural macro results."
+homepage.workspace = true
+keywords = ["scarb"]
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+cairo-lang-macro = { path = "../cairo-lang-macro" }
+cairo-lang-parser.workspace = true
+cairo-lang-syntax.workspace = true
+cairo-lang-utils.workspace = true
+cairo-lang-filesystem.workspace = true
+
+[dev-dependencies]
+indoc.workspace = true
