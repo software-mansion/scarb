@@ -88,8 +88,8 @@ impl TextSpan {
     #[doc(hidden)]
     pub fn into_stable(self) -> StableTextSpan {
         StableTextSpan {
-            start: self.start,
-            end: self.end,
+            start: self.start.as_u32(),
+            end: self.end.as_u32(),
         }
     }
 
@@ -97,8 +97,8 @@ impl TextSpan {
     #[doc(hidden)]
     pub fn from_stable(span: &StableTextSpan) -> Self {
         Self {
-            start: span.start,
-            end: span.end,
+            start: span.start.into(),
+            end: span.end.into(),
         }
     }
 
