@@ -32,21 +32,15 @@ asdf global scarb latest
         Run the following in your terminal, then follow the onscreen
         instructions
       </h2>
-      <div class="split">
-        <div class="left">
-          <h3>Install via quick installation script</h3>
-          <Snippet :src="QUICK" lang="shell" />
-        </div>
-        <div class="right">
-          <h3>
-            Install via
-            <a href="https://asdf-vm.com/" rel="noreferrer" target="_blank"
-              >asdf</a
-            >
-            version manager
-          </h3>
-          <Snippet :src="ASDF" lang="shell" />
-        </div>
+      <div>
+        <h3>
+          Install via
+          <a href="https://asdf-vm.com/" rel="noreferrer" target="_blank"
+            >asdf</a
+          >
+          version manager
+        </h3>
+        <Snippet :src="ASDF" lang="shell" />
       </div>
       <p class="notes">
         You appear to be running macOS or Linux. These commands will install the
@@ -95,12 +89,6 @@ h3 {
 .download-other {
   font-size: 1.25em;
   text-align: center;
-}
-
-.split {
-  display: grid;
-  grid-gap: 1rem 3rem;
-  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (min-width: 768px) {
