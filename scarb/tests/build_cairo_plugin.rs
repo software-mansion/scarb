@@ -767,16 +767,7 @@ fn cannot_duplicate_macros_across_packages() {
 fn cannot_use_undefined_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
-        .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-
-        #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(token_stream)
-        }
-        "##})
-        .build(&t);
+    CairoPluginProjectBuilder::default().build(&t);
     let project = temp.child("hello");
     ProjectBuilder::start()
         .name("hello")
