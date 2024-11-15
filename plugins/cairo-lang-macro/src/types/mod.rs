@@ -44,7 +44,7 @@ pub struct ProcMacroResult {
 ///     let token_stream = TokenStream::new(vec![
 ///         TokenTree::Ident(
 ///             Token::new(
-///                 code.clone(),
+///                 &code,
 ///                 TextSpan::new(0, code.len())
 ///             )
 ///         )

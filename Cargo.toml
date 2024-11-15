@@ -55,6 +55,7 @@ assert_fs = "1"
 async-trait = "0.1"
 axum = { version = "0.6", features = ["http2"] }
 bincode = "2.0.0-rc.3"
+bumpalo = "3.16.0"
 cairo-lang-compiler = "*"
 cairo-lang-defs = "*"
 cairo-lang-diagnostics = "*"
