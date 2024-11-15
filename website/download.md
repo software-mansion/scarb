@@ -21,47 +21,6 @@ If you are not sure if you have Scarb installed or not, you can run `scarb --ver
 
 To download Git dependencies, Scarb requires a Git executable to be available in the `PATH` environment variable.
 
-## Install via installation script
-
-Installing via installation script is the fastest way to get Scarb up and running.
-This method only works on macOS and Linux.
-
-Run the following in your terminal, then follow the onscreen instructions.
-This will install the latest **stable** release.
-
-```shell
-curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh
-```
-
-Run following command if you want to install the latest **nightly** release.
-
-```shell
-curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v nightly
-```
-
-If you want to install a specific version of Scarb (such as a preview or nightly version), run the following with the desired
-version number.
-
-```shell-vue
-curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v {{ rel.sampleVersion }}
-```
-
-### Uninstall
-
-The installation script does not have uninstalling logic built-in.
-It tries to minimize changes performed to the system, though, to keep the number of manual steps to remove Scarb low.
-
-1. Remove the `$XDG_DATA_HOME/scarb-install` directory, usually this is `~/.local/share/scarb-install`.
-2. Remove `~/.local/bin/scarb` symbolic link.
-
-The installation script might have added path to `~/.local/bin` to `$PATH`, by adding appropriate lines
-to `.bashrc`, `.zshrc` or others, depending on the shell running in the system.
-If you wish, you can remove these lines, but often this is not desirable.
-
-On top of that, Scarb creates several files (like data files or caches) in standard system paths.
-These have to be removed manually.
-The list of all global paths written to by Scarb is listed in [here](./docs/reference/global-directories).
-
 ## Install via asdf
 
 asdf is a CLI tool that can manage multiple language runtime versions on a per-project basis.
@@ -106,6 +65,48 @@ asdf global scarb latest
 
 Check [asdf guide](https://asdf-vm.com/guide/getting-started.html) for more instructions on how to install & manage
 versions.
+
+## Install via installation script
+
+Installing via installation script is the fastest way to get Scarb up and running.
+This method only works on macOS and Linux.
+
+Run the following in your terminal, then follow the onscreen instructions.
+This will install the latest **stable** release.
+
+```shell
+curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh
+```
+
+Run following command if you want to install the latest **nightly** release.
+
+```shell
+curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v nightly
+```
+
+If you want to install a specific version of Scarb (such as a preview or nightly version), run the following with the
+desired
+version number.
+
+```shell-vue
+curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v {{ rel.sampleVersion }}
+```
+
+### Uninstall
+
+The installation script does not have uninstalling logic built-in.
+It tries to minimize changes performed to the system, though, to keep the number of manual steps to remove Scarb low.
+
+1. Remove the `$XDG_DATA_HOME/scarb-install` directory, usually this is `~/.local/share/scarb-install`.
+2. Remove `~/.local/bin/scarb` symbolic link.
+
+The installation script might have added path to `~/.local/bin` to `$PATH`, by adding appropriate lines
+to `.bashrc`, `.zshrc` or others, depending on the shell running in the system.
+If you wish, you can remove these lines, but often this is not desirable.
+
+On top of that, Scarb creates several files (like data files or caches) in standard system paths.
+These have to be removed manually.
+The list of all global paths written to by Scarb is listed in [here](./docs/reference/global-directories).
 
 ## By operating system
 
