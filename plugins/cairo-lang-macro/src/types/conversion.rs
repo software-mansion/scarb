@@ -1,6 +1,7 @@
 use crate::{
-    AuxData, Diagnostic, ExpansionDefinition, FullPathMarker, PostProcessContext, ProcMacroResult,
-    Severity, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
+    AllocationContext, AuxData, Diagnostic, ExpansionDefinition, FullPathMarker,
+    PostProcessContext, ProcMacroResult, Severity, TextSpan, Token, TokenStream,
+    TokenStreamMetadata, TokenTree,
 };
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
@@ -30,7 +31,7 @@ impl ProcMacroResult {
             .map(|m| CString::new(m).unwrap().into_raw())
             .collect::<Vec<_>>();
         StableProcMacroResult {
-            token_stream: self.token_stream.into_stable(),
+            token_stream: self.token_stream.as_stable(),
             aux_data: AuxData::maybe_into_stable(self.aux_data),
             diagnostics: StableSlice::new(diagnostics),
             full_path_markers: StableSlice::new(full_path_markers),
@@ -44,6 +45,7 @@ impl ProcMacroResult {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn from_stable(result: &StableProcMacroResult) -> Self {
+        let ctx = AllocationContext::with_capacity(result.token_stream.size_hint);
         let (ptr, n) = result.diagnostics.raw_parts();
         let diagnostics = slice::from_raw_parts(ptr, n)
             .iter()
@@ -55,7 +57,7 @@ impl ProcMacroResult {
             .map(|m| from_raw_cstr(*m))
             .collect::<Vec<_>>();
         ProcMacroResult {
-            token_stream: TokenStream::from_stable(&result.token_stream),
+            token_stream: TokenStream::from_stable_in(&result.token_stream, &ctx),
             diagnostics,
             full_path_markers,
             aux_data: AuxData::from_stable(&result.aux_data),
@@ -109,11 +111,13 @@ impl TextSpan {
 impl Token {
     /// Convert to FFI-safe representation.
     #[doc(hidden)]
-    pub fn into_stable(self) -> StableToken {
-        let cstr = CString::new(self.content.as_bytes()).unwrap();
+    pub fn as_stable(&self) -> StableToken {
+        let ptr = self.content.as_ptr();
+        let len = self.content.len();
         StableToken {
-            span: self.span.into_stable(),
-            content: cstr.into_raw(),
+            span: self.span.clone().into_stable(),
+            ptr,
+            len,
         }
     }
 
@@ -123,9 +127,11 @@ impl Token {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_stable(token: &StableToken) -> Self {
+    pub unsafe fn from_stable_in(token: &StableToken, ctx: &AllocationContext) -> Self {
+        let content = slice::from_raw_parts(token.ptr, token.len);
+        let content = ctx.intern(std::str::from_utf8(content).unwrap());
         Self {
-            content: from_raw_cstr(token.content),
+            content,
             span: TextSpan::from_stable(&token.span),
         }
     }
@@ -138,7 +144,6 @@ impl Token {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn free_owned_stable(token: StableToken) {
-        free_raw_cstring(token.content);
         TextSpan::free_owned_stable(token.span);
     }
 }
@@ -146,9 +151,9 @@ impl Token {
 impl TokenTree {
     /// Convert to FFI-safe representation.
     #[doc(hidden)]
-    pub fn into_stable(self) -> StableTokenTree {
+    pub fn as_stable(&self) -> StableTokenTree {
         match self {
-            Self::Ident(token) => StableTokenTree::Ident(token.into_stable()),
+            Self::Ident(token) => StableTokenTree::Ident(token.as_stable()),
         }
     }
 
@@ -158,9 +163,9 @@ impl TokenTree {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_stable(token_tree: &StableTokenTree) -> Self {
+    pub unsafe fn from_stable_in(token_tree: &StableTokenTree, ctx: &AllocationContext) -> Self {
         match token_tree {
-            StableTokenTree::Ident(token) => Self::Ident(Token::from_stable(token)),
+            StableTokenTree::Ident(token) => Self::Ident(Token::from_stable_in(token, ctx)),
         }
     }
 
@@ -185,15 +190,20 @@ impl TokenStream {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub fn into_stable(self) -> StableTokenStream {
+    pub fn as_stable(&self) -> StableTokenStream {
+        let mut size_hint: usize = 0;
         let tokens = self
             .tokens
-            .into_iter()
-            .map(|token| token.into_stable())
+            .iter()
+            .map(|token| {
+                size_hint += token.size_hint();
+                token.as_stable()
+            })
             .collect::<Vec<_>>();
         StableTokenStream {
             tokens: StableSlice::new(tokens),
-            metadata: self.metadata.into_stable(),
+            metadata: self.metadata.clone().into_stable(),
+            size_hint,
         }
     }
 
@@ -203,11 +213,14 @@ impl TokenStream {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub unsafe fn from_stable(token_stream: &StableTokenStream) -> Self {
+    pub unsafe fn from_stable_in(
+        token_stream: &StableTokenStream,
+        ctx: &AllocationContext,
+    ) -> Self {
         let (ptr, n) = token_stream.tokens.raw_parts();
         let tokens = slice::from_raw_parts(ptr, n)
             .iter()
-            .map(|token_tree| TokenTree::from_stable(token_tree))
+            .map(|token_tree| TokenTree::from_stable_in(token_tree, ctx))
             .collect::<Vec<_>>();
         Self {
             tokens,

@@ -15,8 +15,8 @@ use cairo_lang_diagnostics::ToOption;
 use cairo_lang_filesystem::db::Edition;
 use cairo_lang_filesystem::ids::CodeMapping;
 use cairo_lang_macro::{
-    AuxData, Diagnostic, FullPathMarker, ProcMacroResult, Severity, TokenStream,
-    TokenStreamMetadata,
+    AllocationContext, AuxData, Diagnostic, FullPathMarker, ProcMacroResult, Severity, TokenStream,
+    TokenStreamMetadata, TokenTree,
 };
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
@@ -167,6 +167,7 @@ impl ProcMacroHostPlugin {
         let mut item_builder = PatchBuilder::new(db, &item_ast);
         let mut used_attr_names: HashSet<SmolStr> = Default::default();
         let mut all_none = true;
+        let ctx = AllocationContext::default();
 
         match item_ast.clone() {
             ast::ModuleItem::Trait(trait_ast) => {
@@ -194,13 +195,14 @@ impl ProcMacroHostPlugin {
 
                             let mut token_stream_builder = TokenStreamBuilder::new(db);
                             let attrs = func.attributes(db).elements(db);
-                            let found = self.parse_attrs(db, &mut token_stream_builder, attrs);
+                            let found =
+                                self.parse_attrs(db, &mut token_stream_builder, attrs, &ctx);
                             if let Some(name) = found.as_name() {
                                 used_attr_names.insert(name);
                             }
                             token_stream_builder.add_node(func.declaration(db).as_syntax_node());
                             token_stream_builder.add_node(func.body(db).as_syntax_node());
-                            let token_stream = token_stream_builder.build();
+                            let token_stream = token_stream_builder.build(&ctx);
 
                             all_none = all_none
                                 && self.do_expand_inner_attr(
@@ -255,14 +257,15 @@ impl ProcMacroHostPlugin {
 
                             let mut token_stream_builder = TokenStreamBuilder::new(db);
                             let attrs = func.attributes(db).elements(db);
-                            let found = self.parse_attrs(db, &mut token_stream_builder, attrs);
+                            let found =
+                                self.parse_attrs(db, &mut token_stream_builder, attrs, &ctx);
                             if let Some(name) = found.as_name() {
                                 used_attr_names.insert(name);
                             }
                             token_stream_builder.add_node(func.visibility(db).as_syntax_node());
                             token_stream_builder.add_node(func.declaration(db).as_syntax_node());
                             token_stream_builder.add_node(func.body(db).as_syntax_node());
-                            let token_stream = token_stream_builder.build();
+                            let token_stream = token_stream_builder.build(&ctx);
                             all_none = all_none
                                 && self.do_expand_inner_attr(
                                     db,
@@ -328,7 +331,7 @@ impl ProcMacroHostPlugin {
 
         let result = self.instance(input.package_id).generate_code(
             input.expansion.name.clone(),
-            args.clone(),
+            args,
             token_stream.clone(),
         );
 
@@ -348,12 +351,13 @@ impl ProcMacroHostPlugin {
         &self,
         db: &dyn SyntaxGroup,
         item_ast: ast::ModuleItem,
+        ctx: &AllocationContext,
     ) -> (AttrExpansionFound, TokenStream) {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         let input = match item_ast.clone() {
             ast::ModuleItem::Trait(trait_ast) => {
                 let attrs = trait_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs, ctx);
                 token_stream_builder.add_node(trait_ast.visibility(db).as_syntax_node());
                 token_stream_builder.add_node(trait_ast.trait_kw(db).as_syntax_node());
                 token_stream_builder.add_node(trait_ast.name(db).as_syntax_node());
@@ -363,7 +367,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::Impl(impl_ast) => {
                 let attrs = impl_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs, ctx);
                 token_stream_builder.add_node(impl_ast.visibility(db).as_syntax_node());
                 token_stream_builder.add_node(impl_ast.impl_kw(db).as_syntax_node());
                 token_stream_builder.add_node(impl_ast.name(db).as_syntax_node());
@@ -375,7 +379,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::Module(module_ast) => {
                 let attrs = module_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs, ctx);
                 token_stream_builder.add_node(module_ast.visibility(db).as_syntax_node());
                 token_stream_builder.add_node(module_ast.module_kw(db).as_syntax_node());
                 token_stream_builder.add_node(module_ast.name(db).as_syntax_node());
@@ -384,7 +388,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::FreeFunction(free_func_ast) => {
                 let attrs = free_func_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs, ctx);
                 token_stream_builder.add_node(free_func_ast.visibility(db).as_syntax_node());
                 token_stream_builder.add_node(free_func_ast.declaration(db).as_syntax_node());
                 token_stream_builder.add_node(free_func_ast.body(db).as_syntax_node());
@@ -392,7 +396,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::ExternFunction(extern_func_ast) => {
                 let attrs = extern_func_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs, ctx);
                 token_stream_builder.add_node(extern_func_ast.visibility(db).as_syntax_node());
                 token_stream_builder.add_node(extern_func_ast.extern_kw(db).as_syntax_node());
                 token_stream_builder.add_node(extern_func_ast.declaration(db).as_syntax_node());
@@ -401,7 +405,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::ExternType(extern_type_ast) => {
                 let attrs = extern_type_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs, ctx);
                 token_stream_builder.add_node(extern_type_ast.visibility(db).as_syntax_node());
                 token_stream_builder.add_node(extern_type_ast.extern_kw(db).as_syntax_node());
                 token_stream_builder.add_node(extern_type_ast.type_kw(db).as_syntax_node());
@@ -412,7 +416,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::Struct(struct_ast) => {
                 let attrs = struct_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs, ctx);
                 token_stream_builder.add_node(struct_ast.visibility(db).as_syntax_node());
                 token_stream_builder.add_node(struct_ast.struct_kw(db).as_syntax_node());
                 token_stream_builder.add_node(struct_ast.name(db).as_syntax_node());
@@ -424,7 +428,7 @@ impl ProcMacroHostPlugin {
             }
             ast::ModuleItem::Enum(enum_ast) => {
                 let attrs = enum_ast.attributes(db).elements(db);
-                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs);
+                let expansion = self.parse_attrs(db, &mut token_stream_builder, attrs, ctx);
                 token_stream_builder.add_node(enum_ast.visibility(db).as_syntax_node());
                 token_stream_builder.add_node(enum_ast.enum_kw(db).as_syntax_node());
                 token_stream_builder.add_node(enum_ast.name(db).as_syntax_node());
@@ -436,7 +440,7 @@ impl ProcMacroHostPlugin {
             }
             _ => AttrExpansionFound::None,
         };
-        let token_stream = token_stream_builder.build();
+        let token_stream = token_stream_builder.build(ctx);
         (input, token_stream)
     }
 
@@ -445,6 +449,7 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         builder: &mut TokenStreamBuilder<'_>,
         attrs: Vec<ast::Attribute>,
+        ctx: &AllocationContext,
     ) -> AttrExpansionFound {
         // This function parses attributes of the item,
         // checking if those attributes correspond to a procedural macro that should be fired.
@@ -469,7 +474,7 @@ impl ProcMacroHostPlugin {
                     if expansion.is_none() {
                         let mut args_builder = TokenStreamBuilder::new(db);
                         args_builder.add_node(attr.arguments(db).as_syntax_node());
-                        let args = args_builder.build();
+                        let args = args_builder.build(ctx);
                         expansion = Some((found, args, attr.stable_ptr().untyped()));
                         // Do not add the attribute for found expansion.
                         continue;
@@ -543,7 +548,6 @@ impl ProcMacroHostPlugin {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         token_stream_builder.add_node(item_ast.as_syntax_node());
         token_stream_builder.with_metadata(stream_metadata.clone());
-        let token_stream = token_stream_builder.build();
         let mut aux_data = EmittedAuxData::default();
         let mut all_diagnostics: Vec<Diagnostic> = Vec::new();
 
@@ -551,12 +555,14 @@ impl ProcMacroHostPlugin {
         let derives = self.parse_derive(db, item_ast.clone());
         let any_derives = !derives.is_empty();
 
+        let ctx = AllocationContext::default();
         let mut derived_code = PatchBuilder::new(db, &item_ast);
         for derive in derives.iter() {
+            let token_stream = token_stream_builder.build(&ctx);
             let result = self.instance(derive.package_id).generate_code(
                 derive.expansion.name.clone(),
                 TokenStream::empty(),
-                token_stream.clone(),
+                token_stream,
             );
 
             // Register diagnostics.
@@ -576,7 +582,13 @@ impl ProcMacroHostPlugin {
                 continue;
             }
 
-            derived_code.add_str(result.token_stream.to_string().as_str());
+            for token in result.token_stream.tokens {
+                match token {
+                    TokenTree::Ident(token) => {
+                        derived_code.add_str(token.content.as_ref());
+                    }
+                }
+            }
         }
 
         if any_derives {
@@ -625,10 +637,11 @@ impl ProcMacroHostPlugin {
         token_stream: TokenStream,
         stable_ptr: SyntaxStablePtrId,
     ) -> PluginResult {
+        let original = token_stream.to_string();
         let result = self.instance(input.package_id).generate_code(
             input.expansion.name.clone(),
-            args.clone(),
-            token_stream.clone(),
+            args,
+            token_stream,
         );
 
         // Handle token stream.
@@ -654,10 +667,7 @@ impl ProcMacroHostPlugin {
         // In essence, `code: None, remove_original_item: false` means `ProcMacroHost` will not be
         // called again for this AST item.
         // This optimization limits the number of generated nodes a bit.
-        if last
-            && result.aux_data.is_none()
-            && token_stream.to_string() == result.token_stream.to_string()
-        {
+        if last && result.aux_data.is_none() && original == result.token_stream.to_string() {
             return PluginResult {
                 code: None,
                 remove_original_item: false,
@@ -884,8 +894,8 @@ impl<'a> InnerAttrExpansionContext<'a> {
         result: ProcMacroResult,
         stable_ptr: SyntaxStablePtrId,
     ) -> String {
-        let expanded = result.token_stream.to_string();
-        let changed = expanded.as_str() != original;
+        let result_str = result.token_stream.to_string();
+        let changed = result_str != original;
 
         if changed {
             self.host
@@ -902,7 +912,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
 
         self.any_changed = self.any_changed || changed;
 
-        expanded
+        result_str
     }
     pub fn into_result(
         self,
@@ -958,7 +968,8 @@ impl MacroPlugin for ProcMacroHostPlugin {
         // Expand first attribute.
         // Note that we only expand the first attribute, as we assume that the rest of the attributes
         // will be handled by a subsequent call to this function.
-        let (input, body) = self.parse_attribute(db, item_ast.clone());
+        let ctx = AllocationContext::default();
+        let (input, body) = self.parse_attribute(db, item_ast.clone(), &ctx);
 
         if let Some(result) = match input {
             AttrExpansionFound::Last {
@@ -1078,11 +1089,12 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         syntax: &ast::ExprInlineMacro,
         _metadata: &MacroPluginMetadata<'_>,
     ) -> InlinePluginResult {
+        let ctx = AllocationContext::default();
         let stable_ptr = syntax.clone().stable_ptr().untyped();
         let arguments = syntax.arguments(db);
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         token_stream_builder.add_node(arguments.as_syntax_node());
-        let token_stream = token_stream_builder.build();
+        let token_stream = token_stream_builder.build(&ctx);
         let result = self.instance().generate_code(
             self.expansion.name.clone(),
             TokenStream::empty(),
