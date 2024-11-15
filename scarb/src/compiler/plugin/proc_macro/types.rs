@@ -1,4 +1,6 @@
-use cairo_lang_macro::{TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree};
+use cairo_lang_macro::{
+    AllocationContext, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
+};
 use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
 
 /// Helps creating TokenStream based on multiple SyntaxNodes,
@@ -26,29 +28,28 @@ impl<'a> TokenStreamBuilder<'a> {
         self.metadata = Some(metadata);
     }
 
-    pub fn build(self) -> TokenStream {
-        let mut result: Vec<TokenTree> = Vec::default();
-        for node in self.nodes.iter() {
-            let leaves = node.tokens(self.db);
-            let tokens =
-                leaves.map(|node| TokenTree::Ident(self.token_from_syntax_node(node.clone())));
-            result.extend(tokens);
-        }
+    pub fn build(&self, ctx: &AllocationContext) -> TokenStream {
+        let result: Vec<TokenTree> = self
+            .nodes
+            .iter()
+            .flat_map(|node| {
+                let leaves = node.tokens(self.db);
+                leaves.map(|node| TokenTree::Ident(self.token_from_syntax_node(node.clone(), ctx)))
+            })
+            .collect();
 
-        match self.metadata {
-            Some(metadata) => TokenStream::new(result.clone()).with_metadata(metadata.clone()),
-            None => TokenStream::new(result.clone()),
+        match self.metadata.as_ref() {
+            Some(metadata) => TokenStream::new(result).with_metadata(metadata.clone()),
+            None => TokenStream::new(result),
         }
     }
 
-    pub fn token_from_syntax_node(&self, node: SyntaxNode) -> Token {
+    pub fn token_from_syntax_node(&self, node: SyntaxNode, ctx: &AllocationContext) -> Token {
         let span = node.span(self.db).to_str_range();
-        Token::new(
-            node.get_text(self.db),
-            Some(TextSpan {
-                start: span.start,
-                end: span.end,
-            }),
-        )
+        let span = TextSpan {
+            start: span.start,
+            end: span.end,
+        };
+        Token::new_in(node.get_text(self.db), Some(span), ctx)
     }
 }
