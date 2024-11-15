@@ -35,6 +35,7 @@ anyhow = "1"
 assert_fs = "1"
 async-trait = "0.1"
 axum = { version = "0.6", features = ["http2"] }
+bumpalo = "3"
 cairo-lang-compiler = "2.9.1"
 cairo-lang-defs = "2.9.1"
 cairo-lang-diagnostics = "2.9.1"

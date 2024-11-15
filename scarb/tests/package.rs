@@ -486,6 +486,7 @@ fn workspace() {
 #[test]
 fn cairo_plugin() {
     let t = TempDir::new().unwrap();
+    // Note this will be packaged with `cairo-lang-macro` from crates, not the local one.
     CairoPluginProjectBuilder::default().build(&t);
 
     Scarb::quick_snapbox()

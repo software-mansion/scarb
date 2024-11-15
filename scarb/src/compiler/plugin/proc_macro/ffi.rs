@@ -152,8 +152,8 @@ impl ProcMacroInstance {
         token_stream: TokenStream,
     ) -> ProcMacroResult {
         // This must be manually freed with call to `free_owned_stable`.
-        let stable_token_stream = token_stream.into_stable();
-        let stable_attr = attr.into_stable();
+        let stable_token_stream = token_stream.as_stable();
+        let stable_attr = attr.as_stable();
         // Allocate proc macro name.
         let item_name = CString::new(item_name.to_string()).unwrap().into_raw();
         // Call FFI interface for code expansion.
