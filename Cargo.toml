@@ -73,7 +73,7 @@ dialoguer = "0.11.0"
 directories = "5"
 dunce = "1"
 expect-test = "1.5"
-flate2 = { version = "1.0.34", default-features = false, features = ["zlib"] }
+flate2 = { version = "1.0.35", default-features = false, features = ["zlib"] }
 fs4 = { version = "0.7", features = ["tokio"] }
 fs_extra = "1"
 futures = { version = "0.3", default-features = false, features = ["std", "async-await"] }
