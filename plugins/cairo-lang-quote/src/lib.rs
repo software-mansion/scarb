@@ -1,127 +1,93 @@
-pub use cairo_lang_macro::{TokenStream, TokenTree};
-pub use cairo_lang_utils::Upcast;
-#[cfg(test)]
-mod test;
+use std::iter::Peekable;
 
-/// Macro that works similar to rust's quote and format macro. It takes a string literal, which includes `{}` sections.
-/// Like in format macro in rust, it also takes the same number of arguments as `{}` in a literal. Those values are supposed to be a type of [cairo_lang_syntax::node::SyntaxNode].
-/// Macro will produce a new [TokenStream], which will persist all the TextSpan values from passed SyntaxNodes inside.
-#[macro_export]
-macro_rules! quote_format {
-  ($literal:expr) => {{
-    use $crate::{split_by_space_and_pos_arg, TokenTree, TokenStream};
+use cairo_lang_macro::{TextSpan, Token, TokenStream, TokenTree};
+use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
+use proc_macro::{Delimiter, Ident, TokenStream as RustTokenStream, TokenTree as RustTokenTree};
+use proc_macro2::{Ident as Ident2, Span};
 
-    let positional_arguments: Vec<_> = $literal.matches("{}").collect();
-    let positional_arguments_len = positional_arguments.len();
+extern crate proc_macro;
+use quote::quote as rust_quote;
 
-    assert!(positional_arguments_len == 0, "0 arguments found but the numer of positional arguments is: {}", positional_arguments_len);
-
-    let mut result_tokens: Vec<TokenTree> = Vec::default();
-    let splitted_literal = split_by_space_and_pos_arg($literal);
-
-    for string_token in splitted_literal.into_iter() {
-          // Plain code inserted into the quote won't be getting any span.
-          // For tokens with no span, the macro host will decide upon what should be the default behaviour.
-          result_tokens.push(TokenTree::Ident(Token::new(string_token, None)));
-    }
-
-    TokenStream::new(result_tokens)
-  }};
-  ($db:expr, $literal:expr, $($arg:expr),*) => {{
-    // As the user writes a macro, we can assume that those packages are included inside the user's Cargo.toml.
-    use cairo_lang_macro::{TokenStream, TokenTree};
-    use cairo_lang_syntax::node::{SyntaxNode, db::SyntaxGroup};
-    use $crate::split_by_space_and_pos_arg;
-
-    trait Tokenable {
-      fn to_tokens(&self, db: &dyn SyntaxGroup) -> Vec<TokenTree>;
-    }
-
-    impl Tokenable for TokenStream {
-      fn to_tokens(&self, _db: &dyn SyntaxGroup) -> Vec<TokenTree> {
-          self.tokens.clone()
-      }
-    }
-
-    impl Tokenable for &SyntaxNode {
-        fn to_tokens(&self, db: &dyn SyntaxGroup) -> Vec<TokenTree> {
-            let node_span = self.span(db).to_str_range();
-            vec![TokenTree::Ident(Token::new(
-                self.get_text(db),
-                Some(TextSpan::new(node_span.start, node_span.end)),
-            ))]
-        }
-    }
-
-    impl Tokenable for SyntaxNode {
-        fn to_tokens(&self, db: &dyn SyntaxGroup) -> Vec<TokenTree> {
-            let node_span = self.span(db).to_str_range();
-            vec![TokenTree::Ident(Token::new(
-                self.get_text(db),
-                Some(TextSpan::new(node_span.start, node_span.end)),
-            ))]
-        }
-    }
-
-    impl Tokenable for TokenTree {
-        fn to_tokens(&self, _db: &dyn SyntaxGroup) -> Vec<TokenTree> {
-            vec![self.clone()]
-        }
-    }
-
-    let db = $db.upcast();
-    let positional_arguments: Vec<_> = $literal.matches("{}").collect();
-    let positional_arguments_number = positional_arguments.len();
-    let args_static = [$($arg),*];
-    let args = args_static.iter().map(|tokenable| tokenable as &dyn Tokenable).collect::<Vec<_>>();
-    let args_num: usize = args.len();
-
-    assert!(
-      positional_arguments_number >= args_num,
-        "Too many arguments provided for the number of positional arguments. Positional arguments: {}, arguments: {}", positional_arguments_number, args_num
-    );
-    assert!(
-      args_num >= positional_arguments_number,
-        "Too many positional arguments for provided arguments. Positional arguments: {}, arguments: {}", positional_arguments_number, args_num
-    );
-
-    let mut result_tokens: Vec<TokenTree> = Vec::default();
-    let splitted_literal = split_by_space_and_pos_arg($literal);
-    let mut arg_index: usize = 0;
-
-    for string_token in splitted_literal.into_iter() {
-        if string_token == "{}" {
-            let arg = args.get(arg_index).unwrap();
-            result_tokens.extend(arg.to_tokens(db));
-            arg_index += 1;
-        } else {
-            // Plain code inserted into the quote won't be getting any span.
-            // For tokens with no span, the macro host will decide upon what should be the default behaviour.
-            result_tokens.push(TokenTree::Ident(Token::new(string_token, None)));
-        }
-    }
-
-    TokenStream::new(result_tokens)
-}};
+#[derive(Debug)]
+enum QuoteToken {
+    Var(Ident),
+    Content(String),
 }
 
-pub fn split_by_space_and_pos_arg(s: &str) -> Vec<String> {
-    let mut result = Vec::new();
-    let mut last = 0;
-
-    let mut match_indices: Vec<_> = s.match_indices(' ').chain(s.match_indices("{}")).collect();
-    match_indices.sort_by_key(|pair| pair.0);
-
-    for (index, matched) in match_indices {
-        if last != index {
-            result.push(s[last..index].to_owned());
+impl QuoteToken {
+    pub fn from_delimiter(delimiter: Delimiter, is_end: bool) -> Self {
+        match (delimiter, is_end) {
+            (Delimiter::Brace, false) => Self::Content("{".to_string()),
+            (Delimiter::Brace, true) => Self::Content("}".to_string()),
+            (Delimiter::Bracket, false) => Self::Content("[".to_string()),
+            (Delimiter::Bracket, true) => Self::Content("]".to_string()),
+            (Delimiter::Parenthesis, false) => Self::Content("(".to_string()),
+            (Delimiter::Parenthesis, true) => Self::Content(")".to_string()),
+            _ => Self::Content(String::default()),
         }
-        result.push(matched.to_owned());
-        last = index + matched.len();
+    }
+}
+
+fn process_token_stream(
+    mut token_stream: Peekable<impl Iterator<Item = RustTokenTree>>,
+    output: &mut Vec<QuoteToken>,
+) {
+    while let Some(token_tree) = token_stream.next() {
+        match token_tree {
+            RustTokenTree::Group(group) => {
+                let token_iter = group.stream().into_iter().peekable();
+                let delimiter = group.delimiter();
+                output.push(QuoteToken::from_delimiter(delimiter, false));
+                process_token_stream(token_iter, output);
+                output.push(QuoteToken::from_delimiter(delimiter, true));
+            }
+            RustTokenTree::Punct(punct) => {
+                if punct.as_char() == '#' {
+                    if let Some(RustTokenTree::Ident(ident)) = token_stream.next() {
+                        output.push(QuoteToken::Var(ident))
+                    }
+                } else {
+                    output.push(QuoteToken::Content(punct.to_string()));
+                }
+            }
+            _ => {
+                output.push(QuoteToken::Content(token_tree.to_string()));
+            }
+        }
+    }
+}
+
+#[proc_macro]
+pub fn quote(input: RustTokenStream) -> RustTokenStream {
+    let mut parsed_input: Vec<QuoteToken> = Vec::new();
+    let mut output_token_stream = rust_quote! {
+      use cairo_lang_macro::{TokenTree, Token, TokenStream};
+      use cairo_lang_stable_token::ToStableTokenStream;
+      let mut quote_macro_result = TokenStream::default();
+    };
+
+    let token_iter = input.into_iter().peekable();
+    process_token_stream(token_iter, &mut parsed_input);
+
+    for quote_token in parsed_input.iter() {
+        match quote_token {
+            QuoteToken::Content(content) => {
+                output_token_stream.extend(rust_quote! {
+                  quote_macro_result.push_token(TokenTree::Ident(Token::new(#content.to_string(), None)));
+                });
+            }
+            QuoteToken::Var(ident) => {
+                let ident: Ident2 = Ident2::new(&ident.to_string(), Span::call_site());
+                output_token_stream.extend(rust_quote! {
+                  quote_macro_result.extend(TokenStream::from_stable_token_stream(#ident.to_stable_token_stream()));
+                });
+            }
+        }
     }
 
-    if last < s.len() {
-        result.push(s[last..].to_owned());
-    }
+    let result = RustTokenStream::from(rust_quote!({ #output_token_stream }));
+
+    println!("Result: {:?}", result);
+
     result
 }

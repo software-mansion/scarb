@@ -761,6 +761,7 @@ version = "0.1.0"
 dependencies = [
  "cairo-lang-macro-attributes 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-macro-stable",
+ "cairo-lang-stable-token",
  "indoc",
  "linkme",
  "serde",
@@ -860,6 +861,9 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "indoc",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -1025,6 +1029,10 @@ dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-utils",
 ]
+
+[[package]]
+name = "cairo-lang-stable-token"
+version = "1.0.0"
 
 [[package]]
 name = "cairo-lang-starknet"

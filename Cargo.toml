@@ -60,6 +60,7 @@ cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo", rev = "5e
 cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", rev = "5e447a6bec62eadc97af00d84b74e3b435bff723" }
 cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "5e447a6bec62eadc97af00d84b74e3b435bff723" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "5e447a6bec62eadc97af00d84b74e3b435bff723", features = ["env_logger"] }
+cairo-lang-stable-token = { path = "../cairo/crates/cairo-lang-stable-token", version="1.0.0" }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }

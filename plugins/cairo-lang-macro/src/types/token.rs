@@ -1,4 +1,6 @@
-use std::fmt::Display;
+use std::{fmt::Display, iter::once};
+
+use cairo_lang_stable_token::{StableSpan, StableToken, ToStableTokenStream};
 
 /// An abstract stream of Cairo tokens.
 ///
@@ -85,6 +87,32 @@ impl TokenStream {
     pub fn is_empty(&self) -> bool {
         self.to_string().is_empty()
     }
+
+    pub fn from_stable_token_stream(
+        stable_token_stream: impl Iterator<Item = StableToken>,
+    ) -> Self {
+        Self::new(
+            stable_token_stream
+                .map(|stable_token| {
+                    TokenTree::Ident(Token::new(
+                        stable_token.0,
+                        stable_token.1.map(|stable_span| TextSpan {
+                            start: stable_span.start,
+                            end: stable_span.end,
+                        }),
+                    ))
+                })
+                .collect(),
+        )
+    }
+
+    pub fn extend(&mut self, token_stream: Self) {
+        self.tokens.extend(token_stream.tokens);
+    }
+
+    pub fn push_token(&mut self, token_tree: TokenTree) {
+        self.tokens.push(token_tree);
+    }
 }
 
 impl Display for TokenStream {
@@ -125,5 +153,36 @@ impl TextSpan {
 impl Token {
     pub fn new(content: String, span: Option<TextSpan>) -> Self {
         Self { content, span }
+    }
+}
+
+impl ToStableTokenStream for TokenStream {
+    fn to_stable_token_stream(&self) -> impl Iterator<Item = StableToken> {
+        self.tokens
+            .clone()
+            .into_iter()
+            .map(|token_tree| match token_tree {
+                TokenTree::Ident(token) => StableToken::new(
+                    token.content,
+                    token.span.map(|span| StableSpan {
+                        start: span.start,
+                        end: span.end,
+                    }),
+                ),
+            })
+    }
+}
+
+impl ToStableTokenStream for TokenTree {
+    fn to_stable_token_stream(&self) -> impl Iterator<Item = StableToken> {
+        once(match self {
+            TokenTree::Ident(token) => StableToken::new(
+                token.content.clone(),
+                token.span.clone().map(|span| StableSpan {
+                    start: span.start,
+                    end: span.end,
+                }),
+            ),
+        })
     }
 }
