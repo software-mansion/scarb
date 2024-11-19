@@ -844,10 +844,10 @@ fn can_implement_inline_macro() {
         pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
             ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
               "34".to_string(),
-              TextSpan {
+              Some(TextSpan {
                   start: 0,
                   end: 2,
-              },
+              }),
             ))]))
         }
         "##})
@@ -1541,4 +1541,182 @@ fn can_expand_impl_inner_func_attrr() {
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
 
         "#});
+}
+
+#[test]
+fn can_use_quote() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+    .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
+    .add_dep(r#"cairo-lang-stable-token = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-stable-token", version = "1.0"}"#)
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
+        use cairo_lang_quote::quote;
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+                let tokens = quote! {
+                    5
+                };
+                ProcMacroResult::new(tokens)
+        }
+        "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 { some!() }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+}
+
+#[test]
+fn can_use_quote_with_token_tree() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+    .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
+    .add_dep(r#"cairo-lang-stable-token = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-stable-token", version = "1.0"}"#)
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token};
+        use cairo_lang_quote::quote;
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+          let token = TokenTree::Ident(Token::new("5".to_string(), None));
+          let tokens = quote! {
+            #token
+          };
+          ProcMacroResult::new(tokens)
+        }
+        "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 { 
+              some!()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+}
+
+#[test]
+fn can_use_quote_with_token_stream() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+      .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
+      .add_dep(r#"cairo-lang-stable-token = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-stable-token", version = "1.0"}"#)
+      .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token};
+        use cairo_lang_quote::quote;
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+          let token = TokenStream::new(vec![TokenTree::Ident(Token::new("5".to_string(), None))]);
+          let tokens = quote! {
+            #token
+          };
+          ProcMacroResult::new(tokens)
+        }
+      "##})
+      .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 { 
+              some!()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+}
+
+#[test]
+fn can_use_quote_with_syntax_node() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+      .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
+      .add_dep(r#"cairo-lang-stable-token = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-stable-token", version = "1.0"}"#)
+      .add_dep(r#"cairo-lang-syntax = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-syntax"}"#)
+      .add_dep(r#"cairo-lang-parser = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-parser"}"#)
+      .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_quote::quote;
+        use cairo_lang_parser::utils::SimpleParserDatabase;
+        use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+          let db_val = SimpleParserDatabase::default();
+          let db = &db_val;
+          let code = r#"
+              fn main() -> felt252 {
+                5
+              }
+          "#;
+          let syntax_node = SyntaxNodeWithDb::new(db.parse_virtual(code).unwrap(), db);
+          let tokens = quote! {
+            #syntax_node
+          };
+          ProcMacroResult::new(tokens)
+        }
+      "##})
+      .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> u32 {
+              // completly wrong type
+              true 
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
 }
