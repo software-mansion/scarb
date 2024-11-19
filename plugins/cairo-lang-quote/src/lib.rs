@@ -30,6 +30,8 @@ fn process_token_stream(
     mut token_stream: Peekable<impl Iterator<Item = RustTokenTree>>,
     output: &mut Vec<QuoteToken>,
 ) {
+    // Rust proc macro parser to TokenStream gets rid of all whitespaces.
+    // Here we just make sure no two identifiers are without a space between them.
     let mut was_last_ident: bool = false;
     while let Some(token_tree) = token_stream.next() {
         match token_tree {
@@ -70,14 +72,6 @@ fn process_token_stream(
 
 #[proc_macro]
 pub fn quote(input: RustTokenStream) -> RustTokenStream {
-    println!("input: {:?}", input);
-    // let source = input
-    //     .into_iter()
-    //     .next()
-    //     .unwrap()
-    //     .span()
-    //     .source_text()
-    //     .unwrap();
     let mut parsed_input: Vec<QuoteToken> = Vec::new();
     let mut output_token_stream = rust_quote! {
       use cairo_lang_macro::{TokenTree, Token, TokenStream};
@@ -102,7 +96,6 @@ pub fn quote(input: RustTokenStream) -> RustTokenStream {
             }
         }
     }
-    println!("{}", output_token_stream.to_string());
     RustTokenStream::from(rust_quote!({
       #output_token_stream
       quote_macro_result
