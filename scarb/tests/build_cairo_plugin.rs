@@ -226,13 +226,12 @@ fn can_emit_plugin_error() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let diag = Diagnostic::error("Some error from macro.");
+        pub fn some(_attr: TokenStream, mut token_stream: TokenStream) -> ProcMacroResult {
+            token_stream.tokens.push(TokenTree::Ident(Token::new("    ", TextSpan { start: 0, end: 1 })));
             ProcMacroResult::new(token_stream)
-                .with_diagnostics(diag.into())
         }
         "#})
         .build(&t);
@@ -243,7 +242,11 @@ fn can_emit_plugin_error() {
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
             #[some]
-            fn f() -> felt252 { 12 }
+            fn f() -> felt252 {
+                let x = 1;
+                x = 2;
+                x
+            }
         "#})
         .build(&project);
 
@@ -1534,5 +1537,101 @@ fn can_expand_impl_inner_func_attrr() {
             test hello::tests::test_flow ... ok (gas usage est.: [..])
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
 
+        "#});
+}
+
+#[test]
+fn code_mappings_preserve_error_locations() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, mut token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream_length = token_stream.to_string().len();
+            token_stream.tokens.push(TokenTree::Ident(Token::new("    ", TextSpan { start: token_stream_length + 1, end: token_stream_length + 5 })));
+            ProcMacroResult::new(token_stream)
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn f() -> felt22 { 1 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Type not found.
+             --> [..]lib.cairo:2:11
+            fn f() -> felt22 { 1 }
+                      ^*****^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn code_mappings_preserve_error_locations_2() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, mut token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream_length = token_stream.to_string().len();
+            token_stream.tokens.push(TokenTree::Ident(Token::new("    ", TextSpan { start: token_stream_length + 1, end: token_stream_length + 5 })));
+            ProcMacroResult::new(token_stream)
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn f() -> felt252 {
+                let x = 1;
+                x = 2;
+                x
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Cannot assign to an immutable variable.
+             --> [..]lib.cairo:3:5
+                x = 2;
+                ^***^
+
+            error: could not compile `hello` due to previous error
         "#});
 }
