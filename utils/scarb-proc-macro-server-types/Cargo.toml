@@ -1,0 +1,15 @@
+[package]
+name = "scarb-proc-macro-server-types"
+version = "0.1.0"
+description = "Types for interacting with an RPC server set up by the `scarb proc-macro-server` command."
+readme = "README.md"
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+cairo-lang-macro = { version = "0.1", features = ["serde"] }
+serde.workspace = true
+serde_json.workspace = true

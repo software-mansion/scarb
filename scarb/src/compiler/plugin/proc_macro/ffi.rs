@@ -107,10 +107,19 @@ impl ProcMacroInstance {
         self.package_id
     }
 
-    pub fn declared_attributes(&self) -> Vec<String> {
+    pub fn declared_attributes_and_executables(&self) -> Vec<String> {
         self.get_expansions()
             .iter()
             .filter(|e| e.kind == ExpansionKind::Attr || e.kind == ExpansionKind::Executable)
+            .map(|e| e.name.clone())
+            .map(Into::into)
+            .collect()
+    }
+
+    pub fn declared_attributes(&self) -> Vec<String> {
+        self.get_expansions()
+            .iter()
+            .filter(|e| e.kind == ExpansionKind::Attr)
             .map(|e| e.name.clone())
             .map(Into::into)
             .collect()
@@ -129,6 +138,15 @@ impl ProcMacroInstance {
         self.get_expansions()
             .iter()
             .filter(|e| e.kind == ExpansionKind::Executable)
+            .map(|e| e.name.clone())
+            .map(Into::into)
+            .collect()
+    }
+
+    pub fn inline_macros(&self) -> Vec<String> {
+        self.get_expansions()
+            .iter()
+            .filter(|e| e.kind == ExpansionKind::Inline)
             .map(|e| e.name.clone())
             .map(Into::into)
             .collect()

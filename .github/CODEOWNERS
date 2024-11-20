@@ -1,1 +1,5 @@
-* @maciektr @DelevoXDG @wawel37
+* @software-mansion/scarb-maintainers
+/scarb/src/bin/scarb/commands/proc_macro_server.rs @software-mansion/scarb-maintainers @Draggu
+/scarb/src/ops/proc_macro_server @software-mansion/scarb-maintainers @Draggu
+/utils/scarb-proc-macro-server-types @software-mansion/scarb-maintainers @Draggu
+/utils/scarb-test-support/src/proc_macro_server.rs @software-mansion/scarb-maintainers @Draggu

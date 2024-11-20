@@ -1,6 +1,6 @@
 [package]
 name = "cairo-lang-macro"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 
 authors.workspace = true
@@ -16,7 +16,11 @@ repository.workspace = true
 cairo-lang-macro-attributes = "0.1"
 cairo-lang-macro-stable = "1"
 linkme.workspace = true
+serde = { workspace = true, optional = true }
 
 [dev-dependencies]
 serde.workspace = true
 serde_json.workspace = true
+
+[features]
+serde = ["dep:serde"]

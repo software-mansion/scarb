@@ -22,7 +22,7 @@ cairo-lang-diagnostics.workspace = true
 cairo-lang-filesystem.workspace = true
 cairo-lang-formatter.workspace = true
 cairo-lang-lowering.workspace = true
-cairo-lang-macro = { path = "../plugins/cairo-lang-macro" }
+cairo-lang-macro = "0.1"
 cairo-lang-macro-stable = "1"
 cairo-lang-parser.workspace = true
 cairo-lang-semantic.workspace = true
@@ -37,6 +37,7 @@ camino.workspace = true
 clap.workspace = true
 convert_case.workspace = true
 create-output-dir = { path = "../utils/create-output-dir" }
+crossbeam-channel = "0.5.13"
 data-encoding.workspace = true
 deno_task_shell.workspace = true
 derive_builder.workspace = true
@@ -56,6 +57,7 @@ libloading.workspace = true
 once_cell.workspace = true
 pathdiff.workspace = true
 petgraph.workspace = true
+scarb-proc-macro-server-types = { path = "../utils/scarb-proc-macro-server-types" }
 ra_ap_toolchain.workspace = true
 redb.workspace = true
 reqwest.workspace = true

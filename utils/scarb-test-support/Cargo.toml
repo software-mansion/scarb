@@ -17,6 +17,7 @@ indoc.workspace = true
 itertools.workspace = true
 scarb = { path = "../../scarb" }
 scarb-build-metadata = { path = "../scarb-build-metadata" }
+scarb-proc-macro-server-types = { path = "../scarb-proc-macro-server-types" }
 scarb-ui = { path = "../scarb-ui" }
 semver.workspace = true
 serde.workspace = true

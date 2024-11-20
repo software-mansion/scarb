@@ -6,6 +6,7 @@ pub mod filesystem;
 pub mod fsx;
 pub mod gitx;
 pub mod manifest_edit;
+pub mod proc_macro_server;
 pub mod project_builder;
 pub mod registry;
 pub mod simple_http_server;
