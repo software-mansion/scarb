@@ -12,7 +12,8 @@ use cairo_lang_defs::plugin::{
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_diagnostics::ToOption;
 use cairo_lang_filesystem::db::Edition;
-use cairo_lang_filesystem::ids::CodeMapping;
+use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
+use cairo_lang_filesystem::span::{TextOffset, TextSpan, TextWidth};
 use cairo_lang_macro::{
     AllocationContext, AuxData, Diagnostic, FullPathMarker, ProcMacroResult, Severity, TokenStream,
     TokenStreamMetadata, TokenTree,
@@ -540,6 +541,9 @@ impl ProcMacroHostPlugin {
 
         let ctx = AllocationContext::default();
         let mut derived_code = PatchBuilder::new(db, &item_ast);
+        let mut code_mappings = Vec::new();
+        let mut current_width = TextWidth::default();
+
         for derive in derives {
             let token_stream = token_stream_builder.build(&ctx);
             let result = self.instance(derive.package_id).generate_code(
@@ -565,6 +569,14 @@ impl ProcMacroHostPlugin {
                 continue;
             }
 
+            let mut mappings = generate_code_mappings(&result.token_stream);
+            for mapping in &mut mappings {
+                mapping.span.start = mapping.span.start.add_width(current_width);
+                mapping.span.end = mapping.span.end.add_width(current_width);
+            }
+            code_mappings.extend(mappings);
+            current_width = current_width + TextWidth::from_str(&result.token_stream.to_string());
+
             for token in result.token_stream.tokens {
                 match token {
                     TokenTree::Ident(token) => {
@@ -582,7 +594,7 @@ impl ProcMacroHostPlugin {
                 } else {
                     Some(PluginGeneratedFile {
                         name: "proc_macro_derive".into(),
-                        code_mappings: Vec::new(),
+                        code_mappings,
                         content: derived_code,
                         aux_data: if aux_data.is_empty() {
                             None
@@ -648,11 +660,12 @@ impl ProcMacroHostPlugin {
         }
 
         let file_name = format!("proc_{}", input.expansion.name);
+        let code_mappings = generate_code_mappings(&result.token_stream);
         let content = result.token_stream.to_string();
         PluginResult {
             code: Some(PluginGeneratedFile {
                 name: file_name.into(),
-                code_mappings: Vec::new(),
+                code_mappings,
                 content,
                 aux_data: result.aux_data.map(|new_aux_data| {
                     DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
@@ -1067,10 +1080,11 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                 DynGeneratedFileAuxData::new(emitted)
             });
             let content = token_stream.to_string();
+            let code_mappings = generate_code_mappings(&token_stream);
             InlinePluginResult {
                 code: Some(PluginGeneratedFile {
                     name: "inline_proc_macro".into(),
-                    code_mappings: Vec::new(),
+                    code_mappings,
                     content,
                     aux_data,
                 }),
@@ -1126,4 +1140,34 @@ impl ProcMacroHost {
     pub fn macros(&self) -> &[Arc<ProcMacroInstance>] {
         &self.macros
     }
+}
+
+fn generate_code_mappings(token_stream: &TokenStream) -> Vec<CodeMapping> {
+    let mut mappings = Vec::new();
+    let mut current_pos = TextOffset::default();
+
+    for token in token_stream.tokens.iter() {
+        match token {
+            TokenTree::Ident(token) => {
+                let token_width = TextWidth::from_str(token.content.as_ref());
+
+                mappings.push(CodeMapping {
+                    span: TextSpan {
+                        start: current_pos,
+                        end: current_pos.add_width(token_width),
+                    },
+                    origin: CodeOrigin::Span(TextSpan {
+                        start: TextOffset::default()
+                            .add_width(TextWidth::new_for_testing(token.span.start as u32)),
+                        end: TextOffset::default()
+                            .add_width(TextWidth::new_for_testing(token.span.end as u32)),
+                    }),
+                });
+
+                current_pos = current_pos.add_width(token_width);
+            }
+        }
+    }
+
+    mappings
 }
