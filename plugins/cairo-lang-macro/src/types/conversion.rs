@@ -182,6 +182,211 @@ impl TokenTree {
     }
 }
 
+impl TextSpan {
+    /// Convert to FFI-safe representation.
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableTextSpan {
+        StableTextSpan {
+            start: self.start,
+            end: self.end,
+        }
+    }
+
+    #[doc(hidden)]
+    pub fn from_stable(span: &StableTextSpan) -> Self {
+        Self {
+            start: span.start,
+            end: span.end,
+        }
+    }
+
+    #[doc(hidden)]
+    pub fn from_owned_stable(span: StableTextSpan) -> Self {
+        Self {
+            start: span.start,
+            end: span.end,
+        }
+    }
+}
+
+impl Token {
+    /// Convert to FFI-safe representation.
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableToken {
+        let cstr = CString::new(self.content.as_bytes()).unwrap();
+        StableToken {
+            span: self.span.into_stable(),
+            content: cstr.into_raw(),
+        }
+    }
+
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_stable(token: &StableToken) -> Self {
+        Self {
+            content: from_raw_cstr(token.content),
+            span: TextSpan::from_stable(&token.span),
+        }
+    }
+
+    /// Convert to native Rust representation, with taking the ownership of the string.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_owned_stable(token: StableToken) -> Self {
+        Self {
+            content: from_raw_cstring(token.content),
+            span: TextSpan::from_owned_stable(token.span),
+        }
+    }
+}
+
+impl TokenTree {
+    /// Convert to FFI-safe representation.
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableTokenTree {
+        match self {
+            Self::Ident(token) => StableTokenTree::Ident(token.into_stable()),
+        }
+    }
+
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `from_owned_stable`.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_stable(token_tree: &StableTokenTree) -> Self {
+        match token_tree {
+            StableTokenTree::Ident(token) => Self::Ident(Token::from_stable(token)),
+        }
+    }
+
+    /// Take the ownership of memory under the pointer and drop it.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn free_owned_stable(result: StableProcMacroResult) {
+        for diagnostic in result.diagnostics.into_owned() {
+            Diagnostic::free_owned_stable(diagnostic);
+        }
+        for marker in result.full_path_markers.into_owned() {
+            free_raw_cstring(marker)
+        }
+        TokenStream::free_owned_stable(result.token_stream);
+        AuxData::free_owned_stable(result.aux_data);
+    }
+}
+
+impl TextSpan {
+    /// Convert to FFI-safe representation.
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableTextSpan {
+        StableTextSpan {
+            start: self.start,
+            end: self.end,
+        }
+    }
+
+    /// Convert to native Rust representation, without taking the ownership.
+    #[doc(hidden)]
+    pub fn from_stable(span: &StableTextSpan) -> Self {
+        Self {
+            start: span.start,
+            end: span.end,
+        }
+    }
+
+    #[doc(hidden)]
+    pub fn free_owned_stable(span: StableTextSpan) {
+        let _ = span;
+    }
+}
+
+impl Token {
+    /// Convert to FFI-safe representation.
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableToken {
+        let cstr = CString::new(self.content.as_bytes()).unwrap();
+        StableToken {
+            span: self.span.map(|span| span.into_stable()),
+            content: cstr.into_raw(),
+        }
+    }
+
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_stable(token: &StableToken) -> Self {
+        Self {
+            content: from_raw_cstr(token.content),
+            span: token.span.as_ref().map(TextSpan::from_stable),
+        }
+    }
+
+    /// Take the ownership of memory under the pointer and drop it.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn free_owned_stable(token: StableToken) {
+        free_raw_cstring(token.content);
+        if let Some(span) = token.span {
+            TextSpan::free_owned_stable(span);
+        }
+    }
+}
+
+impl TokenTree {
+    /// Convert to FFI-safe representation.
+    #[doc(hidden)]
+    pub fn into_stable(self) -> StableTokenTree {
+        match self {
+            Self::Ident(token) => StableTokenTree::Ident(token.into_stable()),
+        }
+    }
+
+    /// Convert to native Rust representation, without taking the ownership of the string.
+    ///
+    /// Note that you still need to free the memory by calling `free_owned_stable`.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_stable(token_tree: &StableTokenTree) -> Self {
+        match token_tree {
+            StableTokenTree::Ident(token) => Self::Ident(Token::from_stable(token)),
+        }
+    }
+
+    /// Take the ownership of memory under the pointer and drop it.
+    ///
+    /// Useful when you need to free the allocated memory.
+    /// Only use on the same side of FFI-barrier, where the memory has been allocated.
+    ///
+    /// # Safety
+    #[doc(hidden)]
+    pub unsafe fn from_owned_stable(token_tree: StableTokenTree) -> Self {
+        match token_tree {
+            StableTokenTree::Ident(token) => Self::Ident(Token::from_owned_stable(token)),
+        }
+    }
+}
+
 impl TokenStream {
     /// Convert to FFI-safe representation.
     ///
