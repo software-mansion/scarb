@@ -174,6 +174,10 @@ impl Config {
         self.ui.clone()
     }
 
+    pub fn set_ui(&mut self, ui: Ui) {
+        self.ui = ui;
+    }
+
     pub fn elapsed_time(&self) -> Duration {
         self.creation_time.elapsed()
     }
