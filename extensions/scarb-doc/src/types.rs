@@ -50,13 +50,7 @@ impl Crate {
         include_private_items: bool,
     ) -> Maybe<Self> {
         let root_module_id = ModuleId::CrateRoot(crate_id);
-        let root_module = Module::new(
-            db,
-            root_module_id,
-            root_module_id,
-            include_private_items,
-            None,
-        )?;
+        let root_module = Module::new(db, root_module_id, root_module_id, include_private_items)?;
         let included_items = root_module.get_all_item_ids();
         Ok(Self {
             root_module,
@@ -196,7 +190,6 @@ impl Module {
         module_id: ModuleId,
         root_module_id: ModuleId,
         include_private_items: bool,
-        parent_full_path: Option<String>,
     ) -> Maybe<Self> {
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData::new_crate(db, crate_id),
@@ -204,11 +197,8 @@ impl Module {
                 db,
                 submodule_id,
                 LookupItemId::ModuleItem(ModuleItemId::Submodule(submodule_id)).into(),
-                parent_full_path,
             ),
         };
-
-        let parent_full_path = Some(item_data.full_path.clone());
 
         let should_include_item = |id: &dyn TopLevelLanguageElementId| {
             let syntax_node = id.stable_location(db.upcast()).syntax_node(db.upcast());
@@ -225,7 +215,7 @@ impl Module {
         let constants = filter_map_item_id_to_item(
             chain!(module_constants.keys(), module_pubuses.use_constants.iter()),
             should_include_item,
-            |id| Ok(Constant::new(db, *id, parent_full_path.clone())),
+            |id| Ok(Constant::new(db, *id)),
         )?;
 
         let module_free_functions = db.module_free_functions(module_id)?;
@@ -235,29 +225,21 @@ impl Module {
                 module_pubuses.use_free_functions.iter()
             ),
             should_include_item,
-            |id| Ok(FreeFunction::new(db, *id, parent_full_path.clone())),
+            |id| Ok(FreeFunction::new(db, *id)),
         )?;
 
         let module_structs = db.module_structs(module_id)?;
         let structs = filter_map_item_id_to_item(
             chain!(module_structs.keys(), module_pubuses.use_structs.iter()),
             should_include_item,
-            |id| {
-                Struct::new(
-                    db,
-                    *id,
-                    root_module_id,
-                    include_private_items,
-                    parent_full_path.clone(),
-                )
-            },
+            |id| Struct::new(db, *id, root_module_id, include_private_items),
         )?;
 
         let module_enums = db.module_enums(module_id)?;
         let enums = filter_map_item_id_to_item(
             chain!(module_enums.keys(), module_pubuses.use_enums.iter()),
             should_include_item,
-            |id| Enum::new(db, *id, parent_full_path.clone()),
+            |id| Enum::new(db, *id),
         )?;
 
         let module_type_aliases = db.module_type_aliases(module_id)?;
@@ -267,7 +249,7 @@ impl Module {
                 module_pubuses.use_module_type_aliases.iter()
             ),
             should_include_item,
-            |id| Ok(TypeAlias::new(db, *id, parent_full_path.clone())),
+            |id| Ok(TypeAlias::new(db, *id)),
         )?;
 
         let module_impl_aliases = db.module_impl_aliases(module_id)?;
@@ -277,14 +259,14 @@ impl Module {
                 module_pubuses.use_impl_aliases.iter()
             ),
             should_include_item,
-            |id| Ok(ImplAlias::new(db, *id, parent_full_path.clone())),
+            |id| Ok(ImplAlias::new(db, *id)),
         )?;
 
         let module_traits = db.module_traits(module_id)?;
         let traits = filter_map_item_id_to_item(
             chain!(module_traits.keys(), module_pubuses.use_traits.iter()),
             should_include_item,
-            |id| Trait::new(db, *id, parent_full_path.clone()),
+            |id| Trait::new(db, *id),
         )?;
 
         let module_impls = db.module_impls(module_id)?;
@@ -336,7 +318,7 @@ impl Module {
             chain!(module_impls.keys(), module_pubuses.use_impl_defs.iter())
                 .filter(hide_impls_for_hidden_traits),
             should_include_item,
-            |id| Impl::new(db, *id, parent_full_path.clone()),
+            |id| Impl::new(db, *id),
         )?;
 
         let module_extern_types = db.module_extern_types(module_id)?;
@@ -346,7 +328,7 @@ impl Module {
                 module_pubuses.use_extern_types.iter()
             ),
             should_include_item,
-            |id| Ok(ExternType::new(db, *id, parent_full_path.clone())),
+            |id| Ok(ExternType::new(db, *id)),
         )?;
 
         let module_extern_functions = db.module_extern_functions(module_id)?;
@@ -356,7 +338,7 @@ impl Module {
                 module_pubuses.use_extern_functions.iter()
             ),
             should_include_item,
-            |id| Ok(ExternFunction::new(db, *id, parent_full_path.clone())),
+            |id| Ok(ExternFunction::new(db, *id)),
         )?;
 
         let module_submodules = db.module_submodules(module_id)?;
@@ -372,7 +354,6 @@ impl Module {
                     ModuleId::Submodule(*id),
                     root_module_id,
                     include_private_items,
-                    parent_full_path.clone(),
                 )
             },
         )?;
@@ -386,7 +367,6 @@ impl Module {
                     ModuleId::CrateRoot(*id),
                     root_module_id,
                     include_private_items,
-                    parent_full_path.clone(),
                 )
             })
             .collect::<Maybe<_>>()?;
@@ -524,7 +504,6 @@ impl ItemData {
         db: &ScarbDocDatabase,
         id: impl TopLevelLanguageElementId,
         documentable_item_id: DocumentableItemId,
-        parent_full_path: Option<String>,
     ) -> Self {
         Self {
             id: documentable_item_id,
@@ -532,7 +511,7 @@ impl ItemData {
             doc: db.get_item_documentation_as_tokens(documentable_item_id),
             signature: Some(db.get_item_signature(documentable_item_id)),
             full_path: id.full_path(db),
-            parent_full_path,
+            parent_full_path: Some(id.parent_module(db).full_path(db)),
         }
     }
 
@@ -540,7 +519,6 @@ impl ItemData {
         db: &ScarbDocDatabase,
         id: impl TopLevelLanguageElementId,
         documentable_item_id: DocumentableItemId,
-        parent_full_path: Option<String>,
     ) -> Self {
         Self {
             id: documentable_item_id,
@@ -548,7 +526,7 @@ impl ItemData {
             doc: db.get_item_documentation_as_tokens(documentable_item_id),
             signature: None,
             full_path: id.full_path(db),
-            parent_full_path,
+            parent_full_path: Some(id.parent_module(db).full_path(db)),
         }
     }
 
@@ -595,7 +573,7 @@ pub struct Constant {
 }
 
 impl Constant {
-    pub fn new(db: &ScarbDocDatabase, id: ConstantId, parent_full_path: Option<String>) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ConstantId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -604,7 +582,6 @@ impl Constant {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::Constant(id)).into(),
-                parent_full_path,
             ),
         }
     }
@@ -621,11 +598,7 @@ pub struct FreeFunction {
 }
 
 impl FreeFunction {
-    pub fn new(
-        db: &ScarbDocDatabase,
-        id: FreeFunctionId,
-        parent_full_path: Option<String>,
-    ) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: FreeFunctionId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -634,7 +607,6 @@ impl FreeFunction {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::FreeFunction(id)).into(),
-                parent_full_path,
             ),
         }
     }
@@ -658,7 +630,6 @@ impl Struct {
         id: StructId,
         root_module_id: ModuleId,
         include_private_items: bool,
-        parent_full_path: Option<String>,
     ) -> Maybe<Self> {
         let members = db.struct_members(id)?;
 
@@ -666,7 +637,6 @@ impl Struct {
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
-            parent_full_path,
         );
         let members = members
             .iter()
@@ -680,11 +650,7 @@ impl Struct {
                         if (include_private_items || visible)
                             && !is_doc_hidden_attr(db, syntax_node)
                         {
-                            Some(Ok(Member::new(
-                                db,
-                                semantic_member.id,
-                                Some(item_data.full_path.clone()),
-                            )))
+                            Some(Ok(Member::new(db, semantic_member.id)))
                         } else {
                             None
                         }
@@ -722,13 +688,13 @@ pub struct Member {
 }
 
 impl Member {
-    pub fn new(db: &ScarbDocDatabase, id: MemberId, parent_full_path: Option<String>) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: MemberId) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Member(id), parent_full_path),
+            item_data: ItemData::new(db, id, DocumentableItemId::Member(id)),
         }
     }
 }
@@ -746,20 +712,17 @@ pub struct Enum {
 }
 
 impl Enum {
-    pub fn new(db: &ScarbDocDatabase, id: EnumId, parent_full_path: Option<String>) -> Maybe<Self> {
+    pub fn new(db: &ScarbDocDatabase, id: EnumId) -> Maybe<Self> {
         let variants = db.enum_variants(id)?;
         let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Enum(id)).into(),
-            parent_full_path,
         );
 
         let variants = variants
             .iter()
-            .map(|(_name, variant_id)| {
-                Variant::new(db, *variant_id, Some(item_data.full_path.clone()))
-            })
+            .map(|(_name, variant_id)| Variant::new(db, *variant_id))
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
@@ -790,13 +753,13 @@ pub struct Variant {
 }
 
 impl Variant {
-    pub fn new(db: &ScarbDocDatabase, id: VariantId, parent_full_path: Option<String>) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: VariantId) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Variant(id), parent_full_path),
+            item_data: ItemData::new(db, id, DocumentableItemId::Variant(id)),
         }
     }
 }
@@ -812,11 +775,7 @@ pub struct TypeAlias {
 }
 
 impl TypeAlias {
-    pub fn new(
-        db: &ScarbDocDatabase,
-        id: ModuleTypeAliasId,
-        parent_full_path: Option<String>,
-    ) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ModuleTypeAliasId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -825,7 +784,6 @@ impl TypeAlias {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::TypeAlias(id)).into(),
-                parent_full_path,
             ),
         }
     }
@@ -842,7 +800,7 @@ pub struct ImplAlias {
 }
 
 impl ImplAlias {
-    pub fn new(db: &ScarbDocDatabase, id: ImplAliasId, parent_full_path: Option<String>) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplAliasId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -851,7 +809,6 @@ impl ImplAlias {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ImplAlias(id)).into(),
-                parent_full_path,
             ),
         }
     }
@@ -872,42 +829,29 @@ pub struct Trait {
 }
 
 impl Trait {
-    pub fn new(
-        db: &ScarbDocDatabase,
-        id: TraitId,
-        parent_full_path: Option<String>,
-    ) -> Maybe<Self> {
+    pub fn new(db: &ScarbDocDatabase, id: TraitId) -> Maybe<Self> {
         let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Trait(id)).into(),
-            parent_full_path,
         );
-
-        let parent_full_path = Some(item_data.full_path.clone());
 
         let trait_constants = db.trait_constants(id)?;
         let trait_constants = trait_constants
             .iter()
-            .map(|(_name, trait_constant_id)| {
-                TraitConstant::new(db, *trait_constant_id, parent_full_path.clone())
-            })
+            .map(|(_name, trait_constant_id)| TraitConstant::new(db, *trait_constant_id))
             .collect::<Vec<_>>();
 
         let trait_types = db.trait_types(id)?;
         let trait_types = trait_types
             .iter()
-            .map(|(_name, trait_type_id)| {
-                TraitType::new(db, *trait_type_id, parent_full_path.clone())
-            })
+            .map(|(_name, trait_type_id)| TraitType::new(db, *trait_type_id))
             .collect::<Vec<_>>();
 
         let trait_functions = db.trait_functions(id)?;
         let trait_functions = trait_functions
             .iter()
-            .map(|(_name, trait_function_id)| {
-                TraitFunction::new(db, *trait_function_id, parent_full_path.clone())
-            })
+            .map(|(_name, trait_function_id)| TraitFunction::new(db, *trait_function_id))
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
@@ -947,11 +891,7 @@ pub struct TraitConstant {
 }
 
 impl TraitConstant {
-    pub fn new(
-        db: &ScarbDocDatabase,
-        id: TraitConstantId,
-        parent_full_path: Option<String>,
-    ) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitConstantId) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -961,7 +901,6 @@ impl TraitConstant {
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Constant(id)).into(),
-                parent_full_path,
             ),
         }
     }
@@ -978,7 +917,7 @@ pub struct TraitType {
 }
 
 impl TraitType {
-    pub fn new(db: &ScarbDocDatabase, id: TraitTypeId, parent_full_path: Option<String>) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitTypeId) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -988,7 +927,6 @@ impl TraitType {
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Type(id)).into(),
-                parent_full_path,
             ),
         }
     }
@@ -1005,11 +943,7 @@ pub struct TraitFunction {
 }
 
 impl TraitFunction {
-    pub fn new(
-        db: &ScarbDocDatabase,
-        id: TraitFunctionId,
-        parent_full_path: Option<String>,
-    ) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: TraitFunctionId) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -1019,7 +953,6 @@ impl TraitFunction {
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Function(id)).into(),
-                parent_full_path,
             ),
         }
     }
@@ -1040,36 +973,29 @@ pub struct Impl {
 }
 
 impl Impl {
-    pub fn new(
-        db: &ScarbDocDatabase,
-        id: ImplDefId,
-        parent_full_path: Option<String>,
-    ) -> Maybe<Self> {
+    pub fn new(db: &ScarbDocDatabase, id: ImplDefId) -> Maybe<Self> {
         let item_data = ItemData::new(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Impl(id)).into(),
-            parent_full_path,
         );
-
-        let parent_full_path = Some(item_data.full_path.clone());
 
         let impl_types = db.impl_types(id)?;
         let impl_types = impl_types
             .iter()
-            .map(|(id, _)| ImplType::new(db, *id, parent_full_path.clone()))
+            .map(|(id, _)| ImplType::new(db, *id))
             .collect::<Vec<_>>();
 
         let impl_constants = db.impl_constants(id)?;
         let impl_constants = impl_constants
             .iter()
-            .map(|(id, _)| ImplConstant::new(db, *id, parent_full_path.clone()))
+            .map(|(id, _)| ImplConstant::new(db, *id))
             .collect::<Vec<_>>();
 
         let impl_functions = db.impl_functions(id)?;
         let impl_functions = impl_functions
             .iter()
-            .map(|(_name, id)| ImplFunction::new(db, *id, parent_full_path.clone()))
+            .map(|(_name, id)| ImplFunction::new(db, *id))
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
@@ -1109,18 +1035,13 @@ pub struct ImplType {
 }
 
 impl ImplType {
-    pub fn new(db: &ScarbDocDatabase, id: ImplTypeDefId, parent_full_path: Option<String>) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplTypeDefId) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
             id,
             node,
-            item_data: ItemData::new(
-                db,
-                id,
-                LookupItemId::ImplItem(ImplItemId::Type(id)).into(),
-                parent_full_path,
-            ),
+            item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id)).into()),
         }
     }
 }
@@ -1136,11 +1057,7 @@ pub struct ImplConstant {
 }
 
 impl ImplConstant {
-    pub fn new(
-        db: &ScarbDocDatabase,
-        id: ImplConstantDefId,
-        parent_full_path: Option<String>,
-    ) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplConstantDefId) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -1150,7 +1067,6 @@ impl ImplConstant {
                 db,
                 id,
                 LookupItemId::ImplItem(ImplItemId::Constant(id)).into(),
-                parent_full_path,
             ),
         }
     }
@@ -1167,11 +1083,7 @@ pub struct ImplFunction {
 }
 
 impl ImplFunction {
-    pub fn new(
-        db: &ScarbDocDatabase,
-        id: ImplFunctionId,
-        parent_full_path: Option<String>,
-    ) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ImplFunctionId) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
@@ -1181,7 +1093,6 @@ impl ImplFunction {
                 db,
                 id,
                 LookupItemId::ImplItem(ImplItemId::Function(id)).into(),
-                parent_full_path,
             ),
         }
     }
@@ -1198,7 +1109,7 @@ pub struct ExternType {
 }
 
 impl ExternType {
-    pub fn new(db: &ScarbDocDatabase, id: ExternTypeId, parent_full_path: Option<String>) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ExternTypeId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -1207,7 +1118,6 @@ impl ExternType {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternType(id)).into(),
-                parent_full_path,
             ),
         }
     }
@@ -1224,11 +1134,7 @@ pub struct ExternFunction {
 }
 
 impl ExternFunction {
-    pub fn new(
-        db: &ScarbDocDatabase,
-        id: ExternFunctionId,
-        parent_full_path: Option<String>,
-    ) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: ExternFunctionId) -> Self {
         let node = id.stable_ptr(db);
         Self {
             id,
@@ -1237,7 +1143,6 @@ impl ExternFunction {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternFunction(id)).into(),
-                parent_full_path,
             ),
         }
     }
