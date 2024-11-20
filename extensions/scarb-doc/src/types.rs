@@ -439,42 +439,22 @@ impl Module {
 
         self.structs.iter().for_each(|struct_| {
             ids.insert(struct_.item_data.id, struct_.item_data.clone());
-            struct_.members.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
-            })
+            struct_.get_all_item_ids();
         });
 
         self.enums.iter().for_each(|enum_| {
             ids.insert(enum_.item_data.id, enum_.item_data.clone());
-            enum_.variants.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
-            });
+            ids.extend(enum_.get_all_item_ids());
         });
 
         self.traits.iter().for_each(|trait_| {
             ids.insert(trait_.item_data.id, trait_.item_data.clone());
-            trait_.trait_constants.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
-            });
-            trait_.trait_functions.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
-            });
-            trait_.trait_types.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
-            });
+            ids.extend(trait_.get_all_item_ids());
         });
 
         self.impls.iter().for_each(|impl_| {
             ids.insert(impl_.item_data.id, impl_.item_data.clone());
-            impl_.impl_constants.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
-            });
-            impl_.impl_functions.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
-            });
-            impl_.impl_types.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
-            });
+            ids.extend(impl_.get_all_item_ids());
         });
 
         self.submodules.iter().for_each(|sub_module| {
@@ -722,6 +702,13 @@ impl Struct {
             item_data,
         })
     }
+
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
+        self.members
+            .iter()
+            .map(|item| (item.item_data.id, item.item_data.clone()))
+            .collect()
+    }
 }
 
 #[derive(Serialize, Clone)]
@@ -782,6 +769,13 @@ impl Enum {
             variants,
             item_data,
         })
+    }
+
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
+        self.variants
+            .iter()
+            .map(|item| (item.item_data.id, item.item_data.clone()))
+            .collect()
     }
 }
 
@@ -925,6 +919,20 @@ impl Trait {
             trait_functions,
             item_data,
         })
+    }
+
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
+        let mut result: HashMap<DocumentableItemId, ItemData> = HashMap::default();
+        self.trait_constants.iter().for_each(|item| {
+            result.insert(item.item_data.id, item.item_data.clone());
+        });
+        self.trait_functions.iter().for_each(|item| {
+            result.insert(item.item_data.id, item.item_data.clone());
+        });
+        self.trait_types.iter().for_each(|item| {
+            result.insert(item.item_data.id, item.item_data.clone());
+        });
+        result
     }
 }
 
@@ -1073,6 +1081,20 @@ impl Impl {
             impl_functions,
             item_data,
         })
+    }
+
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
+        let mut result: HashMap<DocumentableItemId, ItemData> = HashMap::default();
+        self.impl_constants.iter().for_each(|item| {
+            result.insert(item.item_data.id, item.item_data.clone());
+        });
+        self.impl_functions.iter().for_each(|item| {
+            result.insert(item.item_data.id, item.item_data.clone());
+        });
+        self.impl_types.iter().for_each(|item| {
+            result.insert(item.item_data.id, item.item_data.clone());
+        });
+        result
     }
 }
 
