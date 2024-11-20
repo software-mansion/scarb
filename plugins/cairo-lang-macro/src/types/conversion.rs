@@ -132,7 +132,7 @@ impl Token {
         let content = ctx.intern(std::str::from_utf8_unchecked(content));
         Self {
             content,
-            span: TextSpan::from_stable(&token.span),
+            span: Some(TextSpan::from_stable(&token.span)),
         }
     }
 
