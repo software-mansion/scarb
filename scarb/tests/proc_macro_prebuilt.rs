@@ -1,7 +1,7 @@
 use assert_fs::fixture::{ChildPath, FileWriteStr, PathCreateDir};
 use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
-use cairo_lang_macro::TokenStream;
+use cairo_lang_macro::{TextSpan, Token, TokenStream, TokenTree};
 use indoc::indoc;
 use libloading::library_filename;
 use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineMacroParams};
@@ -216,9 +216,18 @@ fn load_prebuilt_proc_macros() {
     let response = proc_macro_server
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
             name: "some".to_string(),
-            args: TokenStream::new("42".to_string()),
+            args: TokenStream::new(vec![TokenTree::Ident(Token::new(
+                "42",
+                TextSpan::default(),
+            ))]),
         })
         .unwrap();
     assert_eq!(response.diagnostics, vec![]);
-    assert_eq!(response.token_stream, TokenStream::new("42".to_string()));
+    assert_eq!(
+        response.token_stream,
+        TokenStream::new(vec![TokenTree::Ident(Token::new(
+            "42",
+            TextSpan::default(),
+        ))])
+    );
 }
