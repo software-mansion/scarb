@@ -227,7 +227,7 @@ fn load_prebuilt_proc_macros() {
             context: ProcMacroScope { component },
             name: "some".to_string(),
             args: TokenStream::new(vec![TokenTree::Ident(Token::new(
-                "42".to_string(),
+                "42",
                 TextSpan::default(),
             ))]),
         })
@@ -237,7 +237,7 @@ fn load_prebuilt_proc_macros() {
     assert_eq!(
         response.token_stream,
         TokenStream::new(vec![TokenTree::Ident(Token::new(
-            "42".to_string(),
+            "42",
             TextSpan::default(),
         ))])
     );
