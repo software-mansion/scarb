@@ -1,3 +1,4 @@
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::core::{Config, Package, PackageId};
 use anyhow::{ensure, Context, Result};
 use cairo_lang_macro::{
@@ -15,9 +16,7 @@ use std::ffi::{c_char, CStr, CString};
 use std::fmt::Debug;
 use std::slice;
 
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::ProcMacroAuxData;
-
 #[cfg(not(windows))]
 use libloading::os::unix::Symbol as RawSymbol;
 #[cfg(windows)]
