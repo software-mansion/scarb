@@ -1,5 +1,6 @@
 use anyhow::Result;
 use camino::Utf8Path;
+use context::MarkdownGenerationContext;
 use itertools::chain;
 use std::fs;
 
@@ -11,12 +12,13 @@ use crate::docs_generation::markdown::traits::{
 use crate::docs_generation::{collect_all_top_level_items, TopLevelItems};
 use crate::errors::{IODirectoryCreationError, IOWriteError};
 use crate::types::{
-    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, IncludedItems,
-    Module, Struct, Trait, TypeAlias,
+    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Module, Struct,
+    Trait, TypeAlias,
 };
 use crate::PackageInformation;
 
 mod book_toml;
+mod context;
 mod summary;
 mod traits;
 
@@ -26,17 +28,17 @@ const BOOK_TOML_FILENAME: &str = "book.toml";
 pub const SUMMARY_FILENAME: &str = "SUMMARY.md";
 
 type Filename = String;
+type GeneratedFile = (Filename, String);
 
 pub struct MarkdownContent {
     book_toml: String,
     summary: String,
-    doc_files: Vec<(Filename, String)>,
+    doc_files: Vec<GeneratedFile>,
 }
 
 impl MarkdownContent {
     pub fn from_crate(package_information: &PackageInformation) -> Result<Self> {
         let top_level_items = collect_all_top_level_items(&package_information.crate_);
-        let included_items = &package_information.crate_.included_items;
 
         let summary_file_content = generate_summary_file_content(&top_level_items)?;
         let TopLevelItems {
@@ -53,18 +55,19 @@ impl MarkdownContent {
             extern_functions,
         } = top_level_items;
 
+        let context = MarkdownGenerationContext::from_crate(&package_information.crate_);
         let docs_for_top_level_items = chain!(
-            generate_top_level_docs_contents(&modules, included_items)?,
-            generate_top_level_docs_contents(&constants, included_items)?,
-            generate_top_level_docs_contents(&free_functions, included_items)?,
-            generate_top_level_docs_contents(&structs, included_items)?,
-            generate_top_level_docs_contents(&enums, included_items)?,
-            generate_top_level_docs_contents(&type_aliases, included_items)?,
-            generate_top_level_docs_contents(&impl_aliases, included_items)?,
-            generate_top_level_docs_contents(&traits, included_items)?,
-            generate_top_level_docs_contents(&impls, included_items)?,
-            generate_top_level_docs_contents(&extern_types, included_items)?,
-            generate_top_level_docs_contents(&extern_functions, included_items)?,
+            generate_top_level_docs_contents(&modules, &context)?,
+            generate_top_level_docs_contents(&constants, &context)?,
+            generate_top_level_docs_contents(&free_functions, &context)?,
+            generate_top_level_docs_contents(&structs, &context)?,
+            generate_top_level_docs_contents(&enums, &context)?,
+            generate_top_level_docs_contents(&type_aliases, &context)?,
+            generate_top_level_docs_contents(&impl_aliases, &context)?,
+            generate_top_level_docs_contents(&traits, &context)?,
+            generate_top_level_docs_contents(&impls, &context)?,
+            generate_top_level_docs_contents(&extern_types, &context)?,
+            generate_top_level_docs_contents(&extern_functions, &context)?,
         )
         .collect::<Vec<(String, String)>>();
 
@@ -150,13 +153,13 @@ impl MarkdownContent {
 
 fn generate_top_level_docs_contents(
     items: &[&impl TopLevelMarkdownDocItem],
-    included_items: &IncludedItems,
+    context: &MarkdownGenerationContext,
 ) -> Result<Vec<(Filename, String)>> {
     items
         .iter()
         .map(|item| {
             let filename = item.filename();
-            item.generate_markdown(included_items, BASE_HEADER_LEVEL)
+            item.generate_markdown(context, BASE_HEADER_LEVEL)
                 .map(|markdown| (filename, markdown))
         })
         .collect()

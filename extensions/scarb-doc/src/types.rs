@@ -34,12 +34,8 @@ use cairo_lang_syntax::node::{
 use crate::db::ScarbDocDatabase;
 use serde::Serializer;
 
-pub type IncludedItems = HashMap<DocumentableItemId, ItemData>;
-
 #[derive(Serialize, Clone)]
 pub struct Crate {
-    #[serde(skip)]
-    pub included_items: HashMap<DocumentableItemId, ItemData>,
     pub root_module: Module,
 }
 
@@ -51,11 +47,7 @@ impl Crate {
     ) -> Maybe<Self> {
         let root_module_id = ModuleId::CrateRoot(crate_id);
         let root_module = Module::new(db, root_module_id, root_module_id, include_private_items)?;
-        let included_items = root_module.get_all_item_ids();
-        Ok(Self {
-            root_module,
-            included_items,
-        })
+        Ok(Self { root_module })
     }
 }
 
@@ -390,50 +382,50 @@ impl Module {
         })
     }
 
-    /// Recursivly traverses all the module and gets all the item [DocumentableItemId]s.
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
-        let mut ids: HashMap<DocumentableItemId, ItemData> = HashMap::default();
+    /// Recursively traverses all the module and gets all the item [`DocumentableItemId`]s.
+    pub(crate) fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+        let mut ids: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
 
-        ids.insert(self.item_data.id, self.item_data.clone());
+        ids.insert(self.item_data.id, &self.item_data);
         self.constants.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.free_functions.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.type_aliases.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.impl_aliases.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.free_functions.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.extern_types.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.extern_functions.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
 
         self.structs.iter().for_each(|struct_| {
-            ids.insert(struct_.item_data.id, struct_.item_data.clone());
+            ids.insert(struct_.item_data.id, &struct_.item_data);
             struct_.get_all_item_ids();
         });
 
         self.enums.iter().for_each(|enum_| {
-            ids.insert(enum_.item_data.id, enum_.item_data.clone());
+            ids.insert(enum_.item_data.id, &enum_.item_data);
             ids.extend(enum_.get_all_item_ids());
         });
 
         self.traits.iter().for_each(|trait_| {
-            ids.insert(trait_.item_data.id, trait_.item_data.clone());
+            ids.insert(trait_.item_data.id, &trait_.item_data);
             ids.extend(trait_.get_all_item_ids());
         });
 
         self.impls.iter().for_each(|impl_| {
-            ids.insert(impl_.item_data.id, impl_.item_data.clone());
+            ids.insert(impl_.item_data.id, &impl_.item_data);
             ids.extend(impl_.get_all_item_ids());
         });
 
@@ -669,10 +661,10 @@ impl Struct {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
         self.members
             .iter()
-            .map(|item| (item.item_data.id, item.item_data.clone()))
+            .map(|item| (item.item_data.id, &item.item_data))
             .collect()
     }
 }
@@ -734,10 +726,10 @@ impl Enum {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
         self.variants
             .iter()
-            .map(|item| (item.item_data.id, item.item_data.clone()))
+            .map(|item| (item.item_data.id, &item.item_data))
             .collect()
     }
 }
@@ -865,16 +857,16 @@ impl Trait {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
-        let mut result: HashMap<DocumentableItemId, ItemData> = HashMap::default();
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+        let mut result: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
         self.trait_constants.iter().for_each(|item| {
-            result.insert(item.item_data.id, item.item_data.clone());
+            result.insert(item.item_data.id, &item.item_data);
         });
         self.trait_functions.iter().for_each(|item| {
-            result.insert(item.item_data.id, item.item_data.clone());
+            result.insert(item.item_data.id, &item.item_data);
         });
         self.trait_types.iter().for_each(|item| {
-            result.insert(item.item_data.id, item.item_data.clone());
+            result.insert(item.item_data.id, &item.item_data);
         });
         result
     }
@@ -1009,16 +1001,16 @@ impl Impl {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
-        let mut result: HashMap<DocumentableItemId, ItemData> = HashMap::default();
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+        let mut result: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
         self.impl_constants.iter().for_each(|item| {
-            result.insert(item.item_data.id, item.item_data.clone());
+            result.insert(item.item_data.id, &item.item_data);
         });
         self.impl_functions.iter().for_each(|item| {
-            result.insert(item.item_data.id, item.item_data.clone());
+            result.insert(item.item_data.id, &item.item_data);
         });
         self.impl_types.iter().for_each(|item| {
-            result.insert(item.item_data.id, item.item_data.clone());
+            result.insert(item.item_data.id, &item.item_data);
         });
         result
     }
