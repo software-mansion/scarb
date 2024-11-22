@@ -34,12 +34,8 @@ use cairo_lang_syntax::node::{
 use crate::db::ScarbDocDatabase;
 use serde::Serializer;
 
-pub type IncludedItems = HashMap<DocumentableItemId, ItemData>;
-
 #[derive(Serialize, Clone)]
 pub struct Crate {
-    #[serde(skip)]
-    pub included_items: HashMap<DocumentableItemId, ItemData>,
     pub root_module: Module,
 }
 
@@ -57,11 +53,7 @@ impl Crate {
             include_private_items,
             None,
         )?;
-        let included_items = root_module.get_all_item_ids();
-        Ok(Self {
-            root_module,
-            included_items,
-        })
+        Ok(Self { root_module })
     }
 }
 
@@ -410,70 +402,70 @@ impl Module {
         })
     }
 
-    /// Recursivly traverses all the module and gets all the item [DocumentableItemId]s.
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, ItemData> {
-        let mut ids: HashMap<DocumentableItemId, ItemData> = HashMap::default();
+    /// Recursively traverses all the module and gets all the item [`DocumentableItemId`]s.
+    pub(crate) fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+        let mut ids: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
 
-        ids.insert(self.item_data.id, self.item_data.clone());
+        ids.insert(self.item_data.id, &self.item_data);
         self.constants.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.free_functions.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.type_aliases.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.impl_aliases.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.free_functions.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.extern_types.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
         self.extern_functions.iter().for_each(|item| {
-            ids.insert(item.item_data.id, item.item_data.clone());
+            ids.insert(item.item_data.id, &item.item_data);
         });
 
         self.structs.iter().for_each(|struct_| {
-            ids.insert(struct_.item_data.id, struct_.item_data.clone());
+            ids.insert(struct_.item_data.id, &struct_.item_data);
             struct_.members.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
+                ids.insert(item.item_data.id, &item.item_data);
             })
         });
 
         self.enums.iter().for_each(|enum_| {
-            ids.insert(enum_.item_data.id, enum_.item_data.clone());
+            ids.insert(enum_.item_data.id, &enum_.item_data);
             enum_.variants.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
+                ids.insert(item.item_data.id, &item.item_data);
             });
         });
 
         self.traits.iter().for_each(|trait_| {
-            ids.insert(trait_.item_data.id, trait_.item_data.clone());
+            ids.insert(trait_.item_data.id, &trait_.item_data);
             trait_.trait_constants.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
+                ids.insert(item.item_data.id, &item.item_data);
             });
             trait_.trait_functions.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
+                ids.insert(item.item_data.id, &item.item_data);
             });
             trait_.trait_types.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
+                ids.insert(item.item_data.id, &item.item_data);
             });
         });
 
         self.impls.iter().for_each(|impl_| {
-            ids.insert(impl_.item_data.id, impl_.item_data.clone());
+            ids.insert(impl_.item_data.id, &impl_.item_data);
             impl_.impl_constants.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
+                ids.insert(item.item_data.id, &item.item_data);
             });
             impl_.impl_functions.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
+                ids.insert(item.item_data.id, &item.item_data);
             });
             impl_.impl_types.iter().for_each(|item| {
-                ids.insert(item.item_data.id, item.item_data.clone());
+                ids.insert(item.item_data.id, &item.item_data);
             });
         });
 
