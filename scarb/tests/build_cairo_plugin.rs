@@ -226,12 +226,13 @@ fn can_emit_plugin_error() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, mut token_stream: TokenStream) -> ProcMacroResult {
-            token_stream.tokens.push(TokenTree::Ident(Token::new("    ", TextSpan { start: 0, end: 1 })));
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let diag = Diagnostic::error("Some error from macro.");
             ProcMacroResult::new(token_stream)
+                .with_diagnostics(diag.into())
         }
         "#})
         .build(&t);
@@ -242,11 +243,7 @@ fn can_emit_plugin_error() {
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
             #[some]
-            fn f() -> felt252 {
-                let x = 1;
-                x = 2;
-                x
-            }
+            fn f() -> felt252 { 12 }
         "#})
         .build(&project);
 
