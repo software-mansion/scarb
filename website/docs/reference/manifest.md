@@ -76,11 +76,11 @@ If the edition field is not present in Scarb.toml, then the default edition is a
 
 The publish field is an optional key that determines whether the package can be published to a registry.
 Setting this field to false will prevent the package from being published.
-If the publish field is not present, then it is assumed to be true.
+By default, this field is set to `true`.
 
 ```toml
 [package]
-publish = false
+publish = true
 ```
 
 ### `cairo-version`
@@ -263,32 +263,34 @@ For example, while the Sierra name be `[6]`, with this flag turned on it might b
 - For types: `felt252` or `Box<Box<felt252>>`.
 - For user functions: `test::foo`.
 
+By default, this flag is set to `false`.
+
 ```toml
 [cairo]
-sierra-replace-ids = true
+sierra-replace-ids = false
 ```
 
 ### `allow-warnings`
 
 If enabled, Scarb will not exit with error on compiler warnings.
-By default, this flag is enabled.
+By default, this flag is set to `true`.
 
 ```toml
 [cairo]
-allow-warnings = false
+allow-warnings = true
 ```
 
 ### `enable-gas`
 
 If enabled, during the project compilation Scarb will not add any instructions related to gas usage calculation.
-By default, this flag is enabled.
+By default, this flag is set to `true`.
 
 ```toml
 [cairo]
-enable-gas = false
+enable-gas = true
 ```
 
-This flag cannot be disabled while compiling the `starknet-contract` target.
+This flag cannot be set to `false` while compiling the `starknet-contract` target.
 
 ### `inlining-strategy`
 
@@ -309,11 +311,11 @@ If `avoid` strategy is set, the compiler will only inline function annotated wit
 > It is advised not to use it for other purposes than that.
 
 If enabled, during the project compilation Scarb will add redeposit gas libfunc calls in some locations.
-By default, this flag is disabled.
+By default, this flag is set to `false`.
 
 ```toml
 [cairo]
-add-redeposit-gas = true
+add-redeposit-gas = false
 ```
 
 ### `unstable-add-statements-functions-debug-info`
@@ -327,11 +329,11 @@ add-redeposit-gas = true
 If enabled, during the project compilation Scarb will a add mapping between Sierra statement indexes and vectors of
 fully qualified paths of Cairo functions to debug info. A statement index maps to a vector consisting of a function
 which caused the statement to be generated and all functions that were inlined or generated along the way.
-By default, this flag is disabled.
+By default, this flag is set to `false`.
 
 ```toml
 [cairo]
-unstable-add-statements-functions-debug-info = true
+unstable-add-statements-functions-debug-info = false
 ```
 
 ### `unstable-add-statements-code-locations-debug-info`
@@ -345,11 +347,11 @@ unstable-add-statements-functions-debug-info = true
 If enabled, during the project compilation Scarb will add a mapping between Sierra statement indexes and locations in
 the code to debug info. A statement index maps to a vector consisting of code fragment which caused the statement to be
 generated and all code fragments that were inlined or generated along the way.
-By default, this flag is disabled.
+By default, this flag is set to `false`.
 
 ```toml
 [cairo]
-unstable-add-statements-code-locations-debug-info = true
+unstable-add-statements-code-locations-debug-info = false
 ```
 
 ## `[profile]`

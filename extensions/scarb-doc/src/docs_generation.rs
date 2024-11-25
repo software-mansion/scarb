@@ -3,6 +3,7 @@ use crate::types::{
     ImplFunction, ImplType, Member, Module, Struct, Trait, TraitConstant, TraitFunction, TraitType,
     TypeAlias, Variant,
 };
+use cairo_lang_doc::parser::DocumentationCommentToken;
 
 pub mod markdown;
 
@@ -71,6 +72,7 @@ fn collect_all_top_level_items_internal<'a, 'b>(
 
 // Trait for items with no descendants.
 // Used to enforce constraints on generic implementations of traits like `MarkdownDocItem`.
+
 trait PrimitiveDocItem: DocItem {}
 
 impl PrimitiveDocItem for Constant {}
@@ -109,7 +111,7 @@ trait DocItem {
     const HEADER: &'static str;
 
     fn name(&self) -> &str;
-    fn doc(&self) -> &Option<String>;
+    fn doc(&self) -> &Option<Vec<DocumentationCommentToken>>;
     fn signature(&self) -> &Option<String>;
     fn full_path(&self) -> &str;
 }
@@ -123,7 +125,7 @@ macro_rules! impl_doc_item {
                 &self.item_data.name
             }
 
-            fn doc(&self) -> &Option<String> {
+            fn doc(&self) -> &Option<Vec<DocumentationCommentToken>> {
                 &self.item_data.doc
             }
 
