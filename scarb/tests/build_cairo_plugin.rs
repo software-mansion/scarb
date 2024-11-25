@@ -1610,7 +1610,7 @@ fn code_mappings_preserve_inline_macro_error_locations() {
         }
         "##})
         .build(&t);
-    
+
     let project = temp.child("hello");
     ProjectBuilder::start()
         .name("hello")

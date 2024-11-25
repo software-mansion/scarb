@@ -1,5 +1,7 @@
 use crate::compiler::plugin::proc_macro::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::host::{into_cairo_diagnostics, DERIVE_ATTR, generate_code_mappings};
+use crate::compiler::plugin::proc_macro::host::{
+    generate_code_mappings, into_cairo_diagnostics, DERIVE_ATTR,
+};
 use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
@@ -146,5 +148,4 @@ impl ProcMacroHostPlugin {
 
         None
     }
-
 }

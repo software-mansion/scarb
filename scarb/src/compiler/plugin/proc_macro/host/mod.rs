@@ -14,7 +14,11 @@ use anyhow::{ensure, Result};
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
 use cairo_lang_filesystem::db::Edition;
-use cairo_lang_macro::{AllocationContext, Diagnostic, Severity, TokenStream, TokenStreamMetadata, TokenTree};
+use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
+use cairo_lang_filesystem::span::{TextOffset, TextSpan, TextWidth};
+use cairo_lang_macro::{
+    AllocationContext, Diagnostic, Severity, TokenStream, TokenStreamMetadata, TokenTree,
+};
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
@@ -25,8 +29,6 @@ use scarb_stable_hash::short_hash;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock};
-use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
-use cairo_lang_filesystem::span::{TextOffset, TextSpan, TextWidth};
 
 const FULL_PATH_MARKER_KEY: &str = "macro::full_path_marker";
 const DERIVE_ATTR: &str = "derive";
