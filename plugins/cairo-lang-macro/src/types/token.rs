@@ -1,10 +1,12 @@
 use crate::CONTEXT;
 use bumpalo::Bump;
+use cairo_lang_stable_token::{StableSpan, StableToken, ToStableTokenStream};
 use std::fmt::Display;
 use std::hash::{Hash, Hasher};
+use std::iter::{once, Map, Once};
 use std::ops::Deref;
 use std::rc::Rc;
-use cairo_lang_stable_token::{StableSpan, StableToken, ToStableTokenStream};
+use std::vec::IntoIter;
 
 /// An abstract stream of Cairo tokens.
 ///
@@ -65,7 +67,7 @@ mod deserializer {
                         let content = ctx.intern(token.content.as_str());
                         let token = crate::Token {
                             content,
-                            span: token.span,
+                            span: Some(token.span),
                         };
                         crate::TokenTree::Ident(token)
                     }
@@ -116,7 +118,7 @@ pub struct TextSpan {
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct Token {
-    pub content: String,
+    pub content: InternedStr,
     pub span: Option<TextSpan>,
 }
 
@@ -291,34 +293,8 @@ impl TokenStream {
             stable_token_stream
                 .map(|stable_token| {
                     TokenTree::Ident(Token::new(
-                        stable_token.0,
-                        stable_token.1.map(|stable_span| TextSpan {
-                            start: stable_span.start,
-                            end: stable_span.end,
-                        }),
-                    ))
-                })
-                .collect(),
-        )
-    }
-
-    pub fn extend(&mut self, token_stream: Self) {
-        self.tokens.extend(token_stream.tokens);
-    }
-
-    pub fn push_token(&mut self, token_tree: TokenTree) {
-        self.tokens.push(token_tree);
-    }
-
-    pub fn from_stable_token_stream(
-        stable_token_stream: impl Iterator<Item = StableToken>,
-    ) -> Self {
-        Self::new(
-            stable_token_stream
-                .map(|stable_token| {
-                    TokenTree::Ident(Token::new(
-                        stable_token.0,
-                        stable_token.1.map(|stable_span| TextSpan {
+                        stable_token.content,
+                        stable_token.span.map(|stable_span| TextSpan {
                             start: stable_span.start,
                             end: stable_span.end,
                         }),
@@ -377,7 +353,7 @@ impl TextSpan {
 
 impl Token {
     /// Create [`Token`] in thread-local context.
-    pub fn new(content: impl AsRef<str>, span: TextSpan) -> Self {
+    pub fn new(content: impl AsRef<str>, span: Option<TextSpan>) -> Self {
         CONTEXT.with(|ctx| {
             let ctx_borrow = ctx.borrow();
             let ctx: &AllocationContext = ctx_borrow.deref();
@@ -386,12 +362,48 @@ impl Token {
     }
 
     /// Create [`Token`] in specified context.
-    pub fn new_in(content: impl AsRef<str>, span: TextSpan, ctx: &AllocationContext) -> Self {
+    pub fn new_in(
+        content: impl AsRef<str>,
+        span: Option<TextSpan>,
+        ctx: &AllocationContext,
+    ) -> Self {
         let content = ctx.intern(content.as_ref());
         Self { content, span }
     }
 }
 
+impl ToStableTokenStream for TokenStream {
+    type Iter = Map<IntoIter<TokenTree>, fn(TokenTree) -> StableToken>;
+    fn to_stable_token_stream(&self) -> Self::Iter {
+        self.tokens
+            .clone()
+            .into_iter()
+            .map(|token_tree| match token_tree {
+                TokenTree::Ident(token) => StableToken::new(
+                    token.content.to_string(),
+                    token.span.map(|span| StableSpan {
+                        start: span.start,
+                        end: span.end,
+                    }),
+                ),
+            })
+    }
+}
+
+impl ToStableTokenStream for TokenTree {
+    type Iter = Once<StableToken>;
+    fn to_stable_token_stream(&self) -> Self::Iter {
+        once(match self {
+            TokenTree::Ident(token) => StableToken::new(
+                token.content.to_string(),
+                token.span.clone().map(|span| StableSpan {
+                    start: span.start,
+                    end: span.end,
+                }),
+            ),
+        })
+    }
+}
 #[cfg(test)]
 mod test {
     use crate::{AllocationContext, TextSpan, Token, TokenStream, TokenTree};
@@ -420,10 +432,10 @@ mod test {
     pub fn can_serde_token_stream() {
         let ctx = AllocationContext::default();
         let original = TokenStream::new(vec![
-            TokenTree::Ident(Token::new_in("first", TextSpan::new(0, 1), &ctx)),
-            TokenTree::Ident(Token::new_in("second", TextSpan::new(2, 3), &ctx)),
-            TokenTree::Ident(Token::new_in("third", TextSpan::new(4, 5), &ctx)),
-            TokenTree::Ident(Token::new_in("fourth", TextSpan::new(6, 7), &ctx)),
+            TokenTree::Ident(Token::new_in("first", Some(TextSpan::new(0, 1)), &ctx)),
+            TokenTree::Ident(Token::new_in("second", Some(TextSpan::new(2, 3)), &ctx)),
+            TokenTree::Ident(Token::new_in("third", Some(TextSpan::new(4, 5)), &ctx)),
+            TokenTree::Ident(Token::new_in("fourth", Some(TextSpan::new(6, 7)), &ctx)),
         ]);
         let serialized = serde_json::to_string(&original).unwrap();
         let derived: TokenStream = serde_json::from_str(serialized.as_str()).unwrap();
@@ -445,36 +457,5 @@ mod test {
                 }
             })
         );
-    }
-}
-
-impl ToStableTokenStream for TokenStream {
-    fn to_stable_token_stream(&self) -> impl Iterator<Item = StableToken> {
-        self.tokens
-            .clone()
-            .into_iter()
-            .map(|token_tree| match token_tree {
-                TokenTree::Ident(token) => StableToken::new(
-                    token.content,
-                    token.span.map(|span| StableSpan {
-                        start: span.start,
-                        end: span.end,
-                    }),
-                ),
-            })
-    }
-}
-
-impl ToStableTokenStream for TokenTree {
-    fn to_stable_token_stream(&self) -> impl Iterator<Item = StableToken> {
-        once(match self {
-            TokenTree::Ident(token) => StableToken::new(
-                token.content.clone(),
-                token.span.clone().map(|span| StableSpan {
-                    start: span.start,
-                    end: span.end,
-                }),
-            ),
-        })
     }
 }

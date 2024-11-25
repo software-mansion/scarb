@@ -115,7 +115,7 @@ impl Token {
         let ptr = self.content.as_ptr();
         let len = self.content.len();
         StableToken {
-            span: self.span.into_stable(),
+            span: self.span.map(|span| span.into_stable()),
             ptr,
             len,
         }
@@ -132,7 +132,7 @@ impl Token {
         let content = ctx.intern(std::str::from_utf8_unchecked(content));
         Self {
             content,
-            span: Some(TextSpan::from_stable(&token.span)),
+            span: token.span.as_ref().map(TextSpan::from_stable),
         }
     }
 
@@ -144,7 +144,9 @@ impl Token {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn free_owned_stable(token: StableToken) {
-        TextSpan::free_owned_stable(token.span);
+        if let Some(token_span) = token.span {
+            TextSpan::free_owned_stable(token_span);
+        }
     }
 }
 

@@ -21,7 +21,7 @@ impl QuoteToken {
             (Delimiter::Bracket, true) => Self::Content("]".to_string()),
             (Delimiter::Parenthesis, false) => Self::Content("(".to_string()),
             (Delimiter::Parenthesis, true) => Self::Content(")".to_string()),
-            _ => Self::Content(String::default()),
+            (Delimiter::None, _) => Self::Content(String::default()),
         }
     }
 }
@@ -56,7 +56,7 @@ fn process_token_stream(
             }
             RustTokenTree::Ident(ident) => {
                 if was_last_ident {
-                    output.push(QuoteToken::Content(format!(" {}", ident.to_string())));
+                    output.push(QuoteToken::Content(format!(" {}", ident)));
                 } else {
                     output.push(QuoteToken::Content(ident.to_string()));
                 }

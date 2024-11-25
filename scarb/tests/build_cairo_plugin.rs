@@ -379,7 +379,7 @@ fn can_replace_original_node() {
             let new_token_string = token_stream.to_string().replace("12", "34");
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 new_token_string.clone(),
-                TextSpan { start: 0, end: new_token_string.len() },
+                Some(TextSpan { start: 0, end: new_token_string.len() }),
             ))]);
             ProcMacroResult::new(token_stream)
         }
@@ -548,7 +548,7 @@ fn can_define_multiple_macros() {
             let new_token_string = token_stream.to_string().replace("12", "34");
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 new_token_string.clone(),
-                TextSpan { start: 0, end: new_token_string.len() },
+                Some(TextSpan { start: 0, end: new_token_string.len() }),
             ))]);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
@@ -559,7 +559,7 @@ fn can_define_multiple_macros() {
             let new_token_string = token_stream.to_string().replace("56", "78");
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 new_token_string.clone(),
-                TextSpan { start: 0, end: new_token_string.len() },
+                Some(TextSpan { start: 0, end: new_token_string.len() }),
             ))]);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
@@ -583,7 +583,7 @@ fn can_define_multiple_macros() {
             let new_token_string = token_stream.to_string().replace("90", "09");
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 new_token_string.clone(),
-                TextSpan { start: 0, end: new_token_string.len() },
+                Some(TextSpan { start: 0, end: new_token_string.len() }),
             ))]);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
@@ -784,10 +784,10 @@ fn can_resolve_full_path_markers() {
 
             ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
               code.clone(),
-                TextSpan {
+                Some(TextSpan {
                   start: 0,
                   end: code.len(),
-                },
+                }),
               ))])
             ).with_full_path_markers(full_path_markers)
         }
@@ -951,10 +951,10 @@ fn can_implement_derive_macro() {
 
                 let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                   code.clone(),
-                    TextSpan {
+                    Some(TextSpan {
                         start: 0,
                         end: code.len(),
-                    },
+                    }),
                 ))]);
 
                 ProcMacroResult::new(token_stream)
@@ -1012,10 +1012,10 @@ fn can_use_both_derive_and_attr() {
                 let new_token_string = token_stream.to_string().replace("SomeType", "OtherType");
                 ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
                   new_token_string.clone(),
-                    TextSpan {
+                    Some(TextSpan {
                         start: 0,
                         end: new_token_string.len(),
-                    },
+                    }),
                 ))]))
             }
 
@@ -1024,19 +1024,19 @@ fn can_use_both_derive_and_attr() {
                 let code = token_stream.to_string().replace("OtherType", "RenamedStruct");
                 let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                   code.clone(),
-                    TextSpan {
+                    Some(TextSpan {
                         start: 0,
                         end: code.len(),
-                    },
+                    }),
                 ))]);
 
                 let result_string = format!("#[derive(Drop)]\n{token_stream}");
                 ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
                   result_string.clone(),
-                    TextSpan {
+                    Some(TextSpan {
                         start: 0,
                         end: result_string.len(),
-                    },
+                    }),
                 ))]))
             }
 
@@ -1052,10 +1052,10 @@ fn can_use_both_derive_and_attr() {
 
                 ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
                   code.clone(),
-                    TextSpan {
+                    Some(TextSpan {
                         start: 0,
                         end: code.len(),
-                    },
+                    }),
                 ))]))
             }
         "##})
@@ -1261,7 +1261,7 @@ fn can_be_expanded() {
             let new_token_string = token_stream.to_string().replace("12", "34");
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 new_token_string.clone(),
-                TextSpan { start: 0, end: new_token_string.len() },
+                Some(TextSpan { start: 0, end: new_token_string.len() }),
             ))]);
             ProcMacroResult::new(token_stream)
         }
@@ -1291,7 +1291,7 @@ fn can_be_expanded() {
 
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 code.clone(),
-                TextSpan { start: 0, end: code.len() },
+                Some(TextSpan { start: 0, end: code.len() }),
             ))]);
 
             ProcMacroResult::new(token_stream)
@@ -1377,7 +1377,7 @@ fn can_expand_trait_inner_func_attrr() {
                     .replace("12", "34");
                 ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
                   new_token_string.clone(),
-                  TextSpan { start: 0, end: new_token_string.len() },
+                  Some(TextSpan { start: 0, end: new_token_string.len() }),
                 ))]))
             }
         "##})
@@ -1437,7 +1437,7 @@ fn can_expand_impl_inner_func_attrr() {
                 let new_token_string = token_stream.to_string().replace("1", "2");
                 ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
                     new_token_string.clone(),
-                    TextSpan { start: 0, end: new_token_string.len() },
+                    Some(TextSpan { start: 0, end: new_token_string.len() }),
                 ))]))
             }
         "##})
@@ -1684,9 +1684,10 @@ fn can_use_quote_with_syntax_node() {
                 5
               }
           "#;
-          let syntax_node = SyntaxNodeWithDb::new(db.parse_virtual(code).unwrap(), db);
+          let syntax_node = db.parse_virtual(code).unwrap();
+          let syntax_node_with_db = SyntaxNodeWithDb::new(&syntax_node, db);
           let tokens = quote! {
-            #syntax_node
+            #syntax_node_with_db
           };
           ProcMacroResult::new(tokens)
         }
