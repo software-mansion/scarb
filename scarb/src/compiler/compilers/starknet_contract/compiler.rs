@@ -1,17 +1,24 @@
 use anyhow::{ensure, Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::CompilerConfig;
-use cairo_lang_defs::ids::NamedLanguageElementId;
+use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::ids::{ModuleId, NamedLanguageElementId};
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use cairo_lang_semantic::db::SemanticGroup;
+use cairo_lang_semantic::items::us::SemanticUseEx;
+use cairo_lang_semantic::items::visibility::Visibility;
+use cairo_lang_semantic::resolve::ResolvedGenericItem::Module;
 use cairo_lang_starknet::compile::compile_prepared_db;
-use cairo_lang_starknet::contract::{find_contracts, ContractDeclaration};
+use cairo_lang_starknet::contract::{find_contracts, module_contract, ContractDeclaration};
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet_classes::contract_class::ContractClass;
+use cairo_lang_syntax::node::ast::OptionAliasClause;
+use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_utils::UpcastMut;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+use std::collections::HashSet;
 use std::iter::zip;
 use tracing::{debug, trace, trace_span};
 
@@ -187,68 +194,157 @@ pub fn find_project_contracts(
     };
 
     let span = trace_span!("find_external_contracts");
-    let external_contracts: Vec<ContractDeclaration> =
-        if let Some(external_contracts) = external_contracts {
-            let _guard = span.enter();
-            debug!("external contracts selectors: {:?}", external_contracts);
+    let external_contracts: Vec<ContractDeclaration> = if let Some(external_contracts) =
+        external_contracts
+    {
+        let _guard = span.enter();
+        debug!("external contracts selectors: {:?}", external_contracts);
 
-            let crate_ids = external_contracts
-                .iter()
-                .map(|selector| selector.package().into())
-                .unique()
-                .map(|name: SmolStr| {
-                    let discriminator = unit
-                        .components()
-                        .iter()
-                        .find(|component| component.package.id.name.to_smol_str() == name)
-                        .and_then(|component| component.id.to_discriminator());
-                    db.upcast_mut().intern_crate(CrateLongId::Real {
-                        name,
-                        discriminator,
-                    })
-                })
-                .collect::<Vec<_>>();
-            let contracts = find_contracts(db, crate_ids.as_ref());
-            let filtered_contracts: Vec<ContractDeclaration> = contracts
-                .into_iter()
-                .filter(|decl| {
-                    let contract_path = decl.module_id().full_path(db.upcast());
-                    external_contracts
-                        .iter()
-                        .any(|selector| contract_matches(selector, contract_path.as_str()))
-                })
-                .collect();
-
-            let never_matched = external_contracts
-                .iter()
-                .filter(|selector| {
-                    !filtered_contracts.iter().any(|decl| {
-                        let contract_path = decl.module_id().full_path(db.upcast());
-                        contract_matches(selector, contract_path.as_str())
-                    })
-                })
-                .collect_vec();
-            if !never_matched.is_empty() {
-                let never_matched = never_matched
+        let crate_ids = external_contracts
+            .iter()
+            .map(|selector| selector.package().into())
+            .unique()
+            .map(|name: SmolStr| {
+                let discriminator = unit
+                    .components()
                     .iter()
-                    .map(|selector| selector.full_path())
-                    .collect_vec()
-                    .join("`, `");
-                ui.warn(format!(
-                    "external contracts not found for selectors: `{never_matched}`"
-                ));
-            }
+                    .find(|component| component.package.id.name.to_smol_str() == name)
+                    .and_then(|component| component.id.to_discriminator());
+                db.upcast_mut().intern_crate(CrateLongId::Real {
+                    name,
+                    discriminator,
+                })
+            })
+            .collect::<Vec<_>>();
+        let contracts = find_contracts(db, crate_ids.as_ref());
+        let mut filtered_contracts: Vec<ContractDeclaration> = contracts
+            .into_iter()
+            .filter(|decl| {
+                let contract_path = decl.module_id().full_path(db.upcast());
+                external_contracts
+                    .iter()
+                    .any(|selector| contract_matches(selector, contract_path.as_str()))
+            })
+            .collect();
 
-            filtered_contracts
-        } else {
-            debug!("no external contracts selected");
-            Vec::new()
-        };
+        let mut matched_selectors: HashSet<ContractSelector> = external_contracts
+            .iter()
+            .filter(|selector| {
+                filtered_contracts.iter().any(|decl| {
+                    let contract_path = decl.module_id().full_path(db.upcast());
+                    contract_matches(selector, contract_path.as_str())
+                })
+            })
+            .cloned()
+            .collect();
+
+        // Find selected reexports.
+        for crate_id in crate_ids {
+            let modules = db.crate_modules(crate_id);
+            for module_id in modules.iter() {
+                let Ok(module_uses) = db.module_uses(*module_id) else {
+                    continue;
+                };
+                let module_with_reexport = module_id.full_path(db.upcast());
+                let matched_contracts = module_uses
+                    .iter()
+                    .filter_map(|(use_id, use_path)| {
+                        let use_alias = match use_path.alias_clause(db.upcast()) {
+                            OptionAliasClause::Empty(_) => None,
+                            OptionAliasClause::AliasClause(alias_clause) => Some(
+                                alias_clause
+                                    .alias(db.upcast())
+                                    .as_syntax_node()
+                                    .get_text_without_trivia(db.upcast()),
+                            ),
+                        };
+                        let visibility = db
+                            .module_item_info_by_name(*module_id, use_id.name(db.upcast()))
+                            .ok()??
+                            .visibility;
+                        if visibility == Visibility::Public {
+                            Some((db.use_resolved_item(*use_id).ok()?, use_alias))
+                        } else {
+                            None
+                        }
+                    })
+                    .filter_map(|(use_item, use_alias)| match use_item {
+                        Module(module_id) => {
+                            module_id.name(db.upcast());
+                            Some((module_id, use_alias))
+                        }
+                        _ => None,
+                    })
+                    .flat_map(|(module_id, use_alias)| {
+                        let exported_module_path = module_id.full_path(db.upcast());
+                        let exported_module_name =
+                            use_alias.unwrap_or_else(|| module_id.name(db.upcast()).to_string());
+                        let mut submodules = Vec::new();
+                        collect_modules_under(db.upcast(), &mut submodules, module_id);
+                        let found_contracts = submodules
+                            .iter()
+                            .filter_map(|module_id| {
+                                let contract = module_contract(db, *module_id)?;
+                                let contract_path = contract.module_id().full_path(db.upcast());
+                                let exported_contract_path =
+                                    contract_path.replace(&exported_module_path, "");
+                                let exported_contract_path = format!(
+                                    "{}::{exported_module_name}{exported_contract_path}",
+                                    &module_with_reexport
+                                );
+                                let selectors_used = external_contracts
+                                    .iter()
+                                    .filter(|selector| {
+                                        contract_matches(selector, exported_contract_path.as_str())
+                                    })
+                                    .map(|c| (*c).clone())
+                                    .collect_vec();
+                                let any_matched = !selectors_used.is_empty();
+                                matched_selectors.extend(selectors_used);
+                                any_matched.then_some(contract)
+                            })
+                            .collect_vec();
+                        found_contracts
+                    })
+                    .collect_vec();
+                filtered_contracts.extend(matched_contracts);
+            }
+        }
+
+        let never_matched = external_contracts
+            .iter()
+            .filter(|selector| !matched_selectors.contains(*selector))
+            .collect_vec();
+        if !never_matched.is_empty() {
+            let never_matched = never_matched
+                .iter()
+                .map(|selector| selector.full_path())
+                .collect_vec()
+                .join("`, `");
+            ui.warn(format!(
+                "external contracts not found for selectors: `{never_matched}`"
+            ));
+        }
+
+        filtered_contracts
+    } else {
+        debug!("no external contracts selected");
+        Vec::new()
+    };
 
     Ok(internal_contracts
         .into_iter()
         .chain(external_contracts)
         .collect())
+}
+
+fn collect_modules_under(db: &dyn DefsGroup, modules: &mut Vec<ModuleId>, module_id: ModuleId) {
+    modules.push(module_id);
+    if let Ok(submodule_ids) = db.module_submodules_ids(module_id) {
+        for submodule_module_id in submodule_ids.iter().copied() {
+            collect_modules_under(db, modules, ModuleId::Submodule(submodule_module_id));
+        }
+    }
 }
 
 fn contract_matches(selector: &ContractSelector, contract_path: &str) -> bool {
