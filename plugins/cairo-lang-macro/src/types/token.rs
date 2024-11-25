@@ -1,7 +1,7 @@
 use crate::CONTEXT;
 use bumpalo::Bump;
 use cairo_lang_stable_token::{StableSpan, StableToken, ToStableTokenStream};
-use std::fmt::Display;
+use std::fmt::{Debug, Display, Write};
 use std::hash::{Hash, Hasher};
 use std::iter::{once, Map, Once};
 use std::ops::Deref;
@@ -135,11 +135,19 @@ impl Token {
 /// and a guard which keeps the buffer alive.
 /// This way we do not need to allocate a new string,
 /// but also do not need to worry about the lifetime of the string.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct InternedStr {
     ptr: *const str,
     // Holding a rc to the underlying buffer, so that ptr will always point to valid memory.
     _bump: Rc<BumpWrap>,
+}
+
+impl Debug for InternedStr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_char('"')?;
+        f.write_str(self.as_ref())?;
+        f.write_char('"')
+    }
 }
 
 impl InternedStr {
