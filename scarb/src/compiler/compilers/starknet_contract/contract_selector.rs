@@ -5,7 +5,7 @@ use std::collections::HashSet;
 pub const CAIRO_PATH_SEPARATOR: &str = "::";
 pub const GLOB_PATH_SELECTOR: &str = "*";
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ContractSelector(pub String);
 
 impl ContractSelector {
