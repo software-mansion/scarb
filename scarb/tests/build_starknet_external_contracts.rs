@@ -545,10 +545,9 @@ fn can_build_external_reexported_contracts() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..] Compiling world v0.1.0 ([..]/Scarb.toml)
-            warn: external contracts not found for selectors: `beautiful::*`
-            [..]  Finished `dev` profile target(s) in [..]
-        "#});
+        [..] Compiling world v0.1.0 ([..]/Scarb.toml)
+        [..]  Finished `dev` profile target(s) in [..]
+    "#});
 
     assert_eq!(
         world.child("target/dev").files(),
