@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
 use anyhow::Result;
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
+use cairo_lang_doc::parser::DocumentationCommentToken;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::{self, Visibility};
@@ -29,6 +32,7 @@ use cairo_lang_syntax::node::{
 };
 
 use crate::db::ScarbDocDatabase;
+use serde::Serializer;
 
 #[derive(Serialize, Clone)]
 pub struct Crate {
@@ -42,9 +46,8 @@ impl Crate {
         include_private_items: bool,
     ) -> Maybe<Self> {
         let root_module_id = ModuleId::CrateRoot(crate_id);
-        Ok(Self {
-            root_module: Module::new(db, root_module_id, root_module_id, include_private_items)?,
-        })
+        let root_module = Module::new(db, root_module_id, root_module_id, include_private_items)?;
+        Ok(Self { root_module })
     }
 }
 
@@ -378,6 +381,60 @@ impl Module {
             extern_functions,
         })
     }
+
+    /// Recursively traverses all the module and gets all the item [`DocumentableItemId`]s.
+    pub(crate) fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+        let mut ids: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
+
+        ids.insert(self.item_data.id, &self.item_data);
+        self.constants.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.free_functions.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.type_aliases.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.impl_aliases.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.free_functions.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.extern_types.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+        self.extern_functions.iter().for_each(|item| {
+            ids.insert(item.item_data.id, &item.item_data);
+        });
+
+        self.structs.iter().for_each(|struct_| {
+            ids.insert(struct_.item_data.id, &struct_.item_data);
+            struct_.get_all_item_ids();
+        });
+
+        self.enums.iter().for_each(|enum_| {
+            ids.insert(enum_.item_data.id, &enum_.item_data);
+            ids.extend(enum_.get_all_item_ids());
+        });
+
+        self.traits.iter().for_each(|trait_| {
+            ids.insert(trait_.item_data.id, &trait_.item_data);
+            ids.extend(trait_.get_all_item_ids());
+        });
+
+        self.impls.iter().for_each(|impl_| {
+            ids.insert(impl_.item_data.id, &impl_.item_data);
+            ids.extend(impl_.get_all_item_ids());
+        });
+
+        self.submodules.iter().for_each(|sub_module| {
+            ids.extend(sub_module.get_all_item_ids());
+        });
+
+        ids
+    }
 }
 
 /// Takes the HashMap of items (returned from db query), filter them based on the `should_include_item_function` returned value,
@@ -423,8 +480,13 @@ fn is_doc_hidden_attr_semantic(
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ItemData {
+    #[serde(skip_serializing)]
+    pub id: DocumentableItemId,
+    #[serde(skip_serializing)]
+    pub parent_full_path: Option<String>,
     pub name: String,
-    pub doc: Option<String>,
+    #[serde(serialize_with = "documentation_serializer")]
+    pub doc: Option<Vec<DocumentationCommentToken>>,
     pub signature: Option<String>,
     pub full_path: String,
 }
@@ -436,10 +498,12 @@ impl ItemData {
         documentable_item_id: DocumentableItemId,
     ) -> Self {
         Self {
+            id: documentable_item_id,
             name: id.name(db).into(),
-            doc: db.get_item_documentation(documentable_item_id),
+            doc: db.get_item_documentation_as_tokens(documentable_item_id),
             signature: Some(db.get_item_signature(documentable_item_id)),
             full_path: id.full_path(db),
+            parent_full_path: Some(id.parent_module(db).full_path(db)),
         }
     }
 
@@ -449,20 +513,44 @@ impl ItemData {
         documentable_item_id: DocumentableItemId,
     ) -> Self {
         Self {
+            id: documentable_item_id,
             name: id.name(db).into(),
-            doc: db.get_item_documentation(documentable_item_id),
+            doc: db.get_item_documentation_as_tokens(documentable_item_id),
             signature: None,
             full_path: id.full_path(db),
+            parent_full_path: Some(id.parent_module(db).full_path(db)),
         }
     }
 
     pub fn new_crate(db: &ScarbDocDatabase, id: CrateId) -> Self {
+        let documentable_id = DocumentableItemId::Crate(id);
         Self {
+            id: documentable_id,
             name: id.name(db).into(),
-            doc: db.get_item_documentation(DocumentableItemId::Crate(id)),
+            doc: db.get_item_documentation_as_tokens(documentable_id),
             signature: None,
             full_path: ModuleId::CrateRoot(id).full_path(db),
+            parent_full_path: None,
         }
+    }
+}
+
+fn documentation_serializer<S>(
+    docs: &Option<Vec<DocumentationCommentToken>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    match docs {
+        Some(doc_vec) => {
+            let combined = doc_vec
+                .iter()
+                .map(|dct| dct.to_string())
+                .collect::<Vec<String>>();
+            serializer.serialize_str(&combined.join(""))
+        }
+        None => serializer.serialize_none(),
     }
 }
 
@@ -572,6 +660,13 @@ impl Struct {
             item_data,
         })
     }
+
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+        self.members
+            .iter()
+            .map(|item| (item.item_data.id, &item.item_data))
+            .collect()
+    }
 }
 
 #[derive(Serialize, Clone)]
@@ -629,6 +724,13 @@ impl Enum {
             variants,
             item_data,
         })
+    }
+
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+        self.variants
+            .iter()
+            .map(|item| (item.item_data.id, &item.item_data))
+            .collect()
     }
 }
 
@@ -753,6 +855,20 @@ impl Trait {
             trait_functions,
             item_data,
         })
+    }
+
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+        let mut result: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
+        self.trait_constants.iter().for_each(|item| {
+            result.insert(item.item_data.id, &item.item_data);
+        });
+        self.trait_functions.iter().for_each(|item| {
+            result.insert(item.item_data.id, &item.item_data);
+        });
+        self.trait_types.iter().for_each(|item| {
+            result.insert(item.item_data.id, &item.item_data);
+        });
+        result
     }
 }
 
@@ -883,6 +999,20 @@ impl Impl {
             impl_functions,
             item_data,
         })
+    }
+
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+        let mut result: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
+        self.impl_constants.iter().for_each(|item| {
+            result.insert(item.item_data.id, &item.item_data);
+        });
+        self.impl_functions.iter().for_each(|item| {
+            result.insert(item.item_data.id, &item.item_data);
+        });
+        self.impl_types.iter().for_each(|item| {
+            result.insert(item.item_data.id, &item.item_data);
+        });
+        result
     }
 }
 
