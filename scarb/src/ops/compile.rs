@@ -8,6 +8,7 @@ use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use scarb_ui::HumanDuration;
 use smol_str::{SmolStr, ToSmolStr};
+use std::collections::HashSet;
 use std::thread;
 
 use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin, ScarbDatabase};
@@ -97,12 +98,12 @@ impl CompileOpts {
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn compile(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) -> Result<()> {
-    process(packages, opts, ws, compile_unit, None)
+    process(packages, opts, ws, compile_units, None)
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn check(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) -> Result<()> {
-    process(packages, opts, ws, check_unit, Some("checking"))
+    process(packages, opts, ws, check_units, Some("checking"))
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -114,7 +115,7 @@ fn process<F>(
     operation_type: Option<&str>,
 ) -> Result<()>
 where
-    F: FnMut(CompilationUnit, &Workspace<'_>) -> Result<()>,
+    F: FnMut(Vec<CompilationUnit>, &Workspace<'_>) -> Result<()>,
 {
     let resolve = ops::resolve_workspace(ws)?;
     let packages_to_process = ws
@@ -155,9 +156,7 @@ where
             })
             .collect::<Vec<_>>();
 
-    for unit in compilation_units {
-        operation(unit, ws)?;
-    }
+    operation(compilation_units, ws)?;
 
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
     let profile = ws.current_profile()?;
@@ -174,6 +173,13 @@ where
 
 /// Run compiler in a new thread.
 /// The stack size of created threads can be altered with `RUST_MIN_STACK` env variable.
+pub fn compile_units(units: Vec<CompilationUnit>, ws: &Workspace<'_>) -> Result<()> {
+    for unit in units {
+        compile_unit(unit, ws)?;
+    }
+    Ok(())
+}
+
 pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     thread::scope(|s| {
         thread::Builder::new()
@@ -215,6 +221,43 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 
         anyhow!("could not compile `{package_name}` due to previous error")
     })
+}
+
+fn check_units(units: Vec<CompilationUnit>, ws: &Workspace<'_>) -> Result<()> {
+    // Select proc macro units that need to be compiled for Cairo compilation units.
+    let required_plugins = units
+        .iter()
+        .flat_map(|unit| {
+            let CompilationUnit::Cairo(unit) = unit else {
+                return Vec::new();
+            };
+            unit.cairo_plugins
+                .iter()
+                .map(|p| p.package.id)
+                .collect_vec()
+        })
+        .collect::<HashSet<PackageId>>();
+
+    // We guarantee that proc-macro units are always processed first,
+    // so that all required plugins are compiled before we start checking Cairo units.
+    let units = units.into_iter().sorted_by_key(|unit| {
+        if matches!(unit, CompilationUnit::ProcMacro(_)) {
+            0
+        } else {
+            1
+        }
+    });
+
+    for unit in units {
+        if matches!(unit, CompilationUnit::ProcMacro(_))
+            && required_plugins.contains(&unit.main_package_id())
+        {
+            compile_unit(unit, ws)?;
+        } else {
+            check_unit(unit, ws)?;
+        }
+    }
+    Ok(())
 }
 
 fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
