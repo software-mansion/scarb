@@ -6,7 +6,14 @@
       <div class="traffic-light green" />
     </div>
     <p>scarb init --name hello_world</p>
-    <p>scarb add alexandria_math@0.1.0</p>
+    <p>
+      scarb add alexandria_math --git
+      <span class="br">
+        \<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;
+      </span>
+      https://github.com/keep-starknet-strange/alexandria.git
+    </p>
     <p>scarb build</p>
     <p>scarb fmt</p>
     <p>scarb test</p>
