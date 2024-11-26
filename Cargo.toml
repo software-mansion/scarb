@@ -120,7 +120,7 @@ syn = "2"
 tar = "0.4"
 tempfile = "3"
 test-case = "3"
-thiserror = "1"
+thiserror = "2"
 time = "0.3"
 tokio = { version = "1", features = ["macros", "io-util", "process", "rt", "rt-multi-thread", "sync"] }
 toml = "0.8"
