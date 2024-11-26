@@ -4,7 +4,7 @@ import { data as rel } from "../../../github.data";
 
 # Starknet Contract Target
 
-The `starknet-contract` target allows to build the package as a [Starknet Contract](https://book.cairo-lang.org/ch99-00-starknet-smart-contracts.html).
+The `starknet-contract` target allows to build the package as a [Starknet Contract](https://book.cairo-lang.org/ch13-00-introduction-to-starknet-smart-contracts.html).
 It searches for all contract classes in the package, and builds a separate compiled JSON file each found class.
 Generated file will be named with following pattern: `[target name]_[contract name].contract_class.json`.
 
@@ -84,10 +84,10 @@ For example, to build `Account` contract defined in `openzeppelin` package, add 
 ```toml-vue
 [dependencies]
 starknet = "{{ rel.stable.starknetPackageVersionReq }}"
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", branch = "cairo-2" }
+openzeppelin = "0.19.0"
 
 [[target.starknet-contract]]
-build-external-contracts = ["openzeppelin::account::account::Account"]
+build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 ```
 
 ### Wildcard support
@@ -188,7 +188,7 @@ For example, to use the `experimental` allow-list, type the following:
 allowed-libfuncs-list.name = "experimental"
 ```
 
-All built-in lists can be located in the [Cairo repository](https://github.com/starkware-libs/cairo/tree/main/crates/cairo-lang-starknet/src/allowed_libfuncs_lists).
+All built-in lists can be located in the [Cairo repository](https://github.com/starkware-libs/cairo/tree/main/crates/cairo-lang-starknet-classes/src/allowed_libfuncs_lists).
 
 ### External allow-lists
 
