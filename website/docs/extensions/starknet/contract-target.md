@@ -84,10 +84,10 @@ For example, to build `Account` contract defined in `openzeppelin` package, add 
 ```toml-vue
 [dependencies]
 starknet = "{{ rel.stable.starknetPackageVersionReq }}"
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", branch = "cairo-2" }
+openzeppelin = "0.19.0"
 
 [[target.starknet-contract]]
-build-external-contracts = ["openzeppelin::account::account::Account"]
+build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 ```
 
 ### Wildcard support
