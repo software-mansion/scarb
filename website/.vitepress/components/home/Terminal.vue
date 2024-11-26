@@ -6,9 +6,7 @@
       <div class="traffic-light green" />
     </div>
     <p>scarb init --name hello_world</p>
-    <p>
-      scarb add alexandria_math@0.1.0
-    </p>
+    <p>scarb add alexandria_math@0.1.0</p>
     <p>scarb build</p>
     <p>scarb fmt</p>
     <p>scarb test</p>
