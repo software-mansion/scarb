@@ -10,9 +10,12 @@ use syn::{parse_macro_input, Expr, ItemFn, LitStr, Meta};
 ///
 /// Note, that this macro can be used multiple times, to define multiple independent attribute macros.
 #[proc_macro_attribute]
-pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn attribute_macro(args: TokenStream, input: TokenStream) -> TokenStream {
+    let custom_name = parse_macro_input!(args as Option<LitStr>).map(|p| p.value());
+
     macro_helper(
         input,
+        custom_name,
         quote!(::cairo_lang_macro::ExpansionKind::Attr),
         quote!(::cairo_lang_macro::ExpansionFunc::Attr),
     )
@@ -24,9 +27,12 @@ pub fn attribute_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// Note, that this macro can be used multiple times, to define multiple independent attribute macros.
 #[proc_macro_attribute]
-pub fn inline_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn inline_macro(args: TokenStream, input: TokenStream) -> TokenStream {
+    let custom_name = parse_macro_input!(args as Option<LitStr>).map(|p| p.value());
+
     macro_helper(
         input,
+        custom_name,
         quote!(::cairo_lang_macro::ExpansionKind::Inline),
         quote!(::cairo_lang_macro::ExpansionFunc::Other),
     )
@@ -38,18 +44,26 @@ pub fn inline_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// Note, that this macro can be used multiple times, to define multiple independent attribute macros.
 #[proc_macro_attribute]
-pub fn derive_macro(_args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn derive_macro(args: TokenStream, input: TokenStream) -> TokenStream {
+    let custom_name = parse_macro_input!(args as Option<LitStr>).map(|p| p.value());
+
     macro_helper(
         input,
+        custom_name,
         quote!(::cairo_lang_macro::ExpansionKind::Derive),
         quote!(::cairo_lang_macro::ExpansionFunc::Other),
     )
 }
 
-fn macro_helper(input: TokenStream, kind: impl ToTokens, func: impl ToTokens) -> TokenStream {
+fn macro_helper(
+    input: TokenStream,
+    custom_name: Option<String>,
+    kind: impl ToTokens,
+    func: impl ToTokens,
+) -> TokenStream {
     let item: ItemFn = parse_macro_input!(input as ItemFn);
 
-    let original_item_name = item.sig.ident.to_string();
+    let original_item_name = custom_name.unwrap_or(item.sig.ident.to_string());
     let doc = item
         .attrs
         .iter()
