@@ -14,6 +14,7 @@ use crate::args::PackageArgs;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: PackageArgs, config: &Config) -> Result<()> {
+    println!("test");
     let ws = ops::read_workspace(config.manifest_path(), config)?;
     let packages = args
         .packages_filter
@@ -38,7 +39,7 @@ pub fn run(args: PackageArgs, config: &Config) -> Result<()> {
         let result = ops::package_list(&packages, &opts, &ws)?;
         ws.config().ui().print(ListMessage(result));
     } else {
-        ops::package(&packages, &opts, &ws)?;
+        ops::package(&packages, &opts, &ws, &args.args)?;
     }
 
     Ok(())

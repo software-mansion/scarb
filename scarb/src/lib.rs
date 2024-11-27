@@ -13,6 +13,7 @@ use std::sync::LazyLock;
 pub use subcommands::EXTERNAL_CMD_PREFIX;
 
 pub mod compiler;
+pub mod consts;
 pub mod core;
 pub mod flock;
 mod internal;

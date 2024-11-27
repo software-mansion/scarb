@@ -30,5 +30,5 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
         },
     };
 
-    ops::publish(package.id, &ops, &ws)
+    ops::publish(package.id, &ops, &ws, &args.args)
 }

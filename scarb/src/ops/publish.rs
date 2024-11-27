@@ -1,3 +1,5 @@
+use std::ffi::OsString;
+
 use anyhow::{ensure, Context, Result};
 use indoc::formatdoc;
 use url::Url;
@@ -17,7 +19,12 @@ pub struct PublishOpts {
 }
 
 #[tracing::instrument(level = "debug", skip(opts, ws))]
-pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) -> Result<()> {
+pub fn publish(
+    package_id: PackageId,
+    opts: &PublishOpts,
+    ws: &Workspace<'_>,
+    args: &[OsString],
+) -> Result<()> {
     let package = ws.fetch_package(&package_id)?.clone();
     ensure!(
         package.is_publishable(),
@@ -43,7 +50,7 @@ pub fn publish(package_id: PackageId, opts: &PublishOpts, ws: &Workspace<'_>) ->
         "publishing packages is not supported by registry: {source_id}"
     );
 
-    let tarball = ops::package_one(package_id, &opts.package_opts, ws)?;
+    let tarball = ops::package_one(package_id, &opts.package_opts, ws, args)?;
 
     let dest_package_id = package_id.with_source_id(source_id);
 
