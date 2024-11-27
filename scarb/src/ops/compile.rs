@@ -227,14 +227,13 @@ fn check_units(units: Vec<CompilationUnit>, ws: &Workspace<'_>) -> Result<()> {
     // Select proc macro units that need to be compiled for Cairo compilation units.
     let required_plugins = units
         .iter()
-        .flat_map(|unit| {
-            let CompilationUnit::Cairo(unit) = unit else {
-                return Vec::new();
-            };
-            unit.cairo_plugins
+        .flat_map(|unit| match unit {
+            CompilationUnit::Cairo(unit) => unit
+                .cairo_plugins
                 .iter()
                 .map(|p| p.package.id)
-                .collect_vec()
+                .collect_vec(),
+            _ => Vec::new(),
         })
         .collect::<HashSet<PackageId>>();
 
