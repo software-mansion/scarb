@@ -868,7 +868,8 @@ fn can_implement_inline_macro() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
 
         #[inline_macro]
-        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
+            assert_eq!(token_stream.to_string(), "()");
             ProcMacroResult::new(TokenStream::new("34".to_string()))
         }
         "##})
@@ -879,7 +880,10 @@ fn can_implement_inline_macro() {
         .version("1.0.0")
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
-            fn main() -> felt252 { some!() }
+            fn main() -> felt252 {
+                let x = some!();
+                x
+            }
         "#})
         .build(&project);
 

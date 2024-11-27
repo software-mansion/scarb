@@ -1072,7 +1072,8 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         _metadata: &MacroPluginMetadata<'_>,
     ) -> InlinePluginResult {
         let stable_ptr = syntax.clone().stable_ptr().untyped();
-        let token_stream = TokenStream::from_syntax_node(db, syntax);
+        let arguments = syntax.arguments(db);
+        let token_stream = TokenStream::from_syntax_node(db, &arguments);
         let result = self.instance().generate_code(
             self.expansion.name.clone(),
             TokenStream::empty(),
