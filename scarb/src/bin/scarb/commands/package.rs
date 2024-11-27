@@ -39,7 +39,7 @@ pub fn run(args: PackageArgs, config: &Config) -> Result<()> {
         let result = ops::package_list(&packages, &opts, &ws)?;
         ws.config().ui().print(ListMessage(result));
     } else {
-        ops::package(&packages, &opts, &ws, &args.args)?;
+        ops::package(&packages, &opts, &ws)?;
     }
 
     Ok(())

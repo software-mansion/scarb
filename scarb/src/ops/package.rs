@@ -1,15 +1,12 @@
 use core::str;
 use std::collections::BTreeMap;
-use std::ffi::OsString;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
-use std::process::Command;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc, writedoc};
 
-use crate::consts::SupportedPlatform;
 use crate::core::registry::package_source_store::PackageSourceStore;
 use crate::sources::client::PackageRepository;
 
@@ -22,9 +19,7 @@ use crate::compiler::plugin::proc_macro::compilation::{
 };
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
-use crate::core::{
-    Config, Package, PackageId, PackageName, ScriptDefinition, Target, TargetKind, Workspace,
-};
+use crate::core::{Config, Package, PackageId, PackageName, Target, TargetKind, Workspace};
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
@@ -82,13 +77,12 @@ pub fn package(
     packages: &[PackageId],
     opts: &PackageOpts,
     ws: &Workspace<'_>,
-    args: &[OsString],
 ) -> Result<Vec<FileLockGuard>> {
     before_package(ws)?;
 
     packages
         .iter()
-        .map(|pkg| package_one_impl(*pkg, opts, ws, args))
+        .map(|pkg| package_one_impl(*pkg, opts, ws))
         .collect()
 }
 
@@ -96,9 +90,8 @@ pub fn package_one(
     package_id: PackageId,
     opts: &PackageOpts,
     ws: &Workspace<'_>,
-    args: &[OsString],
 ) -> Result<FileLockGuard> {
-    package(&[package_id], opts, ws, args).map(|mut v| v.pop().unwrap())
+    package(&[package_id], opts, ws).map(|mut v| v.pop().unwrap())
 }
 
 #[tracing::instrument(level = "debug", skip(opts, ws))]
@@ -163,7 +156,6 @@ fn package_one_impl(
     pkg_id: PackageId,
     opts: &PackageOpts,
     ws: &Workspace<'_>,
-    args: &[OsString],
 ) -> Result<FileLockGuard> {
     let pkg = ws.fetch_package(&pkg_id)?;
 
@@ -178,10 +170,13 @@ fn package_one_impl(
     let recipe = prepare_archive_recipe(pkg, opts, ws)?;
     let num_files = recipe.len();
 
-    // wawel37: tutaj zaczynamy jazde
     if let Some(script_definition) = pkg.manifest.scripts.get("package") {
         if pkg.is_cairo_plugin() {
-            package_cairo_plugin(pkg, ws, args, script_definition);
+            ws.target_dir()
+                .child("scarb")
+                .child("cairo-plugin")
+                .path_existent()?;
+            ops::execute_script(script_definition, &[], ws, pkg.root(), None)?;
         }
     }
 
@@ -190,6 +185,7 @@ fn package_one_impl(
     // or invalid, so we can overwrite it if it exists.
     let filename = pkg_id.tarball_name();
     let target_dir = ws.target_dir().child("package");
+    // println!("{:?}", recipe);
 
     let mut dst =
         target_dir.create_rw(format!(".{filename}"), "package scratch space", ws.config())?;
@@ -622,39 +618,3 @@ fn check_metadata(pkg: &Package, config: &Config) -> Result<()> {
 
     Ok(())
 }
-
-#[tracing::instrument(level = "trace", skip_all)]
-fn package_cairo_plugin(
-    package: &Package,
-    ws: &Workspace<'_>,
-    args: &[OsString],
-    script_definition: &ScriptDefinition,
-) {
-  package.manifest.targets
-    let target_dir = ws.target_dir().child("cairo-plugin");
-  
-
-    // Install standard library for each supported targets.
-    // If the std is already installed, cargo will not download it again if the std is up to date.
-    for platform in SupportedPlatform::variants() {
-      let output = Command::new("rustup").args(["target", "add", platform.as_str()]).output();
-
-      match output {
-        Ok(output) => {
-          if !output.status.success() {
-            ws.config().ui().error(format!("failed to install standard library for target {}:\n{:?}", platform.as_str(), str::from_utf8(&output.stderr).unwrap_or("failed to decode stderr as UTF-8")));
-          }
-        },
-        Err(e) => {
-          ws.config().ui().error(format!("failed to install standard library for target {}:\n{}", platform.as_str(), e));
-        }
-      }
-
-      // Build targets 
-
-      
-    }
-
-}
-
-
