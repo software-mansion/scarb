@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
-use std::process::ExitCode;
+use std::process::{exit, ExitCode};
 use std::rc::Rc;
 
 use anyhow::Result;
@@ -55,6 +55,8 @@ pub fn execute_script(
         (&cwd).as_ref(),
         custom_commands,
     ));
+
+    println!("exit code: {:?}", exit_code);
 
     if exit_code != 0 {
         let exit_code: ExitCode = u8::try_from(exit_code)

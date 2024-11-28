@@ -2,6 +2,7 @@ use core::str;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
+use std::process::Command;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
@@ -169,6 +170,7 @@ fn package_one_impl(
 
     let recipe = prepare_archive_recipe(pkg, opts, ws)?;
     let num_files = recipe.len();
+    let target_dir = ws.target_dir().child("package");
 
     if let Some(script_definition) = pkg.manifest.scripts.get("package") {
         if pkg.is_cairo_plugin() {
@@ -184,8 +186,6 @@ fn package_one_impl(
     // passes all verification checks. Any previously existing tarball can be assumed as corrupt
     // or invalid, so we can overwrite it if it exists.
     let filename = pkg_id.tarball_name();
-    let target_dir = ws.target_dir().child("package");
-    // println!("{:?}", recipe);
 
     let mut dst =
         target_dir.create_rw(format!(".{filename}"), "package scratch space", ws.config())?;
