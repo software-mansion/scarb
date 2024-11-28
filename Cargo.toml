@@ -61,7 +61,6 @@ cairo-lang-syntax = { path = "../cairo/crates/cairo-lang-syntax" }
 cairo-lang-test-plugin = { path = "../cairo/crates/cairo-lang-test-plugin" }
 cairo-lang-test-runner = { path = "../cairo/crates/cairo-lang-test-runner" }
 cairo-lang-utils = { path = "../cairo/crates/cairo-lang-utils" }
-cairo-lang-stable-token = { path = "../cairo/crates/cairo-lang-stable-token", version = "1.0" }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }

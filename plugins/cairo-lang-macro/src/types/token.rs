@@ -1,6 +1,6 @@
 use crate::CONTEXT;
 use bumpalo::Bump;
-use cairo_lang_stable_token::{StableSpan, StableToken, ToStableTokenStream};
+use cairo_lang_primitive_token::{PrimitiveSpan, PrimitiveToken, ToPrimitiveTokenStream};
 use std::fmt::{Debug, Display, Write};
 use std::hash::{Hash, Hasher};
 use std::iter::{once, Map, Once};
@@ -295,7 +295,7 @@ impl TokenStream {
     }
 
     pub fn from_stable_token_stream(
-        stable_token_stream: impl Iterator<Item = StableToken>,
+        stable_token_stream: impl Iterator<Item = PrimitiveToken>,
     ) -> Self {
         Self::new(
             stable_token_stream
@@ -380,16 +380,16 @@ impl Token {
     }
 }
 
-impl ToStableTokenStream for TokenStream {
-    type Iter = Map<IntoIter<TokenTree>, fn(TokenTree) -> StableToken>;
-    fn to_stable_token_stream(&self) -> Self::Iter {
+impl ToPrimitiveTokenStream for TokenStream {
+    type Iter = Map<IntoIter<TokenTree>, fn(TokenTree) -> PrimitiveToken>;
+    fn to_primitive_token_stream(&self) -> Self::Iter {
         self.tokens
             .clone()
             .into_iter()
             .map(|token_tree| match token_tree {
-                TokenTree::Ident(token) => StableToken::new(
+                TokenTree::Ident(token) => PrimitiveToken::new(
                     token.content.to_string(),
-                    token.span.map(|span| StableSpan {
+                    token.span.map(|span| PrimitiveSpan {
                         start: span.start,
                         end: span.end,
                     }),
@@ -398,13 +398,13 @@ impl ToStableTokenStream for TokenStream {
     }
 }
 
-impl ToStableTokenStream for TokenTree {
-    type Iter = Once<StableToken>;
-    fn to_stable_token_stream(&self) -> Self::Iter {
+impl ToPrimitiveTokenStream for TokenTree {
+    type Iter = Once<PrimitiveToken>;
+    fn to_primitive_token_stream(&self) -> Self::Iter {
         once(match self {
-            TokenTree::Ident(token) => StableToken::new(
+            TokenTree::Ident(token) => PrimitiveToken::new(
                 token.content.to_string(),
-                token.span.clone().map(|span| StableSpan {
+                token.span.clone().map(|span| PrimitiveSpan {
                     start: span.start,
                     end: span.end,
                 }),
