@@ -2,6 +2,7 @@ use cairo_lang_macro::{
     AllocationContext, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
 };
 use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
+use std::ops::Add;
 
 /// Helps creating TokenStream based on multiple SyntaxNodes,
 /// which aren't descendants or ascendants of each other inside the SyntaxTree.
@@ -46,10 +47,55 @@ impl<'a> TokenStreamBuilder<'a> {
 
     pub fn token_from_syntax_node(&self, node: SyntaxNode, ctx: &AllocationContext) -> Token {
         let span = node.span(self.db).to_str_range();
-        let span = TextSpan {
-            start: span.start,
+        let text = node.get_text(self.db);
+        let span = Some(TextSpan {
+            // We skip the whitespace prefix, so that diagnostics start where the actual token contents is.
+            start: span.start.add(whitespace_prefix_len(&text)),
             end: span.end,
+        });
+        Token::new_in(text, span, ctx)
+    }
+}
+
+fn whitespace_prefix_len(s: &str) -> usize {
+    s.chars().take_while(|c| c.is_whitespace()).count()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::compiler::plugin::proc_macro::TokenStreamBuilder;
+    use cairo_lang_macro::{AllocationContext, TextSpan, TokenStream, TokenTree};
+    use cairo_lang_parser::utils::SimpleParserDatabase;
+    use indoc::indoc;
+
+    #[test]
+    fn whitespace_skipped() {
+        let db = SimpleParserDatabase::default();
+        let mut builder = TokenStreamBuilder::new(&db);
+        let content = indoc! {r#"
+            fn main() {
+                let x = 42;
+            }
+        "#};
+        let parsed = db.parse_virtual(content).unwrap();
+        builder.add_node(parsed);
+        let ctx = AllocationContext::default();
+        let token_stream = builder.build(&ctx);
+        let token_at = |token_stream: &TokenStream, idx: usize| {
+            let token: TokenTree = token_stream.tokens[idx].clone();
+            match token {
+                TokenTree::Ident(token) => token,
+            }
         };
-        Token::new_in(node.get_text(self.db), Some(span), ctx)
+        let token = token_at(&token_stream, 4);
+        assert_eq!(token.content.as_ref(), "{\n");
+        assert_eq!(token.span, Some(TextSpan { start: 10, end: 12 }));
+        let token = token_at(&token_stream, 5);
+        assert_eq!(token.content.as_ref(), "    let ");
+        // Note we skip 4 whitespaces characters in the span.
+        assert_eq!(token.span, Some(TextSpan { start: 16, end: 20 }));
+        let token = token_at(&token_stream, 6);
+        assert_eq!(token.content.as_ref(), "x ");
+        assert_eq!(token.span, Some(TextSpan { start: 20, end: 22 }));
     }
 }

@@ -1543,7 +1543,7 @@ fn can_use_quote() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
     .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
-    .add_dep(r#"cairo-lang-stable-token = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-stable-token", version = "1.0"}"#)
+    .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
         use cairo_lang_quote::quote;
@@ -1582,7 +1582,7 @@ fn can_use_quote_with_token_tree() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
     .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
-    .add_dep(r#"cairo-lang-stable-token = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-stable-token", version = "1.0"}"#)
+    .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token};
         use cairo_lang_quote::quote;
@@ -1624,7 +1624,7 @@ fn can_use_quote_with_token_stream() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
       .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
-      .add_dep(r#"cairo-lang-stable-token = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-stable-token", version = "1.0"}"#)
+      .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
       .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token};
         use cairo_lang_quote::quote;
@@ -1666,9 +1666,9 @@ fn can_use_quote_with_syntax_node() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
       .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
-      .add_dep(r#"cairo-lang-stable-token = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-stable-token", version = "1.0"}"#)
-      .add_dep(r#"cairo-lang-syntax = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-syntax"}"#)
-      .add_dep(r#"cairo-lang-parser = { path = "/Users/mateusz/SWM/Starkware/cairo/crates/cairo-lang-parser"}"#)
+      .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+      .add_dep(r#"cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo", rev = "f3c98f7e500fdd320d531187fd02842a0114b99e" }"#)
+      .add_dep(r#"cairo-lang-parser = { git = "https://github.com/starkware-libs/cairo", rev = "f3c98f7e500fdd320d531187fd02842a0114b99e" }"#)
       .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
         use cairo_lang_quote::quote;

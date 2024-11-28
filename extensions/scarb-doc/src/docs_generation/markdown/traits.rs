@@ -1,13 +1,16 @@
 use anyhow::Result;
+use cairo_lang_doc::parser::DocumentationCommentToken;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt::Write;
 
 use crate::docs_generation::{DocItem, PrimitiveDocItem, TopLevelDocItem};
 use crate::types::{
-    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Module, Struct,
-    Trait, TypeAlias,
+    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Module,
+    Struct, Trait, TypeAlias,
 };
+
+use super::context::MarkdownGenerationContext;
 
 pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     const ITEMS_SUMMARY_FILENAME: &'static str;
@@ -49,43 +52,82 @@ impl_top_level_markdown_doc_item!(Trait, "traits.md");
 impl_top_level_markdown_doc_item!(TypeAlias, "type_aliases.md");
 
 pub trait MarkdownDocItem: DocItem {
-    fn generate_markdown(&self, header_level: usize) -> Result<String>;
+    fn generate_markdown(
+        &self,
+        context: &MarkdownGenerationContext,
+        header_level: usize,
+    ) -> Result<String>;
+
+    fn get_documentation(&self, context: &MarkdownGenerationContext) -> Option<String> {
+        self.doc().as_ref().map(|doc_tokens| {
+            doc_tokens
+                .iter()
+                .map(|doc_token| match doc_token {
+                    DocumentationCommentToken::Content(content) => content.clone(),
+                    DocumentationCommentToken::Link(link) => {
+                        let file_path = context.resolve_markdown_file_path_from_link(link);
+                        format!(
+                            "[{}]({})",
+                            link.path.clone().unwrap_or(link.label.clone()),
+                            file_path
+                        )
+                    }
+                })
+                .join("")
+        })
+    }
 }
 
 impl<T> MarkdownDocItem for T
 where
     T: PrimitiveDocItem,
 {
-    fn generate_markdown(&self, header_level: usize) -> Result<String> {
-        generate_markdown_from_item_data(self, header_level)
+    fn generate_markdown(
+        &self,
+        context: &MarkdownGenerationContext,
+        header_level: usize,
+    ) -> Result<String> {
+        generate_markdown_from_item_data(self, context, header_level)
     }
 }
 
 impl MarkdownDocItem for Enum {
-    fn generate_markdown(&self, header_level: usize) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, header_level)?;
+    fn generate_markdown(
+        &self,
+        context: &MarkdownGenerationContext,
+        header_level: usize,
+    ) -> Result<String> {
+        let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
 
-        markdown += &generate_markdown_for_subitems(&self.variants, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.variants, context, header_level)?;
 
         Ok(markdown)
     }
 }
 
 impl MarkdownDocItem for Impl {
-    fn generate_markdown(&self, header_level: usize) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, header_level)?;
+    fn generate_markdown(
+        &self,
+        context: &MarkdownGenerationContext,
+        header_level: usize,
+    ) -> Result<String> {
+        let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
 
-        markdown += &generate_markdown_for_subitems(&self.impl_constants, header_level)?;
-        markdown += &generate_markdown_for_subitems(&self.impl_functions, header_level)?;
-        markdown += &generate_markdown_for_subitems(&self.impl_types, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.impl_constants, context, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.impl_functions, context, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.impl_types, context, header_level)?;
 
         Ok(markdown)
     }
 }
 
 impl MarkdownDocItem for Module {
-    fn generate_markdown(&self, header_level: usize) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, header_level)?;
+    fn generate_markdown(
+        &self,
+        context: &MarkdownGenerationContext,
+        header_level: usize,
+    ) -> Result<String> {
+        let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
 
         markdown += &generate_markdown_list_for_top_level_subitems(
             &self.submodules.iter().collect_vec(),
@@ -137,22 +179,30 @@ impl MarkdownDocItem for Module {
 }
 
 impl MarkdownDocItem for Struct {
-    fn generate_markdown(&self, header_level: usize) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, header_level)?;
+    fn generate_markdown(
+        &self,
+        context: &MarkdownGenerationContext,
+        header_level: usize,
+    ) -> Result<String> {
+        let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
 
-        markdown += &generate_markdown_for_subitems(&self.members, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.members, context, header_level)?;
 
         Ok(markdown)
     }
 }
 
 impl MarkdownDocItem for Trait {
-    fn generate_markdown(&self, header_level: usize) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, header_level)?;
+    fn generate_markdown(
+        &self,
+        context: &MarkdownGenerationContext,
+        header_level: usize,
+    ) -> Result<String> {
+        let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
 
-        markdown += &generate_markdown_for_subitems(&self.trait_constants, header_level)?;
-        markdown += &generate_markdown_for_subitems(&self.trait_functions, header_level)?;
-        markdown += &generate_markdown_for_subitems(&self.trait_types, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.trait_constants, context, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.trait_functions, context, header_level)?;
+        markdown += &generate_markdown_for_subitems(&self.trait_types, context, header_level)?;
 
         Ok(markdown)
     }
@@ -242,6 +292,7 @@ pub fn generate_markdown_list_for_top_level_subitems<T: TopLevelMarkdownDocItem>
 
 fn generate_markdown_for_subitems<T: MarkdownDocItem + PrimitiveDocItem>(
     subitems: &[T],
+    context: &MarkdownGenerationContext,
     header_level: usize,
 ) -> Result<String> {
     let mut markdown = String::new();
@@ -254,7 +305,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + PrimitiveDocItem>(
             writeln!(
                 &mut markdown,
                 "{}",
-                item.generate_markdown(header_level + 2)?
+                item.generate_markdown(context, header_level + 2)?
             )?;
         }
     }
@@ -263,7 +314,8 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + PrimitiveDocItem>(
 }
 
 fn generate_markdown_from_item_data(
-    doc_item: &impl DocItem,
+    doc_item: &impl MarkdownDocItem,
+    context: &MarkdownGenerationContext,
     header_level: usize,
 ) -> Result<String> {
     let mut markdown = String::new();
@@ -272,7 +324,7 @@ fn generate_markdown_from_item_data(
 
     writeln!(&mut markdown, "{header} {}\n", doc_item.name())?;
 
-    if let Some(doc) = doc_item.doc() {
+    if let Some(doc) = doc_item.get_documentation(context) {
         writeln!(&mut markdown, "{doc}\n")?;
     }
 
@@ -290,4 +342,34 @@ fn generate_markdown_from_item_data(
     }
 
     Ok(markdown)
+}
+
+pub trait WithPath {
+    fn name(&self) -> &str;
+    fn full_path(&self) -> String;
+    fn parent_full_path(&self) -> Option<String>;
+}
+
+pub trait WithItemData {
+    fn item_data(&self) -> &ItemData;
+}
+
+impl<T: WithItemData> WithPath for T {
+    fn name(&self) -> &str {
+        self.item_data().name.as_str()
+    }
+
+    fn full_path(&self) -> String {
+        self.item_data().full_path.clone()
+    }
+
+    fn parent_full_path(&self) -> Option<String> {
+        self.item_data().parent_full_path.clone()
+    }
+}
+
+impl WithItemData for ItemData {
+    fn item_data(&self) -> &ItemData {
+        self
+    }
 }

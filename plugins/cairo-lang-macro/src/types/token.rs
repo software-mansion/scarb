@@ -13,7 +13,7 @@ use std::vec::IntoIter;
 /// This is both input and part of an output of a procedural macro.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(try_from = "deserializer::TokenStream"))]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TokenStream {
     pub tokens: Vec<TokenTree>,
     pub metadata: TokenStreamMetadata,
@@ -43,7 +43,7 @@ mod deserializer {
     #[derive(serde::Serialize, serde::Deserialize)]
     pub struct Token {
         pub content: String,
-        pub span: TextSpan,
+        pub span: Option<TextSpan>,
     }
 
     pub struct Error {}
@@ -67,7 +67,7 @@ mod deserializer {
                         let content = ctx.intern(token.content.as_str());
                         let token = crate::Token {
                             content,
-                            span: Some(token.span),
+                            span: token.span,
                         };
                         crate::TokenTree::Ident(token)
                     }
@@ -88,12 +88,6 @@ pub enum TokenTree {
     Ident(Token),
 }
 
-impl Default for TokenTree {
-    fn default() -> Self {
-        Self::Ident(Default::default())
-    }
-}
-
 impl TokenTree {
     /// Get the size hint for the [`TokenTree`].
     /// This can be used to estimate size of a buffer needed for allocating this [`TokenTree`].
@@ -106,7 +100,7 @@ impl TokenTree {
 
 /// A range of text offsets that form a span (like text selection).
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TextSpan {
     pub start: usize,
     pub end: usize,
@@ -116,7 +110,7 @@ pub struct TextSpan {
 ///
 /// The most atomic item of Cairo code representation.
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Token {
     pub content: InternedStr,
     pub span: Option<TextSpan>,
@@ -160,15 +154,6 @@ impl InternedStr {
     }
 }
 
-impl Default for InternedStr {
-    fn default() -> Self {
-        Self {
-            ptr: "" as *const str,
-            _bump: Rc::default(),
-        }
-    }
-}
-
 impl AsRef<str> for InternedStr {
     fn as_ref(&self) -> &str {
         self.deref()
@@ -205,7 +190,7 @@ impl Hash for InternedStr {
 }
 
 /// This wrapper de-allocates the underlying buffer on drop.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct BumpWrap(pub Bump);
 
 impl Drop for BumpWrap {
@@ -294,7 +279,7 @@ impl TokenStream {
         self.tokens.is_empty()
     }
 
-    pub fn from_stable_token_stream(
+    pub fn from_primitive_token_stream(
         stable_token_stream: impl Iterator<Item = PrimitiveToken>,
     ) -> Self {
         Self::new(
@@ -412,6 +397,7 @@ impl ToPrimitiveTokenStream for TokenTree {
         })
     }
 }
+
 #[cfg(test)]
 mod test {
     use crate::{AllocationContext, TextSpan, Token, TokenStream, TokenTree};

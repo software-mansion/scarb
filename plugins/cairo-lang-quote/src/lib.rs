@@ -76,7 +76,7 @@ pub fn quote(input: RustTokenStream) -> RustTokenStream {
     let mut output_token_stream = rust_quote! {
       use cairo_lang_macro::{TokenTree, Token, TokenStream};
       use cairo_lang_primitive_token::ToPrimitiveTokenStream;
-      let mut quote_macro_result = TokenStream::default();
+      let mut quote_macro_result = TokenStream::empty();
     };
 
     let token_iter = input.into_iter().peekable();
@@ -91,7 +91,7 @@ pub fn quote(input: RustTokenStream) -> RustTokenStream {
             }
             QuoteToken::Var(ident) => {
                 output_token_stream.extend(rust_quote! {
-                  quote_macro_result.extend(TokenStream::from_stable_token_stream(#ident.to_primitive_token_stream()));
+                  quote_macro_result.extend(TokenStream::from_primitive_token_stream(#ident.to_primitive_token_stream()));
                 });
             }
         }

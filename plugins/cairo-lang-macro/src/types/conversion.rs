@@ -115,7 +115,7 @@ impl Token {
         let ptr = self.content.as_ptr();
         let len = self.content.len();
         StableToken {
-            span: self.span.map(|span| span.into_stable()),
+            span: self.span.map(TextSpan::into_stable),
             ptr,
             len,
         }
@@ -145,7 +145,7 @@ impl Token {
     #[doc(hidden)]
     pub unsafe fn free_owned_stable(token: StableToken) {
         if let Some(token_span) = token.span {
-            TextSpan::free_owned_stable(token_span);
+            TextSpan::free_owned_stable(token_span)
         }
     }
 }
