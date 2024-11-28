@@ -285,7 +285,7 @@ impl<'a> Spec<'a> {
     }
 }
 
-impl<'a> fmt::Display for Spec<'a> {
+impl fmt::Display for Spec<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Spec::All => write!(f, "*"),

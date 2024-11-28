@@ -175,7 +175,7 @@ fn shlex_join(cmd: &Command) -> String {
 
 struct ShlexJoin<'a>(&'a Command);
 
-impl<'a> fmt::Display for ShlexJoin<'a> {
+impl fmt::Display for ShlexJoin<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn write_quoted(f: &mut fmt::Formatter<'_>, s: &OsStr) -> fmt::Result {
             let utf = s.to_string_lossy();

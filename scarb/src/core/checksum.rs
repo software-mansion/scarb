@@ -65,7 +65,7 @@ impl FromStr for Checksum {
     }
 }
 
-impl<'a> TryFrom<&'a str> for Checksum {
+impl TryFrom<&str> for Checksum {
     type Error = anyhow::Error;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
