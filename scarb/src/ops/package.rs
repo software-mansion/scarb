@@ -2,7 +2,6 @@ use core::str;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
-use std::process::Command;
 
 use anyhow::{bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
