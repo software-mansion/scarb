@@ -25,7 +25,7 @@ impl<'a, T> ValueMessage<'a, T> {
     }
 }
 
-impl<'a, T> Message for ValueMessage<'a, T>
+impl<T> Message for ValueMessage<'_, T>
 where
     T: Display + Serialize,
 {

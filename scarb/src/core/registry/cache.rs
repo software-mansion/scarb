@@ -30,7 +30,7 @@ impl<'a> RegistryCache<'a> {
 }
 
 #[async_trait(?Send)]
-impl<'c> Registry for RegistryCache<'c> {
+impl Registry for RegistryCache<'_> {
     /// Attempt to find the packages that match dependency request.
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         self.queries.load(dependency.clone()).await

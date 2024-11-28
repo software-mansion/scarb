@@ -57,7 +57,7 @@ impl<'c> HttpRegistryClient<'c> {
 }
 
 #[async_trait]
-impl<'c> RegistryClient for HttpRegistryClient<'c> {
+impl RegistryClient for HttpRegistryClient<'_> {
     async fn get_records(
         &self,
         package: PackageName,

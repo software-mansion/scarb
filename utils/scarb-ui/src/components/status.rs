@@ -35,7 +35,7 @@ impl<'a> Status<'a> {
     }
 }
 
-impl<'a> Message for Status<'a> {
+impl Message for Status<'_> {
     fn text(self) -> String {
         format!(
             "{} {}",

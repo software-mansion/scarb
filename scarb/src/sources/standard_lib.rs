@@ -76,7 +76,7 @@ impl<'c> StandardLibSource<'c> {
 }
 
 #[async_trait]
-impl<'c> Source for StandardLibSource<'c> {
+impl Source for StandardLibSource<'_> {
     #[tracing::instrument(level = "trace", skip(self))]
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         self.ensure_loaded().await?.query(dependency).await
@@ -88,7 +88,7 @@ impl<'c> Source for StandardLibSource<'c> {
     }
 }
 
-impl<'c> fmt::Debug for StandardLibSource<'c> {
+impl fmt::Debug for StandardLibSource<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("StandardLibSource").finish_non_exhaustive()
     }
