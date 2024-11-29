@@ -2,8 +2,9 @@ use core::str;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
+use std::path::Path;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc, writedoc};
 
@@ -178,6 +179,11 @@ fn package_one_impl(
             "Running package script with package",
             &pkg_id.to_string(),
         ));
+        let script_path_string = script_definition.to_string();
+        let script_path = Path::new(&script_path_string);
+        if !script_path.exists() || !script_path.is_file() {
+            return Err(anyhow!("Package script must be a path to an existing file"));
+        };
         let absolute_path_script_definition = ScriptDefinition::new(
             pkg.root()
                 .join(format!("{}", script_definition))

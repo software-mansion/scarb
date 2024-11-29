@@ -14,7 +14,7 @@ use scarb::DEFAULT_TARGET_DIR_NAME;
 use scarb_build_metadata::CAIRO_VERSION;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
-use scarb_test_support::fsx::unix_paths_to_os_lossy;
+use scarb_test_support::fsx::{make_executable, unix_paths_to_os_lossy};
 use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::LocalRegistry;
@@ -1524,4 +1524,58 @@ fn package_with_publish_disabled() {
             [..]Packaging foo v1.0.0 ([..]Scarb.toml)
             [..]Packaged [..] files, [..] ([..] compressed)
         "#});
+}
+
+#[test]
+fn package_with_package_script() {
+    let t = TempDir::new().unwrap();
+
+    #[cfg(not(windows))]
+    let script_name = "script.sh";
+    #[cfg(not(windows))]
+    let script_code = indoc! { r#"
+      touch text.txt
+    "#};
+
+    #[cfg(windows)]
+    let script_name = "script.bat";
+    #[cfg(windows)]
+    let script_code = indoc! { r#"
+      @echo off
+      copy NUL text.txt
+    "#};
+
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .manifest_extra(formatdoc! {r#"
+            [scripts]
+            package = "{script_name}"
+        "#})
+        .src(script_name, script_code)
+        .build(&t);
+
+    #[cfg(not(windows))]
+    make_executable(&t.to_path_buf().join(script_name));
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--no-verify")
+        .arg("--no-metadata")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+          [..]Packaging[..]
+          [..]Running package script with package foo v1.0.0[..]
+          [..]Packaged[..]
+    "#});
+
+    assert!(Path::new(
+        &t.to_path_buf()
+            .join("target")
+            .join("package")
+            .join("text.txt"),
+    )
+    .exists());
 }
