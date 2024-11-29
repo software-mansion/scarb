@@ -172,13 +172,10 @@ fn package_one_impl(
     let target_dir = ws.target_dir().child("package");
 
     if let Some(script_definition) = pkg.manifest.scripts.get("package") {
-        if pkg.is_cairo_plugin() {
-            ws.target_dir()
-                .child("scarb")
-                .child("cairo-plugin")
-                .path_existent()?;
-            ops::execute_script(script_definition, &[], ws, pkg.root(), None)?;
-        }
+        ws.config()
+            .ui()
+            .print(Status::new("Packaging", &pkg_id.to_string()));
+        ops::execute_script(script_definition, &[], ws, pkg.root(), None)?;
     }
 
     // Package up and test a temporary tarball and only move it to the final location if it actually
