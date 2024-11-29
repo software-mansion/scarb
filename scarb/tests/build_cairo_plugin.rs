@@ -1721,3 +1721,104 @@ fn can_use_quote_with_syntax_node() {
         .assert()
         .success();
 }
+
+#[test]
+fn can_use_quote_with_cairo_specific_syntax() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
+    CairoPluginProjectBuilder::default()
+        .add_dep(formatdoc! {r#"cairo-lang-quote = {{ path={cairo_quote_path} }}"#})
+        .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+        .add_dep(r#"cairo-lang-syntax = "2.9.1""#)
+        .add_dep(r#"cairo-lang-parser = "2.9.1""#)
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_quote::quote;
+        use cairo_lang_parser::utils::SimpleParserDatabase;
+        use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+          let db_val = SimpleParserDatabase::default();
+          let db = &db_val;
+          let code = r#"
+              #[derive(Drop)]
+              struct Rectangle {
+                  width: u64,
+                  height: u64,
+              }
+
+              #[derive(Drop, PartialEq)]
+              struct Square {
+                  side_length: u64,
+              }
+
+              impl RectangleIntoSquare of TryInto<Rectangle, Square> {
+                  fn try_into(self: Rectangle) -> Option<Square> {
+                      if self.height == self.width {
+                          Option::Some(Square { side_length: self.height })
+                      } else {
+                          Option::None
+                      }
+                  }
+              }
+
+              fn main() {
+                let rectangle = Rectangle { width: 8, height: 8 };
+                let result: Square = rectangle.try_into().unwrap();
+                let expected = Square { side_length: 8 };
+                assert!(
+                    result == expected,
+                    "Rectangle with equal width and height should be convertible to a square."
+                );
+
+                let rectangle = Rectangle { width: 5, height: 8 };
+                let result: Option<Square> = rectangle.try_into();
+                assert!(
+                    result.is_none(),
+                    "Rectangle with different width and height should not be convertible to a square."
+                );
+              }
+          "#;
+          let syntax_node = db.parse_virtual(code).unwrap();
+          let syntax_node_with_db = SyntaxNodeWithDb::new(&syntax_node, db);
+          let tokens = quote! {
+            #syntax_node_with_db
+
+            trait Circle {
+              fn print() -> ();
+            }
+
+            impl CircleImpl of Circle {
+              fn print() -> () {
+                println!("This is a circle!");
+              }
+            }
+          };
+          ProcMacroResult::new(tokens)
+        }
+      "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> u32 {
+              // completly wrong type
+              true 
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+}
