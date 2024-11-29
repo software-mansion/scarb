@@ -134,6 +134,9 @@ fn get_crate_settings_for_component(
         coupons: package
             .experimental_features
             .contains(&String::from("coupons")),
+        associated_item_constraints: package
+            .experimental_features
+            .contains(&String::from("associated_item_constraints")),
     };
 
     let dependencies = component
