@@ -1,8 +1,10 @@
 use assert_fs::fixture::PathChild;
 use assert_fs::TempDir;
 use cairo_lang_sierra::program::VersionedProgram;
-use indoc::indoc;
-use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
+use indoc::{formatdoc, indoc};
+use scarb_test_support::cairo_plugin_project_builder::{
+    CairoPluginProjectBuilder, CAIRO_LANG_QUOTE_PATH,
+};
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -1541,9 +1543,10 @@ fn can_expand_impl_inner_func_attrr() {
 fn can_use_quote() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
+    let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
     CairoPluginProjectBuilder::default()
-    .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
-    .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+        .add_dep(formatdoc! {r#"cairo-lang-quote = {{ path={cairo_quote_path} }}"#})
+        .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
         use cairo_lang_quote::quote;
@@ -1580,9 +1583,10 @@ fn can_use_quote() {
 fn can_use_quote_with_token_tree() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
+    let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
     CairoPluginProjectBuilder::default()
-    .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
-    .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+        .add_dep(formatdoc! {r#"cairo-lang-quote = {{ path={cairo_quote_path} }}"#})
+        .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token};
         use cairo_lang_quote::quote;
@@ -1622,10 +1626,11 @@ fn can_use_quote_with_token_tree() {
 fn can_use_quote_with_token_stream() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
+    let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
     CairoPluginProjectBuilder::default()
-      .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
-      .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
-      .lib_rs(indoc! {r##"
+        .add_dep(formatdoc! {r#"cairo-lang-quote = {{ path={cairo_quote_path} }}"#})
+        .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+        .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token};
         use cairo_lang_quote::quote;
 
@@ -1638,7 +1643,7 @@ fn can_use_quote_with_token_stream() {
           ProcMacroResult::new(tokens)
         }
       "##})
-      .build(&t);
+        .build(&t);
     let project = temp.child("hello");
     ProjectBuilder::start()
         .name("hello")
@@ -1664,12 +1669,13 @@ fn can_use_quote_with_token_stream() {
 fn can_use_quote_with_syntax_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
+    let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
     CairoPluginProjectBuilder::default()
-      .add_dep(r#"cairo-lang-quote = { path="/Users/mateusz/SWM/Starkware/scarb/plugins/cairo-lang-quote" }"#)
-      .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
-      .add_dep(r#"cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo", rev = "f3c98f7e500fdd320d531187fd02842a0114b99e" }"#)
-      .add_dep(r#"cairo-lang-parser = { git = "https://github.com/starkware-libs/cairo", rev = "f3c98f7e500fdd320d531187fd02842a0114b99e" }"#)
-      .lib_rs(indoc! {r##"
+        .add_dep(formatdoc! {r#"cairo-lang-quote = {{ path={cairo_quote_path} }}"#})
+        .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+        .add_dep(r#"cairo-lang-syntax = "2.9.1""#)
+        .add_dep(r#"cairo-lang-parser = "2.9.1""#)
+        .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
         use cairo_lang_quote::quote;
         use cairo_lang_parser::utils::SimpleParserDatabase;
@@ -1692,7 +1698,7 @@ fn can_use_quote_with_syntax_node() {
           ProcMacroResult::new(tokens)
         }
       "##})
-      .build(&t);
+        .build(&t);
     let project = temp.child("hello");
     ProjectBuilder::start()
         .name("hello")
