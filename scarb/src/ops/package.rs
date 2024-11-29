@@ -172,9 +172,10 @@ fn package_one_impl(
     let target_dir = ws.target_dir().child("package");
 
     if let Some(script_definition) = pkg.manifest.scripts.get("package") {
-        ws.config()
-            .ui()
-            .print(Status::new("Packaging", &pkg_id.to_string()));
+        ws.config().ui().print(Status::new(
+            "Running package script with package",
+            &pkg_id.to_string(),
+        ));
         ops::execute_script(script_definition, &[], ws, pkg.root(), None)?;
     }
 
