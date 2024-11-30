@@ -1,6 +1,10 @@
 use anyhow::{anyhow, bail, ensure, Context, Result};
+use cairo_lang_runner::profiling::{ProfilingInfoProcessor, ProfilingInfoProcessorParams};
 use cairo_lang_runner::short_string::as_cairo_short_string;
-use cairo_lang_runner::{RunResultStarknet, RunResultValue, SierraCasmRunner, StarknetState};
+use cairo_lang_runner::{
+    ProfilingInfoCollectionConfig, RunResultStarknet, RunResultValue, SierraCasmRunner,
+    StarknetState,
+};
 use cairo_lang_sierra::ids::FunctionId;
 use cairo_lang_sierra::program::{Function, ProgramArtifact, VersionedProgram};
 use camino::Utf8PathBuf;
@@ -68,6 +72,10 @@ struct Args {
     /// It specified, `[ARGUMENTS]` CLI parameter will be ignored.
     #[arg(long)]
     arguments_file: Option<Utf8PathBuf>,
+
+    /// Path to write the profiler output, which contains scoped Sierra statement weights in FlameGraph compatible format.
+    #[arg(long)]
+    profiler_output: Option<Utf8PathBuf>,
 }
 
 fn main() -> ExitCode {
@@ -138,7 +146,12 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
             Some(Default::default())
         },
         Default::default(),
-        None,
+        args.profiler_output
+            .as_ref()
+            .map(|_| ProfilingInfoCollectionConfig {
+                collect_scoped_sierra_statement_weights: true,
+                ..Default::default()
+            }),
     )?;
 
     let result = runner
@@ -149,6 +162,31 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
             StarknetState::default(),
         )
         .with_context(|| "failed to run the function")?;
+
+    if let Some(profiler_output) = args.profiler_output {
+        let profiling_processor = ProfilingInfoProcessor::new(
+            None,
+            sierra_program.program,
+            Default::default(),
+            ProfilingInfoProcessorParams {
+                min_weight: 1,
+                process_by_statement: false,
+                process_by_concrete_libfunc: false,
+                process_by_generic_libfunc: false,
+                process_by_user_function: false,
+                process_by_original_user_function: false,
+                process_by_cairo_function: false,
+                process_by_stack_trace: false,
+                process_by_cairo_stack_trace: false,
+                process_by_scoped_statement: true,
+            },
+        );
+        let processed_profiling_info =
+            profiling_processor.process(result.profiling_info.as_ref().unwrap());
+
+        fs::write(profiler_output, processed_profiling_info.to_string())
+            .with_context(|| "failed to write profiler output")?;
+    }
 
     ui.print(Summary {
         result,
