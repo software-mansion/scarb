@@ -265,7 +265,7 @@ impl ProcMacroHost {
 }
 
 fn generate_code_mappings(token_stream: &TokenStream) -> Vec<CodeMapping> {
-    let mut mappings = Vec::new();
+    let mut mappings = Vec::with_capacity(token_stream.tokens.len());
     let mut current_pos = TextOffset::default();
 
     for token in token_stream.tokens.iter() {
