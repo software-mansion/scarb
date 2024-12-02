@@ -5,7 +5,6 @@ use crate::compiler::plugin::proc_macro::host::{
 use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
-use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginGeneratedFile, PluginResult};
 use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{AllocationContext, Diagnostic, TokenStream, TokenStreamMetadata};
@@ -74,7 +73,7 @@ impl ProcMacroHostPlugin {
         let any_derives = !derives.is_empty();
 
         let ctx = AllocationContext::default();
-        let mut derived_code = PatchBuilder::new(db, &item_ast);
+        let mut derived_code = String::new();
         let mut code_mappings = Vec::new();
         let mut current_width = TextWidth::default();
 
@@ -111,11 +110,10 @@ impl ProcMacroHostPlugin {
             code_mappings.extend(mappings);
             current_width = current_width + TextWidth::from_str(&result.token_stream.to_string());
 
-            derived_code.add_str(&result.token_stream.to_string());
+            derived_code.push_str(&result.token_stream.to_string());
         }
 
         if any_derives {
-            let derived_code = derived_code.build().0;
             return Some(PluginResult {
                 code: if derived_code.is_empty() {
                     None
