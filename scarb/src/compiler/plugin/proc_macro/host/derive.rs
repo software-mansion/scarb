@@ -6,6 +6,7 @@ use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
 use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginGeneratedFile, PluginResult};
+use cairo_lang_filesystem::ids::CodeMapping;
 use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{AllocationContext, Diagnostic, TokenStream, TokenStreamMetadata};
 use cairo_lang_syntax::attribute::structured::{AttributeArgVariant, AttributeStructurize};
@@ -102,14 +103,11 @@ impl ProcMacroHostPlugin {
                 continue;
             }
 
-            let mut mappings = generate_code_mappings(&result.token_stream);
-            for mapping in &mut mappings {
-                mapping.span.start = mapping.span.start.add_width(current_width);
-                mapping.span.end = mapping.span.end.add_width(current_width);
-            }
-            code_mappings.extend(mappings);
+            code_mappings.extend(generate_code_mappings_with_offset(
+                &result.token_stream,
+                current_width,
+            ));
             current_width = current_width + TextWidth::from_str(&result.token_stream.to_string());
-
             derived_code.push_str(&result.token_stream.to_string());
         }
 
@@ -149,4 +147,16 @@ impl ProcMacroHostPlugin {
 
         None
     }
+}
+
+fn generate_code_mappings_with_offset(
+    token_stream: &TokenStream,
+    offset: TextWidth,
+) -> Vec<CodeMapping> {
+    let mut mappings = generate_code_mappings(token_stream);
+    for mapping in &mut mappings {
+        mapping.span.start = mapping.span.start.add_width(offset);
+        mapping.span.end = mapping.span.end.add_width(offset);
+    }
+    mappings
 }
