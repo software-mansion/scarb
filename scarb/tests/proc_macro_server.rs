@@ -58,7 +58,7 @@ fn expand_attribute() {
 
             let output = input.replace(name, "very_new_name");
 
-            let span = TextSpan { start: 0, end: output.len() };
+            let span = Some(TextSpan { start: 0, end: output.len() });
             ProcMacroResult::new(
                 TokenStream::new(vec![
                     TokenTree::Ident(
@@ -151,7 +151,7 @@ fn expand_inline() {
         #[inline_macro]
         pub fn replace_all_15_with_25(token_stream: TokenStream) -> ProcMacroResult {
             let content = token_stream.to_string().replace("15", "25");
-            let span = TextSpan { start: 0, end: content.len() };
+            let span = Some(TextSpan { start: 0, end: content.len() });
             ProcMacroResult::new(
                 TokenStream::new(vec![
                     TokenTree::Ident(
