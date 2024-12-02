@@ -81,7 +81,7 @@ indoc = "2"
 io_tee = "0.1"
 itertools = "0.12"
 libc = "0.2"
-libloading = "0.8.5"
+libloading = "0.8.6"
 linkme = "0.3"
 ntest = "0.9"
 num-bigint = { version = "0.4", features = ["rand"] }
