@@ -265,31 +265,28 @@ impl ProcMacroHost {
 }
 
 fn generate_code_mappings(token_stream: &TokenStream) -> Vec<CodeMapping> {
-    let mut mappings = Vec::with_capacity(token_stream.tokens.len());
-    let mut current_pos = TextOffset::default();
+    token_stream
+        .tokens
+        .iter()
+        .scan(TextOffset::default(), |current_pos, token| {
+            let TokenTree::Ident(token) = token;
+            let token_width = TextWidth::from_str(token.content.as_ref());
 
-    for token in token_stream.tokens.iter() {
-        match token {
-            TokenTree::Ident(token) => {
-                let token_width = TextWidth::from_str(token.content.as_ref());
+            let mapping = CodeMapping {
+                span: TextSpan {
+                    start: *current_pos,
+                    end: current_pos.add_width(token_width),
+                },
+                origin: CodeOrigin::Span(TextSpan {
+                    start: TextOffset::default()
+                        .add_width(TextWidth::new_for_testing(token.span.start as u32)),
+                    end: TextOffset::default()
+                        .add_width(TextWidth::new_for_testing(token.span.end as u32)),
+                }),
+            };
 
-                mappings.push(CodeMapping {
-                    span: TextSpan {
-                        start: current_pos,
-                        end: current_pos.add_width(token_width),
-                    },
-                    origin: CodeOrigin::Span(TextSpan {
-                        start: TextOffset::default()
-                            .add_width(TextWidth::new_for_testing(token.span.start as u32)),
-                        end: TextOffset::default()
-                            .add_width(TextWidth::new_for_testing(token.span.end as u32)),
-                    }),
-                });
-
-                current_pos = current_pos.add_width(token_width);
-            }
-        }
-    }
-
-    mappings
+            *current_pos = current_pos.add_width(token_width);
+            Some(mapping)
+        })
+        .collect()
 }
