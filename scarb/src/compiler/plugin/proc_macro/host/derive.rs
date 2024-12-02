@@ -8,9 +8,7 @@ use crate::compiler::plugin::proc_macro::{
 use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginGeneratedFile, PluginResult};
 use cairo_lang_filesystem::span::TextWidth;
-use cairo_lang_macro::{
-    AllocationContext, Diagnostic, TokenStream, TokenStreamMetadata, TokenTree,
-};
+use cairo_lang_macro::{AllocationContext, Diagnostic, TokenStream, TokenStreamMetadata};
 use cairo_lang_syntax::attribute::structured::{AttributeArgVariant, AttributeStructurize};
 use cairo_lang_syntax::node::ast::{Expr, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
@@ -113,13 +111,7 @@ impl ProcMacroHostPlugin {
             code_mappings.extend(mappings);
             current_width = current_width + TextWidth::from_str(&result.token_stream.to_string());
 
-            for token in result.token_stream.tokens {
-                match token {
-                    TokenTree::Ident(token) => {
-                        derived_code.add_str(token.content.as_ref());
-                    }
-                }
-            }
+            derived_code.add_str(&result.token_stream.to_string());
         }
 
         if any_derives {
