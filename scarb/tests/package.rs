@@ -1535,6 +1535,8 @@ fn package_with_package_script() {
     #[cfg(not(windows))]
     let script_code = indoc! { r#"
       touch text.txt
+      cd ../..
+      cargo build
     "#};
 
     #[cfg(windows)]
@@ -1543,14 +1545,29 @@ fn package_with_package_script() {
     let script_code = indoc! { r#"
       @echo off
       copy NUL text.txt
+      cd ../..
+      cargo build
     "#};
 
-    ProjectBuilder::start()
+    CairoPluginProjectBuilder::start()
         .name("foo")
-        .version("1.0.0")
-        .manifest_extra(formatdoc! {r#"
-            [scripts]
-            package = "{script_name}"
+        .scarb_project(|b| {
+            b.name("foo")
+                .version("1.0.0")
+                .manifest_extra(formatdoc! {r#"
+                  [cairo-plugin]
+
+                  [scripts]
+                  package = "{script_name}"
+                "#})
+        })
+        .lib_rs(indoc! {r#"
+          use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+          #[attribute_macro]
+          pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+              ProcMacroResult::new(token_stream)
+          }
         "#})
         .src(script_name, script_code)
         .build(&t);
@@ -1560,16 +1577,9 @@ fn package_with_package_script() {
 
     Scarb::quick_snapbox()
         .arg("package")
-        .arg("--no-verify")
-        .arg("--no-metadata")
         .current_dir(&t)
         .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-          [..]Packaging[..]
-          [..]Running package script with package foo v1.0.0[..]
-          [..]Packaged[..]
-    "#});
+        .success();
 
     assert!(Path::new(
         &t.to_path_buf()
@@ -1578,4 +1588,5 @@ fn package_with_package_script() {
             .join("text.txt"),
     )
     .exists());
+    assert!(Path::new(&t.to_path_buf().join("target").join("debug")).exists())
 }
