@@ -13,6 +13,9 @@ use cairo_lang_syntax::node::ast::{ImplItem, MaybeImplBody, MaybeTraitBody};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
+use itertools::Itertools;
+use smol_str::SmolStr;
+use std::collections::HashSet;
 
 impl ProcMacroHostPlugin {
     pub(crate) fn expand_inner_attr(
@@ -22,6 +25,7 @@ impl ProcMacroHostPlugin {
     ) -> InnerAttrExpansionResult {
         let mut context = InnerAttrExpansionContext::new(self);
         let mut item_builder = PatchBuilder::new(db, &item_ast);
+        let mut used_attr_names: HashSet<SmolStr> = Default::default();
         let mut all_none = true;
         let ctx = AllocationContext::default();
 
@@ -53,6 +57,9 @@ impl ProcMacroHostPlugin {
                             let attrs = func.attributes(db).elements(db);
                             let found =
                                 self.parse_attrs(db, &mut token_stream_builder, attrs, &ctx);
+                            if let Some(name) = found.as_name() {
+                                used_attr_names.insert(name);
+                            }
                             token_stream_builder.add_node(func.declaration(db).as_syntax_node());
                             token_stream_builder.add_node(func.body(db).as_syntax_node());
                             let token_stream = token_stream_builder.build(&ctx);
@@ -74,7 +81,11 @@ impl ProcMacroHostPlugin {
                             InnerAttrExpansionResult::None
                         } else {
                             let (code, mappings) = item_builder.build();
-                            InnerAttrExpansionResult::Some(context.into_result(code, mappings))
+                            InnerAttrExpansionResult::Some(context.into_result(
+                                code,
+                                mappings,
+                                used_attr_names.into_iter().collect(),
+                            ))
                         }
                     }
                 }
@@ -108,6 +119,9 @@ impl ProcMacroHostPlugin {
                             let attrs = func.attributes(db).elements(db);
                             let found =
                                 self.parse_attrs(db, &mut token_stream_builder, attrs, &ctx);
+                            if let Some(name) = found.as_name() {
+                                used_attr_names.insert(name);
+                            }
                             token_stream_builder.add_node(func.visibility(db).as_syntax_node());
                             token_stream_builder.add_node(func.declaration(db).as_syntax_node());
                             token_stream_builder.add_node(func.body(db).as_syntax_node());
@@ -129,7 +143,11 @@ impl ProcMacroHostPlugin {
                             InnerAttrExpansionResult::None
                         } else {
                             let (code, mappings) = item_builder.build();
-                            InnerAttrExpansionResult::Some(context.into_result(code, mappings))
+                            InnerAttrExpansionResult::Some(context.into_result(
+                                code,
+                                mappings,
+                                used_attr_names.into_iter().collect(),
+                            ))
                         }
                     }
                 }
@@ -395,6 +413,10 @@ impl ProcMacroHostPlugin {
                 name: file_name.into(),
                 code_mappings: Vec::new(),
                 content,
+                diagnostics_note: Some(format!(
+                    "this error originates in the attribute macro: `{}`",
+                    input.expansion.name
+                )),
                 aux_data: result.aux_data.map(|new_aux_data| {
                     DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
                         new_aux_data.into(),
@@ -420,6 +442,16 @@ pub enum AttrExpansionFound {
         args: TokenStream,
         stable_ptr: SyntaxStablePtrId,
     },
+}
+
+impl AttrExpansionFound {
+    pub fn as_name(&self) -> Option<SmolStr> {
+        match self {
+            AttrExpansionFound::Some { expansion, .. }
+            | AttrExpansionFound::Last { expansion, .. } => Some(expansion.expansion.name.clone()),
+            AttrExpansionFound::None => None,
+        }
+    }
 }
 
 pub enum InnerAttrExpansionResult {
@@ -473,7 +505,19 @@ impl<'a> InnerAttrExpansionContext<'a> {
         result_str
     }
 
-    pub fn into_result(self, expanded: String, code_mappings: Vec<CodeMapping>) -> PluginResult {
+    pub fn into_result(
+        self,
+        expanded: String,
+        code_mappings: Vec<CodeMapping>,
+        attr_names: Vec<SmolStr>,
+    ) -> PluginResult {
+        let msg = if attr_names.len() == 1 {
+            "the attribute macro"
+        } else {
+            "one of the attribute macros"
+        };
+        let derive_names = attr_names.iter().map(ToString::to_string).join("`, `");
+        let note = format!("this error originates in {msg}: `{derive_names}`");
         PluginResult {
             code: Some(PluginGeneratedFile {
                 name: "proc_attr_inner".into(),
@@ -484,6 +528,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
                     Some(DynGeneratedFileAuxData::new(self.aux_data))
                 },
                 code_mappings,
+                diagnostics_note: Some(note),
             }),
             diagnostics: self.diagnostics,
             remove_original_item: true,

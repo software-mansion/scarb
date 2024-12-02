@@ -145,6 +145,7 @@ impl Debug for InternedStr {
 }
 
 impl InternedStr {
+    #[allow(unknown_lints)]
     #[allow(private_interfaces)]
     #[doc(hidden)]
     pub(crate) fn new_in(s: &str, bump: Rc<BumpWrap>) -> Self {
@@ -191,7 +192,7 @@ impl Hash for InternedStr {
 
 /// This wrapper de-allocates the underlying buffer on drop.
 #[derive(Debug)]
-struct BumpWrap(pub Bump);
+pub(crate) struct BumpWrap(pub Bump);
 
 impl Drop for BumpWrap {
     fn drop(&mut self) {

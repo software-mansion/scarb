@@ -74,7 +74,7 @@ impl ProcMacroHostPlugin {
 
         let ctx = AllocationContext::default();
         let mut derived_code = PatchBuilder::new(db, &item_ast);
-        for derive in derives {
+        for derive in derives.iter() {
             let token_stream = token_stream_builder.build(&ctx);
             let result = self.instance(derive.package_id).generate_code(
                 derive.expansion.name.clone(),
@@ -114,6 +114,16 @@ impl ProcMacroHostPlugin {
                 code: if derived_code.is_empty() {
                     None
                 } else {
+                    let msg = if derives.len() == 1 {
+                        "the derive macro"
+                    } else {
+                        "one of the derive macros"
+                    };
+                    let derive_names = derives
+                        .iter()
+                        .map(|derive| derive.expansion.name.to_string())
+                        .join("`, `");
+                    let note = format!("this error originates in {msg}: `{derive_names}`");
                     Some(PluginGeneratedFile {
                         name: "proc_macro_derive".into(),
                         code_mappings: Vec::new(),
@@ -123,6 +133,7 @@ impl ProcMacroHostPlugin {
                         } else {
                             Some(DynGeneratedFileAuxData::new(aux_data))
                         },
+                        diagnostics_note: Some(note),
                     })
                 },
                 diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),

@@ -8,6 +8,7 @@ use scarb_test_support::cairo_plugin_project_builder::{
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::assert_matches;
 
 #[test]
@@ -70,6 +71,38 @@ fn check_cairo_plugin() {
         r#"[..]Finished `release` profile [optimized] target(s) in[..]"#,
         last,
     );
+}
+
+#[test]
+fn can_check_cairo_project_with_plugins() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default().build(&t);
+    let project = temp.child("hello");
+    let y = project.child("other");
+    CairoPluginProjectBuilder::default().name("other").build(&y);
+    WorkspaceBuilder::start()
+        .add_member("other")
+        .package(
+            ProjectBuilder::start()
+                .name("hello")
+                .version("1.0.0")
+                .dep("some", &t),
+        )
+        .build(&project);
+    Scarb::quick_snapbox()
+        .arg("check")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Checking other v1.0.0 ([..]Scarb.toml)
+            [..]Checking hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished checking `dev` profile target(s) in [..]
+        "#});
 }
 
 #[test]
@@ -854,7 +887,10 @@ fn can_implement_inline_macro() {
         .version("1.0.0")
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
-            fn main() -> felt252 { some!() }
+            fn main() -> felt252 {
+                let x = some!();
+                x
+            }
         "#})
         .build(&project);
 

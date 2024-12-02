@@ -47,8 +47,9 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
     ) -> InlinePluginResult {
         let ctx = AllocationContext::default();
         let stable_ptr = syntax.clone().stable_ptr().untyped();
+        let arguments = syntax.arguments(db);
         let mut token_stream_builder = TokenStreamBuilder::new(db);
-        token_stream_builder.add_node(syntax.as_syntax_node());
+        token_stream_builder.add_node(arguments.as_syntax_node());
         let token_stream = token_stream_builder.build(&ctx);
         let result = self.instance().generate_code(
             self.expansion.name.clone(),
@@ -82,6 +83,10 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                     code_mappings: Vec::new(),
                     content,
                     aux_data,
+                    diagnostics_note: Some(format!(
+                        "this error originates in the inline macro: `{}`",
+                        self.expansion.name
+                    )),
                 }),
                 diagnostics,
             }

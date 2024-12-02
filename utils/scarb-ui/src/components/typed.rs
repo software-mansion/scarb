@@ -64,7 +64,7 @@ impl<'a> TypedMessage<'a> {
     }
 }
 
-impl<'a> Message for TypedMessage<'a> {
+impl Message for TypedMessage<'_> {
     fn text(self) -> String {
         if self.skip_type_for_text {
             self.message.to_string()
