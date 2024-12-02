@@ -124,7 +124,7 @@ fn get_cargo_library_name(package: &Package, config: &Config) -> Result<String> 
     let cdylib_target = package
         .targets
         .iter()
-        .find(|target| target.kind.contains(&"cdylib".to_string()))
+        .find(|target| target.kind.contains(&"cdylib".into()))
         .ok_or_else(|| anyhow!("no target of `cdylib` kind found in package"))?;
 
     Ok(cdylib_target.name.clone())

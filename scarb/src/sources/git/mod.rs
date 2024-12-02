@@ -150,7 +150,7 @@ impl<'c> GitSource<'c> {
 }
 
 #[async_trait]
-impl<'c> Source for GitSource<'c> {
+impl Source for GitSource<'_> {
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         self.ensure_loaded()
             .await?
@@ -164,7 +164,7 @@ impl<'c> Source for GitSource<'c> {
     }
 }
 
-impl<'c> fmt::Debug for GitSource<'c> {
+impl fmt::Debug for GitSource<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("GitSource")
             .field("source", &self.source_id.to_string())

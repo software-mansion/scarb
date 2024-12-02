@@ -146,7 +146,7 @@ members = ["foo", "bar"]
 
 [workspace.dependencies]
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", branch = "cairo-2" }
+openzeppelin = "0.19.0"
 ```
 
 ```toml [foo/Scarb.toml]

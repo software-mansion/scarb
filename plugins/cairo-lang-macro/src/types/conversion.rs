@@ -31,7 +31,7 @@ impl ProcMacroResult {
             .map(|m| CString::new(m).unwrap().into_raw())
             .collect::<Vec<_>>();
         StableProcMacroResult {
-            token_stream: self.token_stream.into_stable(),
+            token_stream: self.token_stream.as_stable(),
             aux_data: AuxData::maybe_into_stable(self.aux_data),
             diagnostics: StableSlice::new(diagnostics),
             full_path_markers: StableSlice::new(full_path_markers),
@@ -111,11 +111,11 @@ impl TextSpan {
 impl Token {
     /// Convert to FFI-safe representation.
     #[doc(hidden)]
-    pub fn into_stable(self) -> StableToken {
+    pub fn as_stable(&self) -> StableToken {
         let ptr = self.content.as_ptr();
         let len = self.content.len();
         StableToken {
-            span: self.span.into_stable(),
+            span: self.span.clone().into_stable(),
             ptr,
             len,
         }
@@ -129,7 +129,7 @@ impl Token {
     #[doc(hidden)]
     pub unsafe fn from_stable_in(token: &StableToken, ctx: &AllocationContext) -> Self {
         let content = slice::from_raw_parts(token.ptr, token.len);
-        let content = ctx.intern(std::str::from_utf8_unchecked(content));
+        let content = ctx.intern(std::str::from_utf8(content).unwrap());
         Self {
             content,
             span: TextSpan::from_stable(&token.span),
@@ -151,9 +151,9 @@ impl Token {
 impl TokenTree {
     /// Convert to FFI-safe representation.
     #[doc(hidden)]
-    pub fn into_stable(self) -> StableTokenTree {
+    pub fn as_stable(&self) -> StableTokenTree {
         match self {
-            Self::Ident(token) => StableTokenTree::Ident(token.into_stable()),
+            Self::Ident(token) => StableTokenTree::Ident(token.as_stable()),
         }
     }
 
@@ -190,19 +190,19 @@ impl TokenStream {
     ///
     /// # Safety
     #[doc(hidden)]
-    pub fn into_stable(self) -> StableTokenStream {
+    pub fn as_stable(&self) -> StableTokenStream {
         let mut size_hint: usize = 0;
         let tokens = self
             .tokens
-            .into_iter()
+            .iter()
             .map(|token| {
                 size_hint += token.size_hint();
-                token.into_stable()
+                token.as_stable()
             })
             .collect::<Vec<_>>();
         StableTokenStream {
             tokens: StableSlice::new(tokens),
-            metadata: self.metadata.into_stable(),
+            metadata: self.metadata.clone().into_stable(),
             size_hint,
         }
     }

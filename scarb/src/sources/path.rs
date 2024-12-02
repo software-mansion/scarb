@@ -91,7 +91,7 @@ impl<'c> PathSource<'c> {
 }
 
 #[async_trait]
-impl<'c> Source for PathSource<'c> {
+impl Source for PathSource<'_> {
     #[tracing::instrument(level = "trace", skip(self))]
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         Ok(self
@@ -114,7 +114,7 @@ impl<'c> Source for PathSource<'c> {
     }
 }
 
-impl<'c> fmt::Debug for PathSource<'c> {
+impl fmt::Debug for PathSource<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("PathSource")
             .field("source", &self.source_id.to_string())

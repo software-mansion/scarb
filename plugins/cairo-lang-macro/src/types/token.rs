@@ -10,7 +10,7 @@ use std::rc::Rc;
 /// This is both input and part of an output of a procedural macro.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(try_from = "deserializer::TokenStream"))]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TokenStream {
     pub tokens: Vec<TokenTree>,
     pub metadata: TokenStreamMetadata,
@@ -85,12 +85,6 @@ pub enum TokenTree {
     Ident(Token),
 }
 
-impl Default for TokenTree {
-    fn default() -> Self {
-        Self::Ident(Default::default())
-    }
-}
-
 impl TokenTree {
     /// Get the size hint for the [`TokenTree`].
     /// This can be used to estimate size of a buffer needed for allocating this [`TokenTree`].
@@ -103,7 +97,7 @@ impl TokenTree {
 
 /// A range of text offsets that form a span (like text selection).
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TextSpan {
     pub start: usize,
     pub end: usize,
@@ -113,7 +107,7 @@ pub struct TextSpan {
 ///
 /// The most atomic item of Cairo code representation.
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Token {
     pub content: InternedStr,
     pub span: TextSpan,
@@ -148,21 +142,13 @@ impl Debug for InternedStr {
 }
 
 impl InternedStr {
+    #[allow(unknown_lints)]
     #[allow(private_interfaces)]
     #[doc(hidden)]
     pub(crate) fn new_in(s: &str, bump: Rc<BumpWrap>) -> Self {
         let allocated = bump.0.alloc_str(s);
         let ptr = allocated as *const str;
         Self { ptr, _bump: bump }
-    }
-}
-
-impl Default for InternedStr {
-    fn default() -> Self {
-        Self {
-            ptr: "" as *const str,
-            _bump: Rc::default(),
-        }
     }
 }
 
@@ -202,8 +188,8 @@ impl Hash for InternedStr {
 }
 
 /// This wrapper de-allocates the underlying buffer on drop.
-#[derive(Debug, Default)]
-struct BumpWrap(pub Bump);
+#[derive(Debug)]
+pub(crate) struct BumpWrap(pub Bump);
 
 impl Drop for BumpWrap {
     fn drop(&mut self) {
