@@ -22,7 +22,7 @@ impl<'a> RegistryPatcher<'a> {
 }
 
 #[async_trait(?Send)]
-impl<'a> Registry for RegistryPatcher<'a> {
+impl Registry for RegistryPatcher<'_> {
     #[tracing::instrument(skip_all)]
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         let patch = self.patch_map.lookup(dependency);

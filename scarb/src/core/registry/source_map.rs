@@ -57,7 +57,7 @@ impl<'c> SourceMap<'c> {
 }
 
 #[async_trait(?Send)]
-impl<'c> Registry for SourceMap<'c> {
+impl Registry for SourceMap<'_> {
     /// Attempt to find the packages that match a dependency request.
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         let source = self.ensure_loaded(dependency.source_id).await?;

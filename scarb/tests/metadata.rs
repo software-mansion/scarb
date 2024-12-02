@@ -1356,7 +1356,9 @@ fn includes_experimental_features() {
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
-        .manifest_package_extra(r#"experimental-features = ["negative_impls"]"#)
+        .manifest_package_extra(
+            r#"experimental-features = ["negative_impls", "associated_item_constraints"]"#,
+        )
         .build(&t);
 
     let metadata = Scarb::quick_snapbox()
@@ -1367,12 +1369,21 @@ fn includes_experimental_features() {
         .current_dir(&t)
         .stdout_json::<Metadata>();
 
-    assert!(packages_by_name(metadata)
+    let packages = packages_by_name(metadata);
+
+    assert!(packages
         .get("hello")
         .unwrap()
         .clone()
         .experimental_features
-        .contains(&String::from("negative_impls")))
+        .contains(&String::from("negative_impls")));
+
+    assert!(packages
+        .get("hello")
+        .unwrap()
+        .clone()
+        .experimental_features
+        .contains(&String::from("associated_item_constraints")));
 }
 
 #[test]

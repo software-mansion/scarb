@@ -182,7 +182,7 @@ impl Config {
         self.creation_time.elapsed()
     }
 
-    pub fn package_cache_lock<'a>(&'a self) -> &AdvisoryLock<'a> {
+    pub fn package_cache_lock<'a>(&'a self) -> &'a AdvisoryLock<'a> {
         // UNSAFE: These mem::transmute calls only change generic lifetime parameters.
         let static_al: &AdvisoryLock<'static> = self.package_cache_lock.get_or_init(|| {
             let not_static_al =

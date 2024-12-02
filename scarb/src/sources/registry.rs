@@ -68,7 +68,7 @@ impl<'c> RegistrySource<'c> {
 }
 
 #[async_trait]
-impl<'c> Source for RegistrySource<'c> {
+impl Source for RegistrySource<'_> {
     #[tracing::instrument(level = "trace", skip(self))]
     async fn query(&self, dependency: &ManifestDependency) -> Result<Vec<Summary>> {
         let records = self
@@ -159,7 +159,7 @@ impl<'c> RegistrySource<'c> {
     }
 }
 
-impl<'c> fmt::Debug for RegistrySource<'c> {
+impl fmt::Debug for RegistrySource<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("RegistrySource")
             .field("source", &self.source_id.to_string())

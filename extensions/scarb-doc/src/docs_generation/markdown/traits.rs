@@ -212,7 +212,7 @@ impl MarkdownDocItem for Trait {
 /// cthat share the same name.
 pub fn mark_duplicated_item_with_relative_path<'a, T: TopLevelMarkdownDocItem + 'a>(
     items: &'a [&'a T],
-) -> Vec<(&&'a T, Option<String>)> {
+) -> Vec<(&'a &'a T, Option<String>)> {
     let mut paths_for_item_name = HashMap::<String, Vec<String>>::new();
     for item in items {
         paths_for_item_name

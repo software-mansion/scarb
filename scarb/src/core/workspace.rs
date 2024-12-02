@@ -221,7 +221,7 @@ fn check_unique_targets(targets: &Vec<&Target>) -> Result<()> {
     Ok(())
 }
 
-impl<'c> fmt::Display for Workspace<'c> {
+impl fmt::Display for Workspace<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let manifest_path = self.manifest_path();
         let path = if manifest_path.file_name() == Some(MANIFEST_FILE_NAME) {
@@ -233,7 +233,7 @@ impl<'c> fmt::Display for Workspace<'c> {
     }
 }
 
-impl<'c> fmt::Debug for Workspace<'c> {
+impl fmt::Debug for Workspace<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Workspace")
             .field("members", &self.members)
@@ -251,7 +251,7 @@ impl Utf8PathWorkspaceExt for Utf8Path {
     }
 }
 
-impl<'c> PackagesSource for Workspace<'c> {
+impl PackagesSource for Workspace<'_> {
     type Package = Package;
 
     fn package_name_of(package: &Self::Package) -> &str {

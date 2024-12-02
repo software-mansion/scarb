@@ -251,7 +251,7 @@ pub struct DepWith<'a, T: DepBuilder + ?Sized> {
     value: Value,
 }
 
-impl<'a, T: DepBuilder + ?Sized> DepBuilder for DepWith<'a, T> {
+impl<T: DepBuilder + ?Sized> DepBuilder for DepWith<'_, T> {
     fn build(&self) -> Value {
         let mut table = self.dep.build();
         table
