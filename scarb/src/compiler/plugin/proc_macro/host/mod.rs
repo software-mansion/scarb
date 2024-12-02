@@ -280,9 +280,9 @@ fn generate_code_mappings(token_stream: &TokenStream) -> Vec<CodeMapping> {
                     },
                     origin: CodeOrigin::Span(TextSpan {
                         start: TextOffset::default()
-                            .add_width(TextWidth::from_u32(token.span.start as u32)),
+                            .add_width(TextWidth::new_for_testing(token.span.start as u32)),
                         end: TextOffset::default()
-                            .add_width(TextWidth::from_u32(token.span.end as u32)),
+                            .add_width(TextWidth::new_for_testing(token.span.end as u32)),
                     }),
                 });
 
