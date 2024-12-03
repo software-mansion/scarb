@@ -1775,7 +1775,7 @@ fn can_use_quote_with_cairo_specific_syntax() {
         use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some(_attr: TokenStream, _token_stream: TokenStream) -> ProcMacroResult {
           let db_val = SimpleParserDatabase::default();
           let db = &db_val;
           let code = r#"
