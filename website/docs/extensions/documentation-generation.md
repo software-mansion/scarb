@@ -14,7 +14,6 @@ As for now, we support those types of comments:
 - `///` documentation for following item.
 - `//!` documentation for enclosing item (also works with file modules).
 
-
 the `///` and `//!` comment prefixes are supported.
 
 ## Item linkage
@@ -22,7 +21,7 @@ the `///` and `//!` comment prefixes are supported.
 You can also link to another item's page by just refering the item within the documentation comment.
 Currenctly we support only those types of links:
 
-- `[ItemName]` and ```[`ItemName`]``` (where `ItemName` is a valid path to an item).
+- `[ItemName]` and ``[`ItemName`]`` (where `ItemName` is a valid path to an item).
 
 ## mdBook
 
@@ -50,7 +49,7 @@ enum ExampleEnum {
     VARIANT_B
 }
 
-/// Example struct. Contains a public field and a private one. 
+/// Example struct. Contains a public field and a private one.
 struct ExampleStruct {
     /// Private field.
     field_a: felt252,
