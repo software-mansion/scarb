@@ -20,10 +20,9 @@ the `///` and `//!` comment prefixes are supported.
 ## Item linkage
 
 You can also link to another item's page by just refering the item within the documentation comment.
-Currenctly we support 2 types of links:
+Currenctly we support only those types of links:
 
 - `[ItemName]` and ```[`ItemName`]``` (where `ItemName` is a valid path to an item).
-- `[any label you want](ItemPath)`.
 
 ## mdBook
 
@@ -73,7 +72,7 @@ fn test() {
 }
 
 /// Main function that Cairo runs as a binary entrypoint.
-/// This function uses [that](test) function.
+/// This function uses [test] function.
 fn main() {
     //! This is an inner comment. It refers to it's parent which is the main function.
     println!("hello_world");
