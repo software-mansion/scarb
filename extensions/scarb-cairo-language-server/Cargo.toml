@@ -5,7 +5,7 @@ edition.workspace = true
 publish = false
 
 [dependencies]
-cairo-lang-language-server.workspace = true
+cairo-language-server.workspace = true
 
 [dev-dependencies]
 assert_fs.workspace = true

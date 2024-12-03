@@ -41,7 +41,6 @@ cairo-lang-diagnostics = "2.9.1"
 cairo-lang-doc = "2.9.1"
 cairo-lang-filesystem = "2.9.1"
 cairo-lang-formatter = "2.9.1"
-cairo-lang-language-server = "2.9.1"
 cairo-lang-lowering = "2.9.1"
 cairo-lang-parser = "2.9.1"
 cairo-lang-runner = "2.9.1"
@@ -54,6 +53,7 @@ cairo-lang-syntax = "2.9.1"
 cairo-lang-test-plugin = "2.9.1"
 cairo-lang-test-runner = "2.9.1"
 cairo-lang-utils = { version = "2.9.1", features = ["env_logger"] }
+cairo-language-server = {git = "https://github.com/software-mansion/cairols", rev = "deaad4428c86c620782bcdfef14a079745b59f99" }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
