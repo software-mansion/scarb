@@ -62,9 +62,9 @@ impl<'a> MarkdownGenerationContext<'a> {
                     }
                     _ => path_to_file_link(&resolved_item.full_path()),
                 },
-                None => link.to_string(),
+                None => link.path.clone().unwrap_or(link.label.clone()),
             },
-            None => link.to_string(),
+            None => link.path.clone().unwrap_or(link.label.clone()),
         }
     }
 }
