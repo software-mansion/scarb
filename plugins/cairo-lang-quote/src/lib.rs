@@ -74,8 +74,7 @@ fn process_token_stream(
 pub fn quote(input: RustTokenStream) -> RustTokenStream {
     let mut parsed_input: Vec<QuoteToken> = Vec::new();
     let mut output_token_stream = rust_quote! {
-      use cairo_lang_primitive_token::ToPrimitiveTokenStream;
-      let mut quote_macro_result = cairo_lang_macro::TokenStream::empty();
+      let mut quote_macro_result = ::cairo_lang_macro::TokenStream::empty();
     };
 
     let token_iter = input.into_iter().peekable();
@@ -85,16 +84,16 @@ pub fn quote(input: RustTokenStream) -> RustTokenStream {
         match quote_token {
             QuoteToken::Content(content) => {
                 output_token_stream.extend(rust_quote! {
-                  quote_macro_result.push_token(cairo_lang_macro::TokenTree::Ident(cairo_lang_macro::Token::new(#content.to_string(), None)));
+                  quote_macro_result.push_token(::cairo_lang_macro::TokenTree::Ident(::cairo_lang_macro::Token::new(::std::string::ToString::to_string(#content), ::std::option::Option::None)));
                 });
             }
             QuoteToken::Var(ident) => {
                 output_token_stream.extend(rust_quote! {
-                  quote_macro_result.extend(cairo_lang_macro::TokenStream::from_primitive_token_stream(#ident.to_primitive_token_stream()));
+                  quote_macro_result.extend(::cairo_lang_macro::TokenStream::from_primitive_token_stream(::cairo_lang_primitive_token::ToPrimitiveTokenStream::to_primitive_token_stream(&#ident)));
                 });
             }
             QuoteToken::Whitespace => output_token_stream.extend(rust_quote! {
-              quote_macro_result.push_token(cairo_lang_macro::TokenTree::Ident(cairo_lang_macro::Token::new(" ".to_string(), None)));
+              quote_macro_result.push_token(::cairo_lang_macro::TokenTree::Ident(::cairo_lang_macro::Token::new(" ".to_string(), ::std::option::Option::None)));
             }),
         }
     }
