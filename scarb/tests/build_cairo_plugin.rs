@@ -1584,7 +1584,7 @@ fn code_mappings_preserve_attribute_error_locations() {
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, mut token_stream: TokenStream) -> ProcMacroResult {
-            let token_stream_length = token_stream.to_string().len();
+            let token_stream_length = token_stream.to_string().len() as u32;
             token_stream.tokens.push(TokenTree::Ident(Token::new("    ", Some(TextSpan { start: token_stream_length + 1, end: token_stream_length + 5 }))));
             ProcMacroResult::new(token_stream)
         }
@@ -1712,7 +1712,7 @@ fn code_mappings_preserve_derive_error_locations() {
                   code.clone(),
                     Some(TextSpan {
                         start: 0,
-                        end: code.len(),
+                        end: code.len() as u32,
                     }),
                 ))]);
 
