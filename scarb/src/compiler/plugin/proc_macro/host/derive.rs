@@ -1,13 +1,14 @@
 use crate::compiler::plugin::proc_macro::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::host::{into_cairo_diagnostics, DERIVE_ATTR};
+use crate::compiler::plugin::proc_macro::host::{
+    generate_code_mappings, into_cairo_diagnostics, DERIVE_ATTR,
+};
 use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
-use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginGeneratedFile, PluginResult};
-use cairo_lang_macro::{
-    AllocationContext, Diagnostic, TokenStream, TokenStreamMetadata, TokenTree,
-};
+use cairo_lang_filesystem::ids::CodeMapping;
+use cairo_lang_filesystem::span::TextWidth;
+use cairo_lang_macro::{AllocationContext, Diagnostic, TokenStream, TokenStreamMetadata};
 use cairo_lang_syntax::attribute::structured::{AttributeArgVariant, AttributeStructurize};
 use cairo_lang_syntax::node::ast::{Expr, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
@@ -73,7 +74,10 @@ impl ProcMacroHostPlugin {
         let any_derives = !derives.is_empty();
 
         let ctx = AllocationContext::default();
-        let mut derived_code = PatchBuilder::new(db, &item_ast);
+        let mut derived_code = String::new();
+        let mut code_mappings = Vec::new();
+        let mut current_width = TextWidth::default();
+
         for derive in derives.iter() {
             let token_stream = token_stream_builder.build(&ctx);
             let result = self.instance(derive.package_id).generate_code(
@@ -99,17 +103,15 @@ impl ProcMacroHostPlugin {
                 continue;
             }
 
-            for token in result.token_stream.tokens {
-                match token {
-                    TokenTree::Ident(token) => {
-                        derived_code.add_str(token.content.as_ref());
-                    }
-                }
-            }
+            code_mappings.extend(generate_code_mappings_with_offset(
+                &result.token_stream,
+                current_width,
+            ));
+            current_width = current_width + TextWidth::from_str(&result.token_stream.to_string());
+            derived_code.push_str(&result.token_stream.to_string());
         }
 
         if any_derives {
-            let derived_code = derived_code.build().0;
             return Some(PluginResult {
                 code: if derived_code.is_empty() {
                     None
@@ -126,7 +128,7 @@ impl ProcMacroHostPlugin {
                     let note = format!("this error originates in {msg}: `{derive_names}`");
                     Some(PluginGeneratedFile {
                         name: "proc_macro_derive".into(),
-                        code_mappings: Vec::new(),
+                        code_mappings,
                         content: derived_code,
                         aux_data: if aux_data.is_empty() {
                             None
@@ -145,4 +147,16 @@ impl ProcMacroHostPlugin {
 
         None
     }
+}
+
+fn generate_code_mappings_with_offset(
+    token_stream: &TokenStream,
+    offset: TextWidth,
+) -> Vec<CodeMapping> {
+    let mut mappings = generate_code_mappings(token_stream);
+    for mapping in &mut mappings {
+        mapping.span.start = mapping.span.start.add_width(offset);
+        mapping.span.end = mapping.span.end.add_width(offset);
+    }
+    mappings
 }

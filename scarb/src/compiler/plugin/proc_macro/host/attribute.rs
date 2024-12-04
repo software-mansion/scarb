@@ -1,5 +1,5 @@
 use crate::compiler::plugin::proc_macro::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::host::into_cairo_diagnostics;
+use crate::compiler::plugin::proc_macro::host::{generate_code_mappings, into_cairo_diagnostics};
 use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
@@ -407,11 +407,12 @@ impl ProcMacroHostPlugin {
         }
 
         let file_name = format!("proc_{}", input.expansion.name);
+        let code_mappings = generate_code_mappings(&result.token_stream);
         let content = result.token_stream.to_string();
         PluginResult {
             code: Some(PluginGeneratedFile {
                 name: file_name.into(),
-                code_mappings: Vec::new(),
+                code_mappings,
                 content,
                 diagnostics_note: Some(format!(
                     "this error originates in the attribute macro: `{}`",
