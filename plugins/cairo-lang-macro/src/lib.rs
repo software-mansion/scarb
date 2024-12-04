@@ -16,8 +16,11 @@
 //!
 
 pub use cairo_lang_macro_attributes::*;
+pub use cairo_lang_quote::*;
+
 #[doc(hidden)]
 pub use linkme;
+
 use std::cell::RefCell;
 
 use cairo_lang_macro_stable::ffi::StableSlice;
@@ -28,7 +31,6 @@ use std::ffi::{c_char, CStr, CString};
 use std::ops::Deref;
 
 mod types;
-
 pub use types::*;
 
 // A thread-local allocation context for allocating tokens on proc macro side.

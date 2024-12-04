@@ -8,7 +8,7 @@ pub mod ffi;
 #[repr(C)]
 #[derive(Debug)]
 pub struct StableToken {
-    pub span: StableTextSpan,
+    pub span: Option<StableTextSpan>,
     pub ptr: *const u8,
     pub len: usize,
 }

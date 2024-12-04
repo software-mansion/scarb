@@ -17,6 +17,16 @@ static CAIRO_LANG_MACRO_PATH: LazyLock<String> = LazyLock::new(|| {
     serde_json::to_string(&path).unwrap()
 });
 
+pub static CAIRO_LANG_QUOTE_PATH: LazyLock<String> = LazyLock::new(|| {
+    let path = fsx::canonicalize(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../plugins/")
+            .join("cairo-lang-quote"),
+    )
+    .unwrap();
+    serde_json::to_string(&path).unwrap()
+});
+
 pub struct CairoPluginProjectBuilder {
     project: ProjectBuilder,
     name: String,
@@ -91,6 +101,11 @@ impl CairoPluginProjectBuilder {
     pub fn build(&self, t: &impl PathChild) {
         self.project.just_manifest(t);
         self.just_code(t);
+    }
+
+    pub fn add_quote_deps(self) -> Self {
+        // let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
+        self.add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
     }
 }
 

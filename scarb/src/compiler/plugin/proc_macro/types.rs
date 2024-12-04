@@ -47,11 +47,11 @@ impl<'a> TokenStreamBuilder<'a> {
     pub fn token_from_syntax_node(&self, node: SyntaxNode, ctx: &AllocationContext) -> Token {
         let span = node.span(self.db);
         let text = node.get_text(self.db);
-        let span = TextSpan {
+        let span = Some(TextSpan {
             // We skip the whitespace prefix, so that diagnostics start where the actual token contents is.
             start: span.start.as_u32() + whitespace_prefix_len(&text),
             end: span.end.as_u32(),
-        };
+        });
         Token::new_in(text, span, ctx)
     }
 }
@@ -88,13 +88,13 @@ mod tests {
         };
         let token = token_at(&token_stream, 4);
         assert_eq!(token.content.as_ref(), "{\n");
-        assert_eq!(token.span, TextSpan { start: 10, end: 12 });
+        assert_eq!(token.span, Some(TextSpan { start: 10, end: 12 }));
         let token = token_at(&token_stream, 5);
         assert_eq!(token.content.as_ref(), "    let ");
         // Note we skip 4 whitespaces characters in the span.
-        assert_eq!(token.span, TextSpan { start: 16, end: 20 });
+        assert_eq!(token.span, Some(TextSpan { start: 16, end: 20 }));
         let token = token_at(&token_stream, 6);
         assert_eq!(token.content.as_ref(), "x ");
-        assert_eq!(token.span, TextSpan { start: 20, end: 22 });
+        assert_eq!(token.span, Some(TextSpan { start: 20, end: 22 }));
     }
 }

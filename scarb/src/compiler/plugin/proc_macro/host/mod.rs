@@ -277,12 +277,19 @@ fn generate_code_mappings(token_stream: &TokenStream) -> Vec<CodeMapping> {
                     start: *current_pos,
                     end: current_pos.add_width(token_width),
                 },
-                origin: CodeOrigin::Span(TextSpan {
-                    start: TextOffset::default()
-                        .add_width(TextWidth::new_for_testing(token.span.start)),
-                    end: TextOffset::default()
-                        .add_width(TextWidth::new_for_testing(token.span.end)),
-                }),
+                // TODO: instead of putting default TextSpan, put the call_site() here.
+                origin: token
+                    .span
+                    .as_ref()
+                    .map(|span| {
+                        CodeOrigin::Span(TextSpan {
+                            start: TextOffset::default()
+                                .add_width(TextWidth::new_for_testing(span.start)),
+                            end: TextOffset::default()
+                                .add_width(TextWidth::new_for_testing(span.end)),
+                        })
+                    })
+                    .unwrap_or(CodeOrigin::Span(TextSpan::default())),
             };
 
             *current_pos = current_pos.add_width(token_width);

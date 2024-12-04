@@ -1,9 +1,12 @@
 use crate::CONTEXT;
 use bumpalo::Bump;
+use cairo_lang_primitive_token::{PrimitiveSpan, PrimitiveToken, ToPrimitiveTokenStream};
 use std::fmt::{Debug, Display, Write};
 use std::hash::{Hash, Hasher};
+use std::iter::{once, Map, Once};
 use std::ops::Deref;
 use std::rc::Rc;
+use std::vec::IntoIter;
 
 /// An abstract stream of Cairo tokens.
 ///
@@ -40,7 +43,7 @@ mod deserializer {
     #[derive(serde::Serialize, serde::Deserialize)]
     pub struct Token {
         pub content: String,
-        pub span: TextSpan,
+        pub span: Option<TextSpan>,
     }
 
     pub struct Error {}
@@ -112,7 +115,7 @@ pub struct TextSpan {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Token {
     pub content: InternedStr,
-    pub span: TextSpan,
+    pub span: Option<TextSpan>,
 }
 
 impl Token {
@@ -278,6 +281,43 @@ impl TokenStream {
     pub fn is_empty(&self) -> bool {
         self.tokens.is_empty()
     }
+
+    pub fn from_primitive_token_stream(
+        stable_token_stream: impl Iterator<Item = PrimitiveToken>,
+    ) -> Self {
+        Self::new(
+            stable_token_stream
+                .map(|stable_token| {
+                    TokenTree::Ident(Token::new(
+                        stable_token.content,
+                        stable_token.span.map(|stable_span| TextSpan {
+                            start: stable_span.start as u32,
+                            end: stable_span.end as u32,
+                        }),
+                    ))
+                })
+                .collect(),
+        )
+    }
+
+    pub fn push_token(&mut self, token_tree: TokenTree) {
+        self.tokens.push(token_tree);
+    }
+}
+
+impl IntoIterator for TokenStream {
+    type Item = TokenTree;
+    type IntoIter = IntoIter<TokenTree>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.tokens.into_iter()
+    }
+}
+
+impl Extend<TokenTree> for TokenStream {
+    fn extend<T: IntoIterator<Item = TokenTree>>(&mut self, iter: T) {
+        self.tokens.extend(iter);
+    }
 }
 
 impl Display for TokenStream {
@@ -320,7 +360,7 @@ impl TextSpan {
 
 impl Token {
     /// Create [`Token`] in thread-local context.
-    pub fn new(content: impl AsRef<str>, span: TextSpan) -> Self {
+    pub fn new(content: impl AsRef<str>, span: Option<TextSpan>) -> Self {
         CONTEXT.with(|ctx| {
             let ctx_borrow = ctx.borrow();
             let ctx: &AllocationContext = ctx_borrow.deref();
@@ -329,9 +369,46 @@ impl Token {
     }
 
     /// Create [`Token`] in specified context.
-    pub fn new_in(content: impl AsRef<str>, span: TextSpan, ctx: &AllocationContext) -> Self {
+    pub fn new_in(
+        content: impl AsRef<str>,
+        span: Option<TextSpan>,
+        ctx: &AllocationContext,
+    ) -> Self {
         let content = ctx.intern(content.as_ref());
         Self { content, span }
+    }
+}
+
+impl ToPrimitiveTokenStream for TokenStream {
+    type Iter = Map<IntoIter<TokenTree>, fn(TokenTree) -> PrimitiveToken>;
+    fn to_primitive_token_stream(&self) -> Self::Iter {
+        self.tokens
+            .clone()
+            .into_iter()
+            .map(|token_tree| match token_tree {
+                TokenTree::Ident(token) => PrimitiveToken::new(
+                    token.content.to_string(),
+                    token.span.map(|span| PrimitiveSpan {
+                        start: span.start as usize,
+                        end: span.end as usize,
+                    }),
+                ),
+            })
+    }
+}
+
+impl ToPrimitiveTokenStream for TokenTree {
+    type Iter = Once<PrimitiveToken>;
+    fn to_primitive_token_stream(&self) -> Self::Iter {
+        once(match self {
+            TokenTree::Ident(token) => PrimitiveToken::new(
+                token.content.to_string(),
+                token.span.clone().map(|span| PrimitiveSpan {
+                    start: span.start as usize,
+                    end: span.end as usize,
+                }),
+            ),
+        })
     }
 }
 
@@ -363,10 +440,10 @@ mod test {
     pub fn can_serde_token_stream() {
         let ctx = AllocationContext::default();
         let original = TokenStream::new(vec![
-            TokenTree::Ident(Token::new_in("first", TextSpan::new(0, 1), &ctx)),
-            TokenTree::Ident(Token::new_in("second", TextSpan::new(2, 3), &ctx)),
-            TokenTree::Ident(Token::new_in("third", TextSpan::new(4, 5), &ctx)),
-            TokenTree::Ident(Token::new_in("fourth", TextSpan::new(6, 7), &ctx)),
+            TokenTree::Ident(Token::new_in("first", Some(TextSpan::new(0, 1)), &ctx)),
+            TokenTree::Ident(Token::new_in("second", Some(TextSpan::new(2, 3)), &ctx)),
+            TokenTree::Ident(Token::new_in("third", Some(TextSpan::new(4, 5)), &ctx)),
+            TokenTree::Ident(Token::new_in("fourth", Some(TextSpan::new(6, 7)), &ctx)),
         ]);
         let serialized = serde_json::to_string(&original).unwrap();
         let derived: TokenStream = serde_json::from_str(serialized.as_str()).unwrap();
