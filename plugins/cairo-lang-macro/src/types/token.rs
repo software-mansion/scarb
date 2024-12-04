@@ -1,9 +1,12 @@
 use crate::CONTEXT;
 use bumpalo::Bump;
+use cairo_lang_primitive_token::{PrimitiveSpan, PrimitiveToken, ToPrimitiveTokenStream};
 use std::fmt::{Debug, Display, Write};
 use std::hash::{Hash, Hasher};
+use std::iter::{once, Map, Once};
 use std::ops::Deref;
 use std::rc::Rc;
+use std::vec::IntoIter;
 
 /// An abstract stream of Cairo tokens.
 ///
@@ -278,6 +281,46 @@ impl TokenStream {
     pub fn is_empty(&self) -> bool {
         self.tokens.is_empty()
     }
+
+    pub fn from_primitive_token_stream(
+        stable_token_stream: impl Iterator<Item = PrimitiveToken>,
+    ) -> Self {
+        Self::new(
+            stable_token_stream
+                .map(|stable_token| {
+                    TokenTree::Ident(Token::new(
+                        stable_token.content,
+                        stable_token
+                            .span
+                            .map(|stable_span| TextSpan {
+                                start: stable_span.start as u32,
+                                end: stable_span.end as u32,
+                            })
+                            .unwrap_or(TextSpan { start: 0, end: 0 }),
+                    ))
+                })
+                .collect(),
+        )
+    }
+
+    pub fn push_token(&mut self, token_tree: TokenTree) {
+        self.tokens.push(token_tree);
+    }
+}
+
+impl IntoIterator for TokenStream {
+    type Item = TokenTree;
+    type IntoIter = IntoIter<TokenTree>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.tokens.into_iter()
+    }
+}
+
+impl Extend<TokenTree> for TokenStream {
+    fn extend<T: IntoIterator<Item = TokenTree>>(&mut self, iter: T) {
+        self.tokens.extend(iter);
+    }
 }
 
 impl Display for TokenStream {
@@ -332,6 +375,39 @@ impl Token {
     pub fn new_in(content: impl AsRef<str>, span: TextSpan, ctx: &AllocationContext) -> Self {
         let content = ctx.intern(content.as_ref());
         Self { content, span }
+    }
+}
+
+impl ToPrimitiveTokenStream for TokenStream {
+    type Iter = Map<IntoIter<TokenTree>, fn(TokenTree) -> PrimitiveToken>;
+    fn to_primitive_token_stream(&self) -> Self::Iter {
+        self.tokens
+            .clone()
+            .into_iter()
+            .map(|token_tree| match token_tree {
+                TokenTree::Ident(token) => PrimitiveToken::new(
+                    token.content.to_string(),
+                    Some(PrimitiveSpan {
+                        start: token.span.start as usize,
+                        end: token.span.end as usize,
+                    }),
+                ),
+            })
+    }
+}
+
+impl ToPrimitiveTokenStream for TokenTree {
+    type Iter = Once<PrimitiveToken>;
+    fn to_primitive_token_stream(&self) -> Self::Iter {
+        once(match self {
+            TokenTree::Ident(token) => PrimitiveToken::new(
+                token.content.to_string(),
+                Some(PrimitiveSpan {
+                    start: token.span.start as usize,
+                    end: token.span.end as usize,
+                }),
+            ),
+        })
     }
 }
 
