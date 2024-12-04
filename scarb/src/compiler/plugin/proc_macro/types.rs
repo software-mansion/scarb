@@ -2,7 +2,6 @@ use cairo_lang_macro::{
     AllocationContext, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
 };
 use cairo_lang_syntax::node::{db::SyntaxGroup, SyntaxNode};
-use std::ops::Add;
 
 /// Helps creating TokenStream based on multiple SyntaxNodes,
 /// which aren't descendants or ascendants of each other inside the SyntaxTree.
@@ -46,19 +45,19 @@ impl<'a> TokenStreamBuilder<'a> {
     }
 
     pub fn token_from_syntax_node(&self, node: SyntaxNode, ctx: &AllocationContext) -> Token {
-        let span = node.span(self.db).to_str_range();
+        let span = node.span(self.db);
         let text = node.get_text(self.db);
         let span = TextSpan {
             // We skip the whitespace prefix, so that diagnostics start where the actual token contents is.
-            start: span.start.add(whitespace_prefix_len(&text)),
-            end: span.end,
+            start: span.start.as_u32() + whitespace_prefix_len(&text),
+            end: span.end.as_u32(),
         };
         Token::new_in(text, span, ctx)
     }
 }
 
-fn whitespace_prefix_len(s: &str) -> usize {
-    s.chars().take_while(|c| c.is_whitespace()).count()
+fn whitespace_prefix_len(s: &str) -> u32 {
+    s.chars().take_while(|c| c.is_whitespace()).count() as u32
 }
 
 #[cfg(test)]
