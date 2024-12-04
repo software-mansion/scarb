@@ -13,15 +13,20 @@ enum QuoteToken {
     Whitespace,
 }
 
+enum DelimiterVariant {
+    Open,
+    Close,
+}
+
 impl QuoteToken {
-    pub fn from_delimiter(delimiter: Delimiter, is_end: bool) -> Self {
-        match (delimiter, is_end) {
-            (Delimiter::Brace, false) => Self::Content("{".to_string()),
-            (Delimiter::Brace, true) => Self::Content("}".to_string()),
-            (Delimiter::Bracket, false) => Self::Content("[".to_string()),
-            (Delimiter::Bracket, true) => Self::Content("]".to_string()),
-            (Delimiter::Parenthesis, false) => Self::Content("(".to_string()),
-            (Delimiter::Parenthesis, true) => Self::Content(")".to_string()),
+    pub fn from_delimiter(delimiter: Delimiter, variant: DelimiterVariant) -> Self {
+        match (delimiter, variant) {
+            (Delimiter::Brace, DelimiterVariant::Open) => Self::Content("{".to_string()),
+            (Delimiter::Brace, DelimiterVariant::Close) => Self::Content("}".to_string()),
+            (Delimiter::Bracket, DelimiterVariant::Open) => Self::Content("[".to_string()),
+            (Delimiter::Bracket, DelimiterVariant::Close) => Self::Content("]".to_string()),
+            (Delimiter::Parenthesis, DelimiterVariant::Open) => Self::Content("(".to_string()),
+            (Delimiter::Parenthesis, DelimiterVariant::Close) => Self::Content(")".to_string()),
             (Delimiter::None, _) => Self::Content(String::default()),
         }
     }
@@ -39,9 +44,15 @@ fn process_token_stream(
             RustTokenTree::Group(group) => {
                 let token_iter = group.stream().into_iter().peekable();
                 let delimiter = group.delimiter();
-                output.push(QuoteToken::from_delimiter(delimiter, false));
+                output.push(QuoteToken::from_delimiter(
+                    delimiter,
+                    DelimiterVariant::Open,
+                ));
                 process_token_stream(token_iter, output);
-                output.push(QuoteToken::from_delimiter(delimiter, true));
+                output.push(QuoteToken::from_delimiter(
+                    delimiter,
+                    DelimiterVariant::Close,
+                ));
                 was_last_ident = false;
             }
             RustTokenTree::Punct(punct) => {
