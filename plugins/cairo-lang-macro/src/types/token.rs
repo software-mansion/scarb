@@ -300,12 +300,23 @@ impl TokenStream {
         )
     }
 
-    pub fn extend(&mut self, token_stream: Self) {
-        self.tokens.extend(token_stream.tokens);
-    }
-
     pub fn push_token(&mut self, token_tree: TokenTree) {
         self.tokens.push(token_tree);
+    }
+}
+
+impl IntoIterator for TokenStream {
+    type Item = TokenTree;
+    type IntoIter = IntoIter<TokenTree>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.tokens.into_iter()
+    }
+}
+
+impl Extend<TokenTree> for TokenStream {
+    fn extend<T: IntoIterator<Item = TokenTree>>(&mut self, iter: T) {
+        self.tokens.extend(iter);
     }
 }
 

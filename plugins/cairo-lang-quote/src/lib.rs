@@ -89,7 +89,7 @@ pub fn quote(input: RustTokenStream) -> RustTokenStream {
             }
             QuoteToken::Var(ident) => {
                 output_token_stream.extend(rust_quote! {
-                  quote_macro_result.extend(::cairo_lang_macro::TokenStream::from_primitive_token_stream(::cairo_lang_primitive_token::ToPrimitiveTokenStream::to_primitive_token_stream(&#ident)));
+                  quote_macro_result.extend(::cairo_lang_macro::TokenStream::from_primitive_token_stream(::cairo_lang_primitive_token::ToPrimitiveTokenStream::to_primitive_token_stream(&#ident)).into_iter());
                 });
             }
             QuoteToken::Whitespace => output_token_stream.extend(rust_quote! {
