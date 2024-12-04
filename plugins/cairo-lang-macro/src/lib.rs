@@ -27,6 +27,8 @@ use cairo_lang_macro_stable::{
 use std::ffi::{c_char, CStr, CString};
 use std::ops::Deref;
 
+pub use cairo_lang_quote::*;
+
 mod types;
 
 pub use types::*;

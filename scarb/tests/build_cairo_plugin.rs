@@ -1,10 +1,8 @@
 use assert_fs::fixture::PathChild;
 use assert_fs::TempDir;
 use cairo_lang_sierra::program::VersionedProgram;
-use indoc::{formatdoc, indoc};
-use scarb_test_support::cairo_plugin_project_builder::{
-    CairoPluginProjectBuilder, CAIRO_LANG_QUOTE_PATH,
-};
+use indoc::indoc;
+use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -1579,13 +1577,10 @@ fn can_expand_impl_inner_func_attrr() {
 fn can_use_quote() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
     CairoPluginProjectBuilder::default()
-        .add_dep(formatdoc! {r#"cairo-lang-quote = {{ path={cairo_quote_path} }}"#})
-        .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+        .add_quote_deps()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
-        use cairo_lang_quote::quote;
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, quote};
 
         #[inline_macro]
         pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
@@ -1619,13 +1614,10 @@ fn can_use_quote() {
 fn can_use_quote_with_token_tree() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
     CairoPluginProjectBuilder::default()
-        .add_dep(formatdoc! {r#"cairo-lang-quote = {{ path={cairo_quote_path} }}"#})
-        .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+        .add_quote_deps()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token};
-        use cairo_lang_quote::quote;
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, quote};
 
         #[inline_macro]
         pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
@@ -1662,13 +1654,10 @@ fn can_use_quote_with_token_tree() {
 fn can_use_quote_with_token_stream() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
     CairoPluginProjectBuilder::default()
-        .add_dep(formatdoc! {r#"cairo-lang-quote = {{ path={cairo_quote_path} }}"#})
-        .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+        .add_quote_deps()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token};
-        use cairo_lang_quote::quote;
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, quote};
 
         #[inline_macro]
         pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
@@ -1705,15 +1694,12 @@ fn can_use_quote_with_token_stream() {
 fn can_use_quote_with_syntax_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
     CairoPluginProjectBuilder::default()
-        .add_dep(formatdoc! {r#"cairo-lang-quote = {{ path={cairo_quote_path} }}"#})
-        .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+        .add_quote_deps()
         .add_dep(r#"cairo-lang-syntax = "2.9.1""#)
         .add_dep(r#"cairo-lang-parser = "2.9.1""#)
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-        use cairo_lang_quote::quote;
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, quote};
         use cairo_lang_parser::utils::SimpleParserDatabase;
         use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
 
@@ -1750,27 +1736,43 @@ fn can_use_quote_with_syntax_node() {
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("expand")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .success();
+
+    assert_eq!(
+        project.child("target/dev").files(),
+        vec!["hello.expanded.cairo"]
+    );
+
+    let expanded = project
+        .child("target/dev/hello.expanded.cairo")
+        .read_to_string();
+
+    snapbox::assert_eq(
+        indoc! {r#"
+            mod hello {
+                fn main() -> felt252 {
+                    5
+                }
+            }
+        "#},
+        expanded,
+    );
 }
 
 #[test]
 fn can_use_quote_with_cairo_specific_syntax() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
-    CairoPluginProjectBuilder::default()
-        .add_dep(formatdoc! {r#"cairo-lang-quote = {{ path={cairo_quote_path} }}"#})
-        .add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+    CairoPluginProjectBuilder::default().add_quote_deps()
         .add_dep(r#"cairo-lang-syntax = "2.9.1""#)
         .add_dep(r#"cairo-lang-parser = "2.9.1""#)
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-        use cairo_lang_quote::quote;
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, quote};
         use cairo_lang_parser::utils::SimpleParserDatabase;
         use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
 
@@ -1851,10 +1853,79 @@ fn can_use_quote_with_cairo_specific_syntax() {
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("expand")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .success();
+
+    assert_eq!(
+        project.child("target/dev").files(),
+        vec!["hello.expanded.cairo"]
+    );
+
+    let expanded = project
+        .child("target/dev/hello.expanded.cairo")
+        .read_to_string();
+
+    snapbox::assert_eq(
+        indoc! {r#"
+              mod hello {
+                  #[derive(Drop)]
+                  struct Rectangle {
+                      width: u64,
+                      height: u64,
+                  }
+
+                  #[derive(Drop, PartialEq)]
+                  struct Square {
+                      side_length: u64,
+                  }
+
+                  impl RectangleIntoSquare of TryInto<Rectangle, Square> {
+                      fn try_into(self: Rectangle) -> Option<Square> {
+                          if self.height == self.width {
+                              Option::Some(Square { side_length: self.height })
+                          } else {
+                              Option::None
+                          }
+                      }
+                  }
+
+                  fn main() {
+                      let rectangle = Rectangle { width: 8, height: 8 };
+                      let result: Square = rectangle.try_into().unwrap();
+                      let expected = Square { side_length: 8 };
+                      assert!(
+                          result == expected,
+                          "Rectangle with equal width and height should be convertible to a square.",
+                      );
+
+                      let rectangle = Rectangle { width: 5, height: 8 };
+                      let result: Option<Square> = rectangle.try_into();
+                      assert!(
+                          result.is_none(),
+                          "Rectangle with different width and height should not be convertible to a square.",
+                      );
+                  }
+                  trait Circle {
+                      fn print() -> ();
+                  }
+                  impl CircleImpl of Circle {
+                      fn print() -> () {
+                          println!("This is a circle!");
+                      }
+                  }
+                  impl RectangleDrop of core::traits::Drop<Rectangle>;
+                  impl SquareDrop of core::traits::Drop<Square>;
+                  impl SquarePartialEq of core::traits::PartialEq<Square> {
+                      fn eq(lhs: @Square, rhs: @Square) -> bool {
+                          lhs.side_length == rhs.side_length
+                      }
+                  }
+              }
+          "#},
+        expanded,
+    );
 }

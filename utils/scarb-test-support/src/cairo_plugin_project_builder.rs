@@ -102,6 +102,11 @@ impl CairoPluginProjectBuilder {
         self.project.just_manifest(t);
         self.just_code(t);
     }
+
+    pub fn add_quote_deps(self) -> Self {
+        // let cairo_quote_path = CAIRO_LANG_QUOTE_PATH.to_string();
+        self.add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+    }
 }
 
 impl Default for CairoPluginProjectBuilder {

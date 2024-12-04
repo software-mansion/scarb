@@ -784,6 +784,7 @@ dependencies = [
  "cairo-lang-macro-attributes 0.1.0",
  "cairo-lang-macro-stable 1.0.0",
  "cairo-lang-primitive-token",
+ "cairo-lang-quote",
  "indoc",
  "linkme",
  "serde",
