@@ -15,7 +15,11 @@ use anyhow::{ensure, Context, Result};
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
 use cairo_lang_filesystem::db::Edition;
-use cairo_lang_macro::{AllocationContext, Diagnostic, Severity, TokenStreamMetadata};
+use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
+use cairo_lang_filesystem::span::{TextOffset, TextSpan, TextWidth};
+use cairo_lang_macro::{
+    AllocationContext, Diagnostic, Severity, TokenStream, TokenStreamMetadata, TokenTree,
+};
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
@@ -266,4 +270,31 @@ impl ProcMacroHost {
     pub fn macros(&self) -> &[Arc<ProcMacroInstance>] {
         &self.macros
     }
+}
+
+fn generate_code_mappings(token_stream: &TokenStream) -> Vec<CodeMapping> {
+    token_stream
+        .tokens
+        .iter()
+        .scan(TextOffset::default(), |current_pos, token| {
+            let TokenTree::Ident(token) = token;
+            let token_width = TextWidth::from_str(token.content.as_ref());
+
+            let mapping = CodeMapping {
+                span: TextSpan {
+                    start: *current_pos,
+                    end: current_pos.add_width(token_width),
+                },
+                origin: CodeOrigin::Span(TextSpan {
+                    start: TextOffset::default()
+                        .add_width(TextWidth::new_for_testing(token.span.start)),
+                    end: TextOffset::default()
+                        .add_width(TextWidth::new_for_testing(token.span.end)),
+                }),
+            };
+
+            *current_pos = current_pos.add_width(token_width);
+            Some(mapping)
+        })
+        .collect()
 }
