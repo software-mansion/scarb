@@ -1,5 +1,5 @@
 use crate::compiler::plugin::proc_macro::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::host::into_cairo_diagnostics;
+use crate::compiler::plugin::proc_macro::host::{generate_code_mappings, into_cairo_diagnostics};
 use crate::compiler::plugin::proc_macro::{
     Expansion, ProcMacroId, ProcMacroInstance, TokenStreamBuilder,
 };
@@ -77,10 +77,11 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                 DynGeneratedFileAuxData::new(emitted)
             });
             let content = token_stream.to_string();
+            let code_mappings = generate_code_mappings(&token_stream);
             InlinePluginResult {
                 code: Some(PluginGeneratedFile {
                     name: "inline_proc_macro".into(),
-                    code_mappings: Vec::new(),
+                    code_mappings,
                     content,
                     aux_data,
                     diagnostics_note: Some(format!(
