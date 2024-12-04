@@ -95,12 +95,14 @@ impl TokenTree {
     }
 }
 
+pub type TextOffset = u32;
+
 /// A range of text offsets that form a span (like text selection).
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TextSpan {
-    pub start: usize,
-    pub end: usize,
+    pub start: TextOffset,
+    pub end: TextOffset,
 }
 
 /// A single Cairo token.
@@ -311,7 +313,7 @@ impl TokenTree {
 
 impl TextSpan {
     /// Create a new [`TextSpan`].
-    pub fn new(start: usize, end: usize) -> TextSpan {
+    pub fn new(start: TextOffset, end: TextOffset) -> TextSpan {
         TextSpan { start, end }
     }
 }
