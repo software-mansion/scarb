@@ -16,8 +16,8 @@ pub struct StableToken {
 #[repr(C)]
 #[derive(Debug)]
 pub struct StableTextSpan {
-    pub start: usize,
-    pub end: usize,
+    pub start: u32,
+    pub end: u32,
 }
 
 #[repr(C)]
