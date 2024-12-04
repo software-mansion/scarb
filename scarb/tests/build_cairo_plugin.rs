@@ -412,7 +412,7 @@ fn can_replace_original_node() {
             let new_token_string = token_stream.to_string().replace("12", "34");
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 new_token_string.clone(),
-                Some(TextSpan { start: 0, end: new_token_string.len() }),
+                Some(TextSpan { start: 0, end: new_token_string.len() as u32 }),
             ))]);
             ProcMacroResult::new(token_stream)
         }
@@ -581,7 +581,7 @@ fn can_define_multiple_macros() {
             let new_token_string = token_stream.to_string().replace("12", "34");
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 new_token_string.clone(),
-                Some(TextSpan { start: 0, end: new_token_string.len() }),
+                Some(TextSpan { start: 0, end: new_token_string.len() as u32 }),
             ))]);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
@@ -592,7 +592,7 @@ fn can_define_multiple_macros() {
             let new_token_string = token_stream.to_string().replace("56", "78");
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 new_token_string.clone(),
-                Some(TextSpan { start: 0, end: new_token_string.len() }),
+                Some(TextSpan { start: 0, end: new_token_string.len() as u32 }),
             ))]);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
@@ -616,7 +616,7 @@ fn can_define_multiple_macros() {
             let new_token_string = token_stream.to_string().replace("90", "09");
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 new_token_string.clone(),
-                Some(TextSpan { start: 0, end: new_token_string.len() }),
+                Some(TextSpan { start: 0, end: new_token_string.len() as u32 }),
             ))]);
             let aux_data = AuxData::new(Vec::new());
             ProcMacroResult::new(token_stream).with_aux_data(aux_data)
@@ -819,7 +819,7 @@ fn can_resolve_full_path_markers() {
               code.clone(),
                 Some(TextSpan {
                   start: 0,
-                  end: code.len(),
+                  end: code.len() as u32,
                 }),
               ))])
             ).with_full_path_markers(full_path_markers)
@@ -868,7 +868,8 @@ fn can_implement_inline_macro() {
         use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, TextSpan};
 
         #[inline_macro]
-        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+        pub fn some(token_stream: TokenStream) -> ProcMacroResult {
+            assert_eq!(token_stream.to_string(), "()");
             ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
               "34".to_string(),
               Some(TextSpan {
@@ -983,13 +984,13 @@ fn can_implement_derive_macro() {
                             32
                         }}
                     }}
-                "#};  
+                "#};
 
                 let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                   code.clone(),
                     Some(TextSpan {
                         start: 0,
-                        end: code.len(),
+                        end: code.len() as u32,
                     }),
                 ))]);
 
@@ -1050,7 +1051,7 @@ fn can_use_both_derive_and_attr() {
                   new_token_string.clone(),
                     Some(TextSpan {
                         start: 0,
-                        end: new_token_string.len(),
+                        end: new_token_string.len() as u32,
                     }),
                 ))]))
             }
@@ -1062,7 +1063,7 @@ fn can_use_both_derive_and_attr() {
                   code.clone(),
                     Some(TextSpan {
                         start: 0,
-                        end: code.len(),
+                        end: code.len() as u32,
                     }),
                 ))]);
 
@@ -1071,7 +1072,7 @@ fn can_use_both_derive_and_attr() {
                   result_string.clone(),
                     Some(TextSpan {
                         start: 0,
-                        end: result_string.len(),
+                        end: result_string.len() as u32,
                     }),
                 ))]))
             }
@@ -1090,7 +1091,7 @@ fn can_use_both_derive_and_attr() {
                   code.clone(),
                     Some(TextSpan {
                         start: 0,
-                        end: code.len(),
+                        end: code.len() as u32,
                     }),
                 ))]))
             }
@@ -1297,7 +1298,7 @@ fn can_be_expanded() {
             let new_token_string = token_stream.to_string().replace("12", "34");
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 new_token_string.clone(),
-                Some(TextSpan { start: 0, end: new_token_string.len() }),
+                Some(TextSpan { start: 0, end: new_token_string.len() as u32 }),
             ))]);
             ProcMacroResult::new(token_stream)
         }
@@ -1327,7 +1328,7 @@ fn can_be_expanded() {
 
             let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                 code.clone(),
-                Some(TextSpan { start: 0, end: code.len() }),
+                Some(TextSpan { start: 0, end: code.len() as u32 }),
             ))]);
 
             ProcMacroResult::new(token_stream)
@@ -1413,7 +1414,7 @@ fn can_expand_trait_inner_func_attrr() {
                     .replace("12", "34");
                 ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
                   new_token_string.clone(),
-                  Some(TextSpan { start: 0, end: new_token_string.len() }),
+                  Some(TextSpan { start: 0, end: new_token_string.len() as u32 }),
                 ))]))
             }
         "##})
@@ -1473,7 +1474,7 @@ fn can_expand_impl_inner_func_attrr() {
                 let new_token_string = token_stream.to_string().replace("1", "2");
                 ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
                     new_token_string.clone(),
-                    Some(TextSpan { start: 0, end: new_token_string.len() }),
+                    Some(TextSpan { start: 0, end: new_token_string.len() as u32 }),
                 ))]))
             }
         "##})
@@ -1574,152 +1575,20 @@ fn can_expand_impl_inner_func_attrr() {
 }
 
 #[test]
-fn can_use_quote() {
+fn code_mappings_preserve_attribute_error_locations() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
-        .add_quote_deps()
-        .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, quote};
-
-        #[inline_macro]
-        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
-                let tokens = quote! {
-                    5
-                };
-                ProcMacroResult::new(tokens)
-        }
-        "##})
-        .build(&t);
-    let project = temp.child("hello");
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep("some", &t)
-        .lib_cairo(indoc! {r#"
-            fn main() -> felt252 { some!() }
-        "#})
-        .build(&project);
-
-    Scarb::quick_snapbox()
-        .arg("cairo-run")
-        // Disable output from Cargo.
-        .env("CARGO_TERM_QUIET", "true")
-        .current_dir(&project)
-        .assert()
-        .success();
-}
-
-#[test]
-fn can_use_quote_with_token_tree() {
-    let temp = TempDir::new().unwrap();
-    let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
-        .add_quote_deps()
-        .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, quote};
-
-        #[inline_macro]
-        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
-          let token = TokenTree::Ident(Token::new("5".to_string(), None));
-          let tokens = quote! {
-            #token
-          };
-          ProcMacroResult::new(tokens)
-        }
-        "##})
-        .build(&t);
-    let project = temp.child("hello");
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep("some", &t)
-        .lib_cairo(indoc! {r#"
-            fn main() -> felt252 { 
-              some!()
-            }
-        "#})
-        .build(&project);
-
-    Scarb::quick_snapbox()
-        .arg("cairo-run")
-        // Disable output from Cargo.
-        .env("CARGO_TERM_QUIET", "true")
-        .current_dir(&project)
-        .assert()
-        .success();
-}
-
-#[test]
-fn can_use_quote_with_token_stream() {
-    let temp = TempDir::new().unwrap();
-    let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
-        .add_quote_deps()
-        .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, TokenTree, Token, quote};
-
-        #[inline_macro]
-        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
-          let token = TokenStream::new(vec![TokenTree::Ident(Token::new("5".to_string(), None))]);
-          let tokens = quote! {
-            #token
-          };
-          ProcMacroResult::new(tokens)
-        }
-      "##})
-        .build(&t);
-    let project = temp.child("hello");
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep("some", &t)
-        .lib_cairo(indoc! {r#"
-            fn main() -> felt252 { 
-              some!()
-            }
-        "#})
-        .build(&project);
-
-    Scarb::quick_snapbox()
-        .arg("cairo-run")
-        // Disable output from Cargo.
-        .env("CARGO_TERM_QUIET", "true")
-        .current_dir(&project)
-        .assert()
-        .success();
-}
-
-#[test]
-fn can_use_quote_with_syntax_node() {
-    let temp = TempDir::new().unwrap();
-    let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
-        .add_quote_deps()
-        .add_dep(r#"cairo-lang-syntax = "2.9.1""#)
-        .add_dep(r#"cairo-lang-parser = "2.9.1""#)
-        .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, quote};
-        use cairo_lang_parser::utils::SimpleParserDatabase;
-        use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-          let db_val = SimpleParserDatabase::default();
-          let db = &db_val;
-          let code = r#"
-              fn main() -> felt252 {
-                5
-              }
-          "#;
-          let syntax_node = db.parse_virtual(code).unwrap();
-          let syntax_node_with_db = SyntaxNodeWithDb::new(&syntax_node, db);
-          let tokens = quote! {
-            #syntax_node_with_db
-          };
-          ProcMacroResult::new(tokens)
+        pub fn some(_attr: TokenStream, mut token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream_length = token_stream.to_string().len();
+            token_stream.tokens.push(TokenTree::Ident(Token::new("    ", Some(TextSpan { start: token_stream_length + 1, end: token_stream_length + 5 }))));
+            ProcMacroResult::new(token_stream)
         }
-      "##})
+        "#})
         .build(&t);
     let project = temp.child("hello");
     ProjectBuilder::start()
@@ -1728,204 +1597,175 @@ fn can_use_quote_with_syntax_node() {
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
             #[some]
-            fn main() -> u32 {
-              // completly wrong type
-              true 
+            fn f() -> felt252 {
+                let x = 1;
+                x = 2;
+                x
             }
         "#})
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("expand")
+        .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
-        .success();
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Cannot assign to an immutable variable.
+             --> [..]lib.cairo[proc_some]:3:5
+                x = 2;
+                ^***^
+            note: this error originates in the attribute macro: `some`
 
-    assert_eq!(
-        project.child("target/dev").files(),
-        vec!["hello.expanded.cairo"]
-    );
-
-    let expanded = project
-        .child("target/dev/hello.expanded.cairo")
-        .read_to_string();
-
-    snapbox::assert_eq(
-        indoc! {r#"
-            mod hello {
-                fn main() -> felt252 {
-                    5
-                }
-            }
-        "#},
-        expanded,
-    );
+            error: could not compile `hello` due to previous error
+        "#});
 }
 
 #[test]
-fn can_use_quote_with_cairo_specific_syntax() {
+fn code_mappings_preserve_inline_macro_error_locations() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default().add_quote_deps()
-        .add_dep(r#"cairo-lang-syntax = "2.9.1""#)
-        .add_dep(r#"cairo-lang-parser = "2.9.1""#)
+    CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, quote};
-        use cairo_lang_parser::utils::SimpleParserDatabase;
-        use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+        use cairo_lang_macro::{inline_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
 
-        #[attribute_macro]
-        pub fn some(_attr: TokenStream, _token_stream: TokenStream) -> ProcMacroResult {
-          let db_val = SimpleParserDatabase::default();
-          let db = &db_val;
-          let code = r#"
-              #[derive(Drop)]
-              struct Rectangle {
-                  width: u64,
-                  height: u64,
-              }
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+            let mut tokens = Vec::new();
+            tokens.push(TokenTree::Ident(Token::new(
+                "undefined".to_string(),
+                Some(TextSpan::new(0, 9)),
+            )));
 
-              #[derive(Drop, PartialEq)]
-              struct Square {
-                  side_length: u64,
-              }
-
-              impl RectangleIntoSquare of TryInto<Rectangle, Square> {
-                  fn try_into(self: Rectangle) -> Option<Square> {
-                      if self.height == self.width {
-                          Option::Some(Square { side_length: self.height })
-                      } else {
-                          Option::None
-                      }
-                  }
-              }
-
-              fn main() {
-                let rectangle = Rectangle { width: 8, height: 8 };
-                let result: Square = rectangle.try_into().unwrap();
-                let expected = Square { side_length: 8 };
-                assert!(
-                    result == expected,
-                    "Rectangle with equal width and height should be convertible to a square."
-                );
-
-                let rectangle = Rectangle { width: 5, height: 8 };
-                let result: Option<Square> = rectangle.try_into();
-                assert!(
-                    result.is_none(),
-                    "Rectangle with different width and height should not be convertible to a square."
-                );
-              }
-          "#;
-          let syntax_node = db.parse_virtual(code).unwrap();
-          let syntax_node_with_db = SyntaxNodeWithDb::new(&syntax_node, db);
-          let tokens = quote! {
-            #syntax_node_with_db
-
-            trait Circle {
-              fn print() -> ();
-            }
-
-            impl CircleImpl of Circle {
-              fn print() -> () {
-                println!("This is a circle!");
-              }
-            }
-          };
-          ProcMacroResult::new(tokens)
+            ProcMacroResult::new(TokenStream::new(tokens))
         }
-      "##})
+        "##})
         .build(&t);
+
     let project = temp.child("hello");
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
-            #[some]
-            fn main() -> u32 {
-              // completly wrong type
-              true 
+            fn main() -> felt252 {
+                let _x = some!();
+                12
             }
         "#})
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("expand")
-        // Disable output from Cargo.
+        .arg("build")
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
-        .success();
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Identifier not found.
+             --> [..]lib.cairo:1:1
+            fn main() -> felt252 {
+            ^*******^
 
-    assert_eq!(
-        project.child("target/dev").files(),
-        vec!["hello.expanded.cairo"]
-    );
+            error: could not compile `hello` due to previous error
+        "#});
+}
 
-    let expanded = project
-        .child("target/dev/hello.expanded.cairo")
-        .read_to_string();
+#[test]
+fn code_mappings_preserve_derive_error_locations() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
 
-    snapbox::assert_eq(
-        indoc! {r#"
-              mod hello {
-                  #[derive(Drop)]
-                  struct Rectangle {
-                      width: u64,
-                      height: u64,
-                  }
+            #[derive_macro]
+            pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
+                let name = token_stream
+                    .clone()
+                    .to_string()
+                    .lines()
+                    .find(|l| l.starts_with("struct"))
+                    .unwrap()
+                    .to_string()
+                    .replace("struct", "")
+                    .replace("}", "")
+                    .replace("{", "")
+                    .trim()
+                    .to_string();
 
-                  #[derive(Drop, PartialEq)]
-                  struct Square {
-                      side_length: u64,
-                  }
+                let code = indoc::formatdoc!{r#"
+                    impl SomeImpl{name} of Hello<{name}> {{
+                        fn world(self: @{name}) -> u8 {{
+                            256
+                        }}
+                    }}
+                "#};
 
-                  impl RectangleIntoSquare of TryInto<Rectangle, Square> {
-                      fn try_into(self: Rectangle) -> Option<Square> {
-                          if self.height == self.width {
-                              Option::Some(Square { side_length: self.height })
-                          } else {
-                              Option::None
-                          }
-                      }
-                  }
+                let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  code.clone(),
+                    Some(TextSpan {
+                        start: 0,
+                        end: code.len(),
+                    }),
+                ))]);
 
-                  fn main() {
-                      let rectangle = Rectangle { width: 8, height: 8 };
-                      let result: Square = rectangle.try_into().unwrap();
-                      let expected = Square { side_length: 8 };
-                      assert!(
-                          result == expected,
-                          "Rectangle with equal width and height should be convertible to a square.",
-                      );
+                ProcMacroResult::new(token_stream)
+            }
+        "##})
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
 
-                      let rectangle = Rectangle { width: 5, height: 8 };
-                      let result: Option<Square> = rectangle.try_into();
-                      assert!(
-                          result.is_none(),
-                          "Rectangle with different width and height should not be convertible to a square.",
-                      );
-                  }
-                  trait Circle {
-                      fn print() -> ();
-                  }
-                  impl CircleImpl of Circle {
-                      fn print() -> () {
-                          println!("This is a circle!");
-                      }
-                  }
-                  impl RectangleDrop of core::traits::Drop<Rectangle>;
-                  impl SquareDrop of core::traits::Drop<Square>;
-                  impl SquarePartialEq of core::traits::PartialEq<Square> {
-                      fn eq(lhs: @Square, rhs: @Square) -> bool {
-                          lhs.side_length == rhs.side_length
-                      }
-                  }
-              }
-          "#},
-        expanded,
-    );
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                fn world(self: @T) -> u8;
+            }
+
+            #[derive(CustomDerive, Drop)]
+            struct SomeType {}
+
+            #[derive(CustomDerive, Drop)]
+            struct AnotherType {}
+
+            fn main() -> u8 {
+                let a = SomeType {};
+                a.world()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: The value does not fit within the range of type core::integer::u8.
+             --> [..]lib.cairo:1:1
+            trait Hello<T> {
+            ^**************^
+            note: this error originates in the derive macro: `custom_derive`
+
+            error: The value does not fit within the range of type core::integer::u8.
+             --> [..]lib.cairo:1:1
+            trait Hello<T> {
+            ^**************^
+            note: this error originates in the derive macro: `custom_derive`
+
+            error: could not compile `hello` due to previous error
+        "#});
 }

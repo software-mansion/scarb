@@ -66,11 +66,7 @@ pub trait MarkdownDocItem: DocItem {
                     DocumentationCommentToken::Content(content) => content.clone(),
                     DocumentationCommentToken::Link(link) => {
                         let file_path = context.resolve_markdown_file_path_from_link(link);
-                        format!(
-                            "[{}]({})",
-                            link.path.clone().unwrap_or(link.label.clone()),
-                            file_path
-                        )
+                        format!("[{}]({})", link.label.clone(), file_path)
                     }
                 })
                 .join("")

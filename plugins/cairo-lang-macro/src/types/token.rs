@@ -98,12 +98,14 @@ impl TokenTree {
     }
 }
 
+pub type TextOffset = u32;
+
 /// A range of text offsets that form a span (like text selection).
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TextSpan {
-    pub start: usize,
-    pub end: usize,
+    pub start: TextOffset,
+    pub end: TextOffset,
 }
 
 /// A single Cairo token.
@@ -289,8 +291,8 @@ impl TokenStream {
                     TokenTree::Ident(Token::new(
                         stable_token.content,
                         stable_token.span.map(|stable_span| TextSpan {
-                            start: stable_span.start,
-                            end: stable_span.end,
+                            start: stable_span.start as u32,
+                            end: stable_span.end as u32,
                         }),
                     ))
                 })
@@ -340,7 +342,7 @@ impl TokenTree {
 
 impl TextSpan {
     /// Create a new [`TextSpan`].
-    pub fn new(start: usize, end: usize) -> TextSpan {
+    pub fn new(start: TextOffset, end: TextOffset) -> TextSpan {
         TextSpan { start, end }
     }
 }
@@ -376,8 +378,8 @@ impl ToPrimitiveTokenStream for TokenStream {
                 TokenTree::Ident(token) => PrimitiveToken::new(
                     token.content.to_string(),
                     token.span.map(|span| PrimitiveSpan {
-                        start: span.start,
-                        end: span.end,
+                        start: span.start as usize,
+                        end: span.end as usize,
                     }),
                 ),
             })
@@ -391,8 +393,8 @@ impl ToPrimitiveTokenStream for TokenTree {
             TokenTree::Ident(token) => PrimitiveToken::new(
                 token.content.to_string(),
                 token.span.clone().map(|span| PrimitiveSpan {
-                    start: span.start,
-                    end: span.end,
+                    start: span.start as usize,
+                    end: span.end as usize,
                 }),
             ),
         })
