@@ -41,7 +41,7 @@ pub fn inline_some(token_stream: TokenStream) -> ProcMacroResult {
 #[derive_macro]
 fn some_derive(_token_stream: TokenStream)-> ProcMacroResult {
     let content = "impl SomeImpl of SomeTrait {}".to_string();
-    let span = TextSpan { start: 0, end: content.len() };
+    let span = TextSpan { start: 0, end: content.len() as u32 };
     ProcMacroResult::new(
         TokenStream::new(vec![
             TokenTree::Ident(

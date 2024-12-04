@@ -45,7 +45,7 @@ pub struct ProcMacroResult {
 ///         TokenTree::Ident(
 ///             Token::new(
 ///                 &code,
-///                 TextSpan::new(0, code.len())
+///                 TextSpan::new(0, code.len() as u32)
 ///             )
 ///         )
 ///     ]);
