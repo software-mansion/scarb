@@ -984,7 +984,7 @@ fn can_implement_derive_macro() {
                             32
                         }}
                     }}
-                "#};  
+                "#};
 
                 let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
                   code.clone(),
@@ -1571,5 +1571,201 @@ fn can_expand_impl_inner_func_attrr() {
             test hello::tests::test_flow ... ok (gas usage est.: [..])
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
 
+        "#});
+}
+
+#[test]
+fn code_mappings_preserve_attribute_error_locations() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, mut token_stream: TokenStream) -> ProcMacroResult {
+            let token_stream_length = token_stream.to_string().len() as u32;
+            token_stream.tokens.push(TokenTree::Ident(Token::new("    ", TextSpan { start: token_stream_length + 1, end: token_stream_length + 5 })));
+            ProcMacroResult::new(token_stream)
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn f() -> felt252 {
+                let x = 1;
+                x = 2;
+                x
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Cannot assign to an immutable variable.
+             --> [..]lib.cairo[proc_some]:3:5
+                x = 2;
+                ^***^
+            note: this error originates in the attribute macro: `some`
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn code_mappings_preserve_inline_macro_error_locations() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{inline_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
+
+        #[inline_macro]
+        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+            let mut tokens = Vec::new();
+            tokens.push(TokenTree::Ident(Token::new(
+                "undefined".to_string(),
+                TextSpan::new(0, 9),
+            )));
+
+            ProcMacroResult::new(TokenStream::new(tokens))
+        }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 {
+                let _x = some!();
+                12
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Identifier not found.
+             --> [..]lib.cairo:1:1
+            fn main() -> felt252 {
+            ^*******^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn code_mappings_preserve_derive_error_locations() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
+
+            #[derive_macro]
+            pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
+                let name = token_stream
+                    .clone()
+                    .to_string()
+                    .lines()
+                    .find(|l| l.starts_with("struct"))
+                    .unwrap()
+                    .to_string()
+                    .replace("struct", "")
+                    .replace("}", "")
+                    .replace("{", "")
+                    .trim()
+                    .to_string();
+
+                let code = indoc::formatdoc!{r#"
+                    impl SomeImpl{name} of Hello<{name}> {{
+                        fn world(self: @{name}) -> u8 {{
+                            256
+                        }}
+                    }}
+                "#};
+
+                let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                  code.clone(),
+                    TextSpan {
+                        start: 0,
+                        end: code.len() as u32,
+                    },
+                ))]);
+
+                ProcMacroResult::new(token_stream)
+            }
+        "##})
+        .add_dep(r#"indoc = "*""#)
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                fn world(self: @T) -> u8;
+            }
+
+            #[derive(CustomDerive, Drop)]
+            struct SomeType {}
+
+            #[derive(CustomDerive, Drop)]
+            struct AnotherType {}
+
+            fn main() -> u8 {
+                let a = SomeType {};
+                a.world()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: The value does not fit within the range of type core::integer::u8.
+             --> [..]lib.cairo:1:1
+            trait Hello<T> {
+            ^**************^
+            note: this error originates in the derive macro: `custom_derive`
+
+            error: The value does not fit within the range of type core::integer::u8.
+             --> [..]lib.cairo:1:1
+            trait Hello<T> {
+            ^**************^
+            note: this error originates in the derive macro: `custom_derive`
+
+            error: could not compile `hello` due to previous error
         "#});
 }
