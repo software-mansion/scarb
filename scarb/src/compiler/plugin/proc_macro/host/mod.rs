@@ -13,7 +13,6 @@ use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind, ProcMacroInstance};
 use crate::core::{edition_variant, Config, Package, PackageId};
 use anyhow::{ensure, Context, Result};
-use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
 use cairo_lang_filesystem::db::Edition;
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
