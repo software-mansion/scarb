@@ -19,7 +19,12 @@ impl Handler for ExpandAttribute {
             })
             .unwrap();
 
-        let result = instance.generate_code(params.attr.into(), params.args, params.item);
+        let result = instance.generate_code(
+            params.attr.into(),
+            params.call_site,
+            params.args,
+            params.item,
+        );
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,
