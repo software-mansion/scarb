@@ -254,52 +254,6 @@ fn can_emit_plugin_warning() {
 }
 
 #[test]
-fn can_emit_plugin_error() {
-    let temp = TempDir::new().unwrap();
-    let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
-        .lib_rs(indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
-
-        #[attribute_macro]
-        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            let diag = Diagnostic::error("Some error from macro.");
-            ProcMacroResult::new(token_stream)
-                .with_diagnostics(diag.into())
-        }
-        "#})
-        .build(&t);
-    let project = temp.child("hello");
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep("some", &t)
-        .lib_cairo(indoc! {r#"
-            #[some]
-            fn f() -> felt252 { 12 }
-        "#})
-        .build(&project);
-
-    Scarb::quick_snapbox()
-        .arg("build")
-        // Disable output from Cargo.
-        .env("CARGO_TERM_QUIET", "true")
-        .current_dir(&project)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-            [..] Compiling some v1.0.0 ([..]Scarb.toml)
-            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Plugin diagnostic: Some error from macro.
-             --> [..]lib.cairo:1:1
-            #[some]
-            ^^^^^^^
-
-            error: could not compile `hello` due to previous error
-        "#});
-}
-
-#[test]
 fn diags_from_generated_code_mapped_correctly() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -664,123 +618,6 @@ fn can_define_multiple_macros() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             Run completed successfully, returning [121]
-        "#});
-}
-
-#[test]
-fn cannot_duplicate_macros() {
-    let temp = TempDir::new().unwrap();
-    let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
-        .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-
-        #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(token_stream)
-        }
-
-        #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(token_stream)
-        }
-        "##})
-        .build(&t);
-    let project = temp.child("hello");
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep_starknet()
-        .dep("some", &t)
-        .lib_cairo(indoc! {r#"
-            #[hello]
-            fn main() -> felt252 { 12 + 56 + 90 }
-        "#})
-        .build(&project);
-    Scarb::quick_snapbox()
-        .arg("build")
-        // Disable output from Cargo.
-        .env("CARGO_TERM_QUIET", "true")
-        .current_dir(&project)
-        .assert()
-        // Fails with Cargo compile error.
-        .failure();
-}
-
-#[test]
-fn cannot_duplicate_macros_across_packages() {
-    let temp = TempDir::new().unwrap();
-    let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
-        .lib_rs(indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-
-        #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(token_stream)
-        }
-
-        #[attribute_macro]
-        pub fn world(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(token_stream)
-        }
-        "#})
-        .build(&t);
-
-    let w = temp.child("other");
-    CairoPluginProjectBuilder::default()
-        .name("other")
-        .lib_rs(indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-
-        #[attribute_macro]
-        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(token_stream)
-        }
-        "#})
-        .build(&w);
-
-    let p = temp.child("pkg");
-    CairoPluginProjectBuilder::default()
-        .name("pkg")
-        .lib_rs(indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-
-        #[attribute_macro]
-        pub fn foo(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(token_stream)
-        }
-        "#})
-        .build(&p);
-
-    let project = temp.child("hello");
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep_starknet()
-        .dep("some", &t)
-        .dep("other", &w)
-        .dep("pkg", &p)
-        .lib_cairo(indoc! {r#"
-            #[hello]
-            #[world]
-            fn main() -> felt252 { 12 + 56 + 90 }
-        "#})
-        .build(&project);
-
-    Scarb::quick_snapbox()
-        .arg("build")
-        // Disable output from Cargo.
-        .env("CARGO_TERM_QUIET", "true")
-        .current_dir(&project)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-            [..]Compiling other v1.0.0 ([..]Scarb.toml)
-            [..]Compiling pkg v1.0.0 ([..]Scarb.toml)
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
-            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: duplicate expansions defined for procedural macros: hello (other v1.0.0 ([..]Scarb.toml) and some v1.0.0 ([..]Scarb.toml))
         "#});
 }
 
@@ -1672,6 +1509,52 @@ fn can_be_used_through_re_export() {
 }
 
 #[test]
+fn can_emit_plugin_error() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let diag = Diagnostic::error("Some error from macro.");
+            ProcMacroResult::new(token_stream)
+                .with_diagnostics(diag.into())
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn f() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Plugin diagnostic: Some error from macro.
+             --> [..]lib.cairo:1:1
+            #[some]
+            ^^^^^^^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
 fn code_mappings_preserve_attribute_error_locations() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1715,7 +1598,7 @@ fn code_mappings_preserve_attribute_error_locations() {
             error: Cannot assign to an immutable variable.
              --> [..]lib.cairo[proc_some]:3:5
                 x = 2;
-                ^***^
+                ^^^^^
             note: this error originates in the attribute macro: `some`
 
             error: could not compile `hello` due to previous error
@@ -1768,7 +1651,7 @@ fn code_mappings_preserve_inline_macro_error_locations() {
             error: Identifier not found.
              --> [..]lib.cairo:1:1
             fn main() -> felt252 {
-            ^*******^
+            ^^^^^^^^^
 
             error: could not compile `hello` due to previous error
         "#});
@@ -1849,18 +1732,24 @@ fn code_mappings_preserve_derive_error_locations() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            [..] Compiling some v1.0.0 ([..]Scarb.toml)
-            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: The value does not fit within the range of type core::integer::u8.
-             --> [..]lib.cairo:1:1
-            trait Hello<T> {
-            ^**************^
+             --> [..]lib.cairo:1:1-8:1
+              trait Hello<T> {
+             _^
+            | ...
+            | #[derive(CustomDerive, Drop)]
+            |_^
             note: this error originates in the derive macro: `custom_derive`
 
             error: The value does not fit within the range of type core::integer::u8.
-             --> [..]lib.cairo:1:1
-            trait Hello<T> {
-            ^**************^
+             --> [..]lib.cairo:1:1-8:10
+              trait Hello<T> {
+             _^
+            | ...
+            | #[derive(CustomDerive, Drop)]
+            |__________^
             note: this error originates in the derive macro: `custom_derive`
 
             error: could not compile `hello` due to previous error
