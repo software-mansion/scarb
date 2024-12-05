@@ -1,4 +1,4 @@
-use crate::core::{Config, Package, PackageId};
+use crate::core::{Package, PackageId};
 use anyhow::{ensure, Context, Result};
 use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_macro::{
@@ -61,11 +61,20 @@ impl Debug for ProcMacroInstance {
 
 impl ProcMacroInstance {
     /// Load shared library
-    pub fn try_new(package: Package, config: &Config) -> Result<Self> {
-        let lib_path = package
-            .shared_lib_path(config)
-            .context("could not resolve shared library path")?;
-        let plugin = unsafe { Plugin::try_new(lib_path.to_path_buf())? };
+    pub fn try_new(package_id: PackageId, lib_path: Utf8PathBuf) -> Result<Self> {
+        let plugin = unsafe { Plugin::try_new(lib_path)? };
+        Ok(Self {
+            expansions: unsafe { Self::load_expansions(&plugin, package_id)? },
+            package_id,
+            plugin,
+        })
+    }
+
+    pub fn try_load_prebuilt(package: Package) -> Result<Self> {
+        let prebuilt_path = package
+            .prebuilt_lib_path()
+            .context("could not resolve prebuilt library path")?;
+        let plugin = unsafe { Plugin::try_new(prebuilt_path)? };
         Ok(Self {
             expansions: unsafe { Self::load_expansions(&plugin, package.id)? },
             package_id: package.id,
