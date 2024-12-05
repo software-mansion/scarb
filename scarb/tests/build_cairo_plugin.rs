@@ -1560,5 +1560,3 @@ fn can_expand_impl_inner_func_attrr() {
 
         "#});
 }
-
-
