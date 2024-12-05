@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use anyhow::Result;
 use camino::Utf8Path;
-use deno_task_shell::{parser, ExecutableCommand, ShellCommand};
+use deno_task_shell::{parser, ExecutableCommand, KillSignal, ShellCommand};
 
 use crate::core::errors::ScriptExecutionError;
 use crate::core::manifest::ScriptDefinition;
@@ -54,6 +54,7 @@ pub fn execute_script(
         env_vars,
         (&cwd).as_ref(),
         custom_commands,
+        KillSignal::default(),
     ));
 
     if exit_code != 0 {

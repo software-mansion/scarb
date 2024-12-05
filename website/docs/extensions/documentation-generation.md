@@ -9,7 +9,19 @@
 
 ## Available types of comments
 
-As for now, only the `///` comment prefix is supported.
+As for now, we support those types of comments:
+
+- `///` documentation for following item.
+- `//!` documentation for enclosing item (also works with file modules).
+
+the `///` and `//!` comment prefixes are supported.
+
+## Item linkage
+
+You can also link to another item's page by just refering the item within the documentation comment.
+Currenctly we support only those types of links:
+
+- `[ItemName]` and ``[`ItemName`]`` (where `ItemName` is a valid path to an item).
 
 ## mdBook
 
@@ -25,7 +37,11 @@ Requirements:
 Let's take, for example, a simple Cairo project initalized using `scarb new`. Let's change the code inside `lib.cairo` to:
 
 ````cairo
-/// Example Enum.
+//! This module is an example one.
+//! It tries to show how documentation comments work.
+
+
+/// Example Enum. It's really similar to [ExampleStruct]
 enum ExampleEnum {
     /// First enum variant.
     VARIANT_A,
@@ -38,7 +54,9 @@ struct ExampleStruct {
     /// Private field.
     field_a: felt252,
     /// Public field.
-    pub field_b: felt252
+    pub field_b: felt252,
+    /// [`ExampleEnum`] field
+    field_c: ExampleEnum
 }
 
 /// Function that prints "test" to stdout with endline.
@@ -53,8 +71,11 @@ fn test() {
 }
 
 /// Main function that Cairo runs as a binary entrypoint.
+/// This function uses [test] function.
 fn main() {
+    //! This is an inner comment. It refers to it's parent which is the main function.
     println!("hello_world");
+    test();
 }
 ````
 
