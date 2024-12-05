@@ -1,4 +1,4 @@
-use crate::CONTEXT;
+use crate::{CALL_SITE, CONTEXT};
 use bumpalo::Bump;
 use std::fmt::{Debug, Display, Write};
 use std::hash::{Hash, Hasher};
@@ -315,6 +315,26 @@ impl TextSpan {
     /// Create a new [`TextSpan`].
     pub fn new(start: TextOffset, end: TextOffset) -> TextSpan {
         TextSpan { start, end }
+    }
+
+    /// Create a new [`TextSpan`], located at the invocation of the current procedural macro.
+    /// Identifiers created with this span will be resolved as if they were written directly at
+    /// the macro call location (call-site hygiene).
+    pub fn call_site() -> Self {
+        CALL_SITE.with(|call_site| {
+            let call_site = call_site.borrow();
+            Self::new(call_site.0, call_site.1)
+        })
+    }
+
+    /// Create a new [`TextSpan`], with width `0`, located right before this span.
+    pub fn start(self) -> Self {
+        Self::new(self.start, self.start)
+    }
+
+    /// Create a new [`TextSpan`], with width `0`, located right after this span.
+    pub fn end(self) -> Self {
+        Self::new(self.end, self.end)
     }
 }
 
