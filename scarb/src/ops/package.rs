@@ -173,6 +173,9 @@ fn package_one_impl(
     let recipe = prepare_archive_recipe(pkg, opts, ws)?;
     let num_files = recipe.len();
     let target_dir = ws.target_dir().child("package");
+    if let Some(include) = pkg.manifest.metadata.include.clone() {
+        println!("includy: {:?}", include);
+    }
 
     if let Some(script_definition) = pkg.manifest.scripts.get("package") {
         ws.config().ui().print(Status::new(

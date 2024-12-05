@@ -119,6 +119,7 @@ pub struct PackageInheritableFields {
     pub license_file: Option<Utf8PathBuf>,
     pub readme: Option<PathOrBool>,
     pub repository: Option<String>,
+    pub include: Option<Vec<String>>,
     pub cairo_version: Option<VersionReq>,
 }
 
@@ -147,6 +148,7 @@ impl PackageInheritableFields {
     get_field!(license, String);
     get_field!(license_file, Utf8PathBuf);
     get_field!(repository, String);
+    get_field!(include, VecOfStrings);
     get_field!(edition, Edition);
 
     pub fn readme(&self, workspace_root: &Utf8Path, package_root: &Utf8Path) -> Result<PathOrBool> {
@@ -197,6 +199,7 @@ pub struct TomlPackage {
     pub license_file: Option<MaybeWorkspaceField<Utf8PathBuf>>,
     pub readme: Option<MaybeWorkspaceField<PathOrBool>>,
     pub repository: Option<MaybeWorkspaceField<String>>,
+    pub include: Option<MaybeWorkspaceField<Vec<String>>>,
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
     pub no_core: Option<bool>,
     pub cairo_version: Option<MaybeWorkspaceField<VersionReq>>,
@@ -570,6 +573,11 @@ impl TomlManifest {
                 .repository
                 .clone()
                 .map(|mw| mw.resolve("repository", || inheritable_package.repository()))
+                .transpose()?,
+            include: package
+                .include
+                .clone()
+                .map(|mw| mw.resolve("include", || inheritable_package.include()))
                 .transpose()?,
             cairo_version: package
                 .cairo_version

@@ -73,6 +73,7 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
             .clone()
             .map(|_| MaybeWorkspace::Defined((Utf8PathBuf::from(DEFAULT_README_FILE_NAME)).into())),
         repository: metadata.repository.clone().map(MaybeWorkspace::Defined),
+        include: metadata.include.clone().map(MaybeWorkspace::Defined),
         no_core: summary.no_core.then_some(true),
         cairo_version: metadata.cairo_version.clone().map(MaybeWorkspace::Defined),
         experimental_features: pkg.manifest.experimental_features.clone(),
