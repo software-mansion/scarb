@@ -5,13 +5,13 @@ use indoc::indoc;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::assert_matches;
 
-#[test]
 fn compile_cairo_plugin() {
     let t = TempDir::new().unwrap();
+#[test]
     CairoPluginProjectBuilder::default().build(&t);
     let output = Scarb::quick_snapbox()
         .arg("build")
@@ -204,6 +204,36 @@ fn compile_cairo_plugin_with_other_target() {
 
         Caused by:
             target `cairo-plugin` cannot be mixed with other targets
+        "#});
+}
+
+#[test]
+fn compile_with_prebuilt_plugins() {
+    let t = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn main() -> u32 {
+                1
+            }
+        "#})
+        .dep(
+            "snforge_scarb_plugin",
+            Dep.version("0.34").registry("https://scarbs.dev/"),
+        )
+        .manifest_extra(indoc! {r#"
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Downloading snforge_scarb_plugin v0.34.0 ([..])
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..] Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -1530,3 +1560,5 @@ fn can_expand_impl_inner_func_attrr() {
 
         "#});
 }
+
+
