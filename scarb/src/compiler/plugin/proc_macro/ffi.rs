@@ -73,6 +73,20 @@ impl ProcMacroInstance {
         })
     }
 
+    /// Loads a procedural macro from a prebuilt shared library.
+    pub fn try_load_prebuilt(package: Package, _config: &Config) -> Result<Self> {
+        let prebuilt_path = package
+            .prebuilt_lib_path()
+            .context("could not resolve prebuilt library path")?;
+        let plugin = unsafe { Plugin::try_new(prebuilt_path)? };
+        let expansions = unsafe { Self::load_expansions(&plugin, package.id)? };
+        Ok(Self {
+            package_id: package.id,
+            plugin,
+            expansions,
+        })
+    }
+
     unsafe fn load_expansions(plugin: &Plugin, package_id: PackageId) -> Result<Vec<Expansion>> {
         // Make a call to the FFI interface to list declared expansions.
         let stable_expansions = (plugin.vtable.list_expansions)();

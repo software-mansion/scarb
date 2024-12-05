@@ -1156,6 +1156,13 @@ impl ProcMacroHost {
         Ok(())
     }
 
+    /// Registers a prebuilt procedural macro by loading the shared library from the specified path.
+    pub fn register_prebuilt(&mut self, package: Package, config: &Config) -> Result<()> {
+        let instance = ProcMacroInstance::try_load_prebuilt(package, config)?;
+        self.macros.push(Arc::new(instance));
+        Ok(())
+    }
+
     pub fn into_plugin(self) -> Result<ProcMacroHostPlugin> {
         ProcMacroHostPlugin::try_new(self.macros)
     }
