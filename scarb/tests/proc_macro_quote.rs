@@ -40,6 +40,8 @@ fn can_use_quote() {
         .current_dir(&project)
         .assert()
         .stdout_matches(indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
         [..] Compiling some v1.0.0 [..]
         [..] Compiling hello v1.0.0 [..]
         [..] Finished `dev` profile [..]
@@ -86,6 +88,8 @@ fn can_use_quote_with_token_tree() {
         .current_dir(&project)
         .assert()
         .stdout_matches(indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
         [..] Compiling some v1.0.0 [..]
         [..] Compiling hello v1.0.0 [..]
         [..] Finished `dev` profile [..]
@@ -132,11 +136,13 @@ fn can_use_quote_with_token_stream() {
         .current_dir(&project)
         .assert()
         .stdout_matches(indoc! {r#"
-        [..] Compiling some v1.0.0 [..]
-        [..] Compiling hello v1.0.0 [..]
-        [..] Finished `dev` profile [..]
-        [..] Running hello
-        Run completed successfully, returning [5]
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+               Compiling some v1.0.0 ([..]Scarb.toml)
+               Compiling hello v1.0.0 ([..]Scarb.toml)
+                Finished `dev` profile target(s) in [..]
+                 Running hello
+            Run completed successfully, returning [5]
         "#})
         .success();
 }
