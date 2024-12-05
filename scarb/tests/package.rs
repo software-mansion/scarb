@@ -48,10 +48,11 @@ impl PackageChecker {
                     .path()
                     .expect("failed to get archive entry path")
                     .into_owned();
-                let mut contents = String::new();
-                entry
-                    .read_to_string(&mut contents)
-                    .expect("failed to read archive entry contents");
+                let mut contents = String::default();
+                // Some files are not valid utf-8 contents, so we don't want to read them at all.
+                // We just want to track that they even exist.
+                let _ = entry.read_to_string(&mut contents);
+
                 (name, contents)
             })
             .collect();
@@ -1534,9 +1535,9 @@ fn package_with_package_script() {
     let script_name = "script.sh";
     #[cfg(not(windows))]
     let script_code = indoc! { r#"
-      touch text.txt
-      cd ../..
-      cargo build
+      cargo build --release
+      mkdir -p ../scarb/cairo-plugin
+      cp target/release/libfoo.dylib ../scarb/cairo-plugin
     "#};
 
     #[cfg(windows)]
@@ -1544,9 +1545,9 @@ fn package_with_package_script() {
     #[cfg(windows)]
     let script_code = indoc! { r#"
       @echo off
-      copy NUL text.txt
-      cd ../..
-      cargo build
+      cargo build --release
+      mkdir -p ../scarb/cairo-plugin
+      copy target\release\libfoo.dll ..\scarb\cairo-plugin
     "#};
 
     CairoPluginProjectBuilder::start()
@@ -1554,6 +1555,9 @@ fn package_with_package_script() {
         .scarb_project(|b| {
             b.name("foo")
                 .version("1.0.0")
+                .manifest_package_extra(indoc! {r#"
+                  include = ["Cargo.lock", "Cargo.toml", "src", "script.sh"]
+                "#})
                 .manifest_extra(formatdoc! {r#"
                   [cairo-plugin]
 
@@ -1576,17 +1580,66 @@ fn package_with_package_script() {
     make_executable(&t.to_path_buf().join(script_name));
 
     Scarb::quick_snapbox()
-        .arg("package")
         .current_dir(&t)
+        .arg("package")
         .assert()
-        .success();
+        .failure();
 
-    assert!(Path::new(
-        &t.to_path_buf()
-            .join("target")
-            .join("package")
-            .join("text.txt"),
-    )
-    .exists());
-    assert!(Path::new(&t.to_path_buf().join("target").join("debug")).exists())
+    PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
+        .name_and_version("foo", "1.0.0")
+        .contents(&[
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+            "target/scarb/cairo-plugin/libfoo.dylib",
+            "Cargo.toml",
+            "Cargo.orig.toml",
+            "src/lib.rs",
+            "script.sh",
+        ]);
+}
+
+#[test]
+fn package_with_package_script_not_existing_script() {
+    let t = TempDir::new().unwrap();
+
+    #[cfg(not(windows))]
+    let script_name = "script.sh";
+
+    #[cfg(windows)]
+    let script_name = "script.bat";
+
+    CairoPluginProjectBuilder::start()
+        .name("foo")
+        .scarb_project(|b| {
+            b.name("foo")
+                .version("1.0.0")
+                .manifest_package_extra(indoc! {r#"
+                  include = ["Cargo.lock", "Cargo.toml", "src", "script.sh"]
+                "#})
+                .manifest_extra(formatdoc! {r#"
+                  [cairo-plugin]
+
+                  [scripts]
+                  package = "{script_name}"
+                "#})
+        })
+        .lib_rs(indoc! {r#"
+          use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+          #[attribute_macro]
+          pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+              ProcMacroResult::new(token_stream)
+          }
+        "#})
+        .build(&t);
+
+    let assert = Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("package")
+        .assert()
+        .failure();
+
+    let stdout = String::from_utf8(assert.get_output().stdout.clone()).unwrap();
+    assert!(stdout.contains(&formatdoc! {r#"error: path does not exist: {script_name}"#}));
 }
