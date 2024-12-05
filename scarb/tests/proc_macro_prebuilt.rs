@@ -230,6 +230,7 @@ fn load_prebuilt_proc_macros() {
                 "42",
                 TextSpan::new(0, 0),
             ))]),
+            call_site: TextSpan::new(0, 0),
         })
         .unwrap();
 

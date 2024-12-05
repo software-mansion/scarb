@@ -16,6 +16,7 @@ impl Handler for ExpandAttribute {
             attr,
             args,
             item,
+            call_site,
         } = params;
 
         let plugin = workspace_macros
@@ -34,7 +35,7 @@ impl Handler for ExpandAttribute {
             })
             .with_context(|| format!("Unsupported attribute: {attr}"))?;
 
-        let result = instance.generate_code(attr.into(), args, item);
+        let result = instance.generate_code(attr.into(), call_site, args, item);
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,
