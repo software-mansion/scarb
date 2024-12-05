@@ -3,11 +3,11 @@ use crate::core::{Package, PackageId};
 use anyhow::{ensure, Context, Result};
 use cairo_lang_macro::{
     ExpansionKind as SharedExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult,
-    TokenStream,
+    TextSpan, TokenStream,
 };
 use cairo_lang_macro_stable::{
     StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
-    StableResultWrapper, StableTokenStream,
+    StableResultWrapper, StableTextSpan, StableTokenStream,
 };
 use camino::Utf8PathBuf;
 use itertools::Itertools;
@@ -159,6 +159,7 @@ impl ProcMacroInstance {
     pub(crate) fn generate_code(
         &self,
         item_name: SmolStr,
+        call_site: TextSpan,
         attr: TokenStream,
         token_stream: TokenStream,
     ) -> ProcMacroResult {
@@ -169,8 +170,9 @@ impl ProcMacroInstance {
         let item_name = CString::new(item_name.to_string()).unwrap().into_raw();
         // Call FFI interface for code expansion.
         // Note that `stable_result` has been allocated by the dynamic library.
+        let call_site: StableTextSpan = call_site.into_stable();
         let stable_result =
-            (self.plugin.vtable.expand)(item_name, stable_attr, stable_token_stream);
+            (self.plugin.vtable.expand)(item_name, call_site, stable_attr, stable_token_stream);
         // Free proc macro name.
         let _ = unsafe { CString::from_raw(item_name) };
         // Free the memory allocated by the `stable_token_stream`.
@@ -282,8 +284,12 @@ impl Expansion {
 
 type ListExpansions = extern "C" fn() -> StableExpansionsList;
 type FreeExpansionsList = extern "C" fn(StableExpansionsList);
-type ExpandCode =
-    extern "C" fn(*const c_char, StableTokenStream, StableTokenStream) -> StableResultWrapper;
+type ExpandCode = extern "C" fn(
+    *const c_char,
+    StableTextSpan,
+    StableTokenStream,
+    StableTokenStream,
+) -> StableResultWrapper;
 type FreeResult = extern "C" fn(StableProcMacroResult);
 type PostProcessCallback = extern "C" fn(StablePostProcessContext) -> StablePostProcessContext;
 type DocExpansion = extern "C" fn(*const c_char) -> *mut c_char;

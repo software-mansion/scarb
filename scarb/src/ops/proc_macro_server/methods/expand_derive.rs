@@ -20,6 +20,7 @@ impl Handler for ExpandDerive {
             context,
             derives,
             item,
+            call_site,
         } = params;
 
         let mut derived_code = TokenStream::empty();
@@ -38,8 +39,12 @@ impl Handler for ExpandDerive {
                 .find(|instance| instance.get_expansions().contains(&expansion))
                 .with_context(|| format!("Unsupported derive macro: {derive}"))?;
 
-            let result =
-                instance.generate_code(expansion.name.clone(), TokenStream::empty(), item.clone());
+            let result = instance.generate_code(
+                expansion.name.clone(),
+                call_site.clone(),
+                TokenStream::empty(),
+                item.clone(),
+            );
 
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);
