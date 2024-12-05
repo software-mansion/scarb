@@ -1583,7 +1583,7 @@ fn package_with_package_script() {
         .current_dir(&t)
         .arg("package")
         .assert()
-        .failure();
+        .success();
 
     PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
         .name_and_version("foo", "1.0.0")
