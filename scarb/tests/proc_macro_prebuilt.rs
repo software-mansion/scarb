@@ -228,7 +228,7 @@ fn load_prebuilt_proc_macros() {
             name: "some".to_string(),
             args: TokenStream::new(vec![TokenTree::Ident(Token::new(
                 "42",
-                TextSpan::new(0, 0),
+                TextSpan::call_site(),
             ))]),
             call_site: TextSpan::new(0, 0),
         })
@@ -239,7 +239,7 @@ fn load_prebuilt_proc_macros() {
         response.token_stream,
         TokenStream::new(vec![TokenTree::Ident(Token::new(
             "42",
-            TextSpan::new(0, 0),
+            TextSpan::call_site(),
         ))])
     );
 }
