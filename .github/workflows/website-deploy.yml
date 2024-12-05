@@ -27,6 +27,8 @@ jobs:
       - name: Install mdBook
         run: cargo install --version ${MDBOOK_VERSION} mdbook
       - uses: software-mansion/setup-scarb@v1
+        with:
+          cache: false
       - name: Init Scarb to cache corelib
         id: scarb-init
         run: |
@@ -47,7 +49,7 @@ jobs:
           mdbook build
         working-directory: ./core
       - name: Apply custom highlighting
-        run: | 
+        run: |
           curl -o highlight.js https://raw.githubusercontent.com/software-mansion/scarb/main/extensions/scarb-doc/theme/highlight.js
           cp highlight.js ./core/target/doc/core/highlight.js
       - uses: actions/upload-artifact@v4
