@@ -16,6 +16,7 @@ impl Handler for ExpandInline {
             context,
             name,
             args,
+            call_site,
         } = params;
 
         let plugin = workspace_macros
@@ -34,7 +35,7 @@ impl Handler for ExpandInline {
             })
             .with_context(|| format!("Unsupported inline macro: {name}"))?;
 
-        let result = instance.generate_code(name.into(), TokenStream::empty(), args);
+        let result = instance.generate_code(name.into(), call_site, TokenStream::empty(), args);
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,
