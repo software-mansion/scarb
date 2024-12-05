@@ -1,5 +1,8 @@
 use crate::compiler::plugin::proc_macro::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::host::{generate_code_mappings, into_cairo_diagnostics};
+use crate::compiler::plugin::proc_macro::host::conversion::{
+    into_cairo_diagnostics, CallSiteLocation,
+};
+use crate::compiler::plugin::proc_macro::host::generate_code_mappings;
 use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
@@ -12,7 +15,7 @@ use cairo_lang_syntax::attribute::structured::AttributeStructurize;
 use cairo_lang_syntax::node::ast::{ImplItem, MaybeImplBody, MaybeTraitBody};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
-use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
+use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use itertools::Itertools;
 use smol_str::SmolStr;
 use std::collections::HashSet;
@@ -166,22 +169,14 @@ impl ProcMacroHostPlugin {
         token_stream: TokenStream,
     ) -> bool {
         let mut all_none = true;
-        let (input, args, stable_ptr) = match found {
-            AttrExpansionFound::Last {
-                expansion,
-                args,
-                stable_ptr,
-            } => {
+        let input = match found {
+            AttrExpansionFound::Last(input) => {
                 all_none = false;
-                (expansion, args, stable_ptr)
+                input
             }
-            AttrExpansionFound::Some {
-                expansion,
-                args,
-                stable_ptr,
-            } => {
+            AttrExpansionFound::Some(input) => {
                 all_none = false;
-                (expansion, args, stable_ptr)
+                input
             }
             AttrExpansionFound::None => {
                 item_builder.add_node(func.as_syntax_node());
@@ -189,13 +184,20 @@ impl ProcMacroHostPlugin {
             }
         };
 
-        let result = self.instance(input.package_id).generate_code(
-            input.expansion.name.clone(),
-            args,
+        let result = self.instance(input.id.package_id).generate_code(
+            input.id.expansion.name.clone(),
+            input.call_site.span,
+            input.args,
             token_stream.clone(),
         );
 
-        let expanded = context.register_result(token_stream.to_string(), input, result, stable_ptr);
+        let expanded = context.register_result(
+            token_stream.to_string(),
+            input.id,
+            result,
+            input.call_site.stable_ptr,
+        );
+
         item_builder.add_modified(RewriteNode::Mapped {
             origin: func.as_syntax_node().span(db),
             node: Box::new(RewriteNode::Text(expanded.to_string())),
@@ -335,7 +337,11 @@ impl ProcMacroHostPlugin {
                         let mut args_builder = TokenStreamBuilder::new(db);
                         args_builder.add_node(attr.arguments(db).as_syntax_node());
                         let args = args_builder.build(ctx);
-                        expansion = Some((found, args, attr.stable_ptr().untyped()));
+                        expansion = Some(AttrExpansionArgs {
+                            id: found,
+                            args,
+                            call_site: CallSiteLocation::new(&attr, db),
+                        });
                         // Do not add the attribute for found expansion.
                         continue;
                     } else {
@@ -346,16 +352,8 @@ impl ProcMacroHostPlugin {
             builder.add_node(attr.as_syntax_node());
         }
         match (expansion, last) {
-            (Some((expansion, args, stable_ptr)), true) => AttrExpansionFound::Last {
-                expansion,
-                args,
-                stable_ptr,
-            },
-            (Some((expansion, args, stable_ptr)), false) => AttrExpansionFound::Some {
-                expansion,
-                args,
-                stable_ptr,
-            },
+            (Some(args), true) => AttrExpansionFound::Last(args),
+            (Some(args), false) => AttrExpansionFound::Some(args),
             (None, _) => AttrExpansionFound::None,
         }
     }
@@ -366,11 +364,12 @@ impl ProcMacroHostPlugin {
         last: bool,
         args: TokenStream,
         token_stream: TokenStream,
-        stable_ptr: SyntaxStablePtrId,
+        call_site: CallSiteLocation,
     ) -> PluginResult {
         let original = token_stream.to_string();
         let result = self.instance(input.package_id).generate_code(
             input.expansion.name.clone(),
+            call_site.span,
             args,
             token_stream,
         );
@@ -379,7 +378,7 @@ impl ProcMacroHostPlugin {
         if result.token_stream.is_empty() {
             // Remove original code
             return PluginResult {
-                diagnostics: into_cairo_diagnostics(result.diagnostics, stable_ptr),
+                diagnostics: into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr),
                 code: None,
                 remove_original_item: true,
             };
@@ -402,7 +401,7 @@ impl ProcMacroHostPlugin {
             return PluginResult {
                 code: None,
                 remove_original_item: false,
-                diagnostics: into_cairo_diagnostics(result.diagnostics, stable_ptr),
+                diagnostics: into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr),
             };
         }
 
@@ -425,31 +424,30 @@ impl ProcMacroHostPlugin {
                     )))
                 }),
             }),
-            diagnostics: into_cairo_diagnostics(result.diagnostics, stable_ptr),
+            diagnostics: into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr),
             remove_original_item: true,
         }
     }
 }
 
 pub enum AttrExpansionFound {
-    Some {
-        expansion: ProcMacroId,
-        args: TokenStream,
-        stable_ptr: SyntaxStablePtrId,
-    },
+    Some(AttrExpansionArgs),
+    Last(AttrExpansionArgs),
     None,
-    Last {
-        expansion: ProcMacroId,
-        args: TokenStream,
-        stable_ptr: SyntaxStablePtrId,
-    },
+}
+
+pub struct AttrExpansionArgs {
+    pub id: ProcMacroId,
+    pub args: TokenStream,
+    pub call_site: CallSiteLocation,
 }
 
 impl AttrExpansionFound {
     pub fn as_name(&self) -> Option<SmolStr> {
         match self {
-            AttrExpansionFound::Some { expansion, .. }
-            | AttrExpansionFound::Last { expansion, .. } => Some(expansion.expansion.name.clone()),
+            AttrExpansionFound::Some(args) | AttrExpansionFound::Last(args) => {
+                Some(args.id.expansion.name.clone())
+            }
             AttrExpansionFound::None => None,
         }
     }
