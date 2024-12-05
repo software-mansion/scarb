@@ -771,6 +771,8 @@ dependencies = [
  "bumpalo",
  "cairo-lang-macro-attributes 0.1.0",
  "cairo-lang-macro-stable 1.0.0",
+ "cairo-lang-primitive-token 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-quote",
  "linkme",
  "serde",
  "serde_json",
@@ -880,6 +882,14 @@ dependencies = [
  "serde",
  "thiserror 1.0.69",
  "toml",
+]
+
+[[package]]
+name = "cairo-lang-quote"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
 ]
 
 [[package]]
