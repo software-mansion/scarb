@@ -14,9 +14,11 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
 
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
 use crate::core::Workspace;
+use crate::ops::{compile_unit, generate_cairo_plugin_compilation_units};
 use crate::DEFAULT_MODULE_MAIN_FILE;
 
 pub struct ScarbDatabase {
@@ -59,6 +61,17 @@ fn load_plugins(
             let plugin = ws.config().cairo_plugins().fetch(package_id)?;
             let instance = plugin.instantiate()?;
             builder.with_plugin_suite(instance.plugin_suite());
+        } else if plugin_info.package.is_prebuilt()
+            && proc_macros
+                .register_prebuilt(plugin_info.package.clone(), ws.config())
+                .is_err()
+        {
+            let plugin_unit = generate_cairo_plugin_compilation_units(&plugin_info.package)?
+                .first()
+                .unwrap()
+                .clone();
+            compile_unit(plugin_unit, ws, false)?;
+            proc_macros.register(plugin_info.package.clone(), ws.config())?;
         } else {
             proc_macros.register(plugin_info.package.clone(), ws.config())?;
         }
