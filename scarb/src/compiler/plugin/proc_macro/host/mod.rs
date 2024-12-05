@@ -1,5 +1,6 @@
 mod attribute;
 mod aux_data;
+mod conversion;
 mod derive;
 mod inline;
 mod post;
@@ -12,17 +13,13 @@ use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind, ProcMacroInstance};
 use crate::core::{Config, Package, PackageId, edition_variant};
 use anyhow::{Context, Result, ensure};
-use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
 use cairo_lang_filesystem::db::Edition;
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
 use cairo_lang_filesystem::span::{TextOffset, TextSpan, TextWidth};
-use cairo_lang_macro::{
-    AllocationContext, Diagnostic, Severity, TokenStream, TokenStreamMetadata, TokenTree,
-};
+use cairo_lang_macro::{AllocationContext, TokenStream, TokenStreamMetadata, TokenTree};
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{TypedStablePtr, TypedSyntaxNode, ast};
 use convert_case::{Case, Casing};
 use itertools::Itertools;
@@ -186,21 +183,13 @@ impl MacroPlugin for ProcMacroHostPlugin {
         let (input, body) = self.parse_attribute(db, item_ast.clone(), &ctx);
 
         if let Some(result) = match input {
-            AttrExpansionFound::Last {
-                expansion,
-                args,
-                stable_ptr,
-            } => Some((expansion, args, stable_ptr, true)),
-            AttrExpansionFound::Some {
-                expansion,
-                args,
-                stable_ptr,
-            } => Some((expansion, args, stable_ptr, false)),
+            AttrExpansionFound::Last(input) => Some((input, true)),
+            AttrExpansionFound::Some(input) => Some((input, false)),
             AttrExpansionFound::None => None,
         }
-        .map(|(expansion, args, stable_ptr, last)| {
+        .map(|(input, last)| {
             let token_stream = body.with_metadata(stream_metadata.clone());
-            self.expand_attribute(expansion, last, args, token_stream, stable_ptr)
+            self.expand_attribute(input.id, last, input.args, token_stream, input.call_site)
         }) {
             return result;
         }
@@ -241,23 +230,6 @@ impl MacroPlugin for ProcMacroHostPlugin {
             .flat_map(|m| m.executable_attributes())
             .collect()
     }
-}
-
-fn into_cairo_diagnostics(
-    diagnostics: Vec<Diagnostic>,
-    stable_ptr: SyntaxStablePtrId,
-) -> Vec<PluginDiagnostic> {
-    diagnostics
-        .into_iter()
-        .map(|diag| PluginDiagnostic {
-            stable_ptr,
-            message: diag.message,
-            severity: match diag.severity {
-                Severity::Error => cairo_lang_diagnostics::Severity::Error,
-                Severity::Warning => cairo_lang_diagnostics::Severity::Warning,
-            },
-        })
-        .collect_vec()
 }
 
 /// A Scarb wrapper around the `ProcMacroHost` compiler plugin.
