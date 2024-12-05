@@ -22,7 +22,7 @@ use std::cell::RefCell;
 
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
-    StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
+    StableExpansionsList, StablePostProcessContext, StableProcMacroResult, StableTextSpan,
 };
 use std::ffi::{c_char, CStr, CString};
 use std::ops::Deref;
@@ -33,6 +33,8 @@ pub use types::*;
 
 // A thread-local allocation context for allocating tokens on proc macro side.
 thread_local!(static CONTEXT: RefCell<AllocationContext> =  RefCell::default() );
+
+thread_local!(static CALL_SITE: RefCell<(u32, u32)> = RefCell::default());
 
 #[doc(hidden)]
 #[derive(Clone)]
@@ -99,6 +101,7 @@ pub unsafe extern "C" fn free_expansions_list(list: StableExpansionsList) {
 #[no_mangle]
 pub unsafe extern "C" fn expand(
     item_name: *const c_char,
+    call_site: StableTextSpan,
     stable_attr: cairo_lang_macro_stable::StableTokenStream,
     stable_token_stream: cairo_lang_macro_stable::StableTokenStream,
 ) -> cairo_lang_macro_stable::StableResultWrapper {
@@ -111,6 +114,8 @@ pub unsafe extern "C" fn expand(
         ctx_cell.replace(AllocationContext::with_capacity(size_hint));
         let ctx_borrow = ctx_cell.borrow();
         let ctx: &AllocationContext = ctx_borrow.deref();
+        // Set the call site for the current expand call.
+        CALL_SITE.replace((call_site.start, call_site.end));
         // Copy the stable token stream into current context.
         let token_stream = TokenStream::from_stable_in(&stable_token_stream, ctx);
         let attr_token_stream = TokenStream::from_stable_in(&stable_attr, ctx);

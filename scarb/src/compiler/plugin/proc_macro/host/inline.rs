@@ -1,5 +1,8 @@
 use crate::compiler::plugin::proc_macro::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::host::{generate_code_mappings, into_cairo_diagnostics};
+use crate::compiler::plugin::proc_macro::host::conversion::{
+    into_cairo_diagnostics, CallSiteLocation,
+};
+use crate::compiler::plugin::proc_macro::host::generate_code_mappings;
 use crate::compiler::plugin::proc_macro::{
     Expansion, ProcMacroId, ProcMacroInstance, TokenStreamBuilder,
 };
@@ -9,7 +12,7 @@ use cairo_lang_defs::plugin::{
 };
 use cairo_lang_macro::{AllocationContext, TokenStream};
 use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_syntax::node::{ast, TypedStablePtr, TypedSyntaxNode};
+use cairo_lang_syntax::node::{ast, TypedSyntaxNode};
 use std::sync::{Arc, OnceLock};
 
 /// A Cairo compiler inline macro plugin controlling the inline procedural macro execution.
@@ -45,19 +48,20 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         syntax: &ast::ExprInlineMacro,
         _metadata: &MacroPluginMetadata<'_>,
     ) -> InlinePluginResult {
+        let call_site = CallSiteLocation::new(syntax, db);
         let ctx = AllocationContext::default();
-        let stable_ptr = syntax.clone().stable_ptr().untyped();
         let arguments = syntax.arguments(db);
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         token_stream_builder.add_node(arguments.as_syntax_node());
         let token_stream = token_stream_builder.build(&ctx);
         let result = self.instance().generate_code(
             self.expansion.name.clone(),
+            call_site.span,
             TokenStream::empty(),
             token_stream,
         );
         // Handle diagnostics.
-        let diagnostics = into_cairo_diagnostics(result.diagnostics, stable_ptr);
+        let diagnostics = into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr);
         let token_stream = result.token_stream.clone();
         if token_stream.is_empty() {
             // Remove original code
