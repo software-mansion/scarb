@@ -12,6 +12,7 @@ members = [
     "plugins/cairo-lang-macro",
     "plugins/cairo-lang-macro-attributes",
     "plugins/cairo-lang-macro-stable",
+    "plugins/cairo-lang-quote",
     "utils/create-output-dir",
     "utils/once-map",
     "utils/scarb-proc-macro-server-types",
