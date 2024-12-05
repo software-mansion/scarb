@@ -3,7 +3,7 @@ use bumpalo::Bump;
 use cairo_lang_primitive_token::{PrimitiveSpan, PrimitiveToken, ToPrimitiveTokenStream};
 use std::fmt::{Debug, Display, Write};
 use std::hash::{Hash, Hasher};
-use std::iter::{once, Map, Once};
+use std::iter::{Map, Once, once};
 use std::ops::Deref;
 use std::rc::Rc;
 use std::vec::IntoIter;
