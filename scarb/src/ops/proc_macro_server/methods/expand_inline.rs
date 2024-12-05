@@ -20,7 +20,12 @@ impl Handler for ExpandInline {
             })
             .unwrap();
 
-        let result = instance.generate_code(params.name.into(), TokenStream::empty(), params.args);
+        let result = instance.generate_code(
+            params.name.into(),
+            params.call_site,
+            TokenStream::empty(),
+            params.args,
+        );
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,
