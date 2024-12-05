@@ -23,6 +23,7 @@ impl Handler for ExpandDerive {
 
             let result = instance.generate_code(
                 expansion.name.clone(),
+                params.call_site.clone(),
                 TokenStream::empty(),
                 params.item.clone(),
             );
