@@ -15,12 +15,14 @@ use ra_ap_toolchain::Tool;
 use scarb_ui::{Message, OutputFormat};
 use serde::{Serialize, Serializer};
 use serde_json::value::RawValue;
+use std::env::consts::DLL_SUFFIX;
 use std::fmt::Display;
 use std::fs;
 use std::io::{Seek, SeekFrom};
 use std::ops::Deref;
 use std::process::Command;
 use tar::Archive;
+use target_triple::target;
 use tracing::trace_span;
 
 pub const PROC_MACRO_BUILD_PROFILE: &str = "release";
@@ -31,6 +33,10 @@ pub trait SharedLibraryProvider {
     fn target_path(&self, config: &Config) -> Filesystem;
     /// Location of the shared library for the package.
     fn shared_lib_path(&self, config: &Config) -> Result<Utf8PathBuf>;
+    /// Location of the prebuilt binary for the package.
+    fn prebuilt_lib_path(&self) -> Option<Utf8PathBuf>;
+    /// Returns true if the package contains a prebuilt binary.
+    fn is_prebuilt(&self) -> bool;
 }
 
 impl SharedLibraryProvider for Package {
@@ -60,6 +66,31 @@ impl SharedLibraryProvider for Package {
             .into_child(PROC_MACRO_BUILD_PROFILE)
             .path_unchecked()
             .join(lib_name))
+    }
+
+    fn prebuilt_lib_path(&self) -> Option<Utf8PathBuf> {
+        let target_triple = target!();
+
+        let prebuilt_name = format!(
+            "{name}_v{version}_{target}{suffix}",
+            name = self.id.name,
+            version = self.id.version,
+            target = target_triple,
+            suffix = DLL_SUFFIX
+        );
+
+        let prebuilt_path = self
+            .root()
+            .join("target")
+            .join("scarb")
+            .join("cairo-plugin")
+            .join(prebuilt_name);
+
+        prebuilt_path.exists().then_some(prebuilt_path)
+    }
+
+    fn is_prebuilt(&self) -> bool {
+        self.prebuilt_lib_path().is_some()
     }
 }
 
