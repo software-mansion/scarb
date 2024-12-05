@@ -97,6 +97,10 @@ impl CairoPluginProjectBuilder {
         self.project.just_manifest(t);
         self.just_code(t);
     }
+
+    pub fn add_primitive_token_dep(self) -> Self {
+        self.add_dep(r#"cairo-lang-primitive-token = "1.0.0""#)
+    }
 }
 
 impl Default for CairoPluginProjectBuilder {
