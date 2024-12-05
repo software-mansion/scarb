@@ -1076,6 +1076,12 @@ dependencies = [
 [[package]]
 name = "cairo-lang-primitive-token"
 version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "123ac0ecadf31bacae77436d72b88fa9caef2b8e92c89ce63a125ae911a12fae"
+
+[[package]]
+name = "cairo-lang-primitive-token"
+version = "1.0.0"
 source = "git+https://github.com/starkware-libs/cairo?rev=6f2d4975dcf76651793d5880e1429ae96c1c0869#6f2d4975dcf76651793d5880e1429ae96c1c0869"
 
 [[package]]
@@ -1346,7 +1352,7 @@ source = "git+https://github.com/starkware-libs/cairo?rev=6f2d4975dcf76651793d58
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
- "cairo-lang-primitive-token",
+ "cairo-lang-primitive-token 1.0.0 (git+https://github.com/starkware-libs/cairo?rev=6f2d4975dcf76651793d5880e1429ae96c1c0869)",
  "cairo-lang-utils",
  "num-bigint",
  "num-traits",
