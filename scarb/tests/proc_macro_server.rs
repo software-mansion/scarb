@@ -94,6 +94,7 @@ fn expand_attribute() {
             context: ProcMacroScope { component },
             attr: "rename_to_very_new_name".to_string(),
             args: TokenStream::empty(),
+            call_site: TextSpan::new(0, 0),
             item: TokenStream::new(vec![TokenTree::Ident(Token::new(
                 "fn some_test_fn(){}",
                 TextSpan::new(0, 0),
@@ -141,6 +142,7 @@ fn expand_derive() {
         .request_and_wait::<ExpandDerive>(ExpandDeriveParams {
             context: ProcMacroScope { component },
             derives: vec!["some_derive".to_string()],
+            call_site: TextSpan::new(0, 0),
             item,
         })
         .unwrap();
@@ -195,6 +197,7 @@ fn expand_inline() {
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
             context: ProcMacroScope { component },
             name: "replace_all_15_with_25".to_string(),
+            call_site: TextSpan::new(0, 0),
             args: TokenStream::new(vec![TokenTree::Ident(Token::new(
                 "struct A { field: 15 , other_field: macro_call!(12)}",
                 TextSpan::new(0, 0),
