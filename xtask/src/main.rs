@@ -26,7 +26,7 @@ command!(Command(
     get_nightly_version,
     list_binaries,
     nightly_release_notes,
-    set_cairo_version,
+    set_dep_version,
     set_scarb_version,
     verify_archive,
 ));
