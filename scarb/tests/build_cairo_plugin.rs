@@ -9,6 +9,7 @@ use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::assert_matches;
 
+#[test]
 fn compile_cairo_plugin() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default().build(&t);
