@@ -37,7 +37,10 @@ jobs:
         run: cargo build -p xtask
 
       - name: Upgrade Cairo to latest main commit
-        run: cargo xtask set-cairo-version --rev $(git ls-remote --refs "https://github.com/starkware-libs/cairo" main | awk '{print $1}')
+        run: cargo xtask set-dep-version cairo --rev $(git ls-remote --refs "https://github.com/starkware-libs/cairo" main | awk '{print $1}')
+
+      - name: Upgrade CairoLS to latest main commit
+        run: cargo xtask set-dep-version cairols --rev $(git ls-remote --refs "https://github.com/software-mansion/cairols" main | awk '{print $1}')
 
       - name: Rebuild xtasks after Cargo.toml changes
         run: cargo build -p xtask

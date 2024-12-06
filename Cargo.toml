@@ -30,6 +30,21 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/software-mansion/scarb"
 
+# Managing dependencies on crates from starkware-libs/cairo repository:
+#
+# The Cairo compiler is made of a bunch of crates that inter-depend on each other and have
+# synchronised versioning.
+# It is very important to use a single revision of these crates in the entire Cairo toolchain,
+# which consists of Cairo compiler, Scarb, CairoLS and other tools.
+# The toolchain is eventually built by Scarb, which depends on everything other as regular crates.
+# To ensure that all crates in the toolchain use the same revision of Cairo crates, we use a patch
+# mechanism that Cargo provides.
+# Because Cargo requires patches to change the crate source, we have an unspoken contract that
+# all tools *always* depend on some crates.io versions of Cairo crates and Scarb uses
+# [patch.crates.io] table to set final git revision for everything.
+#
+# To keep our Cargo.toml following this contract, always use `cargo xtask set-dep-version`
+# for manipulating these dependencies.
 [workspace.dependencies]
 anyhow = "1"
 assert_fs = "1"
@@ -53,7 +68,7 @@ cairo-lang-syntax = "2.9.1"
 cairo-lang-test-plugin = "2.9.1"
 cairo-lang-test-runner = "2.9.1"
 cairo-lang-utils = { version = "2.9.1", features = ["env_logger"] }
-cairo-language-server = {git = "https://github.com/software-mansion/cairols", rev = "deaad4428c86c620782bcdfef14a079745b59f99" }
+cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "deaad4428c86c620782bcdfef14a079745b59f99" }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
@@ -130,6 +145,13 @@ xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
 zstd = "0.13"
+
+# Here we specify real dependency specifications for Cairo crates *if* currently we want to use
+# a particular unreleased commit (which is frequent mid-development).
+# We list all Cairo crates that go into Scarb's compilation unit even if Scarb itself does not depend
+# on some of them directly.
+# This ensures no duplicate instances of Cairo crates are pulled in by mistake.
+[patch.crates-io]
 
 [profile.release]
 lto = true
