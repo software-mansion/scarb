@@ -1532,10 +1532,10 @@ fn package_with_package_script() {
     let t = TempDir::new().unwrap();
 
     #[cfg(not(windows))]
-    let script_code = indoc! { r#"cargo build --release && mkdir -p ../scarb/cairo-plugin && cp target/release/libfoo.dylib ../scarb/cairo-plugin"#};
+    let script_code = indoc! { r#"cargo build --release && mkdir -p ../scarb/cairo-plugin && cp target/release/libfoo.so ../scarb/cairo-plugin"#};
 
     #[cfg(windows)]
-    let script_code = indoc! { r#"cargo build --release && mkdir -p ..\scarb\cairo-plugin && copy target\release\libfoo.dll ..\scarb\cairo-plugin"#};
+    let script_code = indoc! { r#"cargo build --release && mkdir -p ../scarb/cairo-plugin && copy target/release/libfoo.dll ../scarb/cairo-plugin"#};
 
     CairoPluginProjectBuilder::start()
         .name("foo")
@@ -1543,23 +1543,23 @@ fn package_with_package_script() {
             b.name("foo")
                 .version("1.0.0")
                 .manifest_package_extra(formatdoc! {r#"
-                  include = ["Cargo.lock", "Cargo.toml", "src"]
-                "#})
+      include = ["Cargo.lock", "Cargo.toml", "src"]
+      "#})
                 .manifest_extra(formatdoc! {r#"
-                  [cairo-plugin]
-
-                  [scripts]
-                  package = "{script_code}"
-                "#})
+      [cairo-plugin]
+      
+      [scripts]
+      package = "{script_code}"
+      "#})
         })
         .lib_rs(indoc! {r#"
-          use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-
-          #[attribute_macro]
-          pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-              ProcMacroResult::new(token_stream)
-          }
-        "#})
+    use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+    
+    #[attribute_macro]
+    pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+      ProcMacroResult::new(token_stream)
+      }
+      "#})
         .build(&t);
 
     Scarb::quick_snapbox()
@@ -1568,13 +1568,19 @@ fn package_with_package_script() {
         .assert()
         .success();
 
+    #[cfg(not(windows))]
+    let expected_shared_lib_file = r#"target/scarb/cairo-plugin/libfoo.so"#;
+
+    #[cfg(windows)]
+    let expected_shared_lib_file = r#"target/scarb/cairo-plugin/libfoo.dll"#;
+
     PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
         .name_and_version("foo", "1.0.0")
         .contents(&[
             "VERSION",
             "Scarb.orig.toml",
             "Scarb.toml",
-            "target/scarb/cairo-plugin/libfoo.dylib",
+            expected_shared_lib_file,
             "Cargo.toml",
             "Cargo.orig.toml",
             "src/lib.rs",
