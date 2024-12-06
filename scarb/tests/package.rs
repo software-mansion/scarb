@@ -1535,7 +1535,7 @@ fn package_with_package_script() {
     let script_code = indoc! { r#"cargo build --release && mkdir -p ../scarb/cairo-plugin && cp target/release/libfoo.so ../scarb/cairo-plugin"#};
 
     #[cfg(windows)]
-    let script_code = indoc! { r#"cargo build --release && mkdir -p ../scarb/cairo-plugin && copy target/release/libfoo.dll ../scarb/cairo-plugin"#};
+    let script_code = indoc! { r#"cargo build --release && mkdir -p ../scarb/cairo-plugin && cp target/release/libfoo.dll ../scarb/cairo-plugin"#};
 
     CairoPluginProjectBuilder::start()
         .name("foo")
