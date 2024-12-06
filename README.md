@@ -38,6 +38,7 @@ Scarb is under active development! Expect a lot of new features to appear soon! 
 - [ ] PubGrub implementation for version resolution 🏗️
 - [x] Dynamic loading of custom Cairo compiler plugins as Scarb packages
 - [x] `scarb doc`
+- [ ] `scarb execute` / `scarb prove` / `scarb verify` 🏗️
 - [ ] Dynamic loading of custom targets aka code generators
 - [ ] Dependency overrides
 - [ ] Signing & notarization of Windows & macOS binaries
