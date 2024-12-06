@@ -14,7 +14,7 @@ use scarb::DEFAULT_TARGET_DIR_NAME;
 use scarb_build_metadata::CAIRO_VERSION;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
-use scarb_test_support::fsx::{make_executable, unix_paths_to_os_lossy};
+use scarb_test_support::fsx::unix_paths_to_os_lossy;
 use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::registry::local::LocalRegistry;
@@ -1532,23 +1532,10 @@ fn package_with_package_script() {
     let t = TempDir::new().unwrap();
 
     #[cfg(not(windows))]
-    let script_name = "script.sh";
-    #[cfg(not(windows))]
-    let script_code = indoc! { r#"
-      cargo build --release
-      mkdir -p ../scarb/cairo-plugin
-      cp target/release/libfoo.dylib ../scarb/cairo-plugin
-    "#};
+    let script_code = indoc! { r#"cargo build --release && mkdir -p ../scarb/cairo-plugin && cp target/release/libfoo.dylib ../scarb/cairo-plugin"#};
 
     #[cfg(windows)]
-    let script_name = "script.bat";
-    #[cfg(windows)]
-    let script_code = indoc! { r#"
-      @echo off
-      cargo build --release
-      mkdir -p ../scarb/cairo-plugin
-      copy target\release\libfoo.dll ..\scarb\cairo-plugin
-    "#};
+    let script_code = indoc! { r#"cargo build --release && mkdir -p ..\scarb\cairo-plugin && copy target\release\libfoo.dll ..\scarb\cairo-plugin"#};
 
     CairoPluginProjectBuilder::start()
         .name("foo")
@@ -1556,13 +1543,13 @@ fn package_with_package_script() {
             b.name("foo")
                 .version("1.0.0")
                 .manifest_package_extra(formatdoc! {r#"
-                  include = ["Cargo.lock", "Cargo.toml", "src", "{script_name}"]
+                  include = ["Cargo.lock", "Cargo.toml", "src"]
                 "#})
                 .manifest_extra(formatdoc! {r#"
                   [cairo-plugin]
 
                   [scripts]
-                  package = "{script_name}"
+                  package = "{script_code}"
                 "#})
         })
         .lib_rs(indoc! {r#"
@@ -1573,11 +1560,7 @@ fn package_with_package_script() {
               ProcMacroResult::new(token_stream)
           }
         "#})
-        .src(script_name, script_code)
         .build(&t);
-
-    #[cfg(not(windows))]
-    make_executable(&t.to_path_buf().join(script_name));
 
     Scarb::quick_snapbox()
         .current_dir(&t)
@@ -1595,7 +1578,6 @@ fn package_with_package_script() {
             "Cargo.toml",
             "Cargo.orig.toml",
             "src/lib.rs",
-            script_name,
         ]);
 }
 
