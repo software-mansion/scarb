@@ -215,12 +215,13 @@ fn compile_with_prebuilt_plugins() {
         .name("hello")
         .lib_cairo(indoc! {r#"
             fn main() -> u32 {
-                1
+                let x = some!(42);
+                x
             }
         "#})
         .dep(
-            "snforge_scarb_plugin",
-            Dep.version("0.34").registry("https://scarbs.dev/"),
+            "proc_macro_example",
+            Dep.version("0.1.1").registry("https://scarbs.dev/"),
         )
         .manifest_extra(indoc! {r#"
         "#})
@@ -231,7 +232,7 @@ fn compile_with_prebuilt_plugins() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..]Downloading snforge_scarb_plugin v0.34.0 ([..])
+            [..]Downloading proc_macro_example v0.1.1 ([..])
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..] Finished `dev` profile target(s) in [..]
         "#});
