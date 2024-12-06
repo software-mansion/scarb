@@ -11,7 +11,6 @@ use snapbox::assert_matches;
 
 fn compile_cairo_plugin() {
     let t = TempDir::new().unwrap();
-#[test]
     CairoPluginProjectBuilder::default().build(&t);
     let output = Scarb::quick_snapbox()
         .arg("build")
