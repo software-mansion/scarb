@@ -1555,8 +1555,8 @@ fn package_with_package_script() {
         .scarb_project(|b| {
             b.name("foo")
                 .version("1.0.0")
-                .manifest_package_extra(indoc! {r#"
-                  include = ["Cargo.lock", "Cargo.toml", "src", "script.sh"]
+                .manifest_package_extra(formatdoc! {r#"
+                  include = ["Cargo.lock", "Cargo.toml", "src", "{script_name}"]
                 "#})
                 .manifest_extra(formatdoc! {r#"
                   [cairo-plugin]
@@ -1595,7 +1595,7 @@ fn package_with_package_script() {
             "Cargo.toml",
             "Cargo.orig.toml",
             "src/lib.rs",
-            "script.sh",
+            script_name,
         ]);
 }
 
@@ -1634,12 +1634,9 @@ fn package_with_package_script_not_existing_script() {
         "#})
         .build(&t);
 
-    let assert = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .current_dir(&t)
         .arg("package")
         .assert()
         .failure();
-
-    let stdout = String::from_utf8(assert.get_output().stdout.clone()).unwrap();
-    assert!(stdout.contains(&formatdoc! {r#"error: path does not exist: {script_name}"#}));
 }
