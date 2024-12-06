@@ -1,4 +1,4 @@
-use crate::core::{Config, Package, PackageId};
+use crate::core::PackageId;
 use anyhow::{ensure, Context, Result};
 use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_macro::{
@@ -18,7 +18,6 @@ use std::ffi::{c_char, CStr, CString};
 use std::fmt::Debug;
 use std::slice;
 
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::ProcMacroAuxData;
 
 #[cfg(not(windows))]
@@ -61,29 +60,12 @@ impl Debug for ProcMacroInstance {
 
 impl ProcMacroInstance {
     /// Load shared library
-    pub fn try_new(package: Package, config: &Config) -> Result<Self> {
-        let lib_path = package
-            .shared_lib_path(config)
-            .context("could not resolve shared library path")?;
-        let plugin = unsafe { Plugin::try_new(lib_path.to_path_buf())? };
+    pub fn try_new(package_id: PackageId, lib_path: Utf8PathBuf) -> Result<Self> {
+        let plugin = unsafe { Plugin::try_new(lib_path)? };
         Ok(Self {
-            expansions: unsafe { Self::load_expansions(&plugin, package.id)? },
-            package_id: package.id,
+            expansions: unsafe { Self::load_expansions(&plugin, package_id)? },
+            package_id,
             plugin,
-        })
-    }
-
-    /// Loads a procedural macro from a prebuilt shared library.
-    pub fn try_load_prebuilt(package: Package, _config: &Config) -> Result<Self> {
-        let prebuilt_path = package
-            .prebuilt_lib_path()
-            .context("could not resolve prebuilt library path")?;
-        let plugin = unsafe { Plugin::try_new(prebuilt_path)? };
-        let expansions = unsafe { Self::load_expansions(&plugin, package.id)? };
-        Ok(Self {
-            package_id: package.id,
-            plugin,
-            expansions,
         })
     }
 

@@ -1,8 +1,9 @@
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, FromSyntaxNode, ProcMacroInstance,
 };
 use crate::core::{Config, Package, PackageId};
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::{
@@ -1151,14 +1152,19 @@ pub struct ProcMacroHost {
 
 impl ProcMacroHost {
     pub fn register(&mut self, package: Package, config: &Config) -> Result<()> {
-        let instance = ProcMacroInstance::try_new(package, config)?;
+        let lib_path = package
+            .shared_lib_path(config)
+            .context("could not resolve shared library path")?;
+        let instance = ProcMacroInstance::try_new(package.id, lib_path)?;
         self.macros.push(Arc::new(instance));
         Ok(())
     }
 
-    /// Registers a prebuilt procedural macro by loading the shared library from the specified path.
     pub fn register_prebuilt(&mut self, package: Package, config: &Config) -> Result<()> {
-        let instance = ProcMacroInstance::try_load_prebuilt(package, config)?;
+        let prebuilt_path = package
+            .prebuilt_lib_path()
+            .context("could not resolve prebuilt library path")?;
+        let instance = ProcMacroInstance::try_new(package.id, prebuilt_path)?;
         self.macros.push(Arc::new(instance));
         Ok(())
     }
