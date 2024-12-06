@@ -1162,7 +1162,7 @@ impl ProcMacroHost {
 
     pub fn register_prebuilt(&mut self, package: Package, config: &Config) -> Result<()> {
         let prebuilt_path = package
-            .prebuilt_lib_path()
+            .prebuilt_lib_path()?
             .context("could not resolve prebuilt library path")?;
         let instance = ProcMacroInstance::try_new(package.id, prebuilt_path)?;
         self.macros.push(Arc::new(instance));
