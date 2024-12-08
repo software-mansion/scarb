@@ -221,18 +221,21 @@ fn compile_with_prebuilt_plugins() {
         "#})
         .dep(
             "proc_macro_example",
-            Dep.version("0.1.1").registry("https://scarbs.dev/"),
+            Dep.version("0.1.2").registry("https://scarbs.dev/"),
         )
         .manifest_extra(indoc! {r#"
         "#})
         .build(&t);
     Scarb::quick_snapbox()
         .arg("build")
+        // Disable Cargo and Rust compiler.
+        .env("CARGO", "/bin/false")
+        .env("RUSTC", "/bin/false")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..]Downloading proc_macro_example v0.1.1 ([..])
+            [..]Downloading proc_macro_example v0.1.2 ([..])
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..] Finished `dev` profile target(s) in [..]
         "#});
