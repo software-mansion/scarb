@@ -66,15 +66,17 @@ fn load_plugins(
                 .register_prebuilt(plugin_info.package.clone(), ws.config())
                 .is_err()
             {
-                let plugin_unit = generate_cairo_plugin_compilation_units(&plugin_info.package)?
-                    .first()
-                    .unwrap()
-                    .clone();
-                ws.config()
-                    .ui()
-                    .print(Status::new("Compiling", &plugin_unit.name()));
-                compile_unit(plugin_unit, ws, false)?;
-                proc_macros.register(plugin_info.package.clone(), ws.config())?;
+                if proc_macros.register(plugin_info.package.clone(), ws.config()).is_err() {
+                    let plugin_unit = generate_cairo_plugin_compilation_units(&plugin_info.package)?
+                        .first()
+                        .unwrap()
+                        .clone();
+                    ws.config()
+                        .ui()
+                        .print(Status::new("Compiling", &plugin_unit.name()));
+                    compile_unit(plugin_unit, ws, false)?;
+                    proc_macros.register(plugin_info.package.clone(), ws.config())?;
+                }
             }
         } else {
             proc_macros.register(plugin_info.package.clone(), ws.config())?;
