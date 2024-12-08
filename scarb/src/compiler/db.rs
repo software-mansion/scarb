@@ -1,3 +1,4 @@
+use crate::compiler::plugin::fetch_cairo_plugin;
 use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
@@ -20,7 +21,6 @@ use smol_str::SmolStr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
-use crate::compiler::plugin::fetch_cairo_plugin;
 
 pub struct ScarbDatabase {
     pub db: RootDatabase,
