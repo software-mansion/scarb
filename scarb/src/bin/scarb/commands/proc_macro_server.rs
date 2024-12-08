@@ -29,7 +29,7 @@ pub fn run(config: &mut Config) -> Result<()> {
     // Try loading prebuilt plugins
     for unit in &compilation_units {
         if let CompilationUnit::Cairo(unit) = unit {
-            loaded_plugins.extend(load_prebuilt_plugins(unit.clone(), &ws, &mut proc_macros)?);
+            loaded_plugins.extend(load_prebuilt_plugins(unit.clone(), &mut proc_macros)?);
         }
     }
 
@@ -54,14 +54,13 @@ pub fn run(config: &mut Config) -> Result<()> {
 
 fn load_prebuilt_plugins(
     unit: CairoCompilationUnit,
-    ws: &Workspace<'_>,
     proc_macros: &mut ProcMacroHost,
 ) -> Result<HashSet<PackageId>> {
     let mut loaded = HashSet::new();
 
     for plugin_info in unit.cairo_plugins.into_iter().filter(|p| !p.builtin) {
         if proc_macros
-            .register_prebuilt(plugin_info.package.clone(), ws.config())
+            .register_prebuilt(plugin_info.package.clone())
             .is_ok()
         {
             loaded.insert(plugin_info.package.id);

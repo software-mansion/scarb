@@ -65,7 +65,7 @@ fn load_plugins(
         } else if plugin_info.package.is_prebuilt() {
             // For prebuilt procedural macros, try loading from prebuilt binary first
             if proc_macros
-                .register_prebuilt(plugin_info.package.clone(), ws.config())
+                .register_prebuilt(plugin_info.package.clone())
                 .is_err()
             {
                 // If failed to load from prebuilt binary, try loading from shared library

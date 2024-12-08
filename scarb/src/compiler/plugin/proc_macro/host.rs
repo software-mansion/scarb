@@ -1160,7 +1160,7 @@ impl ProcMacroHost {
         Ok(())
     }
 
-    pub fn register_prebuilt(&mut self, package: Package, config: &Config) -> Result<()> {
+    pub fn register_prebuilt(&mut self, package: Package) -> Result<()> {
         let prebuilt_path = package
             .prebuilt_lib_path()
             .context("could not resolve prebuilt library path")?;
