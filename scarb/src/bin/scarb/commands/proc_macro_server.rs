@@ -42,7 +42,7 @@ pub fn run(config: &mut Config) -> Result<()> {
         }
     }
 
-    // Load all compiled procedural macros.
+    // Load previously compiled procedural macros.
     for unit in compilation_units {
         if let CompilationUnit::Cairo(unit) = unit {
             load_plugins(unit, &ws, &mut proc_macros, &loaded_plugins)?;
