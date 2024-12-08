@@ -69,14 +69,12 @@ impl SharedLibraryProvider for Package {
     }
 
     fn prebuilt_lib_path(&self) -> Result<Utf8PathBuf> {
-        let name = get_cargo_package_name(self)?;
-        let version = get_cargo_package_version(self)?;
         let target_triple = target!();
 
         let prebuilt_name = format!(
             "{name}_v{version}_{target}{suffix}",
-            name = name,
-            version = version,
+            name = self.id.name,
+            version = self.id.version,
             target = target_triple,
             suffix = DLL_SUFFIX
         );
