@@ -242,6 +242,40 @@ fn compile_with_prebuilt_plugins() {
 }
 
 #[test]
+fn compile_with_invalid_prebuilt_plugins() {
+    let t = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn main() -> u32 {
+                let x = some!(42);
+                x
+            }
+        "#})
+        .dep(
+            "invalid_prebuilt_example",
+            Dep.version("0.1.0").registry("https://scarbs.dev/"),
+        )
+        .manifest_extra(indoc! {r#"
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Downloading invalid_prebuilt_example v0.1.0 ([..])
+            [..]Compiling invalid_prebuilt_example v0.1.0 ([..])
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..] Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
 fn can_emit_plugin_warning() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
