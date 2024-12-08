@@ -57,16 +57,20 @@ fn load_plugins(
     let mut proc_macros = ProcMacroHost::default();
     for plugin_info in &unit.cairo_plugins {
         if plugin_info.builtin {
+            // For builtin plugins, fetch and instantiate directly
             let package_id = plugin_info.package.id;
             let plugin = ws.config().cairo_plugins().fetch(package_id)?;
             let instance = plugin.instantiate()?;
             builder.with_plugin_suite(instance.plugin_suite());
         } else if plugin_info.package.is_prebuilt() {
+            // For prebuilt procedural macros, try loading from prebuilt binary first
             if proc_macros
                 .register_prebuilt(plugin_info.package.clone(), ws.config())
                 .is_err()
             {
+                // If failed to load from prebuilt binary, try loading from shared library
                 if proc_macros.register(plugin_info.package.clone(), ws.config()).is_err() {
+                    // If failed to load from shared library, compile the plugin and try again
                     let plugin_unit = generate_cairo_plugin_compilation_units(&plugin_info.package)?
                         .first()
                         .unwrap()
@@ -79,6 +83,7 @@ fn load_plugins(
                 }
             }
         } else {
+            // For non-prebuilt procedural macros, load from shared library
             proc_macros.register(plugin_info.package.clone(), ws.config())?;
         }
     }
