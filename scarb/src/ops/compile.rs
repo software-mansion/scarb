@@ -211,7 +211,7 @@ fn compile_unit_inner(
 
     let result = match unit {
         CompilationUnit::ProcMacro(unit) => {
-            if skip_prebuilt_proc_macros && unit.is_prebuilt() {
+            if unit.is_prebuilt() && skip_prebuilt_proc_macros {
                 Ok(())
             } else {
                 ws.config()
