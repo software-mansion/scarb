@@ -20,6 +20,7 @@ use smol_str::SmolStr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
+use crate::compiler::plugin::fetch_cairo_plugin;
 
 pub struct ScarbDatabase {
     pub db: RootDatabase,
@@ -73,7 +74,8 @@ fn load_plugins(
                     .register(plugin_info.package.clone(), ws.config())
                     .is_err()
                 {
-                    // If failed to load from shared library, compile the plugin and try again
+                    // If failed to load from shared library, fetch the plugin, compile it and try again
+                    fetch_cairo_plugin(&plugin_info.package, ws)?;
                     let plugin_unit =
                         generate_cairo_plugin_compilation_units(&plugin_info.package)?
                             .first()
