@@ -34,7 +34,7 @@ pub trait SharedLibraryProvider {
     /// Location of the shared library for the package.
     fn shared_lib_path(&self, config: &Config) -> Result<Utf8PathBuf>;
     /// Location of the prebuilt binary for the package.
-    fn prebuilt_lib_path(&self) -> Result<Option<Utf8PathBuf>>;
+    fn prebuilt_lib_path(&self) -> Result<Utf8PathBuf>;
     /// Returns true if the package contains a prebuilt binary.
     fn is_prebuilt(&self) -> bool;
 }
@@ -68,7 +68,7 @@ impl SharedLibraryProvider for Package {
             .join(lib_name))
     }
 
-    fn prebuilt_lib_path(&self) -> Result<Option<Utf8PathBuf>> {
+    fn prebuilt_lib_path(&self) -> Result<Utf8PathBuf> {
         let name = get_cargo_package_name(self)?;
         let version = get_cargo_package_version(self)?;
         let target_triple = target!();
@@ -88,11 +88,14 @@ impl SharedLibraryProvider for Package {
             .join("cairo-plugin")
             .join(prebuilt_name);
 
-        Ok(prebuilt_path.exists().then_some(prebuilt_path))
+        prebuilt_path
+            .exists()
+            .then_some(prebuilt_path)
+            .ok_or_else(|| anyhow!("prebuilt library not found"))
     }
 
     fn is_prebuilt(&self) -> bool {
-        self.prebuilt_lib_path().ok().is_some()
+        self.prebuilt_lib_path().is_ok()
     }
 }
 
