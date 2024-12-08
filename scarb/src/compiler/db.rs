@@ -69,12 +69,16 @@ fn load_plugins(
                 .is_err()
             {
                 // If failed to load from prebuilt binary, try loading from shared library
-                if proc_macros.register(plugin_info.package.clone(), ws.config()).is_err() {
+                if proc_macros
+                    .register(plugin_info.package.clone(), ws.config())
+                    .is_err()
+                {
                     // If failed to load from shared library, compile the plugin and try again
-                    let plugin_unit = generate_cairo_plugin_compilation_units(&plugin_info.package)?
-                        .first()
-                        .unwrap()
-                        .clone();
+                    let plugin_unit =
+                        generate_cairo_plugin_compilation_units(&plugin_info.package)?
+                            .first()
+                            .unwrap()
+                            .clone();
                     ws.config()
                         .ui()
                         .print(Status::new("Compiling", &plugin_unit.name()));
