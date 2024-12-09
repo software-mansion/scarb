@@ -4,7 +4,7 @@ use anyhow::{bail, Result};
 use indoc::formatdoc;
 use itertools::Itertools;
 use petgraph::graphmap::DiGraphMap;
-use petgraph::visit::{Dfs, EdgeFiltered, Walker};
+use petgraph::visit::{Dfs, EdgeFiltered, IntoNeighborsDirected, Walker};
 use smallvec::SmallVec;
 
 use crate::core::lockfile::Lockfile;
@@ -57,6 +57,20 @@ impl Resolve {
     ) -> impl Iterator<Item = PackageId> + '_ {
         self.graph
             .neighbors_directed(package_id, petgraph::Direction::Outgoing)
+    }
+
+    /// Collect [`PackageId`]s of directed dependencies of the package, that accept the given target kind.
+    pub fn package_dependencies_for_target_kind(
+        &self,
+        package_id: PackageId,
+        target_kind: &TargetKind,
+    ) -> Vec<PackageId> {
+        let filtered_graph = EdgeFiltered::from_fn(&self.graph, move |(node_a, _node_b, edge)| {
+            edge.accepts_target(target_kind.clone(), node_a == package_id)
+        });
+        filtered_graph
+            .neighbors_directed(package_id, petgraph::Direction::Outgoing)
+            .collect_vec()
     }
 }
 
