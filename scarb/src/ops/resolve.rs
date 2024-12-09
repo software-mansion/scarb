@@ -684,7 +684,7 @@ fn check_cairo_version_compatibility(
     Ok(())
 }
 
-fn generate_cairo_plugin_compilation_units(member: &Package) -> Result<Vec<CompilationUnit>> {
+pub fn generate_cairo_plugin_compilation_units(member: &Package) -> Result<Vec<CompilationUnit>> {
     Ok(vec![CompilationUnit::ProcMacro(ProcMacroCompilationUnit {
         main_package_id: member.id,
         compiler_config: serde_json::Value::Null,
