@@ -126,7 +126,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 typed-builder = ">=0.17"
 url = { version = "2", features = ["serde"] }
 walkdir = "2"
-which = "5"
+which = "7"
 windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System", "Win32_System_Console"] }
 xshell = "0.2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
