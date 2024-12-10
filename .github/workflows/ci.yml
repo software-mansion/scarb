@@ -107,3 +107,28 @@ jobs:
           cache-dependency-path: website/package-lock.json
       - run: npm ci
       - run: npm run fmt:check
+
+  test-prebuilt-plugins:
+    name: test prebuilt plugins ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
+          - name: macos arm64
+            os: macos-latest
+          - name: macos x86-64
+            os: macos-13
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run prebuilt plugin tests
+        run: |
+          cargo test -p scarb --test build_cairo_plugin compile_with_prebuilt_plugins -- --exact
+          cargo test -p scarb --test build_cairo_plugin compile_with_invalid_prebuilt_plugins -- --exact
