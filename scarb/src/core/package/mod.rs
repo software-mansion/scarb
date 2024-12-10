@@ -2,7 +2,7 @@ use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::Deserialize;
 
@@ -12,6 +12,7 @@ use scarb_ui::args::WithManifestPath;
 
 use crate::core::manifest::Manifest;
 use crate::core::{Target, TargetKind};
+use crate::internal::fsx;
 
 mod id;
 mod name;
@@ -103,6 +104,26 @@ impl Package {
             .tool_metadata
             .as_ref()?
             .get(tool_name)
+    }
+
+    pub fn include(&self) -> Result<Vec<Utf8PathBuf>> {
+        self.manifest
+            .as_ref()
+            .metadata
+            .include
+            .as_ref()
+            .map(|include| {
+                include
+                    .iter()
+                    .map(|path| {
+                        let path = self.root().join(path);
+                        let path = fsx::canonicalize_utf8(&path)
+                            .with_context(|| format!("failed to find included file at {path}"))?;
+                        Ok(path)
+                    })
+                    .collect::<Result<Vec<_>>>()
+            })
+            .unwrap_or_else(|| Ok(Vec::new()))
     }
 
     pub fn fetch_tool_metadata(&self, tool_name: &str) -> Result<&toml::Value> {
