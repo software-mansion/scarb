@@ -1,10 +1,14 @@
-use std::collections::BTreeMap;
-use std::fs::File;
-use std::io::{Seek, SeekFrom, Write};
-
-use anyhow::{bail, ensure, Context, Result};
-use camino::Utf8PathBuf;
+use anyhow::{anyhow, bail, ensure, Context, Result};
+use camino::{Utf8Path, Utf8PathBuf};
+use core::str;
+use fs::copy;
+use fs_extra::dir::{copy as fs_extra_copy, CopyOptions};
+use fs_extra::error::{Error as FsExtraError, ErrorKind as FsExtraErrorKind};
 use indoc::{formatdoc, indoc, writedoc};
+use std::collections::BTreeMap;
+use std::fs::{self, File};
+use std::io::{Seek, SeekFrom, Write};
+use std::path::Path;
 
 use crate::core::registry::package_source_store::PackageSourceStore;
 use crate::sources::client::PackageRepository;
@@ -23,8 +27,10 @@ use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
     ops, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
-    MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME,
+    MANIFEST_FILE_NAME, SHARED_LIBRARY_TARGET_DIRECTORY, VCS_INFO_FILE_NAME,
 };
+
+use super::execute_script;
 
 const VERSION: u8 = 1;
 const VERSION_FILE_NAME: &str = "VERSION";
@@ -157,6 +163,7 @@ fn package_one_impl(
     ws: &Workspace<'_>,
 ) -> Result<FileLockGuard> {
     let pkg = ws.fetch_package(&pkg_id)?;
+    let target_dir = ws.target_dir().child("package");
 
     ws.config()
         .ui()
@@ -166,14 +173,44 @@ fn package_one_impl(
         check_metadata(pkg, ws.config())?;
     }
 
-    let recipe = prepare_archive_recipe(pkg, opts, ws)?;
+    let mut recipe: Vec<ArchiveFile> = Vec::default();
+
+    if let Some(script_definition) = pkg.manifest.scripts.get("package") {
+        let target_dir_path = target_dir.path_existent()?;
+        ws.config().ui().print(Status::new(
+            "Running package script with package",
+            &pkg_id.to_string(),
+        ));
+
+        if let Some(includes) = pkg.manifest.metadata.include.clone() {
+            copy_items_to_target_dir(includes, target_dir_path)?;
+        }
+
+        execute_script(script_definition, &[], ws, target_dir_path, None)?;
+
+        let built_macros_target_dir = ws.target_dir().child("scarb").child("cairo-plugin");
+
+        if built_macros_target_dir.exists() {
+            let dynamic_library_files =
+                find_dynamic_library_files(built_macros_target_dir.path_unchecked());
+            for dynamic_library_file in dynamic_library_files.into_iter() {
+                recipe.push(ArchiveFile {
+                    path: SHARED_LIBRARY_TARGET_DIRECTORY
+                        .as_path()
+                        .join(dynamic_library_file.file_name().unwrap()),
+                    contents: ArchiveFileContents::OnDisk(dynamic_library_file),
+                })
+            }
+        }
+    }
+
+    recipe.extend(prepare_archive_recipe(pkg, opts, ws)?);
     let num_files = recipe.len();
 
     // Package up and test a temporary tarball and only move it to the final location if it actually
     // passes all verification checks. Any previously existing tarball can be assumed as corrupt
     // or invalid, so we can overwrite it if it exists.
     let filename = pkg_id.tarball_name();
-    let target_dir = ws.target_dir().child("package");
 
     let mut dst =
         target_dir.create_rw(format!(".{filename}"), "package scratch space", ws.config())?;
@@ -605,4 +642,48 @@ fn check_metadata(pkg: &Package, config: &Config) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn copy_items_to_target_dir(paths: Vec<String>, target_dir: &Utf8Path) -> Result<()> {
+    let target_path = Path::new(target_dir);
+    let options = CopyOptions::new().copy_inside(true).overwrite(true);
+
+    for path_str in paths {
+        let source_path = Path::new(&path_str);
+        if source_path.exists() {
+            if source_path.is_dir() {
+                fs_extra_copy(source_path, target_path, &options)?;
+            } else {
+                let file_name = source_path.file_name().ok_or(FsExtraError::new(
+                    fs_extra::error::ErrorKind::Other,
+                    "failed to extract file name",
+                ))?;
+                let target_file_path = target_path.join(file_name);
+                copy(source_path, target_file_path).map_err(|err| {
+                    FsExtraError::new(FsExtraErrorKind::Io(err), "failed to copy file")
+                })?;
+            }
+        } else {
+            return Err(anyhow!("path does not exist: {}", source_path.display()));
+        }
+    }
+
+    Ok(())
+}
+
+fn find_dynamic_library_files(directory: &Utf8Path) -> Vec<Utf8PathBuf> {
+    let mut files = Vec::new();
+    if let Ok(entries) = fs::read_dir(directory) {
+        for entry in entries.filter_map(Result::ok) {
+            let path = entry.path();
+            if let Ok(utf8_path) = Utf8PathBuf::from_path_buf(path) {
+                if let Some(extension) = utf8_path.extension() {
+                    if extension == "dll" || extension == "so" || extension == "dylib" {
+                        files.push(utf8_path);
+                    }
+                }
+            }
+        }
+    }
+    files
 }
