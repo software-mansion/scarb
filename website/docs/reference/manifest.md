@@ -321,10 +321,11 @@ add-redeposit-gas = false
 ### `unstable-add-statements-functions-debug-info`
 
 > [!WARNING]
-> This is highly experimental and unstable feature intended to be used
-> by [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
-> It may slow down the compilation - it is advised not to use it for other purposes than running
-> [cairo-profiler](https://github.com/software-mansion/cairo-profiler).
+> This is highly experimental and unstable feature intended to be used by [cairo-profiler], [cairo-coverage]
+> and [forge] backtraces.
+> It will slow down the compilation and cause it to use more system memory.
+> It will also make the compilation artifacts larger.
+> It should not be used unless your tooling requires it.
 
 If enabled, during the project compilation Scarb will a add mapping between Sierra statement indexes and vectors of
 fully qualified paths of Cairo functions to debug info. A statement index maps to a vector consisting of a function
@@ -339,10 +340,11 @@ unstable-add-statements-functions-debug-info = false
 ### `unstable-add-statements-code-locations-debug-info`
 
 > [!WARNING]
-> This is highly experimental and unstable feature intended to be used
-> by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
-> It may slow down the compilation - it is advised not to use it for other purposes than running
-> [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
+> This is highly experimental and unstable feature intended to be used by [cairo-profiler], [cairo-coverage]
+> and [forge] backtraces.
+> It will slow down the compilation and cause it to use more system memory.
+> It will also make the compilation artifacts larger.
+> It should not be used unless your tooling requires it.
 
 If enabled, during the project compilation Scarb will add a mapping between Sierra statement indexes and locations in
 the code to debug info. A statement index maps to a vector consisting of code fragment which caused the statement to be
@@ -384,3 +386,7 @@ See [Workspaces](./workspaces) page.
 ## `[features]`
 
 See [Features](./conditional-compilation#features) page.
+
+[cairo-profiler]: (https://github.com/software-mansion/cairo-profiler)
+[cairo-coverage]: (https://github.com/software-mansion/cairo-coverage)
+[forge]: (https://github.com/foundry-rs/starknet-foundry)
