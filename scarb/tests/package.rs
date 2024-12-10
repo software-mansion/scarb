@@ -10,6 +10,7 @@ use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
+use libloading::library_filename;
 use scarb::DEFAULT_TARGET_DIR_NAME;
 use scarb_build_metadata::CAIRO_VERSION;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
@@ -22,7 +23,7 @@ use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use test_case::test_case;
 
 struct PackageChecker {
-    actual_files: HashMap<PathBuf, String>,
+    actual_files: HashMap<PathBuf, Vec<u8>>,
     base_name: PathBuf,
 }
 
@@ -39,7 +40,7 @@ impl PackageChecker {
     fn assert(path: &Path) -> Self {
         let mut archive = Self::open(path);
 
-        let actual_files: HashMap<PathBuf, String> = archive
+        let actual_files: HashMap<PathBuf, Vec<u8>> = archive
             .entries()
             .expect("failed to get archive entries")
             .map(|entry| {
@@ -48,10 +49,11 @@ impl PackageChecker {
                     .path()
                     .expect("failed to get archive entry path")
                     .into_owned();
-                let mut contents = String::new();
+                let mut contents: Vec<u8> = Vec::new();
                 entry
-                    .read_to_string(&mut contents)
+                    .read_to_end(&mut contents)
                     .expect("failed to read archive entry contents");
+
                 (name, contents)
             })
             .collect();
@@ -104,9 +106,11 @@ impl PackageChecker {
 
     fn read_file(&self, path: impl AsRef<Path>) -> &str {
         let path = self.base_name.join(path);
-        self.actual_files
+        let buf = self
+            .actual_files
             .get(&path)
-            .unwrap_or_else(|| panic!("missing file in package tarball: {}", path.display()))
+            .unwrap_or_else(|| panic!("missing file in package tarball: {}", path.display()));
+        std::str::from_utf8(buf).expect("file is not valid UTF-8")
     }
 
     fn file_eq(&self, path: impl AsRef<Path>, expected_contents: &str) -> &Self {
@@ -1675,4 +1679,91 @@ fn files_that_dont_exist_during_packaging_cannot_be_included() {
             1: failed to get absolute path of `[..]file.txt`
             2: [..]
         "#});
+}
+
+#[test]
+fn package_script_is_run() {
+    let t = TempDir::new().unwrap();
+    simple_project()
+        .manifest_package_extra(indoc! {r#"
+            [scripts]
+            package = "echo 'Hello!'"
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("package")
+        .arg("--no-metadata")
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+           [..]Packaging foo v1.0.0 ([..]Scarb.toml)
+           [..]Running `package` script for `foo`
+           Hello!
+           [..]Verifying foo-1.0.0.tar.zst
+           [..]Compiling foo v1.0.0 ([..]Scarb.toml)
+           [..]Finished `dev` profile target(s) in [..]
+           [..]Packaged [..] files[..]
+        "#});
+}
+
+#[test]
+fn package_proc_macro_with_package_script() {
+    let t = TempDir::new().unwrap();
+    t.child("target/scarb/cairo-plugin")
+        .create_dir_all()
+        .unwrap();
+
+    let dll_filename = library_filename("foo");
+    let dll_filename = dll_filename.to_string_lossy().to_string();
+
+    let script_code = format!(
+        "cargo build --release && cp target/release/{dll_filename} target/scarb/cairo-plugin"
+    );
+
+    CairoPluginProjectBuilder::start()
+        .name("foo")
+        .scarb_project(|b| {
+            b.name("foo")
+                .version("1.0.0")
+                .manifest_package_extra(indoc! {r#"
+                    include = ["target/scarb/cairo-plugin"]
+                "#})
+                .manifest_extra(formatdoc! {r#"
+                    [cairo-plugin]
+
+                    [scripts]
+                    package = "{script_code}"
+                "#})
+        })
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+            #[attribute_macro]
+            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+                ProcMacroResult::new(token_stream)
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("package")
+        .arg("--no-metadata")
+        .assert()
+        .success();
+
+    let expected_shared_lib_file = format!("target/scarb/cairo-plugin/{dll_filename}");
+
+    PackageChecker::assert(&t.child("target/package/foo-1.0.0.tar.zst"))
+        .name_and_version("foo", "1.0.0")
+        .contents(&[
+            "VERSION",
+            "Scarb.orig.toml",
+            "Scarb.toml",
+            &expected_shared_lib_file,
+            "Cargo.toml",
+            "Cargo.orig.toml",
+            "src/lib.rs",
+        ]);
 }

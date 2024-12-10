@@ -48,6 +48,9 @@ Use the `scarb package` command to create an archive of your package.
 You can read about the package compression algorithm and contents in the [Package tarball](./package-tarball) section.
 Basically when you run the command, Scarb gathers the source code of your package along with metadata files, such as the
 manifest file, and places them in an archive in `target/package` directory.
+You can define an optional script called `package` (learn more on [scripts here](../reference/scripts.md)) in your
+manifest file, which will be executed directly before the packaging process.
+This can be useful for instance to create some additional files to be included in the package.
 
 If you are in a Git repository, Scarb will first check if the repo state is clean and error out in case of any changes
 present in the Git working directory.
