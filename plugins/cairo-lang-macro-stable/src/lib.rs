@@ -1,10 +1,30 @@
 use crate::ffi::{StableOption, StableSlice};
-use std::ffi::CStr;
 use std::num::NonZeroU8;
 use std::os::raw::c_char;
 use std::ptr::NonNull;
 
 pub mod ffi;
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct StableToken {
+    pub span: StableTextSpan,
+    pub ptr: *const u8,
+    pub len: usize,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct StableTextSpan {
+    pub start: u32,
+    pub end: u32,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum StableTokenTree {
+    Ident(StableToken),
+}
 
 #[repr(C)]
 #[derive(Debug)]
@@ -23,8 +43,9 @@ pub type StableExpansionsList = StableSlice<StableExpansion>;
 #[repr(C)]
 #[derive(Debug)]
 pub struct StableTokenStream {
-    pub value: *mut c_char,
+    pub tokens: StableSlice<StableTokenTree>,
     pub metadata: StableTokenStreamMetadata,
+    pub size_hint: usize,
 }
 
 /// Token stream metadata.
@@ -35,6 +56,7 @@ pub struct StableTokenStream {
 pub struct StableTokenStreamMetadata {
     pub original_file_path: Option<NonNull<c_char>>,
     pub file_id: Option<NonNull<c_char>>,
+    pub edition: Option<NonNull<c_char>>,
 }
 
 /// Auxiliary data returned by the procedural macro.
@@ -74,17 +96,6 @@ pub struct StableResultWrapper {
     pub input: StableTokenStream,
     pub input_attr: StableTokenStream,
     pub output: StableProcMacroResult,
-}
-
-impl StableTokenStream {
-    /// Convert to String.
-    ///
-    /// # Safety
-    pub unsafe fn to_string(&self) -> String {
-        // Note that this does not deallocate the c-string.
-        // The memory must still be freed with `CString::from_raw`.
-        CStr::from_ptr(self.value).to_string_lossy().to_string()
-    }
 }
 
 #[repr(C)]
