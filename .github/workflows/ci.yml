@@ -132,3 +132,4 @@ jobs:
         run: |
           cargo test -p scarb --test build_cairo_plugin compile_with_prebuilt_plugins -- --exact
           cargo test -p scarb --test build_cairo_plugin compile_with_invalid_prebuilt_plugins -- --exact
+          cargo test -p scarb --test proc_macro_server load_prebuilt_proc_macros -- --exact

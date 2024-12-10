@@ -12,7 +12,7 @@ use scarb_proc_macro_server_types::methods::expand::ExpandInlineMacroParams;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::proc_macro_server::ProcMacroClient;
 use scarb_test_support::proc_macro_server::SIMPLE_MACROS;
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 
 #[test]
 fn defined_macros() {
@@ -170,4 +170,33 @@ fn expand_inline() {
         response.token_stream,
         TokenStream::new("struct A { field: 25 , other_field: macro_call!(12)}".to_string())
     );
+}
+
+#[test]
+fn load_prebuilt_proc_macros() {
+    let t = TempDir::new().unwrap();
+
+    let project = t.child("test_package");
+
+    ProjectBuilder::start()
+        .name("test_package")
+        .version("1.0.0")
+        .lib_cairo("")
+        .dep(
+            "proc_macro_example",
+            Dep.version("0.1.2").registry("https://scarbs.dev/"),
+        )
+        .build(&project);
+
+    let mut proc_macro_server = ProcMacroClient::new_without_cargo(&project);
+
+    let response = proc_macro_server
+        .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
+            name: "some".to_string(),
+            args: TokenStream::new("42".to_string()),
+        })
+        .unwrap();
+
+    assert_eq!(response.diagnostics, vec![]);
+    assert_eq!(response.token_stream, TokenStream::new("42".to_string()));
 }
