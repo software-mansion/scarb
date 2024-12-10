@@ -402,7 +402,10 @@ fn source_files(pkg: &Package) -> Result<ArchiveRecipe> {
     list_source_files(pkg)?
         .into_iter()
         .map(|on_disk| {
-            let path = on_disk.strip_prefix(pkg.root())?.to_owned();
+            let path = on_disk
+                .strip_prefix(pkg.root())
+                .with_context(|| format!("file `{on_disk}` is not part of `{}`", pkg.id.name))?
+                .to_owned();
             Ok(ArchiveFile {
                 path,
                 contents: ArchiveFileContents::OnDisk(on_disk),

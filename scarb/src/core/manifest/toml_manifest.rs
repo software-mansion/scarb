@@ -197,6 +197,7 @@ pub struct TomlPackage {
     pub license_file: Option<MaybeWorkspaceField<Utf8PathBuf>>,
     pub readme: Option<MaybeWorkspaceField<PathOrBool>>,
     pub repository: Option<MaybeWorkspaceField<String>>,
+    pub include: Option<Vec<Utf8PathBuf>>,
     /// **UNSTABLE** This package does not depend on Cairo's `core`.
     pub no_core: Option<bool>,
     pub cairo_version: Option<MaybeWorkspaceField<VersionReq>>,
@@ -570,6 +571,16 @@ impl TomlManifest {
                 .repository
                 .clone()
                 .map(|mw| mw.resolve("repository", || inheritable_package.repository()))
+                .transpose()?,
+            include: package
+                .include
+                .clone()
+                .map(|include| {
+                    include
+                        .into_iter()
+                        .map(|path| abs_canonical_path("include path", manifest_path, &path))
+                        .collect::<Result<Vec<_>>>()
+                })
                 .transpose()?,
             cairo_version: package
                 .cairo_version

@@ -100,6 +100,20 @@ Setting the `cairo-version` key in `[package]` will affect all targets in the pa
 The value in this field will not affect the version of the compiler run by Scarb.
 Scarb always uses its built-in version of the Cairo compiler.
 
+### `include`
+
+When packaging a package with `scarb package` command (see
+[packaging your package](../registries/publishing.md#packaging-your-package)), all files excluded with rules from
+`.gitignore` or `.scarbignore` files are not included in the resulting package tarball.
+This field can be used mark files and subdirectories that should be included in the package tarball, even if those files
+would be excluded by rules from ignore files.
+The paths are relative to the package root and cannot point to files outside the package.
+
+```toml
+[package]
+include = ["target/some/file.txt"]
+```
+
 ### `authors`
 
 This optional field lists the people or organizations that are considered the "authors" of the package.
