@@ -37,6 +37,8 @@ const RESERVED_FILES: &[&str] = &[
     VCS_INFO_FILE_NAME,
 ];
 
+const SCARB_PREPACKAGE_SCRIPT_NAME: &str = "package";
+
 #[derive(Clone)]
 pub struct PackageOpts {
     pub allow_dirty: bool,
@@ -166,6 +168,8 @@ fn package_one_impl(
         check_metadata(pkg, ws.config())?;
     }
 
+    run_prepackage_script(pkg, ws)?;
+
     let recipe = prepare_archive_recipe(pkg, opts, ws)?;
     let num_files = recipe.len();
 
@@ -216,6 +220,24 @@ fn package_one_impl(
     ));
 
     Ok(dst)
+}
+
+fn run_prepackage_script(package: &Package, ws: &Workspace<'_>) -> Result<()> {
+    if let Some(script_definition) = package.manifest.scripts.get(SCARB_PREPACKAGE_SCRIPT_NAME) {
+        // Ensure no two instance of Scarb will run `package` script at the same time.
+        let _guard = ws.target_dir().child("scarb").advisory_lock(
+            ".scarb-package.lock",
+            "`package` script",
+            ws.config(),
+        );
+        ws.config().ui().print(Status::new(
+            "Running",
+            &format!("`package` script for `{}`", package.id.name),
+        ));
+        ops::execute_script(script_definition, &[], ws, package.root(), None)
+    } else {
+        Ok(())
+    }
 }
 
 fn list_one_impl(
