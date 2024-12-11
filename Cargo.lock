@@ -663,6 +663,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-lang-executable"
+version = "2.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cdfebefb3d4541b5daea229f1fe0c195c1153527e14a6246491327c0f44d837"
+dependencies = [
+ "anyhow",
+ "cairo-lang-casm",
+ "cairo-lang-compiler",
+ "cairo-lang-defs",
+ "cairo-lang-filesystem",
+ "cairo-lang-lowering",
+ "cairo-lang-plugins",
+ "cairo-lang-runnable-utils",
+ "cairo-lang-semantic",
+ "cairo-lang-sierra-generator",
+ "cairo-lang-sierra-to-casm",
+ "cairo-lang-syntax",
+ "cairo-lang-utils",
+ "cairo-vm",
+ "indoc",
+ "itertools 0.12.1",
+ "serde",
+]
+
+[[package]]
 name = "cairo-lang-filesystem"
 version = "2.9.1"
 source = "git+https://github.com/starkware-libs/cairo?rev=67c6eff9c276d11bd1cc903d7a3981d8d0eb2fa2#67c6eff9c276d11bd1cc903d7a3981d8d0eb2fa2"
@@ -4935,6 +4960,7 @@ dependencies = [
  "cairo-lang-compiler",
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
+ "cairo-lang-executable",
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
  "cairo-lang-lowering",

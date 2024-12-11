@@ -13,7 +13,8 @@ use crate::internal::restricted_names;
 use crate::core::Package;
 
 use crate::{
-    CAIRO_RUN_PLUGIN_NAME, STARKNET_PLUGIN_NAME, TEST_ASSERTS_PLUGIN_NAME, TEST_PLUGIN_NAME,
+    CAIRO_RUN_PLUGIN_NAME, EXECUTABLE_PLUGIN_NAME, STARKNET_PLUGIN_NAME, TEST_ASSERTS_PLUGIN_NAME,
+    TEST_PLUGIN_NAME,
 };
 
 /// A [`String`]-like type representing [`Package`] name.
@@ -33,6 +34,7 @@ pub struct PackageName(SmolStr);
 impl PackageName {
     pub const CORE: Self = PackageName(SmolStr::new_inline(CORELIB_CRATE_NAME));
     pub const STARKNET: Self = PackageName(SmolStr::new_inline(STARKNET_PLUGIN_NAME));
+    pub const EXECUTABLE: Self = PackageName(SmolStr::new_inline(EXECUTABLE_PLUGIN_NAME));
     pub const TEST_PLUGIN: Self = PackageName(SmolStr::new_inline(TEST_PLUGIN_NAME));
     pub const CAIRO_RUN_PLUGIN: Self = PackageName(SmolStr::new_inline(CAIRO_RUN_PLUGIN_NAME));
     pub const TEST_ASSERTS_PLUGIN: Self =
