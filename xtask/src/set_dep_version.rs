@@ -244,6 +244,11 @@ fn simplify_dependency_table(dep: &mut Value) {
     }
 }
 
+/// Remove any unused patches from the `[patch.crates-io]` table.
+///
+/// We are adding patch entries for **all** Cairo crates existing, and some may end up being unused.
+/// Cargo is emitting warnings about unused patches and keeps a record of them in the `Cargo.lock`.
+/// The goal of this function is to resolve these warnings.
 fn purge_unused_patches(cargo_toml: &mut DocumentMut) -> Result<()> {
     let sh = Shell::new()?;
     let cargo_lock = sh.read_file("Cargo.lock")?.parse::<DocumentMut>()?;
