@@ -50,6 +50,19 @@ impl WorkspaceResolve {
             .map(|id| self.packages[id].clone())
             .collect_vec()
     }
+
+    pub fn package_dependencies(
+        &self,
+        package_id: PackageId,
+        target_kind: &TargetKind,
+    ) -> Vec<Package> {
+        assert!(self.packages.contains_key(&package_id));
+        self.resolve
+            .package_dependencies_for_target_kind(package_id, target_kind)
+            .iter()
+            .map(|id| self.packages[id].clone())
+            .collect_vec()
+    }
 }
 
 #[derive(Debug, Default)]
@@ -398,55 +411,23 @@ fn cairo_compilation_unit_for_target(
     };
 
     // Collect dependencies for the components.
+    let member_component = components
+        .iter()
+        .find(|component| component.package.id == member.id)
+        .unwrap();
+    let mut test_package_deps = solution.component_dependencies(member_component, &components);
+    test_package_deps.push(member_component.id.clone());
+
     let dependencies_for_components: Vec<_> = components
         .iter()
         .map(|component| {
-            // Those are direct dependencies of the component.
-            let dependencies_summary: Vec<&ManifestDependency> = component
-                .package
-                .manifest
-                .summary
-                .full_dependencies()
-                .collect();
-
-            // We iterate over all the compilation unit components to get dependency's version.
-            let mut dependencies: Vec<CompilationUnitComponentId> = components
-                .iter()
-                .filter(|component_as_dependency| {
-                    dependencies_summary.iter().any(|dependency_summary| {
-                        dependency_summary.name == component_as_dependency.package.id.name
-                    }) ||
-                        // This is a hacky way of accommodating integration test components,
-                        // which need to depend on the tested package.
-                        component_as_dependency
-                            .package
-                            .manifest
-                            .targets
-                            .iter()
-                            .filter(|target| target.kind.is_test())
-                            .any(|target| {
-                                target.group_id.clone().unwrap_or(target.name.clone())
-                                    == component.package.id.name.to_smol_str()
-                                    && component_as_dependency.cairo_package_name() != component.cairo_package_name()
-                            })
-                })
-                .map(|compilation_unit_component| compilation_unit_component.id.clone()
-                )
-                .collect();
-
-            // Adds itself to dependencies
-            let is_integration_test = if component.first_target().kind.is_test() {
-                let props: Option<TestTargetProps> = component.first_target().props().ok();
-                props
-                    .map(|props| props.test_type == TestTargetType::Integration)
-                    .unwrap_or_default()
-            } else { false };
-            if !is_integration_test {
-                dependencies.push(component.id.clone());
+            if component.package.id == test_package_id {
+                test_package_deps.clone()
+            } else {
+                solution.component_dependencies(component, &components)
             }
-
-            dependencies
-        }).collect();
+        })
+        .collect();
 
     for (component, dependencies) in zip(&mut components, dependencies_for_components) {
         component.dependencies = dependencies;
@@ -627,6 +608,45 @@ impl<'a> PackageSolutionCollector<'a> {
             .collect::<Result<Vec<_>>>()?;
 
         Ok((packages, cairo_plugins))
+    }
+
+    pub fn component_dependencies(
+        &self,
+        component: &CompilationUnitComponent,
+        components: &[CompilationUnitComponent],
+    ) -> Vec<CompilationUnitComponentId> {
+        let package_id = component.id.package_id;
+
+        // Those are direct dependencies of the component.
+        let dependencies_packages = self
+            .resolve
+            .package_dependencies(package_id, self.target_kind.as_ref().unwrap());
+
+        // We iterate over all the compilation unit components to get dependency's version.
+        let mut dependencies: Vec<CompilationUnitComponentId> = components
+            .iter()
+            .filter(|component_as_dependency| {
+                dependencies_packages.iter().any(|dependency_summary| {
+                    dependency_summary.id == component_as_dependency.package.id
+                })
+            })
+            .map(|compilation_unit_component| compilation_unit_component.id.clone())
+            .collect();
+
+        // Adds itself to dependencies
+        let is_integration_test = if component.first_target().kind.is_test() {
+            let props: Option<TestTargetProps> = component.first_target().props().ok();
+            props
+                .map(|props| props.test_type == TestTargetType::Integration)
+                .unwrap_or_default()
+        } else {
+            false
+        };
+        if !is_integration_test {
+            dependencies.push(component.id.clone());
+        }
+
+        dependencies
     }
 
     pub fn show_warnings(self) {

@@ -1047,3 +1047,46 @@ fn test_target_builds_external() {
     t.child("hello/target/dev/hello_unittest.test.starknet_artifacts.json")
         .assert_is_json::<serde_json::Value>();
 }
+
+#[test]
+fn transitive_dev_deps_not_available() {
+    let t = TempDir::new().unwrap();
+
+    let first = &t.child("first");
+    ProjectBuilder::start()
+        .lib_cairo(indoc! {r#"
+            pub fn forty_two() -> felt252 { 42 }
+        "#})
+        .name("first")
+        .build(first);
+    let second = &t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep("first", first)
+        .build(second);
+    let hello = t.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            use first::forty_two;
+            pub fn main() -> felt252 { forty_two() }
+        "#})
+        .dep("second", second)
+        .dev_dep("first", first)
+        .build(&hello);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        .current_dir(hello)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Checking hello v1.0.0 ([..]Scarb.toml)
+            error: Identifier not found.
+             --> [..]lib.cairo:1:5
+            use first::forty_two;
+                ^***^
+
+            error: could not check `hello` due to previous error
+        "#});
+}
