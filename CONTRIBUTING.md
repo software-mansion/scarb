@@ -78,7 +78,7 @@ We have a script that edits the `Cargo.toml` file to use a local checkout of the
 To use this tool, run:
 
 ```shell
-cargo xtask set-cairo-version --path ../path/to/cairo
+cargo xtask set-dep-version cairo --path ../path/to/cairo
 ```
 
 And then you can `cargo build` Scarb with your custom Cairo compiler changes.
