@@ -1,0 +1,6 @@
+[package]
+name = "executable"
+version = "{{ CAIRO_VERSION }}"
+
+[cairo-plugin]
+builtin = true

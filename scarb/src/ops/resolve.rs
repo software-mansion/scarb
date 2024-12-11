@@ -89,6 +89,11 @@ pub fn resolve_workspace_with_opts(
                         .source_id(SourceId::for_std())
                         .build(),
                     ManifestDependency::builder()
+                        .name(PackageName::EXECUTABLE)
+                        .version_req(version_req.clone())
+                        .source_id(SourceId::for_std())
+                        .build(),
+                    ManifestDependency::builder()
                         .kind(DepKind::Target(TargetKind::TEST))
                         .name(PackageName::TEST_PLUGIN)
                         .version_req(version_req.clone())
