@@ -43,7 +43,7 @@ repository = "https://github.com/software-mansion/scarb"
 # all tools *always* depend on some crates.io versions of Cairo crates and Scarb uses
 # [patch.crates.io] table to set final git revision for everything.
 #
-# To keep our Cargo.toml following this contract, always use `cargo xtask set-dep-version`
+# To keep our Cargo.toml following this contract, always use `cargo xtask upgrade`
 # for manipulating these dependencies.
 [workspace.dependencies]
 anyhow = "1"
