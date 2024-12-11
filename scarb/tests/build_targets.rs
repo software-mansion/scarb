@@ -1047,3 +1047,32 @@ fn test_target_builds_external() {
     t.child("hello/target/dev/hello_unittest.test.starknet_artifacts.json")
         .assert_is_json::<serde_json::Value>();
 }
+
+#[test]
+fn test_executable_compiler_creates_output_files() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("executable_test")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_executable()
+        .manifest_extra(indoc! {r#"
+            [[target.executable]]
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/executable_test.executable.json")
+        .assert(predicates::path::exists());
+}
