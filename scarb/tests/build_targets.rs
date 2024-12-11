@@ -1090,3 +1090,32 @@ fn transitive_dev_deps_not_available() {
             error: could not check `hello` due to previous error
         "#});
 }
+
+#[test]
+fn test_executable_compiler_creates_output_files() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("executable_test")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [[target.executable]]
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/executable_test.executable.json")
+        .assert(predicates::path::exists());
+}

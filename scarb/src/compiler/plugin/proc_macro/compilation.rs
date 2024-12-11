@@ -200,8 +200,9 @@ fn run_cargo(action: CargoAction, package: &Package, ws: &Workspace<'_>) -> Resu
             .to_path_buf(),
         config: ws.config(),
     };
+    let span = trace_span!("proc_macro");
     {
-        let _ = trace_span!("proc_macro").enter();
+        let _guard = span.enter();
         exec(&mut cmd.into(), ws.config())?;
     }
     Ok(())
