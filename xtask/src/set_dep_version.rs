@@ -265,6 +265,7 @@ fn purge_unused_patches(cargo_toml: &mut DocumentMut) -> Result<()> {
     Ok(())
 }
 
+/// Extracts names of unused patches from the `[[patch.unused]]` array from the `Cargo.lock` file.
 fn find_unused_patches(cargo_lock: &DocumentMut) -> Option<Vec<String>> {
     Some(
         cargo_lock
