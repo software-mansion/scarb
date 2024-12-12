@@ -1216,6 +1216,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-toolchain-xtasks"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "219b391f6f1220f5a8cc930e42823ce5f6eafb92b3111cb7ea0b5dec4f176abe"
+dependencies = [
+ "anyhow",
+ "clap",
+ "semver",
+ "toml_edit 0.22.22",
+ "xshell",
+]
+
+[[package]]
 name = "cairo-vm"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6814,11 +6827,11 @@ name = "xtask"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "cairo-toolchain-xtasks",
  "clap",
  "semver",
  "serde_json",
  "time",
- "toml_edit 0.22.22",
  "walkdir",
  "xshell",
 ]
