@@ -15,6 +15,7 @@ impl TargetKind {
     pub const LIB: Self = TargetKind(SmolStr::new_inline("lib"));
     pub const TEST: Self = TargetKind(SmolStr::new_inline("test"));
     pub const STARKNET_CONTRACT: Self = TargetKind(SmolStr::new_inline("starknet-contract"));
+    pub const EXECUTABLE: Self = TargetKind(SmolStr::new_inline("executable"));
 
     /// Constructs and validates new [`TargetKind`].
     ///
