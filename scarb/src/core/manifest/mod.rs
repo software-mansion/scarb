@@ -75,6 +75,7 @@ pub struct ManifestMetadata {
     pub license_file: Option<Utf8PathBuf>,
     pub readme: Option<Utf8PathBuf>,
     pub repository: Option<String>,
+    pub include: Option<Vec<Utf8PathBuf>>,
     #[serde(rename = "tool")]
     pub tool_metadata: Option<BTreeMap<SmolStr, Value>>,
     pub cairo_version: Option<VersionReq>,
