@@ -387,6 +387,6 @@ See [Workspaces](./workspaces) page.
 
 See [Features](./conditional-compilation#features) page.
 
-[cairo-profiler]: (https://github.com/software-mansion/cairo-profiler)
-[cairo-coverage]: (https://github.com/software-mansion/cairo-coverage)
-[forge]: (https://github.com/foundry-rs/starknet-foundry)
+[cairo-profiler]: https://github.com/software-mansion/cairo-profiler
+[cairo-coverage]: https://github.com/software-mansion/cairo-coverage
+[forge]: https://github.com/foundry-rs/starknet-foundry
