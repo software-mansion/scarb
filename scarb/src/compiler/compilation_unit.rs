@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use typed_builder::TypedBuilder;
 
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::Profile;
 use crate::core::{
     ManifestCompilerConfig, Package, PackageId, PackageName, Target, TargetKind, Workspace,
@@ -130,6 +131,8 @@ pub trait CompilationUnitAttributes {
     fn components(&self) -> &[CompilationUnitComponent];
     fn digest(&self) -> String;
 
+    fn is_prebuilt(&self) -> bool;
+
     fn main_component(&self) -> &CompilationUnitComponent {
         // NOTE: This uses the order invariant of `component` field.
         let component = &self.components()[0];
@@ -195,6 +198,12 @@ impl CompilationUnitAttributes for CompilationUnit {
             Self::ProcMacro(unit) => unit.digest(),
         }
     }
+    fn is_prebuilt(&self) -> bool {
+        match self {
+            Self::Cairo(unit) => unit.is_prebuilt(),
+            Self::ProcMacro(unit) => unit.is_prebuilt(),
+        }
+    }
 }
 
 impl CompilationUnitAttributes for CairoCompilationUnit {
@@ -215,6 +224,10 @@ impl CompilationUnitAttributes for CairoCompilationUnit {
         self.compiler_config.hash(&mut hasher);
         hasher.finish_as_short_hash()
     }
+
+    fn is_prebuilt(&self) -> bool {
+        false
+    }
 }
 
 impl CompilationUnitAttributes for ProcMacroCompilationUnit {
@@ -232,6 +245,13 @@ impl CompilationUnitAttributes for ProcMacroCompilationUnit {
             component.hash(&mut hasher);
         }
         hasher.finish_as_short_hash()
+    }
+
+    fn is_prebuilt(&self) -> bool {
+        self.components
+            .first()
+            .map(|c| c.package.is_prebuilt())
+            .unwrap_or(false)
     }
 }
 
