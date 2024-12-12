@@ -119,6 +119,22 @@ fn dry_run() {
 }
 
 #[test]
+fn dry_run_without_warnings() {
+    ManifestEditHarness::offline()
+        .args(["add", "--dry-run", "--no-warnings", "dep@1.0.0"])
+        .input(indoc! {r#"
+            [package]
+            name = "hello"
+            version = "1.0.0"
+
+            [dependencies]
+            bar = "1.0.0"
+        "#})
+        .stdout_matches("")
+        .run();
+}
+
+#[test]
 fn path() {
     let t = TempDir::new().unwrap();
 
