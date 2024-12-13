@@ -1,9 +1,5 @@
 use std::collections::BTreeMap;
 
-use anyhow::{bail, Result};
-use camino::Utf8PathBuf;
-use indoc::formatdoc;
-
 use crate::core::{TomlCairoPluginTargetParams, TomlTarget};
 use crate::{
     core::{
@@ -13,6 +9,10 @@ use crate::{
     },
     DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
 };
+use anyhow::{bail, Result};
+use camino::Utf8PathBuf;
+use indoc::formatdoc;
+use itertools::Itertools;
 
 pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
     let package = Some(generate_package(pkg));
@@ -73,6 +73,10 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
             .clone()
             .map(|_| MaybeWorkspace::Defined((Utf8PathBuf::from(DEFAULT_README_FILE_NAME)).into())),
         repository: metadata.repository.clone().map(MaybeWorkspace::Defined),
+        include: metadata.include.as_ref().map(|x| {
+            // Sort for stability.
+            x.iter().sorted().cloned().collect_vec()
+        }),
         no_core: summary.no_core.then_some(true),
         cairo_version: metadata.cairo_version.clone().map(MaybeWorkspace::Defined),
         experimental_features: pkg.manifest.experimental_features.clone(),

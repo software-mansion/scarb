@@ -77,8 +77,11 @@ fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> 
             true
         }
     };
-
-    WalkBuilder::new(pkg.root())
+    let mut builder = WalkBuilder::new(pkg.root());
+    for path in pkg.include()? {
+        builder.add(&path);
+    }
+    builder
         .follow_links(true)
         .standard_filters(true)
         .parents(false)

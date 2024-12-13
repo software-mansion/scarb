@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use camino::Utf8PathBuf;
 use indoc::{formatdoc, indoc, writedoc};
 
@@ -402,7 +402,10 @@ fn source_files(pkg: &Package) -> Result<ArchiveRecipe> {
     list_source_files(pkg)?
         .into_iter()
         .map(|on_disk| {
-            let path = on_disk.strip_prefix(pkg.root())?.to_owned();
+            let path = on_disk
+                .strip_prefix(pkg.root())
+                .map_err(|_| anyhow!("file `{on_disk}` is not part of `{}`", pkg.id.name))?
+                .to_owned();
             Ok(ArchiveFile {
                 path,
                 contents: ArchiveFileContents::OnDisk(on_disk),
