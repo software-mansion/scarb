@@ -6,6 +6,7 @@ use itertools::Itertools;
 use serde_json::json;
 
 use scarb_metadata::{Cfg, DepKind, ManifestMetadataBuilder, Metadata, PackageMetadata};
+use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
@@ -1442,4 +1443,112 @@ fn can_enable_add_redeposit_gas() {
         .as_bool()
         .unwrap();
     assert!(add_redeposit_gas);
+}
+
+#[test]
+fn prebuilt_plugins_disallowed_by_default() {
+    let t = assert_fs::TempDir::new().unwrap();
+
+    CairoPluginProjectBuilder::default()
+        .name("q")
+        .scarb_project(|builder| {
+            builder
+                .name("q")
+                .version("1.0.0")
+                .manifest_extra("[cairo-plugin]")
+        })
+        .build(&t.child("q"));
+    ProjectBuilder::start()
+        .name("y")
+        .version("1.0.0")
+        .lib_cairo(r"fn f() -> felt252 { z::f() }")
+        .dep_cairo_test()
+        .dep("q", Dep.path("../q"))
+        .build(&t.child("y"));
+    ProjectBuilder::start()
+        .name("x")
+        .version("1.0.0")
+        .lib_cairo(r"fn f() -> felt252 { y::f() }")
+        .dep_cairo_test()
+        .dep("y", Dep.path("y"))
+        .dep("q", Dep.path("q"))
+        .build(&t);
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = meta
+        .compilation_units
+        .iter()
+        .find(|cu| cu.target.name == "x")
+        .unwrap();
+
+    assert_eq!(cu.cairo_plugins.len(), 1);
+    assert!(cu.cairo_plugins[0].package.repr.starts_with("q"));
+    assert!(!cu.cairo_plugins[0].prebuilt_allowed.unwrap());
+}
+
+#[test]
+fn can_allow_prebuilt_plugins_for_subtree() {
+    let t = assert_fs::TempDir::new().unwrap();
+
+    CairoPluginProjectBuilder::default()
+        .name("q")
+        .scarb_project(|builder| {
+            builder
+                .name("q")
+                .version("1.0.0")
+                .manifest_extra("[cairo-plugin]")
+        })
+        .build(&t.child("q"));
+
+    ProjectBuilder::start()
+        .name("z")
+        .version("1.0.0")
+        .lib_cairo(r"fn f() -> felt252 { q::f() }")
+        .dep_cairo_test()
+        .dep("q", Dep.path("../q"))
+        .build(&t.child("z"));
+
+    ProjectBuilder::start()
+        .name("y")
+        .version("1.0.0")
+        .lib_cairo(r"fn f() -> felt252 { z::f() }")
+        .dep_cairo_test()
+        .dep("z", Dep.path("../z"))
+        .build(&t.child("y"));
+
+    ProjectBuilder::start()
+        .name("x")
+        .version("1.0.0")
+        .lib_cairo(r"fn f() -> felt252 { y::f() }")
+        .manifest_extra(indoc! {r#"
+            [tool.scarb]
+            allow-prebuilt-plugins = ["y"]
+        "#})
+        .dep_cairo_test()
+        .dep("z", Dep.path("z"))
+        .dep("y", Dep.path("y"))
+        .build(&t);
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let cu = meta
+        .compilation_units
+        .iter()
+        .find(|cu| cu.target.name == "x")
+        .unwrap();
+    assert_eq!(cu.cairo_plugins.len(), 1);
+    assert!(cu.cairo_plugins[0].package.repr.starts_with("q"));
+    assert!(cu.cairo_plugins[0].prebuilt_allowed.unwrap());
 }
