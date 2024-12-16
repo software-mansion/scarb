@@ -76,10 +76,6 @@ to-value-macro = "0.1.0"
 Cairo source file:
 
 ```cairo
-use add_macro::add;
-use tracing_macro::instrument;
-use to_value_macro::ToValue;
-
 #[derive(ToValue)]
 struct Input {
     value: felt252,
