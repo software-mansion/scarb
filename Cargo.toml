@@ -94,7 +94,7 @@ include_dir = "0.7"
 indicatif = "0.17"
 indoc = "2"
 io_tee = "0.1"
-itertools = "0.12"
+itertools = "0.13"
 libc = "0.2"
 libloading = "0.8.6"
 linkme = "0.3"
@@ -107,7 +107,7 @@ predicates = "3"
 proc-macro2 = "1"
 quote = "1"
 ra_ap_toolchain = "0.0.218"
-redb = "2.2.0"
+redb = "2.3.0"
 reqwest = { version = "0.11", features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"], default-features = false }
 salsa = { package = "rust-analyzer-salsa", version = "0.17.0-pre.6" }
 semver = { version = "1", features = ["serde"] }
