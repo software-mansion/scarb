@@ -37,7 +37,7 @@ camino.workspace = true
 clap.workspace = true
 convert_case.workspace = true
 create-output-dir = { path = "../utils/create-output-dir" }
-crossbeam-channel = "0.5.13"
+crossbeam-channel = "0.5.14"
 data-encoding.workspace = true
 deno_task_shell.workspace = true
 derive_builder.workspace = true
