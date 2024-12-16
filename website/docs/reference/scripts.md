@@ -18,6 +18,14 @@ bar = "echo 'World!'"
 This section should not contain any values with type different from string, including subtables, arrays, or numbers.
 In case the section is empty, it will be ignored.
 
+### Special script names
+
+Some script names are reserved for special purposes and their execution might be associated with additional logic.
+The following script names are reserved:
+
+1. `test` - This script will be executed when you run `scarb test` command.
+2. `package` - This script will be executed before the packaging process when you run `scarb package` command.
+
 ## Listing scripts
 
 To list all available scripts, you can use `scarb run` command.
