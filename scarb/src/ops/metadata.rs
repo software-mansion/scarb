@@ -49,6 +49,7 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
             &opts.features,
             opts.ignore_cairo_version,
             ws,
+            true,
         )?
         .iter()
         .flat_map(collect_compilation_unit_metadata)

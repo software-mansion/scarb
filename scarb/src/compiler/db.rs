@@ -1,9 +1,6 @@
-use crate::compiler::plugin::fetch_cairo_plugin;
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
 use crate::core::Workspace;
-use crate::ops::{compile_unit, generate_cairo_plugin_compilation_units};
 use crate::DEFAULT_MODULE_MAIN_FILE;
 use anyhow::{anyhow, Result};
 use cairo_lang_compiler::db::{RootDatabase, RootDatabaseBuilder};
@@ -16,7 +13,6 @@ use cairo_lang_filesystem::db::{
 };
 use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
-use scarb_ui::components::Status;
 use smol_str::SmolStr;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -58,39 +54,14 @@ fn load_plugins(
     let mut proc_macros = ProcMacroHost::default();
     for plugin_info in &unit.cairo_plugins {
         if plugin_info.builtin {
-            // For builtin plugins, fetch and instantiate directly
             let package_id = plugin_info.package.id;
             let plugin = ws.config().cairo_plugins().fetch(package_id)?;
             let instance = plugin.instantiate()?;
             builder.with_plugin_suite(instance.plugin_suite());
-        } else if plugin_info.package.is_prebuilt() {
-            // For prebuilt procedural macros, try loading from prebuilt binary first
-            if proc_macros
-                .register_prebuilt(plugin_info.package.clone())
-                .is_err()
-            {
-                // If failed to load from prebuilt binary, try loading from shared library
-                if proc_macros
-                    .register(plugin_info.package.clone(), ws.config())
-                    .is_err()
-                {
-                    // If failed to load from shared library, fetch the plugin, compile it and try again
-                    fetch_cairo_plugin(&plugin_info.package, ws)?;
-                    let plugin_unit =
-                        generate_cairo_plugin_compilation_units(&plugin_info.package)?
-                            .first()
-                            .unwrap()
-                            .clone();
-                    ws.config()
-                        .ui()
-                        .print(Status::new("Compiling", &plugin_unit.name()));
-                    compile_unit(plugin_unit, ws, false)?;
-                    proc_macros.register(plugin_info.package.clone(), ws.config())?;
-                }
-            }
+        } else if let Some(prebuilt) = &plugin_info.prebuilt {
+            proc_macros.register(prebuilt.clone());
         } else {
-            // For non-prebuilt procedural macros, load from shared library
-            proc_macros.register(plugin_info.package.clone(), ws.config())?;
+            proc_macros.register_new(plugin_info.package.clone(), ws.config())?;
         }
     }
     let macro_host = Arc::new(proc_macros.into_plugin()?);

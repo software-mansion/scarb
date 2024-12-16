@@ -98,12 +98,12 @@ impl CompileOpts {
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn compile(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) -> Result<()> {
-    process(packages, opts, ws, true, compile_units, None)
+    process(packages, opts, ws, compile_units, None)
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn check(packages: Vec<PackageId>, opts: CompileOpts, ws: &Workspace<'_>) -> Result<()> {
-    process(packages, opts, ws, true, check_units, Some("checking"))
+    process(packages, opts, ws, check_units, Some("checking"))
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -111,12 +111,11 @@ fn process<F>(
     packages: Vec<PackageId>,
     opts: CompileOpts,
     ws: &Workspace<'_>,
-    skip_prebuilt_proc_macros: bool,
     mut operation: F,
     operation_type: Option<&str>,
 ) -> Result<()>
 where
-    F: FnMut(Vec<CompilationUnit>, &Workspace<'_>, bool) -> Result<()>,
+    F: FnMut(Vec<CompilationUnit>, &Workspace<'_>) -> Result<()>,
 {
     let resolve = ops::resolve_workspace(ws)?;
     let packages_to_process = ws
@@ -126,38 +125,43 @@ where
     validate_features(&packages_to_process, &opts.features)?;
     // Add test compilation units to build
     let packages = get_test_package_ids(packages, ws);
-    let compilation_units =
-        ops::generate_compilation_units(&resolve, &opts.features, opts.ignore_cairo_version, ws)?
-            .into_iter()
-            .filter(|cu| {
-                let is_excluded = opts
-                    .exclude_target_kinds
-                    .contains(&cu.main_component().target_kind());
-                let is_included = opts.include_target_kinds.is_empty()
-                    || opts
-                        .include_target_kinds
-                        .contains(&cu.main_component().target_kind());
-                let is_included = is_included
-                    && (opts.include_target_names.is_empty()
-                        || cu
-                            .main_component()
-                            .targets
-                            .iter()
-                            .any(|t| opts.include_target_names.contains(&t.name)));
-                let is_selected = packages.contains(&cu.main_package_id());
-                let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
-                is_cairo_plugin || (is_selected && is_included && !is_excluded)
-            })
-            .sorted_by_key(|cu| {
-                if matches!(cu, CompilationUnit::ProcMacro(_)) {
-                    0
-                } else {
-                    1
-                }
-            })
-            .collect::<Vec<_>>();
+    let compilation_units = ops::generate_compilation_units(
+        &resolve,
+        &opts.features,
+        opts.ignore_cairo_version,
+        ws,
+        true,
+    )?
+    .into_iter()
+    .filter(|cu| {
+        let is_excluded = opts
+            .exclude_target_kinds
+            .contains(&cu.main_component().target_kind());
+        let is_included = opts.include_target_kinds.is_empty()
+            || opts
+                .include_target_kinds
+                .contains(&cu.main_component().target_kind());
+        let is_included = is_included
+            && (opts.include_target_names.is_empty()
+                || cu
+                    .main_component()
+                    .targets
+                    .iter()
+                    .any(|t| opts.include_target_names.contains(&t.name)));
+        let is_selected = packages.contains(&cu.main_package_id());
+        let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
+        is_cairo_plugin || (is_selected && is_included && !is_excluded)
+    })
+    .sorted_by_key(|cu| {
+        if matches!(cu, CompilationUnit::ProcMacro(_)) {
+            0
+        } else {
+            1
+        }
+    })
+    .collect::<Vec<_>>();
 
-    operation(compilation_units, ws, skip_prebuilt_proc_macros)?;
+    operation(compilation_units, ws)?;
 
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
     let profile = ws.current_profile()?;
@@ -174,44 +178,30 @@ where
 
 /// Run compiler in a new thread.
 /// The stack size of created threads can be altered with `RUST_MIN_STACK` env variable.
-pub fn compile_units(
-    units: Vec<CompilationUnit>,
-    ws: &Workspace<'_>,
-    skip_prebuilt_proc_macros: bool,
-) -> Result<()> {
+pub fn compile_units(units: Vec<CompilationUnit>, ws: &Workspace<'_>) -> Result<()> {
     for unit in units {
-        compile_unit(unit, ws, skip_prebuilt_proc_macros)?;
+        compile_unit(unit, ws)?;
     }
     Ok(())
 }
 
-pub fn compile_unit(
-    unit: CompilationUnit,
-    ws: &Workspace<'_>,
-    skip_prebuilt_proc_macros: bool,
-) -> Result<()> {
+pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     thread::scope(|s| {
         thread::Builder::new()
             .name(format!("scarb compile {}", unit.id()))
-            .spawn_scoped(s, || {
-                compile_unit_inner(unit, ws, skip_prebuilt_proc_macros)
-            })
+            .spawn_scoped(s, || compile_unit_inner(unit, ws))
             .expect("Failed to spawn compiler thread.")
             .join()
             .expect("Compiler thread has panicked.")
     })
 }
 
-fn compile_unit_inner(
-    unit: CompilationUnit,
-    ws: &Workspace<'_>,
-    skip_prebuilt_proc_macros: bool,
-) -> Result<()> {
+fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package_name = unit.main_package_id().name.clone();
 
     let result = match unit {
         CompilationUnit::ProcMacro(unit) => {
-            if unit.is_prebuilt() && skip_prebuilt_proc_macros {
+            if unit.prebuilt.is_some() {
                 Ok(())
             } else {
                 ws.config()
@@ -246,11 +236,7 @@ fn compile_unit_inner(
     })
 }
 
-fn check_units(
-    units: Vec<CompilationUnit>,
-    ws: &Workspace<'_>,
-    skip_prebuilt_proc_macros: bool,
-) -> Result<()> {
+fn check_units(units: Vec<CompilationUnit>, ws: &Workspace<'_>) -> Result<()> {
     // Select proc macro units that need to be compiled for Cairo compilation units.
     let required_plugins = units
         .iter()
@@ -278,7 +264,7 @@ fn check_units(
         if matches!(unit, CompilationUnit::ProcMacro(_))
             && required_plugins.contains(&unit.main_package_id())
         {
-            compile_unit(unit, ws, skip_prebuilt_proc_macros)?;
+            compile_unit(unit, ws)?;
         } else {
             check_unit(unit, ws)?;
         }

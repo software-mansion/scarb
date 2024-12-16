@@ -1,15 +1,16 @@
-use std::fmt::Write;
-use std::hash::{Hash, Hasher};
-
 use anyhow::{ensure, Result};
 use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::CrateIdentifier;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+use std::fmt::Write;
+use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 use typed_builder::TypedBuilder;
 
 use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::compiler::Profile;
 use crate::core::{
     ManifestCompilerConfig, Package, PackageId, PackageName, Target, TargetKind, Workspace,
@@ -73,6 +74,9 @@ pub struct ProcMacroCompilationUnit {
 
     /// Rust compiler configuration parameters to use in this unit.
     pub compiler_config: serde_json::Value,
+
+    /// Instance of the proc macro loaded from prebuilt library, if available.
+    pub(crate) prebuilt: Option<Arc<ProcMacroInstance>>,
 }
 
 /// Information about a single package that is part of a [`CompilationUnit`].
@@ -98,6 +102,9 @@ pub struct CompilationUnitCairoPlugin {
     /// The Scarb plugin [`Package`] to load.
     pub package: Package,
     pub builtin: bool,
+
+    /// Instance of the proc macro loaded from prebuilt library, if available.
+    pub(crate) prebuilt: Option<Arc<ProcMacroInstance>>,
 }
 
 /// Unique identifier of the compilation unit component.

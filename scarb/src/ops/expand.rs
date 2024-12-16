@@ -43,14 +43,19 @@ pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<
 
     let package_name = package.id.name.to_string();
     let resolve = ops::resolve_workspace(ws)?;
-    let compilation_units =
-        ops::generate_compilation_units(&resolve, &opts.features, opts.ignore_cairo_version, ws)?;
+    let compilation_units = ops::generate_compilation_units(
+        &resolve,
+        &opts.features,
+        opts.ignore_cairo_version,
+        ws,
+        true,
+    )?;
 
     // Compile procedural macros.
     compilation_units
         .iter()
         .filter(|unit| matches!(unit, CompilationUnit::ProcMacro(_)))
-        .map(|unit| ops::compile::compile_unit(unit.clone(), ws, true))
+        .map(|unit| ops::compile::compile_unit(unit.clone(), ws))
         .collect::<Result<Vec<_>>>()?;
 
     let compilation_units = compilation_units

@@ -21,6 +21,7 @@ pub fn run(config: &mut Config) -> Result<()> {
         },
         true,
         &ws,
+        true,
     )?;
 
     let mut proc_macros = ProcMacroHost::default();
@@ -37,7 +38,7 @@ pub fn run(config: &mut Config) -> Result<()> {
     for unit in &compilation_units {
         if let CompilationUnit::ProcMacro(_) = unit {
             if !loaded_plugins.contains(&unit.main_package_id()) {
-                ops::compile_unit(unit.clone(), &ws, false)?;
+                ops::compile_unit(unit.clone(), &ws)?;
             }
         }
     }
@@ -78,7 +79,7 @@ fn load_plugins(
 ) -> Result<()> {
     for plugin_info in unit.cairo_plugins.into_iter().filter(|p| !p.builtin) {
         if !loaded_plugins.contains(&plugin_info.package.id) {
-            proc_macros.register(plugin_info.package, ws.config())?;
+            proc_macros.register_new(plugin_info.package, ws.config())?;
         }
     }
 
