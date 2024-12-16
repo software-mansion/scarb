@@ -30,7 +30,7 @@ impl<'c> SourceMap<'c> {
     pub fn preloaded(packages: impl Iterator<Item = Package>, config: &'c Config) -> Self {
         let sources = packages
             .sorted_by_key(|pkg| pkg.id.source_id)
-            .group_by(|pkg| pkg.id.source_id);
+            .chunk_by(|pkg| pkg.id.source_id);
         let sources = sources.into_iter().map(|(source_id, packages)| {
             let packages = packages.collect::<Vec<_>>();
             let source = PathSource::preloaded(&packages, config);

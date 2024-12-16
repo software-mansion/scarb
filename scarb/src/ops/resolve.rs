@@ -261,7 +261,7 @@ fn generate_cairo_compilation_units(
         .targets
         .iter()
         .filter(|target| target.group_id.is_some())
-        .group_by(|target| target.group_id.clone())
+        .chunk_by(|target| target.group_id.clone())
         .into_iter()
         .map(|(group_id, group)| (group_id, group.collect_vec()))
         .sorted_by_key(|(_, group)| group[0].kind.clone())
