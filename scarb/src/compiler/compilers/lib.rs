@@ -62,8 +62,9 @@ impl Compiler for LibCompiler {
 
         validate_compiler_config(db, &compiler_config, &unit, ws);
 
+        let span = trace_span!("compile_sierra");
         let sierra_program: VersionedProgram = {
-            let _ = trace_span!("compile_sierra").enter();
+            let _guard = span.enter();
             let program_artifact = cairo_lang_compiler::compile_prepared_db_program_artifact(
                 db,
                 main_crate_ids,
@@ -101,8 +102,9 @@ impl Compiler for LibCompiler {
         if props.casm {
             let program = sierra_program.into_v1().unwrap().program;
 
+            let span = trace_span!("casm_calc_metadata");
             let metadata = {
-                let _ = trace_span!("casm_calc_metadata").enter();
+                let _guard = span.enter();
 
                 if unit.compiler_config.enable_gas {
                     debug!("calculating Sierra variables");
@@ -114,8 +116,9 @@ impl Compiler for LibCompiler {
                 .context("failed calculating Sierra variables")?
             };
 
+            let span = trace_span!("compile_casm");
             let cairo_program = {
-                let _ = trace_span!("compile_casm").enter();
+                let _guard = span.enter();
                 let sierra_to_casm = SierraToCasmConfig {
                     gas_usage_check: unit.compiler_config.enable_gas,
                     max_bytecode_size: usize::MAX,

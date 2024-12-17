@@ -114,7 +114,9 @@ impl Compiler for StarknetContractCompiler {
         check_allowed_libfuncs(&props, &contracts, &classes, db, &unit, ws)?;
 
         let casm_classes: Vec<Option<CasmContractClass>> = if props.casm {
-            let _ = trace_span!("compile_sierra").enter();
+            let span = trace_span!("compile_sierra");
+            let _guard = span.enter();
+
             zip(&contracts, &classes)
                 .map(|(decl, class)| -> Result<_> {
                     let contract_name = decl.submodule_id.name(db.upcast_mut());
@@ -159,8 +161,9 @@ pub fn get_compiled_contracts(
         .collect::<Vec<_>>();
     trace!(contracts = ?contract_paths);
 
+    let span = trace_span!("compile_starknet");
     let classes = {
-        let _ = trace_span!("compile_starknet").enter();
+        let _guard = span.enter();
         compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
     };
     Ok(CompiledContracts {
@@ -177,14 +180,16 @@ pub fn find_project_contracts(
     main_crate_ids: Vec<CrateId>,
     external_contracts: Option<Vec<ContractSelector>>,
 ) -> Result<Vec<ContractDeclaration>> {
+    let span = trace_span!("find_internal_contracts");
     let internal_contracts = {
-        let _ = trace_span!("find_internal_contracts").enter();
+        let _guard = span.enter();
         find_contracts(db, &main_crate_ids)
     };
 
+    let span = trace_span!("find_external_contracts");
     let external_contracts: Vec<ContractDeclaration> =
         if let Some(external_contracts) = external_contracts {
-            let _ = trace_span!("find_external_contracts").enter();
+            let _guard = span.enter();
             debug!("external contracts selectors: {:?}", external_contracts);
 
             let crate_ids = external_contracts
