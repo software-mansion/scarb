@@ -114,6 +114,10 @@ impl ProjectBuilder {
         self.dep_builtin("starknet")
     }
 
+    pub fn dep_cairo_execute(self) -> Self {
+        self.dep_builtin("cairo_execute")
+    }
+
     pub fn dep_cairo_test(self) -> Self {
         self.dev_dep_builtin("cairo_test")
     }
