@@ -110,14 +110,7 @@ jobs:
       - run: npm run fmt:check
 
   snforge-init:
-    runs-on: ${{ matrix.platform.os }}
-    strategy:
-      matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          - name: windows x86-64
-            os: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
