@@ -1,3 +1,5 @@
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::compiler::plugin::{fetch_cairo_plugin, CairoPluginProps};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
@@ -27,6 +29,7 @@ use indoc::formatdoc;
 use itertools::Itertools;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::iter::zip;
+use std::sync::Arc;
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -190,6 +193,7 @@ pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
     enabled_features: &FeaturesOpts,
     ignore_cairo_version: bool,
+    load_prebuilts: bool,
     ws: &Workspace<'_>,
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
@@ -222,7 +226,10 @@ pub fn generate_compilation_units(
         .collect_vec();
 
     for plugin in cairo_plugins {
-        units.extend(generate_cairo_plugin_compilation_units(&plugin)?);
+        units.extend(generate_cairo_plugin_compilation_units(
+            &plugin,
+            load_prebuilts,
+        )?);
     }
 
     assert!(
@@ -605,9 +612,13 @@ impl<'a> PackageSolutionCollector<'a> {
                 // We can safely unwrap as all packages with `PackageClass::CairoPlugin` must define plugin target.
                 let target = package.target(&TargetKind::CAIRO_PLUGIN).unwrap();
                 let props: CairoPluginProps = target.props()?;
+                let prebuilt = ProcMacroInstance::try_load_prebuilt(package.clone())
+                    .ok()
+                    .map(Arc::new);
                 Ok(CompilationUnitCairoPlugin::builder()
                     .package(package)
                     .builtin(props.builtin)
+                    .prebuilt(prebuilt)
                     .build())
             })
             .collect::<Result<Vec<_>>>()?;
@@ -709,7 +720,17 @@ fn check_cairo_version_compatibility(
     Ok(())
 }
 
-fn generate_cairo_plugin_compilation_units(member: &Package) -> Result<Vec<CompilationUnit>> {
+pub fn generate_cairo_plugin_compilation_units(
+    member: &Package,
+    load_prebuilts: bool,
+) -> Result<Vec<CompilationUnit>> {
+    let prebuilt = if load_prebuilts && member.is_prebuilt() {
+        ProcMacroInstance::try_load_prebuilt(member.clone())
+            .ok()
+            .map(Arc::new)
+    } else {
+        None
+    };
     Ok(vec![CompilationUnit::ProcMacro(ProcMacroCompilationUnit {
         main_package_id: member.id,
         compiler_config: serde_json::Value::Null,
@@ -722,6 +743,7 @@ fn generate_cairo_plugin_compilation_units(member: &Package) -> Result<Vec<Compi
                 .expect("main component of procedural macro must define `cairo-plugin` target")],
             None,
         )?],
+        prebuilt,
     })])
 }
 
