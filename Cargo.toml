@@ -17,6 +17,7 @@ members = [
     "utils/scarb-ui",
     "utils/test-for-each-example",
     "xtask",
+    "extensions/scarb-cairo-execute",
 ]
 "resolver" = "2"
 
@@ -70,6 +71,7 @@ cairo-lang-test-plugin = "*"
 cairo-lang-test-runner = "*"
 cairo-lang-utils = { version = "*", features = ["env_logger"] }
 cairo-language-server = "*"
+cairo-vm = "*"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
