@@ -5149,8 +5149,10 @@ name = "scarb-proc-macro-server-types"
 version = "0.1.0"
 dependencies = [
  "cairo-lang-macro 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-utils",
  "serde",
  "serde_json",
+ "smol_str",
 ]
 
 [[package]]
