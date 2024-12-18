@@ -2,6 +2,9 @@ use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::plugin::MacroPlugin;
+use cairo_lang_filesystem::db::FilesGroup;
+use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
@@ -145,15 +148,22 @@ fn validate_compiler_config(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
 ) {
+    let main_component = unit.main_component();
+    let main_crate_id = db.intern_crate(CrateLongId::Real {
+        name: main_component.target_name(),
+        discriminator: main_component.id.to_discriminator(),
+    });
+
     // Generally, lib target compilation should be driven by a certain objective (e.g. cairo-run,
     // test framework, etc.), expressed by the plugin set with executables definition.
     // This does not apply to debug build (expressed by `replace_ids` flag),
     // which is a goal by itself.
     // See starkware-libs/cairo#5440 for more context.
-    let executable_plugin = db
-        .macro_plugins()
-        .iter()
-        .any(|plugin| !plugin.executable_attributes().is_empty());
+    let executable_plugin = db.crate_macro_plugins(main_crate_id).iter().any(|&plugin| {
+        !db.lookup_intern_macro_plugin(plugin)
+            .executable_attributes()
+            .is_empty()
+    });
     if !executable_plugin && !compiler_config.replace_ids {
         ws.config().ui().warn(formatdoc! {r#"
             artefacts produced by this build may be hard to utilize due to the build configuration

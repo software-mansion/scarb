@@ -37,11 +37,17 @@ fn defined_macros() {
     let response = proc_macro_server
         .request_and_wait::<DefinedMacros>(DefinedMacrosParams {})
         .unwrap();
+    let response = response.crate_macro_info;
 
-    assert_eq!(response.attributes, vec!["some".to_string()]);
-    assert_eq!(response.derives, vec!["some_derive".to_string()]);
-    assert_eq!(response.inline_macros, vec!["inline_some".to_string()]);
-    assert_eq!(response.executables, vec!["some_executable".to_string()]);
+    let packages = response.keys().collect::<Vec<_>>();
+    assert_eq!(packages.len(), 1);
+    assert_eq!(packages[0], "some");
+
+    let crate_macros = &response["some"];
+    assert_eq!(&crate_macros.attributes, &["some".to_string()]);
+    assert_eq!(&crate_macros.derives, &["some_derive".to_string()]);
+    assert_eq!(&crate_macros.inline_macros, &["inline_some".to_string()]);
+    assert_eq!(&crate_macros.executables, &["some_executable".to_string()]);
 }
 
 #[test]

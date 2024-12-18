@@ -58,13 +58,13 @@ fn load_plugins(
             let package_id = plugin_info.package.id;
             let plugin = ws.config().cairo_plugins().fetch(package_id)?;
             let instance = plugin.instantiate()?;
-            builder.with_plugin_suite(instance.plugin_suite());
+            builder.with_default_plugin_suite(instance.plugin_suite());
         } else {
             proc_macros.register(plugin_info.package.clone(), ws.config())?;
         }
     }
     let macro_host = Arc::new(proc_macros.into_plugin()?);
-    builder.with_plugin_suite(ProcMacroHostPlugin::build_plugin_suite(macro_host.clone()));
+    builder.with_default_plugin_suite(ProcMacroHostPlugin::build_plugin_suite(macro_host.clone()));
     Ok(macro_host)
 }
 
@@ -198,10 +198,15 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
     Ok(project_config)
 }
 
-pub(crate) fn has_starknet_plugin(db: &RootDatabase) -> bool {
-    db.macro_plugins()
+pub(crate) fn has_starknet_plugin(db: &RootDatabase, component: &CompilationUnitComponent) -> bool {
+    let crate_id = db.intern_crate(CrateLongId::Real {
+        name: component.target_name(),
+        discriminator: component.id.to_discriminator(),
+    });
+
+    db.crate_macro_plugins(crate_id)
         .iter()
-        .any(|plugin| is_starknet_plugin(&**plugin))
+        .any(|&plugin| is_starknet_plugin(&db.lookup_intern_macro_plugin(plugin)))
 }
 
 fn is_starknet_plugin(plugin: &dyn MacroPlugin) -> bool {

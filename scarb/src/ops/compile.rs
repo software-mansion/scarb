@@ -302,7 +302,7 @@ fn check_starknet_dependency(
     //   I think we can get away with emitting false positives for users who write raw contracts
     //   without using Starknet code generators. Such people shouldn't do what they do 😁
     if unit.main_component().target_kind() == TargetKind::STARKNET_CONTRACT
-        && !has_starknet_plugin(db)
+        && !has_starknet_plugin(db, unit.main_component())
     {
         ws.config().ui().warn(formatdoc! {
             r#"
