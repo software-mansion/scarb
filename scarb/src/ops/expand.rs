@@ -47,8 +47,8 @@ pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<
         &resolve,
         &opts.features,
         opts.ignore_cairo_version,
-        ws,
         true,
+        ws,
     )?;
 
     // Compile procedural macros.

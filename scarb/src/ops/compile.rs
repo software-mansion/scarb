@@ -129,8 +129,8 @@ where
         &resolve,
         &opts.features,
         opts.ignore_cairo_version,
-        ws,
         true,
+        ws,
     )?
     .into_iter()
     .filter(|cu| {

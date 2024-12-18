@@ -16,8 +16,8 @@ pub fn run(config: &mut Config) -> Result<()> {
             no_default_features: false,
         },
         true,
-        &ws,
         true,
+        &ws,
     )?;
 
     // Compile procedural macros only.

@@ -175,8 +175,8 @@ pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
     enabled_features: &FeaturesOpts,
     ignore_cairo_version: bool,
-    ws: &Workspace<'_>,
     load_prebuilts: bool,
+    ws: &Workspace<'_>,
 ) -> Result<Vec<CompilationUnit>> {
     let mut units = Vec::with_capacity(ws.members().size_hint().0);
     let members = ws
