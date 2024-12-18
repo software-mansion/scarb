@@ -76,7 +76,7 @@ pub struct ProcMacroCompilationUnit {
     pub compiler_config: serde_json::Value,
 
     /// Instance of the proc macro loaded from prebuilt library, if available.
-    pub(crate) prebuilt: Option<Arc<ProcMacroInstance>>,
+    pub prebuilt: Option<Arc<ProcMacroInstance>>,
 }
 
 /// Information about a single package that is part of a [`CompilationUnit`].
@@ -104,7 +104,7 @@ pub struct CompilationUnitCairoPlugin {
     pub builtin: bool,
 
     /// Instance of the proc macro loaded from prebuilt library, if available.
-    pub(crate) prebuilt: Option<Arc<ProcMacroInstance>>,
+    pub prebuilt: Option<Arc<ProcMacroInstance>>,
 }
 
 /// Unique identifier of the compilation unit component.

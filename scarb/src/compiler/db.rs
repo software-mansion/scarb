@@ -59,7 +59,7 @@ fn load_plugins(
             let instance = plugin.instantiate()?;
             builder.with_plugin_suite(instance.plugin_suite());
         } else if let Some(prebuilt) = &plugin_info.prebuilt {
-            proc_macros.register(prebuilt.clone());
+            proc_macros.register_instance(prebuilt.clone());
         } else {
             proc_macros.register_new(plugin_info.package.clone(), ws.config())?;
         }

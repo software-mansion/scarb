@@ -1151,7 +1151,7 @@ pub struct ProcMacroHost {
 }
 
 impl ProcMacroHost {
-    pub fn register(&mut self, instance: Arc<ProcMacroInstance>) {
+    pub fn register_instance(&mut self, instance: Arc<ProcMacroInstance>) {
         self.macros.push(instance);
     }
 
@@ -1160,13 +1160,7 @@ impl ProcMacroHost {
             .shared_lib_path(config)
             .context("could not resolve shared library path")?;
         let instance = ProcMacroInstance::try_new(package.id, lib_path)?;
-        self.register(Arc::new(instance));
-        Ok(())
-    }
-
-    pub fn register_prebuilt(&mut self, package: Package) -> Result<()> {
-        let instance = ProcMacroInstance::try_load_prebuilt(package)?;
-        self.register(Arc::new(instance));
+        self.register_instance(Arc::new(instance));
         Ok(())
     }
 
