@@ -1,14 +1,14 @@
-use std::collections::HashMap;
-
+use crate::core::lockfile::Lockfile;
+use crate::core::{PackageId, Summary, TargetKind};
 use anyhow::{bail, Result};
 use indoc::formatdoc;
 use itertools::Itertools;
+use petgraph::algo::kosaraju_scc;
 use petgraph::graphmap::DiGraphMap;
 use petgraph::visit::{Dfs, EdgeFiltered, IntoNeighborsDirected, Walker};
 use smallvec::SmallVec;
-
-use crate::core::lockfile::Lockfile;
-use crate::core::{PackageId, Summary, TargetKind};
+use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 
 /// Represents a fully-resolved package dependency graph.
 ///
@@ -71,6 +71,67 @@ impl Resolve {
         filtered_graph
             .neighbors_directed(package_id, petgraph::Direction::Outgoing)
             .collect_vec()
+    }
+
+    /// Find all subtress of the graph, that are reachable from nodes, that can be identified by
+    /// keys from the `start` vector, where each key is a result of applying `key` function to a
+    /// package id.
+    pub fn filter_subtrees<T: Sized + Eq + Hash>(
+        &self,
+        target_kind: &TargetKind,
+        start: Vec<T>,
+        key: impl Fn(PackageId) -> T,
+    ) -> HashSet<T> {
+        // We want to traverse the graph in topological order, so that for each node we can decide
+        // if the subtree should be included.
+        // However, we cannot actually topologically sort the graph, as it's not guaranteed to be
+        // a DAG (it may contain cycles of dependencies).
+        // Instead, we use Kosaraju's algorithm to find strongly connected components (scc) of the graph.
+        // Each of SCCs is a cycle in the original graph.
+        // The graph of SCCs is a DAG, thus we can traverse it in a topological order.
+        let scc = self.scc();
+        let mut allowed_prebuilds = SubTreeFilter::new(start);
+        for comp in &scc {
+            if comp.iter().any(|x| allowed_prebuilds.check(&key(*x))) {
+                allowed_prebuilds.allow(comp.iter().map(|x| key(*x)));
+                for package in comp {
+                    let deps = self.package_dependencies_for_target_kind(*package, target_kind);
+                    allowed_prebuilds.allow(deps.iter().map(|x| key(*x)));
+                }
+            }
+        }
+
+        allowed_prebuilds.0
+    }
+
+    /// Return a vector where each element is a strongly connected component (scc) of the graph.
+    /// The order of node ids within each scc is arbitrary,
+    /// but the order of the sccs is their topological order.
+    fn scc(&self) -> Vec<Vec<PackageId>> {
+        kosaraju_scc(&self.graph)
+            .iter()
+            .map(|scc| scc.iter().copied().collect_vec())
+            // We need to reverse the iterator here, as kosaraju algorithm returns
+            // the sccs in a postorder (reversed topological order).
+            .rev()
+            .collect_vec()
+    }
+}
+
+#[derive(Debug, Default)]
+struct SubTreeFilter<T: Sized + Eq + Hash>(HashSet<T>);
+
+impl<T: Sized + Eq + Hash> SubTreeFilter<T> {
+    fn new(allowed: Vec<T>) -> Self {
+        Self(allowed.into_iter().collect())
+    }
+
+    fn allow<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        self.0.extend(iter)
+    }
+
+    fn check(&self, key: &T) -> bool {
+        self.0.contains(key)
     }
 }
 

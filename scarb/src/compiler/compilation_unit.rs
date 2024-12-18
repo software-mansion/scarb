@@ -97,6 +97,7 @@ pub struct CompilationUnitCairoPlugin {
     /// The Scarb plugin [`Package`] to load.
     pub package: Package,
     pub builtin: bool,
+    pub prebuilt_allowed: bool,
 }
 
 /// Unique identifier of the compilation unit component.
