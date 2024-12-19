@@ -63,6 +63,33 @@ impl WorkspaceResolve {
             .map(|id| self.packages[id].clone())
             .collect_vec()
     }
+
+    /// Get all dependencies with allowed prebuilt macros for a given package.
+    pub fn allowed_prebuilt(
+        &self,
+        package: Package,
+        target_kind: &TargetKind,
+    ) -> Result<AllowedPrebuiltFilter> {
+        let metadata = package.scarb_tool_metadata()?;
+        let allowed = metadata.allow_prebuilt_plugins.unwrap_or_default();
+        let allowed = allowed
+            .into_iter()
+            .filter_map(|name| PackageName::try_new(name).ok())
+            .map(|name| name.to_smol_str())
+            .collect();
+        let allowed =
+            self.resolve
+                .filter_subtrees(target_kind, allowed, |package_id: PackageId| {
+                    package_id.name.to_smol_str()
+                });
+        let allowed_prebuilds = AllowedPrebuiltFilter::new(
+            allowed
+                .into_iter()
+                .map(PackageName::new)
+                .collect::<HashSet<_>>(),
+        );
+        Ok(allowed_prebuilds)
+    }
 }
 
 #[derive(Debug, Default)]
@@ -183,6 +210,19 @@ async fn collect_packages_from_resolve_graph(
         packages.insert(package_id, package);
     }
     Ok(packages)
+}
+
+#[derive(Debug, Default)]
+pub struct AllowedPrebuiltFilter(HashSet<PackageName>);
+
+impl AllowedPrebuiltFilter {
+    pub fn new(allowed: HashSet<PackageName>) -> Self {
+        Self(allowed)
+    }
+
+    pub fn check(&self, package: &Package) -> bool {
+        self.0.contains(&package.id.name)
+    }
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -548,6 +588,9 @@ impl<'a> PackageSolutionCollector<'a> {
         target_kind: &TargetKind,
         ignore_cairo_version: bool,
     ) -> Result<(Vec<Package>, Vec<CompilationUnitCairoPlugin>)> {
+        let allowed_prebuilds = self
+            .resolve
+            .allowed_prebuilt(self.member.clone(), target_kind)?;
         let mut classes = self
             .resolve
             .solution_of(self.member.id, target_kind)
@@ -602,12 +645,14 @@ impl<'a> PackageSolutionCollector<'a> {
         let cairo_plugins = cairo_plugins
             .into_iter()
             .map(|package| {
+                let prebuilt_allowed = allowed_prebuilds.check(&package);
                 // We can safely unwrap as all packages with `PackageClass::CairoPlugin` must define plugin target.
                 let target = package.target(&TargetKind::CAIRO_PLUGIN).unwrap();
                 let props: CairoPluginProps = target.props()?;
                 Ok(CompilationUnitCairoPlugin::builder()
                     .package(package)
                     .builtin(props.builtin)
+                    .prebuilt_allowed(prebuilt_allowed)
                     .build())
             })
             .collect::<Result<Vec<_>>>()?;
