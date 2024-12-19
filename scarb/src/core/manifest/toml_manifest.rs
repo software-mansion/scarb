@@ -46,6 +46,7 @@ pub struct TomlManifest {
     pub dependencies: Option<BTreeMap<PackageName, MaybeTomlWorkspaceDependency>>,
     pub dev_dependencies: Option<BTreeMap<PackageName, MaybeTomlWorkspaceDependency>>,
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
+    pub executable: Option<TomlTarget<TomlExecutableTargetParams>>,
     pub cairo_plugin: Option<TomlTarget<TomlCairoPluginTargetParams>>,
     pub test: Option<Vec<TomlTarget<TomlExternalTargetParams>>>,
     pub target: Option<BTreeMap<TargetKind, Vec<TomlTarget<TomlExternalTargetParams>>>>,
@@ -294,6 +295,10 @@ pub struct TomlLibTargetParams {
     pub casm: Option<bool>,
     pub sierra_text: Option<bool>,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TomlExecutableTargetParams {}
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -629,6 +634,14 @@ impl TomlManifest {
         targets.extend(Self::collect_target(
             TargetKind::CAIRO_PLUGIN,
             self.cairo_plugin.as_ref(),
+            &package_name,
+            root,
+            None,
+        )?);
+
+        targets.extend(Self::collect_target(
+            TargetKind::EXECUTABLE,
+            self.executable.as_ref(),
             &package_name,
             root,
             None,
