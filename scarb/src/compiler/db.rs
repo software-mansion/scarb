@@ -1,3 +1,7 @@
+use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
+use crate::core::Workspace;
+use crate::DEFAULT_MODULE_MAIN_FILE;
 use anyhow::{anyhow, Result};
 use cairo_lang_compiler::db::{RootDatabase, RootDatabaseBuilder};
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
@@ -13,11 +17,6 @@ use smol_str::SmolStr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
-
-use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
-use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
-use crate::core::Workspace;
-use crate::DEFAULT_MODULE_MAIN_FILE;
 
 pub struct ScarbDatabase {
     pub db: RootDatabase,
@@ -59,8 +58,10 @@ fn load_plugins(
             let plugin = ws.config().cairo_plugins().fetch(package_id)?;
             let instance = plugin.instantiate()?;
             builder.with_plugin_suite(instance.plugin_suite());
+        } else if let Some(prebuilt) = &plugin_info.prebuilt {
+            proc_macros.register_instance(prebuilt.clone());
         } else {
-            proc_macros.register(plugin_info.package.clone(), ws.config())?;
+            proc_macros.register_new(plugin_info.package.clone(), ws.config())?;
         }
     }
     let macro_host = Arc::new(proc_macros.into_plugin()?);

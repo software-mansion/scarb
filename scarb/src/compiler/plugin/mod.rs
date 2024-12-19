@@ -9,6 +9,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::compiler::plugin::builtin::BuiltinCairoRunPlugin;
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::core::{Package, PackageId, TargetKind, Workspace};
 
 use self::builtin::{BuiltinStarkNetPlugin, BuiltinTestPlugin};
@@ -29,8 +30,8 @@ pub fn fetch_cairo_plugin(package: &Package, ws: &Workspace<'_>) -> Result<()> {
     assert!(package.is_cairo_plugin());
     let target = package.fetch_target(&TargetKind::CAIRO_PLUGIN)?;
     let props: CairoPluginProps = target.props()?;
-    // No need to fetch for buildin plugins.
-    if !props.builtin {
+    // No need to fetch for builtin or prebuilt plugins.
+    if !props.builtin && !package.is_prebuilt() {
         proc_macro::fetch_crate(package, ws)?;
     }
     Ok(())

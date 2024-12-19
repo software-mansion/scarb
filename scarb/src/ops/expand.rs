@@ -43,8 +43,13 @@ pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<
 
     let package_name = package.id.name.to_string();
     let resolve = ops::resolve_workspace(ws)?;
-    let compilation_units =
-        ops::generate_compilation_units(&resolve, &opts.features, opts.ignore_cairo_version, ws)?;
+    let compilation_units = ops::generate_compilation_units(
+        &resolve,
+        &opts.features,
+        opts.ignore_cairo_version,
+        true,
+        ws,
+    )?;
 
     // Compile procedural macros.
     compilation_units
