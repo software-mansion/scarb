@@ -11,8 +11,8 @@ use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::allowed_libfuncs::{
     AllowedLibfuncsError, ListSelector, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST,
 };
-use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
+use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_utils::Upcast;
 use indoc::{formatdoc, writedoc};
 use std::fmt::Write;
@@ -123,10 +123,7 @@ pub fn check_allowed_libfuncs(
     Ok(())
 }
 
-pub fn check_sierra_size_limits(
-    classes: &[ContractClass],
-    ws: &Workspace<'_>,
-) {
+pub fn check_sierra_size_limits(classes: &[ContractClass], ws: &Workspace<'_>) {
     for class in classes {
         let sierra_felts = class.sierra_program.to_vec().len();
         if sierra_felts > MAX_SIERRA_PROGRAM_FELTS {
@@ -146,10 +143,7 @@ pub fn check_sierra_size_limits(
     }
 }
 
-pub fn check_casm_size_limits(
-    casm_classes: &[Option<CasmContractClass>],
-    ws: &Workspace<'_>,
-) {
+pub fn check_casm_size_limits(casm_classes: &[Option<CasmContractClass>], ws: &Workspace<'_>) {
     for casm_class in casm_classes.iter().flatten() {
         let casm_felts = casm_class.bytecode.len();
         if casm_felts > MAX_CASM_PROGRAM_FELTS {
