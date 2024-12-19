@@ -1,11 +1,19 @@
 use super::Method;
+use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use serde::{Deserialize, Serialize};
+use smol_str::SmolStr;
+
+/// Response structure containing a mapping from package names to the information about the macros they use.
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct DefinedMacrosResponse {
+    pub crate_macro_info: OrderedHashMap<SmolStr, DefinedMacrosCrateInfo>,
+}
 
 /// Response structure containing lists of all defined macros supported.
 ///
 /// Details the types of macros that can be expanded, such as attributes, inline macros, and derives.
 #[derive(Debug, Default, Serialize, Deserialize)]
-pub struct DefinedMacrosResponse {
+pub struct DefinedMacrosCrateInfo {
     /// List of attribute macro names available.
     pub attributes: Vec<String>,
     /// List of inline macro names available.
