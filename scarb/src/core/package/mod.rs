@@ -11,7 +11,7 @@ pub use name::*;
 use scarb_ui::args::WithManifestPath;
 
 use crate::core::manifest::Manifest;
-use crate::core::{Target, TargetKind};
+use crate::core::{Target, TargetKind, TomlToolScarbMetadata};
 use crate::internal::fsx;
 
 mod id;
@@ -135,6 +135,15 @@ impl Package {
         let toml_value = self.fetch_tool_metadata(tool_name)?;
         let structured = toml_value.clone().try_into()?;
         Ok(structured)
+    }
+
+    pub fn scarb_tool_metadata(&self) -> Result<TomlToolScarbMetadata> {
+        Ok(self
+            .tool_metadata("scarb")
+            .cloned()
+            .map(toml::Value::try_into)
+            .transpose()?
+            .unwrap_or_default())
     }
 
     pub fn manifest_mut(&mut self) -> &mut Manifest {

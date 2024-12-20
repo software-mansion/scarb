@@ -357,6 +357,12 @@ impl DefaultForProfile for TomlProfile {
     }
 }
 
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub struct TomlToolScarbMetadata {
+    pub allow_prebuilt_plugins: Option<Vec<String>>,
+}
+
 impl TomlManifest {
     pub fn read_from_path(path: &Utf8Path) -> Result<Self> {
         let contents = fs::read_to_string(path)

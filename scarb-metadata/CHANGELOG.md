@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+- Add `prebuilt_allowed` field to `CompilationUnitCairoPluginMetadata`.
 
 ## 1.13.0 (2024-10-28)
 - Add `CompilationUnitComponentId`.
