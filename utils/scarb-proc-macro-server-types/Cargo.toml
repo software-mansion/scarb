@@ -11,5 +11,8 @@ repository.workspace = true
 
 [dependencies]
 cairo-lang-macro = { version = "0.1", features = ["serde"] }
+cairo-lang-semantic.workspace = true
+cairo-lang-utils.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+smol_str.workspace = true
