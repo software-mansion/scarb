@@ -86,11 +86,10 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          # Linux and windows are tested as part of normal CI run.
-          #- name: linux x86-64
-          #  os: ubuntu-latest
-          #- name: windows x86-64
-          #  os: windows-latest
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
           - name: macos arm64
             os: macos-latest
           - name: macos x86-64
@@ -101,7 +100,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Run prebuilt plugin tests
         run: |
-          cargo test -p scarb --test proc_macro_prebuilt
+          cargo test -p scarb --test proc_macro_prebuilt -- --ignored
 
   check-rust:
     runs-on: ubuntu-latest
