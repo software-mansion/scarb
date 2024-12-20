@@ -45,6 +45,11 @@ impl CairoPluginProjectBuilder {
         self
     }
 
+    pub fn version(mut self, version: impl ToString) -> Self {
+        self.project = self.project.version(&version.to_string());
+        self
+    }
+
     pub fn src(mut self, path: impl Into<Utf8PathBuf>, source: impl ToString) -> Self {
         self.src.insert(path.into(), source.to_string());
         self

@@ -96,8 +96,8 @@ fn can_check_cairo_project_with_plugins() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in [..]
         "#});
@@ -649,8 +649,8 @@ fn can_define_multiple_macros() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
@@ -753,8 +753,8 @@ fn cannot_duplicate_macros_across_packages() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: duplicate expansions defined for procedural macros: hello (some v1.0.0 ([..]Scarb.toml) and other v1.0.0 ([..]Scarb.toml))
         "#});

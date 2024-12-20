@@ -90,6 +90,31 @@ impl ProcMacroClient {
             responses: Default::default(),
         }
     }
+    pub fn new_without_cargo<P: AsRef<Path>>(path: P) -> Self {
+        let mut server_process = Scarb::new()
+            .std()
+            .arg("--quiet")
+            .arg("proc-macro-server")
+            .env("CARGO", "/bin/false")
+            .env("RUSTC", "/bin/false")
+            .stdout(Stdio::piped())
+            .stdin(Stdio::piped())
+            .stderr(Stdio::inherit())
+            .current_dir(path)
+            .spawn()
+            .unwrap();
+
+        let requester = server_process.stdin.take().unwrap();
+        let responder = BufReader::new(server_process.stdout.take().unwrap()).lines();
+
+        Self {
+            requester,
+            responder,
+            server_process,
+            id_counter: Default::default(),
+            responses: Default::default(),
+        }
+    }
 
     pub fn request<M: Method>(&mut self, params: M::Params) -> PendingRequest<M> {
         let id = self.id_counter;

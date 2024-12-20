@@ -5029,6 +5029,7 @@ dependencies = [
  "smol_str",
  "snapbox",
  "tar",
+ "target-triple",
  "test-case",
  "test-for-each-example",
  "thiserror 2.0.7",
@@ -5825,6 +5826,12 @@ dependencies = [
  "libc",
  "xattr",
 ]
+
+[[package]]
+name = "target-triple"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42a4d50cdb458045afc8131fd91b64904da29548bcb63c7236e0844936c13078"
 
 [[package]]
 name = "tempfile"

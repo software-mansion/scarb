@@ -1,3 +1,5 @@
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::compiler::plugin::{fetch_cairo_plugin, CairoPluginProps};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
@@ -27,6 +29,7 @@ use indoc::formatdoc;
 use itertools::Itertools;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::iter::zip;
+use std::sync::Arc;
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -225,45 +228,98 @@ impl AllowedPrebuiltFilter {
     }
 }
 
+pub struct CompilationUnitsOpts {
+    /// Skip cairo version requirements check.
+    ///
+    /// This will ignore requirements defined in `cairo-version` field in package manifest.
+    pub ignore_cairo_version: bool,
+    /// Load prebuilt macros for procedural macros.
+    ///
+    /// Disabling this flag is useful if the generated compilation units will not be used to compile
+    /// users project. For example, when generating units for scarb-metadata.
+    /// Note, even if `true`, only macros allowed in package manifest will be loaded.
+    pub load_prebuilt_macros: bool,
+}
+
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn generate_compilation_units(
     resolve: &WorkspaceResolve,
     enabled_features: &FeaturesOpts,
-    ignore_cairo_version: bool,
     ws: &Workspace<'_>,
+    opts: CompilationUnitsOpts,
 ) -> Result<Vec<CompilationUnit>> {
-    let mut units = Vec::with_capacity(ws.members().size_hint().0);
+    let mut cairo_units: Vec<CairoCompilationUnit> = Vec::with_capacity(ws.members().size_hint().0);
     let members = ws
         .members()
         .filter(|member| !member.is_cairo_plugin())
         .collect_vec();
     validate_features(&members, enabled_features)?;
     for member in members {
-        units.extend(generate_cairo_compilation_units(
+        cairo_units.extend(generate_cairo_compilation_units(
             &member,
             resolve,
             enabled_features,
-            ignore_cairo_version,
+            opts.ignore_cairo_version,
             ws,
         )?);
     }
 
-    let cairo_plugins = units
+    let proc_macro_units = cairo_units
         .iter()
-        .filter_map(|unit| match unit {
-            CompilationUnit::Cairo(unit) => Some(unit),
-            _ => None,
-        })
         .flat_map(|unit| unit.cairo_plugins.clone())
         .filter(|plugin| !plugin.builtin)
-        .map(|plugin| plugin.package.clone())
-        .chain(ws.members().filter(|member| member.is_cairo_plugin()))
-        .unique_by(|plugin| plugin.id)
-        .collect_vec();
+        .map(|plugin| (plugin.package.clone(), plugin.prebuilt_allowed))
+        .chain(
+            ws.members()
+                .filter(|member| member.is_cairo_plugin())
+                .map(|member| (member, false)),
+        )
+        // In case some prebuilt macro is allowed for one workspace member and disallowed for
+        // the other, we need to set `prebuilt_allowed` to `false` for that macro package, so that
+        // it is compiled with Cargo.
+        // This works by placing packages with `prebuilt_allowed` set to `false` first
+        // in the iterator and relying on stability of `unique_by` method to skip duplicates with
+        // allowed prebuilt macros (retaining once with disabled).
+        .sorted_by_key(|(_, prebuilt_allowed)| if *prebuilt_allowed { 1 } else { 0 })
+        .unique_by(|(plugin, _)| plugin.id)
+        .map(|(plugin, prebuilt_allowed)| {
+            Ok((
+                plugin.id,
+                generate_cairo_plugin_compilation_units(
+                    &plugin,
+                    opts.load_prebuilt_macros && prebuilt_allowed,
+                )?,
+            ))
+        })
+        .collect::<Result<HashMap<PackageId, ProcMacroCompilationUnit>>>()?;
 
-    for plugin in cairo_plugins {
-        units.extend(generate_cairo_plugin_compilation_units(&plugin)?);
-    }
+    let units = cairo_units
+        .into_iter()
+        .map(|mut unit| {
+            for plugin in &mut unit.cairo_plugins {
+                if let Some(proc_macro_unit) = proc_macro_units.get(&plugin.package.id) {
+                    plugin.prebuilt = plugin
+                        // We check if prebuilt is allowed for this compilation unit, as it might
+                        // be disabled for some workspace members even if other members allow it.
+                        .prebuilt_allowed
+                        .then_some(proc_macro_unit.prebuilt.clone())
+                        .flatten();
+                }
+            }
+            unit
+        })
+        .map(CompilationUnit::Cairo)
+        .collect_vec();
+    let units: Vec<CompilationUnit> = units
+        .into_iter()
+        .chain(
+            proc_macro_units
+                .into_values()
+                // Sort for stability.
+                .sorted_by_key(|unit| unit.main_package_id)
+                .map(CompilationUnit::ProcMacro),
+        )
+        .collect();
 
     assert!(
         units.iter().map(CompilationUnit::id).all_unique(),
@@ -298,7 +354,7 @@ fn generate_cairo_compilation_units(
     enabled_features: &FeaturesOpts,
     ignore_cairo_version: bool,
     ws: &Workspace<'_>,
-) -> Result<Vec<CompilationUnit>> {
+) -> Result<Vec<CairoCompilationUnit>> {
     let profile = ws.current_profile()?;
     let mut solution = PackageSolutionCollector::new(member, resolve, ws);
     let grouped = member
@@ -312,14 +368,14 @@ fn generate_cairo_compilation_units(
         .sorted_by_key(|(_, group)| group[0].kind.clone())
         .map(|(_group_id, group)| {
             let group = group.into_iter().cloned().collect_vec();
-            Ok(CompilationUnit::Cairo(cairo_compilation_unit_for_target(
+            cairo_compilation_unit_for_target(
                 group,
                 member,
                 profile.clone(),
                 enabled_features,
                 ignore_cairo_version,
                 &mut solution,
-            )?))
+            )
         })
         .collect::<Result<Vec<_>>>()?;
     let result = member
@@ -328,14 +384,14 @@ fn generate_cairo_compilation_units(
         .iter()
         .filter(|target| target.group_id.is_none())
         .map(|member_target| {
-            Ok(CompilationUnit::Cairo(cairo_compilation_unit_for_target(
+            cairo_compilation_unit_for_target(
                 vec![member_target.clone()],
                 member,
                 profile.clone(),
                 enabled_features,
                 ignore_cairo_version,
                 &mut solution,
-            )?))
+            )
         })
         .collect::<Result<Vec<_>>>()?
         .into_iter()
@@ -653,6 +709,7 @@ impl<'a> PackageSolutionCollector<'a> {
                     .package(package)
                     .builtin(props.builtin)
                     .prebuilt_allowed(prebuilt_allowed)
+                    .prebuilt(None)
                     .build())
             })
             .collect::<Result<Vec<_>>>()?;
@@ -754,20 +811,37 @@ fn check_cairo_version_compatibility(
     Ok(())
 }
 
-fn generate_cairo_plugin_compilation_units(member: &Package) -> Result<Vec<CompilationUnit>> {
-    Ok(vec![CompilationUnit::ProcMacro(ProcMacroCompilationUnit {
+pub fn generate_cairo_plugin_compilation_units(
+    member: &Package,
+    // Whether loading a prebuilt library is both allowed and requested.
+    load_prebuilt: bool,
+) -> Result<ProcMacroCompilationUnit> {
+    let load_prebuilt = load_prebuilt && member.prebuilt_lib_path().is_some();
+    let prebuilt = load_prebuilt
+        .then_some(
+            ProcMacroInstance::try_load_prebuilt(member.clone())
+                // Note we ignore loading errors here.
+                // If the prebuilt library is corrupted, it will be later compiled with Cargo,
+                // like there was no prebuilt defined.
+                .ok()
+                .map(Arc::new),
+        )
+        .flatten();
+    let components = vec![CompilationUnitComponent::try_new(
+        member.clone(),
+        vec![member
+            .fetch_target(&TargetKind::CAIRO_PLUGIN)
+            .cloned()
+            // Safe to unwrap, as member.is_cairo_plugin() has been ensured before.
+            .expect("main component of procedural macro must define `cairo-plugin` target")],
+        None,
+    )?];
+    Ok(ProcMacroCompilationUnit {
         main_package_id: member.id,
         compiler_config: serde_json::Value::Null,
-        components: vec![CompilationUnitComponent::try_new(
-            member.clone(),
-            vec![member
-                .fetch_target(&TargetKind::CAIRO_PLUGIN)
-                .cloned()
-                // Safe to unwrap, as member.is_cairo_plugin() has been ensured before.
-                .expect("main component of procedural macro must define `cairo-plugin` target")],
-            None,
-        )?],
-    })])
+        components,
+        prebuilt,
+    })
 }
 
 /// Generate package ids associated with test compilation units for the given packages.
