@@ -268,13 +268,27 @@ pub fn generate_compilation_units(
         .iter()
         .flat_map(|unit| unit.cairo_plugins.clone())
         .filter(|plugin| !plugin.builtin)
-        .map(|plugin| plugin.package.clone())
-        .chain(ws.members().filter(|member| member.is_cairo_plugin()))
-        .unique_by(|plugin| plugin.id)
-        .map(|plugin| {
+        .map(|plugin| (plugin.package.clone(), plugin.prebuilt_allowed))
+        .chain(
+            ws.members()
+                .filter(|member| member.is_cairo_plugin())
+                .map(|member| (member, false)),
+        )
+        // In case some prebuilt macro is allowed for one workspace member and disallowed for
+        // the other, we need to set `prebuilt_allowed` to `false` for that macro package, so that
+        // it is compiled with Cargo.
+        // This works by placing packages with `prebuilt_allowed` set to `false` first
+        // in the iterator and relying on stability of `unique_by` method to skip duplicates with
+        // allowed prebuilt macros (retaining once with disabled).
+        .sorted_by_key(|(_, prebuilt_allowed)| if *prebuilt_allowed { 1 } else { 0 })
+        .unique_by(|(plugin, _)| plugin.id)
+        .map(|(plugin, prebuilt_allowed)| {
             Ok((
                 plugin.id,
-                generate_cairo_plugin_compilation_units(&plugin, opts.load_prebuilt_macros)?,
+                generate_cairo_plugin_compilation_units(
+                    &plugin,
+                    opts.load_prebuilt_macros && prebuilt_allowed,
+                )?,
             ))
         })
         .collect::<Result<HashMap<PackageId, ProcMacroCompilationUnit>>>()?;
@@ -284,7 +298,12 @@ pub fn generate_compilation_units(
         .map(|mut unit| {
             for plugin in &mut unit.cairo_plugins {
                 if let Some(proc_macro_unit) = proc_macro_units.get(&plugin.package.id) {
-                    plugin.prebuilt = proc_macro_unit.prebuilt.clone();
+                    plugin.prebuilt = plugin
+                        // We check if prebuilt is allowed for this compilation unit, as it might
+                        // be disabled for some workspace members even if other members allow it.
+                        .prebuilt_allowed
+                        .then_some(proc_macro_unit.prebuilt.clone())
+                        .flatten();
                 }
             }
             unit
@@ -296,6 +315,8 @@ pub fn generate_compilation_units(
         .chain(
             proc_macro_units
                 .into_values()
+                // Sort for stability.
+                .sorted_by_key(|unit| unit.main_package_id)
                 .map(CompilationUnit::ProcMacro),
         )
         .collect();
@@ -792,9 +813,10 @@ fn check_cairo_version_compatibility(
 
 pub fn generate_cairo_plugin_compilation_units(
     member: &Package,
-    load_prebuilt_macros: bool,
+    // Whether loading a prebuilt library is both allowed and requested.
+    load_prebuilt: bool,
 ) -> Result<ProcMacroCompilationUnit> {
-    let load_prebuilt = load_prebuilt_macros && member.prebuilt_lib_path().is_some();
+    let load_prebuilt = load_prebuilt && member.prebuilt_lib_path().is_some();
     let prebuilt = load_prebuilt
         .then_some(
             ProcMacroInstance::try_load_prebuilt(member.clone())

@@ -26,6 +26,7 @@ use libloading::os::unix::Symbol as RawSymbol;
 #[cfg(windows)]
 use libloading::os::windows::Symbol as RawSymbol;
 use smol_str::SmolStr;
+use tracing::trace;
 
 pub trait FromSyntaxNode {
     fn from_syntax_node(db: &dyn SyntaxGroup, node: &impl TypedSyntaxNode) -> Self;
@@ -62,6 +63,7 @@ impl Debug for ProcMacroInstance {
 impl ProcMacroInstance {
     /// Load shared library
     pub fn try_new(package_id: PackageId, lib_path: Utf8PathBuf) -> Result<Self> {
+        trace!("loading compiled macro for `{}` package", package_id);
         let plugin = unsafe { Plugin::try_new(lib_path)? };
         Ok(Self {
             expansions: unsafe { Self::load_expansions(&plugin, package_id)? },
@@ -71,6 +73,7 @@ impl ProcMacroInstance {
     }
 
     pub fn try_load_prebuilt(package: Package) -> Result<Self> {
+        trace!("loading prebuilt macro for `{}` package", package.id);
         let prebuilt_path = package
             .prebuilt_lib_path()
             .context("could not resolve prebuilt library path")?;

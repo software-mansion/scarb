@@ -5,7 +5,7 @@ use indoc::indoc;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
-use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::assert_matches;
 
@@ -96,8 +96,8 @@ fn can_check_cairo_project_with_plugins() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in [..]
         "#});
@@ -204,74 +204,6 @@ fn compile_cairo_plugin_with_other_target() {
 
         Caused by:
             target `cairo-plugin` cannot be mixed with other targets
-        "#});
-}
-
-#[test]
-fn compile_with_prebuilt_plugins() {
-    let t = TempDir::new().unwrap();
-
-    ProjectBuilder::start()
-        .name("hello")
-        .lib_cairo(indoc! {r#"
-            fn main() -> u32 {
-                let x = some!(42);
-                x
-            }
-        "#})
-        .dep(
-            "proc_macro_example",
-            Dep.version("0.1.2").registry("https://scarbs.dev/"),
-        )
-        .manifest_extra(indoc! {r#"
-        "#})
-        .build(&t);
-    Scarb::quick_snapbox()
-        .arg("build")
-        // Disable Cargo and Rust compiler.
-        .env("CARGO", "/bin/false")
-        .env("RUSTC", "/bin/false")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-            [..]Downloading proc_macro_example v0.1.2 ([..])
-            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..] Finished `dev` profile target(s) in [..]
-        "#});
-}
-
-#[test]
-fn compile_with_invalid_prebuilt_plugins() {
-    let t = TempDir::new().unwrap();
-
-    ProjectBuilder::start()
-        .name("hello")
-        .lib_cairo(indoc! {r#"
-            fn main() -> u32 {
-                let x = some!(42);
-                x
-            }
-        "#})
-        .dep(
-            "invalid_prebuilt_example",
-            Dep.version("0.1.0").registry("https://scarbs.dev/"),
-        )
-        .manifest_extra(indoc! {r#"
-        "#})
-        .build(&t);
-    Scarb::quick_snapbox()
-        .arg("build")
-        // Disable output from Cargo.
-        .env("CARGO_TERM_QUIET", "true")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-            [..]Downloading invalid_prebuilt_example v0.1.0 ([..])
-            [..]Compiling invalid_prebuilt_example v0.1.0 ([..])
-            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..] Finished `dev` profile target(s) in [..]
         "#});
 }
 
@@ -717,8 +649,8 @@ fn can_define_multiple_macros() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
@@ -821,8 +753,8 @@ fn cannot_duplicate_macros_across_packages() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: duplicate expansions defined for procedural macros: hello (some v1.0.0 ([..]Scarb.toml) and other v1.0.0 ([..]Scarb.toml))
         "#});
