@@ -68,6 +68,7 @@ impl SharedLibraryProvider for Package {
 
     fn prebuilt_lib_path(&self) -> Option<Utf8PathBuf> {
         let target_triple = target!();
+        dbg!(&target_triple);
 
         let prebuilt_name = format!(
             "{name}_v{version}_{target}{suffix}",
@@ -83,6 +84,7 @@ impl SharedLibraryProvider for Package {
             .join("scarb")
             .join("cairo-plugin")
             .join(prebuilt_name);
+        dbg!(&prebuilt_path);
 
         prebuilt_path.exists().then_some(prebuilt_path)
     }

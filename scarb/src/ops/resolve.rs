@@ -816,7 +816,11 @@ pub fn generate_cairo_plugin_compilation_units(
     // Whether loading a prebuilt library is both allowed and requested.
     load_prebuilt: bool,
 ) -> Result<ProcMacroCompilationUnit> {
+    dbg!(member.id);
+    dbg!(load_prebuilt);
     let load_prebuilt = load_prebuilt && member.prebuilt_lib_path().is_some();
+    dbg!(member.prebuilt_lib_path());
+    dbg!(member.prebuilt_lib_path().is_some());
     let prebuilt = load_prebuilt
         .then_some(
             ProcMacroInstance::try_load_prebuilt(member.clone())
@@ -827,6 +831,7 @@ pub fn generate_cairo_plugin_compilation_units(
                 .map(Arc::new),
         )
         .flatten();
+    dbg!(prebuilt.is_some());
     let components = vec![CompilationUnitComponent::try_new(
         member.clone(),
         vec![member
