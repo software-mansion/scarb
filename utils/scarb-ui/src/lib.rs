@@ -103,7 +103,7 @@ impl Ui {
 
     /// Print the message to standard output if not in quiet verbosity mode.
     pub fn print<T: Message>(&self, message: T) {
-        if self.verbosity >= Verbosity::Normal {
+        if self.verbosity > Verbosity::Quiet {
             self.do_print(message);
         }
     }
@@ -140,7 +140,9 @@ impl Ui {
 
     /// Print a warning to the user.
     pub fn warn(&self, message: impl AsRef<str>) {
-        self.print(TypedMessage::styled("warn", "yellow", message.as_ref()))
+        if self.verbosity > Verbosity::NoWarnings {
+            self.print(TypedMessage::styled("warn", "yellow", message.as_ref()))
+        }
     }
 
     /// Print an error to the user.
