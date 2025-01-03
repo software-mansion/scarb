@@ -10,6 +10,7 @@ members = [
     "plugins/cairo-lang-macro-attributes",
     "plugins/cairo-lang-macro-stable",
     "utils/create-output-dir",
+    "utils/once-map",
     "utils/scarb-proc-macro-server-types",
     "utils/scarb-build-metadata",
     "utils/scarb-stable-hash",
@@ -76,6 +77,7 @@ clap = { version = "4", features = ["derive", "env", "string"] }
 console = "0.15"
 convert_case = "0.6.0"
 darling = "0.20"
+dashmap = "6"
 data-encoding = "2"
 deno_task_shell = ">=0.13"
 derive_builder = ">=0.12"
@@ -86,7 +88,7 @@ expect-test = "1.5"
 flate2 = { version = "1.0.35", default-features = false, features = ["zlib"] }
 fs4 = { version = "0.7", features = ["tokio"] }
 fs_extra = "1"
-futures = { version = "0.3", default-features = false, features = ["std", "async-await"] }
+futures = { version = "0.3", default-features = false, features = ["std", "async-await", "executor"] }
 gix = ">=0.55"
 gix-path = "0.10"
 glob = "0.3"
