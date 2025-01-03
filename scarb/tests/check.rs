@@ -54,7 +54,7 @@ fn check_fail_with_syntax_error() {
             error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
              --> [..]/lib.cairo:1:1
             not_a_keyword
-            ^***********^
+            ^^^^^^^^^^^^^
 
             error: could not check `hello` due to previous error
         "#});

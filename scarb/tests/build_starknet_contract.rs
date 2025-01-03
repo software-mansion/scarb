@@ -365,57 +365,57 @@ fn compile_starknet_contract_without_starknet_dep() {
         error: Plugin diagnostic: Unsupported attribute.
          --> [..]src/lib.cairo:9:1
         #[starknet::contract]
-        ^*******************^
+        ^^^^^^^^^^^^^^^^^^^^^
 
         error: Plugin diagnostic: Unsupported attribute.
          --> [..]src/lib.cairo:13:5
             #[storage]
-            ^********^
+            ^^^^^^^^^^
 
         error: Plugin diagnostic: Unsupported attribute.
          --> [..]src/lib.cairo:18:5
             #[constructor]
-            ^************^
+            ^^^^^^^^^^^^^^
 
         error: Plugin diagnostic: Unsupported attribute.
          --> [..]src/lib.cairo:23:5
             #[abi(embed_v0)]
-            ^**************^
+            ^^^^^^^^^^^^^^^^
 
         error: Type not found.
          --> [..]src/lib.cairo:19:30
             fn constructor(ref self: ContractState, value_: u128) {
-                                     ^***********^
+                                     ^^^^^^^^^^^^^
 
         error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapWriteAccess::write and core::starknet::storage::StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:20:20
                 self.value.write(value_);
-                           ^***^
+                           ^^^^^
 
         error: Type not found.
          --> [..]src/lib.cairo:24:37
             impl Balance of super::IBalance<ContractState> {
-                                            ^***********^
+                                            ^^^^^^^^^^^^^
 
         error: Type not found.
          --> [..]src/lib.cairo:25:23
                 fn get(self: @ContractState) -> u128 {
-                              ^***********^
+                              ^^^^^^^^^^^^^
 
         error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapReadAccess::read and core::starknet::storage::StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:26:24
                     self.value.read()
-                               ^**^
+                               ^^^^
 
         error: Type not found.
          --> [..]src/lib.cairo:28:31
                 fn increase(ref self: ContractState, a: u128)  {
-                                      ^***********^
+                                      ^^^^^^^^^^^^^
 
         error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapWriteAccess::write and core::starknet::storage::StoragePointerWriteAccess::write. Consider adding type annotations or explicitly refer to the impl function.
          --> [..]src/lib.cairo:29:24
                     self.value.write( self.value.read() + a );
-                               ^***^
+                               ^^^^^
 
         error: could not check `hello` due to previous error
         "#});
