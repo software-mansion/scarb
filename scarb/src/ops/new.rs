@@ -217,12 +217,12 @@ fn mk(
     Ok(())
 }
 
-fn init_snforge(name: PackageName, target_dir: Utf8PathBuf, config: &Config) -> Result<()> {
-    let target_dir = target_dir.parent().context("package must have a parent")?;
+fn init_snforge(name: PackageName, root_dir: Utf8PathBuf, config: &Config) -> Result<()> {
     let mut process = Command::new("snforge")
-        .arg("init")
-        .arg(name.as_str())
-        .current_dir(target_dir)
+        .arg("new")
+        .args(["--name", name.as_str()])
+        .arg("--overwrite")
+        .arg(root_dir.as_str())
         .envs(get_env_vars(config, None)?)
         .stderr(Stdio::inherit())
         .stdout(Stdio::inherit())
