@@ -138,42 +138,45 @@ fn test_diagnostics_error() {
     error: Identifier not found.
      --> [..]
               ERC20Event: ERC20Component::Event
-                          ^************^
+                          ^^^^^^^^^^^^^^
 
     error: Identifier not found.
      --> [..]
               pub erc20: ERC20Component::Storage
-                         ^************^
+                         ^^^^^^^^^^^^^^
 
     error: Type annotations needed. Failed to infer ?0.
      --> [..]
           #[storage]
-          ^********^
+          ^^^^^^^^^^
 
     error: Invalid drop trait implementation, Trait `core::traits::Drop::<<missing>>` has multiple implementations, in: `hello_world::DualCaseERC20Mock::ContractStateDrop`, `hello_world::DualCaseERC20Mock::StorageStorageBaseDrop`
      --> [..]
-          #[storage]
-          ^********^
+            #[storage]
+     _______^
+    | ...
+    |       }
+    |_______^
 
     error: Trait has no implementation in context: core::starknet::event::Event::<hello_world::DualCaseERC20Mock::Event>.
      --> [..]
       #[starknet::contract]
-      ^*******************^
+      ^^^^^^^^^^^^^^^^^^^^^
 
     error: Identifier not found.
      --> [..]
           component!(path: ERC20Component, storage: erc20, event: ERC20Event);
-                           ^************^
+                           ^^^^^^^^^^^^^^
 
     error: Invalid drop trait implementation, Candidate impl core::starknet::storage::storage_base::FlattenedStorageDrop::<?0> has an unused generic parameter.
      --> [..]
           #[storage]
-          ^********^
+          ^^^^^^^^^^
 
     error: Invalid copy trait implementation, Candidate impl core::starknet::storage::storage_base::FlattenedStorageCopy::<?0> has an unused generic parameter.
      --> [..]
           #[storage]
-          ^********^
+          ^^^^^^^^^^
 
     error: Compilation failed.
     error: process did not exit successfully: exit code: 1
@@ -189,42 +192,45 @@ fn test_diagnostics_error() {
     error: Identifier not found.
      --> [..]
               ERC20Event: ERC20Component::Event
-                          ^************^
+                          ^^^^^^^^^^^^^^
 
     error: Identifier not found.
      --> [..]
               pub erc20: ERC20Component::Storage
-                         ^************^
+                         ^^^^^^^^^^^^^^
 
     error: Type annotations needed. Failed to infer ?0.
      --> [..]
           #[storage]
-          ^********^
+          ^^^^^^^^^^
 
     error: Invalid drop trait implementation, Trait `core::traits::Drop::<<missing>>` has multiple implementations, in: `hello_world::DualCaseERC20Mock::ContractStateDrop`, `hello_world::DualCaseERC20Mock::StorageStorageBaseDrop`
      --> [..]
-          #[storage]
-          ^********^
+            #[storage]
+     _______^
+    | ...
+    |       }
+    |_______^
 
     error: Trait has no implementation in context: core::starknet::event::Event::<hello_world::DualCaseERC20Mock::Event>.
      --> [..]
       #[starknet::contract]
-      ^*******************^
+      ^^^^^^^^^^^^^^^^^^^^^
 
     error: Identifier not found.
      --> [..]
           component!(path: ERC20Component, storage: erc20, event: ERC20Event);
-                           ^************^
+                           ^^^^^^^^^^^^^^
 
     error: Invalid drop trait implementation, Candidate impl core::starknet::storage::storage_base::FlattenedStorageDrop::<?0> has an unused generic parameter.
      --> [..]
           #[storage]
-          ^********^
+          ^^^^^^^^^^
 
     error: Invalid copy trait implementation, Candidate impl core::starknet::storage::storage_base::FlattenedStorageCopy::<?0> has an unused generic parameter.
      --> [..]
           #[storage]
-          ^********^
+          ^^^^^^^^^^
 
     error: Compilation failed.
   "#});
