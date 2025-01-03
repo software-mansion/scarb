@@ -40,7 +40,7 @@ fn usage() {
         [..] Downloading bar v1.0.0 ([..])
         "#});
 
-    let expected = expect![["
+    let expected = expect![[r#"
         GET /api/v1/index/config.json
         accept: */*
         accept-encoding: gzip, br, deflate
@@ -71,6 +71,19 @@ fn usage() {
 
         ###
 
+        GET /index/3/b/bar.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        if-none-match: ...
+        user-agent: ...
+
+        304 Not Modified
+        content-length: 0
+        etag: ...
+
+        ###
+
         GET /bar-1.0.0.tar.zst
         accept: */*
         accept-encoding: gzip, br, deflate
@@ -83,7 +96,7 @@ fn usage() {
         content-type: application/octet-stream
         etag: ...
         last-modified: ...
-    "]];
+    "#]];
     expected.assert_eq(&registry.logs());
 }
 
@@ -117,7 +130,7 @@ fn publish_verified() {
         [..] Downloading bar v1.0.0 ([..])
         "#});
 
-    let expected = expect![["
+    let expected = expect![[r#"
         GET /api/v1/index/config.json
         accept: */*
         accept-encoding: gzip, br, deflate
@@ -148,6 +161,19 @@ fn publish_verified() {
 
         ###
 
+        GET /index/3/b/bar.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        if-none-match: ...
+        user-agent: ...
+
+        304 Not Modified
+        content-length: 0
+        etag: ...
+
+        ###
+
         GET /bar-1.0.0.tar.zst
         accept: */*
         accept-encoding: gzip, br, deflate
@@ -160,7 +186,7 @@ fn publish_verified() {
         content-type: application/octet-stream
         etag: ...
         last-modified: ...
-    "]];
+    "#]];
     expected.assert_eq(&registry.logs());
 }
 
@@ -194,7 +220,8 @@ fn not_found() {
         error: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
 
         Caused by:
-            package not found in registry: baz ^1 (registry+http://[..])
+            0: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
+            1: package not found in registry: baz ^1 (registry+http://[..])
         "#});
 
     let expected = expect![["
@@ -248,8 +275,9 @@ fn missing_config_json() {
         error: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
 
         Caused by:
-            0: failed to fetch registry config
-            1: HTTP status client error (404 Not Found) for url (http://[..]/config.json)
+            0: failed to lookup for `baz ^1 (registry+http://[..])` in registry: registry+http://[..]
+            1: failed to fetch registry config
+            2: HTTP status client error (404 Not Found) for url (http://[..]/config.json)
         "#});
 
     let expected = expect![["
@@ -349,6 +377,19 @@ fn caching() {
 
         ###
 
+        GET /index/3/b/bar.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        if-none-match: ...
+        user-agent: ...
+
+        304 Not Modified
+        content-length: 0
+        etag: ...
+
+        ###
+
         GET /bar-1.0.0.tar.zst
         accept: */*
         accept-encoding: gzip, br, deflate
@@ -361,6 +402,32 @@ fn caching() {
         content-type: application/octet-stream
         etag: ...
         last-modified: ...
+
+        ###
+
+        GET /index/3/b/bar.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        if-none-match: ...
+        user-agent: ...
+
+        304 Not Modified
+        content-length: 0
+        etag: ...
+
+        ###
+
+        GET /index/3/b/bar.json
+        accept: */*
+        accept-encoding: gzip, br, deflate
+        host: ...
+        if-none-match: ...
+        user-agent: ...
+
+        304 Not Modified
+        content-length: 0
+        etag: ...
 
         ###
 

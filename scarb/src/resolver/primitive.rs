@@ -16,7 +16,6 @@ pub async fn resolve(
     registry: &dyn Registry,
     lockfile: Lockfile,
 ) -> Result<Resolve> {
-    // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
 
     let main_packages = summaries
