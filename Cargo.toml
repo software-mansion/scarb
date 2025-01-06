@@ -108,7 +108,7 @@ predicates = "3"
 proc-macro2 = "1"
 quote = "1"
 ra_ap_toolchain = "0.0.218"
-redb = "2.3.0"
+redb = "2.4.0"
 reqwest = { version = "0.11", features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"], default-features = false }
 salsa = { package = "rust-analyzer-salsa", version = "0.17.0-pre.6" }
 semver = { version = "1", features = ["serde"] }
