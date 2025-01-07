@@ -128,16 +128,16 @@ pub fn check_sierra_size_limits(classes: &[ContractClass], ws: &Workspace<'_>) {
         let sierra_felts = class.sierra_program.to_vec().len();
         if sierra_felts > MAX_SIERRA_PROGRAM_FELTS {
             ws.config().ui().warn(formatdoc! {r#"
-                Sierra program exceeds maximum byte-code size:
-                {MAX_SIERRA_PROGRAM_FELTS} felts allowed on Starknet. Actual size: {sierra_felts} felts.
+                Sierra program exceeds maximum byte-code size on Starknet:
+                {MAX_SIERRA_PROGRAM_FELTS} felts allowed. Actual size: {sierra_felts} felts.
             "#});
         }
 
         let class_size = serde_json::to_vec(class).unwrap().len();
         if class_size > MAX_CONTRACT_CLASS_BYTES {
             ws.config().ui().warn(formatdoc! {r#"
-                Contract class size exceeds maximum allowed size:
-                {MAX_CONTRACT_CLASS_BYTES} bytes allowed on Starknet. Actual size: {class_size} bytes.
+                Contract class size exceeds maximum allowed size on Starknet:
+                {MAX_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {class_size} bytes.
             "#});
         }
     }
@@ -148,16 +148,16 @@ pub fn check_casm_size_limits(casm_classes: &[Option<CasmContractClass>], ws: &W
         let casm_felts = casm_class.bytecode.len();
         if casm_felts > MAX_CASM_PROGRAM_FELTS {
             ws.config().ui().warn(formatdoc! {r#"
-                CASM program exceeds maximum byte-code size:
-                {MAX_CASM_PROGRAM_FELTS} felts allowed on Starknet. Actual size: {casm_felts} felts.
+                CASM program exceeds maximum byte-code size on Starknet:
+                {MAX_CASM_PROGRAM_FELTS} felts allowed. Actual size: {casm_felts} felts.
             "#});
         }
 
         let compiled_class_size = serde_json::to_vec(casm_class).unwrap().len();
         if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
             ws.config().ui().warn(formatdoc! {r#"
-                Compiled contract class size exceeds maximum allowed size:
-                {MAX_COMPILED_CONTRACT_CLASS_BYTES} bytes allowed on Starknet. Actual size: {compiled_class_size} bytes.
+                Compiled contract class size exceeds maximum allowed size on Starknet:
+                {MAX_COMPILED_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {compiled_class_size} bytes.
             "#});
         }
     }
