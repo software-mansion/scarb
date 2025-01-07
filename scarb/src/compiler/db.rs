@@ -35,9 +35,6 @@ pub(crate) fn build_scarb_root_database(
     if !unit.compiler_config.enable_gas {
         b.skip_auto_withdraw_gas();
     }
-    if unit.compiler_config.add_redeposit_gas {
-        b.with_add_redeposit_gas();
-    }
     let mut db = b.build()?;
     inject_virtual_wrapper_lib(&mut db, unit)?;
     Ok(ScarbDatabase {

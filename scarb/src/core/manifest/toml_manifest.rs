@@ -322,8 +322,6 @@ pub struct TomlCairo {
     pub allow_warnings: Option<bool>,
     /// Enable auto gas withdrawal and gas usage check.
     pub enable_gas: Option<bool>,
-    /// Add a call to the redeposits_gas libfunc in a bunch of places.
-    pub add_redeposit_gas: Option<bool>,
     /// Add a mapping between sierra statement indexes and fully qualified paths of cairo functions
     /// to debug info. A statement index maps to a vector consisting of a function which caused the
     /// statement to be generated and all functions that were inlined or generated along the way.
@@ -901,9 +899,6 @@ impl TomlManifest {
             }
             if let Some(enable_gas) = cairo.enable_gas {
                 compiler_config.enable_gas = enable_gas;
-            }
-            if let Some(add_redeposit_gas) = cairo.add_redeposit_gas {
-                compiler_config.add_redeposit_gas = add_redeposit_gas;
             }
             if let Some(unstable_add_statements_functions_debug_info) =
                 cairo.unstable_add_statements_functions_debug_info
