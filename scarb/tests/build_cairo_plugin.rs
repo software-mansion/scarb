@@ -247,7 +247,7 @@ fn can_emit_plugin_warning() {
             warn: Plugin diagnostic: Some warning from macro.
              --> [..]lib.cairo:1:1
             #[some]
-            ^*****^
+            ^^^^^^^
 
             [..]Finished `dev` profile target(s) in [..]
         "#});
@@ -293,7 +293,7 @@ fn can_emit_plugin_error() {
             error: Plugin diagnostic: Some error from macro.
              --> [..]lib.cairo:1:1
             #[some]
-            ^*****^
+            ^^^^^^^
 
             error: could not compile `hello` due to previous error
         "#});
@@ -342,12 +342,12 @@ fn diags_from_generated_code_mapped_correctly() {
             error: Plugin diagnostic: Some error from macro.
              --> [..]lib.cairo:2:1
             #[some]
-            ^*****^
+            ^^^^^^^
             
             error: Function not found.
              --> [..]lib.cairo:4:5
                 i_don_exist();
-                ^*********^
+                ^^^^^^^^^^^
             
             error: could not compile `hello` due to previous error
     "#});
@@ -798,7 +798,7 @@ fn cannot_use_undefined_macro() {
         error: Plugin diagnostic: Unsupported attribute.
          --> [..]lib.cairo:1:1
         #[world]
-        ^******^
+        ^^^^^^^^
 
         error: could not compile `hello` due to previous error
         "#});
@@ -943,7 +943,7 @@ fn empty_inline_macro_result() {
             error: Inline macro `some` failed.
              --> [..]lib.cairo:2:14
                 let _x = some!();
-                         ^*****^
+                         ^^^^^^^
             
             error: could not compile `hello` due to previous error
         "#});
