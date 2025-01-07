@@ -225,47 +225,42 @@ fn format_with_import_sorting() {
             Diff in file [..]lib.cairo:
              --- original
             +++ modified
-            @@ -1,21 +1,18 @@
-            -use openzeppelin::introspection::interface;
+            @@ -1,21 +1,21 @@
+            +use openzeppelin::introspection::first;
+             use openzeppelin::introspection::interface;
             -use openzeppelin::introspection::first;
-            +use openzeppelin::introspection::{first, interface};
-
+            
              #[starknet::contract]
              mod SRC5 {
-            -    use openzeppelin::introspection::interface;
+                 use openzeppelin::introspection::interface;
             -    use openzeppelin::introspection::{interface, AB};
             +    use openzeppelin::introspection::{AB, interface};
-
+            
                  #[storage]
                  struct Storage {
             -        supported_interfaces: LegacyMap<felt252, bool>
             +        supported_interfaces: LegacyMap<felt252, bool>,
                  }
-            -
+            
                  use openzeppelin::introspection::first;
-
+            
                  mod A {}
-            +    mod F;
-                 mod G;
-            -    mod F;
-
+            -    mod G;
+                 mod F;
+            +    mod G;
+            
                  #[abi(embed_v0)]
                  impl SRC5Impl of interface::ISRC5<ContractState> {
-            @@ -23,12 +20,10 @@
-                         true
-                     }
-                 }
-            -
-                 use A;
+            @@ -28,7 +28,7 @@
                  use starknet::ArrayTrait;
-
+            
                  mod Inner {
-            -        use C;
+            +        use B;
+                     use C;
             -        use B;
-            +        use {B, C};
                  }
              }
-
+            
         "});
 }
 

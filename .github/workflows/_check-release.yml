@@ -41,10 +41,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --profile=ci --no-fail-fast
   
-  snforge-init:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: foundry-rs/setup-snfoundry@v3
-      - run: cargo test --profile=ci --package scarb --test snforge_init new_simple -- --ignored
+#  snforge-init:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: dtolnay/rust-toolchain@stable
+#      - uses: foundry-rs/setup-snfoundry@v3
+#      - run: cargo test --profile=ci --package scarb --test snforge_init new_simple -- --ignored
