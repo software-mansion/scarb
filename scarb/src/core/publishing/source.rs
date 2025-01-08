@@ -5,8 +5,8 @@ use ignore::{DirEntry, WalkBuilder};
 use crate::core::Package;
 use crate::internal::fsx::PathBufUtf8Ext;
 use crate::{
-    CARGO_LOCK_FILE_NAME, CARGO_MANIFEST_FILE_NAME, DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME,
-    MANIFEST_FILE_NAME, SCARB_IGNORE_FILE_NAME,
+    CAIRO_PROJECT_FILE_NAME, CARGO_LOCK_FILE_NAME, CARGO_MANIFEST_FILE_NAME,
+    DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME, SCARB_IGNORE_FILE_NAME,
 };
 
 /// List all files relevant to building this package inside this source.
@@ -55,7 +55,8 @@ fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> 
                 return false;
             }
 
-            // Skip `Scarb.toml`, `Scarb.lock`, 'Cargo.toml`, 'Cargo.lock', and `target` directory.
+            // Skip `Scarb.toml`, `Scarb.lock`, 'Cargo.toml`, 'Cargo.lock', `cairo_project.toml`,
+            // and `target` directory.
             if entry.depth() == 1
                 && ({
                     let f = entry.file_name();
@@ -64,6 +65,7 @@ fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> 
                         || f == CARGO_MANIFEST_FILE_NAME
                         || f == CARGO_LOCK_FILE_NAME
                         || f == DEFAULT_TARGET_DIR_NAME
+                        || f == CAIRO_PROJECT_FILE_NAME
                 })
             {
                 return false;
