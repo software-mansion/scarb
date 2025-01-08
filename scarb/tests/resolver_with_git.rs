@@ -1,10 +1,10 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::indoc;
-
 use scarb_test_support::command::Scarb;
 use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{DepBuilder, ProjectBuilder};
+use snapbox::assert_matches;
 
 #[test]
 fn valid_triangle() {
@@ -33,15 +33,34 @@ fn valid_triangle() {
         .dep("proxy", &proxy)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    let output = Scarb::quick_snapbox()
         .arg("fetch")
         .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-        [..]  Updating git repository file://[..]/culprit
-        [..]  Updating git repository file://[..]/proxy
-        "#});
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(
+        output.status.success(),
+        "output is not success:\n{}",
+        stderr.clone()
+    );
+
+    let output = String::from_utf8_lossy(&output.stdout).to_string();
+    assert_matches(
+        indoc! {r#"
+        [..]  Updating git repository file://[..]
+        [..]  Updating git repository file://[..]
+        "#},
+        &output,
+    );
+
+    assert!(
+        // Order is not assured.
+        output.contains("/proxy") && output.contains("/culprit"),
+        "{}",
+        stderr
+    );
 }
 
 #[test]
@@ -73,18 +92,33 @@ fn two_revs_of_same_dep() {
         .dep("proxy", &proxy)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    let output = Scarb::quick_snapbox()
         .arg("fetch")
         .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-            [..] Updating git repository file://[..]/culprit
-            [..] Updating git repository file://[..]/culprit
-            error: found dependencies on the same package `culprit` coming from incompatible sources:
-            source 1: git+file://[..]/culprit#[..]
-            source 2: git+file://[..]/culprit?branch=branchy#[..]
-        "#});
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(!output.status.success(), "{}", stderr.clone());
+
+    let output = String::from_utf8_lossy(&output.stdout).to_string();
+    assert_matches(
+        indoc! {r#"
+        [..] Updating git repository file://[..]/culprit
+        [..] Updating git repository file://[..]/culprit
+        error: found dependencies on the same package `culprit` coming from incompatible sources:
+        source 1: git+file://[..]/culprit[..]
+        source 2: git+file://[..]/culprit[..]
+        "#},
+        &output,
+    );
+
+    assert!(
+        // Order is not assured.
+        output.contains("culprit?branch=branchy#") && output.contains("culprit#"),
+        "{}",
+        stderr
+    );
 }
 
 #[test]
@@ -125,18 +159,40 @@ fn two_revs_of_same_dep_diamond() {
         .dep("dep2", &dep2)
         .build(&t);
 
-    Scarb::quick_snapbox()
+    let output = Scarb::quick_snapbox()
         .arg("fetch")
         .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
-            [..] Updating git repository file://[..]/dep1
-            [..] Updating git repository file://[..]/dep2
-            [..] Updating git repository file://[..]/culprit
-            [..] Updating git repository file://[..]/culprit
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(!output.status.success(), "{}", stderr.clone());
+
+    let output = String::from_utf8_lossy(&output.stdout).to_string();
+    assert_matches(
+        indoc! {r#"
+            [..] Updating git repository file://[..]
+            [..] Updating git repository file://[..]
+            [..] Updating git repository file://[..]
+            [..] Updating git repository file://[..]
             error: found dependencies on the same package `culprit` coming from incompatible sources:
-            source 1: git+file://[..]/culprit#[..]
-            source 2: git+file://[..]/culprit?branch=branchy#[..]
-        "#});
+            source 1: git+file://[..]/culprit[..]
+            source 2: git+file://[..]/culprit[..]
+        "#},
+        &output,
+    );
+
+    assert!(
+        // Order is not assured.
+        output.contains("/dep1") && output.contains("/dep2") && output.contains("/culprit"),
+        "{}",
+        stderr.clone()
+    );
+
+    assert!(
+        // Order is not assured.
+        output.contains("/culprit?branch=branchy#") && output.contains("/culprit#"),
+        "{}",
+        stderr
+    );
 }

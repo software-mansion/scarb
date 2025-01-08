@@ -108,12 +108,14 @@ pathdiff = { version = "0.2", features = ["camino"] }
 petgraph = "0.6"
 predicates = "3"
 proc-macro2 = "1"
+pubgrub = { git = "https://github.com/software-mansion-labs/pubgrub.git", branch = "dev" }
 quote = "1"
 ra_ap_toolchain = "0.0.218"
 redb = "2.4.0"
 reqwest = { version = "0.11", features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"], default-features = false }
 salsa = { package = "rust-analyzer-salsa", version = "0.17.0-pre.6" }
 semver = { version = "1", features = ["serde"] }
+semver-pubgrub = { git = "https://github.com/software-mansion-labs/semver-pubgrub.git" }
 serde = { version = "1", features = ["serde_derive"] }
 serde-untagged = "0.1"
 serde-value = "0.7"
@@ -134,6 +136,7 @@ test-case = "3"
 thiserror = "2"
 time = "0.3"
 tokio = { version = "1", features = ["macros", "io-util", "process", "rt", "rt-multi-thread", "sync"] }
+tokio-stream = "0.1"
 toml = "0.8"
 toml_edit = { version = "0.22", features = ["serde"] }
 tower-http = { version = "0.4", features = ["fs"] }

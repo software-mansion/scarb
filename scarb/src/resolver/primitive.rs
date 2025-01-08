@@ -10,13 +10,37 @@ use indoc::{formatdoc, indoc};
 use petgraph::graphmap::DiGraphMap;
 use std::collections::{HashMap, HashSet};
 
+/// Builds the list of all packages required to build the first argument.
+///
+/// This is meant to be used by `scarb::resolver::resolve` function.
+///
+/// # Arguments
+///
+/// * `summaries` - the list of all top-level packages that are intended to be part of
+///     the lock file (resolve output).
+///     These typically are a list of all workspace members.
+///
+/// * `registry` - this is the source from which all package summaries are loaded.
+///     It is expected that this is extensively configured ahead of time and is idempotent with
+///     our requests to it (aka returns the same results for the same query every time).
+///     It is also advised to implement internal caching, as the resolver may frequently ask
+///     repetitive queries.
+///
+/// * `lockfile` - a [`Lockfile`] instance, which is used to guide the resolution process. Empty
+///     lockfile will result in no guidance. This function does not read or write lock files from
+///     the filesystem.
+///
+/// # Implementation:
+///
+/// This is a naive implementation of the dependency resolver.
+/// It will choose the first available version of a dependency that satisfies the version requirement.
+/// It will not attempt to solve any package incompatibilities and return an error instead.
 #[tracing::instrument(level = "trace", skip_all)]
 pub async fn resolve(
     summaries: &[Summary],
     registry: &dyn Registry,
     lockfile: Lockfile,
 ) -> Result<Resolve> {
-    // TODO(#2): This is very bad, use PubGrub here.
     let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
 
     let main_packages = summaries
