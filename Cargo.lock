@@ -1196,8 +1196,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-language-server"
-version = "2.9.1"
-source = "git+https://github.com/software-mansion/cairols?rev=94f1543b43caa6355bf492f80cdf46b2ae2bf854#94f1543b43caa6355bf492f80cdf46b2ae2bf854"
+version = "2.9.2"
+source = "git+https://github.com/software-mansion/cairols?rev=6432886fea7564816078ed140434addf50bbaa23#6432886fea7564816078ed140434addf50bbaa23"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1220,7 +1220,7 @@ dependencies = [
  "governor",
  "indent",
  "indoc",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "jod-thread",
  "libc",
  "lsp-server",
@@ -3126,9 +3126,9 @@ dependencies = [
 
 [[package]]
 name = "governor"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0746aa765db78b521451ef74221663b57ba595bf83f75d0ce23cc09447c8139f"
+checksum = "842dc78579ce01e6a1576ad896edc92fca002dd60c9c3746b7fc2bec6fb429d0"
 dependencies = [
  "cfg-if",
  "futures-sink",
@@ -3667,6 +3667,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3897,13 +3906,14 @@ dependencies = [
 
 [[package]]
 name = "lsp-server"
-version = "0.7.7"
+version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "550446e84739dcaf6d48a4a093973850669e13e8a34d8f8d64851041be267cd9"
+checksum = "9462c4dc73e17f971ec1f171d44bfffb72e65a130117233388a0ebc7ec5656f9"
 dependencies = [
  "crossbeam-channel",
  "log",
  "serde",
+ "serde_derive",
  "serde_json",
 ]
 
@@ -5485,9 +5495,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.134"
+version = "1.0.135"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d00f4175c42ee48b15416f6193a959ba3a0d67fc699a0db9ad12df9f83991c7d"
+checksum = "2b0d7ba2887406110130a978386c4e1befb98c674b4fba677954e4db976630d9"
 dependencies = [
  "itoa",
  "memchr",
