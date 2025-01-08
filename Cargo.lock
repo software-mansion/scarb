@@ -78,6 +78,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c6cb57a04249c6480766f7f7cef5467412af1490f8d1e243141daddada3264f"
 
 [[package]]
+name = "annotate-snippets"
+version = "0.11.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "710e8eae58854cdc1790fcb56cca04d712a17be849eeb81da2a724bf4bae2bc4"
+dependencies = [
+ "anstyle",
+ "unicode-width 0.2.0",
+]
+
+[[package]]
 name = "anstream"
 version = "0.6.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1238,6 +1248,25 @@ dependencies = [
  "tracing-chrome",
  "tracing-subscriber",
  "which",
+]
+
+[[package]]
+name = "cairo-lint-core"
+version = "0.1.0"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=3cd07f36a6d509c8844284dd88a17535b6b1e265#3cd07f36a6d509c8844284dd88a17535b6b1e265"
+dependencies = [
+ "annotate-snippets",
+ "cairo-lang-compiler",
+ "cairo-lang-defs",
+ "cairo-lang-diagnostics",
+ "cairo-lang-filesystem",
+ "cairo-lang-semantic",
+ "cairo-lang-syntax",
+ "cairo-lang-test-plugin",
+ "cairo-lang-utils",
+ "if_chain",
+ "log",
+ "num-bigint",
 ]
 
 [[package]]
@@ -3491,6 +3520,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "if_chain"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb56e1aa765b4b4f3aadfab769793b7087bb03a4ea4920644a6d238e2df5b9ed"
+
+[[package]]
 name = "ignore"
 version = "0.4.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5075,6 +5110,7 @@ dependencies = [
 name = "scarb"
 version = "2.9.2"
 dependencies = [
+ "annotate-snippets",
  "anyhow",
  "assert_fs",
  "async-trait",
@@ -5096,6 +5132,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
+ "cairo-lint-core",
  "camino",
  "cargo_metadata",
  "clap",

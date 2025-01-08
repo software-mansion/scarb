@@ -219,7 +219,7 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
             let ScarbDatabase {
                 mut db,
                 proc_macro_host,
-            } = build_scarb_root_database(&unit, ws)?;
+            } = build_scarb_root_database(&unit, ws, vec![])?;
             check_starknet_dependency(&unit, ws, &db, &package_name);
             let result = ws.config().compilers().compile(unit, &mut db, ws);
             proc_macro_host
@@ -284,7 +284,7 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let result = match unit {
         CompilationUnit::ProcMacro(unit) => proc_macro::check_unit(unit, ws),
         CompilationUnit::Cairo(unit) => {
-            let ScarbDatabase { db, .. } = build_scarb_root_database(&unit, ws)?;
+            let ScarbDatabase { db, .. } = build_scarb_root_database(&unit, ws, vec![])?;
             let main_crate_ids = collect_main_crate_ids(&unit, &db);
             check_starknet_dependency(&unit, ws, &db, &package_name);
             let mut compiler_config = build_compiler_config(&db, &unit, &main_crate_ids, ws);

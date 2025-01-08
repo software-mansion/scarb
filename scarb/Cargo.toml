@@ -14,6 +14,7 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
+annotate-snippets.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
 cairo-lang-compiler.workspace = true
@@ -34,6 +35,7 @@ cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-test-plugin.workspace = true
 cairo-lang-utils.workspace = true
+cairo-lint-core.workspace = true
 camino.workspace = true
 clap.workspace = true
 convert_case.workspace = true
