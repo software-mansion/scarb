@@ -47,6 +47,7 @@ repository = "https://github.com/software-mansion/scarb"
 # To keep our Cargo.toml following this contract, always use `cargo xtask upgrade`
 # for manipulating these dependencies.
 [workspace.dependencies]
+annotate-snippets = "0.11.5"
 anyhow = "1"
 assert_fs = "1"
 async-trait = "0.1"
@@ -71,6 +72,7 @@ cairo-lang-test-plugin = "*"
 cairo-lang-test-runner = "*"
 cairo-lang-utils = { version = "*", features = ["env_logger"] }
 cairo-language-server = "*"
+cairo-lint-core = {git = "https://github.com/software-mansion/cairo-lint", rev = "3cd07f36a6d509c8844284dd88a17535b6b1e265"}
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }

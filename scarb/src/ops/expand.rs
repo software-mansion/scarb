@@ -168,7 +168,7 @@ fn do_expand(
     opts: ExpandOpts,
     ws: &Workspace<'_>,
 ) -> Result<()> {
-    let ScarbDatabase { db, .. } = build_scarb_root_database(compilation_unit, ws)?;
+    let ScarbDatabase { db, .. } = build_scarb_root_database(compilation_unit, ws, vec![])?;
     let name = compilation_unit.main_component().cairo_package_name();
     let main_crate_id = db.intern_crate(CrateLongId::Real {
         name,
