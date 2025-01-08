@@ -1,0 +1,34 @@
+[package]
+name = "scarb-cairo-execute"
+publish = false
+
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+bincode = { version = "2.0.0-rc.3" }
+cairo-lang-executable.workspace = true
+cairo-lang-runner.workspace = true
+cairo-vm.workspace = true
+camino.workspace = true
+clap.workspace = true
+create-output-dir = { path = "../../utils/create-output-dir" }
+indoc.workspace = true
+num-bigint.workspace = true
+predicates.workspace = true
+scarb = { path = "../../scarb" }
+scarb-metadata = { path = "../../scarb-metadata" }
+scarb-ui = { path = "../../utils/scarb-ui" }
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+assert_fs.workspace = true
+scarb-test-support = { path = "../../utils/scarb-test-support" }
+snapbox.workspace = true
