@@ -65,7 +65,7 @@ mod state;
 /// packages that satisfy all incompatibilities cannot is never a solution of the dependency
 /// requirements). During the resolver run, new incompatibilities are derived until a valid solution
 /// is found in available versions.
-pub async fn resolve<'c>(
+pub async fn resolve(
     summaries: &[Summary],
     registry: &dyn Registry,
     lockfile: Lockfile,
