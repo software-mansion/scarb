@@ -1,3 +1,4 @@
+use assert_fs::fixture::FileWriteStr;
 use assert_fs::{prelude::PathChild, TempDir};
 use indoc::indoc;
 use scarb_test_support::{
@@ -19,18 +20,20 @@ fn lint_main_package() {
     "#})
         .build(&t);
 
-    Scarb::quick_snapbox()
+    Scarb::quick_snapbox().env("CLICOLOR", "0")
         .arg("lint")
         .current_dir(&t)
         .assert()
+        // Current expected values include ANSI color codes because lint has custom renderer.
         .stdout_matches(indoc! {r#"
-              Checking hello v1.0.0 ([..]Scarb.toml)
-          warning: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
-           --> [..]
-            |
-          3 |     if x == false {
-            |        ----------
-            |
+              Checking hello v1.0.0 ([..]/Scarb.toml)
+          [1m[33mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+           [1m[94m-->[0m [..]/lib.cairo:3:8
+            [1m[94m|[0m
+          [1m[94m3 |[0m     if x == false {
+            [1m[94m|[0m        [1m[33m----------[0m
+            [1m[94m|[0m
+  
         "#})
         .success();
 }
@@ -79,27 +82,82 @@ fn lint_workspace() {
       .arg("--workspace")
       .current_dir(&t)
       .assert()
+      // Current expected values include ANSI color codes because lint has custom renderer.
       .stdout_matches(indoc! {r#"
-            Checking first v1.0.0 ([..]first/Scarb.toml)
-        warning: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
-         --> [..]/lib.cairo:3:8
-          |
-        3 |     if first == false {
-          |        --------------
-          |
-            Checking main v1.0.0 ([..]/Scarb.toml)
-        warning: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
-         --> [..]/lib.cairo:3:8
-          |
-        3 |     if _main == false {
-          |        --------------
-          |
-            Checking second v1.0.0 ([..]second/Scarb.toml)  
-        warning: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
-         --> [..]/lib.cairo:3:8
-          |
-        3 |     if second == false {
-          |        ---------------
-          |          
+          Checking first v1.0.0 ([..]/first/Scarb.toml)
+      [1m[33mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+       [1m[94m-->[0m [..]/lib.cairo:3:8
+        [1m[94m|[0m
+      [1m[94m3 |[0m     if first == false {
+        [1m[94m|[0m        [1m[33m--------------[0m
+        [1m[94m|[0m
+
+          Checking main v1.0.0 ([..]/Scarb.toml)
+      [1m[33mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+       [1m[94m-->[0m [..]/lib.cairo:3:8
+        [1m[94m|[0m
+      [1m[94m3 |[0m     if _main == false {
+        [1m[94m|[0m        [1m[33m--------------[0m
+        [1m[94m|[0m
+
+          Checking second v1.0.0 ([..]/second/Scarb.toml)
+      [1m[33mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+       [1m[94m-->[0m [..]/lib.cairo:3:8
+        [1m[94m|[0m
+      [1m[94m3 |[0m     if second == false {
+        [1m[94m|[0m        [1m[33m---------------[0m
+        [1m[94m|[0m
+
       "#}).success();
+}
+
+#[test]
+fn lint_integration_tests() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+          pub fn f1() -> u32 {
+              42
+          }
+
+          fn main() {
+              // This is a comment
+          }
+        "#})
+        .dep_cairo_test()
+        .build(&t);
+    t.child("tests/test1.cairo")
+        .write_str(indoc! {r#"
+          use hello::f1;
+          #[test]
+          fn it_works() {
+              let x = true;
+              if false == x {
+                  println!("x is false");
+              }
+              assert_eq!(1, f1());
+          }
+        "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("-t")
+        .current_dir(&t)
+        .assert()
+        // Current expected values include ANSI color codes because lint has custom renderer.
+        .stdout_matches(indoc! {r#"
+              Checking hello v1.0.0 ([..]/Scarb.toml)
+              Checking test(hello_unittest) hello v1.0.0 ([..]/Scarb.toml)
+              Checking test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]/Scarb.toml)
+          [1m[33mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+           [1m[94m-->[0m [..]/tests/test1.cairo:5:8
+            [1m[94m|[0m
+          [1m[94m5 |[0m     if false == x {
+            [1m[94m|[0m        [1m[33m----------[0m
+            [1m[94m|[0m
+
+        "#})
+        .success();
 }

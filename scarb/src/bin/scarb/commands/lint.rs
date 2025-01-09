@@ -18,6 +18,7 @@ pub fn run(args: LintArgs, config: &Config) -> Result<()> {
             packages,
             test: args.test,
             fix: args.fix,
+            ignore_cairo_version: args.ignore_cairo_version,
         },
         &ws,
     )

@@ -14,9 +14,7 @@ use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateLongId, FileId};
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::diagnostic::SemanticDiagnosticKind;
-use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_syntax::node::SyntaxNode;
-use cairo_lang_test_plugin::test_plugin_suite;
 use cairo_lang_utils::Upcast;
 use cairo_lint_core::{
     diagnostics::format_diagnostic,
@@ -36,6 +34,7 @@ pub struct LintOptions {
     pub packages: Vec<Package>,
     pub test: bool,
     pub fix: bool,
+    pub ignore_cairo_version: bool,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -52,8 +51,8 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         &feature_opts,
         ws,
         CompilationUnitsOpts {
-            ignore_cairo_version: false,
-            load_prebuilt_macros: false,
+            ignore_cairo_version: opts.ignore_cairo_version,
+            load_prebuilt_macros: true,
         },
     )?;
 
@@ -95,15 +94,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .ui()
                         .print(Status::new("Checking", &compilation_unit.name()));
 
-                    let additional_plugins = if opts.test {
-                        vec![
-                            test_plugin_suite(),
-                            cairo_lint_plugin_suite(),
-                            starknet_plugin_suite(),
-                        ]
-                    } else {
-                        vec![cairo_lint_plugin_suite(), starknet_plugin_suite()]
-                    };
+                    let additional_plugins = vec![cairo_lint_plugin_suite()];
                     let ScarbDatabase { db, .. } =
                         build_scarb_root_database(compilation_unit, ws, additional_plugins)?;
 
