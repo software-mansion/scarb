@@ -187,7 +187,7 @@ pub enum Command {
         to a registry.
     ")]
     Publish(PublishArgs),
-    /// Run lint checker.
+    /// Checks a package to catch common mistakes and improve your Cairo code.
     Lint(LintArgs),
     /// Run arbitrary package scripts.
     Run(ScriptsRunnerArgs),
@@ -538,20 +538,18 @@ pub struct LintArgs {
     /// Name of the package.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
-    /// Path to the file or project to analyze
-    pub path: Option<String>,
-    /// Logging verbosity.
-    #[command(flatten)]
-    pub verbose: VerbositySpec,
-    /// Comma separated list of target names to compile.
-    #[arg(long, value_delimiter = ',', env = "SCARB_TARGET_NAMES")]
-    pub target_names: Vec<String>,
+
     /// Should lint the tests.
     #[arg(short, long, default_value_t = false)]
     pub test: bool,
+
     /// Should fix the lint when it can.
     #[arg(short, long, default_value_t = false)]
     pub fix: bool,
+
+    /// Do not error on `cairo-version` mismatch.
+    #[arg(long)]
+    pub ignore_cairo_version: bool,
 }
 
 /// Git reference specification arguments.
