@@ -20,12 +20,28 @@ fn lint_main_package() {
     "#})
         .build(&t);
 
-    Scarb::quick_snapbox().env("CLICOLOR", "0")
+    let snapbox = Scarb::quick_snapbox()
         .arg("lint")
         .current_dir(&t)
         .assert()
-        // Current expected values include ANSI color codes because lint has custom renderer.
-        .stdout_matches(indoc! {r#"
+        .success();
+
+    // Current expected values include ANSI color codes because lint has custom renderer.
+    #[cfg(windows)]
+    snapbox.stdout_matches(indoc! {r#"
+              Checking hello v1.0.0 ([..]/Scarb.toml)
+          [1m93mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+           [1m[96m-->[0m [..]/lib.cairo:3:8
+            [1m[96m|[0m
+          [1m[96m3 |[0m     if x == false {
+            [1m[96m|[0m        [1m[93m----------[0m
+            [1m[96m|[0m
+  
+        "#});
+
+    // Current expected values include ANSI color codes because lint has custom renderer.
+    #[cfg(not(windows))]
+        snapbox.stdout_matches(indoc! {r#"
               Checking hello v1.0.0 ([..]/Scarb.toml)
           [1m[33mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
            [1m[94m-->[0m [..]/lib.cairo:3:8
@@ -34,8 +50,7 @@ fn lint_main_package() {
             [1m[94m|[0m        [1m[33m----------[0m
             [1m[94m|[0m
   
-        "#})
-        .success();
+        "#});
 }
 
 #[test]
@@ -77,13 +92,45 @@ fn lint_workspace() {
         "#}))
         .build(&t);
 
-    Scarb::quick_snapbox()
-      .arg("lint")
-      .arg("--workspace")
-      .current_dir(&t)
-      .assert()
-      // Current expected values include ANSI color codes because lint has custom renderer.
-      .stdout_matches(indoc! {r#"
+    let snapbox = Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("--workspace")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    // Current expected values include ANSI color codes because lint has custom renderer.
+    #[cfg(windows)]
+      snapbox.stdout_matches(indoc! {r#"
+          Checking first v1.0.0 ([..]/first/Scarb.toml)
+      [1m[93mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+       [1m[96m-->[0m [..]/lib.cairo:3:8
+        [1m[96m|[0m
+      [1m[96m3 |[0m     if first == false {
+        [1m[96m|[0m        [1m[93m--------------[0m
+        [1m[96m|[0m
+ 
+          Checking main v1.0.0 ([..]/Scarb.toml)
+      [1m[93mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+       [1m[96m-->[0m [..]/lib.cairo:3:8
+        [1m[96m|[0m
+      [1m[96m3 |[0m     if _main == false {
+        [1m[96m|[0m        [1m[93m--------------[0m
+        [1m[96m|[0m
+ 
+          Checking second v1.0.0 ([..]/second/Scarb.toml)
+      [1m[93mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+       [1m[96m-->[0m [..]/lib.cairo:3:8
+        [1m[96m|[0m
+      [1m[96m3 |[0m     if second == false {
+        [1m[96m|[0m        [1m[93m---------------[0m
+        [1m[96m|[0m
+ 
+      "#});
+
+    // Current expected values include ANSI color codes because lint has custom renderer.
+    #[cfg(not(windows))]
+      snapbox.stdout_matches(indoc! {r#"
           Checking first v1.0.0 ([..]/first/Scarb.toml)
       [1m[33mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
        [1m[94m-->[0m [..]/lib.cairo:3:8
@@ -108,7 +155,7 @@ fn lint_workspace() {
         [1m[94m|[0m        [1m[33m---------------[0m
         [1m[94m|[0m
 
-      "#}).success();
+      "#});
 }
 
 #[test]
@@ -141,13 +188,31 @@ fn lint_integration_tests() {
         "#})
         .unwrap();
 
-    Scarb::quick_snapbox()
+    let snapbox = Scarb::quick_snapbox()
         .arg("lint")
         .arg("-t")
         .current_dir(&t)
         .assert()
-        // Current expected values include ANSI color codes because lint has custom renderer.
-        .stdout_matches(indoc! {r#"
+        .success();
+
+    // Current expected values include ANSI color codes because lint has custom renderer.
+    #[cfg(windows)]
+      snapbox.stdout_matches(indoc! {r#"
+            Checking hello v1.0.0 ([..]/Scarb.toml)
+            Checking test(hello_unittest) hello v1.0.0 ([..]/Scarb.toml)
+            Checking test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]/Scarb.toml)
+        [1m[93mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+         [1m[96m-->[0m [..]/tests/test1.cairo:5:8
+          [1m[96m|[0m
+        [1m[96m5 |[0m     if false == x {
+          [1m[96m|[0m        [1m[93m----------[0m
+          [1m[96m|[0m
+
+      "#});
+
+    // Current expected values include ANSI color codes because lint has custom renderer.
+    #[cfg(not(windows))]
+        snapbox.stdout_matches(indoc! {r#"
               Checking hello v1.0.0 ([..]/Scarb.toml)
               Checking test(hello_unittest) hello v1.0.0 ([..]/Scarb.toml)
               Checking test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]/Scarb.toml)
@@ -158,6 +223,5 @@ fn lint_integration_tests() {
             [1m[94m|[0m        [1m[33m----------[0m
             [1m[94m|[0m
 
-        "#})
-        .success();
+        "#});
 }
