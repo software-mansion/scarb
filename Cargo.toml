@@ -9,6 +9,7 @@ members = [
     "plugins/cairo-lang-macro",
     "plugins/cairo-lang-macro-attributes",
     "plugins/cairo-lang-macro-stable",
+    "plugins/cairo-lang-quote",
     "utils/create-output-dir",
     "utils/once-map",
     "utils/scarb-proc-macro-server-types",
@@ -51,6 +52,7 @@ anyhow = "1"
 assert_fs = "1"
 async-trait = "0.1"
 axum = { version = "0.6", features = ["http2"] }
+bumpalo = "3.16.0"
 cairo-lang-compiler = "*"
 cairo-lang-defs = "*"
 cairo-lang-diagnostics = "*"

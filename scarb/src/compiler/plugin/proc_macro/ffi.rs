@@ -1,16 +1,14 @@
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::core::{Package, PackageId};
 use anyhow::{ensure, Context, Result};
-use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_macro::{
     ExpansionKind as SharedExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult,
-    TokenStream,
+    TextSpan, TokenStream,
 };
 use cairo_lang_macro_stable::{
     StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
-    StableResultWrapper, StableTokenStream,
+    StableResultWrapper, StableTextSpan, StableTokenStream,
 };
-use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_syntax::node::TypedSyntaxNode;
 use camino::Utf8PathBuf;
 use itertools::Itertools;
 use libloading::{Library, Symbol};
@@ -18,27 +16,13 @@ use std::ffi::{c_char, CStr, CString};
 use std::fmt::Debug;
 use std::slice;
 
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::ProcMacroAuxData;
-
 #[cfg(not(windows))]
 use libloading::os::unix::Symbol as RawSymbol;
 #[cfg(windows)]
 use libloading::os::windows::Symbol as RawSymbol;
 use smol_str::SmolStr;
 use tracing::trace;
-
-pub trait FromSyntaxNode {
-    fn from_syntax_node(db: &dyn SyntaxGroup, node: &impl TypedSyntaxNode) -> Self;
-}
-
-impl FromSyntaxNode for TokenStream {
-    fn from_syntax_node(db: &dyn SyntaxGroup, node: &impl TypedSyntaxNode) -> Self {
-        let mut builder = PatchBuilder::new(db, node);
-        builder.add_node(node.as_syntax_node());
-        Self::new(builder.build().0)
-    }
-}
 
 const EXEC_ATTR_PREFIX: &str = "__exec_attr_";
 
@@ -175,25 +159,27 @@ impl ProcMacroInstance {
     pub(crate) fn generate_code(
         &self,
         item_name: SmolStr,
+        call_site: TextSpan,
         attr: TokenStream,
         token_stream: TokenStream,
     ) -> ProcMacroResult {
-        // This must be manually freed with call to from_owned_stable.
-        let stable_token_stream = token_stream.into_stable();
-        let stable_attr = attr.into_stable();
+        // This must be manually freed with call to `free_owned_stable`.
+        let stable_token_stream = token_stream.as_stable();
+        let stable_attr = attr.as_stable();
         // Allocate proc macro name.
         let item_name = CString::new(item_name.to_string()).unwrap().into_raw();
         // Call FFI interface for code expansion.
         // Note that `stable_result` has been allocated by the dynamic library.
+        let call_site: StableTextSpan = call_site.into_stable();
         let stable_result =
-            (self.plugin.vtable.expand)(item_name, stable_attr, stable_token_stream);
+            (self.plugin.vtable.expand)(item_name, call_site, stable_attr, stable_token_stream);
         // Free proc macro name.
         let _ = unsafe { CString::from_raw(item_name) };
         // Free the memory allocated by the `stable_token_stream`.
         // This will call `CString::from_raw` under the hood, to take ownership.
         unsafe {
-            TokenStream::from_owned_stable(stable_result.input);
-            TokenStream::from_owned_stable(stable_result.input_attr);
+            TokenStream::free_owned_stable(stable_result.input);
+            TokenStream::free_owned_stable(stable_result.input_attr);
         };
         // Create Rust representation of the result.
         // Note, that the memory still needs to be freed on the allocator side!
@@ -218,7 +204,7 @@ impl ProcMacroInstance {
         // Actual call to FFI interface for aux data callback.
         let context = (self.plugin.vtable.post_process_callback)(context);
         // Free the allocated memory.
-        let _ = unsafe { PostProcessContext::from_owned_stable(context) };
+        unsafe { PostProcessContext::free_owned_stable(context) };
     }
 
     pub fn doc(&self, item_name: SmolStr) -> Option<String> {
@@ -298,8 +284,12 @@ impl Expansion {
 
 type ListExpansions = extern "C" fn() -> StableExpansionsList;
 type FreeExpansionsList = extern "C" fn(StableExpansionsList);
-type ExpandCode =
-    extern "C" fn(*const c_char, StableTokenStream, StableTokenStream) -> StableResultWrapper;
+type ExpandCode = extern "C" fn(
+    *const c_char,
+    StableTextSpan,
+    StableTokenStream,
+    StableTokenStream,
+) -> StableResultWrapper;
 type FreeResult = extern "C" fn(StableProcMacroResult);
 type PostProcessCallback = extern "C" fn(StablePostProcessContext) -> StablePostProcessContext;
 type DocExpansion = extern "C" fn(*const c_char) -> *mut c_char;
