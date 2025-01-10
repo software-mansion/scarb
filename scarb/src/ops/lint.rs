@@ -92,7 +92,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                 CompilationUnit::Cairo(compilation_unit) => {
                     ws.config()
                         .ui()
-                        .print(Status::new("Checking", &compilation_unit.name()));
+                        .print(Status::new("Linting", &compilation_unit.name()));
 
                     let additional_plugins = vec![cairo_lint_plugin_suite()];
                     let ScarbDatabase { db, .. } =
