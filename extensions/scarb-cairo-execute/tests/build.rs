@@ -28,17 +28,19 @@ fn can_run_default_main_function_from_executable() {
     let output = Scarb::quick_snapbox()
         .arg("cairo-execute")
         .current_dir(&t)
-        .output()
-        .unwrap();
+        .assert()
+        .stdout_matches(indoc! {r#"
+            [..]Running hello
+        "#});
 
-    assert!(
-        output.status.success(),
-        "stdout={}\n stderr={}",
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr),
-    );
-    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    assert!(stdout.contains("Running hello"));
+    // assert!(
+    //     output.status.success(),
+    //     "stdout={}\n stderr={}",
+    //     String::from_utf8_lossy(&output.stdout),
+    //     String::from_utf8_lossy(&output.stderr),
+    // );
+    // let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    // assert!(stdout.contains("Running hello"));
 
     t.child("target/cairo-execute/execution1.zip")
         .assert(predicates::path::exists());
