@@ -9,11 +9,11 @@ use crate::{
 use annotate_snippets::Renderer;
 use anyhow::{anyhow, Result};
 use cairo_lang_defs::db::DefsGroup;
-use cairo_lang_diagnostics::{DiagnosticEntry, Maybe};
+use cairo_lang_diagnostics::{DiagnosticEntry, Diagnostics};
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateLongId, FileId};
-use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::diagnostic::SemanticDiagnosticKind;
+use cairo_lang_semantic::{db::SemanticGroup, SemanticDiagnostic};
 use cairo_lang_syntax::node::SyntaxNode;
 use cairo_lang_utils::Upcast;
 use cairo_lint_core::{
@@ -22,6 +22,7 @@ use cairo_lint_core::{
     plugin::{cairo_lint_plugin_suite, diagnostic_kind_from_message, CairoLintKind},
 };
 use scarb_ui::components::Status;
+use serde::Deserialize;
 use smol_str::SmolStr;
 use std::cmp::Reverse;
 use std::collections::HashMap;
@@ -98,29 +99,22 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                     let ScarbDatabase { db, .. } =
                         build_scarb_root_database(compilation_unit, ws, additional_plugins)?;
 
-                    let main_component = compilation_unit
-                        .components
-                        .iter()
-                        .find(|component| component.package.id == compilation_unit.main_package_id)
-                        .expect("main component is guaranteed to exist in compilation unit");
+                    let main_component = compilation_unit.main_component();
 
                     let crate_id = db.intern_crate(CrateLongId::Real {
                         name: SmolStr::new(main_component.target_name()),
                         discriminator: main_component.id.to_discriminator(),
                     });
-                    let mut diags = Vec::new();
 
-                    for module_id in &*db.crate_modules(crate_id) {
-                        if let Maybe::Ok(module_diags) = db.module_semantic_diagnostics(*module_id)
-                        {
-                            diags.push(module_diags);
-                        }
-                    }
+                    let diags: Vec<Diagnostics<SemanticDiagnostic>> = db
+                        .crate_modules(crate_id)
+                        .iter()
+                        .flat_map(|module_id| db.module_semantic_diagnostics(*module_id).ok())
+                        .collect();
 
-                    let should_lint_panics = package
-                        .tool_metadata("cairo-lint")
-                        .and_then(|config| config["nopanic"].as_bool())
-                        .unwrap_or(false);
+                    let should_lint_panics = cairo_lint_tool_metadata(&package)?.nopanic;
+                    println!("metadata: {:?}", cairo_lint_tool_metadata(&package)?);
+                    println!("metadata: {:?}", package.tool_metadata("cairo-lint"));
 
                     let renderer = Renderer::styled();
 
@@ -234,4 +228,18 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[derive(Deserialize, Default, Debug)]
+pub struct CairoLintToolMetadata {
+    pub nopanic: bool,
+}
+
+fn cairo_lint_tool_metadata(package: &Package) -> Result<CairoLintToolMetadata> {
+    Ok(package
+        .tool_metadata("cairo-lint")
+        .cloned()
+        .map(toml::Value::try_into)
+        .transpose()?
+        .unwrap_or_default())
 }
