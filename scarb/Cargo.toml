@@ -105,6 +105,7 @@ reqwest = { workspace = true, default-features = true }
 reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
 
 [dev-dependencies]
+annotate-snippets = { workspace = true, features = ["testing-colors"] }
 assert_fs.workspace = true
 expect-test.workspace = true
 fs_extra.workspace = true
