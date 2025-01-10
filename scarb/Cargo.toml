@@ -14,7 +14,6 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
-annotate-snippets.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
 cairo-lang-compiler.workspace = true
@@ -105,7 +104,6 @@ reqwest = { workspace = true, default-features = true }
 reqwest = { workspace = true, features = ["rustls-tls-native-roots"] }
 
 [dev-dependencies]
-annotate-snippets = { workspace = true, features = ["testing-colors"] }
 assert_fs.workspace = true
 expect-test.workspace = true
 fs_extra.workspace = true
@@ -119,6 +117,7 @@ similar-asserts.workspace = true
 snapbox.workspace = true
 test-case.workspace = true
 test-for-each-example = { path = "../utils/test-for-each-example" }
+cairo-lint-core = { workspace = true, features = ["testing-colors"]}
 
 [build-dependencies]
 fs_extra.workspace = true
