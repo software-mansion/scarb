@@ -37,7 +37,7 @@ impl ResolverState {
         Ok(())
     }
 
-    async fn process_request<'a>(
+    async fn process_request(
         &self,
         request: Request,
         registry: &dyn Registry,

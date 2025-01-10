@@ -114,7 +114,7 @@ impl RegistryClient for LocalRegistryClient<'_> {
             let records = match fsx::read(records_path) {
                 Err(e)
                     if e.downcast_ref::<io::Error>()
-                        .map_or(false, |ioe| ioe.kind() == io::ErrorKind::NotFound) =>
+                        .is_some_and(|ioe| ioe.kind() == io::ErrorKind::NotFound) =>
                 {
                     return Ok(RegistryResource::NotFound);
                 }
