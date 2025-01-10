@@ -187,6 +187,8 @@ pub enum Command {
         to a registry.
     ")]
     Publish(PublishArgs),
+    /// Checks a package to catch common mistakes and improve your Cairo code.
+    Lint(LintArgs),
     /// Run arbitrary package scripts.
     Run(ScriptsRunnerArgs),
     /// Execute all unit and integration tests of a local package.
@@ -525,6 +527,25 @@ pub struct PublishArgs {
     /// Specify features to enable.
     #[command(flatten)]
     pub features: FeaturesSpec,
+
+    /// Do not error on `cairo-version` mismatch.
+    #[arg(long)]
+    pub ignore_cairo_version: bool,
+}
+
+#[derive(Parser, Clone, Debug)]
+pub struct LintArgs {
+    /// Name of the package.
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
+
+    /// Should lint the tests.
+    #[arg(short, long, default_value_t = false)]
+    pub test: bool,
+
+    /// Should fix the lint when it can.
+    #[arg(short, long, default_value_t = false)]
+    pub fix: bool,
 
     /// Do not error on `cairo-version` mismatch.
     #[arg(long)]
