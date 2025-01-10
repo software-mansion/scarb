@@ -1,9 +1,11 @@
+use std::collections::HashSet;
+
 use crate::{
     compiler::{
         db::{build_scarb_root_database, ScarbDatabase},
         CompilationUnit, CompilationUnitAttributes,
     },
-    core::TargetKind,
+    core::{PackageId, TargetKind},
     ops,
 };
 use anyhow::Result;
@@ -19,13 +21,14 @@ use cairo_lint_core::{
     diagnostics::format_diagnostic,
     plugin::{cairo_lint_plugin_suite, diagnostic_kind_from_message, CairoLintKind},
 };
+use itertools::Itertools;
 use scarb_ui::components::Status;
 use serde::Deserialize;
 use smol_str::SmolStr;
 
 use crate::core::{Package, Workspace};
 
-use super::{CompilationUnitsOpts, FeaturesOpts, FeaturesSelector};
+use super::{compile_unit, CompilationUnitsOpts, FeaturesOpts, FeaturesSelector};
 
 pub struct LintOptions {
     pub packages: Vec<Package>,
@@ -53,6 +56,19 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         },
     )?;
 
+    // Select proc macro units that need to be compiled for Cairo compilation units.
+    let required_plugins = compilation_units
+        .iter()
+        .flat_map(|unit| match unit {
+            CompilationUnit::Cairo(unit) => unit
+                .cairo_plugins
+                .iter()
+                .map(|p| p.package.id)
+                .collect_vec(),
+            _ => Vec::new(),
+        })
+        .collect::<HashSet<PackageId>>();
+
     for package in opts.packages {
         let package_compilation_units = if opts.test {
             compilation_units
@@ -78,13 +94,24 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                 .unwrap()]
         };
 
-        for compilation_unit in package_compilation_units {
+        // We guarantee that proc-macro units are always processed first,
+        // so that all required plugins are compiled before we start checking Cairo units.
+        let units = package_compilation_units.into_iter().sorted_by_key(|unit| {
+            if matches!(unit, CompilationUnit::ProcMacro(_)) {
+                0
+            } else {
+                1
+            }
+        });
+
+        for compilation_unit in units {
             match compilation_unit {
-                // We skip proc macros as we don't want to check anything related to rust code.
-                CompilationUnit::ProcMacro(_) => ws
-                    .config()
-                    .ui()
-                    .print(Status::new("Skipping proc macro", &compilation_unit.name())),
+                CompilationUnit::ProcMacro(_) => {
+                    // We process all proc-macro units that are required by Cairo compilation units.
+                    if required_plugins.contains(&compilation_unit.main_package_id()) {
+                        compile_unit(compilation_unit.clone(), ws)?;
+                    }
+                }
                 CompilationUnit::Cairo(compilation_unit) => {
                     ws.config()
                         .ui()

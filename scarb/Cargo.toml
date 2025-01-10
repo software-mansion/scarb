@@ -117,7 +117,7 @@ similar-asserts.workspace = true
 snapbox.workspace = true
 test-case.workspace = true
 test-for-each-example = { path = "../utils/test-for-each-example" }
-cairo-lint-core = { workspace = true, features = ["testing-colors"]}
+cairo-lint-core = { workspace = true, features = ["testing-colors"] }
 
 [build-dependencies]
 fs_extra.workspace = true
