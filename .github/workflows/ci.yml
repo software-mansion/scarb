@@ -136,3 +136,11 @@ jobs:
           cache-dependency-path: website/package-lock.json
       - run: npm ci
       - run: npm run fmt:check
+
+  snforge-init:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: foundry-rs/setup-snfoundry@v3
+      - run: cargo test --profile=ci --package scarb --test snforge_init new_simple -- --ignored
