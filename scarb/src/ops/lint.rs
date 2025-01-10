@@ -6,7 +6,6 @@ use crate::{
     core::TargetKind,
     ops,
 };
-use annotate_snippets::Renderer;
 use anyhow::Result;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::Diagnostics;
@@ -14,6 +13,7 @@ use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_semantic::diagnostic::SemanticDiagnosticKind;
 use cairo_lang_semantic::{db::SemanticGroup, SemanticDiagnostic};
+use cairo_lint_core::annotate_snippets::Renderer;
 use cairo_lint_core::{
     apply_fixes,
     diagnostics::format_diagnostic,
@@ -57,7 +57,6 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         let package_compilation_units = if opts.test {
             compilation_units
                 .iter()
-                // TODO: Test this (if the test packages are also checked)
                 .filter(|compilation_unit| {
                     let is_main_component = compilation_unit.main_package_id() == package.id;
                     let has_test_components =

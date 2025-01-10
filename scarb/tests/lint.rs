@@ -20,15 +20,13 @@ fn lint_main_package() {
     "#})
         .build(&t);
 
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("lint")
         .current_dir(&t)
         .assert()
-        .success();
-
-    // Current expected values include ANSI color codes because lint has custom renderer.
-    #[cfg(not(windows))]
-        snapbox.stdout_matches(indoc! {r#"
+        .success()
+        // Current expected values include ANSI color codes because lint has custom renderer.
+        .stdout_matches(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           [1m[33mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
            [1m[94m-->[0m [..]/lib.cairo:3:8
@@ -79,16 +77,14 @@ fn lint_workspace() {
         "#}))
         .build(&t);
 
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("lint")
         .arg("--workspace")
         .current_dir(&t)
         .assert()
-        .success();
-
-    // Current expected values include ANSI color codes because lint has custom renderer.
-    #[cfg(not(windows))]
-      snapbox.stdout_matches(indoc! {r#"
+        .success()
+        // Current expected values include ANSI color codes because lint has custom renderer.
+        .stdout_matches(indoc! {r#"
            Linting first v1.0.0 ([..]/first/Scarb.toml)
       [1m[33mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
        [1m[94m-->[0m [..]/lib.cairo:3:8
@@ -146,16 +142,14 @@ fn lint_integration_tests() {
         "#})
         .unwrap();
 
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("lint")
         .arg("-t")
         .current_dir(&t)
         .assert()
-        .success();
-
-    // Current expected values include ANSI color codes because lint has custom renderer.
-    #[cfg(not(windows))]
-        snapbox.stdout_matches(indoc! {r#"
+        .success()
+        // Current expected values include ANSI color codes because lint has custom renderer.
+        .stdout_matches(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
                Linting test(hello_unittest) hello v1.0.0 ([..]/Scarb.toml)
                Linting test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]/Scarb.toml)

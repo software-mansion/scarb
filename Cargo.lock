@@ -1253,7 +1253,7 @@ dependencies = [
 [[package]]
 name = "cairo-lint-core"
 version = "0.1.0"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=b13c0d1600eb9f0fd9d1d807c695dc0db32a7f65#b13c0d1600eb9f0fd9d1d807c695dc0db32a7f65"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=5a3e8f50db7de8106fcfbaf18ae90526b3647996#5a3e8f50db7de8106fcfbaf18ae90526b3647996"
 dependencies = [
  "annotate-snippets",
  "anyhow",
@@ -5111,7 +5111,6 @@ dependencies = [
 name = "scarb"
 version = "2.9.2"
 dependencies = [
- "annotate-snippets",
  "anyhow",
  "assert_fs",
  "async-trait",
