@@ -15,10 +15,12 @@ use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_semantic::diagnostic::SemanticDiagnosticKind;
 use cairo_lang_semantic::{db::SemanticGroup, SemanticDiagnostic};
+use cairo_lang_utils::Upcast;
 use cairo_lint_core::annotate_snippets::Renderer;
 use cairo_lint_core::{
-    apply_fixes,
+    apply_file_fixes,
     diagnostics::format_diagnostic,
+    get_fixes,
     plugin::{cairo_lint_plugin_suite, diagnostic_kind_from_message, CairoLintKind},
 };
 use itertools::Itertools;
@@ -170,10 +172,13 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .collect::<Vec<_>>();
 
                     if opts.fix {
-                        let printer = |file_name: &str| {
-                            ws.config().ui().print(Status::new("Fixing", file_name));
-                        };
-                        apply_fixes(&db, diagnostics, printer)?;
+                        let fixes = get_fixes(&db, diagnostics)?;
+                        for (file_id, fixes) in fixes.into_iter() {
+                            ws.config()
+                                .ui()
+                                .print(Status::new("Fixing", &file_id.file_name(db.upcast())));
+                            apply_file_fixes(file_id, fixes, &db)?;
+                        }
                     }
                 }
             }
