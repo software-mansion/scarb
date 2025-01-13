@@ -1,24 +1,44 @@
 use assert_fs::fixture::FileWriteStr;
 use assert_fs::{prelude::PathChild, TempDir};
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use scarb_test_support::{
     command::Scarb, project_builder::ProjectBuilder, workspace_builder::WorkspaceBuilder,
 };
 
 #[test]
 fn lint_main_package() {
+    let test_code = indoc! {r#"
+      use hello::f1;
+      #[test]
+      fn it_works() {
+          let x = true;
+          if false == x {
+              println!("x is false");
+          }
+          assert_eq!(1, f1());
+      }
+    "#};
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
-        .lib_cairo(indoc! {r#"
-      fn main() {
-          let x = true;
-          if x == false {
-              println!("x is false");
-          }
-      }
-    "#})
+        .lib_cairo(formatdoc! {r#"
+          fn main() {{
+              let x = true;
+              if x == false {{
+                  println!("x is false");
+              }}
+          }}
+
+          // This should not be checked.
+          #[cfg(test)]
+          mod tests {{
+            {test_code}
+          }}
+        "#})
         .build(&t);
+
+    // We add this one to test that the linting is not run on the test package.
+    t.child("tests/test1.cairo").write_str(test_code).unwrap();
 
     Scarb::quick_snapbox()
         .arg("lint")
@@ -159,6 +179,63 @@ fn lint_integration_tests() {
           [1m[94m5 |[0m     if false == x {
             [1m[94m|[0m        [1m[33m----------[0m
             [1m[94m|[0m
+
+        "#});
+}
+
+#[test]
+fn lint_unit_test() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .dep_cairo_test()
+        .manifest_extra(
+            r#"
+          [[test]]
+          test-type = "unit"
+        "#,
+        )
+        .lib_cairo(indoc! {r#"
+          pub fn f1() -> u32 {
+              42
+          }
+
+          fn main() {
+              // This is a comment
+          }
+
+          #[cfg(test)]
+          mod tests {
+              use hello::f1;
+              #[test]
+              fn it_works() {
+                  let x = true;
+                  if false == x {
+                      println!("x is false");
+                  }
+                  assert_eq!(1, f1());
+              }
+          }
+        "#})
+        .dep_cairo_test()
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("-t")
+        .current_dir(&t)
+        .assert()
+        .success()
+        // Current expected values include ANSI color codes because lint has custom renderer.
+        .stdout_matches(indoc! {r#"
+               Linting hello v1.0.0 ([..]/Scarb.toml)
+               Linting test(hello) hello v1.0.0 ([..]/Scarb.toml)
+          [1m[33mwarning[0m: [1mPlugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.[0m
+            [1m[94m-->[0m [..]/lib.cairo:15:12
+             [1m[94m|[0m
+          [1m[94m15 |[0m         if false == x {
+             [1m[94m|[0m            [1m[33m----------[0m
+             [1m[94m|[0m
 
         "#});
 }

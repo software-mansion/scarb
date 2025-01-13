@@ -11,8 +11,8 @@ use crate::{
 use anyhow::Result;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::Diagnostics;
-use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateLongId;
+use cairo_lang_filesystem::{cfg::Cfg, db::FilesGroup};
 use cairo_lang_semantic::diagnostic::SemanticDiagnosticKind;
 use cairo_lang_semantic::{db::SemanticGroup, SemanticDiagnostic};
 use cairo_lang_utils::Upcast;
@@ -73,26 +73,35 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
 
     for package in opts.packages {
         let package_compilation_units = if opts.test {
-            compilation_units
+            let integration_test_compilation_unit =
+                find_integration_test_package_id(&package).map(|id| {
+                    compilation_units
+                        .iter()
+                        .find(|compilation_unit| compilation_unit.main_package_id() == id)
+                        .unwrap()
+                });
+
+            let mut result = compilation_units
                 .iter()
-                .filter(|compilation_unit| {
-                    let is_main_component = compilation_unit.main_package_id() == package.id;
-                    let has_test_components =
-                        compilation_unit.components().iter().any(|component| {
-                            component.target_kind() == TargetKind::TEST
-                                && component.package.id == package.id
-                        });
-                    let is_integration_test_package =
-                        compilation_unit.main_package_id().name.to_string()
-                            == format!("{}_integrationtest", package.id.name)
-                            && compilation_unit.main_package_id().version == package.id.version;
-                    is_main_component || has_test_components || is_integration_test_package
-                })
-                .collect::<Vec<_>>()
+                .filter(|compilation_unit| compilation_unit.main_package_id() == package.id)
+                .collect::<Vec<_>>();
+
+            if let Some(integration_test_compilation_unit) = integration_test_compilation_unit {
+                result.push(integration_test_compilation_unit);
+            }
+            result
         } else {
             vec![compilation_units
                 .iter()
-                .find(|compilation_unit| compilation_unit.main_package_id() == package.id)
+                .find(|compilation_unit| match compilation_unit {
+                    CompilationUnit::Cairo(compilation_unit) => {
+                        compilation_unit.main_package_id() == package.id
+                            && !compilation_unit
+                                .cfg_set
+                                .contains(&Cfg::kv("target", "test"))
+                    }
+                    _ => false,
+                })
                 .unwrap()]
         };
 
@@ -199,4 +208,22 @@ fn cairo_lint_tool_metadata(package: &Package) -> Result<CairoLintToolMetadata> 
         .map(toml::Value::try_into)
         .transpose()?
         .unwrap_or_default())
+}
+
+fn find_integration_test_package_id(package: &Package) -> Option<PackageId> {
+    let integration_target = package.manifest.targets.iter().find(|target| {
+        target.kind == TargetKind::TEST
+            && target
+                .params
+                .get("test-type")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                == "integration"
+    });
+
+    integration_target.map(|target| {
+        package
+            .id
+            .for_test_target(target.group_id.clone().unwrap_or(target.name.clone()))
+    })
 }
