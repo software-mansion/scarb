@@ -125,7 +125,7 @@ pub fn check_allowed_libfuncs(
 
 pub fn check_sierra_size_limits(classes: &[ContractClass], ws: &Workspace<'_>) {
     for class in classes {
-        let sierra_felts = class.sierra_program.to_vec().len();
+        let sierra_felts = class.sierra_program.len();
         if sierra_felts > MAX_SIERRA_PROGRAM_FELTS {
             ws.config().ui().warn(formatdoc! {r#"
                 Sierra program exceeds maximum byte-code size on Starknet:
