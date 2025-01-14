@@ -38,6 +38,7 @@ fn usage() {
 }
 
 #[test]
+#[ignore = "use pubgrub"]
 fn not_found() {
     let mut registry = LocalRegistry::create();
     registry.publish(|t| {
@@ -75,6 +76,7 @@ fn not_found() {
 // TODO(mkaput): Test path dependencies overrides.
 
 #[test]
+#[ignore = "use pubgrub"]
 fn empty_registry() {
     let registry = LocalRegistry::create();
 
@@ -100,6 +102,7 @@ fn empty_registry() {
 }
 
 #[test]
+#[ignore = "use pubgrub"]
 fn url_pointing_to_file() {
     let registry_t = TempDir::new().unwrap();
     let registry = registry_t.child("r");

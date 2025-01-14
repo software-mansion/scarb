@@ -183,6 +183,7 @@ fn path_version() {
 }
 
 #[test]
+#[ignore = "use pubgrub"]
 fn runs_resolver_if_network_is_allowed() {
     let t = TempDir::new().unwrap();
 

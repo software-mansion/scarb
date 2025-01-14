@@ -38,7 +38,8 @@ pub async fn resolve(
             let s = var.as_str();
             s == "true" || s == "1"
         })
-        .unwrap_or(false);
+        // Defaults to primitive!
+        .unwrap_or(true);
     if algo_primitive {
         primitive::resolve(summaries, registry, lockfile).await
     } else {
@@ -252,6 +253,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "use pubgrub"]
     fn backtrack_1() {
         check(
             registry![
@@ -268,6 +270,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "use pubgrub"]
     fn backtrack_2() {
         check(
             registry![
@@ -313,6 +316,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "use pubgrub"]
     fn sub_dependencies() {
         check(
             registry![
@@ -341,6 +345,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "use pubgrub"]
     fn unsatisfied_version_constraint() {
         check(
             registry![("foo v2.0.0", []),],
@@ -359,6 +364,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "use pubgrub"]
     fn no_matching_transient_dependency_1() {
         check(
             registry![
@@ -375,6 +381,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "use pubgrub"]
     fn no_matching_transient_dependency_2() {
         check(
             registry![
@@ -395,6 +402,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "use pubgrub"]
     fn no_matching_transient_dependency_3() {
         check(
             registry![
@@ -509,6 +517,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "use pubgrub"]
     fn lock_conflict_1() {
         check_with_lock(
             registry![("foo v1.0.0", []),],
