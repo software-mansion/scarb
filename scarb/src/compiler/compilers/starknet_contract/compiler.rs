@@ -17,9 +17,7 @@ use tracing::{debug, trace, trace_span};
 
 use super::contract_selector::ContractSelector;
 use crate::compiler::compilers::starknet_contract::contract_selector::GLOB_PATH_SELECTOR;
-use crate::compiler::compilers::starknet_contract::validations::{
-    check_allowed_libfuncs
-};
+use crate::compiler::compilers::starknet_contract::validations::check_allowed_libfuncs;
 use crate::compiler::compilers::{ensure_gas_enabled, ArtifactsWriter};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};

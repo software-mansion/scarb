@@ -11,7 +11,6 @@ use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::allowed_libfuncs::{
     AllowedLibfuncsError, ListSelector, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST,
 };
-use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_utils::Upcast;
 use indoc::{formatdoc, writedoc};

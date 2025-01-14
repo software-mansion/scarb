@@ -21,7 +21,10 @@ pub struct CountingBufWriter<W> {
 
 impl<W: Write> CountingBufWriter<W> {
     pub fn new(inner: W) -> Self {
-        Self { inner, byte_count: 0 }
+        Self {
+            inner,
+            byte_count: 0,
+        }
     }
 
     pub fn bytes_written(&self) -> usize {

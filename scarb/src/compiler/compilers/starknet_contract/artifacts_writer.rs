@@ -9,11 +9,11 @@ use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_utils::UpcastMut;
+use indoc::formatdoc;
 use itertools::{izip, Itertools};
 use scarb_stable_hash::short_hash;
 use serde::Serialize;
 use smol_str::SmolStr;
-use indoc::formatdoc;
 
 const MAX_SIERRA_PROGRAM_FELTS: usize = 81290;
 const MAX_CASM_PROGRAM_FELTS: usize = 81290;
@@ -148,7 +148,8 @@ impl ArtifactsWriter {
 
                 let file_name = format!("{file_stem}{extension_prefix}.contract_class.json");
 
-                let class_size = write_json(&file_name, "output file", &self.target_dir, ws, class)?;
+                let class_size =
+                    write_json(&file_name, "output file", &self.target_dir, ws, class)?;
                 if class_size > MAX_CONTRACT_CLASS_BYTES {
                     ws.config().ui().warn(formatdoc! {r#"
                         Contract class size exceeds maximum allowed size on Starknet:
@@ -168,9 +169,11 @@ impl ArtifactsWriter {
                         "#});
                     }
 
-                    let file_name = format!("{file_stem}{extension_prefix}.compiled_contract_class.json");
+                    let file_name =
+                        format!("{file_stem}{extension_prefix}.compiled_contract_class.json");
 
-                    let compiled_class_size = write_json(&file_name, "output file", &self.target_dir, ws, casm_class)?;
+                    let compiled_class_size =
+                        write_json(&file_name, "output file", &self.target_dir, ws, casm_class)?;
                     if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
                         ws.config().ui().warn(formatdoc! {r#"
                             Compiled contract class size exceeds maximum allowed size on Starknet:
