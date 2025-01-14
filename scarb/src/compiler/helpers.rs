@@ -14,25 +14,21 @@ use itertools::Itertools;
 use serde::Serialize;
 use std::io::{BufWriter, Write};
 
-pub struct CountingBufWriter<W> {
+pub struct CountingWriter<W> {
     inner: W,
-    byte_count: usize,
+    pub byte_count: usize,
 }
 
-impl<W: Write> CountingBufWriter<W> {
+impl<W: Write> CountingWriter<W> {
     pub fn new(inner: W) -> Self {
         Self {
             inner,
             byte_count: 0,
         }
     }
-
-    pub fn bytes_written(&self) -> usize {
-        self.byte_count
-    }
 }
 
-impl<W: Write> Write for CountingBufWriter<W> {
+impl<W: Write> Write for CountingWriter<W> {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let n = self.inner.write(buf)?;
         self.byte_count += n;
@@ -137,10 +133,10 @@ pub fn write_json(
 ) -> Result<usize> {
     let file = target_dir.create_rw(file_name, description, ws.config())?;
     let file = BufWriter::new(&*file);
-    let mut writer = CountingBufWriter::new(file);
+    let mut writer = CountingWriter::new(file);
     serde_json::to_writer(&mut writer, &value)
         .with_context(|| format!("failed to serialize {file_name}"))?;
-    Ok(writer.bytes_written())
+    Ok(writer.byte_count)
 }
 
 pub fn write_string(
