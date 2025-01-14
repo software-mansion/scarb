@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, vec};
 
 use crate::{
     compiler::{
@@ -8,11 +8,12 @@ use crate::{
     core::{PackageId, TargetKind},
     ops,
 };
+use anyhow::anyhow;
 use anyhow::Result;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::Diagnostics;
+use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateLongId;
-use cairo_lang_filesystem::{cfg::Cfg, db::FilesGroup};
 use cairo_lang_semantic::diagnostic::SemanticDiagnosticKind;
 use cairo_lang_semantic::{db::SemanticGroup, SemanticDiagnostic};
 use cairo_lang_utils::Upcast;
@@ -71,8 +72,18 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         })
         .collect::<HashSet<PackageId>>();
 
+    // We process all proc-macro units that are required by Cairo compilation units beforehand.
+    for compilation_unit in compilation_units.iter() {
+        if let CompilationUnit::ProcMacro(_) = compilation_unit {
+            if required_plugins.contains(&compilation_unit.main_package_id()) {
+                compile_unit(compilation_unit.clone(), ws)?;
+            }
+        }
+    }
+
     for package in opts.packages {
         let package_compilation_units = if opts.test {
+            let mut result = vec![];
             let integration_test_compilation_unit =
                 find_integration_test_package_id(&package).map(|id| {
                     compilation_units
@@ -81,47 +92,55 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .unwrap()
                 });
 
-            let mut result = compilation_units
-                .iter()
-                .filter(|compilation_unit| compilation_unit.main_package_id() == package.id)
-                .collect::<Vec<_>>();
+            // We also want to get the main compilation unit for the package.
+            if let Some(cu) = compilation_units.iter().find(|compilation_unit| {
+                compilation_unit.main_package_id() == package.id
+                    && compilation_unit.main_component().target_kind() != TargetKind::TEST
+            }) {
+                result.push(cu)
+            }
 
+            // We get all the compilation units with target kind set to "test".
+            result.extend(compilation_units.iter().filter(|compilation_unit| {
+                compilation_unit.main_package_id() == package.id
+                    && compilation_unit.main_component().target_kind() == TargetKind::TEST
+            }));
+
+            // If any integration test compilation unit was found, we add it to the result.
             if let Some(integration_test_compilation_unit) = integration_test_compilation_unit {
                 result.push(integration_test_compilation_unit);
             }
+
+            if result.is_empty() {
+                return Err(anyhow!(
+                    "No Cairo compilation unit found for package {}.",
+                    package.id
+                ));
+            }
+
             result
         } else {
-            vec![compilation_units
-                .iter()
-                .find(|compilation_unit| match compilation_unit {
-                    CompilationUnit::Cairo(compilation_unit) => {
-                        compilation_unit.main_package_id() == package.id
-                            && !compilation_unit
-                                .cfg_set
-                                .contains(&Cfg::kv("target", "test"))
-                    }
-                    _ => false,
-                })
-                .unwrap()]
+            let found_compilation_unit =
+                compilation_units
+                    .iter()
+                    .find(|compilation_unit| match compilation_unit {
+                        CompilationUnit::Cairo(compilation_unit) => {
+                            compilation_unit.main_package_id() == package.id
+                                && compilation_unit.main_component().target_kind()
+                                    != TargetKind::TEST
+                        }
+                        _ => false,
+                    });
+            vec![found_compilation_unit.ok_or(anyhow!(
+                "No Cairo compilation unit found for package {}. Try running `--test` to include tests.",
+                package.id
+            ))?]
         };
 
-        // We guarantee that proc-macro units are always processed first,
-        // so that all required plugins are compiled before we start checking Cairo units.
-        let units = package_compilation_units.into_iter().sorted_by_key(|unit| {
-            if matches!(unit, CompilationUnit::ProcMacro(_)) {
-                0
-            } else {
-                1
-            }
-        });
-
-        for compilation_unit in units {
+        for compilation_unit in package_compilation_units {
             match compilation_unit {
                 CompilationUnit::ProcMacro(_) => {
-                    // We process all proc-macro units that are required by Cairo compilation units.
-                    if required_plugins.contains(&compilation_unit.main_package_id()) {
-                        compile_unit(compilation_unit.clone(), ws)?;
-                    }
+                    continue;
                 }
                 CompilationUnit::Cairo(compilation_unit) => {
                     ws.config()
