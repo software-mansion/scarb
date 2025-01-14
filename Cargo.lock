@@ -1253,7 +1253,7 @@ dependencies = [
 [[package]]
 name = "cairo-lint-core"
 version = "0.1.0"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=6f6416fdf4ed4b04c59fce694886506384c3859d#6f6416fdf4ed4b04c59fce694886506384c3859d"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=b95a1949b932e89179c052efdbf4e21002ce6777#b95a1949b932e89179c052efdbf4e21002ce6777"
 dependencies = [
  "annotate-snippets",
  "anyhow",
