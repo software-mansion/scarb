@@ -17,6 +17,7 @@ use crate::core::{
     SourceId, Target, Workspace,
 };
 use crate::ops;
+use crate::ops::CompilationUnitsOpts;
 use crate::version::CommitInfo;
 
 pub struct MetadataOptions {
@@ -47,8 +48,11 @@ pub fn collect_metadata(opts: &MetadataOptions, ws: &Workspace<'_>) -> Result<m:
         let compilation_units: Vec<m::CompilationUnitMetadata> = ops::generate_compilation_units(
             &resolve,
             &opts.features,
-            opts.ignore_cairo_version,
             ws,
+            CompilationUnitsOpts {
+                ignore_cairo_version: opts.ignore_cairo_version,
+                load_prebuilt_macros: false,
+            },
         )?
         .iter()
         .flat_map(collect_compilation_unit_metadata)
@@ -239,6 +243,7 @@ fn collect_cairo_compilation_unit_metadata(
         .map(|c| {
             m::CompilationUnitCairoPluginMetadataBuilder::default()
                 .package(wrap_package_id(c.package.id))
+                .prebuilt_allowed(c.prebuilt_allowed)
                 .build()
                 .unwrap()
         })

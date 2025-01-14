@@ -111,7 +111,7 @@ pub(crate) mod mock {
             let summary = Summary::builder()
                 .package_id(package_id)
                 .dependencies(dependencies)
-                .no_core(package_id.is_core())
+                .no_core(package_id.name == PackageName::CORE)
                 .build();
 
             let manifest = Box::new(

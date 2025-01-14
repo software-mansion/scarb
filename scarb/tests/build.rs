@@ -85,7 +85,7 @@ fn compile_with_syntax_error() {
             error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
              --> [..]/lib.cairo:1:1
             not_a_keyword
-            ^***********^
+            ^^^^^^^^^^^^^
 
             error: could not check `hello` due to previous error
         "#});
@@ -108,7 +108,7 @@ fn compile_with_syntax_error_json() {
         .code(1)
         .stdout_matches(indoc! {r#"
             {"status":"checking","message":"hello v0.1.0 ([..]Scarb.toml)"}
-            {"type":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute./n --> [..]/lib.cairo:1:1/nnot_a_keyword/n^***********^/n"}
+            {"type":"error","message":"Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute./n --> [..]/lib.cairo:1:1/nnot_a_keyword/n^^^^^^^^^^^^^/n"}
             {"type":"error","message":"could not check `hello` due to previous error"}
         "#});
 }

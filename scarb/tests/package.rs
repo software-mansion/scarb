@@ -229,7 +229,9 @@ fn simple() {
 #[test]
 fn list_simple() {
     let t = TempDir::new().unwrap();
-    simple_project().build(&t);
+    simple_project()
+        .src("cairo_project.toml", "this should be skipped")
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")

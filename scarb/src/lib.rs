@@ -26,6 +26,7 @@ pub mod version;
 
 pub const SCARB_ENV: &str = "SCARB";
 pub const MANIFEST_FILE_NAME: &str = "Scarb.toml";
+pub const CAIRO_PROJECT_FILE_NAME: &str = "cairo_project.toml";
 pub const VCS_INFO_FILE_NAME: &str = "VCS.json";
 pub const LOCK_FILE_NAME: &str = "Scarb.lock";
 pub const DEFAULT_MODULE_MAIN_FILE: &str = "lib.cairo";

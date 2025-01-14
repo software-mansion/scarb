@@ -21,7 +21,7 @@ pub enum LockVersion {
     V1 = 1,
 }
 
-#[derive(Debug, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Lockfile {
     pub version: LockVersion,

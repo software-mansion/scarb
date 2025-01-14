@@ -83,7 +83,7 @@ impl DerefMut for FileLockGuard {
 impl Drop for FileLockGuard {
     fn drop(&mut self) {
         if let Some(file) = self.file.take() {
-            let _ = file.unlock();
+            let _ = FileExt::unlock(&file);
         }
     }
 }
