@@ -13,6 +13,12 @@ use itertools::{izip, Itertools};
 use scarb_stable_hash::short_hash;
 use serde::Serialize;
 use smol_str::SmolStr;
+use indoc::formatdoc;
+
+const MAX_SIERRA_PROGRAM_FELTS: usize = 81290;
+const MAX_CASM_PROGRAM_FELTS: usize = 81290;
+const MAX_CONTRACT_CLASS_BYTES: usize = 4089446;
+const MAX_COMPILED_CONTRACT_CLASS_BYTES: usize = 4089446;
 
 #[derive(Debug, Serialize)]
 struct StarknetArtifacts {
@@ -132,16 +138,45 @@ impl ArtifactsWriter {
             );
 
             if self.sierra {
+                let sierra_felts = class.sierra_program.len();
+                if sierra_felts > MAX_SIERRA_PROGRAM_FELTS {
+                    ws.config().ui().warn(formatdoc! {r#"
+                        Sierra program exceeds maximum byte-code size on Starknet:
+                        {MAX_SIERRA_PROGRAM_FELTS} felts allowed. Actual size: {sierra_felts} felts.
+                    "#});
+                }
+
                 let file_name = format!("{file_stem}{extension_prefix}.contract_class.json");
-                write_json(&file_name, "output file", &self.target_dir, ws, class)?;
+
+                let class_size = write_json(&file_name, "output file", &self.target_dir, ws, class)?;
+                if class_size > MAX_CONTRACT_CLASS_BYTES {
+                    ws.config().ui().warn(formatdoc! {r#"
+                        Contract class size exceeds maximum allowed size on Starknet:
+                        {MAX_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {class_size} bytes.
+                    "#});
+                }
                 artifact.artifacts.sierra = Some(file_name);
             }
 
             if self.casm {
                 if let Some(casm_class) = casm_class {
-                    let file_name =
-                        format!("{file_stem}{extension_prefix}.compiled_contract_class.json");
-                    write_json(&file_name, "output file", &self.target_dir, ws, casm_class)?;
+                    let casm_felts = casm_class.bytecode.len();
+                    if casm_felts > MAX_CASM_PROGRAM_FELTS {
+                        ws.config().ui().warn(formatdoc! {r#"
+                            CASM program exceeds maximum byte-code size on Starknet:
+                            {MAX_CASM_PROGRAM_FELTS} felts allowed. Actual size: {casm_felts} felts.
+                        "#});
+                    }
+
+                    let file_name = format!("{file_stem}{extension_prefix}.compiled_contract_class.json");
+
+                    let compiled_class_size = write_json(&file_name, "output file", &self.target_dir, ws, casm_class)?;
+                    if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
+                        ws.config().ui().warn(formatdoc! {r#"
+                            Compiled contract class size exceeds maximum allowed size on Starknet:
+                            {MAX_COMPILED_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {compiled_class_size} bytes.
+                        "#});
+                    }
                     artifact.artifacts.casm = Some(file_name);
                 }
             }

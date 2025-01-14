@@ -18,7 +18,7 @@ use tracing::{debug, trace, trace_span};
 use super::contract_selector::ContractSelector;
 use crate::compiler::compilers::starknet_contract::contract_selector::GLOB_PATH_SELECTOR;
 use crate::compiler::compilers::starknet_contract::validations::{
-    check_allowed_libfuncs, check_casm_size_limits, check_sierra_size_limits,
+    check_allowed_libfuncs
 };
 use crate::compiler::compilers::{ensure_gas_enabled, ArtifactsWriter};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
@@ -115,8 +115,6 @@ impl Compiler for StarknetContractCompiler {
 
         check_allowed_libfuncs(&props, &contracts, &classes, db, &unit, ws)?;
 
-        check_sierra_size_limits(&classes, ws);
-
         let casm_classes: Vec<Option<CasmContractClass>> = if props.casm {
             let span = trace_span!("compile_sierra");
             let _guard = span.enter();
@@ -138,8 +136,6 @@ impl Compiler for StarknetContractCompiler {
         } else {
             classes.iter().map(|_| None).collect()
         };
-
-        check_casm_size_limits(&casm_classes, ws);
 
         let target_name = &unit.main_component().target_name();
 

@@ -20,10 +20,6 @@ use std::iter::zip;
 use tracing::debug;
 
 const AUTO_WITHDRAW_GAS_FLAG: &str = "add_withdraw_gas";
-const MAX_SIERRA_PROGRAM_FELTS: usize = 81290;
-const MAX_CASM_PROGRAM_FELTS: usize = 81290;
-const MAX_CONTRACT_CLASS_BYTES: usize = 4089446;
-const MAX_COMPILED_CONTRACT_CLASS_BYTES: usize = 4089446;
 
 pub fn ensure_gas_enabled(db: &mut RootDatabase) -> anyhow::Result<()> {
     let flag = FlagId::new(db.as_files_group_mut(), AUTO_WITHDRAW_GAS_FLAG);
@@ -121,44 +117,4 @@ pub fn check_allowed_libfuncs(
     }
 
     Ok(())
-}
-
-pub fn check_sierra_size_limits(classes: &[ContractClass], ws: &Workspace<'_>) {
-    for class in classes {
-        let sierra_felts = class.sierra_program.len();
-        if sierra_felts > MAX_SIERRA_PROGRAM_FELTS {
-            ws.config().ui().warn(formatdoc! {r#"
-                Sierra program exceeds maximum byte-code size on Starknet:
-                {MAX_SIERRA_PROGRAM_FELTS} felts allowed. Actual size: {sierra_felts} felts.
-            "#});
-        }
-
-        let class_size = serde_json::to_vec(class).unwrap().len();
-        if class_size > MAX_CONTRACT_CLASS_BYTES {
-            ws.config().ui().warn(formatdoc! {r#"
-                Contract class size exceeds maximum allowed size on Starknet:
-                {MAX_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {class_size} bytes.
-            "#});
-        }
-    }
-}
-
-pub fn check_casm_size_limits(casm_classes: &[Option<CasmContractClass>], ws: &Workspace<'_>) {
-    for casm_class in casm_classes.iter().flatten() {
-        let casm_felts = casm_class.bytecode.len();
-        if casm_felts > MAX_CASM_PROGRAM_FELTS {
-            ws.config().ui().warn(formatdoc! {r#"
-                CASM program exceeds maximum byte-code size on Starknet:
-                {MAX_CASM_PROGRAM_FELTS} felts allowed. Actual size: {casm_felts} felts.
-            "#});
-        }
-
-        let compiled_class_size = serde_json::to_vec(casm_class).unwrap().len();
-        if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
-            ws.config().ui().warn(formatdoc! {r#"
-                Compiled contract class size exceeds maximum allowed size on Starknet:
-                {MAX_COMPILED_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {compiled_class_size} bytes.
-            "#});
-        }
-    }
 }

@@ -14,6 +14,33 @@ use itertools::Itertools;
 use serde::Serialize;
 use std::io::{BufWriter, Write};
 
+pub struct CountingBufWriter<W> {
+    inner: W,
+    byte_count: usize,
+}
+
+impl<W: Write> CountingBufWriter<W> {
+    pub fn new(inner: W) -> Self {
+        Self { inner, byte_count: 0 }
+    }
+
+    pub fn bytes_written(&self) -> usize {
+        self.byte_count
+    }
+}
+
+impl<W: Write> Write for CountingBufWriter<W> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let n = self.inner.write(buf)?;
+        self.byte_count += n;
+        Ok(n)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.inner.flush()
+    }
+}
+
 pub fn build_compiler_config<'c>(
     db: &RootDatabase,
     unit: &CairoCompilationUnit,
@@ -104,12 +131,13 @@ pub fn write_json(
     target_dir: &Filesystem,
     ws: &Workspace<'_>,
     value: impl Serialize,
-) -> Result<()> {
+) -> Result<usize> {
     let file = target_dir.create_rw(file_name, description, ws.config())?;
     let file = BufWriter::new(&*file);
-    serde_json::to_writer(file, &value)
+    let mut writer = CountingBufWriter::new(file);
+    serde_json::to_writer(&mut writer, &value)
         .with_context(|| format!("failed to serialize {file_name}"))?;
-    Ok(())
+    Ok(writer.bytes_written())
 }
 
 pub fn write_string(
