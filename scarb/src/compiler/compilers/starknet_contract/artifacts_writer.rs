@@ -148,8 +148,13 @@ impl ArtifactsWriter {
 
                 let file_name = format!("{file_stem}{extension_prefix}.contract_class.json");
 
-                let class_size =
-                    write_json_with_byte_count(&file_name, "output file", &self.target_dir, ws, class)?;
+                let class_size = write_json_with_byte_count(
+                    &file_name,
+                    "output file",
+                    &self.target_dir,
+                    ws,
+                    class,
+                )?;
                 if class_size > MAX_CONTRACT_CLASS_BYTES {
                     ws.config().ui().warn(formatdoc! {r#"
                         Contract class size exceeds maximum allowed size on Starknet:
@@ -172,8 +177,13 @@ impl ArtifactsWriter {
                     let file_name =
                         format!("{file_stem}{extension_prefix}.compiled_contract_class.json");
 
-                    let compiled_class_size =
-                        write_json_with_byte_count(&file_name, "output file", &self.target_dir, ws, casm_class)?;
+                    let compiled_class_size = write_json_with_byte_count(
+                        &file_name,
+                        "output file",
+                        &self.target_dir,
+                        ws,
+                        casm_class,
+                    )?;
                     if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
                         ws.config().ui().warn(formatdoc! {r#"
                             Compiled contract class size exceeds maximum allowed size on Starknet:
