@@ -1516,9 +1516,9 @@ fn code_mappings_preserve_attribute_error_locations() {
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Cannot assign to an immutable variable.
-             --> [..]lib.cairo[proc_some]:3:5
+             --> [..]lib.cairo:4:5
                 x = 2;
-                ^^^^^
+                ^^^^^^
             note: this error originates in the attribute macro: `some`
 
             error: could not compile `hello` due to previous error

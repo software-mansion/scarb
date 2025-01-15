@@ -47,17 +47,23 @@ impl<'a> TokenStreamBuilder<'a> {
     pub fn token_from_syntax_node(&self, node: SyntaxNode, ctx: &AllocationContext) -> Token {
         let span = node.span(self.db);
         let text = node.get_text(self.db);
-        let span = TextSpan {
-            // We skip the whitespace prefix, so that diagnostics start where the actual token contents is.
-            start: span.start.as_u32() + whitespace_prefix_len(&text),
-            end: span.end.as_u32(),
-        };
+        // We skip the whitespace prefix, so that diagnostics start where the actual token contents is.
+        let start = span.start.as_u32() + whitespace_prefix_len(&text);
+        // Then we also skip the whitespace suffix, for the same reason.
+        let end = span.end.as_u32() - whitespace_suffix_len(&text);
+        // This handles the case of a whitespace only string.
+        let end = if end < start { start } else { end };
+        let span = TextSpan { start, end };
         Token::new_in(text, span, ctx)
     }
 }
 
 fn whitespace_prefix_len(s: &str) -> u32 {
     s.chars().take_while(|c| c.is_whitespace()).count() as u32
+}
+
+fn whitespace_suffix_len(s: &str) -> u32 {
+    s.chars().rev().take_while(|c| c.is_whitespace()).count() as u32
 }
 
 #[cfg(test)]
@@ -88,13 +94,13 @@ mod tests {
         };
         let token = token_at(&token_stream, 4);
         assert_eq!(token.content.as_ref(), "{\n");
-        assert_eq!(token.span, TextSpan { start: 10, end: 12 });
+        assert_eq!(token.span, TextSpan { start: 10, end: 11 });
         let token = token_at(&token_stream, 5);
         assert_eq!(token.content.as_ref(), "    let ");
         // Note we skip 4 whitespaces characters in the span.
-        assert_eq!(token.span, TextSpan { start: 16, end: 20 });
+        assert_eq!(token.span, TextSpan { start: 16, end: 19 });
         let token = token_at(&token_stream, 6);
         assert_eq!(token.content.as_ref(), "x ");
-        assert_eq!(token.span, TextSpan { start: 20, end: 22 });
+        assert_eq!(token.span, TextSpan { start: 20, end: 21 });
     }
 }
