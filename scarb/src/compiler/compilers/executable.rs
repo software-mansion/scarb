@@ -42,7 +42,6 @@ impl Compiler for ExecutableCompiler {
             &target_dir,
             ws,
             &executable,
-        )?;
-        Ok(())
+        )
     }
 }
