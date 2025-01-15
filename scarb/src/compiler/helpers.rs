@@ -130,6 +130,20 @@ pub fn write_json(
     target_dir: &Filesystem,
     ws: &Workspace<'_>,
     value: impl Serialize,
+) -> Result<()> {
+    let file = target_dir.create_rw(file_name, description, ws.config())?;
+    let file = BufWriter::new(&*file);
+    serde_json::to_writer(file, &value)
+        .with_context(|| format!("failed to serialize {file_name}"))?;
+    Ok(())
+}
+
+pub fn write_json_with_byte_count(
+    file_name: &str,
+    description: &str,
+    target_dir: &Filesystem,
+    ws: &Workspace<'_>,
+    value: impl Serialize,
 ) -> Result<usize> {
     let file = target_dir.create_rw(file_name, description, ws.config())?;
     let file = BufWriter::new(&*file);
