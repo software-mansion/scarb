@@ -42,6 +42,9 @@ jobs:
       - name: Upgrade CairoLS to latest main commit
         run: cargo xtask upgrade cairols --rev $(git ls-remote --refs "https://github.com/software-mansion/cairols" main | awk '{print $1}')
 
+      - name: Upgrade Cairo-lint to latest main commit
+        run: cargo xtask upgrade cairolint --rev $(git ls-remote --refs "https://github.com/software-mansion/cairo-lint" main | awk '{print $1}')
+
       - name: Rebuild xtasks after Cargo.toml changes
         run: cargo build -p xtask
 
