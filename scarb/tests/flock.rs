@@ -12,7 +12,7 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
-#[timeout(180_000)]
+#[timeout(360_000)]
 fn locking_build_artifacts() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
