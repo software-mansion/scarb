@@ -62,8 +62,9 @@ impl Compiler for TestCompiler {
         let diagnostics_reporter =
             build_compiler_config(db, &unit, &test_crate_ids, ws).diagnostics_reporter;
 
+        let span = trace_span!("compile_test");
         let test_compilation = {
-            let _ = trace_span!("compile_test").enter();
+            let _guard = span.enter();
             let config = TestsCompilationConfig {
                 starknet,
                 add_statements_functions: unit
@@ -79,9 +80,9 @@ impl Compiler for TestCompiler {
             compile_test_prepared_db(db, config, test_crate_ids.clone(), diagnostics_reporter)?
         };
 
+        let span = trace_span!("serialize_test");
         {
-            let _ = trace_span!("serialize_test").enter();
-
+            let _guard = span.enter();
             let sierra_program: VersionedProgram = test_compilation.sierra_program.clone().into();
             let file_name = format!("{}.test.sierra.json", unit.main_component().target_name());
             write_json(&file_name, "output file", &target_dir, ws, &sierra_program)?;

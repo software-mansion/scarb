@@ -1,3 +1,7 @@
+use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
+use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
+use crate::core::Workspace;
+use crate::DEFAULT_MODULE_MAIN_FILE;
 use anyhow::{anyhow, Result};
 use cairo_lang_compiler::db::{RootDatabase, RootDatabaseBuilder};
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
@@ -8,16 +12,12 @@ use cairo_lang_filesystem::db::{
     AsFilesGroupMut, CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
 };
 use cairo_lang_filesystem::ids::CrateLongId;
+use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smol_str::SmolStr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
-
-use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
-use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
-use crate::core::Workspace;
-use crate::DEFAULT_MODULE_MAIN_FILE;
 
 pub struct ScarbDatabase {
     pub db: RootDatabase,
@@ -27,12 +27,13 @@ pub struct ScarbDatabase {
 pub(crate) fn build_scarb_root_database(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
+    additional_plugins: Vec<PluginSuite>,
 ) -> Result<ScarbDatabase> {
     let mut b = RootDatabase::builder();
     b.with_project_config(build_project_config(unit)?);
     b.with_cfg(unit.cfg_set.clone());
     b.with_inlining_strategy(unit.compiler_config.inlining_strategy.clone().into());
-    let proc_macro_host = load_plugins(unit, ws, &mut b)?;
+    let proc_macro_host = load_plugins(unit, ws, &mut b, additional_plugins)?;
     if !unit.compiler_config.enable_gas {
         b.skip_auto_withdraw_gas();
     }
@@ -51,6 +52,7 @@ fn load_plugins(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
     builder: &mut RootDatabaseBuilder,
+    additional_plugins: Vec<PluginSuite>,
 ) -> Result<Arc<ProcMacroHostPlugin>> {
     let mut proc_macros = ProcMacroHost::default();
     for plugin_info in &unit.cairo_plugins {
@@ -59,9 +61,14 @@ fn load_plugins(
             let plugin = ws.config().cairo_plugins().fetch(package_id)?;
             let instance = plugin.instantiate()?;
             builder.with_plugin_suite(instance.plugin_suite());
+        } else if let Some(prebuilt) = &plugin_info.prebuilt {
+            proc_macros.register_instance(prebuilt.clone());
         } else {
-            proc_macros.register(plugin_info.package.clone(), ws.config())?;
+            proc_macros.register_new(plugin_info.package.clone(), ws.config())?;
         }
+    }
+    for plugin in additional_plugins {
+        builder.with_plugin_suite(plugin);
     }
     let macro_host = Arc::new(proc_macros.into_plugin()?);
     builder.with_plugin_suite(ProcMacroHostPlugin::build_plugin_suite(macro_host.clone()));

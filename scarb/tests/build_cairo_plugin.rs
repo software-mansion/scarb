@@ -96,8 +96,8 @@ fn can_check_cairo_project_with_plugins() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in [..]
         "#});
@@ -247,7 +247,7 @@ fn can_emit_plugin_warning() {
             warn: Plugin diagnostic: Some warning from macro.
              --> [..]lib.cairo:1:1
             #[some]
-            ^*****^
+            ^^^^^^^
 
             [..]Finished `dev` profile target(s) in [..]
         "#});
@@ -293,7 +293,7 @@ fn can_emit_plugin_error() {
             error: Plugin diagnostic: Some error from macro.
              --> [..]lib.cairo:1:1
             #[some]
-            ^*****^
+            ^^^^^^^
 
             error: could not compile `hello` due to previous error
         "#});
@@ -342,12 +342,12 @@ fn diags_from_generated_code_mapped_correctly() {
             error: Plugin diagnostic: Some error from macro.
              --> [..]lib.cairo:2:1
             #[some]
-            ^*****^
+            ^^^^^^^
             
             error: Function not found.
              --> [..]lib.cairo:4:5
                 i_don_exist();
-                ^*********^
+                ^^^^^^^^^^^
             
             error: could not compile `hello` due to previous error
     "#});
@@ -649,8 +649,8 @@ fn can_define_multiple_macros() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
@@ -753,8 +753,8 @@ fn cannot_duplicate_macros_across_packages() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             error: duplicate expansions defined for procedural macros: hello (some v1.0.0 ([..]Scarb.toml) and other v1.0.0 ([..]Scarb.toml))
         "#});
@@ -798,7 +798,7 @@ fn cannot_use_undefined_macro() {
         error: Plugin diagnostic: Unsupported attribute.
          --> [..]lib.cairo:1:1
         #[world]
-        ^******^
+        ^^^^^^^^
 
         error: could not compile `hello` due to previous error
         "#});
@@ -943,7 +943,7 @@ fn empty_inline_macro_result() {
             error: Inline macro `some` failed.
              --> [..]lib.cairo:2:14
                 let _x = some!();
-                         ^*****^
+                         ^^^^^^^
             
             error: could not compile `hello` due to previous error
         "#});

@@ -7,10 +7,10 @@ publish = false
 # NOTE: Avoid adding new dependencies at all cost. The more complex building of this crate is, the much slower CI is.
 [dependencies]
 anyhow.workspace = true
+cairo-toolchain-xtasks = "1"
 clap.workspace = true
 semver.workspace = true
 serde_json.workspace = true
 time.workspace = true
-toml_edit.workspace = true
 walkdir.workspace = true
 xshell.workspace = true

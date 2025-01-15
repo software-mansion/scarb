@@ -1,0 +1,8 @@
+[package]
+name = "cairo_execute"
+version = "{{ CAIRO_VERSION }}"
+
+no-core = true
+
+[cairo-plugin]
+builtin = true

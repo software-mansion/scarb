@@ -1,4 +1,5 @@
 use anyhow::Result;
+use scarb::ops::CompilationUnitsOpts;
 use scarb::{
     compiler::{plugin::proc_macro::ProcMacroHost, CairoCompilationUnit, CompilationUnit},
     core::{Config, Workspace},
@@ -15,8 +16,11 @@ pub fn run(config: &mut Config) -> Result<()> {
             features: FeaturesSelector::AllFeatures,
             no_default_features: false,
         },
-        true,
         &ws,
+        CompilationUnitsOpts {
+            ignore_cairo_version: true,
+            load_prebuilt_macros: true,
+        },
     )?;
 
     // Compile procedural macros only.
@@ -43,12 +47,12 @@ fn load_plugins(
     ws: &Workspace<'_>,
     proc_macros: &mut ProcMacroHost,
 ) -> Result<()> {
-    for plugin_info in unit
-        .cairo_plugins
-        .into_iter()
-        .filter(|plugin_info| !plugin_info.builtin)
-    {
-        proc_macros.register(plugin_info.package, ws.config())?;
+    for plugin_info in unit.cairo_plugins.into_iter().filter(|p| !p.builtin) {
+        if let Some(prebuilt) = plugin_info.prebuilt {
+            proc_macros.register_instance(prebuilt);
+        } else {
+            proc_macros.register_new(plugin_info.package, ws.config())?;
+        }
     }
 
     Ok(())

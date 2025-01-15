@@ -1,5 +1,6 @@
 use anyhow::Result;
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
+use cairo_lang_executable::plugin::executable_plugin_suite;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_syntax::node::ast::ModuleItem;
@@ -29,6 +30,28 @@ struct BuiltinStarkNetPluginInstance;
 impl CairoPluginInstance for BuiltinStarkNetPluginInstance {
     fn plugin_suite(&self) -> PluginSuite {
         starknet_plugin_suite()
+    }
+}
+
+pub struct BuiltinExecutablePlugin;
+impl CairoPlugin for BuiltinExecutablePlugin {
+    fn id(&self) -> PackageId {
+        PackageId::new(
+            PackageName::EXECUTABLE,
+            crate::version::get().cairo.version.to_version().unwrap(),
+            SourceId::for_std(),
+        )
+    }
+
+    fn instantiate(&self) -> Result<Box<dyn CairoPluginInstance>> {
+        Ok(Box::new(BuiltinExecutablePluginInstance))
+    }
+}
+
+struct BuiltinExecutablePluginInstance;
+impl CairoPluginInstance for BuiltinExecutablePluginInstance {
+    fn plugin_suite(&self) -> PluginSuite {
+        executable_plugin_suite()
     }
 }
 

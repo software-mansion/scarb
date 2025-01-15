@@ -132,7 +132,7 @@ impl Source for RegistrySource<'_> {
     }
 }
 
-impl<'c> RegistrySource<'c> {
+impl RegistrySource<'_> {
     /// Turn the downloaded `.tar.zst` tarball into a [`Package`].
     ///
     /// This method extracts the tarball into cache directory, and then loads it using

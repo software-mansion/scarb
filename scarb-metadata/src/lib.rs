@@ -420,6 +420,9 @@ pub struct CompilationUnitCairoPluginMetadata {
     /// Package ID.
     pub package: PackageId,
 
+    /// Whether Scarb will attempt to load prebuilt binaries associated with this plugin.
+    pub prebuilt_allowed: Option<bool>,
+
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]
     #[serde(flatten)]

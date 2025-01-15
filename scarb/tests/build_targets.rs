@@ -234,7 +234,7 @@ fn compile_dep_not_a_lib() {
             error: Identifier not found.
              --> [..]/lib.cairo:1:25
             fn hellp() -> felt252 { dep::forty_two() }
-                                    ^*^
+                                    ^^^
 
             error: could not check `hello` due to previous error
         "#});
@@ -416,7 +416,7 @@ fn integration_tests_do_not_enable_cfg_in_main_package() {
             error: Type annotations needed. Failed to infer ?0.
              --> [..]test1.cairo:6:16
                     assert(f() == 42, 'it works!');
-                           ^*******^
+                           ^^^^^^^^^
 
             error: could not compile `hello_integrationtest` due to previous error
         "#});
@@ -464,17 +464,17 @@ fn integration_tests_cannot_use_itself_by_target_name() {
             error: Identifier not found.
              --> [..]test1.cairo:6:9
                 use hello_integrationtest::test1::world;
-                    ^*******************^
+                    ^^^^^^^^^^^^^^^^^^^^^
 
             error: Identifier not found.
              --> [..]test1.cairo:7:9
                 use hello_tests::test1::beautiful;
-                    ^*********^
+                    ^^^^^^^^^^^
 
             error: Type annotations needed. Failed to infer ?0.
              --> [..]test1.cairo:12:16
                     assert(world() == 12, '');
-                           ^***********^
+                           ^^^^^^^^^^^^^
 
             error: could not compile `hello_integrationtest` due to previous error
         "#});
@@ -531,7 +531,7 @@ fn features_enabled_in_integration_tests() {
             error: Type annotations needed. Failed to infer ?0.
              --> [..]test1.cairo:7:16
                     assert(f() == 42, 'it works!');
-                           ^*******^
+                           ^^^^^^^^^
 
             error: could not compile `hello_integrationtest` due to previous error
         "#});
@@ -1085,8 +1085,66 @@ fn transitive_dev_deps_not_available() {
             error: Identifier not found.
              --> [..]lib.cairo:1:5
             use first::forty_two;
-                ^***^
+                ^^^^^
 
             error: could not check `hello` due to previous error
         "#});
+}
+
+#[test]
+fn test_executable_compiler_creates_output_files() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("executable_test")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [[target.executable]]
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/executable_test.executable.json")
+        .assert(predicates::path::exists());
+}
+
+#[test]
+fn compile_executable_target_can_use_short_declaration() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("executable_test")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/executable_test.executable.json")
+        .assert(predicates::path::exists());
 }

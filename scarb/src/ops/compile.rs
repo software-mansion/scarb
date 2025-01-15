@@ -19,7 +19,7 @@ use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
 use crate::ops;
-use crate::ops::{get_test_package_ids, validate_features};
+use crate::ops::{get_test_package_ids, validate_features, CompilationUnitsOpts};
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -125,36 +125,43 @@ where
     validate_features(&packages_to_process, &opts.features)?;
     // Add test compilation units to build
     let packages = get_test_package_ids(packages, ws);
-    let compilation_units =
-        ops::generate_compilation_units(&resolve, &opts.features, opts.ignore_cairo_version, ws)?
-            .into_iter()
-            .filter(|cu| {
-                let is_excluded = opts
-                    .exclude_target_kinds
-                    .contains(&cu.main_component().target_kind());
-                let is_included = opts.include_target_kinds.is_empty()
-                    || opts
-                        .include_target_kinds
-                        .contains(&cu.main_component().target_kind());
-                let is_included = is_included
-                    && (opts.include_target_names.is_empty()
-                        || cu
-                            .main_component()
-                            .targets
-                            .iter()
-                            .any(|t| opts.include_target_names.contains(&t.name)));
-                let is_selected = packages.contains(&cu.main_package_id());
-                let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
-                is_cairo_plugin || (is_selected && is_included && !is_excluded)
-            })
-            .sorted_by_key(|cu| {
-                if matches!(cu, CompilationUnit::ProcMacro(_)) {
-                    0
-                } else {
-                    1
-                }
-            })
-            .collect::<Vec<_>>();
+    let compilation_units = ops::generate_compilation_units(
+        &resolve,
+        &opts.features,
+        ws,
+        CompilationUnitsOpts {
+            ignore_cairo_version: opts.ignore_cairo_version,
+            load_prebuilt_macros: true,
+        },
+    )?
+    .into_iter()
+    .filter(|cu| {
+        let is_excluded = opts
+            .exclude_target_kinds
+            .contains(&cu.main_component().target_kind());
+        let is_included = opts.include_target_kinds.is_empty()
+            || opts
+                .include_target_kinds
+                .contains(&cu.main_component().target_kind());
+        let is_included = is_included
+            && (opts.include_target_names.is_empty()
+                || cu
+                    .main_component()
+                    .targets
+                    .iter()
+                    .any(|t| opts.include_target_names.contains(&t.name)));
+        let is_selected = packages.contains(&cu.main_package_id());
+        let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
+        is_cairo_plugin || (is_selected && is_included && !is_excluded)
+    })
+    .sorted_by_key(|cu| {
+        if matches!(cu, CompilationUnit::ProcMacro(_)) {
+            0
+        } else {
+            1
+        }
+    })
+    .collect::<Vec<_>>();
 
     operation(compilation_units, ws)?;
 
@@ -194,17 +201,25 @@ pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package_name = unit.main_package_id().name.clone();
 
-    ws.config()
-        .ui()
-        .print(Status::new("Compiling", &unit.name()));
-
     let result = match unit {
-        CompilationUnit::ProcMacro(unit) => proc_macro::compile_unit(unit, ws),
+        CompilationUnit::ProcMacro(unit) => {
+            if unit.prebuilt.is_some() {
+                Ok(())
+            } else {
+                ws.config()
+                    .ui()
+                    .print(Status::new("Compiling", &unit.name()));
+                proc_macro::compile_unit(unit, ws)
+            }
+        }
         CompilationUnit::Cairo(unit) => {
+            ws.config()
+                .ui()
+                .print(Status::new("Compiling", &unit.name()));
             let ScarbDatabase {
                 mut db,
                 proc_macro_host,
-            } = build_scarb_root_database(&unit, ws)?;
+            } = build_scarb_root_database(&unit, ws, Default::default())?;
             check_starknet_dependency(&unit, ws, &db, &package_name);
             let result = ws.config().compilers().compile(unit, &mut db, ws);
             proc_macro_host
@@ -269,7 +284,8 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let result = match unit {
         CompilationUnit::ProcMacro(unit) => proc_macro::check_unit(unit, ws),
         CompilationUnit::Cairo(unit) => {
-            let ScarbDatabase { db, .. } = build_scarb_root_database(&unit, ws)?;
+            let ScarbDatabase { db, .. } =
+                build_scarb_root_database(&unit, ws, Default::default())?;
             let main_crate_ids = collect_main_crate_ids(&unit, &db);
             check_starknet_dependency(&unit, ws, &db, &package_name);
             let mut compiler_config = build_compiler_config(&db, &unit, &main_crate_ids, ws);

@@ -7,9 +7,11 @@ Once uploaded, it will be available for other users to download and use.
 
 To upload your package, use the scarb publish command.
 By default, this command will publish your package to the official [scarbs.xyz](https://scarbs.xyz) registry.
-The publish command automatically [packages and verifies](#packaging-your-package) your package, so there is no need to run `scarb package` beforehand.
+The publish command automatically [packages and verifies](#packaging-your-package) your package, so there is no need to
+run `scarb package` beforehand.
 
-To publish your package to a registry that supports package publishing, you need to authenticate using an API token with the `publish` scope.
+To publish your package to a registry that supports package publishing, you need to authenticate using an API token with
+the `publish` scope.
 First, log in to the registry and [in the dashboard](https://scarbs.xyz/dashboard) generate the API token.
 Scarb will use the token to authenticate and complete the publishing process.
 The token must be provided via the `SCARB_REGISTRY_AUTH_TOKEN` environment variable.
@@ -44,17 +46,38 @@ publish = false
 
 Use the `scarb package` command to create an archive of your package.
 You can read about the package compression algorithm and contents in the [Package tarball](./package-tarball) section.
-Basically when you run the command, Scarb gathers the source code of your package along with metadata files, such as the manifest file, and places them in an archive in `target/package` directory.
+Basically when you run the command, Scarb gathers the source code of your package along with metadata files, such as the
+manifest file, and places them in an archive in `target/package` directory.
+You can define an optional script called `package` (learn more on [scripts here](../reference/scripts.md)) in your
+manifest file, which will be executed directly before the packaging process.
+This can be useful for instance to create some additional files to be included in the package.
 
-If you are in a Git repository, Scarb will first check if the repo state is clean and error out in case of any changes present in the Git working directory.
+If you are in a Git repository, Scarb will first check if the repo state is clean and error out in case of any changes
+present in the Git working directory.
 To bypass this check, you can use the `--allow-dirty` flag.
 
 The next step is package verification.
-After creating the initial archive, Scarb will attempt to unpack it and compile to check for any corruptions in the packaging process.
+After creating the initial archive, Scarb will attempt to unpack it and compile to check for any corruptions in the
+packaging process.
 If you want to speed up the packaging process, you can disable this step using the `--no-verify` flag.
 
 > [!WARNING]
 > This is a dangerous operation as it can lead to uploading a corrupted package to the registry.
 > Please use with caution.
 
-After successfully completing the whole process, the `{name}-{version}.tar.zst` archive waits in the `target/package` directory for being uploaded, where both `name` and `version` correspond to the values in `Scarb.toml`.
+After successfully completing the whole process, the `{name}-{version}.tar.zst` archive waits in the `target/package`
+directory for being uploaded, where both `name` and `version` correspond to the values in `Scarb.toml`.
+
+### Files included in the package
+
+All files in the package directory are included in the resulting tarball, except for the following:
+
+- Files excluded with rules defined in any `.scarbignore`, `.gitignore` or `.ignore` files.
+- The `<package root>/target` directory.
+- Any subdirectories containing `Scarb.toml` file.
+- The `.git` directory.
+- Symlinks within the package directory are followed, while symlinks outside are ignored.
+- File system boundaries are not crossed.
+
+Files that would be otherwise ignored by the rules listed above, can still be included
+with [include](../reference/manifest.md#include) field.

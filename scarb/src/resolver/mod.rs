@@ -1,17 +1,13 @@
-use std::collections::HashMap;
-
-use anyhow::{bail, Result};
-use indoc::{formatdoc, indoc};
-use petgraph::graphmap::DiGraphMap;
-use std::collections::HashSet;
+use anyhow::Result;
+use std::env;
 
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
-use crate::core::resolver::{DependencyEdge, Resolve};
-use crate::core::{
-    DepKind, DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, Summary,
-    TargetKind,
-};
+use crate::core::resolver::Resolve;
+use crate::core::Summary;
+
+mod algorithm;
+mod primitive;
 
 /// Builds the list of all packages required to build the first argument.
 ///
@@ -30,171 +26,24 @@ use crate::core::{
 /// * `lockfile` - a [`Lockfile`] instance, which is used to guide the resolution process. Empty
 ///     lockfile will result in no guidance. This function does not read or write lock files from
 ///     the filesystem.
-///
-/// * `ui` - an [`Ui`] instance used to show warnings to the user.
 #[tracing::instrument(level = "trace", skip_all)]
 pub async fn resolve(
     summaries: &[Summary],
     registry: &dyn Registry,
     lockfile: Lockfile,
 ) -> Result<Resolve> {
-    // TODO(#2): This is very bad, use PubGrub here.
-    let mut graph = DiGraphMap::<PackageId, DependencyEdge>::new();
-
-    let main_packages = summaries
-        .iter()
-        .map(|sum| sum.package_id)
-        .collect::<HashSet<PackageId>>();
-    let mut packages: HashMap<_, _> = HashMap::from_iter(
-        summaries
-            .iter()
-            .map(|s| (s.package_id.name.clone(), s.package_id)),
-    );
-
-    let mut summaries: HashMap<_, _> = summaries
-        .iter()
-        .map(|s| (s.package_id, s.clone()))
-        .collect();
-
-    let mut queue: Vec<PackageId> = summaries.keys().copied().collect();
-    while !queue.is_empty() {
-        let mut next_queue = Vec::new();
-
-        for package_id in queue {
-            graph.add_node(package_id);
-
-            let summary = summaries[&package_id].clone();
-            let dep_filter =
-                DependencyFilter::propagation(main_packages.contains(&summary.package_id));
-            for dep in summary.filtered_full_dependencies(dep_filter) {
-                let dep = rewrite_dependency_source_id(registry, &package_id, dep).await?;
-
-                let locked_package_id = lockfile.packages_matching(dep.clone());
-                let dep = if let Some(locked_package_id) = locked_package_id {
-                    rewrite_locked_dependency(dep.clone(), locked_package_id?)
-                } else {
-                    dep
-                };
-
-                let results = registry.query(&dep).await?;
-
-                let Some(dep_summary) = results.first() else {
-                    bail!("cannot find package {}", dep.name)
-                };
-
-                let dep_target_kind: Option<TargetKind> = match dep.kind.clone() {
-                    DepKind::Normal => None,
-                    DepKind::Target(target_kind) => Some(target_kind),
-                };
-                let dep = dep_summary.package_id;
-
-                if let Some(existing) = packages.get(dep.name.as_ref()) {
-                    if existing.source_id != dep.source_id {
-                        bail!(
-                            indoc! {"
-                            found dependencies on the same package `{}` coming from incompatible \
-                            sources:
-                            source 1: {}
-                            source 2: {}
-                            "},
-                            dep.name,
-                            existing.source_id,
-                            dep.source_id
-                        );
-                    }
-                }
-
-                let weight = graph
-                    .edge_weight(package_id, dep)
-                    .cloned()
-                    .unwrap_or_default();
-                let weight = weight.extend(dep_target_kind);
-                graph.add_edge(package_id, dep, weight);
-                summaries.insert(dep, dep_summary.clone());
-
-                if packages.contains_key(dep.name.as_ref()) {
-                    continue;
-                }
-
-                packages.insert(dep.name.clone(), dep);
-                next_queue.push(dep);
-            }
-        }
-
-        queue = next_queue;
-    }
-
-    // Detect incompatibilities and bail in case ones are found.
-    let mut incompatibilities = Vec::new();
-    for from_package in graph.nodes() {
-        let dep_filter = DependencyFilter::propagation(main_packages.contains(&from_package));
-        for manifest_dependency in summaries[&from_package].filtered_full_dependencies(dep_filter) {
-            let to_package = packages[&manifest_dependency.name];
-            if !manifest_dependency.matches_package_id(to_package) {
-                let message = format!(
-                    "- {from_package} cannot use {to_package}, because {} requires {} {}",
-                    from_package.name, to_package.name, manifest_dependency.version_req
-                );
-                incompatibilities.push(message);
-            }
-        }
-    }
-
-    if !incompatibilities.is_empty() {
-        incompatibilities.sort();
-        let incompatibilities = incompatibilities.join("\n");
-        bail!(formatdoc! {"
-            Version solving failed:
-            {incompatibilities}
-
-            Scarb does not have real version solving algorithm yet.
-            Perhaps in the future this conflict could be resolved, but currently,
-            please upgrade your dependencies to use latest versions of their dependencies.
-        "});
-    }
-
-    let resolve = Resolve { graph, summaries };
-    resolve.check_checksums(&lockfile)?;
-    Ok(resolve)
-}
-
-fn rewrite_locked_dependency(
-    dependency: ManifestDependency,
-    locked_package_id: PackageId,
-) -> ManifestDependency {
-    ManifestDependency::builder()
-        .kind(dependency.kind.clone())
-        .name(dependency.name.clone())
-        .source_id(locked_package_id.source_id)
-        .version_req(DependencyVersionReq::Locked {
-            exact: locked_package_id.version.clone(),
-            req: dependency.version_req.clone().into(),
+    let algo_primitive = env::var("SCARB_UNSTABLE_PUBGRUB")
+        .ok()
+        .map(|var| {
+            let s = var.as_str();
+            s == "true" || s == "1"
         })
-        .build()
-}
-
-async fn rewrite_dependency_source_id(
-    registry: &dyn Registry,
-    package_id: &PackageId,
-    dependency: &ManifestDependency,
-) -> Result<ManifestDependency> {
-    // Rewrite path dependencies for git sources.
-    if package_id.source_id.is_git() && dependency.source_id.is_path() {
-        let rewritten_dep = ManifestDependency::builder()
-            .kind(dependency.kind.clone())
-            .name(dependency.name.clone())
-            .source_id(package_id.source_id)
-            .version_req(dependency.version_req.clone())
-            .build();
-        // Check if this dependency can be queried from git source.
-        // E.g. packages below other package's manifest will not be accessible.
-        if !registry.query(&rewritten_dep).await?.is_empty() {
-            // If it is, return rewritten dependency.
-            return Ok(rewritten_dep);
-        }
-    };
-
-    Ok(dependency.clone())
+        .unwrap_or(false);
+    if algo_primitive {
+        primitive::resolve(summaries, registry, lockfile).await
+    } else {
+        algorithm::resolve(summaries, registry, lockfile).await
+    }
 }
 
 #[cfg(test)]
@@ -303,9 +152,9 @@ mod tests {
     #[test]
     fn single_fixed_dep() {
         check(
-            registry![("foo v1.0.0", []),],
-            &[deps![("foo", "=1.0.0")]],
-            Ok(pkgs!["foo v1.0.0"]),
+            registry![("foo v1.0.0-rc.0", []),],
+            &[deps![("foo", "=1.0.0-rc.0")]],
+            Ok(pkgs!["foo v1.0.0-rc.0"]),
         )
     }
 
@@ -414,20 +263,7 @@ mod tests {
                 ("baz v1.0.0", []),
             ],
             &[deps![("foo", "*")]],
-            // TODO(#2): Expected result is commented out.
-            // Ok(pkgs![
-            //     "bar v1.0.0",
-            //     "baz v1.0.0",
-            //     "foo v1.0.0"
-            // ]),
-            Err(indoc! {"
-            Version solving failed:
-            - bar v2.0.0 cannot use baz v1.0.0, because bar requires baz ^2.0.0
-
-            Scarb does not have real version solving algorithm yet.
-            Perhaps in the future this conflict could be resolved, but currently,
-            please upgrade your dependencies to use latest versions of their dependencies.
-            "}),
+            Ok(pkgs!["bar v1.0.0", "baz v1.0.0", "foo v1.0.0"]),
         )
     }
 
@@ -446,20 +282,7 @@ mod tests {
                 ("baz v2.1.0", []),
             ],
             &[deps![("bar", "~1.1.0"), ("foo", "~2.7")]],
-            // TODO(#2): Expected result is commented out.
-            // Ok(pkgs![
-            //     "bar v1.1.1",
-            //     "baz v1.7.1",
-            //     "foo v2.7.0"
-            // ]),
-            Err(indoc! {"
-            Version solving failed:
-            - foo v2.7.0 cannot use baz v2.1.0, because foo requires baz ~1.7.1
-
-            Scarb does not have real version solving algorithm yet.
-            Perhaps in the future this conflict could be resolved, but currently,
-            please upgrade your dependencies to use latest versions of their dependencies.
-            "}),
+            Ok(pkgs!["bar v1.1.1", "baz v1.7.1", "foo v2.7.0"]),
         )
     }
 
@@ -500,12 +323,10 @@ mod tests {
             ],
             &[deps![("top1", "1"), ("top2", "1")]],
             Err(indoc! {"
-            Version solving failed:
-            - top2 v1.0.0 cannot use foo v1.0.0, because top2 requires foo ^2.0.0
-
-            Scarb does not have real version solving algorithm yet.
-            Perhaps in the future this conflict could be resolved, but currently,
-            please upgrade your dependencies to use latest versions of their dependencies.
+                version solving failed:
+                Because there is no version of top1 in >1.0.0, <2.0.0 and top1 1.0.0 depends on foo >=1.0.0, <2.0.0, top1 >=1.0.0, <2.0.0 depends on foo >=1.0.0, <2.0.0.
+                And because top2 1.0.0 depends on foo >=2.0.0, <3.0.0 and there is no version of top2 in >1.0.0, <2.0.0, top1 >=1.0.0, <2.0.0, top2 >=1.0.0, <2.0.0 are incompatible.
+                And because root_1 1.0.0 depends on top1 >=1.0.0, <2.0.0 and root_1 1.0.0 depends on top2 >=1.0.0, <2.0.0, root_1 1.0.0 is forbidden.
             "}),
         )
     }
@@ -524,7 +345,7 @@ mod tests {
         check(
             registry![("foo v2.0.0", []),],
             &[deps![("foo", "1.0.0")]],
-            Err(r#"cannot find package foo"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -549,7 +370,7 @@ mod tests {
                 ("b v3.8.14", []),
             ],
             &[deps![("a", "~3.6"), ("b", "~3.6")]],
-            Err(r#"cannot find package a"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -569,7 +390,7 @@ mod tests {
                 ("b v3.8.5", [("d", "2.9.0")]),
             ],
             &[deps![("a", "~3.6"), ("c", "~1.1"), ("b", "~3.6")]],
-            Err(r#"cannot find package a"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -592,7 +413,7 @@ mod tests {
                 ),
             ],
             &[deps![("e", "~1.0"), ("a", "~3.7"), ("b", "~3.7")]],
-            Err(r#"cannot find package e"#),
+            Err(r#"cannot get dependencies of `root_1@1.0.0`"#),
         )
     }
 
@@ -693,7 +514,7 @@ mod tests {
             registry![("foo v1.0.0", []),],
             &[deps![("foo", "2.0.0"),]],
             locks![("foo v1.0.0", [])],
-            Err("cannot find package foo"),
+            Err("cannot get dependencies of `root_1@1.0.0`"),
         );
     }
 

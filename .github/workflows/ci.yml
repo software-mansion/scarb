@@ -7,6 +7,10 @@ on:
   pull_request:
   merge_group:
 
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.head_ref != 'main' }}
+  
 jobs:
   build-test:
     name: build test ${{ matrix.platform.name }}
@@ -32,7 +36,7 @@ jobs:
           path: nextest-archive-${{ matrix.platform.os }}.tar.zst
 
   test:
-    name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/8
+    name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/4
     runs-on: ${{ matrix.platform.os }}
     needs:
       - build-test
@@ -44,7 +48,7 @@ jobs:
             os: ubuntu-latest
           - name: windows x86-64
             os: windows-latest
-        partition: [ 1, 2, 3, 4, 5, 6, 7, 8 ]
+        partition: [ 1, 2, 3, 4 ]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -52,8 +56,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
-      - name: nextest partition ${{ matrix.partition }}/8
-        run: cargo nextest run --partition 'count:${{ matrix.partition }}/8' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+      - name: nextest partition ${{ matrix.partition }}/4
+        run: cargo nextest run --partition 'count:${{ matrix.partition }}/4' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
 
   test-doc:
     name: doc tests
@@ -77,6 +81,30 @@ jobs:
       - run: echo "SCARB_TEST_BIN=$(which scarb)" >> $GITHUB_ENV
       - name: run tests
         run: cargo test -p scarb-metadata
+
+  test-prebuilt-plugins:
+    name: test prebuilt plugins ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
+    # This is isolated, so it can be run on more platforms.
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
+          - name: macos arm64
+            os: macos-latest
+          - name: macos x86-64
+            os: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run prebuilt plugin tests
+        run: |
+          cargo test -p scarb --test proc_macro_prebuilt -- --ignored
 
   check-rust:
     runs-on: ubuntu-latest

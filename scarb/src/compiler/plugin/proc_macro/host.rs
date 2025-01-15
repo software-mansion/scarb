@@ -1,8 +1,9 @@
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, FromSyntaxNode, ProcMacroInstance,
 };
 use crate::core::{Config, Package, PackageId};
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::{
@@ -1150,9 +1151,16 @@ pub struct ProcMacroHost {
 }
 
 impl ProcMacroHost {
-    pub fn register(&mut self, package: Package, config: &Config) -> Result<()> {
-        let instance = ProcMacroInstance::try_new(package, config)?;
-        self.macros.push(Arc::new(instance));
+    pub fn register_instance(&mut self, instance: Arc<ProcMacroInstance>) {
+        self.macros.push(instance);
+    }
+
+    pub fn register_new(&mut self, package: Package, config: &Config) -> Result<()> {
+        let lib_path = package
+            .shared_lib_path(config)
+            .context("could not resolve shared library path")?;
+        let instance = ProcMacroInstance::try_new(package.id, lib_path)?;
+        self.register_instance(Arc::new(instance));
         Ok(())
     }
 

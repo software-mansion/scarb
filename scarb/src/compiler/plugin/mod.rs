@@ -2,13 +2,14 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::compiler::plugin::builtin::BuiltinTestAssertsPlugin;
+use crate::compiler::plugin::builtin::{BuiltinExecutablePlugin, BuiltinTestAssertsPlugin};
 use anyhow::{anyhow, bail, Result};
 use cairo_lang_semantic::plugin::PluginSuite;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::compiler::plugin::builtin::BuiltinCairoRunPlugin;
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::core::{Package, PackageId, TargetKind, Workspace};
 
 use self::builtin::{BuiltinStarkNetPlugin, BuiltinTestPlugin};
@@ -29,8 +30,10 @@ pub fn fetch_cairo_plugin(package: &Package, ws: &Workspace<'_>) -> Result<()> {
     assert!(package.is_cairo_plugin());
     let target = package.fetch_target(&TargetKind::CAIRO_PLUGIN)?;
     let props: CairoPluginProps = target.props()?;
-    // No need to fetch for buildin plugins.
-    if !props.builtin {
+    // There is no need to run `cargo fetch` for builtin plugins.
+    // The `fetch` will not be run for a proc macro that contains a prebuilt library file.
+    // Note, that in case the prebuilt lib file is corrupted, it will be later compiled with Cargo anyway.
+    if !props.builtin && package.prebuilt_lib_path().is_none() {
         proc_macro::fetch_crate(package, ws)?;
     }
     Ok(())
@@ -63,6 +66,7 @@ impl CairoPluginRepository {
         //   `starknet` package which makes it a dependency. This way we can deliver Starknet Cairo
         //   library code to users etc.
         repo.add(Box::new(BuiltinStarkNetPlugin)).unwrap();
+        repo.add(Box::new(BuiltinExecutablePlugin)).unwrap();
         repo.add(Box::new(BuiltinTestPlugin)).unwrap();
         repo.add(Box::new(BuiltinCairoRunPlugin)).unwrap();
         repo.add(Box::new(BuiltinTestAssertsPlugin)).unwrap();
