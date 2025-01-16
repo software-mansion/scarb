@@ -5323,6 +5323,7 @@ dependencies = [
  "bincode",
  "cairo-lang-executable",
  "cairo-lang-runner",
+ "cairo-lang-utils",
  "cairo-vm",
  "camino",
  "clap",

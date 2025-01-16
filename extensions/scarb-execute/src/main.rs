@@ -2,6 +2,7 @@ use anyhow::{bail, ensure, Context, Result};
 use bincode::enc::write::Writer;
 use cairo_lang_executable::executable::{EntryPointKind, Executable};
 use cairo_lang_runner::{build_hints_dict, Arg, CairoHintProcessor};
+use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_vm::cairo_run::cairo_run_program;
 use cairo_vm::cairo_run::CairoRunConfig;
 use cairo_vm::types::layout_name::LayoutName;
@@ -48,9 +49,8 @@ struct Args {
 
 #[derive(Parser, Clone, Debug)]
 struct ExecutionArgs {
-    /// Serialized arguments to the executable function.
-    #[arg(long, value_delimiter = ',')]
-    arguments: Vec<BigInt>,
+    #[command(flatten)]
+    pub arguments: ProgramArguments,
 
     /// Desired execution output, either default Standard or CairoPie
     #[arg(long, default_value = "standard")]
@@ -63,6 +63,37 @@ struct ExecutionArgs {
     /// Whether to print the program outputs.
     #[arg(long, default_value_t = false)]
     print_program_output: bool,
+}
+
+#[derive(Parser, Debug, Clone)]
+pub struct ProgramArguments {
+    /// Serialized arguments to the executable function.
+    #[arg(long, value_delimiter = ',')]
+    arguments: Vec<BigInt>,
+
+    /// Serialized arguments to the executable function from a file.
+    #[arg(long, conflicts_with = "arguments")]
+    arguments_file: Option<Utf8PathBuf>,
+}
+
+impl ProgramArguments {
+    pub fn read_arguments(self) -> Result<Vec<Arg>> {
+        Ok(if let Some(path) = self.arguments_file {
+            let as_vec: Vec<BigUintAsHex> = serde_json::from_reader(
+                fs::File::open(&path).with_context(|| "reading arguments file failed")?,
+            )
+            .with_context(|| "deserializing arguments file failed")?;
+            as_vec
+                .into_iter()
+                .map(|v| Arg::Value(v.value.into()))
+                .collect()
+        } else {
+            self.arguments
+                .iter()
+                .map(|v| Arg::Value(v.into()))
+                .collect()
+        })
+    }
 }
 
 #[derive(ValueEnum, Clone, Debug)]
@@ -175,13 +206,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
 
     let mut hint_processor = CairoHintProcessor {
         runner: None,
-        user_args: vec![vec![Arg::Array(
-            args.run
-                .arguments
-                .iter()
-                .map(|v| Arg::Value(v.into()))
-                .collect(),
-        )]],
+        user_args: vec![vec![Arg::Array(args.run.arguments.read_arguments()?)]],
         string_to_hint,
         starknet_state: Default::default(),
         run_resources: Default::default(),
