@@ -29,7 +29,7 @@ fn build_executable_project() -> TempDir {
 fn can_execute_default_main_function_from_executable() {
     let t = build_executable_project();
     Scarb::quick_snapbox()
-        .arg("cairo-execute")
+        .arg("execute")
         .current_dir(&t)
         .assert()
         .success()
@@ -55,7 +55,7 @@ fn can_execute_prebuilt_executable() {
     let t = build_executable_project();
     Scarb::quick_snapbox().arg("build").current_dir(&t).assert();
     Scarb::quick_snapbox()
-        .arg("cairo-execute")
+        .arg("execute")
         .arg("--no-build")
         .current_dir(&t)
         .assert()
@@ -79,7 +79,7 @@ fn can_execute_prebuilt_executable() {
 fn can_produce_cairo_pie_output() {
     let t = build_executable_project();
     Scarb::quick_snapbox()
-        .arg("cairo-execute")
+        .arg("execute")
         .arg("--target=bootloader")
         .arg("--output=cairo-pie")
         .current_dir(&t)
@@ -117,7 +117,7 @@ fn fails_when_target_missing() {
 
     output_assert(
         Scarb::quick_snapbox()
-            .arg("cairo-execute")
+            .arg("execute")
             .arg("--no-build")
             .current_dir(&t)
             .assert()
