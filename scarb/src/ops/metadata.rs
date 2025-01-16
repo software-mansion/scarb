@@ -243,6 +243,7 @@ fn collect_cairo_compilation_unit_metadata(
         .map(|c| {
             m::CompilationUnitCairoPluginMetadataBuilder::default()
                 .package(wrap_package_id(c.package.id))
+                .component_dependency_id(c.component_dependency_id.to_metadata_component_id())
                 .prebuilt_allowed(c.prebuilt_allowed)
                 .build()
                 .unwrap()

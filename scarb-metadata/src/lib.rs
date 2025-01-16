@@ -388,6 +388,7 @@ pub struct CompilationUnitComponentMetadata {
     /// then this field is [`None`] for `core` crate **only**.
     pub discriminator: Option<String>,
     /// Dependencies of this component.
+    /// Contains libraries and plugins, represented uniquely in the scope of the compilation unit.
     pub dependencies: Option<Vec<CompilationUnitComponentDependencyMetadata>>,
 
     /// Additional data not captured by deserializer.
@@ -403,6 +404,8 @@ pub struct CompilationUnitComponentMetadata {
 #[non_exhaustive]
 pub struct CompilationUnitComponentDependencyMetadata {
     /// An id of a component from the same compilation unit that this dependency refers to.
+    /// It represents either a library or a plugin. It is guaranteed to be unique
+    /// in the scope of the compilation unit.
     pub id: CompilationUnitComponentId,
 
     /// Additional data not captured by deserializer.
@@ -419,6 +422,11 @@ pub struct CompilationUnitComponentDependencyMetadata {
 pub struct CompilationUnitCairoPluginMetadata {
     /// Package ID.
     pub package: PackageId,
+
+    /// An id which uniquely identifies the plugin in scope of the compilation unit
+    /// amongst other plugins and CU components.
+    /// It is used to identify the plugin as a possible dependency of a CU component.
+    pub component_dependency_id: Option<CompilationUnitComponentId>,
 
     /// Whether Scarb will attempt to load prebuilt binaries associated with this plugin.
     pub prebuilt_allowed: Option<bool>,
