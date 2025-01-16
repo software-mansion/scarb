@@ -420,6 +420,11 @@ pub struct CompilationUnitCairoPluginMetadata {
     /// Package ID.
     pub package: PackageId,
 
+    /// An id which uniquely identifies the plugin in scope of the compilation unit
+    /// amongst other plugins and [`CompilationUnitComponent`]s.
+    /// It is used to identify the plugin as a possible dependency of a [`CompilationUnitComponent`].
+    pub component_dependency_id: CompilationUnitComponentId,
+
     /// Whether Scarb will attempt to load prebuilt binaries associated with this plugin.
     pub prebuilt_allowed: Option<bool>,
 
