@@ -35,7 +35,7 @@ fn can_take_big_number_as_arg() {
             [..]Compiling hello v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
-            Program Output:
+            Program output:
             0
             1129815197211541481934112806673325772687763881719835256646064516195041515616
             Saving output to: target/scarb-execute/hello
@@ -76,7 +76,7 @@ fn can_read_arguments_from_file() {
             [..]Compiling hello v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
-            Program Output:
+            Program output:
             0
             1129815197211541481934112806673325772687763881719835256646064516195041515616
             Saving output to: target/scarb-execute/hello

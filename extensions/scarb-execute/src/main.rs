@@ -173,7 +173,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
             .entrypoints
             .iter()
             .find(|e| matches!(e.kind, EntryPointKind::Standalone))
-            .with_context(|| "No `Standalone` entrypoint found.")?;
+            .with_context(|| "no `Standalone` entrypoint found")?;
         Program::new_for_proof(
             entrypoint.builtins.clone(),
             data,
@@ -190,7 +190,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
             .entrypoints
             .iter()
             .find(|e| matches!(e.kind, EntryPointKind::Bootloader))
-            .with_context(|| "No `Bootloader` entrypoint found.")?;
+            .with_context(|| "no `Bootloader` entrypoint found")?;
         Program::new(
             entrypoint.builtins.clone(),
             data,
@@ -202,7 +202,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
             None,
         )
     }
-    .with_context(|| "Failed setting up program.")?;
+    .with_context(|| "failed setting up program")?;
 
     let mut hint_processor = CairoHintProcessor {
         runner: None,
@@ -228,9 +228,9 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
         .with_context(|| "Cairo program run failed")?;
 
     if args.run.print_program_output {
-        let mut output_buffer = "Program Output:\n".to_string();
+        let mut output_buffer = "Program output:\n".to_string();
         runner.vm.write_output(&mut output_buffer)?;
-        print!("{output_buffer}");
+        ui.print(output_buffer.trim_end());
     }
 
     let output_dir = scarb_target_dir.join("scarb-execute");
@@ -256,7 +256,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
         let relocated_trace = runner
             .relocated_trace
             .as_ref()
-            .with_context(|| "Trace not relocated.")?;
+            .with_context(|| "trace not relocated")?;
         let mut writer = FileWriter::new(3 * 1024 * 1024, &trace_path)?;
         cairo_run::write_encoded_trace(relocated_trace, &mut writer)?;
         writer.flush()?;
@@ -278,7 +278,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
             .get_air_private_input()
             .to_serializable(trace_path.to_string(), memory_path.to_string())
             .serialize_json()
-            .with_context(|| "Failed serializing private input.")?;
+            .with_context(|| "failed serializing private input")?;
         fs::write(air_private_input_path, output_value)?;
     }
 
@@ -300,14 +300,14 @@ fn load_prebuilt_executable(path: &Utf8Path, filename: String) -> Result<Executa
     ensure!(
         file_path.exists(),
         formatdoc! {r#"
-            package has not been compiled, file does not exist: {filename}
+            package has not been compiled, file does not exist: `{filename}`
             help: run `scarb build` to compile the package
         "#}
     );
     let file = fs::File::open(&file_path)
-        .with_context(|| format!("failed to open executable program: {file_path}"))?;
+        .with_context(|| format!("failed to open executable program: `{file_path}`"))?;
     serde_json::from_reader(file)
-        .with_context(|| format!("failed to deserialize executable program: {file_path}"))
+        .with_context(|| format!("failed to deserialize executable program: `{file_path}`"))
 }
 
 fn incremental_create_output_file(
@@ -319,7 +319,7 @@ fn incremental_create_output_file(
         path,
         name,
         extension,
-        "Failed to create output directory.",
+        "failed to create output directory",
         |p| {
             OpenOptions::new()
                 .write(true)
@@ -331,7 +331,7 @@ fn incremental_create_output_file(
 }
 
 fn incremental_create_output_dir(path: &Utf8Path, name: String) -> Result<Utf8PathBuf> {
-    incremental_attempt_io_creation(path, name, "", "Failed to create output directory.", |p| {
+    incremental_attempt_io_creation(path, name, "", "failed to create output directory", |p| {
         fs::create_dir(p)
     })
 }

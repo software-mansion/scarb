@@ -124,7 +124,7 @@ fn fails_when_target_missing() {
             .failure(),
         indoc! {r#"
         [..]Executing hello
-        error: package has not been compiled, file does not exist: hello.executable.json
+        error: package has not been compiled, file does not exist: `hello.executable.json`
         help: run `scarb build` to compile the package
         
         "#},
