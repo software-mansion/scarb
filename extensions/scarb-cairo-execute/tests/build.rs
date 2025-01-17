@@ -37,16 +37,16 @@ fn can_execute_default_main_function_from_executable() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/scarb-execute/hello
+        Saving output to: target/scarb-execute/hello/execution1
         "#});
 
-    t.child("target/scarb-execute/hello/air_private_input.json")
+    t.child("target/scarb-execute/hello/execution1/air_private_input.json")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/air_public_input.json")
+    t.child("target/scarb-execute/hello/execution1/air_public_input.json")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/memory.bin")
+    t.child("target/scarb-execute/hello/execution1/memory.bin")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/trace.bin")
+    t.child("target/scarb-execute/hello/execution1/trace.bin")
         .assert(predicates::path::exists());
 }
 
@@ -62,16 +62,16 @@ fn can_execute_prebuilt_executable() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]Executing hello
-        Saving output to: target/scarb-execute/hello
+        Saving output to: target/scarb-execute/hello/execution1
         "#});
 
-    t.child("target/scarb-execute/hello/air_private_input.json")
+    t.child("target/scarb-execute/hello/execution1/air_private_input.json")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/air_public_input.json")
+    t.child("target/scarb-execute/hello/execution1/air_public_input.json")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/memory.bin")
+    t.child("target/scarb-execute/hello/execution1/memory.bin")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/trace.bin")
+    t.child("target/scarb-execute/hello/execution1/trace.bin")
         .assert(predicates::path::exists());
 }
 
@@ -89,10 +89,10 @@ fn can_produce_cairo_pie_output() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/scarb-execute/hello.zip
+        Saving output to: target/scarb-execute/hello/execution1.zip
         "#});
 
-    t.child("target/scarb-execute/hello.zip")
+    t.child("target/scarb-execute/hello/execution1.zip")
         .assert(predicates::path::exists());
 }
 

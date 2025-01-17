@@ -208,19 +208,19 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
         print!("{output_buffer}");
     }
 
-    let output_dir = scarb_target_dir.join("scarb-execute");
+    let output_dir = scarb_target_dir.join("scarb-execute").join(&package.name);
     create_output_dir(output_dir.as_std_path())?;
 
     if args.run.output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
-        let output_file_path = incremental_create_output_file(&output_dir, package.name, ".zip")?;
+        let output_file_path = incremental_create_output_file(&output_dir, ".zip")?;
         ui.print(Status::new(
             "Saving output to:",
             &display_path(&scarb_target_dir, &output_file_path),
         ));
         output_value.write_zip_file(output_file_path.as_std_path())?;
     } else {
-        let execution_output_dir = incremental_create_output_dir(&output_dir, package.name)?;
+        let execution_output_dir = incremental_create_output_dir(&output_dir)?;
         ui.print(Status::new(
             "Saving output to:",
             &display_path(&scarb_target_dir, &execution_output_dir),
@@ -287,12 +287,10 @@ fn load_prebuilt_executable(path: &Utf8Path, filename: String) -> Result<Executa
 
 fn incremental_create_output_file(
     path: &Utf8Path,
-    name: String,
     extension: impl AsRef<str>,
 ) -> Result<Utf8PathBuf> {
     incremental_attempt_io_creation(
         path,
-        name,
         extension,
         "Failed to create output directory.",
         |p| {
@@ -305,29 +303,22 @@ fn incremental_create_output_file(
     )
 }
 
-fn incremental_create_output_dir(path: &Utf8Path, name: String) -> Result<Utf8PathBuf> {
-    incremental_attempt_io_creation(path, name, "", "Failed to create output directory.", |p| {
+fn incremental_create_output_dir(path: &Utf8Path) -> Result<Utf8PathBuf> {
+    incremental_attempt_io_creation(path, "", "Failed to create output directory.", |p| {
         fs::create_dir(p)
     })
 }
 
 fn incremental_attempt_io_creation(
     path: &Utf8Path,
-    name: impl AsRef<str>,
     extension: impl AsRef<str>,
     final_error_message: impl AsRef<str>,
     attempt: impl Fn(&Utf8Path) -> io::Result<()>,
 ) -> Result<Utf8PathBuf> {
-    for i in 0..MAX_ITERATION_COUNT {
-        let number_string = if i == 0 {
-            "".to_string()
-        } else {
-            format!("_{}", i)
-        };
+    for i in 1..=MAX_ITERATION_COUNT {
         let filepath = path.join(format!(
-            "{}{}{}",
-            name.as_ref(),
-            number_string,
+            "execution{}{}",
+            i,
             extension.as_ref()
         ));
         let result = attempt(&filepath);
