@@ -5,6 +5,7 @@ members = [
     "extensions/scarb-doc",
     "extensions/scarb-cairo-execute",
     "extensions/scarb-cairo-language-server",
+    "extensions/scarb-cairo-prove",
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
     "plugins/cairo-lang-macro",
@@ -136,7 +137,7 @@ tar = "0.4"
 target-triple = "0.1"
 tempfile = "3"
 test-case = "3"
-thiserror = "2"
+thiserror = "2.0.10"
 time = "0.3"
 tokio = { version = "1", features = ["macros", "io-util", "process", "rt", "rt-multi-thread", "sync"] }
 tokio-stream = "0.1"

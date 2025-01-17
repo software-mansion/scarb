@@ -1,0 +1,31 @@
+[package]
+name = "scarb-cairo-prove"
+publish = false
+
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+indoc.workspace = true
+scarb-metadata = { path = "../../scarb-metadata" }
+scarb-ui = { path = "../../utils/scarb-ui" }
+clap.workspace = true
+serde.workspace = true
+camino.workspace = true
+serde_json.workspace = true
+create-output-dir = { path = "../../utils/create-output-dir" }
+stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "a27287c21e8b7e677b07cc40988c8c145533c55d" }
+stwo-prover = { git = "https://github.com/starkware-libs/stwo", rev = "af5475cb", features = [
+    "parallel",
+] }
+
+[dev-dependencies]
+scarb-test-support = { path = "../../utils/scarb-test-support" }
+assert_fs.workspace = true
+indoc.workspace = true
