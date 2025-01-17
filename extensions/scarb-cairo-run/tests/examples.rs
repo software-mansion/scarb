@@ -58,13 +58,13 @@ fn build_can_be_skipped() {
 
     #[cfg(windows)]
     snapbox.stdout_eq(indoc! {r#"
-            error: package has not been compiled, file does not exist: hello_world.sierra.json
+            error: package has not been compiled, file does not exist: `hello_world.sierra.json`
             help: run `scarb build` to compile the package
             error: process did not exit successfully: exit code: 1
         "#});
     #[cfg(not(windows))]
     snapbox.stdout_eq(indoc! {r#"
-            error: package has not been compiled, file does not exist: hello_world.sierra.json
+            error: package has not been compiled, file does not exist: `hello_world.sierra.json`
             help: run `scarb build` to compile the package
         "#});
 }

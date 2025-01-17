@@ -111,7 +111,7 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
     ensure!(
         path.exists(),
         formatdoc! {r#"
-            package has not been compiled, file does not exist: {filename}
+            package has not been compiled, file does not exist: `{filename}`
             help: run `scarb build` to compile the package
         "#}
     );

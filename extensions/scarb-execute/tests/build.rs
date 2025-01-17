@@ -29,7 +29,7 @@ fn build_executable_project() -> TempDir {
 fn can_execute_default_main_function_from_executable() {
     let t = build_executable_project();
     Scarb::quick_snapbox()
-        .arg("cairo-execute")
+        .arg("execute")
         .current_dir(&t)
         .assert()
         .success()
@@ -37,16 +37,16 @@ fn can_execute_default_main_function_from_executable() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/scarb-execute/hello
+        Saving output to: target/execute/hello
         "#});
 
-    t.child("target/scarb-execute/hello/air_private_input.json")
+    t.child("target/execute/hello/air_private_input.json")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/air_public_input.json")
+    t.child("target/execute/hello/air_public_input.json")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/memory.bin")
+    t.child("target/execute/hello/memory.bin")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/trace.bin")
+    t.child("target/execute/hello/trace.bin")
         .assert(predicates::path::exists());
 }
 
@@ -55,23 +55,23 @@ fn can_execute_prebuilt_executable() {
     let t = build_executable_project();
     Scarb::quick_snapbox().arg("build").current_dir(&t).assert();
     Scarb::quick_snapbox()
-        .arg("cairo-execute")
+        .arg("execute")
         .arg("--no-build")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]Executing hello
-        Saving output to: target/scarb-execute/hello
+        Saving output to: target/execute/hello
         "#});
 
-    t.child("target/scarb-execute/hello/air_private_input.json")
+    t.child("target/execute/hello/air_private_input.json")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/air_public_input.json")
+    t.child("target/execute/hello/air_public_input.json")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/memory.bin")
+    t.child("target/execute/hello/memory.bin")
         .assert(predicates::path::exists());
-    t.child("target/scarb-execute/hello/trace.bin")
+    t.child("target/execute/hello/trace.bin")
         .assert(predicates::path::exists());
 }
 
@@ -79,7 +79,7 @@ fn can_execute_prebuilt_executable() {
 fn can_produce_cairo_pie_output() {
     let t = build_executable_project();
     Scarb::quick_snapbox()
-        .arg("cairo-execute")
+        .arg("execute")
         .arg("--target=bootloader")
         .arg("--output=cairo-pie")
         .current_dir(&t)
@@ -89,10 +89,10 @@ fn can_produce_cairo_pie_output() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/scarb-execute/hello.zip
+        Saving output to: target/execute/hello.zip
         "#});
 
-    t.child("target/scarb-execute/hello.zip")
+    t.child("target/execute/hello.zip")
         .assert(predicates::path::exists());
 }
 
@@ -117,14 +117,14 @@ fn fails_when_target_missing() {
 
     output_assert(
         Scarb::quick_snapbox()
-            .arg("cairo-execute")
+            .arg("execute")
             .arg("--no-build")
             .current_dir(&t)
             .assert()
             .failure(),
         indoc! {r#"
         [..]Executing hello
-        error: package has not been compiled, file does not exist: hello.executable.json
+        error: package has not been compiled, file does not exist: `hello.executable.json`
         help: run `scarb build` to compile the package
         
         "#},

@@ -5228,31 +5228,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scarb-cairo-execute"
-version = "2.9.2"
-dependencies = [
- "anyhow",
- "assert_fs",
- "bincode",
- "cairo-lang-executable",
- "cairo-lang-runner",
- "cairo-vm",
- "camino",
- "clap",
- "create-output-dir",
- "indoc",
- "num-bigint",
- "predicates",
- "scarb",
- "scarb-metadata 1.13.0",
- "scarb-test-support",
- "scarb-ui",
- "serde",
- "serde_json",
- "snapbox",
-]
-
-[[package]]
 name = "scarb-cairo-language-server"
 version = "2.9.2"
 dependencies = [
@@ -5337,6 +5312,32 @@ dependencies = [
  "smol_str",
  "thiserror 2.0.11",
  "walkdir",
+]
+
+[[package]]
+name = "scarb-execute"
+version = "2.9.2"
+dependencies = [
+ "anyhow",
+ "assert_fs",
+ "bincode",
+ "cairo-lang-executable",
+ "cairo-lang-runner",
+ "cairo-lang-utils",
+ "cairo-vm",
+ "camino",
+ "clap",
+ "create-output-dir",
+ "indoc",
+ "num-bigint",
+ "predicates",
+ "scarb",
+ "scarb-metadata 1.13.0",
+ "scarb-test-support",
+ "scarb-ui",
+ "serde",
+ "serde_json",
+ "snapbox",
 ]
 
 [[package]]
