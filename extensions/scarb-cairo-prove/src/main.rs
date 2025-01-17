@@ -1,5 +1,5 @@
 use anyhow::{ensure, Context, Result};
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
@@ -22,26 +22,26 @@ struct Args {
     #[command(flatten)]
     packages_filter: PackagesFilter,
 
-    /// Number of `cairo-execute` output for given package, for which to generate proof.
+    /// Number of `cairo-execute` *standard* output for given package, for which to generate proof.
     #[arg(long)]
     execution: Option<u32>,
 
     #[command(flatten)]
-    paths: PathInputArgs,
+    files: InputFileArgs,
 
     #[command(flatten)]
     prover: ProverArgs,
 }
 
 #[derive(Parser, Clone, Debug)]
-struct PathInputArgs {
-    /// The AIR public input path.
+struct InputFileArgs {
+    /// AIR public input path.
     #[arg(long, required_unless_present_any = ["execution"], conflicts_with_all = ["execution"])]
-    pub_input: Option<Utf8PathBuf>,
+    pub_input_file: Option<Utf8PathBuf>,
 
-    /// The AIR private input path.
+    /// AIR private input path.
     #[arg(long, required_unless_present_any = ["execution"], conflicts_with_all = ["execution"])]
-    priv_input: Option<Utf8PathBuf>,
+    priv_input_file: Option<Utf8PathBuf>,
 }
 
 #[derive(Parser, Clone, Debug)]
@@ -69,7 +69,10 @@ fn main() -> ExitCode {
 }
 
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
-    let (pub_input, priv_input, proof_path) = if let Some(execution_num) = args.execution {
+    let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
+
+    let (pub_input_path, priv_input_path, proof_path) = if let Some(execution_num) = args.execution
+    {
         // Package-based mode
         let metadata = MetadataCommand::new().inherit_stderr().exec()?;
         let package = args
@@ -79,7 +82,6 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
         ui.print(Status::new("Proving", &package.name));
 
-        let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
         let execution_dir = scarb_target_dir
             .join("scarb-execute")
             .join(&package.name)
@@ -88,37 +90,43 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         ensure!(
             execution_dir.exists(),
             formatdoc! {r#"
-            Execution directory not found: {}
-            Make sure to run scarb cairo-execute first
-        "#, execution_dir}
-        );
-
-        // Get input files from execution directory
-        let pub_input = execution_dir.join("air_public_input.json");
-        let priv_input = execution_dir.join("air_private_input.json");
-
-        ensure!(
-            pub_input.exists() && priv_input.exists(),
-            formatdoc! {r#"
-                Missing input files in execution directory: {}
-                Make sure both air_public_input.json and air_private_input.json exist
+                Execution directory not found: {}
+                Make sure to run `scarb cairo-execute` first
             "#, execution_dir}
         );
 
-        // Create proof directory inside execution directory
-        let proof_dir = execution_dir.join("proof");
-        create_output_dir(proof_dir.as_std_path())?;
+        // Get input files from execution directory
+        let pub_input_path = execution_dir.join("air_public_input.json");
+        let priv_input_path = execution_dir.join("air_private_input.json");
+        ensure!(
+            pub_input_path.exists() && priv_input_path.exists(),
+            formatdoc! {r#"
+                Missing input files in directory: {}
+                Make sure air_public_input.json and air_private_input.json exist
+            "#, execution_dir}
+        );
 
-        (pub_input, priv_input, proof_dir.join("proof.json"))
+        // Create proof directory under this execution folder
+        let proof_dir = execution_dir.join("proof");
+        create_output_dir(proof_dir.as_std_path()).context("Failed to create proof directory")?;
+        let proof_path = proof_dir.join("proof.json");
+
+        (pub_input_path, priv_input_path, proof_path)
     } else {
         // Raw file paths mode
-        let pub_input_path = args.paths.pub_input.unwrap();
-        let priv_input_path = args.paths.priv_input.unwrap();
+        let pub_input_path = args.files.pub_input_file.unwrap();
+        let priv_input_path = args.files.priv_input_file.unwrap();
 
         ui.print(Status::new("Proving", "Cairo program"));
 
-        ensure!(pub_input_path.exists(), "Public input file not found");
-        ensure!(priv_input_path.exists(), "Private input file not found");
+        ensure!(
+            pub_input_path.exists(),
+            "Public input file does not exist at path: {pub_input_path}"
+        );
+        ensure!(
+            priv_input_path.exists(),
+            "Private input file does not exist at path: {priv_input_path}"
+        );
 
         // Create proof file in current directory
         let proof_path = Utf8PathBuf::from("proof.json");
@@ -126,9 +134,12 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         (pub_input_path, priv_input_path, proof_path)
     };
 
-    // Generate proof
-    let prover_input = adapt_vm_output(pub_input.as_std_path(), priv_input.as_std_path(), false)
-        .context("Failed to adapt VM output")?;
+    let prover_input = adapt_vm_output(
+        pub_input_path.as_std_path(),
+        priv_input_path.as_std_path(),
+        false,
+    )
+    .context("Failed to adapt VM output")?;
 
     let config = ProverConfig::builder()
         .track_relations(args.prover.track_relations)
@@ -138,10 +149,17 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let proof = prove_cairo::<Blake2sMerkleChannel>(prover_input, config)
         .context("Failed to generate proof")?;
 
-    // Save proof output
+    // Save proof
+    ui.print(Status::new("Saving proof to:", &display_path(&scarb_target_dir, &proof_path)));
     fs::write(proof_path.as_std_path(), serde_json::to_string(&proof)?)
         .context("Failed to write proof file")?;
 
-    ui.print(Status::new("Proof saved to:", proof_path.as_str()));
     Ok(())
+}
+
+fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {
+    match output_path.strip_prefix(scarb_target_dir) {
+        Ok(stripped) => Utf8PathBuf::from("target").join(stripped).to_string(),
+        Err(_) => output_path.to_string(),
+    }
 }
