@@ -29,7 +29,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
-        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+        run: cargo nextest archive --workspace --exclude cairo-lang-macro --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
       - uses: actions/upload-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
@@ -81,6 +81,27 @@ jobs:
       - run: echo "SCARB_TEST_BIN=$(which scarb)" >> $GITHUB_ENV
       - name: run tests
         run: cargo test -p scarb-metadata
+
+  test-cairo-lang-macro:
+    name: test cairo-lang-macro ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        # Note tests depending on trybuild crate cannot be run with nextest,
+        # as they require access to cargo build cache of the package,
+        # which is not archived with nextest-archive.
+        run: cargo test -p cairo-lang-macro --all-features
 
   test-prebuilt-plugins:
     name: test prebuilt plugins ${{ matrix.platform.name }}
