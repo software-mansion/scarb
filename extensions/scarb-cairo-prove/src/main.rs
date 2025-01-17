@@ -73,65 +73,16 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
     let (pub_input_path, priv_input_path, proof_path) = if let Some(execution_num) = args.execution
     {
-        // Package-based mode
         let metadata = MetadataCommand::new().inherit_stderr().exec()?;
-        let package = args
-            .packages_filter
-            .match_one(&metadata)
-            .context("Failed to find a matching package in the workspace")?;
+        let package = args.packages_filter.match_one(&metadata)?;
 
         ui.print(Status::new("Proving", &package.name));
 
-        let execution_dir = scarb_target_dir
-            .join("scarb-execute")
-            .join(&package.name)
-            .join(format!("execution{}", execution_num));
-
-        ensure!(
-            execution_dir.exists(),
-            formatdoc! {r#"
-                Execution directory not found: {}
-                Make sure to run `scarb cairo-execute` first
-            "#, execution_dir}
-        );
-
-        // Get input files from execution directory
-        let pub_input_path = execution_dir.join("air_public_input.json");
-        let priv_input_path = execution_dir.join("air_private_input.json");
-        ensure!(
-            pub_input_path.exists() && priv_input_path.exists(),
-            formatdoc! {r#"
-                Missing input files in directory: {}
-                Make sure air_public_input.json and air_private_input.json exist
-            "#, execution_dir}
-        );
-
-        // Create proof directory under this execution folder
-        let proof_dir = execution_dir.join("proof");
-        create_output_dir(proof_dir.as_std_path()).context("Failed to create proof directory")?;
-        let proof_path = proof_dir.join("proof.json");
-
-        (pub_input_path, priv_input_path, proof_path)
+        resolve_paths_from_package(&scarb_target_dir, &package.name, execution_num)?
     } else {
-        // Raw file paths mode
-        let pub_input_path = args.files.pub_input_file.unwrap();
-        let priv_input_path = args.files.priv_input_file.unwrap();
-
         ui.print(Status::new("Proving", "Cairo program"));
 
-        ensure!(
-            pub_input_path.exists(),
-            "Public input file does not exist at path: {pub_input_path}"
-        );
-        ensure!(
-            priv_input_path.exists(),
-            "Private input file does not exist at path: {priv_input_path}"
-        );
-
-        // Create proof file in current directory
-        let proof_path = Utf8PathBuf::from("proof.json");
-
-        (pub_input_path, priv_input_path, proof_path)
+        resolve_paths(&args.files)?
     };
 
     let prover_input = adapt_vm_output(
@@ -150,11 +101,70 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         .context("Failed to generate proof")?;
 
     // Save proof
-    ui.print(Status::new("Saving proof to:", &display_path(&scarb_target_dir, &proof_path)));
+    ui.print(Status::new(
+        "Saving proof to:",
+        &display_path(&scarb_target_dir, &proof_path),
+    ));
     fs::write(proof_path.as_std_path(), serde_json::to_string(&proof)?)
         .context("Failed to write proof file")?;
 
     Ok(())
+}
+
+fn resolve_paths_from_package(
+    scarb_target_dir: &Utf8PathBuf,
+    package_name: &str,
+    execution_num: u32,
+) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
+    let execution_dir = scarb_target_dir
+        .join("scarb-execute")
+        .join(&package_name)
+        .join(format!("execution{}", execution_num));
+
+    ensure!(
+        execution_dir.exists(),
+        formatdoc! {r#"
+            Execution directory not found: {}
+            Make sure to run `scarb cairo-execute` first
+        "#, execution_dir}
+    );
+
+    // Get input files from execution directory
+    let pub_input_path = execution_dir.join("air_public_input.json");
+    let priv_input_path = execution_dir.join("air_private_input.json");
+    ensure!(
+        pub_input_path.exists() && priv_input_path.exists(),
+        formatdoc! {r#"
+            Missing input files in directory: {}
+            Make sure air_public_input.json and air_private_input.json exist
+        "#, execution_dir}
+    );
+
+    // Create proof directory under this execution folder
+    let proof_dir = execution_dir.join("proof");
+    create_output_dir(proof_dir.as_std_path()).context("Failed to create proof directory")?;
+    let proof_path = proof_dir.join("proof.json");
+
+    Ok((pub_input_path, priv_input_path, proof_path))
+}
+
+fn resolve_paths(files: &InputFileArgs) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
+    let pub_input_path = files.pub_input_file.clone().unwrap();
+    let priv_input_path = files.priv_input_file.clone().unwrap();
+
+    ensure!(
+        pub_input_path.exists(),
+        "Public input file does not exist at path: {pub_input_path}"
+    );
+    ensure!(
+        priv_input_path.exists(),
+        "Private input file does not exist at path: {priv_input_path}"
+    );
+
+    // Create proof file in current directory
+    let proof_path = Utf8PathBuf::from("proof.json");
+
+    Ok((pub_input_path, priv_input_path, proof_path))
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {
