@@ -101,8 +101,7 @@ jobs:
         # Note tests depending on trybuild crate cannot be run with nextest,
         # as they require access to cargo build cache of the package,
         # which is not archived with nextest-archive.
-        run: |
-          cargo test -p cairo-lang-macro --all-features
+        run: cargo test -p cairo-lang-macro --all-features
 
   test-prebuilt-plugins:
     name: test prebuilt plugins ${{ matrix.platform.name }}
