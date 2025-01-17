@@ -1,8 +1,8 @@
 error: only `parent` argument is supported
- --> tests/args/args_01.rs:3:24
+ --> tests/args/args_01.rs:3:35
   |
-3 | #[attribute_macro(path = "some::path")]
-  |                        ^
+3 | #[attribute_macro(unsupported_key = "some::path")]
+  |                                   ^
 
 warning: unused imports: `ProcMacroResult` and `TokenStream`
  --> tests/args/args_01.rs:1:41
