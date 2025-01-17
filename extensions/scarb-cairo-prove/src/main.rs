@@ -15,7 +15,7 @@ use stwo_cairo_prover::input::vm_import::adapt_vm_output;
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
 
 /// Proves `cairo-execute` output using Stwo prover.
-#[derive(Parser, Debug)]
+#[derive(Parser, Clone, Debug)]
 #[clap(version, verbatim_doc_comment)]
 struct Args {
     /// Name of the package.
@@ -26,13 +26,33 @@ struct Args {
     #[arg(long)]
     execution: Option<u32>,
 
+    #[command(flatten)]
+    paths: PathInputArgs,
+
+    #[command(flatten)]
+    prover: ProverArgs,
+}
+
+#[derive(Parser, Clone, Debug)]
+struct PathInputArgs {
     /// The AIR public input path.
-    #[arg(long, value_name = "PUBLIC_INPUT_PATH",required_unless_present_any = ["execution"], conflicts_with_all = ["execution"])]
+    #[arg(long, required_unless_present_any = ["execution"], conflicts_with_all = ["execution"])]
     pub_input: Option<Utf8PathBuf>,
 
     /// The AIR private input path.
-    #[arg(long, value_name = "PRIVATE_INPUT_PATH", required_unless_present_any = ["execution"], conflicts_with_all = ["execution"])]
+    #[arg(long, required_unless_present_any = ["execution"], conflicts_with_all = ["execution"])]
     priv_input: Option<Utf8PathBuf>,
+}
+
+#[derive(Parser, Clone, Debug)]
+struct ProverArgs {
+    /// Track relations during proving.
+    #[arg(long)]
+    track_relations: bool,
+
+    /// Display components during proving.
+    #[arg(long)]
+    display_components: bool,
 }
 
 fn main() -> ExitCode {
@@ -92,8 +112,8 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         (pub_input, priv_input, proof_dir.join("proof.json"))
     } else {
         // Raw file paths mode
-        let pub_input_path = args.pub_input.unwrap();
-        let priv_input_path = args.priv_input.unwrap();
+        let pub_input_path = args.paths.pub_input.unwrap();
+        let priv_input_path = args.paths.priv_input.unwrap();
 
         ui.print(Status::new("Proving", "Cairo program"));
 
@@ -110,7 +130,11 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let prover_input = adapt_vm_output(pub_input.as_std_path(), priv_input.as_std_path(), false)
         .context("Failed to adapt VM output")?;
 
-    let config = ProverConfig::builder().build();
+    let config = ProverConfig::builder()
+        .track_relations(args.prover.track_relations)
+        .display_components(args.prover.display_components)
+        .build();
+
     let proof = prove_cairo::<Blake2sMerkleChannel>(prover_input, config)
         .context("Failed to generate proof")?;
 
