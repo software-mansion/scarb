@@ -78,21 +78,21 @@ pub struct ProgramArguments {
 
 impl ProgramArguments {
     pub fn read_arguments(self) -> Result<Vec<Arg>> {
-        Ok(if let Some(path) = self.arguments_file {
-            let as_vec: Vec<BigUintAsHex> = serde_json::from_reader(
-                fs::File::open(&path).with_context(|| "reading arguments file failed")?,
-            )
-            .with_context(|| "deserializing arguments file failed")?;
-            as_vec
+        if let Some(path) = self.arguments_file {
+            let file = fs::File::open(&path).with_context(|| "reading arguments file failed")?;
+            let as_vec: Vec<BigUintAsHex> = serde_json::from_reader(file)
+                .with_context(|| "deserializing arguments file failed")?;
+            Ok(as_vec
                 .into_iter()
                 .map(|v| Arg::Value(v.value.into()))
-                .collect()
+                .collect())
         } else {
-            self.arguments
+            Ok(self
+                .arguments
                 .iter()
                 .map(|v| Arg::Value(v.into()))
-                .collect()
-        })
+                .collect())
+        }
     }
 }
 
@@ -233,7 +233,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
         ui.print(output_buffer.trim_end());
     }
 
-    let output_dir = scarb_target_dir.join("scarb-execute");
+    let output_dir = scarb_target_dir.join("execute");
     create_output_dir(output_dir.as_std_path())?;
 
     if args.run.output.is_cairo_pie() {
