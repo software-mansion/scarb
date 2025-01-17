@@ -5762,11 +5762,13 @@ dependencies = [
  "clap",
  "create-output-dir",
  "indoc",
+ "predicates",
  "scarb-metadata 1.13.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
  "serde_json",
+ "snapbox",
  "stwo-prover",
  "stwo_cairo_prover",
 ]

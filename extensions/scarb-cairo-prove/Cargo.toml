@@ -26,6 +26,8 @@ stwo-prover = { git = "https://github.com/starkware-libs/stwo", rev = "af5475cb"
 ] }
 
 [dev-dependencies]
-scarb-test-support = { path = "../../utils/scarb-test-support" }
 assert_fs.workspace = true
-indoc.workspace = true
+scarb-test-support = { path = "../../utils/scarb-test-support" }
+snapbox.workspace = true
+predicates.workspace = true
+
