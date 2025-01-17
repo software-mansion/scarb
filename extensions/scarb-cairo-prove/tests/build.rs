@@ -97,7 +97,9 @@ fn prove_with_relations_summary() {
 
     assert!(stdout.contains("Proving hello"));
     assert!(stdout.contains("Relations summary:"));
-    assert!(stdout.contains("Saving proof to: target/scarb-execute/hello/execution1/proof/proof.json"));
+    assert!(
+        stdout.contains("Saving proof to: target/scarb-execute/hello/execution1/proof/proof.json")
+    );
 
     t.child("target/scarb-execute/hello/execution1/proof/proof.json")
         .assert(predicates::path::exists());
@@ -126,12 +128,13 @@ fn prove_with_display_components() {
 
     assert!(stdout.contains("Proving hello"));
     assert!(stdout.contains("CairoComponents"));
-    assert!(stdout.contains("Saving proof to: target/scarb-execute/hello/execution1/proof/proof.json"));
+    assert!(
+        stdout.contains("Saving proof to: target/scarb-execute/hello/execution1/proof/proof.json")
+    );
 
     t.child("target/scarb-execute/hello/execution1/proof/proof.json")
         .assert(predicates::path::exists());
 }
-
 
 #[test]
 fn prove_fails_when_execution_output_not_found() {

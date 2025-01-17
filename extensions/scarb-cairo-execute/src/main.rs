@@ -289,18 +289,13 @@ fn incremental_create_output_file(
     path: &Utf8Path,
     extension: impl AsRef<str>,
 ) -> Result<Utf8PathBuf> {
-    incremental_attempt_io_creation(
-        path,
-        extension,
-        "Failed to create output directory.",
-        |p| {
-            OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(p)
-                .map(|_| ())
-        },
-    )
+    incremental_attempt_io_creation(path, extension, "Failed to create output directory.", |p| {
+        OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(p)
+            .map(|_| ())
+    })
 }
 
 fn incremental_create_output_dir(path: &Utf8Path) -> Result<Utf8PathBuf> {
@@ -316,11 +311,7 @@ fn incremental_attempt_io_creation(
     attempt: impl Fn(&Utf8Path) -> io::Result<()>,
 ) -> Result<Utf8PathBuf> {
     for i in 1..=MAX_ITERATION_COUNT {
-        let filepath = path.join(format!(
-            "execution{}{}",
-            i,
-            extension.as_ref()
-        ));
+        let filepath = path.join(format!("execution{}{}", i, extension.as_ref()));
         let result = attempt(&filepath);
         return match result {
             Err(e) => {

@@ -47,11 +47,11 @@ struct InputFileArgs {
 #[derive(Parser, Clone, Debug)]
 struct ProverArgs {
     /// Track relations during proving.
-    #[arg(long)]
+    #[arg(long, default_value = "false")]
     track_relations: bool,
 
     /// Display components during proving.
-    #[arg(long)]
+    #[arg(long, default_value = "false")]
     display_components: bool,
 }
 
@@ -118,7 +118,7 @@ fn resolve_paths_from_package(
 ) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
     let execution_dir = scarb_target_dir
         .join("scarb-execute")
-        .join(&package_name)
+        .join(package_name)
         .join(format!("execution{}", execution_num));
 
     ensure!(
