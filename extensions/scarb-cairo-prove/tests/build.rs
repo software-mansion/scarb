@@ -175,6 +175,30 @@ fn prove_fails_when_input_files_not_found() {
     )
 }
 
+#[test]
+fn prove_with_execute() {
+    let t = build_executable_project();
+
+    Scarb::quick_snapbox()
+        .arg("cairo-prove")
+        .arg("--execute")
+        .arg("--target=standalone")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..])
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Saving output to: target/scarb-execute/hello/execution1
+        [..]Proving hello
+        Saving proof to: target/scarb-execute/hello/execution1/proof/proof.json
+        "#});
+
+    t.child("target/scarb-execute/hello/execution1/proof/proof.json")
+        .assert(predicates::path::exists());
+}
+
 fn output_assert(output: OutputAssert, expected: &str) {
     #[cfg(windows)]
     output.stdout_matches(format!(

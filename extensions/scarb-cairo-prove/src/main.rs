@@ -1,9 +1,9 @@
-use anyhow::{ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use scarb_metadata::MetadataCommand;
+use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::Status;
 use scarb_ui::{OutputFormat, Ui};
@@ -26,6 +26,14 @@ struct Args {
     #[arg(long)]
     execution: Option<u32>,
 
+    /// Execute the program before proving.
+    #[arg(long, conflicts_with_all = ["execution", "pub_input_file", "priv_input_file"])]
+    execute: bool,
+
+    /// Execute the program before proving.
+    #[command(flatten)]
+    execute_args: ExecuteArgs,
+
     #[command(flatten)]
     files: InputFileArgs,
 
@@ -34,13 +42,28 @@ struct Args {
 }
 
 #[derive(Parser, Clone, Debug)]
+struct ExecuteArgs {
+    /// Do not build the package before execution.
+    #[arg(long, requires = "execute")]
+    no_build: bool,
+
+    /// Arguments to pass to the program during execution.
+    #[arg(long, requires = "execute")]
+    arguments: Option<String>,
+
+    /// Target for execution.
+    #[arg(long, requires = "execute")]
+    target: Option<String>,
+}
+
+#[derive(Parser, Clone, Debug)]
 struct InputFileArgs {
     /// AIR public input path.
-    #[arg(long, required_unless_present_any = ["execution"], conflicts_with_all = ["execution"])]
+    #[arg(long, required_unless_present_any = ["execution", "execute"], conflicts_with_all = ["execution", "execute"])]
     pub_input_file: Option<Utf8PathBuf>,
 
     /// AIR private input path.
-    #[arg(long, required_unless_present_any = ["execution"], conflicts_with_all = ["execution"])]
+    #[arg(long, required_unless_present_any = ["execution", "execute"], conflicts_with_all = ["execution", "execute"])]
     priv_input_file: Option<Utf8PathBuf>,
 }
 
@@ -71,11 +94,52 @@ fn main() -> ExitCode {
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
 
-    let (pub_input_path, priv_input_path, proof_path) = if let Some(execution_num) = args.execution
+    let (pub_input_path, priv_input_path, proof_path) = if args.execute || args.execution.is_some()
     {
         let metadata = MetadataCommand::new().inherit_stderr().exec()?;
         let package = args.packages_filter.match_one(&metadata)?;
 
+        let execution_num = match args.execution {
+            Some(execution_num) => execution_num,
+            None => {
+                let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
+                let mut cmd = ScarbCommand::new_with_output();
+                cmd.arg("cairo-execute")
+                    .env("SCARB_PACKAGES_FILTER", filter.to_env())
+                    .env("SCARB_TARGET_DIR", &scarb_target_dir);
+
+                if args.execute_args.no_build {
+                    cmd.arg("--no-build");
+                }
+                if let Some(arguments) = &args.execute_args.arguments {
+                    cmd.arg(format!("--arguments={arguments}"));
+                }
+                if let Some(target) = &args.execute_args.target {
+                    cmd.arg(format!("--target={target}"));
+                }
+
+                let output = cmd
+                    .run_with_output()
+                    .context("Failed to run `scarb cairo-execute`")?;
+
+                let stdout = String::from_utf8(output.stdout)
+                    .context("Failed to parse `scarb cairo-execute` output")?;
+
+                stdout
+                    .lines()
+                    .find_map(|line| {
+                        line.trim()
+                            .strip_prefix(&format!(
+                                "Saving output to: target/scarb-execute/{package_name}/execution",
+                                package_name = &package.name,
+                            ))
+                            .and_then(|num| num.parse::<u32>().ok())
+                    })
+                    .ok_or_else(|| {
+                        anyhow!("Failed to find execution number in cairo-execute output")
+                    })?
+            }
+        };
         ui.print(Status::new("Proving", &package.name));
 
         resolve_paths_from_package(&scarb_target_dir, &package.name, execution_num)?

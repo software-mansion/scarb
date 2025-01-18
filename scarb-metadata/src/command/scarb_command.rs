@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 use std::io;
 use std::path::PathBuf;
-
+use std::process::Output;
 use crate::command::internal_command::InternalScarbCommandBuilder;
 use thiserror::Error;
 
@@ -21,6 +21,7 @@ pub enum ScarbCommandError {
 #[derive(Clone, Debug, Default)]
 pub struct ScarbCommand {
     inner: InternalScarbCommandBuilder,
+    print_stdout: bool,
 }
 
 impl ScarbCommand {
@@ -30,7 +31,22 @@ impl ScarbCommand {
         let mut cmd = InternalScarbCommandBuilder::new();
         cmd.inherit_stderr();
         cmd.inherit_stdout();
-        Self { inner: cmd }
+        Self { 
+            inner: cmd,
+            print_stdout: false,
+        }
+    }
+
+    /// Creates a `scarb` command that captures output while still printing it to stdout.
+    pub fn new_with_output() -> Self {
+        // We can not just use self.inner.inherit_stdout()
+        // Because it will make output.stdout empty
+        let mut cmd = InternalScarbCommandBuilder::new();
+        cmd.inherit_stderr();
+        Self { 
+            inner: cmd,
+            print_stdout: true,
+        }
     }
 
     /// Path to `scarb` executable.
@@ -106,6 +122,22 @@ impl ScarbCommand {
         let mut cmd = self.inner.command();
         if cmd.status()?.success() {
             Ok(())
+        } else {
+            Err(ScarbCommandError::ScarbError)
+        }
+    }
+
+    /// Runs configured `scarb` command and returns its output.
+    pub fn run_with_output(&self) -> Result<Output, ScarbCommandError> {
+        let mut cmd = self.inner.command();
+        let output = cmd.output()?;
+        
+        if self.print_stdout {
+            print!("{}", String::from_utf8_lossy(&output.stdout));
+        }
+        
+        if output.status.success() {
+            Ok(output)
         } else {
             Err(ScarbCommandError::ScarbError)
         }
