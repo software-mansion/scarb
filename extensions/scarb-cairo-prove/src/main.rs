@@ -6,7 +6,7 @@ use indoc::formatdoc;
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand};
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use scarb_ui::components::Status;
-use scarb_ui::{OutputFormat, Ui};
+use scarb_ui::{OutputFormat, Ui, Verbosity};
 use std::env;
 use std::fs;
 use std::process::{ExitCode, Output};
@@ -104,7 +104,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
         let execution_id = match args.execution_id {
             Some(execution_id) => execution_id,
-            None => run_cairo_execute(&args.execute_args, &package, &scarb_target_dir)?,
+            None => run_cairo_execute(&args.execute_args, &package, &scarb_target_dir, &args.verbose)?,
         };
 
         ui.print(Status::new("Proving", &package.name));
@@ -203,10 +203,12 @@ fn run_cairo_execute(
     execution_args: &ExecuteArgs,
     package: &PackageMetadata,
     scarb_target_dir: &Utf8PathBuf,
+    verbosity_spec: &VerbositySpec,
 ) -> Result<u32> {
     let package_filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
 
-    let mut cmd = ScarbCommand::new_with_output();
+    let print_stdout = Verbosity::from(verbosity_spec.clone()) != Verbosity::Quiet;
+    let mut cmd = ScarbCommand::new_with_output(print_stdout);
     cmd.arg("cairo-execute")
         .env("SCARB_PACKAGES_FILTER", package_filter.to_env())
         .env("SCARB_TARGET_DIR", scarb_target_dir);

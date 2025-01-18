@@ -38,14 +38,14 @@ impl ScarbCommand {
     }
 
     /// Creates a `scarb` command that captures output while still printing it to stdout.
-    pub fn new_with_output() -> Self {
+    pub fn new_with_output(print_stdout: bool) -> Self {
         // We can not just use self.inner.inherit_stdout()
         // Because it will make output.stdout empty
         let mut cmd = InternalScarbCommandBuilder::new();
         cmd.inherit_stderr();
         Self { 
             inner: cmd,
-            print_stdout: true,
+            print_stdout,
         }
     }
 
