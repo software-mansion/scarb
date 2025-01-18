@@ -62,7 +62,6 @@ fn can_execute_prebuilt_executable() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]Executing hello
-        Saving output to: target/execute/hello/execution1
         "#});
 
     t.child("target/execute/hello/execution1/air_private_input.json")

@@ -34,6 +34,7 @@ cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-test-plugin.workspace = true
 cairo-lang-utils.workspace = true
+cairo-lint-core.workspace = true
 camino.workspace = true
 clap.workspace = true
 convert_case.workspace = true
@@ -116,6 +117,7 @@ similar-asserts.workspace = true
 snapbox.workspace = true
 test-case.workspace = true
 test-for-each-example = { path = "../utils/test-for-each-example" }
+cairo-lint-core = { workspace = true, features = ["testing-colors"] }
 
 [build-dependencies]
 fs_extra.workspace = true
