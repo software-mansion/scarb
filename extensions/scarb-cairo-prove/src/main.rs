@@ -97,24 +97,29 @@ fn main() -> ExitCode {
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
 
-    let (pub_input_path, priv_input_path, proof_path) = if args.execute || args.execution_id.is_some()
-    {
-        let metadata = MetadataCommand::new().inherit_stderr().exec()?;
-        let package = args.packages_filter.match_one(&metadata)?;
+    let (pub_input_path, priv_input_path, proof_path) =
+        if args.execute || args.execution_id.is_some() {
+            let metadata = MetadataCommand::new().inherit_stderr().exec()?;
+            let package = args.packages_filter.match_one(&metadata)?;
 
-        let execution_id = match args.execution_id {
-            Some(execution_id) => execution_id,
-            None => run_cairo_execute(&args.execute_args, &package, &scarb_target_dir, &args.verbose)?,
+            let execution_id = match args.execution_id {
+                Some(execution_id) => execution_id,
+                None => run_cairo_execute(
+                    &args.execute_args,
+                    &package,
+                    &scarb_target_dir,
+                    &args.verbose,
+                )?,
+            };
+
+            ui.print(Status::new("Proving", &package.name));
+
+            resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?
+        } else {
+            ui.print(Status::new("Proving", "Cairo program"));
+
+            resolve_paths(&args.files)?
         };
-
-        ui.print(Status::new("Proving", &package.name));
-
-        resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?
-    } else {
-        ui.print(Status::new("Proving", "Cairo program"));
-
-        resolve_paths(&args.files)?
-    };
 
     let prover_input = adapt_vm_output(
         pub_input_path.as_std_path(),
