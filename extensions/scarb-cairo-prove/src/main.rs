@@ -223,8 +223,7 @@ fn run_cairo_execute(
 }
 
 fn extract_execution_num(output: &Output) -> Result<u32> {
-    let stdout = String::from_utf8(output.stdout.clone())
-        .context("failed to parse `cairo-execute` output")?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
 
     stdout
         .lines()
