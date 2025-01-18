@@ -208,7 +208,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
         print!("{output_buffer}");
     }
 
-    let output_dir = scarb_target_dir.join("scarb-execute").join(&package.name);
+    let output_dir = scarb_target_dir.join("execute").join(&package.name);
     create_output_dir(output_dir.as_std_path())?;
 
     if args.run.output.is_cairo_pie() {

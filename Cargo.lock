@@ -5716,31 +5716,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scarb-cairo-execute"
-version = "2.9.2"
-dependencies = [
- "anyhow",
- "assert_fs",
- "bincode",
- "cairo-lang-executable",
- "cairo-lang-runner",
- "cairo-vm 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "camino",
- "clap",
- "create-output-dir",
- "indoc",
- "num-bigint",
- "predicates",
- "scarb",
- "scarb-metadata 1.13.0",
- "scarb-test-support",
- "scarb-ui",
- "serde",
- "serde_json",
- "snapbox",
-]
-
-[[package]]
 name = "scarb-cairo-language-server"
 version = "2.9.2"
 dependencies = [
@@ -5750,27 +5725,6 @@ dependencies = [
  "serde_json",
  "tokio",
  "url",
-]
-
-[[package]]
-name = "scarb-cairo-prove"
-version = "2.9.2"
-dependencies = [
- "anyhow",
- "assert_fs",
- "camino",
- "clap",
- "create-output-dir",
- "indoc",
- "predicates",
- "scarb-metadata 1.13.0",
- "scarb-test-support",
- "scarb-ui",
- "serde",
- "serde_json",
- "snapbox",
- "stwo-prover",
- "stwo_cairo_prover",
 ]
 
 [[package]]
@@ -5849,6 +5803,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "scarb-execute"
+version = "2.9.2"
+dependencies = [
+ "anyhow",
+ "assert_fs",
+ "bincode",
+ "cairo-lang-executable",
+ "cairo-lang-runner",
+ "cairo-vm 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "camino",
+ "clap",
+ "create-output-dir",
+ "indoc",
+ "num-bigint",
+ "predicates",
+ "scarb",
+ "scarb-metadata 1.13.0",
+ "scarb-test-support",
+ "scarb-ui",
+ "serde",
+ "serde_json",
+ "snapbox",
+]
+
+[[package]]
 name = "scarb-metadata"
 version = "1.13.0"
 dependencies = [
@@ -5894,6 +5873,27 @@ dependencies = [
  "cairo-lang-macro 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "scarb-prove"
+version = "2.9.2"
+dependencies = [
+ "anyhow",
+ "assert_fs",
+ "camino",
+ "clap",
+ "create-output-dir",
+ "indoc",
+ "predicates",
+ "scarb-metadata 1.13.0",
+ "scarb-test-support",
+ "scarb-ui",
+ "serde",
+ "serde_json",
+ "snapbox",
+ "stwo-prover",
+ "stwo_cairo_prover",
 ]
 
 [[package]]

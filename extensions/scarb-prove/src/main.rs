@@ -14,7 +14,7 @@ use stwo_cairo_prover::cairo_air::{prove_cairo, ProverConfig};
 use stwo_cairo_prover::input::vm_import::adapt_vm_output;
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
 
-/// Proves `cairo-execute` output using Stwo prover.
+/// Proves `scarb execute` output using Stwo prover.
 #[derive(Parser, Clone, Debug)]
 #[clap(version, verbatim_doc_comment)]
 struct Args {
@@ -22,7 +22,7 @@ struct Args {
     #[command(flatten)]
     packages_filter: PackagesFilter,
 
-    /// ID of `cairo-execute` *standard* output for given package, for which to generate proof.
+    /// ID of `scarb execute` *standard* output for given package, for which to generate proof.
     #[arg(long)]
     execution_id: Option<u32>,
 
@@ -104,7 +104,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
             let execution_id = match args.execution_id {
                 Some(execution_id) => execution_id,
-                None => run_cairo_execute(&args.execute_args, &package, &scarb_target_dir, &ui)?,
+                None => run_execute(&args.execute_args, &package, &scarb_target_dir, &ui)?,
             };
 
             ui.print(Status::new("Proving", &package.name));
@@ -147,7 +147,7 @@ fn resolve_paths_from_package(
     execution_id: u32,
 ) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
     let execution_dir = scarb_target_dir
-        .join("scarb-execute")
+        .join("execute")
         .join(package_name)
         .join(format!("execution{}", execution_id));
 
@@ -155,7 +155,7 @@ fn resolve_paths_from_package(
         execution_dir.exists(),
         formatdoc! {r#"
             execution directory not found: {}
-            help: make sure to run `scarb cairo-execute` first
+            help: make sure to run `scarb execute` first
             and that the execution ID is correct
         "#, execution_dir}
     );
@@ -199,7 +199,7 @@ fn resolve_paths(files: &InputFileArgs) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf
     Ok((pub_input_path, priv_input_path, proof_path))
 }
 
-fn run_cairo_execute(
+fn run_execute(
     execution_args: &ExecuteArgs,
     package: &PackageMetadata,
     scarb_target_dir: &Utf8PathBuf,
@@ -208,7 +208,7 @@ fn run_cairo_execute(
     let package_filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
 
     let mut cmd = ScarbCommand::new_for_output();
-    cmd.arg("cairo-execute")
+    cmd.arg("execute")
         .env("SCARB_PACKAGES_FILTER", package_filter.to_env())
         .env("SCARB_TARGET_DIR", scarb_target_dir);
 
@@ -242,7 +242,7 @@ fn extract_execution_id(output: &[String]) -> Result<u32> {
                         .ok()
                 })
         })
-        .ok_or_else(|| anyhow!("failed to extract execution ID from `cairo-execute` output"))
+        .ok_or_else(|| anyhow!("failed to extract execution ID from `scarb execute` output"))
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {

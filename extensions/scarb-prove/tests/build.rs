@@ -30,23 +30,23 @@ fn prove_from_execution_output() {
     let t = build_executable_project();
 
     Scarb::quick_snapbox()
-        .arg("cairo-execute")
+        .arg("execute")
         .current_dir(&t)
         .assert()
         .success();
 
     Scarb::quick_snapbox()
-        .arg("cairo-prove")
+        .arg("prove")
         .arg("--execution-id=1")
         .current_dir(&t)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
         [..]Proving hello
-        Saving proof to: target/scarb-execute/hello/execution1/proof/proof.json
+        Saving proof to: target/execute/hello/execution1/proof/proof.json
         "#});
 
-    t.child("target/scarb-execute/hello/execution1/proof/proof.json")
+    t.child("target/execute/hello/execution1/proof/proof.json")
         .assert(predicates::path::exists());
 }
 
@@ -55,15 +55,15 @@ fn prove_from_paths() {
     let t = build_executable_project();
 
     Scarb::quick_snapbox()
-        .arg("cairo-execute")
+        .arg("execute")
         .current_dir(&t)
         .assert()
         .success();
 
     Scarb::quick_snapbox()
-        .arg("cairo-prove")
-        .arg("--pub-input-file=target/scarb-execute/hello/execution1/air_public_input.json")
-        .arg("--priv-input-file=target/scarb-execute/hello/execution1/air_private_input.json")
+        .arg("prove")
+        .arg("--pub-input-file=target/execute/hello/execution1/air_public_input.json")
+        .arg("--priv-input-file=target/execute/hello/execution1/air_private_input.json")
         .current_dir(&t)
         .assert()
         .success()
@@ -80,13 +80,13 @@ fn prove_with_track_relations() {
     let t = build_executable_project();
 
     Scarb::quick_snapbox()
-        .arg("cairo-execute")
+        .arg("execute")
         .current_dir(&t)
         .assert()
         .success();
 
     let cmd = Scarb::quick_snapbox()
-        .arg("cairo-prove")
+        .arg("prove")
         .arg("--execution-id=1")
         .arg("--track-relations")
         .current_dir(&t)
@@ -98,10 +98,10 @@ fn prove_with_track_relations() {
     assert!(stdout.contains("Proving hello"));
     assert!(stdout.contains("Relations summary:"));
     assert!(
-        stdout.contains("Saving proof to: target/scarb-execute/hello/execution1/proof/proof.json")
+        stdout.contains("Saving proof to: target/execute/hello/execution1/proof/proof.json")
     );
 
-    t.child("target/scarb-execute/hello/execution1/proof/proof.json")
+    t.child("target/execute/hello/execution1/proof/proof.json")
         .assert(predicates::path::exists());
 }
 
@@ -142,15 +142,15 @@ fn prove_fails_when_execution_output_not_found() {
 
     output_assert(
         Scarb::quick_snapbox()
-            .arg("cairo-prove")
+            .arg("prove")
             .arg("--execution-id=1")
             .current_dir(&t)
             .assert()
             .failure(),
         indoc! {r#"
         [..]Proving hello
-        error: execution directory not found: [..]/target/scarb-execute/hello/execution1
-        help: make sure to run `scarb cairo-execute` first
+        error: execution directory not found: [..]/target/execute/hello/execution1
+        help: make sure to run `scarb execute` first
         and that the execution ID is correct
 
         "#},
@@ -163,7 +163,7 @@ fn prove_fails_when_input_files_not_found() {
 
     output_assert(
         Scarb::quick_snapbox()
-            .arg("cairo-prove")
+            .arg("prove")
             .arg("--pub-input-file=nonexistent.json")
             .arg("--priv-input-file=nonexistent.json")
             .current_dir(&t)
@@ -181,7 +181,7 @@ fn prove_with_execute() {
     let t = build_executable_project();
 
     Scarb::quick_snapbox()
-        .arg("cairo-prove")
+        .arg("prove")
         .arg("--execute")
         .arg("--target=standalone")
         .current_dir(&t)
@@ -191,12 +191,12 @@ fn prove_with_execute() {
         [..]Compiling hello v0.1.0 ([..])
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/scarb-execute/hello/execution1
+        Saving output to: target/execute/hello/execution1
         [..]Proving hello
-        Saving proof to: target/scarb-execute/hello/execution1/proof/proof.json
+        Saving proof to: target/execute/hello/execution1/proof/proof.json
         "#});
 
-    t.child("target/scarb-execute/hello/execution1/proof/proof.json")
+    t.child("target/execute/hello/execution1/proof/proof.json")
         .assert(predicates::path::exists());
 }
 
