@@ -4,7 +4,7 @@ use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand};
-use scarb_ui::args::PackagesFilter;
+use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use scarb_ui::components::Status;
 use scarb_ui::{OutputFormat, Ui};
 use std::env;
@@ -38,6 +38,10 @@ struct Args {
 
     #[command(flatten)]
     prover: ProverArgs,
+
+    /// Logging verbosity.
+    #[command(flatten)]
+    pub verbose: VerbositySpec,
 }
 
 #[derive(Parser, Clone, Debug)]
@@ -79,7 +83,7 @@ struct ProverArgs {
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let ui = Ui::new(Default::default(), OutputFormat::Text);
+    let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
 
     match main_inner(args, ui.clone()) {
         Ok(()) => ExitCode::SUCCESS,
