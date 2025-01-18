@@ -3,13 +3,13 @@ use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
+use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand};
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::Status;
 use scarb_ui::{OutputFormat, Ui};
 use std::env;
 use std::fs;
-use std::process::ExitCode;
+use std::process::{ExitCode, Output};
 use stwo_cairo_prover::cairo_air::{prove_cairo, ProverConfig};
 use stwo_cairo_prover::input::vm_import::adapt_vm_output;
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
@@ -101,45 +101,9 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
         let execution_num = match args.execution {
             Some(execution_num) => execution_num,
-            None => {
-                let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
-                let mut cmd = ScarbCommand::new_with_output();
-                cmd.arg("cairo-execute")
-                    .env("SCARB_PACKAGES_FILTER", filter.to_env())
-                    .env("SCARB_TARGET_DIR", &scarb_target_dir);
-
-                if args.execute_args.no_build {
-                    cmd.arg("--no-build");
-                }
-                if let Some(arguments) = &args.execute_args.arguments {
-                    cmd.arg(format!("--arguments={arguments}"));
-                }
-                if let Some(target) = &args.execute_args.target {
-                    cmd.arg(format!("--target={target}"));
-                }
-
-                let output = cmd
-                    .run_with_output()
-                    .context("Failed to run `scarb cairo-execute`")?;
-
-                let stdout = String::from_utf8(output.stdout)
-                    .context("Failed to parse `scarb cairo-execute` output")?;
-
-                stdout
-                    .lines()
-                    .find_map(|line| {
-                        line.trim()
-                            .strip_prefix(&format!(
-                                "Saving output to: target/scarb-execute/{package_name}/execution",
-                                package_name = &package.name,
-                            ))
-                            .and_then(|num| num.parse::<u32>().ok())
-                    })
-                    .ok_or_else(|| {
-                        anyhow!("Failed to find execution number in cairo-execute output")
-                    })?
-            }
+            None => run_cairo_execute(&args.execute_args, &package, &scarb_target_dir)?,
         };
+
         ui.print(Status::new("Proving", &package.name));
 
         resolve_paths_from_package(&scarb_target_dir, &package.name, execution_num)?
@@ -229,6 +193,55 @@ fn resolve_paths(files: &InputFileArgs) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf
     let proof_path = Utf8PathBuf::from("proof.json");
 
     Ok((pub_input_path, priv_input_path, proof_path))
+}
+
+fn run_cairo_execute(
+    execution_args: &ExecuteArgs,
+    package: &PackageMetadata,
+    scarb_target_dir: &Utf8PathBuf,
+) -> Result<u32> {
+    let package_filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
+
+    let mut cmd = ScarbCommand::new_with_output();
+    cmd.arg("cairo-execute")
+        .env("SCARB_PACKAGES_FILTER", package_filter.to_env())
+        .env("SCARB_TARGET_DIR", scarb_target_dir);
+
+    if execution_args.no_build {
+        cmd.arg("--no-build");
+    }
+    if let Some(arguments) = &execution_args.arguments {
+        cmd.arg(format!("--arguments={arguments}"));
+    }
+    if let Some(target) = &execution_args.target {
+        cmd.arg(format!("--target={target}"));
+    }
+
+    let output = cmd
+        .run_with_output()
+        .context("Failed to run `scarb cairo-execute`")?;
+    extract_execution_num(&output)
+}
+
+fn extract_execution_num(output: &Output) -> Result<u32> {
+    let stdout = String::from_utf8(output.stdout.clone())
+        .context("Failed to parse `cairo-execute` output")?;
+
+    stdout
+        .lines()
+        .find_map(|line| {
+            line.trim()
+                .strip_prefix("Saving output to:")
+                // Isolate the last path component (e.g., "execution1"), strip "execution" prefix, and parse the number
+                .and_then(|output_path| output_path.trim().split('/').last())
+                .and_then(|execution_str| {
+                    execution_str
+                        .trim_start_matches("execution")
+                        .parse::<u32>()
+                        .ok()
+                })
+        })
+        .ok_or_else(|| anyhow!("Failed to get execution number from `cairo-execute` output"))
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {
