@@ -37,7 +37,7 @@ fn prove_from_execution_output() {
 
     Scarb::quick_snapbox()
         .arg("cairo-prove")
-        .arg("--execution=1")
+        .arg("--execution-id=1")
         .current_dir(&t)
         .assert()
         .success()
@@ -87,7 +87,7 @@ fn prove_with_track_relations() {
 
     let cmd = Scarb::quick_snapbox()
         .arg("cairo-prove")
-        .arg("--execution=1")
+        .arg("--execution-id=1")
         .arg("--track-relations")
         .current_dir(&t)
         .assert()
@@ -117,7 +117,7 @@ fn prove_with_display_components() {
 
     let cmd = Scarb::quick_snapbox()
         .arg("cairo-prove")
-        .arg("--execution=1")
+        .arg("--execution-id=1")
         .arg("--display-components")
         .current_dir(&t)
         .assert()
@@ -143,7 +143,7 @@ fn prove_fails_when_execution_output_not_found() {
     output_assert(
         Scarb::quick_snapbox()
             .arg("cairo-prove")
-            .arg("--execution=1")
+            .arg("--execution-id=1")
             .current_dir(&t)
             .assert()
             .failure(),
