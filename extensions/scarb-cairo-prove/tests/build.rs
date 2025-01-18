@@ -76,7 +76,7 @@ fn prove_from_paths() {
 }
 
 #[test]
-fn prove_with_relations_summary() {
+fn prove_with_track_relations() {
     let t = build_executable_project();
 
     Scarb::quick_snapbox()
