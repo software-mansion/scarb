@@ -151,7 +151,7 @@ fn prove_fails_when_execution_output_not_found() {
         [..]Proving hello
         error: execution directory not found: [..]/target/scarb-execute/hello/execution1
         help: make sure to run `scarb cairo-execute` first
-        and that the execution number is correct
+        and that the execution ID is correct
 
         "#},
     )

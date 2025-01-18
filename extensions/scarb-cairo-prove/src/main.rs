@@ -22,15 +22,14 @@ struct Args {
     #[command(flatten)]
     packages_filter: PackagesFilter,
 
-    /// Number of `cairo-execute` *standard* output for given package, for which to generate proof.
+    /// ID of `cairo-execute` *standard* output for given package, for which to generate proof.
     #[arg(long)]
-    execution: Option<u32>,
+    execution_id: Option<u32>,
 
     /// Execute the program before proving.
-    #[arg(long, conflicts_with_all = ["execution", "pub_input_file", "priv_input_file"])]
+    #[arg(long, conflicts_with_all = ["execution_id", "pub_input_file", "priv_input_file"])]
     execute: bool,
 
-    /// Execute the program before proving.
     #[command(flatten)]
     execute_args: ExecuteArgs,
 
@@ -59,11 +58,11 @@ struct ExecuteArgs {
 #[derive(Parser, Clone, Debug)]
 struct InputFileArgs {
     /// AIR public input path.
-    #[arg(long, required_unless_present_any = ["execution", "execute"], conflicts_with_all = ["execution", "execute"])]
+    #[arg(long, required_unless_present_any = ["execution_id", "execute"], conflicts_with_all = ["execution_id", "execute"])]
     pub_input_file: Option<Utf8PathBuf>,
 
     /// AIR private input path.
-    #[arg(long, required_unless_present_any = ["execution", "execute"], conflicts_with_all = ["execution", "execute"])]
+    #[arg(long, required_unless_present_any = ["execution_id", "execute"], conflicts_with_all = ["execution_id", "execute"])]
     priv_input_file: Option<Utf8PathBuf>,
 }
 
@@ -94,19 +93,19 @@ fn main() -> ExitCode {
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
 
-    let (pub_input_path, priv_input_path, proof_path) = if args.execute || args.execution.is_some()
+    let (pub_input_path, priv_input_path, proof_path) = if args.execute || args.execution_id.is_some()
     {
         let metadata = MetadataCommand::new().inherit_stderr().exec()?;
         let package = args.packages_filter.match_one(&metadata)?;
 
-        let execution_num = match args.execution {
-            Some(execution_num) => execution_num,
+        let execution_id = match args.execution_id {
+            Some(execution_id) => execution_id,
             None => run_cairo_execute(&args.execute_args, &package, &scarb_target_dir)?,
         };
 
         ui.print(Status::new("Proving", &package.name));
 
-        resolve_paths_from_package(&scarb_target_dir, &package.name, execution_num)?
+        resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?
     } else {
         ui.print(Status::new("Proving", "Cairo program"));
 
@@ -141,19 +140,19 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 fn resolve_paths_from_package(
     scarb_target_dir: &Utf8PathBuf,
     package_name: &str,
-    execution_num: u32,
+    execution_id: u32,
 ) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
     let execution_dir = scarb_target_dir
         .join("scarb-execute")
         .join(package_name)
-        .join(format!("execution{}", execution_num));
+        .join(format!("execution{}", execution_id));
 
     ensure!(
         execution_dir.exists(),
         formatdoc! {r#"
             execution directory not found: {}
             help: make sure to run `scarb cairo-execute` first
-            and that the execution number is correct
+            and that the execution ID is correct
         "#, execution_dir}
     );
 
@@ -219,10 +218,10 @@ fn run_cairo_execute(
     }
 
     let output = cmd.run_with_output()?;
-    extract_execution_num(&output)
+    extract_execution_id(&output)
 }
 
-fn extract_execution_num(output: &Output) -> Result<u32> {
+fn extract_execution_id(output: &Output) -> Result<u32> {
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     stdout
@@ -239,7 +238,7 @@ fn extract_execution_num(output: &Output) -> Result<u32> {
                         .ok()
                 })
         })
-        .ok_or_else(|| anyhow!("failed to extract execution number from `cairo-execute` output"))
+        .ok_or_else(|| anyhow!("failed to extract execution ID from `cairo-execute` output"))
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {
