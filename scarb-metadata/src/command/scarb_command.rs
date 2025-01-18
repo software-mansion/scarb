@@ -30,9 +30,7 @@ impl ScarbCommand {
         let mut cmd = InternalScarbCommandBuilder::new();
         cmd.inherit_stderr();
         cmd.inherit_stdout();
-        Self { 
-            inner: cmd,
-        }
+        Self { inner: cmd }
     }
 
     /// Creates a `scarb` command that captures output while still printing it to stdout.
@@ -42,9 +40,7 @@ impl ScarbCommand {
         // We can not just use cmd.inherit_stdout()
         // Because it will make output.stdout empty
         cmd.pipe_stdout();
-        Self { 
-            inner: cmd,
-        }
+        Self { inner: cmd }
     }
 
     /// Path to `scarb` executable.
