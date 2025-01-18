@@ -21,7 +21,6 @@ pub enum ScarbCommandError {
 #[derive(Clone, Debug, Default)]
 pub struct ScarbCommand {
     inner: InternalScarbCommandBuilder,
-    print_stdout: bool,
 }
 
 impl ScarbCommand {
@@ -33,20 +32,18 @@ impl ScarbCommand {
         cmd.inherit_stdout();
         Self { 
             inner: cmd,
-            print_stdout: false,
         }
     }
 
     /// Creates a `scarb` command that captures output while still printing it to stdout.
-    pub fn new_for_output(print_stdout: bool) -> Self {
-        // We can not just use self.inner.inherit_stdout()
-        // Because it will make output.stdout empty
+    pub fn new_for_output() -> Self {
         let mut cmd = InternalScarbCommandBuilder::new();
         cmd.inherit_stderr();
+        // We can not just use cmd.inherit_stdout()
+        // Because it will make output.stdout empty
         cmd.pipe_stdout();
         Self { 
             inner: cmd,
-            print_stdout,
         }
     }
 
@@ -129,7 +126,7 @@ impl ScarbCommand {
     }
 
     /// Runs configured `scarb` command and returns its stdout output.
-    pub fn output(&self) -> Result<Vec<String>, ScarbCommandError> {
+    pub fn output_and_stream(&self, printer: &impl Printer) -> Result<Vec<String>, ScarbCommandError> {
         let mut cmd = self.inner.command();
         let mut child = cmd.spawn()?;
 
@@ -143,9 +140,8 @@ impl ScarbCommand {
         let mut output = Vec::new();
         for line in reader.lines() {
             let line = line.map_err(|err| ScarbCommandError::Io(err))?;
-            if self.print_stdout {
-                println!("{}", line);
-            }
+
+            printer.print(&line);
             output.push(line);
         }
 
@@ -156,3 +152,10 @@ impl ScarbCommand {
         }
     }
 }
+
+/// Trait for printing messages.
+pub trait Printer {
+    /// Print a message.
+    fn print(&self, message: &str);
+}
+
