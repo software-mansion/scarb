@@ -1,5 +1,5 @@
 [package]
-name = "scarb-cairo-prove"
+name = "scarb-prove"
 publish = false
 
 authors.workspace = true
