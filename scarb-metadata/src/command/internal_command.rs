@@ -13,6 +13,8 @@ pub struct InternalScarbCommandBuilder {
     env_clear: bool,
     inherit_stderr: bool,
     inherit_stdout: bool,
+    pipe_stderr: bool,
+    pipe_stdout: bool,
     json: bool,
     manifest_path: Option<PathBuf>,
     scarb_path: Option<PathBuf>,
@@ -117,6 +119,19 @@ impl InternalScarbCommandBuilder {
         self
     }
 
+    /// Pipe standard error
+    #[allow(unused)]
+    pub fn pipe_stderr(&mut self) -> &mut Self {
+        self.pipe_stderr = true;
+        self
+    }
+
+    /// Pipe standard output
+    pub fn pipe_stdout(&mut self) -> &mut Self {
+        self.pipe_stdout = true;
+        self
+    }
+
     /// Set output format to JSON.
     pub fn json(&mut self) -> &mut Self {
         self.json = true;
@@ -161,10 +176,14 @@ impl InternalScarbCommandBuilder {
 
         if self.inherit_stderr {
             cmd.stderr(Stdio::inherit());
+        } else if self.pipe_stderr {
+            cmd.stderr(Stdio::piped());
         }
 
         if self.inherit_stdout {
             cmd.stdout(Stdio::inherit());
+        } else if self.pipe_stdout {
+            cmd.stdout(Stdio::piped());
         }
 
         cmd

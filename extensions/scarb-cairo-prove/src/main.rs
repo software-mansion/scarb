@@ -9,7 +9,7 @@ use scarb_ui::components::Status;
 use scarb_ui::{OutputFormat, Ui, Verbosity};
 use std::env;
 use std::fs;
-use std::process::{ExitCode, Output};
+use std::process::ExitCode;
 use stwo_cairo_prover::cairo_air::{prove_cairo, ProverConfig};
 use stwo_cairo_prover::input::vm_import::adapt_vm_output;
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
@@ -208,7 +208,7 @@ fn run_cairo_execute(
     let package_filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
 
     let print_stdout = Verbosity::from(verbosity_spec.clone()) != Verbosity::Quiet;
-    let mut cmd = ScarbCommand::new_with_output(print_stdout);
+    let mut cmd = ScarbCommand::new_for_output(print_stdout);
     cmd.arg("cairo-execute")
         .env("SCARB_PACKAGES_FILTER", package_filter.to_env())
         .env("SCARB_TARGET_DIR", scarb_target_dir);
@@ -223,15 +223,13 @@ fn run_cairo_execute(
         cmd.arg(format!("--target={target}"));
     }
 
-    let output = cmd.run_with_output()?;
+    let output = cmd.output()?;
     extract_execution_id(&output)
 }
 
-fn extract_execution_id(output: &Output) -> Result<u32> {
-    let stdout = String::from_utf8_lossy(&output.stdout);
-
-    stdout
-        .lines()
+fn extract_execution_id(output: &[String]) -> Result<u32> {
+    output
+        .iter()
         .find_map(|line| {
             line.trim()
                 .strip_prefix("Saving output to:")

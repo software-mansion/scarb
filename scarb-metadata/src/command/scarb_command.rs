@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 use std::io;
+use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
-use std::process::Output;
 use crate::command::internal_command::InternalScarbCommandBuilder;
 use thiserror::Error;
 
@@ -13,7 +13,7 @@ pub enum ScarbCommandError {
     #[error("failed to read `scarb` output")]
     Io(#[from] io::Error),
     /// Error during execution of `scarb` command.
-    #[error("`scarb metadata` exited with error")]
+    #[error("`scarb` command exited with error")]
     ScarbError,
 }
 
@@ -38,11 +38,12 @@ impl ScarbCommand {
     }
 
     /// Creates a `scarb` command that captures output while still printing it to stdout.
-    pub fn new_with_output(print_stdout: bool) -> Self {
+    pub fn new_for_output(print_stdout: bool) -> Self {
         // We can not just use self.inner.inherit_stdout()
         // Because it will make output.stdout empty
         let mut cmd = InternalScarbCommandBuilder::new();
         cmd.inherit_stderr();
+        cmd.pipe_stdout();
         Self { 
             inner: cmd,
             print_stdout,
@@ -127,16 +128,28 @@ impl ScarbCommand {
         }
     }
 
-    /// Runs configured `scarb` command and returns its output.
-    pub fn run_with_output(&self) -> Result<Output, ScarbCommandError> {
+    /// Runs configured `scarb` command and returns its stdout output.
+    pub fn output(&self) -> Result<Vec<String>, ScarbCommandError> {
         let mut cmd = self.inner.command();
-        let output = cmd.output()?;
-        
-        if self.print_stdout {
-            print!("{}", String::from_utf8_lossy(&output.stdout));
+        let mut child = cmd.spawn()?;
+
+        let stdout = child.stdout.take().ok_or_else(|| {
+            ScarbCommandError::Io(io::Error::from(io::ErrorKind::BrokenPipe))
+        })?;
+
+        let reader = BufReader::new(stdout);
+
+        // Collect and stream stdout lines
+        let mut output = Vec::new();
+        for line in reader.lines() {
+            let line = line.map_err(|err| ScarbCommandError::Io(err))?;
+            if self.print_stdout {
+                println!("{}", line);
+            }
+            output.push(line);
         }
-        
-        if output.status.success() {
+
+        if child.wait()?.success() {
             Ok(output)
         } else {
             Err(ScarbCommandError::ScarbError)
