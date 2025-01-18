@@ -118,7 +118,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         priv_input_path.as_std_path(),
         false,
     )
-    .context("Failed to adapt VM output")?;
+    .context("failed to adapt VM output")?;
 
     let config = ProverConfig::builder()
         .track_relations(args.prover.track_relations)
@@ -126,15 +126,14 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         .build();
 
     let proof = prove_cairo::<Blake2sMerkleChannel>(prover_input, config)
-        .context("Failed to generate proof")?;
+        .context("failed to generate proof")?;
 
-    // Save proof
     ui.print(Status::new(
         "Saving proof to:",
         &display_path(&scarb_target_dir, &proof_path),
     ));
-    fs::write(proof_path.as_std_path(), serde_json::to_string(&proof)?)
-        .context("Failed to write proof file")?;
+
+    fs::write(proof_path.as_std_path(), serde_json::to_string(&proof)?)?;
 
     Ok(())
 }
@@ -152,8 +151,9 @@ fn resolve_paths_from_package(
     ensure!(
         execution_dir.exists(),
         formatdoc! {r#"
-            Execution directory not found: {}
-            Make sure to run `scarb cairo-execute` first
+            execution directory not found: {}
+            help: make sure to run `scarb cairo-execute` first
+            and that the execution number is correct
         "#, execution_dir}
     );
 
@@ -161,16 +161,17 @@ fn resolve_paths_from_package(
     let pub_input_path = execution_dir.join("air_public_input.json");
     let priv_input_path = execution_dir.join("air_private_input.json");
     ensure!(
-        pub_input_path.exists() && priv_input_path.exists(),
-        formatdoc! {r#"
-            Missing input files in directory: {}
-            Make sure air_public_input.json and air_private_input.json exist
-        "#, execution_dir}
+        pub_input_path.exists(),
+        format!("public input file does not exist at path: {pub_input_path}")
+    );
+    ensure!(
+        priv_input_path.exists(),
+        format!("private input file does not exist at path: {priv_input_path}")
     );
 
     // Create proof directory under this execution folder
     let proof_dir = execution_dir.join("proof");
-    create_output_dir(proof_dir.as_std_path()).context("Failed to create proof directory")?;
+    create_output_dir(proof_dir.as_std_path()).context("failed to create proof directory")?;
     let proof_path = proof_dir.join("proof.json");
 
     Ok((pub_input_path, priv_input_path, proof_path))
@@ -182,11 +183,11 @@ fn resolve_paths(files: &InputFileArgs) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf
 
     ensure!(
         pub_input_path.exists(),
-        "Public input file does not exist at path: {pub_input_path}"
+        format!("public input file does not exist at path: {pub_input_path}")
     );
     ensure!(
         priv_input_path.exists(),
-        "Private input file does not exist at path: {priv_input_path}"
+        format!("private input file does not exist at path: {priv_input_path}")
     );
 
     // Create proof file in current directory
@@ -217,15 +218,13 @@ fn run_cairo_execute(
         cmd.arg(format!("--target={target}"));
     }
 
-    let output = cmd
-        .run_with_output()
-        .context("Failed to run `scarb cairo-execute`")?;
+    let output = cmd.run_with_output()?;
     extract_execution_num(&output)
 }
 
 fn extract_execution_num(output: &Output) -> Result<u32> {
     let stdout = String::from_utf8(output.stdout.clone())
-        .context("Failed to parse `cairo-execute` output")?;
+        .context("failed to parse `cairo-execute` output")?;
 
     stdout
         .lines()
@@ -241,7 +240,7 @@ fn extract_execution_num(output: &Output) -> Result<u32> {
                         .ok()
                 })
         })
-        .ok_or_else(|| anyhow!("Failed to get execution number from `cairo-execute` output"))
+        .ok_or_else(|| anyhow!("failed to extract execution number from `cairo-execute` output"))
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {

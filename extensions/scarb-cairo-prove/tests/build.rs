@@ -149,8 +149,9 @@ fn prove_fails_when_execution_output_not_found() {
             .failure(),
         indoc! {r#"
         [..]Proving hello
-        error: Execution directory not found: [..]/target/scarb-execute/hello/execution1
-        Make sure to run `scarb cairo-execute` first
+        error: execution directory not found: [..]/target/scarb-execute/hello/execution1
+        help: make sure to run `scarb cairo-execute` first
+        and that the execution number is correct
 
         "#},
     )
@@ -170,7 +171,7 @@ fn prove_fails_when_input_files_not_found() {
             .failure(),
         indoc! {r#"
         [..]Proving Cairo program
-        error: Public input file does not exist at path: nonexistent.json
+        error: public input file does not exist at path: nonexistent.json
         "#},
     )
 }
