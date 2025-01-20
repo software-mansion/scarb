@@ -14,10 +14,7 @@ use crate::core::registry::source_map::SourceMap;
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
-use crate::core::{
-    DepKind, DependencyVersionReq, FeatureName, ManifestDependency, PackageName, SourceId, Target,
-    TargetKind, TestTargetProps, TestTargetType,
-};
+use crate::core::{DepKind, DependencyVersionReq, FeatureName, ManifestDependency, PackageName, SourceId, Target, TargetKind, TestTargetProps, TestTargetType, ManifestCompilerConfig};
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::ops::{FeaturesOpts, FeaturesSelector};
@@ -414,7 +411,7 @@ fn cairo_compilation_unit_for_target(
     let packages = solution.packages.as_ref().unwrap();
     let cairo_plugins = solution.cairo_plugins.as_ref().unwrap();
 
-    let cfg_set = build_cfg_set(&member_target);
+    let cfg_set = build_cfg_set(&member_target, &member.manifest.compiler_config);
     let no_test_cfg_set = cfg_set
         .iter()
         .filter(|cfg| **cfg != Cfg::name("test"))
@@ -764,10 +761,13 @@ impl<'a> PackageSolutionCollector<'a> {
 }
 
 /// Build a set of `cfg` items to enable while building the compilation unit.
-fn build_cfg_set(target: &Target) -> CfgSet {
+fn build_cfg_set(target: &Target, compiler_config: &ManifestCompilerConfig) -> CfgSet {
     let mut cfg = CfgSet::from_iter([Cfg::kv("target", target.kind.clone())]);
     if target.is_test() {
         cfg.insert(Cfg::name("test"));
+    }
+    if !compiler_config.enable_gas {
+        cfg.insert(Cfg::kv("gas", "disabled"));
     }
     cfg
 }
