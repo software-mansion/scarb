@@ -1,8 +1,8 @@
 use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::command::{CommandExt, Scarb};
+use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
 fn gas_enabled_by_default() {
@@ -29,7 +29,9 @@ fn gas_enabled_by_default() {
         .success();
 
     t.child("target/dev/hello.sierra.json")
-        .assert(predicates::str::contains(r#""debug_name":"Const<felt252, 42>""#));
+        .assert(predicates::str::contains(
+            r#""debug_name":"Const<felt252, 42>""#,
+        ));
 }
 
 #[test]
@@ -61,7 +63,9 @@ fn gas_disabled_with_config() {
         .success();
 
     t.child("target/dev/hello.sierra.json")
-        .assert(predicates::str::contains(r#""debug_name":"Const<felt252, 21>""#));
+        .assert(predicates::str::contains(
+            r#""debug_name":"Const<felt252, 21>""#,
+        ));
 }
 
 #[test]
@@ -84,5 +88,7 @@ fn gas_disabled_in_metadata() {
         .stdout_json::<scarb_metadata::Metadata>();
 
     let unit = &metadata.compilation_units[0];
-    assert!(unit.cfg.contains(&scarb_metadata::Cfg::KV("gas".into(), "disabled".into())));
+    assert!(unit
+        .cfg
+        .contains(&scarb_metadata::Cfg::KV("gas".into(), "disabled".into())));
 }

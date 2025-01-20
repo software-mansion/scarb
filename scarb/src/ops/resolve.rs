@@ -14,7 +14,10 @@ use crate::core::registry::source_map::SourceMap;
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
-use crate::core::{DepKind, DependencyVersionReq, FeatureName, ManifestDependency, PackageName, SourceId, Target, TargetKind, TestTargetProps, TestTargetType, ManifestCompilerConfig};
+use crate::core::{
+    DepKind, DependencyVersionReq, FeatureName, ManifestCompilerConfig, ManifestDependency,
+    PackageName, SourceId, Target, TargetKind, TestTargetProps, TestTargetType,
+};
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::ops::{FeaturesOpts, FeaturesSelector};
