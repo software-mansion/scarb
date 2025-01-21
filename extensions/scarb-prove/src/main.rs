@@ -240,13 +240,10 @@ fn extract_execution_id(output: &[String]) -> Result<u32> {
         .find_map(|line| {
             line.trim()
                 .strip_prefix("Saving output to:")
-                // Isolate the last path component (e.g., "execution1"), strip "execution" prefix, and parse the number
-                .and_then(|output_path| output_path.trim().split('/').last())
-                .and_then(|execution_str| {
-                    execution_str
-                        .trim_start_matches("execution")
-                        .parse::<u32>()
-                        .ok()
+                .and_then(|output_path| {
+                    Utf8PathBuf::from(output_path.trim())
+                        .file_name()
+                        .and_then(|name| name.trim_start_matches("execution").parse::<u32>().ok())
                 })
         })
         .ok_or_else(|| anyhow!("failed to extract execution ID from `scarb execute` output"))
