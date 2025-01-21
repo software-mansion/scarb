@@ -8,7 +8,6 @@ use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use scarb_ui::components::Status;
 use scarb_ui::{OutputFormat, Ui, UiPrinter};
 use std::env;
-use std::fmt::Arguments;
 use std::fs;
 use std::process::ExitCode;
 use stwo_cairo_prover::cairo_air::{prove_cairo, ProverConfig};
