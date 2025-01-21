@@ -38,7 +38,7 @@ fn can_take_big_number_as_arg() {
             Program output:
             0
             1129815197211541481934112806673325772687763881719835256646064516195041515616
-            Saving output to: target/execute/hello
+            Saving output to: target/execute/hello/execution1
         "#});
 }
 
@@ -79,6 +79,6 @@ fn can_read_arguments_from_file() {
             Program output:
             0
             1129815197211541481934112806673325772687763881719835256646064516195041515616
-            Saving output to: target/execute/hello
+            Saving output to: target/execute/hello/execution1
         "#});
 }
