@@ -8,6 +8,7 @@ use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use scarb_ui::components::Status;
 use scarb_ui::{OutputFormat, Ui, UiPrinter};
 use std::env;
+use std::fmt::Arguments;
 use std::fs;
 use std::process::ExitCode;
 use stwo_cairo_prover::cairo_air::{prove_cairo, ProverConfig};
@@ -53,6 +54,10 @@ struct ExecuteArgs {
     /// Arguments to pass to the program during execution.
     #[arg(long, requires = "execute")]
     arguments: Option<String>,
+
+    /// Arguments to the executable function from a file.
+    #[arg(long, conflicts_with = "arguments")]
+    arguments_file: Option<String>,
 
     /// Target for execution.
     #[arg(long, requires = "execute")]
@@ -217,6 +222,9 @@ fn run_execute(
     }
     if let Some(arguments) = &execution_args.arguments {
         cmd.arg(format!("--arguments={arguments}"));
+    }
+    if let Some(arguments_file) = &execution_args.arguments_file {
+        cmd.arg(format!("--arguments-file={arguments_file}"));
     }
     if let Some(target) = &execution_args.target {
         cmd.arg(format!("--target={target}"));
