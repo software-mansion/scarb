@@ -30,4 +30,3 @@ assert_fs.workspace = true
 scarb-test-support = { path = "../../utils/scarb-test-support" }
 snapbox.workspace = true
 predicates.workspace = true
-
