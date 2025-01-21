@@ -108,13 +108,13 @@ fn prove_with_display_components() {
     let t = build_executable_project();
 
     Scarb::quick_snapbox()
-        .arg("cairo-execute")
+        .arg("execute")
         .current_dir(&t)
         .assert()
         .success();
 
     let cmd = Scarb::quick_snapbox()
-        .arg("cairo-prove")
+        .arg("prove")
         .arg("--execution-id=1")
         .arg("--display-components")
         .current_dir(&t)
@@ -127,10 +127,10 @@ fn prove_with_display_components() {
     assert!(stdout.contains("Proving hello"));
     assert!(stdout.contains("CairoComponents"));
     assert!(
-        stdout.contains("Saving proof to: target/scarb-execute/hello/execution1/proof/proof.json")
+        stdout.contains("Saving proof to: target/execute/hello/execution1/proof/proof.json")
     );
 
-    t.child("target/scarb-execute/hello/execution1/proof/proof.json")
+    t.child("target/execute/hello/execution1/proof/proof.json")
         .assert(predicates::path::exists());
 }
 
