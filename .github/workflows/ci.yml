@@ -164,7 +164,7 @@ jobs:
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTFLAGS: "-Dwarnings"
-      - run: cargo doc --all-features --no-deps --exclude scarb-prove
+      - run: cargo doc --all-features --no-deps --workspace --exclude scarb-prove
 
   check-rust-scarb-prove:
     name: check-rust (scarb-prove)
