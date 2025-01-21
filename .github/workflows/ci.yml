@@ -160,7 +160,7 @@ jobs:
             -p scarb-ui \
             -p test-for-each-example \
             -p xtask
-      - run: cargo clippy --all-targets --all-features --exclude scarb-prove -- --no-deps
+      - run: cargo clippy --all-targets --all-features --workspace --exclude scarb-prove -- --no-deps
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTFLAGS: "-Dwarnings"
