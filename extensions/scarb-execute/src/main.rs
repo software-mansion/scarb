@@ -314,18 +314,13 @@ fn incremental_create_output_file(
     path: &Utf8Path,
     extension: impl AsRef<str>,
 ) -> Result<Utf8PathBuf> {
-    incremental_attempt_io_creation(
-        path,
-        extension,
-        "failed to create output directory",
-        |p| {
-            OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(p)
-                .map(|_| ())
-        },
-    )
+    incremental_attempt_io_creation(path, extension, "failed to create output directory", |p| {
+        OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(p)
+            .map(|_| ())
+    })
 }
 
 fn incremental_create_output_dir(path: &Utf8Path) -> Result<Utf8PathBuf> {
