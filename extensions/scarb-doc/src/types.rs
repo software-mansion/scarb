@@ -5,7 +5,7 @@ use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
 use cairo_lang_doc::parser::DocumentationCommentToken;
 use cairo_lang_semantic::items::functions::GenericFunctionId;
 use cairo_lang_semantic::items::us::SemanticUseEx;
-use cairo_lang_semantic::items::visibility::{self, Visibility};
+use cairo_lang_semantic::items::visibility::Visibility;
 use cairo_lang_semantic::resolve::ResolvedGenericItem;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_utils::{LookupIntern, Upcast};
@@ -46,24 +46,15 @@ impl Crate {
         include_private_items: bool,
     ) -> Maybe<Self> {
         let root_module_id = ModuleId::CrateRoot(crate_id);
-        let root_module = Module::new(db, root_module_id, root_module_id, include_private_items)?;
+        let root_module = Module::new(db, root_module_id, include_private_items)?;
         Ok(Self { root_module })
     }
 }
 
-fn is_visible_in_module(
-    db: &ScarbDocDatabase,
-    root_module_id: ModuleId,
-    element_id: &dyn TopLevelLanguageElementId,
-) -> Maybe<bool> {
-    let cotaining_module_id = element_id.parent_module(db);
-    match db.module_item_info_by_name(cotaining_module_id, element_id.name(db.upcast()))? {
-        Some(module_item_info) => Ok(visibility::peek_visible_in(
-            db,
-            module_item_info.visibility,
-            cotaining_module_id,
-            root_module_id,
-        )),
+fn is_public(db: &ScarbDocDatabase, element_id: &dyn TopLevelLanguageElementId) -> Maybe<bool> {
+    let containing_module_id = element_id.parent_module(db);
+    match db.module_item_info_by_name(containing_module_id, element_id.name(db.upcast()))? {
+        Some(module_item_info) => Ok(matches!(module_item_info.visibility, Visibility::Public)),
         None => Ok(false),
     }
 }
@@ -180,7 +171,6 @@ impl Module {
     pub fn new(
         db: &ScarbDocDatabase,
         module_id: ModuleId,
-        root_module_id: ModuleId,
         include_private_items: bool,
     ) -> Maybe<Self> {
         let item_data = match module_id {
@@ -195,10 +185,8 @@ impl Module {
         let should_include_item = |id: &dyn TopLevelLanguageElementId| {
             let syntax_node = id.stable_location(db.upcast()).syntax_node(db.upcast());
 
-            Ok(
-                (include_private_items || is_visible_in_module(db, root_module_id, id)?)
-                    && !is_doc_hidden_attr(db, &syntax_node),
-            )
+            Ok((include_private_items || is_public(db, id)?)
+                && !is_doc_hidden_attr(db, &syntax_node))
         };
 
         let module_pubuses = ModulePubUses::new(db, module_id);
@@ -224,7 +212,7 @@ impl Module {
         let structs = filter_map_item_id_to_item(
             chain!(module_structs.keys(), module_pubuses.use_structs.iter()),
             should_include_item,
-            |id| Struct::new(db, *id, root_module_id, include_private_items),
+            |id| Struct::new(db, *id, include_private_items),
         )?;
 
         let module_enums = db.module_enums(module_id)?;
@@ -340,27 +328,13 @@ impl Module {
                 module_pubuses.use_submodules.iter()
             ),
             should_include_item,
-            |id| {
-                Module::new(
-                    db,
-                    ModuleId::Submodule(*id),
-                    root_module_id,
-                    include_private_items,
-                )
-            },
+            |id| Module::new(db, ModuleId::Submodule(*id), include_private_items),
         )?;
 
         let reexported_crates_as_modules: Vec<Module> = module_pubuses
             .use_crates
             .iter()
-            .map(|id| {
-                Module::new(
-                    db,
-                    ModuleId::CrateRoot(*id),
-                    root_module_id,
-                    include_private_items,
-                )
-            })
+            .map(|id| Module::new(db, ModuleId::CrateRoot(*id), include_private_items))
             .collect::<Maybe<_>>()?;
 
         submodules.extend(reexported_crates_as_modules);
@@ -617,12 +591,7 @@ pub struct Struct {
 }
 
 impl Struct {
-    pub fn new(
-        db: &ScarbDocDatabase,
-        id: StructId,
-        root_module_id: ModuleId,
-        include_private_items: bool,
-    ) -> Maybe<Self> {
+    pub fn new(db: &ScarbDocDatabase, id: StructId, include_private_items: bool) -> Maybe<Self> {
         let members = db.struct_members(id)?;
 
         let item_data = ItemData::new(
@@ -633,21 +602,15 @@ impl Struct {
         let members = members
             .iter()
             .filter_map(|(_, semantic_member)| {
-                match is_visible_in_module(db, root_module_id, &semantic_member.id) {
-                    Ok(visible) => {
-                        let syntax_node = &semantic_member
-                            .id
-                            .stable_location(db.upcast())
-                            .syntax_node(db.upcast());
-                        if (include_private_items || visible)
-                            && !is_doc_hidden_attr(db, syntax_node)
-                        {
-                            Some(Ok(Member::new(db, semantic_member.id)))
-                        } else {
-                            None
-                        }
-                    }
-                    Err(e) => Some(Err(e)),
+                let visible = matches!(semantic_member.visibility, Visibility::Public);
+                let syntax_node = &semantic_member
+                    .id
+                    .stable_location(db.upcast())
+                    .syntax_node(db.upcast());
+                if (include_private_items || visible) && !is_doc_hidden_attr(db, syntax_node) {
+                    Some(Ok(Member::new(db, semantic_member.id)))
+                } else {
+                    None
                 }
             })
             .collect::<Maybe<Vec<_>>>()?;
