@@ -152,7 +152,7 @@ jobs:
             -p cairo-lang-macro-attributes \
             -p cairo-lang-macro-stable \
             -p create-output-dir \
-            -p once-map \
+            -p once_map \
             -p scarb-proc-macro-server-types \
             -p scarb-build-metadata \
             -p scarb-stable-hash \
