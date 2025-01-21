@@ -346,9 +346,9 @@ where
                     Some(
                         c.dependencies
                             .iter()
-                            .map(|component_id|
+                            .map(|dependency|
                                 m::CompilationUnitComponentDependencyMetadataBuilder::default()
-                                    .id(component_id.to_metadata_component_id())
+                                    .id(dependency.component_id().clone().to_metadata_component_id())
                                     .build().
                                     unwrap()
                             ).collect()

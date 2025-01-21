@@ -3,7 +3,7 @@ use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::compiler::plugin::{fetch_cairo_plugin, CairoPluginProps};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
-    CompilationUnitComponent, CompilationUnitComponentId, ProcMacroCompilationUnit, Profile,
+    CompilationUnitComponent, CompilationUnitDependency, ProcMacroCompilationUnit, Profile,
 };
 use crate::core::lockfile::Lockfile;
 use crate::core::package::{Package, PackageClass, PackageId};
@@ -517,7 +517,9 @@ fn cairo_compilation_unit_for_target(
         .find(|component| component.package.id == member.id)
         .unwrap();
     let mut test_package_deps = solution.component_dependencies(member_component, &components);
-    test_package_deps.push(member_component.id.clone());
+    test_package_deps.push(CompilationUnitDependency::Library(
+        member_component.id.clone(),
+    ));
 
     let dependencies_for_components: Vec<_> = components
         .iter()
@@ -721,7 +723,7 @@ impl<'a> PackageSolutionCollector<'a> {
         &self,
         component: &CompilationUnitComponent,
         components: &[CompilationUnitComponent],
-    ) -> Vec<CompilationUnitComponentId> {
+    ) -> Vec<CompilationUnitDependency> {
         let package_id = component.id.package_id;
 
         // Those are direct dependencies of the component.
@@ -730,14 +732,14 @@ impl<'a> PackageSolutionCollector<'a> {
             .package_dependencies(package_id, self.target_kind.as_ref().unwrap());
 
         // We iterate over all the compilation unit components to get dependency's version.
-        let mut dependencies: Vec<CompilationUnitComponentId> = components
+        let mut dependencies: Vec<_> = components
             .iter()
             .filter(|component_as_dependency| {
                 dependencies_packages.iter().any(|dependency_summary| {
                     dependency_summary.id == component_as_dependency.package.id
                 })
             })
-            .map(|compilation_unit_component| compilation_unit_component.id.clone())
+            .map(|component| CompilationUnitDependency::Library(component.id.clone()))
             .collect();
 
         // Adds itself to dependencies
@@ -750,7 +752,7 @@ impl<'a> PackageSolutionCollector<'a> {
             false
         };
         if !is_integration_test {
-            dependencies.push(component.id.clone());
+            dependencies.push(CompilationUnitDependency::Library(component.id.clone()));
         }
 
         dependencies
