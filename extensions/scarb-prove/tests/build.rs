@@ -42,6 +42,7 @@ fn prove_from_execution_output() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving hello
         Saving proof to: target/execute/hello/execution1/proof/proof.json
         "#});
@@ -68,6 +69,7 @@ fn prove_from_paths() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving Cairo program
         Saving proof to: proof.json
         "#});
@@ -144,6 +146,7 @@ fn prove_fails_when_execution_output_not_found() {
             .assert()
             .failure(),
         indoc! {r#"
+        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving hello
         error: execution directory not found: [..]/target/execute/hello/execution1
         help: make sure to run `scarb execute` first
@@ -166,6 +169,7 @@ fn prove_fails_when_input_files_not_found() {
             .assert()
             .failure(),
         indoc! {r#"
+        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving Cairo program
         error: public input file does not exist at path: nonexistent.json
         "#},
@@ -184,6 +188,7 @@ fn prove_with_execute() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Compiling hello v0.1.0 ([..])
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
