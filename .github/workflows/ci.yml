@@ -86,6 +86,7 @@ jobs:
     name: test scarb-prove ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
     env:
+      # TODO(#1915): Use stable toolchain once stwo is stable.
       RUST_TOOLCHAIN: "nightly-2025-01-02"
     strategy:
       fail-fast: false
@@ -139,6 +140,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      # TODO(#1915): Build all crates with stable toolchain once stwo is stable.
       - run: |
           cargo fmt --check \
             -p scarb \
@@ -170,6 +172,7 @@ jobs:
     name: check-rust (scarb-prove)
     runs-on: ubuntu-latest
     env:
+      # TODO(#1915): Use stable toolchain once stwo is stable.
       RUST_TOOLCHAIN: "nightly-2025-01-02"
     steps:
       - uses: actions/checkout@v4
