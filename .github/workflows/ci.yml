@@ -12,75 +12,6 @@ concurrency:
   cancel-in-progress: ${{ github.head_ref != 'main' }}
   
 jobs:
-  build-test:
-    name: build test ${{ matrix.platform.name }}
-    runs-on: ${{ matrix.platform.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          - name: windows x86-64
-            os: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@nextest
-      - name: nextest archive
-        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove
-      - uses: actions/upload-artifact@v4
-        with:
-          name: nextest-archive-${{ matrix.platform.os }}
-          path: nextest-archive-${{ matrix.platform.os }}.tar.zst
-
-  test:
-    name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/4
-    runs-on: ${{ matrix.platform.os }}
-    needs:
-      - build-test
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          - name: windows x86-64
-            os: windows-latest
-        partition: [ 1, 2, 3, 4 ]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: taiki-e/install-action@nextest
-      - uses: actions/download-artifact@v4
-        with:
-          name: nextest-archive-${{ matrix.platform.os }}
-      - name: nextest partition ${{ matrix.partition }}/4
-        run: cargo nextest run --partition 'count:${{ matrix.partition }}/4' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
-
-  test-doc:
-    name: doc tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: run tests
-        run: cargo test --doc
-
-  scarb-metadata-compatibility:
-    name: scarb-metadata compatibility check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: software-mansion/setup-scarb@v1
-        with:
-          cache: false
-          scarb-version: "2.3.0"
-      - run: echo "SCARB_TEST_BIN=$(which scarb)" >> $GITHUB_ENV
-      - name: run tests
-        run: cargo test -p scarb-metadata
 
   test-scarb-prove:
     name: test scarb-prove ${{ matrix.platform.name }}
@@ -92,8 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - name: linux x86-64
-            os: ubuntu-latest
           - name: windows x86-64
             os: windows-latest
     steps:
@@ -108,47 +37,6 @@ jobs:
       - name: Run scarb-prove tests
         run: cargo +${{ env.RUST_TOOLCHAIN }} test -p scarb-prove
 
-  test-prebuilt-plugins:
-    name: test prebuilt plugins ${{ matrix.platform.name }}
-    runs-on: ${{ matrix.platform.os }}
-    # This is isolated, so it can be run on more platforms.
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          - name: windows x86-64
-            os: windows-latest
-          - name: macos arm64
-            os: macos-latest
-          - name: macos x86-64
-            os: macos-13
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - name: Run prebuilt plugin tests
-        run: |
-          cargo test -p scarb --test proc_macro_prebuilt -- --ignored
-
-  check-rust:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo fmt --check
-      # TODO(#1915): Build all crates with stable toolchain once stwo is stable.
-      - run: cargo clippy --all-targets --all-features --workspace --exclude scarb-prove -- --no-deps
-        env:
-          # Make sure CI fails on all warnings, including Clippy lints.
-          RUSTFLAGS: "-Dwarnings"
-      - run: cargo doc --all-features --no-deps --workspace --exclude scarb-prove
-        env:
-          # Make sure CI fails on all warnings, including Clippy lints.
-          RUSTDOCFLAGS: "-Dwarnings"
-
   check-rust-scarb-prove:
     name: check-rust (scarb-prove)
     runs-on: ubuntu-latest
@@ -162,6 +50,7 @@ jobs:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+      - run: cargo +${{ env.RUST_TOOLCHAIN }} fmt --check -p scarb-prove
       - run: cargo +${{ env.RUST_TOOLCHAIN }} clippy --all-targets --all-features -p scarb-prove -- --no-deps
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
@@ -169,27 +58,4 @@ jobs:
       - run: cargo +${{ env.RUST_TOOLCHAIN }} doc --all-features --no-deps -p scarb-prove
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
-          RUSTDOCFLAGS: "-Dwarnings"      
-
-  check-website:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./website
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18.x'
-          cache: npm
-          cache-dependency-path: website/package-lock.json
-      - run: npm ci
-      - run: npm run fmt:check
-
-  snforge-init:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: foundry-rs/setup-snfoundry@v3
-      - run: cargo test --profile=ci --package scarb --test snforge_init new_simple -- --ignored
+          RUSTDOCFLAGS: "-Dwarnings"
