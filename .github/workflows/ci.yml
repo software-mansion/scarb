@@ -19,6 +19,7 @@ jobs:
     env:
       # TODO(#1915): Use stable toolchain once stwo is stable.
       RUST_TOOLCHAIN: "nightly-2025-01-02"
+      RUST_BACKTRACE: "full"
     strategy:
       fail-fast: false
       matrix:
