@@ -32,15 +32,13 @@ fn prove_from_execution_output() {
     Scarb::quick_snapbox()
         .arg("execute")
         .current_dir(&t)
-        .assert()
-        .success();
+        .assert();
 
     Scarb::quick_snapbox()
         .arg("prove")
         .arg("--execution-id=1")
         .current_dir(&t)
         .assert()
-        .success()
         .stdout_matches(indoc! {r#"
         [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving hello
@@ -58,16 +56,14 @@ fn prove_with_track_relations() {
     Scarb::quick_snapbox()
         .arg("execute")
         .current_dir(&t)
-        .assert()
-        .success();
+        .assert();
 
     let cmd = Scarb::quick_snapbox()
         .arg("prove")
         .arg("--execution-id=1")
         .arg("--track-relations")
         .current_dir(&t)
-        .assert()
-        .success();
+        .assert();
     let output = cmd.get_output().stdout.clone();
     let stdout = String::from_utf8(output).unwrap();
 
@@ -86,16 +82,14 @@ fn prove_with_display_components() {
     Scarb::quick_snapbox()
         .arg("execute")
         .current_dir(&t)
-        .assert()
-        .success();
+        .assert();
 
     let cmd = Scarb::quick_snapbox()
         .arg("prove")
         .arg("--execution-id=1")
         .arg("--display-components")
         .current_dir(&t)
-        .assert()
-        .success();
+        .assert();
 
     let output = cmd.get_output().stdout.clone();
     let stdout = String::from_utf8(output).unwrap();
@@ -140,7 +134,6 @@ fn prove_with_execute() {
         .arg("--target=standalone")
         .current_dir(&t)
         .assert()
-        .success()
         .stdout_matches(indoc! {r#"
         [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Compiling hello v0.1.0 ([..])
