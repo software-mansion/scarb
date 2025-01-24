@@ -3,7 +3,7 @@ use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, FromSyntaxNode, ProcMacroInstance,
 };
 use crate::core::{Config, Package, PackageId};
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::{
@@ -30,6 +30,7 @@ use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{ast, Terminal, TypedStablePtr, TypedSyntaxNode};
 use convert_case::{Case, Casing};
 use itertools::Itertools;
+use once_map::OnceMap;
 use scarb_stable_hash::short_hash;
 use smol_str::SmolStr;
 use std::any::Any;
@@ -1170,5 +1171,39 @@ impl ProcMacroHost {
 
     pub fn macros(&self) -> &[Arc<ProcMacroInstance>] {
         &self.macros
+    }
+}
+
+/// A global storage for dynamically-loaded procedural macros.
+/// Loads dynamic shared libraries and hides them beside [`ProcMacroInstance`].
+/// Guarantees that every library is loaded exactly once,
+/// but does not prevent loading multiple versions of the same library.
+#[derive(Default)]
+pub struct ProcMacroRepository {
+    /// A mapping between the [`PackageId`] of the package which defines the plugin
+    /// and the [`ProcMacroInstance`] holding the underlying shared library.
+    macros: OnceMap<PackageId, Arc<ProcMacroInstance>>,
+}
+
+impl ProcMacroRepository {
+    /// Returns the [`ProcMacroInstance`] representing the procedural macros defined in the [`Package`].
+    /// Loads the underlying shared library if it has not been loaded yet.
+    pub fn get_or_load(&self, package: Package, config: &Config) -> Result<Arc<ProcMacroInstance>> {
+        if let Some(instance) = self.macros.get(&package.id) {
+            return Ok(instance);
+        }
+
+        let job_started = self.macros.register(package.id);
+        if !job_started {
+            bail!("Could not start a job in OnceMap");
+        }
+
+        let lib_path = package
+            .shared_lib_path(config)
+            .context("could not resolve shared library path")?;
+
+        let instance = Arc::new(ProcMacroInstance::try_new(package.id, lib_path)?);
+        self.macros.done(package.id, instance.clone());
+        Ok(instance)
     }
 }
