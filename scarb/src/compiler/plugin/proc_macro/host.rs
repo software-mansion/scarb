@@ -1196,6 +1196,8 @@ impl ProcMacroRepository {
             return Ok(instance.clone());
         }
 
+        drop(macros);
+
         let Ok(mut macros) = self.macros.write() else {
             bail!("could not get a write access to the ProcMacroRepository");
         };
