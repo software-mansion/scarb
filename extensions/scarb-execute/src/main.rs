@@ -102,6 +102,9 @@ enum OutputFormat {
     Standard,
 }
 impl OutputFormat {
+    pub fn is_standard(&self) -> bool {
+        matches!(self, OutputFormat::Standard)
+    }
     pub fn is_cairo_pie(&self) -> bool {
         matches!(self, OutputFormat::CairoPie)
     }
@@ -218,9 +221,9 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
         allow_missing_builtins: Some(true),
         layout: LayoutName::all_cairo,
         proof_mode: args.run.target.is_standalone(),
-        relocate_mem: args.run.target.is_standalone(),
         secure_run: None,
-        trace_enabled: true,
+        relocate_mem: args.run.output.is_standard(),
+        trace_enabled: args.run.output.is_standard(),
         ..Default::default()
     };
 
