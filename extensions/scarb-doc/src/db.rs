@@ -1,5 +1,5 @@
 use cairo_lang_compiler::project::{update_crate_roots_from_project_config, ProjectConfig};
-use cairo_lang_defs::db::{try_ext_as_virtual_impl, DefsDatabase, DefsGroup};
+use cairo_lang_defs::db::{init_defs_group, try_ext_as_virtual_impl, DefsDatabase, DefsGroup};
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
@@ -8,7 +8,9 @@ use cairo_lang_filesystem::db::{
 use cairo_lang_filesystem::ids::VirtualFile;
 use cairo_lang_lowering::db::{LoweringDatabase, LoweringGroup};
 use cairo_lang_parser::db::{ParserDatabase, ParserGroup};
-use cairo_lang_semantic::db::{SemanticDatabase, SemanticGroup};
+use cairo_lang_semantic::db::{
+    init_semantic_group, PluginSuiteInput, SemanticDatabase, SemanticGroup,
+};
 use cairo_lang_semantic::inline_macros::get_default_plugin_suite;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_starknet::starknet_plugin_suite;
@@ -44,10 +46,13 @@ impl ScarbDocDatabase {
         };
 
         init_files_group(&mut db);
+        init_defs_group(&mut db);
+        init_semantic_group(&mut db);
 
         db.set_cfg_set(Self::initial_cfg_set().into());
 
-        db.apply_plugin_suite(plugin_suite);
+        let interned_plugin_suite = db.intern_plugin_suite(plugin_suite);
+        db.set_default_plugins_from_suite(interned_plugin_suite);
 
         if let Some(config) = project_config {
             db.apply_project_config(config);
@@ -58,12 +63,6 @@ impl ScarbDocDatabase {
 
     fn initial_cfg_set() -> CfgSet {
         CfgSet::from_iter([Cfg::name("doc")])
-    }
-
-    fn apply_plugin_suite(&mut self, plugin_suite: PluginSuite) {
-        self.set_macro_plugins(plugin_suite.plugins);
-        self.set_inline_macro_plugins(plugin_suite.inline_macro_plugins.into());
-        self.set_analyzer_plugins(plugin_suite.analyzer_plugins);
     }
 
     fn apply_project_config(&mut self, config: ProjectConfig) {
