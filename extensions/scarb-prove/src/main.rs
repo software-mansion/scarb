@@ -11,7 +11,6 @@ use std::env;
 use std::fs;
 use std::process::ExitCode;
 use stwo_cairo_prover::cairo_air::{prove_cairo, ProverConfig};
-use stwo_cairo_prover::cairo_air::air::CairoProof;
 use stwo_cairo_prover::input::vm_import::adapt_vm_output;
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
 
@@ -133,7 +132,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         .display_components(args.prover.display_components)
         .build();
 
-    let proof : CairoProof<Blake2sMerkleChannel> = prove_cairo(prover_input, config)
+    let proof = prove_cairo::<Blake2sMerkleChannel>(prover_input, config)
         .context("failed to generate proof")?;
 
     ui.print(Status::new(
