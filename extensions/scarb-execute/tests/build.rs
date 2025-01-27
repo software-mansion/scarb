@@ -2,12 +2,12 @@ use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
 use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_test_support::command::Scarb;
-use scarb_test_support::project_builder::ProjectBuilder;
-use snapbox::cmd::OutputAssert;
 use predicates::prelude::*;
+use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::predicates::non_empty_file;
+use scarb_test_support::project_builder::ProjectBuilder;
+use snapbox::cmd::OutputAssert;
 
 fn build_executable_project() -> TempDir {
     let t = TempDir::new().unwrap();
@@ -48,11 +48,9 @@ fn can_execute_default_main_function_from_executable() {
     t.child("target/execute/hello/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/memory.bin")
-        .assert(predicates::path::exists()
-        .and(non_empty_file()));
+        .assert(predicates::path::exists().and(non_empty_file()));
     t.child("target/execute/hello/trace.bin")
-        .assert(predicates::path::exists()
-        .and(non_empty_file()));
+        .assert(predicates::path::exists().and(non_empty_file()));
 }
 
 #[test]
@@ -75,11 +73,9 @@ fn can_execute_prebuilt_executable() {
     t.child("target/execute/hello/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/memory.bin")
-        .assert(predicates::path::exists()
-        .and(non_empty_file()));
+        .assert(predicates::path::exists().and(non_empty_file()));
     t.child("target/execute/hello/trace.bin")
-        .assert(predicates::path::exists()
-        .and(non_empty_file()));
+        .assert(predicates::path::exists().and(non_empty_file()));
 }
 
 #[test]
@@ -103,11 +99,9 @@ fn can_execute_bootloader_target() {
     t.child("target/execute/hello/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/memory.bin")
-        .assert(predicates::path::exists()
-        .and(non_empty_file()));
+        .assert(predicates::path::exists().and(non_empty_file()));
     t.child("target/execute/hello/trace.bin")
-        .assert(predicates::path::exists()
-        .and(non_empty_file()));
+        .assert(predicates::path::exists().and(non_empty_file()));
 }
 
 #[test]
