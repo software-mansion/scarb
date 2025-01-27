@@ -75,7 +75,10 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 }
 
 fn load_proof(path: &Utf8Path) -> Result<CairoProof<Blake2sMerkleHasher>> {
-    ensure!(path.exists(), format!("proof file does not exist at path: {path}"));
+    ensure!(
+        path.exists(),
+        format!("proof file does not exist at path: {path}")
+    );
 
     let proof_contents =
         fs::read_to_string(path).with_context(|| format!("failed to read proof file: {path}"))?;
