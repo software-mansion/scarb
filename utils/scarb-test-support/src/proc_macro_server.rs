@@ -3,6 +3,9 @@ use scarb_proc_macro_server_types::jsonrpc::RequestId;
 use scarb_proc_macro_server_types::jsonrpc::ResponseError;
 use scarb_proc_macro_server_types::jsonrpc::RpcRequest;
 use scarb_proc_macro_server_types::jsonrpc::RpcResponse;
+use scarb_proc_macro_server_types::methods::defined_macros::CompilationUnitDefinedMacrosInfo;
+use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacros;
+use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacrosParams;
 use scarb_proc_macro_server_types::methods::Method;
 use std::collections::HashMap;
 use std::io::BufRead;
@@ -64,6 +67,14 @@ pub struct ProcMacroClient {
     server_process: Child,
     id_counter: RequestId,
     responses: HashMap<RequestId, RpcResponse>,
+}
+
+/// A helper structure to store the relate the PMS response to the ID of the main compilation unit's member.
+pub struct DefinedMacrosInfo {
+    /// ID of the main compilation unit's member, recognized via PMS.
+    pub compilation_unit_main_component_id: String,
+    /// A proper part of the response, related to the main component of the main CU.
+    pub component_macros: CompilationUnitDefinedMacrosInfo,
 }
 
 impl ProcMacroClient {
@@ -166,6 +177,32 @@ impl ProcMacroClient {
             } else {
                 self.responses.insert(raw_response.id, raw_response);
             }
+        }
+    }
+
+    /// Returns the information about macros available for the main CU component
+    /// of the main compilation unit associated with a package of `package_name`.
+    /// Used as a helper in PMS tests, where concrete IDs assigned by Scarb are required.
+    pub fn defined_macros_for_main_component(&mut self, package_name: &str) -> DefinedMacrosInfo {
+        let response = self
+            .request_and_wait::<DefinedMacros>(DefinedMacrosParams {})
+            .unwrap();
+
+        let mut response = response.workspace_macro_info;
+
+        let compilation_unit_main_component_id = response
+            .keys()
+            .find(|cu_id| cu_id.starts_with(package_name))
+            .expect("Response from Proc Macro Server should contain the main compilation unit.")
+            .to_owned();
+
+        let component_macros = response.remove(&compilation_unit_main_component_id).expect(
+            "Response from Proc Macro Server should contain the main compilation unit component.",
+        );
+
+        DefinedMacrosInfo {
+            compilation_unit_main_component_id,
+            component_macros,
         }
     }
 }

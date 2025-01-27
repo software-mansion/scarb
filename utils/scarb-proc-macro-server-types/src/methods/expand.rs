@@ -1,3 +1,5 @@
+use crate::scope::ProcMacroScope;
+
 use super::Method;
 use super::ProcMacroResult;
 use cairo_lang_macro::TokenStream;
@@ -9,6 +11,8 @@ use serde::{Deserialize, Serialize};
 /// based on the provided item and arguments.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub struct ExpandAttributeParams {
+    /// The project scope in which the action is requested.
+    pub context: ProcMacroScope,
     /// The name of the attribute macro to be expanded.
     pub attr: String,
     /// The token stream representing arguments passed to the macro.
@@ -32,6 +36,8 @@ impl Method for ExpandAttribute {
 /// These parameters specify a list of derive macros to be expanded and the item they apply to.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub struct ExpandDeriveParams {
+    /// The project scope in which the action is requested.
+    pub context: ProcMacroScope,
     /// A list of names for derived macros to be expanded.
     pub derives: Vec<String>,
     /// The token stream of the item to which the derive macros are applied.
@@ -53,6 +59,8 @@ impl Method for ExpandDerive {
 /// Specifies the inline macro to expand along with its arguments.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub struct ExpandInlineMacroParams {
+    /// The project scope in which the action is requested.
+    pub context: ProcMacroScope,
     /// The macro_name! of the inline macro to be expanded.
     pub name: String,
     /// The token stream representing arguments passed to the macro.
