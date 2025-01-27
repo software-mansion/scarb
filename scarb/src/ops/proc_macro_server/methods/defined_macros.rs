@@ -1,49 +1,49 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use anyhow::Result;
+use cairo_lang_defs::plugin::MacroPlugin;
 use scarb_proc_macro_server_types::methods::defined_macros::{
-    DefinedMacros, DefinedMacrosResponse,
+    ComponentDefinedMacrosInfo, DefinedMacros, DefinedMacrosResponse,
 };
 
 use super::Handler;
-use crate::compiler::plugin::proc_macro::ProcMacroHost;
+use crate::compiler::plugin::collection::WorkspaceProcMacros;
 
 impl Handler for DefinedMacros {
     fn handle(
-        proc_macro_host: Arc<ProcMacroHost>,
+        workspace_macros: Arc<WorkspaceProcMacros>,
         _params: Self::Params,
     ) -> Result<Self::Response> {
-        let mut response = proc_macro_host
-            .macros()
+        let crate_macro_info = workspace_macros
+            .macros_for_compilation_units
             .iter()
-            .map(|e| DefinedMacrosResponse {
-                attributes: e.declared_attributes(),
-                inline_macros: e.inline_macros(),
-                derives: e.declared_derives(),
-                executables: e.executable_attributes(),
+            .map(|(cu_member_id, plugins)| {
+                let plugins = plugins
+                    .iter()
+                    .map(|(component_id, plugin)| {
+                        let attributes = plugin.declared_attributes();
+                        let inline_macros = plugin.declared_inline_macros();
+                        let derives = plugin.declared_derives();
+                        let executables = plugin.executable_attributes();
+
+                        (
+                            component_id.clone(),
+                            ComponentDefinedMacrosInfo {
+                                attributes,
+                                inline_macros,
+                                derives,
+                                executables,
+                            },
+                        )
+                    })
+                    .collect::<HashMap<_, _>>();
+
+                (cu_member_id.clone(), plugins)
             })
-            .reduce(|mut acc, defined_macros| {
-                acc.attributes.extend(defined_macros.attributes);
-                acc.inline_macros.extend(defined_macros.inline_macros);
-                acc.derives.extend(defined_macros.derives);
-                acc.executables.extend(defined_macros.executables);
+            .collect::<HashMap<_, _>>();
 
-                acc
-            })
-            .unwrap_or_default();
-
-        response.attributes.sort();
-        response.attributes.dedup();
-
-        response.inline_macros.sort();
-        response.inline_macros.dedup();
-
-        response.derives.sort();
-        response.derives.dedup();
-
-        response.executables.sort();
-        response.executables.dedup();
-
-        Ok(response)
+        Ok(DefinedMacrosResponse {
+            workspace_macro_info: crate_macro_info,
+        })
     }
 }

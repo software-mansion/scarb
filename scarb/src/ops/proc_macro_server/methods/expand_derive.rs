@@ -3,29 +3,49 @@ use std::sync::Arc;
 use anyhow::Result;
 use cairo_lang_macro::TokenStream;
 use convert_case::{Case, Casing};
-use scarb_proc_macro_server_types::methods::{expand::ExpandDerive, ProcMacroResult};
+use scarb_proc_macro_server_types::{
+    context::RequestContext,
+    methods::{expand::ExpandDerive, ProcMacroResult},
+};
 
 use super::Handler;
-use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind, ProcMacroHost};
+use crate::compiler::plugin::{
+    collection::WorkspaceProcMacros,
+    proc_macro::{Expansion, ExpansionKind},
+};
 
 impl Handler for ExpandDerive {
-    fn handle(proc_macro_host: Arc<ProcMacroHost>, params: Self::Params) -> Result<Self::Response> {
+    fn handle(
+        workspace_macros: Arc<WorkspaceProcMacros>,
+        params: Self::Params,
+    ) -> Result<Self::Response> {
+        let Self::Params {
+            context:
+                RequestContext {
+                    compilation_unit_id,
+                    compilation_unit_component_id,
+                },
+            derives,
+            item,
+        } = params;
+
         let mut derived_code = String::new();
         let mut all_diagnostics = vec![];
 
-        for derive in params.derives {
+        for derive in derives {
             let expansion = Expansion::new(derive.to_case(Case::Snake), ExpansionKind::Derive);
-            let instance = proc_macro_host
-                .macros()
+
+            let plugin =
+                workspace_macros.get(&compilation_unit_id, &compilation_unit_component_id)?;
+
+            let instance = plugin
+                .macros
                 .iter()
-                .find(|e| e.get_expansions().contains(&expansion))
+                .find(|instance| instance.get_expansions().contains(&expansion))
                 .unwrap();
 
-            let result = instance.generate_code(
-                expansion.name.clone(),
-                TokenStream::empty(),
-                params.item.clone(),
-            );
+            let result =
+                instance.generate_code(expansion.name.clone(), TokenStream::empty(), item.clone());
 
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);

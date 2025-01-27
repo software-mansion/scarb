@@ -4,6 +4,7 @@ use assert_fs::TempDir;
 use cairo_lang_macro::TokenStream;
 use indoc::indoc;
 use libloading::library_filename;
+use scarb_proc_macro_server_types::context::RequestContext;
 use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineMacroParams};
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
@@ -219,6 +220,10 @@ fn load_prebuilt_proc_macros() {
     let mut proc_macro_server = ProcMacroClient::new_without_cargo(&project);
     let response = proc_macro_server
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
+            context: RequestContext {
+                compilation_unit_id: String::from(""),
+                compilation_unit_component_id: String::from(""),
+            },
             name: "some".to_string(),
             args: TokenStream::new("42".to_string()),
         })
