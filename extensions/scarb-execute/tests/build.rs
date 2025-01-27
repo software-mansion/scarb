@@ -5,7 +5,7 @@ use indoc::indoc;
 use predicates::prelude::*;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
-use scarb_test_support::predicates::file_not_empty;
+use scarb_test_support::predicates::is_file_empty;
 use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::cmd::OutputAssert;
 
@@ -48,9 +48,9 @@ fn can_execute_default_main_function_from_executable() {
     t.child("target/execute/hello/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/memory.bin")
-        .assert(predicates::path::exists().and(file_not_empty()));
+        .assert(predicates::path::exists().and(is_file_empty().not()));
     t.child("target/execute/hello/trace.bin")
-        .assert(predicates::path::exists().and(file_not_empty()));
+        .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
 #[test]
@@ -73,9 +73,9 @@ fn can_execute_prebuilt_executable() {
     t.child("target/execute/hello/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/memory.bin")
-        .assert(predicates::path::exists().and(file_not_empty()));
+        .assert(predicates::path::exists().and(is_file_empty().not()));
     t.child("target/execute/hello/trace.bin")
-        .assert(predicates::path::exists().and(file_not_empty()));
+        .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
 #[test]
@@ -99,9 +99,9 @@ fn can_execute_bootloader_target() {
     t.child("target/execute/hello/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/memory.bin")
-        .assert(predicates::path::exists().and(file_not_empty()));
+        .assert(predicates::path::exists().and(is_file_empty().not()));
     t.child("target/execute/hello/trace.bin")
-        .assert(predicates::path::exists().and(file_not_empty()));
+        .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
 #[test]
