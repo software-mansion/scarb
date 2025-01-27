@@ -83,6 +83,34 @@ fn can_execute_prebuilt_executable() {
 }
 
 #[test]
+fn can_execute_bootloader_target() {
+    let t = build_executable_project();
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--target=bootloader")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Saving output to: target/execute/hello
+        "#});
+
+    t.child("target/execute/hello/air_private_input.json")
+        .assert_is_json::<serde_json::Value>();
+    t.child("target/execute/hello/air_public_input.json")
+        .assert_is_json::<serde_json::Value>();
+    t.child("target/execute/hello/memory.bin")
+        .assert(predicates::path::exists()
+        .and(non_empty_file()));
+    t.child("target/execute/hello/trace.bin")
+        .assert(predicates::path::exists()
+        .and(non_empty_file()));
+}
+
+#[test]
 fn can_produce_cairo_pie_output() {
     let t = build_executable_project();
     Scarb::quick_snapbox()
