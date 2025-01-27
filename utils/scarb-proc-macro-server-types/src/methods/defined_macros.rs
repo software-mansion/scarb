@@ -1,11 +1,19 @@
+use std::collections::HashMap;
+
 use super::Method;
 use serde::{Deserialize, Serialize};
+
+/// Response structure containing a mapping from package names to the information about the macros they use.
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct DefinedMacrosResponse {
+    pub workspace_macro_info: HashMap<String, HashMap<String, ComponentDefinedMacrosInfo>>,
+}
 
 /// Response structure containing lists of all defined macros supported.
 ///
 /// Details the types of macros that can be expanded, such as attributes, inline macros, and derives.
 #[derive(Debug, Default, Serialize, Deserialize)]
-pub struct DefinedMacrosResponse {
+pub struct ComponentDefinedMacrosInfo {
     /// List of attribute macro names available.
     pub attributes: Vec<String>,
     /// List of inline macro names available.
