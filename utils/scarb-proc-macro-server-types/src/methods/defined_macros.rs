@@ -1,11 +1,28 @@
+use std::collections::HashMap;
+
 use super::Method;
 use serde::{Deserialize, Serialize};
 
-/// Response structure containing lists of all defined macros supported.
+/// Response structure containing a mapping from package IDs
+/// to the information about the macros they use.
 ///
-/// Details the types of macros that can be expanded, such as attributes, inline macros, and derives.
-#[derive(Debug, Default, Serialize, Deserialize)]
+/// # Invariant
+/// Correct usage of this struct during proc macro server <-> LS communication
+/// relies on the implicit contract that keys of `macros_by_package_id` are of form
+/// `PackageId.to_serialized_string()` which is always equal to
+/// `scarb_metadata::CompilationUnitComponentId.repr`.
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct DefinedMacrosResponse {
+    /// A mapping of the form: `package (as a serialized `PackageId`) -> macros info`.
+    /// Contains serialized IDs of all packages from the workspace,
+    /// mapped to the [`PackageDefinedMacrosInfo`], describing macros available for them.
+    pub macros_by_package_id: HashMap<String, PackageDefinedMacrosInfo>,
+}
+
+/// Response structure containing lists of all defined macros available for one package.
+/// Details the types of macros that can be expanded, such as attributes, inline macros, and derives.
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct PackageDefinedMacrosInfo {
     /// List of attribute macro names available.
     pub attributes: Vec<String>,
     /// List of inline macro names available.
