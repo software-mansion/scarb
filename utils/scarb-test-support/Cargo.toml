@@ -28,3 +28,5 @@ tokio.workspace = true
 toml_edit.workspace = true
 tower-http.workspace = true
 url.workspace = true
+predicates.workspace = true
+
