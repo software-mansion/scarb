@@ -148,6 +148,13 @@ pub struct CompilationUnitComponentId {
 }
 
 impl CompilationUnitComponentId {
+    /// Returns a name of the corresponding package.
+    pub fn cairo_package_name(&self) -> SmolStr {
+        self.package_id.name.to_smol_str()
+    }
+}
+
+impl CompilationUnitComponentId {
     pub fn to_metadata_component_id(&self) -> scarb_metadata::CompilationUnitComponentId {
         self.package_id.to_serialized_string().into()
     }

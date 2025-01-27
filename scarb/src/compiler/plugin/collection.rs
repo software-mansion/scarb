@@ -144,7 +144,7 @@ fn collect_builtin_plugins(
     Ok(plugin_suites)
 }
 
-/// Builds [`ProcMacroHostPlugin`]s for each component of the [`CairoCompilationUnit`],
+/// Collects [`ProcMacroInstances`]s for each component of the [`CairoCompilationUnit`],
 /// according to the dependencies on procedural macros.
 fn collect_proc_macros(
     workspace: &Workspace<'_>,

@@ -1,4 +1,4 @@
-use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
+use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
     CompilationUnitDependency,
@@ -6,24 +6,30 @@ use crate::compiler::{
 use crate::core::Workspace;
 use crate::DEFAULT_MODULE_MAIN_FILE;
 use anyhow::{anyhow, Result};
-use cairo_lang_compiler::db::{RootDatabase, RootDatabaseBuilder};
+use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{
-    AsFilesGroupMut, CrateIdentifier, CrateSettings, DependencySettings, FilesGroupEx,
+    AsFilesGroupMut, CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
 };
+use cairo_lang_filesystem::ids::CrateLongId;
+use cairo_lang_semantic::db::PluginSuiteInput;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smol_str::SmolStr;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
 
+use super::plugin::collection::PluginsForComponents;
+use super::CompilationUnitComponentId;
+
 pub struct ScarbDatabase {
     pub db: RootDatabase,
-    pub proc_macro_host: Arc<ProcMacroHostPlugin>,
+    pub proc_macros: Vec<Arc<ProcMacroHostPlugin>>,
 }
 
 pub(crate) fn build_scarb_root_database(
@@ -35,43 +41,47 @@ pub(crate) fn build_scarb_root_database(
     b.with_project_config(build_project_config(unit)?);
     b.with_cfg(unit.cfg_set.clone());
     b.with_inlining_strategy(unit.compiler_config.inlining_strategy.clone().into());
-    let proc_macro_host = load_plugins(unit, ws, &mut b, additional_plugins)?;
+
+    let PluginsForComponents {
+        mut plugins,
+        proc_macros,
+    } = PluginsForComponents::collect(ws, unit)?;
+
+    let main_component_suite = plugins
+        .get_mut(&unit.main_component().id)
+        .expect("should be able to retrieve plugins for main component");
+
+    for additional_suite in additional_plugins.iter() {
+        main_component_suite.add(additional_suite.clone());
+    }
+
     if !unit.compiler_config.enable_gas {
         b.skip_auto_withdraw_gas();
     }
     let mut db = b.build()?;
+
+    apply_plugins(&mut db, plugins);
     inject_virtual_wrapper_lib(&mut db, unit)?;
-    Ok(ScarbDatabase {
-        db,
-        proc_macro_host,
-    })
+
+    let proc_macros = proc_macros.into_values().collect();
+    Ok(ScarbDatabase { db, proc_macros })
 }
 
-fn load_plugins(
-    unit: &CairoCompilationUnit,
-    ws: &Workspace<'_>,
-    builder: &mut RootDatabaseBuilder,
-    additional_plugins: Vec<PluginSuite>,
-) -> Result<Arc<ProcMacroHostPlugin>> {
-    let mut proc_macros = ProcMacroHost::default();
-    for plugin_info in &unit.cairo_plugins {
-        if plugin_info.builtin {
-            let package_id = plugin_info.package.id;
-            let plugin = ws.config().cairo_plugins().fetch(package_id)?;
-            let instance = plugin.instantiate()?;
-            builder.with_plugin_suite(instance.plugin_suite());
-        } else if let Some(prebuilt) = &plugin_info.prebuilt {
-            proc_macros.register_instance(prebuilt.clone());
-        } else {
-            proc_macros.register_new(plugin_info.package.clone(), ws.config())?;
-        }
+/// Sets the plugin suites for crates related to the library components
+/// according to the `plugins_for_components` mapping.
+fn apply_plugins(
+    db: &mut RootDatabase,
+    plugins_for_components: HashMap<CompilationUnitComponentId, PluginSuite>,
+) {
+    for (component_id, suite) in plugins_for_components {
+        let crate_id = db.intern_crate(CrateLongId::Real {
+            name: component_id.cairo_package_name(),
+            discriminator: component_id.to_discriminator(),
+        });
+
+        let interned_suite = db.intern_plugin_suite(suite);
+        db.set_override_crate_plugins_from_suite(crate_id, interned_suite);
     }
-    for plugin in additional_plugins {
-        builder.with_plugin_suite(plugin);
-    }
-    let macro_host = Arc::new(proc_macros.into_plugin()?);
-    builder.with_plugin_suite(ProcMacroHostPlugin::build_plugin_suite(macro_host.clone()));
-    Ok(macro_host)
 }
 
 /// Generates a wrapper lib file for appropriate compilation units.
@@ -207,8 +217,16 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
     Ok(project_config)
 }
 
-pub(crate) fn has_plugin(db: &RootDatabase, predicate: fn(&dyn MacroPlugin) -> bool) -> bool {
-    db.macro_plugins().iter().any(|plugin| predicate(&**plugin))
+pub(crate) fn has_plugin(
+    db: &RootDatabase,
+    predicate: fn(&dyn MacroPlugin) -> bool,
+    component: &CompilationUnitComponent,
+) -> bool {
+    let crate_id = component.crate_id(db);
+
+    db.crate_macro_plugins(crate_id)
+        .iter()
+        .any(|plugin_id| predicate(&*db.lookup_intern_macro_plugin(*plugin_id).0))
 }
 
 pub(crate) fn is_starknet_plugin(plugin: &dyn MacroPlugin) -> bool {

@@ -220,13 +220,17 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 .print(Status::new("Compiling", &unit.name()));
             let ScarbDatabase {
                 mut db,
-                proc_macro_host,
+                proc_macros,
             } = build_scarb_root_database(&unit, ws, Default::default())?;
             check_starknet_dependency(&unit, ws, &db, &package_name);
             let result = ws.config().compilers().compile(unit, &mut db, ws);
-            proc_macro_host
-                .post_process(db.upcast())
-                .context("procedural macro post processing callback failed")?;
+
+            for plugin in proc_macros {
+                plugin
+                    .post_process(db.upcast())
+                    .context("procedural macro post processing callback failed")?;
+            }
+
             result
         }
     };
@@ -320,7 +324,7 @@ fn check_starknet_dependency(
     //   I think we can get away with emitting false positives for users who write raw contracts
     //   without using Starknet code generators. Such people shouldn't do what they do 😁
     if unit.main_component().target_kind() == TargetKind::STARKNET_CONTRACT
-        && !has_plugin(db, is_starknet_plugin)
+        && !has_plugin(db, is_starknet_plugin, unit.main_component())
     {
         ws.config().ui().warn(formatdoc! {
             r#"
