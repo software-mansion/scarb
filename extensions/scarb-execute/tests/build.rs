@@ -5,6 +5,9 @@ use indoc::indoc;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::cmd::OutputAssert;
+use predicates::prelude::*;
+use scarb_test_support::fsx::ChildPathEx;
+use scarb_test_support::predicates::non_empty_file;
 
 fn build_executable_project() -> TempDir {
     let t = TempDir::new().unwrap();
@@ -41,13 +44,15 @@ fn can_execute_default_main_function_from_executable() {
         "#});
 
     t.child("target/execute/hello/air_private_input.json")
-        .assert(predicates::path::exists());
+        .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/air_public_input.json")
-        .assert(predicates::path::exists());
+        .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/memory.bin")
-        .assert(predicates::path::exists());
+        .assert(predicates::path::exists()
+        .and(non_empty_file()));
     t.child("target/execute/hello/trace.bin")
-        .assert(predicates::path::exists());
+        .assert(predicates::path::exists()
+        .and(non_empty_file()));
 }
 
 #[test]
@@ -66,13 +71,15 @@ fn can_execute_prebuilt_executable() {
         "#});
 
     t.child("target/execute/hello/air_private_input.json")
-        .assert(predicates::path::exists());
+        .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/air_public_input.json")
-        .assert(predicates::path::exists());
+        .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/memory.bin")
-        .assert(predicates::path::exists());
+        .assert(predicates::path::exists()
+        .and(non_empty_file()));
     t.child("target/execute/hello/trace.bin")
-        .assert(predicates::path::exists());
+        .assert(predicates::path::exists()
+        .and(non_empty_file()));
 }
 
 #[test]
