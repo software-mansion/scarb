@@ -167,7 +167,7 @@ fn prove_fails_when_input_files_not_found() {
             .failure(),
         indoc! {r#"
         [..]Proving Cairo program
-        error: public input file does not exist at path: nonexistent.json
+        error: public input file does not exist: nonexistent.json
         "#},
     )
 }

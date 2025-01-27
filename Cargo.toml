@@ -5,6 +5,7 @@ members = [
     "extensions/scarb-doc",
     "extensions/scarb-execute",
     "extensions/scarb-prove",
+    "extensions/scarb-verify",
     "extensions/scarb-cairo-language-server",
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",

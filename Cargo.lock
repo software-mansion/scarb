@@ -5998,6 +5998,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "scarb-verify"
+version = "2.9.2"
+dependencies = [
+ "anyhow",
+ "assert_fs",
+ "camino",
+ "clap",
+ "indoc",
+ "scarb-metadata 1.13.0",
+ "scarb-test-support",
+ "scarb-ui",
+ "serde",
+ "serde_json",
+ "snapbox",
+ "stwo-prover",
+ "stwo_cairo_prover",
+]
+
+[[package]]
 name = "schannel"
 version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
