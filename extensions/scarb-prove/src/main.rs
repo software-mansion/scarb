@@ -27,7 +27,12 @@ struct Args {
     execution_id: Option<u32>,
 
     /// Execute the program before proving.
-    #[arg(long, conflicts_with = "execution_id")]
+    #[arg(
+        long,
+        default_value_t = false,
+        conflicts_with = "execution_id",
+        required_unless_present = "execution_id"
+    )]
     execute: bool,
 
     #[command(flatten)]
@@ -94,10 +99,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let execution_id = match args.execution_id {
         Some(id) => id,
         None => {
-            ensure!(
-                args.execute,
-                "either `--execution-id` or `--execute` must be provided"
-            );
+            ensure!(args.execute);
             run_execute(&args.execute_args, &package, &scarb_target_dir, &ui)?
         }
     };
