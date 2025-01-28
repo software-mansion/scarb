@@ -192,7 +192,7 @@ fn resolve_paths(files: &InputFileArgs) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf
 
     ensure!(
         pub_input_path.exists(),
-        format!("public input file does not exist at path: {pub_input_path}")
+       "public input file does not exist at path: {pub_input_path}"
     );
     ensure!(
         priv_input_path.exists(),
