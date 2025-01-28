@@ -104,9 +104,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: |
-          cargo +${{ env.RUST_TOOLCHAIN }} build --all-features -p scarb-prove
-          cargo build --workspace --all-features --exclude scarb-prove
+        run: cargo build --workspace --all-features --exclude scarb-prove
       - name: Run scarb-prove tests
         run: cargo +${{ env.RUST_TOOLCHAIN }} test -p scarb-prove
 
