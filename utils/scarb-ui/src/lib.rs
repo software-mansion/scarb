@@ -31,7 +31,6 @@ use std::fmt::Debug;
 use std::sync::{Arc, RwLock};
 
 pub use message::*;
-use scarb_metadata::Printer;
 pub use verbosity::*;
 pub use widget::*;
 
@@ -231,23 +230,5 @@ impl Ui {
     /// * `CLICOLOR_FORCE != 0`: ANSI colors should be enabled no matter what.
     pub fn has_colors_enabled_stderr(&self) -> bool {
         console::colors_enabled_stderr()
-    }
-}
-
-/// A printer that forwards messages to a [`Ui`] instance.
-pub struct UiPrinter<'a> {
-    ui: &'a Ui,
-}
-
-impl<'a> UiPrinter<'a> {
-    /// Create a new [`UiPrinter`] instance.
-    pub fn new(ui: &'a Ui) -> Self {
-        Self { ui }
-    }
-}
-
-impl Printer for UiPrinter<'_> {
-    fn print(&self, message: &str) {
-        self.ui.print(message);
     }
 }
