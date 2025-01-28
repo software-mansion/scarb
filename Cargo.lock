@@ -5966,6 +5966,7 @@ dependencies = [
  "hyper",
  "indoc",
  "itertools 0.14.0",
+ "predicates",
  "scarb",
  "scarb-build-metadata",
  "scarb-proc-macro-server-types 0.1.0",
