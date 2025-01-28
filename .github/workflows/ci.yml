@@ -98,13 +98,13 @@ jobs:
             os: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
-      - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build --workspace --all-features --exclude scarb-prove
+        run: cargo +stable build --workspace --all-features --exclude scarb-prove
       - name: Run scarb-prove tests
         run: cargo +${{ env.RUST_TOOLCHAIN }} test -p scarb-prove
 
