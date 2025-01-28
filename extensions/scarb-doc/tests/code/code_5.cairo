@@ -88,7 +88,7 @@ pub mod PublicParent {
         private_field: felt252
     }
 
-    /// Parent publi crate struct
+    /// Parent public crate struct
     pub(crate) struct PublicCrateParentStructure {
         /// Public struct field
         pub public_field: felt252,
