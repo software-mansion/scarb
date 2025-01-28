@@ -187,6 +187,9 @@ jobs:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTFLAGS: "-Dwarnings"
       - run: cargo +${{ env.RUST_TOOLCHAIN }} doc --all-features --no-deps -p scarb-prove
+        env:
+          # Make sure CI fails on all warnings, including Clippy lints.
+          RUSTDOCFLAGS: "-Dwarnings"      
 
   check-website:
     runs-on: ubuntu-latest
