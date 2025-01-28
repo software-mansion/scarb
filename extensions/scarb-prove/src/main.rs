@@ -103,11 +103,10 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
             run_execute(&args.execute_args, &package, &scarb_target_dir, &ui)?
         }
     };
+    ui.print(Status::new("Proving", &package.name));
 
     let (pub_input_path, priv_input_path, proof_path) =
         resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?;
-
-    ui.print(Status::new("Proving", &package.name));
 
     let prover_input = adapt_vm_output(
         pub_input_path.as_std_path(),
