@@ -23,7 +23,7 @@ use std::io::{self, Write};
 pub mod args;
 const MAX_ITERATION_COUNT: usize = 10000;
 
-pub fn main_inner(args: args::Args, ui: Ui) -> Result<(), anyhow::Error> {
+pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
     ensure!(
         !(args.execution.run.output.is_cairo_pie() && args.execution.run.target.is_standalone()),
         "Cairo pie output format is not supported for standalone execution target"
@@ -131,14 +131,15 @@ pub fn main_inner(args: args::Args, ui: Ui) -> Result<(), anyhow::Error> {
 
     if args.execution.run.output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
-        let output_file_path = incremental_create_output_file(&output_dir, ".zip")?;
+        let (output_file_path, execution_id) = incremental_create_output_file(&output_dir, ".zip")?;
         ui.print(Status::new(
             "Saving output to:",
             &display_path(&scarb_target_dir, &output_file_path),
         ));
         output_value.write_zip_file(output_file_path.as_std_path())?;
+        Ok(execution_id)
     } else {
-        let execution_output_dir = incremental_create_output_dir(&output_dir)?;
+        let (execution_output_dir, execution_id) = incremental_create_output_dir(&output_dir)?;
         ui.print(Status::new(
             "Saving output to:",
             &display_path(&scarb_target_dir, &execution_output_dir),
@@ -173,9 +174,9 @@ pub fn main_inner(args: args::Args, ui: Ui) -> Result<(), anyhow::Error> {
             .serialize_json()
             .with_context(|| "failed serializing private input")?;
         fs::write(air_private_input_path, output_value)?;
-    }
 
-    Ok(())
+        Ok(execution_id)
+    }
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {
@@ -206,7 +207,7 @@ fn load_prebuilt_executable(path: &Utf8Path, filename: String) -> Result<Executa
 fn incremental_create_output_file(
     path: &Utf8Path,
     extension: impl AsRef<str>,
-) -> Result<Utf8PathBuf> {
+) -> Result<(Utf8PathBuf, usize)> {
     incremental_attempt_io_creation(path, extension, "failed to create output directory", |p| {
         OpenOptions::new()
             .write(true)
@@ -216,7 +217,7 @@ fn incremental_create_output_file(
     })
 }
 
-fn incremental_create_output_dir(path: &Utf8Path) -> Result<Utf8PathBuf> {
+fn incremental_create_output_dir(path: &Utf8Path) -> Result<(Utf8PathBuf, usize)> {
     incremental_attempt_io_creation(path, "", "failed to create output directory", |p| {
         fs::create_dir(p)
     })
@@ -227,7 +228,7 @@ fn incremental_attempt_io_creation(
     extension: impl AsRef<str>,
     final_error_message: impl AsRef<str>,
     attempt: impl Fn(&Utf8Path) -> io::Result<()>,
-) -> Result<Utf8PathBuf> {
+) -> Result<(Utf8PathBuf, usize)> {
     for i in 1..=MAX_ITERATION_COUNT {
         let filepath = path.join(format!("execution{}{}", i, extension.as_ref()));
         let result = attempt(&filepath);
@@ -238,7 +239,7 @@ fn incremental_attempt_io_creation(
                 }
                 Err(e.into())
             }
-            Ok(_) => Ok(filepath),
+            Ok(_) => Ok((filepath, i)),
         };
     }
     bail!(final_error_message.as_ref().to_string());
