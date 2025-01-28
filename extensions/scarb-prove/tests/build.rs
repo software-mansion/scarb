@@ -124,7 +124,37 @@ fn prove_fails_when_execution_output_not_found() {
         [..]Proving hello
         error: execution directory not found: [..]/target/execute/hello/execution1
         help: make sure to run `scarb execute` first
-        and that the execution ID is correct
+        and then run `scarb prove` with correct execution ID
+
+        "#},
+    )
+}
+
+#[test]
+fn prove_fails_when_cairo_pie_output() {
+    let t = build_executable_project();
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--target=bootloader")
+        .arg("--output=cairo-pie")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    output_assert(
+        Scarb::quick_snapbox()
+            .arg("prove")
+            .arg("--execution-id=1")
+            .current_dir(&t)
+            .assert()
+            .failure(),
+        indoc! {r#"
+        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
+        [..]Proving hello
+        error: proving cairo pie output is not supported: [..]/target/execute/hello/execution1.zip
+        help: run `scarb execute --output=standard` first
+        and then run `scarb prove` with correct execution ID
 
         "#},
     )
