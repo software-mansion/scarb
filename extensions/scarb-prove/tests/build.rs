@@ -52,32 +52,6 @@ fn prove_from_execution_output() {
 }
 
 #[test]
-fn prove_from_paths() {
-    let t = build_executable_project();
-
-    Scarb::quick_snapbox()
-        .arg("execute")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    Scarb::quick_snapbox()
-        .arg("prove")
-        .arg("--pub-input-file=target/execute/hello/execution1/air_public_input.json")
-        .arg("--priv-input-file=target/execute/hello/execution1/air_private_input.json")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
-        [..]Proving Cairo program
-        Saving proof to: proof.json
-        "#});
-
-    t.child("proof.json").assert(predicates::path::exists());
-}
-
-#[test]
 fn prove_with_track_relations() {
     let t = build_executable_project();
 
@@ -152,26 +126,6 @@ fn prove_fails_when_execution_output_not_found() {
         help: make sure to run `scarb execute` first
         and that the execution ID is correct
 
-        "#},
-    )
-}
-
-#[test]
-fn prove_fails_when_input_files_not_found() {
-    let t = build_executable_project();
-
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("prove")
-            .arg("--pub-input-file=nonexistent.json")
-            .arg("--priv-input-file=nonexistent.json")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
-        [..]Proving Cairo program
-        error: public input file does not exist at path: nonexistent.json
         "#},
     )
 }

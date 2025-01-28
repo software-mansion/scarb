@@ -27,14 +27,11 @@ struct Args {
     execution_id: Option<u32>,
 
     /// Execute the program before proving.
-    #[arg(long, conflicts_with_all = ["execution_id", "pub_input_file", "priv_input_file"])]
+    #[arg(long, conflicts_with = "execution_id")]
     execute: bool,
 
     #[command(flatten)]
     execute_args: ExecuteArgs,
-
-    #[command(flatten)]
-    files: InputFileArgs,
 
     #[command(flatten)]
     prover: ProverArgs,
@@ -61,17 +58,6 @@ struct ExecuteArgs {
     /// Target for execution.
     #[arg(long, requires = "execute")]
     target: Option<String>,
-}
-
-#[derive(Parser, Clone, Debug)]
-struct InputFileArgs {
-    /// AIR public input path.
-    #[arg(long, required_unless_present_any = ["execution_id", "execute"], conflicts_with_all = ["execution_id", "execute"])]
-    pub_input_file: Option<Utf8PathBuf>,
-
-    /// AIR private input path.
-    #[arg(long, required_unless_present_any = ["execution_id", "execute"], conflicts_with_all = ["execution_id", "execute"])]
-    priv_input_file: Option<Utf8PathBuf>,
 }
 
 #[derive(Parser, Clone, Debug)]
@@ -103,24 +89,23 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
     ui.warn("soundness of proof is not yet guaranteed by Stwo, use at your own risk");
 
+    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
+    let package = args.packages_filter.match_one(&metadata)?;
+    let execution_id = match args.execution_id {
+        Some(id) => id,
+        None => {
+            ensure!(
+                args.execute,
+                "either `--execution-id` or `--execute` must be provided"
+            );
+            run_execute(&args.execute_args, &package, &scarb_target_dir, &ui)?
+        }
+    };
+
     let (pub_input_path, priv_input_path, proof_path) =
-        if args.execute || args.execution_id.is_some() {
-            let metadata = MetadataCommand::new().inherit_stderr().exec()?;
-            let package = args.packages_filter.match_one(&metadata)?;
+        resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?;
 
-            let execution_id = match args.execution_id {
-                Some(execution_id) => execution_id,
-                None => run_execute(&args.execute_args, &package, &scarb_target_dir, &ui)?,
-            };
-
-            ui.print(Status::new("Proving", &package.name));
-
-            resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?
-        } else {
-            ui.print(Status::new("Proving", "Cairo program"));
-
-            resolve_paths(&args.files)?
-        };
+    ui.print(Status::new("Proving", &package.name));
 
     let prover_input = adapt_vm_output(
         pub_input_path.as_std_path(),
@@ -182,26 +167,6 @@ fn resolve_paths_from_package(
     let proof_dir = execution_dir.join("proof");
     create_output_dir(proof_dir.as_std_path()).context("failed to create proof directory")?;
     let proof_path = proof_dir.join("proof.json");
-
-    Ok((pub_input_path, priv_input_path, proof_path))
-}
-
-fn resolve_paths(files: &InputFileArgs) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
-    // We can unwrap these values thanks to validations handled within the clap parser
-    let pub_input_path = files.pub_input_file.clone().unwrap();
-    let priv_input_path = files.priv_input_file.clone().unwrap();
-
-    ensure!(
-        pub_input_path.exists(),
-       "public input file does not exist at path: {pub_input_path}"
-    );
-    ensure!(
-        priv_input_path.exists(),
-        format!("private input file does not exist at path: {priv_input_path}")
-    );
-
-    // Create proof file in current directory
-    let proof_path = Utf8PathBuf::from("proof.json");
 
     Ok((pub_input_path, priv_input_path, proof_path))
 }
