@@ -187,6 +187,7 @@ fn resolve_paths_from_package(
 }
 
 fn resolve_paths(files: &InputFileArgs) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
+    // We can unwrap these values thanks to validations handled within the clap parser
     let pub_input_path = files.pub_input_file.clone().unwrap();
     let priv_input_path = files.priv_input_file.clone().unwrap();
 
