@@ -1,12 +1,13 @@
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand};
+use scarb_execute::args::{Args as ExecuteArgs, ExecutionArgs};
+use scarb_metadata::MetadataCommand;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use scarb_ui::components::Status;
-use scarb_ui::{OutputFormat, Ui, UiPrinter};
+use scarb_ui::{OutputFormat, Ui};
 use std::env;
 use std::fs;
 use std::process::ExitCode;
@@ -24,7 +25,7 @@ struct Args {
 
     /// ID of `scarb execute` *standard* output for given package, for which to generate proof.
     #[arg(long)]
-    execution_id: Option<u32>,
+    execution_id: Option<usize>,
 
     /// Execute the program before proving.
     #[arg(
@@ -36,7 +37,7 @@ struct Args {
     execute: bool,
 
     #[command(flatten)]
-    execute_args: ExecuteArgs,
+    execute_args: ExecutionArgs,
 
     #[command(flatten)]
     prover: ProverArgs,
@@ -44,25 +45,6 @@ struct Args {
     /// Logging verbosity.
     #[command(flatten)]
     pub verbose: VerbositySpec,
-}
-
-#[derive(Parser, Clone, Debug)]
-struct ExecuteArgs {
-    /// Do not build the package before execution.
-    #[arg(long, requires = "execute")]
-    no_build: bool,
-
-    /// Arguments to pass to the program during execution.
-    #[arg(long, requires = "execute")]
-    arguments: Option<String>,
-
-    /// Arguments to the executable function from a file.
-    #[arg(long, conflicts_with = "arguments")]
-    arguments_file: Option<String>,
-
-    /// Target for execution.
-    #[arg(long, requires = "execute")]
-    target: Option<String>,
 }
 
 #[derive(Parser, Clone, Debug)]
@@ -96,11 +78,12 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
     let package = args.packages_filter.match_one(&metadata)?;
+
     let execution_id = match args.execution_id {
         Some(id) => id,
         None => {
             ensure!(args.execute);
-            run_execute(&args.execute_args, &package, &scarb_target_dir, &ui)?
+            run_execute(&args, &ui)?
         }
     };
     ui.print(Status::new("Proving", &package.name));
@@ -133,10 +116,21 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     Ok(())
 }
 
+fn run_execute(args: &Args, ui: &Ui) -> Result<usize> {
+    let args = ExecuteArgs {
+        packages_filter: args.packages_filter.clone(),
+        execution: args.execute_args.clone(),
+        verbose: args.verbose.clone(),
+    };
+    let execution_id = scarb_execute::main_inner(args, ui.clone())?;
+
+    Ok(execution_id)
+}
+
 fn resolve_paths_from_package(
     scarb_target_dir: &Utf8PathBuf,
     package_name: &str,
-    execution_id: u32,
+    execution_id: usize,
 ) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
     let execution_dir = scarb_target_dir
         .join("execute")
@@ -170,52 +164,6 @@ fn resolve_paths_from_package(
     let proof_path = proof_dir.join("proof.json");
 
     Ok((pub_input_path, priv_input_path, proof_path))
-}
-
-fn run_execute(
-    execution_args: &ExecuteArgs,
-    package: &PackageMetadata,
-    scarb_target_dir: &Utf8PathBuf,
-    ui: &Ui,
-) -> Result<u32> {
-    let package_filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
-
-    let mut cmd = ScarbCommand::new_for_output();
-    cmd.arg("execute")
-        .env("SCARB_PACKAGES_FILTER", package_filter.to_env())
-        .env("SCARB_TARGET_DIR", scarb_target_dir);
-
-    if execution_args.no_build {
-        cmd.arg("--no-build");
-    }
-    if let Some(arguments) = &execution_args.arguments {
-        cmd.arg(format!("--arguments={arguments}"));
-    }
-    if let Some(arguments_file) = &execution_args.arguments_file {
-        cmd.arg(format!("--arguments-file={arguments_file}"));
-    }
-    if let Some(target) = &execution_args.target {
-        cmd.arg(format!("--target={target}"));
-    }
-
-    let printer = UiPrinter::new(ui);
-    let output = cmd.output_and_stream(&printer)?;
-    extract_execution_id(&output)
-}
-
-fn extract_execution_id(output: &[String]) -> Result<u32> {
-    output
-        .iter()
-        .find_map(|line| {
-            line.trim()
-                .strip_prefix("Saving output to:")
-                .and_then(|output_path| {
-                    Utf8PathBuf::from(output_path.trim())
-                        .file_name()
-                        .and_then(|name| name.trim_start_matches("execution").parse::<u32>().ok())
-                })
-        })
-        .ok_or_else(|| anyhow!("failed to extract execution ID from `scarb execute` output"))
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {

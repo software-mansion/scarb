@@ -5924,6 +5924,7 @@ dependencies = [
  "create-output-dir",
  "indoc",
  "predicates",
+ "scarb-execute",
  "scarb-metadata 1.13.0",
  "scarb-test-support",
  "scarb-ui",
