@@ -59,6 +59,9 @@ fn process_token_stream(
                 if punct.as_char() == '#' {
                     // Only peek, so items precessed with punct can be handled in next iteration.
                     if let Some(TokenTree::Ident(ident)) = token_stream.peek() {
+                        if was_previous_ident {
+                            output.push(QuoteToken::Whitespace);
+                        }
                         let var_ident = Ident::new(&ident.to_string(), Span::call_site());
                         output.push(QuoteToken::Var(var_ident));
                         // Move iterator, as we only did peek before.
