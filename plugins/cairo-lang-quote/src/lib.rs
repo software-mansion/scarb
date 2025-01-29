@@ -57,9 +57,15 @@ fn process_token_stream(
             }
             TokenTree::Punct(punct) => {
                 if punct.as_char() == '#' {
-                    if let Some(TokenTree::Ident(ident)) = token_stream.next() {
+                    // Only peek, so items precessed with punct can be handled in next iteration.
+                    if let Some(TokenTree::Ident(ident)) = token_stream.peek() {
                         let var_ident = Ident::new(&ident.to_string(), Span::call_site());
-                        output.push(QuoteToken::Var(var_ident))
+                        output.push(QuoteToken::Var(var_ident));
+                        // Move iterator, as we only did peek before.
+                        let _ = token_stream.next();
+                    } else {
+                        // E.g. to support Cairo attributes (i.e. punct followed by non-ident `#[`).
+                        output.push(QuoteToken::Content(punct.to_string()));
                     }
                 } else {
                     output.push(QuoteToken::Content(punct.to_string()));
