@@ -1,6 +1,7 @@
 use anyhow::{bail, ensure, Context, Result};
 use bincode::enc::write::Writer;
 use cairo_lang_executable::executable::{EntryPointKind, Executable};
+use cairo_lang_runner::casm_run::format_for_panic;
 use cairo_lang_runner::{build_hints_dict, Arg, CairoHintProcessor};
 use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_vm::cairo_run::cairo_run_program;
@@ -235,6 +236,17 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
         let mut output_buffer = "Program output:\n".to_string();
         runner.vm.write_output(&mut output_buffer)?;
         ui.print(output_buffer.trim_end());
+        // Print panic reason.
+        if let [.., start_marker, end_marker] = &hint_processor.markers[..] {
+            let size = (*end_marker - *start_marker).with_context(|| {
+                format!("panic data markers mismatch: start={start_marker}, end={end_marker}")
+            })?;
+            let panic_data = runner
+                .vm
+                .get_integer_range(*start_marker, size)
+                .with_context(|| "failed reading panic data")?;
+            ui.print(format_for_panic(panic_data.into_iter().map(|value| *value)));
+        }
     }
 
     let output_dir = scarb_target_dir.join("execute");
