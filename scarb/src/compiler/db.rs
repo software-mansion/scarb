@@ -214,5 +214,5 @@ pub(crate) fn has_starknet_plugin(db: &RootDatabase) -> bool {
 fn is_starknet_plugin(plugin: &dyn MacroPlugin) -> bool {
     // Can this be done in less "hacky" way? TypeId is not working here, because we deal with
     // trait objects.
-    format!("{:?}", plugin).contains("StarkNetPlugin")
+    format!("{:?}", plugin).contains("StarknetPlugin")
 }

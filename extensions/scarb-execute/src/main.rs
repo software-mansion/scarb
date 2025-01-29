@@ -215,6 +215,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<(), anyhow::Error> {
         run_resources: Default::default(),
         syscalls_used_resources: Default::default(),
         no_temporary_segments: false,
+        markers: Default::default(),
     };
 
     let cairo_run_config = CairoRunConfig {
