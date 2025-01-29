@@ -11,8 +11,8 @@ use crate::compiler::plugin::{CairoPlugin, CairoPluginInstance};
 use crate::core::{PackageId, PackageName, SourceId};
 use crate::internal::to_version::ToVersion;
 
-pub struct BuiltinStarkNetPlugin;
-impl CairoPlugin for BuiltinStarkNetPlugin {
+pub struct BuiltinStarknetPlugin;
+impl CairoPlugin for BuiltinStarknetPlugin {
     fn id(&self) -> PackageId {
         PackageId::new(
             PackageName::STARKNET,
@@ -22,12 +22,12 @@ impl CairoPlugin for BuiltinStarkNetPlugin {
     }
 
     fn instantiate(&self) -> Result<Box<dyn CairoPluginInstance>> {
-        Ok(Box::new(BuiltinStarkNetPluginInstance))
+        Ok(Box::new(BuiltinStarknetPluginInstance))
     }
 }
 
-struct BuiltinStarkNetPluginInstance;
-impl CairoPluginInstance for BuiltinStarkNetPluginInstance {
+struct BuiltinStarknetPluginInstance;
+impl CairoPluginInstance for BuiltinStarknetPluginInstance {
     fn plugin_suite(&self) -> PluginSuite {
         starknet_plugin_suite()
     }

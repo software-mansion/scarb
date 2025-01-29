@@ -46,7 +46,7 @@ Adding following line to `[lib]` section will stop building Sierra code:
 sierra = false
 ```
 
-### Building StarkNet contracts
+### Building Starknet contracts
 
 Add following to `Scarb.toml`:
 

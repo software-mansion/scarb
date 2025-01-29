@@ -26,7 +26,7 @@
       </svg>
       <h3>Compile</h3>
       <p>
-        Comes with built-in Cairo and StarkNet compiler, no need for setting up
+        Comes with built-in Cairo and Starknet compiler, no need for setting up
         extra tooling.
       </p>
     </div>
