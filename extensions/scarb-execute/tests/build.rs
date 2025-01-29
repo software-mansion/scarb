@@ -15,8 +15,11 @@ fn executable_project_builder() -> ProjectBuilder {
         .version("0.1.0")
         .dep_cairo_execute()
         .manifest_extra(indoc! {r#"
-                [executable]
-            "#})
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             #[executable]
             fn main() -> felt252 {
@@ -136,8 +139,11 @@ fn fails_when_attr_missing() {
         .version("0.1.0")
         .dep_cairo_execute()
         .manifest_extra(indoc! {r#"
-                [executable]
-            "#})
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             fn main() -> felt252 {
                 42
