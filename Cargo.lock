@@ -1284,9 +1284,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-toolchain-xtasks"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "303215ff6c23bfb13530b01405a21da0e7316ecc93a60a77c8caabe6f58a13a4"
+checksum = "20cb651f2fb6b882fd224f144e450a8d8b12c1a4f85af8c28c5bfbb391ddea5b"
 dependencies = [
  "anyhow",
  "clap",
