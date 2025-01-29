@@ -6,6 +6,7 @@ extern crate proc_macro;
 use quote::quote as rust_quote;
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 enum QuoteToken {
     Var(Ident),
     Content(String),
@@ -113,4 +114,38 @@ pub fn quote(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
       #output_token_stream
       quote_macro_result
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{process_token_stream, QuoteToken};
+    use quote::quote as rust_quote;
+
+    #[test]
+    fn parse_cairo_attr() {
+        let input: proc_macro2::TokenStream = rust_quote! {
+            #[some_attr]
+            fn some_fun() {
+
+            }
+        };
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("#".to_string()),
+                QuoteToken::Content("[".to_string()),
+                QuoteToken::Content("some_attr".to_string()),
+                QuoteToken::Content("]".to_string()),
+                QuoteToken::Content("fn".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("some_fun".to_string()),
+                QuoteToken::Content("(".to_string()),
+                QuoteToken::Content(")".to_string()),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
 }
