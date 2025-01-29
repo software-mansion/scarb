@@ -23,6 +23,8 @@ fn can_run_default_main_function() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
@@ -49,6 +51,8 @@ fn can_run_default_main_function_with_plugin() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
@@ -76,6 +80,8 @@ fn no_entrypoint_fails() {
             .assert()
             .failure(),
         indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
@@ -108,6 +114,8 @@ fn no_debug_build_fails() {
             .assert()
             .failure(),
         indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
@@ -141,6 +149,8 @@ fn can_run_executable() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
@@ -173,6 +183,8 @@ fn ambiguous_executables_will_fail() {
             .assert()
             .failure(),
         indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
@@ -213,6 +225,8 @@ fn ambiguous_executables_will_fail_no_debug_names() {
             .failure(),
         // Note that we cannot list available executables, as we don't know their debug names.
         indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
@@ -295,6 +309,8 @@ fn cannot_choose_non_executable_if_any_present() {
             .assert()
             .failure(),
         indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
@@ -334,6 +350,8 @@ fn can_choose_executable_to_run() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
@@ -362,6 +380,8 @@ fn choose_not_existing_function() {
             .assert()
             .failure(),
         indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Running hello
