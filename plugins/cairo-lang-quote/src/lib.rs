@@ -1,7 +1,6 @@
 use std::iter::Peekable;
 
-use proc_macro::{Delimiter, TokenStream as RustTokenStream, TokenTree as RustTokenTree};
-use proc_macro2::{Ident, Span};
+use proc_macro2::{Delimiter, Ident, Span, TokenTree};
 
 extern crate proc_macro;
 use quote::quote as rust_quote;
@@ -33,7 +32,7 @@ impl QuoteToken {
 }
 
 fn process_token_stream(
-    mut token_stream: Peekable<impl Iterator<Item = RustTokenTree>>,
+    mut token_stream: Peekable<impl Iterator<Item = TokenTree>>,
     output: &mut Vec<QuoteToken>,
 ) {
     // Rust proc macro parser to TokenStream gets rid of all whitespaces.
@@ -41,7 +40,7 @@ fn process_token_stream(
     let mut was_previous_ident: bool = false;
     while let Some(token_tree) = token_stream.next() {
         match token_tree {
-            RustTokenTree::Group(group) => {
+            TokenTree::Group(group) => {
                 let token_iter = group.stream().into_iter().peekable();
                 let delimiter = group.delimiter();
                 output.push(QuoteToken::from_delimiter(
@@ -55,9 +54,9 @@ fn process_token_stream(
                 ));
                 was_previous_ident = false;
             }
-            RustTokenTree::Punct(punct) => {
+            TokenTree::Punct(punct) => {
                 if punct.as_char() == '#' {
-                    if let Some(RustTokenTree::Ident(ident)) = token_stream.next() {
+                    if let Some(TokenTree::Ident(ident)) = token_stream.next() {
                         let var_ident = Ident::new(&ident.to_string(), Span::call_site());
                         output.push(QuoteToken::Var(var_ident))
                     }
@@ -66,14 +65,14 @@ fn process_token_stream(
                 }
                 was_previous_ident = false;
             }
-            RustTokenTree::Ident(ident) => {
+            TokenTree::Ident(ident) => {
                 if was_previous_ident {
                     output.push(QuoteToken::Whitespace);
                 }
                 output.push(QuoteToken::Content(ident.to_string()));
                 was_previous_ident = true;
             }
-            RustTokenTree::Literal(literal) => {
+            TokenTree::Literal(literal) => {
                 output.push(QuoteToken::Content(literal.to_string()));
                 was_previous_ident = false;
             }
@@ -82,13 +81,15 @@ fn process_token_stream(
 }
 
 #[proc_macro]
-pub fn quote(input: RustTokenStream) -> RustTokenStream {
-    let mut parsed_input: Vec<QuoteToken> = Vec::new();
+pub fn quote(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut output_token_stream = rust_quote! {
       let mut quote_macro_result = ::cairo_lang_macro::TokenStream::empty();
     };
 
+    let input: proc_macro2::TokenStream = input.into();
     let token_iter = input.into_iter().peekable();
+    let (size_hint_lower, _) = token_iter.size_hint();
+    let mut parsed_input: Vec<QuoteToken> = Vec::with_capacity(size_hint_lower);
     process_token_stream(token_iter, &mut parsed_input);
 
     for quote_token in parsed_input.iter() {
@@ -108,7 +109,7 @@ pub fn quote(input: RustTokenStream) -> RustTokenStream {
             }),
         }
     }
-    RustTokenStream::from(rust_quote!({
+    proc_macro::TokenStream::from(rust_quote!({
       #output_token_stream
       quote_macro_result
     }))
