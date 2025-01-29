@@ -1,12 +1,12 @@
 use std::iter::Peekable;
 
-use proc_macro::{Delimiter, TokenStream as RustTokenStream, TokenTree as RustTokenTree};
-use proc_macro2::{Ident, Span};
+use proc_macro2::{Delimiter, Ident, Span, TokenTree};
 
 extern crate proc_macro;
 use quote::quote as rust_quote;
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 enum QuoteToken {
     Var(Ident),
     Content(String),
@@ -33,7 +33,7 @@ impl QuoteToken {
 }
 
 fn process_token_stream(
-    mut token_stream: Peekable<impl Iterator<Item = RustTokenTree>>,
+    mut token_stream: Peekable<impl Iterator<Item = TokenTree>>,
     output: &mut Vec<QuoteToken>,
 ) {
     // Rust proc macro parser to TokenStream gets rid of all whitespaces.
@@ -41,7 +41,7 @@ fn process_token_stream(
     let mut was_previous_ident: bool = false;
     while let Some(token_tree) = token_stream.next() {
         match token_tree {
-            RustTokenTree::Group(group) => {
+            TokenTree::Group(group) => {
                 let token_iter = group.stream().into_iter().peekable();
                 let delimiter = group.delimiter();
                 output.push(QuoteToken::from_delimiter(
@@ -55,25 +55,34 @@ fn process_token_stream(
                 ));
                 was_previous_ident = false;
             }
-            RustTokenTree::Punct(punct) => {
+            TokenTree::Punct(punct) => {
                 if punct.as_char() == '#' {
-                    if let Some(RustTokenTree::Ident(ident)) = token_stream.next() {
+                    // Only peek, so items precessed with punct can be handled in next iteration.
+                    if let Some(TokenTree::Ident(ident)) = token_stream.peek() {
+                        if was_previous_ident {
+                            output.push(QuoteToken::Whitespace);
+                        }
                         let var_ident = Ident::new(&ident.to_string(), Span::call_site());
-                        output.push(QuoteToken::Var(var_ident))
+                        output.push(QuoteToken::Var(var_ident));
+                        // Move iterator, as we only did peek before.
+                        let _ = token_stream.next();
+                    } else {
+                        // E.g. to support Cairo attributes (i.e. punct followed by non-ident `#[`).
+                        output.push(QuoteToken::Content(punct.to_string()));
                     }
                 } else {
                     output.push(QuoteToken::Content(punct.to_string()));
                 }
                 was_previous_ident = false;
             }
-            RustTokenTree::Ident(ident) => {
+            TokenTree::Ident(ident) => {
                 if was_previous_ident {
                     output.push(QuoteToken::Whitespace);
                 }
                 output.push(QuoteToken::Content(ident.to_string()));
                 was_previous_ident = true;
             }
-            RustTokenTree::Literal(literal) => {
+            TokenTree::Literal(literal) => {
                 output.push(QuoteToken::Content(literal.to_string()));
                 was_previous_ident = false;
             }
@@ -82,13 +91,15 @@ fn process_token_stream(
 }
 
 #[proc_macro]
-pub fn quote(input: RustTokenStream) -> RustTokenStream {
-    let mut parsed_input: Vec<QuoteToken> = Vec::new();
+pub fn quote(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut output_token_stream = rust_quote! {
       let mut quote_macro_result = ::cairo_lang_macro::TokenStream::empty();
     };
 
+    let input: proc_macro2::TokenStream = input.into();
     let token_iter = input.into_iter().peekable();
+    let (size_hint_lower, _) = token_iter.size_hint();
+    let mut parsed_input: Vec<QuoteToken> = Vec::with_capacity(size_hint_lower);
     process_token_stream(token_iter, &mut parsed_input);
 
     for quote_token in parsed_input.iter() {
@@ -108,8 +119,84 @@ pub fn quote(input: RustTokenStream) -> RustTokenStream {
             }),
         }
     }
-    RustTokenStream::from(rust_quote!({
+    proc_macro::TokenStream::from(rust_quote!({
       #output_token_stream
       quote_macro_result
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{process_token_stream, QuoteToken};
+    use proc_macro2::{Ident, Span};
+    use quote::{quote as rust_quote, TokenStreamExt};
+
+    #[test]
+    fn parse_cairo_attr() {
+        let input: proc_macro2::TokenStream = rust_quote! {
+            #[some_attr]
+            fn some_fun() {
+
+            }
+        };
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("#".to_string()),
+                QuoteToken::Content("[".to_string()),
+                QuoteToken::Content("some_attr".to_string()),
+                QuoteToken::Content("]".to_string()),
+                QuoteToken::Content("fn".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("some_fun".to_string()),
+                QuoteToken::Content("(".to_string()),
+                QuoteToken::Content(")".to_string()),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn quote_var_whitespace() {
+        /*
+        Construct program input, equivalent to following:
+        input = rust_quote! {
+            #[some_attr]
+            mod #name {
+            }
+        }
+        In a way that avoids `#name` being parsed as `rust_quote` var.
+        */
+        let mut input: proc_macro2::TokenStream = rust_quote! {
+            #[some_attr]
+            mod
+        };
+        input.append(proc_macro2::TokenTree::Punct(proc_macro2::Punct::new(
+            '#',
+            proc_macro2::Spacing::Joint,
+        )));
+        input.extend(rust_quote! {
+            name {
+            }
+        });
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("#".to_string()),
+                QuoteToken::Content("[".to_string()),
+                QuoteToken::Content("some_attr".to_string()),
+                QuoteToken::Content("]".to_string()),
+                QuoteToken::Content("mod".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Var(Ident::new("name", Span::call_site())),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
 }
