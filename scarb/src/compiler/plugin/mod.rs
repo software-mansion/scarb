@@ -12,7 +12,7 @@ use crate::compiler::plugin::builtin::BuiltinCairoRunPlugin;
 use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::core::{Package, PackageId, TargetKind, Workspace};
 
-use self::builtin::{BuiltinStarkNetPlugin, BuiltinTestPlugin};
+use self::builtin::{BuiltinStarknetPlugin, BuiltinTestPlugin};
 
 pub mod builtin;
 pub mod proc_macro;
@@ -65,7 +65,7 @@ impl CairoPluginRepository {
         // TODO(mkaput): Provide the plugin as `starknet_plugin` package and create regular
         //   `starknet` package which makes it a dependency. This way we can deliver Starknet Cairo
         //   library code to users etc.
-        repo.add(Box::new(BuiltinStarkNetPlugin)).unwrap();
+        repo.add(Box::new(BuiltinStarknetPlugin)).unwrap();
         repo.add(Box::new(BuiltinExecutablePlugin)).unwrap();
         repo.add(Box::new(BuiltinTestPlugin)).unwrap();
         repo.add(Box::new(BuiltinCairoRunPlugin)).unwrap();
