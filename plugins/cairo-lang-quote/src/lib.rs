@@ -125,7 +125,8 @@ pub fn quote(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 #[cfg(test)]
 mod tests {
     use super::{process_token_stream, QuoteToken};
-    use quote::quote as rust_quote;
+    use proc_macro2::{Ident, Span};
+    use quote::{quote as rust_quote, TokenStreamExt};
 
     #[test]
     fn parse_cairo_attr() {
@@ -149,6 +150,47 @@ mod tests {
                 QuoteToken::Content("some_fun".to_string()),
                 QuoteToken::Content("(".to_string()),
                 QuoteToken::Content(")".to_string()),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn quote_var_whitespace() {
+        /*
+        Construct program input, equivalent to following:
+        input = rust_quote! {
+            #[some_attr]
+            mod #name {
+            }
+        }
+        In a way that avoids `#name` being parsed as `rust_quote` var.
+        */
+        let mut input: proc_macro2::TokenStream = rust_quote! {
+            #[some_attr]
+            mod
+        };
+        input.append(proc_macro2::TokenTree::Punct(proc_macro2::Punct::new(
+            '#',
+            proc_macro2::Spacing::Joint,
+        )));
+        input.extend(rust_quote! {
+            name {
+            }
+        });
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("#".to_string()),
+                QuoteToken::Content("[".to_string()),
+                QuoteToken::Content("some_attr".to_string()),
+                QuoteToken::Content("]".to_string()),
+                QuoteToken::Content("mod".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Var(Ident::new("name", Span::call_site())),
                 QuoteToken::Content("{".to_string()),
                 QuoteToken::Content("}".to_string()),
             ]
