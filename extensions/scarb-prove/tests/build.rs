@@ -31,14 +31,17 @@ fn prove_from_execution_output() {
 
     Scarb::quick_snapbox()
         .arg("execute")
+        .env("SCARB_LOG", "error")
         .current_dir(&t)
         .assert();
 
     Scarb::quick_snapbox()
         .arg("prove")
+        .env("SCARB_LOG", "error")
         .arg("--execution-id=1")
         .current_dir(&t)
         .assert()
+        .stderr_matches("")
         .stdout_matches(indoc! {r#"
         [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving hello
@@ -107,11 +110,11 @@ fn prove_fails_when_execution_output_not_found() {
     let t = build_executable_project();
 
     output_assert(
-        Scarb::quick_snapbox()
-            .arg("prove")
-            .arg("--execution-id=1")
-            .current_dir(&t)
-            .assert()
+    Scarb::quick_snapbox()
+        .arg("prove")
+        .arg("--execution-id=1")
+        .current_dir(&t)
+        .assert()
             .failure(),
         indoc! {r#"
         [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
@@ -130,10 +133,12 @@ fn prove_with_execute() {
 
     Scarb::quick_snapbox()
         .arg("prove")
+        .env("SCARB_LOG", "error")
         .arg("--execute")
         .arg("--target=standalone")
         .current_dir(&t)
         .assert()
+        .stderr_matches("")
         .stdout_matches(indoc! {r#"
         [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Compiling hello v0.1.0 ([..])
