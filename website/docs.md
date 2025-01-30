@@ -1,7 +1,7 @@
 # Introduction
 
 Scarb is the [Cairo](https://cairo-lang.org) package manager.
-Scarb downloads your Cairo package's dependencies, compiles your projects (either pure Cairo or StarkNet contracts),
+Scarb downloads your Cairo package's dependencies, compiles your projects (either pure Cairo or Starknet contracts),
 and works as an entry point for other tooling to work with your code, such
 as [Starknet Foundry](https://foundry-rs.github.io/starknet-foundry) or IDEs.
 

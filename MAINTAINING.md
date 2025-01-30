@@ -35,7 +35,7 @@ You might need to swiftly pause the [Website Deploy] workflow to prevent publish
 
 > [!IMPORTANT]
 > Make sure `scarb-metadata` crate is [released and published](#scarb-metadata-release-procedure) to [crates.io].
-> Only [StarkNet Crates.io Admins] can do this.
+> Only [Starknet Crates.io Admins] can do this.
 
 > [!IMPORTANT]
 > If you add or remove a binary target compiled with the release (i.e. create or remove a crate in `extensions` directory),
@@ -197,4 +197,4 @@ Releasing `cairo-lang-macro` crate is also a semi-automated process.
 
 [crates.io]: https://crates.io
 
-[StarkNet Crates.io Admins]: https://github.com/orgs/software-mansion/teams/starknet-crates-io-admins
+[Starknet Crates.io Admins]: https://github.com/orgs/software-mansion/teams/starknet-crates-io-admins

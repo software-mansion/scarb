@@ -73,6 +73,7 @@ struct Args {
 fn main() -> ExitCode {
     let args: Args = Args::parse();
     let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
+    ui.warn("`scarb cairo-run` will be deprecated soon\nhelp: use `scarb execute` instead");
     if let Err(err) = main_inner(&ui, args) {
         ui.anyhow(&err);
         return ExitCode::FAILURE;
