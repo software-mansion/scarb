@@ -391,6 +391,8 @@ fn can_remove_original_node() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -437,6 +439,8 @@ fn can_replace_original_node() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -649,6 +653,8 @@ fn can_define_multiple_macros() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
@@ -895,6 +901,8 @@ fn can_implement_inline_macro() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -1014,6 +1022,8 @@ fn can_implement_derive_macro() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -1094,6 +1104,8 @@ fn can_use_both_derive_and_attr() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
@@ -1411,6 +1423,8 @@ fn can_expand_trait_inner_func_attrr() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
