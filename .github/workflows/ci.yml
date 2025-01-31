@@ -29,7 +29,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
-        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove
       - uses: actions/upload-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
@@ -82,6 +82,32 @@ jobs:
       - name: run tests
         run: cargo test -p scarb-metadata
 
+  test-scarb-prove:
+    name: test scarb-prove ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
+    env:
+      # TODO(#1915): Use stable toolchain once stwo is stable.
+      RUST_TOOLCHAIN: "nightly-2025-01-02"
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo +stable build --workspace --all-features --exclude scarb-prove
+      - name: Run scarb-prove tests
+        run: cargo +${{ env.RUST_TOOLCHAIN }} test -p scarb-prove
+
   test-prebuilt-plugins:
     name: test prebuilt plugins ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
@@ -113,14 +139,37 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --check
-      - run: cargo clippy --all-targets --all-features -- --no-deps
+      # TODO(#1915): Build all crates with stable toolchain once stwo is stable.
+      - run: cargo clippy --all-targets --all-features --workspace --exclude scarb-prove -- --no-deps
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTFLAGS: "-Dwarnings"
-      - run: cargo doc --all-features --no-deps
+      - run: cargo doc --all-features --no-deps --workspace --exclude scarb-prove
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTDOCFLAGS: "-Dwarnings"
+
+  check-rust-scarb-prove:
+    name: check-rust (scarb-prove)
+    runs-on: ubuntu-latest
+    env:
+      # TODO(#1915): Use stable toolchain once stwo is stable.
+      RUST_TOOLCHAIN: "nightly-2025-01-02"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo +${{ env.RUST_TOOLCHAIN }} clippy --all-targets --all-features -p scarb-prove -- --no-deps
+        env:
+          # Make sure CI fails on all warnings, including Clippy lints.
+          RUSTFLAGS: "-Dwarnings"
+      - run: cargo +${{ env.RUST_TOOLCHAIN }} doc --all-features --no-deps -p scarb-prove
+        env:
+          # Make sure CI fails on all warnings, including Clippy lints.
+          RUSTDOCFLAGS: "-Dwarnings"      
 
   check-website:
     runs-on: ubuntu-latest

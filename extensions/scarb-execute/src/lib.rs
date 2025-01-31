@@ -12,26 +12,32 @@ use cairo_vm::{cairo_run, Felt252};
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
+use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand};
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::Status;
 use scarb_ui::Ui;
 use std::env;
 use std::fs;
-use std::fs::OpenOptions;
 use std::io::{self, Write};
 
 pub mod args;
 const MAX_ITERATION_COUNT: usize = 10000;
 
-pub fn main_inner(args: args::Args, ui: Ui) -> Result<(), anyhow::Error> {
+pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
+    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
+    let package = args.packages_filter.match_one(&metadata)?;
+    execute(&package, &args.execution, &ui)
+}
+
+pub fn execute(
+    package: &PackageMetadata,
+    args: &args::ExecutionArgs,
+    ui: &Ui,
+) -> Result<usize, anyhow::Error> {
     ensure!(
         !(args.run.output.is_cairo_pie() && args.run.target.is_standalone()),
         "Cairo pie output format is not supported for standalone execution target"
     );
-
-    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
-    let package = args.packages_filter.match_one(&metadata)?;
 
     if !args.no_build {
         let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
@@ -98,7 +104,9 @@ pub fn main_inner(args: args::Args, ui: Ui) -> Result<(), anyhow::Error> {
 
     let mut hint_processor = CairoHintProcessor {
         runner: None,
-        user_args: vec![vec![Arg::Array(args.run.arguments.read_arguments()?)]],
+        user_args: vec![vec![Arg::Array(
+            args.run.arguments.clone().read_arguments()?,
+        )]],
         string_to_hint,
         starknet_state: Default::default(),
         run_resources: Default::default(),
@@ -137,19 +145,20 @@ pub fn main_inner(args: args::Args, ui: Ui) -> Result<(), anyhow::Error> {
         }
     }
 
-    let output_dir = scarb_target_dir.join("execute");
+    let output_dir = scarb_target_dir.join("execute").join(&package.name);
     create_output_dir(output_dir.as_std_path())?;
+
+    let (execution_output_dir, execution_id) = incremental_create_output_dir(&output_dir)?;
 
     if args.run.output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
-        let output_file_path = incremental_create_output_file(&output_dir, package.name, ".zip")?;
+        let output_file_path = execution_output_dir.join("cairo_pie.zip");
         ui.print(Status::new(
             "Saving output to:",
             &display_path(&scarb_target_dir, &output_file_path),
         ));
         output_value.write_zip_file(output_file_path.as_std_path())?;
     } else {
-        let execution_output_dir = incremental_create_output_dir(&output_dir, package.name)?;
         ui.print(Status::new(
             "Saving output to:",
             &display_path(&scarb_target_dir, &execution_output_dir),
@@ -186,7 +195,7 @@ pub fn main_inner(args: args::Args, ui: Ui) -> Result<(), anyhow::Error> {
         fs::write(air_private_input_path, output_value)?;
     }
 
-    Ok(())
+    Ok(execution_id)
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {
@@ -214,52 +223,10 @@ fn load_prebuilt_executable(path: &Utf8Path, filename: String) -> Result<Executa
         .with_context(|| format!("failed to deserialize executable program: `{file_path}`"))
 }
 
-fn incremental_create_output_file(
-    path: &Utf8Path,
-    name: String,
-    extension: impl AsRef<str>,
-) -> Result<Utf8PathBuf> {
-    incremental_attempt_io_creation(
-        path,
-        name,
-        extension,
-        "failed to create output directory",
-        |p| {
-            OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(p)
-                .map(|_| ())
-        },
-    )
-}
-
-fn incremental_create_output_dir(path: &Utf8Path, name: String) -> anyhow::Result<Utf8PathBuf> {
-    incremental_attempt_io_creation(path, name, "", "failed to create output directory", |p| {
-        fs::create_dir(p)
-    })
-}
-
-fn incremental_attempt_io_creation(
-    path: &Utf8Path,
-    name: impl AsRef<str>,
-    extension: impl AsRef<str>,
-    final_error_message: impl AsRef<str>,
-    attempt: impl Fn(&Utf8Path) -> io::Result<()>,
-) -> anyhow::Result<Utf8PathBuf> {
-    for i in 0..MAX_ITERATION_COUNT {
-        let number_string = if i == 0 {
-            "".to_string()
-        } else {
-            format!("_{}", i)
-        };
-        let filepath = path.join(format!(
-            "{}{}{}",
-            name.as_ref(),
-            number_string,
-            extension.as_ref()
-        ));
-        let result = attempt(&filepath);
+fn incremental_create_output_dir(path: &Utf8Path) -> Result<(Utf8PathBuf, usize)> {
+    for i in 1..=MAX_ITERATION_COUNT {
+        let filepath = path.join(format!("execution{}", i));
+        let result = fs::create_dir(&filepath);
         return match result {
             Err(e) => {
                 if e.kind() == io::ErrorKind::AlreadyExists {
@@ -267,10 +234,10 @@ fn incremental_attempt_io_creation(
                 }
                 Err(e.into())
             }
-            Ok(_) => Ok(filepath),
+            Ok(_) => Ok((filepath, i)),
         };
     }
-    bail!(final_error_message.as_ref().to_string());
+    bail!("failed to create output directory")
 }
 
 /// Writer implementation for a file.

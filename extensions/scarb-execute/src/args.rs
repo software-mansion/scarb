@@ -16,12 +16,8 @@ pub struct Args {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
-    /// Do not rebuild the package.
-    #[arg(long, default_value_t = false)]
-    pub no_build: bool,
-
-    #[clap(flatten)]
-    pub run: ExecutionArgs,
+    #[command(flatten)]
+    pub execution: ExecutionArgs,
 
     /// Logging verbosity.
     #[command(flatten)]
@@ -30,6 +26,16 @@ pub struct Args {
 
 #[derive(Parser, Clone, Debug)]
 pub struct ExecutionArgs {
+    /// Do not rebuild the package.
+    #[arg(long, default_value_t = false)]
+    pub no_build: bool,
+
+    #[command(flatten)]
+    pub run: RunArgs,
+}
+
+#[derive(Parser, Clone, Debug)]
+pub struct RunArgs {
     #[command(flatten)]
     pub arguments: ProgramArguments,
 

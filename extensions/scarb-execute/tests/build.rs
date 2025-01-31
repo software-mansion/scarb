@@ -46,16 +46,16 @@ fn can_execute_default_main_function_from_executable() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/execute/hello
+        Saving output to: target/execute/hello/execution1
         "#});
 
-    t.child("target/execute/hello/air_private_input.json")
+    t.child("target/execute/hello/execution1/air_private_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/air_public_input.json")
+    t.child("target/execute/hello/execution1/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/memory.bin")
+    t.child("target/execute/hello/execution1/memory.bin")
         .assert(predicates::path::exists().and(is_file_empty().not()));
-    t.child("target/execute/hello/trace.bin")
+    t.child("target/execute/hello/execution1/trace.bin")
         .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
@@ -71,16 +71,16 @@ fn can_execute_prebuilt_executable() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]Executing hello
-        Saving output to: target/execute/hello
+        Saving output to: target/execute/hello/execution1
         "#});
 
-    t.child("target/execute/hello/air_private_input.json")
+    t.child("target/execute/hello/execution1/air_private_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/air_public_input.json")
+    t.child("target/execute/hello/execution1/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/memory.bin")
+    t.child("target/execute/hello/execution1/memory.bin")
         .assert(predicates::path::exists().and(is_file_empty().not()));
-    t.child("target/execute/hello/trace.bin")
+    t.child("target/execute/hello/execution1/trace.bin")
         .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
@@ -97,16 +97,16 @@ fn can_execute_bootloader_target() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/execute/hello
+        Saving output to: target/execute/hello/execution1
         "#});
 
-    t.child("target/execute/hello/air_private_input.json")
+    t.child("target/execute/hello/execution1/air_private_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/air_public_input.json")
+    t.child("target/execute/hello/execution1/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/memory.bin")
+    t.child("target/execute/hello/execution1/memory.bin")
         .assert(predicates::path::exists().and(is_file_empty().not()));
-    t.child("target/execute/hello/trace.bin")
+    t.child("target/execute/hello/execution1/trace.bin")
         .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
@@ -124,10 +124,10 @@ fn can_produce_cairo_pie_output() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/execute/hello.zip
+        Saving output to: target/execute/hello/execution1/cairo_pie.zip
         "#});
 
-    t.child("target/execute/hello.zip")
+    t.child("target/execute/hello/execution1/cairo_pie.zip")
         .assert(predicates::path::exists());
 }
 
@@ -206,15 +206,15 @@ fn can_print_panic_reason() {
         Program output:
         1
         Panicked with "abcd".
-        Saving output to: target/execute/hello
+        Saving output to: target/execute/hello/execution1
         "#});
-    t.child("target/execute/hello/air_private_input.json")
+    t.child("target/execute/hello/execution1/air_private_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/air_public_input.json")
+    t.child("target/execute/hello/execution1/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/memory.bin")
+    t.child("target/execute/hello/execution1/memory.bin")
         .assert(predicates::path::exists().and(is_file_empty().not()));
-    t.child("target/execute/hello/trace.bin")
+    t.child("target/execute/hello/execution1/trace.bin")
         .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
