@@ -34,13 +34,20 @@ jobs:
             os: macos-14
           - name: windows x86-64
             os: windows-latest
+    env:
+      # TODO(#1915): Use stable toolchain once stwo is stable.
+      RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-01-02"
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test --profile=ci --no-fail-fast
-  
+      - run: cargo test --profile=ci --no-fail-fast --workspace --exclude scarb-prove --exclude scarb-verify
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test --profile=ci --no-fail-fast -p scarb-prove -p scarb-verify
+
   snforge-init:
     runs-on: ubuntu-latest
     steps:
