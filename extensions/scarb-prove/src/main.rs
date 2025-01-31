@@ -1,4 +1,4 @@
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
@@ -137,14 +137,25 @@ fn resolve_paths_from_package(
         .join(package_name)
         .join(format!("execution{}", execution_id));
 
-    ensure!(
-        execution_dir.exists(),
-        formatdoc! {r#"
-            execution directory not found: {}
-            help: make sure to run `scarb execute` first
-            and that the execution ID is correct
-        "#, execution_dir}
-    );
+    if !execution_dir.exists() {
+        let execution_archive = scarb_target_dir
+            .join("execute")
+            .join(package_name)
+            .join(format!("execution{}.zip", execution_id));
+        if execution_archive.exists() {
+            bail!(formatdoc! {r#"
+                proving cairo pie output is not supported: {}
+                help: run `scarb execute --output=standard` first
+                and then run `scarb prove` with correct execution ID
+                "#, execution_archive});
+        } else {
+            bail!(formatdoc! {r#"
+                execution directory not found: {}
+                help: make sure to run `scarb execute` first
+                and then run `scarb prove` with correct execution ID
+                "#, execution_dir});
+        }
+    }
 
     // Get input files from execution directory
     let pub_input_path = execution_dir.join("air_public_input.json");
