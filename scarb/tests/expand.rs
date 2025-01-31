@@ -291,7 +291,7 @@ fn can_expand_multiple_targets() {
                         let temp = b;
                         b = a + b;
                         a = temp;
-                    };
+                    }
                     a
                 }
 

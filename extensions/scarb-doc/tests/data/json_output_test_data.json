@@ -62,7 +62,7 @@
             {
               "item_data": {
                 "name": "fib",
-                "doc": "Calculate the nth Fibonacci numberArguments * `n` - The index of the Fibonacci number to calculate",
+                "doc": "Calculate the nth Fibonacci number  # Arguments * `n` - The index of the Fibonacci number to calculate",
                 "signature": "fn fib(mut n: u32) -> u32",
                 "full_path": "hello_world::fib"
               }
