@@ -46,8 +46,8 @@ fn prove_from_execution_output() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving hello
+        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
         Saving proof to: target/execute/hello/execution1/proof/proof.json
         "#});
 
@@ -127,8 +127,8 @@ fn prove_fails_when_execution_output_not_found() {
             .assert()
             .failure(),
         indoc! {r#"
-        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving hello
+        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
         error: execution directory not found: [..]/target/execute/hello/execution1
         help: make sure to run `scarb execute` first
         and then run `scarb prove` with correct execution ID
@@ -142,6 +142,7 @@ fn prove_fails_when_execution_output_not_found() {
 fn prove_fails_when_cairo_pie_output() {
     let t = build_executable_project();
 
+    // First create a cairo pie output
     Scarb::quick_snapbox()
         .arg("execute")
         .arg("--target=bootloader")
@@ -153,6 +154,7 @@ fn prove_fails_when_cairo_pie_output() {
     t.child("target/execute/hello/execution1/cairo_pie.zip")
         .assert(predicates::path::exists());
 
+    // Then try to prove it
     output_assert(
         Scarb::quick_snapbox()
             .arg("prove")
@@ -161,14 +163,14 @@ fn prove_fails_when_cairo_pie_output() {
             .assert()
             .failure(),
         indoc! {r#"
-        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving hello
+        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
         error: proving cairo pie output is not supported: [..]/target/execute/hello/execution1/cairo_pie.zip
         help: run `scarb execute --output=standard` first
         and then run `scarb prove` with correct execution ID
 
         "#},
-    )
+    );
 }
 
 #[test]
@@ -184,12 +186,12 @@ fn prove_with_execute() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-        [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Compiling hello v0.1.0 ([..])
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
         Saving output to: target/execute/hello/execution1
         [..]Proving hello
+        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
         Saving proof to: target/execute/hello/execution1/proof/proof.json
         "#});
 

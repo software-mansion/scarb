@@ -83,8 +83,6 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
     let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
 
-    ui.warn("soundness of proof is not yet guaranteed by Stwo, use at your own risk");
-
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
     let package = args.packages_filter.match_one(&metadata)?;
 
@@ -96,6 +94,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         }
     };
     ui.print(Status::new("Proving", &package.name));
+    ui.warn("soundness of proof is not yet guaranteed by Stwo, use at your own risk");
 
     let (pub_input_path, priv_input_path, proof_path) =
         resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?;
