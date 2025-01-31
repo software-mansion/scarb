@@ -31,17 +31,16 @@ fn prove_from_execution_output() {
 
     Scarb::quick_snapbox()
         .arg("execute")
-        .env("SCARB_LOG", "error")
         .current_dir(&t)
-        .assert();
+        .assert()
+        .success();
 
     Scarb::quick_snapbox()
         .arg("prove")
-        .env("SCARB_LOG", "error")
         .arg("--execution-id=1")
         .current_dir(&t)
         .assert()
-        .stderr_matches("")
+        .success()
         .stdout_matches(indoc! {r#"
         [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving hello
@@ -59,14 +58,16 @@ fn prove_with_track_relations() {
     Scarb::quick_snapbox()
         .arg("execute")
         .current_dir(&t)
-        .assert();
+        .assert()
+        .success();
 
     let cmd = Scarb::quick_snapbox()
         .arg("prove")
         .arg("--execution-id=1")
         .arg("--track-relations")
         .current_dir(&t)
-        .assert();
+        .assert()
+        .success();
     let output = cmd.get_output().stdout.clone();
     let stdout = String::from_utf8(output).unwrap();
 
@@ -85,14 +86,16 @@ fn prove_with_display_components() {
     Scarb::quick_snapbox()
         .arg("execute")
         .current_dir(&t)
-        .assert();
+        .assert()
+        .success();
 
     let cmd = Scarb::quick_snapbox()
         .arg("prove")
         .arg("--execution-id=1")
         .arg("--display-components")
         .current_dir(&t)
-        .assert();
+        .assert()
+        .success();
 
     let output = cmd.get_output().stdout.clone();
     let stdout = String::from_utf8(output).unwrap();
@@ -110,11 +113,11 @@ fn prove_fails_when_execution_output_not_found() {
     let t = build_executable_project();
 
     output_assert(
-    Scarb::quick_snapbox()
-        .arg("prove")
-        .arg("--execution-id=1")
-        .current_dir(&t)
-        .assert()
+        Scarb::quick_snapbox()
+            .arg("prove")
+            .arg("--execution-id=1")
+            .current_dir(&t)
+            .assert()
             .failure(),
         indoc! {r#"
         [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
@@ -163,12 +166,11 @@ fn prove_with_execute() {
 
     Scarb::quick_snapbox()
         .arg("prove")
-        .env("SCARB_LOG", "error")
         .arg("--execute")
         .arg("--target=standalone")
         .current_dir(&t)
         .assert()
-        .stderr_matches("")
+        .success()
         .stdout_matches(indoc! {r#"
         [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Compiling hello v0.1.0 ([..])
