@@ -193,21 +193,31 @@ fn can_print_panic_reason() {
             }
         "#})
         .build(&t);
-    Scarb::quick_snapbox()
+    let output = Scarb::quick_snapbox()
         .arg("execute")
         .arg("--print-program-output")
+        .arg("--print-resource-usage")
         .current_dir(&t)
         .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
+        .failure();
+
+    output_assert(
+        output,
+        indoc! {r#"
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
         Program output:
         1
-        Panicked with "abcd".
+        Resources:
+        	steps: [..]
+        	memory holes: [..]
+        	builtins: ([..])
+        	syscalls: ()
         Saving output to: target/execute/hello/execution1
-        "#});
+        error: Panicked with "abcd".
+        "#},
+    );
     t.child("target/execute/hello/execution1/air_private_input.json")
         .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/execution1/air_public_input.json")
