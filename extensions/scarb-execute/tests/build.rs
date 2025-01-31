@@ -118,10 +118,10 @@ fn can_produce_cairo_pie_output() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/execute/hello/execution1.zip
+        Saving output to: target/execute/hello/execution1/cairo_pie.zip
         "#});
 
-    t.child("target/execute/hello/execution1.zip")
+    t.child("target/execute/hello/execution1/cairo_pie.zip")
         .assert(predicates::path::exists());
 }
 

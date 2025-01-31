@@ -136,9 +136,11 @@ pub fn execute(
     let output_dir = scarb_target_dir.join("execute").join(&package.name);
     create_output_dir(output_dir.as_std_path())?;
 
+    let (execution_output_dir, execution_id) = incremental_create_output_dir(&output_dir)?;
+
     if args.run.output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
-        let (output_file_path, execution_id) = incremental_create_output_file(&output_dir, ".zip")?;
+        let output_file_path = execution_output_dir.join("cairo_pie.zip");
         ui.print(Status::new(
             "Saving output to:",
             &display_path(&scarb_target_dir, &output_file_path),
@@ -146,7 +148,6 @@ pub fn execute(
         output_value.write_zip_file(output_file_path.as_std_path())?;
         Ok(execution_id)
     } else {
-        let (execution_output_dir, execution_id) = incremental_create_output_dir(&output_dir)?;
         ui.print(Status::new(
             "Saving output to:",
             &display_path(&scarb_target_dir, &execution_output_dir),

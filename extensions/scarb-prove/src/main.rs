@@ -127,23 +127,20 @@ fn resolve_paths_from_package(
         .join(format!("execution{}", execution_id));
 
     if !execution_dir.exists() {
-        let execution_archive = scarb_target_dir
-            .join("execute")
-            .join(package_name)
-            .join(format!("execution{}.zip", execution_id));
-        if execution_archive.exists() {
-            bail!(formatdoc! {r#"
-                proving cairo pie output is not supported: {}
-                help: run `scarb execute --output=standard` first
-                and then run `scarb prove` with correct execution ID
-                "#, execution_archive});
-        } else {
-            bail!(formatdoc! {r#"
-                execution directory not found: {}
-                help: make sure to run `scarb execute` first
-                and then run `scarb prove` with correct execution ID
-                "#, execution_dir});
-        }
+        bail!(formatdoc! {r#"
+            execution directory not found: {}
+            help: make sure to run `scarb execute` first
+            and then run `scarb prove` with correct execution ID
+            "#, execution_dir});
+    }
+
+    let cairo_pie_path = execution_dir.join("cairo_pie.zip");
+    if cairo_pie_path.exists() {
+        bail!(formatdoc! {r#"
+            proving cairo pie output is not supported: {}
+            help: run `scarb execute --output=standard` first
+            and then run `scarb prove` with correct execution ID
+            "#, cairo_pie_path});
     }
 
     // Get input files from execution directory

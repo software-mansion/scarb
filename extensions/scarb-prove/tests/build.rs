@@ -142,6 +142,9 @@ fn prove_fails_when_cairo_pie_output() {
         .assert()
         .success();
 
+    t.child("target/execute/hello/execution1/cairo_pie.zip")
+        .assert(predicates::path::exists());
+
     output_assert(
         Scarb::quick_snapbox()
             .arg("prove")
@@ -152,7 +155,7 @@ fn prove_fails_when_cairo_pie_output() {
         indoc! {r#"
         [..]soundness of proof is not yet guaranteed by Stwo, use at your own risk
         [..]Proving hello
-        error: proving cairo pie output is not supported: [..]/target/execute/hello/execution1.zip
+        error: proving cairo pie output is not supported: [..]/target/execute/hello/execution1/cairo_pie.zip
         help: run `scarb execute --output=standard` first
         and then run `scarb prove` with correct execution ID
 
