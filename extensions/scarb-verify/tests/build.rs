@@ -12,6 +12,9 @@ fn build_executable_project() -> TempDir {
         .dep_cairo_execute()
         .manifest_extra(indoc! {r#"
                 [executable]
+
+                [cairo]
+                enable-gas = false
             "#})
         .lib_cairo(indoc! {r#"
             #[executable]
@@ -115,7 +118,7 @@ fn verify_fails_when_proof_file_not_found() {
             .failure(),
         indoc! {r#"
         [..]Verifying proof
-        error: proof file does not exist: nonexistent.json
+        error: proof file does not exist at path: nonexistent.json
         "#},
     )
 }
