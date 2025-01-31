@@ -26,6 +26,7 @@ fn build_executable_project() -> TempDir {
 }
 
 #[test]
+#[cfg(not(windows))]
 fn prove_from_execution_output() {
     let t = build_executable_project();
 
@@ -52,6 +53,7 @@ fn prove_from_execution_output() {
 }
 
 #[test]
+#[cfg(not(windows))]
 fn prove_with_track_relations() {
     let t = build_executable_project();
 
@@ -80,6 +82,7 @@ fn prove_with_track_relations() {
 }
 
 #[test]
+#[cfg(not(windows))]
 fn prove_with_display_components() {
     let t = build_executable_project();
 
@@ -109,6 +112,7 @@ fn prove_with_display_components() {
 }
 
 #[test]
+#[cfg(not(windows))]
 fn prove_fails_when_execution_output_not_found() {
     let t = build_executable_project();
 
@@ -131,6 +135,7 @@ fn prove_fails_when_execution_output_not_found() {
 }
 
 #[test]
+#[cfg(not(windows))]
 fn prove_fails_when_cairo_pie_output() {
     let t = build_executable_project();
 
@@ -161,6 +166,7 @@ fn prove_fails_when_cairo_pie_output() {
 }
 
 #[test]
+#[cfg(not(windows))]
 fn prove_with_execute() {
     let t = build_executable_project();
 
@@ -183,6 +189,26 @@ fn prove_with_execute() {
 
     t.child("target/execute/hello/execution1/proof/proof.json")
         .assert(predicates::path::exists());
+}
+
+#[test]
+#[cfg(windows)]
+fn prove_fails_on_windows() {
+    let t = build_executable_project();
+
+    output_assert(
+        Scarb::quick_snapbox()
+            .arg("prove")
+            .arg("--execute")
+            .current_dir(&t)
+            .assert()
+            .failure(),
+        indoc! {r#"
+        error: `scarb prove` is not supported on Windows
+        help: use WSL or a Linux/macOS machine instead
+
+        "#},
+    )
 }
 
 fn output_assert(output: OutputAssert, expected: &str) {

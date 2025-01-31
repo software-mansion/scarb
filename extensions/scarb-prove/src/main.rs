@@ -2,7 +2,7 @@ use anyhow::{bail, ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
-use indoc::formatdoc;
+use indoc::{formatdoc, indoc};
 use scarb_execute::args::{Args as ExecuteArgs, ExecutionArgs};
 use scarb_metadata::MetadataCommand;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
@@ -72,6 +72,15 @@ fn main() -> ExitCode {
 }
 
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
+    ensure!(
+        !cfg!(windows),
+        indoc! {r#"
+            `scarb prove` is not supported on Windows
+            help: use WSL or a Linux/macOS machine instead
+            "#
+        }
+    );
+
     let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
 
     ui.warn("soundness of proof is not yet guaranteed by Stwo, use at your own risk");
