@@ -33,7 +33,8 @@ struct Args {
             "arguments_file",
             "output",
             "target",
-            "print_program_output"
+            "print_program_output",
+            "print_resource_usage"
         ]
     )]
     execution_id: Option<usize>,
