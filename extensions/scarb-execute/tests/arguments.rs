@@ -13,6 +13,9 @@ fn can_take_big_number_as_arg() {
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [executable]
+            
+            [cairo]
+            enable-gas = false
         "#})
         .dep_cairo_execute()
         .lib_cairo(indoc! {r#"
@@ -51,6 +54,9 @@ fn can_read_arguments_from_file() {
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [executable]
+            
+            [cairo]
+            enable-gas = false
         "#})
         .dep_cairo_execute()
         .lib_cairo(indoc! {r#"

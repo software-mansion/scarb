@@ -1,6 +1,6 @@
 # fib
 
-Calculate the nth Fibonacci number  # Arguments * `n` - The index of the Fibonacci number to calculate
+Calculate the nth Fibonacci numberArguments * `n` - The index of the Fibonacci number to calculate
 
 Fully qualified path: `hello_world::fib`
 

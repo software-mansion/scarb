@@ -1,6 +1,6 @@
 use assert_fs::TempDir;
 use indoc::indoc;
-use snapbox::cmd::{cargo_bin, Command};
+use snapbox::cmd::{cargo_bin, Command, OutputAssert};
 
 use scarb_test_support::cargo::manifest_dir;
 
@@ -26,6 +26,8 @@ fn scarb_build_is_called() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
                Compiling hello_world v0.1.0 ([..]/Scarb.toml)
                 Finished `dev` profile target(s) in [..]
                  Running hello_world
@@ -56,17 +58,15 @@ fn build_can_be_skipped() {
         .assert()
         .failure();
 
-    #[cfg(windows)]
-    snapbox.stdout_eq(indoc! {r#"
-            error: package has not been compiled, file does not exist: `hello_world.sierra.json`
-            help: run `scarb build` to compile the package
-            error: process did not exit successfully: exit code: 1
-        "#});
-    #[cfg(not(windows))]
-    snapbox.stdout_eq(indoc! {r#"
-            error: package has not been compiled, file does not exist: `hello_world.sierra.json`
-            help: run `scarb build` to compile the package
-        "#});
+    output_assert(
+        snapbox,
+        indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
+        error: package has not been compiled, file does not exist: `hello_world.sierra.json`
+        help: run `scarb build` to compile the package
+    "#},
+    );
 }
 
 #[test]
@@ -93,6 +93,8 @@ fn can_limit_gas() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
                Compiling hello_world v0.1.0 ([..]/Scarb.toml)
                 Finished `dev` profile target(s) in [..]
                  Running hello_world
@@ -125,19 +127,24 @@ fn can_disable_gas() {
         .assert()
         .failure();
 
+    output_assert(
+        snapbox,
+        indoc! {r#"
+        warn: `scarb cairo-run` will be deprecated soon
+        help: use `scarb execute` instead
+           Compiling hello_world v0.1.0 ([..]Scarb.toml)
+            Finished `dev` profile target(s) in [..]
+             Running hello_world
+        error: program requires gas counter, please provide `--available-gas` argument
+    "#},
+    );
+}
+
+fn output_assert(output: OutputAssert, expected: &str) {
     #[cfg(windows)]
-    snapbox.stdout_matches(indoc! {r#"
-               Compiling hello_world v0.1.0 ([..]Scarb.toml)
-                Finished `dev` profile target(s) in [..]
-                 Running hello_world
-            error: program requires gas counter, please provide `--available-gas` argument
-            error: process did not exit successfully: exit code: 1
-        "#});
+    output.stdout_matches(format!(
+        "{expected}error: process did not exit successfully: exit code: 1\n"
+    ));
     #[cfg(not(windows))]
-    snapbox.stdout_matches(indoc! {r#"
-               Compiling hello_world v0.1.0 ([..]Scarb.toml)
-                Finished `dev` profile target(s) in [..]
-                 Running hello_world
-            error: program requires gas counter, please provide `--available-gas` argument
-        "#});
+    output.stdout_matches(expected);
 }

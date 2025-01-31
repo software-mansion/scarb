@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Scarb, the Cairo and StarkNet development toolchain
+title: Scarb, the Cairo and Starknet development toolchain
 titleTemplate: false
 ---
 

@@ -280,7 +280,7 @@ Within Scarb, Cairo plugins are managed through `CairoPluginRepository`, residin
 The plugin repository stores references to all Cairo plugins that are available during the compilation process.
 Plugins appropriate to be used for building a specific package are applied to the compiler database before the compilation. 
 When using Scarb as a library, Cairo plugins can be defined with configuration builder. 
-If not specified otherwise, Scarb comes with predefined StarkNet Cairo plugin, that can be used for StarkNet contracts
+If not specified otherwise, Scarb comes with predefined Starknet Cairo plugin, that can be used for Starknet contracts
 compilation.
 
 ### Procedural Macros 
