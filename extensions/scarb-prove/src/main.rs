@@ -82,7 +82,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let execution_id = match args.execution_id {
         Some(id) => id,
         None => {
-            ensure!(args.execute);
+            assert!(args.execute);
             run_execute(&args, &ui)?
         }
     };
