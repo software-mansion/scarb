@@ -14,6 +14,9 @@ fn build_executable_project() -> TempDir {
         .dep_cairo_execute()
         .manifest_extra(indoc! {r#"
                 [executable]
+
+                [cairo]
+                enable-gas = false
             "#})
         .lib_cairo(indoc! {r#"
             #[executable]

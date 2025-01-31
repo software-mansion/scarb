@@ -64,7 +64,7 @@ dependencies = [
  "itertools 0.13.0",
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -90,9 +90,9 @@ checksum = "5c6cb57a04249c6480766f7f7cef5467412af1490f8d1e243141daddada3264f"
 
 [[package]]
 name = "alloy-rlp"
-version = "0.3.10"
+version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f542548a609dca89fcd72b3b9f355928cf844d4363c5eed9c5273a3dd225e097"
+checksum = "3d6c1d995bff8d011f7cd6c81820d51825e6e06d6db73914c1630ecf544d83d6"
 dependencies = [
  "arrayvec",
  "bytes",
@@ -415,24 +415,24 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.85"
+version = "0.1.84"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f934833b4b7233644e5848f235df3f57ed8c80f1528a26c3dfa13d2147fa056"
+checksum = "1b1244b10dcd56c92219da4e14caa97e312079e185f04ba3eea25061561dc0a0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
 name = "auto_impl"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c87f3f15e7794432337fc718554eaa4dc8f04c9677a950ffe366f20a162ae42"
+checksum = "e12882f59de5360c748c4cbf569a042d5fb0eb515f7bea9c1f470b47f6ffbd73"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -598,9 +598,9 @@ dependencies = [
 
 [[package]]
 name = "blake3"
-version = "1.5.3"
+version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9ec96fe9a81b5e365f9db71fe00edc4fe4ca2cc7dcb7861f0603012a7caa210"
+checksum = "b8ee0c1824c4dea5b5f81736aff91bae041d2c07ee1192bec91054e10e3e601e"
 dependencies = [
  "arrayref",
  "arrayvec",
@@ -690,7 +690,7 @@ checksum = "3fa76293b4f7bb636ab88fd78228235b5248b4d05cc589aed610f954af5d7c7a"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -735,7 +735,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-casm"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-utils",
  "indoc",
@@ -748,7 +748,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-compiler"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "anyhow",
  "cairo-lang-defs",
@@ -773,7 +773,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-debug"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-utils",
 ]
@@ -781,7 +781,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-defs"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-diagnostics",
@@ -797,7 +797,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-diagnostics"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
@@ -808,7 +808,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-doc"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -828,7 +828,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-eq-solver"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-utils",
  "good_lp",
@@ -837,11 +837,12 @@ dependencies = [
 [[package]]
 name = "cairo-lang-executable"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "anyhow",
  "cairo-lang-casm",
  "cairo-lang-compiler",
+ "cairo-lang-debug",
  "cairo-lang-defs",
  "cairo-lang-filesystem",
  "cairo-lang-lowering",
@@ -861,7 +862,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-filesystem"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-utils",
@@ -876,7 +877,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-formatter"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "anyhow",
  "cairo-lang-diagnostics",
@@ -895,7 +896,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-lowering"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -913,7 +914,6 @@ dependencies = [
  "num-integer",
  "num-traits 0.2.19",
  "rust-analyzer-salsa",
- "smol_str",
 ]
 
 [[package]]
@@ -945,7 +945,7 @@ version = "0.1.0"
 dependencies = [
  "quote",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -956,7 +956,7 @@ checksum = "e32e958decd95ae122ee64daa26721da2f76e83231047f947fd9cdc5d3c90cc6"
 dependencies = [
  "quote",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -972,7 +972,7 @@ checksum = "c49906d6b1c215e5814be7c5c65ecf2328898b335bee8c2409ec07cfb5530daf"
 [[package]]
 name = "cairo-lang-parser"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
@@ -991,7 +991,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-plugins"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1009,22 +1009,22 @@ dependencies = [
 [[package]]
 name = "cairo-lang-primitive-token"
 version = "1.0.0"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 
 [[package]]
 name = "cairo-lang-proc-macros"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-debug",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
 name = "cairo-lang-project"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-utils",
@@ -1036,7 +1036,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-runnable-utils"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-sierra",
@@ -1053,7 +1053,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-runner"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "ark-ff 0.4.2",
  "ark-secp256k1",
@@ -1082,7 +1082,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-semantic"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1108,7 +1108,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "anyhow",
  "cairo-lang-utils",
@@ -1134,7 +1134,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-ap-change"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
@@ -1149,7 +1149,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-gas"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
@@ -1164,7 +1164,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-generator"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1187,7 +1187,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-to-casm"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "assert_matches",
  "cairo-lang-casm",
@@ -1207,7 +1207,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-type-size"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-utils",
@@ -1216,7 +1216,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-starknet"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1245,7 +1245,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-starknet-classes"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-sierra",
@@ -1267,7 +1267,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-syntax"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
@@ -1283,7 +1283,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-syntax-codegen"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "genco",
  "xshell",
@@ -1292,7 +1292,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-test-plugin"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1318,7 +1318,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-test-runner"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1340,7 +1340,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-test-utils"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-utils",
@@ -1352,7 +1352,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-utils"
 version = "2.9.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=03944ce36c4b37ef954d7f462d23edce8669e692#03944ce36c4b37ef954d7f462d23edce8669e692"
+source = "git+https://github.com/starkware-libs/cairo?rev=1510dbf57cbb2117069c83832f615f0447d0ec12#1510dbf57cbb2117069c83832f615f0447d0ec12"
 dependencies = [
  "env_logger",
  "hashbrown 0.14.5",
@@ -1369,13 +1369,14 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.9.2"
-source = "git+https://github.com/software-mansion/cairols?rev=6432886fea7564816078ed140434addf50bbaa23#6432886fea7564816078ed140434addf50bbaa23"
+source = "git+https://github.com/software-mansion/cairols?rev=6cdca03964273518687d2e2253ff731d8f2e9fd0#6cdca03964273518687d2e2253ff731d8f2e9fd0"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
  "cairo-lang-doc",
+ "cairo-lang-executable",
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
  "cairo-lang-lowering",
@@ -1397,6 +1398,7 @@ dependencies = [
  "libc",
  "lsp-server",
  "lsp-types",
+ "memchr",
  "rust-analyzer-salsa",
  "scarb-metadata 1.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "scarb-proc-macro-server-types 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1414,8 +1416,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-lint-core"
-version = "0.1.0"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=b95a1949b932e89179c052efdbf4e21002ce6777#b95a1949b932e89179c052efdbf4e21002ce6777"
+version = "2.9.2"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=20a858bcfba2319edfd92021e243e6cf95543330#20a858bcfba2319edfd92021e243e6cf95543330"
 dependencies = [
  "annotate-snippets",
  "anyhow",
@@ -1541,13 +1543,13 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.98"
+version = "1.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41c270e7540d725e65ac7f1b212ac8ce349719624d7bcff99f8e2e488e8cf03f"
+checksum = "13208fcbb66eaeffe09b99fffbe1af420f00a7b35aa99ad683dfc1aa76145229"
 dependencies = [
  "jobserver",
  "libc",
- "once_cell",
+ "shlex",
 ]
 
 [[package]]
@@ -1603,7 +1605,7 @@ dependencies = [
  "heck 0.5.0",
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -1861,7 +1863,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "strsim",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -1872,7 +1874,7 @@ checksum = "d336a2a514f6ccccaa3e09b02d41d35330c07ddf03a62165fcec10bb561c7806"
 dependencies = [
  "darling_core",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -1951,7 +1953,7 @@ dependencies = [
  "darling",
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -1961,7 +1963,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab63b0e2bf4d5928aff72e83a7dace85d7bba5fe12dcc3c5a572d78caffd3f3c"
 dependencies = [
  "derive_builder_core",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -2068,7 +2070,7 @@ checksum = "97369cbbc041bc366949bc74d34658d6cda5621039731c6310521892a3a20ae0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -2104,7 +2106,7 @@ dependencies = [
  "enum-ordinalize",
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -2154,7 +2156,7 @@ checksum = "0d28318a75d4aead5c4db25382e8ef717932d0346600cacae6357eb5941bc5ff"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -2431,7 +2433,7 @@ checksum = "162ee34ebcb7c64a8abebc059ce0fee27c2262618d7b60ed8faf72fef13c3650"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -2489,7 +2491,7 @@ checksum = "553630feadf7b76442b0849fd25fdf89b860d933623aec9693fed19af0400c78"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -3770,7 +3772,7 @@ checksum = "1ec89e9337638ecdc08744df490b221a7399bf8d164eb52a665454e60e075ad6"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -4201,7 +4203,7 @@ checksum = "edbe595006d355eaf9ae11db92707d4338cd2384d16866131cc1afdbdd35d8d9"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -4299,14 +4301,14 @@ checksum = "5cf92c10c7e361d6b99666ec1c6f9805b0bea2c3bd8c78dc6fe98ac5bd78db11"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
 name = "memchr"
-version = "2.7.2"
+version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
+checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
 name = "memmap2"
@@ -4402,7 +4404,7 @@ checksum = "1bb5c1d8184f13f7d0ccbeeca0def2f9a181bce2624302793005f5ca8aa62e5e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -4675,7 +4677,7 @@ checksum = "a948666b637a0f465e8564c73e89d4dde00d72d4d473cc972f390fc3dcee7d9c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -4888,7 +4890,7 @@ checksum = "2f38a4412a78282e09a2cf38d195ea5420d15ba0602cb375210efbc877243965"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -5006,9 +5008,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.93"
+version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60946a68e5f9d28b0dc1c21bb8a97ee7d018a8b322fa57838ba31cc878e22d99"
+checksum = "37d3544b3f2748c54e147655edb5025752e2303145b5aefb3c3ea2c78b973bb0"
 dependencies = [
  "unicode-ident",
 ]
@@ -5074,7 +5076,7 @@ checksum = "ca414edb151b4c8d125c12566ab0d74dc9cdba36fb80eb7b848c15f495fd32d1"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -5287,7 +5289,7 @@ checksum = "bcc303e793d3734489387d205e9b186fac9c6cfacedd98cbb2e8a5943595f3e6"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -5421,9 +5423,9 @@ dependencies = [
 
 [[package]]
 name = "rkyv"
-version = "0.8.9"
+version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b11a153aec4a6ab60795f8ebe2923c597b16b05bb1504377451e705ef1a45323"
+checksum = "1e147371c75553e1e2fcdb483944a8540b8438c31426279553b9a8182a9b7b65"
 dependencies = [
  "bytes",
  "hashbrown 0.15.2",
@@ -5439,13 +5441,13 @@ dependencies = [
 
 [[package]]
 name = "rkyv_derive"
-version = "0.8.9"
+version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "beb382a4d9f53bd5c0be86b10d8179c3f8a14c30bf774ff77096ed6581e35981"
+checksum = "246b40ac189af6c675d124b802e8ef6d5246c53e17367ce9501f8f66a81abb7a"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -5516,7 +5518,7 @@ dependencies = [
  "heck 0.4.1",
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6030,7 +6032,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde_derive_internals",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6146,7 +6148,7 @@ checksum = "5a9bf7cf98d04a2b28aead066b7496853d4779c9cc183c440dbac457641e19a0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6157,7 +6159,7 @@ checksum = "18d26a20a969b9e3fdf2fc2d9f21eda6c40e2de84c9408bb5d3b05d499aae711"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6190,7 +6192,7 @@ checksum = "6c64451ba24fc7a6a2d60fc75dd9c83c90903b19028d4eff35e88fc1e86564e9"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6275,6 +6277,12 @@ name = "shell-words"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
+
+[[package]]
+name = "shlex"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "signal-hook"
@@ -6497,7 +6505,7 @@ checksum = "bbc159a1934c7be9761c237333a57febe060ace2bc9e3b337a59a37af206d19f"
 dependencies = [
  "starknet-curve",
  "starknet-ff",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6583,7 +6591,7 @@ dependencies = [
  "itertools 0.13.0",
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6603,7 +6611,7 @@ source = "git+https://github.com/starkware-libs/stwo-cairo?rev=a27287c21e8b7e677
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6688,9 +6696,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.96"
+version = "2.0.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5d0adab1ae378d7f53bdebc67a39f1f151407ef230f0ce2883572f5d8985c80"
+checksum = "46f71c0377baf4ef1cc3e3402ded576dccc315800fbc62dfc7fe04b009773b4a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6711,7 +6719,7 @@ checksum = "c8af7666ab7b6390ab78131fb5b0fce11d6b7a6951602017c35fa82800708971"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6806,7 +6814,7 @@ dependencies = [
  "cfg-if",
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6817,7 +6825,7 @@ checksum = "5c89e72a01ed4c579669add59014b9a524d609c0c88c6a585ce37485879f6ffb"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
  "test-case-core",
 ]
 
@@ -6829,7 +6837,7 @@ dependencies = [
  "darling",
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6858,7 +6866,7 @@ checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6869,7 +6877,7 @@ checksum = "26afc1baea8a989337eeb52b6e72a039780ce45c3edfcc9c5b9d112feeb173c2"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -6971,9 +6979,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.43.0"
+version = "1.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d61fa4ffa3de412bfea335c6ecff681de2b609ba3c77ef3e00e521813a9ed9e"
+checksum = "5cec9b21b0450273377fc97bd4c33a8acffc8c996c987a7c5b319a0083707551"
 dependencies = [
  "backtrace",
  "bytes",
@@ -6988,13 +6996,13 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "2.5.0"
+version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e06d43f1345a3bcd39f6a56dbb7dcab2ba47e68e8ac134855e7e2bdbaf8cab8"
+checksum = "693d596312e88961bc67d7f1f97af8a70227d9f90c31bba5806eec004978d752"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -7159,7 +7167,7 @@ checksum = "395ae124c09f9e6918a2310af6038fba074bcf474ac352496d5910dd59a2226d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -7245,7 +7253,7 @@ checksum = "560b82d656506509d43abe30e0ba64c56b1953ab3d4fe7ba5902747a7a3cedd5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -7394,9 +7402,9 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 
 [[package]]
 name = "uuid"
-version = "1.12.0"
+version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "744018581f9a3454a9e15beb8a33b017183f1e7c0cd170232a2d1453b23a51c4"
+checksum = "b3758f5e68192bb96cc8f9b7e2c2cfdabb435499a28499a42f8f984092adad4b"
 
 [[package]]
 name = "valuable"
@@ -7485,7 +7493,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
  "wasm-bindgen-shared",
 ]
 
@@ -7519,7 +7527,7 @@ checksum = "e94f17b526d0a461a191c78ea52bbce64071ed5c04c9ffe424dcb38f74171bb7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -7881,7 +7889,7 @@ checksum = "28cc31741b18cb6f1d5ff12f5b7523e3d6eb0852bbbad19d73905511d9849b95"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
  "synstructure",
 ]
 
@@ -7902,7 +7910,7 @@ checksum = "15e934569e47891f7d9411f1a451d947a60e000ab3bd24fbb970f000387d1b3b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -7922,7 +7930,7 @@ checksum = "0ea7b4a3637ea8669cedf0f1fd5c286a17f3de97b8dd5a70a6c167a1730e63a5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
  "synstructure",
 ]
 
@@ -7943,7 +7951,7 @@ checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -7965,7 +7973,7 @@ checksum = "6eafa6dfb17584ea3e2bd6e76e0cc15ad7af12b09abdd1ca55961bed9b1063c6"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.96",
+ "syn 2.0.95",
 ]
 
 [[package]]

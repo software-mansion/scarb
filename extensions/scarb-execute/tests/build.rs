@@ -206,15 +206,15 @@ fn can_print_panic_reason() {
         Program output:
         1
         Panicked with "abcd".
-        Saving output to: target/execute/hello
+        Saving output to: target/execute/hello/execution1
         "#});
-    t.child("target/execute/hello/air_private_input.json")
+    t.child("target/execute/hello/execution1/air_private_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/air_public_input.json")
+    t.child("target/execute/hello/execution1/air_public_input.json")
         .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/memory.bin")
+    t.child("target/execute/hello/execution1/memory.bin")
         .assert(predicates::path::exists().and(is_file_empty().not()));
-    t.child("target/execute/hello/trace.bin")
+    t.child("target/execute/hello/execution1/trace.bin")
         .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
