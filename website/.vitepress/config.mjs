@@ -135,7 +135,7 @@ export default withMermaid(
         "meta",
         {
           property: "og:title",
-          content: "Scarb, the Cairo and StarkNet development toolchain",
+          content: "Scarb, the Cairo and Starknet development toolchain",
         },
       ],
       [

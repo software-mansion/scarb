@@ -1,12 +1,13 @@
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
-use indoc::formatdoc;
-use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand};
+use indoc::{formatdoc, indoc};
+use scarb_execute::args::ExecutionArgs;
+use scarb_metadata::MetadataCommand;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use scarb_ui::components::Status;
-use scarb_ui::{OutputFormat, Ui, UiPrinter};
+use scarb_ui::{OutputFormat, Ui};
 use std::env;
 use std::fs;
 use std::process::ExitCode;
@@ -24,17 +25,19 @@ struct Args {
 
     /// ID of `scarb execute` *standard* output for given package, for which to generate proof.
     #[arg(long)]
-    execution_id: Option<u32>,
+    execution_id: Option<usize>,
 
     /// Execute the program before proving.
-    #[arg(long, conflicts_with_all = ["execution_id", "pub_input_file", "priv_input_file"])]
+    #[arg(
+        long,
+        default_value_t = false,
+        conflicts_with = "execution_id",
+        required_unless_present = "execution_id"
+    )]
     execute: bool,
 
     #[command(flatten)]
-    execute_args: ExecuteArgs,
-
-    #[command(flatten)]
-    files: InputFileArgs,
+    execute_args: ExecutionArgs,
 
     #[command(flatten)]
     prover: ProverArgs,
@@ -42,36 +45,6 @@ struct Args {
     /// Logging verbosity.
     #[command(flatten)]
     pub verbose: VerbositySpec,
-}
-
-#[derive(Parser, Clone, Debug)]
-struct ExecuteArgs {
-    /// Do not build the package before execution.
-    #[arg(long, requires = "execute")]
-    no_build: bool,
-
-    /// Arguments to pass to the program during execution.
-    #[arg(long, requires = "execute")]
-    arguments: Option<String>,
-
-    /// Arguments to the executable function from a file.
-    #[arg(long, conflicts_with = "arguments")]
-    arguments_file: Option<String>,
-
-    /// Target for execution.
-    #[arg(long, requires = "execute")]
-    target: Option<String>,
-}
-
-#[derive(Parser, Clone, Debug)]
-struct InputFileArgs {
-    /// AIR public input path.
-    #[arg(long, required_unless_present_any = ["execution_id", "execute"], conflicts_with_all = ["execution_id", "execute"])]
-    pub_input_file: Option<Utf8PathBuf>,
-
-    /// AIR private input path.
-    #[arg(long, required_unless_present_any = ["execution_id", "execute"], conflicts_with_all = ["execution_id", "execute"])]
-    priv_input_file: Option<Utf8PathBuf>,
 }
 
 #[derive(Parser, Clone, Debug)]
@@ -99,26 +72,32 @@ fn main() -> ExitCode {
 }
 
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
+    ensure!(
+        !cfg!(windows),
+        indoc! {r#"
+            `scarb prove` is not supported on Windows
+            help: use WSL or a Linux/macOS machine instead
+            "#
+        }
+    );
+
     let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
 
+    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
+    let package = args.packages_filter.match_one(&metadata)?;
+
+    let execution_id = match args.execution_id {
+        Some(id) => id,
+        None => {
+            assert!(args.execute);
+            scarb_execute::execute(&package, &args.execute_args, &ui)?
+        }
+    };
+    ui.print(Status::new("Proving", &package.name));
+    ui.warn("soundness of proof is not yet guaranteed by Stwo, use at your own risk");
+
     let (pub_input_path, priv_input_path, proof_path) =
-        if args.execute || args.execution_id.is_some() {
-            let metadata = MetadataCommand::new().inherit_stderr().exec()?;
-            let package = args.packages_filter.match_one(&metadata)?;
-
-            let execution_id = match args.execution_id {
-                Some(execution_id) => execution_id,
-                None => run_execute(&args.execute_args, &package, &scarb_target_dir, &ui)?,
-            };
-
-            ui.print(Status::new("Proving", &package.name));
-
-            resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?
-        } else {
-            ui.print(Status::new("Proving", "Cairo program"));
-
-            resolve_paths(&args.files)?
-        };
+        resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?;
 
     let prover_input = adapt_vm_output(
         pub_input_path.as_std_path(),
@@ -148,7 +127,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 fn resolve_paths_from_package(
     scarb_target_dir: &Utf8PathBuf,
     package_name: &str,
-    execution_id: u32,
+    execution_id: usize,
 ) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
     let execution_dir = scarb_target_dir
         .join("execute")
@@ -160,8 +139,18 @@ fn resolve_paths_from_package(
         formatdoc! {r#"
             execution directory not found: {}
             help: make sure to run `scarb execute` first
-            and that the execution ID is correct
-        "#, execution_dir}
+            and then run `scarb prove` with correct execution ID
+            "#, execution_dir}
+    );
+
+    let cairo_pie_path = execution_dir.join("cairo_pie.zip");
+    ensure!(
+        !cairo_pie_path.exists(),
+        formatdoc! {r#"
+            proving cairo pie output is not supported: {}
+            help: run `scarb execute --output=standard` first
+            and then run `scarb prove` with correct execution ID
+            "#, cairo_pie_path}
     );
 
     // Get input files from execution directory
@@ -182,74 +171,6 @@ fn resolve_paths_from_package(
     let proof_path = proof_dir.join("proof.json");
 
     Ok((pub_input_path, priv_input_path, proof_path))
-}
-
-fn resolve_paths(files: &InputFileArgs) -> Result<(Utf8PathBuf, Utf8PathBuf, Utf8PathBuf)> {
-    let pub_input_path = files.pub_input_file.clone().unwrap();
-    let priv_input_path = files.priv_input_file.clone().unwrap();
-
-    ensure!(
-        pub_input_path.exists(),
-        format!("public input file does not exist at path: {pub_input_path}")
-    );
-    ensure!(
-        priv_input_path.exists(),
-        format!("private input file does not exist at path: {priv_input_path}")
-    );
-
-    // Create proof file in current directory
-    let proof_path = Utf8PathBuf::from("proof.json");
-
-    Ok((pub_input_path, priv_input_path, proof_path))
-}
-
-fn run_execute(
-    execution_args: &ExecuteArgs,
-    package: &PackageMetadata,
-    scarb_target_dir: &Utf8PathBuf,
-    ui: &Ui,
-) -> Result<u32> {
-    let package_filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
-
-    let mut cmd = ScarbCommand::new_for_output();
-    cmd.arg("execute")
-        .env("SCARB_PACKAGES_FILTER", package_filter.to_env())
-        .env("SCARB_TARGET_DIR", scarb_target_dir);
-
-    if execution_args.no_build {
-        cmd.arg("--no-build");
-    }
-    if let Some(arguments) = &execution_args.arguments {
-        cmd.arg(format!("--arguments={arguments}"));
-    }
-    if let Some(arguments_file) = &execution_args.arguments_file {
-        cmd.arg(format!("--arguments-file={arguments_file}"));
-    }
-    if let Some(target) = &execution_args.target {
-        cmd.arg(format!("--target={target}"));
-    }
-
-    let printer = UiPrinter::new(ui);
-    let output = cmd.output_and_stream(&printer)?;
-    extract_execution_id(&output)
-}
-
-fn extract_execution_id(output: &[String]) -> Result<u32> {
-    output
-        .iter()
-        .find_map(|line| {
-            line.trim()
-                .strip_prefix("Saving output to:")
-                // Isolate the last path component (e.g., "execution1"), strip "execution" prefix, and parse the number
-                .and_then(|output_path| output_path.trim().split('/').last())
-                .and_then(|execution_str| {
-                    execution_str
-                        .trim_start_matches("execution")
-                        .parse::<u32>()
-                        .ok()
-                })
-        })
-        .ok_or_else(|| anyhow!("failed to extract execution ID from `scarb execute` output"))
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {

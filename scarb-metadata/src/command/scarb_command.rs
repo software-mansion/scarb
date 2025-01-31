@@ -1,8 +1,8 @@
-use crate::command::internal_command::InternalScarbCommandBuilder;
 use std::ffi::OsStr;
 use std::io;
-use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
+
+use crate::command::internal_command::InternalScarbCommandBuilder;
 use thiserror::Error;
 
 /// Error thrown while trying to execute `scarb` command.
@@ -13,7 +13,7 @@ pub enum ScarbCommandError {
     #[error("failed to read `scarb` output")]
     Io(#[from] io::Error),
     /// Error during execution of `scarb` command.
-    #[error("`scarb` command exited with error")]
+    #[error("`scarb metadata` exited with error")]
     ScarbError,
 }
 
@@ -30,16 +30,6 @@ impl ScarbCommand {
         let mut cmd = InternalScarbCommandBuilder::new();
         cmd.inherit_stderr();
         cmd.inherit_stdout();
-        Self { inner: cmd }
-    }
-
-    /// Creates a `scarb` command that captures output while still printing it to stdout.
-    pub fn new_for_output() -> Self {
-        let mut cmd = InternalScarbCommandBuilder::new();
-        cmd.inherit_stderr();
-        // We can not just use cmd.inherit_stdout()
-        // Because it will make output.stdout empty
-        cmd.pipe_stdout();
         Self { inner: cmd }
     }
 
@@ -120,41 +110,4 @@ impl ScarbCommand {
             Err(ScarbCommandError::ScarbError)
         }
     }
-
-    /// Runs configured `scarb` command and returns its stdout output.
-    pub fn output_and_stream(
-        &self,
-        printer: &impl Printer,
-    ) -> Result<Vec<String>, ScarbCommandError> {
-        let mut cmd = self.inner.command();
-        let mut child = cmd.spawn()?;
-
-        let stdout = child
-            .stdout
-            .take()
-            .ok_or_else(|| ScarbCommandError::Io(io::Error::from(io::ErrorKind::BrokenPipe)))?;
-
-        let reader = BufReader::new(stdout);
-
-        // Collect and stream stdout lines
-        let mut output = Vec::new();
-        for line in reader.lines() {
-            let line = line.map_err(ScarbCommandError::Io)?;
-
-            printer.print(&line);
-            output.push(line);
-        }
-
-        if child.wait()?.success() {
-            Ok(output)
-        } else {
-            Err(ScarbCommandError::ScarbError)
-        }
-    }
-}
-
-/// Trait for printing messages.
-pub trait Printer {
-    /// Print a message.
-    fn print(&self, message: &str);
 }

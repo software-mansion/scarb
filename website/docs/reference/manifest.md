@@ -296,7 +296,9 @@ allow-warnings = true
 
 ### `enable-gas`
 
-If enabled, during the project compilation Scarb will not add any instructions related to gas usage calculation.
+If set to `false`, during the project compilation Scarb will not add any instructions related to gas usage calculation.
+Additionally, `gas: "disabled"` cfg attribute will be set.
+
 By default, this flag is set to `true`.
 
 ```toml

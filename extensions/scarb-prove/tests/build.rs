@@ -14,6 +14,9 @@ fn build_executable_project() -> TempDir {
         .dep_cairo_execute()
         .manifest_extra(indoc! {r#"
                 [executable]
+
+                [cairo]
+                enable-gas = false
             "#})
         .lib_cairo(indoc! {r#"
             #[executable]
@@ -26,6 +29,7 @@ fn build_executable_project() -> TempDir {
 }
 
 #[test]
+#[cfg(not(windows))]
 fn prove_from_execution_output() {
     let t = build_executable_project();
 
@@ -43,6 +47,7 @@ fn prove_from_execution_output() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]Proving hello
+        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
         Saving proof to: target/execute/hello/execution1/proof/proof.json
         "#});
 
@@ -51,31 +56,7 @@ fn prove_from_execution_output() {
 }
 
 #[test]
-fn prove_from_paths() {
-    let t = build_executable_project();
-
-    Scarb::quick_snapbox()
-        .arg("execute")
-        .current_dir(&t)
-        .assert()
-        .success();
-
-    Scarb::quick_snapbox()
-        .arg("prove")
-        .arg("--pub-input-file=target/execute/hello/execution1/air_public_input.json")
-        .arg("--priv-input-file=target/execute/hello/execution1/air_private_input.json")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-        [..]Proving Cairo program
-        Saving proof to: proof.json
-        "#});
-
-    t.child("proof.json").assert(predicates::path::exists());
-}
-
-#[test]
+#[cfg(not(windows))]
 fn prove_with_track_relations() {
     let t = build_executable_project();
 
@@ -104,6 +85,7 @@ fn prove_with_track_relations() {
 }
 
 #[test]
+#[cfg(not(windows))]
 fn prove_with_display_components() {
     let t = build_executable_project();
 
@@ -133,6 +115,7 @@ fn prove_with_display_components() {
 }
 
 #[test]
+#[cfg(not(windows))]
 fn prove_fails_when_execution_output_not_found() {
     let t = build_executable_project();
 
@@ -145,34 +128,53 @@ fn prove_fails_when_execution_output_not_found() {
             .failure(),
         indoc! {r#"
         [..]Proving hello
+        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
         error: execution directory not found: [..]/target/execute/hello/execution1
         help: make sure to run `scarb execute` first
-        and that the execution ID is correct
+        and then run `scarb prove` with correct execution ID
 
         "#},
     )
 }
 
 #[test]
-fn prove_fails_when_input_files_not_found() {
+#[cfg(not(windows))]
+fn prove_fails_when_cairo_pie_output() {
     let t = build_executable_project();
 
+    // First create a cairo pie output
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--target=bootloader")
+        .arg("--output=cairo-pie")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/execute/hello/execution1/cairo_pie.zip")
+        .assert(predicates::path::exists());
+
+    // Then try to prove it
     output_assert(
         Scarb::quick_snapbox()
             .arg("prove")
-            .arg("--pub-input-file=nonexistent.json")
-            .arg("--priv-input-file=nonexistent.json")
+            .arg("--execution-id=1")
             .current_dir(&t)
             .assert()
             .failure(),
         indoc! {r#"
-        [..]Proving Cairo program
-        error: public input file does not exist at path: nonexistent.json
+        [..]Proving hello
+        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
+        error: proving cairo pie output is not supported: [..]/target/execute/hello/execution1/cairo_pie.zip
+        help: run `scarb execute --output=standard` first
+        and then run `scarb prove` with correct execution ID
+
         "#},
-    )
+    );
 }
 
 #[test]
+#[cfg(not(windows))]
 fn prove_with_execute() {
     let t = build_executable_project();
 
@@ -189,11 +191,32 @@ fn prove_with_execute() {
         [..]Executing hello
         Saving output to: target/execute/hello/execution1
         [..]Proving hello
+        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
         Saving proof to: target/execute/hello/execution1/proof/proof.json
         "#});
 
     t.child("target/execute/hello/execution1/proof/proof.json")
         .assert(predicates::path::exists());
+}
+
+#[test]
+#[cfg(windows)]
+fn prove_fails_on_windows() {
+    let t = build_executable_project();
+
+    output_assert(
+        Scarb::quick_snapbox()
+            .arg("prove")
+            .arg("--execute")
+            .current_dir(&t)
+            .assert()
+            .failure(),
+        indoc! {r#"
+        error: `scarb prove` is not supported on Windows
+        help: use WSL or a Linux/macOS machine instead
+
+        "#},
+    )
 }
 
 fn output_assert(output: OutputAssert, expected: &str) {

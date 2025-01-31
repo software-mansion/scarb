@@ -1101,6 +1101,9 @@ fn test_executable_compiler_creates_output_files() {
         .dep_cairo_execute()
         .manifest_extra(indoc! {r#"
             [[target.executable]]
+
+            [cairo]
+            enable-gas = false
         "#})
         .lib_cairo(indoc! {r#"
             #[executable]
@@ -1130,6 +1133,9 @@ fn compile_executable_target_can_use_short_declaration() {
         .dep_cairo_execute()
         .manifest_extra(indoc! {r#"
             [executable]
+
+            [cairo]
+            enable-gas = false
         "#})
         .lib_cairo(indoc! {r#"
             #[executable]
@@ -1147,4 +1153,41 @@ fn compile_executable_target_can_use_short_declaration() {
 
     t.child("target/dev/executable_test.executable.json")
         .assert(predicates::path::exists());
+}
+
+#[test]
+fn executable_target_requires_disabled_gas() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("executable_test")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling executable_test v1.0.0 ([..]Scarb.toml)
+        error: executable target cannot be compiled with enabled gas calculation
+        help: if you want to diable gas calculation, consider adding following
+        excerpt to your package manifest
+            -> Scarb.toml
+                [cairo]
+                enable-gas = false
+        error: could not compile `executable_test` due to previous error
+        "#});
+
+    t.child("target/dev/executable_test.executable.json")
+        .assert(predicates::path::exists().not());
 }

@@ -20,7 +20,8 @@ Files that had already been in a correct format will not be emitted.
 This may be useful for integrating with some external tools.
 
 You can choose packages to format with `--package / --workspace` arguments.
-When formatting a package, all cairo files in package root and directories below will be formatted (not only the `src/*` directory).
+When formatting a package, all cairo files in package root and directories below will be formatted (not only the `src/*`
+directory).
 
 ## Formatting options
 
@@ -58,3 +59,16 @@ You can create multiple ignore files on different levels of your directory struc
 `.gitignore` files.
 
 Additionally, files ignored by the `.gitignore` files will be omitted as well.
+
+## Ignoring lines
+
+Mark statements or expressions with `#[cairofmt::skip]` attribute to omit them during formatting. See example below:
+
+```cairo
+#[cairofmt::skip]
+let a = array![
+    1,
+    2,
+    3
+    ];
+```

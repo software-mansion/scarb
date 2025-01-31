@@ -717,7 +717,7 @@
                   ],
                   "item_data": {
                     "name": "PublicCrateParentStructure",
-                    "doc": "Parent publi crate struct",
+                    "doc": "Parent public crate struct",
                     "signature": "pub(crate) struct PublicCrateParentStructure {\n    pub public_field: felt252,\n    pub(crate) public_crate_field: felt252,\n    private_field: felt252,\n}",
                     "full_path": "hello_world::PublicParent::PublicCrateParentStructure"
                   }

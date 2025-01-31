@@ -2,26 +2,35 @@ use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
 use assert_fs::TempDir;
 use indoc::indoc;
+use predicates::prelude::*;
 use scarb_test_support::command::Scarb;
+use scarb_test_support::fsx::ChildPathEx;
+use scarb_test_support::predicates::is_file_empty;
 use scarb_test_support::project_builder::ProjectBuilder;
 use snapbox::cmd::OutputAssert;
 
-fn build_executable_project() -> TempDir {
-    let t = TempDir::new().unwrap();
+fn executable_project_builder() -> ProjectBuilder {
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
         .dep_cairo_execute()
         .manifest_extra(indoc! {r#"
-                [executable]
-            "#})
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             #[executable]
             fn main() -> felt252 {
                 42
             }
         "#})
-        .build(&t);
+}
+
+fn build_executable_project() -> TempDir {
+    let t = TempDir::new().unwrap();
+    executable_project_builder().build(&t);
     t
 }
 
@@ -41,13 +50,13 @@ fn can_execute_default_main_function_from_executable() {
         "#});
 
     t.child("target/execute/hello/execution1/air_private_input.json")
-        .assert(predicates::path::exists());
+        .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/execution1/air_public_input.json")
-        .assert(predicates::path::exists());
+        .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/execution1/memory.bin")
-        .assert(predicates::path::exists());
+        .assert(predicates::path::exists().and(is_file_empty().not()));
     t.child("target/execute/hello/execution1/trace.bin")
-        .assert(predicates::path::exists());
+        .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
 #[test]
@@ -62,17 +71,43 @@ fn can_execute_prebuilt_executable() {
         .success()
         .stdout_matches(indoc! {r#"
         [..]Executing hello
-        [..]Saving output to: target/execute/hello/execution1
+        Saving output to: target/execute/hello/execution1
         "#});
 
     t.child("target/execute/hello/execution1/air_private_input.json")
-        .assert(predicates::path::exists());
+        .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/execution1/air_public_input.json")
-        .assert(predicates::path::exists());
+        .assert_is_json::<serde_json::Value>();
     t.child("target/execute/hello/execution1/memory.bin")
-        .assert(predicates::path::exists());
+        .assert(predicates::path::exists().and(is_file_empty().not()));
     t.child("target/execute/hello/execution1/trace.bin")
-        .assert(predicates::path::exists());
+        .assert(predicates::path::exists().and(is_file_empty().not()));
+}
+
+#[test]
+fn can_execute_bootloader_target() {
+    let t = build_executable_project();
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--target=bootloader")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Saving output to: target/execute/hello/execution1
+        "#});
+
+    t.child("target/execute/hello/execution1/air_private_input.json")
+        .assert_is_json::<serde_json::Value>();
+    t.child("target/execute/hello/execution1/air_public_input.json")
+        .assert_is_json::<serde_json::Value>();
+    t.child("target/execute/hello/execution1/memory.bin")
+        .assert(predicates::path::exists().and(is_file_empty().not()));
+    t.child("target/execute/hello/execution1/trace.bin")
+        .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
 #[test]
@@ -89,23 +124,26 @@ fn can_produce_cairo_pie_output() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/execute/hello/execution1.zip
+        Saving output to: target/execute/hello/execution1/cairo_pie.zip
         "#});
 
-    t.child("target/execute/hello/execution1.zip")
+    t.child("target/execute/hello/execution1/cairo_pie.zip")
         .assert(predicates::path::exists());
 }
 
 #[test]
-fn fails_when_target_missing() {
+fn fails_when_attr_missing() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
         .dep_cairo_execute()
         .manifest_extra(indoc! {r#"
-                [executable]
-            "#})
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             fn main() -> felt252 {
                 42
@@ -113,7 +151,19 @@ fn fails_when_target_missing() {
         "#})
         .build(&t);
 
-    Scarb::quick_snapbox().arg("build").current_dir(&t).assert();
+    output_assert(
+        Scarb::quick_snapbox()
+            .arg("execute")
+            .current_dir(&t)
+            .assert()
+            .failure(),
+        indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        error: Requested `#[executable]` not found.
+        error: could not compile `hello` due to previous error
+        error: `scarb metadata` exited with error
+        "#},
+    );
 
     output_assert(
         Scarb::quick_snapbox()
@@ -124,11 +174,48 @@ fn fails_when_target_missing() {
             .failure(),
         indoc! {r#"
         [..]Executing hello
-        error: package has not been compiled, file does not exist: hello.executable.json
+        error: package has not been compiled, file does not exist: `hello.executable.json`
         help: run `scarb build` to compile the package
-        
+
         "#},
-    )
+    );
+}
+
+#[test]
+fn can_print_panic_reason() {
+    let t = TempDir::new().unwrap();
+    executable_project_builder()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                panic!("abcd");
+                42
+            }
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Program output:
+        1
+        Panicked with "abcd".
+        Saving output to: target/execute/hello/execution1
+        "#});
+    t.child("target/execute/hello/execution1/air_private_input.json")
+        .assert_is_json::<serde_json::Value>();
+    t.child("target/execute/hello/execution1/air_public_input.json")
+        .assert_is_json::<serde_json::Value>();
+    t.child("target/execute/hello/execution1/memory.bin")
+        .assert(predicates::path::exists().and(is_file_empty().not()));
+    t.child("target/execute/hello/execution1/trace.bin")
+        .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
 fn output_assert(output: OutputAssert, expected: &str) {
