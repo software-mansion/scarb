@@ -1,9 +1,0 @@
-[package]
-name = "executable_example"
-version = "0.1.0"
-edition = "2024_07"
-
-[dependencies]
-cairo_execute = "2.9.2"
-
-[executable]
