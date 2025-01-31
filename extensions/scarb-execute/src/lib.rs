@@ -17,7 +17,6 @@ use scarb_ui::components::Status;
 use scarb_ui::Ui;
 use std::env;
 use std::fs;
-use std::fs::OpenOptions;
 use std::io::{self, Write};
 
 pub mod args;
@@ -212,34 +211,10 @@ fn load_prebuilt_executable(path: &Utf8Path, filename: String) -> Result<Executa
         .with_context(|| format!("failed to deserialize executable program: `{file_path}`"))
 }
 
-fn incremental_create_output_file(
-    path: &Utf8Path,
-    extension: impl AsRef<str>,
-) -> Result<(Utf8PathBuf, usize)> {
-    incremental_attempt_io_creation(path, extension, "failed to create output directory", |p| {
-        OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(p)
-            .map(|_| ())
-    })
-}
-
 fn incremental_create_output_dir(path: &Utf8Path) -> Result<(Utf8PathBuf, usize)> {
-    incremental_attempt_io_creation(path, "", "failed to create output directory", |p| {
-        fs::create_dir(p)
-    })
-}
-
-fn incremental_attempt_io_creation(
-    path: &Utf8Path,
-    extension: impl AsRef<str>,
-    final_error_message: impl AsRef<str>,
-    attempt: impl Fn(&Utf8Path) -> io::Result<()>,
-) -> Result<(Utf8PathBuf, usize)> {
     for i in 1..=MAX_ITERATION_COUNT {
-        let filepath = path.join(format!("execution{}{}", i, extension.as_ref()));
-        let result = attempt(&filepath);
+        let filepath = path.join(format!("execution{}", i));
+        let result = fs::create_dir(&filepath);
         return match result {
             Err(e) => {
                 if e.kind() == io::ErrorKind::AlreadyExists {
@@ -250,7 +225,7 @@ fn incremental_attempt_io_creation(
             Ok(_) => Ok((filepath, i)),
         };
     }
-    bail!(final_error_message.as_ref().to_string());
+    bail!("failed to create output directory")
 }
 
 /// Writer implementation for a file.
