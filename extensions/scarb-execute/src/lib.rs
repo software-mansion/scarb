@@ -11,7 +11,7 @@ use cairo_vm::{cairo_run, Felt252};
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
+use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand};
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::Status;
 use scarb_ui::Ui;
@@ -24,15 +24,22 @@ pub mod args;
 const MAX_ITERATION_COUNT: usize = 10000;
 
 pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
+    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
+    let package = args.packages_filter.match_one(&metadata)?;
+    execute(&package, &args.execution, &ui)
+}
+
+pub fn execute(
+    package: &PackageMetadata,
+    args: &args::ExecutionArgs,
+    ui: &Ui,
+) -> Result<usize, anyhow::Error> {
     ensure!(
-        !(args.execution.run.output.is_cairo_pie() && args.execution.run.target.is_standalone()),
+        !(args.run.output.is_cairo_pie() && args.run.target.is_standalone()),
         "Cairo pie output format is not supported for standalone execution target"
     );
 
-    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
-    let package = args.packages_filter.match_one(&metadata)?;
-
-    if !args.execution.no_build {
+    if !args.no_build {
         let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
         ScarbCommand::new()
             .arg("build")
@@ -59,7 +66,7 @@ pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
 
     let (hints, string_to_hint) = build_hints_dict(&executable.program.hints);
 
-    let program = if args.execution.run.target.is_standalone() {
+    let program = if args.run.target.is_standalone() {
         let entrypoint = executable
             .entrypoints
             .iter()
@@ -98,7 +105,7 @@ pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
     let mut hint_processor = CairoHintProcessor {
         runner: None,
         user_args: vec![vec![Arg::Array(
-            args.execution.run.arguments.read_arguments()?,
+            args.run.arguments.clone().read_arguments()?,
         )]],
         string_to_hint,
         starknet_state: Default::default(),
@@ -110,17 +117,17 @@ pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
     let cairo_run_config = CairoRunConfig {
         allow_missing_builtins: Some(true),
         layout: LayoutName::all_cairo,
-        proof_mode: args.execution.run.target.is_standalone(),
+        proof_mode: args.run.target.is_standalone(),
         secure_run: None,
-        relocate_mem: args.execution.run.output.is_standard(),
-        trace_enabled: args.execution.run.output.is_standard(),
+        relocate_mem: args.run.output.is_standard(),
+        trace_enabled: args.run.output.is_standard(),
         ..Default::default()
     };
 
     let mut runner = cairo_run_program(&program, &cairo_run_config, &mut hint_processor)
         .with_context(|| "Cairo program run failed")?;
 
-    if args.execution.run.print_program_output {
+    if args.run.print_program_output {
         let mut output_buffer = "Program output:\n".to_string();
         runner.vm.write_output(&mut output_buffer)?;
         ui.print(output_buffer.trim_end());
@@ -129,7 +136,7 @@ pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
     let output_dir = scarb_target_dir.join("execute").join(&package.name);
     create_output_dir(output_dir.as_std_path())?;
 
-    if args.execution.run.output.is_cairo_pie() {
+    if args.run.output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
         let (output_file_path, execution_id) = incremental_create_output_file(&output_dir, ".zip")?;
         ui.print(Status::new(

@@ -3,7 +3,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use scarb_execute::args::{Args as ExecuteArgs, ExecutionArgs};
+use scarb_execute::args::ExecutionArgs;
 use scarb_metadata::MetadataCommand;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use scarb_ui::components::Status;
@@ -83,7 +83,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         Some(id) => id,
         None => {
             assert!(args.execute);
-            run_execute(&args, &ui)?
+            scarb_execute::execute(&package, &args.execute_args, &ui)?
         }
     };
     ui.print(Status::new("Proving", &package.name));
@@ -114,17 +114,6 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     fs::write(proof_path.as_std_path(), serde_json::to_string(&proof)?)?;
 
     Ok(())
-}
-
-fn run_execute(args: &Args, ui: &Ui) -> Result<usize> {
-    let args = ExecuteArgs {
-        packages_filter: args.packages_filter.clone(),
-        execution: args.execute_args.clone(),
-        verbose: args.verbose.clone(),
-    };
-    let execution_id = scarb_execute::main_inner(args, ui.clone())?;
-
-    Ok(execution_id)
 }
 
 fn resolve_paths_from_package(
