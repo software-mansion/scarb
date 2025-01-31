@@ -24,14 +24,24 @@ struct Args {
     packages_filter: PackagesFilter,
 
     /// ID of `scarb execute` *standard* output for given package, for which to generate proof.
-    #[arg(long)]
+    #[arg(
+        long,
+        conflicts_with_all = [
+            "execute",
+            "no_build",
+            "arguments",
+            "arguments_file",
+            "output",
+            "target",
+            "print_program_output"
+        ]
+    )]
     execution_id: Option<usize>,
 
     /// Execute the program before proving.
     #[arg(
         long,
         default_value_t = false,
-        conflicts_with = "execution_id",
         required_unless_present = "execution_id"
     )]
     execute: bool,
