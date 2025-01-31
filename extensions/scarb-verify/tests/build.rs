@@ -26,6 +26,8 @@ fn build_executable_project() -> TempDir {
     t
 }
 
+// Disabled due to `scarb prove` not being supported on Windows
+#[cfg(not(windows))]
 #[test]
 fn verify_from_execution_output() {
     let t = build_executable_project();
@@ -55,6 +57,8 @@ fn verify_from_execution_output() {
         "#});
 }
 
+// Disabled due to `scarb prove` not being supported on Windows
+#[cfg(not(windows))]
 #[test]
 fn verify_from_path() {
     let t = build_executable_project();
