@@ -40,8 +40,8 @@ pub struct RunArgs {
     pub arguments: ProgramArguments,
 
     /// Desired execution output, either default Standard or CairoPie
-    #[arg(long, default_value = "standard")]
-    pub output: OutputFormat,
+    #[arg(long)]
+    pub output: Option<OutputFormat>,
 
     /// Execution target.
     #[arg(long, default_value = "standalone")]
@@ -93,6 +93,12 @@ pub enum OutputFormat {
     Standard,
 }
 impl OutputFormat {
+    pub fn default_for_target(target: ExecutionTarget) -> OutputFormat {
+        match target {
+            ExecutionTarget::Bootloader => OutputFormat::CairoPie,
+            ExecutionTarget::Standalone => OutputFormat::Standard,
+        }
+    }
     pub fn is_standard(&self) -> bool {
         matches!(self, OutputFormat::Standard)
     }
@@ -110,5 +116,8 @@ pub enum ExecutionTarget {
 impl ExecutionTarget {
     pub fn is_standalone(&self) -> bool {
         matches!(self, ExecutionTarget::Standalone)
+    }
+    pub fn is_bootloader(&self) -> bool {
+        matches!(self, ExecutionTarget::Bootloader)
     }
 }
