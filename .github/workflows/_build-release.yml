@@ -76,7 +76,7 @@ jobs:
         run: echo "CARGO=cross" >> $GITHUB_ENV
 
       - name: Build
-        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove --exclude scarb-verify
 
       - uses: dtolnay/rust-toolchain@master
         with:
@@ -92,8 +92,8 @@ jobs:
         shell: bash
         run: echo "CARGO=cross" >> $GITHUB_ENV
 
-      - name: Build scarb-prove
-        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --package scarb-prove
+      - name: Build scarb-prove & scarb-verify
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --package scarb-prove --package scarb-verify
 
       - name: Create archive
         run: cargo xtask create-archive
