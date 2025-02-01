@@ -1,7 +1,8 @@
+use crate::args::OutputFormat;
+use crate::output::{ExecutionOutput, ExecutionResources, ExecutionSummary, PanicReason};
 use anyhow::{bail, ensure, Context, Result};
 use bincode::enc::write::Writer;
 use cairo_lang_executable::executable::{EntryPointKind, Executable};
-use cairo_lang_runner::casm_run::format_for_panic;
 use cairo_lang_runner::{build_hints_dict, Arg, CairoHintProcessor};
 use cairo_vm::cairo_run::cairo_run_program;
 use cairo_vm::cairo_run::CairoRunConfig;
@@ -21,6 +22,8 @@ use std::fs;
 use std::io::{self, Write};
 
 pub mod args;
+pub(crate) mod output;
+
 const MAX_ITERATION_COUNT: usize = 10000;
 
 pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
@@ -34,9 +37,19 @@ pub fn execute(
     args: &args::ExecutionArgs,
     ui: &Ui,
 ) -> Result<usize, anyhow::Error> {
+    let output = args
+        .run
+        .output
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| OutputFormat::default_for_target(args.run.target.clone()));
     ensure!(
-        !(args.run.output.is_cairo_pie() && args.run.target.is_standalone()),
+        !(output.is_cairo_pie() && args.run.target.is_standalone()),
         "Cairo pie output format is not supported for standalone execution target"
+    );
+    ensure!(
+        !(output.is_standard() && args.run.target.is_bootloader()),
+        "Standard output format is not supported for bootloader execution target"
     );
 
     if !args.no_build {
@@ -120,37 +133,34 @@ pub fn execute(
         layout: LayoutName::all_cairo,
         proof_mode: args.run.target.is_standalone(),
         secure_run: None,
-        relocate_mem: args.run.output.is_standard(),
-        trace_enabled: args.run.output.is_standard(),
+        relocate_mem: output.is_standard(),
+        trace_enabled: output.is_standard(),
         ..Default::default()
     };
 
     let mut runner = cairo_run_program(&program, &cairo_run_config, &mut hint_processor)
         .with_context(|| "Cairo program run failed")?;
 
-    if args.run.print_program_output {
-        let mut output_buffer = "Program output:\n".to_string();
-        runner.vm.write_output(&mut output_buffer)?;
-        ui.print(output_buffer.trim_end());
-        // Print panic reason.
-        if let [.., start_marker, end_marker] = &hint_processor.markers[..] {
-            let size = (*end_marker - *start_marker).with_context(|| {
-                format!("panic data markers mismatch: start={start_marker}, end={end_marker}")
-            })?;
-            let panic_data = runner
-                .vm
-                .get_integer_range(*start_marker, size)
-                .with_context(|| "failed reading panic data")?;
-            ui.print(format_for_panic(panic_data.into_iter().map(|value| *value)));
-        }
-    }
+    let panic_reason = PanicReason::try_new(&runner, &hint_processor);
+    ui.print(ExecutionSummary {
+        output: args
+            .run
+            .print_program_output
+            .then(|| ExecutionOutput::try_new(&mut runner))
+            .transpose()?,
+        resources: args
+            .run
+            .print_resource_usage
+            .then(|| ExecutionResources::try_new(&runner, hint_processor))
+            .transpose()?,
+    });
 
     let output_dir = scarb_target_dir.join("execute").join(&package.name);
     create_output_dir(output_dir.as_std_path())?;
 
     let (execution_output_dir, execution_id) = incremental_create_output_dir(&output_dir)?;
 
-    if args.run.output.is_cairo_pie() {
+    if output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
         let output_file_path = execution_output_dir.join("cairo_pie.zip");
         ui.print(Status::new(
@@ -194,6 +204,8 @@ pub fn execute(
             .with_context(|| "failed serializing private input")?;
         fs::write(air_private_input_path, output_value)?;
     }
+
+    panic_reason?.into_result()?;
 
     Ok(execution_id)
 }

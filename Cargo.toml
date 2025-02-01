@@ -5,6 +5,7 @@ members = [
     "extensions/scarb-doc",
     "extensions/scarb-execute",
     "extensions/scarb-prove",
+    "extensions/scarb-verify",
     "extensions/scarb-cairo-language-server",
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
@@ -133,6 +134,8 @@ smallvec = "1"
 smol_str = { version = "0.3", features = ["serde"] }
 snapbox = { version = "0.4", features = ["cmd", "path"] }
 starknet-types-core = "0.1"
+stwo-prover = { git = "https://github.com/starkware-libs/stwo", rev = "af5475cb", features = ["parallel"] }
+stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "a27287c21e8b7e677b07cc40988c8c145533c55d" }
 syn = "2"
 tar = "0.4"
 target-triple = "0.1"

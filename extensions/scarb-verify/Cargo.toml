@@ -1,5 +1,5 @@
 [package]
-name = "scarb-prove"
+name = "scarb-verify"
 publish = false
 
 authors.workspace = true
@@ -19,13 +19,10 @@ clap.workspace = true
 serde.workspace = true
 camino.workspace = true
 serde_json.workspace = true
-create-output-dir = { path = "../../utils/create-output-dir" }
 stwo_cairo_prover.workspace = true
 stwo-prover.workspace = true
-scarb-execute = { path = "../scarb-execute" }
 
 [dev-dependencies]
 assert_fs.workspace = true
 scarb-test-support = { path = "../../utils/scarb-test-support" }
 snapbox.workspace = true
-predicates.workspace = true
