@@ -50,6 +50,10 @@ pub struct RunArgs {
     /// Whether to print the program outputs.
     #[arg(long, default_value_t = false)]
     pub print_program_output: bool,
+
+    /// Whether to print detailed execution resources.
+    #[arg(long, default_value_t = false)]
+    pub print_resource_usage: bool,
 }
 
 #[derive(Parser, Debug, Clone)]

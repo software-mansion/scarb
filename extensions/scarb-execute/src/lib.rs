@@ -1,7 +1,7 @@
+use crate::output::{ExecutionOutput, ExecutionResources, ExecutionStatus, ExecutionSummary};
 use anyhow::{bail, ensure, Context, Result};
 use bincode::enc::write::Writer;
 use cairo_lang_executable::executable::{EntryPointKind, Executable};
-use cairo_lang_runner::casm_run::format_for_panic;
 use cairo_lang_runner::{build_hints_dict, Arg, CairoHintProcessor};
 use cairo_vm::cairo_run::cairo_run_program;
 use cairo_vm::cairo_run::CairoRunConfig;
@@ -21,6 +21,8 @@ use std::fs;
 use std::io::{self, Write};
 
 pub mod args;
+pub(crate) mod output;
+
 const MAX_ITERATION_COUNT: usize = 10000;
 
 pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
@@ -128,22 +130,19 @@ pub fn execute(
     let mut runner = cairo_run_program(&program, &cairo_run_config, &mut hint_processor)
         .with_context(|| "Cairo program run failed")?;
 
-    if args.run.print_program_output {
-        let mut output_buffer = "Program output:\n".to_string();
-        runner.vm.write_output(&mut output_buffer)?;
-        ui.print(output_buffer.trim_end());
-        // Print panic reason.
-        if let [.., start_marker, end_marker] = &hint_processor.markers[..] {
-            let size = (*end_marker - *start_marker).with_context(|| {
-                format!("panic data markers mismatch: start={start_marker}, end={end_marker}")
-            })?;
-            let panic_data = runner
-                .vm
-                .get_integer_range(*start_marker, size)
-                .with_context(|| "failed reading panic data")?;
-            ui.print(format_for_panic(panic_data.into_iter().map(|value| *value)));
-        }
-    }
+    let execution_status = ExecutionStatus::try_new(&runner, &hint_processor);
+    ui.print(ExecutionSummary {
+        output: args
+            .run
+            .print_program_output
+            .then(|| ExecutionOutput::try_new(&mut runner))
+            .transpose()?,
+        resources: args
+            .run
+            .print_resource_usage
+            .then(|| ExecutionResources::try_new(&runner, hint_processor))
+            .transpose()?,
+    });
 
     let output_dir = scarb_target_dir.join("execute").join(&package.name);
     create_output_dir(output_dir.as_std_path())?;
@@ -195,7 +194,11 @@ pub fn execute(
         fs::write(air_private_input_path, output_value)?;
     }
 
-    Ok(execution_id)
+    if let ExecutionStatus::Panic { reason } = execution_status? {
+        Err(anyhow::anyhow!(reason))
+    } else {
+        Ok(execution_id)
+    }
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {
