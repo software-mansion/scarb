@@ -4,6 +4,7 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler}
 use crate::core::{TargetKind, Utf8PathWorkspaceExt, Workspace};
 use anyhow::{ensure, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_executable::compile::ExecutableConfig;
 use cairo_lang_executable::executable::Executable;
 use indoc::formatdoc;
 use tracing::trace_span;
@@ -45,6 +46,7 @@ impl Compiler for ExecutableCompiler {
                     None,
                     main_crate_ids,
                     compiler_config.diagnostics_reporter,
+                    ExecutableConfig::default(),
                 )?,
             )
         };
