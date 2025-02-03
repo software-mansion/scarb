@@ -33,6 +33,7 @@ use itertools::Itertools;
 use scarb_stable_hash::short_hash;
 use smol_str::SmolStr;
 use std::any::Any;
+use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::sync::{Arc, OnceLock, RwLock};
@@ -1170,5 +1171,40 @@ impl ProcMacroHost {
 
     pub fn macros(&self) -> &[Arc<ProcMacroInstance>] {
         &self.macros
+    }
+}
+
+/// A global storage for dynamically-loaded procedural macros.
+/// Loads dynamic shared libraries and hides them beside [`ProcMacroInstance`].
+/// Guarantees that every library is loaded exactly once,
+/// but does not prevent loading multiple versions of the same library.
+#[derive(Default)]
+pub struct ProcMacroRepository {
+    /// A mapping between the [`PackageId`] of the package which defines the plugin
+    /// and the [`ProcMacroInstance`] holding the underlying shared library.
+    macros: HashMap<PackageId, Arc<ProcMacroInstance>>,
+}
+
+impl ProcMacroRepository {
+    /// Returns the [`ProcMacroInstance`] representing the procedural macros defined in the [`Package`].
+    /// Loads the underlying shared library if it has not been loaded yet.
+    pub fn get_or_load(
+        &mut self,
+        package: Package,
+        config: &Config,
+    ) -> Result<Arc<ProcMacroInstance>> {
+        match self.macros.entry(package.id) {
+            Entry::Occupied(slot) => Ok(slot.get().clone()),
+            Entry::Vacant(slot) => {
+                let lib_path = package
+                    .shared_lib_path(config)
+                    .context("could not resolve shared library path")?;
+
+                let instance = Arc::new(ProcMacroInstance::try_new(package.id, lib_path)?);
+
+                slot.insert(instance.clone());
+                Ok(instance)
+            }
+        }
     }
 }
