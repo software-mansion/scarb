@@ -105,10 +105,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo +stable build --workspace --all-features --exclude scarb-prove --exclude scarb-verify
-      - name: Run scarb-prove tests
-        run: cargo +${{ env.RUST_TOOLCHAIN }} test -p scarb-prove
-      - name: Run scarb-verify tests
-        run: cargo +${{ env.RUST_TOOLCHAIN }} test -p scarb-verify
+      - name: Run scarb-prove and scarb-verify tests
+        run: cargo +${{ env.RUST_TOOLCHAIN }} test -p scarb-prove -p scarb-verify
 
   test-prebuilt-plugins:
     name: test prebuilt plugins ${{ matrix.platform.name }}
