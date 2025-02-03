@@ -11,17 +11,17 @@ on:
         required: false
         type: string
 
+env:
+  # TODO(#1915): Use stable toolchain once stwo is stable.
+  RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-01-02"
+
 jobs:
   build:
     name: build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-
     env:
       # Cross-compiled targets will override this to `cross`.
       CARGO: cargo
-      # TODO(#1915): Use stable toolchain once stwo is stable.
-      RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-01-02"
-
     strategy:
       matrix:
         include:

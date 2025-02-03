@@ -20,6 +20,10 @@ on:
         type: boolean
         default: true
 
+env:
+  # TODO(#1915): Use stable toolchain once stwo is stable.
+  RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-01-02"
+
 jobs:
   test:
     name: test ${{ matrix.name }}
@@ -34,9 +38,6 @@ jobs:
             os: macos-14
           - name: windows x86-64
             os: windows-latest
-    env:
-      # TODO(#1915): Use stable toolchain once stwo is stable.
-      RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-01-02"
     steps:
       - uses: actions/checkout@v4
         with:
