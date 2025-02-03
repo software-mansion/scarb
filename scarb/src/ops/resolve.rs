@@ -3,7 +3,8 @@ use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::compiler::plugin::{fetch_cairo_plugin, CairoPluginProps};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
-    CompilationUnitComponent, CompilationUnitDependency, ProcMacroCompilationUnit, Profile,
+    CompilationUnitComponent, CompilationUnitComponentId, CompilationUnitDependency,
+    ProcMacroCompilationUnit, Profile,
 };
 use crate::core::lockfile::Lockfile;
 use crate::core::package::{Package, PackageClass, PackageId};
@@ -708,6 +709,9 @@ impl<'a> PackageSolutionCollector<'a> {
                 let target = package.target(&TargetKind::CAIRO_PLUGIN).unwrap();
                 let props: CairoPluginProps = target.props()?;
                 Ok(CompilationUnitCairoPlugin::builder()
+                    .component_dependency_id(CompilationUnitComponentId {
+                        package_id: package.id,
+                    })
                     .package(package)
                     .builtin(props.builtin)
                     .prebuilt_allowed(prebuilt_allowed)
@@ -725,11 +729,12 @@ impl<'a> PackageSolutionCollector<'a> {
         components: &[CompilationUnitComponent],
     ) -> Vec<CompilationUnitDependency> {
         let package_id = component.id.package_id;
+        let component_target_kind = self.target_kind.as_ref().unwrap();
 
         // Those are direct dependencies of the component.
         let dependencies_packages = self
             .resolve
-            .package_dependencies(package_id, self.target_kind.as_ref().unwrap());
+            .package_dependencies(package_id, component_target_kind);
 
         // We iterate over all the compilation unit components to get dependency's version.
         let mut dependencies: Vec<_> = components
@@ -755,6 +760,19 @@ impl<'a> PackageSolutionCollector<'a> {
             dependencies.push(CompilationUnitDependency::Library(component.id.clone()));
         }
 
+        let plugin_dependencies = self
+            .resolve
+            .package_dependencies(package_id, component_target_kind)
+            .into_iter()
+            .filter(|package| package.is_cairo_plugin())
+            .map(|package| {
+                CompilationUnitDependency::Plugin(CompilationUnitComponentId {
+                    package_id: package.id,
+                })
+            })
+            .collect::<Vec<_>>();
+
+        dependencies.extend(plugin_dependencies);
         dependencies
     }
 
