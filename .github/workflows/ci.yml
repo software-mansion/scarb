@@ -10,7 +10,11 @@ on:
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: ${{ github.head_ref != 'main' }}
-  
+
+env:
+  # TODO(#1915): Use stable toolchain once stwo is stable.
+  RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-01-02"
+
 jobs:
   build-test:
     name: build test ${{ matrix.platform.name }}
@@ -85,9 +89,6 @@ jobs:
   test-nightly-crates:
     name: test nightly crates ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
-    env:
-      # TODO(#1915): Use stable toolchain once stwo is stable.
-      RUST_TOOLCHAIN: "nightly-2025-01-02"
     strategy:
       fail-fast: false
       matrix:
@@ -101,12 +102,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo +stable build --workspace --all-features --exclude scarb-prove --exclude scarb-verify
       - name: Run scarb-prove and scarb-verify tests
-        run: cargo +${{ env.RUST_TOOLCHAIN }} test -p scarb-prove -p scarb-verify
+        run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test -p scarb-prove -p scarb-verify
 
   test-prebuilt-plugins:
     name: test prebuilt plugins ${{ matrix.platform.name }}
@@ -152,21 +153,18 @@ jobs:
   check-rust-nightly:
     name: check-rust (nightly)
     runs-on: ubuntu-latest
-    env:
-      # TODO(#1915): Use stable toolchain once stwo is stable.
-      RUST_TOOLCHAIN: "nightly-2025-01-02"
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo +${{ env.RUST_TOOLCHAIN }} clippy --all-targets --all-features -p scarb-prove -p scarb-verify -- --no-deps
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} clippy --all-targets --all-features -p scarb-prove -p scarb-verify -- --no-deps
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTFLAGS: "-Dwarnings"
-      - run: cargo +${{ env.RUST_TOOLCHAIN }} doc --all-features --no-deps -p scarb-prove -p scarb-verify
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} doc --all-features --no-deps -p scarb-prove -p scarb-verify
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTDOCFLAGS: "-Dwarnings"
