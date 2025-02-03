@@ -5,6 +5,7 @@ members = [
     "extensions/scarb-doc",
     "extensions/scarb-execute",
     "extensions/scarb-prove",
+    "extensions/scarb-verify",
     "extensions/scarb-cairo-language-server",
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
@@ -76,6 +77,8 @@ cairo-lang-utils = { version = "*", features = ["env_logger"] }
 cairo-language-server = "*"
 cairo-lint-core = "*"
 cairo-vm = "1.0.1"
+stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "a27287c21e8b7e677b07cc40988c8c145533c55d" }
+stwo-prover = { git = "https://github.com/starkware-libs/stwo", rev = "af5475cb", features = ["parallel"] }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
