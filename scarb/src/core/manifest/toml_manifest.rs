@@ -298,7 +298,12 @@ pub struct TomlLibTargetParams {
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct TomlExecutableTargetParams {}
+pub struct TomlExecutableTargetParams {
+    /// If true, will allow syscalls in the program.
+    ///
+    /// In general, syscalls are not allowed in executables, as they are currently not checked.
+    pub allow_syscalls: Option<bool>,
+}
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]

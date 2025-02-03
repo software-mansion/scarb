@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use assert_fs::prelude::*;
+use assert_fs::TempDir;
 use indoc::indoc;
 use itertools::Itertools;
 use serde_json::json;
@@ -1551,4 +1552,47 @@ fn can_allow_prebuilt_plugins_for_subtree() {
     assert_eq!(cu.cairo_plugins.len(), 1);
     assert!(cu.cairo_plugins[0].package.repr.starts_with("q"));
     assert!(cu.cairo_plugins[0].prebuilt_allowed.unwrap());
+}
+
+#[test]
+fn executable_target_can_allow_syscalls() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("executable_test")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            allow-syscalls = true
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let pkg = meta
+        .packages
+        .iter()
+        .find(|p| p.name == "executable_test")
+        .unwrap();
+    let target = pkg.targets.first().unwrap();
+    assert!(
+        target
+            .params
+            .as_object()
+            .unwrap()
+            .get("allow-syscalls")
+            .unwrap()
+            .as_bool()
+            .unwrap(),
+        "syscalls not allowed"
+    );
 }

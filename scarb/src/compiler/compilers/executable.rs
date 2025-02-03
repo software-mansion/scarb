@@ -4,11 +4,19 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler}
 use crate::core::{TargetKind, Utf8PathWorkspaceExt, Workspace};
 use anyhow::{ensure, Result};
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_executable::compile::ExecutableConfig;
 use cairo_lang_executable::executable::Executable;
 use indoc::formatdoc;
+use serde::{Deserialize, Serialize};
 use tracing::trace_span;
 
 pub struct ExecutableCompiler;
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+struct Props {
+    pub allow_syscalls: bool,
+}
 
 impl Compiler for ExecutableCompiler {
     fn target_kind(&self) -> TargetKind {
@@ -33,6 +41,8 @@ impl Compiler for ExecutableCompiler {
                 "#, scarb_toml=unit.main_component().package.manifest_path().workspace_relative(ws)}
         );
 
+        let props: Props = unit.main_component().target_props()?;
+
         let target_dir = unit.target_dir(ws);
         let main_crate_ids = collect_main_crate_ids(&unit, db);
         let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
@@ -45,6 +55,9 @@ impl Compiler for ExecutableCompiler {
                     None,
                     main_crate_ids,
                     compiler_config.diagnostics_reporter,
+                    ExecutableConfig {
+                        allow_syscalls: props.allow_syscalls,
+                    },
                 )?,
             )
         };
