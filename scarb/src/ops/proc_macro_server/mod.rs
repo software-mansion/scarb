@@ -12,12 +12,12 @@ use scarb_proc_macro_server_types::methods::expand::{ExpandAttribute, ExpandDeri
 use scarb_proc_macro_server_types::methods::Method;
 use serde_json::Value;
 
-use crate::compiler::plugin::proc_macro::ProcMacroHost;
+use crate::compiler::plugin::collection::WorkspaceProcMacros;
 
 mod connection;
 mod methods;
 
-pub fn start_proc_macro_server(proc_macros: ProcMacroHost) -> Result<()> {
+pub fn start_proc_macro_server(proc_macros: WorkspaceProcMacros) -> Result<()> {
     let connection = Connection::new();
     let available_parallelism = available_parallelism().map(NonZero::get).unwrap_or(4);
     let proc_macros = Arc::new(proc_macros);
@@ -41,7 +41,7 @@ pub fn start_proc_macro_server(proc_macros: ProcMacroHost) -> Result<()> {
 }
 
 fn handle_requests(
-    proc_macros: Arc<ProcMacroHost>,
+    proc_macros: Arc<WorkspaceProcMacros>,
     receiver: Receiver<RpcRequest>,
     sender: Sender<RpcResponse>,
 ) {
@@ -68,7 +68,7 @@ fn handle_requests(
     }
 }
 
-fn route_request(proc_macros: Arc<ProcMacroHost>, request: RpcRequest) -> Result<Value> {
+fn route_request(proc_macros: Arc<WorkspaceProcMacros>, request: RpcRequest) -> Result<Value> {
     match request.method.as_str() {
         DefinedMacros::METHOD => run_handler::<DefinedMacros>(proc_macros.clone(), request.value),
         ExpandAttribute::METHOD => {
@@ -80,7 +80,7 @@ fn route_request(proc_macros: Arc<ProcMacroHost>, request: RpcRequest) -> Result
     }
 }
 
-fn run_handler<M: Handler>(proc_macros: Arc<ProcMacroHost>, value: Value) -> Result<Value> {
+fn run_handler<M: Handler>(proc_macros: Arc<WorkspaceProcMacros>, value: Value) -> Result<Value> {
     M::handle(proc_macros, serde_json::from_value(value).unwrap())
         .map(|res| serde_json::to_value(res).unwrap())
 }
