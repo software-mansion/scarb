@@ -11,15 +11,17 @@ on:
         required: false
         type: string
 
+env:
+  # TODO(#1915): Use stable toolchain once stwo is stable.
+  RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-01-02"
+
 jobs:
   build:
     name: build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-
     env:
       # Cross-compiled targets will override this to `cross`.
       CARGO: cargo
-
     strategy:
       matrix:
         include:
@@ -55,7 +57,6 @@ jobs:
 
           #- target: aarch64-pc-windows-msvc
           #  os: windows-latest
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -75,7 +76,24 @@ jobs:
         run: echo "CARGO=cross" >> $GITHUB_ENV
 
       - name: Build
-        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }}
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove --exclude scarb-verify
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          target: ${{ matrix.target }}
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+
+      - name: Install cross
+        if: matrix.cross
+        uses: taiki-e/install-action@cross
+
+      - name: Enable cross-compilation
+        if: matrix.cross
+        shell: bash
+        run: echo "CARGO=cross" >> $GITHUB_ENV
+
+      - name: Build nightly crates
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} -p scarb-prove -p scarb-verify
 
       - name: Create archive
         run: cargo xtask create-archive
