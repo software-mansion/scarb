@@ -83,7 +83,7 @@ camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
 console = "0.15"
-convert_case = "0.6.0"
+convert_case = "0.7.1"
 darling = "0.20"
 dashmap = "6"
 data-encoding = "2"
@@ -113,7 +113,7 @@ ntest = "0.9"
 num-bigint = { version = "0.4", features = ["rand"] }
 once_cell = "1"
 pathdiff = { version = "0.2", features = ["camino"] }
-petgraph = "0.6"
+petgraph = "0.7"
 predicates = "3"
 proc-macro2 = "1"
 pubgrub = { git = "https://github.com/software-mansion-labs/pubgrub.git", branch = "dev" }
