@@ -7,7 +7,7 @@ use anyhow::{bail, Result};
 /// The requested verbosity of output.
 ///
 /// # Ordering
-/// [`Verbosity::Quiet`] < [`Verbosity::Normal`] < [`Verbosity::Verbose`]
+/// [`Verbosity::Quiet`] < [`Verbosity::NoWarnings`] < [`Verbosity::Normal`] < [`Verbosity::Verbose`]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Verbosity {
     /// Avoid printing anything to standard output.
