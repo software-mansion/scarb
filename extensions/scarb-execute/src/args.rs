@@ -30,6 +30,14 @@ pub struct ExecutionArgs {
     #[arg(long, default_value_t = false)]
     pub no_build: bool,
 
+    /// Choose build target to run by target name.
+    #[arg(long)]
+    pub executable_name: Option<String>,
+
+    /// Choose build target to run by function path.
+    #[arg(long, conflicts_with = "executable_name")]
+    pub executable_function: Option<String>,
+
     #[command(flatten)]
     pub run: RunArgs,
 }

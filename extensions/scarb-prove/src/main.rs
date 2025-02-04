@@ -34,7 +34,9 @@ struct Args {
             "output",
             "target",
             "print_program_output",
-            "print_resource_usage"
+            "print_resource_usage",
+            "executable_name",
+            "executable_function"
         ]
     )]
     execution_id: Option<usize>,
@@ -101,7 +103,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         Some(id) => id,
         None => {
             assert!(args.execute);
-            scarb_execute::execute(&package, &args.execute_args, &ui)?
+            scarb_execute::execute(&metadata, &package, &args.execute_args, &ui)?
         }
     };
     ui.print(Status::new("Proving", &package.name));

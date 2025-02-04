@@ -13,8 +13,8 @@ use cairo_vm::{cairo_run, Felt252};
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand};
-use scarb_ui::args::PackagesFilter;
+use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
+use scarb_ui::args::{PackagesFilter, WithManifestPath};
 use scarb_ui::components::Status;
 use scarb_ui::Ui;
 use std::env;
@@ -29,10 +29,11 @@ const MAX_ITERATION_COUNT: usize = 10000;
 pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
     let package = args.packages_filter.match_one(&metadata)?;
-    execute(&package, &args.execution, &ui)
+    execute(&metadata, &package, &args.execution, &ui)
 }
 
 pub fn execute(
+    metadata: &Metadata,
     package: &PackageMetadata,
     args: &args::ExecutionArgs,
     ui: &Ui,
@@ -56,10 +57,17 @@ pub fn execute(
     let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
     let scarb_build_dir = scarb_target_dir.join(env::var("SCARB_PROFILE")?);
 
+    let build_target = find_build_target(
+        metadata,
+        package,
+        args.executable_name.as_deref(),
+        args.executable_function.as_deref(),
+    )?;
+
     ui.print(Status::new("Executing", &package.name));
     let executable = load_prebuilt_executable(
         &scarb_build_dir,
-        format!("{}.executable.json", package.name),
+        format!("{}.executable.json", build_target.name),
     )?;
 
     let data = executable
@@ -203,6 +211,90 @@ pub fn execute(
     } else {
         Ok(execution_id)
     }
+}
+
+fn find_build_target<'a>(
+    metadata: &Metadata,
+    package: &'a PackageMetadata,
+    executable_name: Option<&str>,
+    executable_function: Option<&str>,
+) -> Result<&'a TargetMetadata> {
+    let mut executable_targets = package
+        .targets
+        .iter()
+        .filter(|target| target.kind.as_str() == "executable");
+
+    let matched_by_args = executable_targets.find(|target| {
+        let build_target_function = target
+            .params
+            .as_object()
+            .and_then(|params| params.get("function"))
+            .and_then(|x| x.as_str());
+        let function_matches =
+            build_target_function.is_some_and(|left| Some(left) == executable_function);
+        let name_matches = executable_name.is_some_and(|name| target.name == name);
+        name_matches || function_matches
+    });
+
+    if let Some(matched) = matched_by_args {
+        return Ok(matched);
+    }
+
+    // `--executable-name` and `--executable-function` names have not matched any target.
+    if let Some(name) = executable_name {
+        bail!(
+            "no executable target with name `{name}` found for package `{}`",
+            package.name
+        )
+    }
+    if let Some(function) = executable_function {
+        bail!(
+            "no executable target with executable function `{function}` found for package `{}`",
+            package.name
+        )
+    }
+    let mut executable_targets = package
+        .targets
+        .iter()
+        .filter(|target| target.kind.as_str() == "executable");
+
+    let Some(first_target) = executable_targets.next() else {
+        bail!(missing_executable_target_error(metadata, package))
+    };
+
+    ensure!(
+        executable_targets.next().is_none(),
+        formatdoc! {r#"
+            more than one executable target found for package `{}`
+            help: specify the target with `--executable-name` or `--executable-function`
+            "#, package.name
+        }
+    );
+
+    Ok(first_target)
+}
+
+fn missing_executable_target_error(metadata: &Metadata, package: &PackageMetadata) -> String {
+    let scarb_version = metadata
+        .app_version_info
+        .clone()
+        .version
+        .clone()
+        .to_string();
+    let scarb_toml = package.manifest_path.clone();
+    let scarb_toml = scarb_toml
+        .strip_prefix(metadata.workspace.root.clone())
+        .unwrap_or_else(|_| package.manifest_path());
+    formatdoc! {r#"
+        no executable target found for package `{}`
+        help: you can add `executable` target to the package manifest with following excerpt
+        -> {scarb_toml}
+            [executable]
+
+            [dependencies]
+            cairo_execute = "{scarb_version}"
+        "#
+    , package.name}
 }
 
 fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {
