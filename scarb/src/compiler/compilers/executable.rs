@@ -16,6 +16,7 @@ pub struct ExecutableCompiler;
 #[serde(rename_all = "kebab-case")]
 struct Props {
     pub allow_syscalls: bool,
+    pub function: Option<String>,
 }
 
 impl Compiler for ExecutableCompiler {
@@ -52,7 +53,7 @@ impl Compiler for ExecutableCompiler {
             Executable::new(
                 cairo_lang_executable::compile::compile_executable_in_prepared_db(
                     db,
-                    None,
+                    props.function.as_deref(),
                     main_crate_ids,
                     compiler_config.diagnostics_reporter,
                     ExecutableConfig {

@@ -1191,3 +1191,47 @@ fn executable_target_requires_disabled_gas() {
     t.child("target/dev/executable_test.executable.json")
         .assert(predicates::path::exists().not());
 }
+
+#[test]
+fn executable_for_multiple_functions() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            function = "hello_world::main"
+
+            [[target.executable]]
+            name = "secondary"
+            function = "hello_world::secondary"
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+
+            #[executable]
+            fn secondary() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/hello_world.executable.json")
+        .assert(predicates::path::exists());
+    t.child("target/dev/secondary.executable.json")
+        .assert(predicates::path::exists());
+}
