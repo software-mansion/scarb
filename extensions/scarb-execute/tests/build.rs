@@ -97,38 +97,47 @@ fn can_execute_bootloader_target() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Saving output to: target/execute/hello/execution1
-        "#});
-
-    t.child("target/execute/hello/execution1/air_private_input.json")
-        .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/execution1/air_public_input.json")
-        .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/execution1/memory.bin")
-        .assert(predicates::path::exists().and(is_file_empty().not()));
-    t.child("target/execute/hello/execution1/trace.bin")
-        .assert(predicates::path::exists().and(is_file_empty().not()));
-}
-
-#[test]
-fn can_produce_cairo_pie_output() {
-    let t = build_executable_project();
-    Scarb::quick_snapbox()
-        .arg("execute")
-        .arg("--target=bootloader")
-        .arg("--output=cairo-pie")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished `dev` profile target(s) in [..]
-        [..]Executing hello
         Saving output to: target/execute/hello/execution1/cairo_pie.zip
         "#});
 
     t.child("target/execute/hello/execution1/cairo_pie.zip")
         .assert(predicates::path::exists());
+}
+
+#[test]
+fn cannot_produce_trace_file_for_bootloader_target() {
+    let t = build_executable_project();
+    let output = Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--target=bootloader")
+        .arg("--output=standard")
+        .current_dir(&t)
+        .assert()
+        .failure();
+    output_assert(
+        output,
+        indoc! {r#"
+        error: Standard output format is not supported for bootloader execution target
+        "#},
+    );
+}
+
+#[test]
+fn cannot_produce_cairo_pie_for_standalone_target() {
+    let t = build_executable_project();
+    let output = Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--target=standalone")
+        .arg("--output=cairo-pie")
+        .current_dir(&t)
+        .assert()
+        .failure();
+    output_assert(
+        output,
+        indoc! {r#"
+        error: Cairo pie output format is not supported for standalone execution target
+        "#},
+    );
 }
 
 #[test]

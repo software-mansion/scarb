@@ -1,3 +1,4 @@
+use crate::args::OutputFormat;
 use crate::output::{ExecutionOutput, ExecutionResources, ExecutionStatus, ExecutionSummary};
 use anyhow::{bail, ensure, Context, Result};
 use bincode::enc::write::Writer;
@@ -36,10 +37,13 @@ pub fn execute(
     args: &args::ExecutionArgs,
     ui: &Ui,
 ) -> Result<usize, anyhow::Error> {
-    ensure!(
-        !(args.run.output.is_cairo_pie() && args.run.target.is_standalone()),
-        "Cairo pie output format is not supported for standalone execution target"
-    );
+    let output = args
+        .run
+        .output
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| OutputFormat::default_for_target(args.run.target.clone()));
+    output.validate(&args.run.target)?;
 
     if !args.no_build {
         let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
@@ -122,8 +126,8 @@ pub fn execute(
         layout: LayoutName::all_cairo,
         proof_mode: args.run.target.is_standalone(),
         secure_run: None,
-        relocate_mem: args.run.output.is_standard(),
-        trace_enabled: args.run.output.is_standard(),
+        relocate_mem: output.is_standard(),
+        trace_enabled: output.is_standard(),
         ..Default::default()
     };
 
@@ -149,7 +153,7 @@ pub fn execute(
 
     let (execution_output_dir, execution_id) = incremental_create_output_dir(&output_dir)?;
 
-    if args.run.output.is_cairo_pie() {
+    if output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
         let output_file_path = execution_output_dir.join("cairo_pie.zip");
         ui.print(Status::new(
