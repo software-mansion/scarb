@@ -1235,3 +1235,53 @@ fn executable_for_multiple_functions() {
     t.child("target/dev/secondary.executable.json")
         .assert(predicates::path::exists());
 }
+
+#[test]
+fn ambiguous_executable_function() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+
+            #[executable]
+            fn secondary() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+               Compiling hello_world v1.0.0 ([..]Scarb.toml)
+            error: more than one executable found in the main crate: 
+            [..]hello_world::main
+            [..]hello_world::secondary
+            help: add a separate `executable` target for each of your executable functions
+            -> Scarb.toml
+            [[target.executable]]
+            name = "main"
+            function = "hello_world::main"
+
+            [[target.executable]]
+            name = "secondary"
+            function = "hello_world::secondary"
+            error: could not compile `hello_world` due to previous error
+        "#});
+}
