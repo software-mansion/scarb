@@ -66,6 +66,7 @@ cairo-lang-filesystem = "*"
 cairo-lang-formatter = "*"
 cairo-lang-lowering = "*"
 cairo-lang-parser = "*"
+cairo-lang-primitive-token  = { git = "https://github.com/starkware-libs/cairo", rev = "1e7992b5fd6e8a0d921613dc3b49c1162dc955ea" }
 cairo-lang-runner = "*"
 cairo-lang-semantic = "*"
 cairo-lang-sierra = "*"
