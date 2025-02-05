@@ -987,7 +987,7 @@ dependencies = [
  "bumpalo",
  "cairo-lang-macro-attributes 0.1.0",
  "cairo-lang-macro-stable 1.0.0",
- "cairo-lang-primitive-token 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-primitive-token 1.0.0 (git+https://github.com/starkware-libs/cairo?rev=1e7992b5fd6e8a0d921613dc3b49c1162dc955ea)",
  "cairo-lang-quote",
  "linkme",
  "serde",
@@ -1078,8 +1078,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-primitive-token"
 version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "123ac0ecadf31bacae77436d72b88fa9caef2b8e92c89ce63a125ae911a12fae"
+source = "git+https://github.com/starkware-libs/cairo?rev=1e7992b5fd6e8a0d921613dc3b49c1162dc955ea#1e7992b5fd6e8a0d921613dc3b49c1162dc955ea"
 
 [[package]]
 name = "cairo-lang-primitive-token"
@@ -1719,7 +1718,7 @@ version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fde0e0ec90c9dfb3b4b1a0891a7dcd0e2bffde2f7efed5fe7c9bb00e5bfb915e"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4241,7 +4240,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -7389,9 +7388,9 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "trybuild"
-version = "1.0.101"
+version = "1.0.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8dcd332a5496c026f1e14b7f3d2b7bd98e509660c04239c58b0ba38a12daded4"
+checksum = "b812699e0c4f813b872b373a4471717d9eb550da14b311058a4d9cf4173cbca6"
 dependencies = [
  "glob",
  "serde",
@@ -7777,7 +7776,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
