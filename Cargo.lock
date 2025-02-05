@@ -949,7 +949,7 @@ dependencies = [
  "bumpalo",
  "cairo-lang-macro-attributes 0.1.0",
  "cairo-lang-macro-stable 1.0.0",
- "cairo-lang-primitive-token",
+ "cairo-lang-primitive-token 1.0.0 (git+https://github.com/starkware-libs/cairo?rev=1e7992b5fd6e8a0d921613dc3b49c1162dc955ea)",
  "cairo-lang-quote",
  "linkme",
  "serde",
@@ -1006,7 +1006,7 @@ source = "git+https://github.com/starkware-libs/cairo?rev=76e8c943895c904da121fb
 dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
- "cairo-lang-primitive-token",
+ "cairo-lang-primitive-token 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-syntax",
  "cairo-lang-syntax-codegen",
  "cairo-lang-utils",
@@ -1042,6 +1042,11 @@ name = "cairo-lang-primitive-token"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "123ac0ecadf31bacae77436d72b88fa9caef2b8e92c89ce63a125ae911a12fae"
+
+[[package]]
+name = "cairo-lang-primitive-token"
+version = "1.0.0"
+source = "git+https://github.com/starkware-libs/cairo?rev=1e7992b5fd6e8a0d921613dc3b49c1162dc955ea#1e7992b5fd6e8a0d921613dc3b49c1162dc955ea"
 
 [[package]]
 name = "cairo-lang-proc-macros"
@@ -1311,7 +1316,7 @@ source = "git+https://github.com/starkware-libs/cairo?rev=76e8c943895c904da121fb
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
- "cairo-lang-primitive-token",
+ "cairo-lang-primitive-token 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-utils",
  "num-bigint",
  "num-traits",
@@ -7365,9 +7370,9 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "trybuild"
-version = "1.0.101"
+version = "1.0.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8dcd332a5496c026f1e14b7f3d2b7bd98e509660c04239c58b0ba38a12daded4"
+checksum = "6ae08be68c056db96f0e6c6dd820727cca756ced9e1f4cc7fdd20e2a55e23898"
 dependencies = [
  "glob",
  "serde",
