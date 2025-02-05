@@ -17,7 +17,7 @@ repository.workspace = true
 bumpalo.workspace = true
 cairo-lang-macro-attributes = { path = "../cairo-lang-macro-attributes" }
 cairo-lang-macro-stable = { path = "../cairo-lang-macro-stable" }
-cairo-lang-primitive-token = "1.0.0"
+cairo-lang-primitive-token.workspace = true
 cairo-lang-quote = { path = "../cairo-lang-quote", version = "0.1.0" }
 linkme.workspace = true
 serde = { workspace = true, optional = true }
