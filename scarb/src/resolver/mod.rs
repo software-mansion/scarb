@@ -38,8 +38,7 @@ pub async fn resolve(
             let s = var.as_str();
             s == "true" || s == "1"
         })
-        // Defaults to primitive!
-        .unwrap_or(true);
+        .unwrap_or(false);
     if algo_primitive {
         primitive::resolve(summaries, registry, lockfile).await
     } else {
@@ -253,7 +252,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
     fn backtrack_1() {
         check(
             registry![
@@ -270,7 +268,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
     fn backtrack_2() {
         check(
             registry![
@@ -316,7 +313,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
     fn sub_dependencies() {
         check(
             registry![
@@ -345,7 +341,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
     fn unsatisfied_version_constraint() {
         check(
             registry![("foo v2.0.0", []),],
@@ -364,7 +359,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
     fn no_matching_transient_dependency_1() {
         check(
             registry![
@@ -381,7 +375,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
     fn no_matching_transient_dependency_2() {
         check(
             registry![
@@ -402,7 +395,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
     fn no_matching_transient_dependency_3() {
         check(
             registry![
@@ -517,7 +509,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
     fn lock_conflict_1() {
         check_with_lock(
             registry![("foo v1.0.0", []),],
