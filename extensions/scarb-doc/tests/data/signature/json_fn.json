@@ -1,0 +1,100 @@
+{
+  "format_version": 1,
+  "packages_information": [
+    {
+      "crate_": {
+        "root_module": {
+          "item_data": {
+            "name": "hello_world",
+            "doc": null,
+            "signature": null,
+            "full_path": "hello_world"
+          },
+          "submodules": [],
+          "constants": [],
+          "free_functions": [
+            {
+              "item_data": {
+                "name": "struct_function",
+                "doc": null,
+                "signature": "pub(crate) fn struct_function(arg1: AnyStruct) -> (u256, u32)",
+                "full_path": "hello_world::struct_function"
+              }
+            },
+            {
+              "item_data": {
+                "name": "multiple_args_function",
+                "doc": null,
+                "signature": "fn multiple_args_function(arg1: u8, arg2: felt252, mut arg3: AnyStruct) -> AnyStruct",
+                "full_path": "hello_world::multiple_args_function"
+              }
+            },
+            {
+              "item_data": {
+                "name": "tuple_function",
+                "doc": null,
+                "signature": "fn tuple_function(pair: (i32, i32)) -> i32",
+                "full_path": "hello_world::tuple_function"
+              }
+            },
+            {
+              "item_data": {
+                "name": "nested_tuple_function",
+                "doc": null,
+                "signature": "pub fn nested_tuple_function(pair: (i32, (i32, i32), [i32; 5])) -> i32",
+                "full_path": "hello_world::nested_tuple_function"
+              }
+            },
+            {
+              "item_data": {
+                "name": "tuples_array_function",
+                "doc": null,
+                "signature": "pub fn tuples_array_function(array: [(bool, bool, bool); 2]) -> [(bool, bool, )bool; 2]",
+                "full_path": "hello_world::tuples_array_function"
+              }
+            }
+          ],
+          "structs": [
+            {
+              "members": [
+                {
+                  "item_data": {
+                    "name": "a",
+                    "doc": null,
+                    "signature": "a: u256",
+                    "full_path": "hello_world::AnyStruct::a"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "b",
+                    "doc": null,
+                    "signature": "b: u32",
+                    "full_path": "hello_world::AnyStruct::b"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "AnyStruct",
+                "doc": null,
+                "signature": "struct AnyStruct: {\n    a: u256,\n    b: u32,\n}",
+                "full_path": "hello_world::AnyStruct"
+              }
+            }
+          ],
+          "enums": [],
+          "type_aliases": [],
+          "impl_aliases": [],
+          "traits": [],
+          "impls": [],
+          "extern_types": [],
+          "extern_functions": []
+        }
+      },
+      "metadata": {
+        "name": "hello_world",
+        "authors": null
+      }
+    }
+  ]
+}

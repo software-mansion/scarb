@@ -1,6 +1,9 @@
+use crate::documentable_formatter::{HirDisplay, HirFormatter};
 use cairo_lang_compiler::project::{update_crate_roots_from_project_config, ProjectConfig};
 use cairo_lang_defs::db::{try_ext_as_virtual_impl, DefsDatabase, DefsGroup};
+use cairo_lang_defs::ids::{ImplItemId, LookupItemId, ModuleItemId, TraitItemId};
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
+use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
     init_files_group, AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup,
@@ -14,8 +17,9 @@ use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_syntax::node::db::{SyntaxDatabase, SyntaxGroup};
 use cairo_lang_utils::Upcast;
-
 use salsa;
+use smol_str::SmolStr;
+use std::collections::HashMap;
 
 /// The Cairo compiler Salsa database tailored for scarb-doc usage.
 #[salsa::database(
@@ -68,6 +72,117 @@ impl ScarbDocDatabase {
 
     fn apply_project_config(&mut self, config: ProjectConfig) {
         update_crate_roots_from_project_config(self, &config);
+    }
+
+    pub fn _get_item_signature(&self, item_id: DocumentableItemId) -> String {
+        let item_id_ = item_id;
+        let mut f = HirFormatter::new(self);
+        match item_id {
+            DocumentableItemId::LookupItem(item_id) => {
+                match item_id {
+                    LookupItemId::ModuleItem(item_id) => match item_id {
+                        ModuleItemId::Constant(item_id) => item_id.get_signature(&mut f, item_id_),
+                        ModuleItemId::FreeFunction(item_id) => {
+                            item_id.get_signature(&mut f, item_id_)
+                        }
+                        ModuleItemId::Struct(_) => {
+                            panic!(
+                                "Unexpected {:?}, use get_complex_type_signature instead.",
+                                item_id
+                            )
+                        }
+                        ModuleItemId::Enum(_) => {
+                            panic!(
+                                "Unexpected {:?}, use get_complex_type_signature instead.",
+                                item_id
+                            )
+                        }
+                        ModuleItemId::TypeAlias(item_id) => item_id.get_signature(&mut f, item_id_),
+                        ModuleItemId::ImplAlias(item_id) => item_id.get_signature(&mut f, item_id_),
+                        ModuleItemId::Trait(item_id) => item_id.get_signature(&mut f, item_id_),
+                        ModuleItemId::Impl(item_id) => item_id.get_signature(&mut f, item_id_),
+                        ModuleItemId::ExternType(item_id) => {
+                            item_id.get_signature(&mut f, item_id_)
+                        }
+                        ModuleItemId::ExternFunction(item_id) => {
+                            item_id.get_signature(&mut f, item_id_)
+                        }
+                        // ModuleItemId::Use - not used in scarb-doc/src/types.rs
+                        // ModuleItemId::Submodule - signature = None
+                        _ => panic!(
+                            "_get_item_signature not implemented for item_id: {:?}",
+                            item_id
+                        ),
+                    },
+                    LookupItemId::TraitItem(item_id) => {
+                        match item_id {
+                            TraitItemId::Function(item_id) => {
+                                item_id.get_signature(&mut f, item_id_)
+                            }
+                            TraitItemId::Constant(item_id) => {
+                                item_id.get_signature(&mut f, item_id_)
+                            }
+                            TraitItemId::Type(item_id) => item_id.get_signature(&mut f, item_id_),
+                            // TraitItemId::Impl
+                            _ => panic!(
+                                "_get_item_signature not implemented for item_id: {:?}",
+                                item_id
+                            ),
+                        }
+                    }
+                    LookupItemId::ImplItem(item_id) => match item_id {
+                        ImplItemId::Function(item_id) => item_id.get_signature(&mut f, item_id_),
+                        ImplItemId::Constant(item_id) => item_id.get_signature(&mut f, item_id_),
+                        ImplItemId::Type(item_id) => item_id.get_signature(&mut f, item_id_),
+                        // ImplItemId::Impl
+                        _ => {
+                            panic!(
+                                "_get_item_signature not implemented for item_id: {:?}",
+                                item_id
+                            )
+                        }
+                    },
+                }
+            }
+            DocumentableItemId::Crate(_) => {
+                panic!(
+                    "_get_item_signature not implemented for item_id: {:?}",
+                    item_id
+                )
+            }
+            // DocumentableItemId::Member
+            // DocumentableItemId::Variant
+            _ => panic!(
+                "Unexpected {:?}, use get_complex_type_signature instead.",
+                item_id
+            ),
+        }
+    }
+
+    pub fn get_complex_type_signature(
+        &self,
+        item_id: DocumentableItemId,
+    ) -> (String, HashMap<SmolStr, String>) {
+        // avoid executing the same code for Members as this data was already generated
+        let item_id_ = item_id;
+
+        let mut f = HirFormatter::new_complex(self);
+        match item_id {
+            DocumentableItemId::LookupItem(LookupItemId::ModuleItem(module_item_id)) => {
+                match module_item_id {
+                    ModuleItemId::Struct(item_id) => {
+                        let signature = item_id.get_signature(&mut f, item_id_);
+                        (signature, f.get_members_buff().unwrap())
+                    }
+                    ModuleItemId::Enum(item_id) => {
+                        let signature = item_id.get_signature(&mut f, item_id_);
+                        (signature, f.get_members_buff().unwrap())
+                    }
+                    _ => panic!("Unexpected {:?}, use _get_item_signature instead", item_id),
+                }
+            }
+            _ => panic!("Unexpected {:?}, use _get_item_signature instead", item_id),
+        }
     }
 }
 

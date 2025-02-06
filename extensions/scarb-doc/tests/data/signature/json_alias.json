@@ -1,0 +1,152 @@
+{
+  "format_version": 1,
+  "packages_information": [
+    {
+      "crate_": {
+        "root_module": {
+          "item_data": {
+            "name": "hello_world",
+            "doc": null,
+            "signature": null,
+            "full_path": "hello_world"
+          },
+          "submodules": [],
+          "constants": [],
+          "free_functions": [],
+          "structs": [
+            {
+              "members": [
+                {
+                  "item_data": {
+                    "name": "x",
+                    "doc": null,
+                    "signature": "x: T",
+                    "full_path": "hello_world::Point::x"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "y",
+                    "doc": null,
+                    "signature": "y: T",
+                    "full_path": "hello_world::Point::y"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "Point",
+                "doc": null,
+                "signature": "struct Point: {\n    x: T,\n    y: T,\n}",
+                "full_path": "hello_world::Point"
+              }
+            },
+            {
+              "members": [
+                {
+                  "item_data": {
+                    "name": "x",
+                    "doc": null,
+                    "signature": "x: felt252",
+                    "full_path": "hello_world::PointSimple::x"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "y",
+                    "doc": null,
+                    "signature": "y: felt252",
+                    "full_path": "hello_world::PointSimple::y"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "PointSimple",
+                "doc": null,
+                "signature": "struct PointSimple: {\n    x: felt252,\n    y: felt252,\n}",
+                "full_path": "hello_world::PointSimple"
+              }
+            },
+            {
+              "members": [
+                {
+                  "item_data": {
+                    "name": "x",
+                    "doc": null,
+                    "signature": "x: T",
+                    "full_path": "hello_world::PointMultipleGenerics::x"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "y",
+                    "doc": null,
+                    "signature": "y: U",
+                    "full_path": "hello_world::PointMultipleGenerics::y"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "PointMultipleGenerics",
+                "doc": null,
+                "signature": "struct PointMultipleGenerics: {\n    x: T,\n    y: U,\n}",
+                "full_path": "hello_world::PointMultipleGenerics"
+              }
+            }
+          ],
+          "enums": [],
+          "type_aliases": [
+            {
+              "item_data": {
+                "name": "GenericPoint",
+                "doc": null,
+                "signature": "impl GenericPoint = Point<felt252>;",
+                "full_path": "hello_world::GenericPoint"
+              }
+            },
+            {
+              "item_data": {
+                "name": "IntegerPointSimple",
+                "doc": null,
+                "signature": "impl IntegerPointSimple = PointSimple;",
+                "full_path": "hello_world::IntegerPointSimple"
+              }
+            },
+            {
+              "item_data": {
+                "name": "IntegerPointMissingGeneric",
+                "doc": null,
+                "signature": "impl IntegerPointMissingGeneric = Point;",
+                "full_path": "hello_world::IntegerPointMissingGeneric"
+              }
+            },
+            {
+              "item_data": {
+                "name": "IntegerPointMultipleGeneric",
+                "doc": null,
+                "signature": "impl IntegerPointMultipleGeneric = PointMultipleGenerics<felt252, felt252>;",
+                "full_path": "hello_world::IntegerPointMultipleGeneric"
+              }
+            },
+            {
+              "item_data": {
+                "name": "AliasAlias",
+                "doc": null,
+                "signature": "impl AliasAlias = IntegerPointMissingGeneric;",
+                "full_path": "hello_world::AliasAlias"
+              }
+            }
+          ],
+          "impl_aliases": [],
+          "traits": [],
+          "impls": [],
+          "extern_types": [],
+          "extern_functions": []
+        }
+      },
+      "metadata": {
+        "name": "hello_world",
+        "authors": null
+      }
+    }
+  ]
+}

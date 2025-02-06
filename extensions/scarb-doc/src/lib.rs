@@ -14,9 +14,10 @@ use scarb_ui::Ui;
 use serde::Serialize;
 use smol_str::ToSmolStr;
 use types::Crate;
-
+pub mod bounding;
 pub mod db;
 pub mod docs_generation;
+pub mod documentable_formatter;
 pub mod errors;
 pub mod metadata;
 pub mod types;

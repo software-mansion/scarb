@@ -1,0 +1,159 @@
+{
+  "format_version": 1,
+  "packages_information": [
+    {
+      "crate_": {
+        "root_module": {
+          "item_data": {
+            "name": "hello_world",
+            "doc": null,
+            "signature": null,
+            "full_path": "hello_world"
+          },
+          "submodules": [],
+          "constants": [
+            {
+              "item_data": {
+                "name": "LITERAL_INT_CONST",
+                "doc": null,
+                "signature": "const LITERAL_INT_CONST: u32 = 3600;",
+                "full_path": "hello_world::LITERAL_INT_CONST"
+              }
+            },
+            {
+              "item_data": {
+                "name": "STRUCT_INSTANCE_CONST",
+                "doc": null,
+                "signature": "const STRUCT_INSTANCE_CONST: AnyStruct = AnyStruct { a: 0, b: 1 };",
+                "full_path": "hello_world::STRUCT_INSTANCE_CONST"
+              }
+            },
+            {
+              "item_data": {
+                "name": "ENUM_INSTANCE_CONST",
+                "doc": null,
+                "signature": "const ENUM_INSTANCE_CONST: AnyEnum = AnyEnum::A('any enum');",
+                "full_path": "hello_world::ENUM_INSTANCE_CONST"
+              }
+            },
+            {
+              "item_data": {
+                "name": "BOOL_FIXED_SIZE_ARRAY_CONST",
+                "doc": null,
+                "signature": "const BOOL_FIXED_SIZE_ARRAY_CONST: [bool; 2] = [true, false];",
+                "full_path": "hello_world::BOOL_FIXED_SIZE_ARRAY_CONST"
+              }
+            },
+            {
+              "item_data": {
+                "name": "ONE_HOUR_IN_SECONDS_EVAL_CONST",
+                "doc": null,
+                "signature": "const ONE_HOUR_IN_SECONDS_EVAL_CONST: u32 = 3600;",
+                "full_path": "hello_world::ONE_HOUR_IN_SECONDS_EVAL_CONST"
+              }
+            },
+            {
+              "item_data": {
+                "name": "TUPLE_CONST",
+                "doc": null,
+                "signature": "const TUPLE_CONST: (u32, u64, bool) = (10, 20, true);",
+                "full_path": "hello_world::TUPLE_CONST"
+              }
+            },
+            {
+              "item_data": {
+                "name": "ARRAY_CONST",
+                "doc": null,
+                "signature": "const ARRAY_CONST: [u64; 5] = [1, 2, 3, 4, 5];",
+                "full_path": "hello_world::ARRAY_CONST"
+              }
+            },
+            {
+              "item_data": {
+                "name": "EVAL_INT_CONST",
+                "doc": null,
+                "signature": "const EVAL_INT_CONST: felt252 = 2+2; // = 4",
+                "full_path": "hello_world::EVAL_INT_CONST"
+              }
+            },
+            {
+              "item_data": {
+                "name": "BOOL_CONST",
+                "doc": null,
+                "signature": "const BOOL_CONST: bool = true;",
+                "full_path": "hello_world::BOOL_CONST"
+              }
+            }
+          ],
+          "free_functions": [],
+          "structs": [
+            {
+              "members": [
+                {
+                  "item_data": {
+                    "name": "a",
+                    "doc": null,
+                    "signature": "a: u256",
+                    "full_path": "hello_world::AnyStruct::a"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "b",
+                    "doc": null,
+                    "signature": "b: u32",
+                    "full_path": "hello_world::AnyStruct::b"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "AnyStruct",
+                "doc": null,
+                "signature": "struct AnyStruct: {\n    a: u256,\n    b: u32,\n}",
+                "full_path": "hello_world::AnyStruct"
+              }
+            }
+          ],
+          "enums": [
+            {
+              "variants": [
+                {
+                  "item_data": {
+                    "name": "A",
+                    "doc": null,
+                    "signature": "A: felt252",
+                    "full_path": "hello_world::AnyEnum::A"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "B",
+                    "doc": null,
+                    "signature": "B: (u32, u256)",
+                    "full_path": "hello_world::AnyEnum::B"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "AnyEnum",
+                "doc": null,
+                "signature": "enum AnyEnum: {\n    A: felt252,\n    B: (u32, u256),\n}",
+                "full_path": "hello_world::AnyEnum"
+              }
+            }
+          ],
+          "type_aliases": [],
+          "impl_aliases": [],
+          "traits": [],
+          "impls": [],
+          "extern_types": [],
+          "extern_functions": []
+        }
+      },
+      "metadata": {
+        "name": "hello_world",
+        "authors": null
+      }
+    }
+  ]
+}

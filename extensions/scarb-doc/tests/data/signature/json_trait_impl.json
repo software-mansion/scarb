@@ -1,0 +1,212 @@
+{
+  "format_version": 1,
+  "packages_information": [
+    {
+      "crate_": {
+        "root_module": {
+          "item_data": {
+            "name": "hello_world",
+            "doc": null,
+            "signature": null,
+            "full_path": "hello_world"
+          },
+          "submodules": [],
+          "constants": [],
+          "free_functions": [],
+          "structs": [
+            {
+              "members": [
+                {
+                  "item_data": {
+                    "name": "headline",
+                    "doc": null,
+                    "signature": "pub headline: ByteArray",
+                    "full_path": "hello_world::NewsArticle::headline"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "location",
+                    "doc": null,
+                    "signature": "pub location: ByteArray",
+                    "full_path": "hello_world::NewsArticle::location"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "author",
+                    "doc": null,
+                    "signature": "pub author: ByteArray",
+                    "full_path": "hello_world::NewsArticle::author"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "content",
+                    "doc": null,
+                    "signature": "pub content: ByteArray",
+                    "full_path": "hello_world::NewsArticle::content"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "NewsArticle",
+                "doc": null,
+                "signature": "pub struct NewsArticle: {\n    pub headline: ByteArray,\n    pub location: ByteArray,\n    pub author: ByteArray,\n    pub content: ByteArray,\n}",
+                "full_path": "hello_world::NewsArticle"
+              }
+            },
+            {
+              "members": [
+                {
+                  "item_data": {
+                    "name": "username",
+                    "doc": null,
+                    "signature": "pub username: ByteArray",
+                    "full_path": "hello_world::Tweet::username"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "content",
+                    "doc": null,
+                    "signature": "pub content: ByteArray",
+                    "full_path": "hello_world::Tweet::content"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "reply",
+                    "doc": null,
+                    "signature": "pub reply: bool",
+                    "full_path": "hello_world::Tweet::reply"
+                  }
+                },
+                {
+                  "item_data": {
+                    "name": "retweet",
+                    "doc": null,
+                    "signature": "pub retweet: bool",
+                    "full_path": "hello_world::Tweet::retweet"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "Tweet",
+                "doc": null,
+                "signature": "pub struct Tweet: {\n    pub username: ByteArray,\n    pub content: ByteArray,\n    pub reply: bool,\n    pub retweet: bool,\n}",
+                "full_path": "hello_world::Tweet"
+              }
+            }
+          ],
+          "enums": [],
+          "type_aliases": [],
+          "impl_aliases": [],
+          "traits": [
+            {
+              "trait_constants": [],
+              "trait_types": [],
+              "trait_functions": [
+                {
+                  "item_data": {
+                    "name": "summarize",
+                    "doc": null,
+                    "signature": "fn summarize(self: @T) -> ByteArray",
+                    "full_path": "hello_world::Summary::summarize"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "Summary",
+                "doc": null,
+                "signature": "pub trait Summary<T>",
+                "full_path": "hello_world::Summary"
+              }
+            },
+            {
+              "trait_constants": [],
+              "trait_types": [],
+              "trait_functions": [],
+              "item_data": {
+                "name": "MultipleGenericArgs",
+                "doc": null,
+                "signature": "trait MultipleGenericArgs<T, U>",
+                "full_path": "hello_world::MultipleGenericArgs"
+              }
+            }
+          ],
+          "impls": [
+            {
+              "impl_types": [],
+              "impl_constants": [],
+              "impl_functions": [
+                {
+                  "item_data": {
+                    "name": "summarize",
+                    "doc": null,
+                    "signature": "fn summarize(self: @NewsArticle) -> ByteArray",
+                    "full_path": "hello_world::NewsArticleSummary::summarize"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "NewsArticleSummary",
+                "doc": null,
+                "signature": "impl NewsArticleSummary of Summary<NewsArticle>;",
+                "full_path": "hello_world::NewsArticleSummary"
+              }
+            },
+            {
+              "impl_types": [],
+              "impl_constants": [],
+              "impl_functions": [
+                {
+                  "item_data": {
+                    "name": "summarize",
+                    "doc": null,
+                    "signature": "fn summarize(self: @Tweet) -> ByteArray",
+                    "full_path": "hello_world::TweetSummary::summarize"
+                  }
+                }
+              ],
+              "item_data": {
+                "name": "TweetSummary",
+                "doc": null,
+                "signature": "impl TweetSummary of Summary<Tweet>;",
+                "full_path": "hello_world::TweetSummary"
+              }
+            },
+            {
+              "impl_types": [],
+              "impl_constants": [],
+              "impl_functions": [],
+              "item_data": {
+                "name": "NewsArticleDrop",
+                "doc": null,
+                "signature": "impl NewsArticleDrop of core::traits::Drop<NewsArticle>;",
+                "full_path": "hello_world::NewsArticleDrop"
+              }
+            },
+            {
+              "impl_types": [],
+              "impl_constants": [],
+              "impl_functions": [],
+              "item_data": {
+                "name": "TweetDrop",
+                "doc": null,
+                "signature": "impl TweetDrop of core::traits::Drop<Tweet>;",
+                "full_path": "hello_world::TweetDrop"
+              }
+            }
+          ],
+          "extern_types": [],
+          "extern_functions": []
+        }
+      },
+      "metadata": {
+        "name": "hello_world",
+        "authors": null
+      }
+    }
+  ]
+}
