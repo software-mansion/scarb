@@ -11,7 +11,9 @@ use smol_str::{SmolStr, ToSmolStr};
 use std::collections::HashSet;
 use std::thread;
 
-use crate::compiler::db::{build_scarb_root_database, has_starknet_plugin, ScarbDatabase};
+use crate::compiler::db::{
+    build_scarb_root_database, has_plugin, is_starknet_plugin, ScarbDatabase,
+};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
@@ -318,7 +320,7 @@ fn check_starknet_dependency(
     //   I think we can get away with emitting false positives for users who write raw contracts
     //   without using Starknet code generators. Such people shouldn't do what they do 😁
     if unit.main_component().target_kind() == TargetKind::STARKNET_CONTRACT
-        && !has_starknet_plugin(db)
+        && !has_plugin(db, is_starknet_plugin)
     {
         ws.config().ui().warn(formatdoc! {
             r#"

@@ -1,7 +1,8 @@
+use crate::compiler::db::{has_plugin, is_executable_plugin};
 use crate::compiler::helpers::write_json;
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
-use crate::core::{TargetKind, Utf8PathWorkspaceExt, Workspace};
+use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use anyhow::{bail, ensure, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
@@ -51,6 +52,8 @@ impl Compiler for ExecutableCompiler {
                         enable-gas = false
                 "#, scarb_toml=unit.main_component().package.manifest_path().workspace_relative(ws)}
         );
+
+        check_executable_plugin_dependency(&unit, ws, db, &unit.main_component().package.id.name);
 
         let props: Props = unit.main_component().target_props()?;
 
@@ -192,4 +195,28 @@ fn originating_function_path(db: &RootDatabase, wrapper: ConcreteFunctionWithBod
         return wrapper_full_path;
     };
     format!("{}{}", wrapper_path_to_module, function_name)
+}
+
+fn check_executable_plugin_dependency(
+    unit: &CairoCompilationUnit,
+    ws: &Workspace<'_>,
+    db: &RootDatabase,
+    package_name: &PackageName,
+) {
+    if unit.main_component().target_kind() == TargetKind::EXECUTABLE
+        && !has_plugin(db, is_executable_plugin)
+    {
+        ws.config().ui().warn(formatdoc! {
+            r#"
+            package `{package_name}` declares `executable` target, but does not depend on `cairo_execute` package
+            note: this may cause contract compilation to fail with cryptic errors
+            help: add dependency on `cairo_execute` to package manifest
+             --> {scarb_toml}
+                [dependencies]
+                cairo_execute = "{cairo_version}"
+            "#,
+            scarb_toml=unit.main_component().package.manifest_path().workspace_relative(ws),
+            cairo_version = crate::version::get().cairo.version,
+        })
+    }
 }
