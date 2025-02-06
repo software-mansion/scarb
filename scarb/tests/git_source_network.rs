@@ -9,7 +9,6 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 
 #[test]
-#[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
 fn https_something_happens() {
     thread::scope(|ts| {
         let server = TcpListener::bind("127.0.0.1:0").unwrap();
@@ -49,7 +48,6 @@ fn https_something_happens() {
 }
 
 #[test]
-#[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
 fn ssh_something_happens() {
     thread::scope(|ts| {
         let server = TcpListener::bind("127.0.0.1:0").unwrap();
