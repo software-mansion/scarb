@@ -110,12 +110,8 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let (pub_input_path, priv_input_path, proof_path) =
         resolve_paths_from_package(&scarb_target_dir, &package.name, execution_id)?;
 
-    let prover_input = adapt_vm_output(
-        pub_input_path.as_std_path(),
-        priv_input_path.as_std_path(),
-        false,
-    )
-    .context("failed to adapt VM output")?;
+    let prover_input = adapt_vm_output(pub_input_path.as_std_path(), priv_input_path.as_std_path())
+        .context("failed to adapt VM output")?;
 
     let config = ProverConfig::builder()
         .track_relations(args.prover.track_relations)

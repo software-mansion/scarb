@@ -57,6 +57,7 @@ fn prove_from_execution_output() {
 
 #[test]
 #[cfg(not(windows))]
+#[ignore = "TODO(maciektr): Ignored until fixed by stwo."]
 fn prove_with_track_relations() {
     let t = build_executable_project();
 
