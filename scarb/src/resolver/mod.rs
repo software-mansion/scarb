@@ -324,8 +324,8 @@ mod tests {
             &[deps![("top1", "1"), ("top2", "1")]],
             Err(indoc! {"
                 version solving failed:
-                Because there is no version of top1 in >1.0.0, <2.0.0 and top1 1.0.0 depends on foo >=1.0.0, <2.0.0, top1 >=1.0.0, <2.0.0 depends on foo >=1.0.0, <2.0.0.
-                And because top2 1.0.0 depends on foo >=2.0.0, <3.0.0 and there is no version of top2 in >1.0.0, <2.0.0, top1 >=1.0.0, <2.0.0, top2 >=1.0.0, <2.0.0 are incompatible.
+                Because there is no version of top2 in >1.0.0, <2.0.0 and top2 1.0.0 depends on foo >=2.0.0, <3.0.0, top2 >=1.0.0, <2.0.0 depends on foo >=2.0.0, <3.0.0.
+                And because top1 1.0.0 depends on foo >=1.0.0, <2.0.0 and there is no version of top1 in >1.0.0, <2.0.0, top1 >=1.0.0, <2.0.0, top2 >=1.0.0, <2.0.0 are incompatible.
                 And because root_1 1.0.0 depends on top1 >=1.0.0, <2.0.0 and root_1 1.0.0 depends on top2 >=1.0.0, <2.0.0, root_1 1.0.0 is forbidden.
             "}),
         )
@@ -789,8 +789,8 @@ mod tests {
             Err(indoc! {"
                 found dependencies on the same package `baz` coming from \
                 incompatible sources:
-                source 1: git+https://example.com/foo.git
-                source 2: git+https://example.com/bar.git
+                source 1: git+https://example.com/bar.git
+                source 2: git+https://example.com/foo.git
             "}),
         )
     }

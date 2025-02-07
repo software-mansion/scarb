@@ -5,6 +5,7 @@ use crate::core::{
 use crate::resolver::algorithm::provider::{PubGrubDependencyProvider, PubGrubPackage};
 use anyhow::bail;
 use indoc::indoc;
+use itertools::Itertools;
 use petgraph::prelude::DiGraphMap;
 use pubgrub::SelectedDependencies;
 use std::collections::HashMap;
@@ -65,6 +66,10 @@ pub fn validate_solution(
     let mut seen: HashMap<PackageName, PubGrubPackage> = Default::default();
     for pkg in solution.keys() {
         if let Some(existing) = seen.get(&pkg.name) {
+            let source_ids = vec![existing.source_id, pkg.source_id]
+                .into_iter()
+                .sorted()
+                .collect_vec();
             bail!(
                 indoc! {"
                     found dependencies on the same package `{}` coming from incompatible \
@@ -73,8 +78,8 @@ pub fn validate_solution(
                     source 2: {}
                 "},
                 pkg.name,
-                existing.source_id,
-                pkg.source_id
+                source_ids[0],
+                source_ids[1]
             );
         }
         seen.insert(pkg.name.clone(), pkg.clone());
