@@ -1,6 +1,9 @@
+use crate::documentable_formatter::{HirDisplay, HirFormatter};
 use cairo_lang_compiler::project::{update_crate_roots_from_project_config, ProjectConfig};
 use cairo_lang_defs::db::{try_ext_as_virtual_impl, DefsDatabase, DefsGroup};
+use cairo_lang_defs::ids::{ImplItemId, LookupItemId, ModuleItemId, TraitItemId};
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
+use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
     init_files_group, AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup,
@@ -14,8 +17,9 @@ use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_syntax::node::db::{SyntaxDatabase, SyntaxGroup};
 use cairo_lang_utils::Upcast;
-
 use salsa;
+use smol_str::SmolStr;
+use std::collections::HashMap;
 
 /// The Cairo compiler Salsa database tailored for scarb-doc usage.
 #[salsa::database(
@@ -68,6 +72,122 @@ impl ScarbDocDatabase {
 
     fn apply_project_config(&mut self, config: ProjectConfig) {
         update_crate_roots_from_project_config(self, &config);
+    }
+
+    pub fn _get_item_signature(&self, item_id: DocumentableItemId) -> String {
+        let item_id_ = item_id;
+        let mut f = HirFormatter {
+            db: self,
+            buf: String::new(),
+            members_buff: None,
+        };
+        match item_id {
+            DocumentableItemId::LookupItem(item_id) => {
+                match item_id {
+                    LookupItemId::ModuleItem(item_id) => {
+                        match item_id {
+                            ModuleItemId::Constant(item_id) => {
+                                return item_id.get_signature(&mut f, item_id_);
+                            }
+                            ModuleItemId::FreeFunction(item_id) => {
+                                return item_id.get_signature(&mut f, item_id_);
+                            }
+                            ModuleItemId::Struct(_) => {
+                                panic!("Unexpected ModuleItemId, use get_complex_type_signature instead")
+                            }
+                            ModuleItemId::Enum(_) => {
+                                panic!("Unexpected ModuleItemId, use get_complex_type_signature instead")
+                            }
+                            ModuleItemId::TypeAlias(_) => {}
+                            ModuleItemId::ImplAlias(item_id) => {
+                                return item_id.get_signature(&mut f, item_id_);
+                            }
+                            ModuleItemId::Trait(item_id) => {
+                                return item_id.get_signature(&mut f, item_id_);
+                            }
+                            ModuleItemId::Impl(item_id) => {
+                                return item_id.get_signature(&mut f, item_id_);
+                            }
+                            ModuleItemId::ExternType(_) => {}
+                            ModuleItemId::ExternFunction(_) => {}
+                            ModuleItemId::Use(_) => {}
+                            ModuleItemId::Submodule(_) => {}
+                        }
+                    }
+                    LookupItemId::TraitItem(item_id) => {
+                        match item_id {
+                            TraitItemId::Function(item_id) => {
+                                let signature = item_id.get_signature(&mut f, item_id_);
+                                // todo: TraitFunction experimental feature
+                                // see: https://book.cairo-lang.org/ch08-02-traits-in-cairo.html?highlight=impl#impl-aliases:~:text=trait%20Extend%3CT%2C%20A%3E%20%7B,iterator%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20self.append(item)%3B%0A%20%20%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%7D%0A%7D
+                                return signature;
+                            }
+                            TraitItemId::Constant(item_id) => {
+                                let signature = item_id.get_signature(&mut f, item_id_);
+                                return signature;
+                            }
+                            TraitItemId::Type(item_id) => {
+                                let signature = item_id.get_signature(&mut f, item_id_);
+                                return signature;
+                            }
+                            TraitItemId::Impl(item_id) => {
+                                let signature = item_id.get_signature(&mut f, item_id_);
+                                return signature;
+                            }
+                        }
+                    }
+                    LookupItemId::ImplItem(item_id) => match item_id {
+                        ImplItemId::Function(item_id) => {
+                            return item_id.get_signature(&mut f, item_id_);
+                        }
+                        ImplItemId::Constant(item_id) => {
+                            return item_id.get_signature(&mut f, item_id_);
+                        }
+                        ImplItemId::Type(item_id) => {
+                            return item_id.get_signature(&mut f, item_id_);
+                        }
+                        ImplItemId::Impl(_) => {
+                            //todo
+                        }
+                    },
+                }
+            }
+            // todo
+            DocumentableItemId::Crate(_) => {}
+            DocumentableItemId::Member(_) => {}
+            DocumentableItemId::Variant(_) => {}
+        };
+        panic!("Not implemented for item_id: {:?}", item_id)
+    }
+
+    pub fn get_complex_type_signature(
+        &self,
+        item_id: DocumentableItemId,
+    ) -> (String, HashMap<SmolStr, String>) {
+        // avoid executing the same code for Members as this data was already generated
+        let item_id_ = item_id;
+        let mut f = HirFormatter {
+            db: self,
+            buf: String::new(),
+            members_buff: Some(HashMap::new()),
+        };
+
+        match item_id {
+            DocumentableItemId::LookupItem(LookupItemId::ModuleItem(module_item_id)) => {
+                match module_item_id {
+                    ModuleItemId::Struct(item_id) => {
+                        let signature = item_id.get_signature(&mut f, item_id_);
+                        (signature, f.members_buff.unwrap())
+                    }
+                    ModuleItemId::Enum(item_id) => {
+                        let signature = item_id.get_signature(&mut f, item_id_);
+                        (signature, f.members_buff.unwrap())
+                    }
+                    _ => panic!("Unexpected ModuleItemId, use _get_item_signature instead"),
+                }
+            }
+            _ => panic!("Unexpected DocumentableItemId: {:?}", item_id),
+        }
     }
 }
 

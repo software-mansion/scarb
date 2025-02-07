@@ -1,17 +1,5 @@
-use std::collections::HashMap;
-
+use crate::db::ScarbDocDatabase;
 use anyhow::Result;
-use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
-use cairo_lang_doc::parser::DocumentationCommentToken;
-use cairo_lang_semantic::items::functions::GenericFunctionId;
-use cairo_lang_semantic::items::us::SemanticUseEx;
-use cairo_lang_semantic::items::visibility::Visibility;
-use cairo_lang_semantic::resolve::ResolvedGenericItem;
-use cairo_lang_syntax::node::helpers::QueryAttrs;
-use cairo_lang_utils::{LookupIntern, Upcast};
-use itertools::chain;
-use serde::Serialize;
-
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, GenericTypeId, ImplAliasId,
@@ -20,19 +8,29 @@ use cairo_lang_defs::ids::{
     StructId, SubmoduleId, TopLevelLanguageElementId, TraitConstantId, TraitFunctionId, TraitId,
     TraitItemId, TraitTypeId, VariantId,
 };
+use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
 use cairo_lang_doc::db::DocGroup;
 use cairo_lang_doc::documentable_item::DocumentableItemId;
+use cairo_lang_doc::parser::DocumentationCommentToken;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
+use cairo_lang_semantic::items::functions::GenericFunctionId;
+use cairo_lang_semantic::items::us::SemanticUseEx;
+use cairo_lang_semantic::items::visibility::{self, Visibility};
+use cairo_lang_semantic::resolve::ResolvedGenericItem;
 use cairo_lang_semantic::{ConcreteTypeId, GenericArgumentId, TypeLongId};
+use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{
     ast::{self},
     SyntaxNode, TypedSyntaxNode,
 };
-
-use crate::db::ScarbDocDatabase;
+use cairo_lang_utils::{LookupIntern, Upcast};
+use itertools::chain;
+use serde::Serialize;
 use serde::Serializer;
+use smol_str::SmolStr;
+use std::collections::HashMap;
 
 #[derive(Serialize, Clone)]
 pub struct Crate {
@@ -463,6 +461,8 @@ pub struct ItemData {
     pub doc: Option<Vec<DocumentationCommentToken>>,
     pub signature: Option<String>,
     pub full_path: String,
+    #[serde(skip_serializing)]
+    pub members_signature: Option<HashMap<SmolStr, String>>,
 }
 
 impl ItemData {
@@ -470,14 +470,20 @@ impl ItemData {
         db: &ScarbDocDatabase,
         id: impl TopLevelLanguageElementId,
         documentable_item_id: DocumentableItemId,
+        signature: Option<String>,
     ) -> Self {
+        let signature = match signature {
+            Some(s) => s,
+            None => db._get_item_signature(documentable_item_id),
+        };
         Self {
             id: documentable_item_id,
             name: id.name(db).into(),
             doc: db.get_item_documentation_as_tokens(documentable_item_id),
-            signature: Some(db.get_item_signature(documentable_item_id)),
+            signature: Some(signature),
             full_path: id.full_path(db),
             parent_full_path: Some(id.parent_module(db).full_path(db)),
+            members_signature: None,
         }
     }
 
@@ -493,6 +499,7 @@ impl ItemData {
             signature: None,
             full_path: id.full_path(db),
             parent_full_path: Some(id.parent_module(db).full_path(db)),
+            members_signature: None,
         }
     }
 
@@ -505,6 +512,25 @@ impl ItemData {
             signature: None,
             full_path: ModuleId::CrateRoot(id).full_path(db),
             parent_full_path: None,
+            members_signature: None,
+        }
+    }
+
+    pub fn new_complex_type(
+        db: &ScarbDocDatabase,
+        id: impl TopLevelLanguageElementId,
+        documentable_item_id: DocumentableItemId,
+    ) -> Self {
+        // struct or enum
+        let (signature, members_signature) = db.get_complex_type_signature(documentable_item_id);
+        Self {
+            id: documentable_item_id,
+            name: id.name(db).into(),
+            doc: db.get_item_documentation_as_tokens(documentable_item_id),
+            signature: Some(signature),
+            full_path: id.full_path(db),
+            parent_full_path: Some(id.parent_module(db).full_path(db)),
+            members_signature: Some(members_signature),
         }
     }
 }
@@ -548,6 +574,7 @@ impl Constant {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::Constant(id)).into(),
+                None,
             ),
         }
     }
@@ -573,6 +600,7 @@ impl FreeFunction {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::FreeFunction(id)).into(),
+                None,
             ),
         }
     }
@@ -594,7 +622,7 @@ impl Struct {
     pub fn new(db: &ScarbDocDatabase, id: StructId, include_private_items: bool) -> Maybe<Self> {
         let members = db.struct_members(id)?;
 
-        let item_data = ItemData::new(
+        let item_data = ItemData::new_complex_type(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
@@ -608,7 +636,14 @@ impl Struct {
                     .stable_location(db.upcast())
                     .syntax_node(db.upcast());
                 if (include_private_items || visible) && !is_doc_hidden_attr(db, syntax_node) {
-                    Some(Ok(Member::new(db, semantic_member.id)))
+                    let signature = item_data
+                        .members_signature
+                        .as_ref()
+                        .unwrap()
+                        .get(&semantic_member.id.name(db))
+                        .unwrap()
+                        .clone();
+                    Some(Ok(Member::new(db, semantic_member.id, signature)))
                 } else {
                     None
                 }
@@ -643,13 +678,13 @@ pub struct Member {
 }
 
 impl Member {
-    pub fn new(db: &ScarbDocDatabase, id: MemberId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: MemberId, signature: String) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Member(id)),
+            item_data: ItemData::new(db, id, DocumentableItemId::Member(id), Some(signature)),
         }
     }
 }
@@ -669,7 +704,7 @@ pub struct Enum {
 impl Enum {
     pub fn new(db: &ScarbDocDatabase, id: EnumId) -> Maybe<Self> {
         let variants = db.enum_variants(id)?;
-        let item_data = ItemData::new(
+        let item_data = ItemData::new_complex_type(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Enum(id)).into(),
@@ -677,7 +712,19 @@ impl Enum {
 
         let variants = variants
             .iter()
-            .map(|(_name, variant_id)| Variant::new(db, *variant_id))
+            .map(|(_name, variant_id)| {
+                Variant::new(
+                    db,
+                    *variant_id,
+                    item_data
+                        .members_signature
+                        .as_ref()
+                        .unwrap()
+                        .get(&_name.clone())
+                        .unwrap()
+                        .clone(),
+                )
+            })
             .collect::<Vec<_>>();
 
         let node = id.stable_ptr(db);
@@ -708,13 +755,13 @@ pub struct Variant {
 }
 
 impl Variant {
-    pub fn new(db: &ScarbDocDatabase, id: VariantId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, id: VariantId, signature: String) -> Self {
         let node = id.stable_ptr(db);
 
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, DocumentableItemId::Variant(id)),
+            item_data: ItemData::new(db, id, DocumentableItemId::Variant(id), Some(signature)),
         }
     }
 }
@@ -739,6 +786,7 @@ impl TypeAlias {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::TypeAlias(id)).into(),
+                None,
             ),
         }
     }
@@ -764,6 +812,7 @@ impl ImplAlias {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ImplAlias(id)).into(),
+                None,
             ),
         }
     }
@@ -789,6 +838,7 @@ impl Trait {
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Trait(id)).into(),
+            None,
         );
 
         let trait_constants = db.trait_constants(id)?;
@@ -856,6 +906,7 @@ impl TraitConstant {
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Constant(id)).into(),
+                None,
             ),
         }
     }
@@ -882,6 +933,7 @@ impl TraitType {
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Type(id)).into(),
+                None,
             ),
         }
     }
@@ -908,6 +960,7 @@ impl TraitFunction {
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Function(id)).into(),
+                None,
             ),
         }
     }
@@ -933,6 +986,7 @@ impl Impl {
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Impl(id)).into(),
+            None,
         );
 
         let impl_types = db.impl_types(id)?;
@@ -996,7 +1050,12 @@ impl ImplType {
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id)).into()),
+            item_data: ItemData::new(
+                db,
+                id,
+                LookupItemId::ImplItem(ImplItemId::Type(id)).into(),
+                None,
+            ),
         }
     }
 }
@@ -1022,6 +1081,7 @@ impl ImplConstant {
                 db,
                 id,
                 LookupItemId::ImplItem(ImplItemId::Constant(id)).into(),
+                None,
             ),
         }
     }
@@ -1048,6 +1108,7 @@ impl ImplFunction {
                 db,
                 id,
                 LookupItemId::ImplItem(ImplItemId::Function(id)).into(),
+                None,
             ),
         }
     }
@@ -1073,6 +1134,7 @@ impl ExternType {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternType(id)).into(),
+                None,
             ),
         }
     }
@@ -1098,6 +1160,7 @@ impl ExternFunction {
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternFunction(id)).into(),
+                None,
             ),
         }
     }
