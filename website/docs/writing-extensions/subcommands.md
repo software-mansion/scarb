@@ -17,7 +17,7 @@ Any additional arguments on the command line after `${command}` will be forwarde
 Additionally, Scarb passes more contextual information via environment variables:
 
 | Environment variable  | Description                                                                                |
-|-----------------------|--------------------------------------------------------------------------------------------|
+| --------------------- | ------------------------------------------------------------------------------------------ |
 | `SCARB`               | Path to Scarb executable.                                                                  |
 | `PATH`                | System `$PATH` but augmented with `bin` directory in Scarb's [local data directory][dirs]. |
 | `SCARB_CACHE`         | Path to Scarb's [cache][dirs] directory.                                                   |
