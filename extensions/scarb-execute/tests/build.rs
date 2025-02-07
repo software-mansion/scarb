@@ -281,6 +281,34 @@ fn no_target_defined() {
 
     "#},
     );
+}
+
+#[test]
+fn undefined_target_specified() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+
+            #[executable]
+            fn secondary() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
 
     let output = Scarb::quick_snapbox()
         .arg("execute")

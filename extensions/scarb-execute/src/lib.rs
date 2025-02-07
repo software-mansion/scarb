@@ -1,4 +1,4 @@
-use crate::args::OutputFormat;
+use crate::args::{BuildTargetSpecifier, OutputFormat};
 use crate::output::{ExecutionOutput, ExecutionResources, ExecutionStatus, ExecutionSummary};
 use anyhow::{bail, ensure, Context, Result};
 use bincode::enc::write::Writer;
@@ -57,12 +57,7 @@ pub fn execute(
     let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
     let scarb_build_dir = scarb_target_dir.join(env::var("SCARB_PROFILE")?);
 
-    let build_target = find_build_target(
-        metadata,
-        package,
-        args.executable_name.as_deref(),
-        args.executable_function.as_deref(),
-    )?;
+    let build_target = find_build_target(metadata, package, &args.build_target_args)?;
 
     ui.print(Status::new("Executing", &package.name));
     let executable = load_prebuilt_executable(
@@ -216,23 +211,31 @@ pub fn execute(
 fn find_build_target<'a>(
     metadata: &Metadata,
     package: &'a PackageMetadata,
-    executable_name: Option<&str>,
-    executable_function: Option<&str>,
+    build_target_args: &BuildTargetSpecifier,
 ) -> Result<&'a TargetMetadata> {
-    let mut executable_targets = package
+    let executable_targets = package
         .targets
         .iter()
-        .filter(|target| target.kind.as_str() == "executable");
+        .filter(|target| target.kind.as_str() == "executable")
+        .collect::<Vec<_>>();
 
-    let matched_by_args = executable_targets.find(|target| {
+    ensure!(
+        !executable_targets.is_empty(),
+        missing_executable_target_error(metadata, package)
+    );
+
+    let matched_by_args = executable_targets.iter().find(|target| {
         let build_target_function = target
             .params
             .as_object()
             .and_then(|params| params.get("function"))
             .and_then(|x| x.as_str());
-        let function_matches =
-            build_target_function.is_some_and(|left| Some(left) == executable_function);
-        let name_matches = executable_name.is_some_and(|name| target.name == name);
+        let function_matches = build_target_function
+            .is_some_and(|left| Some(left) == build_target_args.executable_function.as_deref());
+        let name_matches = build_target_args
+            .executable_name
+            .as_deref()
+            .is_some_and(|name| target.name == name);
         name_matches || function_matches
     });
 
@@ -241,29 +244,21 @@ fn find_build_target<'a>(
     }
 
     // `--executable-name` and `--executable-function` names have not matched any target.
-    if let Some(name) = executable_name {
+    if let Some(name) = build_target_args.executable_name.as_deref() {
         bail!(
             "no executable target with name `{name}` found for package `{}`",
             package.name
         )
     }
-    if let Some(function) = executable_function {
+    if let Some(function) = build_target_args.executable_function.as_deref() {
         bail!(
             "no executable target with executable function `{function}` found for package `{}`",
             package.name
         )
     }
-    let mut executable_targets = package
-        .targets
-        .iter()
-        .filter(|target| target.kind.as_str() == "executable");
-
-    let Some(first_target) = executable_targets.next() else {
-        bail!(missing_executable_target_error(metadata, package))
-    };
 
     ensure!(
-        executable_targets.next().is_none(),
+        executable_targets.len() == 1,
         formatdoc! {r#"
             more than one executable target found for package `{}`
             help: specify the target with `--executable-name` or `--executable-function`
@@ -271,7 +266,7 @@ fn find_build_target<'a>(
         }
     );
 
-    Ok(first_target)
+    Ok(executable_targets[0])
 }
 
 fn missing_executable_target_error(metadata: &Metadata, package: &PackageMetadata) -> String {
