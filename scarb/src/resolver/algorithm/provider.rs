@@ -179,21 +179,16 @@ impl PubGrubDependencyProvider {
     }
 
     fn request_dependencies(&self, summary: &Summary) -> Result<(), DependencyProviderError> {
-        for dep in summary.dependencies.iter() {
-            let locked_package_id = self.lockfile.packages_matching(dep.clone());
-            let dep = if let Some(locked_package_id) = locked_package_id {
-                rewrite_locked_dependency(dep.clone(), locked_package_id?)
-            } else {
-                dep.clone()
-            };
-
+        for dependency in summary.dependencies.iter() {
+            let dep = lock_dependency(&self.lockfile, dependency.clone())?;
             if self.state.index.packages().register(dep.clone()) {
                 self.request_sink
-                    .blocking_send(Request::Package(dep.clone()))
+                    .blocking_send(Request::Package(dep))
                     .unwrap();
             }
 
-            let dep = rewrite_path_dependency_source_id(summary.package_id, &dep)?;
+            let dep = rewrite_path_dependency_source_id(summary.package_id, dependency);
+            let dep = lock_dependency(&self.lockfile, dep)?;
             if self.state.index.packages().register(dep.clone()) {
                 self.request_sink
                     .blocking_send(Request::Package(dep))
@@ -318,20 +313,14 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .filtered_full_dependencies(dep_filter)
             .cloned()
             .map(|dependency| {
-                let original_dep = dependency.clone();
-                let dependency =
-                    rewrite_path_dependency_source_id(summary.package_id, &dependency)?;
-                let locked_package_id = self.lockfile.packages_matching(dependency.clone());
-                let dependency = if let Some(locked_package_id) = locked_package_id {
-                    rewrite_locked_dependency(dependency.clone(), locked_package_id?)
-                } else {
-                    dependency
-                };
+                let original_dependency = dependency.clone();
+                let dependency = rewrite_path_dependency_source_id(summary.package_id, &dependency);
+                let dependency = lock_dependency(&self.lockfile, dependency)?;
 
                 let dep_name = dependency.name.clone().to_string();
                 let summaries = self.wait_for_summaries(dependency.clone())?;
                 let summaries = if summaries.is_empty() {
-                    self.wait_for_summaries(original_dep.clone())?
+                    self.wait_for_summaries(original_dependency.clone())?
                 } else {
                     summaries
                 };
@@ -366,6 +355,18 @@ impl From<DependencyVersionReq> for SemverPubgrub {
     }
 }
 
+/// Check lockfile for a matching package.
+/// Rewrite the dependency if a matching package is found.
+fn lock_dependency(
+    lockfile: &Lockfile,
+    dep: ManifestDependency,
+) -> Result<ManifestDependency, DependencyProviderError> {
+    lockfile
+        .packages_matching(dep.clone())
+        .map(|locked_package_id| Ok(rewrite_locked_dependency(dep.clone(), locked_package_id?)))
+        .unwrap_or(Ok(dep))
+}
+
 pub fn rewrite_locked_dependency(
     dependency: ManifestDependency,
     locked_package_id: PackageId,
@@ -384,7 +385,7 @@ pub fn rewrite_locked_dependency(
 pub fn rewrite_path_dependency_source_id(
     package_id: PackageId,
     dependency: &ManifestDependency,
-) -> Result<ManifestDependency, DependencyProviderError> {
+) -> ManifestDependency {
     // Rewrite path dependencies for git sources.
     if package_id.source_id.is_git() && dependency.source_id.is_path() {
         let rewritten_dep = ManifestDependency::builder()
@@ -394,9 +395,9 @@ pub fn rewrite_path_dependency_source_id(
             .version_req(dependency.version_req.clone())
             .build();
 
-        return Ok(rewritten_dep);
+        return rewritten_dep;
     };
-    Ok(dependency.clone())
+    dependency.clone()
 }
 
 /// Error thrown while trying to execute `scarb` command.
