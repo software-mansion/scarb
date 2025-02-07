@@ -416,7 +416,7 @@ fn git_command() -> Command {
 
 fn with_verbosity_flags(cmd: &mut Command, config: &Config) {
     match config.ui().verbosity() {
-        Verbosity::Normal => {}
+        Verbosity::Normal | Verbosity::NoWarnings => {}
         Verbosity::Verbose => {
             cmd.arg("--verbose");
         }
