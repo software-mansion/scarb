@@ -128,7 +128,7 @@ impl ArtifactsWriter {
             let package_name = contract_selector.package();
             let contract_stem = file_stem_calculator.get_stem(contract_selector.full_path());
 
-            let file_stem = format!("{}_{contract_stem}", self.target_name);
+            let file_stem = format!("{}_{}", self.target_name, contract_stem.clone());
 
             let mut artifact = ContractArtifacts::new(
                 package_name,
@@ -141,9 +141,9 @@ impl ArtifactsWriter {
                 let sierra_felts = class.sierra_program.len();
                 if sierra_felts > MAX_SIERRA_PROGRAM_FELTS {
                     ws.config().ui().warn(formatdoc! {r#"
-                        Sierra program exceeds maximum byte-code size on Starknet:
+                        Sierra program exceeds maximum byte-code size on Starknet for contract `{}`:
                         {MAX_SIERRA_PROGRAM_FELTS} felts allowed. Actual size: {sierra_felts} felts.
-                    "#});
+                    "#, contract_stem.clone()});
                 }
 
                 let file_name = format!("{file_stem}{extension_prefix}.contract_class.json");
@@ -157,9 +157,9 @@ impl ArtifactsWriter {
                 )?;
                 if class_size > MAX_CONTRACT_CLASS_BYTES {
                     ws.config().ui().warn(formatdoc! {r#"
-                        Contract class size exceeds maximum allowed size on Starknet:
+                        Contract class size exceeds maximum allowed size on Starknet for contract `{}`:
                         {MAX_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {class_size} bytes.
-                    "#});
+                    "#, contract_stem.clone()});
                 }
                 artifact.artifacts.sierra = Some(file_name);
             }
@@ -169,9 +169,9 @@ impl ArtifactsWriter {
                     let casm_felts = casm_class.bytecode.len();
                     if casm_felts > MAX_CASM_PROGRAM_FELTS {
                         ws.config().ui().warn(formatdoc! {r#"
-                            CASM program exceeds maximum byte-code size on Starknet:
+                            CASM program exceeds maximum byte-code size on Starknet for contract `{}`:
                             {MAX_CASM_PROGRAM_FELTS} felts allowed. Actual size: {casm_felts} felts.
-                        "#});
+                        "#, contract_stem.clone()});
                     }
 
                     let file_name =
@@ -186,9 +186,9 @@ impl ArtifactsWriter {
                     )?;
                     if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
                         ws.config().ui().warn(formatdoc! {r#"
-                            Compiled contract class size exceeds maximum allowed size on Starknet:
+                            Compiled contract class size exceeds maximum allowed size on Starknet for contract `{}`:
                             {MAX_COMPILED_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {compiled_class_size} bytes.
-                        "#});
+                        "#, contract_stem.clone()});
                     }
                     artifact.artifacts.casm = Some(file_name);
                 }
