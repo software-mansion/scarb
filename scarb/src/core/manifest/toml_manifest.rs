@@ -303,6 +303,7 @@ pub struct TomlExecutableTargetParams {
     ///
     /// In general, syscalls are not allowed in executables, as they are currently not checked.
     pub allow_syscalls: Option<bool>,
+    pub function: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]

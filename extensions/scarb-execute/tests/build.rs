@@ -237,6 +237,197 @@ fn can_print_panic_reason() {
         .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
+#[test]
+fn no_target_defined() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+
+            #[executable]
+            fn secondary() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    let output = Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--no-build")
+        .current_dir(&t)
+        .assert()
+        .failure();
+    output_assert(
+        output,
+        indoc! {r#"
+        error: no executable target found for package `hello_world`
+        help: you can add `executable` target to the package manifest with following excerpt
+        -> Scarb.toml
+            [executable]
+
+            [dependencies]
+            cairo_execute = "[..].[..].[..]"
+
+    "#},
+    );
+}
+
+#[test]
+fn undefined_target_specified() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+
+            #[executable]
+            fn secondary() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    let output = Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--executable-name=secondary")
+        .arg("--no-build")
+        .current_dir(&t)
+        .assert()
+        .failure();
+    output_assert(
+        output,
+        "error: no executable target with name `secondary` found for package `hello_world`\n",
+    );
+
+    let output = Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--executable-function=secondary")
+        .arg("--no-build")
+        .current_dir(&t)
+        .assert()
+        .failure();
+    output_assert(
+        output,
+        "error: no executable target with executable function `secondary` found for package `hello_world`\n",
+    );
+}
+
+fn two_targets() -> ProjectBuilder {
+    ProjectBuilder::start()
+        .name("hello_world")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            function = "hello_world::main"
+
+            [[target.executable]]
+            name = "secondary"
+            function = "hello_world::secondary"
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                24
+            }
+
+            #[executable]
+            fn secondary() -> felt252 {
+                42
+            }
+        "#})
+}
+
+#[test]
+fn can_choose_build_target() {
+    let t = TempDir::new().unwrap();
+    two_targets().build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--executable-name=secondary")
+        .arg("--print-program-output")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling executable(hello_world) hello_world v1.0.0 ([..]Scarb.toml)
+            [..]Compiling executable(secondary) hello_world v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing hello_world
+            Program output:
+            0
+            42
+            Saving output to: target/execute/hello_world/execution1
+        "#});
+
+    // Re-using the same build artifact
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--no-build")
+        .arg("--executable-function=hello_world::main")
+        .arg("--print-program-output")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Executing hello_world
+            Program output:
+            0
+            24
+            Saving output to: target/execute/hello_world/execution2
+        "#});
+}
+
+#[test]
+fn executable_must_be_chosen() {
+    let t = TempDir::new().unwrap();
+    two_targets().build(&t);
+
+    let output = Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--no-build")
+        .current_dir(&t)
+        .assert()
+        .failure();
+
+    output_assert(
+        output,
+        indoc! {r#"
+            error: more than one executable target found for package `hello_world`
+            help: specify the target with `--executable-name` or `--executable-function`
+            
+        "#},
+    );
+}
+
 fn output_assert(output: OutputAssert, expected: &str) {
     #[cfg(windows)]
     output.stdout_matches(format!(

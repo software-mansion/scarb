@@ -205,14 +205,18 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
     Ok(project_config)
 }
 
-pub(crate) fn has_starknet_plugin(db: &RootDatabase) -> bool {
-    db.macro_plugins()
-        .iter()
-        .any(|plugin| is_starknet_plugin(&**plugin))
+pub(crate) fn has_plugin(db: &RootDatabase, predicate: fn(&dyn MacroPlugin) -> bool) -> bool {
+    db.macro_plugins().iter().any(|plugin| predicate(&**plugin))
 }
 
-fn is_starknet_plugin(plugin: &dyn MacroPlugin) -> bool {
-    // Can this be done in less "hacky" way? TypeId is not working here, because we deal with
+pub(crate) fn is_starknet_plugin(plugin: &dyn MacroPlugin) -> bool {
+    // TODO: Can this be done in less "hacky" way? TypeId is not working here, because we deal with
     // trait objects.
     format!("{:?}", plugin).contains("StarknetPlugin")
+}
+
+pub(crate) fn is_executable_plugin(plugin: &dyn MacroPlugin) -> bool {
+    // TODO: Can this be done in less "hacky" way? TypeId is not working here, because we deal with
+    // trait objects.
+    format!("{:?}", plugin).contains("ExecutablePlugin")
 }

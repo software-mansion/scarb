@@ -1191,3 +1191,142 @@ fn executable_target_requires_disabled_gas() {
     t.child("target/dev/executable_test.executable.json")
         .assert(predicates::path::exists().not());
 }
+
+#[test]
+fn compile_executable_with_missing_plugin() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("executable_test")
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling executable_test v1.0.0 ([..]Scarb.toml)
+        warn: package `executable_test` declares `executable` target, but does not depend on `cairo_execute` package
+        note: this may cause contract compilation to fail with cryptic errors
+        help: add dependency on `cairo_execute` to package manifest
+         --> Scarb.toml
+            [dependencies]
+            cairo_execute = "[..]"
+        
+        error: Plugin diagnostic: Unsupported attribute.
+         --> [..]lib.cairo:1:1
+        #[executable]
+        ^^^^^^^^^^^^^
+        
+        error: could not compile `executable_test` due to previous error
+        "#});
+
+    t.child("target/dev/executable_test.executable.json")
+        .assert(predicates::path::exists().not());
+}
+
+#[test]
+fn executable_for_multiple_functions() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            function = "hello_world::main"
+
+            [[target.executable]]
+            name = "secondary"
+            function = "hello_world::secondary"
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+
+            #[executable]
+            fn secondary() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    t.child("target/dev/hello_world.executable.json")
+        .assert(predicates::path::exists());
+    t.child("target/dev/secondary.executable.json")
+        .assert(predicates::path::exists());
+}
+
+#[test]
+fn ambiguous_executable_function() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello_world")
+        .dep_cairo_test()
+        .dep_starknet()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> felt252 {
+                42
+            }
+
+            #[executable]
+            fn secondary() -> felt252 {
+                42
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+               Compiling hello_world v1.0.0 ([..]Scarb.toml)
+            error: more than one executable found in the main crate: 
+            [..]hello_world::main
+            [..]hello_world::secondary
+            help: add a separate `executable` target for each of your executable functions
+            -> Scarb.toml
+            [[target.executable]]
+            name = "main"
+            function = "hello_world::main"
+
+            [[target.executable]]
+            name = "secondary"
+            function = "hello_world::secondary"
+            error: could not compile `hello_world` due to previous error
+        "#});
+}
