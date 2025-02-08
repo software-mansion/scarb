@@ -464,6 +464,45 @@ fn transitive_path_dep() {
 }
 
 #[test]
+fn transitive_path_dep_with_lock() {
+    let git_dep = gitx::new("dep1", |t| {
+        ProjectBuilder::start()
+            .name("dep0")
+            .dep_cairo_test()
+            .lib_cairo("fn hello() -> felt252 { 42 }")
+            .build(&t.child("zero"));
+        ProjectBuilder::start()
+            .name("dep1")
+            .dep_cairo_test()
+            .lib_cairo("fn hello() -> felt252 { dep0::hello() }")
+            .dep("dep0", Dep.path("../zero"))
+            .build(&t.child("one"));
+    });
+
+    let p = TempDir::new().unwrap();
+    let t = p.child("1");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_cairo_test()
+        .dep("dep1", &git_dep)
+        .lib_cairo("fn world() -> felt252 { dep1::hello() }")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+}
+
+#[test]
 fn deps_only_cloned_to_checkouts_once() {
     let cache_dir = TempDir::new().unwrap().child("c");
     let git_dep = gitx::new("dep1", |t| {

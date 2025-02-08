@@ -199,7 +199,6 @@ fn path_version() {
 }
 
 #[test]
-#[ignore = "TODO(#1883): Unignore after fixing pubgrub and changing default registry."]
 fn runs_resolver_if_network_is_allowed() {
     let t = TempDir::new().unwrap();
 
