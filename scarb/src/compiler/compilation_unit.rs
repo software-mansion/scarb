@@ -91,7 +91,23 @@ pub struct CompilationUnitComponent {
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this component.
     pub cfg_set: Option<CfgSet>,
     /// Dependencies of this component.
-    pub dependencies: Vec<CompilationUnitComponentId>,
+    pub dependencies: Vec<CompilationUnitDependency>,
+}
+
+/// The kind of the compilation unit dependency.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum CompilationUnitDependency {
+    Library(CompilationUnitComponentId),
+    Plugin(CompilationUnitComponentId),
+}
+
+impl CompilationUnitDependency {
+    pub fn component_id(&self) -> &CompilationUnitComponentId {
+        match self {
+            CompilationUnitDependency::Library(id) => id,
+            CompilationUnitDependency::Plugin(id) => id,
+        }
+    }
 }
 
 /// Information about a single package that is a compiler plugin to load for [`CompilationUnit`].
