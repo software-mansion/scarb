@@ -78,8 +78,7 @@ cairo-lang-utils = { version = "*", features = ["env_logger"] }
 cairo-language-server = "*"
 cairo-lint-core = "*"
 cairo-vm = "1.0.1"
-stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "cb1ef057e80e3d4f40891efcaa131c32bd8a6d78", features = ["std"] }
-stwo-prover = { git = "https://github.com/starkware-libs/stwo", rev = "a194fad", features = ["parallel"] }
+stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "bac7248", features = ["std"] }
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
