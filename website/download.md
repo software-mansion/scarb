@@ -42,7 +42,7 @@ asdf plugin add scarb
 Show all installable versions:
 
 ```shell
-asdf list-all scarb
+asdf list all scarb
 ```
 
 Install latest version:
@@ -60,7 +60,7 @@ asdf install scarb {{ rel.sampleVersion }}
 Set a version globally (in your `~/.tool-versions` file):
 
 ```shell
-asdf global scarb latest
+asdf set -u scarb latest
 ```
 
 Check [asdf guide](https://asdf-vm.com/guide/getting-started.html) for more instructions on how to install & manage
@@ -121,12 +121,15 @@ As for now, Scarb on Windows needs manual installation, but necessary steps are 
    A folder named `scarb` in
    your [`%LOCALAPPDATA%\Programs`](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid?redirectedfrom=MSDN#FOLDERID_UserProgramFiles)
    directory will suffice:
+
    ```batch
    %LOCALAPPDATA%\Programs\scarb
    ```
+
 3. Add path to the `scarb\bin` directory to your `PATH` environment variable.
 4. Verify installation by running the following command in new terminal session, it should print Scarb and Cairo
    language versions:
+
    ```shell
    scarb --version
    ```
