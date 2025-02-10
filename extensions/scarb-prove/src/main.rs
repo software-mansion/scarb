@@ -13,7 +13,7 @@ use std::fs;
 use std::process::ExitCode;
 use stwo_cairo_prover::cairo_air::{prove_cairo, ProverConfig};
 use stwo_cairo_prover::input::vm_import::adapt_vm_output;
-use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
+use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
 
 /// Proves `scarb execute` output using Stwo prover.
 #[derive(Parser, Clone, Debug)]
