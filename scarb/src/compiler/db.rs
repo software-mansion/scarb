@@ -1,5 +1,8 @@
 use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
-use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent};
+use crate::compiler::{
+    CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
+    CompilationUnitDependency,
+};
 use crate::core::Workspace;
 use crate::DEFAULT_MODULE_MAIN_FILE;
 use anyhow::{anyhow, Result};
@@ -153,15 +156,21 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
             let dependencies = component
                 .dependencies
                 .iter()
-                .map(|compilation_unit_component_id| {
-                    let compilation_unit_component = unit.components.iter().find(|component| component.id == *compilation_unit_component_id)
-                        .expect("dependency of a component is guaranteed to exist in compilation unit components");
-                    (
-                        compilation_unit_component.cairo_package_name().to_string(),
-                        DependencySettings {
-                            discriminator: compilation_unit_component.id.to_discriminator()
-                        },
-                    )
+                .filter_map(|dependency| {
+                    match dependency {
+                        CompilationUnitDependency::Plugin(_) => None,
+                        CompilationUnitDependency::Library(component_id) => {
+                            let compilation_unit_component = unit.components.iter().find(|component| component.id == *component_id)
+                                .expect("Library dependency of a component is guaranteed to exist in compilation unit components");
+
+                            Some((
+                                compilation_unit_component.cairo_package_name().to_string(),
+                                DependencySettings {
+                                    discriminator: compilation_unit_component.id.to_discriminator()
+                                },
+                            ))
+                        }
+                    }
                 })
                 .collect();
 
