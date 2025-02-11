@@ -1,6 +1,7 @@
 use assert_fs::TempDir;
 use indoc::indoc;
 use scarb_test_support::{command::Scarb, project_builder::ProjectBuilder};
+use snapbox::cmd::OutputAssert;
 
 #[test]
 fn test_diagnostics_success() {
@@ -101,137 +102,55 @@ fn test_diagnostics_error() {
         .name("hello_world")
         .lib_cairo(indoc! {r#"
             #[starknet::contract]
-            pub(crate) mod DualCaseERC20Mock {
-                use starknet::ContractAddress;
-
-                component!(path: ERC20Component, storage: erc20, event: ERC20Event);
-
-                #[storage]
-                pub struct Storage {
-                    #[substorage(v0)]
-                    pub erc20: ERC20Component::Storage
-                }
-
-                #[event]
-                enum Event {
-                    #[flat]
-                    ERC20Event: ERC20Component::Event
-                }
+            pub(crate) mod DualCaseERC20Mock 
             }
-          }
+          
         "#})
         .build(&t);
 
-    let snapbox = Scarb::quick_snapbox()
+    let output = Scarb::quick_snapbox()
         .arg("doc")
         .current_dir(&t)
         .assert()
         .failure();
 
+    failure_assert(
+        output,
+        indoc! {r#"
+            error: Missing token TerminalSemicolon.
+             --> [..]lib.cairo:2:33
+            pub(crate) mod DualCaseERC20Mock 
+                                            ^
+            
+            error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
+             --> [..]lib.cairo:3:1
+            }
+            ^
+            
+            error: Plugin diagnostic: Contracts without body are not supported.
+             --> [..]lib.cairo:1:1-2:32
+              #[starknet::contract]
+             _^
+            | pub(crate) mod DualCaseERC20Mock 
+            |________________________________^
+            
+            error[E0005]: Module file not found. Expected path: [..]DualCaseERC20Mock.cairo
+             --> [..]lib.cairo:1:1-2:32
+              #[starknet::contract]
+             _^
+            | pub(crate) mod DualCaseERC20Mock 
+            |________________________________^
+            
+            error: Compilation failed.
+        "#},
+    );
+}
+
+fn failure_assert(output: OutputAssert, expected: &str) {
     #[cfg(windows)]
-      snapbox.stdout_matches(indoc! {r#"
-    error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
-     --> [..]
-    }
-    ^
-
-    error: Identifier not found.
-     --> [..]
-              ERC20Event: ERC20Component::Event
-                          ^^^^^^^^^^^^^^
-
-    error: Identifier not found.
-     --> [..]
-              pub erc20: ERC20Component::Storage
-                         ^^^^^^^^^^^^^^
-
-    error: Type annotations needed. Failed to infer ?0.
-     --> [..]
-          #[storage]
-          ^^^^^^^^^^
-
-    error: Invalid drop trait implementation, Trait `core::traits::Drop::<<missing>>` has multiple implementations, in: `hello_world::DualCaseERC20Mock::ContractStateDrop`, `hello_world::DualCaseERC20Mock::StorageStorageBaseDrop`
-     --> [..]
-            #[storage]
-     _______^
-    | ...
-    |       }
-    |_______^
-
-    error: Trait has no implementation in context: core::starknet::event::Event::<hello_world::DualCaseERC20Mock::Event>.
-     --> [..]
-      #[starknet::contract]
-      ^^^^^^^^^^^^^^^^^^^^^
-
-    error: Identifier not found.
-     --> [..]
-          component!(path: ERC20Component, storage: erc20, event: ERC20Event);
-                           ^^^^^^^^^^^^^^
-
-    error: Invalid drop trait implementation, Candidate impl core::starknet::storage::storage_base::FlattenedStorageDrop::<?0> has an unused generic parameter.
-     --> [..]
-          #[storage]
-          ^^^^^^^^^^
-
-    error: Invalid copy trait implementation, Candidate impl core::starknet::storage::storage_base::FlattenedStorageCopy::<?0> has an unused generic parameter.
-     --> [..]
-          #[storage]
-          ^^^^^^^^^^
-
-    error: Compilation failed.
-    error: process did not exit successfully: exit code: 1
-    "#});
-
+    output.stdout_matches(format!(
+        "{expected}error: process did not exit successfully: exit code: 1\n"
+    ));
     #[cfg(not(windows))]
-    snapbox.stdout_matches(indoc! {r#"
-    error: Skipped tokens. Expected: Const/Enum/ExternFunction/ExternType/Function/Impl/InlineMacro/Module/Struct/Trait/TypeAlias/Use or an attribute.
-     --> [..]
-    }
-    ^
-
-    error: Identifier not found.
-     --> [..]
-              ERC20Event: ERC20Component::Event
-                          ^^^^^^^^^^^^^^
-
-    error: Identifier not found.
-     --> [..]
-              pub erc20: ERC20Component::Storage
-                         ^^^^^^^^^^^^^^
-
-    error: Type annotations needed. Failed to infer ?0.
-     --> [..]
-          #[storage]
-          ^^^^^^^^^^
-
-    error: Invalid drop trait implementation, Trait `core::traits::Drop::<<missing>>` has multiple implementations, in: `hello_world::DualCaseERC20Mock::ContractStateDrop`, `hello_world::DualCaseERC20Mock::StorageStorageBaseDrop`
-     --> [..]
-            #[storage]
-     _______^
-    | ...
-    |       }
-    |_______^
-
-    error: Trait has no implementation in context: core::starknet::event::Event::<hello_world::DualCaseERC20Mock::Event>.
-     --> [..]
-      #[starknet::contract]
-      ^^^^^^^^^^^^^^^^^^^^^
-
-    error: Identifier not found.
-     --> [..]
-          component!(path: ERC20Component, storage: erc20, event: ERC20Event);
-                           ^^^^^^^^^^^^^^
-
-    error: Invalid drop trait implementation, Candidate impl core::starknet::storage::storage_base::FlattenedStorageDrop::<?0> has an unused generic parameter.
-     --> [..]
-          #[storage]
-          ^^^^^^^^^^
-
-    error: Invalid copy trait implementation, Candidate impl core::starknet::storage::storage_base::FlattenedStorageCopy::<?0> has an unused generic parameter.
-     --> [..]
-          #[storage]
-          ^^^^^^^^^^
-
-    error: Compilation failed.
-  "#});
+    output.stdout_matches(expected);
 }
