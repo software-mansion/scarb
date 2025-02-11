@@ -251,7 +251,7 @@ pub struct TokenStreamMetadata {
 }
 
 impl TokenStream {
-    #[doc(hidden)]
+    /// Create a new [`TokenStream`] from a vector of [`TokenTree`]s.
     pub fn new(tokens: Vec<TokenTree>) -> Self {
         Self {
             tokens,
@@ -259,7 +259,7 @@ impl TokenStream {
         }
     }
 
-    #[doc(hidden)]
+    /// Create a new empty [`TokenStream`].
     pub fn empty() -> Self {
         Self::new(Vec::default())
     }
