@@ -94,10 +94,9 @@ struct ModulePubUses {
 }
 
 impl ModulePubUses {
-    pub fn new(db: &ScarbDocDatabase, module_id: ModuleId) -> Self {
+    pub fn new(db: &ScarbDocDatabase, module_id: ModuleId) -> Maybe<Self> {
         let module_use_items: Vec<ResolvedGenericItem> = db
-            .module_uses(module_id)
-            .unwrap()
+            .module_uses(module_id)?
             .iter()
             .filter_map(|(use_id, _)| {
                 let visibility = db
@@ -150,7 +149,7 @@ impl ModulePubUses {
             }
         }
 
-        Self {
+        Ok(Self {
             use_constants,
             use_free_functions,
             use_structs,
@@ -163,7 +162,7 @@ impl ModulePubUses {
             use_extern_functions,
             use_submodules,
             use_crates,
-        }
+        })
     }
 }
 
@@ -189,7 +188,7 @@ impl Module {
                 && !is_doc_hidden_attr(db, &syntax_node))
         };
 
-        let module_pubuses = ModulePubUses::new(db, module_id);
+        let module_pubuses = ModulePubUses::new(db, module_id)?;
 
         let module_constants = db.module_constants(module_id)?;
         let constants = filter_map_item_id_to_item(
