@@ -19,10 +19,8 @@ use cairo_lang_semantic::{db::SemanticGroup, SemanticDiagnostic};
 use cairo_lang_utils::Upcast;
 use cairo_lint_core::annotate_snippets::Renderer;
 use cairo_lint_core::{
-    apply_file_fixes,
-    diagnostics::format_diagnostic,
-    get_fixes,
-    plugin::{cairo_lint_plugin_suite, diagnostic_kind_from_message, CairoLintKind},
+    apply_file_fixes, context::get_lint_type_from_diagnostic_message, context::CairoLintKind,
+    diagnostics::format_diagnostic, get_fixes, plugin::cairo_lint_plugin_suite,
 };
 use itertools::Itertools;
 use scarb_ui::components::Status;
@@ -179,11 +177,13 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                                         &diag.kind
                                     {
                                         (matches!(
-                                            diagnostic_kind_from_message(&diag.message),
+                                            get_lint_type_from_diagnostic_message(&diag.message),
                                             CairoLintKind::Panic
                                         ) && should_lint_panics)
                                             || !matches!(
-                                                diagnostic_kind_from_message(&diag.message),
+                                                get_lint_type_from_diagnostic_message(
+                                                    &diag.message
+                                                ),
                                                 CairoLintKind::Panic
                                             )
                                     } else {
@@ -200,7 +200,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .collect::<Vec<_>>();
 
                     if opts.fix {
-                        let fixes = get_fixes(&db, diagnostics)?;
+                        let fixes = get_fixes(&db, diagnostics);
                         for (file_id, fixes) in fixes.into_iter() {
                             ws.config()
                                 .ui()
