@@ -21,7 +21,7 @@ const QUICK = `curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/s
 const ASDF = `
 asdf plugin add scarb
 asdf install scarb latest
-asdf global scarb latest
+asdf set -u scarb latest
 `.trim();
 </script>
 
