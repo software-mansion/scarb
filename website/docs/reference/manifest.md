@@ -264,6 +264,11 @@ See [Targets](./targets) page.
 Adjust Cairo compiler configuration parameters when compiling this package.
 These options are not taken into consideration when this package is used as a dependency for another package.
 
+> [!WARNING]
+> In context of a workspace, only the `[cairo]` section from the workspace root manifest is applied.
+
+The `[cairo]` section can be overridden by profile definition. See [Profiles](./profiles) page for more information.
+
 ### `sierra-replace-ids`
 
 Replace all names in generated Sierra code with dummy counterparts, representing the
@@ -373,6 +378,9 @@ unstable-add-statements-code-locations-debug-info = false
 ```
 
 ## `[profile]`
+
+> [!WARNING]
+> In context of a workspace, only the profiles from the workspace root manifest are applied.
 
 See [Profiles](./profiles) page.
 
