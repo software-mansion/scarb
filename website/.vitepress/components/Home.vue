@@ -52,7 +52,7 @@ const Download = defineClientComponent(() => import("./home/Download.vue"));
         >Telegram</a
       >
       or Starknet's
-      <a href="https://discord.gg/KZWaFtPZJf" rel="noreferrer" target="_blank"
+      <a href="https://discord.gg/rKzsYaTMvA" rel="noreferrer" target="_blank"
         >Discord</a
       >!
     </p>
