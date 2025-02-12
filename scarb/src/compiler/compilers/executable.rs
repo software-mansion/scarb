@@ -50,7 +50,8 @@ impl Compiler for ExecutableCompiler {
                     -> {scarb_toml}
                         [cairo]
                         enable-gas = false
-                "#, scarb_toml=unit.main_component().package.manifest_path().workspace_relative(ws)}
+                "#, scarb_toml=ws.manifest_path().workspace_relative(ws)
+            }
         );
 
         check_executable_plugin_dependency(&unit, ws, db, &unit.main_component().package.id.name);
