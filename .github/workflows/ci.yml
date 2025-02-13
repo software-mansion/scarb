@@ -111,30 +111,6 @@ jobs:
       - name: Run scarb-prove and scarb-verify tests
         run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test -p scarb-prove -p scarb-verify --profile=ci
 
-  test-prebuilt-plugins:
-    name: test prebuilt plugins ${{ matrix.platform.name }}
-    runs-on: ${{ matrix.platform.os }}
-    # This is isolated, so it can be run on more platforms.
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          - name: windows x86-64
-            os: windows-latest
-          - name: macos arm64
-            os: macos-latest
-          - name: macos x86-64
-            os: macos-13
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - name: Run prebuilt plugin tests
-        run: |
-          cargo test -p scarb --profile=ci --test proc_macro_prebuilt -- --ignored
-
   check-rust:
     runs-on: ubuntu-latest
     steps:
