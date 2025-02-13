@@ -1180,7 +1180,7 @@ fn executable_target_requires_disabled_gas() {
         .stdout_matches(indoc! {r#"
         [..]Compiling executable_test v1.0.0 ([..]Scarb.toml)
         error: executable target cannot be compiled with enabled gas calculation
-        help: if you want to diable gas calculation, consider adding following
+        help: if you want to disable gas calculation, consider adding following
         excerpt to your package manifest
             -> Scarb.toml
                 [cairo]
