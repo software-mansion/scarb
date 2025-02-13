@@ -209,3 +209,4 @@ lto = true
 [profile.ci]
 inherits = "test"
 strip = "debuginfo"
+opt-level = 3
