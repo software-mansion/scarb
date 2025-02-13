@@ -1,6 +1,7 @@
 use anyhow::{ensure, Result};
 use cairo_lang_filesystem::cfg::CfgSet;
-use cairo_lang_filesystem::db::CrateIdentifier;
+use cairo_lang_filesystem::db::{CrateIdentifier, FilesGroup};
+use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
@@ -93,6 +94,16 @@ pub struct CompilationUnitComponent {
     /// Dependencies of this component.
     /// Contains libraries and plugins, represented uniquely in the scope of the compilation unit.
     pub dependencies: Vec<CompilationUnitDependency>,
+}
+
+impl CompilationUnitComponent {
+    /// Returns a [`CrateId`] of a crate associated with the [`CompilationUnitComponent`].
+    pub fn crate_id(&self, db: &dyn FilesGroup) -> CrateId {
+        db.intern_crate(CrateLongId::Real {
+            name: self.cairo_package_name(),
+            discriminator: self.id.to_discriminator(),
+        })
+    }
 }
 
 /// The kind of the compilation unit dependency.

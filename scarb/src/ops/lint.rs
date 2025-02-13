@@ -12,8 +12,6 @@ use anyhow::anyhow;
 use anyhow::Result;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::Diagnostics;
-use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_semantic::diagnostic::SemanticDiagnosticKind;
 use cairo_lang_semantic::{db::SemanticGroup, SemanticDiagnostic};
 use cairo_lang_utils::Upcast;
@@ -25,7 +23,6 @@ use cairo_lint_core::{
 use itertools::Itertools;
 use scarb_ui::components::Status;
 use serde::Deserialize;
-use smol_str::SmolStr;
 
 use crate::core::{Package, Workspace};
 
@@ -150,11 +147,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         build_scarb_root_database(compilation_unit, ws, additional_plugins)?;
 
                     let main_component = compilation_unit.main_component();
-
-                    let crate_id = db.intern_crate(CrateLongId::Real {
-                        name: SmolStr::new(main_component.target_name()),
-                        discriminator: main_component.id.to_discriminator(),
-                    });
+                    let crate_id = main_component.crate_id(&db);
 
                     let diags: Vec<Diagnostics<SemanticDiagnostic>> = db
                         .crate_modules(crate_id)
