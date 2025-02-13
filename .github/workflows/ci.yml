@@ -30,7 +30,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
         run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify
@@ -103,7 +102,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo +stable build --workspace --all-features --exclude scarb-prove --exclude scarb-verify
       - name: Run scarb-prove and scarb-verify tests
@@ -128,7 +126,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
       - name: Run prebuilt plugin tests
         run: |
           cargo test -p scarb --test proc_macro_prebuilt -- --ignored
@@ -138,7 +135,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --check
       # TODO(#1915): Build all crates with stable toolchain once stwo is stable.
       - run: cargo clippy --all-targets --all-features --workspace --exclude scarb-prove --exclude scarb-verify -- --no-deps
@@ -159,7 +155,6 @@ jobs:
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
       - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} clippy --all-targets --all-features -p scarb-prove -p scarb-verify -- --no-deps
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
