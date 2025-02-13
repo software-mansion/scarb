@@ -69,6 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - name: run tests
         run: cargo test --doc
 
@@ -78,6 +79,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: software-mansion/setup-scarb@v1
         with:
           cache: false
@@ -189,5 +191,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: foundry-rs/setup-snfoundry@v3
       - run: cargo test --profile=ci --package scarb --test snforge_init new_simple -- --ignored
