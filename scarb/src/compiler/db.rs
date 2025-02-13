@@ -12,9 +12,8 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{
-    AsFilesGroupMut, CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
+    AsFilesGroupMut, CrateIdentifier, CrateSettings, DependencySettings, FilesGroupEx,
 };
-use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smol_str::SmolStr;
@@ -102,11 +101,8 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
         .collect();
 
     for component in components {
-        let name = component.cairo_package_name();
-        let crate_id = db.intern_crate(CrateLongId::Real {
-            name,
-            discriminator: component.id.to_discriminator(),
-        });
+        let crate_id = component.crate_id(db);
+
         let file_stems = component
             .targets
             .iter()
