@@ -107,7 +107,7 @@ jobs:
       - name: Build
         run: cargo +stable build --workspace --all-features --exclude scarb-prove --exclude scarb-verify
       - name: Run scarb-prove and scarb-verify tests
-        run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test -p scarb-prove -p scarb-verify
+        run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test -p scarb-prove -p scarb-verify --profile=ci
 
   test-prebuilt-plugins:
     name: test prebuilt plugins ${{ matrix.platform.name }}
@@ -131,7 +131,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Run prebuilt plugin tests
         run: |
-          cargo test -p scarb --test proc_macro_prebuilt -- --ignored
+          cargo test -p scarb --profile=ci --test proc_macro_prebuilt -- --ignored
 
   check-rust:
     runs-on: ubuntu-latest
