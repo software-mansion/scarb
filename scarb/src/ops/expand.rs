@@ -9,8 +9,6 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{LanguageElementId, ModuleId, ModuleItemId};
 use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_diagnostics::ToOption;
-use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
 use cairo_lang_parser::db::ParserGroup;
 use cairo_lang_syntax::node::helpers::UsePathEx;
@@ -170,11 +168,7 @@ fn do_expand(
 ) -> Result<()> {
     let ScarbDatabase { db, .. } =
         build_scarb_root_database(compilation_unit, ws, Default::default())?;
-    let name = compilation_unit.main_component().cairo_package_name();
-    let main_crate_id = db.intern_crate(CrateLongId::Real {
-        name,
-        discriminator: compilation_unit.main_component().id.to_discriminator(),
-    });
+    let main_crate_id = compilation_unit.main_component().crate_id(&db);
     let mut compiler_config = build_compiler_config(&db, compilation_unit, &[main_crate_id], ws);
     // Report diagnostics, but do not fail.
     let _ = compiler_config.diagnostics_reporter.check(&db);
