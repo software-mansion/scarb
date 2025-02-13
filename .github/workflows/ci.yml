@@ -56,6 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - uses: actions/download-artifact@v4
         with:
@@ -91,6 +92,8 @@ jobs:
   test-nightly-crates:
     name: test nightly crates ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
+    needs:
+      - build-test
     strategy:
       fail-fast: false
       matrix:
@@ -101,13 +104,21 @@ jobs:
             os: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - uses: Swatinem/rust-cache@v2
-      - name: Build
-        run: cargo +stable build -p scarb -p scarb-execute --all-features --profile=ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: nextest-archive-${{ matrix.platform.os }}
+      - name: Unpack build stable rust artifacts on ubuntu
+        if: matrix.platform.os == 'ubuntu-latest'
+        run: tar --use-compress-program=unzstd -xvf nextest-archive-ubuntu-latest.tar.zst
+      - name: Unpack build stable rust artifacts on windows
+        if: matrix.platform.os == 'windows-latest'
+        run: |
+          zstd -d nextest-archive-windows-latest.tar.zst
+          tar -xf nextest-archive-windows-latest.tar
       - name: Run scarb-prove and scarb-verify tests
         run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test -p scarb-prove -p scarb-verify --profile=ci
 
@@ -169,6 +180,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - uses: actions/download-artifact@v4
         with:
