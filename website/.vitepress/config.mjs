@@ -46,6 +46,7 @@ const sidebar = {
           "Generating documentation",
           "/docs/extensions/documentation-generation",
         ),
+        p("Linter", "/docs/extensions/linter"),
       ],
     },
     {
