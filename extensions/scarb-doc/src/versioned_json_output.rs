@@ -8,7 +8,6 @@ use serde::Serialize;
 use std::fs;
 
 const FORMAT_VERSION: u8 = 1;
-const JSON_OUTPUT_FILENAME: &str = "output.json";
 
 #[derive(Serialize)]
 pub struct VersionedJsonOutput {
@@ -24,11 +23,11 @@ impl VersionedJsonOutput {
         }
     }
 
-    pub fn save_to_file(&self, output_dir: &Utf8Path) -> Result<()> {
+    pub fn save_to_file(&self, output_dir: &Utf8Path, json_output_filename: &str) -> Result<()> {
         fs::create_dir_all(output_dir)
             .map_err(|e| IODirectoryCreationError::new(e, "generated documentation"))?;
 
-        let output_path = output_dir.join(JSON_OUTPUT_FILENAME);
+        let output_path = output_dir.join(json_output_filename);
 
         let output =
             serde_json::to_string_pretty(&self).map_err(PackagesSerializationError::from)? + "\n";
