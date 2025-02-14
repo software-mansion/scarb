@@ -121,6 +121,8 @@ jobs:
           zstd -d nextest-archive-windows-latest.tar.zst
           tar -xf nextest-archive-windows-latest.tar
       - name: Run scarb-prove and scarb-verify tests
+        env:
+          RUSTFLAGS: "-C target-cpu=native"
         run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test -p scarb-prove -p scarb-verify --profile=ci
 
   check-rust:
