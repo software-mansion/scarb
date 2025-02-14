@@ -100,8 +100,9 @@ jobs:
         platform:
           - name: linux x86-64
             os: ubuntu-latest
-          - name: windows x86-64
-            os: windows-latest
+          # Do not run tests on windows, until stwo supports it.
+          # - name: windows x86-64
+          #  os: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
