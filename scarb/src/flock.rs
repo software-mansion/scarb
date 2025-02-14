@@ -83,7 +83,7 @@ impl DerefMut for FileLockGuard {
 impl Drop for FileLockGuard {
     fn drop(&mut self) {
         if let Some(file) = self.file.take() {
-            let _ = file.unlock();
+            let _ = FileExt::unlock(&file);
         }
     }
 }
@@ -156,7 +156,7 @@ pub struct AdvisoryLockGuard {
     _inner: Arc<FileLockGuard>,
 }
 
-impl<'f> AdvisoryLock<'f> {
+impl AdvisoryLock<'_> {
     /// Acquires this advisory lock in an async manner.
     ///
     /// This lock is global per-process and can be acquired recursively.
