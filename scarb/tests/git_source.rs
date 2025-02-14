@@ -465,6 +465,7 @@ fn transitive_path_dep() {
 
 #[test]
 fn transitive_path_dep_with_lock() {
+    let cache_dir = TempDir::new().unwrap().child("c");
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep0")
@@ -490,16 +491,22 @@ fn transitive_path_dep_with_lock() {
         .build(&t);
 
     Scarb::quick_snapbox()
+        .env("SCARB_CACHE", cache_dir.path())
         .arg("fetch")
         .current_dir(&t)
         .assert()
-        .success();
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Updating git repository [..]dep1
+        "#});
 
     Scarb::quick_snapbox()
+        .env("SCARB_CACHE", cache_dir.path())
         .arg("fetch")
         .current_dir(&t)
         .assert()
-        .success();
+        .success()
+        .stdout_eq("");
 }
 
 #[test]
