@@ -7,8 +7,10 @@ The key points of workspaces are:
 - Common commands can run across all workspace members, like `scarb build --workspace`.
 - All packages share a common output directory, which defaults to a directory named target in the _workspace root_.
 - Sharing package metadata, like with _workspace.package_.
-- The `[profile.*]` section in the manifest file is only recognized in the root manifest, and ignored in member
-  manifests.
+
+Compiler configuration in workspaces:
+
+- The `[profile]` and `[cairo]` sections in member packages manifest files are ignored and only the ones defined in the workspace root manifest are applied when compiling member packages.
 
 In a manifest file, the `[workspace]` table supports the following sections:
 
@@ -239,6 +241,14 @@ See [Tool](./manifest#tool) page for more information.
 
 ## `[profile]`
 
-In a workspace context, only profiles defined in the root manifest are applied.
+> [!WARNING]
+> In context of a workspace, only the profiles from the workspace root manifest are applied.
 
 See [Profiles](./profiles) page for more information.
+
+## `[cairo]`
+
+> [!WARNING]
+> In context of a workspace, only Cairo compiler configuration defined in the root manifest is applied.
+
+See [Manifest](./manifest.md#cairo) page for more information.

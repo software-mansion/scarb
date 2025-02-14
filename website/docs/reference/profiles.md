@@ -13,11 +13,23 @@ Profiles defined in dependencies will be ignored.
 Profile can alter the compiler settings (analog to manifest [`[cairo]`](./manifest#cairo) section) and custom tool
 metadata (from [`[tool]`](./manifest#tool) section).
 
+## Workspace profiles
+
+In a workspace context, only profiles defined in the workspace root manifest are applied.
+All profiles defined in the workspace members are ignored.
+See [Workspaces](./workspaces) page for more information.
+
 ## Overriding built-in profile properties
 
 Each of the built-in profiles come with predefined default properties.
 
 The properties of a built-in profile can be overridden by specifying a new property value in a custom profile.
+
+### Overriding Cairo compiler configuration
+
+The Cairo compiler configuration is composed of `[cairo]` section and profiles defined in the manifest file.
+The `[cairo]` section in the manifest can be used to override the default compiler settings.
+Profiles can be used to further alter the compiler settings, by overriding values set in the `[cairo]` section.
 
 For example, the `dev` profile has the `sierra-replace-ids` (see [`[cairo]`](./manifest#cairo)) property set to `true`
 by default.
