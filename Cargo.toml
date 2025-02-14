@@ -21,7 +21,7 @@ members = [
 "resolver" = "2"
 
 [workspace.package]
-version = "2.9.2"
+version = "2.9.3"
 edition = "2021"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
@@ -35,25 +35,25 @@ anyhow = "1"
 assert_fs = "1"
 async-trait = "0.1"
 axum = { version = "0.6", features = ["http2"] }
-cairo-lang-compiler = "2.9.2"
-cairo-lang-defs = "2.9.2"
-cairo-lang-diagnostics = "2.9.2"
-cairo-lang-doc = "2.9.2"
-cairo-lang-filesystem = "2.9.2"
-cairo-lang-formatter = "2.9.2"
-cairo-lang-lowering = "2.9.2"
-cairo-lang-parser = "2.9.2"
-cairo-lang-runner = "2.9.2"
-cairo-lang-semantic = "2.9.2"
-cairo-lang-sierra = "2.9.2"
-cairo-lang-sierra-to-casm = "2.9.2"
-cairo-lang-starknet = "2.9.2"
-cairo-lang-starknet-classes = "2.9.2"
-cairo-lang-syntax = "2.9.2"
-cairo-lang-test-plugin = "2.9.2"
-cairo-lang-test-runner = "2.9.2"
-cairo-lang-utils = { version = "2.9.2", features = ["env_logger"] }
-cairo-lang-language-server = "2.9.2"
+cairo-lang-compiler = "2.9.3"
+cairo-lang-defs = "2.9.3"
+cairo-lang-diagnostics = "2.9.3"
+cairo-lang-doc = "2.9.3"
+cairo-lang-filesystem = "2.9.3"
+cairo-lang-formatter = "2.9.3"
+cairo-lang-lowering = "2.9.3"
+cairo-lang-parser = "2.9.3"
+cairo-lang-runner = "2.9.3"
+cairo-lang-semantic = "2.9.3"
+cairo-lang-sierra = "2.9.3"
+cairo-lang-sierra-to-casm = "2.9.3"
+cairo-lang-starknet = "2.9.3"
+cairo-lang-starknet-classes = "2.9.3"
+cairo-lang-syntax = "2.9.3"
+cairo-lang-test-plugin = "2.9.3"
+cairo-lang-test-runner = "2.9.3"
+cairo-lang-utils = { version = "2.9.3", features = ["env_logger"] }
+cairo-lang-language-server = "2.9.3"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
