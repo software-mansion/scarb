@@ -18,7 +18,7 @@ the `///` and `//!` comment prefixes are supported.
 
 ## Item linkage
 
-You can also link to another item's page by just refering the item within the documentation comment.
+You can also link to another item's page by just referring the item within the documentation comment.
 Currenctly we support only those types of links:
 
 - `[ItemName]` and ``[`ItemName`]`` (where `ItemName` is a valid path to an item).
@@ -34,7 +34,7 @@ Requirements:
 
 ## Examples
 
-Let's take, for example, a simple Cairo project initalized using `scarb new`. Let's change the code inside `lib.cairo` to:
+Let's take, for example, a simple Cairo project initialized using `scarb new`. Let's change the code inside `lib.cairo` to:
 
 ````cairo
 //! This module is an example one.

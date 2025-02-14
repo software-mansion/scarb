@@ -45,7 +45,7 @@ impl Compiler for ExecutableCompiler {
             !unit.compiler_config.enable_gas,
             formatdoc! {r#"
                 executable target cannot be compiled with enabled gas calculation
-                help: if you want to diable gas calculation, consider adding following
+                help: if you want to disable gas calculation, consider adding following
                 excerpt to your package manifest
                     -> {scarb_toml}
                         [cairo]
