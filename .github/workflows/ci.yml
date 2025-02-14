@@ -88,11 +88,9 @@ jobs:
       - name: run tests
         run: cargo test -p scarb-metadata
 
-  test-nightly-crates:
-    name: test nightly crates ${{ matrix.platform.name }}
+  build-nightly-test:
+    name: build test nightly crates ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
-    needs:
-      - build-test
     strategy:
       fail-fast: false
       matrix:
@@ -103,27 +101,88 @@ jobs:
             os: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-#      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@nextest
+      - name: nextest archive
+        run: cargo nextest archive --all-features --cargo-profile ci --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --package scarb-prove --package scarb-verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nextest-nightly-archive-${{ matrix.platform.os }}
+          path: nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst
+
+  test-nightly-crates:
+    name: test nightly ${{ matrix.platform.name }} ${{ matrix.partition }}/2
+    runs-on: ${{ matrix.platform.os }}
+    needs:
+      - build-test
+      - build-nightly-test
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
+        partition: [ 1, 2 ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - uses: taiki-e/install-action@nextest
       - uses: actions/download-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
       - name: Unpack build stable rust artifacts from nextest archive on linux
         if: matrix.platform.os == 'ubuntu-latest'
-        run: tar --use-compress-program=unzstd -xvf nextest-archive-ubuntu-latest.tar.zst
+        run: |
+          tar --use-compress-program=unzstd -xvf nextest-archive-ubuntu-latest.tar.zst
+          mv target stable-crates-target
+          echo "$HOME/stable-crates-target/ci" >> "$GITHUB_PATH"
       - name: Unpack build stable rust artifacts from nextest archive on windows
         if: matrix.platform.os == 'windows-latest'
         run: |
-          choco install zstd -y
           zstd -d nextest-archive-windows-latest.tar.zst
+          ls -l 
           tar -xf nextest-archive-windows-latest.tar
-      - name: Run scarb-prove and scarb-verify tests
-        env:
-          RUSTFLAGS: "-C target-cpu=native"
-        run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test -p scarb-prove -p scarb-verify --profile=ci
+          ls -l 
+          ren target stable-crates-target
+          ls -l 
+          echo "$HOME/stable-crates-target/ci" >> "$GITHUB_PATH"
+      - uses: actions/download-artifact@v4
+        with:
+          name: nextest-nightly-archive-${{ matrix.platform.os }}
+      - name: nextest partition ${{ matrix.partition }}/2
+        run: cargo nextest run --partition 'count:${{ matrix.partition }}/2' --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst'
+
+#  test-nightly-crates:
+#    name: test nightly crates ${{ matrix.platform.name }}
+#    runs-on: ${{ matrix.platform.os }}
+#    needs:
+#      - build-test
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        platform:
+#          - name: linux x86-64
+#            os: ubuntu-latest
+#          - name: windows x86-64
+#            os: windows-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: dtolnay/rust-toolchain@stable
+#      - uses: dtolnay/rust-toolchain@master
+#        with:
+#          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+##      - uses: Swatinem/rust-cache@v2
+#      - name: Run scarb-prove and scarb-verify tests
+#        env:
+#          RUSTFLAGS: "-C target-cpu=native"
+#        run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test -p scarb-prove -p scarb-verify --profile=ci
 
   check-rust:
     runs-on: ubuntu-latest
