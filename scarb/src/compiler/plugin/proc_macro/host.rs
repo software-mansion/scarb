@@ -49,8 +49,28 @@ const DERIVE_ATTR: &str = "derive";
 /// It then redirects the item to the appropriate macro plugin for code expansion.
 #[derive(Debug)]
 pub struct ProcMacroHostPlugin {
-    macros: Vec<Arc<ProcMacroInstance>>,
+    pub macros: Vec<Arc<ProcMacroInstance>>,
     full_path_markers: RwLock<HashMap<PackageId, Vec<String>>>,
+}
+
+impl ProcMacroHostPlugin {
+    pub fn declared_attributes(&self) -> Vec<String> {
+        self.macros
+            .iter()
+            .flat_map(|m| m.declared_attributes())
+            .collect()
+    }
+
+    pub fn declared_derives(&self) -> Vec<String> {
+        self.macros
+            .iter()
+            .flat_map(|m| m.declared_derives())
+            .collect()
+    }
+
+    pub fn declared_inline_macros(&self) -> Vec<String> {
+        self.macros.iter().flat_map(|m| m.inline_macros()).collect()
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
