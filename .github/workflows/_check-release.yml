@@ -78,5 +78,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Run prebuilt plugin tests
-        run: |
-          cargo test -p scarb --profile=ci --test proc_macro_prebuilt
+        run: cargo test -p scarb --profile=ci --test proc_macro_prebuilt
