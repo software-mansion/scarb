@@ -12,6 +12,7 @@ use scarb_doc::generate_packages_information;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 
 use scarb_ui::args::FeaturesSpec;
+use scarb_ui::components::Status;
 use scarb_ui::Ui;
 
 const OUTPUT_DIR: &str = "doc";
@@ -65,7 +66,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         &metadata,
         &metadata_for_packages,
         args.document_private_items,
-        ui,
+        ui.clone(),
     )?;
 
     match args.output_format {
@@ -87,7 +88,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
             }
         }
     }
-
+    ui.print(Status::new("Saved to directory:", output_dir.as_str()));
     Ok(())
 }
 
