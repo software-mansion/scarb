@@ -114,7 +114,7 @@ jobs:
 #          path: nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst
 
   test-nightly-crates:
-    name: test nightly ${{ matrix.platform.name }} ${{ matrix.partition }}/2
+    name: test nightly ${{ matrix.platform.name }} 
     runs-on: ${{ matrix.platform.os }}
 #    needs:
 #      - build-test
@@ -127,7 +127,6 @@ jobs:
             os: ubuntu-latest
           - name: windows x86-64
             os: windows-latest
-        partition: [ 1, 2 ]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
@@ -166,8 +165,8 @@ jobs:
       #      - uses: actions/download-artifact@v4
 #        with:
 #          name: nextest-nightly-archive-${{ matrix.platform.os }}
-      - name: nextest partition ${{ matrix.partition }}/2
-        run: cargo nextest run --partition 'count:${{ matrix.partition }}/2' --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --extract-to ./
+      - name: nextest partition
+        run: cargo nextest run --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --extract-to ./
 
 #  test-nightly-crates:
 #    name: test nightly crates ${{ matrix.platform.name }}
