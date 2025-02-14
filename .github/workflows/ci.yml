@@ -16,109 +16,81 @@ env:
   RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-01-02"
 
 jobs:
-#  build-test:
-#    name: build test ${{ matrix.platform.name }}
-#    runs-on: ${{ matrix.platform.os }}
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        platform:
-#          - name: linux x86-64
-#            os: ubuntu-latest
-#          - name: windows x86-64
-#            os: windows-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: dtolnay/rust-toolchain@stable
-#      - uses: Swatinem/rust-cache@v2
-#      - uses: taiki-e/install-action@nextest
-#      - name: nextest archive
-#        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify
-#      - uses: actions/upload-artifact@v4
-#        with:
-#          name: nextest-archive-${{ matrix.platform.os }}
-#          path: nextest-archive-${{ matrix.platform.os }}.tar.zst
-#
-#  test:
-#    name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/4
-#    runs-on: ${{ matrix.platform.os }}
-#    needs:
-#      - build-test
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        platform:
-#          - name: linux x86-64
-#            os: ubuntu-latest
-#          - name: windows x86-64
-#            os: windows-latest
-#        partition: [ 1, 2, 3, 4 ]
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: dtolnay/rust-toolchain@stable
-#      - uses: taiki-e/install-action@nextest
-#      - uses: actions/download-artifact@v4
-#        with:
-#          name: nextest-archive-${{ matrix.platform.os }}
-#      - name: nextest partition ${{ matrix.partition }}/4
-#        run: cargo nextest run --partition 'count:${{ matrix.partition }}/4' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
-#
-#  test-doc:
-#    name: doc tests
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: dtolnay/rust-toolchain@stable
-#      - uses: Swatinem/rust-cache@v2
-#      - name: run tests
-#        run: cargo test --doc
-#
-#  scarb-metadata-compatibility:
-#    name: scarb-metadata compatibility check
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: dtolnay/rust-toolchain@stable
-#      - uses: Swatinem/rust-cache@v2
-#      - uses: software-mansion/setup-scarb@v1
-#        with:
-#          cache: false
-#          scarb-version: "2.3.0"
-#      - run: echo "SCARB_TEST_BIN=$(which scarb)" >> $GITHUB_ENV
-#      - name: run tests
-#        run: cargo test -p scarb-metadata
-#
-#  build-nightly-test:
-#    name: build test nightly crates ${{ matrix.platform.name }}
-#    runs-on: ${{ matrix.platform.os }}
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        platform:
-#          - name: linux x86-64
-#            os: ubuntu-latest
-#          - name: windows x86-64
-#            os: windows-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: dtolnay/rust-toolchain@master
-#        with:
-#          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-#      - uses: Swatinem/rust-cache@v2
-#      - uses: taiki-e/install-action@nextest
-#      - name: nextest archive
-#        run: cargo nextest archive --all-features --cargo-profile ci --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --package scarb-prove --package scarb-verify
-#      - uses: actions/upload-artifact@v4
-#        with:
-#          name: nextest-nightly-archive-${{ matrix.platform.os }}
-#          path: nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst
-
-  test-nightly-crates:
-    name: test nightly ${{ matrix.platform.name }} 
+  build-test:
+    name: build test ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
-#    needs:
-#      - build-test
-#      - build-nightly-test
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@nextest
+      - name: nextest archive
+        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nextest-archive-${{ matrix.platform.os }}
+          path: nextest-archive-${{ matrix.platform.os }}.tar.zst
+
+  test:
+    name: test ${{ matrix.platform.name }} ${{ matrix.partition }}/4
+    runs-on: ${{ matrix.platform.os }}
+    needs:
+      - build-test
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
+        partition: [ 1, 2, 3, 4 ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@nextest
+      - uses: actions/download-artifact@v4
+        with:
+          name: nextest-archive-${{ matrix.platform.os }}
+      - name: nextest partition ${{ matrix.partition }}/4
+        run: cargo nextest run --partition 'count:${{ matrix.partition }}/4' --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst'
+
+  test-doc:
+    name: doc tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: run tests
+        run: cargo test --doc
+
+  scarb-metadata-compatibility:
+    name: scarb-metadata compatibility check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          cache: false
+          scarb-version: "2.3.0"
+      - run: echo "SCARB_TEST_BIN=$(which scarb)" >> $GITHUB_ENV
+      - name: run tests
+        run: cargo test -p scarb-metadata
+
+  build-nightly-test:
+    name: build test nightly crates ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -132,16 +104,39 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
-#      - uses: actions/download-artifact@v4
-#        with:
-#          name: nextest-archive-${{ matrix.platform.os }}
-      - run: |
-          curl -L -o nextest-archive-ubuntu-latest.tar.zst https://f003.backblazeb2.com/file/maciektr-public/nextest-archive-ubuntu-latest.tar.zst 
-          curl -L -o nextest-archive-windows-latest.tar.zst https://f003.backblazeb2.com/file/maciektr-public/nextest-archive-windows-latest.tar.zst 
-          curl -L -o nextest-nightly-archive-ubuntu-latest.tar.zst https://f003.backblazeb2.com/file/maciektr-public/nextest-nightly-archive-ubuntu-latest.tar.zst 
-          curl -L -o nextest-nightly-archive-windows-latest.tar.zst https://f003.backblazeb2.com/file/maciektr-public/nextest-nightly-archive-windows-latest.tar.zst
+      - name: nextest archive
+        run: cargo nextest archive --all-features --cargo-profile ci --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --package scarb-prove --package scarb-verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nextest-nightly-archive-${{ matrix.platform.os }}
+          path: nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst
 
+  test-nightly-crates:
+    name: test nightly ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
+    needs:
+      - build-test
+      - build-nightly-test
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: linux x86-64
+            os: ubuntu-latest
+          - name: windows x86-64
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@nextest
+      - uses: actions/download-artifact@v4
+        with:
+          name: nextest-archive-${{ matrix.platform.os }}
       - name: Unpack build stable rust artifacts from nextest archive on linux
         if: matrix.platform.os == 'ubuntu-latest'
         run: |
@@ -162,98 +157,73 @@ jobs:
           echo "NEXTEST_BIN_EXE_scarb-execute=$env:GITHUB_WORKSPACE/stable-crates-target/ci/scarb-execute" >> $env:GITHUB_ENV
           Add-Content $env:GITHUB_PATH "$env:GITHUB_WORKSPACE/stable-crates-target/ci"
           Add-Content $env:GITHUB_PATH "$env:GITHUB_WORKSPACE/target/ci"
-      #      - uses: actions/download-artifact@v4
-#        with:
-#          name: nextest-nightly-archive-${{ matrix.platform.os }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: nextest-nightly-archive-${{ matrix.platform.os }}
       - name: nextest partition
         run: cargo nextest run --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --extract-to ./
 
-#  test-nightly-crates:
-#    name: test nightly crates ${{ matrix.platform.name }}
-#    runs-on: ${{ matrix.platform.os }}
-#    needs:
-#      - build-test
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        platform:
-#          - name: linux x86-64
-#            os: ubuntu-latest
-#          - name: windows x86-64
-#            os: windows-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: dtolnay/rust-toolchain@stable
-#      - uses: dtolnay/rust-toolchain@master
-#        with:
-#          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-##      - uses: Swatinem/rust-cache@v2
-#      - name: Run scarb-prove and scarb-verify tests
-#        env:
-#          RUSTFLAGS: "-C target-cpu=native"
-#        run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test -p scarb-prove -p scarb-verify --profile=ci
-#
-#  check-rust:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: dtolnay/rust-toolchain@stable
-#      - uses: Swatinem/rust-cache@v2
-#      - run: cargo fmt --check
-#      # TODO(#1915): Build all crates with stable toolchain once stwo is stable.
-#      - run: cargo clippy --all-targets --all-features --workspace --exclude scarb-prove --exclude scarb-verify -- --no-deps
-#        env:
-#          # Make sure CI fails on all warnings, including Clippy lints.
-#          RUSTFLAGS: "-Dwarnings"
-#      - run: cargo doc --all-features --no-deps --workspace --exclude scarb-prove --exclude scarb-verify
-#        env:
-#          # Make sure CI fails on all warnings, including Clippy lints.
-#          RUSTDOCFLAGS: "-Dwarnings"
-#
-#  check-rust-nightly:
-#    name: check-rust (nightly)
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: dtolnay/rust-toolchain@master
-#        with:
-#          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-#          components: rustfmt, clippy
-#      - uses: Swatinem/rust-cache@v2
-#      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} clippy --all-targets --all-features -p scarb-prove -p scarb-verify -- --no-deps
-#        env:
-#          # Make sure CI fails on all warnings, including Clippy lints.
-#          RUSTFLAGS: "-Dwarnings"
-#      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} doc --all-features --no-deps -p scarb-prove -p scarb-verify
-#        env:
-#          # Make sure CI fails on all warnings, including Clippy lints.
-#          RUSTDOCFLAGS: "-Dwarnings"
-#
-#  check-website:
-#    runs-on: ubuntu-latest
-#    defaults:
-#      run:
-#        working-directory: ./website
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-node@v4
-#        with:
-#          node-version: '18.x'
-#          cache: npm
-#          cache-dependency-path: website/package-lock.json
-#      - run: npm ci
-#      - run: npm run fmt:check
-#
-#  snforge-init:
-#    runs-on: ubuntu-latest
-#    needs:
-#      - build-test
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: dtolnay/rust-toolchain@stable
-#      - uses: taiki-e/install-action@nextest
-#      - uses: actions/download-artifact@v4
-#        with:
-#          name: nextest-archive-ubuntu-latest
-#      - uses: foundry-rs/setup-snfoundry@v3
-#      - run: cargo nextest run --archive-file 'nextest-archive-ubuntu-latest.tar.zst' --run-ignored=all --filterset 'test(new_simple)'
+  check-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      # TODO(#1915): Build all crates with stable toolchain once stwo is stable.
+      - run: cargo clippy --all-targets --all-features --workspace --exclude scarb-prove --exclude scarb-verify -- --no-deps
+        env:
+          # Make sure CI fails on all warnings, including Clippy lints.
+          RUSTFLAGS: "-Dwarnings"
+      - run: cargo doc --all-features --no-deps --workspace --exclude scarb-prove --exclude scarb-verify
+        env:
+          # Make sure CI fails on all warnings, including Clippy lints.
+          RUSTDOCFLAGS: "-Dwarnings"
+
+  check-rust-nightly:
+    name: check-rust (nightly)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} clippy --all-targets --all-features -p scarb-prove -p scarb-verify -- --no-deps
+        env:
+          # Make sure CI fails on all warnings, including Clippy lints.
+          RUSTFLAGS: "-Dwarnings"
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} doc --all-features --no-deps -p scarb-prove -p scarb-verify
+        env:
+          # Make sure CI fails on all warnings, including Clippy lints.
+          RUSTDOCFLAGS: "-Dwarnings"
+
+  check-website:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci
+      - run: npm run fmt:check
+
+  snforge-init:
+    runs-on: ubuntu-latest
+    needs:
+      - build-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@nextest
+      - uses: actions/download-artifact@v4
+        with:
+          name: nextest-archive-ubuntu-latest
+      - uses: foundry-rs/setup-snfoundry@v3
+      - run: cargo nextest run --archive-file 'nextest-archive-ubuntu-latest.tar.zst' --run-ignored=all --filterset 'test(new_simple)'
