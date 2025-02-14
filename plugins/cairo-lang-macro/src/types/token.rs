@@ -251,7 +251,7 @@ pub struct TokenStreamMetadata {
 }
 
 impl TokenStream {
-    #[doc(hidden)]
+    /// Create a new [`TokenStream`] from a vector of [`TokenTree`]s.
     pub fn new(tokens: Vec<TokenTree>) -> Self {
         Self {
             tokens,
@@ -259,7 +259,7 @@ impl TokenStream {
         }
     }
 
-    #[doc(hidden)]
+    /// Create a new empty [`TokenStream`].
     pub fn empty() -> Self {
         Self::new(Vec::default())
     }
@@ -320,6 +320,13 @@ impl IntoIterator for TokenStream {
 impl Extend<TokenTree> for TokenStream {
     fn extend<T: IntoIterator<Item = TokenTree>>(&mut self, iter: T) {
         self.tokens.extend(iter);
+    }
+}
+
+impl Extend<TokenStream> for TokenStream {
+    fn extend<T: IntoIterator<Item = TokenStream>>(&mut self, iter: T) {
+        iter.into_iter()
+            .for_each(|token_stream| self.extend(token_stream));
     }
 }
 
@@ -483,6 +490,51 @@ mod test {
                     "edition": null
                 }
             })
+        );
+    }
+
+    #[test]
+    pub fn token_stream_can_be_extended_with_token_stream() {
+        let mut first = TokenStream::new(vec![TokenTree::Ident(Token::new(
+            "first",
+            TextSpan::new(0, 1),
+        ))]);
+        let second = TokenStream::new(vec![TokenTree::Ident(Token::new(
+            "second",
+            TextSpan::new(2, 3),
+        ))]);
+        first.extend(second);
+        assert_eq!(
+            first.tokens,
+            vec![
+                TokenTree::Ident(Token::new("first", TextSpan::new(0, 1))),
+                TokenTree::Ident(Token::new("second", TextSpan::new(2, 3))),
+            ]
+        );
+    }
+
+    #[test]
+    pub fn token_stream_can_be_extended_with_vec_of_token_sterams() {
+        let mut first = TokenStream::new(vec![TokenTree::Ident(Token::new(
+            "first",
+            TextSpan::new(0, 1),
+        ))]);
+        let second = TokenStream::new(vec![TokenTree::Ident(Token::new(
+            "second",
+            TextSpan::new(2, 3),
+        ))]);
+        let third = TokenStream::new(vec![TokenTree::Ident(Token::new(
+            "third",
+            TextSpan::new(4, 5),
+        ))]);
+        first.extend(vec![second, third]);
+        assert_eq!(
+            first.tokens,
+            vec![
+                TokenTree::Ident(Token::new("first", TextSpan::new(0, 1))),
+                TokenTree::Ident(Token::new("second", TextSpan::new(2, 3))),
+                TokenTree::Ident(Token::new("third", TextSpan::new(4, 5))),
+            ]
         );
     }
 }

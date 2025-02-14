@@ -374,3 +374,96 @@ fn can_use_quote_with_cairo_specific_syntax() {
         expanded,
     );
 }
+
+#[test]
+fn can_parse_incoming_token_stream() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .add_dep(r#"cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo", rev = "b5fdf14a8bd2e4973e2adcec17abf1ae5c1ddfdc" }"#)
+        .add_dep(r#"cairo-lang-parser = { git = "https://github.com/starkware-libs/cairo", rev = "b5fdf14a8bd2e4973e2adcec17abf1ae5c1ddfdc" }"#)
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, quote};
+        use cairo_lang_macro::{TokenTree, Token, TextSpan};
+        use cairo_lang_parser::utils::SimpleParserDatabase;
+        use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+          let db_val = SimpleParserDatabase::default();
+          let db = &db_val;
+          let (body, _diagnostics) = db.parse_token_stream(&token_stream);
+          let name = TokenTree::Ident(Token::new("new_module", TextSpan::call_site()));
+          let body = SyntaxNodeWithDb::new(&body, db);
+          let tokens = quote! {
+            mod #name {
+                #body
+            }
+          };
+          ProcMacroResult::new(tokens)
+        }
+      "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> u32 {
+              // completly wrong type
+              true
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("expand")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+
+    assert_eq!(
+        project.child("target/dev").files(),
+        vec!["hello.expanded.cairo"]
+    );
+
+    let expanded = project
+        .child("target/dev/hello.expanded.cairo")
+        .read_to_string();
+
+    snapbox::assert_eq(
+        indoc! {r#"
+            mod hello {
+                mod new_module {
+                    fn main() -> u32 {
+                        // completly wrong type
+                        true
+                    }
+                }
+            }
+        "#},
+        expanded,
+    );
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Checking hello v1.0.0 ([..]Scarb.toml)
+            error: Unexpected return type. Expected: "core::integer::u32", found: "core::bool".
+             --> [..]lib.cairo:2:14
+            fn main() -> u32 {
+                         ^^^^
+
+            error: could not check `hello` due to previous error
+        "#});
+}
