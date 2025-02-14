@@ -5960,7 +5960,6 @@ dependencies = [
  "indoc",
  "num-bigint",
  "predicates",
- "scarb",
  "scarb-metadata 1.13.0",
  "scarb-test-support",
  "scarb-ui",

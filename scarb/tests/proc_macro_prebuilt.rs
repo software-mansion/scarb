@@ -58,7 +58,6 @@ fn proc_macro_example(t: &ChildPath) {
 }
 
 #[test]
-#[ignore = "run this test by name"]
 fn compile_with_prebuilt_plugins() {
     let t = TempDir::new().unwrap();
     proc_macro_example(&t.child("dep"));
@@ -99,7 +98,6 @@ fn compile_with_prebuilt_plugins() {
 }
 
 #[test]
-#[ignore = "run this test by name"]
 fn compile_with_prebuilt_plugins_only_one_allows() {
     let t = TempDir::new().unwrap();
     proc_macro_example(&t.child("dep"));
@@ -168,7 +166,6 @@ fn invalid_prebuilt_project(t: &ChildPath) {
 }
 
 #[test]
-#[ignore = "run this test by name"]
 fn compile_with_invalid_prebuilt_plugins() {
     let t = TempDir::new().unwrap();
     invalid_prebuilt_project(&t.child("dep"));
@@ -201,7 +198,6 @@ fn compile_with_invalid_prebuilt_plugins() {
 }
 
 #[test]
-#[ignore = "run this test by name"]
 fn load_prebuilt_proc_macros() {
     let t = TempDir::new().unwrap();
     proc_macro_example(&t.child("dep"));

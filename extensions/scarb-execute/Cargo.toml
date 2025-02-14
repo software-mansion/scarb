@@ -23,7 +23,6 @@ create-output-dir = { path = "../../utils/create-output-dir" }
 indoc.workspace = true
 num-bigint.workspace = true
 predicates.workspace = true
-scarb = { path = "../../scarb" }
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde.workspace = true

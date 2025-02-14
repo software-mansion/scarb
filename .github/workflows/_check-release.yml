@@ -56,3 +56,22 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: foundry-rs/setup-snfoundry@v3
       - run: cargo test --profile=ci --package scarb --test snforge_init new_simple -- --ignored
+
+  test-prebuilt-plugins:
+    name: test prebuilt plugins ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
+    # This is isolated, so it can be run on more platforms.
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          # linux x86-64 and windows x86-64 are tested in the main test job.
+          - name: macos arm64
+            os: macos-latest
+          - name: macos x86-64
+            os: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run prebuilt plugin tests
+        run: cargo test -p scarb --profile=ci --test proc_macro_prebuilt
