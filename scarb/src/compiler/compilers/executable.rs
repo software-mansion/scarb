@@ -148,7 +148,7 @@ fn multiple_executables_error_message(executables: Vec<String>, scarb_toml: &Utf
         .join("\n");
 
     formatdoc! {r#"
-        more than one executable found in the main crate: 
+        more than one executable found in the main crate:
             {}
         help: add a separate `executable` target for each of your executable functions
         -> {scarb_toml}
@@ -204,8 +204,10 @@ fn check_executable_plugin_dependency(
     db: &RootDatabase,
     package_name: &PackageName,
 ) {
-    if unit.main_component().target_kind() == TargetKind::EXECUTABLE
-        && !has_plugin(db, is_executable_plugin)
+    let main_component = unit.main_component();
+
+    if main_component.target_kind() == TargetKind::EXECUTABLE
+        && !has_plugin(db, is_executable_plugin, main_component)
     {
         ws.config().ui().warn(formatdoc! {
             r#"
