@@ -85,36 +85,11 @@ jobs:
       - name: run tests
         run: cargo test -p scarb-metadata
 
-  build-nightly-test:
-    name: build test nightly crates ${{ matrix.platform.name }}
-    runs-on: ${{ matrix.platform.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: linux x86-64
-            os: ubuntu-latest
-          - name: windows x86-64
-            os: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - uses: taiki-e/install-action@nextest
-      - name: nextest archive
-        run: cargo nextest archive --all-features --cargo-profile ci --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --package scarb-prove --package scarb-verify
-      - uses: actions/upload-artifact@v4
-        with:
-          name: nextest-nightly-archive-${{ matrix.platform.os }}
-          path: nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst
-
   test-nightly-crates:
-    name: test nightly ${{ matrix.platform.name }}
+    name: test nightly crates ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
     needs:
       - build-test
-      - build-nightly-test
     strategy:
       fail-fast: false
       matrix:
@@ -128,35 +103,20 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - uses: taiki-e/install-action@nextest
+      # - uses: Swatinem/rust-cache@v2
       - uses: actions/download-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
-      - name: Unpack build stable rust artifacts from nextest archive on linux
+      - name: Unpack build stable rust artifacts on ubuntu
         if: matrix.platform.os == 'ubuntu-latest'
-        run: |
-          tar --use-compress-program=unzstd -xvf nextest-archive-ubuntu-latest.tar.zst
-          mv target stable-crates-target
-          ls -al $GITHUB_WORKSPACE/stable-crates-target/ci 
-          echo "NEXTEST_BIN_EXE_scarb=$GITHUB_WORKSPACE/stable-crates-target/ci/scarb" >> $GITHUB_ENV
-          echo "NEXTEST_BIN_EXE_scarb-execute=$GITHUB_WORKSPACE/stable-crates-target/ci/scarb-execute" >> $GITHUB_ENV
-          echo "$GITHUB_WORKSPACE/stable-crates-target/ci" >> $GITHUB_PATH
-          echo "$GITHUB_WORKSPACE/target/ci" >> $GITHUB_PATH
-      - name: Unpack build stable rust artifacts from nextest archive on windows
+        run: tar --use-compress-program=unzstd -xvf nextest-archive-ubuntu-latest.tar.zst
+      - name: Unpack build stable rust artifacts on windows
         if: matrix.platform.os == 'windows-latest'
         run: |
           zstd -d nextest-archive-windows-latest.tar.zst
           tar -xf nextest-archive-windows-latest.tar
-          ren target stable-crates-target
-          echo "NEXTEST_BIN_EXE_scarb=$env:GITHUB_WORKSPACE/stable-crates-target/ci/scarb" >> $env:GITHUB_ENV
-          echo "NEXTEST_BIN_EXE_scarb-execute=$env:GITHUB_WORKSPACE/stable-crates-target/ci/scarb-execute" >> $env:GITHUB_ENV
-          Add-Content $env:GITHUB_PATH "$env:GITHUB_WORKSPACE/stable-crates-target/ci"
-          Add-Content $env:GITHUB_PATH "$env:GITHUB_WORKSPACE/target/ci"
-      - uses: actions/download-artifact@v4
-        with:
-          name: nextest-nightly-archive-${{ matrix.platform.os }}
-      - name: nextest partition
-        run: cargo nextest run --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --extract-to ./
+      - name: Run scarb-prove and scarb-verify tests
+        run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test -p scarb-prove -p scarb-verify --profile=ci
 
   check-rust:
     runs-on: ubuntu-latest
