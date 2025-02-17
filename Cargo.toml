@@ -21,6 +21,7 @@ members = [
     "utils/scarb-ui",
     "utils/test-for-each-example",
     "xtask",
+    "utils/starknet-classes-validation",
 ]
 "resolver" = "2"
 

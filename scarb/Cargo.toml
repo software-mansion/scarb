@@ -97,6 +97,7 @@ zstd.workspace = true
 cargo_metadata.workspace = true
 flate2.workspace = true
 target-triple.workspace = true
+starknet-classes-validation = { path = "../utils/starknet-classes-validation" }
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]
 reqwest = { workspace = true, default-features = true }
