@@ -778,7 +778,7 @@ fn dev_dep_used_outside_tests() {
         .failure()
         .stdout_matches(indoc! {r#"
             [..] Compiling x v1.0.0 ([..])
-            error: Identifier not found.
+            error[E0006]: Identifier not found.
              --> [..]/src/lib.cairo[..]
             use q::dev_dep_function;
                 ^
