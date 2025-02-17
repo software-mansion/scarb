@@ -16,18 +16,27 @@
 //!
 
 pub use cairo_lang_macro_attributes::*;
+pub use cairo_lang_quote::*;
+
 #[doc(hidden)]
 pub use linkme;
 
+use std::cell::RefCell;
+
 use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
-    StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
+    StableExpansionsList, StablePostProcessContext, StableProcMacroResult, StableTextSpan,
 };
 use std::ffi::{c_char, CStr, CString};
+use std::ops::Deref;
 
 mod types;
-
 pub use types::*;
+
+// A thread-local allocation context for allocating tokens on proc macro side.
+thread_local!(static CONTEXT: RefCell<AllocationContext> =  RefCell::default() );
+
+thread_local!(static CALL_SITE: RefCell<(u32, u32)> = RefCell::default());
 
 #[doc(hidden)]
 #[derive(Clone)]
@@ -94,32 +103,48 @@ pub unsafe extern "C" fn free_expansions_list(list: StableExpansionsList) {
 #[no_mangle]
 pub unsafe extern "C" fn expand(
     item_name: *const c_char,
+    call_site: StableTextSpan,
     stable_attr: cairo_lang_macro_stable::StableTokenStream,
     stable_token_stream: cairo_lang_macro_stable::StableTokenStream,
 ) -> cairo_lang_macro_stable::StableResultWrapper {
-    let token_stream = TokenStream::from_stable(&stable_token_stream);
-    let attr_token_stream = TokenStream::from_stable(&stable_attr);
-    let item_name = CStr::from_ptr(item_name).to_string_lossy().to_string();
-    let fun = MACRO_DEFINITIONS_SLICE
-        .iter()
-        .find_map(|m| {
-            if m.name == item_name.as_str() {
-                Some(m.fun.clone())
-            } else {
-                None
-            }
-        })
-        .expect("procedural macro not found");
-    let result = match fun {
-        ExpansionFunc::Attr(fun) => fun(attr_token_stream, token_stream),
-        ExpansionFunc::Other(fun) => fun(token_stream),
-    };
-    let result: StableProcMacroResult = result.into_stable();
-    cairo_lang_macro_stable::StableResultWrapper {
-        input: stable_token_stream,
-        input_attr: stable_attr,
-        output: result,
-    }
+    CONTEXT.with(|ctx_cell| {
+        // Read size hint from stable token stream. This will be used to create a sufficiently
+        // large bump allocation buffer.
+        let size_hint: usize = stable_token_stream.size_hint + stable_attr.size_hint;
+        // Replace the allocation context with a new one.
+        // If there is no interned string guards, the old context will be de-allocated.
+        ctx_cell.replace(AllocationContext::with_capacity(size_hint));
+        let ctx_borrow = ctx_cell.borrow();
+        let ctx: &AllocationContext = ctx_borrow.deref();
+        // Set the call site for the current expand call.
+        CALL_SITE.replace((call_site.start, call_site.end));
+        // Copy the stable token stream into current context.
+        let token_stream = TokenStream::from_stable_in(&stable_token_stream, ctx);
+        let attr_token_stream = TokenStream::from_stable_in(&stable_attr, ctx);
+        let item_name = CStr::from_ptr(item_name)
+            .to_str()
+            .expect("item name must be a valid string");
+        let fun = MACRO_DEFINITIONS_SLICE
+            .iter()
+            .find_map(|m| {
+                if m.name == item_name {
+                    Some(m.fun.clone())
+                } else {
+                    None
+                }
+            })
+            .expect("procedural macro not found");
+        let result = match fun {
+            ExpansionFunc::Attr(fun) => fun(attr_token_stream, token_stream),
+            ExpansionFunc::Other(fun) => fun(token_stream),
+        };
+        let result: StableProcMacroResult = result.into_stable();
+        cairo_lang_macro_stable::StableResultWrapper {
+            input: stable_token_stream,
+            input_attr: stable_attr,
+            output: result,
+        }
+    })
 }
 
 /// Free the memory allocated for the [`StableProcMacroResult`].
@@ -134,7 +159,7 @@ pub unsafe extern "C" fn expand(
 #[doc(hidden)]
 #[no_mangle]
 pub unsafe extern "C" fn free_result(result: StableProcMacroResult) {
-    ProcMacroResult::from_owned_stable(result);
+    ProcMacroResult::free_owned_stable(result);
 }
 
 /// Distributed slice for storing auxiliary data collection callback pointers.
