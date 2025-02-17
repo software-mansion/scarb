@@ -58,7 +58,7 @@ fn can_expand_to_stdout() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            error: Missing token '}'.
+            error: Missing token TerminalRBrace.
              --> [..]lib.cairo:2:6
                 0
                  ^
@@ -92,7 +92,7 @@ fn can_expand_to_stdout_json() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            {"type":"error","message":"Missing token '}'./n --> [..]lib.cairo:2:6/n    0/n     ^/n"}
+            {"type":"error","message":"Missing token TerminalRBrace./n --> [..]lib.cairo:2:6/n    0/n     ^/n"}
             {"expanded":"/nmod hello {/nfn hello() -> felt252 {/n    0/n}/n","package_id":"hello v1.0.0 ([..]Scarb.toml)","target_name":"hello"}
         "#});
     assert!(!t.child("target").exists());
@@ -291,7 +291,7 @@ fn can_expand_multiple_targets() {
                         let temp = b;
                         b = a + b;
                         a = temp;
-                    }
+                    };
                     a
                 }
 
@@ -465,7 +465,7 @@ fn can_expand_erroneous_code() {
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            error: Missing token '}'.
+            error: Missing token TerminalRBrace.
              --> [..]lib.cairo:2:6
                 0
                  ^

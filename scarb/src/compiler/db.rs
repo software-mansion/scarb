@@ -218,7 +218,7 @@ pub(crate) fn has_plugin(db: &RootDatabase, predicate: fn(&dyn MacroPlugin) -> b
 pub(crate) fn is_starknet_plugin(plugin: &dyn MacroPlugin) -> bool {
     // TODO: Can this be done in less "hacky" way? TypeId is not working here, because we deal with
     // trait objects.
-    format!("{:?}", plugin).contains("StarknetPlugin")
+    format!("{:?}", plugin).contains("StarkNetPlugin")
 }
 
 pub(crate) fn is_executable_plugin(plugin: &dyn MacroPlugin) -> bool {

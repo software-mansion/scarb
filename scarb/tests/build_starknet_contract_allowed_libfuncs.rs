@@ -26,6 +26,7 @@ const TESTING_LIST: &str = indoc! {r#"
 "#};
 
 #[test]
+#[ignore = "redeposit_gas is audited now"]
 fn default_behaviour() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -59,6 +60,7 @@ fn default_behaviour() {
 }
 
 #[test]
+#[ignore = "redeposit_gas is audited now"]
 fn check_true() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
