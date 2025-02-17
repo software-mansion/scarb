@@ -37,7 +37,7 @@ sort-module-level-items = true
 - `sort-module-level-items`
 
   Reorder import statements alphabetically in groups (a group is separated by a newline).\
-  **Default:** `true`
+  **Default:** `false`
 
 - `max-line-length`
 
