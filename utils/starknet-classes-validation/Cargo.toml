@@ -1,0 +1,28 @@
+[package]
+name = "starknet-classes-validation"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+anyhow.workspace = true
+camino.workspace = true
+dunce.workspace = true
+cairo-lang-sierra.workspace = true
+cairo-lang-starknet-classes.workspace = true
+cairo-lang-starknet.workspace = true
+cairo-lang-utils.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+smol_str.workspace = true
+thiserror.workspace = true
+num-bigint = "0.4.6"
+num-traits = "0.2.19"
+num-integer = "0.1.46"
+sha3 = "0.10.8"
+starknet-types-core = "0.1.7"

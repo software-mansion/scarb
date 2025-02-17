@@ -14,6 +14,7 @@ use cairo_lang_starknet_classes::allowed_libfuncs::{
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_utils::Upcast;
 use indoc::{formatdoc, writedoc};
+use starknet_classes_validation::validate_version_compatible;
 use std::fmt::Write;
 use std::iter::zip;
 use tracing::debug;
@@ -55,7 +56,7 @@ pub fn check_allowed_libfuncs(
 
     let mut found_disallowed = false;
     for (decl, class) in zip(contracts, classes) {
-        match class.validate_version_compatible(list_selector.clone()) {
+        match validate_version_compatible(class, list_selector.clone()) {
             Ok(()) => {}
 
             Err(AllowedLibfuncsError::UnsupportedLibfunc {
