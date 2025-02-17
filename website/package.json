@@ -11,7 +11,7 @@
     "preview": "vitepress preview"
   },
   "dependencies": {
-    "@octokit/core": "5.1.0",
+    "@octokit/core": "6.1.4",
     "cairo-tm-grammar": "github:software-mansion-labs/cairo-tm-grammar",
     "mermaid": "11.4.1",
     "prettier": "3.3.2",
