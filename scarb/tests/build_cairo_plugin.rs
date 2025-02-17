@@ -344,7 +344,7 @@ fn diags_from_generated_code_mapped_correctly() {
             #[some]
             ^^^^^^^
             
-            error: Function not found.
+            error[E0006]: Function not found.
              --> [..]lib.cairo:4:5
                 i_don_exist();
                 ^^^^^^^^^^^

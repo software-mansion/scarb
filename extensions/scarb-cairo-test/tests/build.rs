@@ -171,7 +171,7 @@ fn features_test_build_failed() {
     #[cfg(not(windows))]
     snapbox.stdout_matches(indoc! {r#"
         [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
-        error: Function not found.
+        error[E0006]: Function not found.
          --> [..]/src/lib.cairo[..]
         fn main() -> felt252 { f() }
                                ^
@@ -181,7 +181,7 @@ fn features_test_build_failed() {
     #[cfg(windows)]
     snapbox.stdout_matches(indoc! {r#"
         [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
-        error: Function not found.
+        error[E0006]: Function not found.
          --> [..]/src/lib.cairo[..]
         fn main() -> felt252 { f() }
                                ^

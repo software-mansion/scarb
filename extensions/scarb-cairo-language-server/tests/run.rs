@@ -79,7 +79,15 @@ async fn run() {
             "jsonrpc": "2.0",
             "id": 1,
             "method": "client/registerCapability",
-            "params": {"registrations": []}
+            "params": {
+                "registrations": [
+                    {
+                        "id": "cairo/viewSyntaxTree",
+                        "method": "cairo/viewSyntaxTree",
+                        "registerOptions": serde_json::Value::Null,
+                    }
+                ]
+            }
         })
     );
 

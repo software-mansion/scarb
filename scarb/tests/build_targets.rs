@@ -231,7 +231,7 @@ fn compile_dep_not_a_lib() {
         .stdout_matches(indoc! {r#"
             warn: hello v1.0.0 ([..]) ignoring invalid dependency `dep` which is missing a lib or cairo-plugin target
                 Checking hello v1.0.0 ([..])
-            error: Identifier not found.
+            error[E0006]: Identifier not found.
              --> [..]/lib.cairo:1:25
             fn hellp() -> felt252 { dep::forty_two() }
                                     ^^^
@@ -408,7 +408,7 @@ fn integration_tests_do_not_enable_cfg_in_main_package() {
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
-            error: Identifier not found.
+            error[E0006]: Identifier not found.
              --> [..]test1.cairo:3:16
                 use hello::f;
                            ^
@@ -461,12 +461,12 @@ fn integration_tests_cannot_use_itself_by_target_name() {
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
-            error: Identifier not found.
+            error[E0006]: Identifier not found.
              --> [..]test1.cairo:6:9
                 use hello_integrationtest::test1::world;
                     ^^^^^^^^^^^^^^^^^^^^^
 
-            error: Identifier not found.
+            error[E0006]: Identifier not found.
              --> [..]test1.cairo:7:9
                 use hello_tests::test1::beautiful;
                     ^^^^^^^^^^^
@@ -523,7 +523,7 @@ fn features_enabled_in_integration_tests() {
         .stdout_matches(indoc! {r#"
             [..] Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..] Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..])
-            error: Identifier not found.
+            error[E0006]: Identifier not found.
              --> [..]test1.cairo:3:16
                 use hello::f;
                            ^
@@ -1082,7 +1082,7 @@ fn transitive_dev_deps_not_available() {
         .failure()
         .stdout_matches(indoc! {r#"
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
-            error: Identifier not found.
+            error[E0006]: Identifier not found.
              --> [..]lib.cairo:1:5
             use first::forty_two;
                 ^^^^^

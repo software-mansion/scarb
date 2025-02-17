@@ -182,7 +182,7 @@ fn features_fail_no_feature_enabled() {
         .assert()
         .stdout_matches(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..])
-            error: Function not found.
+            error[E0006]: Function not found.
              --> [..]/src/lib.cairo[..]
                 f()
                 ^
@@ -274,7 +274,7 @@ fn features_no_default_features() {
         .assert()
         .stdout_matches(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..])
-            error: Function not found.
+            error[E0006]: Function not found.
              --> [..]/src/lib.cairo[..]
                 f()
                 ^
@@ -309,7 +309,7 @@ fn features_all_features_failing() {
         .assert()
         .stdout_matches(indoc! {r#"
             [..] Compiling hello v1.0.0 ([..])
-            error: Function not found.
+            error[E0006]: Function not found.
              --> [..]/src/lib.cairo[..]
                 i()
                 ^

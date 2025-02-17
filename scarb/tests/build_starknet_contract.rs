@@ -382,7 +382,7 @@ fn compile_starknet_contract_without_starknet_dep() {
             #[abi(embed_v0)]
             ^^^^^^^^^^^^^^^^
 
-        error: Type not found.
+        error[E0006]: Type not found.
          --> [..]src/lib.cairo:19:30
             fn constructor(ref self: ContractState, value_: u128) {
                                      ^^^^^^^^^^^^^
@@ -392,12 +392,12 @@ fn compile_starknet_contract_without_starknet_dep() {
                 self.value.write(value_);
                            ^^^^^
 
-        error: Type not found.
+        error[E0006]: Type not found.
          --> [..]src/lib.cairo:24:37
             impl Balance of super::IBalance<ContractState> {
                                             ^^^^^^^^^^^^^
 
-        error: Type not found.
+        error[E0006]: Type not found.
          --> [..]src/lib.cairo:25:23
                 fn get(self: @ContractState) -> u128 {
                               ^^^^^^^^^^^^^
@@ -407,7 +407,7 @@ fn compile_starknet_contract_without_starknet_dep() {
                     self.value.read()
                                ^^^^
 
-        error: Type not found.
+        error[E0006]: Type not found.
          --> [..]src/lib.cairo:28:31
                 fn increase(ref self: ContractState, a: u128)  {
                                       ^^^^^^^^^^^^^
