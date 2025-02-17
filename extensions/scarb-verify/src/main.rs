@@ -9,8 +9,8 @@ use scarb_ui::{OutputFormat, Ui};
 use std::env;
 use std::fs;
 use std::process::ExitCode;
-use stwo_cairo_prover::cairo_air::air::CairoProof;
 use stwo_cairo_prover::cairo_air::verify_cairo;
+use stwo_cairo_prover::cairo_air::CairoProof;
 use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::{
     Blake2sMerkleChannel, Blake2sMerkleHasher,
 };
