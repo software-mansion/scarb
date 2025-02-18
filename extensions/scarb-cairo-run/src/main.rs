@@ -101,6 +101,11 @@ fn main_inner(ui: &Ui, args: Args) -> Result<()> {
         ScarbCommand::new()
             .arg("build")
             .env("SCARB_PACKAGES_FILTER", filter.to_env())
+            .env_if(
+                "SCARB_UI_VERBOSITY",
+                ui.verbosity().to_string(),
+                !ui.verbosity().is_default(),
+            )
             .run()?;
     }
 

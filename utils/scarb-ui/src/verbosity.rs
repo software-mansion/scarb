@@ -64,6 +64,11 @@ impl Verbosity {
         let env_var = env::var(env_var_name)?;
         Self::from_str(env_var.as_str())
     }
+
+    /// Check if the verbosity level is the default one.
+    pub fn is_default(&self) -> bool {
+        *self == Verbosity::default()
+    }
 }
 
 #[cfg(test)]
