@@ -73,11 +73,10 @@ fn main() -> Result<()> {
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
     check_scarb_version(&metadata, &ui);
-    check_cairo_test_plugin(&metadata, &ui);
 
     let matched = args.packages_filter.match_many(&metadata)?;
     let matched_ids = matched.iter().map(|p| p.id.clone()).collect::<Vec<_>>();
-    check_cairo_test_plugin(&metadata, &matched_ids);
+    check_cairo_test_plugin(&metadata, &matched_ids, &ui);
 
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
     let test_kind = args.test_kind.unwrap_or_default();
@@ -105,6 +104,11 @@ fn main() -> Result<()> {
         .arg("--test")
         .env("SCARB_TARGET_NAMES", target_names.clone().join(","))
         .env("SCARB_PACKAGES_FILTER", filter.to_env())
+        .env_if(
+            "SCARB_UI_VERBOSITY",
+            ui.verbosity().to_string(),
+            !ui.verbosity().is_default(),
+        )
         .run()?;
 
     let profile = env::var("SCARB_PROFILE").unwrap_or("dev".into());
@@ -228,7 +232,7 @@ fn check_scarb_version(metadata: &Metadata, ui: &Ui) {
     }
 }
 
-fn check_cairo_test_plugin(metadata: &Metadata, ui: &Ui) {
+fn check_cairo_test_plugin(metadata: &Metadata, packages: &[PackageId], ui: &Ui) {
     let app_version = env!("CARGO_PKG_VERSION").to_string();
     let warn = || {
         ui.print(formatdoc! {r#"
