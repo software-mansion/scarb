@@ -46,6 +46,7 @@ const EXEC_ATTR_PREFIX: &str = "__exec_attr_";
 ///
 /// This struct is a wrapper around a shared library containing the procedural macro implementation.
 /// It is responsible for loading the shared library and providing a safe interface for code expansion.
+#[derive(PartialEq, Eq, Hash)]
 pub struct ProcMacroInstance {
     package_id: PackageId,
     plugin: Plugin,
@@ -241,7 +242,7 @@ impl ProcMacroInstance {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum ExpansionKind {
     Attr,
     Derive,
@@ -259,7 +260,7 @@ impl From<SharedExpansionKind> for ExpansionKind {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Expansion {
     pub name: SmolStr,
     pub kind: ExpansionKind,
@@ -351,6 +352,20 @@ struct Plugin {
     #[allow(dead_code)]
     library: Library,
     vtable: VTableV0,
+}
+
+impl std::cmp::PartialEq for Plugin {
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self, other)
+    }
+}
+
+impl std::cmp::Eq for Plugin {}
+
+impl std::hash::Hash for Plugin {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        (self as *const Plugin).hash(state)
+    }
 }
 
 impl Plugin {
