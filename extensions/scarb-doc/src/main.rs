@@ -12,9 +12,11 @@ use scarb_doc::generate_packages_information;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 
 use scarb_ui::args::FeaturesSpec;
+use scarb_ui::components::Status;
 use scarb_ui::Ui;
 
 const OUTPUT_DIR: &str = "doc";
+const JSON_OUTPUT_FILENAME: &str = "output.json";
 
 #[derive(Default, Debug, Clone, clap::ValueEnum)]
 enum OutputFormat {
@@ -65,12 +67,20 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         &metadata,
         &metadata_for_packages,
         args.document_private_items,
-        ui,
+        ui.clone(),
     )?;
 
     match args.output_format {
         OutputFormat::Json => {
-            VersionedJsonOutput::new(packages_information).save_to_file(&output_dir)?
+            VersionedJsonOutput::new(packages_information)
+                .save_to_file(&output_dir, JSON_OUTPUT_FILENAME)?;
+
+            let output_path = output_dir
+                .join(JSON_OUTPUT_FILENAME)
+                .strip_prefix(&metadata.workspace.root)
+                .unwrap_or(&output_dir)
+                .to_string();
+            ui.print(Status::new("Saving output to:", &output_path));
         }
         OutputFormat::Markdown => {
             for pkg_information in packages_information {
@@ -84,10 +94,15 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
                             pkg_information.metadata.name
                         )
                     })?;
+
+                let output_path = pkg_output_dir
+                    .strip_prefix(&metadata.workspace.root)
+                    .unwrap_or(&pkg_output_dir)
+                    .to_string();
+                ui.print(Status::new("Saving output to:", &output_path));
             }
         }
     }
-
     Ok(())
 }
 

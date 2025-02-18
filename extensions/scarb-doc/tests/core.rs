@@ -1,4 +1,5 @@
 use assert_fs::TempDir;
+use indoc::indoc;
 use scarb_metadata::Metadata;
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -20,4 +21,29 @@ fn can_doc_corelib() {
         .current_dir(core)
         .assert()
         .success();
+}
+
+#[test]
+fn stdout_output_info() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello_world").build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            Saving output to: target/doc/hello_world
+        "#});
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args(["--output-format", "json"])
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            Saving output to: target/doc/output.json
+        "#});
 }
