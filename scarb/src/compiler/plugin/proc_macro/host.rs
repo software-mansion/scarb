@@ -48,8 +48,28 @@ const DERIVE_ATTR: &str = "derive";
 /// It then redirects the item to the appropriate macro plugin for code expansion.
 #[derive(Debug)]
 pub struct ProcMacroHostPlugin {
-    macros: Vec<Arc<ProcMacroInstance>>,
+    pub macros: Vec<Arc<ProcMacroInstance>>,
     full_path_markers: RwLock<HashMap<PackageId, Vec<String>>>,
+}
+
+impl ProcMacroHostPlugin {
+    pub fn declared_attributes(&self) -> Vec<String> {
+        self.macros
+            .iter()
+            .flat_map(|m| m.declared_attributes())
+            .collect()
+    }
+
+    pub fn declared_derives(&self) -> Vec<String> {
+        self.macros
+            .iter()
+            .flat_map(|m| m.declared_derives())
+            .collect()
+    }
+
+    pub fn declared_inline_macros(&self) -> Vec<String> {
+        self.macros.iter().flat_map(|m| m.inline_macros()).collect()
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1139,38 +1159,6 @@ fn into_cairo_diagnostics(
             },
         })
         .collect_vec()
-}
-
-/// A Scarb wrapper around the `ProcMacroHost` compiler plugin.
-///
-/// This struct represent the compiler plugin in terms of Scarb data model.
-/// It also builds a plugin suite that enables the compiler plugin.
-#[derive(Default)]
-pub struct ProcMacroHost {
-    macros: Vec<Arc<ProcMacroInstance>>,
-}
-
-impl ProcMacroHost {
-    pub fn register_instance(&mut self, instance: Arc<ProcMacroInstance>) {
-        self.macros.push(instance);
-    }
-
-    pub fn register_new(&mut self, package: Package, config: &Config) -> Result<()> {
-        let lib_path = package
-            .shared_lib_path(config)
-            .context("could not resolve shared library path")?;
-        let instance = ProcMacroInstance::try_new(package.id, lib_path)?;
-        self.register_instance(Arc::new(instance));
-        Ok(())
-    }
-
-    pub fn into_plugin(self) -> Result<ProcMacroHostPlugin> {
-        ProcMacroHostPlugin::try_new(self.macros)
-    }
-
-    pub fn macros(&self) -> &[Arc<ProcMacroInstance>] {
-        &self.macros
-    }
 }
 
 /// A global storage for dynamically-loaded procedural macros.
