@@ -47,11 +47,10 @@ fn can_test_without_gas() {
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            testing hello ...
+            [..]Testing hello
             running 1 test
             test hello::tests::test_foo ... ok
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
-
         "#});
 }
 
@@ -98,14 +97,13 @@ fn can_print_test_resources() {
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            testing hello ...
+            [..]Testing hello
             running 1 test
             test hello::tests::it_works ... ok (gas usage est.: [..])
                 steps: [..]
                 memory holes: [..]
                 builtins: ("range_check_builtin": [..])
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
-
         "#});
 }
 
@@ -150,11 +148,10 @@ fn features_test_build_success() {
             [..]Running cairo-test hello
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
             [..]Finished `dev` profile target(s) in [..]
-            testing hello ...
+            [..]Testing hello
             running 1 test
             test hello::tests::it_works ... ok[..]
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
-
         "#});
 }
 
@@ -235,16 +232,15 @@ fn integration_tests() {
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            testing hello ...
+            [..]Testing hello
             running 2 tests
             test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 40740)
             test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 40740)
             test result: ok. 2 passed; 0 failed; 0 ignored; 0 filtered out;
-
+            
             running 1 test
             test hello::tests::it_works ... ok (gas usage est.: 40740)
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
-
         "#});
 }
 
@@ -282,10 +278,9 @@ fn warn_if_cairo_test_plugin_missing() {
 
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            testing hello ...
+            [..]Testing hello
             running 0 tests
             test result: ok. 0 passed; 0 failed; 0 ignored; 0 filtered out;
-
        "#});
 }
 
@@ -334,11 +329,10 @@ fn can_choose_test_kind_to_run() {
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            testing hello ...
+            [..]Testing hello
             running 1 test
             test hello::tests::it_works ... ok (gas usage est.: 40740)
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
-
         "#});
     Scarb::quick_snapbox()
         .arg("cairo-test")
@@ -350,11 +344,10 @@ fn can_choose_test_kind_to_run() {
         .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_integrationtest) hello_integrationtest v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            testing hello ...
+            [..]Testing hello
             running 2 tests
             test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 40740)
             test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 40740)
             test result: ok. 2 passed; 0 failed; 0 ignored; 0 filtered out;
-            
         "#});
 }
