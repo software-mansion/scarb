@@ -82,7 +82,7 @@ pub struct ProcMacroCompilationUnit {
 #[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct CompilationUnitComponent {
-    /// Unique id identifying this component.
+    /// Unique id identifying this component in its compilation unit.
     pub id: CompilationUnitComponentId,
     /// The Scarb [`Package`] to be built.
     pub package: Package,
@@ -91,6 +91,7 @@ pub struct CompilationUnitComponent {
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this component.
     pub cfg_set: Option<CfgSet>,
     /// Dependencies of this component.
+    /// Contains libraries and plugins, represented uniquely in the scope of the compilation unit.
     pub dependencies: Vec<CompilationUnitDependency>,
 }
 
@@ -114,6 +115,10 @@ impl CompilationUnitDependency {
 #[derive(Clone, Debug, TypedBuilder)]
 #[non_exhaustive]
 pub struct CompilationUnitCairoPlugin {
+    /// An id which uniquely identifies the plugin in scope of the compilation unit
+    /// amongst other plugins and [`CompilationUnitComponent`]s.
+    /// It is used to identify the plugin as a possible dependency of a [`CompilationUnitComponent`].
+    pub component_dependency_id: CompilationUnitComponentId,
     /// The Scarb plugin [`Package`] to load.
     pub package: Package,
     /// Indicate whether the plugin is built into Scarb, or compiled from source.
