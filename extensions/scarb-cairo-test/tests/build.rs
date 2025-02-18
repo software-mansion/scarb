@@ -1,7 +1,9 @@
+use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 #[test]
 fn can_test_without_gas() {
@@ -287,6 +289,37 @@ fn warn_if_cairo_test_plugin_missing() {
             test result: ok. 0 passed; 0 failed; 0 ignored; 0 filtered out;
 
        "#});
+}
+
+#[test]
+fn do_not_warn_on_non_tested_package() {
+    let t = TempDir::new().unwrap();
+    let pkg1 = t.child("first");
+    ProjectBuilder::start().name("first").build(&pkg1);
+    let pkg2 = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep_cairo_test()
+        .build(&pkg2);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("cairo-test")
+        .arg("--package")
+        .arg("second")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling test(second_unittest) second v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            testing second ...
+            running 0 tests
+            test result: ok. 0 passed; 0 failed; 0 ignored; 0 filtered out;
+            
+        "#});
 }
 
 #[test]
