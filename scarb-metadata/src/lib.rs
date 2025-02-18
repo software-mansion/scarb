@@ -537,6 +537,21 @@ impl Metadata {
         self.packages.iter().find(|p| p.id == *id)
     }
 
+    /// Checks if the plugin associated with [`CompilationUnitCairoPluginMetadata`] is built-in into Scarb.
+    pub fn is_builtin_plugin(&self, plugin: &CompilationUnitCairoPluginMetadata) -> Option<bool> {
+        self.get_package(&plugin.package)?
+            .targets
+            .iter()
+            .find(|&target| target.kind == "cairo-plugin")
+            .map(|target| {
+                target
+                    .params
+                    .get("builtin")
+                    .and_then(|value| value.as_bool())
+                    .unwrap_or_default()
+            })
+    }
+
     /// Returns reference to [`CompilationUnitMetadata`] corresponding to the [`CompilationUnitId`].
     pub fn get_compilation_unit(&self, id: &CompilationUnitId) -> Option<&CompilationUnitMetadata> {
         self.compilation_units.iter().find(|p| p.id == *id)
