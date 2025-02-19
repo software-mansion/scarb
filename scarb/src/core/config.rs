@@ -13,6 +13,7 @@ use which::which_in;
 
 use scarb_ui::{OutputFormat, Ui, Verbosity};
 
+use crate::compiler::plugin::proc_macro::ProcMacroRepository;
 use crate::compiler::plugin::CairoPluginRepository;
 use crate::compiler::{CompilerRepository, Profile};
 use crate::core::AppDirs;
@@ -40,6 +41,7 @@ pub struct Config {
     offline: bool,
     compilers: CompilerRepository,
     cairo_plugins: CairoPluginRepository,
+    proc_macro_repository: ProcMacroRepository,
     // This is a Dojo-specific feature that will be removed once Dojo is decoupled from Scarb as a library.
     custom_source_patches: Option<Vec<ManifestDependency>>,
     tokio_runtime: OnceCell<Runtime>,
@@ -90,6 +92,7 @@ impl Config {
             offline: b.offline,
             compilers,
             cairo_plugins: compiler_plugins,
+            proc_macro_repository: ProcMacroRepository::default(),
             custom_source_patches: b.custom_source_patches,
             tokio_runtime: OnceCell::new(),
             tokio_handle,
@@ -232,6 +235,10 @@ impl Config {
 
     pub fn cairo_plugins(&self) -> &CairoPluginRepository {
         &self.cairo_plugins
+    }
+
+    pub fn proc_macro_repository(&self) -> &ProcMacroRepository {
+        &self.proc_macro_repository
     }
 
     pub fn custom_source_patches(&self) -> &Option<Vec<ManifestDependency>> {
