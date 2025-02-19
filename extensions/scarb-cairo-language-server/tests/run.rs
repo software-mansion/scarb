@@ -80,13 +80,7 @@ async fn run() {
             "id": 1,
             "method": "client/registerCapability",
             "params": {
-                "registrations": [
-                    {
-                        "id": "cairo/viewSyntaxTree",
-                        "method": "cairo/viewSyntaxTree",
-                        "registerOptions": serde_json::Value::Null,
-                    }
-                ]
+                "registrations": []
             }
         })
     );

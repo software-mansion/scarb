@@ -117,7 +117,7 @@ fn test_diagnostics_error() {
     failure_assert(
         output,
         indoc! {r#"
-            error: Missing token ';'.
+            error: Missing token TerminalSemicolon.
              --> [..]lib.cairo:2:33
             pub(crate) mod DualCaseERC20Mock 
                                             ^
