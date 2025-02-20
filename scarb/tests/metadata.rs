@@ -1538,3 +1538,122 @@ fn executable_target_can_allow_syscalls() {
         "syscalls not allowed"
     );
 }
+
+#[test]
+fn cairo_plugins_added_as_component_dependencies() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("world")
+        .manifest_extra(indoc! {r#"
+            [cairo-plugin]
+            # Stop Scarb from attempting to compile the plugin with Cargo
+            builtin = true
+        "#})
+        .build(&t.child("world"));
+    ProjectBuilder::start()
+        .name("beautiful")
+        .dep("world", t.child("world"))
+        .build(&t.child("beautiful"));
+    ProjectBuilder::start()
+        .name("hello")
+        .dep("beautiful", t.child("beautiful"))
+        .build(&t.child("hello"));
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(t.child("hello"))
+        .stdout_json::<Metadata>();
+    let cu = meta
+        .compilation_units
+        .iter()
+        .find(|cu| cu.target.name == "hello" && cu.target.kind == "lib")
+        .unwrap();
+
+    assert_eq!(
+        cu.cairo_plugins.len(),
+        1,
+        "CU should contain exactly one plugin"
+    );
+    assert!(
+        cu.cairo_plugins
+            .first()
+            .unwrap()
+            .package
+            .to_string()
+            .starts_with("world 1.0.0"),
+        "plugin world not found in cu plugins"
+    );
+    assert_eq!(
+        cu.components.len(),
+        3,
+        "CU should contain exactly three components"
+    );
+    let beautiful_component = cu
+        .components
+        .iter()
+        .find(|c| c.name == "beautiful")
+        .unwrap();
+    assert_eq!(
+        beautiful_component.dependencies.clone().unwrap().len(),
+        3,
+        "beautiful component should have 3 dependencies"
+    );
+    let beautiful_deps = beautiful_component
+        .dependencies
+        .clone()
+        .unwrap()
+        .into_iter()
+        .map(|dep| dep.id.to_string())
+        .collect_vec();
+    let beautiful_deps_packages = meta
+        .packages
+        .iter()
+        .filter(|pkg| beautiful_deps.iter().contains(&pkg.id.to_string()))
+        .map(|pkg| pkg.name.to_string())
+        .sorted()
+        .collect_vec();
+    assert_eq!(
+        beautiful_deps_packages.len(),
+        beautiful_deps.len(),
+        "all dependencies should be found in the packages list"
+    );
+    assert_eq!(
+        beautiful_deps_packages,
+        vec!["beautiful", "core", "world"],
+        "beautiful component invalid dependencies"
+    );
+    let hello_component = cu.components.iter().find(|c| c.name == "hello").unwrap();
+    assert_eq!(
+        hello_component.dependencies.clone().unwrap().len(),
+        3,
+        "hello component should have 3 dependencies"
+    );
+    let hello_deps = hello_component
+        .dependencies
+        .clone()
+        .unwrap()
+        .into_iter()
+        .map(|dep| dep.id.to_string())
+        .collect_vec();
+    let hello_deps_packages = meta
+        .packages
+        .iter()
+        .filter(|pkg| hello_deps.iter().contains(&pkg.id.to_string()))
+        .map(|pkg| pkg.name.to_string())
+        .sorted()
+        .collect_vec();
+    assert_eq!(
+        hello_deps_packages.len(),
+        hello_deps.len(),
+        "all dependencies should be found in the packages list"
+    );
+    // Note, hello does not depend on world.
+    assert_eq!(
+        hello_deps_packages,
+        vec!["beautiful", "core", "hello"],
+        "beautiful component invalid dependencies"
+    );
+}
