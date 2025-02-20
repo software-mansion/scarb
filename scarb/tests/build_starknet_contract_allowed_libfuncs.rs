@@ -26,47 +26,20 @@ const TESTING_LIST: &str = indoc! {r#"
 "#};
 
 #[test]
-fn default_behaviour() {
-    let t = assert_fs::TempDir::new().unwrap();
-    ProjectBuilder::start()
-        .name("hello")
-        .version("0.1.0")
-        .manifest_extra(indoc! {r#"
-            [[target.starknet-contract]]
-        "#})
-        .dep_starknet()
-        .lib_cairo(EXPERIMENTAL_LIBFUNC)
-        .build(&t);
-
-    Scarb::quick_snapbox()
-        // NOTE: we cannot use `check` here, because without full compilation
-        // we cannot predict what libfuncs would be generated
-        .arg("build")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-        [..] Compiling hello v0.1.0 ([..])
-        warn: libfunc `redeposit_gas` is not allowed in the libfuncs list `Default libfunc list`
-         --> contract: ExperimentalLibfunc
-        help: try compiling with the `experimental` list
-         --> Scarb.toml
-            [[target.starknet-contract]]
-            allowed-libfuncs-list.name = "experimental"
-
-        [..]  Finished `dev` profile target(s) in [..]
-        "#});
-}
-
-#[test]
 fn check_true() {
     let t = assert_fs::TempDir::new().unwrap();
+
+    t.child("testing_list.json")
+        .write_str(TESTING_LIST)
+        .unwrap();
+
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
             allowed-libfuncs = true
+            allowed-libfuncs-list.path = "testing_list.json"
         "#})
         .dep_starknet()
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
@@ -79,12 +52,8 @@ fn check_true() {
         .success()
         .stdout_matches(indoc! {r#"
         [..] Compiling hello v0.1.0 ([..])
-        warn: libfunc `redeposit_gas` is not allowed in the libfuncs list `Default libfunc list`
+        warn: libfunc `revoke_ap_tracking` is not allowed in the libfuncs list `[..]testing_list.json`
          --> contract: ExperimentalLibfunc
-        help: try compiling with the `experimental` list
-         --> Scarb.toml
-            [[target.starknet-contract]]
-            allowed-libfuncs-list.name = "experimental"
 
         [..]  Finished `dev` profile target(s) in [..]
         "#});
@@ -93,12 +62,18 @@ fn check_true() {
 #[test]
 fn check_false() {
     let t = assert_fs::TempDir::new().unwrap();
+
+    t.child("testing_list.json")
+        .write_str(TESTING_LIST)
+        .unwrap();
+
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
             allowed-libfuncs = false
+            allowed-libfuncs-list.path = "testing_list.json"
         "#})
         .dep_starknet()
         .lib_cairo(EXPERIMENTAL_LIBFUNC)
