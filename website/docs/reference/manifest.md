@@ -247,6 +247,18 @@ This field is responsible for setting experimental flags to be used on the packa
 experimental-features = ["negative_impls"]
 ```
 
+### `re-export-cairo-plugins`
+
+This field can be used to declare a re-export of a package dependency.
+If a package declares a re-export, all packages depending on this package will also depend on the re-export.
+Only packages implementing cairo plugin (with `cairo-plugin` target) can be re-exported.
+Only direct dependencies can be re-exported.
+
+```toml
+[package]
+re-export-cairo-plugins = ["proc_macro_package"]
+```
+
 ## `[dependencies]`
 
 See [Specifying Dependencies](./specifying-dependencies) page.

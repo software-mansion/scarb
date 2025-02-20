@@ -59,13 +59,50 @@ impl WorkspaceResolve {
         &self,
         package_id: PackageId,
         target_kind: &TargetKind,
-    ) -> Vec<Package> {
+    ) -> Result<Vec<Package>> {
         assert!(self.packages.contains_key(&package_id));
-        self.resolve
+        let dependencies = self
+            .resolve
             .package_dependencies_for_target_kind(package_id, target_kind)
             .iter()
             .map(|id| self.packages[id].clone())
-            .collect_vec()
+            .collect_vec();
+
+        let re_exported = dependencies
+            .iter()
+            .flat_map(|dependency| {
+                let package_dependencies = self
+                    .resolve
+                    .package_dependencies_for_target_kind(dependency.id, target_kind);
+                dependency
+                    .manifest
+                    .summary
+                    .re_export_cairo_plugins
+                    .iter()
+                    .map(move |plugin_name| {
+                        package_dependencies
+                            .iter()
+                            .find(|id| id.name == *plugin_name)
+                            .map(|id| {
+                                self.packages.get(id).expect("workspace resolve packages must include all dependency graph nodes").clone()
+                            })
+                            .filter(|package| package.is_cairo_plugin())
+                            .map(Ok)
+                            .unwrap_or_else(|| {
+                                bail!(
+                                "package `{}` cannot re-export cairo plugin `{plugin_name}` which is not a dependency of `{}`",
+                                dependency.id.name, dependency.id.name)
+                            })
+                    })
+
+            })
+            .collect_vec();
+
+        dependencies
+            .into_iter()
+            .map(Ok)
+            .chain(re_exported)
+            .collect::<Result<Vec<Package>>>()
     }
 
     /// Get all dependencies with allowed prebuilt macros for a given package.
@@ -517,7 +554,7 @@ fn cairo_compilation_unit_for_target(
         .iter()
         .find(|component| component.package.id == member.id)
         .unwrap();
-    let mut test_package_deps = solution.component_dependencies(member_component, &components);
+    let mut test_package_deps = solution.component_dependencies(member_component, &components)?;
     if is_integration_test {
         test_package_deps.push(CompilationUnitDependency::Library(
             member_component.id.clone(),
@@ -527,13 +564,13 @@ fn cairo_compilation_unit_for_target(
     let dependencies_for_components: Vec<_> = components
         .iter()
         .map(|component| {
-            if component.package.id == test_package_id {
+            Ok(if component.package.id == test_package_id {
                 test_package_deps.clone()
             } else {
-                solution.component_dependencies(component, &components)
-            }
+                solution.component_dependencies(component, &components)?
+            })
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
 
     for (component, dependencies) in zip(&mut components, dependencies_for_components) {
         component.dependencies = dependencies;
@@ -729,14 +766,14 @@ impl<'a> PackageSolutionCollector<'a> {
         &self,
         component: &CompilationUnitComponent,
         components: &[CompilationUnitComponent],
-    ) -> Vec<CompilationUnitDependency> {
+    ) -> Result<Vec<CompilationUnitDependency>> {
         let package_id = component.id.package_id;
         let component_target_kind = self.target_kind.as_ref().unwrap();
 
         // Those are direct dependencies of the component.
         let dependencies_packages = self
             .resolve
-            .package_dependencies(package_id, component_target_kind);
+            .package_dependencies(package_id, component_target_kind)?;
 
         // We iterate over all the compilation unit components to get dependency's version.
         let mut dependencies: Vec<_> = components
@@ -762,10 +799,8 @@ impl<'a> PackageSolutionCollector<'a> {
             dependencies.push(CompilationUnitDependency::Library(component.id.clone()));
         }
 
-        let plugin_dependencies = self
-            .resolve
-            .package_dependencies(package_id, component_target_kind)
-            .into_iter()
+        let plugin_dependencies = dependencies_packages
+            .iter()
             .filter(|package| package.is_cairo_plugin())
             .map(|package| {
                 CompilationUnitDependency::Plugin(CompilationUnitComponentId {
@@ -775,7 +810,7 @@ impl<'a> PackageSolutionCollector<'a> {
             .collect::<Vec<_>>();
 
         dependencies.extend(plugin_dependencies);
-        dependencies
+        Ok(dependencies)
     }
 
     pub fn show_warnings(self) {
