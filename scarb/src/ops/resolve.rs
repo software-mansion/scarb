@@ -518,9 +518,11 @@ fn cairo_compilation_unit_for_target(
         .find(|component| component.package.id == member.id)
         .unwrap();
     let mut test_package_deps = solution.component_dependencies(member_component, &components);
-    test_package_deps.push(CompilationUnitDependency::Library(
-        member_component.id.clone(),
-    ));
+    if is_integration_test {
+        test_package_deps.push(CompilationUnitDependency::Library(
+            member_component.id.clone(),
+        ));
+    }
 
     let dependencies_for_components: Vec<_> = components
         .iter()
