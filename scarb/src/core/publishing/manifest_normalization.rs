@@ -81,6 +81,7 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
         no_core: summary.no_core.then_some(true),
         cairo_version: metadata.cairo_version.clone().map(MaybeWorkspace::Defined),
         experimental_features: pkg.manifest.experimental_features.clone(),
+        cairo_plugin_reexports: Some(pkg.manifest.summary.cairo_plugin_reexports.clone()),
     })
 }
 

@@ -24,6 +24,8 @@ pub struct SummaryInner {
     pub package_id: PackageId,
     #[builder(default)]
     pub dependencies: Vec<ManifestDependency>,
+    #[builder(default)]
+    pub cairo_plugin_reexports: Vec<PackageName>,
     #[builder(default = false)]
     pub no_core: bool,
     #[builder(default)]

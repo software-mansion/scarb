@@ -203,6 +203,7 @@ pub struct TomlPackage {
     pub no_core: Option<bool>,
     pub cairo_version: Option<MaybeWorkspaceField<VersionReq>>,
     pub experimental_features: Option<Vec<SmolStr>>,
+    pub cairo_plugin_reexports: Option<Vec<PackageName>>,
 }
 
 #[derive(Clone, Debug, Serialize, Eq, PartialEq)]
@@ -490,9 +491,12 @@ impl TomlManifest {
 
         let publish = package.publish.unwrap_or(true);
 
+        let cairo_plugin_reexports = package.cairo_plugin_reexports.clone().unwrap_or_default();
+
         let summary = Summary::builder()
             .package_id(package_id)
             .dependencies(dependencies)
+            .cairo_plugin_reexports(cairo_plugin_reexports)
             .no_core(no_core)
             .build();
 
