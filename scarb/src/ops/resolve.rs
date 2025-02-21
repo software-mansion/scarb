@@ -150,8 +150,9 @@ pub fn resolve_workspace_with_opts(
     ws: &Workspace<'_>,
     opts: &ResolveOpts,
 ) -> Result<WorkspaceResolve> {
-    ws.config().tokio_handle().block_on(
-        async {
+    ws.config()
+        .tokio_handle()
+        .block_on(TryFutureExt::into_future(async {
             let mut patch_map = PatchMap::new();
 
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
@@ -229,9 +230,7 @@ pub fn resolve_workspace_with_opts(
                 .collect::<Result<Vec<()>>>()?;
 
             Ok(WorkspaceResolve { resolve, packages })
-        }
-        .into_future(),
-    )
+        }))
 }
 
 /// Gather [`Package`] instances from this resolver result, by asking the [`RegistryCache`]
