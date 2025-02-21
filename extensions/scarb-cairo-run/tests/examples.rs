@@ -1,6 +1,6 @@
 use assert_fs::TempDir;
 use indoc::indoc;
-use snapbox::cmd::{cargo_bin, Command, OutputAssert};
+use snapbox::cmd::{Command, OutputAssert, cargo_bin};
 
 use scarb_test_support::cargo::manifest_dir;
 

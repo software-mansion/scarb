@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::fs;
 
-use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use assert_fs::prelude::*;
 use gix::refs::transaction::PreviousValue;
 use indoc::indoc;
 use scarb_metadata::Metadata;

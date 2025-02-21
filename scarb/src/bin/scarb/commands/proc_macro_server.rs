@@ -1,7 +1,7 @@
 use anyhow::Result;
 use scarb::ops::CompilationUnitsOpts;
 use scarb::{
-    compiler::{plugin::proc_macro::ProcMacroHost, CairoCompilationUnit, CompilationUnit},
+    compiler::{CairoCompilationUnit, CompilationUnit, plugin::proc_macro::ProcMacroHost},
     core::{Config, Workspace},
     ops::{self, FeaturesOpts, FeaturesSelector},
 };

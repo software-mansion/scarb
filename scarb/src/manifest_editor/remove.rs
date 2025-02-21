@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use toml_edit::DocumentMut;
 
 use scarb_ui::components::Status;

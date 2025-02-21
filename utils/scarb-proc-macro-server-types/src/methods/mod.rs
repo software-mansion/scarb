@@ -1,5 +1,5 @@
 use cairo_lang_macro::TokenStream;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 pub mod defined_macros;
 pub mod expand;

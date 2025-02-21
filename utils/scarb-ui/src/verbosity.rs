@@ -2,7 +2,7 @@ use std::env;
 use std::fmt::Display;
 use std::str::FromStr;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 /// The requested verbosity of output.
 ///
@@ -95,11 +95,17 @@ mod tests {
     #[test]
     fn verbosity_from_env_var() {
         use Verbosity::*;
-        env::set_var("SOME_ENV_VAR", "quiet");
+        unsafe {
+            env::set_var("SOME_ENV_VAR", "quiet");
+        }
         assert_eq!(Verbosity::from_env_var("SOME_ENV_VAR").unwrap(), Quiet);
-        env::set_var("SOME_ENV_VAR", "verbose");
+        unsafe {
+            env::set_var("SOME_ENV_VAR", "verbose");
+        }
         assert_eq!(Verbosity::from_env_var("SOME_ENV_VAR").unwrap(), Verbose);
-        env::set_var("SOME_ENV_VAR", "no-warnings");
+        unsafe {
+            env::set_var("SOME_ENV_VAR", "no-warnings");
+        }
         assert_eq!(Verbosity::from_env_var("SOME_ENV_VAR").unwrap(), NoWarnings);
         assert!(Verbosity::from_env_var("SOME_ENV_VAR_THAT_DOESNT_EXIST").is_err());
     }

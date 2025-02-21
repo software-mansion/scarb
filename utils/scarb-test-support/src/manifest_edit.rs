@@ -2,9 +2,9 @@ use std::cell::LazyCell;
 use std::ffi::OsStr;
 use std::fs;
 
+use assert_fs::TempDir;
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
-use assert_fs::TempDir;
 use snapbox::cmd::Command;
 
 use crate::command::Scarb;

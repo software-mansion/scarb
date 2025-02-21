@@ -1,10 +1,10 @@
 use anyhow::Result;
 use std::env;
 
+use crate::core::Summary;
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
-use crate::core::Summary;
 
 mod algorithm;
 mod primitive;
@@ -59,7 +59,7 @@ mod tests {
 
     use crate::core::lockfile::{Lockfile, PackageLock};
     use crate::core::package::PackageName;
-    use crate::core::registry::mock::{deps, locks, pkgs, registry, MockRegistry};
+    use crate::core::registry::mock::{MockRegistry, deps, locks, pkgs, registry};
     use crate::core::{ManifestDependency, PackageId, Resolve, SourceId, TargetKind};
 
     fn check(

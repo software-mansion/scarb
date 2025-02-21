@@ -1,4 +1,4 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use toml_edit::{DocumentMut, Item, Table};
 
 pub fn get_table_mut<'a>(doc: &'a mut DocumentMut, path: &[&str]) -> Result<&'a mut Item> {

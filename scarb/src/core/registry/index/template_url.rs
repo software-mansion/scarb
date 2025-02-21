@@ -1,6 +1,6 @@
 use std::fmt;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use indoc::formatdoc;
 use serde::{Deserialize, Serialize};
 use url::Url;

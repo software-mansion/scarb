@@ -4,14 +4,14 @@ use std::default::Default;
 use std::fs;
 use std::iter::{repeat, zip};
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use cairo_lang_filesystem::db::Edition;
 use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
 use pathdiff::diff_utf8_paths;
 use semver::{Version, VersionReq};
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de};
 use serde_untagged::UntaggedEnumVisitor;
 use smol_str::SmolStr;
 use tracing::trace;
@@ -29,7 +29,7 @@ use crate::core::{
 };
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
-use crate::internal::serdex::{toml_merge, toml_merge_apply_strategy, RelativeUtf8PathBuf};
+use crate::internal::serdex::{RelativeUtf8PathBuf, toml_merge, toml_merge_apply_strategy};
 use crate::internal::to_version::ToVersion;
 use crate::{
     DEFAULT_MODULE_MAIN_FILE, DEFAULT_SOURCE_PATH, DEFAULT_TESTS_PATH, MANIFEST_FILE_NAME,

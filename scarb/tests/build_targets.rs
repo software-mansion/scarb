@@ -1,5 +1,5 @@
-use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use assert_fs::prelude::*;
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use indoc::{formatdoc, indoc};

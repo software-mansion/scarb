@@ -1,5 +1,5 @@
-use crate::core::Config;
 use crate::SCARB_ENV;
+use crate::core::Config;
 use camino::Utf8PathBuf;
 use std::collections::HashMap;
 use std::ffi::OsString;

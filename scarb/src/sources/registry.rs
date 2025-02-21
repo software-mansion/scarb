@@ -1,15 +1,15 @@
 use std::fmt;
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use async_trait::async_trait;
 use tracing::trace;
 
 use scarb_ui::components::Status;
 
+use crate::core::registry::client::RegistryClient;
 use crate::core::registry::client::cache::RegistryClientCache;
 use crate::core::registry::client::http::HttpRegistryClient;
 use crate::core::registry::client::local::LocalRegistryClient;
-use crate::core::registry::client::RegistryClient;
 use crate::core::registry::index::IndexRecord;
 use crate::core::registry::package_source_store::PackageSourceStore;
 use crate::core::source::Source;

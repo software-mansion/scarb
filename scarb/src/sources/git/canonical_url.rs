@@ -1,6 +1,6 @@
 use std::fmt;
 
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use url::Url;
 
 use scarb_stable_hash::short_hash;

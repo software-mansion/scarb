@@ -1,17 +1,17 @@
 use std::fmt;
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use async_trait::async_trait;
 use camino::Utf8Path;
-use include_dir::{include_dir, Dir, DirEntry};
+use include_dir::{Dir, DirEntry, include_dir};
 use tokio::sync::OnceCell;
 use tracing::trace;
 
+use crate::core::SourceId;
 use crate::core::config::Config;
 use crate::core::manifest::{ManifestDependency, Summary, TomlManifest};
 use crate::core::package::{Package, PackageId};
 use crate::core::source::Source;
-use crate::core::SourceId;
 use crate::flock::protected_run_if_not_ok;
 use crate::internal::fsx;
 use crate::internal::fsx::PathUtf8Ext;

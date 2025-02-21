@@ -1,6 +1,6 @@
+use assert_fs::TempDir;
 use assert_fs::fixture::ChildPath;
 use assert_fs::prelude::*;
-use assert_fs::TempDir;
 use serde_json::json;
 use std::fmt;
 use std::path::Path;
