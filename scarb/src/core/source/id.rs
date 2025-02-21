@@ -3,15 +3,15 @@ use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::{Arc, LazyLock};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smol_str::SmolStr;
 use url::Url;
 
+use crate::core::Config;
 use crate::core::registry::DEFAULT_REGISTRY_INDEX;
 use crate::core::source::Source;
-use crate::core::Config;
 use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::static_hash_cache::StaticHashCache;
 use crate::sources::canonical_url::CanonicalUrl;
@@ -475,7 +475,7 @@ mod tests {
     use test_case::test_case;
     use url::Url;
 
-    use crate::core::{source::SourceId, GitReference};
+    use crate::core::{GitReference, source::SourceId};
 
     #[test_case(SourceId::mock_git())]
     #[test_case(SourceId::mock_path())]

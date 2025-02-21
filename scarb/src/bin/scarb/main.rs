@@ -8,8 +8,8 @@ use tracing::debug;
 use tracing_subscriber::EnvFilter;
 
 use args::ScarbArgs;
-use scarb::core::errors::ScriptExecutionError;
 use scarb::core::Config;
+use scarb::core::errors::ScriptExecutionError;
 use scarb::ops;
 use scarb_ui::Ui;
 

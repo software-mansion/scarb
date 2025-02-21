@@ -3,10 +3,10 @@ use std::env;
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 
+use crate::MANIFEST_FILE_NAME;
 use crate::core::manifest::TomlManifest;
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
-use crate::MANIFEST_FILE_NAME;
 
 #[tracing::instrument(level = "debug")]
 pub fn find_manifest_path(user_override: Option<&Utf8Path>) -> Result<Utf8PathBuf> {

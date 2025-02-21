@@ -2,11 +2,11 @@ use std::env;
 use std::path::Path;
 use std::str::FromStr;
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use async_trait::async_trait;
 use futures::StreamExt;
 use reqwest::header::{
-    HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH,
+    AUTHORIZATION, ETAG, HeaderMap, HeaderName, HeaderValue, IF_MODIFIED_SINCE, IF_NONE_MATCH,
     LAST_MODIFIED,
 };
 use reqwest::multipart::{Form, Part};

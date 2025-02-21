@@ -3,7 +3,7 @@ use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, FromSyntaxNode, ProcMacroInstance,
 };
 use crate::core::{Config, Package, PackageId};
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::{
@@ -27,7 +27,7 @@ use cairo_lang_syntax::node::ast::{Expr, ImplItem, MaybeImplBody, MaybeTraitBody
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
-use cairo_lang_syntax::node::{ast, Terminal, TypedStablePtr, TypedSyntaxNode};
+use cairo_lang_syntax::node::{Terminal, TypedStablePtr, TypedSyntaxNode, ast};
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use scarb_stable_hash::short_hash;

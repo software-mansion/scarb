@@ -5,9 +5,9 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
+use assert_fs::TempDir;
 use assert_fs::fixture::{ChildPath, PathChild};
 use assert_fs::prelude::*;
-use assert_fs::TempDir;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
 use libloading::library_filename;

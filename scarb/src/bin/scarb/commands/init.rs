@@ -1,6 +1,6 @@
 use std::env;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use camino::Utf8PathBuf;
 
 use scarb::core::Config;

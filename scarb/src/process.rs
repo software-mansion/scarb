@@ -4,8 +4,8 @@ use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::{fmt, thread};
 
-use anyhow::{anyhow, bail, Context, Result};
-use tracing::{debug, debug_span, warn, Span};
+use anyhow::{Context, Result, anyhow, bail};
+use tracing::{Span, debug, debug_span, warn};
 
 use scarb_ui::components::{Spinner, Status};
 
@@ -38,7 +38,7 @@ mod imp {
     use std::os::unix::process::CommandExt;
     use std::process::Command;
 
-    use anyhow::{bail, Result};
+    use anyhow::{Result, bail};
 
     pub fn exec_replace(cmd: &mut Command) -> Result<()> {
         let err = cmd.exec();
@@ -50,7 +50,7 @@ mod imp {
 mod imp {
     use std::process::Command;
 
-    use anyhow::{bail, Context, Result};
+    use anyhow::{Context, Result, bail};
     use windows_sys::Win32::Foundation::{BOOL, FALSE, TRUE};
     use windows_sys::Win32::System::Console::SetConsoleCtrlHandler;
 

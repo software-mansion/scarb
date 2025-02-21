@@ -1,6 +1,6 @@
+use assert_fs::TempDir;
 use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
-use assert_fs::TempDir;
 use indoc::indoc;
 
 use scarb_metadata::{Cfg, Metadata};
@@ -358,9 +358,10 @@ fn features_metadata_feature_in_compilation_units() {
     assert!(unit.package.repr.starts_with("hello "));
     assert_eq!(unit.target.name, "hello");
     assert!(!unit.components.is_empty());
-    assert!(unit
-        .cfg
-        .contains(&Cfg::KV("target".into(), unit.target.kind.clone())));
+    assert!(
+        unit.cfg
+            .contains(&Cfg::KV("target".into(), unit.target.kind.clone()))
+    );
     assert!(unit.components.len() >= 2);
     let main_component_cfg = unit.components[1].cfg.clone();
     assert!(

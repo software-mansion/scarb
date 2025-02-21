@@ -11,9 +11,9 @@ use scarb_ui::args::{PackagesFilter, ToEnvVars, VerbositySpec};
 use scarb_doc::generate_packages_information;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 
+use scarb_ui::Ui;
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
-use scarb_ui::Ui;
 
 const OUTPUT_DIR: &str = "doc";
 const JSON_OUTPUT_FILENAME: &str = "output.json";

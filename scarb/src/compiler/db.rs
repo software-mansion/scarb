@@ -1,11 +1,11 @@
+use crate::DEFAULT_MODULE_MAIN_FILE;
 use crate::compiler::plugin::proc_macro::{ProcMacroHost, ProcMacroHostPlugin};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
     CompilationUnitDependency,
 };
 use crate::core::Workspace;
-use crate::DEFAULT_MODULE_MAIN_FILE;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use cairo_lang_compiler::db::{RootDatabase, RootDatabaseBuilder};
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
 use cairo_lang_defs::db::DefsGroup;

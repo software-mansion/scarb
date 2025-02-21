@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use scarb_proc_macro_server_types::methods::{expand::ExpandAttribute, ProcMacroResult};
+use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandAttribute};
 
 use super::Handler;
 use crate::compiler::plugin::proc_macro::{ExpansionKind, ProcMacroHost};

@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use expect_test::{expect_file, ExpectFile};
+use expect_test::{ExpectFile, expect_file};
 
 #[derive(Default)]
 pub struct JsonTargetChecker {

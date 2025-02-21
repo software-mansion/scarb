@@ -1,5 +1,5 @@
-use crate::core::lockfile::Lockfile;
 use crate::core::Workspace;
+use crate::core::lockfile::Lockfile;
 use anyhow::{Context, Result};
 use fs4::FileExt;
 use std::fs::{File, OpenOptions};

@@ -1,4 +1,4 @@
-use assert_fs::{prelude::*, TempDir};
+use assert_fs::{TempDir, prelude::*};
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;

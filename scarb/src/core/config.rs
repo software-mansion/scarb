@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{env, mem};
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use once_cell::sync::OnceCell;
 use tokio::runtime::{Builder, Handle, Runtime};
@@ -13,15 +13,15 @@ use which::which_in;
 
 use scarb_ui::{OutputFormat, Ui, Verbosity};
 
-use crate::compiler::plugin::proc_macro::ProcMacroRepository;
+use crate::SCARB_ENV;
 use crate::compiler::plugin::CairoPluginRepository;
+use crate::compiler::plugin::proc_macro::ProcMacroRepository;
 use crate::compiler::{CompilerRepository, Profile};
 use crate::core::AppDirs;
 #[cfg(doc)]
 use crate::core::Workspace;
 use crate::flock::AdvisoryLock;
 use crate::internal::fsx;
-use crate::SCARB_ENV;
 
 use super::ManifestDependency;
 

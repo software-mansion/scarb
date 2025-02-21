@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use itertools::Itertools;
 use semver::{Version, VersionReq};
 use smol_str::SmolStr;
@@ -13,8 +13,8 @@ use crate::compiler::{
     ProcMacroCompilationUnit,
 };
 use crate::core::{
-    edition_variant, DepKind, DependencyVersionReq, ManifestDependency, Package, PackageId,
-    SourceId, Target, Workspace,
+    DepKind, DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId, Target,
+    Workspace, edition_variant,
 };
 use crate::ops;
 use crate::ops::CompilationUnitsOpts;

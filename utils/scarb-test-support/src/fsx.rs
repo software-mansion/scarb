@@ -1,15 +1,15 @@
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
-use std::path::{Path, PathBuf, MAIN_SEPARATOR_STR};
+use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
 
-use assert_fs::fixture::ChildPath;
 use assert_fs::TempDir;
+use assert_fs::fixture::ChildPath;
 use camino::Utf8Path;
 use itertools::Itertools;
 use serde::de::DeserializeOwned;
 
-pub use internal_fsx::{canonicalize, canonicalize_utf8, PathBufUtf8Ext, PathUtf8Ext};
+pub use internal_fsx::{PathBufUtf8Ext, PathUtf8Ext, canonicalize, canonicalize_utf8};
 
 #[allow(unused)]
 #[path = "../../../scarb/src/internal/fsx.rs"]
