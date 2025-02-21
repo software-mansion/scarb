@@ -133,7 +133,7 @@ impl ProcMacroHostPlugin {
                     .collect_vec()
             })
             .collect::<Vec<_>>();
-        expansions.sort_unstable_by_key(|e| e.expansion.name.clone());
+        expansions.sort_unstable_by_key(|e| (e.expansion.name.clone(), e.package_id));
         ensure!(
             expansions
                 .windows(2)

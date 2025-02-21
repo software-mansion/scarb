@@ -737,6 +737,19 @@ fn cannot_duplicate_macros_across_packages() {
         "#})
         .build(&w);
 
+    let p = temp.child("pkg");
+    CairoPluginProjectBuilder::default()
+        .name("pkg")
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+        #[attribute_macro]
+        pub fn foo(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(token_stream)
+        }
+        "#})
+        .build(&p);
+
     let project = temp.child("hello");
     ProjectBuilder::start()
         .name("hello")
@@ -744,6 +757,7 @@ fn cannot_duplicate_macros_across_packages() {
         .dep_starknet()
         .dep("some", &t)
         .dep("other", &w)
+        .dep("pkg", &p)
         .lib_cairo(indoc! {r#"
             #[hello]
             #[world]
@@ -760,9 +774,10 @@ fn cannot_duplicate_macros_across_packages() {
         .failure()
         .stdout_matches(indoc! {r#"
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
+            [..]Compiling pkg v1.0.0 ([..]Scarb.toml)
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: duplicate expansions defined for procedural macros: hello (some v1.0.0 ([..]Scarb.toml) and other v1.0.0 ([..]Scarb.toml))
+            error: duplicate expansions defined for procedural macros: hello (other v1.0.0 ([..]Scarb.toml) and some v1.0.0 ([..]Scarb.toml))
         "#});
 }
 

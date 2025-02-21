@@ -1315,7 +1315,7 @@ fn ambiguous_executable_function() {
         .failure()
         .stdout_matches(indoc! {r#"
                Compiling hello_world v1.0.0 ([..]Scarb.toml)
-            error: more than one executable found in the main crate: 
+            error: more than one executable found in the main crate:
             [..]hello_world::main
             [..]hello_world::secondary
             help: add a separate `executable` target for each of your executable functions
