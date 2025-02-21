@@ -2,14 +2,14 @@ use std::num::NonZero;
 use std::sync::Arc;
 use std::thread::available_parallelism;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use connection::Connection;
 use crossbeam_channel::{Receiver, Sender};
 use methods::Handler;
 use scarb_proc_macro_server_types::jsonrpc::{ResponseError, RpcRequest, RpcResponse};
+use scarb_proc_macro_server_types::methods::Method;
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacros;
 use scarb_proc_macro_server_types::methods::expand::{ExpandAttribute, ExpandDerive, ExpandInline};
-use scarb_proc_macro_server_types::methods::Method;
 use serde_json::Value;
 
 use crate::compiler::plugin::collection::WorkspaceProcMacros;

@@ -1,5 +1,5 @@
-use predicates::function::function;
 use predicates::Predicate;
+use predicates::function::function;
 use std::fs;
 use std::path::Path;
 

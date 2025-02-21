@@ -2,11 +2,11 @@ use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::{PackageId, Resolve, Summary};
 use crate::resolver::algorithm::provider::{
-    rewrite_locked_dependency, DependencyProviderError, PubGrubDependencyProvider, PubGrubPackage,
+    DependencyProviderError, PubGrubDependencyProvider, PubGrubPackage, rewrite_locked_dependency,
 };
 use crate::resolver::algorithm::solution::{build_resolve, validate_solution};
 use crate::resolver::algorithm::state::{Request, ResolverState};
-use anyhow::{bail, format_err, Error};
+use anyhow::{Error, bail, format_err};
 use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
 use pubgrub::PubGrubError;

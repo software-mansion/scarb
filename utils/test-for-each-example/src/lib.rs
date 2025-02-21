@@ -6,7 +6,7 @@ use darling::ast::NestedMeta;
 use darling::{Error, FromMeta};
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::{parse_macro_input, parse_quote, ItemFn};
+use syn::{ItemFn, parse_macro_input, parse_quote};
 
 #[derive(Debug, FromMeta)]
 struct TestForEachArgs {

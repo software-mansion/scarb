@@ -1,5 +1,5 @@
-use assert_fs::fixture::{PathChild, PathCreateDir};
 use assert_fs::TempDir;
+use assert_fs::fixture::{PathChild, PathCreateDir};
 use indoc::indoc;
 
 use scarb_metadata::Metadata;

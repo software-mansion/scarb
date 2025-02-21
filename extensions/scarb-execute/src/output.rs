@@ -1,6 +1,7 @@
 use anyhow::Context;
 use anyhow::Result;
 use cairo_lang_runner::CairoHintProcessor;
+use cairo_lang_runner::casm_run::format_for_panic;
 use cairo_vm::vm::runners::cairo_runner::CairoRunner;
 use scarb_ui::Message;
 use serde::{Serialize, Serializer};

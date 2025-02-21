@@ -4,10 +4,10 @@ use std::path::Path;
 use std::sync::{Arc, Weak};
 use std::{fmt, io};
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use fs4::tokio::AsyncFileExt;
-use fs4::{lock_contended_error, FileExt};
+use fs4::{FileExt, lock_contended_error};
 use tokio::sync::Mutex;
 
 use scarb_ui::components::Status;

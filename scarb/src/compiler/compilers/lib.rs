@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
-use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::CompilerConfig;
+use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_sierra::program::VersionedProgram;

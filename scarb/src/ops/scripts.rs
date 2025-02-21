@@ -6,11 +6,11 @@ use std::rc::Rc;
 
 use anyhow::Result;
 use camino::Utf8Path;
-use deno_task_shell::{parser, ExecutableCommand, KillSignal, ShellCommand};
+use deno_task_shell::{ExecutableCommand, KillSignal, ShellCommand, parser};
 
+use crate::core::Workspace;
 use crate::core::errors::ScriptExecutionError;
 use crate::core::manifest::ScriptDefinition;
-use crate::core::Workspace;
 use crate::subcommands::get_env_vars;
 
 /// Execute user defined script.

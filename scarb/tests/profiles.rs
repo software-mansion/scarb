@@ -1,5 +1,5 @@
-use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use assert_fs::prelude::*;
 use indoc::indoc;
 
 use scarb_metadata::Metadata;
@@ -330,11 +330,13 @@ fn compiler_config_defaults_in_dev() {
     assert!(!metadata.compilation_units.is_empty());
     for cu in metadata.compilation_units {
         let compiler_config = cu.compiler_config;
-        assert!(compiler_config
-            .get("sierra_replace_ids")
-            .unwrap()
-            .as_bool()
-            .unwrap());
+        assert!(
+            compiler_config
+                .get("sierra_replace_ids")
+                .unwrap()
+                .as_bool()
+                .unwrap()
+        );
         assert_eq!(
             compiler_config
                 .get("inlining_strategy")
@@ -367,11 +369,13 @@ fn sierra_replace_ids_default_false_in_release() {
     assert!(!metadata.compilation_units.is_empty());
     for cu in metadata.compilation_units {
         let compiler_config = cu.compiler_config;
-        assert!(!compiler_config
-            .get("sierra_replace_ids")
-            .unwrap()
-            .as_bool()
-            .unwrap());
+        assert!(
+            !compiler_config
+                .get("sierra_replace_ids")
+                .unwrap()
+                .as_bool()
+                .unwrap()
+        );
     }
 }
 
@@ -400,11 +404,13 @@ fn compiler_config_set_for_all_profiles() {
     assert!(!metadata.compilation_units.is_empty());
     for cu in metadata.compilation_units {
         let compiler_config = cu.compiler_config;
-        assert!(compiler_config
-            .get("sierra_replace_ids")
-            .unwrap()
-            .as_bool()
-            .unwrap());
+        assert!(
+            compiler_config
+                .get("sierra_replace_ids")
+                .unwrap()
+                .as_bool()
+                .unwrap()
+        );
         assert_eq!(
             compiler_config
                 .get("inlining_strategy")
@@ -424,11 +430,13 @@ fn compiler_config_set_for_all_profiles() {
     assert!(!metadata.compilation_units.is_empty());
     for cu in metadata.compilation_units {
         let compiler_config = cu.compiler_config;
-        assert!(compiler_config
-            .get("sierra_replace_ids")
-            .unwrap()
-            .as_bool()
-            .unwrap());
+        assert!(
+            compiler_config
+                .get("sierra_replace_ids")
+                .unwrap()
+                .as_bool()
+                .unwrap()
+        );
         assert_eq!(
             compiler_config
                 .get("inlining_strategy")
@@ -455,11 +463,13 @@ fn compiler_config_set_for_all_profiles() {
     assert!(!metadata.compilation_units.is_empty());
     for cu in metadata.compilation_units {
         let compiler_config = cu.compiler_config;
-        assert!(compiler_config
-            .get("sierra_replace_ids")
-            .unwrap()
-            .as_bool()
-            .unwrap());
+        assert!(
+            compiler_config
+                .get("sierra_replace_ids")
+                .unwrap()
+                .as_bool()
+                .unwrap()
+        );
         assert_eq!(
             compiler_config
                 .get("inlining_strategy")
@@ -491,11 +501,13 @@ fn can_set_replace_ids_in_profile() {
     assert!(!metadata.compilation_units.is_empty());
     for cu in metadata.compilation_units {
         let compiler_config = cu.compiler_config;
-        assert!(compiler_config
-            .get("sierra_replace_ids")
-            .unwrap()
-            .as_bool()
-            .unwrap());
+        assert!(
+            compiler_config
+                .get("sierra_replace_ids")
+                .unwrap()
+                .as_bool()
+                .unwrap()
+        );
     }
 }
 
@@ -522,11 +534,13 @@ fn profile_precedes_compiler_config() {
     assert!(!metadata.compilation_units.is_empty());
     for cu in metadata.compilation_units {
         let compiler_config = cu.compiler_config;
-        assert!(compiler_config
-            .get("sierra_replace_ids")
-            .unwrap()
-            .as_bool()
-            .unwrap());
+        assert!(
+            compiler_config
+                .get("sierra_replace_ids")
+                .unwrap()
+                .as_bool()
+                .unwrap()
+        );
     }
 
     let metadata = Scarb::quick_snapbox()
@@ -538,11 +552,13 @@ fn profile_precedes_compiler_config() {
     assert!(!metadata.compilation_units.is_empty());
     for cu in metadata.compilation_units {
         let compiler_config = cu.compiler_config;
-        assert!(!compiler_config
-            .get("sierra_replace_ids")
-            .unwrap()
-            .as_bool()
-            .unwrap());
+        assert!(
+            !compiler_config
+                .get("sierra_replace_ids")
+                .unwrap()
+                .as_bool()
+                .unwrap()
+        );
     }
 }
 
@@ -572,11 +588,13 @@ fn custom_profiles_inherit_from_dev_by_default() {
     assert!(!metadata.compilation_units.is_empty());
     for cu in metadata.compilation_units {
         let compiler_config = cu.compiler_config;
-        assert!(compiler_config
-            .get("sierra_replace_ids")
-            .unwrap()
-            .as_bool()
-            .unwrap());
+        assert!(
+            compiler_config
+                .get("sierra_replace_ids")
+                .unwrap()
+                .as_bool()
+                .unwrap()
+        );
     }
 }
 
@@ -607,11 +625,13 @@ fn custom_profiles_can_inherit_by_name() {
     assert!(!metadata.compilation_units.is_empty());
     for cu in metadata.compilation_units {
         let compiler_config = cu.compiler_config;
-        assert!(!compiler_config
-            .get("sierra_replace_ids")
-            .unwrap()
-            .as_bool()
-            .unwrap());
+        assert!(
+            !compiler_config
+                .get("sierra_replace_ids")
+                .unwrap()
+                .as_bool()
+                .unwrap()
+        );
     }
 }
 

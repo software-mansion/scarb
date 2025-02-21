@@ -27,7 +27,7 @@ pub(crate) mod mock {
     use std::collections::{HashMap, HashSet};
     use std::sync::RwLock;
 
-    use anyhow::{anyhow, bail, Result};
+    use anyhow::{Result, anyhow, bail};
     use async_trait::async_trait;
     use camino::Utf8PathBuf;
     use itertools::Itertools;

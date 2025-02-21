@@ -1,6 +1,6 @@
-use anyhow::{ensure, Context, Result};
-use cairo_lang_compiler::db::RootDatabase;
+use anyhow::{Context, Result, ensure};
 use cairo_lang_compiler::CompilerConfig;
+use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleId, NamedLanguageElementId};
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
@@ -9,11 +9,11 @@ use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::Visibility;
 use cairo_lang_semantic::resolve::ResolvedGenericItem::Module;
 use cairo_lang_starknet::compile::compile_prepared_db;
-use cairo_lang_starknet::contract::{find_contracts, module_contract, ContractDeclaration};
+use cairo_lang_starknet::contract::{ContractDeclaration, find_contracts, module_contract};
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet_classes::contract_class::ContractClass;
-use cairo_lang_syntax::node::ast::OptionAliasClause;
 use cairo_lang_syntax::node::TypedSyntaxNode;
+use cairo_lang_syntax::node::ast::OptionAliasClause;
 use cairo_lang_utils::UpcastMut;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,7 @@ use tracing::{debug, trace, trace_span};
 use super::contract_selector::ContractSelector;
 use crate::compiler::compilers::starknet_contract::contract_selector::GLOB_PATH_SELECTOR;
 use crate::compiler::compilers::starknet_contract::validations::check_allowed_libfuncs;
-use crate::compiler::compilers::{ensure_gas_enabled, ArtifactsWriter};
+use crate::compiler::compilers::{ArtifactsWriter, ensure_gas_enabled};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Workspace};
@@ -92,9 +92,11 @@ impl Compiler for StarknetContractCompiler {
 
         if let Some(external_contracts) = props.build_external_contracts.clone() {
             for path in external_contracts.iter() {
-                ensure!(path.0.matches(GLOB_PATH_SELECTOR).count() <= 1,
+                ensure!(
+                    path.0.matches(GLOB_PATH_SELECTOR).count() <= 1,
                     "external contract path `{}` has multiple global path selectors, only one '*' selector is allowed",
-                    path.0);
+                    path.0
+                );
             }
         }
 

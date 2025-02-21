@@ -2,9 +2,9 @@ use anyhow::Result;
 use std::str::FromStr;
 use url::Url;
 
-use scarb::core::registry::DEFAULT_REGISTRY_INDEX;
 use scarb::core::Config;
-use scarb::ops::{self, validate_features, PackageOpts, PublishOpts};
+use scarb::core::registry::DEFAULT_REGISTRY_INDEX;
+use scarb::ops::{self, PackageOpts, PublishOpts, validate_features};
 
 use crate::args::PublishArgs;
 

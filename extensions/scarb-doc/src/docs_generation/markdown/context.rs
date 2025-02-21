@@ -1,5 +1,5 @@
-use crate::docs_generation::markdown::traits::WithPath;
 use crate::docs_generation::markdown::SUMMARY_FILENAME;
+use crate::docs_generation::markdown::traits::WithPath;
 use crate::types::Crate;
 use cairo_lang_defs::ids::{ImplItemId, LookupItemId, TraitItemId};
 use cairo_lang_doc::documentable_item::DocumentableItemId;

@@ -2,7 +2,7 @@ use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::Deserialize;
 

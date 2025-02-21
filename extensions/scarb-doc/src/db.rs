@@ -1,15 +1,15 @@
-use cairo_lang_compiler::project::{update_crate_roots_from_project_config, ProjectConfig};
-use cairo_lang_defs::db::{init_defs_group, try_ext_as_virtual_impl, DefsDatabase, DefsGroup};
+use cairo_lang_compiler::project::{ProjectConfig, update_crate_roots_from_project_config};
+use cairo_lang_defs::db::{DefsDatabase, DefsGroup, init_defs_group, try_ext_as_virtual_impl};
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{
-    init_files_group, AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup,
+    AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup, init_files_group,
 };
 use cairo_lang_filesystem::ids::VirtualFile;
 use cairo_lang_lowering::db::{LoweringDatabase, LoweringGroup};
 use cairo_lang_parser::db::{ParserDatabase, ParserGroup};
 use cairo_lang_semantic::db::{
-    init_semantic_group, PluginSuiteInput, SemanticDatabase, SemanticGroup,
+    PluginSuiteInput, SemanticDatabase, SemanticGroup, init_semantic_group,
 };
 use cairo_lang_semantic::inline_macros::get_default_plugin_suite;
 use cairo_lang_semantic::plugin::PluginSuite;

@@ -1,6 +1,6 @@
 use crate::{
-    errors::{IODirectoryCreationError, IOWriteError, PackagesSerializationError},
     PackageInformation,
+    errors::{IODirectoryCreationError, IOWriteError, PackagesSerializationError},
 };
 use anyhow::Result;
 use camino::Utf8Path;

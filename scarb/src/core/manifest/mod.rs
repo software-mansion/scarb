@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashSet};
 
-use anyhow::{bail, ensure, Result};
+use anyhow::{Result, bail, ensure};
 use cairo_lang_filesystem::db::Edition;
 use camino::Utf8PathBuf;
 use derive_builder::Builder;

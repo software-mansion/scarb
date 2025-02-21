@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 use std::fmt;
 use std::str::FromStr;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 

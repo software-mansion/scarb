@@ -1,13 +1,13 @@
 use std::io::{Seek, SeekFrom};
 use std::ops::DerefMut;
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use camino::Utf8PathBuf;
 use tokio::task::spawn_blocking;
 use tracing::{debug, trace};
 
 use crate::core::{Config, PackageId, SourceId};
-use crate::flock::{protected_run_if_not_ok, FileLockGuard, Filesystem, OK_FILE};
+use crate::flock::{FileLockGuard, Filesystem, OK_FILE, protected_run_if_not_ok};
 use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::restricted_names::is_windows_restricted_path;
 

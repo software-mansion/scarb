@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use scarb_stable_hash::short_hash;
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, Expr, ItemFn, LitStr, Meta};
+use syn::{Expr, ItemFn, LitStr, Meta, parse_macro_input};
 
 /// Constructs the attribute macro implementation.
 ///
