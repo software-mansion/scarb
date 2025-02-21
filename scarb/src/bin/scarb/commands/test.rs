@@ -3,7 +3,7 @@ use anyhow::Result;
 use itertools::Itertools;
 use scarb::core::Config;
 use scarb::ops;
-use scarb::ops::{validate_features, FeaturesOpts};
+use scarb::ops::{FeaturesOpts, validate_features};
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: TestArgs, config: &Config) -> Result<()> {

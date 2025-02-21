@@ -1,4 +1,4 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::fmt;
@@ -30,7 +30,9 @@ impl Profile {
         );
         ensure!(
             name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-'),
-            format!("profile name `{name}` is not allowed, only alphanumeric characters and `-` can be used")
+            format!(
+                "profile name `{name}` is not allowed, only alphanumeric characters and `-` can be used"
+            )
         );
         Ok(Self(name))
     }

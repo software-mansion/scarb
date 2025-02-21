@@ -1,5 +1,5 @@
-use assert_fs::fixture::PathChild;
 use assert_fs::TempDir;
+use assert_fs::fixture::PathChild;
 use cairo_lang_sierra::program::VersionedProgram;
 use indoc::indoc;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
@@ -1227,11 +1227,13 @@ fn can_create_executable_attribute() {
     assert_eq!(executables.len(), 1);
     let fid = executables.first().unwrap().clone();
     assert_eq!(fid.clone().debug_name.unwrap(), "hello::main");
-    assert!(sierra
-        .program
-        .funcs
-        .iter()
-        .any(|f| f.id.clone() == fid.clone()));
+    assert!(
+        sierra
+            .program
+            .funcs
+            .iter()
+            .any(|f| f.id.clone() == fid.clone())
+    );
 }
 
 #[test]

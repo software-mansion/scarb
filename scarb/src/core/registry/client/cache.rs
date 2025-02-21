@@ -1,6 +1,6 @@
 use std::io::{Seek, SeekFrom};
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, bail, ensure};
 use camino::Utf8Path;
 use redb::{MultimapTableDefinition, TableDefinition};
 use semver::Version;
@@ -10,12 +10,12 @@ use tracing::trace;
 
 use scarb_ui::Ui;
 
+#[allow(unused_imports)]
+use crate::core::PackageName;
 use crate::core::registry::client::{
     CreateScratchFileCallback, RegistryClient, RegistryDownload, RegistryResource,
 };
 use crate::core::registry::index::{IndexRecord, IndexRecords};
-#[allow(unused_imports)]
-use crate::core::PackageName;
 use crate::core::{Checksum, Config, ManifestDependency, PackageId, SourceId};
 use crate::flock::{AdvisoryLockGuard, FileLockGuard, Filesystem};
 use crate::internal::fsx;
@@ -163,7 +163,9 @@ impl<'c> RegistryClientCache<'c> {
         match self.client.download(package, create_scratch_file).await? {
             RegistryDownload::NotFound => {
                 trace!("package archive file not found in registry");
-                bail!("could not find downloadable archive for package indexed in registry: {package}")
+                bail!(
+                    "could not find downloadable archive for package indexed in registry: {package}"
+                )
             }
             RegistryDownload::Download(file) => {
                 trace!("package archive file downloaded successfully, verifying checksum");

@@ -1,14 +1,14 @@
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 use cairo_lang_filesystem::db::Edition;
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
 
-use crate::core::{edition_variant, Config, PackageName};
+use crate::core::{Config, PackageName, edition_variant};
 use crate::internal::fsx;
 use crate::internal::restricted_names;
 use crate::subcommands::get_env_vars;
-use crate::{ops, DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME};
+use crate::{DEFAULT_SOURCE_PATH, DEFAULT_TARGET_DIR_NAME, MANIFEST_FILE_NAME, ops};
 use scarb_build_metadata::CAIRO_VERSION;
 use std::process::{Command, Stdio};
 

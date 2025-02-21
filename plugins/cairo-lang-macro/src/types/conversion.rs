@@ -8,7 +8,7 @@ use cairo_lang_macro_stable::{
     StablePostProcessContext, StableProcMacroResult, StableSeverity, StableTokenStream,
     StableTokenStreamMetadata,
 };
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 use std::num::NonZeroU8;
 use std::ptr::NonNull;
 use std::slice;

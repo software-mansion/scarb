@@ -2,7 +2,7 @@ use std::env;
 use std::fmt::Display;
 use std::str::FromStr;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 /// The requested verbosity of output.
 ///

@@ -1,4 +1,4 @@
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::{CrateIdentifier, FilesGroup};
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
@@ -10,8 +10,8 @@ use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use typed_builder::TypedBuilder;
 
-use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::compiler::Profile;
+use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::core::{
     ManifestCompilerConfig, Package, PackageId, PackageName, Target, TargetKind, Workspace,
 };

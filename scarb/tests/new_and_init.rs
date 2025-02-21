@@ -199,8 +199,8 @@ fn issue_148() {
         for (_, value) in parsed {
             if let Value::String(s) = value {
                 assert!(!s.contains(
-                "compiling this new package may not work due to invalid workspace configuration"
-            ));
+                    "compiling this new package may not work due to invalid workspace configuration"
+                ));
             }
         }
     }

@@ -1,6 +1,6 @@
+use assert_fs::TempDir;
 use assert_fs::fixture::{ChildPath, FileWriteStr, PathCreateDir};
 use assert_fs::prelude::PathChild;
-use assert_fs::TempDir;
 use cairo_lang_macro::TokenStream;
 use indoc::indoc;
 use libloading::library_filename;

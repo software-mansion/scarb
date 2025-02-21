@@ -7,10 +7,10 @@ use itertools::Itertools;
 use tokio::sync::RwLock;
 use tracing::trace;
 
-use crate::core::registry::Registry;
-use crate::core::source::Source;
 #[cfg(doc)]
 use crate::core::Workspace;
+use crate::core::registry::Registry;
+use crate::core::source::Source;
 use crate::core::{Config, ManifestDependency, Package, PackageId, SourceId, Summary};
 use crate::sources::PathSource;
 

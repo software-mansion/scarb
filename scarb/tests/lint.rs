@@ -1,5 +1,5 @@
 use assert_fs::fixture::FileWriteStr;
-use assert_fs::{prelude::PathChild, TempDir};
+use assert_fs::{TempDir, prelude::PathChild};
 use indoc::{formatdoc, indoc};
 use scarb_test_support::{
     command::Scarb, project_builder::ProjectBuilder, workspace_builder::WorkspaceBuilder,

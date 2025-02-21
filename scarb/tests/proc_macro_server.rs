@@ -1,5 +1,5 @@
-use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
+use assert_fs::prelude::PathChild;
 use cairo_lang_macro::TokenStream;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttribute;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttributeParams;

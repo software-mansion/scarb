@@ -2,8 +2,8 @@
 // The original implementation can be found here:
 // https://github.com/rust-lang/cargo/blob/31eda6f7c360d9911f853b3014e057db61238f3e/src/cargo/util/toml/mod.rs#L1071
 
-use anyhow::{bail, Context, Result};
-use serde::{de, Deserialize, Serialize};
+use anyhow::{Context, Result, bail};
+use serde::{Deserialize, Serialize, de};
 
 /// This Trait exists to make [`MaybeWorkspace::Workspace`] generic. It makes deserialization of
 /// [`MaybeWorkspace`] much easier, as well as making error messages for

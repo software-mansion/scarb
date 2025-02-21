@@ -4,7 +4,7 @@ use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};
 
 /// Equivalent to [`fs::canonicalize`] with better error messages.

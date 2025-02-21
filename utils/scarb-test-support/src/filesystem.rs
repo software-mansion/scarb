@@ -2,8 +2,8 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 use std::{env, iter, vec};
 
-use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use assert_fs::prelude::*;
 use indoc::indoc;
 
 use crate::fsx::make_executable;

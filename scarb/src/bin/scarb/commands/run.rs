@@ -1,6 +1,6 @@
 use crate::args::ScriptsRunnerArgs;
 use crate::errors::ErrorWithExitCode;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use indoc::formatdoc;
 use itertools::Itertools;
 use scarb::core::errors::ScriptExecutionError;

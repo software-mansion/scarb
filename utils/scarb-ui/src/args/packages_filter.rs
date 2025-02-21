@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::ffi::OsString;
 use std::fmt;
 
-use anyhow::{bail, ensure, Result};
+use anyhow::{Result, bail, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 
 use scarb_metadata::{Metadata, PackageMetadata};

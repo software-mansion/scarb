@@ -1,9 +1,9 @@
 use std::io::{self, IsTerminal};
 
 use crate::args::TestRunner;
-use anyhow::{ensure, Result};
-use dialoguer::theme::ColorfulTheme;
+use anyhow::{Result, ensure};
 use dialoguer::Select;
+use dialoguer::theme::ColorfulTheme;
 use indoc::indoc;
 use which::which;
 

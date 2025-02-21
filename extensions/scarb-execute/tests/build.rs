@@ -1,6 +1,6 @@
+use assert_fs::TempDir;
 use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
-use assert_fs::TempDir;
 use indoc::indoc;
 use predicates::prelude::*;
 use scarb_test_support::command::Scarb;

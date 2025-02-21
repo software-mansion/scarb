@@ -16,8 +16,8 @@ use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
 use scarb::manifest_editor::SectionArgs;
 use scarb::version;
-use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use scarb_ui::OutputFormat;
+use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 
 /// The Cairo package manager.
 #[derive(Parser, Clone, Debug)]

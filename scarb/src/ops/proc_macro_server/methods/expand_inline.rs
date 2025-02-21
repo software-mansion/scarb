@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result};
 use cairo_lang_macro::TokenStream;
-use scarb_proc_macro_server_types::methods::{expand::ExpandInline, ProcMacroResult};
+use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandInline};
 
 use super::Handler;
 use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};

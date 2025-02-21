@@ -1,9 +1,9 @@
 use std::mem;
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{Context, Result, anyhow, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use indoc::formatdoc;
-use toml_edit::{value, DocumentMut, Entry, InlineTable, Item};
+use toml_edit::{DocumentMut, Entry, InlineTable, Item, value};
 use url::Url;
 
 use crate::core::{GitReference, PackageName};

@@ -1,5 +1,5 @@
 use crate::core::{Package, PackageId};
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_macro::{
     ExpansionKind as SharedExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult,
@@ -9,17 +9,17 @@ use cairo_lang_macro_stable::{
     StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
     StableResultWrapper, StableTokenStream,
 };
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::TypedSyntaxNode;
+use cairo_lang_syntax::node::db::SyntaxGroup;
 use camino::Utf8PathBuf;
 use itertools::Itertools;
 use libloading::{Library, Symbol};
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 use std::fmt::Debug;
 use std::slice;
 
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::ProcMacroAuxData;
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 
 #[cfg(not(windows))]
 use libloading::os::unix::Symbol as RawSymbol;

@@ -1,5 +1,5 @@
 use assert_fs::TempDir;
-use snapbox::cmd::{cargo_bin, Command};
+use snapbox::cmd::{Command, cargo_bin};
 use std::env;
 use std::path::PathBuf;
 
@@ -21,10 +21,12 @@ fn empty_project() {
         .inherit_stderr()
         .exec();
 
-    assert!(result
-        .unwrap_err()
-        .to_string()
-        .contains("failed to read manifest"));
+    assert!(
+        result
+            .unwrap_err()
+            .to_string()
+            .contains("failed to read manifest")
+    );
 }
 
 #[test]

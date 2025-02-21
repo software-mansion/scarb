@@ -1,18 +1,18 @@
-use anyhow::{anyhow, Context, Error, Result};
+use anyhow::{Context, Error, Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use cairo_lang_utils::Upcast;
 use indoc::formatdoc;
 use itertools::Itertools;
+use scarb_ui::HumanDuration;
 use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
-use scarb_ui::HumanDuration;
 use smol_str::{SmolStr, ToSmolStr};
 use std::collections::HashSet;
 use std::thread;
 
 use crate::compiler::db::{
-    build_scarb_root_database, has_plugin, is_starknet_plugin, ScarbDatabase,
+    ScarbDatabase, build_scarb_root_database, has_plugin, is_starknet_plugin,
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::plugin::proc_macro;
@@ -21,7 +21,7 @@ use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
 use crate::ops;
-use crate::ops::{get_test_package_ids, validate_features, CompilationUnitsOpts};
+use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {

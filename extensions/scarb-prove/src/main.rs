@@ -1,4 +1,4 @@
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
@@ -13,7 +13,7 @@ use std::fs;
 use std::process::ExitCode;
 use stwo_cairo_adapter::vm_import::adapt_vm_output;
 use stwo_cairo_prover::cairo_air::{
-    default_prod_prover_parameters, prove_cairo, ProverConfig, ProverParameters,
+    ProverConfig, ProverParameters, default_prod_prover_parameters, prove_cairo,
 };
 use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
 

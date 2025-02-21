@@ -23,7 +23,7 @@ use cairo_lang_macro_stable::ffi::StableSlice;
 use cairo_lang_macro_stable::{
     StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
 };
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 
 mod types;
 

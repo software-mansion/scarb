@@ -3,9 +3,9 @@
 use std::fs;
 use std::path::Path;
 
-use assert_fs::prelude::*;
 use assert_fs::TempDir;
-use fs_extra::dir::{copy, CopyOptions};
+use assert_fs::prelude::*;
+use fs_extra::dir::{CopyOptions, copy};
 use indoc::indoc;
 use snapbox::cmd::Command;
 

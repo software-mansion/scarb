@@ -7,7 +7,7 @@ use std::fmt::Write;
 use std::sync::LazyLock;
 
 use scarb_build_metadata::{
-    CommitHash, CAIRO_COMMIT_HASH, CAIRO_VERSION, SCARB_COMMIT_DATE, SCARB_COMMIT_HASH,
+    CAIRO_COMMIT_HASH, CAIRO_VERSION, CommitHash, SCARB_COMMIT_DATE, SCARB_COMMIT_HASH,
     SCARB_VERSION,
 };
 
