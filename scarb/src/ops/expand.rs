@@ -81,12 +81,10 @@ pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<
             // Includes test package ids.
             get_test_package_ids(vec![package.id], ws).contains(&unit.main_package_id())
                 // We can use main_component below, as targets are not grouped.
-                && target_kind.as_ref()
-                    .map_or(true, |kind| unit.main_component().target_kind() == *kind)
+                && target_kind.as_ref().is_none_or(|kind| unit.main_component().target_kind() == *kind)
                 && opts
                     .target_name
-                    .as_ref()
-                    .map_or(true, |name| unit.main_component().first_target().name == *name)
+                    .as_ref().is_none_or(|name| unit.main_component().first_target().name == *name)
         })
         .map(|unit| match unit {
             CompilationUnit::Cairo(unit) => Ok(unit),
