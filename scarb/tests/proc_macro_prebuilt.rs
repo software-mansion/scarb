@@ -5,9 +5,10 @@ use cairo_lang_macro::TokenStream;
 use indoc::indoc;
 use libloading::library_filename;
 use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineMacroParams};
+use scarb_proc_macro_server_types::scope::ProcMacroScope;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
-use scarb_test_support::proc_macro_server::ProcMacroClient;
+use scarb_test_support::proc_macro_server::{DefinedMacrosInfo, ProcMacroClient};
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::cmd::Command;
@@ -201,7 +202,9 @@ fn compile_with_invalid_prebuilt_plugins() {
 fn load_prebuilt_proc_macros() {
     let t = TempDir::new().unwrap();
     proc_macro_example(&t.child("dep"));
+
     let project = t.child("test_package");
+
     ProjectBuilder::start()
         .name("test_package")
         .version("1.0.0")
@@ -212,13 +215,24 @@ fn load_prebuilt_proc_macros() {
             allow-prebuilt-plugins = ["proc_macro_example"]
         "#})
         .build(&project);
-    let mut proc_macro_server = ProcMacroClient::new_without_cargo(&project);
-    let response = proc_macro_server
+
+    let mut proc_macro_client = ProcMacroClient::new_without_cargo(&project);
+
+    let DefinedMacrosInfo {
+        package_id: compilation_unit_main_component_id,
+        ..
+    } = proc_macro_client.defined_macros_for_package("test_package");
+
+    let response = proc_macro_client
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
+            context: ProcMacroScope {
+                package_id: compilation_unit_main_component_id,
+            },
             name: "some".to_string(),
             args: TokenStream::new("42".to_string()),
         })
         .unwrap();
+
     assert_eq!(response.diagnostics, vec![]);
     assert_eq!(response.token_stream, TokenStream::new("42".to_string()));
 }

@@ -1,49 +1,47 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use anyhow::Result;
+use cairo_lang_defs::plugin::MacroPlugin;
+use convert_case::{Case, Casing};
 use scarb_proc_macro_server_types::methods::defined_macros::{
-    DefinedMacros, DefinedMacrosResponse,
+    DefinedMacros, DefinedMacrosResponse, PackageDefinedMacrosInfo,
 };
 
 use super::Handler;
-use crate::compiler::plugin::proc_macro::ProcMacroHost;
+use crate::compiler::plugin::collection::WorkspaceProcMacros;
 
 impl Handler for DefinedMacros {
     fn handle(
-        proc_macro_host: Arc<ProcMacroHost>,
+        workspace_macros: Arc<WorkspaceProcMacros>,
         _params: Self::Params,
     ) -> Result<Self::Response> {
-        let mut response = proc_macro_host
-            .macros()
+        let macros_by_package_id = workspace_macros
+            .macros_for_packages
             .iter()
-            .map(|e| DefinedMacrosResponse {
-                attributes: e.declared_attributes(),
-                inline_macros: e.inline_macros(),
-                derives: e.declared_derives(),
-                executables: e.executable_attributes(),
+            .map(|(package_id, plugin)| {
+                let attributes = plugin.declared_attributes_without_executables();
+                let inline_macros = plugin.declared_inline_macros();
+                let derives = plugin
+                    .declared_derives()
+                    .into_iter()
+                    .map(|name| name.to_case(Case::Snake))
+                    .collect();
+                let executables = plugin.executable_attributes();
+
+                (
+                    package_id.to_owned(),
+                    PackageDefinedMacrosInfo {
+                        attributes,
+                        inline_macros,
+                        derives,
+                        executables,
+                    },
+                )
             })
-            .reduce(|mut acc, defined_macros| {
-                acc.attributes.extend(defined_macros.attributes);
-                acc.inline_macros.extend(defined_macros.inline_macros);
-                acc.derives.extend(defined_macros.derives);
-                acc.executables.extend(defined_macros.executables);
+            .collect::<HashMap<_, _>>();
 
-                acc
-            })
-            .unwrap_or_default();
-
-        response.attributes.sort();
-        response.attributes.dedup();
-
-        response.inline_macros.sort();
-        response.inline_macros.dedup();
-
-        response.derives.sort();
-        response.derives.dedup();
-
-        response.executables.sort();
-        response.executables.dedup();
-
-        Ok(response)
+        Ok(DefinedMacrosResponse {
+            macros_by_package_id,
+        })
     }
 }
