@@ -572,7 +572,11 @@ fn can_dedup_contract_reexports() {
             [[target.starknet-contract]]
         "#})
         .dep_starknet()
-        .lib_cairo("pub mod a; pub use a::Balance;")
+        .lib_cairo(indoc! {r#"
+            // Note that Balance contract can be accessed both through mod tree and the reexport.
+            pub mod a; 
+            pub use a::Balance;
+        "#})
         .src("src/a.cairo", BALANCE_CONTRACT)
         .build(&hello);
 
