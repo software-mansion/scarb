@@ -196,7 +196,7 @@ fn publish() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:40c6063030324bfbaf47f23f9b2557428fecf35deb94c2dd756e2cefe89084aa",
+                "cksum": "sha256:04140f66ec3add19844f0be349797a5569c8637edff81f17e5e80be3bcfd2146",
             }
         ])
     );
@@ -209,12 +209,12 @@ fn publish() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:effe1d6260bc79dd77b07a65bf4d5010ce16d88847c0a08b4a74c2dfa065e37c",
+                "cksum": "sha256:15c08d24286da6239a0bf56b1d68cd6dfa09761d1a43e6b2dfe807672b85c640",
             },
             {
                 "v": "1.1.0",
                 "deps": [],
-                "cksum": "sha256:88113a5dd5996502a5b0f8dbc6809145d57af1f58ed9438cf7d217d7a73de20e",
+                "cksum": "sha256:d9989ed9f02b62d464f1b641af51b9f409d546c597aa8418ccd208f453a75ba1",
             }
         ])
     );
@@ -274,7 +274,7 @@ fn publish_overwrites_existing() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:cc09cbd0906f8387f8f02e2ed1378655fa3125eac4df2e9c2c78d2fea09a576f",
+                "cksum": "sha256:03214b4a235dc6a1f439562758bee7c2abb9d876d0b2cc8f2211b570cc1b90c2",
             }
         ])
     );
@@ -302,7 +302,7 @@ fn publish_overwrites_existing() {
             {
                 "v": "1.0.0",
                 "deps": [],
-                "cksum": "sha256:108fb6aca5303b97e09159eb61d6741ac2d434972a1e789f7e1daaf770faa768",
+                "cksum": "sha256:606fa349d05e8234b9aa614f1f0f5dc9f2c37fea8fde84f727af1f12a1305881",
             }
         ])
     );
