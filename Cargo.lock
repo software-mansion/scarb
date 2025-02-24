@@ -1473,7 +1473,7 @@ dependencies = [
  "memchr",
  "rust-analyzer-salsa",
  "scarb-metadata 1.13.0 (git+https://github.com/software-mansion/scarb?rev=3d791dc9c3f951cff158539e5f9164a53ce029e7)",
- "scarb-proc-macro-server-types 0.1.0 (git+https://github.com/software-mansion/scarb?branch=spr/main/43650dd0)",
+ "scarb-proc-macro-server-types 0.1.0",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_json",
@@ -5799,7 +5799,7 @@ dependencies = [
  "reqwest",
  "scarb-build-metadata",
  "scarb-metadata 1.13.0",
- "scarb-proc-macro-server-types 0.1.0",
+ "scarb-proc-macro-server-types 0.2.0",
  "scarb-stable-hash 1.0.0",
  "scarb-test-support",
  "scarb-ui",
@@ -5987,6 +5987,7 @@ dependencies = [
 [[package]]
 name = "scarb-proc-macro-server-types"
 version = "0.1.0"
+source = "git+https://github.com/software-mansion/scarb?branch=spr/main/43650dd0#abc093d4a8942d96d0f7fb00066a7ab66ab80cc2"
 dependencies = [
  "cairo-lang-macro 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
@@ -5995,8 +5996,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-proc-macro-server-types"
-version = "0.1.0"
-source = "git+https://github.com/software-mansion/scarb?branch=spr/main/43650dd0#abc093d4a8942d96d0f7fb00066a7ab66ab80cc2"
+version = "0.2.0"
 dependencies = [
  "cairo-lang-macro 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
@@ -6060,7 +6060,7 @@ dependencies = [
  "predicates",
  "scarb",
  "scarb-build-metadata",
- "scarb-proc-macro-server-types 0.1.0",
+ "scarb-proc-macro-server-types 0.2.0",
  "scarb-ui",
  "semver 1.0.25",
  "serde",
