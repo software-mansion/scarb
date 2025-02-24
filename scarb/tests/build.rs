@@ -1375,7 +1375,7 @@ fn add_statements_code_locations_debug_info() {
         .get("statements_code_locations")
         .expect("Expected statements_code_locations info to exist");
     assert!(
-        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan, bool)>>>(
             mappings.clone()
         )
         .is_ok(),
@@ -1392,7 +1392,7 @@ fn add_statements_code_locations_debug_info() {
         .get("statements_code_locations")
         .expect("Expected statements_code_locations info to exist");
     assert!(
-        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan, bool)>>>(
             mappings.clone()
         )
         .is_ok(),
@@ -1567,7 +1567,7 @@ fn add_statements_code_locations_debug_info_to_tests() {
         .get("statements_code_locations")
         .expect("Expected statements_code_locations info to exist");
     assert!(
-        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan)>>>(
+        serde_json::from_value::<HashMap<StatementIdx, Vec<(String, SourceCodeSpan, bool)>>>(
             mappings.clone()
         )
         .is_ok(),
