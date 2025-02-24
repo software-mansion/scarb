@@ -66,9 +66,11 @@ fn main() -> Result<()> {
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
     check_scarb_version(&metadata);
-    check_cairo_test_plugin(&metadata);
 
     let matched = args.packages_filter.match_many(&metadata)?;
+    let matched_ids = matched.iter().map(|p| p.id.clone()).collect::<Vec<_>>();
+    check_cairo_test_plugin(&metadata, &matched_ids);
+
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
     let test_kind = args.test_kind.unwrap_or_default();
     let target_names = matched
@@ -214,7 +216,7 @@ fn check_scarb_version(metadata: &Metadata) {
     }
 }
 
-fn check_cairo_test_plugin(metadata: &Metadata) {
+fn check_cairo_test_plugin(metadata: &Metadata, packages: &[PackageId]) {
     let app_version = env!("CARGO_PKG_VERSION").to_string();
     let warn = || {
         println!(
@@ -247,6 +249,9 @@ fn check_cairo_test_plugin(metadata: &Metadata) {
 
     for cu in &metadata.compilation_units {
         if cu.target.kind != "test" {
+            continue;
+        }
+        if !packages.contains(&cu.package) {
             continue;
         }
         if !cu
