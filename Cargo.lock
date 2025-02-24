@@ -1472,7 +1472,7 @@ dependencies = [
  "lsp-types",
  "memchr",
  "rust-analyzer-salsa",
- "scarb-metadata 1.13.0 (git+https://github.com/software-mansion/scarb?rev=3d791dc9c3f951cff158539e5f9164a53ce029e7)",
+ "scarb-metadata 1.13.0",
  "scarb-proc-macro-server-types 0.1.0",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
@@ -5798,7 +5798,7 @@ dependencies = [
  "redb",
  "reqwest",
  "scarb-build-metadata",
- "scarb-metadata 1.13.0",
+ "scarb-metadata 1.14.0",
  "scarb-proc-macro-server-types 0.2.0",
  "scarb-stable-hash 1.0.0",
  "scarb-test-support",
@@ -5868,7 +5868,7 @@ dependencies = [
  "clap",
  "indoc",
  "num-bigint",
- "scarb-metadata 1.13.0",
+ "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -5890,7 +5890,7 @@ dependencies = [
  "camino",
  "clap",
  "indoc",
- "scarb-metadata 1.13.0",
+ "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
  "serde_json",
@@ -5921,7 +5921,7 @@ dependencies = [
  "indoc",
  "itertools 0.14.0",
  "rust-analyzer-salsa",
- "scarb-metadata 1.13.0",
+ "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -5949,27 +5949,12 @@ dependencies = [
  "indoc",
  "num-bigint",
  "predicates",
- "scarb-metadata 1.13.0",
+ "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
  "serde_json",
  "snapbox",
-]
-
-[[package]]
-name = "scarb-metadata"
-version = "1.13.0"
-dependencies = [
- "assert_fs",
- "cairo-lang-filesystem",
- "camino",
- "derive_builder",
- "semver 1.0.25",
- "serde",
- "serde_json",
- "snapbox",
- "thiserror 2.0.11",
 ]
 
 [[package]]
@@ -5981,6 +5966,21 @@ dependencies = [
  "semver 1.0.25",
  "serde",
  "serde_json",
+ "thiserror 2.0.11",
+]
+
+[[package]]
+name = "scarb-metadata"
+version = "1.14.0"
+dependencies = [
+ "assert_fs",
+ "cairo-lang-filesystem",
+ "camino",
+ "derive_builder",
+ "semver 1.0.25",
+ "serde",
+ "serde_json",
+ "snapbox",
  "thiserror 2.0.11",
 ]
 
@@ -6015,7 +6015,7 @@ dependencies = [
  "indoc",
  "predicates",
  "scarb-execute",
- "scarb-metadata 1.13.0",
+ "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -6082,7 +6082,7 @@ dependencies = [
  "clap",
  "console",
  "indicatif",
- "scarb-metadata 1.13.0",
+ "scarb-metadata 1.14.0",
  "serde",
  "serde_json",
  "test-case",
@@ -6098,7 +6098,7 @@ dependencies = [
  "camino",
  "clap",
  "indoc",
- "scarb-metadata 1.13.0",
+ "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
