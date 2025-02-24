@@ -12,7 +12,9 @@ use indoc::formatdoc;
 use scarb_metadata::{
     Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
 };
-use scarb_ui::args::PackagesFilter;
+use scarb_ui::args::{PackagesFilter, VerbositySpec};
+use scarb_ui::components::{NewLine, Status};
+use scarb_ui::{OutputFormat, Ui};
 
 /// Execute all unit tests of a local package.
 #[derive(Parser, Clone, Debug)]
@@ -40,6 +42,10 @@ struct Args {
     /// Whether to print resource usage after each test.
     #[arg(long, default_value_t = false)]
     print_resource_usage: bool,
+
+    /// Logging verbosity.
+    #[command(flatten)]
+    pub verbose: VerbositySpec,
 }
 
 #[derive(ValueEnum, Clone, Debug, Default)]
@@ -62,11 +68,12 @@ impl TestKind {
 
 fn main() -> Result<()> {
     let args: Args = Args::parse();
+    let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
 
     let metadata = MetadataCommand::new().inherit_stderr().exec()?;
 
-    check_scarb_version(&metadata);
-    check_cairo_test_plugin(&metadata);
+    check_scarb_version(&metadata, &ui);
+    check_cairo_test_plugin(&metadata, &ui);
 
     let matched = args.packages_filter.match_many(&metadata)?;
     let filter = PackagesFilter::generate_for::<Metadata>(matched.iter());
@@ -95,6 +102,11 @@ fn main() -> Result<()> {
         .arg("--test")
         .env("SCARB_TARGET_NAMES", target_names.clone().join(","))
         .env("SCARB_PACKAGES_FILTER", filter.to_env())
+        .env_if(
+            "SCARB_UI_VERBOSITY",
+            ui.verbosity().to_string(),
+            !ui.verbosity().is_default(),
+        )
         .run()?;
 
     let profile = env::var("SCARB_PROFILE").unwrap_or("dev".into());
@@ -107,7 +119,8 @@ fn main() -> Result<()> {
 
     let mut deduplicator = TargetGroupDeduplicator::default();
     for package in matched {
-        println!("testing {} ...", package.name);
+        ui.print(Status::new("Testing", &package.name.to_string()));
+        let mut first = true;
         for target in find_testable_targets(&package) {
             if !target_names.contains(&target.name) {
                 continue;
@@ -122,6 +135,10 @@ fn main() -> Result<()> {
             if already_seen {
                 continue;
             }
+            if !first {
+                ui.print(NewLine::new());
+            }
+            first = false;
             let test_compilation = deserialize_test_compilation(&target_dir, name.clone())?;
             let config = TestRunConfig {
                 filter: args.filter.clone(),
@@ -133,7 +150,6 @@ fn main() -> Result<()> {
             };
             let runner = CompiledTestRunner::new(test_compilation, config);
             runner.run(None)?;
-            println!();
         }
     }
 
@@ -197,7 +213,7 @@ fn find_testable_targets(package: &PackageMetadata) -> Vec<&TargetMetadata> {
         .collect()
 }
 
-fn check_scarb_version(metadata: &Metadata) {
+fn check_scarb_version(metadata: &Metadata, ui: &Ui) {
     let app_version = env!("CARGO_PKG_VERSION").to_string();
     let scarb_version = metadata
         .app_version_info
@@ -206,28 +222,25 @@ fn check_scarb_version(metadata: &Metadata) {
         .clone()
         .to_string();
     if app_version != scarb_version {
-        println!(
+        ui.print(format!(
             "warn: the version of cairo-test does not match the version of scarb.\
          cairo-test: `{}`, scarb: `{}`",
-            app_version, scarb_version
-        );
+            app_version, scarb_version,
+        ));
     }
 }
 
-fn check_cairo_test_plugin(metadata: &Metadata) {
+fn check_cairo_test_plugin(metadata: &Metadata, ui: &Ui) {
     let app_version = env!("CARGO_PKG_VERSION").to_string();
     let warn = || {
-        println!(
-            "{}",
-            formatdoc! {r#"
+        ui.print(formatdoc! {r#"
         warn: `cairo_test` plugin not found
         please add the following snippet to your Scarb.toml manifest:
         ```
         [dev-dependencies]
         cairo_test = "{}"
         ```
-        "#, app_version}
-        );
+        "#, app_version});
     };
 
     let Some(plugin_pkg) = metadata.packages.iter().find(|pkg| {
