@@ -162,6 +162,12 @@ On top of that, Scarb creates several files (like data files or caches) in stand
 These have to be removed manually.
 The list of all global paths written to by Scarb is listed in [here](./docs/reference/global-directories).
 
+### Windows Subsystem for Linux
+
+Scarb can be used on Windows through [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install).
+To install Scarb in WSL, follow [the installation instructions](#install-via-starkup-installation-script) for Linux.
+No additional steps should be required.
+
 ### NixOS
 
 The community-maintained Cairo Nix overlay provides a ready-to-use Cairo development environment, which includes Scarb.
