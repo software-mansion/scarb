@@ -216,25 +216,9 @@ fn can_print_panic_reason() {
         [..]Compiling hello v0.1.0 ([..]Scarb.toml)
         [..]Finished `dev` profile target(s) in [..]
         [..]Executing hello
-        Program output:
-        1
-        Resources:
-        	steps: [..]
-        	memory holes: [..]
-        	builtins: ([..])
-        	syscalls: ()
-        Saving output to: target/execute/hello/execution1
         error: Panicked with "abcd".
         "#},
     );
-    t.child("target/execute/hello/execution1/air_private_input.json")
-        .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/execution1/air_public_input.json")
-        .assert_is_json::<serde_json::Value>();
-    t.child("target/execute/hello/execution1/memory.bin")
-        .assert(predicates::path::exists().and(is_file_empty().not()));
-    t.child("target/execute/hello/execution1/trace.bin")
-        .assert(predicates::path::exists().and(is_file_empty().not()));
 }
 
 #[test]

@@ -1,8 +1,9 @@
 use crate::args::{BuildTargetSpecifier, OutputFormat};
-use crate::output::{ExecutionOutput, ExecutionResources, ExecutionStatus, ExecutionSummary};
-use anyhow::{bail, ensure, Context, Result};
+use crate::output::{ExecutionOutput, ExecutionResources, ExecutionSummary};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use bincode::enc::write::Writer;
 use cairo_lang_executable::executable::{EntryPointKind, Executable};
+use cairo_lang_runner::casm_run::format_for_panic;
 use cairo_lang_runner::{build_hints_dict, Arg, CairoHintProcessor};
 use cairo_vm::cairo_run::cairo_run_program;
 use cairo_vm::cairo_run::CairoRunConfig;
@@ -134,10 +135,15 @@ pub fn execute(
         ..Default::default()
     };
 
-    let mut runner = cairo_run_program(&program, &cairo_run_config, &mut hint_processor)
-        .with_context(|| "Cairo program run failed")?;
+    let mut runner =
+        cairo_run_program(&program, &cairo_run_config, &mut hint_processor).map_err(|err| {
+            if let Some(panic_data) = hint_processor.markers.last() {
+                anyhow!(format_for_panic(panic_data.iter().copied()))
+            } else {
+                anyhow::Error::from(err).context("Cairo program run failed")
+            }
+        })?;
 
-    let execution_status = ExecutionStatus::try_new(&runner, &hint_processor);
     ui.print(ExecutionSummary {
         output: args
             .run
@@ -201,11 +207,7 @@ pub fn execute(
         fs::write(air_private_input_path, output_value)?;
     }
 
-    if let ExecutionStatus::Panic { reason } = execution_status? {
-        Err(anyhow::anyhow!(reason))
-    } else {
-        Ok(execution_id)
-    }
+    Ok(execution_id)
 }
 
 fn find_build_target<'a>(

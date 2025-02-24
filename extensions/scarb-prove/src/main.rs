@@ -11,8 +11,10 @@ use scarb_ui::{OutputFormat, Ui};
 use std::env;
 use std::fs;
 use std::process::ExitCode;
-use stwo_cairo_prover::adapter::vm_import::adapt_vm_output;
-use stwo_cairo_prover::cairo_air::{prove_cairo, ProverConfig};
+use stwo_cairo_adapter::vm_import::adapt_vm_output;
+use stwo_cairo_prover::cairo_air::{
+    default_prod_prover_parameters, prove_cairo, ProverConfig, ProverParameters,
+};
 use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
 
 /// Proves `scarb execute` output using Stwo prover.
@@ -120,7 +122,8 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         .display_components(args.prover.display_components)
         .build();
 
-    let proof = prove_cairo::<Blake2sMerkleChannel>(prover_input, config)
+    let ProverParameters { pcs_config } = default_prod_prover_parameters();
+    let proof = prove_cairo::<Blake2sMerkleChannel>(prover_input, config, pcs_config)
         .context("failed to generate proof")?;
 
     ui.print(Status::new(
