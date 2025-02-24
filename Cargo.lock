@@ -5735,7 +5735,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "2.10.1"
+version = "2.10.1+nightly-2025-02-24"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -5838,7 +5838,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-build-metadata"
-version = "2.10.1"
+version = "2.10.1+nightly-2025-02-24"
 dependencies = [
  "cargo_metadata",
  "semver 1.0.25",
@@ -5846,7 +5846,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "2.10.1"
+version = "2.10.1+nightly-2025-02-24"
 dependencies = [
  "assert_fs",
  "cairo-language-server",
@@ -5858,7 +5858,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-run"
-version = "2.10.1"
+version = "2.10.1+nightly-2025-02-24"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -5880,7 +5880,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "2.10.1"
+version = "2.10.1+nightly-2025-02-24"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -5900,7 +5900,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-doc"
-version = "2.10.1"
+version = "2.10.1+nightly-2025-02-24"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -5934,7 +5934,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-execute"
-version = "2.10.1"
+version = "2.10.1+nightly-2025-02-24"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6005,7 +6005,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-prove"
-version = "2.10.1"
+version = "2.10.1+nightly-2025-02-24"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6091,7 +6091,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-verify"
-version = "2.10.1"
+version = "2.10.1+nightly-2025-02-24"
 dependencies = [
  "anyhow",
  "assert_fs",
