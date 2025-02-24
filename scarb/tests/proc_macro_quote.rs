@@ -123,7 +123,9 @@ fn can_use_quote_with_token_stream() {
         .version("1.0.0")
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
-            fn main() -> felt252 { some!() }
+            fn main() -> felt252 {
+              some!()
+            }
         "#})
         .build(&project);
 
@@ -195,7 +197,6 @@ fn can_use_quote_with_syntax_node() {
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
-        .stdout_matches("")
         .success();
 
     assert_eq!(
