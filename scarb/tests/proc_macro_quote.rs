@@ -123,9 +123,7 @@ fn can_use_quote_with_token_stream() {
         .version("1.0.0")
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
-            fn main() -> felt252 {
-              some!()
-            }
+            fn main() -> felt252 { some!() }
         "#})
         .build(&project);
 
@@ -197,6 +195,7 @@ fn can_use_quote_with_syntax_node() {
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
+        .stdout_matches("")
         .success();
 
     assert_eq!(
@@ -466,4 +465,83 @@ fn can_parse_incoming_token_stream() {
 
             error: could not check `hello` due to previous error
         "#});
+}
+
+#[test]
+fn can_parse_with_token_interpolation() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan, quote};
+            #[attribute_macro]
+            pub fn some(_attr: TokenStream, _token_stream: TokenStream) -> ProcMacroResult {
+                let name_string = "MyStruct".to_string();
+                let name_token = TokenTree::Ident(Token::new(name_string.clone(), TextSpan::call_site()));
+                let impl_string = format!("{}NameImpl", name_string);
+                let impl_token = TokenTree::Ident(Token::new(impl_string, TextSpan::call_site()));
+                let res_string = format!("\"{}\"", name_string);
+                let res_token = TokenTree::Ident(Token::new(res_string, TextSpan::call_site()));
+                let tokens = quote! {
+                    impl #impl_token of NameTrait<#name_token> {
+                        fn name(self: @#name_token) -> ByteArray {
+                            #res_token
+                        }
+                    }
+                };
+                ProcMacroResult::new(tokens)
+            }
+        "##})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            pub trait NameTrait<T> {
+                fn name(self: @NameTrait) -> ByteArray;
+            }
+            pub struct MyStruct {}
+
+            #[some]
+            fn main() -> u32 {
+               true
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("expand")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+
+    assert_eq!(
+        project.child("target/dev").files(),
+        vec!["hello.expanded.cairo"]
+    );
+
+    let expanded = project
+        .child("target/dev/hello.expanded.cairo")
+        .read_to_string();
+
+    snapbox::assert_eq(
+        indoc! {r#"
+            mod hello {
+                pub trait NameTrait<T> {
+                    fn name(self: @NameTrait) -> ByteArray;
+                }
+                pub struct MyStruct {}
+                impl MyStructNameImpl of NameTrait<MyStruct> {
+                    fn name(self: @MyStruct) -> ByteArray {
+                        "MyStruct"
+                    }
+                }
+            }
+        "#},
+        expanded,
+    );
 }

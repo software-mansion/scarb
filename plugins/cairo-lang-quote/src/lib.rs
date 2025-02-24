@@ -44,6 +44,9 @@ fn process_token_stream(
             TokenTree::Group(group) => {
                 let token_iter = group.stream().into_iter().peekable();
                 let delimiter = group.delimiter();
+                if was_previous_ident {
+                    output.push(QuoteToken::Whitespace);
+                }
                 output.push(QuoteToken::from_delimiter(
                     delimiter,
                     DelimiterVariant::Open,
@@ -64,16 +67,17 @@ fn process_token_stream(
                         }
                         let var_ident = Ident::new(&ident.to_string(), Span::call_site());
                         output.push(QuoteToken::Var(var_ident));
+                        was_previous_ident = true;
                         // Move iterator, as we only did peek before.
                         let _ = token_stream.next();
                     } else {
-                        // E.g. to support Cairo attributes (i.e. punct followed by non-ident `#[`).
                         output.push(QuoteToken::Content(punct.to_string()));
+                        was_previous_ident = false;
                     }
                 } else {
                     output.push(QuoteToken::Content(punct.to_string()));
+                    was_previous_ident = false;
                 }
-                was_previous_ident = false;
             }
             TokenTree::Ident(ident) => {
                 if was_previous_ident {
