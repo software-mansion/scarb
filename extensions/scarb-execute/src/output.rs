@@ -1,6 +1,5 @@
 use anyhow::Context;
 use anyhow::Result;
-use cairo_lang_runner::casm_run::format_for_panic;
 use cairo_lang_runner::CairoHintProcessor;
 use cairo_vm::vm::runners::cairo_runner::CairoRunner;
 use scarb_ui::Message;
@@ -140,48 +139,4 @@ where
         .map(|(key, value)| format!("{key:?}: {value}"))
         .collect::<Vec<String>>()
         .join(", ")
-}
-
-#[derive(Serialize)]
-pub enum ExecutionStatus {
-    Success,
-    Panic { reason: String },
-}
-
-impl ExecutionStatus {
-    pub fn try_new(runner: &CairoRunner, hint_processor: &CairoHintProcessor) -> Result<Self> {
-        Ok(
-            if let [.., start_marker, end_marker] = &hint_processor.markers[..] {
-                let size = (*end_marker - *start_marker).with_context(|| {
-                    format!("panic data markers mismatch: start={start_marker}, end={end_marker}")
-                })?;
-                let panic_data = runner
-                    .vm
-                    .get_integer_range(*start_marker, size)
-                    .with_context(|| "failed reading panic data")?;
-                let reason = format_for_panic(panic_data.into_iter().map(|value| *value));
-                Self::Panic { reason }
-            } else {
-                Self::Success
-            },
-        )
-    }
-}
-
-impl Message for ExecutionStatus {
-    fn print_text(self)
-    where
-        Self: Sized,
-    {
-        if let ExecutionStatus::Panic { reason } = self {
-            println!("{reason}");
-        }
-    }
-
-    fn structured<S: Serializer>(self, ser: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        Self: Sized,
-    {
-        self.serialize(ser)
-    }
 }
