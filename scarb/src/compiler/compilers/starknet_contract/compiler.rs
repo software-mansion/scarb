@@ -332,9 +332,18 @@ pub fn find_project_contracts(
         Vec::new()
     };
 
-    Ok(internal_contracts
+    // Deduplicate found contracts by contract path.
+    let mut contracts_found = internal_contracts
         .into_iter()
         .chain(external_contracts)
+        .map(|decl| (decl.module_id().full_path(db.upcast()), decl))
+        .sorted_by_key(|(path, _)| path.clone())
+        .collect_vec();
+    contracts_found.dedup_by_key(|(path, _)| path.clone());
+
+    Ok(contracts_found
+        .into_iter()
+        .map(|(_path, decl)| decl)
         .collect())
 }
 

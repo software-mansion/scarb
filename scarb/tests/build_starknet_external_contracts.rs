@@ -558,3 +558,54 @@ fn can_build_external_reexported_contracts() {
         ]
     );
 }
+#[test]
+fn can_dedup_contract_reexports() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let world = t.child("world");
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .lib_cairo(indoc! {r#"
+            // Note that Balance contract can be accessed both through mod tree and the reexport.
+            pub mod a; 
+            pub use a::Balance;
+        "#})
+        .src("src/a.cairo", BALANCE_CONTRACT)
+        .build(&hello);
+
+    ProjectBuilder::start()
+        .name("world")
+        .version("0.1.0")
+        .dep("hello", hello)
+        .manifest_extra(formatdoc! {r#"
+            [[target.starknet-contract]]
+            build-external-contracts = ["hello::*"]
+        "#})
+        .dep_starknet()
+        .build(&world);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&world)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..] Compiling world v0.1.0 ([..]/Scarb.toml)
+        [..]  Finished `dev` profile target(s) in [..]
+    "#});
+
+    assert_eq!(
+        world.child("target/dev").files(),
+        vec![
+            "world.starknet_artifacts.json",
+            "world_Balance.contract_class.json",
+        ]
+    );
+}
