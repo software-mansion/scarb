@@ -64,16 +64,18 @@ fn process_token_stream(
                         }
                         let var_ident = Ident::new(&ident.to_string(), Span::call_site());
                         output.push(QuoteToken::Var(var_ident));
+                        was_previous_ident = true;
                         // Move iterator, as we only did peek before.
                         let _ = token_stream.next();
                     } else {
                         // E.g. to support Cairo attributes (i.e. punct followed by non-ident `#[`).
                         output.push(QuoteToken::Content(punct.to_string()));
+                        was_previous_ident = false;
                     }
                 } else {
                     output.push(QuoteToken::Content(punct.to_string()));
+                    was_previous_ident = false;
                 }
-                was_previous_ident = false;
             }
             TokenTree::Ident(ident) => {
                 if was_previous_ident {
@@ -194,6 +196,50 @@ mod tests {
                 QuoteToken::Content("mod".to_string()),
                 QuoteToken::Whitespace,
                 QuoteToken::Var(Ident::new("name", Span::call_site())),
+                QuoteToken::Content("{".to_string()),
+                QuoteToken::Content("}".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn interpolate_tokens() {
+        use super::{process_token_stream, QuoteToken};
+        use proc_macro2::{Ident, Punct, Spacing, Span, TokenTree};
+        use quote::{quote as rust_quote, TokenStreamExt};
+
+        // impl #impl_token of NameTrait<#name_token> {}
+
+        let mut input: proc_macro2::TokenStream = rust_quote! {
+            impl
+        };
+        input.append(TokenTree::Punct(Punct::new('#', Spacing::Joint)));
+        input.extend(rust_quote! {
+            impl_token
+        });
+        input.extend(rust_quote! {
+            of NameTrait<
+        });
+        input.append(TokenTree::Punct(Punct::new('#', Spacing::Joint)));
+        input.extend(rust_quote! {
+            name_token> {}
+        });
+
+        let mut output = Vec::new();
+        process_token_stream(input.into_iter().peekable(), &mut output);
+        assert_eq!(
+            output,
+            vec![
+                QuoteToken::Content("impl".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Var(Ident::new("impl_token", Span::call_site())),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("of".to_string()),
+                QuoteToken::Whitespace,
+                QuoteToken::Content("NameTrait".to_string()),
+                QuoteToken::Content("<".to_string()),
+                QuoteToken::Var(Ident::new("name_token", Span::call_site())),
+                QuoteToken::Content(">".to_string()),
                 QuoteToken::Content("{".to_string()),
                 QuoteToken::Content("}".to_string()),
             ]
