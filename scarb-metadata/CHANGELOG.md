@@ -3,7 +3,11 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+
+## 1.14.0 (2025-02-25) 
 - Add `prebuilt_allowed` field to `CompilationUnitCairoPluginMetadata`.
+- Add `component_dependency_id` field to `CompilationUnitCairoPluginMetadata`.
+- Add `is_builtin_plugin` method to `Metadata`.
 
 ## 1.13.0 (2024-10-28)
 - Add `CompilationUnitComponentId`.
