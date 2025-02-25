@@ -14,6 +14,7 @@ use scarb_test_support::project_builder::ProjectBuilder;
 fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &str) {
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [lib]
@@ -25,6 +26,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
 
     ProjectBuilder::start()
         .name("world")
+        .edition("2023_01")
         .version("0.1.0")
         .dep("hello", hello)
         .manifest_extra(formatdoc! {r#"
@@ -51,6 +53,7 @@ fn compile_starknet_contract() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra("[[target.starknet-contract]]")
         .dep_starknet()
@@ -88,6 +91,7 @@ fn compile_starknet_contract_to_casm() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
@@ -125,6 +129,7 @@ fn compile_many_contracts() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [lib]
@@ -241,6 +246,7 @@ fn casm_add_pythonic_hints() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
@@ -271,6 +277,7 @@ fn compile_starknet_contract_only_with_cfg() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [lib]
@@ -343,6 +350,7 @@ fn compile_starknet_contract_without_starknet_dep() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra("[[target.starknet-contract]]")
         .lib_cairo(BALANCE_CONTRACT)

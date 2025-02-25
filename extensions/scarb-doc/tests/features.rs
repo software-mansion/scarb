@@ -32,6 +32,7 @@ fn test_workspace_no_features() {
 
     let root = ProjectBuilder::start()
         .name("hello_world")
+        .edition("2023_01")
         .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE);
 
     WorkspaceBuilder::start()
@@ -41,6 +42,7 @@ fn test_workspace_no_features() {
 
     ProjectBuilder::start()
         .name("hello_world_sub_package")
+        .edition("2023_01")
         .lib_cairo(COMMON_CODE_WITHOUT_FEATURE)
         .build(&child_dir);
 
@@ -140,6 +142,7 @@ fn test_workspace_with_working_feature_in_root_and_sub_package() {
 
     let root = ProjectBuilder::start()
         .name("hello_world")
+        .edition("2023_01")
         .lib_cairo(FIBONACCI_CODE_WITH_FEATURE);
 
     WorkspaceBuilder::start()
@@ -155,6 +158,7 @@ fn test_workspace_with_working_feature_in_root_and_sub_package() {
 
     ProjectBuilder::start()
         .name("hello_world_sub_package")
+        .edition("2023_01")
         .manifest_extra(formatdoc! {r#"
             [features]
             {feature_name} = []

@@ -622,7 +622,7 @@ fn workspace_as_dep() {
         .name("second")
         .dep("first", Dep.path("../first"))
         .lib_cairo(indoc! {r#"
-        fn fib(a: felt252, b: felt252, n: felt252) -> felt252 {
+        pub fn fib(a: felt252, b: felt252, n: felt252) -> felt252 {
             match n {
                 0 => a,
                 _ => fib(b, a + b, n - 1),
@@ -827,6 +827,7 @@ fn build_test_without_compiling_tests_from_dependencies() {
     let q = t.child("q");
     ProjectBuilder::start()
         .name("q")
+        .edition("2023_01")
         .lib_cairo(indoc! {r#"
             fn dev_dep_function() -> felt252 { 42 }
 
@@ -1177,6 +1178,7 @@ fn add_statements_functions_debug_info() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .lib_cairo(indoc! {r##"
             #[starknet::interface]
             pub trait IHelloStarknet<TContractState> {
@@ -1294,6 +1296,7 @@ fn add_statements_code_locations_debug_info() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .lib_cairo(indoc! {r##"
             #[starknet::interface]
             pub trait IHelloStarknet<TContractState> {
@@ -1405,6 +1408,7 @@ fn add_statements_functions_debug_info_to_tests() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .lib_cairo(indoc! {r##"
             #[starknet::interface]
             pub trait IHelloStarknet<TContractState> {
@@ -1491,6 +1495,7 @@ fn add_statements_code_locations_debug_info_to_tests() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .lib_cairo(indoc! {r##"
             #[starknet::interface]
             pub trait IHelloStarknet<TContractState> {

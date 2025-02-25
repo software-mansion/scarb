@@ -316,6 +316,7 @@ fn compile_test_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .dep_cairo_test()
         .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
         .build(&t);
@@ -427,6 +428,7 @@ fn integration_tests_cannot_use_itself_by_target_name() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .dep_cairo_test()
         .lib_cairo(indoc! {r#"
             fn hello_world() -> felt252 { 42 }
@@ -485,6 +487,7 @@ fn features_enabled_in_integration_tests() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .dep_cairo_test()
         .manifest_extra(indoc! {r#"
             [features]
@@ -881,6 +884,7 @@ fn test_target_builds_contracts() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [lib]

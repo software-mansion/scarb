@@ -17,7 +17,7 @@ fn compile_simple_git_dep() {
     let git_dep = gitx::new("dep1", |t| {
         ProjectBuilder::start()
             .name("dep1")
-            .lib_cairo("fn hello() -> felt252 { 42 }")
+            .lib_cairo("pub fn hello() -> felt252 { 42 }")
             .build(&t)
     });
 
@@ -205,7 +205,7 @@ fn stale_cached_version() {
     let dep = gitx::new("dep", |t| {
         ProjectBuilder::start()
             .name("dep")
-            .lib_cairo("fn hello() -> felt252 { 11111111111101 }")
+            .lib_cairo("pub fn hello() -> felt252 { 11111111111101 }")
             .build(&t)
     });
 
@@ -235,7 +235,10 @@ fn stale_cached_version() {
     t.child("target/dev/hello.sierra.json")
         .assert(predicates::str::contains("11111111111101"));
 
-    dep.change_file("src/lib.cairo", "fn hello() -> felt252 { 11111111111102 }");
+    dep.change_file(
+        "src/lib.cairo",
+        "pub fn hello() -> felt252 { 11111111111102 }",
+    );
 
     Scarb::quick_snapbox()
         .arg("build")

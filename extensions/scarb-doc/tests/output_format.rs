@@ -39,6 +39,7 @@ fn markdown_output() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello_world")
+        .edition("2023_01")
         .lib_cairo(FIBONACCI_CODE_WITHOUT_FEATURE)
         .build(&t);
 
