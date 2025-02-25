@@ -24,6 +24,8 @@ pub struct SummaryInner {
     pub package_id: PackageId,
     #[builder(default)]
     pub dependencies: Vec<ManifestDependency>,
+    #[builder(default)]
+    pub re_export_cairo_plugins: Vec<PackageName>,
     #[builder(default = false)]
     pub no_core: bool,
     #[builder(default)]

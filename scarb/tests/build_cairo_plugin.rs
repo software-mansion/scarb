@@ -1559,3 +1559,69 @@ fn can_expand_impl_inner_func_attrr() {
 
         "#});
 }
+
+#[test]
+fn can_be_used_through_re_export() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+
+            #[attribute_macro]
+            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+                let token_stream = TokenStream::new(
+                    token_stream
+                        .to_string()
+                        .replace("12", "34")
+                );
+                ProcMacroResult::new(token_stream)
+            }
+        "##})
+        .build(&t);
+    let dep = temp.child("dep");
+    ProjectBuilder::start()
+        .name("dep")
+        .version("1.0.0")
+        .dep("some", &t)
+        .manifest_package_extra(indoc! {r#"
+            re-export-cairo-plugins = ["some"]
+        "#})
+        .build(&dep);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep", &dep)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("expand")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success();
+
+    assert_eq!(
+        project.child("target/dev").files(),
+        vec!["hello.expanded.cairo"]
+    );
+    let expanded = project
+        .child("target/dev/hello.expanded.cairo")
+        .read_to_string();
+    snapbox::assert_eq(
+        indoc! {r#"
+            mod hello {
+                fn main() -> felt252 {
+                    34
+                }
+            }
+        "#},
+        expanded,
+    );
+}

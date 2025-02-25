@@ -220,6 +220,7 @@ fn simple() {
                 name = "foo"
                 version = "1.0.0"
                 edition = "2023_01"
+                re-export-cairo-plugins = []
 
                 [dependencies]
             "#},
@@ -372,6 +373,7 @@ fn generated_manifest() {
             name = "hello"
             version = "1.0.0"
             edition = "2023_01"
+            re-export-cairo-plugins = []
 
             [dependencies.git_dep]
             version = "^0.2.0"
@@ -473,6 +475,7 @@ fn workspace() {
                 name = "hello"
                 version = "1.0.0"
                 edition = "2023_01"
+                re-export-cairo-plugins = []
 
                 [dependencies.path_dep]
                 version = "^1.0.0"
@@ -545,6 +548,7 @@ fn cairo_plugin() {
                 name = "some"
                 version = "1.0.0"
                 edition = "2023_01"
+                re-export-cairo-plugins = []
 
                 [dependencies]
 
@@ -631,6 +635,7 @@ fn builtin_cairo_plugin() {
                 version = "{CAIRO_VERSION}"
                 edition = "2023_01"
                 no-core = true
+                re-export-cairo-plugins = []
 
                 [dependencies]
 
@@ -1627,6 +1632,7 @@ fn can_include_additional_files() {
                 "target/file.txt",
                 "target/some/",
             ]
+            re-export-cairo-plugins = []
 
             [dependencies]
         "#},
