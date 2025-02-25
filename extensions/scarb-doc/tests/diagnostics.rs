@@ -100,6 +100,7 @@ fn test_diagnostics_error() {
 
     ProjectBuilder::start()
         .name("hello_world")
+        .edition("2023_01")
         .lib_cairo(indoc! {r#"
             #[starknet::contract]
             pub(crate) mod DualCaseERC20Mock 

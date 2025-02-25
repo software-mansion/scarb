@@ -13,6 +13,7 @@ use scarb_test_support::project_builder::ProjectBuilder;
 fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &str) {
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [lib]
@@ -24,6 +25,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
 
     ProjectBuilder::start()
         .name("world")
+        .edition("2023_01")
         .version("0.1.0")
         .dep("hello", hello)
         .manifest_extra(formatdoc! {r#"
@@ -177,6 +179,7 @@ fn build_external_full_path() {
 
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [lib]
@@ -200,6 +203,7 @@ fn build_external_full_path() {
 
     ProjectBuilder::start()
         .name("world")
+        .edition("2023_01")
         .version("0.1.0")
         .dep("hello", &hello)
         .manifest_extra(indoc! {r#"
@@ -330,6 +334,7 @@ fn compile_multiple_with_glob_subpath() {
 
     ProjectBuilder::start()
         .name("y")
+        .edition("2023_01")
         .version("1.0.0")
         .dep_starknet()
         .lib_cairo(r#"mod subfolder;"#)
@@ -358,6 +363,7 @@ fn compile_multiple_with_glob_subpath() {
 
     ProjectBuilder::start()
         .name("x")
+        .edition("2023_01")
         .version("1.0.0")
         .dep_starknet()
         .dep("y", &y)
@@ -437,6 +443,7 @@ fn will_warn_about_unmatched_paths() {
 
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [lib]
@@ -505,6 +512,7 @@ fn can_build_external_reexported_contracts() {
 
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [lib]
@@ -518,6 +526,7 @@ fn can_build_external_reexported_contracts() {
 
     ProjectBuilder::start()
         .name("beautiful")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [lib]
@@ -530,6 +539,7 @@ fn can_build_external_reexported_contracts() {
 
     ProjectBuilder::start()
         .name("world")
+        .edition("2023_01")
         .version("0.1.0")
         .dep("beautiful", beautiful)
         .manifest_extra(formatdoc! {r#"
@@ -566,6 +576,7 @@ fn can_dedup_contract_reexports() {
 
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [lib]
@@ -582,6 +593,7 @@ fn can_dedup_contract_reexports() {
 
     ProjectBuilder::start()
         .name("world")
+        .edition("2023_01")
         .version("0.1.0")
         .dep("hello", hello)
         .manifest_extra(formatdoc! {r#"

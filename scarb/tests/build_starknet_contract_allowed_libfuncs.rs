@@ -35,6 +35,7 @@ fn check_true() {
 
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
@@ -69,6 +70,7 @@ fn check_false() {
 
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
@@ -103,6 +105,7 @@ fn deny_true() {
 
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
@@ -135,6 +138,7 @@ fn pass_named_list() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
@@ -162,6 +166,7 @@ fn unknown_list_name() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
@@ -198,6 +203,7 @@ fn list_path() {
 
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
@@ -228,6 +234,7 @@ fn list_path_does_not_exist() {
     let t = assert_fs::TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("0.1.0")
         .manifest_extra(indoc! {r#"
             [[target.starknet-contract]]
