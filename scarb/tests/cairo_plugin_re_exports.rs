@@ -1,5 +1,5 @@
-use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
+use assert_fs::prelude::PathChild;
 use indoc::indoc;
 use itertools::Itertools;
 use scarb_metadata::Metadata;

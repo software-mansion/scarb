@@ -7,7 +7,6 @@ use cairo_lang_runner::casm_run::format_for_panic;
 use cairo_lang_runner::{Arg, CairoHintProcessor, build_hints_dict};
 use cairo_vm::cairo_run::CairoRunConfig;
 use cairo_vm::cairo_run::cairo_run_program;
-use cairo_vm::cairo_run::cairo_run_program;
 use cairo_vm::types::layout_name::LayoutName;
 use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::MaybeRelocatable;
