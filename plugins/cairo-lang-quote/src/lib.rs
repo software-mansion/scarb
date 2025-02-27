@@ -129,9 +129,9 @@ pub fn quote(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
 #[cfg(test)]
 mod tests {
-    use super::{process_token_stream, QuoteToken};
+    use super::{QuoteToken, process_token_stream};
     use proc_macro2::{Ident, Span};
-    use quote::{quote as rust_quote, TokenStreamExt};
+    use quote::{TokenStreamExt, quote as rust_quote};
 
     #[test]
     fn parse_cairo_attr() {
@@ -204,9 +204,9 @@ mod tests {
 
     #[test]
     fn interpolate_tokens() {
-        use super::{process_token_stream, QuoteToken};
+        use super::{QuoteToken, process_token_stream};
         use proc_macro2::{Ident, Punct, Spacing, Span, TokenTree};
-        use quote::{quote as rust_quote, TokenStreamExt};
+        use quote::{TokenStreamExt, quote as rust_quote};
 
         // impl #impl_token of NameTrait<#name_token> {}
 
