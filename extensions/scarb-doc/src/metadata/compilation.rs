@@ -144,16 +144,24 @@ fn get_crate_settings_for_component(
         .as_ref()
         .expect("dependencies are expected to exist")
         .iter()
-        .map(|CompilationUnitComponentDependencyMetadata { id, .. }| {
+        .filter_map(|CompilationUnitComponentDependencyMetadata { id, .. }| {
+            // Skip the plugin dependencies.
+            if unit.cairo_plugins
+                .iter()
+                .any(|plugin_metadata| plugin_metadata.component_dependency_id.as_ref() == Some(id))
+            {
+                return None
+            }
+
             let dependency_component = unit.components.iter()
                 .find(|component| component.id.as_ref().expect("component is expected to have an id") == id)
                 .expect("dependency of a component is guaranteed to exist in compilation unit components");
-            (
+            Some((
                 dependency_component.name.clone(),
                 DependencySettings {
                     discriminator: dependency_component.discriminator.as_ref().map(ToSmolStr::to_smolstr)
                 },
-            )
+            ))
         })
         .collect();
 
