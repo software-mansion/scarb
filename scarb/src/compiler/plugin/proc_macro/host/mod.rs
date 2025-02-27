@@ -9,10 +9,9 @@ use attribute::*;
 pub use aux_data::ProcMacroAuxData;
 use inline::*;
 
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind, ProcMacroInstance};
-use crate::core::{Config, Package, PackageId, edition_variant};
-use anyhow::{Context, Result, ensure};
+use crate::core::{PackageId, edition_variant};
+use anyhow::{Result, ensure};
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
 use cairo_lang_filesystem::db::Edition;
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
@@ -229,38 +228,6 @@ impl MacroPlugin for ProcMacroHostPlugin {
             .iter()
             .flat_map(|m| m.executable_attributes())
             .collect()
-    }
-}
-
-/// A Scarb wrapper around the `ProcMacroHost` compiler plugin.
-///
-/// This struct represent the compiler plugin in terms of Scarb data model.
-/// It also builds a plugin suite that enables the compiler plugin.
-#[derive(Default)]
-pub struct ProcMacroHost {
-    macros: Vec<Arc<ProcMacroInstance>>,
-}
-
-impl ProcMacroHost {
-    pub fn register_instance(&mut self, instance: Arc<ProcMacroInstance>) {
-        self.macros.push(instance);
-    }
-
-    pub fn register_new(&mut self, package: Package, config: &Config) -> Result<()> {
-        let lib_path = package
-            .shared_lib_path(config)
-            .context("could not resolve shared library path")?;
-        let instance = ProcMacroInstance::try_new(package.id, lib_path)?;
-        self.register_instance(Arc::new(instance));
-        Ok(())
-    }
-
-    pub fn into_plugin(self) -> Result<ProcMacroHostPlugin> {
-        ProcMacroHostPlugin::try_new(self.macros)
-    }
-
-    pub fn macros(&self) -> &[Arc<ProcMacroInstance>] {
-        &self.macros
     }
 }
 
