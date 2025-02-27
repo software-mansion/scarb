@@ -18,6 +18,7 @@ const platform = computed(() => {
 });
 
 const QUICK = `curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh`;
+const STARKUP = `curl --proto '=https' --tlsv1.2 -sSf https://sh.starkup.dev | sh`;
 const ASDF = `
 asdf plugin add scarb
 asdf install scarb latest
@@ -32,9 +33,21 @@ asdf set -u scarb latest
         Run the following in your terminal, then follow the onscreen
         instructions
       </h2>
-      <div>
+      <div class="installation-method">
         <h3>
           Install via
+          <a
+            href="https://github.com/software-mansion/starkup"
+            rel="noreferrer"
+            target="_blank"
+            >starkup</a
+          >
+        </h3>
+        <Snippet :src="STARKUP" lang="shell" />
+      </div>
+      <div class="installation-method">
+        <h3>
+          Or via
           <a href="https://asdf-vm.com/" rel="noreferrer" target="_blank"
             >asdf</a
           >
@@ -79,6 +92,10 @@ h3 {
 
 .download-unix {
   text-align: center;
+}
+
+.installation-method {
+  margin-bottom: 1.5rem;
 }
 
 .download-unix > .notes {
