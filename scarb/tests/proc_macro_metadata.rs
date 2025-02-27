@@ -133,26 +133,31 @@ fn can_resolve_full_path_markers() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, post_process, PostProcessContext, TokenTree, Token, TextSpan};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, post_process, PostProcessContext, TokenTree, Token, TextSpan, quote};
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
             let full_path_markers = vec!["some-key".to_string()];
-
-            let code = format!(
-                r#"#[macro::full_path_marker("some-key")] {}"#,
-                token_stream.to_string().replace("12", "34")
+            let token_stream = TokenStream::new(
+                token_stream
+                    .into_iter()
+                    .map(|TokenTree::Ident(token)| {
+                        if token.content.to_string() == "12" {
+                            TokenTree::Ident(Token::new("34", TextSpan::call_site()))
+                        } else {
+                            TokenTree::Ident(token)
+                        }
+                    })
+                    .collect(),
             );
-
-            ProcMacroResult::new(TokenStream::new(vec![TokenTree::Ident(Token::new(
-              code.clone(),
-                TextSpan {
-                  start: 0,
-                  end: code.len() as u32,
-                },
-              ))])
-            ).with_full_path_markers(full_path_markers)
+            let code = quote!(
+                #[macro::full_path_marker("some-key")]
+                #token_stream
+            );
+            ProcMacroResult::new(code)
+                .with_full_path_markers(full_path_markers)
         }
 
         #[post_process]
@@ -170,7 +175,7 @@ fn can_resolve_full_path_markers() {
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
             #[some]
-            fn main() -> felt252 { 12 }
+            fn main() -> felt252 {12}
         "#})
         .build(&project);
 
