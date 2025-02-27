@@ -1448,16 +1448,22 @@ fn can_be_used_through_re_export() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .lib_rs(indoc! {r##"
-            use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, TokenTree, Token, TextSpan, attribute_macro};
 
             #[attribute_macro]
             pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                let token_stream = TokenStream::new(
+                ProcMacroResult::new(TokenStream::new(
                     token_stream
-                        .to_string()
-                        .replace("12", "34")
-                );
-                ProcMacroResult::new(token_stream)
+                        .into_iter()
+                        .map(|TokenTree::Ident(token)| {
+                            if token.content.to_string() == "12" {
+                                TokenTree::Ident(Token::new("34", TextSpan::call_site()))
+                            } else {
+                                TokenTree::Ident(token)
+                            }
+                        })
+                        .collect(),
+                ))
             }
         "##})
         .build(&t);
@@ -1477,7 +1483,7 @@ fn can_be_used_through_re_export() {
         .dep("dep", &dep)
         .lib_cairo(indoc! {r#"
             #[some]
-            fn main() -> felt252 { 12 }
+            fn main() -> felt252 {12}
         "#})
         .build(&project);
 
@@ -1648,7 +1654,7 @@ fn code_mappings_preserve_inline_macro_error_locations() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Identifier not found.
+            error[E0006]: Identifier not found.
              --> [..]lib.cairo:1:1
             fn main() -> felt252 {
             ^^^^^^^^^
