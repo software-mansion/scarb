@@ -1,4 +1,8 @@
-use cairo_lang_macro::TokenStream;
+#[cfg(not(feature = "macro_v2"))]
+use cairo_lang_macro::{Diagnostic, TokenStream};
+#[cfg(feature = "macro_v2")]
+use cairo_lang_macro_v2::{Diagnostic, TokenStream};
+
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 pub mod defined_macros;
@@ -15,10 +19,30 @@ pub trait Method {
 ///
 /// This struct encapsulates both the resulting token stream from macro expansion
 /// and any diagnostic messages (e.g., errors or warnings) that were generated during processing.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ProcMacroResult {
     /// The resultant token stream produced after the macro expansion.
     pub token_stream: TokenStream,
     /// A list of diagnostics produced during the macro execution.
-    pub diagnostics: Vec<cairo_lang_macro::Diagnostic>,
+    pub diagnostics: Vec<Diagnostic>,
+}
+
+#[cfg(feature = "macro_v2")]
+impl Default for ProcMacroResult {
+    fn default() -> Self {
+        Self {
+            token_stream: TokenStream::empty(),
+            diagnostics: Vec::new(),
+        }
+    }
+}
+
+#[cfg(not(feature = "macro_v2"))]
+impl Default for ProcMacroResult {
+    fn default() -> Self {
+        Self {
+            token_stream: TokenStream::default(),
+            diagnostics: Vec::new(),
+        }
+    }
 }

@@ -16,6 +16,12 @@ use self::builtin::{BuiltinStarknetPlugin, BuiltinTestPlugin};
 
 pub mod builtin;
 pub mod collection;
+
+#[cfg(not(feature = "macro_v2"))]
+pub mod proc_macro;
+
+#[cfg(feature = "macro_v2")]
+#[path = "proc_macro_v2/mod.rs"]
 pub mod proc_macro;
 
 /// Properties that can be defined on Cairo plugin target.

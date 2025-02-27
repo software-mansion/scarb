@@ -1,7 +1,6 @@
 use assert_fs::fixture::{ChildPath, FileWriteStr, PathCreateDir};
 use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
-use cairo_lang_macro::TokenStream;
 use indoc::indoc;
 use libloading::library_filename;
 use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineMacroParams};
@@ -13,6 +12,11 @@ use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::cmd::Command;
 use std::fs;
+
+#[cfg(not(feature = "macro_v2"))]
+use cairo_lang_macro::TokenStream;
+#[cfg(feature = "macro_v2")]
+use cairo_lang_macro_v2::{TextSpan, Token, TokenStream, TokenTree};
 
 static TRIPLETS: [(&str, &str); 4] = [
     ("aarch64-apple-darwin", ".dylib"),
@@ -199,6 +203,7 @@ fn compile_with_invalid_prebuilt_plugins() {
 }
 
 #[test]
+#[cfg(not(feature = "macro_v2"))]
 fn load_prebuilt_proc_macros() {
     let t = TempDir::new().unwrap();
     proc_macro_example(&t.child("dep"));
@@ -235,4 +240,49 @@ fn load_prebuilt_proc_macros() {
 
     assert_eq!(response.diagnostics, vec![]);
     assert_eq!(response.token_stream, TokenStream::new("42".to_string()));
+}
+
+#[test]
+#[cfg(feature = "macro_v2")]
+fn load_prebuilt_proc_macros() {
+    let t = TempDir::new().unwrap();
+    proc_macro_example(&t.child("dep"));
+    let project = t.child("test_package");
+    ProjectBuilder::start()
+        .name("test_package")
+        .version("1.0.0")
+        .lib_cairo("")
+        .dep("proc_macro_example", t.child("dep"))
+        .manifest_extra(indoc! {r#"
+            [tool.scarb]
+            allow-prebuilt-plugins = ["proc_macro_example"]
+        "#})
+        .build(&project);
+    let mut proc_macro_client = ProcMacroClient::new_without_cargo(&project);
+    let DefinedMacrosInfo {
+        package_id: compilation_unit_main_component_id,
+        ..
+    } = proc_macro_client.defined_macros_for_package("test_package");
+    let response = proc_macro_client
+        .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
+            context: ProcMacroScope {
+                package_id: compilation_unit_main_component_id,
+            },
+            name: "some".to_string(),
+            args: TokenStream::new(vec![TokenTree::Ident(Token::new(
+                "42",
+                TextSpan::call_site(),
+            ))]),
+            call_site: TextSpan::new(0, 0),
+        })
+        .unwrap();
+
+    assert_eq!(response.diagnostics, vec![]);
+    assert_eq!(
+        response.token_stream,
+        TokenStream::new(vec![TokenTree::Ident(Token::new(
+            "42",
+            TextSpan::call_site(),
+        ))])
+    );
 }
