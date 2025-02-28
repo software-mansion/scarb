@@ -210,7 +210,7 @@ fn integration_tests() {
     ProjectBuilder::start()
         .name("hello")
         .lib_cairo(formatdoc! {r#"
-            fn fib(mut n: u32) -> u32 {{
+            pub fn fib(mut n: u32) -> u32 {{
                 let mut a: u32 = 0;
                 let mut b: u32 = 1;
                 while n != 0 {{
@@ -339,7 +339,7 @@ fn can_choose_test_kind_to_run() {
     ProjectBuilder::start()
         .name("hello")
         .lib_cairo(formatdoc! {r#"
-            fn fib(mut n: u32) -> u32 {{
+            pub fn fib(mut n: u32) -> u32 {{
                 let mut a: u32 = 0;
                 let mut b: u32 = 1;
                 while n != 0 {{

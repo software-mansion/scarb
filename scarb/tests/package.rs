@@ -219,7 +219,7 @@ fn simple() {
                 [package]
                 name = "foo"
                 version = "1.0.0"
-                edition = "2023_01"
+                edition = "2024_07"
                 re-export-cairo-plugins = []
 
                 [dependencies]
@@ -372,7 +372,7 @@ fn generated_manifest() {
             [package]
             name = "hello"
             version = "1.0.0"
-            edition = "2023_01"
+            edition = "2024_07"
             re-export-cairo-plugins = []
 
             [dependencies.git_dep]
@@ -474,7 +474,7 @@ fn workspace() {
                 [package]
                 name = "hello"
                 version = "1.0.0"
-                edition = "2023_01"
+                edition = "2024_07"
                 re-export-cairo-plugins = []
 
                 [dependencies.path_dep]
@@ -547,7 +547,7 @@ fn cairo_plugin() {
                 [package]
                 name = "some"
                 version = "1.0.0"
-                edition = "2023_01"
+                edition = "2024_07"
                 re-export-cairo-plugins = []
 
                 [dependencies]
@@ -633,7 +633,7 @@ fn builtin_cairo_plugin() {
                 [package]
                 name = "assert_macros"
                 version = "{CAIRO_VERSION}"
-                edition = "2023_01"
+                edition = "2024_07"
                 no-core = true
                 re-export-cairo-plugins = []
 
@@ -1625,7 +1625,7 @@ fn can_include_additional_files() {
             [package]
             name = "foo"
             version = "1.0.0"
-            edition = "2023_01"
+            edition = "2024_07"
             include = [
                 "other/file.txt",
                 "other/some",

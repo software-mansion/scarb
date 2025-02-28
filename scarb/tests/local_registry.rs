@@ -140,6 +140,7 @@ fn publish() {
         let t = TempDir::new().unwrap();
         ProjectBuilder::start()
             .name(name)
+            .edition("2023_01")
             .version(version)
             .lib_cairo("fn main() -> felt252 { 0 }")
             .build(&t);
@@ -253,6 +254,7 @@ fn publish_overwrites_existing() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("foobar")
+        .edition("2023_01")
         .version("1.0.0")
         .lib_cairo("fn main() -> felt252 { 0 }")
         .build(&t);
@@ -282,6 +284,7 @@ fn publish_overwrites_existing() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("foobar")
+        .edition("2023_01")
         .version("1.0.0")
         .lib_cairo("fn main() -> felt252 { 1024 }")
         .build(&t);

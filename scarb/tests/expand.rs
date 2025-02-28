@@ -116,7 +116,7 @@ fn expand_integration_test() {
         .name("hello")
         .dep_cairo_test()
         .lib_cairo(formatdoc! {r#"
-            fn fib(mut n: u32) -> u32 {{
+            pub fn fib(mut n: u32) -> u32 {{
                 let mut a: u32 = 0;
                 let mut b: u32 = 1;
                 while n != 0 {{
@@ -241,7 +241,7 @@ fn can_expand_multiple_targets() {
         .name("hello")
         .dep_cairo_test()
         .lib_cairo(formatdoc! {r#"
-            fn fib(mut n: u32) -> u32 {{
+            pub fn fib(mut n: u32) -> u32 {{
                 let mut a: u32 = 0;
                 let mut b: u32 = 1;
                 while n != 0 {{
@@ -283,7 +283,7 @@ fn can_expand_multiple_targets() {
     snapbox::assert_eq(
         indoc! {r#"
             mod hello {
-                fn fib(mut n: u32) -> u32 {
+                pub fn fib(mut n: u32) -> u32 {
                     let mut a: u32 = 0;
                     let mut b: u32 = 1;
                     while n != 0 {
