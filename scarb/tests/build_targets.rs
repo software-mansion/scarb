@@ -1334,3 +1334,145 @@ fn ambiguous_executable_function() {
             error: could not compile `hello_world` due to previous error
         "#});
 }
+
+#[test]
+fn test_target_builds_contracts_with_error() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            sierra = true
+
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .dep_cairo_test()
+        .lib_cairo(indoc! {r#"
+            pub mod hello;
+        "#})
+        .src(
+            "src/hello.cairo",
+            indoc! {r#"
+            #[starknet::interface]
+            trait IHelloContract<T> {
+                fn answer(ref self: T) -> felt252;
+            }
+            #[starknet::contract]
+            mod HelloContract {
+                #[storage]
+                struct Storage {}
+                #[abi(embed_v0)]
+                impl HelloContract of super::IHelloContract<ContractState> {
+                    fn answer(ref self: ContractState) -> felt252 { boo() }
+                }
+            }
+        "#},
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling test(hello_unittest) hello v0.1.0 ([..]Scarb.toml)
+            error[E0006]: Function not found.
+             --> [..]hello.cairo:11:57
+                    fn answer(ref self: ContractState) -> felt252 { boo() }
+                                                                    ^^^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn test_target_builds_contracts_with_warning() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [lib]
+            sierra = true
+
+            [[target.starknet-contract]]
+        "#})
+        .dep_starknet()
+        .dep_cairo_test()
+        .lib_cairo(indoc! {r#"
+            pub mod hello;
+            pub mod fibmod;
+        "#})
+        .src(
+            "src/fibmod.cairo",
+            indoc! {r#"
+            pub fn fib(mut n: u32) -> u32 {
+                let mut a: u32 = 0;
+                let mut b: u32 = 1;
+                while n != 0 {
+                    n = n - 1;
+                    let temp = b;
+                    b = a + b;
+                    a = temp;
+                };
+                a
+            }
+        "#},
+        )
+        .src(
+            "src/hello.cairo",
+            indoc! {r#"
+            use hello::fibmod::fib;
+
+            #[starknet::interface]
+            trait IHelloContract<T> {
+                fn answer(ref self: T) -> felt252;
+            }
+            #[starknet::contract]
+            mod HelloContract {
+                #[storage]
+                struct Storage {}
+                #[abi(embed_v0)]
+                impl HelloContract of super::IHelloContract<ContractState> {
+                    fn answer(ref self: ContractState) -> felt252 { 'hello' }
+                }
+            }
+        "#},
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling test(hello_unittest) hello v0.1.0 ([..]Scarb.toml)
+            warn: Unused import: `hello::hello::fib`
+             --> [..]hello.cairo:1:20
+            use hello::fibmod::fib;
+                               ^^^
+
+            warn: Unused import: `hello::hello::fib`
+             --> [..]hello.cairo:1:20
+            use hello::fibmod::fib;
+                               ^^^
+
+                Finished `dev` profile target(s) in [..]
+        "#});
+
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec![
+            "hello_unittest.test.json",
+            "hello_unittest.test.sierra.json",
+            "hello_unittest.test.starknet_artifacts.json",
+            "hello_unittest_HelloContract.test.contract_class.json"
+        ]
+    );
+}
