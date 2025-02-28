@@ -255,11 +255,38 @@ pub struct FullPathMarker {
 #[cfg(test)]
 mod tests {
     use crate::types::TokenStream;
+    use crate::{AllocationContext, TextSpan, Token, TokenTree};
 
     #[test]
     fn new_token_stream_metadata_empty() {
         let token_stream = TokenStream::empty();
         assert!(token_stream.metadata.file_id.is_none());
         assert!(token_stream.metadata.original_file_path.is_none());
+    }
+
+    #[test]
+    fn can_convert_to_stable() {
+        let token_stream = TokenStream::new(vec![
+            TokenTree::Ident(Token::new("test", TextSpan::new(0, 4))),
+            TokenTree::Ident(Token::new(";", TextSpan::new(4, 5))),
+        ]);
+        let stable = token_stream.as_stable();
+        let ctx = AllocationContext::default();
+        let token_stream = unsafe { TokenStream::from_stable_in(&stable, &ctx) };
+        assert_eq!(token_stream.tokens.len(), 2);
+        assert_eq!(token_stream.to_string(), "test;");
+    }
+
+    #[test]
+    fn can_store_null_character() {
+        let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+            "te\0st",
+            TextSpan::new(0, 4),
+        ))]);
+        let stable = token_stream.as_stable();
+        let ctx = AllocationContext::default();
+        let token_stream = unsafe { TokenStream::from_stable_in(&stable, &ctx) };
+        assert_eq!(token_stream.tokens.len(), 1);
+        assert_eq!(token_stream.to_string(), "te\0st");
     }
 }
