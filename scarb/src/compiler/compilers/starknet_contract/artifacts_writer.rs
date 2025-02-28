@@ -6,8 +6,10 @@ use crate::flock::Filesystem;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_starknet::contract::ContractDeclaration;
+use cairo_lang_starknet_classes::abi::Contract;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
-use cairo_lang_starknet_classes::contract_class::ContractClass;
+use cairo_lang_starknet_classes::contract_class::{ContractClass, ContractEntryPoints};
+use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_lang_utils::UpcastMut;
 use indoc::formatdoc;
 use itertools::{izip, Itertools};
@@ -19,6 +21,27 @@ const MAX_SIERRA_PROGRAM_FELTS: usize = 81290;
 const MAX_CASM_PROGRAM_FELTS: usize = 81290;
 const MAX_CONTRACT_CLASS_BYTES: usize = 4089446;
 const MAX_COMPILED_CONTRACT_CLASS_BYTES: usize = 4089446;
+
+// Represents a contract in the Starknet network as defined in Starknet JSON-RPC spec:
+// https://github.com/starkware-libs/starknet-specs/blob/2030a650be4e40cfa34d5051a0334f375384a421/api/starknet_api_openrpc.json#L3030
+#[derive(Clone, Debug, Serialize)]
+struct ContractClassNoDebug<'a> {
+    sierra_program: &'a Vec<BigUintAsHex>,
+    contract_class_version: &'a String,
+    entry_points_by_type: &'a ContractEntryPoints,
+    abi: &'a Option<Contract>,
+}
+
+impl<'a> ContractClassNoDebug<'a> {
+    fn new(contract_class: &'a ContractClass) -> Self {
+        Self {
+            sierra_program: &contract_class.sierra_program,
+            contract_class_version: &contract_class.contract_class_version,
+            entry_points_by_type: &contract_class.entry_points_by_type,
+            abi: &contract_class.abi,
+        }
+    }
+}
 
 #[derive(Debug, Serialize)]
 struct StarknetArtifacts {
@@ -156,10 +179,17 @@ impl ArtifactsWriter {
                     class,
                 )?;
                 if class_size > MAX_CONTRACT_CLASS_BYTES {
-                    ws.config().ui().warn(formatdoc! {r#"
-                        Contract class size exceeds maximum allowed size on Starknet for contract `{}`:
-                        {MAX_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {class_size} bytes.
-                    "#, contract_stem.clone()});
+                    // Debug info is omitted on Starknet.
+                    // Only warn if size without debug info exceeds the limit as well.
+                    let rpc_class = ContractClassNoDebug::new(class);
+                    let rpc_class_size = serde_json::to_vec(&rpc_class)?.len();
+
+                    if rpc_class_size > MAX_CONTRACT_CLASS_BYTES {
+                        ws.config().ui().warn(formatdoc! {r#"
+                            Contract class size exceeds maximum allowed size on Starknet for contract `{}`:
+                            {MAX_CONTRACT_CLASS_BYTES} bytes allowed. Actual size (without debug info): {rpc_class_size} bytes.
+                        "#, contract_stem.clone()});
+                    }
                 }
                 artifact.artifacts.sierra = Some(file_name);
             }
