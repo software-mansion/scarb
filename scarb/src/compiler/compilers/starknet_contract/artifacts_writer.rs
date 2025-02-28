@@ -25,14 +25,14 @@ const MAX_COMPILED_CONTRACT_CLASS_BYTES: usize = 4089446;
 // Represents a contract in the Starknet network as defined in Starknet JSON-RPC spec:
 // https://github.com/starkware-libs/starknet-specs/blob/2030a650be4e40cfa34d5051a0334f375384a421/api/starknet_api_openrpc.json#L3030
 #[derive(Clone, Debug, Serialize)]
-struct RpcContractClass<'a> {
+struct ContractClassNoDebug<'a> {
     sierra_program: &'a Vec<BigUintAsHex>,
     contract_class_version: &'a String,
     entry_points_by_type: &'a ContractEntryPoints,
     abi: &'a Option<Contract>,
 }
 
-impl<'a> RpcContractClass<'a> {
+impl<'a> ContractClassNoDebug<'a> {
     fn new(contract_class: &'a ContractClass) -> Self {
         Self {
             sierra_program: &contract_class.sierra_program,
@@ -181,7 +181,7 @@ impl ArtifactsWriter {
                 if class_size > MAX_CONTRACT_CLASS_BYTES {
                     // Debug info is omitted on Starknet.
                     // Only warn if size without debug info exceeds the limit as well.
-                    let rpc_class = RpcContractClass::new(class);
+                    let rpc_class = ContractClassNoDebug::new(class);
                     let rpc_class_size = serde_json::to_vec(&rpc_class)?.len();
 
                     if rpc_class_size > MAX_CONTRACT_CLASS_BYTES {
