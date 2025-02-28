@@ -1,6 +1,6 @@
 use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
-use cairo_lang_macro::TokenStream;
+use cairo_lang_macro::{TextSpan, Token, TokenStream, TokenTree};
 use scarb_proc_macro_server_types::methods::expand::ExpandAttribute;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttributeParams;
 use scarb_proc_macro_server_types::methods::expand::ExpandDerive;
@@ -60,7 +60,14 @@ fn expand_attribute() {
 
             let output = input.replace(name, "very_new_name");
 
-            ProcMacroResult::new(TokenStream::new(output))
+            let span = TextSpan { start: 0, end: output.len() as u32 };
+            ProcMacroResult::new(
+                TokenStream::new(vec![
+                    TokenTree::Ident(
+                        Token::new(output, span)
+                    )
+                ])
+            )
         }}
     "##;
 
@@ -88,14 +95,18 @@ fn expand_attribute() {
             context: ProcMacroScope { package_id },
             attr: "rename_to_very_new_name".to_string(),
             args: TokenStream::empty(),
-            item: TokenStream::new("fn some_test_fn(){}".to_string()),
+            call_site: TextSpan::new(0, 0),
+            item: TokenStream::new(vec![TokenTree::Ident(Token::new(
+                "fn some_test_fn(){}",
+                TextSpan::new(0, 0),
+            ))]),
         })
         .unwrap();
 
     assert_eq!(response.diagnostics, vec![]);
     assert_eq!(
-        response.token_stream,
-        TokenStream::new("fn very_new_name(){}".to_string())
+        response.token_stream.to_string(),
+        "fn very_new_name(){}".to_string()
     );
 }
 
@@ -122,20 +133,24 @@ fn expand_derive() {
     let DefinedMacrosInfo { package_id, .. } =
         proc_macro_client.defined_macros_for_package("test_package");
 
-    let item = TokenStream::new("fn some_test_fn(){}".to_string());
+    let item = TokenStream::new(vec![TokenTree::Ident(Token::new(
+        "fn some_test_fn(){}",
+        TextSpan::new(0, 0),
+    ))]);
 
     let response = proc_macro_client
         .request_and_wait::<ExpandDerive>(ExpandDeriveParams {
             context: ProcMacroScope { package_id },
             derives: vec!["some_derive".to_string()],
+            call_site: TextSpan::new(0, 0),
             item,
         })
         .unwrap();
 
     assert_eq!(response.diagnostics, vec![]);
     assert_eq!(
-        response.token_stream,
-        TokenStream::new("impl SomeImpl of SomeTrait {}".to_string())
+        response.token_stream.to_string(),
+        "impl SomeImpl of SomeTrait {}".to_string()
     );
 }
 
@@ -147,7 +162,15 @@ fn expand_inline() {
     let replace_all_15_with_25 = r#"
         #[inline_macro]
         pub fn replace_all_15_with_25(token_stream: TokenStream) -> ProcMacroResult {
-            ProcMacroResult::new(TokenStream::new(token_stream.to_string().replace("15", "25")))
+            let content = token_stream.to_string().replace("15", "25");
+            let span = TextSpan { start: 0, end: content.len() as u32 };
+            ProcMacroResult::new(
+                TokenStream::new(vec![
+                    TokenTree::Ident(
+                        Token::new(content, span)
+                    )
+                ])
+            )
         }
     "#;
 
@@ -173,15 +196,17 @@ fn expand_inline() {
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
             context: ProcMacroScope { package_id },
             name: "replace_all_15_with_25".to_string(),
-            args: TokenStream::new(
-                "struct A { field: 15 , other_field: macro_call!(12)}".to_string(),
-            ),
+            call_site: TextSpan::new(0, 0),
+            args: TokenStream::new(vec![TokenTree::Ident(Token::new(
+                "struct A { field: 15 , other_field: macro_call!(12)}",
+                TextSpan::new(0, 0),
+            ))]),
         })
         .unwrap();
 
     assert_eq!(response.diagnostics, vec![]);
     assert_eq!(
-        response.token_stream,
-        TokenStream::new("struct A { field: 25 , other_field: macro_call!(12)}".to_string())
+        response.token_stream.to_string(),
+        "struct A { field: 25 , other_field: macro_call!(12)}".to_string()
     );
 }
