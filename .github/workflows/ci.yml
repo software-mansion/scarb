@@ -186,5 +186,5 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: nextest-archive-ubuntu-latest
-      - uses: foundry-rs/setup-snfoundry@v3
+      - uses: foundry-rs/setup-snfoundry@v4
       - run: cargo nextest run --archive-file 'nextest-archive-ubuntu-latest.tar.zst' --run-ignored=all --filterset 'test(new_simple)'
