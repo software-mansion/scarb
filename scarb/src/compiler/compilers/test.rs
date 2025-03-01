@@ -1,5 +1,6 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use cairo_lang_sierra::program::VersionedProgram;
@@ -130,7 +131,8 @@ fn compile_contracts(
         build_external_contracts,
         ..StarknetContractProps::default()
     };
-    let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
+    let mut compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
+    compiler_config.diagnostics_reporter = DiagnosticsReporter::ignoring().allow_warnings();
     let CompiledContracts {
         contract_paths,
         contracts,

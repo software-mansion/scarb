@@ -1458,11 +1458,6 @@ fn test_target_builds_contracts_with_warning() {
             use hello::fibmod::fib;
                                ^^^
 
-            warn: Unused import: `hello::hello::fib`
-             --> [..]hello.cairo:1:20
-            use hello::fibmod::fib;
-                               ^^^
-
                 Finished `dev` profile target(s) in [..]
         "#});
 
