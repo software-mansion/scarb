@@ -55,12 +55,14 @@ lead to unexpected behavior.
 
 The executable target defines an artifact that can be executed with `scarb execute` command.
 This target should be used for packages that are meant to be executed rather than used as dependencies.
+See [Scarb execute](../extensions/execute.md) page for more details.
 Execution of the package created by the `scarb execute` command can be proved with `scarb prove` and the proof can be
 verified with `scarb verify`.
 See [proving and verifying execution](../extensions/prove-and-verify.md) page for more details.
 
 > [!TIP]
 > The executable target requires teh Cairo gas calculation to be disabled.
+> Gas tracking introduces a computation overhead and makes less sense outside the context of Starknet smart contracts.
 > You can achieve this with adding following section to your `Scarb.toml` manifest.
 >
 > ```toml

@@ -25,6 +25,10 @@ const sidebar = {
         p("Formatting", "/docs/guides/formatting"),
         p("Defining custom profiles", "/docs/guides/defining-custom-profiles"),
         p("Defining custom scripts", "/docs/guides/defining-custom-scripts"),
+        p(
+          "Creating executable package",
+          "/docs/guides/creating-executable-package",
+        ),
         p("Using Scarb in CI", "/docs/guides/using-scarb-in-ci"),
       ],
     },
@@ -32,6 +36,8 @@ const sidebar = {
       text: "Core extensions",
       items: [
         p("Testing", "/docs/extensions/testing"),
+        p("Execute", "/docs/extensions/execute"),
+        p("Prove and verify", "/docs/extensions/prove-and-verify"),
         p("Cairo runner", "/docs/extensions/cairo-run"),
         {
           text: "Starknet",
