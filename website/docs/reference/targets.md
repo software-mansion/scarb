@@ -49,13 +49,17 @@ lead to unexpected behavior.
 
 ## Test targets
 
-The test target produces artifacts that can be used by the `scarb cairo-test` to run tests.
+The test target produces artifacts that can be used by the `scarb cairo-test` or [Starknet Foundry] to run tests.
+If your project implements Starknet contracts, the test target will compile them as well.
 Each package can define multiple test targets, each of which will produce a separate test runner artifact.
 The test runner relies on test target definitions to find runnable tests.
-The test target can define two custom properties: `source-path` and `test-type`.
+The test target can define three custom properties: `source-path`, `test-type` and `build-external-contracts`.
 The `source-path` property is a path from package root, to the main Cairo file of the test module.
 The `test-type` property accepts either `unit` or `integration` as a value, as described in
 [tests organization](../extensions/testing#tests-organization).
+The `build-external-contracts` allows compilation of contracts defined in dependencies of the tested package, as
+described in [compiling external contracts](../extensions/starknet/contract-target#compiling-external-contracts) section
+of the Starknet Contract Target page.
 
 Example test target definition:
 
@@ -120,3 +124,5 @@ The `name` field specifies the name of the target, which corresponds to the file
 generated.
 If missing, this defaults to the name of the package.
 If multiple targets of the same kind are defined in the package, they all must specify unique names.
+
+[Starknet Foundry]: https://foundry-rs.github.io/starknet-foundry/
