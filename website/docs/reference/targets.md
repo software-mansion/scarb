@@ -1,3 +1,7 @@
+<script setup>
+import { data as rel } from "../../github.data";
+</script>
+
 # Targets
 
 Scarb packages consist of _targets_ which correspond to source files which can be compiled into a package, and the way
@@ -47,12 +51,104 @@ or textual Sierra, respectively.
 While textual Sierra may be practical for debugging or similar tasks, relying on it in a production environment could
 lead to unexpected behavior.
 
+## Executable target
+
+The executable target defines an artifact that can be executed with `scarb execute` command.
+This target should be used for packages that are meant to be executed rather than used as dependencies.
+Execution of the package created by the `scarb execute` command can be proved with `scarb prove` and the proof can be
+verified with `scarb verify`.
+See [proving and verifying execution](../extensions/prove-and-verify.md) page for more details.
+
+> [!TIP]
+> The executable target requires teh Cairo gas calculation to be disabled.
+> You can achieve this with adding following section to your `Scarb.toml` manifest.
+>
+> ```toml
+> [cairo]
+> enable-gas = false
+> ```
+>
+> See [manifest reference](../reference/manifest.md#cairo) for more details.
+
+### Configurable properties
+
+The executable target can define two custom properties: `allow-syscalls` and `function`.
+
+The `function` property is described in detail in the [compiling with multiple main functions section](#compiling-with-multiple-main-functions).
+
+The `allow-syscalls` property is a boolean that allows the package to use syscalls.
+By default, this flag is set to `false`.
+
+> [!WARNING]
+> Execution of packages using syscalls cannot reliably be proven with `scarb prove` and `scarb verify`.
+> You should only compile executable targets with syscalls if you do not need to prove its execution.
+
+```toml
+[cairo]
+allow-syscalls = false
+```
+
+### Choosing the main function
+
+To compile a package as an executable target, you need to declare which function should be the executable entry point.
+This can be done by adding the `#[executable]` attribute to the function you want to use as the main function.
+To make the `#[executable]` entrypoint available during the compilation, please add the `cairo_execute` package to the
+dependencies.
+
+```toml-vue
+[dependencies]
+cairo_execute = "{{ rel.stable.starknetPackageVersionReq }}
+```
+
+Then add the attribute to the function of your choosing.
+
+```cairo
+#[executable]
+fn main() {
+    // Your code goes here
+}
+```
+
+### Compiling with multiple main functions
+
+If you need to execute the package multiple times, with different entry points, you can declare multiple executable
+targets, each with a different main function.
+This can be achieved with the `function` property of the executable target definition.
+
+```toml
+[executable]
+function = "hello_world::main"
+
+[[target.executable]]
+name = "secondary"
+function = "hello_world::secondary"
+```
+
+```cairo
+#[executable]
+fn main() -> felt252 {
+    12
+}
+
+#[executable]
+fn secondary() -> felt252 {
+    34
+}
+```
+
+Each of the executable targets defined will be compiled separately and produce separate artifacts.
+Each of the targets need to have a unique name.
+If your package defines `#[executable]` attribute multiple times, the `function` property is required to be set.
+
 ## Test targets
 
 The test target produces artifacts that can be used by the `scarb cairo-test` or [Starknet Foundry] to run tests.
 If your project implements Starknet contracts, the test target will compile them as well.
 Each package can define multiple test targets, each of which will produce a separate test runner artifact.
 The test runner relies on test target definitions to find runnable tests.
+
+### Configurable properties
+
 The test target can define three custom properties: `source-path`, `test-type` and `build-external-contracts`.
 The `source-path` property is a path from package root, to the main Cairo file of the test module.
 The `test-type` property accepts either `unit` or `integration` as a value, as described in
