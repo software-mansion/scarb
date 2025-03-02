@@ -1,7 +1,7 @@
 export default {
   load() {
     return {
-      edition: "2023_10",
+      edition: "2024_07",
     };
   },
 };
