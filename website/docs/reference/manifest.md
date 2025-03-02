@@ -388,6 +388,15 @@ See [Scripts](./scripts) page.
 
 ## `[tool]`
 
+> [!WARNING]
+> In context of a workspace, the `[tool]` section still needs to be defined on the package to take effect.
+> Packages can inherit `tool` section from workspace manifest, but only explicitly.
+> See [Workspaces](./workspaces#tool) page for more detailed information.
+
+> [!WARNING]
+> Profiles can be used to change values defined in `[tool]` section.
+> See [Profiles](./profiles#overriding-tool-metadata) page for more detailed information.
+
 This section can be used for tools which would like to store package configuration in Scarb.toml.
 Scarb by default will warn about unused keys in Scarb.toml to assist in detecting typos and such.
 The `[tool]` table, however, is completely ignored by Scarb and will not be warned about.

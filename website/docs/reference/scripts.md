@@ -18,6 +18,11 @@ bar = "echo 'World!'"
 This section should not contain any values with type different from string, including subtables, arrays, or numbers.
 In case the section is empty, it will be ignored.
 
+> [!WARNING]
+> In context of a workspace, the `[scripts]` section still needs to be defined on the package to take effect.
+> Packages can inherit `scripts` section from workspace manifest, but only explicitly.
+> See [Workspaces](./workspaces#scripts) page for more detailed information.
+
 ### Special script names
 
 Some script names are reserved for special purposes and their execution might be associated with additional logic.
