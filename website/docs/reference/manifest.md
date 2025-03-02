@@ -1,5 +1,6 @@
 <script setup>
 import {data as constants} from "../../constants.data";
+import { data as rel } from "../../github.data";
 </script>
 
 # The Manifest Format
@@ -85,20 +86,25 @@ publish = true
 
 ### `cairo-version`
 
-The `cairo-version` field is an optional key that tells Scarb what version of the Cairo language and compiler your
-package can be compiled with.
+The `cairo-version` field is an optional key that tells Scarb what range of versions of the Cairo language and compiler
+your package can be compiled with.
 If the currently running version of the Scarb compiler does not match this requirement, Scarb will exit with an error,
 telling the user what version is required.
 This field takes a [semver version requirement](./specifying-dependencies#version-requirements).
 
 ```toml
 [package]
-cairo-version = "1.0.0"
+cairo-version = "^{{ rel.preview.version }}"
 ```
 
 Setting the `cairo-version` key in `[package]` will affect all targets in the package.
+
 The value in this field will not affect the version of the compiler run by Scarb.
 Scarb always uses its built-in version of the Cairo compiler.
+It will instead show an error message to the user if the version of the Cairo compiler is not compatible with the project.
+
+Checking Cairo version requirements can be skipped with `--ignore-cairo-version` argument.
+Scarb will attempt to compile the project disregarding this field, even if it's not compatible with the builtin compiler version.
 
 ### `include`
 
