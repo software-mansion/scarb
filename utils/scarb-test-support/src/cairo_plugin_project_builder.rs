@@ -163,7 +163,7 @@ impl CairoPluginProjectBuilder {
     pub fn default_v2() -> Self {
         let default_name = "some";
         let default_code = indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro_v2::{ProcMacroResult, TokenStream, attribute_macro};
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
