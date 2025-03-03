@@ -5,7 +5,7 @@ use cairo_lang_macro_v2::TokenStream;
 use scarb_proc_macro_server_types::methods::{expand::ExpandInline, ProcMacroResult};
 
 use super::Handler;
-use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};
+use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro_common::ExpansionKind};
 
 impl Handler for ExpandInline {
     fn handle(
@@ -35,7 +35,12 @@ impl Handler for ExpandInline {
             })
             .with_context(|| format!("Unsupported inline macro: {name}"))?;
 
-        let result = instance.generate_code(name.into(), call_site, TokenStream::empty(), args);
+        let result = instance.plugin().as_v2().unwrap().generate_code(
+            name.into(),
+            call_site,
+            TokenStream::empty(),
+            args,
+        );
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,

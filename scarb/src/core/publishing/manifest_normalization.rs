@@ -160,6 +160,7 @@ fn generate_cairo_plugin(pkg: &Package) -> Option<TomlTarget<TomlCairoPluginTarg
         source_path: None,
         params: TomlCairoPluginTargetParams {
             builtin: params.builtin.and_then(|b| b.then_some(true)),
+            api: params.api.clone(),
         },
     })
 }

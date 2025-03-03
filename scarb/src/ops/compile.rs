@@ -15,7 +15,7 @@ use crate::compiler::db::{
     build_scarb_root_database, has_plugin, is_starknet_plugin, ScarbDatabase,
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
-use crate::compiler::plugin::proc_macro;
+use crate::compiler::plugin::proc_macro_common;
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
 use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
@@ -211,7 +211,7 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 ws.config()
                     .ui()
                     .print(Status::new("Compiling", &unit.name()));
-                proc_macro::compile_unit(unit, ws)
+                proc_macro_common::compile_unit(unit, ws)
             }
         }
         CompilationUnit::Cairo(unit) => {
@@ -288,7 +288,7 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
         .print(Status::new("Checking", &unit.name()));
 
     let result = match unit {
-        CompilationUnit::ProcMacro(unit) => proc_macro::check_unit(unit, ws),
+        CompilationUnit::ProcMacro(unit) => proc_macro_common::check_unit(unit, ws),
         CompilationUnit::Cairo(unit) => {
             let ScarbDatabase { db, .. } =
                 build_scarb_root_database(&unit, ws, Default::default())?;

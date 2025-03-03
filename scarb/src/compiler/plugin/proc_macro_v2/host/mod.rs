@@ -9,8 +9,9 @@ use attribute::*;
 pub use aux_data::ProcMacroAuxData;
 use inline::*;
 
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
-use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind, ProcMacroInstance};
+use crate::compiler::plugin::proc_macro_common::{
+    Expansion, ExpansionKind, ProcMacroInstance, SharedLibraryProvider,
+};
 use crate::core::{edition_variant, Config, Package, PackageId};
 use anyhow::{ensure, Context, Result};
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
@@ -250,7 +251,7 @@ impl ProcMacroHost {
         let lib_path = package
             .shared_lib_path(config)
             .context("could not resolve shared library path")?;
-        let instance = ProcMacroInstance::try_new(package.id, lib_path)?;
+        let instance = ProcMacroInstance::try_new(&package, lib_path)?;
         self.register_instance(Arc::new(instance));
         Ok(())
     }

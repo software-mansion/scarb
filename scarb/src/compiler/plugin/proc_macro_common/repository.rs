@@ -1,7 +1,7 @@
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
-use crate::compiler::plugin::proc_macro::ProcMacroInstance;
+use crate::compiler::plugin::proc_macro_common::SharedLibraryProvider;
+use crate::compiler::plugin::ProcMacroInstance;
 use crate::core::{Config, Package, PackageId};
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Context};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
@@ -19,7 +19,11 @@ pub struct ProcMacroRepository {
 impl ProcMacroRepository {
     /// Returns the [`ProcMacroInstance`] representing the procedural macros defined in the [`Package`].
     /// Loads the underlying shared library if it has not been loaded yet.
-    pub fn get_or_load(&self, package: Package, config: &Config) -> Result<Arc<ProcMacroInstance>> {
+    pub fn get_or_load(
+        &self,
+        package: Package,
+        config: &Config,
+    ) -> anyhow::Result<Arc<ProcMacroInstance>> {
         let Ok(macros) = self.macros.read() else {
             bail!("could not get a read access to the ProcMacroRepository");
         };
@@ -38,7 +42,7 @@ impl ProcMacroRepository {
             .shared_lib_path(config)
             .context("could not resolve shared library path")?;
 
-        let instance = Arc::new(ProcMacroInstance::try_new(package.id, lib_path)?);
+        let instance = Arc::new(ProcMacroInstance::try_new(&package, lib_path)?);
         macros.insert(package.id, instance.clone());
 
         Ok(instance)

@@ -1,5 +1,5 @@
-use crate::compiler::plugin::proc_macro::host::FULL_PATH_MARKER_KEY;
-use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
+use crate::compiler::plugin::proc_macro_v2::host::FULL_PATH_MARKER_KEY;
+use crate::compiler::plugin::proc_macro_v2::ProcMacroHostPlugin;
 use crate::core::PackageId;
 use anyhow::Result;
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
@@ -45,7 +45,11 @@ impl ProcMacroHostPlugin {
                 .cloned()
                 .unwrap_or_default();
             debug!("calling post processing callback with: {data:?}");
-            instance.post_process_callback(data.clone(), markers_for_instance);
+            instance
+                .plugin()
+                .as_v2()
+                .unwrap()
+                .post_process_callback(data.clone(), markers_for_instance);
         }
         Ok(())
     }

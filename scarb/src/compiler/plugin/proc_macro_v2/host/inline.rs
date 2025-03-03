@@ -1,11 +1,11 @@
-use crate::compiler::plugin::proc_macro::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::host::conversion::{
+use crate::compiler::plugin::proc_macro_common::Expansion;
+use crate::compiler::plugin::proc_macro_v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
+use crate::compiler::plugin::proc_macro_v2::host::conversion::{
     into_cairo_diagnostics, CallSiteLocation,
 };
-use crate::compiler::plugin::proc_macro::host::generate_code_mappings;
-use crate::compiler::plugin::proc_macro::{
-    Expansion, ProcMacroId, ProcMacroInstance, TokenStreamBuilder,
-};
+use crate::compiler::plugin::proc_macro_v2::host::generate_code_mappings;
+use crate::compiler::plugin::proc_macro_v2::{ProcMacroId, TokenStreamBuilder};
+use crate::compiler::plugin::ProcMacroInstance;
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, InlineMacroExprPlugin, InlinePluginResult, MacroPluginMetadata,
     PluginGeneratedFile,
@@ -54,7 +54,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         token_stream_builder.add_node(arguments.as_syntax_node());
         let token_stream = token_stream_builder.build(&ctx);
-        let result = self.instance().generate_code(
+        let result = self.instance().plugin().as_v2().unwrap().generate_code(
             self.expansion.name.clone(),
             call_site.span,
             TokenStream::empty(),

@@ -1,4 +1,4 @@
-use crate::compiler::plugin::proc_macro::{ProcMacroHostPlugin, ProcMacroId};
+use crate::compiler::plugin::proc_macro_v2::{ProcMacroHostPlugin, ProcMacroId};
 use crate::core::PackageId;
 use cairo_lang_defs::plugin::GeneratedFileAuxData;
 use cairo_lang_macro_v2::AuxData;

@@ -1,4 +1,6 @@
-use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
+use super::plugin::collection::PluginsForComponents;
+use super::CompilationUnitComponentId;
+use crate::compiler::plugin::proc_macro_common::VersionedProcMacroHost;
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
     CompilationUnitDependency,
@@ -24,12 +26,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
 
-use super::plugin::collection::PluginsForComponents;
-use super::CompilationUnitComponentId;
-
 pub struct ScarbDatabase {
     pub db: RootDatabase,
-    pub proc_macros: Vec<Arc<ProcMacroHostPlugin>>,
+    pub proc_macros: Vec<VersionedProcMacroHost>,
 }
 
 pub(crate) fn build_scarb_root_database(
@@ -63,7 +62,10 @@ pub(crate) fn build_scarb_root_database(
     apply_plugins(&mut db, plugins);
     inject_virtual_wrapper_lib(&mut db, unit)?;
 
-    let proc_macros = proc_macros.into_values().collect();
+    let proc_macros = proc_macros
+        .into_values()
+        .flat_map(|hosts| hosts.into_iter())
+        .collect();
     Ok(ScarbDatabase { db, proc_macros })
 }
 

@@ -8,7 +8,7 @@ use scarb_proc_macro_server_types::methods::{expand::ExpandDerive, ProcMacroResu
 use super::Handler;
 use crate::compiler::plugin::{
     collection::WorkspaceProcMacros,
-    proc_macro::{Expansion, ExpansionKind},
+    proc_macro_common::{Expansion, ExpansionKind},
 };
 
 impl Handler for ExpandDerive {
@@ -39,7 +39,7 @@ impl Handler for ExpandDerive {
                 .find(|instance| instance.get_expansions().contains(&expansion))
                 .with_context(|| format!("Unsupported derive macro: {derive}"))?;
 
-            let result = instance.generate_code(
+            let result = instance.plugin().as_v2().unwrap().generate_code(
                 expansion.name.clone(),
                 call_site.clone(),
                 TokenStream::empty(),

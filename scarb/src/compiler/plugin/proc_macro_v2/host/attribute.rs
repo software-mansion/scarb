@@ -1,10 +1,11 @@
-use crate::compiler::plugin::proc_macro::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::host::conversion::{
+use crate::compiler::plugin::proc_macro_common::{Expansion, ExpansionKind};
+use crate::compiler::plugin::proc_macro_v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
+use crate::compiler::plugin::proc_macro_v2::host::conversion::{
     into_cairo_diagnostics, CallSiteLocation,
 };
-use crate::compiler::plugin::proc_macro::host::generate_code_mappings;
-use crate::compiler::plugin::proc_macro::{
-    Expansion, ExpansionKind, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
+use crate::compiler::plugin::proc_macro_v2::host::generate_code_mappings;
+use crate::compiler::plugin::proc_macro_v2::{
+    ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::PluginDiagnostic;
@@ -184,12 +185,17 @@ impl ProcMacroHostPlugin {
             }
         };
 
-        let result = self.instance(input.id.package_id).generate_code(
-            input.id.expansion.name.clone(),
-            input.call_site.span,
-            input.args,
-            token_stream.clone(),
-        );
+        let result = self
+            .instance(input.id.package_id)
+            .plugin()
+            .as_v2()
+            .unwrap()
+            .generate_code(
+                input.id.expansion.name.clone(),
+                input.call_site.span,
+                input.args,
+                token_stream.clone(),
+            );
 
         let expanded = context.register_result(
             token_stream.to_string(),
@@ -367,12 +373,17 @@ impl ProcMacroHostPlugin {
         call_site: CallSiteLocation,
     ) -> PluginResult {
         let original = token_stream.to_string();
-        let result = self.instance(input.package_id).generate_code(
-            input.expansion.name.clone(),
-            call_site.span,
-            args,
-            token_stream,
-        );
+        let result = self
+            .instance(input.package_id)
+            .plugin()
+            .as_v2()
+            .unwrap()
+            .generate_code(
+                input.expansion.name.clone(),
+                call_site.span,
+                args,
+                token_stream,
+            );
 
         // Handle token stream.
         if result.token_stream.is_empty() {

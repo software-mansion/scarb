@@ -9,7 +9,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::compiler::plugin::builtin::BuiltinCairoRunPlugin;
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro_common::SharedLibraryProvider;
 use crate::core::{Package, PackageId, TargetKind, Workspace};
 
 use self::builtin::{BuiltinStarknetPlugin, BuiltinTestPlugin};
@@ -17,12 +17,20 @@ use self::builtin::{BuiltinStarknetPlugin, BuiltinTestPlugin};
 pub mod builtin;
 pub mod collection;
 
-#[cfg(not(feature = "macro_v2"))]
-pub mod proc_macro;
+pub mod proc_macro_common;
+pub mod proc_macro_v1;
+pub mod proc_macro_v2;
 
-#[cfg(feature = "macro_v2")]
-#[path = "proc_macro_v2/mod.rs"]
-pub mod proc_macro;
+pub use proc_macro_common::ProcMacroInstance;
+
+#[derive(
+    Debug, Clone, Copy, Serialize, Deserialize, Default, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
+pub enum PluginApiVersion {
+    #[default]
+    V1,
+    V2,
+}
 
 /// Properties that can be defined on Cairo plugin target.
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -31,6 +39,8 @@ pub struct CairoPluginProps {
     /// Mark this macro plugin as builtin.
     /// Builtin plugins are assumed to be available in `CairoPluginRepository` for the whole Scarb execution.
     pub builtin: bool,
+    /// Version of the API used by the plugin.
+    pub api: PluginApiVersion,
 }
 
 pub fn fetch_cairo_plugin(package: &Package, ws: &Workspace<'_>) -> Result<()> {
@@ -41,7 +51,7 @@ pub fn fetch_cairo_plugin(package: &Package, ws: &Workspace<'_>) -> Result<()> {
     // The `fetch` will not be run for a proc macro that contains a prebuilt library file.
     // Note, that in case the prebuilt lib file is corrupted, it will be later compiled with Cargo anyway.
     if !props.builtin && package.prebuilt_lib_path().is_none() {
-        proc_macro::fetch_crate(package, ws)?;
+        proc_macro_common::fetch_crate(package, ws)?;
     }
     Ok(())
 }
