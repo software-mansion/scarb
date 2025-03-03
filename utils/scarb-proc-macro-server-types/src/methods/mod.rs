@@ -1,6 +1,3 @@
-#[cfg(not(feature = "macro_v2"))]
-use cairo_lang_macro::{Diagnostic, TokenStream};
-#[cfg(feature = "macro_v2")]
 use cairo_lang_macro_v2::{Diagnostic, TokenStream};
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -27,21 +24,10 @@ pub struct ProcMacroResult {
     pub diagnostics: Vec<Diagnostic>,
 }
 
-#[cfg(feature = "macro_v2")]
 impl Default for ProcMacroResult {
     fn default() -> Self {
         Self {
             token_stream: TokenStream::empty(),
-            diagnostics: Vec::new(),
-        }
-    }
-}
-
-#[cfg(not(feature = "macro_v2"))]
-impl Default for ProcMacroResult {
-    fn default() -> Self {
-        Self {
-            token_stream: TokenStream::default(),
             diagnostics: Vec::new(),
         }
     }
