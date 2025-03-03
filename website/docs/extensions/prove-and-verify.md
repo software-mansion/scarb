@@ -23,13 +23,15 @@ To clean the target directory, you can use the `scarb clean` command.
 To prove the execution, you can run:
 
 ```shell
-scarb prove --execution_id <index of the relevant execution>
+scarb prove --execution-id <index of the relevant execution>
 ```
 
 You can also run `scarb prove` with the `--execute` flag, which will run the `scarb execute` command automatically
 before proving the execution for you.
 
 The proof for the trace files inside the execution folder will be generated, and a `proof.json` file will be placed inside the execution directory.
+
+## Verifying Cairo proof
 
 To verify the proof, you can run:
 

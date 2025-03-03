@@ -61,7 +61,7 @@ verified with `scarb verify`.
 See [proving and verifying execution](../extensions/prove-and-verify.md) page for more details.
 
 > [!TIP]
-> The executable target requires teh Cairo gas calculation to be disabled.
+> The executable target requires the Cairo gas calculation to be disabled.
 > Gas tracking introduces a computation overhead and makes less sense outside the context of Starknet smart contracts.
 > You can achieve this with adding following section to your `Scarb.toml` manifest.
 >

@@ -6,7 +6,7 @@ import { data as rel } from "../../github.data";
 
 The `scarb execute` command executes a function from a local package.
 Only packages defining the [executable target](../reference/targets#executable-target) can be executed.
-It does automatically compile the cairo code within the package so using `scarb build` beforehand is not necessary.
+It does automatically compile the Cairo code within the package so using `scarb build` beforehand is not necessary.
 This automatically called build can be skipped with the `--no-build` flag.
 
 ## Choosing a function to run
@@ -18,23 +18,24 @@ This can be achieved through one of two flags:
 
 - `--executable-name` to choose the target by its name.
 - `--executable-function` to choose the target by the main function it defines.
-  Those flags are mutually exclusive.
+
+Those flags are mutually exclusive.
 
 ## Saving the execution information
 
 The execution will be carried out for one of two execution targets: `standalone` or `bootloader`.
 You can choose the target with the `--target` flag.
 Standalone means that the program will be executed as-is, and intended to be proven directly with `scarb prove`.
-hen we run with the bootloader target, the program’s execution is expected to be wrapped by the
+When we run with the bootloader target, the program’s execution is expected to be wrapped by the
 [bootloader’s](https://github.com/Moonsong-Labs/cairo-bootloader?tab=readme-ov-file#cairo-bootloader) execution,
 which itself will be proven via Stwo.
 
-After the execution, information about it will be saved to the target directory of the package.
+After the execution, information about it will be saved to the target directory of the package:
 
-For `standalone` target, the output will be saved as trace files (`air_public_input.json`, `air_private_input.json`,
-`memory.bin`, and `trace.bin`), which can be used for creating a proof with `scarb prove`.
-For `bootloader` target, the output will be saved as a CairoPie format (Position Indenpendent Execution),
-which is not yet supported by the `prove` command.
+- For `standalone` target, the output will be saved as trace files (`air_public_input.json`, `air_private_input.json`,
+  `memory.bin`, and `trace.bin`), which can be used for creating a proof with `scarb prove`.
+- For `bootloader` target, the output will be saved as a CairoPie format (Position Indenpendent Execution),
+  which is not yet supported by the `scarb prove` command.
 
 See more on [proving and verifying execution](./prove-and-verify.md) page.
 
