@@ -338,8 +338,7 @@ The possible values are `default` or `avoid`.
 If `avoid` strategy is set, the compiler will only inline function annotated with `#[inline(always)]` attribute.
 
 > [!WARNING]
-> Using the `avoid` strategy may result in a slower execution of the compiled code and significantly larger artefacts
-> size.
+> Using the `avoid` strategy may result in a slower execution of the compiled code.
 > Please use with caution, only if your tooling requires that.
 > You can use profile settings overwriting, for more granular control of which builds use the avoid strategy.
 
