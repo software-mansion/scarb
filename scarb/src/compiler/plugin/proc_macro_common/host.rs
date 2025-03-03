@@ -24,6 +24,13 @@ impl VersionedProcMacroHost {
         })
     }
 
+    pub fn macros(&self) -> &[Arc<ProcMacroInstance>] {
+        match self {
+            VersionedProcMacroHost::V1(host) => host.macros(),
+            VersionedProcMacroHost::V2(host) => host.macros(),
+        }
+    }
+
     pub fn post_process(&self, db: &dyn SemanticGroup) -> Result<()> {
         match self {
             VersionedProcMacroHost::V1(host) => host.post_process(db),

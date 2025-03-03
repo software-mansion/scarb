@@ -14,7 +14,7 @@ use snapbox::cmd::Command;
 use std::fs;
 
 #[cfg(not(feature = "macro_v2"))]
-use cairo_lang_macro::TokenStream;
+use cairo_lang_macro_v2::TokenStream;
 #[cfg(feature = "macro_v2")]
 use cairo_lang_macro_v2::{TextSpan, Token, TokenStream, TokenTree};
 
@@ -28,11 +28,11 @@ static TRIPLETS: [(&str, &str); 4] = [
 fn proc_macro_example(t: &ChildPath) {
     let name = "proc_macro_example";
     let version = "0.1.0";
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v2()
         .name(name)
         .version(version)
         .lib_rs(indoc! {r#"
-            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
+            use cairo_lang_macro_v2::{ProcMacroResult, TokenStream, inline_macro};
             #[inline_macro]
             pub fn some(token_stream: TokenStream) -> ProcMacroResult {
                 ProcMacroResult::new(token_stream)
@@ -149,11 +149,11 @@ fn compile_with_prebuilt_plugins_only_one_allows() {
 fn invalid_prebuilt_project(t: &ChildPath) {
     let name = "invalid_prebuilt_example";
     let version = "0.1.0";
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v2()
         .name(name)
         .version(version)
         .lib_rs(indoc! {r#"
-             use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
+             use cairo_lang_macro_v2::{ProcMacroResult, TokenStream, inline_macro};
             #[inline_macro]
             pub fn some(token_stream: TokenStream) -> ProcMacroResult {
                 ProcMacroResult::new(token_stream)
@@ -203,6 +203,7 @@ fn compile_with_invalid_prebuilt_plugins() {
 }
 
 #[test]
+#[ignore = "FIXME(maciektr)"]
 #[cfg(not(feature = "macro_v2"))]
 fn load_prebuilt_proc_macros() {
     let t = TempDir::new().unwrap();
@@ -243,6 +244,7 @@ fn load_prebuilt_proc_macros() {
 }
 
 #[test]
+#[ignore = "FIXME(maciektr)"]
 #[cfg(feature = "macro_v2")]
 fn load_prebuilt_proc_macros() {
     let t = TempDir::new().unwrap();

@@ -5,9 +5,9 @@ error: inline macro cannot use `parent` argument
   |                         ^^^^^^^^
 
 warning: unused imports: `MACRO_DEFINITIONS_SLICE`, `ProcMacroResult`, and `TokenStream`
- --> tests/args/args_03.rs:1:38
+ --> tests/args/args_03.rs:1:41
   |
 1 | use cairo_lang_macro_v2::{inline_macro, ProcMacroResult, TokenStream, MACRO_DEFINITIONS_SLICE};
-  |                                      ^^^^^^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^
+  |                                         ^^^^^^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^
   |
   = note: `#[warn(unused_imports)]` on by default

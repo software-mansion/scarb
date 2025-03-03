@@ -1,5 +1,6 @@
 use crate::compiler::plugin::proc_macro_common::VersionedProcMacroHost;
 use crate::compiler::plugin::proc_macro_v1::ProcMacroHostPlugin;
+use crate::compiler::plugin::proc_macro_v2::ProcMacroId;
 use crate::compiler::plugin::ProcMacroInstance;
 #[cfg(doc)]
 use crate::core::PackageId;
@@ -7,7 +8,7 @@ use crate::{
     compiler::{CairoCompilationUnit, CompilationUnitComponentId, CompilationUnitDependency},
     core::Workspace,
 };
-use anyhow::Result;
+use anyhow::{ensure, Result};
 use cairo_lang_semantic::{inline_macros::get_default_plugin_suite, plugin::PluginSuite};
 use itertools::Itertools;
 use std::vec::IntoIter;
@@ -22,6 +23,35 @@ pub struct ComponentProcMacroHost(Vec<VersionedProcMacroHost>);
 
 impl ComponentProcMacroHost {
     pub fn try_new(hosts: Vec<VersionedProcMacroHost>) -> Result<Self> {
+        // Validate expansions across hosts.
+        let mut expansions = hosts
+            .iter()
+            .flat_map(|host| host.macros())
+            .flat_map(|m| {
+                m.get_expansions()
+                    .iter()
+                    .map(|e| ProcMacroId::new(m.package_id(), e.clone()))
+                    .collect_vec()
+            })
+            .collect::<Vec<_>>();
+        expansions.sort_unstable_by_key(|e| (e.expansion.name.clone(), e.package_id));
+        ensure!(
+            expansions
+                .windows(2)
+                .all(|w| w[0].expansion.name != w[1].expansion.name),
+            "duplicate expansions defined for procedural macros: {duplicates}",
+            duplicates = expansions
+                .windows(2)
+                .filter(|w| w[0].expansion.name == w[1].expansion.name)
+                .map(|w| format!(
+                    "{} ({} and {})",
+                    w[0].expansion.name.as_str(),
+                    w[0].package_id,
+                    w[1].package_id
+                ))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
         Ok(Self(hosts))
     }
 

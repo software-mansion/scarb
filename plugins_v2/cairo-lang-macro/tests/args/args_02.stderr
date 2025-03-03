@@ -5,9 +5,9 @@ error: `parent` argument is not a valid path
   |                            ^^^^^
 
 warning: unused imports: `ProcMacroResult` and `TokenStream`
- --> tests/args/args_02.rs:1:41
+ --> tests/args/args_02.rs:1:44
   |
 1 | use cairo_lang_macro_v2::{attribute_macro, ProcMacroResult, TokenStream};
-  |                                         ^^^^^^^^^^^^^^^  ^^^^^^^^^^^
+  |                                            ^^^^^^^^^^^^^^^  ^^^^^^^^^^^
   |
   = note: `#[warn(unused_imports)]` on by default
