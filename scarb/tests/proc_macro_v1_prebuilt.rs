@@ -1,7 +1,6 @@
-use assert_fs::fixture::{ChildPath, FileWriteStr, PathCreateDir};
+use assert_fs::fixture::{ChildPath, PathCreateDir};
 use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
-use cairo_lang_macro::TokenStream;
 use cairo_lang_macro_v2::{TextSpan, Token, TokenStream as TokenStreamV2, TokenTree};
 
 use indoc::indoc;
@@ -9,10 +8,8 @@ use libloading::library_filename;
 use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineMacroParams};
 use scarb_proc_macro_server_types::scope::ProcMacroScope;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
-use scarb_test_support::command::Scarb;
 use scarb_test_support::proc_macro_server::{DefinedMacrosInfo, ProcMacroClient};
 use scarb_test_support::project_builder::ProjectBuilder;
-use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::cmd::Command;
 use std::fs;
 

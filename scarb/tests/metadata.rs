@@ -1390,9 +1390,9 @@ fn includes_experimental_features() {
 
 #[test]
 fn prebuilt_plugins_disallowed_by_default() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
 
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v2()
         .name("q")
         .scarb_project(|builder| {
             builder
@@ -1438,9 +1438,9 @@ fn prebuilt_plugins_disallowed_by_default() {
 
 #[test]
 fn can_allow_prebuilt_plugins_for_subtree() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
 
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v2()
         .name("q")
         .scarb_project(|builder| {
             builder
