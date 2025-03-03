@@ -27,7 +27,7 @@ fn proc_macro_example(t: &ChildPath) {
         .name(name)
         .version(version)
         .lib_rs(indoc! {r#"
-            use cairo_lang_macro_v2::{ProcMacroResult, TokenStream, inline_macro};
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
             #[inline_macro]
             pub fn some(token_stream: TokenStream) -> ProcMacroResult {
                 ProcMacroResult::new(token_stream)

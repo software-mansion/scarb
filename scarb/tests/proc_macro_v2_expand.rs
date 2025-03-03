@@ -1251,6 +1251,7 @@ fn can_expand_impl_inner_func_attr() {
     let project = temp.child("hello");
     ProjectBuilder::start()
         .name("hello")
+        .edition("2023_01")
         .version("1.0.0")
         .dep_starknet()
         .dep_cairo_test()

@@ -33,7 +33,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
-        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro
+        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro --exclude cairo-lang-macro-v2
       - uses: actions/upload-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
@@ -142,7 +142,7 @@ jobs:
         # Note tests depending on trybuild crate cannot be run with nextest,
         # as they require access to cargo build cache of the package,
         # which is not archived with nextest-archive.
-        run: cargo test -p cairo-lang-macro --all-features
+        run: cargo test -p cairo-lang-macro -p cairo-lang-macro-v2 --all-features
 
   check-rust:
     runs-on: ubuntu-latest
