@@ -850,23 +850,20 @@ impl TomlManifest {
 
     fn collect_profile_definition(&self, profile: Profile) -> Result<TomlProfile> {
         let toml_cairo = self.cairo.clone().unwrap_or_default();
-        let toml_profiles = self.profile.clone();
+        let all_toml_profiles = self.profile.as_ref();
 
-        let profile_definition = toml_profiles
-            .clone()
-            .unwrap_or_default()
-            .get(profile.as_str())
-            .cloned();
+        let profile_definition =
+            all_toml_profiles.and_then(|profiles| profiles.get(profile.as_str()).cloned());
 
         let parent_profile = profile_definition
-            .clone()
-            .unwrap_or_default()
-            .inherits
+            .as_ref()
+            .and_then(|p| p.inherits.clone())
             .map(Profile::new)
             .unwrap_or_else(|| {
                 if profile.is_custom() {
                     Ok(Profile::default())
                 } else {
+                    // Default profiles do not inherit from any other profile.
                     Ok(profile.clone())
                 }
             })?;
@@ -879,38 +876,16 @@ impl TomlManifest {
         }
 
         let parent_default = TomlProfile::default_for_profile(&parent_profile);
-        let parent_definition = toml_profiles
-            .unwrap_or_default()
-            .get(parent_profile.as_str())
-            .cloned()
+        let parent_definition = all_toml_profiles
+            .and_then(|profiles| profiles.get(parent_profile.as_str()).cloned())
             .unwrap_or(parent_default.clone());
 
-        let mut parent_definition = toml_merge(&parent_default, &parent_definition)?;
-
+        let mut parent_definition = merge_profile(&parent_default, &parent_definition)?;
         let parent_cairo = toml_merge(&parent_definition.cairo, &toml_cairo)?;
         parent_definition.cairo = parent_cairo;
 
         let profile = if let Some(profile_definition) = profile_definition {
-            if let Some(inherits) = profile_definition.inherits {
-                parent_definition.inherits = Some(inherits);
-            }
-
-            let parent_cairo = match (&parent_definition.cairo, &profile_definition.cairo) {
-                (Some(parent), Some(profile)) => Some(toml_merge(parent, profile)?),
-                (None, Some(profile)) => Some(profile.clone()),
-                (Some(parent), None) => Some(parent.clone()),
-                (None, None) => None,
-            };
-            let parent_tool = match (&parent_definition.tool, &profile_definition.tool) {
-                (Some(parent), Some(profile)) => Some(toml_merge(parent, profile)?),
-                (None, Some(profile)) => Some(profile.clone()),
-                (Some(parent), None) => Some(parent.clone()),
-                (None, None) => None,
-            };
-            parent_definition.cairo = parent_cairo;
-            parent_definition.tool = parent_tool;
-
-            parent_definition
+            merge_profile(&parent_definition, &profile_definition)?
         } else {
             parent_definition
         };
@@ -1007,6 +982,25 @@ impl TomlManifest {
         }
         Ok(())
     }
+}
+
+fn merge_profile(target: &TomlProfile, source: &TomlProfile) -> Result<TomlProfile> {
+    let inherits = source.inherits.clone().or(target.inherits.clone());
+    let cairo = if let (Some(target), Some(source)) = (&target.cairo, &source.cairo) {
+        Some(toml_merge(target, source)?.clone())
+    } else {
+        source.cairo.clone().or(target.cairo.clone())
+    };
+    let tool = if let (Some(target), Some(source)) = (&target.tool, &source.tool) {
+        Some(toml_merge(target, source)?.clone())
+    } else {
+        source.tool.clone().or(target.tool.clone())
+    };
+    Ok(TomlProfile {
+        inherits,
+        cairo,
+        tool,
+    })
 }
 
 /// Returns the absolute canonical path of the README file for a [`TomlPackage`].
