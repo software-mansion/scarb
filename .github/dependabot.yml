@@ -24,6 +24,7 @@ updates:
           - "gix"
           - "semver"
           - "salsa"
+          - "cairo-vm"
 
   - package-ecosystem: "github-actions"
     directory: "/"
