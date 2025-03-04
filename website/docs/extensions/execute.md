@@ -58,8 +58,9 @@ This list should correspond to the Cairo’s Serde of main’s arguments, for ex
 | :------------------------------------- | :---------------------- | :------------------------------------ |
 | `fn main(num: u8)`                     | 1                       | ["0x1"]                               |
 | `fn main(num1: u8, num2: u16)`         | 1,27                    | ["0x1", "0x1b"]                       |
-| `fn main(num1: u8, tuple: (u16, u16))` | 1,2,3                   | ["0x1", "0x2", "0x3"]                 |
-| `fn main(num1: u8, num2: u256)`        | 1,2,3                   | ["0x1", "0x2", "0x3"]                 |
+
+| `fn main(num1: u8, tuple: (u16, u16))` | 1,2,27                   | ["0x1", "0x2", "0x1b"]                 |
+| `fn main(num1: u8, num2: u256)`        | 1,2,27                   | ["0x1", "0x2", "0x1b"]                 |
 | `fn main(num1: u8, arr: Array<u8>)`    | 1,2,1,2                 | ["0x1", "0x2", "0x1", "0x2"]          |
 
 Note that when using `--arguments-file`, the expected input is an array of felts represented as hex string.
