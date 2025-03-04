@@ -412,11 +412,6 @@ impl TomlManifest {
         self.workspace.as_ref().cloned()
     }
 
-    pub fn fetch_workspace(&self) -> Result<TomlWorkspace> {
-        self.get_workspace()
-            .ok_or_else(|| anyhow!("manifest is not a workspace"))
-    }
-
     pub fn to_manifest(
         &self,
         manifest_path: &Utf8Path,
