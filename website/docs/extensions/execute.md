@@ -5,9 +5,9 @@ import { data as rel } from "../../github.data";
 # Scarb execute
 
 The `scarb execute` command executes a function from a local package.
-Only packages defining the [executable target](../reference/targets#executable-target) can be executed.
 It does automatically compile the Cairo code within the package so using `scarb build` beforehand is not necessary.
-This automatically called build can be skipped with the `--no-build` flag.
+You can skip the automatic build with the `--no-build` flag.
+Only packages defining the [executable target](../reference/targets#executable-target) can be executed.
 
 ## Choosing a function to run
 
@@ -24,18 +24,12 @@ Those flags are mutually exclusive.
 ## Saving the execution information
 
 The execution will be carried out for one of two execution targets: `standalone` or `bootloader`.
-You can choose the target with the `--target` flag.
-Standalone means that the program will be executed as-is, and intended to be proven directly with `scarb prove`.
-When we run with the bootloader target, the program’s execution is expected to be wrapped by the
-[bootloader’s](https://github.com/Moonsong-Labs/cairo-bootloader?tab=readme-ov-file#cairo-bootloader) execution,
-which itself will be proven via Stwo.
+You can choose the target with the `--target` flag:
 
-After the execution, information about it will be saved to the target directory of the package:
-
-- For `standalone` target, the output will be saved as trace files (`air_public_input.json`, `air_private_input.json`,
-  `memory.bin`, and `trace.bin`), which can be used for creating a proof with `scarb prove`.
-- For `bootloader` target, the output will be saved as a CairoPie format (Position Indenpendent Execution),
-  which is not yet supported by the `scarb prove` command.
+- **Standalone**: executes program as-is, execution is intended to be directly proven with `scarb prove`.
+- **Bootloader**: program’s execution is expected to be wrapped by
+  the [bootloader’s](https://github.com/Moonsong-Labs/cairo-bootloader?tab=readme-ov-file#cairo-bootloader) execution,
+  which itself will be proven via Stwo.
 
 See more on [proving and verifying execution](./prove-and-verify.md) page.
 
@@ -60,15 +54,13 @@ They can be passed to the `scarb execute` command via either `--arguments` or `-
 The expected input with `--arguments` is a comma-separated list of integers.
 This list should correspond to the Cairo’s Serde of main’s arguments, for example:
 
-| main’s signature                       | valid arguments example |
-| :------------------------------------- | :---------------------- |
-| `fn main(num: u8)`                     | 1                       |
-| `fn main(num1: u8, num2: u16)`         | 1,2                     |
-| `fn main(num1: u8, tuple: (u16, u16))` | 1,2,3                   |
-| `fn main(num1: u8, num2: u256)`        | 1,2,3                   |
-| `fn main(num1: u8, arr: Array<u8>)`    | 1,2,1,2                 |
-
-See the [documentation](https://docs.starknet.io/architecture-and-concepts/smart-contracts/serialization-of-cairo-types/) for more information about Cairo’s Serde.
+| main’s signature                       | valid arguments example | valid arguments file contents example |
+| :------------------------------------- | :---------------------- | :------------------------------------ |
+| `fn main(num: u8)`                     | 1                       | ["0x1"]                               |
+| `fn main(num1: u8, num2: u16)`         | 1,27                    | ["0x1", "0x1b"]                       |
+| `fn main(num1: u8, tuple: (u16, u16))` | 1,2,3                   | ["0x1", "0x2", "0x3"]                 |
+| `fn main(num1: u8, num2: u256)`        | 1,2,3                   | ["0x1", "0x2", "0x3"]                 |
+| `fn main(num1: u8, arr: Array<u8>)`    | 1,2,1,2                 | ["0x1", "0x2", "0x1", "0x2"]          |
 
 Note that when using `--arguments-file`, the expected input is an array of felts represented as hex string.
-For example, `1,2,3` in the above table becomes `["0x1", "0x2", "0x3"]`.
+See the [documentation](https://docs.starknet.io/architecture-and-concepts/smart-contracts/serialization-of-cairo-types/) for more information about Cairo’s Serde.

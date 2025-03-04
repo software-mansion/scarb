@@ -28,6 +28,8 @@ scarb prove --execution-id <index of the relevant execution>
 
 You can also run `scarb prove` with the `--execute` flag, which will run the `scarb execute` command automatically
 before proving the execution for you.
+When running with `--execute` flag, you can specify the same arguments as for `scarb execute` command.
+See [`scarb execute`](./execute.md) documentation for more information.
 
 The proof for the trace files inside the execution folder will be generated, and a `proof.json` file will be placed inside the execution directory.
 
@@ -45,4 +47,6 @@ The `stwo-cairo` prover can highly benefit from platform specific optimizations,
 is run from a precompiled binary.
 For the best performance, it is recommended to build `scarb-prove` and `scarb-verify` crates from source,
 with following compilation flags: `RUSTFLAGS="-C target-cpu=native -C opt-level=3" --features="std"`.
+To use manually compiled binaries with Scarb, replace the `scarb-prove` and `scarb-verify` binaries in the Scarb
+installation directory, or add them to the `PATH` environment variable **before** any other Scarb related binaries.
 For production use, it is recommended to use the `stwo-cairo` prover directly.
