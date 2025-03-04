@@ -1,5 +1,6 @@
 <script setup>
 import {data as constants} from "../../constants.data";
+import { data as rel } from "../../github.data";
 </script>
 
 # The Manifest Format
@@ -85,20 +86,25 @@ publish = true
 
 ### `cairo-version`
 
-The `cairo-version` field is an optional key that tells Scarb what version of the Cairo language and compiler your
-package can be compiled with.
+The `cairo-version` field is an optional key that tells Scarb what range of versions of the Cairo language and compiler
+your package can be compiled with.
 If the currently running version of the Scarb compiler does not match this requirement, Scarb will exit with an error,
 telling the user what version is required.
 This field takes a [semver version requirement](./specifying-dependencies#version-requirements).
 
 ```toml
 [package]
-cairo-version = "1.0.0"
+cairo-version = "^{{ rel.preview.version }}"
 ```
 
 Setting the `cairo-version` key in `[package]` will affect all targets in the package.
+
 The value in this field will not affect the version of the compiler run by Scarb.
 Scarb always uses its built-in version of the Cairo compiler.
+It will instead show an error message to the user if the version of the Cairo compiler is not compatible with the project.
+
+Checking Cairo version requirements can be skipped with `--ignore-cairo-version` argument.
+Scarb will attempt to compile the project disregarding this field, even if it's not compatible with the builtin compiler version.
 
 ### `include`
 
@@ -332,8 +338,7 @@ The possible values are `default` or `avoid`.
 If `avoid` strategy is set, the compiler will only inline function annotated with `#[inline(always)]` attribute.
 
 > [!WARNING]
-> Using the `avoid` strategy may result in a slower execution of the compiled code and significantly larger artefacts
-> size.
+> Using the `avoid` strategy may result in a slower execution of the compiled code.
 > Please use with caution, only if your tooling requires that.
 > You can use profile settings overwriting, for more granular control of which builds use the avoid strategy.
 
@@ -387,6 +392,15 @@ See [Profiles](./profiles) page.
 See [Scripts](./scripts) page.
 
 ## `[tool]`
+
+> [!WARNING]
+> In context of a workspace, the `[tool]` section still needs to be defined on the package to take effect.
+> Packages can inherit `tool` section from workspace manifest, but only explicitly.
+> See [Workspaces](./workspaces#tool) page for more detailed information.
+
+> [!WARNING]
+> Profiles can be used to change values defined in `[tool]` section.
+> See [Profiles](./profiles#overriding-tool-metadata) page for more detailed information.
 
 This section can be used for tools which would like to store package configuration in Scarb.toml.
 Scarb by default will warn about unused keys in Scarb.toml to assist in detecting typos and such.

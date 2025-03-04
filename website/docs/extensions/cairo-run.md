@@ -2,7 +2,11 @@
 import { data as rel } from "../../github.data";
 </script>
 
-# Using cairo-run in Scarb projects
+# Using cairo-run in Scarb projects <Badge type="warning" text="deprecated" />
+
+> [!WARNING]
+> Scarb cairo-run is scheduled for deprecation in unspecified future.
+> Please use [`scarb execute`](./execute.md) instead.
 
 The `scarb cairo-run` command executes a function from a local package.
 It does automatically compile the cairo code within the package so using `scarb build` beforehand is not necessary.

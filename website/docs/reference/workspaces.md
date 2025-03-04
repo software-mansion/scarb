@@ -237,7 +237,7 @@ snforge.workspace = true
 
 :::
 
-See [Tool](./manifest#tool) page for more information.
+See [Tool](./manifest#tool) section for more information.
 
 ## `[profile]`
 
