@@ -19,7 +19,7 @@ impl Handler for ExpandInline {
         } = params;
 
         let plugin = workspace_macros
-            .get(&context.package_id)
+            .get(&context.component)
             .with_context(|| format!("No macros found in scope: {context:?}"))?;
 
         let instance = plugin

@@ -1,28 +1,31 @@
-use std::collections::HashMap;
+use crate::scope::CompilationUnitComponent;
 
 use super::Method;
 use serde::{Deserialize, Serialize};
 
-/// Response structure containing a mapping from package IDs
-/// to the information about the macros they use.
+/// Response structure containing a listed information
+/// about the macros used by packages from the workspace.
 ///
 /// # Invariant
-/// Correct usage of this struct during proc macro server <-> LS communication
-/// relies on the implicit contract that keys of `macros_by_package_id` are of form
-/// `PackageId.to_serialized_string()` which is always equal to
-/// `scarb_metadata::CompilationUnitComponentId.repr`.
+/// Each [`CompilationUnitComponentMacros`] in `macros_for_packages` should have
+/// a unique `component` field which identifies it in the response.
+/// Effectively, it simulates a HashMap which cannot be used directly
+/// because of the JSON serialization.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct DefinedMacrosResponse {
-    /// A mapping of the form: `package (as a serialized `PackageId`) -> macros info`.
-    /// Contains serialized IDs of all packages from the workspace,
-    /// mapped to the [`PackageDefinedMacrosInfo`], describing macros available for them.
-    pub macros_by_package_id: HashMap<String, PackageDefinedMacrosInfo>,
+    /// A list of [`CompilationUnitComponentMacros`], describing macros
+    /// available for each package from the workspace.
+    pub macros_for_cu_components: Vec<CompilationUnitComponentMacros>,
 }
 
-/// Response structure containing lists of all defined macros available for one package.
-/// Details the types of macros that can be expanded, such as attributes, inline macros, and derives.
+/// Response structure containing lists of all defined macros available for one compilation unit component.
+/// Provides the types of macros that can be expanded, such as attributes, inline macros, and derives.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct PackageDefinedMacrosInfo {
+pub struct CompilationUnitComponentMacros {
+    /// A component for which the macros are defined.
+    /// It should identify [`CompilationUnitComponentMacros`]
+    /// uniquely in the [`DefinedMacrosResponse`].
+    pub component: CompilationUnitComponent,
     /// List of attribute macro names available.
     pub attributes: Vec<String>,
     /// List of inline macro names available.
