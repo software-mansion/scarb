@@ -896,7 +896,26 @@ impl TomlManifest {
         parent_definition.cairo = parent_cairo;
 
         let profile = if let Some(profile_definition) = profile_definition {
-            toml_merge(&parent_definition, &profile_definition)?
+            if let Some(inherits) = profile_definition.inherits {
+                parent_definition.inherits = Some(inherits);
+            }
+
+            let parent_cairo = match (&parent_definition.cairo, &profile_definition.cairo) {
+                (Some(parent), Some(profile)) => Some(toml_merge(parent, profile)?),
+                (None, Some(profile)) => Some(profile.clone()),
+                (Some(parent), None) => Some(parent.clone()),
+                (None, None) => None,
+            };
+            let parent_tool = match (&parent_definition.tool, &profile_definition.tool) {
+                (Some(parent), Some(profile)) => Some(toml_merge(parent, profile)?),
+                (None, Some(profile)) => Some(profile.clone()),
+                (Some(parent), None) => Some(parent.clone()),
+                (None, None) => None,
+            };
+            parent_definition.cairo = parent_cairo;
+            parent_definition.tool = parent_tool;
+
+            parent_definition
         } else {
             parent_definition
         };
