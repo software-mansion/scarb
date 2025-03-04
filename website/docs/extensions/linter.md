@@ -5,6 +5,8 @@
 It can help you improve your code quality and consistency by checking the codebase against a set of predefined rules, called lints.
 It can also automatically fix some of the issues found.
 
+Cairo lint has also it's own documentation available [here](https://docs.swmansion.com/cairo-lint/).
+
 ## Getting started
 
 To run `lint` in the current project, just type:
