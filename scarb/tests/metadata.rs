@@ -1754,3 +1754,87 @@ fn compiler_config_collected_properly_in_workspace() {
         })
     );
 }
+
+#[test]
+fn profile_can_override_cairo_section() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+         [profile.dev.cairo]
+         inlining-strategy = "default"
+
+         [cairo]
+         inlining-strategy = "avoid"
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| &cu.target.kind == "lib")
+        .unwrap();
+
+    assert_eq!(
+        cu.compiler_config,
+        json!({
+            "allow_warnings": true,
+            "enable_gas": true,
+            "inlining_strategy": "default",
+            "sierra_replace_ids": true,
+            "unstable_add_statements_code_locations_debug_info": false,
+            "unstable_add_statements_functions_debug_info": false
+        })
+    );
+}
+
+#[test]
+fn cairo_section_overrides_profile_defaults() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+         [profile.some]
+         inherits = "release"
+
+         [cairo]
+         sierra-replace-ids = true
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| &cu.target.kind == "lib")
+        .unwrap();
+
+    assert_eq!(
+        cu.compiler_config,
+        json!({
+            "allow_warnings": true,
+            "enable_gas": true,
+            "inlining_strategy": "default",
+            "sierra_replace_ids": true,
+            "unstable_add_statements_code_locations_debug_info": false,
+            "unstable_add_statements_functions_debug_info": false
+        })
+    );
+}
