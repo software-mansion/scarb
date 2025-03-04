@@ -310,10 +310,9 @@ fn do_not_warn_on_non_tested_package() {
         .stdout_matches(indoc! {r#"
             [..]Compiling test(second_unittest) second v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            testing second ...
+            [..]Testing second
             running 0 tests
             test result: ok. 0 passed; 0 failed; 0 ignored; 0 filtered out;
-            
         "#});
 }
 
