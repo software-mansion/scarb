@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::Result;
 use cairo_lang_defs::plugin::MacroPlugin;
@@ -18,7 +18,7 @@ impl Handler for DefinedMacros {
         let macros_by_package_id = workspace_macros
             .macros_for_packages
             .iter()
-            .map(|(package_id, plugin)| {
+            .map(|(package, plugin)| {
                 let attributes = plugin.declared_attributes_without_executables();
                 let inline_macros = plugin.declared_inline_macros();
                 let derives = plugin
@@ -28,20 +28,18 @@ impl Handler for DefinedMacros {
                     .collect();
                 let executables = plugin.executable_attributes();
 
-                (
-                    package_id.to_owned(),
-                    PackageDefinedMacrosInfo {
-                        attributes,
-                        inline_macros,
-                        derives,
-                        executables,
-                    },
-                )
+                PackageDefinedMacrosInfo {
+                    package: package.to_owned(),
+                    attributes,
+                    inline_macros,
+                    derives,
+                    executables,
+                }
             })
-            .collect::<HashMap<_, _>>();
+            .collect();
 
         Ok(DefinedMacrosResponse {
-            macros_by_package_id,
+            macros_for_packages: macros_by_package_id,
         })
     }
 }

@@ -69,15 +69,6 @@ pub struct ProcMacroClient {
     responses: HashMap<RequestId, RpcResponse>,
 }
 
-/// A helper structure containing macros available for a package
-/// identified by the `package_id` which is a serialized `PackageId`.
-pub struct DefinedMacrosInfo {
-    /// An ID of the package recognized by PMS.
-    pub package_id: String,
-    /// A proper part of the response, related to the main component of the main CU.
-    pub defined_macros: PackageDefinedMacrosInfo,
-}
-
 impl ProcMacroClient {
     pub fn new<P: AsRef<Path>>(path: P) -> Self {
         let mut server_process = Scarb::new()
@@ -183,28 +174,16 @@ impl ProcMacroClient {
 
     /// Returns the information about macros available for the package with name `package_name`.
     /// Used as a helper in PMS tests, where communication requires package IDs assigned by Scarb.
-    pub fn defined_macros_for_package(&mut self, package_name: &str) -> DefinedMacrosInfo {
+    pub fn defined_macros_for_package(&mut self, package_name: &str) -> PackageDefinedMacrosInfo {
         let response = self
             .request_and_wait::<DefinedMacros>(DefinedMacrosParams {})
             .unwrap();
 
-        let mut response = response.macros_by_package_id;
-
-        // Usually, we can't discover the ID of the mock package used in test, so we extract it from the PMS response.
-        let package_id = response
-            .keys()
-            .find(|cu_id| cu_id.starts_with(package_name))
-            .expect("Response from Proc Macro Server should contain the main compilation unit.")
-            .to_owned();
-
-        let defined_macros = response.remove(&package_id).expect(
-            "Response from Proc Macro Server should contain the main compilation unit component.",
-        );
-
-        DefinedMacrosInfo {
-            package_id,
-            defined_macros,
-        }
+        response
+            .macros_for_packages
+            .into_iter()
+            .find(|package_response| package_response.package.name == package_name)
+            .expect("Response from Proc Macro Server should contain the tested package.")
     }
 }
 
