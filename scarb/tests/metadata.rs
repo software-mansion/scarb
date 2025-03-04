@@ -1657,3 +1657,100 @@ fn cairo_plugins_added_as_component_dependencies() {
         "beautiful component invalid dependencies"
     );
 }
+
+#[test]
+fn compiler_config_collected_properly() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+         [profile.dev.cairo]
+         sierra-replace-ids = false
+
+         [cairo]
+         inlining-strategy = "avoid"
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| &cu.target.kind == "lib")
+        .unwrap();
+
+    assert_eq!(
+        cu.compiler_config,
+        json!({
+            "allow_warnings": true,
+            "enable_gas": true,
+            "inlining_strategy": "avoid",
+            "sierra_replace_ids": false,
+            "unstable_add_statements_code_locations_debug_info": false,
+            "unstable_add_statements_functions_debug_info": false
+        })
+    );
+}
+
+#[test]
+fn compiler_config_collected_properly_in_workspace() {
+    let t = TempDir::new().unwrap().child("test_workspace");
+    let pkg1 = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            sierra-replace-ids = false
+        "#})
+        .build(&pkg1);
+    let pkg2 = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            inlining-strategy = "default"
+        "#})
+        .build(&pkg2);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .manifest_extra(indoc! {r#"
+             [profile.dev.cairo]
+             enable-gas = false
+
+             [cairo]
+             inlining-strategy = "avoid"
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version=1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| &cu.target.kind == "lib" && cu.components[1].name == "first")
+        .unwrap();
+
+    assert_eq!(
+        cu.compiler_config,
+        json!({
+            "allow_warnings": true,
+            "enable_gas": false,
+            "inlining_strategy": "avoid",
+            "sierra_replace_ids": true,
+            "unstable_add_statements_code_locations_debug_info": false,
+            "unstable_add_statements_functions_debug_info": false
+        })
+    );
+}
