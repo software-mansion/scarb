@@ -99,7 +99,7 @@ dependencies.
 
 ```toml-vue
 [dependencies]
-cairo_execute = "{{ rel.stable.starknetPackageVersionReq }}
+cairo_execute = "{{ rel.stable.starknetPackageVersionReq }}"
 ```
 
 Then add the attribute to the function of your choosing.
