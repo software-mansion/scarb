@@ -48,7 +48,7 @@ fn units_and_components(meta: Metadata) -> BTreeMap<String, Vec<String>> {
 
 #[test]
 fn simple() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -65,7 +65,7 @@ fn simple() {
 
 #[test]
 fn includes_compilation_units() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -91,7 +91,7 @@ fn includes_compilation_units() {
 
 #[test]
 fn fails_without_format_version() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start().build(&t);
 
     Scarb::quick_snapbox()
@@ -101,7 +101,7 @@ fn fails_without_format_version() {
         .failure();
 }
 
-fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
+fn create_local_dependencies_setup(t: &TempDir) {
     ProjectBuilder::start()
         .name("q")
         .version("1.0.0")
@@ -137,7 +137,7 @@ fn create_local_dependencies_setup(t: &assert_fs::TempDir) {
 
 #[test]
 fn local_dependencies() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
     let meta = Scarb::quick_snapbox()
         .arg("--json")
@@ -186,7 +186,7 @@ fn local_dependencies() {
 
 #[test]
 fn dev_dependencies() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     let q = t.child("q");
     ProjectBuilder::start().name("q").dep_cairo_test().build(&q);
     ProjectBuilder::start()
@@ -243,7 +243,7 @@ fn dev_dependencies() {
 
 #[test]
 fn dev_deps_are_not_propagated() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
 
     let dep1 = t.child("dep1");
     ProjectBuilder::start()
@@ -333,7 +333,7 @@ fn dev_deps_are_not_propagated() {
 
 #[test]
 fn dev_deps_are_not_propagated_for_ws_members() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
 
     let dep1 = t.child("dep1");
     ProjectBuilder::start()
@@ -399,7 +399,7 @@ fn dev_deps_are_not_propagated_for_ws_members() {
 
 #[test]
 fn no_dep() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
     let meta = Scarb::quick_snapbox()
         .arg("--json")
@@ -425,7 +425,7 @@ fn no_dep() {
 
 #[test]
 fn manifest_targets_and_metadata() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     t.child("Scarb.toml")
         .write_str(
             r#"
@@ -532,7 +532,7 @@ fn manifest_targets_and_metadata() {
 
 #[test]
 fn tool_metadata_is_packaged_contained() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     create_local_dependencies_setup(&t);
     t.child("q/Scarb.toml")
         .write_str(
@@ -577,7 +577,7 @@ fn tool_metadata_is_packaged_contained() {
 
 #[test]
 fn json_output_is_not_pretty() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -596,7 +596,7 @@ fn json_output_is_not_pretty() {
 
 #[test]
 fn workspace_simple() {
-    let t = assert_fs::TempDir::new().unwrap().child("test_workspace");
+    let t = TempDir::new().unwrap().child("test_workspace");
     let pkg1 = t.child("first");
     ProjectBuilder::start()
         .name("first")
@@ -644,7 +644,7 @@ fn workspace_simple() {
 
 #[test]
 fn workspace_with_root() {
-    let t = assert_fs::TempDir::new().unwrap().child("test_workspace");
+    let t = TempDir::new().unwrap().child("test_workspace");
     let pkg1 = t.child("first");
     ProjectBuilder::start()
         .name("first")
@@ -704,7 +704,7 @@ fn workspace_with_root() {
 
 #[test]
 fn workspace_as_dep() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     let first_t = t.child("first_workspace");
     let pkg1 = first_t.child("first");
     ProjectBuilder::start()
@@ -815,7 +815,7 @@ fn workspace_as_dep() {
 
 #[test]
 fn workspace_package_key_inheritance() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
 
     let some_dep = t.child("some_dep");
     ProjectBuilder::start()
@@ -883,7 +883,7 @@ fn workspace_package_key_inheritance() {
 
 #[test]
 fn infer_readme_simple() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -1017,7 +1017,7 @@ fn infer_readme_simple() {
 
 #[test]
 fn infer_readme_simple_bool() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -1100,7 +1100,7 @@ fn infer_readme_simple_bool() {
 
 #[test]
 fn infer_readme_workspace() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -1328,7 +1328,7 @@ fn infer_readme_workspace() {
 
 #[test]
 fn includes_edition() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -1354,7 +1354,7 @@ fn includes_edition() {
 
 #[test]
 fn includes_experimental_features() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
         .version("0.1.0")
@@ -1390,7 +1390,7 @@ fn includes_experimental_features() {
 
 #[test]
 fn prebuilt_plugins_disallowed_by_default() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
 
     CairoPluginProjectBuilder::default()
         .name("q")
@@ -1438,7 +1438,7 @@ fn prebuilt_plugins_disallowed_by_default() {
 
 #[test]
 fn can_allow_prebuilt_plugins_for_subtree() {
-    let t = assert_fs::TempDir::new().unwrap();
+    let t = TempDir::new().unwrap();
 
     CairoPluginProjectBuilder::default()
         .name("q")
@@ -1655,5 +1655,186 @@ fn cairo_plugins_added_as_component_dependencies() {
         hello_deps_packages,
         vec!["beautiful", "core", "hello"],
         "beautiful component invalid dependencies"
+    );
+}
+
+#[test]
+fn compiler_config_collected_properly() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+         [profile.dev.cairo]
+         sierra-replace-ids = false
+
+         [cairo]
+         inlining-strategy = "avoid"
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| &cu.target.kind == "lib")
+        .unwrap();
+
+    assert_eq!(
+        cu.compiler_config,
+        json!({
+            "allow_warnings": true,
+            "enable_gas": true,
+            "inlining_strategy": "avoid",
+            "sierra_replace_ids": false,
+            "unstable_add_statements_code_locations_debug_info": false,
+            "unstable_add_statements_functions_debug_info": false
+        })
+    );
+}
+
+#[test]
+fn compiler_config_collected_properly_in_workspace() {
+    let t = TempDir::new().unwrap().child("test_workspace");
+    let pkg1 = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            sierra-replace-ids = false
+        "#})
+        .build(&pkg1);
+    let pkg2 = t.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            inlining-strategy = "default"
+        "#})
+        .build(&pkg2);
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .manifest_extra(indoc! {r#"
+             [profile.dev.cairo]
+             enable-gas = false
+
+             [cairo]
+             inlining-strategy = "avoid"
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version=1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| &cu.target.kind == "lib" && cu.components[1].name == "first")
+        .unwrap();
+
+    assert_eq!(
+        cu.compiler_config,
+        json!({
+            "allow_warnings": true,
+            "enable_gas": false,
+            "inlining_strategy": "avoid",
+            "sierra_replace_ids": true,
+            "unstable_add_statements_code_locations_debug_info": false,
+            "unstable_add_statements_functions_debug_info": false
+        })
+    );
+}
+
+#[test]
+fn profile_can_override_cairo_section() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+         [profile.dev.cairo]
+         inlining-strategy = "default"
+
+         [cairo]
+         inlining-strategy = "avoid"
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| &cu.target.kind == "lib")
+        .unwrap();
+
+    assert_eq!(
+        cu.compiler_config,
+        json!({
+            "allow_warnings": true,
+            "enable_gas": true,
+            "inlining_strategy": "default",
+            "sierra_replace_ids": true,
+            "unstable_add_statements_code_locations_debug_info": false,
+            "unstable_add_statements_functions_debug_info": false
+        })
+    );
+}
+
+#[test]
+fn cairo_section_overrides_profile_defaults() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+         [profile.some]
+         inherits = "release"
+
+         [cairo]
+         sierra-replace-ids = true
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| &cu.target.kind == "lib")
+        .unwrap();
+
+    assert_eq!(
+        cu.compiler_config,
+        json!({
+            "allow_warnings": true,
+            "enable_gas": true,
+            "inlining_strategy": "default",
+            "sierra_replace_ids": true,
+            "unstable_add_statements_code_locations_debug_info": false,
+            "unstable_add_statements_functions_debug_info": false
+        })
     );
 }
