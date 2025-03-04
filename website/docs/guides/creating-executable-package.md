@@ -46,7 +46,7 @@ scarb execute -p test_execute --print-program-output --arguments 5
 
 Where `test_execute` is the name of the package with the executable target (as defined in our Scarb.toml manifest).
 
-The above command runs our executable function within the `test-execute` package and prints the program's output segment, which contains a success bit (0 for success) followed by the Cairo Serde of main’s output or the panic reason in case of a panic.
+The above command runs our executable function within the `test-execute` package and prints the program's output segment.
 
 The execution information will be saved under the `target/execute/<target name>` directory.
 For each execution, a new output directory will be created, with consecutive number as names (e.g. `execution1`, `execution2`, ...).

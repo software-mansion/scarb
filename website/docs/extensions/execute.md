@@ -6,7 +6,8 @@ import { data as rel } from "../../github.data";
 
 The `scarb execute` command executes a function from a local package.
 It does automatically compile the Cairo code within the package so using `scarb build` beforehand is not necessary.
-You can skip the automatic build with the `--no-build` flag.
+If `scarb build` or `scarb execute` has been previously used and the package hasn't changed since,
+this automatic build can be optionally skipped with the `--no-build` flag.
 Only packages defining the [executable target](../reference/targets#executable-target) can be executed.
 
 ## Choosing a function to run
@@ -46,6 +47,9 @@ This will show information about:
 - `builtin_instance_counter`
 - `syscalls`
 
+In case your Cairo program panics, the panic reason will be shown on the output, and the program will exit with a
+non-zero exit code.
+
 ## Program arguments
 
 The executable function may accept arguments.
@@ -54,14 +58,14 @@ They can be passed to the `scarb execute` command via either `--arguments` or `-
 The expected input with `--arguments` is a comma-separated list of integers.
 This list should correspond to the Cairo’s Serde of main’s arguments, for example:
 
-| main’s signature                       | valid arguments example | valid arguments file contents example |
-| :------------------------------------- | :---------------------- | :------------------------------------ |
-| `fn main(num: u8)`                     | 1                       | ["0x1"]                               |
-| `fn main(num1: u8, num2: u16)`         | 1,27                    | ["0x1", "0x1b"]                       |
+| main’s signature               | valid arguments example | valid arguments file contents example |
+| :----------------------------- | :---------------------- | :------------------------------------ |
+| `fn main(num: u8)`             | 1                       | ["0x1"]                               |
+| `fn main(num1: u8, num2: u16)` | 1,27                    | ["0x1", "0x1b"]                       |
 
-| `fn main(num1: u8, tuple: (u16, u16))` | 1,2,27                   | ["0x1", "0x2", "0x1b"]                 |
-| `fn main(num1: u8, num2: u256)`        | 1,2,27                   | ["0x1", "0x2", "0x1b"]                 |
-| `fn main(num1: u8, arr: Array<u8>)`    | 1,2,1,2                 | ["0x1", "0x2", "0x1", "0x2"]          |
+| `fn main(num1: u8, tuple: (u16, u16))` | 1,2,27 | ["0x1", "0x2", "0x1b"] |
+| `fn main(num1: u8, num2: u256)` | 1,2,27 | ["0x1", "0x2", "0x1b"] |
+| `fn main(num1: u8, arr: Array<u8>)` | 1,2,1,2 | ["0x1", "0x2", "0x1", "0x2"] |
 
 Note that when using `--arguments-file`, the expected input is an array of felts represented as hex string.
 See the [documentation](https://docs.starknet.io/architecture-and-concepts/smart-contracts/serialization-of-cairo-types/) for more information about Cairo’s Serde.
