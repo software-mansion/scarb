@@ -3,7 +3,7 @@
 Fully qualified path: `hello_world::CircleSerde`
 
 ```rust
-impl CircleSerde of core::serde::Serde<Circle>
+impl CircleSerde of Serde<Circle>;
 ```
 
 ## Impl functions
@@ -13,16 +13,15 @@ impl CircleSerde of core::serde::Serde<Circle>
 Fully qualified path: `hello_world::CircleSerde::serialize`
 
 ```rust
-fn serialize(self: @Circle, ref output: core::array::Array<felt252>)
+fn serialize(self: Circle, ref output: Array<felt252>)
 ```
-
 
 ### deserialize
 
 Fully qualified path: `hello_world::CircleSerde::deserialize`
 
 ```rust
-fn deserialize(ref serialized: core::array::Span<felt252>) -> core::option::Option<Circle>
+fn deserialize(ref serialized: Span<felt252>) -> Option<Circle>
 ```
 
 

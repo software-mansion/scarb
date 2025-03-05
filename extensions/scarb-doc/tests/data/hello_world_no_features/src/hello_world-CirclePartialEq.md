@@ -3,7 +3,7 @@
 Fully qualified path: `hello_world::CirclePartialEq`
 
 ```rust
-impl CirclePartialEq of core::traits::PartialEq<Circle>
+impl CirclePartialEq of PartialEq<Circle>;
 ```
 
 ## Impl functions
@@ -13,7 +13,7 @@ impl CirclePartialEq of core::traits::PartialEq<Circle>
 Fully qualified path: `hello_world::CirclePartialEq::eq`
 
 ```rust
-fn eq(lhs: @Circle, rhs: @Circle) -> bool
+fn eq(lhs: Circle, rhs: Circle) -> bool
 ```
 
 

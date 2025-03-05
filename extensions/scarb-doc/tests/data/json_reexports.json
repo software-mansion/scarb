@@ -110,7 +110,7 @@
                       "item_data": {
                         "name": "test",
                         "doc": null,
-                        "signature": "fn test() -> ()",
+                        "signature": "fn test()",
                         "full_path": "sub_package::TestTrait::test"
                       }
                     }
@@ -140,7 +140,7 @@
                   "item_data": {
                     "name": "TestImpl",
                     "doc": null,
-                    "signature": "pub impl TestImpl of TestTrait",
+                    "signature": "pub impl TestImpl of TestTrait;",
                     "full_path": "sub_package::TestImpl"
                   }
                 }
@@ -150,7 +150,7 @@
                   "item_data": {
                     "name": "ExternalType",
                     "doc": null,
-                    "signature": "pub extern type ExternalType",
+                    "signature": "pub extern type ExternalType;",
                     "full_path": "sub_package::ExternalType"
                   }
                 }
