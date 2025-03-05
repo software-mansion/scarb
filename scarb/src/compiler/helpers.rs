@@ -101,6 +101,9 @@ impl From<InliningStrategy> for cairo_lang_lowering::utils::InliningStrategy {
         match value {
             InliningStrategy::Default => cairo_lang_lowering::utils::InliningStrategy::Default,
             InliningStrategy::Avoid => cairo_lang_lowering::utils::InliningStrategy::Avoid,
+            InliningStrategy::InlineSmallFunctions(weight) => {
+                cairo_lang_lowering::utils::InliningStrategy::InlineSmallFunctions(weight)
+            }
         }
     }
 }
@@ -111,6 +114,9 @@ impl From<cairo_lang_lowering::utils::InliningStrategy> for InliningStrategy {
         match value {
             cairo_lang_lowering::utils::InliningStrategy::Default => InliningStrategy::Default,
             cairo_lang_lowering::utils::InliningStrategy::Avoid => InliningStrategy::Avoid,
+            cairo_lang_lowering::utils::InliningStrategy::InlineSmallFunctions(weight) => {
+                InliningStrategy::InlineSmallFunctions(weight)
+            }
         }
     }
 }
