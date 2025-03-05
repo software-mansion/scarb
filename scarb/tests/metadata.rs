@@ -1838,3 +1838,74 @@ fn cairo_section_overrides_profile_defaults() {
         })
     );
 }
+
+#[test]
+fn can_specify_inlining_strategy_by_weight() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+         [cairo]
+         inlining-strategy = 12
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|cu| &cu.target.kind == "lib")
+        .unwrap();
+
+    assert_eq!(
+        cu.compiler_config,
+        json!({
+            "allow_warnings": true,
+            "enable_gas": true,
+            "inlining_strategy": 12,
+            "sierra_replace_ids": true,
+            "unstable_add_statements_code_locations_debug_info": false,
+            "unstable_add_statements_functions_debug_info": false
+        })
+    );
+}
+
+#[test]
+fn cannot_specify_not_predefined_inlining_strategy() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+         [cairo]
+         inlining-strategy = "super-cool"
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: failed to parse manifest at: [..]Scarb.toml
+            
+            Caused by:
+                TOML parse error at line 9, column 21
+                  |
+                9 | inlining-strategy = "super-cool"
+                  |                     ^^^^^^^^^^^^
+                unknown inlining strategy: `super-cool`
+                use one of: `default`, `avoid` or a number
+        "#});
+}

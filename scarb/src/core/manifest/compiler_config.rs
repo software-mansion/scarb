@@ -37,13 +37,64 @@ pub struct ManifestCompilerConfig {
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Eq, PartialEq, Hash, Clone)]
-#[serde(rename_all = "kebab-case")]
+#[serde(
+    rename_all = "kebab-case",
+    try_from = "serdex::InliningStrategy",
+    into = "serdex::InliningStrategy"
+)]
 pub enum InliningStrategy {
     /// Do not override inlining strategy.
     #[default]
     Default,
     /// Inline only in the case of an `inline(always)` annotation.
     Avoid,
+    /// Should inline small functions up to the given weight.
+    ///
+    /// Note: the weight exact definition is subject to change.
+    InlineSmallFunctions(usize),
+}
+
+mod serdex {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Debug, Deserialize, Serialize)]
+    #[serde(untagged)]
+    pub enum InliningStrategy {
+        InlineSmallFunctions(usize),
+        Predefined(String),
+    }
+
+    impl TryFrom<InliningStrategy> for super::InliningStrategy {
+        type Error = serde::de::value::Error;
+
+        fn try_from(value: InliningStrategy) -> Result<Self, Self::Error> {
+            match value {
+                InliningStrategy::InlineSmallFunctions(weight) => {
+                    Ok(Self::InlineSmallFunctions(weight))
+                }
+                InliningStrategy::Predefined(name) => match name.as_str() {
+                    "default" => Ok(Self::Default),
+                    "avoid" => Ok(Self::Avoid),
+                    _ => Err(serde::de::Error::custom(format!(
+                        "unknown inlining strategy: `{}`\nuse one of: `default`, `avoid` or a number",
+                        name
+                    ))),
+                },
+            }
+        }
+    }
+
+    impl From<super::InliningStrategy> for InliningStrategy {
+        fn from(strategy: super::InliningStrategy) -> Self {
+            match strategy {
+                super::InliningStrategy::Default => Self::Predefined("default".to_string()),
+                super::InliningStrategy::Avoid => Self::Predefined("avoid".to_string()),
+                super::InliningStrategy::InlineSmallFunctions(weight) => {
+                    Self::InlineSmallFunctions(weight)
+                }
+            }
+        }
+    }
 }
 
 impl DefaultForProfile for ManifestCompilerConfig {
