@@ -3,7 +3,7 @@
 Fully qualified path: `hello_world::CircleSerde`
 
 ```rust
-impl CircleSerde of core::serde::Serde<Circle>
+impl CircleSerde<> of core::serde::Serde<Circle>
 ```
 
 ## Impl functions
