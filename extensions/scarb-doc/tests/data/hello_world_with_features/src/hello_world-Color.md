@@ -6,9 +6,9 @@ Fully qualified path: `hello_world::Color`
 
 ```rust
 enum Color {
-    Red: (),
-    Green: (),
-    Blue: (),
+    Red,
+    Green,
+    Blue,
 }
 ```
 
@@ -21,7 +21,7 @@ Red color
 Fully qualified path: `hello_world::Color::Red`
 
 ```rust
-Red : ( )
+Red
 ```
 
 
@@ -32,7 +32,7 @@ Green color
 Fully qualified path: `hello_world::Color::Green`
 
 ```rust
-Green : ( )
+Green
 ```
 
 
@@ -43,7 +43,7 @@ Blue color
 Fully qualified path: `hello_world::Color::Blue`
 
 ```rust
-Blue : ( )
+Blue
 ```
 
 

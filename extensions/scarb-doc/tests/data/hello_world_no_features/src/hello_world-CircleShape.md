@@ -5,7 +5,7 @@ Implementation of the Shape trait for Circle
 Fully qualified path: `hello_world::CircleShape`
 
 ```rust
-impl CircleShape of Shape<Circle>
+impl CircleShape of Shape<Circle>;
 ```
 
 ## Impl constants

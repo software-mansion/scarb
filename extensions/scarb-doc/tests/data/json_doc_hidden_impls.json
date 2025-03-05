@@ -59,7 +59,7 @@
               "item_data": {
                 "name": "VisibleImpl",
                 "doc": null,
-                "signature": "impl VisibleImpl of VisibleTrait<VisibleStruct>",
+                "signature": "impl VisibleImpl of VisibleTrait<VisibleStruct>;",
                 "full_path": "hello_world::VisibleImpl"
               }
             },
@@ -70,7 +70,7 @@
               "item_data": {
                 "name": "SecondVisibleImpl",
                 "doc": null,
-                "signature": "impl SecondVisibleImpl of SecondVisibleTrait<HiddenStruct, VisibleStruct>",
+                "signature": "impl SecondVisibleImpl of SecondVisibleTrait<<missing>, VisibleStruct>;",
                 "full_path": "hello_world::SecondVisibleImpl"
               }
             }

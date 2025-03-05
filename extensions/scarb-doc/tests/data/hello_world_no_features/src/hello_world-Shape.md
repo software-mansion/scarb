@@ -30,7 +30,7 @@ Calculate the area of the shape
 Fully qualified path: `hello_world::Shape::area`
 
 ```rust
-fn area(self: T) -> u32
+fn area<T, T>(self: T) -> u32
 ```
 
 
