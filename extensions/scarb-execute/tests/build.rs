@@ -367,7 +367,6 @@ fn can_choose_build_target() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello_world
             Program output:
-            0
             42
             Saving output to: target/execute/hello_world/execution1
         "#});
@@ -384,7 +383,6 @@ fn can_choose_build_target() {
         .stdout_matches(indoc! {r#"
             [..]Executing hello_world
             Program output:
-            0
             24
             Saving output to: target/execute/hello_world/execution2
         "#});

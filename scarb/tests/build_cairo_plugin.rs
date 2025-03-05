@@ -1369,7 +1369,7 @@ fn can_be_expanded() {
 
             #[derive(CustomDerive, Drop)]
             struct SomeType {}
-            impl SomeTypeDrop of core::traits::Drop<SomeType>;
+            impl SomeTypeDrop<> of core::traits::Drop<SomeType>;
             impl SomeImpl of Hello<SomeType> {
                 fn world(self: @SomeType) -> u32 {
                     32
