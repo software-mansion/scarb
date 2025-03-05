@@ -117,10 +117,9 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let prover_input = adapt_vm_output(pub_input_path.as_std_path(), priv_input_path.as_std_path())
         .context("failed to adapt VM output")?;
 
-    let config = ProverConfig::builder()
-        .track_relations(args.prover.track_relations)
-        .display_components(args.prover.display_components)
-        .build();
+    let config = ProverConfig {
+        display_components: args.prover.display_components,
+    };
 
     let ProverParameters { pcs_config } = default_prod_prover_parameters();
     let proof = prove_cairo::<Blake2sMerkleChannel>(prover_input, config, pcs_config)
