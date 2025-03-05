@@ -1,22 +1,76 @@
-use std::{collections::HashMap, sync::Arc};
-
-use anyhow::Result;
-use cairo_lang_semantic::{inline_macros::get_default_plugin_suite, plugin::PluginSuite};
-use itertools::Itertools;
-
+use crate::compiler::plugin::proc_macro_common::VersionedProcMacroHost;
+use crate::compiler::plugin::proc_macro_v1::ProcMacroHostPlugin;
+use crate::compiler::plugin::proc_macro_v2::ProcMacroId;
+use crate::compiler::plugin::ProcMacroInstance;
+#[cfg(doc)]
+use crate::core::PackageId;
 use crate::{
     compiler::{CairoCompilationUnit, CompilationUnitComponentId, CompilationUnitDependency},
     core::Workspace,
 };
-
-#[cfg(doc)]
-use crate::core::PackageId;
-
-use super::proc_macro::{ProcMacroHostPlugin, ProcMacroInstance};
+use anyhow::{ensure, Result};
+use cairo_lang_semantic::{inline_macros::get_default_plugin_suite, plugin::PluginSuite};
+use itertools::Itertools;
+use std::vec::IntoIter;
+use std::{collections::HashMap, sync::Arc};
 
 pub struct PluginsForComponents {
     pub plugins: HashMap<CompilationUnitComponentId, PluginSuite>,
-    pub proc_macros: HashMap<CompilationUnitComponentId, Arc<ProcMacroHostPlugin>>,
+    pub proc_macros: HashMap<CompilationUnitComponentId, ComponentProcMacroHost>,
+}
+
+pub struct ComponentProcMacroHost(Vec<VersionedProcMacroHost>);
+
+impl ComponentProcMacroHost {
+    pub fn try_new(hosts: Vec<VersionedProcMacroHost>) -> Result<Self> {
+        // Validate expansions across hosts.
+        let mut expansions = hosts
+            .iter()
+            .flat_map(|host| host.macros())
+            .flat_map(|m| {
+                m.get_expansions()
+                    .iter()
+                    .map(|e| ProcMacroId::new(m.package_id(), e.clone()))
+                    .collect_vec()
+            })
+            .collect::<Vec<_>>();
+        expansions.sort_unstable_by_key(|e| (e.expansion.name.clone(), e.package_id));
+        ensure!(
+            expansions
+                .windows(2)
+                .all(|w| w[0].expansion.name != w[1].expansion.name),
+            "duplicate expansions defined for procedural macros: {duplicates}",
+            duplicates = expansions
+                .windows(2)
+                .filter(|w| w[0].expansion.name == w[1].expansion.name)
+                .map(|w| format!(
+                    "{} ({} and {})",
+                    w[0].expansion.name.as_str(),
+                    w[0].package_id,
+                    w[1].package_id
+                ))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        Ok(Self(hosts))
+    }
+
+    pub fn build_plugin_suite(&self) -> PluginSuite {
+        let mut suite = PluginSuite::default();
+        for host in self.0.iter() {
+            suite.add(host.build_plugin_suite());
+        }
+        suite
+    }
+}
+
+impl IntoIterator for ComponentProcMacroHost {
+    type Item = VersionedProcMacroHost;
+    type IntoIter = IntoIter<Self::Item>;
+
+    fn into_iter(self) -> IntoIter<VersionedProcMacroHost> {
+        self.0.into_iter()
+    }
 }
 
 impl PluginsForComponents {
@@ -27,14 +81,24 @@ impl PluginsForComponents {
         let proc_macros = collect_proc_macros(workspace, unit)?
             .into_iter()
             .map(|(component_id, instances)| {
-                let plugin = Arc::new(ProcMacroHostPlugin::try_new(instances)?);
-                Ok((component_id, plugin))
+                let instances = instances
+                    .into_iter()
+                    .sorted_by_key(|instance| instance.api_version())
+                    .chunk_by(|instance| instance.api_version());
+                let plugins = instances
+                    .into_iter()
+                    .map(|(api_version, instances)| {
+                        let instances: Vec<Arc<ProcMacroInstance>> = instances.collect_vec();
+                        VersionedProcMacroHost::try_new(instances, api_version)
+                    })
+                    .collect::<Result<Vec<VersionedProcMacroHost>>>()?;
+                Ok((component_id, ComponentProcMacroHost::try_new(plugins)?))
             })
             .collect::<Result<HashMap<_, _>>>()?;
 
         for (component_id, suite) in plugins.iter_mut() {
             if let Some(proc_macro) = proc_macros.get(component_id) {
-                suite.add(ProcMacroHostPlugin::build_plugin_suite(proc_macro.clone()));
+                suite.add(proc_macro.build_plugin_suite());
             }
         }
 

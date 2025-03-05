@@ -1,7 +1,7 @@
 use assert_fs::fixture::{ChildPath, FileWriteStr, PathCreateDir};
 use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
-use cairo_lang_macro::TokenStream;
+use cairo_lang_macro_v2::{TextSpan, Token, TokenStream, TokenTree};
 use indoc::indoc;
 use libloading::library_filename;
 use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineMacroParams};
@@ -24,11 +24,11 @@ static TRIPLETS: [(&str, &str); 4] = [
 fn proc_macro_example(t: &ChildPath) {
     let name = "proc_macro_example";
     let version = "0.1.0";
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v2()
         .name(name)
         .version(version)
         .lib_rs(indoc! {r#"
-            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
+            use cairo_lang_macro_v2::{ProcMacroResult, TokenStream, inline_macro};
             #[inline_macro]
             pub fn some(token_stream: TokenStream) -> ProcMacroResult {
                 ProcMacroResult::new(token_stream)
@@ -145,11 +145,11 @@ fn compile_with_prebuilt_plugins_only_one_allows() {
 fn invalid_prebuilt_project(t: &ChildPath) {
     let name = "invalid_prebuilt_example";
     let version = "0.1.0";
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v2()
         .name(name)
         .version(version)
         .lib_rs(indoc! {r#"
-             use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
+             use cairo_lang_macro_v2::{ProcMacroResult, TokenStream, inline_macro};
             #[inline_macro]
             pub fn some(token_stream: TokenStream) -> ProcMacroResult {
                 ProcMacroResult::new(token_stream)
@@ -202,9 +202,7 @@ fn compile_with_invalid_prebuilt_plugins() {
 fn load_prebuilt_proc_macros() {
     let t = TempDir::new().unwrap();
     proc_macro_example(&t.child("dep"));
-
     let project = t.child("test_package");
-
     ProjectBuilder::start()
         .name("test_package")
         .version("1.0.0")
@@ -215,24 +213,31 @@ fn load_prebuilt_proc_macros() {
             allow-prebuilt-plugins = ["proc_macro_example"]
         "#})
         .build(&project);
-
     let mut proc_macro_client = ProcMacroClient::new_without_cargo(&project);
-
     let DefinedMacrosInfo {
         package_id: compilation_unit_main_component_id,
         ..
     } = proc_macro_client.defined_macros_for_package("test_package");
-
     let response = proc_macro_client
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
             context: ProcMacroScope {
                 package_id: compilation_unit_main_component_id,
             },
             name: "some".to_string(),
-            args: TokenStream::new("42".to_string()),
+            args: TokenStream::new(vec![TokenTree::Ident(Token::new(
+                "42",
+                TextSpan::call_site(),
+            ))]),
+            call_site: TextSpan::new(0, 0),
         })
         .unwrap();
 
     assert_eq!(response.diagnostics, vec![]);
-    assert_eq!(response.token_stream, TokenStream::new("42".to_string()));
+    assert_eq!(
+        response.token_stream,
+        TokenStream::new(vec![TokenTree::Ident(Token::new(
+            "42",
+            TextSpan::call_site(),
+        ))])
+    );
 }

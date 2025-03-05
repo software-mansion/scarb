@@ -1392,7 +1392,7 @@ fn includes_experimental_features() {
 fn prebuilt_plugins_disallowed_by_default() {
     let t = TempDir::new().unwrap();
 
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v2()
         .name("q")
         .scarb_project(|builder| {
             builder
@@ -1440,7 +1440,7 @@ fn prebuilt_plugins_disallowed_by_default() {
 fn can_allow_prebuilt_plugins_for_subtree() {
     let t = TempDir::new().unwrap();
 
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v2()
         .name("q")
         .scarb_project(|builder| {
             builder

@@ -2,7 +2,8 @@ use crate::scope::ProcMacroScope;
 
 use super::Method;
 use super::ProcMacroResult;
-use cairo_lang_macro::TokenStream;
+use cairo_lang_macro_v2::TextSpan;
+use cairo_lang_macro_v2::TokenStream;
 use serde::{Deserialize, Serialize};
 
 /// Parameters for expanding a specific attribute macro.
@@ -19,6 +20,8 @@ pub struct ExpandAttributeParams {
     pub args: TokenStream,
     /// The token stream representing the item on which the macro is applied.
     pub item: TokenStream,
+    /// Call site span.
+    pub call_site: TextSpan,
 }
 
 /// Represents a request to expand a single attribute macro.
@@ -42,6 +45,8 @@ pub struct ExpandDeriveParams {
     pub derives: Vec<String>,
     /// The token stream of the item to which the derive macros are applied.
     pub item: TokenStream,
+    /// Call site span.
+    pub call_site: TextSpan,
 }
 
 /// Represents a request to expand derive macros.
@@ -65,6 +70,8 @@ pub struct ExpandInlineMacroParams {
     pub name: String,
     /// The token stream representing arguments passed to the macro.
     pub args: TokenStream,
+    /// Call site span.
+    pub call_site: TextSpan,
 }
 
 /// Represents a request to expand a single inline macro.

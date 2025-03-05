@@ -13,7 +13,7 @@ use which::which_in;
 
 use scarb_ui::{OutputFormat, Ui, Verbosity};
 
-use crate::compiler::plugin::proc_macro::ProcMacroRepository;
+use crate::compiler::plugin::proc_macro_common::ProcMacroRepository;
 use crate::compiler::plugin::CairoPluginRepository;
 use crate::compiler::{CompilerRepository, Profile};
 use crate::core::AppDirs;

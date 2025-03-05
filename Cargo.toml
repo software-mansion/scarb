@@ -21,6 +21,7 @@ members = [
     "utils/scarb-ui",
     "utils/test-for-each-example",
     "xtask",
+    "plugins_v2/cairo-lang-macro",
 ]
 "resolver" = "2"
 
@@ -55,6 +56,7 @@ assert_fs = "1"
 async-trait = "0.1"
 axum = { version = "0.6", features = ["http2"] }
 bincode = "2.0.0-rc.3"
+bumpalo = "3.16.0"
 cairo-lang-compiler = "*"
 cairo-lang-defs = "*"
 cairo-lang-diagnostics = "*"
@@ -64,6 +66,7 @@ cairo-lang-filesystem = "*"
 cairo-lang-formatter = "*"
 cairo-lang-lowering = "*"
 cairo-lang-parser = "*"
+cairo-lang-primitive-token = "1"
 cairo-lang-runner = "*"
 cairo-lang-semantic = "*"
 cairo-lang-sierra = "*"
@@ -153,6 +156,7 @@ tracing = "0.1"
 tracing-core = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 typed-builder = ">=0.17"
+trybuild = "1.0.101"
 url = { version = "2", features = ["serde"] }
 walkdir = "2"
 which = "7"

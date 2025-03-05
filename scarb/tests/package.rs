@@ -495,7 +495,7 @@ fn workspace() {
 #[test]
 fn cairo_plugin() {
     let t = TempDir::new().unwrap();
-    CairoPluginProjectBuilder::default().build(&t);
+    CairoPluginProjectBuilder::default_v1().build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
@@ -585,7 +585,7 @@ fn cairo_plugin() {
 #[test]
 fn builtin_cairo_plugin() {
     let t = TempDir::new().unwrap();
-    CairoPluginProjectBuilder::start()
+    CairoPluginProjectBuilder::start_v1()
         .name("assert_macros")
         .scarb_project(|b| {
             b.name("assert_macros")
@@ -1467,7 +1467,7 @@ fn package_without_verification() {
 #[test]
 fn package_cairo_plugin_without_verification() {
     let t = TempDir::new().unwrap();
-    CairoPluginProjectBuilder::default().build(&t);
+    CairoPluginProjectBuilder::default_v1().build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
@@ -1729,7 +1729,7 @@ fn package_proc_macro_with_package_script() {
         "cargo build --release && cp target/release/{dll_filename} target/scarb/cairo-plugin"
     );
 
-    CairoPluginProjectBuilder::start()
+    CairoPluginProjectBuilder::default_v1()
         .name("foo")
         .scarb_project(|b| {
             b.name("foo")
@@ -1744,14 +1744,6 @@ fn package_proc_macro_with_package_script() {
                     package = "{script_code}"
                 "#})
         })
-        .lib_rs(indoc! {r#"
-            use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
-
-            #[attribute_macro]
-            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-                ProcMacroResult::new(token_stream)
-            }
-        "#})
         .build(&t);
 
     Scarb::quick_snapbox()

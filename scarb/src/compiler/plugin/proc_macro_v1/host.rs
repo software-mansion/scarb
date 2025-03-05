@@ -1,9 +1,7 @@
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
-use crate::compiler::plugin::proc_macro::{
-    Expansion, ExpansionKind, FromSyntaxNode, ProcMacroInstance,
-};
-use crate::core::{Config, Package, PackageId};
-use anyhow::{bail, ensure, Context, Result};
+use crate::compiler::plugin::proc_macro_common::{Expansion, ExpansionKind, ProcMacroInstance};
+use crate::compiler::plugin::proc_macro_v1::FromSyntaxNode;
+use crate::core::PackageId;
+use anyhow::{ensure, Result};
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::{
@@ -347,11 +345,16 @@ impl ProcMacroHostPlugin {
             }
         };
 
-        let result = self.instance(input.package_id).generate_code(
-            input.expansion.name.clone(),
-            args.clone(),
-            token_stream.clone(),
-        );
+        let result = self
+            .instance(input.package_id)
+            .plugin()
+            .as_v1()
+            .unwrap()
+            .generate_code(
+                input.expansion.name.clone(),
+                args.clone(),
+                token_stream.clone(),
+            );
 
         let expanded = context.register_result(token_stream.to_string(), input, result, stable_ptr);
         item_builder.add_modified(RewriteNode::Mapped {
@@ -574,11 +577,16 @@ impl ProcMacroHostPlugin {
 
         let mut derived_code = PatchBuilder::new(db, &item_ast);
         for derive in derives.iter() {
-            let result = self.instance(derive.package_id).generate_code(
-                derive.expansion.name.clone(),
-                TokenStream::empty(),
-                token_stream.clone(),
-            );
+            let result = self
+                .instance(derive.package_id)
+                .plugin()
+                .as_v1()
+                .unwrap()
+                .generate_code(
+                    derive.expansion.name.clone(),
+                    TokenStream::empty(),
+                    token_stream.clone(),
+                );
 
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);
@@ -646,11 +654,16 @@ impl ProcMacroHostPlugin {
         token_stream: TokenStream,
         stable_ptr: SyntaxStablePtrId,
     ) -> PluginResult {
-        let result = self.instance(input.package_id).generate_code(
-            input.expansion.name.clone(),
-            args.clone(),
-            token_stream.clone(),
-        );
+        let result = self
+            .instance(input.package_id)
+            .plugin()
+            .as_v1()
+            .unwrap()
+            .generate_code(
+                input.expansion.name.clone(),
+                args.clone(),
+                token_stream.clone(),
+            );
 
         // Handle token stream.
         if result.token_stream.is_empty() {
@@ -769,7 +782,11 @@ impl ProcMacroHostPlugin {
                 .cloned()
                 .unwrap_or_default();
             debug!("calling post processing callback with: {data:?}");
-            instance.post_process_callback(data.clone(), markers_for_instance);
+            instance
+                .plugin()
+                .as_v1()
+                .unwrap()
+                .post_process_callback(data.clone(), markers_for_instance);
         }
         Ok(())
     }
@@ -1097,7 +1114,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         let stable_ptr = syntax.clone().stable_ptr().untyped();
         let arguments = syntax.arguments(db);
         let token_stream = TokenStream::from_syntax_node(db, &arguments);
-        let result = self.instance().generate_code(
+        let result = self.instance().plugin().as_v1().unwrap().generate_code(
             self.expansion.name.clone(),
             TokenStream::empty(),
             token_stream,
@@ -1161,44 +1178,4 @@ fn into_cairo_diagnostics(
             },
         })
         .collect_vec()
-}
-
-/// A global storage for dynamically-loaded procedural macros.
-/// Loads dynamic shared libraries and hides them beside [`ProcMacroInstance`].
-/// Guarantees that every library is loaded exactly once,
-/// but does not prevent loading multiple versions of the same library.
-#[derive(Default)]
-pub struct ProcMacroRepository {
-    /// A mapping between the [`PackageId`] of the package which defines the plugin
-    /// and the [`ProcMacroInstance`] holding the underlying shared library.
-    macros: RwLock<HashMap<PackageId, Arc<ProcMacroInstance>>>,
-}
-
-impl ProcMacroRepository {
-    /// Returns the [`ProcMacroInstance`] representing the procedural macros defined in the [`Package`].
-    /// Loads the underlying shared library if it has not been loaded yet.
-    pub fn get_or_load(&self, package: Package, config: &Config) -> Result<Arc<ProcMacroInstance>> {
-        let Ok(macros) = self.macros.read() else {
-            bail!("could not get a read access to the ProcMacroRepository");
-        };
-
-        if let Some(instance) = macros.get(&package.id) {
-            return Ok(instance.clone());
-        }
-
-        drop(macros);
-
-        let Ok(mut macros) = self.macros.write() else {
-            bail!("could not get a write access to the ProcMacroRepository");
-        };
-
-        let lib_path = package
-            .shared_lib_path(config)
-            .context("could not resolve shared library path")?;
-
-        let instance = Arc::new(ProcMacroInstance::try_new(package.id, lib_path)?);
-        macros.insert(package.id, instance.clone());
-
-        Ok(instance)
-    }
 }
