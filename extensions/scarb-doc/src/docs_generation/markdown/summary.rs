@@ -1,9 +1,9 @@
 use anyhow::Result;
 use std::fmt::Write;
 
-use crate::docs_generation::markdown::traits::TopLevelMarkdownDocItem;
-use crate::docs_generation::markdown::BASE_HEADER_LEVEL;
 use crate::docs_generation::TopLevelItems;
+use crate::docs_generation::markdown::BASE_HEADER_LEVEL;
+use crate::docs_generation::markdown::traits::TopLevelMarkdownDocItem;
 
 use super::traits::mark_duplicated_item_with_relative_path;
 

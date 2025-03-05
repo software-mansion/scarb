@@ -2,8 +2,8 @@ use anyhow::Result;
 use async_trait::async_trait;
 use tracing::debug;
 
-use crate::core::registry::patch_map::PatchMap;
 use crate::core::registry::Registry;
+use crate::core::registry::patch_map::PatchMap;
 use crate::core::{ManifestDependency, Package, PackageId, Summary};
 
 /// Intercepts [`Registry::query`] operations to follow patches set by user.

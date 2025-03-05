@@ -5,9 +5,9 @@ use std::{env, fmt, fs};
 use anyhow::Result;
 use serde::{Serialize, Serializer};
 
+use scarb::EXTERNAL_CMD_PREFIX;
 use scarb::core::Config;
 use scarb::process::is_executable;
-use scarb::EXTERNAL_CMD_PREFIX;
 use scarb_ui::Message;
 
 use crate::args::ScarbArgs;
@@ -110,14 +110,14 @@ mod tests {
     use std::env;
     use std::path::PathBuf;
 
-    use assert_fs::prelude::*;
     use assert_fs::TempDir;
+    use assert_fs::prelude::*;
     use camino::Utf8Path;
 
     use scarb::core::Config;
     use scarb_test_support::fsx::make_executable;
 
-    use super::{list_commands, CommandInfo};
+    use super::{CommandInfo, list_commands};
 
     #[test]
     fn cmd_list() {

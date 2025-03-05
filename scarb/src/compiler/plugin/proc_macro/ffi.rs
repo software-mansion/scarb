@@ -1,5 +1,5 @@
 use crate::core::{Package, PackageId};
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_macro::{
     ExpansionKind as SharedExpansionKind, FullPathMarker, PostProcessContext, ProcMacroResult,
@@ -9,17 +9,17 @@ use cairo_lang_macro_stable::{
     StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
     StableResultWrapper, StableTokenStream,
 };
-use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::TypedSyntaxNode;
+use cairo_lang_syntax::node::db::SyntaxGroup;
 use camino::Utf8PathBuf;
 use itertools::Itertools;
 use libloading::{Library, Symbol};
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 use std::fmt::Debug;
 use std::slice;
 
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::ProcMacroAuxData;
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 
 #[cfg(not(windows))]
 use libloading::os::unix::Symbol as RawSymbol;
@@ -89,10 +89,10 @@ impl ProcMacroInstance {
         // Make a call to the FFI interface to list declared expansions.
         let stable_expansions = (plugin.vtable.list_expansions)();
         let (ptr, n) = stable_expansions.raw_parts();
-        let expansions = slice::from_raw_parts(ptr, n);
+        let expansions = unsafe { slice::from_raw_parts(ptr, n) };
         let mut expansions: Vec<Expansion> = expansions
             .iter()
-            .map(|e| Expansion::from_stable(e))
+            .map(|e| unsafe { Expansion::from_stable(e) })
             .collect();
         // Free the memory allocated by the `stable_expansions`.
         (plugin.vtable.free_expansions_list)(stable_expansions);
@@ -278,7 +278,7 @@ impl Expansion {
         let name = if stable_expansion.name.is_null() {
             String::default()
         } else {
-            let cstr = CStr::from_ptr(stable_expansion.name);
+            let cstr = unsafe { CStr::from_ptr(stable_expansion.name) };
             cstr.to_string_lossy().to_string()
         };
         // Handle special case for executable attributes.
@@ -291,7 +291,7 @@ impl Expansion {
         }
         Self {
             name: SmolStr::new(name),
-            kind: SharedExpansionKind::from_stable(&stable_expansion.kind).into(),
+            kind: unsafe { SharedExpansionKind::from_stable(&stable_expansion.kind).into() },
         }
     }
 }
@@ -327,23 +327,25 @@ macro_rules! get_symbol {
 
 impl VTableV0 {
     unsafe fn try_new(library: &Library) -> Result<VTableV0> {
-        Ok(VTableV0 {
-            list_expansions: get_symbol!(library, b"list_expansions\0", ListExpansions),
-            free_expansions_list: get_symbol!(
-                library,
-                b"free_expansions_list\0",
-                FreeExpansionsList
-            ),
-            expand: get_symbol!(library, b"expand\0", ExpandCode),
-            free_result: get_symbol!(library, b"free_result\0", FreeResult),
-            post_process_callback: get_symbol!(
-                library,
-                b"post_process_callback\0",
-                PostProcessCallback
-            ),
-            doc: get_symbol!(library, b"doc\0", DocExpansion),
-            free_doc: get_symbol!(library, b"free_doc\0", FreeExpansionDoc),
-        })
+        unsafe {
+            Ok(VTableV0 {
+                list_expansions: get_symbol!(library, b"list_expansions\0", ListExpansions),
+                free_expansions_list: get_symbol!(
+                    library,
+                    b"free_expansions_list\0",
+                    FreeExpansionsList
+                ),
+                expand: get_symbol!(library, b"expand\0", ExpandCode),
+                free_result: get_symbol!(library, b"free_result\0", FreeResult),
+                post_process_callback: get_symbol!(
+                    library,
+                    b"post_process_callback\0",
+                    PostProcessCallback
+                ),
+                doc: get_symbol!(library, b"doc\0", DocExpansion),
+                free_doc: get_symbol!(library, b"free_doc\0", FreeExpansionDoc),
+            })
+        }
     }
 }
 
@@ -355,8 +357,8 @@ struct Plugin {
 
 impl Plugin {
     unsafe fn try_new(library_path: Utf8PathBuf) -> Result<Plugin> {
-        let library = Library::new(library_path)?;
-        let vtable = VTableV0::try_new(&library)?;
+        let library = unsafe { Library::new(library_path)? };
+        let vtable = unsafe { VTableV0::try_new(&library)? };
 
         Ok(Plugin { library, vtable })
     }

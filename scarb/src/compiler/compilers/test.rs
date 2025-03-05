@@ -6,7 +6,7 @@ use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
-use cairo_lang_test_plugin::{compile_test_prepared_db, TestsCompilationConfig};
+use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
 use cairo_lang_utils::UpcastMut;
 use itertools::Itertools;
 use smol_str::ToSmolStr;
@@ -14,8 +14,8 @@ use tracing::trace_span;
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
 use crate::compiler::compilers::{
-    ensure_gas_enabled, find_project_contracts, get_compiled_contracts, ArtifactsWriter,
-    CompiledContracts, ContractSelector,
+    ArtifactsWriter, CompiledContracts, ContractSelector, ensure_gas_enabled,
+    find_project_contracts, get_compiled_contracts,
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};

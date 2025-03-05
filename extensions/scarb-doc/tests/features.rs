@@ -1,7 +1,7 @@
 //! Run `UPDATE_EXPECT=1 cargo test` to fix the tests.
 
-use assert_fs::prelude::PathChild;
 use assert_fs::TempDir;
+use assert_fs::prelude::PathChild;
 use indoc::{formatdoc, indoc};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 

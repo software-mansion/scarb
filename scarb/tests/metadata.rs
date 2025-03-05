@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
-use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use assert_fs::prelude::*;
 use indoc::indoc;
 use itertools::Itertools;
 use serde_json::json;
@@ -84,9 +84,10 @@ fn includes_compilation_units() {
     assert!(unit.package.repr.starts_with("hello "));
     assert_eq!(unit.target.name, "hello");
     assert!(!unit.components.is_empty());
-    assert!(unit
-        .cfg
-        .contains(&Cfg::KV("target".into(), unit.target.kind.clone())));
+    assert!(
+        unit.cfg
+            .contains(&Cfg::KV("target".into(), unit.target.kind.clone()))
+    );
 }
 
 #[test]
@@ -1373,19 +1374,23 @@ fn includes_experimental_features() {
 
     let packages = packages_by_name(metadata);
 
-    assert!(packages
-        .get("hello")
-        .unwrap()
-        .clone()
-        .experimental_features
-        .contains(&String::from("negative_impls")));
+    assert!(
+        packages
+            .get("hello")
+            .unwrap()
+            .clone()
+            .experimental_features
+            .contains(&String::from("negative_impls"))
+    );
 
-    assert!(packages
-        .get("hello")
-        .unwrap()
-        .clone()
-        .experimental_features
-        .contains(&String::from("associated_item_constraints")));
+    assert!(
+        packages
+            .get("hello")
+            .unwrap()
+            .clone()
+            .experimental_features
+            .contains(&String::from("associated_item_constraints"))
+    );
 }
 
 #[test]

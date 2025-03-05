@@ -1,11 +1,11 @@
+use crate::DEFAULT_MODULE_MAIN_FILE;
 use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
     CompilationUnitDependency,
 };
 use crate::core::Workspace;
-use crate::DEFAULT_MODULE_MAIN_FILE;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
 use cairo_lang_defs::db::DefsGroup;
@@ -24,8 +24,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
 
-use super::plugin::collection::PluginsForComponents;
 use super::CompilationUnitComponentId;
+use super::plugin::collection::PluginsForComponents;
 
 pub struct ScarbDatabase {
     pub db: RootDatabase,

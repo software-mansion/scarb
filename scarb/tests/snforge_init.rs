@@ -1,5 +1,5 @@
-use assert_fs::fixture::PathChild;
 use assert_fs::TempDir;
+use assert_fs::fixture::PathChild;
 use scarb::core::TomlManifest;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::AssertFsUtf8Ext;

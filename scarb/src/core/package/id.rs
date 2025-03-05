@@ -6,8 +6,8 @@ use semver::Version;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smol_str::SmolStr;
 
-use crate::core::source::SourceId;
 use crate::core::PackageName;
+use crate::core::source::SourceId;
 use crate::internal::static_hash_cache::StaticHashCache;
 use crate::internal::to_version::ToVersion;
 
@@ -52,7 +52,7 @@ impl PackageId {
 
     #[cfg(test)]
     pub(crate) fn from_display_str(string: &str) -> Result<Self> {
-        use anyhow::{anyhow, bail, Context};
+        use anyhow::{Context, anyhow, bail};
 
         let mut s = string.splitn(3, ' ');
 
@@ -184,12 +184,12 @@ impl fmt::Debug for PackageId {
 #[cfg(test)]
 mod tests {
     use semver::Version;
-    use serde_test::{assert_de_tokens_error, assert_tokens, Token};
+    use serde_test::{Token, assert_de_tokens_error, assert_tokens};
     use test_case::test_case;
 
+    use crate::core::PackageName;
     use crate::core::package::PackageId;
     use crate::core::source::SourceId;
-    use crate::core::PackageName;
 
     fn leak_string(string: String) -> &'static str {
         Box::leak(string.into_boxed_str())

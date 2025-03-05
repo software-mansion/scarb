@@ -1,5 +1,5 @@
-use crate::compiler::compilers::starknet_contract::{ContractFileStemCalculator, ContractSelector};
 use crate::compiler::compilers::Props;
+use crate::compiler::compilers::starknet_contract::{ContractFileStemCalculator, ContractSelector};
 use crate::compiler::helpers::write_json_with_byte_count;
 use crate::core::{PackageName, Workspace};
 use crate::flock::Filesystem;
@@ -12,7 +12,7 @@ use cairo_lang_starknet_classes::contract_class::{ContractClass, ContractEntryPo
 use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_lang_utils::UpcastMut;
 use indoc::formatdoc;
-use itertools::{izip, Itertools};
+use itertools::{Itertools, izip};
 use scarb_stable_hash::short_hash;
 use serde::Serialize;
 use smol_str::SmolStr;

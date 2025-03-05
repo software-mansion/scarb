@@ -1,9 +1,9 @@
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::fmt;
 
 use crate::compiler::plugin::builtin::{BuiltinExecutablePlugin, BuiltinTestAssertsPlugin};
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use cairo_lang_semantic::plugin::PluginSuite;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};

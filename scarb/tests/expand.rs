@@ -1,5 +1,5 @@
-use assert_fs::fixture::PathChild;
 use assert_fs::TempDir;
+use assert_fs::fixture::PathChild;
 use indoc::{formatdoc, indoc};
 use itertools::Itertools;
 use scarb_test_support::command::Scarb;
