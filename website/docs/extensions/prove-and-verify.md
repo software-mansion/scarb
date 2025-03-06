@@ -15,7 +15,7 @@ and `scarb verify` commands.
 
 ## Proving Cairo execution
 
-Only packages defining the [executable target](../reference/targets.md/#Executable-target) can be proven.
+Only packages defining the [executable target](../reference/targets.md#executable-target) can be proven.
 To prove the execution, you need to run the `scarb execute` command first, which will save execution information under the `target/execute/<target name>` directory.
 For each execution, a new output directory will be created, with consecutive number as names (e.g. `execution1`, `execution2`, ...).
 To clean the target directory, you can use the `scarb clean` command.
