@@ -147,6 +147,8 @@ xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
 zstd = "0.13"
 
+[patch.crates-io]
+
 [profile.release]
 lto = true
 
