@@ -544,6 +544,35 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "TODO(#2031): upgrade lock that matches only part of the deps"]
+    fn lock_matching_only_some_deps_is_upgraded() {
+        check_with_lock(
+            registry![("foo v0.1.0", []), ("foo v0.1.1", [])],
+            // First dep matches: >=0.1.0 && < 0.2.0
+            // Second dep matches: >=0.1.1 && < 0.2.0
+            // So they clearly intersect at v0.1.1
+            &[deps![("foo", "^0.1.0"),], deps![("foo", "^0.1.1")]],
+            // However, the project locks foo to 0.1.0 (e.g. both deps set to =0.1.0 in previous run).
+            // Which can lock ^0.1.0, but cannot lock ^0.1.1
+            locks![("foo v0.1.0", [])],
+            // If we run the resolver with both deps set to ^0.1.0,
+            // it would resolve to 0.1.0 keeping the lock.
+            // If we run the resolver with both deps set to ^0.1.1,
+            // it would resolve to 0.1.1, upgrading the lock, as not matching deps.
+            // Unfortunately, with this configuration, the lock will be kept and resolution will fail
+            // with the following error.
+            // Ideally, the lock should be upgraded instead.
+            Ok(pkgs!["foo v0.1.1"]),
+            // Current error message:
+            // Err(indoc! { r#"
+            //     version solving failed:
+            //     Because root_2 1.0.0 depends on foo >=0.1.1, <0.2.0 and root_1 1.0.0 depends on foo >=0.1.0, <0.1.1, root_2 1.0.0, root_1 1.0.0 are incompatible.
+            //     And because we are solving dependencies of root_2 1.0.0, root_1 1.0.0 is forbidden.
+            // "#}),
+        );
+    }
+
+    #[test]
     #[ignore = "optional deps are not implemented yet"]
     fn skip_single_optional() {
         //     Registry.put("foo", "1.0.0", [])
