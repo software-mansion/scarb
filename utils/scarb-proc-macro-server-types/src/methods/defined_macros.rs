@@ -1,4 +1,4 @@
-use crate::scope::Package;
+use crate::scope::CompilationUnitComponent;
 
 use super::Method;
 use serde::{Deserialize, Serialize};
@@ -7,25 +7,25 @@ use serde::{Deserialize, Serialize};
 /// about the macros used by packages from the workspace.
 ///
 /// # Invariant
-/// Each [`PackageDefinedMacrosInfo`] in `macros_for_packages` should have
+/// Each [`CompilationUnitComponentMacros`] in `macros_for_packages` should have
 /// an exclusive `package` field which identifies it in the response.
 /// Effectively, it simulates a HashMap which cannot be used directly
 /// because of the JSON serialization.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct DefinedMacrosResponse {
-    /// A list of [`PackageDefinedMacrosInfo`], describing macros
+    /// A list of [`CompilationUnitComponentMacros`], describing macros
     /// available for each package from the workspace.
-    pub macros_for_packages: Vec<PackageDefinedMacrosInfo>,
+    pub macros_for_cu_components: Vec<CompilationUnitComponentMacros>,
 }
 
-/// Response structure containing lists of all defined macros available for one package.
-/// Details the types of macros that can be expanded, such as attributes, inline macros, and derives.
+/// Response structure containing lists of all defined macros available for one compilation unit component.
+/// Provides the types of macros that can be expanded, such as attributes, inline macros, and derives.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct PackageDefinedMacrosInfo {
-    /// A package for which the macros are defined.
-    /// It should identify [`PackageDefinedMacrosInfo`]
+pub struct CompilationUnitComponentMacros {
+    /// A component for which the macros are defined.
+    /// It should identify [`CompilationUnitComponentMacros`]
     /// uniquely in the [`DefinedMacrosResponse`].
-    pub package: Package,
+    pub component: CompilationUnitComponent,
     /// List of attribute macro names available.
     pub attributes: Vec<String>,
     /// List of inline macro names available.

@@ -4,7 +4,7 @@ use anyhow::Result;
 use cairo_lang_defs::plugin::MacroPlugin;
 use convert_case::{Case, Casing};
 use scarb_proc_macro_server_types::methods::defined_macros::{
-    DefinedMacros, DefinedMacrosResponse, PackageDefinedMacrosInfo,
+    CompilationUnitComponentMacros, DefinedMacros, DefinedMacrosResponse,
 };
 
 use super::Handler;
@@ -15,10 +15,10 @@ impl Handler for DefinedMacros {
         workspace_macros: Arc<WorkspaceProcMacros>,
         _params: Self::Params,
     ) -> Result<Self::Response> {
-        let macros_by_package_id = workspace_macros
-            .macros_for_packages
+        let macros_for_cu_components = workspace_macros
+            .macros_for_components
             .iter()
-            .map(|(package, plugin)| {
+            .map(|(component, plugin)| {
                 let attributes = plugin.declared_attributes_without_executables();
                 let inline_macros = plugin.declared_inline_macros();
                 let derives = plugin
@@ -28,8 +28,8 @@ impl Handler for DefinedMacros {
                     .collect();
                 let executables = plugin.executable_attributes();
 
-                PackageDefinedMacrosInfo {
-                    package: package.to_owned(),
+                CompilationUnitComponentMacros {
+                    component: component.to_owned(),
                     attributes,
                     inline_macros,
                     derives,
@@ -39,7 +39,7 @@ impl Handler for DefinedMacros {
             .collect();
 
         Ok(DefinedMacrosResponse {
-            macros_for_packages: macros_by_package_id,
+            macros_for_cu_components,
         })
     }
 }

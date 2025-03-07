@@ -3,9 +3,9 @@ use scarb_proc_macro_server_types::jsonrpc::RequestId;
 use scarb_proc_macro_server_types::jsonrpc::ResponseError;
 use scarb_proc_macro_server_types::jsonrpc::RpcRequest;
 use scarb_proc_macro_server_types::jsonrpc::RpcResponse;
+use scarb_proc_macro_server_types::methods::defined_macros::CompilationUnitComponentMacros;
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacros;
 use scarb_proc_macro_server_types::methods::defined_macros::DefinedMacrosParams;
-use scarb_proc_macro_server_types::methods::defined_macros::PackageDefinedMacrosInfo;
 use scarb_proc_macro_server_types::methods::Method;
 use std::collections::HashMap;
 use std::io::BufRead;
@@ -174,15 +174,18 @@ impl ProcMacroClient {
 
     /// Returns the information about macros available for the package with name `package_name`.
     /// Used as a helper in PMS tests, where communication requires package IDs assigned by Scarb.
-    pub fn defined_macros_for_package(&mut self, package_name: &str) -> PackageDefinedMacrosInfo {
+    pub fn defined_macros_for_package(
+        &mut self,
+        package_name: &str,
+    ) -> CompilationUnitComponentMacros {
         let response = self
             .request_and_wait::<DefinedMacros>(DefinedMacrosParams {})
             .unwrap();
 
         response
-            .macros_for_packages
+            .macros_for_cu_components
             .into_iter()
-            .find(|package_response| package_response.package.name == package_name)
+            .find(|cu_response| cu_response.component.name == package_name)
             .expect("Response from Proc Macro Server should contain the tested package.")
     }
 }

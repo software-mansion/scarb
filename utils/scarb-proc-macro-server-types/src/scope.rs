@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 ///    At the moment, they are obtained using `CompilationUnitComponent::cairo_package_name`
 ///    and `CompilationUnitComponentId::to_discriminator`, respectively.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
-pub struct Package {
+pub struct CompilationUnitComponent {
     /// Name of the `CompilationUnitComponent` associated with the package.
     pub name: String,
     /// A `CompilationUnitComponent` discriminator.
@@ -16,9 +16,9 @@ pub struct Package {
     pub discriminator: Option<String>,
 }
 
-impl Package {
-    /// Builds a new [`Package`] from `name` and `discriminator`
-    /// without checking them for consistency.
+impl CompilationUnitComponent {
+    /// Builds a new [`CompilationUnitComponent`] from `name` and `discriminator`
+    /// without checking for consistency between them and with the metadata.
     ///
     /// # Safety
     /// Communication between PMS and LS relies on the invariant that `name` and `discriminator`
@@ -35,6 +35,6 @@ impl Package {
 /// A description of the location in the workspace where particular macro is available.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct ProcMacroScope {
-    /// A package in which context the action occurs.
-    pub package: Package,
+    /// A [`CompilationUnitComponent`] in which context the action occurs.
+    pub component: CompilationUnitComponent,
 }

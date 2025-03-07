@@ -78,13 +78,13 @@ fn expand_attribute() {
 
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
-    let package = proc_macro_client
+    let component = proc_macro_client
         .defined_macros_for_package("test_package")
-        .package;
+        .component;
 
     let response = proc_macro_client
         .request_and_wait::<ExpandAttribute>(ExpandAttributeParams {
-            context: ProcMacroScope { package },
+            context: ProcMacroScope { component },
             attr: "rename_to_very_new_name".to_string(),
             args: TokenStream::empty(),
             item: TokenStream::new("fn some_test_fn(){}".to_string()),
@@ -118,15 +118,15 @@ fn expand_derive() {
 
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
-    let package = proc_macro_client
+    let component = proc_macro_client
         .defined_macros_for_package("test_package")
-        .package;
+        .component;
 
     let item = TokenStream::new("fn some_test_fn(){}".to_string());
 
     let response = proc_macro_client
         .request_and_wait::<ExpandDerive>(ExpandDeriveParams {
-            context: ProcMacroScope { package },
+            context: ProcMacroScope { component },
             derives: vec!["some_derive".to_string()],
             item,
         })
@@ -166,13 +166,13 @@ fn expand_inline() {
 
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
-    let package = proc_macro_client
+    let component = proc_macro_client
         .defined_macros_for_package("test_package")
-        .package;
+        .component;
 
     let response = proc_macro_client
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
-            context: ProcMacroScope { package },
+            context: ProcMacroScope { component },
             name: "replace_all_15_with_25".to_string(),
             args: TokenStream::new(
                 "struct A { field: 15 , other_field: macro_call!(12)}".to_string(),

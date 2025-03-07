@@ -218,13 +218,13 @@ fn load_prebuilt_proc_macros() {
 
     let mut proc_macro_client = ProcMacroClient::new_without_cargo(&project);
 
-    let package = proc_macro_client
+    let component = proc_macro_client
         .defined_macros_for_package("test_package")
-        .package;
+        .component;
 
     let response = proc_macro_client
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
-            context: ProcMacroScope { package },
+            context: ProcMacroScope { component },
             name: "some".to_string(),
             args: TokenStream::new("42".to_string()),
         })

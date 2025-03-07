@@ -106,7 +106,9 @@ impl CompilationUnitComponent {
     }
 }
 
-impl From<&CompilationUnitComponent> for scarb_proc_macro_server_types::scope::Package {
+impl From<&CompilationUnitComponent>
+    for scarb_proc_macro_server_types::scope::CompilationUnitComponent
+{
     fn from(value: &CompilationUnitComponent) -> Self {
         // `name` and `discriminator` used here must be identital to the scarb-metadata.
         // This implementation detail is crucial for communication between PMS and LS.
