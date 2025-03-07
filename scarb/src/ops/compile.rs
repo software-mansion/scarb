@@ -1,3 +1,14 @@
+use crate::compiler::db::{
+    build_scarb_root_database, has_plugin, is_starknet_plugin, ScarbDatabase,
+};
+use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
+use crate::compiler::plugin::proc_macro;
+use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
+use crate::core::{
+    FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
+};
+use crate::ops;
+use crate::ops::{get_test_package_ids, validate_features, CompilationUnitsOpts};
 use anyhow::{anyhow, Context, Error, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
@@ -10,18 +21,6 @@ use scarb_ui::HumanDuration;
 use smol_str::{SmolStr, ToSmolStr};
 use std::collections::HashSet;
 use std::thread;
-
-use crate::compiler::db::{
-    build_scarb_root_database, has_plugin, is_starknet_plugin, ScarbDatabase,
-};
-use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
-use crate::compiler::plugin::proc_macro;
-use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
-use crate::core::{
-    FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
-};
-use crate::ops;
-use crate::ops::{get_test_package_ids, validate_features, CompilationUnitsOpts};
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -183,7 +182,19 @@ where
 /// Run compiler in a new thread.
 /// The stack size of created threads can be altered with `RUST_MIN_STACK` env variable.
 pub fn compile_units(units: Vec<CompilationUnit>, ws: &Workspace<'_>) -> Result<()> {
+    let required_plugins = required_plugins(&units);
+
+    let all_units_are_macros = units
+        .iter()
+        .all(|unit| matches!(unit, CompilationUnit::ProcMacro(_)));
+
     for unit in units {
+        if matches!(&unit, &CompilationUnit::ProcMacro(_))
+            && !all_units_are_macros
+            && !required_plugins.contains(&unit.main_package_id())
+        {
+            continue;
+        }
         compile_unit(unit, ws)?;
     }
     Ok(())
@@ -245,28 +256,7 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 }
 
 fn check_units(units: Vec<CompilationUnit>, ws: &Workspace<'_>) -> Result<()> {
-    // Select proc macro units that need to be compiled for Cairo compilation units.
-    let required_plugins = units
-        .iter()
-        .flat_map(|unit| match unit {
-            CompilationUnit::Cairo(unit) => unit
-                .cairo_plugins
-                .iter()
-                .map(|p| p.package.id)
-                .collect_vec(),
-            _ => Vec::new(),
-        })
-        .collect::<HashSet<PackageId>>();
-
-    // We guarantee that proc-macro units are always processed first,
-    // so that all required plugins are compiled before we start checking Cairo units.
-    let units = units.into_iter().sorted_by_key(|unit| {
-        if matches!(unit, CompilationUnit::ProcMacro(_)) {
-            0
-        } else {
-            1
-        }
-    });
+    let required_plugins = required_plugins(&units);
 
     for unit in units {
         if matches!(unit, CompilationUnit::ProcMacro(_))
@@ -343,4 +333,19 @@ fn check_starknet_dependency(
 
 fn suppress_error(err: &anyhow::Error) -> bool {
     matches!(err.downcast_ref(), Some(&DiagnosticsError))
+}
+
+// Select proc macro packages that need to be compiled for the provided Cairo compilation units.
+fn required_plugins(units: &[CompilationUnit]) -> HashSet<PackageId> {
+    units
+        .iter()
+        .flat_map(|unit| match unit {
+            CompilationUnit::Cairo(unit) => unit
+                .cairo_plugins
+                .iter()
+                .map(|p| p.package.id)
+                .collect_vec(),
+            _ => Vec::new(),
+        })
+        .collect::<HashSet<PackageId>>()
 }
