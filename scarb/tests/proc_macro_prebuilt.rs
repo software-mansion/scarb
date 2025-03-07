@@ -8,7 +8,7 @@ use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineM
 use scarb_proc_macro_server_types::scope::ProcMacroScope;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
-use scarb_test_support::proc_macro_server::{DefinedMacrosInfo, ProcMacroClient};
+use scarb_test_support::proc_macro_server::ProcMacroClient;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::cmd::Command;
@@ -218,16 +218,13 @@ fn load_prebuilt_proc_macros() {
 
     let mut proc_macro_client = ProcMacroClient::new_without_cargo(&project);
 
-    let DefinedMacrosInfo {
-        package_id: compilation_unit_main_component_id,
-        ..
-    } = proc_macro_client.defined_macros_for_package("test_package");
+    let component = proc_macro_client
+        .defined_macros_for_package("test_package")
+        .component;
 
     let response = proc_macro_client
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
-            context: ProcMacroScope {
-                package_id: compilation_unit_main_component_id,
-            },
+            context: ProcMacroScope { component },
             name: "some".to_string(),
             args: TokenStream::new("42".to_string()),
         })

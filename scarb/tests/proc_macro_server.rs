@@ -9,7 +9,6 @@ use scarb_proc_macro_server_types::methods::expand::ExpandInline;
 use scarb_proc_macro_server_types::methods::expand::ExpandInlineMacroParams;
 use scarb_proc_macro_server_types::scope::ProcMacroScope;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
-use scarb_test_support::proc_macro_server::DefinedMacrosInfo;
 use scarb_test_support::proc_macro_server::ProcMacroClient;
 use scarb_test_support::proc_macro_server::SIMPLE_MACROS;
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -34,8 +33,7 @@ fn defined_macros() {
 
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
-    let DefinedMacrosInfo { defined_macros, .. } =
-        proc_macro_client.defined_macros_for_package("test_package");
+    let defined_macros = proc_macro_client.defined_macros_for_package("test_package");
 
     assert_eq!(&defined_macros.attributes, &["some".to_string()]);
     assert_eq!(&defined_macros.derives, &["some_derive".to_string()]);
@@ -80,12 +78,13 @@ fn expand_attribute() {
 
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
-    let DefinedMacrosInfo { package_id, .. } =
-        proc_macro_client.defined_macros_for_package("test_package");
+    let component = proc_macro_client
+        .defined_macros_for_package("test_package")
+        .component;
 
     let response = proc_macro_client
         .request_and_wait::<ExpandAttribute>(ExpandAttributeParams {
-            context: ProcMacroScope { package_id },
+            context: ProcMacroScope { component },
             attr: "rename_to_very_new_name".to_string(),
             args: TokenStream::empty(),
             item: TokenStream::new("fn some_test_fn(){}".to_string()),
@@ -119,14 +118,15 @@ fn expand_derive() {
 
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
-    let DefinedMacrosInfo { package_id, .. } =
-        proc_macro_client.defined_macros_for_package("test_package");
+    let component = proc_macro_client
+        .defined_macros_for_package("test_package")
+        .component;
 
     let item = TokenStream::new("fn some_test_fn(){}".to_string());
 
     let response = proc_macro_client
         .request_and_wait::<ExpandDerive>(ExpandDeriveParams {
-            context: ProcMacroScope { package_id },
+            context: ProcMacroScope { component },
             derives: vec!["some_derive".to_string()],
             item,
         })
@@ -166,12 +166,13 @@ fn expand_inline() {
 
     let mut proc_macro_client = ProcMacroClient::new(&project);
 
-    let DefinedMacrosInfo { package_id, .. } =
-        proc_macro_client.defined_macros_for_package("test_package");
+    let component = proc_macro_client
+        .defined_macros_for_package("test_package")
+        .component;
 
     let response = proc_macro_client
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
-            context: ProcMacroScope { package_id },
+            context: ProcMacroScope { component },
             name: "replace_all_15_with_25".to_string(),
             args: TokenStream::new(
                 "struct A { field: 15 , other_field: macro_call!(12)}".to_string(),

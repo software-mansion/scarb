@@ -29,7 +29,7 @@ impl Handler for ExpandDerive {
             let expansion = Expansion::new(derive.to_case(Case::Snake), ExpansionKind::Derive);
 
             let plugin = workspace_macros
-                .get(&context.package_id)
+                .get(&context.component)
                 .with_context(|| format!("No macros found in scope {context:?}"))?;
 
             let instance = plugin

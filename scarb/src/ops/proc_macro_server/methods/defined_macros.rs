@@ -1,10 +1,10 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::Result;
 use cairo_lang_defs::plugin::MacroPlugin;
 use convert_case::{Case, Casing};
 use scarb_proc_macro_server_types::methods::defined_macros::{
-    DefinedMacros, DefinedMacrosResponse, PackageDefinedMacrosInfo,
+    CompilationUnitComponentMacros, DefinedMacros, DefinedMacrosResponse,
 };
 
 use super::Handler;
@@ -15,10 +15,10 @@ impl Handler for DefinedMacros {
         workspace_macros: Arc<WorkspaceProcMacros>,
         _params: Self::Params,
     ) -> Result<Self::Response> {
-        let macros_by_package_id = workspace_macros
-            .macros_for_packages
+        let macros_for_cu_components = workspace_macros
+            .macros_for_components
             .iter()
-            .map(|(package_id, plugin)| {
+            .map(|(component, plugin)| {
                 let attributes = plugin.declared_attributes_without_executables();
                 let inline_macros = plugin.declared_inline_macros();
                 let derives = plugin
@@ -28,20 +28,18 @@ impl Handler for DefinedMacros {
                     .collect();
                 let executables = plugin.executable_attributes();
 
-                (
-                    package_id.to_owned(),
-                    PackageDefinedMacrosInfo {
-                        attributes,
-                        inline_macros,
-                        derives,
-                        executables,
-                    },
-                )
+                CompilationUnitComponentMacros {
+                    component: component.to_owned(),
+                    attributes,
+                    inline_macros,
+                    derives,
+                    executables,
+                }
             })
-            .collect::<HashMap<_, _>>();
+            .collect();
 
         Ok(DefinedMacrosResponse {
-            macros_by_package_id,
+            macros_for_cu_components,
         })
     }
 }

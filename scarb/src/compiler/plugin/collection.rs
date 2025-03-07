@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use anyhow::Result;
 use cairo_lang_semantic::{inline_macros::get_default_plugin_suite, plugin::PluginSuite};
 use itertools::Itertools;
+use scarb_proc_macro_server_types::scope::CompilationUnitComponent;
 
 use crate::{
     compiler::{CairoCompilationUnit, CompilationUnitComponentId, CompilationUnitDependency},
@@ -48,17 +49,12 @@ impl PluginsForComponents {
 // NOTE: Since this structure is used to handle JsonRPC requests, its keys have to be serialized to strings.
 //
 /// A container for Proc Macro Server to manage macros present in the analyzed workspace.
-///
-/// # Invariant
-/// Correct usage of this struct during proc macro server <-> LS communication
-/// relies on the implicit contract that keys of `macros_for_packages` are of form
-/// `PackageId.to_serialized_string()` which is always equal to
-/// `scarb_metadata::CompilationUnitComponentId.repr`.
 pub struct WorkspaceProcMacros {
-    /// A mapping of the form: `package (as a serialized [`PackageId`]) -> plugin`.
-    /// Contains IDs of all packages from the workspace, each mapped to a [`ProcMacroHostPlugin`] which contains
+    /// A mapping of the form: `cu_component (as a [`CompilationUnitComponent`]) -> plugin`.
+    /// Contains IDs of all components of all compilation units from the workspace,
+    /// each mapped to a [`ProcMacroHostPlugin`] which contains
     /// **all proc macro dependencies of the package** collected from **all compilation units it appears in**.
-    pub macros_for_packages: HashMap<String, Arc<ProcMacroHostPlugin>>,
+    pub macros_for_components: HashMap<CompilationUnitComponent, Arc<ProcMacroHostPlugin>>,
 }
 
 impl WorkspaceProcMacros {
@@ -71,18 +67,23 @@ impl WorkspaceProcMacros {
 
         for &unit in compilation_units {
             for (component_id, mut macro_instances) in collect_proc_macros(workspace, unit)? {
-                // Here we assume that CompilationUnitComponentId.repr == PackageId.to_serialized_string().
-                let key = component_id.package_id.to_serialized_string();
+                let component: CompilationUnitComponent = unit
+                    .components
+                    .iter()
+                    .find(|component| component.id == component_id)
+                    .expect("component should always exist")
+                    .into();
+
                 macros_for_components
-                    .entry(key)
+                    .entry(component)
                     .or_default()
                     .append(&mut macro_instances);
             }
         }
 
-        let macros_for_packages = macros_for_components
+        let macros_for_components = macros_for_components
             .into_iter()
-            .map(|(package_id, macro_instances)| {
+            .map(|(component, macro_instances)| {
                 let deduplicated_instances = macro_instances
                     .into_iter()
                     .unique_by(|instance| instance.package_id())
@@ -90,18 +91,18 @@ impl WorkspaceProcMacros {
 
                 let plugin = Arc::new(ProcMacroHostPlugin::try_new(deduplicated_instances)?);
 
-                Ok((package_id, plugin))
+                Ok((component, plugin))
             })
             .collect::<Result<HashMap<_, _>>>()?;
 
         Ok(Self {
-            macros_for_packages,
+            macros_for_components,
         })
     }
 
-    /// Returns a [`ProcMacroHostPlugin`] assigned to the package with `package_id`.
-    pub fn get(&self, package_id: &str) -> Option<Arc<ProcMacroHostPlugin>> {
-        self.macros_for_packages.get(package_id).cloned()
+    /// Returns a [`ProcMacroHostPlugin`] assigned to the [`CompilationUnitComponent`].
+    pub fn get(&self, component: &CompilationUnitComponent) -> Option<Arc<ProcMacroHostPlugin>> {
+        self.macros_for_components.get(component).cloned()
     }
 }
 
