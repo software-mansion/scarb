@@ -2,7 +2,5 @@
 
 Fully qualified path: `hello_world::CircleDrop`
 
-```rust
-impl CircleDrop of core::traits::Drop<Circle>;
-```
+<pre><code class="language-rust">impl CircleDrop of core::traits::Drop&lt;Circle&gt;;</code></pre>
 

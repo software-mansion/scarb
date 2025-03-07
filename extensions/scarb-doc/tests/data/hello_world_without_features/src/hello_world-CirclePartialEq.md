@@ -2,9 +2,7 @@
 
 Fully qualified path: `hello_world::CirclePartialEq`
 
-```rust
-impl CirclePartialEq of core::traits::PartialEq<Circle>
-```
+<pre><code class="language-rust">impl CirclePartialEq of core::traits::PartialEq&lt;Circle&gt;</code></pre>
 
 ## Impl functions
 
@@ -12,8 +10,6 @@ impl CirclePartialEq of core::traits::PartialEq<Circle>
 
 Fully qualified path: `hello_world::CirclePartialEq::eq`
 
-```rust
-fn eq(lhs: @Circle, rhs: @Circle) -> bool
-```
+<pre><code class="language-rust">fn eq(lhs: @Circle, rhs: @Circle) -&gt bool</code></pre>
 
 
