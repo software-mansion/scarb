@@ -4,12 +4,10 @@ Circle struct with radius field
 
 Fully qualified path: `hello_world::Circle`
 
-```rust
-#[derive(Drop, Serde, PartialEq)]
+<pre><code class="language-rust">#[derive(Drop, Serde, PartialEq)]
 struct Circle {
     radius: u32,
-}
-```
+}</code></pre>
 
 ## Members
 
@@ -19,8 +17,6 @@ Radius of the circle
 
 Fully qualified path: `hello_world::Circle::radius`
 
-```rust
-radius: u32
-```
+<pre><code class="language-rust">radius: u32</code></pre>
 
 
