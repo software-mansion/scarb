@@ -10,7 +10,5 @@ This is a under feature attribute comment.
 
 Fully qualified path: `hello_world_sub_package::test`
 
-```rust
-fn test()
-```
+<pre><code class="language-rust">fn test()</code></pre>
 

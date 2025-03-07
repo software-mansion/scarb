@@ -333,11 +333,26 @@ fn generate_markdown_from_item_data(
     if let Some(sig) = &doc_item.signature() {
         if !sig.is_empty() {
             // TODO(#1525) add cairo support to mdbook
-            writeln!(&mut markdown, "```rust\n{sig}\n```\n")?;
+            let signature_formatted = format!(
+                "<pre><code class=\"language-rust\">{}</code></pre>\n",
+                escape_html_markers(sig)
+            );
+            writeln!(&mut markdown, "{}", signature_formatted)?;
         }
     }
-
     Ok(markdown)
+}
+
+fn escape_html_markers(input: &str) -> String {
+    let mut escaped = String::with_capacity(input.len());
+    for c in input.chars() {
+        match c {
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            _ => escaped.push(c),
+        }
+    }
+    escaped
 }
 
 pub trait WithPath {
