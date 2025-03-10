@@ -1613,3 +1613,43 @@ fn can_import_from_self_by_name() {
         .assert()
         .success();
 }
+
+#[test]
+fn valid_lint_allows_dont_generate_warning() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            #[allow(collapsible_if_else)]
+            fn func() {}
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]  Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
+#[ignore = "will work after compiler bump"]
+fn invalid_lints_generate_only_warning() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            #[allow(invalid_lint)]
+            fn func() {}
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .stdout_matches(indoc! {r#"
+            TODO: will work after compiler bump
+        "#});
+}
