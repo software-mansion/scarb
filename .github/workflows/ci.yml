@@ -136,7 +136,8 @@ jobs:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - uses: taiki-e/install-action@nextest
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/download-artifact@v4
+      - name: Download stable build artifacts  
+         uses: actions/download-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
       - name: Unpack build stable rust artifacts from nextest archive on linux
@@ -157,7 +158,8 @@ jobs:
       #     echo "NEXTEST_BIN_EXE_scarb=$env:GITHUB_WORKSPACE/stable-crates-target/ci/scarb" >> $env:GITHUB_ENV
       #     Add-Content $env:GITHUB_PATH "$env:GITHUB_WORKSPACE/stable-crates-target/ci"
       #     Add-Content $env:GITHUB_PATH "$env:GITHUB_WORKSPACE/target/ci"
-      - uses: actions/download-artifact@v4
+      - name: Download nightly build artifacts  
+         uses: actions/download-artifact@v4
         with:
           name: nextest-nightly-archive-${{ matrix.platform.os }}
       - name: nextest partition
