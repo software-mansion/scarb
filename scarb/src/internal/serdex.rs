@@ -32,14 +32,14 @@ impl TryFrom<&str> for MergeStrategy {
 /// If `source` and `target` are tables and a specific key exists in both, the conflict will be
 /// resolved as follows:
 /// 1) If value under the conflicting key in either `source` or `target` is not a table, the value
-///     in `target` will be overridden with the value from `source`. This means that no keys from
-///     subtables under the conflicting key will be preserved.
+///    in `target` will be overridden with the value from `source`. This means that no keys from
+///    subtables under the conflicting key will be preserved.
 /// 2) If values under the conflicting key in both `source` and `target` are tables,
-///     the conflict will be resolved with one of two strategies defined by `source`:
+///    the conflict will be resolved with one of two strategies defined by `source`:
 ///    a) If `source` have a key `merge-strategy` with value `override`, the value in `target` will
-///     be overridden with the value from `source`.
+///    be overridden with the value from `source`.
 ///    b) If `source` have a key `merge-strategy` with value `merge`, the value in `target` will be
-///     merged with the value from `source` recursively with this function.
+///    merged with the value from `source` recursively with this function.
 ///    c) If `source` does not have a key `merge-strategy`, the value in `target` will be overridden.
 pub fn toml_merge_apply_strategy<'de, T, S>(target: &T, source: &S) -> Result<T>
 where

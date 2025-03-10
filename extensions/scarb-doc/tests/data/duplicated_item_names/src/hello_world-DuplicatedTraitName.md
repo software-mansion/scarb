@@ -2,7 +2,5 @@
 
 Fully qualified path: `hello_world::DuplicatedTraitName`
 
-```rust
-trait DuplicatedTraitName
-```
+<pre><code class="language-rust">trait DuplicatedTraitName</code></pre>
 

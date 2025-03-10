@@ -21,14 +21,14 @@ use std::collections::{HashMap, HashSet};
 ///     These typically are a list of all workspace members.
 ///
 /// * `registry` - this is the source from which all package summaries are loaded.
-///     It is expected that this is extensively configured ahead of time and is idempotent with
-///     our requests to it (aka returns the same results for the same query every time).
-///     It is also advised to implement internal caching, as the resolver may frequently ask
-///     repetitive queries.
+///   It is expected that this is extensively configured ahead of time and is idempotent with
+///   our requests to it (aka returns the same results for the same query every time).
+///   It is also advised to implement internal caching, as the resolver may frequently ask
+///   repetitive queries.
 ///
 /// * `lockfile` - a [`Lockfile`] instance, which is used to guide the resolution process. Empty
-///     lockfile will result in no guidance. This function does not read or write lock files from
-///     the filesystem.
+///   lockfile will result in no guidance. This function does not read or write lock files from
+///   the filesystem.
 ///
 /// # Implementation:
 ///
