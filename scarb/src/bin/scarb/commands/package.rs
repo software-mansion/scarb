@@ -7,7 +7,7 @@ use serde::Serializer;
 
 use scarb::core::{Config, PackageName};
 use scarb::ops;
-use scarb::ops::{validate_features, PackageOpts};
+use scarb::ops::{PackageOpts, validate_features};
 use scarb_ui::Message;
 
 use crate::args::PackageArgs;

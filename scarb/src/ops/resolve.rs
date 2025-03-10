@@ -1,6 +1,6 @@
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::ProcMacroInstance;
-use crate::compiler::plugin::{fetch_cairo_plugin, CairoPluginProps};
+use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::{CairoPluginProps, fetch_cairo_plugin};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
     CompilationUnitComponent, CompilationUnitComponentId, CompilationUnitDependency,
@@ -8,11 +8,11 @@ use crate::compiler::{
 };
 use crate::core::lockfile::Lockfile;
 use crate::core::package::{Package, PackageClass, PackageId};
+use crate::core::registry::Registry;
 use crate::core::registry::cache::RegistryCache;
 use crate::core::registry::patch_map::PatchMap;
 use crate::core::registry::patcher::RegistryPatcher;
 use crate::core::registry::source_map::SourceMap;
-use crate::core::registry::Registry;
 use crate::core::resolver::Resolve;
 use crate::core::workspace::Workspace;
 use crate::core::{
@@ -22,8 +22,8 @@ use crate::core::{
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::ops::{FeaturesOpts, FeaturesSelector};
-use crate::{resolver, DEFAULT_SOURCE_PATH};
-use anyhow::{bail, Result};
+use crate::{DEFAULT_SOURCE_PATH, resolver};
+use anyhow::{Result, bail};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;
@@ -150,8 +150,9 @@ pub fn resolve_workspace_with_opts(
     ws: &Workspace<'_>,
     opts: &ResolveOpts,
 ) -> Result<WorkspaceResolve> {
-    ws.config().tokio_handle().block_on(
-        async {
+    ws.config()
+        .tokio_handle()
+        .block_on(TryFutureExt::into_future(async {
             let mut patch_map = PatchMap::new();
 
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
@@ -229,9 +230,7 @@ pub fn resolve_workspace_with_opts(
                 .collect::<Result<Vec<()>>>()?;
 
             Ok(WorkspaceResolve { resolve, packages })
-        }
-        .into_future(),
-    )
+        }))
 }
 
 /// Gather [`Package`] instances from this resolver result, by asking the [`RegistryCache`]
@@ -889,11 +888,13 @@ pub fn generate_cairo_plugin_compilation_units(
         .flatten();
     let components = vec![CompilationUnitComponent::try_new(
         member.clone(),
-        vec![member
-            .fetch_target(&TargetKind::CAIRO_PLUGIN)
-            .cloned()
-            // Safe to unwrap, as member.is_cairo_plugin() has been ensured before.
-            .expect("main component of procedural macro must define `cairo-plugin` target")],
+        vec![
+            member
+                .fetch_target(&TargetKind::CAIRO_PLUGIN)
+                .cloned()
+                // Safe to unwrap, as member.is_cairo_plugin() has been ensured before.
+                .expect("main component of procedural macro must define `cairo-plugin` target"),
+        ],
         None,
     )?];
     Ok(ProcMacroCompilationUnit {

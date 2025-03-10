@@ -65,8 +65,7 @@ impl LazyDirectoryCreator {
             .get_or_try_init(|| {
                 trace!(
                     "creating directory {}; output_dir={}",
-                    &self.path,
-                    self.is_output_dir
+                    &self.path, self.is_output_dir
                 );
 
                 if self.is_output_dir {

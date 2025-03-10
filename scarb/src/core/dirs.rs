@@ -3,7 +3,7 @@ use std::ffi::OsString;
 use std::fmt;
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use camino::Utf8PathBuf;
 use directories::ProjectDirs;
 

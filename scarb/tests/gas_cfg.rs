@@ -1,5 +1,5 @@
-use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use assert_fs::prelude::*;
 use indoc::indoc;
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -88,7 +88,8 @@ fn gas_disabled_in_metadata() {
         .stdout_json::<scarb_metadata::Metadata>();
 
     let unit = &metadata.compilation_units[0];
-    assert!(unit
-        .cfg
-        .contains(&scarb_metadata::Cfg::KV("gas".into(), "disabled".into())));
+    assert!(
+        unit.cfg
+            .contains(&scarb_metadata::Cfg::KV("gas".into(), "disabled".into()))
+    );
 }

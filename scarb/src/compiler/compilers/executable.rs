@@ -3,11 +3,11 @@ use crate::compiler::helpers::write_json;
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
-use anyhow::{bail, ensure, Result};
+use anyhow::{Result, bail, ensure};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_executable::compile::{
-    compile_executable_function_in_prepared_db, CompiledFunction, ExecutableConfig,
+    CompiledFunction, ExecutableConfig, compile_executable_function_in_prepared_db,
 };
 use cairo_lang_executable::executable::Executable;
 use cairo_lang_executable::plugin::{EXECUTABLE_PREFIX, EXECUTABLE_RAW_ATTR};

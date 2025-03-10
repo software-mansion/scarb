@@ -2,14 +2,14 @@ use std::collections::BTreeMap;
 
 use crate::core::{TomlCairoPluginTargetParams, TomlTarget};
 use crate::{
+    DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
     core::{
         DepKind, DependencyVersionReq, DetailedTomlDependency, ManifestDependency, MaybeWorkspace,
         Package, PackageName, TargetKind, TomlDependency, TomlManifest, TomlPackage,
         TomlWorkspaceDependency,
     },
-    DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
 };
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use camino::Utf8PathBuf;
 use indoc::formatdoc;
 use itertools::Itertools;

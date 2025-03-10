@@ -1,4 +1,4 @@
-use console::{pad_str, Alignment, Style};
+use console::{Alignment, Style, pad_str};
 use serde::{Serialize, Serializer};
 
 use crate::Message;

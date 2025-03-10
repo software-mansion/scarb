@@ -1,5 +1,5 @@
 use assert_fs::TempDir;
-use snapbox::cmd::{cargo_bin, Command};
+use snapbox::cmd::{Command, cargo_bin};
 use std::env;
 use std::path::PathBuf;
 

@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::{env, iter};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use camino::Utf8PathBuf;
 use scarb_ui::args::{FeaturesSpec, ToEnvVars};
 use tracing::debug;
@@ -15,7 +15,7 @@ use crate::core::{Config, Package, ScriptDefinition, Workspace};
 use crate::internal::fsx::is_executable;
 use crate::ops;
 use crate::process::exec_replace;
-use crate::subcommands::{get_env_vars, EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV};
+use crate::subcommands::{EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV, get_env_vars};
 
 /// Prepare environment and execute an external subcommand.
 ///

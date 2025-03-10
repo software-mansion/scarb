@@ -105,8 +105,8 @@ impl From<VerbositySpec> for Verbosity {
 mod tests {
     use test_case::test_case;
 
-    use crate::args::VerbositySpec;
     use crate::Verbosity;
+    use crate::args::VerbositySpec;
 
     #[test_case(Verbosity::Quiet)]
     #[test_case(Verbosity::NoWarnings)]

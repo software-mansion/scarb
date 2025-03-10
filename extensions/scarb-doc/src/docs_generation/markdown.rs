@@ -4,18 +4,18 @@ use context::MarkdownGenerationContext;
 use itertools::chain;
 use std::fs;
 
+use crate::PackageInformation;
 use crate::docs_generation::markdown::book_toml::generate_book_toml_content;
 use crate::docs_generation::markdown::summary::generate_summary_file_content;
 use crate::docs_generation::markdown::traits::{
-    generate_markdown_list_for_top_level_subitems, TopLevelMarkdownDocItem,
+    TopLevelMarkdownDocItem, generate_markdown_list_for_top_level_subitems,
 };
-use crate::docs_generation::{collect_all_top_level_items, TopLevelItems};
+use crate::docs_generation::{TopLevelItems, collect_all_top_level_items};
 use crate::errors::{IODirectoryCreationError, IOWriteError};
 use crate::types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Module, Struct,
     Trait, TypeAlias,
 };
-use crate::PackageInformation;
 
 mod book_toml;
 mod context;

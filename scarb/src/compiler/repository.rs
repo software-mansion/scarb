@@ -1,8 +1,8 @@
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::fmt;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use cairo_lang_compiler::db::RootDatabase;
 use itertools::Itertools;
 use smol_str::SmolStr;

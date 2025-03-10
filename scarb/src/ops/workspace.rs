@@ -1,22 +1,22 @@
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};
 use glob::glob;
 use indoc::formatdoc;
 use indoc::indoc;
 use tracing::trace;
 
+use crate::MANIFEST_FILE_NAME;
+use crate::core::TomlManifest;
 use crate::core::config::Config;
 use crate::core::package::Package;
 use crate::core::source::SourceId;
 use crate::core::workspace::Workspace;
-use crate::core::TomlManifest;
 use crate::internal::fsx;
-use crate::internal::fsx::{is_hidden, PathBufUtf8Ext};
+use crate::internal::fsx::{PathBufUtf8Ext, is_hidden};
 use crate::ops::find_workspace_manifest_path;
-use crate::MANIFEST_FILE_NAME;
 
 #[tracing::instrument(level = "debug", skip(config))]
 pub fn read_workspace<'c>(manifest_path: &Utf8Path, config: &'c Config) -> Result<Workspace<'c>> {

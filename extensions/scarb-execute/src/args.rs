@@ -1,8 +1,8 @@
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use cairo_lang_runner::Arg;
 use cairo_lang_utils::bigint::BigUintAsHex;
 use camino::Utf8PathBuf;
-use clap::{arg, Parser, ValueEnum};
+use clap::{Parser, ValueEnum, arg};
 use num_bigint::BigInt;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use std::fs;

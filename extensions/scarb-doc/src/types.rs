@@ -27,8 +27,8 @@ use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::attribute::SemanticQueryAttrs;
 use cairo_lang_semantic::{ConcreteTypeId, GenericArgumentId, TypeLongId};
 use cairo_lang_syntax::node::{
-    ast::{self},
     SyntaxNode, TypedSyntaxNode,
+    ast::{self},
 };
 
 use crate::db::ScarbDocDatabase;

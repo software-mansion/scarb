@@ -4,7 +4,7 @@ use std::io::Read;
 use std::str;
 use std::str::FromStr;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 use data_encoding::{Encoding, HEXLOWER_PERMISSIVE};
 use serde::{Deserialize, Serialize};
 use sha2::Digest as _;

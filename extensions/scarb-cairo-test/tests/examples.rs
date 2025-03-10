@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use snapbox::cmd::{cargo_bin, Command};
+use snapbox::cmd::{Command, cargo_bin};
 
 use test_for_each_example::test_for_each_example;
 

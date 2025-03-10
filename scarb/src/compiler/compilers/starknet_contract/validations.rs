@@ -1,7 +1,7 @@
 use crate::compiler::compilers::{Props, SerdeListSelector};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes};
 use crate::core::{Utf8PathWorkspaceExt, Workspace};
-use anyhow::{bail, ensure, Context};
+use anyhow::{Context, bail, ensure};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_filesystem::db::{AsFilesGroupMut, FilesGroup};
@@ -9,7 +9,7 @@ use cairo_lang_filesystem::flag::Flag;
 use cairo_lang_filesystem::ids::FlagId;
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::allowed_libfuncs::{
-    AllowedLibfuncsError, ListSelector, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST,
+    AllowedLibfuncsError, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST, ListSelector,
 };
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_utils::Upcast;
@@ -106,7 +106,7 @@ pub fn check_allowed_libfuncs(
                         "failed to check allowed libfuncs for contract: {contract_name}",
                         contract_name = decl.submodule_id.name(db.upcast())
                     )
-                })
+                });
             }
         }
     }

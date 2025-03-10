@@ -1,8 +1,8 @@
 use std::fs;
 use std::time::Duration;
 
-use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use assert_fs::prelude::*;
 use expect_test::expect;
 use indoc::indoc;
 

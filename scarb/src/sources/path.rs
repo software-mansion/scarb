@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops::Deref;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use camino::Utf8Path;
 use tokio::sync::OnceCell;

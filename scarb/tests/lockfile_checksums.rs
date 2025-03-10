@@ -1,5 +1,5 @@
-use assert_fs::prelude::*;
 use assert_fs::TempDir;
+use assert_fs::prelude::*;
 use indoc::indoc;
 use toml_edit::value;
 
