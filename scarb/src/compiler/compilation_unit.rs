@@ -106,6 +106,20 @@ impl CompilationUnitComponent {
     }
 }
 
+impl From<&CompilationUnitComponent>
+    for scarb_proc_macro_server_types::scope::CompilationUnitComponent
+{
+    fn from(value: &CompilationUnitComponent) -> Self {
+        // `name` and `discriminator` used here must be identital to the scarb-metadata.
+        // This implementation detail is crucial for communication between PMS and LS.
+        // Always remember to verify this invariant when changing the internals.
+        Self {
+            name: value.cairo_package_name().to_string(),
+            discriminator: value.id.to_discriminator().map(Into::into),
+        }
+    }
+}
+
 /// The kind of the compilation unit dependency.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum CompilationUnitDependency {
