@@ -10,14 +10,15 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
-use cairo_lang_defs::plugin::MacroPlugin;
+use cairo_lang_defs::plugin::{MacroPlugin, PluginDiagnostic};
 use cairo_lang_filesystem::db::{
     AsFilesGroupMut, CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
 };
 use cairo_lang_filesystem::ids::CrateLongId;
-use cairo_lang_semantic::db::PluginSuiteInput;
-use cairo_lang_semantic::plugin::PluginSuite;
+use cairo_lang_semantic::db::{PluginSuiteInput, SemanticGroup};
+use cairo_lang_semantic::plugin::{AnalyzerPlugin, PluginSuite};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
+use cairo_lint_core::plugin::CairoLint;
 use smol_str::SmolStr;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -46,6 +47,10 @@ pub(crate) fn build_scarb_root_database(
         mut plugins,
         proc_macros,
     } = PluginsForComponents::collect(ws, unit)?;
+
+    for plugin_suite in plugins.values_mut() {
+        plugin_suite.add_analyzer_plugin::<CairoLintMockPlugin>();
+    }
 
     let main_component_suite = plugins
         .get_mut(&unit.main_component().id)
@@ -239,4 +244,19 @@ pub(crate) fn is_executable_plugin(plugin: &dyn MacroPlugin) -> bool {
     // TODO: Can this be done in less "hacky" way? TypeId is not working here, because we deal with
     // trait objects.
     format!("{:?}", plugin).contains("ExecutablePlugin")
+}
+
+/// Plugin with `declared_allows` matching these of [`CairoLint`].
+/// Its purpose is to avoid needless compiler warnings on unsupported
+#[derive(Debug, Default)]
+struct CairoLintMockPlugin;
+
+impl AnalyzerPlugin for CairoLintMockPlugin {
+    fn diagnostics(&self, _db: &dyn SemanticGroup, _module_id: ModuleId) -> Vec<PluginDiagnostic> {
+        Vec::new()
+    }
+
+    fn declared_allows(&self) -> Vec<String> {
+        CairoLint::new(false).declared_allows()
+    }
 }
