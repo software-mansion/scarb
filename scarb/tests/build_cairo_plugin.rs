@@ -1555,11 +1555,10 @@ fn can_expand_impl_inner_func_attrr() {
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            testing hello ...
+            [..]Testing hello
             running 1 test
             test hello::tests::test_flow ... ok (gas usage est.: [..])
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
-
         "#});
 }
 
