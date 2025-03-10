@@ -1608,6 +1608,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-vm"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9b51a63d0c89638a1de1fa9a685b80dc3b7e6c0ecdc050b4e1a182b8ef00190"
+dependencies = [
+ "anyhow",
+ "bincode 2.0.0-rc.3",
+ "bitvec",
+ "generic-array",
+ "hashbrown 0.15.2",
+ "hex",
+ "indoc",
+ "keccak",
+ "lazy_static",
+ "nom",
+ "num-bigint",
+ "num-integer",
+ "num-prime",
+ "num-traits",
+ "rand 0.8.5",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sha3",
+ "starknet-crypto 0.7.4",
+ "starknet-types-core",
+ "thiserror-no-std",
+ "wasm-bindgen",
+ "zip",
+]
+
+[[package]]
 name = "camino"
 version = "1.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5974,7 +6007,7 @@ dependencies = [
  "cairo-lang-executable",
  "cairo-lang-runner",
  "cairo-lang-utils",
- "cairo-vm 1.0.2",
+ "cairo-vm 2.0.0",
  "camino",
  "clap",
  "create-output-dir",
