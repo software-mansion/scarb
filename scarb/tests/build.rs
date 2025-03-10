@@ -1613,3 +1613,73 @@ fn can_import_from_self_by_name() {
         .assert()
         .success();
 }
+
+#[test]
+fn valid_lint_allows_dont_generate_diagnostics() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            #[allow(collapsible_if_else)]
+            fn func() {}
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]  Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
+fn invalid_lint_allows_generate_only_warnings() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            #[allow(invalid_lint)]
+            fn func() {}
+        "#})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            warn: `allow` attribute argument not supported.
+             --> [..]src/lib.cairo:1:8
+            #[allow(invalid_lint)]
+                   ^^^^^^^^^^^^^^
+
+            [..]  Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
+fn invalid_lint_allows_are_ignored_in_deps() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("dep")
+        .lib_cairo(indoc! {r#"
+            #[allow(invalid_lint)]
+            fn func() {}
+        "#})
+        .build(&t.child("dep"));
+
+    ProjectBuilder::start()
+        .name("hello")
+        .dep("dep", Dep.path("../dep"))
+        .build(&t.child("hello"));
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(t.child("hello"))
+        .assert()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]  Finished `dev` profile target(s) in [..]
+        "#});
+}
