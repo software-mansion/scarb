@@ -104,11 +104,7 @@ fn main() -> Result<()> {
         .arg("--test")
         .env("SCARB_TARGET_NAMES", target_names.clone().join(","))
         .env("SCARB_PACKAGES_FILTER", filter.to_env())
-        .env_if(
-            "SCARB_UI_VERBOSITY",
-            ui.verbosity().to_string(),
-            !ui.verbosity().is_default(),
-        )
+        .env("SCARB_UI_VERBOSITY", ui.verbosity().to_string())
         .run()?;
 
     let profile = env::var("SCARB_PROFILE").unwrap_or("dev".into());

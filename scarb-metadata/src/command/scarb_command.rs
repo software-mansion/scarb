@@ -78,19 +78,6 @@ impl ScarbCommand {
         self
     }
 
-    /// Inserts or updates an environment variable mapping, if `cond` is `true`.
-    pub fn env_if(
-        &mut self,
-        key: impl AsRef<OsStr>,
-        val: impl AsRef<OsStr>,
-        cond: bool,
-    ) -> &mut Self {
-        if cond {
-            self.inner.env(key, val);
-        }
-        self
-    }
-
     /// Adds or updates multiple environment variable mappings.
     pub fn envs<I, K, V>(&mut self, vars: I) -> &mut Self
     where
