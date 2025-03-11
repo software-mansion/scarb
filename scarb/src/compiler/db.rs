@@ -1,3 +1,5 @@
+use super::CompilationUnitComponentId;
+use super::plugin::collection::PluginsForComponents;
 use crate::DEFAULT_MODULE_MAIN_FILE;
 use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
 use crate::compiler::{
@@ -18,14 +20,12 @@ use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_semantic::db::PluginSuiteInput;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
+use cairo_lint_core::plugin::CairoLintAllow;
 use smol_str::SmolStr;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
-
-use super::CompilationUnitComponentId;
-use super::plugin::collection::PluginsForComponents;
 
 pub struct ScarbDatabase {
     pub db: RootDatabase,
@@ -46,6 +46,11 @@ pub(crate) fn build_scarb_root_database(
         mut plugins,
         proc_macros,
     } = PluginsForComponents::collect(ws, unit)?;
+
+    plugins
+        .get_mut(&unit.main_component().id)
+        .unwrap()
+        .add_analyzer_plugin::<CairoLintAllow>();
 
     let main_component_suite = plugins
         .get_mut(&unit.main_component().id)
