@@ -2,7 +2,5 @@
 
 Fully qualified path: `hello_world::main`
 
-```rust
-fn main()
-```
+<pre><code class="language-rust">fn main()</code></pre>
 
