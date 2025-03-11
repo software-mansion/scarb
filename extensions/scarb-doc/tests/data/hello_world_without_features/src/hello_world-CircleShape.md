@@ -2,12 +2,9 @@
 
 Implementation of the Shape trait for Circle
 
-
 Fully qualified path: `hello_world::CircleShape`
 
-```rust
-impl CircleShape of Shape<Circle>
-```
+<pre><code class="language-rust">impl CircleShape of Shape&lt;Circle&gt;</code></pre>
 
 ## Impl constants
 
@@ -15,13 +12,9 @@ impl CircleShape of Shape<Circle>
 
 Shape constant
 
-
 Fully qualified path: `hello_world::CircleShape::SHAPE_CONST`
 
-```rust
-const SHAPE_CONST: felt252 = 'xyz';
-```
-
+<pre><code class="language-rust">const SHAPE_CONST: felt252 = &apos;xyz&apos;;</code></pre>
 
 ## Impl functions
 
@@ -29,13 +22,9 @@ const SHAPE_CONST: felt252 = 'xyz';
 
 Implementation of the area method for Circle
 
-
 Fully qualified path: `hello_world::CircleShape::area`
 
-```rust
-fn area(self: Circle) -> u32
-```
-
+<pre><code class="language-rust">fn area(self: Circle) -&gt; u32</code></pre>
 
 ## Impl types
 
@@ -43,11 +32,8 @@ fn area(self: Circle) -> u32
 
 Type alias for a pair of circles
 
-
 Fully qualified path: `hello_world::CircleShape::ShapePair`
 
-```rust
-type ShapePair = (Circle, Circle);
-```
+<pre><code class="language-rust">type ShapePair = (Circle, Circle);</code></pre>
 
 

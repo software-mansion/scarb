@@ -9,7 +9,5 @@ Function that prints "test" to stdout with endline. Can invoke it like that:
 
 Fully qualified path: `hello_world_sub_package::test`
 
-```rust
-fn test()
-```
+<pre><code class="language-rust">fn test()</code></pre>
 
