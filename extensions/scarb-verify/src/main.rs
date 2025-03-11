@@ -10,9 +10,8 @@ use std::env;
 use std::fs;
 use std::process::ExitCode;
 use stwo_cairo_prover::cairo_air::CairoProof;
-use stwo_cairo_prover::cairo_air::{
-    ProverParameters, default_prod_prover_parameters, verify_cairo,
-};
+use stwo_cairo_prover::cairo_air::prover::{ProverParameters, default_prod_prover_parameters};
+use stwo_cairo_prover::cairo_air::verifier::verify_cairo;
 use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::{
     Blake2sMerkleChannel, Blake2sMerkleHasher,
 };

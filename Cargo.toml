@@ -60,8 +60,8 @@ cairo-lang-syntax = "2.11.2"
 cairo-lang-test-plugin = "2.11.2"
 cairo-lang-test-runner = "2.11.2"
 cairo-lang-utils = { version = "2.11.2", features = ["env_logger"] }
-cairo-language-server = "2.11.1"
-cairo-lint-core = { git = "https://github.com/software-mansion/cairo-lint.git" }
+cairo-language-server = "2.11.2"
+cairo-lint-core = "2.11.2"
 cairo-vm = "1.0.1"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
@@ -120,8 +120,8 @@ smallvec = "1"
 smol_str = { version = "0.2", features = ["serde"] }
 snapbox = { version = "0.4", features = ["cmd", "path"] }
 starknet-types-core = "0.1"
-stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "71a214aa5cb5b199e1da156a3672bcc99de21fc2" }
-stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "71a214aa5cb5b199e1da156a3672bcc99de21fc2", features = ["std"] }
+stwo-cairo-adapter = {  git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd", features = ["std"] }
+stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
 syn = "2"
 tar = "0.4"
 target-triple = "0.1"
