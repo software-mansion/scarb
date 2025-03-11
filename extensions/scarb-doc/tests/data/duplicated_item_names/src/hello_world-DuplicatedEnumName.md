@@ -2,7 +2,5 @@
 
 Fully qualified path: `hello_world::DuplicatedEnumName`
 
-```rust
-enum DuplicatedEnumName {}
-```
+<pre><code class="language-rust">enum DuplicatedEnumName {}</code></pre>
 
