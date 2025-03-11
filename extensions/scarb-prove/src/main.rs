@@ -12,7 +12,7 @@ use std::env;
 use std::fs;
 use std::process::ExitCode;
 use stwo_cairo_adapter::vm_import::adapt_vm_output;
-use stwo_cairo_prover::cairo_air::{
+use stwo_cairo_prover::cairo_air::prover::{
     ProverConfig, ProverParameters, default_prod_prover_parameters, prove_cairo,
 };
 use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
