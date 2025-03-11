@@ -410,6 +410,30 @@ fn executable_must_be_chosen() {
     );
 }
 
+#[test]
+fn can_set_ui_verbosity() {
+    let t = build_executable_project();
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--quiet")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq("");
+}
+
+#[test]
+fn maintains_parent_verbosity() {
+    let t = build_executable_project();
+    Scarb::quick_snapbox()
+        .arg("--quiet")
+        .arg("execute")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq("");
+}
+
 fn output_assert(output: OutputAssert, expected: &str) {
     #[cfg(windows)]
     output.stdout_matches(format!(
