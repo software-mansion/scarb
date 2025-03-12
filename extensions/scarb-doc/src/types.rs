@@ -474,7 +474,7 @@ impl ItemData {
             id: documentable_item_id,
             name: id.name(db).into(),
             doc: db.get_item_documentation_as_tokens(documentable_item_id),
-            signature: Some(db.get_item_signature(documentable_item_id)),
+            signature: db.get_item_signature(documentable_item_id),
             full_path: id.full_path(db),
             parent_full_path: Some(id.parent_module(db).full_path(db)),
         }

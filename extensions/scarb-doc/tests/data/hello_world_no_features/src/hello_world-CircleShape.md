@@ -4,7 +4,7 @@ Implementation of the Shape trait for Circle
 
 Fully qualified path: `hello_world::CircleShape`
 
-<pre><code class="language-rust">impl CircleShape of Shape&lt;Circle&gt;</code></pre>
+<pre><code class="language-rust">impl CircleShape of Shape&lt;Circle&gt;;</code></pre>
 
 ## Impl constants
 

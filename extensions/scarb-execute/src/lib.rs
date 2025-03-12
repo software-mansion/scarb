@@ -171,7 +171,7 @@ pub fn execute(
             "Saving output to:",
             &display_path(&scarb_target_dir, &output_file_path),
         ));
-        output_value.write_zip_file(output_file_path.as_std_path())?;
+        output_value.write_zip_file(output_file_path.as_std_path(), true)?;
     } else {
         ui.print(Status::new(
             "Saving output to:",

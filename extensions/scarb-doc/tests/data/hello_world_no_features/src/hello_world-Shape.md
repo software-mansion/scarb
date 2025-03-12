@@ -25,7 +25,7 @@ Calculate the area of the shape
 
 Fully qualified path: `hello_world::Shape::area`
 
-<pre><code class="language-rust">fn area(self: T) -&gt; u32</code></pre>
+<pre><code class="language-rust">fn area&lt;T, T&gt;(self: T) -&gt; u32</code></pre>
 
 
 ## Trait types

@@ -65,7 +65,9 @@ impl MarkdownTargetChecker {
             if expected_dir_entry.file_type().is_file() {
                 assert!(actual_dir_entry.file_type().is_file());
 
-                let content = fs::read_to_string(actual_dir_entry.path()).unwrap();
+                let content = fs::read_to_string(actual_dir_entry.path())
+                    .unwrap()
+                    .replace("\r", "");
 
                 let expect_file =
                     expect_file![fsx::canonicalize(expected_dir_entry.path()).unwrap()];
