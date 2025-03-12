@@ -117,7 +117,7 @@ fn process<F>(
     operation_type: Option<&str>,
 ) -> Result<()>
 where
-    F: FnMut(Vec<CompilationUnit>, &Workspace<'_>) -> Result<()>,
+    F: FnMut(Vec<CompilationUnit>, &[PackageId], &Workspace<'_>) -> Result<()>,
 {
     let resolve = ops::resolve_workspace(ws)?;
     let packages_to_process = ws
@@ -156,6 +156,7 @@ where
         let is_cairo_plugin = matches!(cu, CompilationUnit::ProcMacro(_));
         is_cairo_plugin || (is_selected && is_included && !is_excluded)
     })
+    // Proc macro compilations are processed first, as Cairo compilation units may depend on them.
     .sorted_by_key(|cu| {
         if matches!(cu, CompilationUnit::ProcMacro(_)) {
             0
@@ -165,7 +166,7 @@ where
     })
     .collect::<Vec<_>>();
 
-    operation(compilation_units, ws)?;
+    operation(compilation_units, &packages, ws)?;
 
     let elapsed_time = HumanDuration(ws.config().elapsed_time());
     let profile = ws.current_profile()?;
@@ -180,15 +181,29 @@ where
     Ok(())
 }
 
-/// Run compiler in a new thread.
-/// The stack size of created threads can be altered with `RUST_MIN_STACK` env variable.
-pub fn compile_units(units: Vec<CompilationUnit>, ws: &Workspace<'_>) -> Result<()> {
+pub fn compile_units(
+    units: Vec<CompilationUnit>,
+    required_packages: &[PackageId],
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    let required_plugins = plugins_required_for_units(&units);
+
     for unit in units {
+        // We can skip compiling proc macros that are not used by Cairo compilation units.
+        if matches!(&unit, &CompilationUnit::ProcMacro(_))
+            && !required_plugins.contains(&unit.main_package_id())
+            // Unless they are explicitly requested with `--package` CLI arg.
+            && !required_packages.contains(&unit.main_package_id())
+        {
+            continue;
+        }
         compile_unit(unit, ws)?;
     }
     Ok(())
 }
 
+/// Run compiler in a new thread.
+/// The stack size of created threads can be altered with `RUST_MIN_STACK` env variable.
 pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     thread::scope(|s| {
         thread::Builder::new()
@@ -244,34 +259,19 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     })
 }
 
-fn check_units(units: Vec<CompilationUnit>, ws: &Workspace<'_>) -> Result<()> {
-    // Select proc macro units that need to be compiled for Cairo compilation units.
-    let required_plugins = units
-        .iter()
-        .flat_map(|unit| match unit {
-            CompilationUnit::Cairo(unit) => unit
-                .cairo_plugins
-                .iter()
-                .map(|p| p.package.id)
-                .collect_vec(),
-            _ => Vec::new(),
-        })
-        .collect::<HashSet<PackageId>>();
-
-    // We guarantee that proc-macro units are always processed first,
-    // so that all required plugins are compiled before we start checking Cairo units.
-    let units = units.into_iter().sorted_by_key(|unit| {
-        if matches!(unit, CompilationUnit::ProcMacro(_)) {
-            0
-        } else {
-            1
-        }
-    });
+fn check_units(
+    units: Vec<CompilationUnit>,
+    _required_packages: &[PackageId],
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    let required_plugins = plugins_required_for_units(&units);
 
     for unit in units {
         if matches!(unit, CompilationUnit::ProcMacro(_))
             && required_plugins.contains(&unit.main_package_id())
         {
+            // We compile proc macros that will be used by latter Cairo CUs.
+            // Note: this only works, because `process` maintains the order of units.
             compile_unit(unit, ws)?;
         } else {
             check_unit(unit, ws)?;
@@ -341,6 +341,21 @@ fn check_starknet_dependency(
     }
 }
 
-fn suppress_error(err: &anyhow::Error) -> bool {
+fn suppress_error(err: &Error) -> bool {
     matches!(err.downcast_ref(), Some(&DiagnosticsError))
+}
+
+// Returns proc macro packages that need to be compiled for the provided Cairo compilation units.
+pub fn plugins_required_for_units(units: &[CompilationUnit]) -> HashSet<PackageId> {
+    units
+        .iter()
+        .flat_map(|unit| match unit {
+            CompilationUnit::Cairo(unit) => unit
+                .cairo_plugins
+                .iter()
+                .map(|p| p.package.id)
+                .collect_vec(),
+            _ => Vec::new(),
+        })
+        .collect::<HashSet<PackageId>>()
 }
