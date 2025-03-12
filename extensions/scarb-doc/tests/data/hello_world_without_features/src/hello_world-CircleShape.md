@@ -24,7 +24,7 @@ Implementation of the area method for Circle
 
 Fully qualified path: `hello_world::CircleShape::area`
 
-<pre><code class="language-rust">fn area(self: Circle) -&gt; u32</code></pre>
+<pre><code class="language-rust">fn area(self: <a href="cairo_docs-Circle.html">Circle</a>) -&gt; u32</code></pre>
 
 ## Impl types
 

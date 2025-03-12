@@ -11,6 +11,7 @@ use crate::types::{
 };
 
 use super::context::MarkdownGenerationContext;
+use crate::location_links::DocLocationLink;
 
 pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     const ITEMS_SUMMARY_FILENAME: &'static str;
@@ -336,23 +337,50 @@ fn generate_markdown_from_item_data(
             writeln!(
                 &mut markdown,
                 "<pre><code class=\"language-rust\">{}</code></pre>\n",
-                escape_html_markers(sig)
+                format_signature(sig, doc_item.doc_location_links())
             )?;
         }
     }
     Ok(markdown)
 }
 
-fn escape_html_markers(input: &str) -> String {
+fn format_signature(input: &str, links: &[DocLocationLink]) -> String {
     let mut escaped = String::with_capacity(input.len());
-    for c in input.chars() {
-        match c {
-            '<' => escaped.push_str("&lt;"),
-            '>' => escaped.push_str("&gt;"),
-            '"' => escaped.push_str("&quot;"),
-            '&' => escaped.push_str("&amp;"),
-            '\'' => escaped.push_str("&apos;"),
-            _ => escaped.push(c),
+    let mut index_pointer = 0;
+
+    let sorted_links = links.iter().sorted_by_key(|k| k.start).collect_vec();
+    let mut chars_iter = input.chars().enumerate();
+    let mut skip_chars = 0;
+
+    while index_pointer < input.len() {
+        if let Some((i, ch)) = chars_iter.nth(skip_chars) {
+            skip_chars = 0;
+
+            if let Some(link) = sorted_links
+                .iter()
+                .find(|&link| i >= link.start && i < link.end)
+            {
+                let slice = &input[link.start..link.end];
+                escaped.push_str(&format!(
+                    "<a href=\"{}.html\">{}</a>",
+                    link.full_path, slice
+                ));
+                index_pointer = link.end;
+                skip_chars = link.end - link.start - 1;
+                continue;
+            } else {
+                match ch {
+                    '<' => escaped.push_str("&lt;"),
+                    '>' => escaped.push_str("&gt;"),
+                    '"' => escaped.push_str("&quot;"),
+                    '&' => escaped.push_str("&amp;"),
+                    '\'' => escaped.push_str("&apos;"),
+                    _ => escaped.push(ch),
+                }
+                index_pointer += ch.len_utf8();
+            }
+        } else {
+            break;
         }
     }
     escaped
