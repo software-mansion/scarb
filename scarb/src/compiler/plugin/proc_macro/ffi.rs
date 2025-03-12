@@ -319,21 +319,21 @@ impl VTableV0 {
     unsafe fn try_new(library: &Library) -> Result<VTableV0> {
         unsafe {
             Ok(VTableV0 {
-                list_expansions: get_symbol!(library, b"list_expansions\0", ListExpansions),
+                list_expansions: get_symbol!(library, b"list_expansions_v2\0", ListExpansions),
                 free_expansions_list: get_symbol!(
                     library,
-                    b"free_expansions_list\0",
+                    b"free_expansions_list_v2\0",
                     FreeExpansionsList
                 ),
-                expand: get_symbol!(library, b"expand\0", ExpandCode),
-                free_result: get_symbol!(library, b"free_result\0", FreeResult),
+                expand: get_symbol!(library, b"expand_v2\0", ExpandCode),
+                free_result: get_symbol!(library, b"free_result_v2\0", FreeResult),
                 post_process_callback: get_symbol!(
                     library,
-                    b"post_process_callback\0",
+                    b"post_process_callback_v2\0",
                     PostProcessCallback
                 ),
-                doc: get_symbol!(library, b"doc\0", DocExpansion),
-                free_doc: get_symbol!(library, b"free_doc\0", FreeExpansionDoc),
+                doc: get_symbol!(library, b"doc_v2\0", DocExpansion),
+                free_doc: get_symbol!(library, b"free_doc_v2\0", FreeExpansionDoc),
             })
         }
     }
