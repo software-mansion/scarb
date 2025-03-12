@@ -19,7 +19,7 @@ impl Handler for ExpandAttribute {
         } = params;
 
         let plugin = workspace_macros
-            .get(&context.component)
+            .get(&context.package_id)
             .with_context(|| format!("No macros found in scope: {context:?}"))?;
 
         let instance = plugin
