@@ -18,6 +18,7 @@ use types::Crate;
 pub mod db;
 pub mod docs_generation;
 pub mod errors;
+pub mod location_links;
 pub mod metadata;
 pub mod types;
 pub mod versioned_json_output;

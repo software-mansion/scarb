@@ -4,7 +4,7 @@ Implementation of the Shape trait for Circle
 
 Fully qualified path: `hello_world::CircleShape`
 
-<pre><code class="language-rust">impl CircleShape of Shape&lt;Circle&gt;;</code></pre>
+<pre><code class="language-rust">impl CircleShape of Shape&lt;<a href="hello_world-Circle.html">Circle</a>&gt;;</code></pre>
 
 ## Impl constants
 
@@ -25,7 +25,7 @@ Implementation of the area method for Circle
 
 Fully qualified path: `hello_world::CircleShape::area`
 
-<pre><code class="language-rust">fn area(self: Circle) -&gt; u32</code></pre>
+<pre><code class="language-rust">fn area(self: <a href="hello_world-Circle.html">Circle</a>) -&gt; u32</code></pre>
 
 
 ## Impl types

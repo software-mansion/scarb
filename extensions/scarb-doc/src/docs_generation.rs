@@ -1,3 +1,4 @@
+use crate::location_links::DocLocationLink;
 use crate::types::{
     Constant, Crate, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
     ImplFunction, ImplType, Member, Module, Struct, Trait, TraitConstant, TraitFunction, TraitType,
@@ -114,6 +115,7 @@ trait DocItem {
     fn doc(&self) -> &Option<Vec<DocumentationCommentToken>>;
     fn signature(&self) -> &Option<String>;
     fn full_path(&self) -> &str;
+    fn doc_location_links(&self) -> &Vec<DocLocationLink>;
 }
 
 macro_rules! impl_doc_item {
@@ -135,6 +137,10 @@ macro_rules! impl_doc_item {
 
             fn full_path(&self) -> &str {
                 &self.item_data.full_path
+            }
+
+            fn doc_location_links(&self) -> &Vec<DocLocationLink> {
+                &self.item_data.doc_location_links
             }
         }
     };
