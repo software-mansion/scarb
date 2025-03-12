@@ -185,9 +185,9 @@ jobs:
     steps:
       - name: Notifying about Nightly fail!
         uses: slackapi/slack-github-action@v2.0.0
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_FAILURE_WEBHOOK_URL }}
         with:
+          webhook: ${{ secrets.SLACK_NIGHTLY_FAILURE_WEBHOOK_URL }}
+          webhook-type: webhook-trigger
           payload: |
             {
               "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -202,9 +202,9 @@ jobs:
     steps:
       - name: Notifying about check fail!
         uses: slackapi/slack-github-action@v2.0.0
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_CHECK_FAILURE_WEBHOOK_URL }}
         with:
+          webhook: ${{ secrets.SLACK_NIGHTLY_CHECK_FAILURE_WEBHOOK_URL }}
+          webhook-type: webhook-trigger
           payload: |
             {
               "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
