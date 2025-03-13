@@ -19,7 +19,7 @@ use std::process::ChildStdin;
 use std::process::ChildStdout;
 use std::process::Stdio;
 
-pub const SIMPLE_MACROS: &str = r#"
+pub const SIMPLE_MACROS_V2: &str = r#"
 use cairo_lang_macro::{
     ProcMacroResult,
     TokenStream, TokenTree, Token, TextSpan,
