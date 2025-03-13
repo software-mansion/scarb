@@ -1,5 +1,5 @@
-use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
-use crate::compiler::plugin::proc_macro::host::FULL_PATH_MARKER_KEY;
+use crate::compiler::plugin::proc_macro::v2::ProcMacroHostPlugin;
+use crate::compiler::plugin::proc_macro::v2::host::FULL_PATH_MARKER_KEY;
 use crate::core::PackageId;
 use anyhow::Result;
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};

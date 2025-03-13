@@ -9,7 +9,7 @@ use attribute::*;
 pub use aux_data::ProcMacroAuxData;
 use inline::*;
 
-use crate::compiler::plugin::proc_macro::{Expansion, ExpansionKind, ProcMacroInstance};
+use crate::compiler::plugin::proc_macro::v2::{Expansion, ExpansionKind, ProcMacroInstance};
 use crate::core::{PackageId, edition_variant};
 use anyhow::{Result, ensure};
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
