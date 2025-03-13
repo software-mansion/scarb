@@ -10,7 +10,7 @@ use scarb_proc_macro_server_types::methods::expand::ExpandInlineMacroParams;
 use scarb_proc_macro_server_types::scope::ProcMacroScope;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::proc_macro_server::ProcMacroClient;
-use scarb_test_support::proc_macro_server::SIMPLE_MACROS;
+use scarb_test_support::proc_macro_server::SIMPLE_MACROS_V2;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
@@ -19,7 +19,7 @@ fn defined_macros() {
     let plugin_package = t.child("some");
 
     CairoPluginProjectBuilder::default()
-        .lib_rs(SIMPLE_MACROS)
+        .lib_rs(SIMPLE_MACROS_V2)
         .build(&plugin_package);
 
     let project = t.child("test_package");
@@ -70,7 +70,7 @@ fn expand_attribute() {
     "##;
 
     CairoPluginProjectBuilder::default()
-        .lib_rs(format!("{SIMPLE_MACROS}\n{rename_to_very_new_name}"))
+        .lib_rs(format!("{SIMPLE_MACROS_V2}\n{rename_to_very_new_name}"))
         .add_dep(r#"regex = "1.11.1""#)
         .build(&plugin_package);
 
@@ -115,7 +115,7 @@ fn expand_derive() {
     let plugin_package = t.child("some");
 
     CairoPluginProjectBuilder::default()
-        .lib_rs(SIMPLE_MACROS)
+        .lib_rs(SIMPLE_MACROS_V2)
         .build(&plugin_package);
 
     let project = t.child("test_package");
@@ -175,7 +175,7 @@ fn expand_inline() {
     "#;
 
     CairoPluginProjectBuilder::default()
-        .lib_rs(format!("{SIMPLE_MACROS}\n{replace_all_15_with_25}"))
+        .lib_rs(format!("{SIMPLE_MACROS_V2}\n{replace_all_15_with_25}"))
         .build(&plugin_package);
 
     let project = t.child("test_package");

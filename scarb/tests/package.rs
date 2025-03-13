@@ -496,7 +496,7 @@ fn workspace() {
 fn cairo_plugin() {
     let t = TempDir::new().unwrap();
     // Note this will be packaged with `cairo-lang-macro` from crates, not the local one.
-    CairoPluginProjectBuilder::default().build(&t);
+    CairoPluginProjectBuilder::default_v1().build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
@@ -570,7 +570,7 @@ fn cairo_plugin() {
                 crate-type = ["cdylib"]
 
                 [dependencies]
-                cairo-lang-macro = { path = "[..]cairo-lang-macro", version = "0.1.0" }
+                cairo-lang-macro = "0.1"
             "#},
         )
         .file_matches(
@@ -1468,7 +1468,7 @@ fn package_without_verification() {
 #[test]
 fn package_cairo_plugin_without_verification() {
     let t = TempDir::new().unwrap();
-    CairoPluginProjectBuilder::default().build(&t);
+    CairoPluginProjectBuilder::default_v1().build(&t);
 
     Scarb::quick_snapbox()
         .arg("package")
@@ -1730,7 +1730,7 @@ fn package_proc_macro_with_package_script() {
         "cargo build --release && cp target/release/{dll_filename} target/scarb/cairo-plugin"
     );
 
-    CairoPluginProjectBuilder::start()
+    CairoPluginProjectBuilder::start_v1()
         .name("foo")
         .scarb_project(|b| {
             b.name("foo")

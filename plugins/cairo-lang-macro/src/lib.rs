@@ -68,7 +68,7 @@ pub static MACRO_DEFINITIONS_SLICE: [ExpansionDefinition];
 /// # Safety
 #[doc(hidden)]
 #[no_mangle]
-pub unsafe extern "C" fn list_expansions() -> StableExpansionsList {
+pub unsafe extern "C" fn list_expansions_v2() -> StableExpansionsList {
     let list = MACRO_DEFINITIONS_SLICE
         .iter()
         .map(|m| m.clone().into_stable())
@@ -84,7 +84,7 @@ pub unsafe extern "C" fn list_expansions() -> StableExpansionsList {
 /// # Safety
 #[doc(hidden)]
 #[no_mangle]
-pub unsafe extern "C" fn free_expansions_list(list: StableExpansionsList) {
+pub unsafe extern "C" fn free_expansions_list_v2(list: StableExpansionsList) {
     let v = list.into_owned();
     v.into_iter().for_each(|v| {
         ExpansionDefinition::free_owned(v);
@@ -101,7 +101,7 @@ pub unsafe extern "C" fn free_expansions_list(list: StableExpansionsList) {
 /// # Safety
 #[doc(hidden)]
 #[no_mangle]
-pub unsafe extern "C" fn expand(
+pub unsafe extern "C" fn expand_v2(
     item_name: *const c_char,
     call_site: StableTextSpan,
     stable_attr: cairo_lang_macro_stable::StableTokenStream,
@@ -158,7 +158,7 @@ pub unsafe extern "C" fn expand(
 /// # Safety
 #[doc(hidden)]
 #[no_mangle]
-pub unsafe extern "C" fn free_result(result: StableProcMacroResult) {
+pub unsafe extern "C" fn free_result_v2(result: StableProcMacroResult) {
     ProcMacroResult::free_owned_stable(result);
 }
 
@@ -178,7 +178,7 @@ pub static AUX_DATA_CALLBACKS: [fn(PostProcessContext)];
 /// # Safety
 #[doc(hidden)]
 #[no_mangle]
-pub unsafe extern "C" fn post_process_callback(
+pub unsafe extern "C" fn post_process_callback_v2(
     context: StablePostProcessContext,
 ) -> StablePostProcessContext {
     if !AUX_DATA_CALLBACKS.is_empty() {
@@ -197,7 +197,7 @@ pub unsafe extern "C" fn post_process_callback(
 ///
 #[doc(hidden)]
 #[no_mangle]
-pub unsafe extern "C" fn doc(item_name: *mut c_char) -> *mut c_char {
+pub unsafe extern "C" fn doc_v2(item_name: *mut c_char) -> *mut c_char {
     let item_name = CStr::from_ptr(item_name).to_string_lossy().to_string();
     let doc = MACRO_DEFINITIONS_SLICE
         .iter()
@@ -218,7 +218,7 @@ pub unsafe extern "C" fn doc(item_name: *mut c_char) -> *mut c_char {
 ///
 #[doc(hidden)]
 #[no_mangle]
-pub unsafe extern "C" fn free_doc(doc: *mut c_char) {
+pub unsafe extern "C" fn free_doc_v2(doc: *mut c_char) {
     if !doc.is_null() {
         let _ = CString::from_raw(doc);
     }

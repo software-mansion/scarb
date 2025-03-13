@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
-static CAIRO_LANG_MACRO_PATH: LazyLock<String> = LazyLock::new(|| {
+static CAIRO_LANG_MACRO_PATH_V2: LazyLock<String> = LazyLock::new(|| {
     let path = fsx::canonicalize(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../plugins/")
@@ -17,11 +17,19 @@ static CAIRO_LANG_MACRO_PATH: LazyLock<String> = LazyLock::new(|| {
     serde_json::to_string(&path).unwrap()
 });
 
+#[derive(Debug, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum CairoPluginProjectVersion {
+    V1,
+    #[default]
+    V2,
+}
+
 pub struct CairoPluginProjectBuilder {
     project: ProjectBuilder,
     name: String,
     src: HashMap<Utf8PathBuf, String>,
     deps: Vec<String>,
+    version: CairoPluginProjectVersion,
 }
 
 impl CairoPluginProjectBuilder {
@@ -31,6 +39,17 @@ impl CairoPluginProjectBuilder {
             name: Default::default(),
             src: Default::default(),
             deps: Default::default(),
+            version: CairoPluginProjectVersion::default(),
+        }
+    }
+
+    pub fn start_v1() -> Self {
+        Self {
+            project: ProjectBuilder::start(),
+            name: Default::default(),
+            src: Default::default(),
+            deps: Default::default(),
+            version: CairoPluginProjectVersion::V1,
         }
     }
 
@@ -65,9 +84,15 @@ impl CairoPluginProjectBuilder {
     }
 
     fn render_manifest(&self) -> String {
-        let macro_lib_path = CAIRO_LANG_MACRO_PATH.to_string();
+        let macro_lib_path = CAIRO_LANG_MACRO_PATH_V2.to_string();
         let deps = self.deps.join("\n");
         let name = self.name.clone();
+        let macro_lib_version_req = match self.version {
+            CairoPluginProjectVersion::V1 => "\"0.1\"".to_string(),
+            CairoPluginProjectVersion::V2 => {
+                format!("{{ path = {macro_lib_path}, version = \"0.2.0\" }}")
+            }
+        };
         formatdoc! {r#"
                 [package]
                 name = "{name}"
@@ -79,7 +104,7 @@ impl CairoPluginProjectBuilder {
                 crate-type = ["cdylib"]
 
                 [dependencies]
-                cairo-lang-macro = {{ path = {macro_lib_path}, version = "0.1.0" }}
+                cairo-lang-macro = {macro_lib_version_req}
                 {deps}
                 "#}
     }
@@ -101,6 +126,25 @@ impl CairoPluginProjectBuilder {
     pub fn add_primitive_token_dep(self) -> Self {
         self.add_dep(r#"cairo-lang-primitive-token = "1""#)
     }
+
+    pub fn default_v1() -> Self {
+        let default_name = "some";
+        let default_code = indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            ProcMacroResult::new(token_stream)
+        }
+        "#};
+        Self::start_v1()
+            .name(default_name)
+            .scarb_project(|b| {
+                b.name(default_name)
+                    .version("1.0.0")
+                    .manifest_extra("[cairo-plugin]")
+            })
+            .lib_rs(default_code)
+    }
 }
 
 impl Default for CairoPluginProjectBuilder {
@@ -119,7 +163,10 @@ impl Default for CairoPluginProjectBuilder {
             .scarb_project(|b| {
                 b.name(default_name)
                     .version("1.0.0")
-                    .manifest_extra(r#"[cairo-plugin]"#)
+                    .manifest_extra(indoc! {r#"
+                        [cairo-plugin]
+                        api = "v2"
+                    "#})
             })
             .lib_rs(default_code)
     }
