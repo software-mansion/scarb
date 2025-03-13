@@ -154,6 +154,10 @@ impl ProcMacroInstance {
             )
         })
     }
+
+    pub fn api_version(&self) -> ProcMacroApiVersion {
+        self.plugin().api_version()
+    }
 }
 
 /// This struct provides a unified interface for both v1 and v2 proc macro plugins.
@@ -209,6 +213,13 @@ impl VersionedPlugin {
         match self {
             VersionedPlugin::V2(plugin) => Some(plugin),
             _ => None,
+        }
+    }
+
+    pub fn api_version(&self) -> ProcMacroApiVersion {
+        match self {
+            VersionedPlugin::V1(_) => ProcMacroApiVersion::V1,
+            VersionedPlugin::V2(_) => ProcMacroApiVersion::V2,
         }
     }
 }
