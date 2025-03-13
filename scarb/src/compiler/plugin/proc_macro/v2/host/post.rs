@@ -1,5 +1,5 @@
+use crate::compiler::plugin::proc_macro::FULL_PATH_MARKER_KEY;
 use crate::compiler::plugin::proc_macro::v2::ProcMacroHostPlugin;
-use crate::compiler::plugin::proc_macro::v2::host::FULL_PATH_MARKER_KEY;
 use crate::core::PackageId;
 use anyhow::Result;
 use cairo_lang_defs::ids::{ModuleItemId, TopLevelLanguageElementId};
@@ -19,7 +19,7 @@ impl ProcMacroHostPlugin {
         let markers = self.collect_full_path_markers(db);
 
         let aux_data = self.collect_aux_data(db);
-        for instance in self.macros.iter() {
+        for instance in self.instances.iter() {
             let _ = trace_span!(
                 "post_process_callback",
                 instance = %instance.package_id()
