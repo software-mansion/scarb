@@ -9,6 +9,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::compiler::plugin::builtin::BuiltinCairoRunPlugin;
+use crate::compiler::plugin::proc_macro::ProcMacroApiVersion;
 use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
 use crate::core::{Package, PackageId, TargetKind, Workspace};
 
@@ -25,6 +26,8 @@ pub struct CairoPluginProps {
     /// Mark this macro plugin as builtin.
     /// Builtin plugins are assumed to be available in `CairoPluginRepository` for the whole Scarb execution.
     pub builtin: bool,
+    /// Version of the API used by the plugin.
+    pub api: ProcMacroApiVersion,
 }
 
 pub fn fetch_cairo_plugin(package: &Package, ws: &Workspace<'_>) -> Result<()> {
