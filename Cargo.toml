@@ -64,7 +64,7 @@ cairo-lang-test-plugin = "*"
 cairo-lang-test-runner = "*"
 cairo-lang-utils = { version = "*", features = ["env_logger"] }
 cairo-language-server = "*"
-cairo-lint-core = "*"
+cairo-lint-core = { path = "../cairo-lint/crates/cairo-lint-core" }
 cairo-vm = "2.0.0"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
@@ -152,42 +152,42 @@ zip = { version = "0.6", default-features = false, features = ["deflate"] }
 zstd = "0.13"
 
 [patch.crates-io]
-cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-debug = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-diagnostics = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-doc = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-eq-solver = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-executable = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-formatter = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-lowering = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-parser = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-plugins = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-proc-macros = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-project = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-runnable-utils = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-runner = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-semantic = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-sierra = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-sierra-ap-change = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-sierra-gas = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-sierra-generator = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-sierra-type-size = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-starknet-classes = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-syntax-codegen = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-test-plugin = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-test-utils = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "76e8c943895c904da121fb0f6e48551d367e64d8" }
-cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "7b26a0edc124028781a92e68de24882faea0d885" }
-cairo-lint-core = { git = "https://github.com/software-mansion/cairo-lint", rev = "136ae392703c6ee6a8ad41b7b5e1329b8b9a7604" }
-stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
-stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
+cairo-lang-casm = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-compiler = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-debug = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-defs = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-diagnostics = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-doc = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-eq-solver = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-executable = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-filesystem = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-formatter = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-lowering = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-parser = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-plugins = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-proc-macros = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-project = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-runnable-utils = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-runner = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-semantic = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-sierra = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-sierra-ap-change = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-sierra-gas = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-sierra-generator = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-sierra-to-casm = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-sierra-type-size = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-starknet = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-starknet-classes = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-syntax = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-syntax-codegen = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-test-plugin = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-test-runner = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-test-utils = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+cairo-lang-utils = { git = "https://github.com/DelevoXDG/cairo", branch = "zdobnikau/diagnostics-all" }
+# cairo-language-server = { git = "https://github.com/DelevoXDG/cairols", branch = "zdobnikau/diagnostics-all" }
+cairo-lint-core = { git = "https://github.com/DelevoXDG/cairo-lint", branch = "zdobnikau/diagnostics-all" }
+stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "4f16a586138170f9c565a424fec75df2b8cee750" }
+stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "4f16a586138170f9c565a424fec75df2b8cee750" }
 
 [profile.release]
 lto = true
