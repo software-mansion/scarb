@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::compiler::plugin::builtin::BuiltinCairoRunPlugin;
 use crate::compiler::plugin::proc_macro::ProcMacroApiVersion;
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::core::{Package, PackageId, TargetKind, Workspace};
 
 use self::builtin::{BuiltinStarknetPlugin, BuiltinTestPlugin};
