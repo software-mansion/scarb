@@ -45,7 +45,10 @@ impl ProcMacroHostPlugin {
                 .cloned()
                 .unwrap_or_default();
             debug!("calling post processing callback with: {data:?}");
-            instance.post_process_callback(data.clone(), markers_for_instance);
+            instance
+                .try_v2()
+                .expect("procedural macro using v1 api used in a context expecting v2 api")
+                .post_process_callback(data.clone(), markers_for_instance);
         }
         Ok(())
     }
