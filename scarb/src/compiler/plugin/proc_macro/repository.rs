@@ -1,5 +1,5 @@
+use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::v2::ProcMacroInstance;
-use crate::compiler::plugin::proc_macro::v2::compilation::SharedLibraryProvider;
 use crate::core::{Config, Package, PackageId};
 use anyhow::{Context, Result, bail};
 use std::collections::HashMap;
