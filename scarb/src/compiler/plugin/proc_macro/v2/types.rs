@@ -68,7 +68,7 @@ fn whitespace_suffix_len(s: &str) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::compiler::plugin::proc_macro::TokenStreamBuilder;
+    use crate::compiler::plugin::proc_macro::v2::TokenStreamBuilder;
     use cairo_lang_macro::{AllocationContext, TextSpan, TokenStream, TokenTree};
     use cairo_lang_parser::utils::SimpleParserDatabase;
     use indoc::indoc;

@@ -1,9 +1,9 @@
-use crate::compiler::plugin::proc_macro::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::host::conversion::{
+use crate::compiler::plugin::proc_macro::v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
+use crate::compiler::plugin::proc_macro::v2::host::conversion::{
     CallSiteLocation, into_cairo_diagnostics,
 };
-use crate::compiler::plugin::proc_macro::host::{DERIVE_ATTR, generate_code_mappings};
-use crate::compiler::plugin::proc_macro::{
+use crate::compiler::plugin::proc_macro::v2::host::{DERIVE_ATTR, generate_code_mappings};
+use crate::compiler::plugin::proc_macro::v2::{
     Expansion, ExpansionKind, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
 use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginGeneratedFile, PluginResult};
