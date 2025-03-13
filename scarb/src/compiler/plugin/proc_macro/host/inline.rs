@@ -89,7 +89,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                     content,
                     aux_data,
                     diagnostics_note: Some(format!(
-                        "this error originates in the inline macro: `{}`",
+                        "this diagnostic originates in the inline macro: `{}`",
                         self.expansion.name
                     )),
                 }),

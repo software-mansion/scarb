@@ -138,7 +138,7 @@ impl ProcMacroHostPlugin {
                     .iter()
                     .map(|derive| derive.id.expansion.name.to_string())
                     .join("`, `");
-                let note = format!("this error originates in {msg}: `{derive_names}`");
+                let note = format!("this diagnostic originates in {msg}: `{derive_names}`");
 
                 Some(PluginGeneratedFile {
                     name: "proc_macro_derive".into(),

@@ -414,7 +414,7 @@ impl ProcMacroHostPlugin {
                 code_mappings,
                 content,
                 diagnostics_note: Some(format!(
-                    "this error originates in the attribute macro: `{}`",
+                    "this diagnostic originates in the attribute macro: `{}`",
                     input.expansion.name
                 )),
                 aux_data: result.aux_data.map(|new_aux_data| {
@@ -516,7 +516,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
             "one of the attribute macros"
         };
         let derive_names = attr_names.iter().map(ToString::to_string).join("`, `");
-        let note = format!("this error originates in {msg}: `{derive_names}`");
+        let note = format!("this diagnostic originates in {msg}: `{derive_names}`");
         PluginResult {
             code: Some(PluginGeneratedFile {
                 name: "proc_attr_inner".into(),

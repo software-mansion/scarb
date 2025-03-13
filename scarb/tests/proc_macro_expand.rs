@@ -1605,7 +1605,7 @@ fn code_mappings_preserve_attribute_error_locations() {
              --> [..]lib.cairo:4:5
                 x = 2;
                 ^^^^^^
-            note: this error originates in the attribute macro: `some`
+            note: this diagnostic originates in the attribute macro: `some`
 
             error: could not compile `hello` due to previous error
         "#});
@@ -1747,7 +1747,7 @@ fn code_mappings_preserve_derive_error_locations() {
             | ...
             | #[derive(CustomDerive, Drop)]
             |_^
-            note: this error originates in the derive macro: `custom_derive`
+            note: this diagnostic originates in the derive macro: `custom_derive`
 
             error: The value does not fit within the range of type core::integer::u8.
              --> [..]lib.cairo:1:1-8:10
@@ -1756,7 +1756,7 @@ fn code_mappings_preserve_derive_error_locations() {
             | ...
             | #[derive(CustomDerive, Drop)]
             |__________^
-            note: this error originates in the derive macro: `custom_derive`
+            note: this diagnostic originates in the derive macro: `custom_derive`
 
             error: could not compile `hello` due to previous error
         "#});
