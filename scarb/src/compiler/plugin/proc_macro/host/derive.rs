@@ -125,6 +125,10 @@ impl ProcMacroHostPlugin {
             derived_code.push_str(&result.token_stream.to_string());
         }
 
+        let derive_names = derives
+            .iter()
+            .map(|derive| derive.id.expansion.name.to_string())
+            .join("`, `");
         Some(PluginResult {
             code: if derived_code.is_empty() {
                 None
@@ -134,10 +138,6 @@ impl ProcMacroHostPlugin {
                 } else {
                     "one of the derive macros"
                 };
-                let derive_names = derives
-                    .iter()
-                    .map(|derive| derive.id.expansion.name.to_string())
-                    .join("`, `");
                 let note = format!("this diagnostic originates in {msg}: `{derive_names}`");
 
                 Some(PluginGeneratedFile {
@@ -152,7 +152,13 @@ impl ProcMacroHostPlugin {
                     },
                 })
             },
-            diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),
+            diagnostics: into_cairo_diagnostics(
+                db,
+                all_diagnostics,
+                stable_ptr,
+                Some(derive_names.as_str()),
+                Some(ExpansionKind::Derive),
+            ),
             // Note that we don't remove the original item here, unlike for attributes.
             // We do not add the original code to the generated file either.
             remove_original_item: false,

@@ -192,6 +192,7 @@ impl ProcMacroHostPlugin {
         );
 
         let expanded = context.register_result(
+            db,
             token_stream.to_string(),
             input.id,
             result,
@@ -360,6 +361,7 @@ impl ProcMacroHostPlugin {
 
     pub fn expand_attribute(
         &self,
+        db: &dyn SyntaxGroup,
         input: ProcMacroId,
         last: bool,
         args: TokenStream,
@@ -378,7 +380,13 @@ impl ProcMacroHostPlugin {
         if result.token_stream.is_empty() {
             // Remove original code
             return PluginResult {
-                diagnostics: into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr),
+                diagnostics: into_cairo_diagnostics(
+                    db,
+                    result.diagnostics,
+                    call_site.stable_ptr,
+                    Some(&input.expansion.name),
+                    Some(input.expansion.kind.clone()),
+                ),
                 code: None,
                 remove_original_item: true,
             };
@@ -401,7 +409,13 @@ impl ProcMacroHostPlugin {
             return PluginResult {
                 code: None,
                 remove_original_item: false,
-                diagnostics: into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr),
+                diagnostics: into_cairo_diagnostics(
+                    db,
+                    result.diagnostics,
+                    call_site.stable_ptr,
+                    Some(&input.expansion.name),
+                    Some(input.expansion.kind.clone()),
+                ),
             };
         }
 
@@ -418,13 +432,20 @@ impl ProcMacroHostPlugin {
                     input.expansion.name
                 )),
                 aux_data: result.aux_data.map(|new_aux_data| {
+                    let input_clone = input.clone();
                     DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
                         new_aux_data.into(),
-                        input,
+                        input_clone,
                     )))
                 }),
             }),
-            diagnostics: into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr),
+            diagnostics: into_cairo_diagnostics(
+                db,
+                result.diagnostics,
+                call_site.stable_ptr,
+                Some(&input.expansion.name),
+                Some(input.expansion.kind.clone()),
+            ),
             remove_original_item: true,
         }
     }
@@ -478,6 +499,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
 
     pub fn register_result(
         &mut self,
+        db: &dyn SyntaxGroup,
         original: String,
         input: ProcMacroId,
         result: ProcMacroResult,
@@ -491,12 +513,17 @@ impl<'a> InnerAttrExpansionContext<'a> {
                 .register_full_path_markers(input.package_id, result.full_path_markers.clone());
         }
 
-        self.diagnostics
-            .extend(into_cairo_diagnostics(result.diagnostics, stable_ptr));
+        self.diagnostics.extend(into_cairo_diagnostics(
+            db,
+            result.diagnostics,
+            stable_ptr,
+            Some(&input.expansion.name),
+            Some(input.expansion.kind.clone()),
+        ));
 
         if let Some(new_aux_data) = result.aux_data {
             self.aux_data
-                .push(ProcMacroAuxData::new(new_aux_data.into(), input));
+                .push(ProcMacroAuxData::new(new_aux_data.into(), input.clone()));
         }
 
         self.any_changed = self.any_changed || changed;

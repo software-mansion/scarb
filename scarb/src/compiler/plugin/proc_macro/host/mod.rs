@@ -188,7 +188,14 @@ impl MacroPlugin for ProcMacroHostPlugin {
         }
         .map(|(input, last)| {
             let token_stream = body.with_metadata(stream_metadata.clone());
-            self.expand_attribute(input.id, last, input.args, token_stream, input.call_site)
+            self.expand_attribute(
+                db,
+                input.id,
+                last,
+                input.args,
+                token_stream,
+                input.call_site,
+            )
         }) {
             return result;
         }

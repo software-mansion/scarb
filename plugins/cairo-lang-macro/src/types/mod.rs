@@ -106,6 +106,11 @@ pub struct Diagnostic {
     ///
     /// Defines how this diagnostic should influence the compilation.
     pub severity: Severity,
+    /// Optional custom span for the diagnostic location.
+    ///
+    /// If provided, this span will be used instead of the default attribute location.
+    /// This allows macros to point to specific elements within the annotated item.
+    pub span: Option<TextSpan>,
 }
 
 /// The severity of a diagnostic.
@@ -136,6 +141,7 @@ impl Diagnostic {
         Self {
             message: message.to_string(),
             severity: Severity::Error,
+            span: None,
         }
     }
 
@@ -144,6 +150,25 @@ impl Diagnostic {
         Self {
             message: message.to_string(),
             severity: Severity::Warning,
+            span: None,
+        }
+    }
+
+    /// Create a new error diagnostic with a custom span.
+    pub fn error_with_span(message: impl ToString, span: TextSpan) -> Self {
+        Self {
+            message: message.to_string(),
+            severity: Severity::Error,
+            span: Some(span),
+        }
+    }
+
+    /// Create a new warning diagnostic with a custom span.
+    pub fn warn_with_span(message: impl ToString, span: TextSpan) -> Self {
+        Self {
+            message: message.to_string(),
+            severity: Severity::Warning,
+            span: Some(span),
         }
     }
 }
