@@ -6,6 +6,7 @@ use convert_case::{Case, Casing};
 use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandDerive};
 
 use super::Handler;
+use crate::compiler::plugin::proc_macro::{DeclaredProcMacroInstances, ProcMacroApiVersion};
 use crate::compiler::plugin::{
     collection::WorkspaceProcMacros,
     proc_macro::{Expansion, ExpansionKind},
@@ -29,12 +30,17 @@ impl Handler for ExpandDerive {
         for derive in derives {
             let expansion = Expansion::new(derive.to_case(Case::Snake), ExpansionKind::Derive);
 
-            let plugin = workspace_macros
-                .get(&context.component)
-                .with_context(|| format!("No macros found in scope {context:?}"))?;
+            let plugin = workspace_macros.get(&context.component);
+            let plugin = plugin
+                .as_ref()
+                .and_then(|v| {
+                    v.iter()
+                        .find(|a| a.api_version() == ProcMacroApiVersion::V2)
+                })
+                .with_context(|| format!("No macros found in scope: {context:?}"))?;
 
             let instance = plugin
-                .macros()
+                .instances()
                 .iter()
                 .find(|instance| instance.get_expansions().contains(&expansion))
                 .with_context(|| format!("Unsupported derive macro: {derive}"))?;
