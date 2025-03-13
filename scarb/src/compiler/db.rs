@@ -29,7 +29,7 @@ use tracing::trace;
 
 pub struct ScarbDatabase {
     pub db: RootDatabase,
-    pub proc_macros: Vec<Arc<ProcMacroHostPlugin>>,
+    pub proc_macros: Vec<ProcMacroHostPlugin>,
 }
 
 pub(crate) fn build_scarb_root_database(
@@ -68,7 +68,10 @@ pub(crate) fn build_scarb_root_database(
     apply_plugins(&mut db, plugins);
     inject_virtual_wrapper_lib(&mut db, unit)?;
 
-    let proc_macros = proc_macros.into_values().collect();
+    let proc_macros = proc_macros
+        .into_values()
+        .flat_map(|hosts| hosts.into_iter())
+        .collect();
     Ok(ScarbDatabase { db, proc_macros })
 }
 
