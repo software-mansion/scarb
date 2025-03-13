@@ -1,10 +1,11 @@
+use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
 use crate::compiler::plugin::proc_macro::v2::host::conversion::{
     CallSiteLocation, into_cairo_diagnostics,
 };
 use crate::compiler::plugin::proc_macro::v2::host::{DERIVE_ATTR, generate_code_mappings};
 use crate::compiler::plugin::proc_macro::v2::{
-    Expansion, ExpansionKind, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
+    ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
 use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginGeneratedFile, PluginResult};
 use cairo_lang_filesystem::ids::CodeMapping;
@@ -93,12 +94,16 @@ impl ProcMacroHostPlugin {
             let call_site = &derive.call_site;
             let derive = &derive.id;
             let token_stream = token_stream_builder.build(&ctx);
-            let result = self.instance(derive.package_id).generate_code(
-                derive.expansion.name.clone(),
-                call_site.span.clone(),
-                TokenStream::empty(),
-                token_stream,
-            );
+            let result = self
+                .instance(derive.package_id)
+                .try_v2()
+                .expect("procedural macro using v1 api used in a context expecting v2 api")
+                .generate_code(
+                    derive.expansion.name.clone(),
+                    call_site.span.clone(),
+                    TokenStream::empty(),
+                    token_stream,
+                );
 
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);

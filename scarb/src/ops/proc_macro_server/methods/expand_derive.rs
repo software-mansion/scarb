@@ -39,12 +39,15 @@ impl Handler for ExpandDerive {
                 .find(|instance| instance.get_expansions().contains(&expansion))
                 .with_context(|| format!("Unsupported derive macro: {derive}"))?;
 
-            let result = instance.generate_code(
-                expansion.name.clone(),
-                call_site.clone(),
-                TokenStream::empty(),
-                item.clone(),
-            );
+            let result = instance
+                .try_v2()
+                .expect("procedural macro using v1 api used in a context expecting v2 api")
+                .generate_code(
+                    expansion.name.clone(),
+                    call_site.clone(),
+                    TokenStream::empty(),
+                    item.clone(),
+                );
 
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);

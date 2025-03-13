@@ -4,7 +4,8 @@ use anyhow::{Context, Result};
 use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandAttribute};
 
 use super::Handler;
-use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};
+use crate::compiler::plugin::collection::WorkspaceProcMacros;
+use crate::compiler::plugin::proc_macro::ExpansionKind;
 
 impl Handler for ExpandAttribute {
     fn handle(
@@ -35,7 +36,10 @@ impl Handler for ExpandAttribute {
             })
             .with_context(|| format!("Unsupported attribute: {attr}"))?;
 
-        let result = instance.generate_code(attr.into(), call_site, args, item);
+        let result = instance
+            .try_v2()
+            .expect("procedural macro using v1 api used in a context expecting v2 api")
+            .generate_code(attr.into(), call_site, args, item);
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,
