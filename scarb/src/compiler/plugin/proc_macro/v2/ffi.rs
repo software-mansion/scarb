@@ -1,4 +1,4 @@
-use crate::compiler::plugin::proc_macro::v2::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::core::{Package, PackageId};
 use anyhow::{Context, Result, ensure};
 use cairo_lang_macro::{

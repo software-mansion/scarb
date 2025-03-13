@@ -18,8 +18,8 @@ use std::ffi::{CStr, CString, c_char};
 use std::fmt::Debug;
 use std::slice;
 
+use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::v1::ProcMacroAuxData;
-use crate::compiler::plugin::proc_macro::v1::compilation::SharedLibraryProvider;
 
 #[cfg(not(windows))]
 use libloading::os::unix::Symbol as RawSymbol;
