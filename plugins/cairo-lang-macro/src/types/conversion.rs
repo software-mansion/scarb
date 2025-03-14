@@ -370,7 +370,6 @@ impl Diagnostic {
             message: CString::new(self.message).unwrap().into_raw(),
             severity: self.severity.into_stable(),
             span: self.span.map(|span| span.into_stable()),
-            note: std::ptr::null_mut(),
         }
     }
 
@@ -399,9 +398,6 @@ impl Diagnostic {
         free_raw_cstring(diagnostic.message);
         if let Some(span) = diagnostic.span {
             TextSpan::free_owned_stable(span);
-        }
-        if !diagnostic.note.is_null() {
-            free_raw_cstring(diagnostic.note);
         }
     }
 }

@@ -73,7 +73,6 @@ pub struct StableDiagnostic {
     pub message: *mut c_char,
     pub severity: StableSeverity,
     pub span: Option<StableTextSpan>,
-    pub note: *mut c_char,
 }
 
 /// The severity of a diagnostic.
