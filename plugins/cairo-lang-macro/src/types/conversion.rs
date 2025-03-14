@@ -361,7 +361,7 @@ impl AuxData {
 }
 
 impl Diagnostic {
-    // Convert to FFI-safe representation.
+    /// Convert to FFI-safe representation.
     ///
     /// # Safety
     #[doc(hidden)]
@@ -369,6 +369,7 @@ impl Diagnostic {
         StableDiagnostic {
             message: CString::new(self.message).unwrap().into_raw(),
             severity: self.severity.into_stable(),
+            span: self.span.map(|span| span.into_stable()),
         }
     }
 
@@ -382,6 +383,7 @@ impl Diagnostic {
         Self {
             message: from_raw_cstr(diagnostic.message),
             severity: Severity::from_stable(&diagnostic.severity),
+            span: diagnostic.span.as_ref().map(TextSpan::from_stable),
         }
     }
 
@@ -394,6 +396,9 @@ impl Diagnostic {
     #[doc(hidden)]
     pub unsafe fn free_owned_stable(diagnostic: StableDiagnostic) {
         free_raw_cstring(diagnostic.message);
+        if let Some(span) = diagnostic.span {
+            TextSpan::free_owned_stable(span);
+        }
     }
 }
 

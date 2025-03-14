@@ -4,7 +4,7 @@ use crate::compiler::plugin::proc_macro::host::conversion::{
 };
 use crate::compiler::plugin::proc_macro::host::generate_code_mappings;
 use crate::compiler::plugin::proc_macro::{
-    Expansion, ProcMacroId, ProcMacroInstance, TokenStreamBuilder,
+    Expansion, ExpansionKind, ProcMacroId, ProcMacroInstance, TokenStreamBuilder,
 };
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, InlineMacroExprPlugin, InlinePluginResult, MacroPluginMetadata,
@@ -61,7 +61,13 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
             token_stream,
         );
         // Handle diagnostics.
-        let diagnostics = into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr);
+        let diagnostics = into_cairo_diagnostics(
+            db,
+            result.diagnostics,
+            call_site.stable_ptr,
+            Some(&self.expansion.name),
+            Some(ExpansionKind::Inline),
+        );
         let token_stream = result.token_stream.clone();
         if token_stream.is_empty() {
             // Remove original code
@@ -89,7 +95,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                     content,
                     aux_data,
                     diagnostics_note: Some(format!(
-                        "this error originates in the inline macro: `{}`",
+                        "this diagnostic originates in the inline macro: `{}`",
                         self.expansion.name
                     )),
                 }),
