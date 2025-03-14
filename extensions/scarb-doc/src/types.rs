@@ -12,6 +12,7 @@ use cairo_lang_utils::{LookupIntern, Upcast};
 use itertools::chain;
 use serde::Serialize;
 
+use crate::location_links::DocLocationLink;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, GenericTypeId, ImplAliasId,
@@ -462,6 +463,8 @@ pub struct ItemData {
     pub doc: Option<Vec<DocumentationCommentToken>>,
     pub signature: Option<String>,
     pub full_path: String,
+    #[serde(skip_serializing)]
+    pub doc_location_links: Vec<DocLocationLink>,
 }
 
 impl ItemData {
@@ -470,13 +473,19 @@ impl ItemData {
         id: impl TopLevelLanguageElementId,
         documentable_item_id: DocumentableItemId,
     ) -> Self {
+        let signature = db.get_item_signature_with_links(documentable_item_id);
+        let mut doc_location_links: Vec<DocLocationLink> = Vec::new();
+        for link in signature.1 {
+            doc_location_links.push(DocLocationLink::new(link.start, link.end, link.item_id, db))
+        }
         Self {
             id: documentable_item_id,
             name: id.name(db).into(),
             doc: db.get_item_documentation_as_tokens(documentable_item_id),
-            signature: db.get_item_signature(documentable_item_id),
+            signature: signature.0,
             full_path: id.full_path(db),
             parent_full_path: Some(id.parent_module(db).full_path(db)),
+            doc_location_links,
         }
     }
 
@@ -492,6 +501,7 @@ impl ItemData {
             signature: None,
             full_path: id.full_path(db),
             parent_full_path: Some(id.parent_module(db).full_path(db)),
+            doc_location_links: vec![],
         }
     }
 
@@ -504,6 +514,7 @@ impl ItemData {
             signature: None,
             full_path: ModuleId::CrateRoot(id).full_path(db),
             parent_full_path: None,
+            doc_location_links: vec![],
         }
     }
 }

@@ -2,7 +2,7 @@
 
 Fully qualified path: `hello_world::CircleSerde`
 
-<pre><code class="language-rust">impl CircleSerde of Serde&lt;Circle&gt;;</code></pre>
+<pre><code class="language-rust">impl CircleSerde of Serde&lt;<a href="hello_world-Circle.html">Circle</a>&gt;;</code></pre>
 
 ## Impl functions
 

@@ -52,7 +52,7 @@ fn hides_impls_of_private_traits() {
     ProjectBuilder::start()
         .name("hello_world")
         .lib_cairo(indoc! {r#"
-          #[doc(hidden)
+          #[doc(hidden)]
           struct HiddenStuct {}
 
           #[doc(hidden)]
