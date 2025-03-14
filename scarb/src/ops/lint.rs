@@ -8,8 +8,8 @@ use crate::{
     core::{PackageId, TargetKind},
     ops,
 };
-use anyhow::Result;
 use anyhow::anyhow;
+use anyhow::{Context, Result};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::Diagnostics;
 use cairo_lang_semantic::{SemanticDiagnostic, db::SemanticGroup};
@@ -190,7 +190,8 @@ fn cairo_lint_tool_metadata(package: &Package) -> Result<CairoLintToolMetadata> 
         .tool_metadata(CAIRO_LINT_TOOL_NAME)
         .cloned()
         .map(toml::Value::try_into)
-        .transpose()?
+        .transpose()
+        .context("Failed to parse Cairo lint tool metadata")?
         .unwrap_or_default())
 }
 
