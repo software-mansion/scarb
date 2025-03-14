@@ -1,10 +1,11 @@
-use std::fmt::Display;
 use std::vec::IntoIter;
 
 mod conversion;
 mod expansions;
+mod token;
 
 pub use expansions::*;
+pub use token::*;
 
 /// Result of procedural macro code generation.
 #[derive(Debug, Clone)]
@@ -13,78 +14,6 @@ pub struct ProcMacroResult {
     pub aux_data: Option<AuxData>,
     pub diagnostics: Vec<Diagnostic>,
     pub full_path_markers: Vec<String>,
-}
-
-/// An abstract stream of Cairo tokens.
-///
-/// This is both input and part of an output of a procedural macro.
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
-pub struct TokenStream {
-    value: String,
-    metadata: TokenStreamMetadata,
-}
-
-/// Metadata of [`TokenStream`].
-///
-/// This struct can be used to describe the origin of the [`TokenStream`].
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
-pub struct TokenStreamMetadata {
-    /// The path to the file from which the [`TokenStream`] has been created.
-    pub original_file_path: Option<String>,
-    /// ID of the file from which the [`TokenStream`] has been created.
-    ///
-    /// It is guaranteed, that the `file_id` will be unique for each file.
-    pub file_id: Option<String>,
-}
-
-impl TokenStream {
-    #[doc(hidden)]
-    pub fn new(value: String) -> Self {
-        Self {
-            value,
-            metadata: TokenStreamMetadata::default(),
-        }
-    }
-
-    #[doc(hidden)]
-    pub fn empty() -> Self {
-        Self::new("".to_string())
-    }
-
-    #[doc(hidden)]
-    pub fn with_metadata(mut self, metadata: TokenStreamMetadata) -> Self {
-        self.metadata = metadata;
-        self
-    }
-
-    /// Get `[TokenStreamMetadata`] associated with this [`TokenStream`].
-    ///
-    /// The metadata struct can be used to describe the [`TokenStream`] origin.
-    pub fn metadata(&self) -> &TokenStreamMetadata {
-        &self.metadata
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.to_string().is_empty()
-    }
-}
-
-impl Display for TokenStream {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
-
-impl TokenStreamMetadata {
-    #[doc(hidden)]
-    pub fn new(file_path: impl ToString, file_id: impl ToString) -> Self {
-        Self {
-            original_file_path: Some(file_path.to_string()),
-            file_id: Some(file_id.to_string()),
-        }
-    }
 }
 
 /// **Auxiliary data** returned by procedural macro code generation.
@@ -101,7 +30,7 @@ impl TokenStreamMetadata {
 /// For instance, auxiliary data can be serialized as JSON.
 ///
 /// ```
-/// use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream, attribute_macro, post_process, PostProcessContext};
+/// use cairo_lang_macro::{AuxData, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan, attribute_macro, post_process, PostProcessContext};
 /// use serde::{Serialize, Deserialize};
 /// #[derive(Debug, Serialize, Deserialize)]
 /// struct SomeAuxDataFormat {
@@ -110,11 +39,16 @@ impl TokenStreamMetadata {
 ///
 /// #[attribute_macro]
 /// pub fn some_macro(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
-///     let token_stream = TokenStream::new(
-///         token_stream.to_string()
-///         // Remove macro call to avoid infinite loop.
-///         .replace("#[some]", "")
-///     );
+///     // Remove macro call to avoid infinite loop.
+///     let code = token_stream.to_string().replace("#[some]", "");
+///     let token_stream = TokenStream::new(vec![
+///         TokenTree::Ident(
+///             Token::new(
+///                 &code,
+///                 TextSpan::new(0, code.len() as u32)
+///             )
+///         )
+///     ]);
 ///     let value = SomeAuxDataFormat { some_message: "Hello from some macro!".to_string() };
 ///     let value = serde_json::to_string(&value).unwrap();
 ///     let value: Vec<u8> = value.into_bytes();
@@ -321,11 +255,38 @@ pub struct FullPathMarker {
 #[cfg(test)]
 mod tests {
     use crate::types::TokenStream;
+    use crate::{AllocationContext, TextSpan, Token, TokenTree};
 
     #[test]
     fn new_token_stream_metadata_empty() {
         let token_stream = TokenStream::empty();
         assert!(token_stream.metadata.file_id.is_none());
         assert!(token_stream.metadata.original_file_path.is_none());
+    }
+
+    #[test]
+    fn can_convert_to_stable() {
+        let token_stream = TokenStream::new(vec![
+            TokenTree::Ident(Token::new("test", TextSpan::new(0, 4))),
+            TokenTree::Ident(Token::new(";", TextSpan::new(4, 5))),
+        ]);
+        let stable = token_stream.as_stable();
+        let ctx = AllocationContext::default();
+        let token_stream = unsafe { TokenStream::from_stable_in(&stable, &ctx) };
+        assert_eq!(token_stream.tokens.len(), 2);
+        assert_eq!(token_stream.to_string(), "test;");
+    }
+
+    #[test]
+    fn can_store_null_character() {
+        let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+            "te\0st",
+            TextSpan::new(0, 4),
+        ))]);
+        let stable = token_stream.as_stable();
+        let ctx = AllocationContext::default();
+        let token_stream = unsafe { TokenStream::from_stable_in(&stable, &ctx) };
+        assert_eq!(token_stream.tokens.len(), 1);
+        assert_eq!(token_stream.to_string(), "te\0st");
     }
 }
