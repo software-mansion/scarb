@@ -6,7 +6,6 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_use_both_v1_and_v2_proc_macros() {
     let temp = TempDir::new().unwrap();
     let foo = temp.child("foo");
@@ -30,7 +29,7 @@ fn can_use_both_v1_and_v2_proc_macros() {
     CairoPluginProjectBuilder::default()
         .name("bar")
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro_v2::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
         pub fn bar(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
@@ -87,7 +86,6 @@ fn can_use_both_v1_and_v2_proc_macros() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn v1_and_v2_macros_cannot_duplicate_expansions() {
     let temp = TempDir::new().unwrap();
     let foo = temp.child("foo");
@@ -111,7 +109,7 @@ fn v1_and_v2_macros_cannot_duplicate_expansions() {
     CairoPluginProjectBuilder::default()
         .name("bar")
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro_v2::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
