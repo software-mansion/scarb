@@ -12,17 +12,15 @@ use anyhow::Result;
 use anyhow::anyhow;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::Diagnostics;
-use cairo_lang_semantic::diagnostic::SemanticDiagnosticKind;
 use cairo_lang_semantic::{SemanticDiagnostic, db::SemanticGroup};
 use cairo_lang_utils::Upcast;
-use cairo_lint_core::annotate_snippets::Renderer;
+use cairo_lint_core::{CAIRO_LINT_TOOL_NAME, annotate_snippets::Renderer};
 use cairo_lint_core::{
-    apply_file_fixes, context::CairoLintKind, context::get_lint_type_from_diagnostic_message,
-    diagnostics::format_diagnostic, get_fixes, plugin::cairo_lint_plugin_suite,
+    CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
+    plugin::cairo_lint_plugin_suite,
 };
 use itertools::Itertools;
 use scarb_ui::components::Status;
-use serde::Deserialize;
 
 use crate::core::{Package, Workspace};
 
@@ -142,7 +140,8 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .ui()
                         .print(Status::new("Linting", &compilation_unit.name()));
 
-                    let additional_plugins = vec![cairo_lint_plugin_suite()];
+                    let additional_plugins =
+                        vec![cairo_lint_plugin_suite(cairo_lint_tool_metadata(&package)?)];
                     let ScarbDatabase { db, .. } =
                         build_scarb_root_database(compilation_unit, ws, additional_plugins)?;
 
@@ -155,39 +154,17 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .flat_map(|module_id| db.module_semantic_diagnostics(*module_id).ok())
                         .collect();
 
-                    let should_lint_panics = cairo_lint_tool_metadata(&package)?.nopanic;
-
                     let renderer = Renderer::styled();
 
                     let diagnostics = diags
                         .iter()
                         .flat_map(|diags| {
                             let all_diags = diags.get_all();
-                            all_diags
-                                .iter()
-                                .filter(|diag| {
-                                    if let SemanticDiagnosticKind::PluginDiagnostic(diag) =
-                                        &diag.kind
-                                    {
-                                        (matches!(
-                                            get_lint_type_from_diagnostic_message(&diag.message),
-                                            CairoLintKind::Panic
-                                        ) && should_lint_panics)
-                                            || !matches!(
-                                                get_lint_type_from_diagnostic_message(
-                                                    &diag.message
-                                                ),
-                                                CairoLintKind::Panic
-                                            )
-                                    } else {
-                                        true
-                                    }
-                                })
-                                .for_each(|diag| {
-                                    ws.config()
-                                        .ui()
-                                        .print(format_diagnostic(diag, &db, &renderer))
-                                });
+                            all_diags.iter().for_each(|diag| {
+                                ws.config()
+                                    .ui()
+                                    .print(format_diagnostic(diag, &db, &renderer))
+                            });
                             all_diags
                         })
                         .collect::<Vec<_>>();
@@ -208,14 +185,9 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     Ok(())
 }
 
-#[derive(Deserialize, Default, Debug)]
-pub struct CairoLintToolMetadata {
-    pub nopanic: bool,
-}
-
 fn cairo_lint_tool_metadata(package: &Package) -> Result<CairoLintToolMetadata> {
     Ok(package
-        .tool_metadata("cairo-lint")
+        .tool_metadata(CAIRO_LINT_TOOL_NAME)
         .cloned()
         .map(toml::Value::try_into)
         .transpose()?

@@ -239,3 +239,63 @@ fn lint_unit_test() {
 
         "#});
 }
+
+#[test]
+fn lint_no_panics() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn main() {
+                panic!("This should not be linted.");
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches("     Linting hello v1.0.0 ([..]/Scarb.toml)\n");
+}
+
+#[test]
+fn lint_panics() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [tool]
+            cairo-lint.nopanic = true
+        "#})
+        .lib_cairo(indoc! {r#"
+            fn main() {
+                panic!("This should not be linted.");
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+               Linting hello v1.0.0 ([..]/Scarb.toml)
+          [1m[33mwarning[0m: [1mPlugin diagnostic: Leaving `panic` in the code is discouraged.[0m
+           [1m[94m-->[0m [..]/lib.cairo:2:5
+            [1m[94m|[0m
+          [1m[94m2 |[0m     panic!("This should not be linted.");
+            [1m[94m|[0m     [1m[33m-----[0m
+            [1m[94m|[0m
+
+          [1m[33mwarning[0m: [1mPlugin diagnostic: Leaving `panic` in the code is discouraged.[0m
+           [1m[94m-->[0m [..]/lib.cairo:2:5
+            [1m[94m|[0m
+          [1m[94m2 |[0m     panic!("This should not be linted.");
+            [1m[94m|[0m     [1m[33m-----[0m
+            [1m[94m|[0m
+        
+        "#});
+}
