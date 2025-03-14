@@ -147,7 +147,7 @@ Example:
 members = ["foo", "bar"]
 
 [workspace.dependencies]
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+alexandria_math = "0.1.0"
 openzeppelin = "0.19.0"
 ```
 
