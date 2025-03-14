@@ -72,7 +72,6 @@ fn check_cairo_plugin() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_check_cairo_project_with_plugins() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -107,7 +106,6 @@ fn can_check_cairo_project_with_plugins() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn resolve_fetched_plugins() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default_v1().build(&t);
@@ -128,7 +126,6 @@ fn resolve_fetched_plugins() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_use_json_output() {
     let t = TempDir::new().unwrap();
     CairoPluginProjectBuilder::default_v1().build(&t);
@@ -163,7 +160,6 @@ fn can_use_json_output() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn compile_cairo_plugin_with_lib_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -189,7 +185,6 @@ fn compile_cairo_plugin_with_lib_target() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn compile_cairo_plugin_with_other_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -215,7 +210,6 @@ fn compile_cairo_plugin_with_other_target() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_emit_plugin_warning() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -262,7 +256,6 @@ fn can_emit_plugin_warning() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_emit_plugin_error() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -309,7 +302,6 @@ fn can_emit_plugin_error() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn diags_from_generated_code_mapped_correctly() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -364,7 +356,6 @@ fn diags_from_generated_code_mapped_correctly() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_remove_original_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -413,7 +404,6 @@ fn can_remove_original_node() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_replace_original_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -462,7 +452,6 @@ fn can_replace_original_node() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_return_aux_data_from_plugin() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -533,7 +522,6 @@ fn can_return_aux_data_from_plugin() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_read_token_stream_metadata() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -584,7 +572,6 @@ fn can_read_token_stream_metadata() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_define_multiple_macros() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -680,7 +667,6 @@ fn can_define_multiple_macros() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn cannot_duplicate_macros() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -721,7 +707,6 @@ fn cannot_duplicate_macros() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn cannot_duplicate_macros_across_packages() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -799,7 +784,6 @@ fn cannot_duplicate_macros_across_packages() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn cannot_use_undefined_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -844,7 +828,6 @@ fn cannot_use_undefined_macro() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_resolve_full_path_markers() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -900,7 +883,6 @@ fn can_resolve_full_path_markers() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_implement_inline_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -947,7 +929,6 @@ fn can_implement_inline_macro() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn empty_inline_macro_result() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -994,7 +975,6 @@ fn empty_inline_macro_result() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_implement_derive_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1070,7 +1050,6 @@ fn can_implement_derive_macro() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_use_both_derive_and_attr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1153,7 +1132,6 @@ fn can_use_both_derive_and_attr() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_read_attribute_args() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1203,7 +1181,6 @@ fn can_read_attribute_args() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_create_executable_attribute() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1262,7 +1239,6 @@ fn can_create_executable_attribute() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn executable_name_cannot_clash_attr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1306,7 +1282,6 @@ fn executable_name_cannot_clash_attr() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_be_expanded() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1416,7 +1391,6 @@ fn can_be_expanded() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_expand_trait_inner_func_attrr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1479,7 +1453,6 @@ fn can_expand_trait_inner_func_attrr() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_expand_impl_inner_func_attrr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -1556,7 +1529,6 @@ fn can_expand_impl_inner_func_attrr() {
                 use super::{IHello, Hello, IHelloDispatcher, IHelloDispatcherTrait};
 
                 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
                 fn test_flow() {
                     let calldata = array![100];
                     let (address0, _) = deploy_syscall(
@@ -1593,7 +1565,6 @@ fn can_expand_impl_inner_func_attrr() {
 }
 
 #[test]
-#[ignore = "TODO(maciektr): support old macro api"]
 fn can_be_used_through_re_export() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
