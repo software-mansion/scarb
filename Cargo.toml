@@ -64,7 +64,7 @@ cairo-lang-test-plugin = "*"
 cairo-lang-test-runner = "*"
 cairo-lang-utils = { version = "*", features = ["env_logger"] }
 cairo-language-server = "*"
-cairo-lint-core = { path = "../cairo-lint/crates/cairo-lint-core" }
+cairo-lint-core = { git = "https://github.com/DelevoXDG/cairo-lint", branch = "zdobnikau/diagnostics-all" }
 cairo-vm = "2.0.0"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
