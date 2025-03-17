@@ -114,7 +114,7 @@ jobs:
         run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} -p scarb-prove -p scarb-verify
 
       - name: Create archive
-        run: cargo xtask create-archive
+        run: cargo xtask create-archive ${{ !inputs.include-cairols && '--skip-cairols' || '' }} ${{ !inputs.include-stwo && '--skip-stwo' || '' }}
         env:
           STAGING: scarb-${{ inputs.scarb-tag }}-${{ matrix.target }}
           TARGET: ${{ matrix.target }}
