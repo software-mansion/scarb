@@ -18,8 +18,37 @@ on:
       # upgrade_stwo:
       #   description: "Upgrade Stwo"
       #   type: boolean
-      #   description: "Upgrade Stwo"
       #   default: true
+  workflow_call:
+    inputs:
+      dry_run:
+        description: "Dry run"
+        type: boolean
+        default: true
+      upgrade_cairols:
+        description: "Upgrade CairoLS"
+        type: boolean
+        default: true
+      upgrade_cairolint:
+        description: "Upgrade CairoLint"
+        type: boolean
+        default: true
+      # upgrade_stwo:
+      #   description: "Upgrade Stwo"
+      #   type: boolean
+      #   default: true
+      include_cairols:
+        description: "Include CairoLS in build"
+        type: boolean
+        default: true
+      include_stwo:
+        description: "Include Stwo in build"
+        type: boolean
+        default: true
+      include_lint:
+        description: "Include CairoLint in build"
+        type: boolean
+        default: true
   schedule:
     - cron: '0 0 * * 3,6'
 
