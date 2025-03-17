@@ -10,7 +10,10 @@ on:
       ref:
         required: false
         type: string
-      include_cairols:
+      full-verify:
+        required: false
+        type: boolean
+        default: false
       include-cairols:
         description: "Include CairoLS in build"
         type: boolean
@@ -166,7 +169,7 @@ jobs:
         shell: bash
         run: |
           archive=$(find target/verify -name 'scarb-*.zip' -o -name 'scarb-*.tar.gz')
-          cargo xtask verify-archive --archive "$archive"
+          cargo xtask verify-archive --archive "$archive" ${{ inputs.full-verify && '--full' || ''}}
         env:
           EXPECTED_VERSION: ${{ inputs.scarb-tag }}
 

@@ -16,6 +16,7 @@ jobs:
     uses: ./.github/workflows/_build-release.yml
     with:
       scarb-tag: ${{ github.ref_name }}
+      full-verify: true
 
   draft:
     name: draft release

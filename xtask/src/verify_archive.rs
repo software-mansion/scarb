@@ -1,10 +1,10 @@
 use std::env;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, ensure, Result};
-use clap::Parser;
+use anyhow::{Result, anyhow, ensure};
+use clap::{Parser, arg};
 use walkdir::WalkDir;
-use xshell::{cmd, Shell};
+use xshell::{Shell, cmd};
 
 #[derive(Parser)]
 pub struct Args {
@@ -12,6 +12,9 @@ pub struct Args {
     archive: PathBuf,
     #[arg(short, long, env = "EXPECTED_VERSION")]
     expected_version: String,
+    // Ensure Scarb has been compiled with all optional components.
+    #[arg(long)]
+    full: bool,
 }
 
 pub fn main(args: Args) -> Result<()> {
@@ -20,7 +23,13 @@ pub fn main(args: Args) -> Result<()> {
     let expected_version = args.expected_version.trim_start_matches('v');
 
     let install_dir = sh.create_temp_dir()?;
-    if args.archive.file_name().unwrap().to_string_lossy().ends_with(".tar.gz") {
+    if args
+        .archive
+        .file_name()
+        .unwrap()
+        .to_string_lossy()
+        .ends_with(".tar.gz")
+    {
         let archive = &args.archive;
         let install_dir = install_dir.path();
         cmd!(sh, "tar -zxvf {archive} -C {install_dir}").run()?;
@@ -47,6 +56,16 @@ pub fn main(args: Args) -> Result<()> {
     sh.change_dir(workdir.path().join("smoke_test"));
     cmd!(sh, "{scarb} build").run()?;
     cmd!(sh, "{scarb} test").run()?;
+    if args.full {
+        cmd!(sh, "{scarb} lint").run()?;
+        cmd!(
+            sh,
+            "{scarb} commands | jq -e 'has(\"cairo-language-server\")'"
+        )
+        .run()?;
+        cmd!(sh, "{scarb} commands | jq -e 'has(\"verify\")'").run()?;
+        cmd!(sh, "{scarb} commands | jq -e 'has(\"prove\")'").run()?;
+    }
 
     Ok(())
 }
