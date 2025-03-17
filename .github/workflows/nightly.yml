@@ -57,7 +57,7 @@ on:
     - cron: '0 0 * * 3,6'
 
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ !!inputs.is_dev }}
   cancel-in-progress: true
 
 permissions:
