@@ -92,10 +92,7 @@ jobs:
         run: echo "CARGO=cross" >> $GITHUB_ENV
 
       - name: Build
-        run: |
-            ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove \
-            --exclude scarb-verify ${{ inputs.include-cairols && '--exclude scarb-cairo-language-server' || ''}} \
-            --no-default-features ${{ inputs.include-lint && '--features scarb/scarb-lint' || ''}}
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove --exclude scarb-verify ${{ inputs.include-cairols && '--exclude scarb-cairo-language-server' || ''}} --no-default-features ${{ inputs.include-lint && '--features scarb/scarb-lint' || ''}}
 
       - uses: dtolnay/rust-toolchain@master
         if: inputs.include-stwo
