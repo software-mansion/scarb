@@ -49,6 +49,10 @@ on:
         description: "Include CairoLint in build"
         type: boolean
         default: true
+      is_dev:
+        description: "Is this a dev build"
+        type: boolean
+        default: false
   schedule:
     - cron: '0 0 * * 3,6'
 
@@ -99,6 +103,8 @@ jobs:
       - name: Determine nightly version
         id: version
         shell: bash
+        env:
+          IS_SCARB_DEV: ${{ inputs.is_dev }}
         run: |
           NIGHTLY_TAG=$(cargo xtask get-nightly-version --tag)
           NIGHTLY_VERSION=$(cargo xtask get-nightly-version)
@@ -119,6 +125,8 @@ jobs:
         run: cargo build -p xtask
 
       - name: Compose release notes
+        env:
+          IS_SCARB_DEV: ${{ inputs.is_dev }}
         run: cargo xtask nightly-release-notes > NIGHTLY_RELEASE_NOTES.md
 
       - name: Commit patches

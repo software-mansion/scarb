@@ -42,4 +42,5 @@ jobs:
       #upgrade_stwo: ${{ inputs.upgrade_stwo }}
       include-cairols: ${{ inputs.include-cairols }}
       include-stwo: ${{ inputs.include-stwo }}
-      include-lint: ${{ inputs.include-lint }} 
+      include-lint: ${{ inputs.include-lint }}
+      is_dev: true
