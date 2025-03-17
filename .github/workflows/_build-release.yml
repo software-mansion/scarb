@@ -18,6 +18,10 @@ on:
         description: "Include Stwo in build"
         type: boolean
         default: true
+      include_lint:
+        description: "Include CairoLint in build"
+        type: boolean
+        default: true
 
 env:
   # TODO(#1915): Use stable toolchain once stwo is stable.
@@ -86,7 +90,8 @@ jobs:
       - name: Build
         run: |
             ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove \
-          --exclude scarb-verify ${{ inputs.include_cairols && '--exclude scarb-cairo-language-server' || ''}}
+          --exclude scarb-verify ${{ inputs.include_cairols && '--exclude scarb-cairo-language-server' || ''}} \
+          --no-default-features ${{ inputs.include_lint && '--features scarb/scarb-lint' || ''}}
 
       - uses: dtolnay/rust-toolchain@master
         if: inputs.include_stwo
