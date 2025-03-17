@@ -10,6 +10,10 @@ on:
       ref:
         required: false
         type: string
+      include_cairols:
+        description: "Include CairoLS in build"
+        type: boolean
+        default: true
       include_stwo:
         description: "Include Stwo in build"
         type: boolean
@@ -80,7 +84,9 @@ jobs:
         run: echo "CARGO=cross" >> $GITHUB_ENV
 
       - name: Build
-        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove --exclude scarb-verify
+        run: |
+            ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove \
+          --exclude scarb-verify ${{ inputs.include_cairols && '--exclude scarb-cairo-language-server' || ''}}
 
       - uses: dtolnay/rust-toolchain@master
         if: inputs.include_stwo
