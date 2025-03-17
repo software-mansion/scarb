@@ -2,9 +2,45 @@ name: Dev Build
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run"
+        type: boolean
+        default: true
+      upgrade_cairols:
+        description: "Upgrade CairoLS"
+        type: boolean
+        default: false
+      upgrade_cairolint:
+        description: "Upgrade CairoLint"
+        type: boolean
+        default: false
+      # upgrade_stwo:
+      #   description: "Upgrade Stwo"
+      #   type: boolean
+      #   default: false
+      include-cairols:
+        description: "Include CairoLS in build"
+        type: boolean
+        default: true
+      include-stwo:
+        description: "Include Stwo in build"
+        type: boolean
+        default: true
+      include-lint:
+        description: "Include CairoLint in build"
+        type: boolean
+        default: true
 
 jobs:
   dev-build:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Hello world!"
+    uses: ./.github/workflows/nightly.yml
+    with:
+      dry_run: ${{ inputs.dry_run }}
+      upgrade_cairols: ${{ inputs.upgrade_cairols }}
+      upgrade_cairolint: ${{ inputs.upgrade_cairolint }}
+      #upgrade_stwo: ${{ inputs.upgrade_stwo }}
+      include-cairols: ${{ inputs.include-cairols }}
+      include-stwo: ${{ inputs.include-stwo }}
+      include-lint: ${{ inputs.include-lint }}
+      is_dev: true
