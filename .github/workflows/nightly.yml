@@ -7,6 +7,10 @@ on:
         description: "Dry run"
         type: boolean
         default: true
+      upgrade-cairo:
+        description: "Upgrade Cairo"
+        type: boolean
+        default: true
       upgrade-cairols:
         description: "Upgrade CairoLS"
         type: boolean
@@ -23,6 +27,10 @@ on:
     inputs:
       dry_run:
         description: "Dry run"
+        type: boolean
+        default: true
+      upgrade-cairo:
+        description: "Upgrade Cairo"
         type: boolean
         default: true
       upgrade-cairols:
@@ -83,6 +91,7 @@ jobs:
         run: cargo build -p xtask
 
       - name: Upgrade Cairo to latest main commit
+        if: ${{ !contains(inputs.upgrade-cairo, 'false') }}
         run: cargo xtask upgrade cairo --rev $(git ls-remote --refs "https://github.com/starkware-libs/cairo" main | awk '{print $1}')
 
       - name: Upgrade CairoLS to latest main commit

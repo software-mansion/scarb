@@ -37,6 +37,7 @@ jobs:
     uses: ./.github/workflows/nightly.yml
     with:
       dry_run: ${{ inputs.dry_run }}
+      upgrade-cairo: ${{ inputs.upgrade-cairo }}
       upgrade-cairols: ${{ inputs.upgrade-cairols }}
       upgrade-cairolint: ${{ inputs.upgrade-cairolint }}
       #upgrade-stwo: ${{ inputs.upgrade-stwo }}
