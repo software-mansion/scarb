@@ -10,6 +10,10 @@ on:
       ref:
         required: false
         type: string
+      include_stwo:
+        description: "Include Stwo in build"
+        type: boolean
+        default: true
 
 env:
   # TODO(#1915): Use stable toolchain once stwo is stable.
@@ -79,20 +83,22 @@ jobs:
         run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove --exclude scarb-verify
 
       - uses: dtolnay/rust-toolchain@master
+        if: inputs.include_stwo
         with:
           target: ${{ matrix.target }}
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
 
       - name: Install cross
-        if: matrix.cross
+        if: matrix.cross && inputs.include_stwo
         uses: taiki-e/install-action@cross
 
       - name: Enable cross-compilation
-        if: matrix.cross
+        if: matrix.cross && inputs.include_stwo
         shell: bash
         run: echo "CARGO=cross" >> $GITHUB_ENV
 
       - name: Build nightly crates
+        if: inputs.include_stwo
         run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} -p scarb-prove -p scarb-verify
 
       - name: Create archive
