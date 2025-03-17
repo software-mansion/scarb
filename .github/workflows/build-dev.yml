@@ -1,0 +1,10 @@
+name: Dev Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dev-build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hello world!"
