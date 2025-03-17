@@ -317,7 +317,7 @@ fn prepare_archive_recipe(
             contents: ArchiveFileContents::OnDisk(
                 pkg.target_path(ws.config())
                     .into_child("package")
-                    .into_child(crate_archive_basename)
+                    .into_child(&crate_archive_basename)
                     .into_child(CARGO_MANIFEST_FILE_NAME)
                     .path_unchecked()
                     .to_path_buf(),
@@ -330,10 +330,17 @@ fn prepare_archive_recipe(
             contents: ArchiveFileContents::OnDisk(pkg.root().join(CARGO_MANIFEST_FILE_NAME)),
         });
 
-        // Add original Cargo.lock file.
+        // Add generated Cargo.lock file.
         recipe.push(ArchiveFile {
             path: CARGO_LOCK_FILE_NAME.into(),
-            contents: ArchiveFileContents::OnDisk(pkg.root().join(CARGO_LOCK_FILE_NAME)),
+            contents: ArchiveFileContents::OnDisk(
+                pkg.target_path(ws.config())
+                    .into_child("package")
+                    .into_child(&crate_archive_basename)
+                    .into_child(CARGO_LOCK_FILE_NAME)
+                    .path_unchecked()
+                    .to_path_buf(),
+            ),
         });
     }
 
