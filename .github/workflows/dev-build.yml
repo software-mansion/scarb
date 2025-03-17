@@ -19,15 +19,15 @@ on:
       #   description: "Upgrade Stwo"
       #   type: boolean
       #   default: false
-      include_cairols:
+      include-cairols:
         description: "Include CairoLS in build"
         type: boolean
         default: true
-      include_stwo:
+      include-stwo:
         description: "Include Stwo in build"
         type: boolean
         default: true
-      include_lint:
+      include-lint:
         description: "Include CairoLint in build"
         type: boolean
         default: true
@@ -40,6 +40,6 @@ jobs:
       upgrade_cairols: ${{ inputs.upgrade_cairols }}
       upgrade_cairolint: ${{ inputs.upgrade_cairolint }}
       #upgrade_stwo: ${{ inputs.upgrade_stwo }}
-      include_cairols: ${{ inputs.include_cairols }}
-      include_stwo: ${{ inputs.include_stwo }}
-      include_lint: ${{ inputs.include_lint }} 
+      include-cairols: ${{ inputs.include-cairols }}
+      include-stwo: ${{ inputs.include-stwo }}
+      include-lint: ${{ inputs.include-lint }} 

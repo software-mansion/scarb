@@ -11,14 +11,15 @@ on:
         required: false
         type: string
       include_cairols:
+      include-cairols:
         description: "Include CairoLS in build"
         type: boolean
         default: true
-      include_stwo:
+      include-stwo:
         description: "Include Stwo in build"
         type: boolean
         default: true
-      include_lint:
+      include-lint:
         description: "Include CairoLint in build"
         type: boolean
         default: true
@@ -90,26 +91,26 @@ jobs:
       - name: Build
         run: |
             ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove \
-          --exclude scarb-verify ${{ inputs.include_cairols && '--exclude scarb-cairo-language-server' || ''}} \
-          --no-default-features ${{ inputs.include_lint && '--features scarb/scarb-lint' || ''}}
+          --exclude scarb-verify ${{ inputs.include-cairols && '--exclude scarb-cairo-language-server' || ''}} \
+          --no-default-features ${{ inputs.include-lint && '--features scarb/scarb-lint' || ''}}
 
       - uses: dtolnay/rust-toolchain@master
-        if: inputs.include_stwo
+        if: inputs.include-stwo
         with:
           target: ${{ matrix.target }}
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
 
       - name: Install cross
-        if: matrix.cross && inputs.include_stwo
+        if: matrix.cross && inputs.include-stwo
         uses: taiki-e/install-action@cross
 
       - name: Enable cross-compilation
-        if: matrix.cross && inputs.include_stwo
+        if: matrix.cross && inputs.include-stwo
         shell: bash
         run: echo "CARGO=cross" >> $GITHUB_ENV
 
       - name: Build nightly crates
-        if: inputs.include_stwo
+        if: inputs.include-stwo
         run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} -p scarb-prove -p scarb-verify
 
       - name: Create archive

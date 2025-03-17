@@ -37,15 +37,15 @@ on:
       #   description: "Upgrade Stwo"
       #   type: boolean
       #   default: true
-      include_cairols:
+      include-cairols:
         description: "Include CairoLS in build"
         type: boolean
         default: true
-      include_stwo:
+      include-stwo:
         description: "Include Stwo in build"
         type: boolean
         default: true
-      include_lint:
+      include-lint:
         description: "Include CairoLint in build"
         type: boolean
         default: true
