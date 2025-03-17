@@ -22,8 +22,8 @@ use crate::core::{Config, Package, PackageId, PackageName, Target, TargetKind, W
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
-    CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
-    MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME, ops,
+    CARGO_LOCK_FILE_NAME, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME,
+    DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME, ops,
 };
 
 const VERSION: u8 = 1;
@@ -328,6 +328,12 @@ fn prepare_archive_recipe(
         recipe.push(ArchiveFile {
             path: ORIGINAL_CARGO_MANIFEST_FILE_NAME.into(),
             contents: ArchiveFileContents::OnDisk(pkg.root().join(CARGO_MANIFEST_FILE_NAME)),
+        });
+
+        // Add original Cargo.lock file.
+        recipe.push(ArchiveFile {
+            path: CARGO_LOCK_FILE_NAME.into(),
+            contents: ArchiveFileContents::OnDisk(pkg.root().join(CARGO_LOCK_FILE_NAME)),
         });
     }
 
