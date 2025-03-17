@@ -7,6 +7,10 @@ on:
         description: "Dry run"
         type: boolean
         default: true
+      upgrade-cairo:
+        description: "Upgrade Cairo"
+        type: boolean
+        default: false
       upgrade-cairols:
         description: "Upgrade CairoLS"
         type: boolean

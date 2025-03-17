@@ -30,5 +30,5 @@ fn do_lint(args: LintArgs, config: &Config) -> Result<()> {
 
 #[cfg(not(feature = "scarb-lint"))]
 fn do_lint(_args: LintArgs, _config: &Config) -> Result<()> {
-    panic!("scarb was not compiled with the `lint` command enabled")
+    anyhow::bail!("scarb was not compiled with the `lint` command enabled")
 }

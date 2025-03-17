@@ -26,9 +26,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::trace;
 
-#[cfg(feature = "scarb-lint")]
-use cairo_lint_core::plugin::CairoLintAllow;
-
 pub struct ScarbDatabase {
     pub db: RootDatabase,
     pub proc_macros: Vec<Arc<ProcMacroHostPlugin>>,
@@ -73,7 +70,7 @@ pub(crate) fn build_scarb_root_database(
 
 #[cfg(feature = "scarb-lint")]
 fn append_lint_plugin(suite: &mut PluginSuite) {
-    suite.add_analyzer_plugin::<CairoLintAllow>();
+    suite.add_analyzer_plugin::<cairo_lint_core::plugin::CairoLintAllow>();
 }
 
 #[cfg(not(feature = "scarb-lint"))]
