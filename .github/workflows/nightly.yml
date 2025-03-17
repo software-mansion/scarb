@@ -7,15 +7,15 @@ on:
         description: "Dry run"
         type: boolean
         default: true
-      upgrade_cairols:
+      upgrade-cairols:
         description: "Upgrade CairoLS"
         type: boolean
         default: true
-      upgrade_cairolint:
+      upgrade-cairolint:
         description: "Upgrade CairoLint"
         type: boolean
         default: true
-      # upgrade_stwo:
+      # upgrade-stwo:
       #   description: "Upgrade Stwo"
       #   type: boolean
       #   default: true
@@ -25,15 +25,15 @@ on:
         description: "Dry run"
         type: boolean
         default: true
-      upgrade_cairols:
+      upgrade-cairols:
         description: "Upgrade CairoLS"
         type: boolean
         default: true
-      upgrade_cairolint:
+      upgrade-cairolint:
         description: "Upgrade CairoLint"
         type: boolean
         default: true
-      # upgrade_stwo:
+      # upgrade-stwo:
       #   description: "Upgrade Stwo"
       #   type: boolean
       #   default: true
@@ -86,15 +86,15 @@ jobs:
         run: cargo xtask upgrade cairo --rev $(git ls-remote --refs "https://github.com/starkware-libs/cairo" main | awk '{print $1}')
 
       - name: Upgrade CairoLS to latest main commit
-        if: ${{ inputs.upgrade_cairols }}
+        if: ${{ !contains(inputs.upgrade-cairols, 'false') }}
         run: cargo xtask upgrade cairols --rev $(git ls-remote --refs "https://github.com/software-mansion/cairols" main | awk '{print $1}')
 
       - name: Upgrade Cairo-lint to latest main commit
-        if: ${{ inputs.upgrade_cairolint }}
+        if: ${{ !contains(inputs.upgrade-cairolint, 'false') }}
         run: cargo xtask upgrade cairolint --rev $(git ls-remote --refs "https://github.com/software-mansion/cairo-lint" main | awk '{print $1}')
 
       # - name: Upgrade stwo-cairo to latest main commit
-      #   if: ${{ inputs.upgrade_stwo }}
+      #   if: ${{ !contains(inputs.upgrade-stwo, 'false') }}
       #   run: cargo xtask upgrade stwo-cairo --rev $(git ls-remote --refs "https://github.com/starkware-libs/stwo-cairo" main | awk '{print $1}')
 
       - name: Rebuild xtasks after Cargo.toml changes
@@ -104,7 +104,7 @@ jobs:
         id: version
         shell: bash
         env:
-          IS_SCARB_DEV: ${{ inputs.is_dev }}
+          IS_SCARB_DEV: ${{ !!inputs.is_dev }}
         run: |
           NIGHTLY_TAG=$(cargo xtask get-nightly-version --tag)
           NIGHTLY_VERSION=$(cargo xtask get-nightly-version)
@@ -126,7 +126,7 @@ jobs:
 
       - name: Compose release notes
         env:
-          IS_SCARB_DEV: ${{ inputs.is_dev }}
+          IS_SCARB_DEV: ${{ !!inputs.is_dev }}
         run: cargo xtask nightly-release-notes > NIGHTLY_RELEASE_NOTES.md
 
       - name: Commit patches
