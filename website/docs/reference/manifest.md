@@ -454,6 +454,12 @@ allow-prebuilt-plugins = ["snforge_std"]
 This field is only read from the package that is currently build by Scarb.
 Sections defined in dependencies will be ignored.
 
+The prebuilt binaries are used in a best-effort manner - if it's not possible to load a prebuilt binary for any reason,
+it will attempt to compile the macro source code instead.
+No errors will be emitted if the prebuilt binary is not found or cannot be loaded.
+
+See [prebuilt procedural macros](./procedural-macro.md#prebuilt-procedural-macros) for more information.
+
 ## `[workspace]`
 
 See [Workspaces](./workspaces) page.
