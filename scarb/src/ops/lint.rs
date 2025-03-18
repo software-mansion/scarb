@@ -8,13 +8,14 @@ use crate::{
     core::{PackageId, TargetKind},
     ops,
 };
+
 use anyhow::anyhow;
 use anyhow::{Context, Result};
 use cairo_lang_defs::db::DefsGroup;
-use cairo_lang_diagnostics::Diagnostics;
+use cairo_lang_diagnostics::{DiagnosticEntry, Diagnostics, Severity};
 use cairo_lang_semantic::{SemanticDiagnostic, db::SemanticGroup};
 use cairo_lang_utils::Upcast;
-use cairo_lint_core::{CAIRO_LINT_TOOL_NAME, annotate_snippets::Renderer};
+use cairo_lint_core::CAIRO_LINT_TOOL_NAME;
 use cairo_lint_core::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
     plugin::cairo_lint_plugin_suite,
@@ -154,16 +155,17 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .flat_map(|module_id| db.module_semantic_diagnostics(*module_id).ok())
                         .collect();
 
-                    let renderer = Renderer::styled();
-
                     let diagnostics = diags
                         .iter()
                         .flat_map(|diags| {
                             let all_diags = diags.get_all();
-                            all_diags.iter().for_each(|diag| {
-                                ws.config()
-                                    .ui()
-                                    .print(format_diagnostic(diag, &db, &renderer))
+                            all_diags.iter().for_each(|diag| match diag.severity() {
+                                Severity::Error => {
+                                    ws.config().ui().error(format_diagnostic(diag, &db))
+                                }
+                                Severity::Warning => {
+                                    ws.config().ui().warn(format_diagnostic(diag, &db))
+                                }
                             });
                             all_diags
                         })
