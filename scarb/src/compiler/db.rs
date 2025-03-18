@@ -20,7 +20,6 @@ use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_semantic::db::PluginSuiteInput;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
-use cairo_lint_core::plugin::CairoLintAllow;
 use smol_str::SmolStr;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -47,10 +46,7 @@ pub(crate) fn build_scarb_root_database(
         proc_macros,
     } = PluginsForComponents::collect(ws, unit)?;
 
-    plugins
-        .get_mut(&unit.main_component().id)
-        .unwrap()
-        .add_analyzer_plugin::<CairoLintAllow>();
+    append_lint_plugin(plugins.get_mut(&unit.main_component().id).unwrap());
 
     let main_component_suite = plugins
         .get_mut(&unit.main_component().id)
@@ -71,6 +67,14 @@ pub(crate) fn build_scarb_root_database(
     let proc_macros = proc_macros.into_values().collect();
     Ok(ScarbDatabase { db, proc_macros })
 }
+
+#[cfg(feature = "scarb-lint")]
+fn append_lint_plugin(suite: &mut PluginSuite) {
+    suite.add_analyzer_plugin::<cairo_lint_core::plugin::CairoLintAllow>();
+}
+
+#[cfg(not(feature = "scarb-lint"))]
+fn append_lint_plugin(_suite: &mut PluginSuite) {}
 
 /// Sets the plugin suites for crates related to the library components
 /// according to the `plugins_for_components` mapping.

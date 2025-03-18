@@ -1,18 +1,21 @@
 use anyhow::Result;
 use clap::Parser;
-use xshell::{cmd, Shell};
+use xshell::{Shell, cmd};
 
 use crate::get_nightly_version::nightly_version;
 
 #[derive(Parser)]
-pub struct Args;
+pub struct Args {
+    #[arg(long, env = "IS_SCARB_DEV")]
+    dev: bool,
+}
 
-pub fn main(_: Args) -> Result<()> {
+pub fn main(args: Args) -> Result<()> {
     // Note: We do not use scarb-build-metadata here because it requires rebuilding xtasks.
 
     let sh = Shell::new()?;
 
-    let version = nightly_version()?;
+    let version = nightly_version(args.dev)?;
 
     let scarb_commit = cmd!(sh, "git log -1 --date=short --format=%H").read()?;
 
@@ -28,10 +31,7 @@ pub fn main(_: Args) -> Result<()> {
         .unwrap()
         .iter()
         .find(|node| {
-            let repr = node.get("id")
-                .unwrap()
-                .as_str()
-                .unwrap();
+            let repr = node.get("id").unwrap().as_str().unwrap();
             // The first condition for Rust >= 1.77
             // (After the PackageId spec stabilization)
             // The second condition for Rust < 1.77

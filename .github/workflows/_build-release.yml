@@ -10,6 +10,22 @@ on:
       ref:
         required: false
         type: string
+      full-verify:
+        required: false
+        type: boolean
+        default: false
+      include-cairols:
+        description: "Include CairoLS in build"
+        type: boolean
+        default: true
+      include-stwo:
+        description: "Include Stwo in build"
+        type: boolean
+        default: true
+      include-lint:
+        description: "Include CairoLint in build"
+        type: boolean
+        default: true
 
 env:
   # TODO(#1915): Use stable toolchain once stwo is stable.
@@ -76,27 +92,29 @@ jobs:
         run: echo "CARGO=cross" >> $GITHUB_ENV
 
       - name: Build
-        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove --exclude scarb-verify
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove --exclude scarb-verify ${{ !inputs.include-cairols && '--exclude scarb-cairo-language-server' || ''}} --no-default-features ${{ inputs.include-lint && '--features scarb/scarb-lint' || ''}}
 
       - uses: dtolnay/rust-toolchain@master
+        if: inputs.include-stwo
         with:
           target: ${{ matrix.target }}
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
 
       - name: Install cross
-        if: matrix.cross
+        if: matrix.cross && inputs.include-stwo
         uses: taiki-e/install-action@cross
 
       - name: Enable cross-compilation
-        if: matrix.cross
+        if: matrix.cross && inputs.include-stwo
         shell: bash
         run: echo "CARGO=cross" >> $GITHUB_ENV
 
       - name: Build nightly crates
+        if: inputs.include-stwo
         run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} -p scarb-prove -p scarb-verify
 
       - name: Create archive
-        run: cargo xtask create-archive
+        run: cargo xtask create-archive ${{ !inputs.include-cairols && '--skip-cairols' || '' }} ${{ !inputs.include-stwo && '--skip-stwo' || '' }}
         env:
           STAGING: scarb-${{ inputs.scarb-tag }}-${{ matrix.target }}
           TARGET: ${{ matrix.target }}
@@ -148,7 +166,7 @@ jobs:
         shell: bash
         run: |
           archive=$(find target/verify -name 'scarb-*.zip' -o -name 'scarb-*.tar.gz')
-          cargo xtask verify-archive --archive "$archive"
+          cargo xtask verify-archive --archive "$archive" ${{ inputs.full-verify && '--full' || ''}}
         env:
           EXPECTED_VERSION: ${{ inputs.scarb-tag }}
 
