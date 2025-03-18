@@ -22,7 +22,7 @@ use crate::core::{Config, Package, PackageId, PackageName, Target, TargetKind, W
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
-    CARGO_LOCK_FILE_NAME, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME,
+    CARGO_LOCKFILE_FILE_NAME, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME,
     DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME, ops,
 };
 
@@ -332,12 +332,12 @@ fn prepare_archive_recipe(
 
         // Add generated Cargo.lock file.
         recipe.push(ArchiveFile {
-            path: CARGO_LOCK_FILE_NAME.into(),
+            path: CARGO_LOCKFILE_FILE_NAME.into(),
             contents: ArchiveFileContents::OnDisk(
                 pkg.target_path(ws.config())
                     .into_child("package")
                     .into_child(&crate_archive_basename)
-                    .into_child(CARGO_LOCK_FILE_NAME)
+                    .into_child(CARGO_LOCKFILE_FILE_NAME)
                     .path_unchecked()
                     .to_path_buf(),
             ),

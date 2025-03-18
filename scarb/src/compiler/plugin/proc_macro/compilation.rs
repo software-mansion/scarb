@@ -4,7 +4,7 @@ use crate::flock::Filesystem;
 use crate::internal::fsx;
 use crate::ops::PackageOpts;
 use crate::process::exec_piping;
-use crate::{CARGO_LOCK_FILE_NAME, CARGO_MANIFEST_FILE_NAME};
+use crate::{CARGO_LOCKFILE_FILE_NAME, CARGO_MANIFEST_FILE_NAME};
 use anyhow::{Context, Result, anyhow};
 use camino::Utf8PathBuf;
 use cargo_metadata::MetadataCommand;
@@ -174,7 +174,7 @@ fn get_cargo_package_version(package: &Package) -> Result<String> {
 }
 
 fn get_cargo_lockfile_path(package: &Package) -> Option<Utf8PathBuf> {
-    let lockfile_path = package.root().join(CARGO_LOCK_FILE_NAME);
+    let lockfile_path = package.root().join(CARGO_LOCKFILE_FILE_NAME);
     lockfile_path.exists().then_some(lockfile_path)
 }
 

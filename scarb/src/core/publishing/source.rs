@@ -5,7 +5,7 @@ use ignore::{DirEntry, WalkBuilder};
 use crate::core::Package;
 use crate::internal::fsx::PathBufUtf8Ext;
 use crate::{
-    CAIRO_PROJECT_FILE_NAME, CARGO_LOCK_FILE_NAME, CARGO_MANIFEST_FILE_NAME,
+    CAIRO_PROJECT_FILE_NAME, CARGO_LOCKFILE_FILE_NAME, CARGO_MANIFEST_FILE_NAME,
     DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME, SCARB_IGNORE_FILE_NAME,
 };
 
@@ -63,7 +63,7 @@ fn push_worktree_files(pkg: &Package, ret: &mut Vec<Utf8PathBuf>) -> Result<()> 
                     f == MANIFEST_FILE_NAME
                         || f == LOCK_FILE_NAME
                         || f == CARGO_MANIFEST_FILE_NAME
-                        || f == CARGO_LOCK_FILE_NAME
+                        || f == CARGO_LOCKFILE_FILE_NAME
                         || f == DEFAULT_TARGET_DIR_NAME
                         || f == CAIRO_PROJECT_FILE_NAME
                 })
