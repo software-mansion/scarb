@@ -64,9 +64,10 @@ impl Resolve {
         &self,
         package_id: PackageId,
         target_kind: &TargetKind,
+        is_unit_root: bool,
     ) -> Vec<PackageId> {
-        let filtered_graph = EdgeFiltered::from_fn(&self.graph, move |(node_a, _node_b, edge)| {
-            edge.accepts_target(target_kind.clone(), node_a == package_id)
+        let filtered_graph = EdgeFiltered::from_fn(&self.graph, move |(_node_a, _node_b, edge)| {
+            edge.accepts_target(target_kind.clone(), is_unit_root)
         });
         filtered_graph
             .neighbors_directed(package_id, petgraph::Direction::Outgoing)
@@ -95,7 +96,8 @@ impl Resolve {
             if comp.iter().any(|x| allowed_prebuilds.check(&key(*x))) {
                 allowed_prebuilds.allow(comp.iter().map(|x| key(*x)));
                 for package in comp {
-                    let deps = self.package_dependencies_for_target_kind(*package, target_kind);
+                    let deps =
+                        self.package_dependencies_for_target_kind(*package, target_kind, true);
                     allowed_prebuilds.allow(deps.iter().map(|x| key(*x)));
                 }
             }
