@@ -1,10 +1,10 @@
-use crate::CARGO_MANIFEST_FILE_NAME;
 use crate::compiler::ProcMacroCompilationUnit;
 use crate::core::{Config, Package, Workspace};
 use crate::flock::Filesystem;
 use crate::internal::fsx;
 use crate::ops::PackageOpts;
 use crate::process::exec_piping;
+use crate::{CARGO_LOCK_FILE_NAME, CARGO_MANIFEST_FILE_NAME};
 use anyhow::{Context, Result, anyhow};
 use camino::Utf8PathBuf;
 use cargo_metadata::MetadataCommand;
@@ -173,6 +173,11 @@ fn get_cargo_package_version(package: &Package) -> Result<String> {
     Ok(package.version.to_string())
 }
 
+fn get_cargo_lockfile_path(package: &Package) -> Option<Utf8PathBuf> {
+    let lockfile_path = package.root().join(CARGO_LOCK_FILE_NAME);
+    lockfile_path.exists().then_some(lockfile_path)
+}
+
 pub fn get_crate_archive_basename(package: &Package) -> Result<String> {
     let package_name = get_cargo_package_name(package)?;
     let package_version = get_cargo_package_version(package)?;
@@ -224,6 +229,7 @@ fn run_cargo(action: CargoAction, package: &Package, ws: &Workspace<'_>) -> Resu
             .path_unchecked()
             .to_path_buf(),
         config: ws.config(),
+        locked: get_cargo_lockfile_path(package).is_some(),
     };
     let span = trace_span!("proc_macro");
     {
@@ -247,6 +253,7 @@ struct CargoCommand<'c> {
     output_format: OutputFormat,
     action: CargoAction,
     config: &'c Config,
+    locked: bool,
 }
 
 enum CargoOutputFormat {
@@ -282,6 +289,9 @@ impl<'c> From<CargoCommand<'c>> for Command {
             CargoAction::Check => cmd.arg("check"),
             CargoAction::Package(_) => cmd.arg("package"),
         };
+        if args.locked {
+            cmd.arg("--locked");
+        }
         if args.config.offline() {
             cmd.arg("--offline");
         }
