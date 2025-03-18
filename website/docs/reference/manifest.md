@@ -334,8 +334,23 @@ This flag cannot be set to `false` while compiling the `starknet-contract` targe
 ### `inlining-strategy`
 
 This field is responsible for setting the inlining strategy to be used by compiler when building the package.
-The possible values are `default` or `avoid`.
+The possible values are `default`, `avoid` or a numerical value.
 If `avoid` strategy is set, the compiler will only inline function annotated with `#[inline(always)]` attribute.
+Example usage:
+
+```toml
+[cairo]
+inlining-strategy = "avoid"
+```
+
+If numerical value is set, the compiler will inline functions up to the given weight.
+Note, that the weight exact definition is subject to change.
+Example usage:
+
+```toml
+[cairo]
+inlining-strategy = 18
+```
 
 > [!WARNING]
 > Using the `avoid` strategy may result in a slower execution of the compiled code.
