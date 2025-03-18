@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::Parser;
-use xshell::{cmd, Shell};
+use xshell::{Shell, cmd};
 
 use crate::list_binaries::list_binaries;
 
@@ -12,6 +12,10 @@ pub struct Args {
     target: Option<String>,
     #[arg(short, long, env = "STAGING")]
     staging: PathBuf,
+    #[arg(long)]
+    skip_cairols: bool,
+    #[arg(long)]
+    skip_stwo: bool,
 }
 
 pub fn main(args: Args) -> Result<()> {
@@ -38,6 +42,12 @@ pub fn main(args: Args) -> Result<()> {
     }
 
     for bin in list_binaries()? {
+        if args.skip_cairols && bin == "scarb-cairo-language-server" {
+            continue;
+        }
+        if args.skip_stwo && (bin == "scarb-prove" || bin == "scarb-verify") {
+            continue;
+        }
         let file_name = format!("{bin}{bin_ext}");
         sh.copy_file(
             target_dir.join("release").join(&file_name),
