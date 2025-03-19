@@ -1473,7 +1473,7 @@ dependencies = [
 [[package]]
 name = "cairo-lint-core"
 version = "2.11.2"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=ada79d10e756facd3bc5d8c872d7f54199d40ffa#ada79d10e756facd3bc5d8c872d7f54199d40ffa"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=7fbf9cdd22565279ad96ab9fa1af248ce1e77aa4#7fbf9cdd22565279ad96ab9fa1af248ce1e77aa4"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1489,6 +1489,7 @@ dependencies = [
  "log",
  "num-bigint",
  "serde",
+ "which",
 ]
 
 [[package]]
