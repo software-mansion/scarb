@@ -161,10 +161,24 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                             let all_diags = diags.get_all();
                             all_diags.iter().for_each(|diag| match diag.severity() {
                                 Severity::Error => {
-                                    ws.config().ui().error(format_diagnostic(diag, &db))
+                                    if let Some(code) = diag.error_code() {
+                                        ws.config().ui().error_with_code(
+                                            code.as_str(),
+                                            format_diagnostic(diag, &db),
+                                        )
+                                    } else {
+                                        ws.config().ui().error(format_diagnostic(diag, &db))
+                                    }
                                 }
                                 Severity::Warning => {
-                                    ws.config().ui().warn(format_diagnostic(diag, &db))
+                                    if let Some(code) = diag.error_code() {
+                                        ws.config().ui().warn_with_code(
+                                            code.as_str(),
+                                            format_diagnostic(diag, &db),
+                                        )
+                                    } else {
+                                        ws.config().ui().warn(format_diagnostic(diag, &db))
+                                    }
                                 }
                             });
                             all_diags
