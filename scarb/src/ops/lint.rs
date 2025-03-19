@@ -14,10 +14,9 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::Diagnostics;
 use cairo_lang_semantic::{SemanticDiagnostic, db::SemanticGroup};
 use cairo_lang_utils::Upcast;
-use cairo_lint_core::{CAIRO_LINT_TOOL_NAME, annotate_snippets::Renderer};
-use cairo_lint_core::{
-    CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
-    plugin::cairo_lint_plugin_suite,
+use cairo_lint::{
+    CAIRO_LINT_TOOL_NAME, CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic,
+    get_fixes, plugin::cairo_lint_plugin_suite,
 };
 use itertools::Itertools;
 use scarb_ui::components::Status;

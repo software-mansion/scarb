@@ -70,7 +70,7 @@ pub(crate) fn build_scarb_root_database(
 
 #[cfg(feature = "scarb-lint")]
 fn append_lint_plugin(suite: &mut PluginSuite) {
-    suite.add_analyzer_plugin::<cairo_lint_core::plugin::CairoLintAllow>();
+    suite.add_analyzer_plugin::<cairo_lint::plugin::CairoLintAllow>();
 }
 
 #[cfg(not(feature = "scarb-lint"))]
