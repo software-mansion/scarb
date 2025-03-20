@@ -9,7 +9,7 @@ use scarb_proc_macro_server_types::methods::defined_macros::{
 
 use super::Handler;
 use crate::compiler::plugin::collection::WorkspaceProcMacros;
-use crate::compiler::plugin::proc_macro::{DeclaredProcMacroInstances, ProcMacroApiVersion};
+use crate::compiler::plugin::proc_macro::DeclaredProcMacroInstances;
 
 impl Handler for DefinedMacros {
     fn handle(
@@ -22,7 +22,6 @@ impl Handler for DefinedMacros {
             .flat_map(|(component, plugin)| {
                 plugin
                     .iter()
-                    .filter(|p| p.api_version() == ProcMacroApiVersion::V1)
                     .map(|plugin| {
                         let attributes = plugin.declared_attributes_without_executables();
                         let inline_macros = plugin.declared_inline_macros();

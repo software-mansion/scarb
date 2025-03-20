@@ -1,5 +1,5 @@
 mod ffi;
-mod host;
+pub(crate) mod host;
 mod types;
 
 pub use ffi::*;
