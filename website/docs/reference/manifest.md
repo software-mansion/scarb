@@ -344,7 +344,7 @@ inlining-strategy = "avoid"
 ```
 
 If numerical value is set, the compiler will inline functions up to the given weight.
-Note, that the weight exact definition is subject to change.
+Note, that the weight exact definition is a compiler implementation detail and is subject to changes with every release.
 Example usage:
 
 ```toml
