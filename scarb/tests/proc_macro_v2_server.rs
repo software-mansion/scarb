@@ -9,8 +9,8 @@ use scarb_proc_macro_server_types::methods::expand::ExpandInline;
 use scarb_proc_macro_server_types::methods::expand::ExpandInlineMacroParams;
 use scarb_proc_macro_server_types::scope::ProcMacroScope;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
-use scarb_test_support::proc_macro_server::ProcMacroClient;
-use scarb_test_support::proc_macro_server::SIMPLE_MACROS_V1;
+use scarb_test_support::proc_macro_server::{ProcMacroClient, SIMPLE_MACROS_V2};
+
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
@@ -18,8 +18,8 @@ fn defined_macros() {
     let t = TempDir::new().unwrap();
     let plugin_package = t.child("some");
 
-    CairoPluginProjectBuilder::default_v1()
-        .lib_rs(SIMPLE_MACROS_V1)
+    CairoPluginProjectBuilder::default()
+        .lib_rs(SIMPLE_MACROS_V2)
         .build(&plugin_package);
 
     let project = t.child("test_package");
@@ -49,22 +49,20 @@ fn expand_attribute() {
     let t = TempDir::new().unwrap();
     let plugin_package = t.child("some");
 
-    let rename_to_very_new_name = r##"
+    let replace_12_with_34 = r#"
         #[attribute_macro]
-        pub fn rename_to_very_new_name(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {{
-            let re = regex::Regex::new(r#"fn (\w+)\(.*\)\{.*\}"#).unwrap();
-            let input = token_stream.to_string();
-            let name = re.captures(&input).unwrap().get(1).unwrap().as_str();
-
-            let output = input.replace(name, "very_new_name");
-
-            ProcMacroResult::new(TokenStream::new(output))
+        pub fn replace_12_with_34(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {{
+            let new_token_string = token_stream.to_string().replace("12", "34");
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                new_token_string.clone(),
+                TextSpan { start: 0, end: new_token_string.len() as u32 },
+            ))]);
+            ProcMacroResult::new(token_stream)
         }}
-    "##;
+    "#;
 
-    CairoPluginProjectBuilder::default_v1()
-        .lib_rs(format!("{SIMPLE_MACROS_V1}\n{rename_to_very_new_name}"))
-        .add_dep(r#"regex = "1.11.1""#)
+    CairoPluginProjectBuilder::default()
+        .lib_rs(format!("{SIMPLE_MACROS_V2}\n{replace_12_with_34}"))
         .build(&plugin_package);
 
     let project = t.child("test_package");
@@ -82,14 +80,14 @@ fn expand_attribute() {
         .defined_macros_for_package("test_package")
         .component;
 
-    let code = "fn some_test_fn(){}".to_string();
+    let code = "fn some_test_fn_12(){}".to_string();
     let span = TextSpan::new(0, code.len() as u32);
     let item = TokenStreamV2::new(vec![TokenTree::Ident(Token::new(code, span.clone()))]);
 
     let response = proc_macro_client
         .request_and_wait::<ExpandAttribute>(ExpandAttributeParams {
             context: ProcMacroScope { component },
-            attr: "rename_to_very_new_name".to_string(),
+            attr: "replace_12_with_34".to_string(),
             args: TokenStreamV2::empty(),
             item,
             call_site: span,
@@ -99,7 +97,7 @@ fn expand_attribute() {
     assert_eq!(response.diagnostics, vec![]);
     assert_eq!(
         response.token_stream.to_string(),
-        "fn very_new_name(){}".to_string()
+        "fn some_test_fn_34(){}".to_string()
     );
 }
 
@@ -108,8 +106,8 @@ fn expand_derive() {
     let t = TempDir::new().unwrap();
     let plugin_package = t.child("some");
 
-    CairoPluginProjectBuilder::default_v1()
-        .lib_rs(SIMPLE_MACROS_V1)
+    CairoPluginProjectBuilder::default()
+        .lib_rs(SIMPLE_MACROS_V2)
         .build(&plugin_package);
 
     let project = t.child("test_package");
@@ -156,12 +154,16 @@ fn expand_inline() {
         #[inline_macro]
         pub fn replace_all_15_with_25(token_stream: TokenStream) -> ProcMacroResult {
             let content = token_stream.to_string().replace("15", "25");
-            ProcMacroResult::new(TokenStream::new(content))
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                content.clone(),
+                TextSpan { start: 0, end: content.len() as u32 },
+            ))]);
+            ProcMacroResult::new(token_stream)
         }
     "#;
 
-    CairoPluginProjectBuilder::default_v1()
-        .lib_rs(format!("{SIMPLE_MACROS_V1}\n{replace_all_15_with_25}"))
+    CairoPluginProjectBuilder::default()
+        .lib_rs(format!("{SIMPLE_MACROS_V2}\n{replace_all_15_with_25}"))
         .build(&plugin_package);
 
     let project = t.child("test_package");

@@ -1,6 +1,7 @@
 use assert_fs::TempDir;
 use assert_fs::fixture::{ChildPath, FileWriteStr, PathCreateDir};
 use assert_fs::prelude::PathChild;
+use cairo_lang_macro::{TextSpan, Token, TokenStream as TokenStreamV2, TokenTree};
 use cairo_lang_macro_v1::TokenStream;
 use indoc::indoc;
 use libloading::library_filename;
@@ -24,6 +25,7 @@ static TRIPLETS: [(&str, &str); 4] = [
 fn proc_macro_example(t: &ChildPath) {
     let name = "proc_macro_example";
     let version = "0.1.0";
+    // version.to_string().push_str()
     CairoPluginProjectBuilder::default_v1()
         .name(name)
         .version(version)
@@ -31,6 +33,7 @@ fn proc_macro_example(t: &ChildPath) {
             use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
             #[inline_macro]
             pub fn some(token_stream: TokenStream) -> ProcMacroResult {
+                // token_stream.to_string().push_str("1");
                 ProcMacroResult::new(token_stream)
             }
         "#})
@@ -222,11 +225,16 @@ fn load_prebuilt_proc_macros() {
         .defined_macros_for_package("test_package")
         .component;
 
+    let args_code = "42".to_string();
+    let span = TextSpan::new(0, args_code.len() as u32);
+    let args = TokenStreamV2::new(vec![TokenTree::Ident(Token::new(args_code, span.clone()))]);
+
     let response = proc_macro_client
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
             context: ProcMacroScope { component },
             name: "some".to_string(),
-            args: TokenStream::new("42".to_string()),
+            args,
+            call_site: span,
         })
         .unwrap();
 
