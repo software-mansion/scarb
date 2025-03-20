@@ -2,7 +2,7 @@
 
 Fully qualified path: `hello_world::CirclePartialEq`
 
-<pre><code class="language-rust">impl CirclePartialEq of PartialEq&lt;Circle&gt;;</code></pre>
+<pre><code class="language-rust">impl CirclePartialEq of PartialEq&lt;<a href="hello_world-Circle.html">Circle</a>&gt;;</code></pre>
 
 ## Impl functions
 
