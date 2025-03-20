@@ -353,3 +353,37 @@ pub fn callback(context: PostProcessContext) {
     println!("{:?}", aux_data);
 }
 ```
+
+#### Prebuilt procedural macros
+
+By default, all procedural macros are compiled on the user system before being used by Scarb.
+This means that programmers that wanted to depend on a package utilizing a procedural macro have to install Rust compiler
+(and Cargo) on their system.
+Prebuilt macros is an opt-in feature, that enables the user to request a pre-compiled procedural macro to be used instead
+of compiling it on their system themselves.
+
+For this to be possible, two conditions need to be met:
+
+- The procedural macro package has to be published with the precompiled macros included.
+- Usage of the precompiled macro binaries needs to be explicitly allowed in the top-level Scarb toml manifest file.
+
+To include a precompiled macro binaries in your package, you need to place the binary files in `target/scarb/cairo-plugin`
+directory of the package, with names adhering to following convention: `{package_name}_v{version}_{target_name}.{dll_extension}`,
+where target name describes the target OS in [Cargo conventions](https://doc.rust-lang.org/rustc/platform-support.html#tier-1-with-host-tools).
+For publishing, [the `include` field](./manifest.md#include) of the package manifest may be useful, as it can be used
+to instruct Scarb to include this directory when packaging Scarb package with `scarb package`/`scarb publish`.
+
+To allow usage of precompiled procedural macros, you need to add a list of package names under `allow-prebuilt-plugins`
+name in the `[tool.scarb]` section of Scarb manifest of the compiled (top-level) package.
+Only the section defined in top level package will be considered and sections defined in dependencies will be ignored.
+Note this allow list works recursively, so adding a package names allow usage of precompiled macros in the dependency
+tree of this package.
+
+```toml
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
+```
+
+The prebuilt binaries are used in a best-effort manner - if it's not possible to load a prebuilt binary for any reason,
+it will attempt to compile the macro source code instead.
+No errors will be emitted if the prebuilt binary is not found or cannot be loaded.

@@ -334,8 +334,23 @@ This flag cannot be set to `false` while compiling the `starknet-contract` targe
 ### `inlining-strategy`
 
 This field is responsible for setting the inlining strategy to be used by compiler when building the package.
-The possible values are `default` or `avoid`.
+The possible values are `default`, `avoid` or a numerical value.
 If `avoid` strategy is set, the compiler will only inline function annotated with `#[inline(always)]` attribute.
+Example usage:
+
+```toml
+[cairo]
+inlining-strategy = "avoid"
+```
+
+If numerical value is set, the compiler will inline functions up to the given weight.
+Note, that the weight exact definition is a compiler implementation detail and is subject to changes with every release.
+Example usage:
+
+```toml
+[cairo]
+inlining-strategy = 18
+```
 
 > [!WARNING]
 > Using the `avoid` strategy may result in a slower execution of the compiled code.
@@ -414,6 +429,36 @@ exit-first = true
 
 No fields in this section are required or defined by Scarb.
 Each field can accept any valid toml value including a table.
+
+### `[tool.scarb]` section
+
+Scarb defines own tool section, called `[tool.scarb]`, which can be used to store Scarb specific configuration.
+
+As of now, only one key is supported in this section: `allow-prebuilt-plugins`.
+This field accepts a list of names of packages from the dependencies of the package.
+It can accept both direct and transient dependencies.
+Adding a package name to this list means, that Scarb can load prebuilt plugins for this package and all of its dependencies.
+
+Example usage:
+
+```toml
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
+```
+
+> [!WARNING]
+> Since loading a prebuilt plugin means loading and executing a binary file distributed with the dependency,
+> only mark packages as allowed if you trust the source of the package and the package itself.
+> Executing bytecode from untrusted sources can lead to security vulnerabilities.
+
+This field is only read from the package that is currently build by Scarb.
+Sections defined in dependencies will be ignored.
+
+The prebuilt binaries are used in a best-effort manner - if it's not possible to load a prebuilt binary for any reason,
+it will attempt to compile the macro source code instead.
+No errors will be emitted if the prebuilt binary is not found or cannot be loaded.
+
+See [prebuilt procedural macros](./procedural-macro.md#prebuilt-procedural-macros) for more information.
 
 ## `[workspace]`
 
