@@ -1419,7 +1419,7 @@ dependencies = [
  "cairo-lang-syntax-codegen",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
- "cairo-lint-core 2.11.1",
+ "cairo-lint-core",
  "colored",
  "convert_case",
  "crossbeam",
@@ -1450,6 +1450,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-lint"
+version = "2.11.2"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=92996d9adc261818b45b15bd5bcf79c911b13a02#92996d9adc261818b45b15bd5bcf79c911b13a02"
+dependencies = [
+ "anyhow",
+ "cairo-lang-compiler",
+ "cairo-lang-defs",
+ "cairo-lang-diagnostics",
+ "cairo-lang-filesystem",
+ "cairo-lang-semantic",
+ "cairo-lang-syntax",
+ "cairo-lang-test-plugin",
+ "cairo-lang-utils",
+ "if_chain",
+ "indoc",
+ "itertools 0.14.0",
+ "log",
+ "num-bigint",
+ "scarb-metadata 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde",
+ "tempfile",
+ "which",
+]
+
+[[package]]
 name = "cairo-lint-core"
 version = "2.11.1"
 source = "git+https://github.com/software-mansion/cairo-lint.git?rev=9000bebcc16bcb4a35fa9c3b51e6193518f865fc#9000bebcc16bcb4a35fa9c3b51e6193518f865fc"
@@ -1468,28 +1493,6 @@ dependencies = [
  "itertools 0.14.0",
  "log",
  "num-bigint",
-]
-
-[[package]]
-name = "cairo-lint-core"
-version = "2.11.2"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=7fbf9cdd22565279ad96ab9fa1af248ce1e77aa4#7fbf9cdd22565279ad96ab9fa1af248ce1e77aa4"
-dependencies = [
- "anyhow",
- "cairo-lang-compiler",
- "cairo-lang-defs",
- "cairo-lang-diagnostics",
- "cairo-lang-filesystem",
- "cairo-lang-semantic",
- "cairo-lang-syntax",
- "cairo-lang-test-plugin",
- "cairo-lang-utils",
- "if_chain",
- "itertools 0.14.0",
- "log",
- "num-bigint",
- "serde",
- "which",
 ]
 
 [[package]]
@@ -1683,7 +1686,7 @@ version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fde0e0ec90c9dfb3b4b1a0891a7dcd0e2bffde2f7efed5fe7c9bb00e5bfb915e"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4188,7 +4191,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -5715,7 +5718,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
- "cairo-lint-core 2.11.2",
+ "cairo-lint",
  "camino",
  "cargo_metadata",
  "clap",
@@ -7729,7 +7732,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]

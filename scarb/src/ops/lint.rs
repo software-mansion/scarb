@@ -15,8 +15,8 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::{DiagnosticEntry, Diagnostics, Severity};
 use cairo_lang_semantic::{SemanticDiagnostic, db::SemanticGroup};
 use cairo_lang_utils::Upcast;
-use cairo_lint_core::CAIRO_LINT_TOOL_NAME;
-use cairo_lint_core::{
+use cairo_lint::CAIRO_LINT_TOOL_NAME;
+use cairo_lint::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
     plugin::cairo_lint_plugin_suite,
 };
