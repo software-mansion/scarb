@@ -1,5 +1,5 @@
 use crate::compiler::plugin::proc_macro::ProcMacroInstance;
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::compiler::plugin::{CairoPluginProps, fetch_cairo_plugin};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,

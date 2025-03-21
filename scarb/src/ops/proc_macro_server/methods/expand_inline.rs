@@ -35,7 +35,10 @@ impl Handler for ExpandInline {
             })
             .with_context(|| format!("Unsupported inline macro: {name}"))?;
 
-        let result = instance.generate_code(name.into(), call_site, TokenStream::empty(), args);
+        let result = instance
+            .try_v2()
+            .expect("procedural macro using v1 api used in a context expecting v2 api")
+            .generate_code(name.into(), call_site, TokenStream::empty(), args);
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,

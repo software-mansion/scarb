@@ -13,8 +13,9 @@ use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
 use serde::Serialize;
 
+use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::compilation::{
-    SharedLibraryProvider, get_crate_archive_basename, package_crate, unpack_crate,
+    get_crate_archive_basename, package_crate, unpack_crate,
 };
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
