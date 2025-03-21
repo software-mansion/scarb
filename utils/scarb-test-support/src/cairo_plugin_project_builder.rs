@@ -151,10 +151,11 @@ impl Default for CairoPluginProjectBuilder {
     fn default() -> Self {
         let default_name = "some";
         let default_code = indoc! {r#"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, CAIRO_LANG_MACRO_API_VERSION, attribute_macro};
 
         #[attribute_macro]
         pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            assert!(CAIRO_LANG_MACRO_API_VERSION == unsafe { std::num::NonZeroU8::new_unchecked(2)} );
             ProcMacroResult::new(token_stream)
         }
         "#};
@@ -165,7 +166,6 @@ impl Default for CairoPluginProjectBuilder {
                     .version("1.0.0")
                     .manifest_extra(indoc! {r#"
                         [cairo-plugin]
-                        api = "v2"
                     "#})
             })
             .lib_rs(default_code)

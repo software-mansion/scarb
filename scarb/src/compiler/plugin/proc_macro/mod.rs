@@ -1,5 +1,6 @@
 pub mod compilation;
 mod expansion;
+mod ffi;
 mod host;
 mod instance;
 mod repository;
