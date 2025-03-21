@@ -1,10 +1,10 @@
+use crate::CARGO_MANIFEST_FILE_NAME;
 use crate::compiler::ProcMacroCompilationUnit;
 use crate::core::{Config, Package, Workspace};
 use crate::flock::Filesystem;
 use crate::internal::fsx;
 use crate::ops::PackageOpts;
 use crate::process::exec_piping;
-use crate::{CARGO_LOCKFILE_FILE_NAME, CARGO_MANIFEST_FILE_NAME};
 use anyhow::{Context, Result, anyhow};
 use camino::Utf8PathBuf;
 use cargo_metadata::MetadataCommand;
