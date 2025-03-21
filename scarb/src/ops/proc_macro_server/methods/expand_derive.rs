@@ -20,9 +20,10 @@ impl Handler for ExpandDerive {
             context,
             derives,
             item,
+            call_site,
         } = params;
 
-        let mut derived_code = String::new();
+        let mut derived_code = TokenStream::empty();
         let mut all_diagnostics = vec![];
 
         for derive in derives {
@@ -38,17 +39,21 @@ impl Handler for ExpandDerive {
                 .find(|instance| instance.get_expansions().contains(&expansion))
                 .with_context(|| format!("Unsupported derive macro: {derive}"))?;
 
-            let result =
-                instance.generate_code(expansion.name.clone(), TokenStream::empty(), item.clone());
+            let result = instance.generate_code(
+                expansion.name.clone(),
+                call_site.clone(),
+                TokenStream::empty(),
+                item.clone(),
+            );
 
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);
             // Add generated code.
-            derived_code.push_str(&result.token_stream.to_string());
+            derived_code.tokens.extend(result.token_stream.tokens);
         }
 
         Ok(ProcMacroResult {
-            token_stream: TokenStream::new(derived_code),
+            token_stream: derived_code,
             diagnostics: all_diagnostics,
         })
     }

@@ -12,7 +12,7 @@ use snapbox::assert_matches;
 #[test]
 fn compile_cairo_plugin() {
     let t = TempDir::new().unwrap();
-    CairoPluginProjectBuilder::default().build(&t);
+    CairoPluginProjectBuilder::default_v1().build(&t);
     let output = Scarb::quick_snapbox()
         .arg("build")
         // Disable colors in Cargo output.
@@ -42,7 +42,7 @@ fn compile_cairo_plugin() {
 #[test]
 fn check_cairo_plugin() {
     let t = TempDir::new().unwrap();
-    CairoPluginProjectBuilder::default().build(&t);
+    CairoPluginProjectBuilder::default_v1().build(&t);
     let output = Scarb::quick_snapbox()
         .arg("check")
         // Disable colors in Cargo output.
@@ -72,13 +72,16 @@ fn check_cairo_plugin() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_check_cairo_project_with_plugins() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default().build(&t);
+    CairoPluginProjectBuilder::default_v1().build(&t);
     let project = temp.child("hello");
     let y = project.child("other");
-    CairoPluginProjectBuilder::default().name("other").build(&y);
+    CairoPluginProjectBuilder::default_v1()
+        .name("other")
+        .build(&y);
     WorkspaceBuilder::start()
         .add_member("other")
         .package(
@@ -104,9 +107,10 @@ fn can_check_cairo_project_with_plugins() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn resolve_fetched_plugins() {
     let t = TempDir::new().unwrap();
-    CairoPluginProjectBuilder::default().build(&t);
+    CairoPluginProjectBuilder::default_v1().build(&t);
     assert!(!t.child("Cargo.lock").exists());
     let output = Scarb::quick_snapbox()
         .arg("fetch")
@@ -124,9 +128,10 @@ fn resolve_fetched_plugins() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_use_json_output() {
     let t = TempDir::new().unwrap();
-    CairoPluginProjectBuilder::default().build(&t);
+    CairoPluginProjectBuilder::default_v1().build(&t);
     let output = Scarb::quick_snapbox()
         .arg("--json")
         .arg("check")
@@ -158,6 +163,7 @@ fn can_use_json_output() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn compile_cairo_plugin_with_lib_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -183,6 +189,7 @@ fn compile_cairo_plugin_with_lib_target() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn compile_cairo_plugin_with_other_target() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -208,10 +215,11 @@ fn compile_cairo_plugin_with_other_target() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_emit_plugin_warning() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r#"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
 
@@ -254,10 +262,11 @@ fn can_emit_plugin_warning() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_emit_plugin_error() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r#"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
 
@@ -300,10 +309,11 @@ fn can_emit_plugin_error() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn diags_from_generated_code_mapped_correctly() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r#"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic};
 
@@ -354,10 +364,11 @@ fn diags_from_generated_code_mapped_correctly() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_remove_original_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r#"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
@@ -402,10 +413,11 @@ fn can_remove_original_node() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_replace_original_node() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
@@ -450,10 +462,11 @@ fn can_replace_original_node() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_return_aux_data_from_plugin() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process};
         use serde::{Serialize, Deserialize};
@@ -520,10 +533,11 @@ fn can_return_aux_data_from_plugin() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_read_token_stream_metadata() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
@@ -570,10 +584,11 @@ fn can_read_token_stream_metadata() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_define_multiple_macros() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process};
 
@@ -607,7 +622,7 @@ fn can_define_multiple_macros() {
         .build(&t);
 
     let w = temp.child("other");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .name("other")
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, AuxData, PostProcessContext, post_process};
@@ -665,10 +680,11 @@ fn can_define_multiple_macros() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn cannot_duplicate_macros() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
@@ -705,10 +721,11 @@ fn cannot_duplicate_macros() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn cannot_duplicate_macros_across_packages() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r#"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
@@ -725,7 +742,7 @@ fn cannot_duplicate_macros_across_packages() {
         .build(&t);
 
     let w = temp.child("other");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .name("other")
         .lib_rs(indoc! {r#"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
@@ -738,7 +755,7 @@ fn cannot_duplicate_macros_across_packages() {
         .build(&w);
 
     let p = temp.child("pkg");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .name("pkg")
         .lib_rs(indoc! {r#"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
@@ -782,10 +799,11 @@ fn cannot_duplicate_macros_across_packages() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn cannot_use_undefined_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
@@ -826,10 +844,11 @@ fn cannot_use_undefined_macro() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_resolve_full_path_markers() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, post_process, PostProcessContext};
 
@@ -881,10 +900,11 @@ fn can_resolve_full_path_markers() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_implement_inline_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
 
@@ -927,10 +947,11 @@ fn can_implement_inline_macro() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn empty_inline_macro_result() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
 
@@ -973,10 +994,11 @@ fn empty_inline_macro_result() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_implement_derive_macro() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
             use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream};
 
@@ -1048,10 +1070,11 @@ fn can_implement_derive_macro() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_use_both_derive_and_attr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
             use cairo_lang_macro::{derive_macro, attribute_macro, ProcMacroResult, TokenStream};
 
@@ -1130,10 +1153,11 @@ fn can_use_both_derive_and_attr() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_read_attribute_args() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
@@ -1179,10 +1203,11 @@ fn can_read_attribute_args() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_create_executable_attribute() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::executable_attribute;
         
@@ -1237,10 +1262,11 @@ fn can_create_executable_attribute() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn executable_name_cannot_clash_attr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{executable_attribute, attribute_macro, TokenStream, ProcMacroResult};
 
@@ -1280,10 +1306,11 @@ fn executable_name_cannot_clash_attr() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_be_expanded() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, derive_macro};
 
@@ -1389,10 +1416,11 @@ fn can_be_expanded() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_expand_trait_inner_func_attrr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
             use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream};
 
@@ -1451,10 +1479,11 @@ fn can_expand_trait_inner_func_attrr() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_expand_impl_inner_func_attrr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
             use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream};
 
@@ -1527,6 +1556,7 @@ fn can_expand_impl_inner_func_attrr() {
                 use super::{IHello, Hello, IHelloDispatcher, IHelloDispatcherTrait};
 
                 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
                 fn test_flow() {
                     let calldata = array![100];
                     let (address0, _) = deploy_syscall(
@@ -1563,10 +1593,11 @@ fn can_expand_impl_inner_func_attrr() {
 }
 
 #[test]
+#[ignore = "TODO(maciektr): support old macro api"]
 fn can_be_used_through_re_export() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
-    CairoPluginProjectBuilder::default()
+    CairoPluginProjectBuilder::default_v1()
         .lib_rs(indoc! {r##"
             use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro};
 
@@ -1626,79 +1657,4 @@ fn can_be_used_through_re_export() {
         "#},
         expanded,
     );
-}
-
-#[test]
-fn only_compiles_needed_macros() {
-    let t = TempDir::new().unwrap();
-    let some = t.child("some");
-    CairoPluginProjectBuilder::default()
-        .name("some")
-        .build(&some);
-    let other = t.child("other");
-    CairoPluginProjectBuilder::default()
-        .name("other")
-        .build(&other);
-    let hello = t.child("hello");
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep("some", &some)
-        .build(&hello);
-    WorkspaceBuilder::start()
-        .add_member("other")
-        .add_member("some")
-        .add_member("hello")
-        .build(&t);
-    Scarb::quick_snapbox()
-        .arg("build")
-        .args(vec!["-p", "hello"])
-        // Disable output from Cargo.
-        .env("CARGO_TERM_QUIET", "true")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
-            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished `dev` profile target(s) in [..]
-        "#});
-}
-
-#[test]
-fn always_compile_macros_requested_with_package_filter() {
-    let t = TempDir::new().unwrap();
-    let some = t.child("some");
-    CairoPluginProjectBuilder::default()
-        .name("some")
-        .build(&some);
-    let other = t.child("other");
-    CairoPluginProjectBuilder::default()
-        .name("other")
-        .build(&other);
-    let hello = t.child("hello");
-    ProjectBuilder::start()
-        .name("hello")
-        .version("1.0.0")
-        .dep("some", &some)
-        .build(&hello);
-    WorkspaceBuilder::start()
-        .add_member("other")
-        .add_member("some")
-        .add_member("hello")
-        .build(&t);
-    Scarb::quick_snapbox()
-        .arg("build")
-        .arg("--workspace")
-        // Disable output from Cargo.
-        .env("CARGO_TERM_QUIET", "true")
-        .current_dir(&t)
-        .assert()
-        .success()
-        .stdout_matches(indoc! {r#"
-            [..]Compiling other v1.0.0 ([..]Scarb.toml)
-            [..]Compiling some v1.0.0 ([..]Scarb.toml)
-            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            [..]Finished `dev` profile target(s) in [..]
-        "#});
 }

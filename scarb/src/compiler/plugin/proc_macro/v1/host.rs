@@ -1,5 +1,5 @@
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
-use crate::compiler::plugin::proc_macro::{
+use crate::compiler::plugin::proc_macro::v1::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::v1::{
     Expansion, ExpansionKind, FromSyntaxNode, ProcMacroInstance,
 };
 use crate::core::{Config, Package, PackageId};
@@ -13,7 +13,7 @@ use cairo_lang_defs::plugin::{
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_diagnostics::ToOption;
 use cairo_lang_filesystem::ids::CodeMapping;
-use cairo_lang_macro::{
+use cairo_lang_macro_v1::{
     AuxData, Diagnostic, FullPathMarker, ProcMacroResult, Severity, TokenStream,
     TokenStreamMetadata,
 };
