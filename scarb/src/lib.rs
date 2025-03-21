@@ -42,5 +42,5 @@ pub const TEST_PLUGIN_NAME: &str = "cairo_test";
 pub const TEST_ASSERTS_PLUGIN_NAME: &str = "assert_macros";
 pub const CAIRO_RUN_PLUGIN_NAME: &str = "cairo_run";
 pub const CARGO_MANIFEST_FILE_NAME: &str = "Cargo.toml";
-pub const CARGO_LOCK_FILE_NAME: &str = "Cargo.lock";
+pub const CARGO_LOCKFILE_FILE_NAME: &str = "Cargo.lock";
 pub const EXECUTABLE_PLUGIN_NAME: &str = "cairo_execute";
