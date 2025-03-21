@@ -6,6 +6,7 @@ use indoc::indoc;
 use libloading::library_filename;
 use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineMacroParams};
 use scarb_proc_macro_server_types::scope::ProcMacroScope;
+use cairo_lang_macro::{TextSpan, Token, TokenStream as TokenStreamV2, TokenTree};
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::proc_macro_server::ProcMacroClient;
@@ -222,11 +223,21 @@ fn load_prebuilt_proc_macros() {
         .defined_macros_for_package("test_package")
         .component;
 
+    let args_code = "42".to_string();
+    let span = TextSpan::new(0, args_code.len() as u32);
+    let args = TokenStreamV2::new(
+        vec![TokenTree::Ident(Token::new(
+            args_code,
+            span.clone()
+        ))]
+    );
+
     let response = proc_macro_client
         .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
             context: ProcMacroScope { component },
             name: "some".to_string(),
-            args: TokenStream::new("42".to_string()),
+            args,
+            call_site: span,
         })
         .unwrap();
 

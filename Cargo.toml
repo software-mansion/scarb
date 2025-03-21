@@ -65,6 +65,7 @@ cairo-lang-test-runner = "*"
 cairo-lang-utils = { version = "*", features = ["env_logger"] }
 cairo-language-server = "*"
 cairo-lint = "*"
+cairo-lang-macro-v1 = { version = "0.1", package = "cairo-lang-macro", features = ["serde"] }
 cairo-vm = "2.0.0"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
