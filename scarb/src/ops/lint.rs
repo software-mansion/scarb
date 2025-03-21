@@ -1,4 +1,4 @@
-use std::{collections::HashSet, vec};
+use std::vec;
 
 use crate::{
     compiler::{
@@ -20,12 +20,13 @@ use cairo_lint::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
     plugin::cairo_lint_plugin_suite,
 };
-use itertools::Itertools;
 use scarb_ui::components::Status;
 
 use crate::core::{Package, Workspace};
 
-use super::{CompilationUnitsOpts, FeaturesOpts, FeaturesSelector, compile_unit};
+use super::{
+    CompilationUnitsOpts, FeaturesOpts, FeaturesSelector, compile_unit, plugins_required_for_units,
+};
 
 pub struct LintOptions {
     pub packages: Vec<Package>,
@@ -54,17 +55,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     )?;
 
     // Select proc macro units that need to be compiled for Cairo compilation units.
-    let required_plugins = compilation_units
-        .iter()
-        .flat_map(|unit| match unit {
-            CompilationUnit::Cairo(unit) => unit
-                .cairo_plugins
-                .iter()
-                .map(|p| p.package.id)
-                .collect_vec(),
-            _ => Vec::new(),
-        })
-        .collect::<HashSet<PackageId>>();
+    let required_plugins = plugins_required_for_units(&compilation_units);
 
     // We process all proc-macro units that are required by Cairo compilation units beforehand.
     for compilation_unit in compilation_units.iter() {
