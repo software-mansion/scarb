@@ -11,7 +11,6 @@ use cairo_lang_macro_v1::{
 };
 use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_syntax::node::db::SyntaxGroup;
-use camino::Utf8Path;
 use itertools::Itertools;
 use libloading::{Library, Symbol};
 use std::ffi::{CStr, CString, c_char};
@@ -112,10 +111,8 @@ impl Plugin {
     ///
     /// # Safety
     /// This function is unsafe because it calls the FFI interface of procedural macro package.
-    pub unsafe fn try_new(library_path: &Utf8Path) -> Result<Plugin> {
-        let library = unsafe { Library::new(library_path)? };
+    pub unsafe fn try_new(library: Library) -> Result<Plugin> {
         let vtable = unsafe { VTableV0::try_new(&library)? };
-
         Ok(Plugin { library, vtable })
     }
 

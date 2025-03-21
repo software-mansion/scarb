@@ -1,8 +1,8 @@
-use crate::compiler::plugin::CairoPluginProps;
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
-use crate::core::{Package, PackageId, TargetKind};
+use crate::compiler::plugin::proc_macro::ffi::SharedPluginLibrary;
+use crate::core::{Package, PackageId};
 use anyhow::{Context, Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
@@ -18,19 +18,6 @@ pub enum ProcMacroApiVersion {
     #[default]
     V1,
     V2,
-}
-
-pub trait ProcMacroApiVersionReader {
-    fn api_version(&self) -> Result<ProcMacroApiVersion>;
-}
-
-impl ProcMacroApiVersionReader for Package {
-    fn api_version(&self) -> Result<ProcMacroApiVersion> {
-        assert!(self.is_cairo_plugin());
-        let target = self.fetch_target(&TargetKind::CAIRO_PLUGIN)?;
-        let props: CairoPluginProps = target.props()?;
-        Ok(props.api)
-    }
 }
 
 /// Representation of a single, loaded procedural macro package.
@@ -55,7 +42,7 @@ impl ProcMacroInstance {
     /// Load shared library
     pub fn try_new(package: &Package, lib_path: Utf8PathBuf) -> Result<Self> {
         trace!("loading compiled macro for `{}` package", package.id);
-        let plugin = VersionedPlugin::try_new(package, &lib_path)?;
+        let plugin = unsafe { VersionedPlugin::try_new(package, &lib_path)? };
         Ok(Self {
             expansions: unsafe { plugin.load_expansions(package.id)? },
             package_id: package.id,
@@ -68,7 +55,7 @@ impl ProcMacroInstance {
         let prebuilt_path = package
             .prebuilt_lib_path()
             .context("could not resolve prebuilt library path")?;
-        let plugin = VersionedPlugin::try_new(&package, &prebuilt_path)?;
+        let plugin = unsafe { VersionedPlugin::try_new(&package, &prebuilt_path)? };
         Ok(Self {
             expansions: unsafe { plugin.load_expansions(package.id)? },
             package_id: package.id,
@@ -174,13 +161,22 @@ impl VersionedPlugin {
     ///
     /// # Safety
     /// This function is unsafe because it calls the FFI interface of procedural macro package.
-    pub fn try_new(package: &Package, lib_path: &Utf8Path) -> Result<Self> {
-        match package.api_version()? {
+    pub unsafe fn try_new(package: &Package, lib_path: &Utf8Path) -> Result<Self> {
+        let library = unsafe {
+            SharedPluginLibrary::try_new(lib_path).with_context(|| {
+                format!(
+                    "failed to open dynamic library for `{}` proc macro",
+                    package.id
+                )
+            })?
+        };
+
+        match library.api_version() {
             ProcMacroApiVersion::V1 => Ok(VersionedPlugin::V1(unsafe {
-                proc_macro::v1::Plugin::try_new(lib_path)?
+                proc_macro::v1::Plugin::try_new(library.into())?
             })),
             ProcMacroApiVersion::V2 => Ok(VersionedPlugin::V2(unsafe {
-                proc_macro::v2::Plugin::try_new(lib_path)?
+                proc_macro::v2::Plugin::try_new(library.into())?
             })),
         }
     }

@@ -28,10 +28,14 @@ use cairo_lang_macro_stable::{
     StableExpansionsList, StablePostProcessContext, StableProcMacroResult, StableTextSpan,
 };
 use std::ffi::{CStr, CString, c_char};
+use std::num::NonZeroU8;
 use std::ops::Deref;
 
 mod types;
 pub use types::*;
+
+#[no_mangle]
+pub static CAIRO_LANG_MACRO_API_VERSION: NonZeroU8 = unsafe { NonZeroU8::new_unchecked(2) };
 
 // A thread-local allocation context for allocating tokens on proc macro side.
 thread_local!(static CONTEXT: RefCell<AllocationContext> =  RefCell::default() );

@@ -311,7 +311,6 @@ pub struct TomlExecutableTargetParams {
 #[serde(rename_all = "kebab-case")]
 pub struct TomlCairoPluginTargetParams {
     pub builtin: Option<bool>,
-    pub api: Option<String>,
 }
 
 pub type TomlExternalTargetParams = BTreeMap<SmolStr, toml::Value>;
