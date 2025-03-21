@@ -148,7 +148,6 @@ fn expand_inline() {
         #[inline_macro]
         pub fn replace_all_15_with_25(token_stream: TokenStream) -> ProcMacroResult {
             let content = token_stream.to_string().replace("15", "25");
-            let span = TextSpan { start: 0, end: content.len() as u32 };
             ProcMacroResult::new(TokenStream::new(content))
         }
     "#;
