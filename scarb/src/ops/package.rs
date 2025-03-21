@@ -22,8 +22,8 @@ use crate::core::{Config, Package, PackageId, PackageName, Target, TargetKind, W
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
-    CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
-    MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME, ops,
+    CARGO_LOCKFILE_FILE_NAME, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME,
+    DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME, ops,
 };
 
 const VERSION: u8 = 1;
@@ -308,7 +308,7 @@ fn prepare_archive_recipe(
             ));
         }
 
-        // Unpack .crate to make normalized Cargo.toml available.
+        // Unpack .crate to make normalized Cargo.toml and Cargo.lock available.
         unpack_crate(pkg, ws.config())?;
 
         // Add normalized Cargo.toml file.
@@ -317,7 +317,7 @@ fn prepare_archive_recipe(
             contents: ArchiveFileContents::OnDisk(
                 pkg.target_path(ws.config())
                     .into_child("package")
-                    .into_child(crate_archive_basename)
+                    .into_child(&crate_archive_basename)
                     .into_child(CARGO_MANIFEST_FILE_NAME)
                     .path_unchecked()
                     .to_path_buf(),
@@ -328,6 +328,19 @@ fn prepare_archive_recipe(
         recipe.push(ArchiveFile {
             path: ORIGINAL_CARGO_MANIFEST_FILE_NAME.into(),
             contents: ArchiveFileContents::OnDisk(pkg.root().join(CARGO_MANIFEST_FILE_NAME)),
+        });
+
+        // Add generated Cargo.lock file.
+        recipe.push(ArchiveFile {
+            path: CARGO_LOCKFILE_FILE_NAME.into(),
+            contents: ArchiveFileContents::OnDisk(
+                pkg.target_path(ws.config())
+                    .into_child("package")
+                    .into_child(&crate_archive_basename)
+                    .into_child(CARGO_LOCKFILE_FILE_NAME)
+                    .path_unchecked()
+                    .to_path_buf(),
+            ),
         });
     }
 
