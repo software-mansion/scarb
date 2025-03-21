@@ -5,6 +5,7 @@ use cairo_lang_macro::TokenStream;
 use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandInline};
 
 use super::Handler;
+use crate::compiler::plugin::proc_macro::{DeclaredProcMacroInstances, ProcMacroApiVersion};
 use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};
 
 impl Handler for ExpandInline {
@@ -19,12 +20,17 @@ impl Handler for ExpandInline {
             call_site,
         } = params;
 
-        let plugin = workspace_macros
-            .get(&context.component)
+        let plugin = workspace_macros.get(&context.component);
+        let plugin = plugin
+            .as_ref()
+            .and_then(|v| {
+                v.iter()
+                    .find(|a| a.api_version() == ProcMacroApiVersion::V2)
+            })
             .with_context(|| format!("No macros found in scope: {context:?}"))?;
 
         let instance = plugin
-            .macros()
+            .instances()
             .iter()
             .find(|instance| {
                 instance

@@ -5,7 +5,9 @@ use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandAttr
 
 use super::Handler;
 use crate::compiler::plugin::collection::WorkspaceProcMacros;
-use crate::compiler::plugin::proc_macro::ExpansionKind;
+use crate::compiler::plugin::proc_macro::{
+    DeclaredProcMacroInstances, ExpansionKind, ProcMacroApiVersion,
+};
 
 impl Handler for ExpandAttribute {
     fn handle(
@@ -20,12 +22,17 @@ impl Handler for ExpandAttribute {
             call_site,
         } = params;
 
-        let plugin = workspace_macros
-            .get(&context.component)
+        let plugin = workspace_macros.get(&context.component);
+        let plugin = plugin
+            .as_ref()
+            .and_then(|v| {
+                v.iter()
+                    .find(|a| a.api_version() == ProcMacroApiVersion::V2)
+            })
             .with_context(|| format!("No macros found in scope: {context:?}"))?;
 
         let instance = plugin
-            .macros()
+            .instances()
             .iter()
             .find(|instance| {
                 instance

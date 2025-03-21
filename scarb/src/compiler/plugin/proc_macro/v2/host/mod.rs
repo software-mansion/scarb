@@ -9,8 +9,8 @@ use attribute::*;
 pub use aux_data::ProcMacroAuxData;
 use inline::*;
 
-use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
+use crate::compiler::plugin::proc_macro::{DeclaredProcMacroInstances, ProcMacroInstance};
 use crate::core::{PackageId, edition_variant};
 use anyhow::{Result, ensure};
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
@@ -21,14 +21,12 @@ use cairo_lang_macro::{AllocationContext, TokenStream, TokenStreamMetadata, Toke
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{TypedStablePtr, TypedSyntaxNode, ast};
-use convert_case::{Case, Casing};
 use itertools::Itertools;
 use scarb_stable_hash::short_hash;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock};
 
-const FULL_PATH_MARKER_KEY: &str = "macro::full_path_marker";
 const DERIVE_ATTR: &str = "derive";
 
 /// A Cairo compiler plugin controlling the procedural macro execution.
@@ -37,8 +35,14 @@ const DERIVE_ATTR: &str = "derive";
 /// It then redirects the item to the appropriate macro plugin for code expansion.
 #[derive(Debug)]
 pub struct ProcMacroHostPlugin {
-    macros: Vec<Arc<ProcMacroInstance>>,
+    instances: Vec<Arc<ProcMacroInstance>>,
     full_path_markers: RwLock<HashMap<PackageId, Vec<String>>>,
+}
+
+impl DeclaredProcMacroInstances for ProcMacroHostPlugin {
+    fn instances(&self) -> &[Arc<ProcMacroInstance>] {
+        &self.instances
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -87,13 +91,13 @@ impl ProcMacroHostPlugin {
                 .join(", ")
         );
         Ok(Self {
-            macros,
+            instances: macros,
             full_path_markers: RwLock::new(Default::default()),
         })
     }
 
     fn find_expansion(&self, expansion: &Expansion) -> Option<ProcMacroId> {
-        self.macros
+        self.instances()
             .iter()
             .find(|m| m.get_expansions().contains(expansion))
             .map(|m| m.package_id())
@@ -103,7 +107,7 @@ impl ProcMacroHostPlugin {
     pub fn build_plugin_suite(macro_host: Arc<Self>) -> PluginSuite {
         let mut suite = PluginSuite::default();
         // Register inline macro plugins.
-        for proc_macro in &macro_host.macros {
+        for proc_macro in &macro_host.instances {
             let expansions = proc_macro
                 .get_expansions()
                 .iter()
@@ -122,7 +126,7 @@ impl ProcMacroHostPlugin {
     }
 
     pub fn instance(&self, package_id: PackageId) -> &ProcMacroInstance {
-        self.macros
+        self.instances
             .iter()
             .find(|m| m.package_id() == package_id)
             .expect("procedural macro must be registered in proc macro host")
@@ -138,26 +142,6 @@ impl ProcMacroHostPlugin {
         let file_id = short_hash(file_path.clone());
         let edition = edition_variant(edition);
         TokenStreamMetadata::new(file_path, file_id, edition)
-    }
-
-    pub fn macros(&self) -> &[Arc<ProcMacroInstance>] {
-        &self.macros
-    }
-
-    // NOTE: Required for proc macro server. `<ProcMacroHostPlugin as MacroPlugin>::declared_attributes`
-    // returns attributes **and** executables. In PMS, we only need the former because the latter is handled separately.
-    pub fn declared_attributes_without_executables(&self) -> Vec<String> {
-        self.macros
-            .iter()
-            .flat_map(|instance| instance.declared_attributes())
-            .collect()
-    }
-
-    pub fn declared_inline_macros(&self) -> Vec<String> {
-        self.macros
-            .iter()
-            .flat_map(|instance| instance.inline_macros())
-            .collect()
     }
 }
 
@@ -209,26 +193,15 @@ impl MacroPlugin for ProcMacroHostPlugin {
     }
 
     fn declared_attributes(&self) -> Vec<String> {
-        self.macros
-            .iter()
-            .flat_map(|m| m.declared_attributes_and_executables())
-            .chain(vec![FULL_PATH_MARKER_KEY.to_string()])
-            .collect()
+        DeclaredProcMacroInstances::declared_attributes(self)
     }
 
     fn declared_derives(&self) -> Vec<String> {
-        self.macros
-            .iter()
-            .flat_map(|m| m.declared_derives())
-            .map(|s| s.to_case(Case::UpperCamel))
-            .collect()
+        DeclaredProcMacroInstances::declared_derives(self)
     }
 
     fn executable_attributes(&self) -> Vec<String> {
-        self.macros
-            .iter()
-            .flat_map(|m| m.executable_attributes())
-            .collect()
+        DeclaredProcMacroInstances::executable_attributes(self)
     }
 }
 
