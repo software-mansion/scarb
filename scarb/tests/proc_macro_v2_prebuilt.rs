@@ -1,14 +1,10 @@
 use assert_fs::TempDir;
 use assert_fs::fixture::{ChildPath, FileWriteStr, PathCreateDir};
 use assert_fs::prelude::PathChild;
-use cairo_lang_macro::{TextSpan, Token, TokenStream, TokenTree};
 use indoc::indoc;
 use libloading::library_filename;
-use scarb_proc_macro_server_types::methods::expand::{ExpandInline, ExpandInlineMacroParams};
-use scarb_proc_macro_server_types::scope::ProcMacroScope;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::command::Scarb;
-use scarb_test_support::proc_macro_server::ProcMacroClient;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::cmd::Command;
@@ -196,50 +192,4 @@ fn compile_with_invalid_prebuilt_plugins() {
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..] Finished `dev` profile target(s) in [..]
         "#});
-}
-
-#[test]
-fn load_prebuilt_proc_macros() {
-    let t = TempDir::new().unwrap();
-    proc_macro_example(&t.child("dep"));
-
-    let project = t.child("test_package");
-
-    ProjectBuilder::start()
-        .name("test_package")
-        .version("1.0.0")
-        .lib_cairo("")
-        .dep("proc_macro_example", t.child("dep"))
-        .manifest_extra(indoc! {r#"
-            [tool.scarb]
-            allow-prebuilt-plugins = ["proc_macro_example"]
-        "#})
-        .build(&project);
-
-    let mut proc_macro_client = ProcMacroClient::new_without_cargo(&project);
-
-    let component = proc_macro_client
-        .defined_macros_for_package("test_package")
-        .component;
-
-    let response = proc_macro_client
-        .request_and_wait::<ExpandInline>(ExpandInlineMacroParams {
-            context: ProcMacroScope { component },
-            name: "some".to_string(),
-            args: TokenStream::new(vec![TokenTree::Ident(Token::new(
-                "42",
-                TextSpan::call_site(),
-            ))]),
-            call_site: TextSpan::new(0, 0),
-        })
-        .unwrap();
-
-    assert_eq!(response.diagnostics, vec![]);
-    assert_eq!(
-        response.token_stream,
-        TokenStream::new(vec![TokenTree::Ident(Token::new(
-            "42",
-            TextSpan::call_site(),
-        ))])
-    );
 }

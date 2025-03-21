@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use cairo_lang_macro::TokenStream;
+use cairo_lang_macro_v1::TokenStream;
 use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandInline};
 
 use super::Handler;
@@ -17,7 +17,6 @@ impl Handler for ExpandInline {
             context,
             name,
             args,
-            call_site,
         } = params;
 
         let plugin = workspace_macros.get(&context.component);
@@ -25,7 +24,7 @@ impl Handler for ExpandInline {
             .as_ref()
             .and_then(|v| {
                 v.iter()
-                    .find(|a| a.api_version() == ProcMacroApiVersion::V2)
+                    .find(|a| a.api_version() == ProcMacroApiVersion::V1)
             })
             .with_context(|| format!("No macros found in scope: {context:?}"))?;
 
@@ -42,9 +41,9 @@ impl Handler for ExpandInline {
             .with_context(|| format!("Unsupported inline macro: {name}"))?;
 
         let result = instance
-            .try_v2()
-            .expect("procedural macro using v1 api used in a context expecting v2 api")
-            .generate_code(name.into(), call_site, TokenStream::empty(), args);
+            .try_v1()
+            .expect("procedural macro using v2 api used in a context expecting v1 api")
+            .generate_code(name.into(), TokenStream::empty(), args);
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,
