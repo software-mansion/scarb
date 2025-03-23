@@ -346,6 +346,8 @@ pub struct TomlCairo {
     /// Used by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
     /// This feature is unstable and is subject to change.
     pub unstable_add_statements_code_locations_debug_info: Option<bool>,
+    /// Whether to add panic backtrace handling to the generated code.
+    pub panic_backtrace: Option<bool>,
     /// Inlining strategy.
     pub inlining_strategy: Option<InliningStrategy>,
 }
@@ -923,6 +925,9 @@ impl TomlManifest {
             {
                 compiler_config.unstable_add_statements_code_locations_debug_info =
                     unstable_add_statements_code_locations_debug_info;
+            }
+            if let Some(panic_backtrace) = cairo.panic_backtrace {
+                compiler_config.panic_backtrace = panic_backtrace;
             }
         }
         Ok(compiler_config)

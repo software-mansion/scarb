@@ -59,6 +59,9 @@ pub(crate) fn build_scarb_root_database(
     if !unit.compiler_config.enable_gas {
         b.skip_auto_withdraw_gas();
     }
+    if unit.compiler_config.panic_backtrace {
+        b.with_panic_backtrace();
+    }
     let mut db = b.build()?;
 
     apply_plugins(&mut db, plugins);
