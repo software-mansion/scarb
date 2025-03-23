@@ -365,7 +365,7 @@ By default, this flag is set to `false`, as it won't be available on StarkNet.
 
 ```toml
 [cairo]
-panic-backtrace = true
+panic-backtrace = false
 ```
 
 ### `unstable-add-statements-functions-debug-info`
