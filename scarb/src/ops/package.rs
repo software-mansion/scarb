@@ -331,17 +331,19 @@ fn prepare_archive_recipe(
         });
 
         // Add generated Cargo.lock file.
-        recipe.push(ArchiveFile {
-            path: CARGO_LOCKFILE_FILE_NAME.into(),
-            contents: ArchiveFileContents::OnDisk(
-                pkg.target_path(ws.config())
-                    .into_child("package")
-                    .into_child(&crate_archive_basename)
-                    .into_child(CARGO_LOCKFILE_FILE_NAME)
-                    .path_unchecked()
-                    .to_path_buf(),
-            ),
-        });
+        let cargo_lockfile_path = pkg.target_path(ws.config())
+            .into_child("package")
+            .into_child(&crate_archive_basename)
+            .into_child(CARGO_LOCKFILE_FILE_NAME)
+            .path_unchecked()
+            .to_path_buf();
+            
+        if cargo_lockfile_path.exists() {
+            recipe.push(ArchiveFile {
+                path: CARGO_LOCKFILE_FILE_NAME.into(),
+                contents: ArchiveFileContents::OnDisk(cargo_lockfile_path),
+            });
+        }
     }
 
     // Add README file
