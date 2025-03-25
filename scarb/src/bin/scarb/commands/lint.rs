@@ -23,6 +23,7 @@ fn do_lint(args: LintArgs, config: &Config) -> Result<()> {
             test: args.test,
             fix: args.fix,
             ignore_cairo_version: args.ignore_cairo_version,
+            features: args.features.try_into()?,
         },
         &ws,
     )

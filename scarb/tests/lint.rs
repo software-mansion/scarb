@@ -278,3 +278,84 @@ fn lint_panics() {
 
         "#});
 }
+
+#[test]
+fn lint_selected_features() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+          [features]
+          x = []
+          y = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'y')]
+            fn f() { 
+              println!("Just a correct code.");
+            }
+
+            #[cfg(feature: 'x')]
+            fn f() { 
+                let second = true;
+                if second == false {
+                    println!("x is false");
+                }
+            }
+
+            fn main() {
+                f();
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("--features")
+        .arg("y")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches("     Linting hello v1.0.0 ([..]/Scarb.toml)\n");
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("--features")
+        .arg("x")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! { r#"
+               Linting hello v1.0.0 ([..]/Scarb.toml)
+          warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+           --> [..]/lib.cairo:9:8
+              if second == false {
+                 ^^^^^^^^^^^^^^^
+        
+        "#});
+}
+
+#[test]
+fn test_missing_feature() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            fn main() {
+                println!("Just a correct code.");
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("--features")
+        .arg("x")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: none of the selected packages contains `x` feature
+            note: to use features, you need to define [features] section in Scarb.toml
+        "#});
+}
