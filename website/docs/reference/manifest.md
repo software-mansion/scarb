@@ -361,7 +361,7 @@ inlining-strategy = 18
 
 If enabled, during the project compilation Scarb will add panic backtrace handling to the generated code.
 This can be useful for debugging purposes.
-By default, this flag is set to `false`, as it won't be available on StarkNet.
+By default, this flag is set to `false`, as it won't be available on Starknet.
 
 ```toml
 [cairo]
