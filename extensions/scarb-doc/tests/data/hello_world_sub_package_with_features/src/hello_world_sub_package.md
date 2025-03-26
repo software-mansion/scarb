@@ -2,7 +2,7 @@
 
 Sub-package code (with feature)
 
-Fully qualified path: `hello_world_sub_package`
+Fully qualified path: [hello_world_sub_package](./hello_world_sub_package.md)
 
 ## Free functions
 

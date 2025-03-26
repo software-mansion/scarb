@@ -40,7 +40,10 @@ impl MarkdownContent {
     pub fn from_crate(package_information: &PackageInformation) -> Result<Self> {
         let top_level_items = collect_all_top_level_items(&package_information.crate_);
 
-        let summary_file_content = generate_summary_file_content(&top_level_items)?;
+        let summary_file_content = generate_summary_file_content(
+            &package_information.crate_.root_module,
+            &top_level_items,
+        )?;
         let TopLevelItems {
             modules,
             constants,

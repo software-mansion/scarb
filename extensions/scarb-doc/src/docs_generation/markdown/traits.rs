@@ -205,8 +205,8 @@ impl MarkdownDocItem for Trait {
     }
 }
 
-/// Takes items, and appends for each of them a path, that was trimmed based on the common prefix of all of the items,
-/// cthat share the same name.
+/// Takes items, and appends for each of them a path, that was trimmed based on the common prefix of all the items,
+/// that share the same name.
 pub fn mark_duplicated_item_with_relative_path<'a, T: TopLevelMarkdownDocItem + 'a>(
     items: &'a [&'a T],
 ) -> Vec<(&'a &'a T, Option<String>)> {
@@ -327,8 +327,8 @@ fn generate_markdown_from_item_data(
 
     writeln!(
         &mut markdown,
-        "Fully qualified path: `{}`\n",
-        doc_item.full_path()
+        "Fully qualified path: {}\n",
+        get_linked_path(doc_item.full_path())
     )?;
 
     if let Some(sig) = &doc_item.signature() {
@@ -342,6 +342,21 @@ fn generate_markdown_from_item_data(
         }
     }
     Ok(markdown)
+}
+
+fn get_linked_path(full_path: &str) -> String {
+    let path_items = full_path.split("::").collect::<Vec<_>>();
+    let mut result: Vec<String> = Vec::new();
+    let mut current_path = String::new();
+    for element in path_items {
+        if !current_path.is_empty() {
+            current_path.push('-');
+        }
+        current_path.push_str(element);
+        let formatted = format!("[{}](./{}.md)", element, current_path);
+        result.push(formatted);
+    }
+    result.join("::")
 }
 
 fn format_signature(input: &str, links: &[DocLocationLink]) -> String {
