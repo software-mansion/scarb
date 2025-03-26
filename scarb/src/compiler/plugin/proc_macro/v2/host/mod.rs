@@ -1,7 +1,7 @@
 mod attribute;
 mod aux_data;
 mod conversion;
-pub(crate) mod derive;
+pub mod derive;
 mod inline;
 mod post;
 
@@ -205,7 +205,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
     }
 }
 
-pub(crate) fn generate_code_mappings(token_stream: &TokenStream) -> Vec<CodeMapping> {
+pub fn generate_code_mappings(token_stream: &TokenStream) -> Vec<CodeMapping> {
     token_stream
         .tokens
         .iter()
