@@ -1,4 +1,10 @@
+use anyhow::{Context, Result};
 use std::sync::Arc;
+
+use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
+use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
+use scarb_proc_macro_server_types::conversions::{diagnostic_v2_to_v1, token_stream_v2_to_v1};
+use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandAttribute};
 
 use super::{Handler, interface_code_mapping_from_cairo};
 use crate::compiler::plugin::collection::WorkspaceProcMacros;
@@ -6,11 +12,6 @@ use crate::compiler::plugin::proc_macro::v2::generate_code_mappings;
 use crate::compiler::plugin::proc_macro::{
     Expansion, ExpansionKind, ProcMacroApiVersion, ProcMacroInstance,
 };
-use anyhow::{Context, Result};
-use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
-use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
-use scarb_proc_macro_server_types::conversions::{diagnostic_v2_to_v1, token_stream_v2_to_v1};
-use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandAttribute};
 
 impl Handler for ExpandAttribute {
     fn handle(
@@ -51,6 +52,23 @@ impl Handler for ExpandAttribute {
     }
 }
 
+fn expand_attribute_v1(
+    proc_macro_instance: &Arc<ProcMacroInstance>,
+    attr: String,
+    args: TokenStreamV1,
+    item: TokenStreamV1,
+) -> Result<ProcMacroResult> {
+    let result = proc_macro_instance
+        .try_v1()?
+        .generate_code(attr.into(), args, item);
+
+    Ok(ProcMacroResult {
+        token_stream: result.token_stream,
+        diagnostics: result.diagnostics,
+        code_mappings: None,
+    })
+}
+
 fn expand_attribute_v2(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     attr: String,
@@ -72,22 +90,5 @@ fn expand_attribute_v2(
                 .map(interface_code_mapping_from_cairo)
                 .collect(),
         ),
-    })
-}
-
-fn expand_attribute_v1(
-    proc_macro_instance: &Arc<ProcMacroInstance>,
-    attr: String,
-    args: TokenStreamV1,
-    item: TokenStreamV1,
-) -> Result<ProcMacroResult> {
-    let result = proc_macro_instance
-        .try_v1()?
-        .generate_code(attr.into(), args, item);
-
-    Ok(ProcMacroResult {
-        token_stream: result.token_stream,
-        diagnostics: result.diagnostics,
-        code_mappings: None,
     })
 }

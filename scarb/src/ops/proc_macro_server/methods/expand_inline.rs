@@ -23,8 +23,8 @@ impl Handler for ExpandInline {
             call_site,
         } = params;
 
-        let plugins = workspace_macros.get(&context.component);
         let expansion = Expansion::new(&name, ExpansionKind::Inline);
+        let plugins = workspace_macros.get(&context.component);
         let proc_macro_instance = plugins
             .as_ref()
             .and_then(|v| {

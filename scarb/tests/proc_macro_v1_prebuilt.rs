@@ -25,7 +25,6 @@ static TRIPLETS: [(&str, &str); 4] = [
 fn proc_macro_example(t: &ChildPath) {
     let name = "proc_macro_example";
     let version = "0.1.0";
-    // version.to_string().push_str()
     CairoPluginProjectBuilder::default_v1()
         .name(name)
         .version(version)
@@ -33,7 +32,6 @@ fn proc_macro_example(t: &ChildPath) {
             use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
             #[inline_macro]
             pub fn some(token_stream: TokenStream) -> ProcMacroResult {
-                // token_stream.to_string().push_str("1");
                 ProcMacroResult::new(token_stream)
             }
         "#})

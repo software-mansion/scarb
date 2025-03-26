@@ -29,20 +29,20 @@ use cairo_lang_macro::{
     executable_attribute
 };
 
-executable_attribute!("some_executable");
+executable_attribute!("some_executable_v1");
 
 #[attribute_macro]
-pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+pub fn some_v1(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
     ProcMacroResult::new(token_stream)
 }
 
 #[inline_macro]
-pub fn inline_some(token_stream: TokenStream) -> ProcMacroResult {
+pub fn inline_some_v1(token_stream: TokenStream) -> ProcMacroResult {
     ProcMacroResult::new(token_stream)
 }
 
 #[derive_macro]
-fn some_derive(_token_stream: TokenStream)-> ProcMacroResult {
+fn some_derive_v1(_token_stream: TokenStream)-> ProcMacroResult {
     ProcMacroResult::new(TokenStream::new("impl SomeImpl of SomeTrait {}".to_string()))
 }
 "#;
@@ -57,20 +57,20 @@ use cairo_lang_macro::{
     executable_attribute
 };
 
-executable_attribute!("some_executable");
+executable_attribute!("some_executable_v2");
 
 #[attribute_macro]
-pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+pub fn some_v2(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
     ProcMacroResult::new(token_stream)
 }
 
 #[inline_macro]
-pub fn inline_some(token_stream: TokenStream) -> ProcMacroResult {
+pub fn inline_some_v2(token_stream: TokenStream) -> ProcMacroResult {
     ProcMacroResult::new(token_stream)
 }
 
 #[derive_macro]
-fn some_derive(_token_stream: TokenStream)-> ProcMacroResult {
+fn some_derive_v2(_token_stream: TokenStream)-> ProcMacroResult {
     let content = "impl SomeImpl of SomeTrait {}".to_string();
     let span = TextSpan { start: 0, end: content.len() as u32 };
     ProcMacroResult::new(

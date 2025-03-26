@@ -170,7 +170,7 @@ struct DeriveFound {
     call_site: CallSiteLocation,
 }
 
-pub(crate) fn generate_code_mappings_with_offset(
+pub fn generate_code_mappings_with_offset(
     token_stream: &TokenStream,
     offset: TextWidth,
 ) -> Vec<CodeMapping> {

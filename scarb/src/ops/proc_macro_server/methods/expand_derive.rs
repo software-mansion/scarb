@@ -11,7 +11,6 @@ use anyhow::{Context, Result};
 use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
-use convert_case::{Case, Casing};
 use scarb_proc_macro_server_types::conversions::{diagnostic_v2_to_v1, token_stream_v2_to_v1};
 use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandDerive};
 
@@ -30,10 +29,11 @@ impl Handler for ExpandDerive {
         let mut derived_code = String::new();
         let mut all_diagnostics = vec![];
         let mut code_mappings = vec![];
+        // Needed to provide offset for code mappings in v2-style macros
         let mut current_width = TextWidth::default();
 
         for derive in derives {
-            let expansion = Expansion::new(derive.to_case(Case::Snake), ExpansionKind::Derive);
+            let expansion = Expansion::new(derive.clone(), ExpansionKind::Derive);
 
             let plugins = workspace_macros.get(&context.component);
             let proc_macro_instance = plugins

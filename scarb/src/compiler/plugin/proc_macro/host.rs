@@ -98,12 +98,20 @@ pub trait DeclaredProcMacroInstances {
             .collect()
     }
 
+    fn declared_derives_snake_case(&self) -> Vec<String> {
+        self.instances()
+            .iter()
+            .flat_map(|m| m.declared_derives())
+            .collect()
+    }
+
     fn executable_attributes(&self) -> Vec<String> {
         self.instances()
             .iter()
             .flat_map(|m| m.executable_attributes())
             .collect()
     }
+
     fn declared_attributes(&self) -> Vec<String> {
         self.instances()
             .iter()
