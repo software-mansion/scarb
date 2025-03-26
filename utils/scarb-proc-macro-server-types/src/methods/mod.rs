@@ -1,4 +1,5 @@
-use cairo_lang_macro_v1::{Diagnostic, TokenStream as TokenStreamV1};
+use cairo_lang_macro::Diagnostic as DiagnosticV2;
+use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 pub mod defined_macros;
@@ -20,7 +21,7 @@ pub struct ProcMacroResult {
     /// The resultant token stream produced after the macro expansion.
     pub token_stream: TokenStreamV1,
     /// A list of diagnostics produced during the macro execution.
-    pub diagnostics: Vec<Diagnostic>,
+    pub diagnostics: Vec<DiagnosticV2>,
     /// A list of code mappings produced by the macro
     pub code_mappings: Option<Vec<CodeMapping>>,
 }

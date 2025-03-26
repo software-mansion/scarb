@@ -9,7 +9,7 @@ use crate::compiler::plugin::proc_macro::v2::generate_code_mappings;
 use crate::compiler::plugin::proc_macro::{Expansion, ProcMacroApiVersion, ProcMacroInstance};
 use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
-use scarb_proc_macro_server_types::conversions::{diagnostic_v2_to_v1, token_stream_v2_to_v1};
+use scarb_proc_macro_server_types::conversions::{diagnostic_v1_to_v2, token_stream_v2_to_v1};
 
 impl Handler for ExpandInline {
     fn handle(
@@ -56,7 +56,7 @@ fn expand_inline_v1(
 
     Ok(ProcMacroResult {
         token_stream: result.token_stream,
-        diagnostics: result.diagnostics,
+        diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),
         code_mappings: None,
     })
 }
@@ -77,7 +77,7 @@ fn expand_inline_v2(
     let code_mappings = generate_code_mappings(&result.token_stream);
     Ok(ProcMacroResult {
         token_stream: token_stream_v2_to_v1(&result.token_stream),
-        diagnostics: result.diagnostics.iter().map(diagnostic_v2_to_v1).collect(),
+        diagnostics: result.diagnostics,
         code_mappings: Some(
             code_mappings
                 .into_iter()
