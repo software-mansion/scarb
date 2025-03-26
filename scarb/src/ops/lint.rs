@@ -25,7 +25,7 @@ use scarb_ui::components::Status;
 use crate::core::{Package, Workspace};
 
 use super::{
-    CompilationUnitsOpts, FeaturesOpts, FeaturesSelector, compile_unit, plugins_required_for_units,
+    CompilationUnitsOpts, FeaturesOpts, compile_unit, plugins_required_for_units, validate_features,
 };
 
 pub struct LintOptions {
@@ -33,20 +33,18 @@ pub struct LintOptions {
     pub test: bool,
     pub fix: bool,
     pub ignore_cairo_version: bool,
+    pub features: FeaturesOpts,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
-    let feature_opts = FeaturesOpts {
-        features: FeaturesSelector::AllFeatures,
-        no_default_features: true,
-    };
-
     let resolve = ops::resolve_workspace(ws)?;
+
+    validate_features(&opts.packages, &opts.features)?;
 
     let compilation_units = ops::generate_compilation_units(
         &resolve,
-        &feature_opts,
+        &opts.features,
         ws,
         CompilationUnitsOpts {
             ignore_cairo_version: opts.ignore_cairo_version,
