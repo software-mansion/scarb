@@ -423,10 +423,14 @@ fn dev_deps_are_not_propagated_for_ws_members() {
 fn dev_dep_plugins_are_not_propagated_for_ws_members() {
     let t = TempDir::new().unwrap();
 
+    let m = t.child("m");
+    CairoPluginProjectBuilder::default().name("m").build(&m);
+
     let dep2 = t.child("dep2");
     ProjectBuilder::start()
         .name("dep2")
         .dep_cairo_test()
+        .dev_dep("m", &m)
         .build(&dep2);
 
     let pkg = t.child("pkg");
@@ -452,7 +456,11 @@ fn dev_dep_plugins_are_not_propagated_for_ws_members() {
         units_and_plugins(metadata.clone()),
         BTreeMap::from_iter(vec![
             ("dep2".to_string(), vec![]),
-            ("dep2_unittest".to_string(), vec!["cairo_test".to_string()]),
+            (
+                "dep2_unittest".to_string(),
+                vec!["cairo_test".to_string(), "m".to_string()]
+            ),
+            ("m".to_string(), vec![]),
             ("x".to_string(), vec![]),
             ("x_unittest".to_string(), vec![]),
         ])
@@ -498,7 +506,8 @@ fn dev_dep_plugins_are_not_propagated_for_ws_members() {
                     // Note that `cairo_test` is indeed a dev dependency of `dep2`,
                     // but it's not propagated to the unit tests of `x`.
                     // Only dev dependencies of the main component should be enabled.
-                    // "cairo_test".to_string()
+                    // "cairo_test".to_string(),
+                    // "m".to_string()
                 ]
             ),
             (
