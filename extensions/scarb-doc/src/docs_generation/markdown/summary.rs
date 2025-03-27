@@ -43,7 +43,7 @@ pub fn generate_summary_file_content(
     markdown += &generate_markdown_list_summary_for_top_level_subitems(extern_types)?;
     markdown += &generate_markdown_list_summary_for_top_level_subitems(extern_functions)?;
 
-    Ok(markdown.to_string())
+    Ok(markdown)
 }
 
 fn generate_markdown_list_summary_for_top_level_subitems<T: TopLevelMarkdownDocItem>(
@@ -53,7 +53,7 @@ fn generate_markdown_list_summary_for_top_level_subitems<T: TopLevelMarkdownDocI
     if !subitems.is_empty() {
         writeln!(
             &mut markdown,
-            "---\n- [{}](./{})\n",
+            "---\n- [{}](./{})",
             T::HEADER,
             T::ITEMS_SUMMARY_FILENAME
         )?;
