@@ -1820,7 +1820,8 @@ fn compiler_config_collected_properly() {
             "inlining_strategy": "avoid",
             "sierra_replace_ids": false,
             "unstable_add_statements_code_locations_debug_info": false,
-            "unstable_add_statements_functions_debug_info": false
+            "unstable_add_statements_functions_debug_info": false,
+            "panic_backtrace": false
         })
     );
 }
@@ -1875,7 +1876,8 @@ fn compiler_config_collected_properly_in_workspace() {
             "inlining_strategy": "avoid",
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
-            "unstable_add_statements_functions_debug_info": false
+            "unstable_add_statements_functions_debug_info": false,
+            "panic_backtrace": false
         })
     );
 }
@@ -1917,7 +1919,8 @@ fn profile_can_override_cairo_section() {
             "inlining_strategy": "default",
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
-            "unstable_add_statements_functions_debug_info": false
+            "unstable_add_statements_functions_debug_info": false,
+            "panic_backtrace": false
         })
     );
 }
@@ -1959,7 +1962,8 @@ fn cairo_section_overrides_profile_defaults() {
             "inlining_strategy": "default",
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
-            "unstable_add_statements_functions_debug_info": false
+            "unstable_add_statements_functions_debug_info": false,
+            "panic_backtrace": false
         })
     );
 }
@@ -1998,7 +2002,8 @@ fn can_specify_inlining_strategy_by_weight() {
             "inlining_strategy": 12,
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
-            "unstable_add_statements_functions_debug_info": false
+            "unstable_add_statements_functions_debug_info": false,
+            "panic_backtrace": false
         })
     );
 }

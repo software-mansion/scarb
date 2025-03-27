@@ -3,7 +3,7 @@ use std::fs;
 
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
-use cairo_lang_sierra::program::{StatementIdx, VersionedProgram};
+use cairo_lang_sierra::program::{Program, Statement, StatementIdx, VersionedProgram};
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use indoc::indoc;
 use predicates::prelude::*;
@@ -1682,4 +1682,187 @@ fn invalid_lint_allows_are_ignored_in_deps() {
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]  Finished `dev` profile target(s) in [..]
         "#});
+}
+
+#[test]
+fn add_trace_libfunc() {
+    fn assert_for_trace_libfunc(program: &Program) {
+        assert!(
+            program
+                .libfunc_declarations
+                .iter()
+                .any(|x| x.long_id.generic_id.to_string() == "trace")
+        );
+
+        assert!(program.statements.iter().any(|statement| match statement {
+            Statement::Invocation(invocation) => {
+                invocation
+                    .libfunc_id
+                    .debug_name
+                    .as_ref()
+                    .unwrap()
+                    .contains("trace")
+            }
+            Statement::Return(_) => false,
+        }));
+    }
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .lib_cairo(indoc! {r##"
+            #[starknet::interface]
+            pub trait IHelloStarknet<TContractState> {
+                fn increase_balance(ref self: TContractState, amount: felt252);
+                fn get_balance(self: @TContractState) -> felt252;
+            }
+
+            #[starknet::contract]
+            mod HelloStarknet {
+                #[storage]
+                struct Storage {
+                    balance: felt252,
+                }
+
+                #[abi(embed_v0)]
+                impl HelloStarknetImpl of super::IHelloStarknet<ContractState> {
+                    fn increase_balance(ref self: ContractState, amount: felt252) {
+                        assert(amount != 0, 'Amount cannot be 0');
+                        self.balance.write(self.balance.read() + amount);
+                    }
+
+                    fn get_balance(self: @ContractState) -> felt252 {
+                        self.balance.read()
+                    }
+                }
+            }
+
+            fn foo(mut shape: Span<usize>) -> usize {
+                assert(!shape.is_empty(), 'Shape must not be empty');
+                let mut result: usize = 1;
+
+                loop {
+                    match shape.pop_front() {
+                        Option::Some(item) => { result *= *item; },
+                        Option::None => { break; }
+                    };
+                };
+
+                result
+            }
+
+            fn main() -> usize {
+                foo(array![1, 2].span())
+            }
+        "##})
+        .manifest_extra(indoc! {r#"
+            [lib]
+            casm = true
+
+            [[target.starknet-contract]]
+            casm = true
+
+            [cairo]
+            panic-backtrace = true
+        "#})
+        .dep_starknet()
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lib_sierra_string = t.child("target/dev/hello.sierra.json").read_to_string();
+    let contract_sierra_string = t
+        .child("target/dev/hello_HelloStarknet.contract_class.json")
+        .read_to_string();
+
+    let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
+    let program = lib_sierra.clone().into_v1().unwrap().program;
+    assert_for_trace_libfunc(&program);
+
+    let contract_sierra = serde_json::from_str::<ContractClass>(&contract_sierra_string).unwrap();
+    let program = contract_sierra.extract_sierra_program().unwrap();
+    assert_for_trace_libfunc(&program);
+}
+
+#[test]
+fn add_trace_libfunc_to_tests() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .lib_cairo(indoc! {r##"
+            #[starknet::interface]
+            pub trait IHelloStarknet<TContractState> {
+                fn increase_balance(ref self: TContractState, amount: felt252);
+                fn get_balance(self: @TContractState) -> felt252;
+            }
+
+            #[starknet::contract]
+            mod HelloStarknet {
+                #[storage]
+                struct Storage {
+                    balance: felt252,
+                }
+
+                #[abi(embed_v0)]
+                impl HelloStarknetImpl of super::IHelloStarknet<ContractState> {
+                    fn increase_balance(ref self: ContractState, amount: felt252) {
+                        assert(amount != 0, 'Amount cannot be 0');
+                        self.balance.write(self.balance.read() + amount);
+                    }
+
+                    fn get_balance(self: @ContractState) -> felt252 {
+                        self.balance.read()
+                    }
+                }
+            }
+
+            fn foo(mut shape: Span<usize>) -> usize {
+                assert(!shape.is_empty(), 'Shape must not be empty');
+                let mut result: usize = 1;
+
+                loop {
+                    match shape.pop_front() {
+                        Option::Some(item) => { result *= *item; },
+                        Option::None => { break; }
+                    };
+                };
+
+                result
+            }
+
+            fn main() -> usize {
+                foo(array![1, 2].span())
+            }
+        "##})
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            panic-backtrace = true
+        "#})
+        .dep_starknet()
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    let lib_sierra_string = t
+        .child("target/dev/hello_unittest.test.sierra.json")
+        .read_to_string();
+
+    let lib_sierra = serde_json::from_str::<VersionedProgram>(&lib_sierra_string).unwrap();
+    let program = lib_sierra.clone().into_v1().unwrap().program;
+
+    assert!(
+        program
+            .libfunc_declarations
+            .iter()
+            .any(|x| x.long_id.generic_id.to_string() == "trace")
+    );
 }
