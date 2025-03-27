@@ -69,6 +69,6 @@ impl<'a> MarkdownGenerationContext<'a> {
     }
 }
 
-fn path_to_file_link(path: &str) -> String {
+pub fn path_to_file_link(path: &str) -> String {
     format!("./{}.md", path.replace("::", "-"))
 }

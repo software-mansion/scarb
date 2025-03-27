@@ -1,19 +1,25 @@
 use anyhow::Result;
 use std::fmt::Write;
 
-use crate::docs_generation::TopLevelItems;
-use crate::docs_generation::markdown::BASE_HEADER_LEVEL;
-use crate::docs_generation::markdown::traits::TopLevelMarkdownDocItem;
-
 use super::traits::mark_duplicated_item_with_relative_path;
+use crate::docs_generation::markdown::context::path_to_file_link;
+use crate::docs_generation::markdown::traits::TopLevelMarkdownDocItem;
+use crate::docs_generation::{DocItem, TopLevelItems};
+use crate::types::Module;
 
-pub fn generate_summary_file_content(top_level_items: &TopLevelItems) -> Result<String> {
-    let header = str::repeat("#", BASE_HEADER_LEVEL);
-
-    let mut markdown = format!("{header} Summary\n\n");
+pub fn generate_summary_file_content(
+    root_module: &Module,
+    top_level_items: &TopLevelItems,
+) -> Result<String> {
+    let mut markdown = format!(
+        "# Summary\n\n---\n- [{}](./{})\n",
+        Module::HEADER,
+        Module::ITEMS_SUMMARY_FILENAME
+    );
+    markdown += &generate_modules_summary_content(root_module, 1)?;
 
     let TopLevelItems {
-        modules,
+        modules: _,
         constants,
         free_functions,
         structs,
@@ -26,7 +32,6 @@ pub fn generate_summary_file_content(top_level_items: &TopLevelItems) -> Result<
         extern_functions,
     } = top_level_items;
 
-    markdown += &generate_markdown_list_summary_for_top_level_subitems(modules)?;
     markdown += &generate_markdown_list_summary_for_top_level_subitems(constants)?;
     markdown += &generate_markdown_list_summary_for_top_level_subitems(free_functions)?;
     markdown += &generate_markdown_list_summary_for_top_level_subitems(structs)?;
@@ -38,18 +43,17 @@ pub fn generate_summary_file_content(top_level_items: &TopLevelItems) -> Result<
     markdown += &generate_markdown_list_summary_for_top_level_subitems(extern_types)?;
     markdown += &generate_markdown_list_summary_for_top_level_subitems(extern_functions)?;
 
-    Ok(markdown)
+    Ok(markdown.to_string())
 }
 
 fn generate_markdown_list_summary_for_top_level_subitems<T: TopLevelMarkdownDocItem>(
     subitems: &[&T],
 ) -> Result<String> {
     let mut markdown = String::new();
-
     if !subitems.is_empty() {
         writeln!(
             &mut markdown,
-            "- [{}](./{})\n",
+            "---\n- [{}](./{})\n",
             T::HEADER,
             T::ITEMS_SUMMARY_FILENAME
         )?;
@@ -64,4 +68,24 @@ fn generate_markdown_list_summary_for_top_level_subitems<T: TopLevelMarkdownDocI
     }
 
     Ok(markdown)
+}
+
+pub fn generate_modules_summary_content(
+    module: &Module,
+    mut nesting_level: usize,
+) -> Result<String> {
+    let mut markdown = String::new();
+    writeln!(
+        markdown,
+        "{}- [{}]({})",
+        "  ".repeat(nesting_level),
+        module.item_data.name,
+        path_to_file_link(module.full_path())
+    )?;
+    nesting_level += 1;
+    for submodule in module.submodules.iter() {
+        markdown += &generate_modules_summary_content(submodule, nesting_level)?;
+    }
+
+    Ok(markdown.to_string())
 }

@@ -2,7 +2,7 @@
 
 Fibonacci sequence calculator
 
-Fully qualified path: `hello_world`
+Fully qualified path: [hello_world](./hello_world.md)
 
 ## Modules
 
