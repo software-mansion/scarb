@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandAttribute};
 
 use super::Handler;
+use crate::compiler::plugin::proc_macro::{DeclaredProcMacroInstances, ProcMacroApiVersion};
 use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};
 
 impl Handler for ExpandAttribute {
@@ -19,12 +20,17 @@ impl Handler for ExpandAttribute {
             call_site,
         } = params;
 
-        let plugin = workspace_macros
-            .get(&context.component)
+        let plugin = workspace_macros.get(&context.component);
+        let plugin = plugin
+            .as_ref()
+            .and_then(|v| {
+                v.iter()
+                    .find(|a| a.api_version() == ProcMacroApiVersion::V1)
+            })
             .with_context(|| format!("No macros found in scope: {context:?}"))?;
 
         let instance = plugin
-            .macros()
+            .instances()
             .iter()
             .find(|instance| {
                 instance
@@ -35,7 +41,10 @@ impl Handler for ExpandAttribute {
             })
             .with_context(|| format!("Unsupported attribute: {attr}"))?;
 
-        let result = instance.generate_code(attr.into(), call_site, args, item);
+        let result = instance
+            .try_v1()
+            .expect("procedural macro using v2 api used in a context expecting v1 api")
+            .generate_code(attr.into(), call_site, args, item);
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,

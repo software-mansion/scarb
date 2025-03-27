@@ -19,7 +19,43 @@ use std::process::ChildStdin;
 use std::process::ChildStdout;
 use std::process::Stdio;
 
-pub const SIMPLE_MACROS: &str = r#"
+pub const SIMPLE_MACROS_V1: &str = r#"
+use cairo_lang_macro::{
+    ProcMacroResult,
+    TokenStream, TokenTree, Token, TextSpan,
+    attribute_macro,
+    inline_macro,
+    derive_macro,
+    executable_attribute
+};
+
+executable_attribute!("some_executable");
+
+#[attribute_macro]
+pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+    ProcMacroResult::new(token_stream)
+}
+
+#[inline_macro]
+pub fn inline_some(token_stream: TokenStream) -> ProcMacroResult {
+    ProcMacroResult::new(token_stream)
+}
+
+#[derive_macro]
+fn some_derive(_token_stream: TokenStream)-> ProcMacroResult {
+    let content = "impl SomeImpl of SomeTrait {}".to_string();
+    let span = TextSpan { start: 0, end: content.len() as u32 };
+    ProcMacroResult::new(
+        TokenStream::new(vec![
+            TokenTree::Ident(
+                Token::new(content, span)
+            )
+        ])
+    )
+}
+"#;
+
+pub const SIMPLE_MACROS_V2: &str = r#"
 use cairo_lang_macro::{
     ProcMacroResult,
     TokenStream, TokenTree, Token, TextSpan,

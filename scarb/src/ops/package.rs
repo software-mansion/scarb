@@ -13,8 +13,9 @@ use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
 use serde::Serialize;
 
+use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::compilation::{
-    SharedLibraryProvider, get_crate_archive_basename, package_crate, unpack_crate,
+    get_crate_archive_basename, package_crate, unpack_crate,
 };
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
@@ -22,8 +23,8 @@ use crate::core::{Config, Package, PackageId, PackageName, Target, TargetKind, W
 use crate::flock::{FileLockGuard, Filesystem};
 use crate::internal::restricted_names;
 use crate::{
-    CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
-    MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME, ops,
+    CARGO_LOCKFILE_FILE_NAME, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME,
+    DEFAULT_README_FILE_NAME, MANIFEST_FILE_NAME, VCS_INFO_FILE_NAME, ops,
 };
 
 const VERSION: u8 = 1;
@@ -308,7 +309,7 @@ fn prepare_archive_recipe(
             ));
         }
 
-        // Unpack .crate to make normalized Cargo.toml available.
+        // Unpack .crate to make normalized Cargo.toml and Cargo.lock available.
         unpack_crate(pkg, ws.config())?;
 
         // Add normalized Cargo.toml file.
@@ -317,7 +318,7 @@ fn prepare_archive_recipe(
             contents: ArchiveFileContents::OnDisk(
                 pkg.target_path(ws.config())
                     .into_child("package")
-                    .into_child(crate_archive_basename)
+                    .into_child(&crate_archive_basename)
                     .into_child(CARGO_MANIFEST_FILE_NAME)
                     .path_unchecked()
                     .to_path_buf(),
@@ -329,6 +330,22 @@ fn prepare_archive_recipe(
             path: ORIGINAL_CARGO_MANIFEST_FILE_NAME.into(),
             contents: ArchiveFileContents::OnDisk(pkg.root().join(CARGO_MANIFEST_FILE_NAME)),
         });
+
+        // Add generated Cargo.lock file.
+        let cargo_lockfile_path = pkg
+            .target_path(ws.config())
+            .into_child("package")
+            .into_child(&crate_archive_basename)
+            .into_child(CARGO_LOCKFILE_FILE_NAME)
+            .path_unchecked()
+            .to_path_buf();
+
+        if cargo_lockfile_path.exists() {
+            recipe.push(ArchiveFile {
+                path: CARGO_LOCKFILE_FILE_NAME.into(),
+                contents: ArchiveFileContents::OnDisk(cargo_lockfile_path),
+            });
+        }
     }
 
     // Add README file

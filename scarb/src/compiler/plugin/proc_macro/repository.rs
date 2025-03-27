@@ -1,5 +1,5 @@
 use crate::compiler::plugin::proc_macro::ProcMacroInstance;
-use crate::compiler::plugin::proc_macro::compilation::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::core::{Config, Package, PackageId};
 use anyhow::{Context, Result, bail};
 use std::collections::HashMap;
@@ -38,7 +38,7 @@ impl ProcMacroRepository {
             .shared_lib_path(config)
             .context("could not resolve shared library path")?;
 
-        let instance = Arc::new(ProcMacroInstance::try_new(package.id, lib_path)?);
+        let instance = Arc::new(ProcMacroInstance::try_new(&package, lib_path)?);
         macros.insert(package.id, instance.clone());
 
         Ok(instance)

@@ -1,11 +1,16 @@
 pub mod compilation;
+mod expansion;
 mod ffi;
 mod host;
+mod instance;
 mod repository;
-mod types;
+mod shared_library_provider;
+pub mod v1;
+pub mod v2;
 
 pub use compilation::{check_unit, compile_unit, fetch_crate};
-pub use ffi::*;
+pub use expansion::*;
 pub use host::*;
+pub use instance::*;
 pub use repository::*;
-pub use types::*;
+pub use shared_library_provider::SharedLibraryProvider;

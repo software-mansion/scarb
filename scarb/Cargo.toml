@@ -25,6 +25,8 @@ cairo-lang-formatter.workspace = true
 cairo-lang-lowering.workspace = true
 cairo-lang-macro = { path = "../plugins/cairo-lang-macro" }
 cairo-lang-macro-stable = { path = "../plugins/cairo-lang-macro-stable" }
+cairo-lang-macro-v1 = { version = "0.1", package = "cairo-lang-macro" }
+cairo-lang-macro-stable-v1 = { version = "1", package = "cairo-lang-macro-stable" }
 cairo-lang-parser.workspace = true
 cairo-lang-semantic.workspace = true
 cairo-lang-sierra-generator.workspace = true
@@ -35,7 +37,7 @@ cairo-lang-starknet.workspace = true
 cairo-lang-syntax.workspace = true
 cairo-lang-test-plugin.workspace = true
 cairo-lang-utils.workspace = true
-cairo-lint-core.workspace = true
+cairo-lint = { workspace = true, optional = true }
 camino.workspace = true
 clap.workspace = true
 convert_case.workspace = true
@@ -118,10 +120,14 @@ similar-asserts.workspace = true
 snapbox.workspace = true
 test-case.workspace = true
 test-for-each-example = { path = "../utils/test-for-each-example" }
-cairo-lint-core = { workspace = true, features = ["testing-colors"] }
+cairo-lint = { workspace = true }
 
 [build-dependencies]
 fs_extra.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 toml.workspace = true
 zip.workspace = true
+
+[features]
+default = ["scarb-lint"]
+scarb-lint = ["dep:cairo-lint"]
