@@ -46,6 +46,27 @@ fn units_and_components(meta: Metadata) -> BTreeMap<String, Vec<String>> {
         .collect::<BTreeMap<_, _>>()
 }
 
+fn units_and_plugins(meta: Metadata) -> BTreeMap<String, Vec<String>> {
+    meta.compilation_units
+        .iter()
+        .map(|cu| {
+            (
+                cu.target.name.clone(),
+                cu.cairo_plugins
+                    .iter()
+                    .map(|c| {
+                        meta.packages
+                            .iter()
+                            .find(|p| p.id == c.package)
+                            .map(|p| p.name.clone())
+                            .unwrap()
+                    })
+                    .collect_vec(),
+            )
+        })
+        .collect::<BTreeMap<_, _>>()
+}
+
 #[test]
 fn simple() {
     let t = TempDir::new().unwrap();
@@ -394,6 +415,105 @@ fn dev_deps_are_not_propagated_for_ws_members() {
                     "x".to_string()
                 ]
             ),
+        ])
+    );
+}
+
+#[test]
+fn dev_dep_plugins_are_not_propagated_for_ws_members() {
+    let t = TempDir::new().unwrap();
+
+    let m = t.child("m");
+    CairoPluginProjectBuilder::default().name("m").build(&m);
+
+    let dep2 = t.child("dep2");
+    ProjectBuilder::start()
+        .name("dep2")
+        .dep_cairo_test()
+        .dev_dep("m", &m)
+        .build(&dep2);
+
+    let pkg = t.child("pkg");
+    ProjectBuilder::start()
+        .name("x")
+        .dep("dep2", &dep2)
+        .build(&pkg);
+
+    WorkspaceBuilder::start()
+        .add_member("dep2")
+        .add_member("pkg")
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version")
+        .arg("1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(
+        units_and_plugins(metadata.clone()),
+        BTreeMap::from_iter(vec![
+            ("dep2".to_string(), vec![]),
+            (
+                "dep2_unittest".to_string(),
+                vec!["cairo_test".to_string(), "m".to_string()]
+            ),
+            ("m".to_string(), vec![]),
+            ("x".to_string(), vec![]),
+            ("x_unittest".to_string(), vec![]),
+        ])
+    );
+
+    // Get the compilation unit of `x` unit tests.
+    let cu = metadata
+        .compilation_units
+        .iter()
+        .find(|unit| unit.target.name == "x_unittest")
+        .unwrap();
+    // Get dependencies of components in the compilation unit.
+    let component_deps = BTreeMap::from_iter(cu.components.iter().map(|component| {
+        (
+            component.name.clone(),
+            component
+                .dependencies
+                .as_ref()
+                .map(|deps| {
+                    deps.iter()
+                        .map(|dep| {
+                            metadata
+                                .packages
+                                .iter()
+                                .find(|p| p.id.to_string() == dep.id.clone().to_string())
+                                .map(|p| p.name.clone())
+                                .unwrap()
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .unwrap(),
+        )
+    }));
+    assert_eq!(
+        component_deps,
+        BTreeMap::from_iter(vec![
+            ("core".to_string(), vec!["core".to_string()]),
+            (
+                "dep2".to_string(),
+                vec![
+                    "core".to_string(),
+                    "dep2".to_string(),
+                    // Note that `cairo_test` is indeed a dev dependency of `dep2`,
+                    // but it's not propagated to the unit tests of `x`.
+                    // Only dev dependencies of the main component should be enabled.
+                    // "cairo_test".to_string(),
+                    // "m".to_string()
+                ]
+            ),
+            (
+                "x".to_string(),
+                vec!["core".to_string(), "dep2".to_string(), "x".to_string()]
+            )
         ])
     );
 }

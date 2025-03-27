@@ -59,11 +59,13 @@ impl WorkspaceResolve {
         &self,
         package_id: PackageId,
         target_kind: &TargetKind,
+        main_package_id: PackageId,
     ) -> Result<Vec<Package>> {
+        let is_root = main_package_id == package_id;
         assert!(self.packages.contains_key(&package_id));
         let dependencies = self
             .resolve
-            .package_dependencies_for_target_kind(package_id, target_kind)
+            .package_dependencies_for_target_kind(package_id, target_kind, is_root)
             .iter()
             .map(|id| self.packages[id].clone())
             .collect_vec();
@@ -73,7 +75,7 @@ impl WorkspaceResolve {
             .flat_map(|dependency| {
                 let package_dependencies = self
                     .resolve
-                    .package_dependencies_for_target_kind(dependency.id, target_kind);
+                    .package_dependencies_for_target_kind(dependency.id, target_kind, is_root);
                 dependency
                     .manifest
                     .summary
@@ -553,7 +555,8 @@ fn cairo_compilation_unit_for_target(
         .iter()
         .find(|component| component.package.id == member.id)
         .unwrap();
-    let mut test_package_deps = solution.component_dependencies(member_component, &components)?;
+    let mut test_package_deps =
+        solution.component_dependencies(member_component, &components, member.id)?;
     if is_integration_test {
         test_package_deps.push(CompilationUnitDependency::Library(
             member_component.id.clone(),
@@ -566,7 +569,7 @@ fn cairo_compilation_unit_for_target(
             Ok(if component.package.id == test_package_id {
                 test_package_deps.clone()
             } else {
-                solution.component_dependencies(component, &components)?
+                solution.component_dependencies(component, &components, member.id)?
             })
         })
         .collect::<Result<Vec<_>>>()?;
@@ -765,14 +768,17 @@ impl<'a> PackageSolutionCollector<'a> {
         &self,
         component: &CompilationUnitComponent,
         components: &[CompilationUnitComponent],
+        main_package_id: PackageId,
     ) -> Result<Vec<CompilationUnitDependency>> {
         let package_id = component.id.package_id;
         let component_target_kind = self.target_kind.as_ref().unwrap();
 
         // Those are direct dependencies of the component.
-        let dependencies_packages = self
-            .resolve
-            .package_dependencies(package_id, component_target_kind)?;
+        let dependencies_packages = self.resolve.package_dependencies(
+            package_id,
+            component_target_kind,
+            main_package_id,
+        )?;
 
         // We iterate over all the compilation unit components to get dependency's version.
         let mut dependencies: Vec<_> = components
