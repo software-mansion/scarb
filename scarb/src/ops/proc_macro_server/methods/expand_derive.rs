@@ -12,7 +12,9 @@ use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use scarb_proc_macro_server_types::conversions::{diagnostic_v1_to_v2, token_stream_v2_to_v1};
-use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandDerive};
+use scarb_proc_macro_server_types::methods::{
+    CodeMapping, CodeOrigin, ProcMacroResult, expand::ExpandDerive,
+};
 
 impl Handler for ExpandDerive {
     fn handle(
@@ -48,9 +50,13 @@ impl Handler for ExpandDerive {
                 })?;
 
             let result = match proc_macro_instance.api_version() {
-                ProcMacroApiVersion::V1 => {
-                    expand_derive_v1(proc_macro_instance, expansion, token_stream_v2_to_v1(&item))
-                }
+                ProcMacroApiVersion::V1 => expand_derive_v1(
+                    proc_macro_instance,
+                    current_width,
+                    call_site.clone(),
+                    expansion,
+                    token_stream_v2_to_v1(&item),
+                ),
                 ProcMacroApiVersion::V2 => expand_derive_v2(
                     proc_macro_instance,
                     current_width,
@@ -82,6 +88,8 @@ impl Handler for ExpandDerive {
 
 fn expand_derive_v1(
     proc_macro_instance: &Arc<ProcMacroInstance>,
+    current_width: TextWidth,
+    call_site: TextSpan,
     expansion: Expansion,
     item: TokenStreamV1,
 ) -> Result<ProcMacroResult> {
@@ -91,10 +99,20 @@ fn expand_derive_v1(
         item,
     );
 
+    // Default mapping for v1 derives
+    let added_length = TextWidth::from_str(&result.token_stream.to_string());
+    let code_mappings = Some(vec![CodeMapping {
+        span: TextSpan {
+            start: current_width.as_u32(),
+            end: (current_width + added_length).as_u32(),
+        },
+        origin: CodeOrigin::Span(call_site.clone()),
+    }]);
+
     Ok(ProcMacroResult {
         token_stream: result.token_stream,
         diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),
-        code_mappings: None,
+        code_mappings,
     })
 }
 
