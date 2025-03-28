@@ -130,8 +130,9 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .ui()
                         .print(Status::new("Linting", &compilation_unit.name()));
 
-                    let additional_plugins =
-                        vec![cairo_lint_plugin_suite(cairo_lint_tool_metadata(&package)?)];
+                    let additional_plugins = vec![cairo_lint_plugin_suite(
+                        cairo_lint_tool_metadata(&package)?,
+                    )?];
                     let ScarbDatabase { db, .. } =
                         build_scarb_root_database(compilation_unit, ws, additional_plugins)?;
 

@@ -4,7 +4,7 @@ Shape trait for objects that have an area
 
 Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)
 
-<pre><code class="language-rust">trait Shape&lt;<a href="hello_world-Shape.html">T</a>&gt;</code></pre>
+<pre><code class="language-rust">trait Shape&lt;T&gt;</code></pre>
 
 ## Trait constants
 
