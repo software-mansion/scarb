@@ -255,7 +255,7 @@ fn lint_panics() {
         .name("hello")
         .manifest_extra(indoc! {r#"
             [tool]
-            cairo-lint.nopanic = true
+            cairo-lint.panic = true
         "#})
         .lib_cairo(indoc! {r#"
             fn main() {
