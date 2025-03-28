@@ -127,13 +127,16 @@ pub fn execute(
         panic_traceback: Default::default(),
     };
 
+    let proof_mode = args.run.target.is_standalone();
+
     let cairo_run_config = CairoRunConfig {
         allow_missing_builtins: Some(true),
         layout: LayoutName::all_cairo,
-        proof_mode: args.run.target.is_standalone(),
+        proof_mode,
         secure_run: None,
         relocate_mem: output.is_standard(),
         trace_enabled: output.is_standard(),
+        disable_trace_padding: proof_mode,
         ..Default::default()
     };
 
