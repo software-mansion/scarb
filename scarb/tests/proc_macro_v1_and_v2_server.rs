@@ -192,7 +192,13 @@ fn expand_derive() {
                 }]
             );
         } else {
-            assert_eq!(response.code_mappings, Some(vec![]));
+            assert_eq!(
+                response.code_mappings,
+                Some(vec![CodeMapping {
+                    span: TextSpan { start: 0, end: 29 },
+                    origin: Span(TextSpan { start: 0, end: 19 })
+                }])
+            );
         }
     }
 }
