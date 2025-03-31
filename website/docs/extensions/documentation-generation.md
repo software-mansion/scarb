@@ -25,12 +25,15 @@ Currenctly we support only those types of links:
 
 ## mdBook
 
-Generated markdown can be used to create a documentation book.
-Requirements:
+Generated markdown can be used to build a [mdBook](https://rust-lang.github.io/mdBook) documentation.
+You can do this directly from Scarb by running `scarb doc` with `--build` argument.
+
+Alternatively, you can do this manually with the following steps:
 
 - Install [mdBook](https://rust-lang.github.io/mdBook/guide/installation.html) by running `cargo install mdbook`.
 - Run `scarb doc` inside the project root.
 - Run `mdbook build` (or `mdbook serve`) inside the generated documentation target (`/target/doc/<PACKAGE-NAME>`).
+  By default, mdBook generated documentation doesn't support Cairo code highlighting. To make it work, just replace the generated `book/highlight.js` with [this](https://github.com/software-mansion/scarb/tree/main/extensions/scarb-mdbook/theme) one.
 
 ## Examples
 
@@ -85,7 +88,3 @@ After running `scarb doc`, inside the target directory, you will see the generat
 - The `book.toml` which contains contains settings for describing how to build your book.
 
 Running `scarb doc --output-format json` will result in a single JSON file inside the target directory with collected documentation inside.
-
-## Cairo code highlighting using mdBook
-
-By default, mdBook generated documentation doesn't support Cairo code highlighting. To make it work, just replace the generated `book/highlight.js` with [this](https://github.com/software-mansion/scarb/tree/main/extensions/scarb-mdbook/theme) one.
