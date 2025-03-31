@@ -1,14 +1,15 @@
-use anyhow::Result;
-use cairo_lang_doc::parser::DocumentationCommentToken;
-use itertools::Itertools;
-use std::collections::HashMap;
-use std::fmt::Write;
-
 use crate::docs_generation::{DocItem, PrimitiveDocItem, TopLevelDocItem};
 use crate::types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Module,
     Struct, Trait, TypeAlias,
 };
+use crate::types::{Member, Variant};
+use anyhow::Result;
+use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};
+use itertools::Itertools;
+use std::any::Any;
+use std::collections::HashMap;
+use std::fmt::Write;
 
 use super::context::MarkdownGenerationContext;
 use crate::location_links::DocLocationLink;
@@ -66,18 +67,29 @@ pub trait MarkdownDocItem: DocItem {
                 .map(|doc_token| match doc_token {
                     DocumentationCommentToken::Content(content) => content.clone(),
                     DocumentationCommentToken::Link(link) => {
-                        let file_path = context.resolve_markdown_file_path_from_link(link);
-                        format!("[{}]({})", link.label.clone(), file_path)
+                        self.format_link_to_path(link, context)
                     }
                 })
                 .join("")
         })
     }
+
+    fn format_link_to_path(
+        &self,
+        link: &CommentLinkToken,
+        context: &MarkdownGenerationContext,
+    ) -> String {
+        if let Some(file_path) = context.resolve_markdown_file_path_from_link(link) {
+            format!("[{}]({file_path})", link.label.clone(),)
+        } else {
+            link.label.clone()
+        }
+    }
 }
 
 impl<T> MarkdownDocItem for T
 where
-    T: PrimitiveDocItem,
+    T: PrimitiveDocItem + 'static,
 {
     fn generate_markdown(
         &self,
@@ -311,7 +323,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + PrimitiveDocItem>(
 }
 
 fn generate_markdown_from_item_data(
-    doc_item: &impl MarkdownDocItem,
+    doc_item: &(impl MarkdownDocItem + 'static),
     context: &MarkdownGenerationContext,
     header_level: usize,
 ) -> Result<String> {
@@ -325,11 +337,30 @@ fn generate_markdown_from_item_data(
         writeln!(&mut markdown, "{doc}\n")?;
     }
 
-    writeln!(
-        &mut markdown,
-        "Fully qualified path: {}\n",
-        get_linked_path(doc_item.full_path())
-    )?;
+    let doc_as_any = doc_item as &dyn Any;
+    let full_path = {
+        if doc_as_any.is::<Variant>() || doc_as_any.is::<Member>() {
+            if let Some(position) = doc_item.full_path().rfind("::") {
+                let (parent_path, item_path) = doc_item.full_path().split_at(position);
+                let last_path = format!(
+                    "{}.md#{}",
+                    parent_path.replace("::", "-"),
+                    &item_path[2..].to_lowercase(),
+                );
+                format!(
+                    "{}::[{}](./{})",
+                    get_linked_path(parent_path),
+                    &item_path[2..],
+                    last_path
+                )
+            } else {
+                get_linked_path(doc_item.full_path())
+            }
+        } else {
+            get_linked_path(doc_item.full_path())
+        }
+    };
+    writeln!(&mut markdown, "Fully qualified path: {full_path}\n",)?;
 
     if let Some(sig) = &doc_item.signature() {
         if !sig.is_empty() {
