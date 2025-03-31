@@ -17,7 +17,6 @@ impl Handler for ExpandAttribute {
             attr,
             args,
             item,
-            call_site,
         } = params;
 
         let plugin = workspace_macros.get(&context.component);
@@ -44,7 +43,7 @@ impl Handler for ExpandAttribute {
         let result = instance
             .try_v1()
             .expect("procedural macro using v2 api used in a context expecting v1 api")
-            .generate_code(attr.into(), call_site, args, item);
+            .generate_code(attr.into(), args, item);
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,

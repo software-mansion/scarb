@@ -17,7 +17,6 @@ impl Handler for ExpandInline {
             context,
             name,
             args,
-            call_site,
         } = params;
 
         let plugin = workspace_macros.get(&context.component);
@@ -44,7 +43,7 @@ impl Handler for ExpandInline {
         let result = instance
             .try_v1()
             .expect("procedural macro using v2 api used in a context expecting v1 api")
-            .generate_code(name.into(), call_site, TokenStream::empty(), args);
+            .generate_code(name.into(), TokenStream::empty(), args);
 
         Ok(ProcMacroResult {
             token_stream: result.token_stream,

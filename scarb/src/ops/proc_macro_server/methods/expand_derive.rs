@@ -21,7 +21,6 @@ impl Handler for ExpandDerive {
             context,
             derives,
             item,
-            call_site,
         } = params;
 
         let mut derived_code = String::new();
@@ -49,11 +48,11 @@ impl Handler for ExpandDerive {
                 .try_v1()
                 .expect("procedural macro using v2 api used in a context expecting v1 api")
                 .generate_code(
-                expansion.name.clone(),
-                call_site.clone(),
-                TokenStream::empty(),
-                item.clone(),
-            );
+                    expansion.name.clone(),
+                    // call_site.clone(),
+                    TokenStream::empty(),
+                    item.clone(),
+                );
 
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);
