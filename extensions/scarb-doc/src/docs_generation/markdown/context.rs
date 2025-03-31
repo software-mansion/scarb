@@ -26,7 +26,7 @@ impl<'a> MarkdownGenerationContext<'a> {
         }
     }
 
-    pub fn resolve_markdown_file_path_from_link(&self, link: &CommentLinkToken) -> String {
+    pub fn resolve_markdown_file_path_from_link(&self, link: &CommentLinkToken) -> Option<String> {
         match link.resolved_item {
             Some(resolved_item_id) => match self.included_items.get(&resolved_item_id) {
                 Some(resolved_item) => match resolved_item_id {
@@ -49,22 +49,20 @@ impl<'a> MarkdownGenerationContext<'a> {
                         ImplItemId::Constant(_),
                     )) => {
                         match resolved_item.parent_full_path() {
-                            Some(parent_path) => {
-                                format!(
-                                    "{}#{}",
-                                    path_to_file_link(&parent_path),
-                                    resolved_item.name().to_lowercase()
-                                )
-                            }
+                            Some(parent_path) => Some(format!(
+                                "{}#{}",
+                                path_to_file_link(&parent_path),
+                                resolved_item.name().to_lowercase()
+                            )),
                             // Only root_module / crate doesn't have the parent.
-                            _ => SUMMARY_FILENAME.to_string(),
+                            _ => Some(SUMMARY_FILENAME.to_string()),
                         }
                     }
-                    _ => path_to_file_link(&resolved_item.full_path()),
+                    _ => Some(path_to_file_link(&resolved_item.full_path())),
                 },
-                None => link.path.clone().unwrap_or(link.label.clone()),
+                None => None,
             },
-            None => link.path.clone().unwrap_or(link.label.clone()),
+            None => None,
         }
     }
 }
