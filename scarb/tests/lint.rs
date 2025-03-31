@@ -57,6 +57,62 @@ fn lint_main_package() {
 }
 
 #[test]
+fn lint_warnings_disallowed() {
+    let test_code = indoc! {r#"
+      use hello::f1;
+      #[test]
+      fn it_works() {
+          let x = true;
+          if false == x {
+              println!("x is false");
+          }
+          assert_eq!(1, f1());
+      }
+    "#};
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+          [cairo]
+          allow-warnings = false
+        "#})
+        .lib_cairo(formatdoc! {r#"
+          fn main() {{
+              let x = true;
+              if x == false {{
+                  println!("x is false");
+              }}
+          }}
+
+          // This should not be checked.
+          #[cfg(test)]
+          mod tests {{
+            {test_code}
+          }}
+        "#})
+        .build(&t);
+
+    // We add this one to test that the linting is not run on the test package.
+    t.child("tests/test1.cairo").write_str(test_code).unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        // Current expected values include ANSI color codes because lint has custom renderer.
+        .stdout_matches(indoc! {r#"
+               Linting hello v1.0.0 ([..]/Scarb.toml)
+          warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+           --> [..]/lib.cairo:3:8
+              if x == false {
+                 ^^^^^^^^^^
+  
+          error: lint checking `hello` failed due to previous errors
+        "#});
+}
+
+#[test]
 fn lint_workspace() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()

@@ -65,6 +65,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     }
 
     for package in opts.packages {
+        let package_name = &package.id.name;
         let package_compilation_units = if opts.test {
             let mut result = vec![];
             let integration_test_compilation_unit =
@@ -174,6 +175,17 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                             all_diags
                         })
                         .collect::<Vec<_>>();
+
+                    let warnings_allowed = compilation_unit.compiler_config.allow_warnings;
+
+                    if let Some(_) = diagnostics.iter().find(|diag| {
+                        matches!(diag.severity(), Severity::Error)
+                            || (!warnings_allowed && matches!(diag.severity(), Severity::Warning))
+                    }) {
+                        return Err(anyhow!(
+                            "lint checking `{package_name}` failed due to previous errors"
+                        ));
+                    }
 
                     if opts.fix {
                         let fixes = get_fixes(&db, diagnostics);
