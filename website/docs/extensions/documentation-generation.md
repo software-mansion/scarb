@@ -88,4 +88,4 @@ Running `scarb doc --output-format json` will result in a single JSON file insid
 
 ## Cairo code highlighting using mdBook
 
-By default, mdBook generated documentation doesn't support Cairo code highlighting. To make it work, just replace the generated `book/highlight.js` with [this](https://github.com/software-mansion/scarb/tree/main/extensions/scarb-doc/theme) one.
+By default, mdBook generated documentation doesn't support Cairo code highlighting. To make it work, just replace the generated `book/highlight.js` with [this](https://github.com/software-mansion/scarb/tree/main/extensions/scarb-mdbook/theme) one.
