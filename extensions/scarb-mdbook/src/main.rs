@@ -4,6 +4,9 @@ use clap::Parser;
 use mdbook::MDBook;
 use scarb_ui::Ui;
 use scarb_ui::args::VerbositySpec;
+use std::fs::File;
+use std::io::Write;
+use std::path::PathBuf;
 use std::process::ExitCode;
 
 #[derive(Parser, Debug)]
@@ -40,7 +43,11 @@ fn main() -> ExitCode {
 
 fn main_inner(args: &Args, _ui: Ui) -> Result<()> {
     let mut book = MDBook::load(args.input.clone())?;
-    book.config.build.build_dir = args.output.clone().into();
+    let output_path: PathBuf = args.output.clone().into();
+    book.config.build.build_dir = output_path.strip_prefix(&args.input)?.into();
     book.build()?;
+    let highlight = include_str!("../theme/highlight.js");
+    let mut highlight_file = File::create(output_path.join("highlight.js"))?;
+    highlight_file.write_all(highlight.as_bytes())?;
     Ok(())
 }
