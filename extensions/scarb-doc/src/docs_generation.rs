@@ -33,15 +33,18 @@ impl PrimitiveDocItem for ExternFunction {}
 impl PrimitiveDocItem for ExternType {}
 impl PrimitiveDocItem for FreeFunction {}
 impl PrimitiveDocItem for ImplAlias {}
-impl PrimitiveDocItem for ImplConstant {}
-impl PrimitiveDocItem for ImplFunction {}
-impl PrimitiveDocItem for ImplType {}
-impl PrimitiveDocItem for Member {}
-impl PrimitiveDocItem for TraitConstant {}
-impl PrimitiveDocItem for TraitFunction {}
-impl PrimitiveDocItem for TraitType {}
 impl PrimitiveDocItem for TypeAlias {}
-impl PrimitiveDocItem for Variant {}
+
+trait SubPathDocItem: DocItem {}
+
+impl SubPathDocItem for Member {}
+impl SubPathDocItem for Variant {}
+impl SubPathDocItem for TraitFunction {}
+impl SubPathDocItem for ImplFunction {}
+impl SubPathDocItem for ImplType {}
+impl SubPathDocItem for ImplConstant {}
+impl SubPathDocItem for TraitConstant {}
+impl SubPathDocItem for TraitType {}
 
 // Trait for items that have their own documentation page.
 // Used to enforce constraints on generic implementations of traits like `TopLevelMarkdownDocItem`.
