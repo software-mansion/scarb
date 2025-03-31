@@ -108,7 +108,7 @@ pub struct Diagnostic {
     pub severity: Severity,
     /// Optional custom span for the diagnostic location.
     ///
-    /// If provided, this span will be used instead of the default attribute location.
+    /// If provided, this span will be used instead of call site span.
     /// This allows macros to point to specific elements within the annotated item.
     pub span: Option<TextSpan>,
 }

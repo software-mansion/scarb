@@ -47,12 +47,7 @@ impl Handler for ExpandDerive {
             let result = instance
                 .try_v1()
                 .expect("procedural macro using v2 api used in a context expecting v1 api")
-                .generate_code(
-                    expansion.name.clone(),
-                    // call_site.clone(),
-                    TokenStream::empty(),
-                    item.clone(),
-                );
+                .generate_code(expansion.name.clone(), TokenStream::empty(), item.clone());
 
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);

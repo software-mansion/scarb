@@ -38,18 +38,14 @@ pub fn into_cairo_diagnostics(
 ) -> Vec<PluginDiagnostic> {
     diagnostics
         .into_iter()
-        .map(|diag| {
-            let severity = match diag.severity {
+        .map(|diag| PluginDiagnostic {
+            stable_ptr,
+            span: diag.span.map(|span| into_cairo_span(span)),
+            message: diag.message,
+            severity: match diag.severity {
                 Severity::Error => cairo_lang_diagnostics::Severity::Error,
                 Severity::Warning => cairo_lang_diagnostics::Severity::Warning,
-            };
-
-            PluginDiagnostic {
-                stable_ptr,
-                message: diag.message,
-                severity,
-                span: diag.span.map(|span| into_cairo_span(span)),
-            }
+            },
         })
         .collect_vec()
 }
