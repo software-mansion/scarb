@@ -12,5 +12,5 @@ This is a under feature attribute comment.
 
 Fully qualified path: [hello_world_sub_package](./hello_world_sub_package.md)::[test](./hello_world_sub_package-test.md)
 
-<pre><code class="language-rust">fn test()</code></pre>
+<pre><code class="language-cairo">fn test()</code></pre>
 

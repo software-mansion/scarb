@@ -10,5 +10,5 @@ Can invoke it like that:
 
 Fully qualified path: [hello_world](./hello_world.md)::[test](./hello_world-test.md)
 
-<pre><code class="language-rust">fn test()</code></pre>
+<pre><code class="language-cairo">fn test()</code></pre>
 
