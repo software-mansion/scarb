@@ -40,7 +40,7 @@ pub fn into_cairo_diagnostics(
         .into_iter()
         .map(|diag| PluginDiagnostic {
             stable_ptr,
-            span: diag.span.map(|span| into_cairo_span(span)),
+            span: diag.span.map(into_cairo_span),
             message: diag.message,
             severity: match diag.severity {
                 Severity::Error => cairo_lang_diagnostics::Severity::Error,
