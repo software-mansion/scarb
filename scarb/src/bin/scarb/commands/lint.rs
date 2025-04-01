@@ -24,6 +24,7 @@ fn do_lint(args: LintArgs, config: &Config) -> Result<()> {
             fix: args.fix,
             ignore_cairo_version: args.ignore_cairo_version,
             features: args.features.try_into()?,
+            deny_warnings: args.deny_warnings,
         },
         &ws,
     )

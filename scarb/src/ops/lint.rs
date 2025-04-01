@@ -34,6 +34,7 @@ pub struct LintOptions {
     pub fix: bool,
     pub ignore_cairo_version: bool,
     pub features: FeaturesOpts,
+    pub deny_warnings: bool,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -176,9 +177,10 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         })
                         .collect::<Vec<_>>();
 
-                    let warnings_allowed = compilation_unit.compiler_config.allow_warnings;
+                    let warnings_allowed =
+                        compilation_unit.compiler_config.allow_warnings && !opts.deny_warnings;
 
-                    if let Some(_) = diagnostics.iter().find(|diag| {
+                    if diagnostics.iter().any(|diag| {
                         matches!(diag.severity(), Severity::Error)
                             || (!warnings_allowed && matches!(diag.severity(), Severity::Warning))
                     }) {
