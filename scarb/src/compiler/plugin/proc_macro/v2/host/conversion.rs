@@ -1,4 +1,5 @@
 use cairo_lang_defs::plugin::PluginDiagnostic;
+use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{Diagnostic, Severity, TextSpan};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
@@ -39,6 +40,7 @@ pub fn into_cairo_diagnostics(
         .into_iter()
         .map(|diag| PluginDiagnostic {
             stable_ptr,
+            relative_span: diag.span.map(into_cairo_span),
             message: diag.message,
             severity: match diag.severity {
                 Severity::Error => cairo_lang_diagnostics::Severity::Error,
@@ -46,4 +48,13 @@ pub fn into_cairo_diagnostics(
             },
         })
         .collect_vec()
+}
+
+pub fn into_cairo_span(span: TextSpan) -> cairo_lang_filesystem::span::TextSpan {
+    cairo_lang_filesystem::span::TextSpan {
+        start: cairo_lang_filesystem::span::TextOffset::default()
+            .add_width(TextWidth::new_for_testing(span.start)),
+        end: cairo_lang_filesystem::span::TextOffset::default()
+            .add_width(TextWidth::new_for_testing(span.end)),
+    }
 }
