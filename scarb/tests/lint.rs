@@ -109,7 +109,6 @@ fn lint_warnings_disallowed_manifest() {
                  ^^^^^^^^^^
   
           error: lint checking `hello` failed due to previous errors
-
         "#});
 }
 
@@ -163,7 +162,6 @@ fn lint_warnings_disallowed_cli() {
                  ^^^^^^^^^^
   
           error: lint checking `hello` failed due to previous errors
-          
         "#});
 }
 
@@ -221,7 +219,6 @@ fn lint_warnings_disallowed_cli_and_manifest() {
                  ^^^^^^^^^^
   
           error: lint checking `hello` failed due to previous errors
-          
         "#});
 }
 
