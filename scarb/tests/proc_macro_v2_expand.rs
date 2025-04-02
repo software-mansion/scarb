@@ -310,7 +310,7 @@ fn can_implement_derive_macro() {
             use cairo_lang_macro::{derive_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
 
             #[derive_macro]
-            pub fn custom_derive(token_stream: TokenStream) -> ProcMacroResult {
+            pub fn custom_derive_v2(token_stream: TokenStream) -> ProcMacroResult {
                 let name = token_stream
                     .clone()
                     .to_string()
@@ -356,7 +356,7 @@ fn can_implement_derive_macro() {
                 fn world(self: @T) -> u32;
             }
 
-            #[derive(CustomDerive, Drop)]
+            #[derive(CustomDeriveV2, Drop)]
             struct SomeType {}
 
             fn main() -> u32 {
