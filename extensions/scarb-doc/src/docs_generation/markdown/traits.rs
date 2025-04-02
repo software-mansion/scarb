@@ -4,14 +4,16 @@ use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt::Write;
 
+use super::context::MarkdownGenerationContext;
+use crate::docs_generation::markdown::{
+    SHORT_DOCUMENTATION_AVOID_PREFIXES, SHORT_DOCUMENTATION_LEN,
+};
 use crate::docs_generation::{DocItem, PrimitiveDocItem, TopLevelDocItem};
+use crate::location_links::DocLocationLink;
 use crate::types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Module,
     Struct, Trait, TypeAlias,
 };
-
-use super::context::MarkdownGenerationContext;
-use crate::location_links::DocLocationLink;
 
 pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     const ITEMS_SUMMARY_FILENAME: &'static str;
@@ -28,7 +30,7 @@ pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     }
 
     fn generate_markdown_list_item(&self, relative_path: Option<String>) -> String {
-        format!("- {}\n", self.md_ref(relative_path))
+        format!("- {}", self.md_ref(relative_path))
     }
 }
 
@@ -58,6 +60,43 @@ pub trait MarkdownDocItem: DocItem {
         context: &MarkdownGenerationContext,
         header_level: usize,
     ) -> Result<String>;
+
+    fn get_short_documentation(&self, context: &MarkdownGenerationContext) -> String {
+        let mut short_doc_buff = String::new();
+
+        if let Some(tokens) = self.doc() {
+            for token in tokens.iter() {
+                let mut text_formatted = match token {
+                    DocumentationCommentToken::Content(content) => {
+                        if SHORT_DOCUMENTATION_AVOID_PREFIXES
+                            .iter()
+                            .any(|prefix| content.starts_with(prefix))
+                        {
+                            return short_doc_buff.trim().to_string();
+                        } else if !content.eq("\n") {
+                            content.replace("\n", " ")
+                        } else {
+                            continue;
+                        }
+                    }
+                    DocumentationCommentToken::Link(link) => {
+                        let file_path = context.resolve_markdown_file_path_from_link(link);
+                        format!("[{}]({})", link.label.clone(), file_path).replace("\n", " ")
+                    }
+                };
+                if !text_formatted.ends_with(' ') {
+                    text_formatted.push(' ');
+                }
+
+                if short_doc_buff.len() + text_formatted.len() > SHORT_DOCUMENTATION_LEN {
+                    return short_doc_buff.trim().to_string();
+                } else {
+                    short_doc_buff.push_str(&text_formatted);
+                }
+            }
+        }
+        short_doc_buff.trim().to_string()
+    }
 
     fn get_documentation(&self, context: &MarkdownGenerationContext) -> Option<String> {
         self.doc().as_ref().map(|doc_tokens| {
@@ -126,49 +165,49 @@ impl MarkdownDocItem for Module {
     ) -> Result<String> {
         let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
 
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.submodules.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.constants.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.free_functions.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.structs.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.enums.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.type_aliases.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.impl_aliases.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.traits.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.impls.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.extern_types.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
-        markdown += &generate_markdown_list_for_top_level_subitems(
+        markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.extern_functions.iter().collect_vec(),
-            header_level + 1,
+            context,
         )?;
 
         Ok(markdown)
@@ -264,22 +303,24 @@ pub fn mark_duplicated_item_with_relative_path<'a, T: TopLevelMarkdownDocItem + 
         .collect::<Vec<_>>()
 }
 
-pub fn generate_markdown_list_for_top_level_subitems<T: TopLevelMarkdownDocItem>(
+pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdownDocItem>(
     subitems: &[&T],
-    header_level: usize,
+    context: &MarkdownGenerationContext,
 ) -> Result<String> {
     let mut markdown = String::new();
 
     if !subitems.is_empty() {
-        let header = str::repeat("#", header_level);
+        writeln!(&mut markdown, "\n{}\n ---\n| | |\n|:---|:---|", T::HEADER,)?;
 
-        writeln!(&mut markdown, "{header} {}\n", T::HEADER)?;
         let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
         for (item, relative_path) in items_with_relative_path {
+            let item_doc = item.get_short_documentation(context);
             writeln!(
                 &mut markdown,
-                "{}",
-                item.generate_markdown_list_item(relative_path)
+                "| {} | {}[...](./{}) |",
+                item.md_ref(relative_path),
+                item_doc,
+                item.filename(),
             )?;
         }
     }
