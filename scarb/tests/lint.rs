@@ -45,7 +45,6 @@ fn lint_main_package() {
         .current_dir(&t)
         .assert()
         .success()
-        // Current expected values include ANSI color codes because lint has custom renderer.
         .stdout_matches(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
@@ -100,7 +99,6 @@ fn lint_warnings_disallowed_manifest() {
         .current_dir(&t)
         .assert()
         .failure()
-        // Current expected values include ANSI color codes because lint has custom renderer.
         .stdout_matches(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
@@ -153,7 +151,6 @@ fn lint_warnings_disallowed_cli() {
         .current_dir(&t)
         .assert()
         .failure()
-        // Current expected values include ANSI color codes because lint has custom renderer.
         .stdout_matches(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
@@ -210,7 +207,6 @@ fn lint_warnings_disallowed_cli_and_manifest() {
         .current_dir(&t)
         .assert()
         .failure()
-        // Current expected values include ANSI color codes because lint has custom renderer.
         .stdout_matches(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
           warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
@@ -267,7 +263,6 @@ fn lint_workspace() {
         .current_dir(&t)
         .assert()
         .success()
-        // Current expected values include ANSI color codes because lint has custom renderer.
         .stdout_matches(indoc! {r#"
            Linting first v1.0.0 ([..]/first/Scarb.toml)
       warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
@@ -326,7 +321,6 @@ fn lint_integration_tests() {
         .current_dir(&t)
         .assert()
         .success()
-        // Current expected values include ANSI color codes because lint has custom renderer.
         .stdout_matches(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
                Linting test(hello_unittest) hello v1.0.0 ([..]/Scarb.toml)
@@ -382,7 +376,6 @@ fn lint_unit_test() {
         .current_dir(&t)
         .assert()
         .success()
-        // Current expected values include ANSI color codes because lint has custom renderer.
         .stdout_matches(indoc! {r#"
                Linting hello v1.0.0 ([..]/Scarb.toml)
                Linting test(hello) hello v1.0.0 ([..]/Scarb.toml)
