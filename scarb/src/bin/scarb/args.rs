@@ -554,6 +554,10 @@ pub struct LintArgs {
     /// Specify features to enable.
     #[command(flatten)]
     pub features: FeaturesSpec,
+
+    /// Should fail on any warning.
+    #[arg(short, long, default_value_t = false)]
+    pub deny_warnings: bool,
 }
 
 /// Git reference specification arguments.
