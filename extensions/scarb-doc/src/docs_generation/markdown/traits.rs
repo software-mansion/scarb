@@ -1,9 +1,3 @@
-use anyhow::Result;
-use cairo_lang_doc::parser::DocumentationCommentToken;
-use itertools::Itertools;
-use std::collections::HashMap;
-use std::fmt::Write;
-
 use super::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::{
     SHORT_DOCUMENTATION_AVOID_PREFIXES, SHORT_DOCUMENTATION_LEN,
@@ -14,12 +8,17 @@ use crate::types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Module,
     Struct, Trait, TypeAlias,
 };
+use anyhow::Result;
+use cairo_lang_doc::parser::DocumentationCommentToken;
+use itertools::Itertools;
+use std::collections::HashMap;
+use std::fmt::Write;
 
 pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     const ITEMS_SUMMARY_FILENAME: &'static str;
 
     fn filename(&self) -> String {
-        format!("{}.md", self.full_path().replace("::", "-"))
+        format!("{}.md", self.markdown_formatted_path())
     }
 
     fn md_ref(&self, relative_path: Option<String>) -> String {
@@ -29,8 +28,16 @@ pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
         }
     }
 
-    fn generate_markdown_list_item(&self, relative_path: Option<String>) -> String {
-        format!("- {}", self.md_ref(relative_path))
+    fn generate_markdown_nested_list_item(
+        &self,
+        relative_path: Option<String>,
+        nesting_level: usize,
+    ) -> String {
+        format!(
+            "{}- {}",
+            "  ".repeat(nesting_level),
+            self.md_ref(relative_path)
+        )
     }
 }
 
@@ -168,46 +175,57 @@ impl MarkdownDocItem for Module {
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.submodules.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.constants.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.free_functions.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.structs.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.enums.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.type_aliases.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.impl_aliases.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.traits.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.impls.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.extern_types.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.extern_functions.iter().collect_vec(),
             context,
+            &self.markdown_formatted_path(),
         )?;
 
         Ok(markdown)
@@ -306,11 +324,19 @@ pub fn mark_duplicated_item_with_relative_path<'a, T: TopLevelMarkdownDocItem + 
 pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdownDocItem>(
     subitems: &[&T],
     context: &MarkdownGenerationContext,
+    markdown_formatted_path: &String,
 ) -> Result<String> {
     let mut markdown = String::new();
 
     if !subitems.is_empty() {
-        writeln!(&mut markdown, "\n{}\n ---\n| | |\n|:---|:---|", T::HEADER,)?;
+        let linked = format!(
+            "[{}](./{}-{})",
+            T::HEADER,
+            markdown_formatted_path,
+            T::ITEMS_SUMMARY_FILENAME
+        );
+
+        writeln!(&mut markdown, "\n{}\n ---\n| | |\n|:---|:---|", linked,)?;
 
         let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
         for (item, relative_path) in items_with_relative_path {

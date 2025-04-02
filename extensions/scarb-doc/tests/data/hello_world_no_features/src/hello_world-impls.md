@@ -1,5 +1,5 @@
 
-Impls
+[Impls](./hello_world-impls.md)
  ---
 | | |
 |:---|:---|

@@ -1,5 +1,5 @@
 
-Structs
+[Structs](./hello_world-structs.md)
  ---
 | | |
 |:---|:---|
