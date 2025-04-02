@@ -2,11 +2,10 @@ use std::sync::Arc;
 
 use super::{Handler, interface_code_mapping_from_cairo};
 use crate::compiler::plugin::proc_macro::v2::derive::generate_code_mappings_with_offset;
-use crate::compiler::plugin::proc_macro::{ProcMacroApiVersion, ProcMacroInstance};
-use crate::compiler::plugin::{
-    collection::WorkspaceProcMacros,
-    proc_macro::{Expansion, ExpansionKind},
+use crate::compiler::plugin::proc_macro::{
+    DeclaredProcMacroInstances, Expansion, ExpansionQuery, ProcMacroApiVersion, ProcMacroInstance,
 };
+use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};
 use anyhow::{Context, Result};
 use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
@@ -35,7 +34,8 @@ impl Handler for ExpandDerive {
         let mut current_width = TextWidth::default();
 
         for derive in derives {
-            let expansion = Expansion::new(derive.clone(), ExpansionKind::Derive);
+            let expansion =
+                ExpansionQuery::with_expansion_name(derive.clone(), ExpansionKind::Derive);
 
             let plugins = workspace_macros.get(&context.component);
             let proc_macro_instance = plugins
@@ -45,6 +45,12 @@ impl Handler for ExpandDerive {
                         .filter_map(|plugin| plugin.find_instance_with_expansion(&expansion))
                         .next()
                 })
+                .with_context(|| {
+                    format!("No \"{derive}\" derive macros found in scope {context:?}")
+                })?;
+
+            let expansion = proc_macro_instance
+                .find_expansion(&expansion)
                 .with_context(|| {
                     format!("No \"{derive}\" derive macros found in scope {context:?}")
                 })?;
@@ -90,11 +96,11 @@ fn expand_derive_v1(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     current_width: TextWidth,
     call_site: TextSpan,
-    expansion: Expansion,
+    expansion: &Expansion,
     item: TokenStreamV1,
 ) -> Result<ProcMacroResult> {
     let result = proc_macro_instance.try_v1()?.generate_code(
-        expansion.name.clone(),
+        expansion.expansion_name.clone(),
         TokenStreamV1::empty(),
         item,
     );
@@ -119,12 +125,12 @@ fn expand_derive_v1(
 fn expand_derive_v2(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     current_width: TextWidth,
-    expansion: Expansion,
+    expansion: &Expansion,
     call_site: TextSpan,
     item: TokenStreamV2,
 ) -> Result<ProcMacroResult> {
     let result = proc_macro_instance.try_v2()?.generate_code(
-        expansion.name.clone(),
+        expansion.expansion_name.clone(),
         call_site.clone(),
         TokenStreamV2::empty(),
         item.clone(),

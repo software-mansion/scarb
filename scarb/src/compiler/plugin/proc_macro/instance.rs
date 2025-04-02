@@ -1,7 +1,7 @@
 use crate::compiler::plugin::proc_macro;
-use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::ffi::SharedPluginLibrary;
+use crate::compiler::plugin::proc_macro::{ExpansionQuery, SharedLibraryProvider};
 use crate::core::{Package, PackageId};
 use anyhow::{Context, Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};
@@ -43,8 +43,9 @@ impl ProcMacroInstance {
     pub fn try_new(package: &Package, lib_path: Utf8PathBuf) -> Result<Self> {
         trace!("loading compiled macro for `{}` package", package.id);
         let plugin = unsafe { VersionedPlugin::try_new(package, &lib_path)? };
+        let expansions = unsafe { plugin.load_expansions(package.id)? };
         Ok(Self {
-            expansions: unsafe { plugin.load_expansions(package.id)? },
+            expansions,
             package_id: package.id,
             plugin,
         })
@@ -56,8 +57,9 @@ impl ProcMacroInstance {
             .prebuilt_lib_path()
             .context("could not resolve prebuilt library path")?;
         let plugin = unsafe { VersionedPlugin::try_new(&package, &prebuilt_path)? };
+        let expansions = unsafe { plugin.load_expansions(package.id)? };
         Ok(Self {
-            expansions: unsafe { plugin.load_expansions(package.id)? },
+            expansions,
             package_id: package.id,
             plugin,
         })
@@ -71,6 +73,12 @@ impl ProcMacroInstance {
         &self.expansions
     }
 
+    pub fn find_expansion(&self, query: &ExpansionQuery) -> Option<&Expansion> {
+        self.get_expansions()
+            .iter()
+            .find(|exp| exp.matches_query(query))
+    }
+
     fn plugin(&self) -> &VersionedPlugin {
         &self.plugin
     }
@@ -79,7 +87,7 @@ impl ProcMacroInstance {
         self.get_expansions()
             .iter()
             .filter(|e| e.kind == ExpansionKind::Attr || e.kind == ExpansionKind::Executable)
-            .map(|e| e.name.clone())
+            .map(|e| e.cairo_name.clone())
             .map(Into::into)
             .collect()
     }
@@ -88,7 +96,7 @@ impl ProcMacroInstance {
         self.get_expansions()
             .iter()
             .filter(|e| e.kind == ExpansionKind::Attr)
-            .map(|e| e.name.clone())
+            .map(|e| e.cairo_name.clone())
             .map(Into::into)
             .collect()
     }
@@ -97,7 +105,16 @@ impl ProcMacroInstance {
         self.get_expansions()
             .iter()
             .filter(|e| e.kind == ExpansionKind::Derive)
-            .map(|e| e.name.clone())
+            .map(|e| e.cairo_name.clone())
+            .map(Into::into)
+            .collect()
+    }
+
+    pub fn declared_derives_snake_case(&self) -> Vec<String> {
+        self.get_expansions()
+            .iter()
+            .filter(|e| e.kind == ExpansionKind::Derive)
+            .map(|e| e.expansion_name.clone())
             .map(Into::into)
             .collect()
     }
@@ -106,7 +123,7 @@ impl ProcMacroInstance {
         self.get_expansions()
             .iter()
             .filter(|e| e.kind == ExpansionKind::Executable)
-            .map(|e| e.name.clone())
+            .map(|e| e.cairo_name.clone())
             .map(Into::into)
             .collect()
     }
@@ -115,7 +132,7 @@ impl ProcMacroInstance {
         self.get_expansions()
             .iter()
             .filter(|e| e.kind == ExpansionKind::Inline)
-            .map(|e| e.name.clone())
+            .map(|e| e.cairo_name.clone())
             .map(Into::into)
             .collect()
     }

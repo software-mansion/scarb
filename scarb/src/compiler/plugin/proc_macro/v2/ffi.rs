@@ -1,3 +1,5 @@
+use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
+use crate::compiler::plugin::proc_macro::v2::ProcMacroAuxData;
 use crate::core::PackageId;
 use anyhow::{Context, Result, ensure};
 use cairo_lang_macro::{
@@ -8,18 +10,16 @@ use cairo_lang_macro_stable::{
     StableExpansion, StableExpansionsList, StablePostProcessContext, StableProcMacroResult,
     StableResultWrapper, StableTextSpan, StableTokenStream,
 };
+use convert_case::{Case, Casing};
 use itertools::Itertools;
-use libloading::{Library, Symbol};
-use std::ffi::{CStr, CString, c_char};
-use std::slice;
-
-use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
-use crate::compiler::plugin::proc_macro::v2::ProcMacroAuxData;
 #[cfg(not(windows))]
 use libloading::os::unix::Symbol as RawSymbol;
 #[cfg(windows)]
 use libloading::os::windows::Symbol as RawSymbol;
-use smol_str::SmolStr;
+use libloading::{Library, Symbol};
+use smol_str::{SmolStr, ToSmolStr};
+use std::ffi::{CStr, CString, c_char};
+use std::slice;
 
 /// This constant is used to identify executable attributes.
 ///
@@ -120,14 +120,16 @@ impl Plugin {
         // Free the memory allocated by the `stable_expansions`.
         (self.vtable.free_expansions_list)(stable_expansions);
         // Validate expansions.
-        expansions.sort_unstable_by_key(|e| e.name.clone());
+        expansions.sort_unstable_by_key(|e| e.cairo_name.clone());
         ensure!(
-            expansions.windows(2).all(|w| w[0].name != w[1].name),
+            expansions
+                .windows(2)
+                .all(|w| w[0].cairo_name != w[1].cairo_name),
             "duplicate expansions defined for procedural macro {package_id}: {duplicates}",
             duplicates = expansions
                 .windows(2)
-                .filter(|w| w[0].name == w[1].name)
-                .map(|w| w[0].name.as_str())
+                .filter(|w| w[0].cairo_name == w[1].cairo_name)
+                .map(|w| w[0].cairo_name.as_str())
                 .collect::<Vec<_>>()
                 .join(", ")
         );
@@ -236,14 +238,23 @@ impl From<&StableExpansion> for Expansion {
         // Handle special case for executable attributes.
         if name.starts_with(EXEC_ATTR_PREFIX) {
             let name = name.strip_prefix(EXEC_ATTR_PREFIX).unwrap();
+            let name = name.to_smolstr();
             return Self {
-                name: SmolStr::new(name),
+                cairo_name: name.clone(),
+                expansion_name: name.clone(),
                 kind: ExpansionKind::Executable,
             };
         }
         let expansion_kind = unsafe { ExpansionKindV2::from_stable(&stable_expansion.kind) }.into();
+        let cairo_name = if matches!(expansion_kind, ExpansionKind::Derive) {
+            let name = name.to_case(Case::UpperCamel);
+            name.to_smolstr()
+        } else {
+            name.to_smolstr()
+        };
         Self {
-            name: SmolStr::new(name),
+            cairo_name,
+            expansion_name: name.to_smolstr(),
             kind: expansion_kind,
         }
     }
