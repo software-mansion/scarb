@@ -34,6 +34,16 @@ pub struct CompilationUnitComponentMacros {
     pub derives: Vec<String>,
     /// List of executable attributes available.
     pub executables: Vec<String>,
+    /// Additional debug information.
+    pub debug_info: DebugInfo,
+}
+
+/// Stores extra information about the macros managed by the server.
+/// Used for debugging on the LS side.
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct DebugInfo {
+    /// Serialized `PackageId`s of Rust packages which define the procedural macros.
+    pub source_packages: Vec<String>,
 }
 
 /// Parameters for the request to retrieve all defined macros.

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use itertools::Itertools;
 use scarb_proc_macro_server_types::methods::defined_macros::{
-    CompilationUnitComponentMacros, DefinedMacros, DefinedMacrosResponse,
+    CompilationUnitComponentMacros, DebugInfo, DefinedMacros, DefinedMacrosResponse,
 };
 
 use super::Handler;
@@ -26,6 +26,11 @@ impl Handler for DefinedMacros {
                         let inline_macros = plugin.declared_inline_macros();
                         let derives = plugin.declared_derives_snake_case();
                         let executables = plugin.executable_attributes();
+                        let source_packages = plugin
+                            .instances()
+                            .iter()
+                            .map(|instance| instance.package_id().to_serialized_string())
+                            .collect();
 
                         CompilationUnitComponentMacros {
                             component: component.to_owned(),
@@ -33,6 +38,7 @@ impl Handler for DefinedMacros {
                             inline_macros,
                             derives,
                             executables,
+                            debug_info: DebugInfo { source_packages },
                         }
                     })
                     .collect_vec()
@@ -47,12 +53,14 @@ impl Handler for DefinedMacros {
                 let mut executables = Vec::new();
                 let mut attributes = Vec::new();
                 let mut inline_macros = Vec::new();
+                let mut source_packages = Vec::new();
 
                 for macros in cu_macros {
                     derives.extend(macros.derives.clone());
                     executables.extend(macros.executables.clone());
                     attributes.extend(macros.attributes.clone());
-                    inline_macros.extend(macros.inline_macros.clone())
+                    inline_macros.extend(macros.inline_macros.clone());
+                    source_packages.extend(macros.debug_info.source_packages.clone());
                 }
 
                 CompilationUnitComponentMacros {
@@ -61,6 +69,7 @@ impl Handler for DefinedMacros {
                     derives,
                     attributes,
                     inline_macros,
+                    debug_info: DebugInfo { source_packages },
                 }
             })
             .collect();
