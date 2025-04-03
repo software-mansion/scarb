@@ -197,6 +197,7 @@ impl ProcMacroHostPlugin {
             );
 
         let expanded = context.register_result(
+            db,
             token_stream.to_string(),
             input.id,
             result,
@@ -365,6 +366,7 @@ impl ProcMacroHostPlugin {
 
     pub fn expand_attribute(
         &self,
+        db: &dyn SyntaxGroup,
         input: ProcMacroId,
         last: bool,
         args: TokenStream,
@@ -387,7 +389,7 @@ impl ProcMacroHostPlugin {
         if result.token_stream.is_empty() {
             // Remove original code
             return PluginResult {
-                diagnostics: into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr),
+                diagnostics: into_cairo_diagnostics(db, result.diagnostics, call_site.stable_ptr),
                 code: None,
                 remove_original_item: true,
             };
@@ -410,7 +412,7 @@ impl ProcMacroHostPlugin {
             return PluginResult {
                 code: None,
                 remove_original_item: false,
-                diagnostics: into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr),
+                diagnostics: into_cairo_diagnostics(db, result.diagnostics, call_site.stable_ptr),
             };
         }
 
@@ -433,7 +435,7 @@ impl ProcMacroHostPlugin {
                     )))
                 }),
             }),
-            diagnostics: into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr),
+            diagnostics: into_cairo_diagnostics(db, result.diagnostics, call_site.stable_ptr),
             remove_original_item: true,
         }
     }
@@ -487,6 +489,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
 
     pub fn register_result(
         &mut self,
+        db: &dyn SyntaxGroup,
         original: String,
         input: ProcMacroId,
         result: ProcMacroResult,
@@ -501,7 +504,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
         }
 
         self.diagnostics
-            .extend(into_cairo_diagnostics(result.diagnostics, stable_ptr));
+            .extend(into_cairo_diagnostics(db, result.diagnostics, stable_ptr));
 
         if let Some(new_aux_data) = result.aux_data {
             self.aux_data
