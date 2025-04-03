@@ -5,7 +5,7 @@ edition.workspace = true
 publish = false
 
 [dependencies]
-cairo-language-server.workspace = true
+cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "ac5cfde0372fce38e24bb4266b4ada3ddd457483" }
 
 [dev-dependencies]
 assert_fs.workspace = true

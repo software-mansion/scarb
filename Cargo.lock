@@ -749,7 +749,7 @@ checksum = "2d2c12f985c78475a6b8d629afd0c360260ef34cfef52efccdcfd31972f81c2e"
 [[package]]
 name = "cairo-lang-casm"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-utils",
  "indoc",
@@ -762,7 +762,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-compiler"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "anyhow",
  "cairo-lang-defs",
@@ -787,7 +787,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-debug"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-utils",
 ]
@@ -795,7 +795,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-defs"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-diagnostics",
@@ -811,7 +811,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-diagnostics"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
@@ -822,7 +822,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-doc"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -841,7 +841,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-eq-solver"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-utils",
  "good_lp",
@@ -850,7 +850,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-executable"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "anyhow",
  "cairo-lang-casm",
@@ -875,7 +875,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-filesystem"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-utils",
@@ -890,7 +890,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-formatter"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "anyhow",
  "cairo-lang-diagnostics",
@@ -909,7 +909,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-lowering"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "bincode 1.3.3",
  "cairo-lang-debug",
@@ -992,7 +992,7 @@ version = "2.0.0"
 [[package]]
 name = "cairo-lang-parser"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
@@ -1012,7 +1012,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-plugins"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1036,7 +1036,7 @@ checksum = "123ac0ecadf31bacae77436d72b88fa9caef2b8e92c89ce63a125ae911a12fae"
 [[package]]
 name = "cairo-lang-proc-macros"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-debug",
  "quote",
@@ -1046,7 +1046,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-project"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-filesystem",
  "cairo-lang-utils",
@@ -1066,7 +1066,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-runnable-utils"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-sierra",
@@ -1083,7 +1083,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-runner"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "ark-ff 0.5.0",
  "ark-secp256k1",
@@ -1112,7 +1112,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-semantic"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1138,7 +1138,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "anyhow",
  "cairo-lang-utils",
@@ -1164,7 +1164,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-ap-change"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
@@ -1179,7 +1179,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-gas"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
@@ -1194,7 +1194,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-generator"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1217,7 +1217,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-to-casm"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "assert_matches",
  "cairo-lang-casm",
@@ -1237,7 +1237,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-type-size"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-utils",
@@ -1246,7 +1246,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-starknet"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1275,7 +1275,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-starknet-classes"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-casm",
  "cairo-lang-sierra",
@@ -1297,7 +1297,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-syntax"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
@@ -1314,7 +1314,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-syntax-codegen"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "genco",
  "xshell",
@@ -1323,7 +1323,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-test-plugin"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1349,7 +1349,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-test-runner"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1371,7 +1371,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-test-utils"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-utils",
@@ -1383,7 +1383,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-utils"
 version = "2.11.2"
-source = "git+https://github.com/starkware-libs/cairo?rev=1a531143af0066d3d9141d63dfbfba2e293ff8f0#1a531143af0066d3d9141d63dfbfba2e293ff8f0"
+source = "git+https://github.com/DelevoXDG/cairo?branch=zdobnikau/plugin-diagnostic-span#6069b035661512b58fe2a8264a42356ad094d0d7"
 dependencies = [
  "env_logger",
  "hashbrown 0.15.2",
@@ -1399,63 +1399,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "cairo-language-server"
-version = "2.11.2"
-source = "git+https://github.com/software-mansion/cairols?rev=17d26a5cb987e6a723bca1a7707aed7e764283bc#17d26a5cb987e6a723bca1a7707aed7e764283bc"
-dependencies = [
- "anyhow",
- "cairo-lang-compiler",
- "cairo-lang-defs",
- "cairo-lang-diagnostics",
- "cairo-lang-doc",
- "cairo-lang-executable",
- "cairo-lang-filesystem",
- "cairo-lang-formatter",
- "cairo-lang-lowering",
- "cairo-lang-macro 0.1.1",
- "cairo-lang-parser",
- "cairo-lang-project",
- "cairo-lang-semantic",
- "cairo-lang-starknet",
- "cairo-lang-syntax",
- "cairo-lang-syntax-codegen",
- "cairo-lang-test-plugin",
- "cairo-lang-utils",
- "cairo-lint",
- "colored",
- "convert_case",
- "crossbeam",
- "governor",
- "if_chain",
- "indent",
- "indoc",
- "itertools 0.14.0",
- "jaro_winkler",
- "jod-thread",
- "libc",
- "lsp-server",
- "lsp-types",
- "memchr",
- "rust-analyzer-salsa",
- "scarb-metadata 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "scarb-proc-macro-server-types 0.2.0 (git+https://github.com/software-mansion/scarb?rev=8caf288a0634e8f90323529bde3eac79c47b1fa4)",
- "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "semver 1.0.26",
- "serde",
- "serde_json",
- "serde_yaml",
- "tempfile",
- "toml",
- "tracing",
- "tracing-chrome",
- "tracing-subscriber",
- "which",
-]
-
-[[package]]
 name = "cairo-lint"
-version = "2.11.2"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=b545bc9be6ae981dd9089579f8e484bb06bde5d9#b545bc9be6ae981dd9089579f8e484bb06bde5d9"
+version = "2.10.0"
+source = "git+https://github.com/DelevoXDG/cairo-lint?branch=zdobnikau/plugin-diagnostic-span#4c1e21cf33f021f58a22ab12af38858d059dbd25"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1468,7 +1414,7 @@ dependencies = [
  "cairo-lang-utils",
  "if_chain",
  "indoc",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "log",
  "num-bigint",
  "scarb-metadata 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1787,19 +1733,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crossbeam"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1137cd7e7fc0fb5d3c5a8678be38ec56e819125d8d7907411fe24ccb943faca8"
-dependencies = [
- "crossbeam-channel",
- "crossbeam-deque",
- "crossbeam-epoch",
- "crossbeam-queue",
- "crossbeam-utils",
-]
-
-[[package]]
 name = "crossbeam-channel"
 version = "0.5.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1823,15 +1756,6 @@ name = "crossbeam-epoch"
 version = "0.9.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b82ac4a3c2ca9c3460964f020e1402edd5753411d7737aa39c3714ad1b5420e"
-dependencies = [
- "crossbeam-utils",
-]
-
-[[package]]
-name = "crossbeam-queue"
-version = "0.3.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f58bbc28f91df819d0aa2a2c00cd19754769c2fad90579b3592b1c9ba7a3115"
 dependencies = [
  "crossbeam-utils",
 ]
@@ -2471,12 +2395,6 @@ name = "futures-task"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f90f7dce0722e95104fcb095585910c0977252f286e354b5e3bd38902cd99988"
-
-[[package]]
-name = "futures-timer"
-version = "3.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f288b0a4f20f9a56b5d1da57e2227c661b7b16168e2f72365f57b63326e29b24"
 
 [[package]]
 name = "futures-util"
@@ -3482,25 +3400,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "governor"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "842dc78579ce01e6a1576ad896edc92fca002dd60c9c3746b7fc2bec6fb429d0"
-dependencies = [
- "cfg-if",
- "futures-sink",
- "futures-timer",
- "futures-util",
- "no-std-compat",
- "nonzero_ext",
- "parking_lot",
- "portable-atomic",
- "quanta",
- "smallvec",
- "spinning_top",
-]
-
-[[package]]
 name = "h2"
 version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4025,12 +3924,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
-name = "jaro_winkler"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "966903d6b75c207539d45eef272e66e68542640adc142f15e9c9623f76f36b5f"
-
-[[package]]
 name = "jiff"
 version = "0.1.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4067,12 +3960,6 @@ checksum = "48d1dbcbbeb6a7fec7e059840aa538bd62aaccf972c7346c4d9d2059312853d0"
 dependencies = [
  "libc",
 ]
-
-[[package]]
-name = "jod-thread"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b23360e99b8717f20aaa4598f5a6541efbe30630039fbc7706cf954a87947ae"
 
 [[package]]
 name = "js-sys"
@@ -4272,32 +4159,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lsp-server"
-version = "0.7.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9462c4dc73e17f971ec1f171d44bfffb72e65a130117233388a0ebc7ec5656f9"
-dependencies = [
- "crossbeam-channel",
- "log",
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
-name = "lsp-types"
-version = "0.95.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e34d33a8e9b006cd3fc4fe69a921affa097bae4bb65f76271f4644f9a334365"
-dependencies = [
- "bitflags 1.3.2",
- "serde",
- "serde_json",
- "serde_repr",
- "url",
-]
-
-[[package]]
 name = "matchers"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4477,12 +4338,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "no-std-compat"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b93853da6d84c2e3c7d730d6473e8817692dd89be387eb01b94d7f108ecb5b8c"
-
-[[package]]
 name = "nom"
 version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4491,12 +4346,6 @@ dependencies = [
  "memchr",
  "minimal-lexical",
 ]
-
-[[package]]
-name = "nonzero_ext"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38bf9645c8b145698bb0b18a4637dcacbc421ea49bef2317e4fd8065a387cf21"
 
 [[package]]
 name = "normalize-line-endings"
@@ -5107,21 +4956,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "007d8adb5ddab6f8e3f491ac63566a7d5002cc7ed73901f72057943fa71ae1ae"
 
 [[package]]
-name = "quanta"
-version = "0.12.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bd1fe6824cea6538803de3ff1bc0cf3949024db3d43c9643024bfb33a807c0e"
-dependencies = [
- "crossbeam-utils",
- "libc",
- "once_cell",
- "raw-cpuid",
- "wasi 0.11.0+wasi-snapshot-preview1",
- "web-sys",
- "winapi",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5222,15 +5056,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d25bf25ec5ae4a3f1b92f929810509a2f53d7dca2f50b794ff57e3face536c8f"
 dependencies = [
  "rand_core 0.6.4",
-]
-
-[[package]]
-name = "raw-cpuid"
-version = "11.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "529468c1335c1c03919960dfefdb1b3648858c20d7ec2d0663e728e4a717efbc"
-dependencies = [
- "bitflags 2.9.0",
 ]
 
 [[package]]
@@ -5746,7 +5571,7 @@ dependencies = [
  "reqwest",
  "scarb-build-metadata",
  "scarb-metadata 1.14.0",
- "scarb-proc-macro-server-types 0.2.0",
+ "scarb-proc-macro-server-types",
  "scarb-stable-hash 1.0.0",
  "scarb-test-support",
  "scarb-ui",
@@ -5789,18 +5614,6 @@ version = "2.11.2"
 dependencies = [
  "cargo_metadata",
  "semver 1.0.26",
-]
-
-[[package]]
-name = "scarb-cairo-language-server"
-version = "2.11.2"
-dependencies = [
- "assert_fs",
- "cairo-language-server",
- "scarb-test-support",
- "serde_json",
- "tokio",
- "url",
 ]
 
 [[package]]
@@ -5943,16 +5756,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scarb-proc-macro-server-types"
-version = "0.2.0"
-source = "git+https://github.com/software-mansion/scarb?rev=8caf288a0634e8f90323529bde3eac79c47b1fa4#8caf288a0634e8f90323529bde3eac79c47b1fa4"
-dependencies = [
- "cairo-lang-macro 0.1.1",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "scarb-prove"
 version = "2.11.2"
 dependencies = [
@@ -6009,7 +5812,7 @@ dependencies = [
  "predicates",
  "scarb",
  "scarb-build-metadata",
- "scarb-proc-macro-server-types 0.2.0",
+ "scarb-proc-macro-server-types",
  "scarb-ui",
  "semver 1.0.26",
  "serde",
@@ -6281,19 +6084,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_yaml"
-version = "0.9.34+deprecated"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a8b1a1a2ebf674015cc02edccce75287f1a0130d394307b36743c2f5d504b47"
-dependencies = [
- "indexmap 2.7.1",
- "itoa",
- "ryu",
- "serde",
- "unsafe-libyaml",
-]
-
-[[package]]
 name = "sha1_smol"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6502,15 +6292,6 @@ name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
-
-[[package]]
-name = "spinning_top"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d96d2d1d716fb500937168cc09353ffdc7a012be8475ac7308e1bdf0e3923300"
-dependencies = [
- "lock_api",
-]
 
 [[package]]
 name = "sprs"
@@ -7278,17 +7059,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tracing-chrome"
-version = "0.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf0a738ed5d6450a9fb96e86a23ad808de2b727fd1394585da5cdd6788ffe724"
-dependencies = [
- "serde_json",
- "tracing-core",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "tracing-core"
 version = "0.1.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7482,12 +7252,6 @@ name = "unicode-xid"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
-
-[[package]]
-name = "unsafe-libyaml"
-version = "0.2.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "673aac59facbab8a9007c7f6108d11f63b603f7cabff99fabf650fea5c32b861"
 
 [[package]]
 name = "untrusted"
