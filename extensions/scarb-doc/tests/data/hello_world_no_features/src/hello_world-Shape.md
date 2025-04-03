@@ -2,9 +2,9 @@
 
 Shape trait for objects that have an area
 
-Fully qualified path: `hello_world::Shape`
+Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)
 
-<pre><code class="language-rust">trait Shape&lt;<a href="hello_world-Shape.html">T</a>&gt;</code></pre>
+<pre><code class="language-rust">trait Shape&lt;T&gt;</code></pre>
 
 ## Trait constants
 
@@ -12,7 +12,7 @@ Fully qualified path: `hello_world::Shape`
 
 Constant for the shape type
 
-Fully qualified path: `hello_world::Shape::SHAPE_CONST`
+Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)::[SHAPE_CONST](./hello_world-Shape-SHAPE_CONST.md)
 
 <pre><code class="language-rust">const SHAPE_CONST: felt252;</code></pre>
 
@@ -23,7 +23,7 @@ Fully qualified path: `hello_world::Shape::SHAPE_CONST`
 
 Calculate the area of the shape
 
-Fully qualified path: `hello_world::Shape::area`
+Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)::[area](./hello_world-Shape-area.md)
 
 <pre><code class="language-rust">fn area&lt;T, T&gt;(self: T) -&gt; u32</code></pre>
 
@@ -34,7 +34,7 @@ Fully qualified path: `hello_world::Shape::area`
 
 Type alias for a pair of shapes
 
-Fully qualified path: `hello_world::Shape::ShapePair`
+Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)::[ShapePair](./hello_world-Shape-ShapePair.md)
 
 <pre><code class="language-rust">type ShapePair;</code></pre>
 

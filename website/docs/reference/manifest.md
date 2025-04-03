@@ -357,6 +357,17 @@ inlining-strategy = 18
 > Please use with caution, only if your tooling requires that.
 > You can use profile settings overwriting, for more granular control of which builds use the avoid strategy.
 
+### `panic-backtrace`
+
+If enabled, during the project compilation Scarb will add panic backtrace handling to the generated code.
+This can be useful for debugging purposes.
+By default, this flag is set to `false`, as it won't be available on Starknet.
+
+```toml
+[cairo]
+panic-backtrace = false
+```
+
 ### `unstable-add-statements-functions-debug-info`
 
 > [!WARNING]

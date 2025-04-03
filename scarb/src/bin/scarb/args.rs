@@ -550,6 +550,14 @@ pub struct LintArgs {
     /// Do not error on `cairo-version` mismatch.
     #[arg(long)]
     pub ignore_cairo_version: bool,
+
+    /// Specify features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
+
+    /// Should fail on any warning.
+    #[arg(short, long, default_value_t = false)]
+    pub deny_warnings: bool,
 }
 
 /// Git reference specification arguments.

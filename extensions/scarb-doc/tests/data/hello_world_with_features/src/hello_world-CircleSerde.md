@@ -1,6 +1,6 @@
 # CircleSerde
 
-Fully qualified path: `hello_world::CircleSerde`
+Fully qualified path: [hello_world](./hello_world.md)::[CircleSerde](./hello_world-CircleSerde.md)
 
 <pre><code class="language-rust">impl CircleSerde of Serde&lt;<a href="hello_world-Circle.html">Circle</a>&gt;;</code></pre>
 
@@ -8,14 +8,14 @@ Fully qualified path: `hello_world::CircleSerde`
 
 ### serialize
 
-Fully qualified path: `hello_world::CircleSerde::serialize`
+Fully qualified path: [hello_world](./hello_world.md)::[CircleSerde](./hello_world-CircleSerde.md)::[serialize](./hello_world-CircleSerde-serialize.md)
 
 <pre><code class="language-rust">fn serialize(self: Circle, ref output: Array&lt;felt252&gt;)</code></pre>
 
 
 ### deserialize
 
-Fully qualified path: `hello_world::CircleSerde::deserialize`
+Fully qualified path: [hello_world](./hello_world.md)::[CircleSerde](./hello_world-CircleSerde.md)::[deserialize](./hello_world-CircleSerde-deserialize.md)
 
 <pre><code class="language-rust">fn deserialize(ref serialized: Span&lt;felt252&gt;) -&gt; Option&lt;Circle&gt;</code></pre>
 

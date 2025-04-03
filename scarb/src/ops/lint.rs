@@ -25,7 +25,7 @@ use scarb_ui::components::Status;
 use crate::core::{Package, Workspace};
 
 use super::{
-    CompilationUnitsOpts, FeaturesOpts, FeaturesSelector, compile_unit, plugins_required_for_units,
+    CompilationUnitsOpts, FeaturesOpts, compile_unit, plugins_required_for_units, validate_features,
 };
 
 pub struct LintOptions {
@@ -33,20 +33,19 @@ pub struct LintOptions {
     pub test: bool,
     pub fix: bool,
     pub ignore_cairo_version: bool,
+    pub features: FeaturesOpts,
+    pub deny_warnings: bool,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
 pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
-    let feature_opts = FeaturesOpts {
-        features: FeaturesSelector::AllFeatures,
-        no_default_features: true,
-    };
-
     let resolve = ops::resolve_workspace(ws)?;
+
+    validate_features(&opts.packages, &opts.features)?;
 
     let compilation_units = ops::generate_compilation_units(
         &resolve,
-        &feature_opts,
+        &opts.features,
         ws,
         CompilationUnitsOpts {
             ignore_cairo_version: opts.ignore_cairo_version,
@@ -67,6 +66,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     }
 
     for package in opts.packages {
+        let package_name = &package.id.name;
         let package_compilation_units = if opts.test {
             let mut result = vec![];
             let integration_test_compilation_unit =
@@ -132,8 +132,9 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .ui()
                         .print(Status::new("Linting", &compilation_unit.name()));
 
-                    let additional_plugins =
-                        vec![cairo_lint_plugin_suite(cairo_lint_tool_metadata(&package)?)];
+                    let additional_plugins = vec![cairo_lint_plugin_suite(
+                        cairo_lint_tool_metadata(&package)?,
+                    )?];
                     let ScarbDatabase { db, .. } =
                         build_scarb_root_database(compilation_unit, ws, additional_plugins)?;
 
@@ -175,6 +176,18 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                             all_diags
                         })
                         .collect::<Vec<_>>();
+
+                    let warnings_allowed =
+                        compilation_unit.compiler_config.allow_warnings && !opts.deny_warnings;
+
+                    if diagnostics.iter().any(|diag| {
+                        matches!(diag.severity(), Severity::Error)
+                            || (!warnings_allowed && matches!(diag.severity(), Severity::Warning))
+                    }) {
+                        return Err(anyhow!(
+                            "lint checking `{package_name}` failed due to previous errors"
+                        ));
+                    }
 
                     if opts.fix {
                         let fixes = get_fixes(&db, diagnostics);

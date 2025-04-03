@@ -32,6 +32,8 @@ pub struct ManifestCompilerConfig {
     /// Used by [cairo-coverage](https://github.com/software-mansion/cairo-coverage).
     /// This feature is unstable and is subject to change.
     pub unstable_add_statements_code_locations_debug_info: bool,
+    /// Whether to add panic backtrace handling to the generated code.
+    pub panic_backtrace: bool,
     // Inlining strategy.
     pub inlining_strategy: InliningStrategy,
 }
@@ -105,6 +107,7 @@ impl DefaultForProfile for ManifestCompilerConfig {
             enable_gas: true,
             unstable_add_statements_functions_debug_info: false,
             unstable_add_statements_code_locations_debug_info: false,
+            panic_backtrace: false,
             inlining_strategy: InliningStrategy::default(),
         }
     }
@@ -122,6 +125,7 @@ impl From<ManifestCompilerConfig> for TomlCairo {
             unstable_add_statements_code_locations_debug_info: Some(
                 config.unstable_add_statements_code_locations_debug_info,
             ),
+            panic_backtrace: Some(config.panic_backtrace),
             inlining_strategy: Some(config.inlining_strategy),
         }
     }

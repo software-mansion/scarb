@@ -2,7 +2,7 @@
 
 Color enum with Red, Green, and Blue variants
 
-Fully qualified path: `hello_world::Color`
+Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Color.md)
 
 <pre><code class="language-rust">enum Color {
     Red,
@@ -16,7 +16,7 @@ Fully qualified path: `hello_world::Color`
 
 Red color
 
-Fully qualified path: `hello_world::Color::Red`
+Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Color.md)::[Red](./hello_world-Color-Red.md)
 
 <pre><code class="language-rust">Red</code></pre>
 
@@ -25,7 +25,7 @@ Fully qualified path: `hello_world::Color::Red`
 
 Green color
 
-Fully qualified path: `hello_world::Color::Green`
+Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Color.md)::[Green](./hello_world-Color-Green.md)
 
 <pre><code class="language-rust">Green</code></pre>
 
@@ -34,7 +34,7 @@ Fully qualified path: `hello_world::Color::Green`
 
 Blue color
 
-Fully qualified path: `hello_world::Color::Blue`
+Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Color.md)::[Blue](./hello_world-Color-Blue.md)
 
 <pre><code class="language-rust">Blue</code></pre>
 

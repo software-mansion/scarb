@@ -1,4 +1,4 @@
-use crate::compiler::plugin::proc_macro::ProcMacroInstance;
+use crate::compiler::plugin::proc_macro::{Expansion, ProcMacroInstance};
 use crate::compiler::plugin::{ProcMacroApiVersion, proc_macro};
 use anyhow::Result;
 use cairo_lang_semantic::db::SemanticGroup;
@@ -60,6 +60,15 @@ impl ProcMacroHostPlugin {
             ProcMacroHostPlugin::V2(_) => ProcMacroApiVersion::V2,
         }
     }
+
+    pub fn find_instance_with_expansion(
+        &self,
+        expansion: &Expansion,
+    ) -> Option<&Arc<ProcMacroInstance>> {
+        self.instances()
+            .iter()
+            .find(|instance| instance.get_expansions().contains(expansion))
+    }
 }
 
 pub trait DeclaredProcMacroInstances {
@@ -89,12 +98,20 @@ pub trait DeclaredProcMacroInstances {
             .collect()
     }
 
+    fn declared_derives_snake_case(&self) -> Vec<String> {
+        self.instances()
+            .iter()
+            .flat_map(|m| m.declared_derives())
+            .collect()
+    }
+
     fn executable_attributes(&self) -> Vec<String> {
         self.instances()
             .iter()
             .flat_map(|m| m.executable_attributes())
             .collect()
     }
+
     fn declared_attributes(&self) -> Vec<String> {
         self.instances()
             .iter()
