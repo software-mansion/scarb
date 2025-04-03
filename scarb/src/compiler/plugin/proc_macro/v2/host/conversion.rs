@@ -1,3 +1,4 @@
+use anyhow::{Result, anyhow};
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_filesystem::span::{TextOffset, TextWidth};
 use cairo_lang_macro::{Diagnostic, Severity, TextSpan};
@@ -7,7 +8,6 @@ use cairo_lang_syntax::node::stable_ptr::SyntaxStablePtr;
 use cairo_lang_syntax::node::{SyntaxNode, TypedStablePtr, TypedSyntaxNode};
 use cairo_lang_utils::LookupIntern;
 use itertools::Itertools;
-use anyhow::{anyhow, Result};
 
 pub trait SpanSource {
     fn text_span(&self, db: &dyn SyntaxGroup) -> TextSpan;
@@ -46,22 +46,20 @@ pub fn into_cairo_diagnostics(
         .into_iter()
         .map(|diag| {
             let (node_ptr, relative_span) = match diag.span {
-                Some(span) => {
-                    match find_encompassing_node(&root_syntax_node, db, &span) {
-                        Ok(node) => {
-                            let relative_span = cairo_lang_filesystem::span::TextSpan {
-                                start: TextOffset::default()
-                                    .add_width(TextWidth::new_for_testing(span.start))
-                                    .sub_width(TextWidth::new_for_testing(node.offset().as_u32())),
-                                end: TextOffset::default()
-                                    .add_width(TextWidth::new_for_testing(span.end))
-                                    .sub_width(TextWidth::new_for_testing(node.offset().as_u32())),
-                            };
-                            (node.stable_ptr(), Some(relative_span))
-                        }
-                        Err(_) => (stable_ptr, None),
+                Some(span) => match find_encompassing_node(&root_syntax_node, db, &span) {
+                    Ok(node) => {
+                        let relative_span = cairo_lang_filesystem::span::TextSpan {
+                            start: TextOffset::default()
+                                .add_width(TextWidth::new_for_testing(span.start))
+                                .sub_width(TextWidth::new_for_testing(node.offset().as_u32())),
+                            end: TextOffset::default()
+                                .add_width(TextWidth::new_for_testing(span.end))
+                                .sub_width(TextWidth::new_for_testing(node.offset().as_u32())),
+                        };
+                        (node.stable_ptr(), Some(relative_span))
                     }
-                }
+                    Err(_) => (stable_ptr, None),
+                },
                 None => (stable_ptr, None),
             };
 
@@ -112,4 +110,3 @@ pub fn find_encompassing_node(
     }
     Ok(current_node)
 }
-
