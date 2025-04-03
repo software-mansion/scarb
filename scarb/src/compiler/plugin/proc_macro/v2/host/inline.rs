@@ -65,7 +65,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                 token_stream,
             );
         // Handle diagnostics.
-        let diagnostics = into_cairo_diagnostics(result.diagnostics, call_site.stable_ptr);
+        let diagnostics = into_cairo_diagnostics(db, result.diagnostics, call_site.stable_ptr);
         let token_stream = result.token_stream.clone();
         if token_stream.is_empty() {
             // Remove original code
