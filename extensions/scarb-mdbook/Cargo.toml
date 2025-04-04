@@ -1,0 +1,16 @@
+[package]
+name = "scarb-mdbook"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[dependencies]
+mdbook.workspace = true
+scarb-ui = { path = "../../utils/scarb-ui" }
+clap.workspace = true
+anyhow.workspace = true
+camino.workspace = true

@@ -2,21 +2,22 @@
 members = [
     "scarb",
     "scarb-metadata",
-    "extensions/scarb-doc",
-    "extensions/scarb-execute",
-    "extensions/scarb-prove",
-    "extensions/scarb-verify",
     "extensions/scarb-cairo-language-server",
     "extensions/scarb-cairo-run",
     "extensions/scarb-cairo-test",
+    "extensions/scarb-doc",
+    "extensions/scarb-execute",
+    "extensions/scarb-mdbook",
+    "extensions/scarb-prove",
+    "extensions/scarb-verify",
     "plugins/cairo-lang-macro",
     "plugins/cairo-lang-macro-attributes",
     "plugins/cairo-lang-macro-stable",
     "plugins/cairo-lang-quote",
     "utils/create-output-dir",
     "utils/once-map",
-    "utils/scarb-proc-macro-server-types",
     "utils/scarb-build-metadata",
+    "utils/scarb-proc-macro-server-types",
     "utils/scarb-stable-hash",
     "utils/scarb-test-support",
     "utils/scarb-ui",
@@ -97,6 +98,7 @@ itertools = "0.14"
 libc = "0.2"
 libloading = "0.8.6"
 linkme = "0.3"
+mdbook = "0.4"
 ntest = "0.9"
 num-bigint = { version = "0.4", features = ["rand"] }
 once_cell = "1"
