@@ -1,5 +1,6 @@
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
+use crate::core::registry::patch_map::PatchMap;
 use crate::core::{PackageId, Resolve, Summary};
 use crate::resolver::algorithm::provider::{
     DependencyProviderError, PubGrubDependencyProvider, PubGrubPackage, rewrite_locked_dependency,
@@ -68,6 +69,7 @@ mod state;
 pub async fn resolve(
     summaries: &[Summary],
     registry: &dyn Registry,
+    patch_map: PatchMap,
     lockfile: Lockfile,
 ) -> anyhow::Result<Resolve> {
     let state = Arc::new(ResolverState::default());
@@ -106,7 +108,14 @@ pub async fn resolve(
     thread::Builder::new()
         .name("scarb-resolver".into())
         .spawn(move || {
-            scarb_resolver(state, request_sink, tx, cloned_lockfile, main_package_ids)
+            scarb_resolver(
+                state,
+                request_sink,
+                tx,
+                patch_map,
+                cloned_lockfile,
+                main_package_ids,
+            )
         })?;
 
     let resolve_fut = async move {
@@ -125,12 +134,18 @@ fn scarb_resolver(
     state: Arc<ResolverState>,
     request_sink: mpsc::Sender<Request>,
     solution_tx: oneshot::Sender<Result<Resolve, Error>>,
+    patch_map: PatchMap,
     lockfile: Lockfile,
     main_package_ids: HashSet<PackageId>,
 ) {
     let result = || {
-        let provider =
-            PubGrubDependencyProvider::new(main_package_ids, state, request_sink, lockfile);
+        let provider = PubGrubDependencyProvider::new(
+            main_package_ids,
+            state,
+            request_sink,
+            patch_map,
+            lockfile,
+        );
 
         // Init state
         let main_package_ids = provider

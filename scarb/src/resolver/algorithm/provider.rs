@@ -1,4 +1,5 @@
 use crate::core::lockfile::Lockfile;
+use crate::core::registry::patch_map::PatchMap;
 use crate::core::{
     DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId,
     Summary,
@@ -118,6 +119,7 @@ pub struct PubGrubDependencyProvider {
     priority: RwLock<HashMap<PubGrubPackage, usize>>,
     packages: RwLock<HashMap<PackageId, Summary>>,
     main_package_ids: HashSet<PackageId>,
+    patch_map: PatchMap,
     lockfile: Lockfile,
     state: Arc<ResolverState>,
     request_sink: mpsc::Sender<Request>,
@@ -128,6 +130,7 @@ impl PubGrubDependencyProvider {
         main_package_ids: HashSet<PackageId>,
         state: Arc<ResolverState>,
         request_sink: mpsc::Sender<Request>,
+        patch_map: PatchMap,
         lockfile: Lockfile,
     ) -> Self {
         Self {
@@ -135,6 +138,7 @@ impl PubGrubDependencyProvider {
             priority: RwLock::new(HashMap::new()),
             packages: RwLock::new(HashMap::new()),
             state,
+            patch_map,
             lockfile,
             request_sink,
         }
