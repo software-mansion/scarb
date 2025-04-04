@@ -10,8 +10,9 @@ use smol_str::SmolStr;
 use crate::compiler::Profile;
 use crate::core::config::Config;
 use crate::core::package::Package;
-use crate::core::{PackageId, ScriptDefinition, Target};
+use crate::core::{ManifestDependency, PackageId, ScriptDefinition, Target};
 use crate::flock::Filesystem;
+use crate::sources::canonical_url::CanonicalUrl;
 use crate::{DEFAULT_TARGET_DIR_NAME, LOCK_FILE_NAME, MANIFEST_FILE_NAME};
 
 /// The core abstraction for working with a workspace of packages.
@@ -26,6 +27,7 @@ pub struct Workspace<'c> {
     scripts: BTreeMap<SmolStr, ScriptDefinition>,
     root_package: Option<PackageId>,
     target_dir: Filesystem,
+    patch: BTreeMap<CanonicalUrl, Vec<ManifestDependency>>,
 }
 
 impl<'c> Workspace<'c> {
@@ -36,6 +38,7 @@ impl<'c> Workspace<'c> {
         config: &'c Config,
         profiles: Vec<Profile>,
         scripts: BTreeMap<SmolStr, ScriptDefinition>,
+        patch: BTreeMap<CanonicalUrl, Vec<ManifestDependency>>,
     ) -> Result<Self> {
         let targets = packages
             .iter()
@@ -62,6 +65,7 @@ impl<'c> Workspace<'c> {
             target_dir,
             members: packages,
             scripts,
+            patch,
         })
     }
 
@@ -69,6 +73,7 @@ impl<'c> Workspace<'c> {
         package: Package,
         config: &'c Config,
         profiles: Vec<Profile>,
+        patch: BTreeMap<CanonicalUrl, Vec<ManifestDependency>>,
     ) -> Result<Self> {
         let manifest_path = package.manifest_path().to_path_buf();
         let root_package = Some(package.id);
@@ -80,6 +85,7 @@ impl<'c> Workspace<'c> {
             config,
             profiles,
             BTreeMap::new(),
+            patch,
         )
     }
 
@@ -186,6 +192,10 @@ impl<'c> Workspace<'c> {
 
     pub fn script(&self, name: &SmolStr) -> Option<&ScriptDefinition> {
         self.scripts.get(name)
+    }
+
+    pub fn patch(&self) -> &BTreeMap<CanonicalUrl, Vec<ManifestDependency>> {
+        &self.patch
     }
 }
 
