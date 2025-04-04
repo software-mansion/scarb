@@ -184,6 +184,7 @@ impl PubGrubDependencyProvider {
 
     fn request_dependencies(&self, summary: &Summary) -> Result<(), DependencyProviderError> {
         for original_dependency in summary.dependencies.iter() {
+            let original_dependency = self.patch_map.lookup(original_dependency);
             let dependency = lock_dependency(&self.lockfile, original_dependency.clone())?;
             if self.state.index.packages().register(dependency.clone()) {
                 self.request_sink
@@ -207,11 +208,12 @@ impl PubGrubDependencyProvider {
         &self,
         dependency: ManifestDependency,
     ) -> Result<Vec<Summary>, DependencyProviderError> {
+        let dependency = self.patch_map.lookup(&dependency);
         let summaries = self
             .state
             .index
             .packages()
-            .wait_blocking(&dependency)
+            .wait_blocking(dependency)
             .unwrap();
         let VersionsResponse::Found(summaries) = summaries.as_ref();
 
@@ -243,6 +245,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
     fn prioritize(&self, package: &Self::P, range: &Self::VS) -> Self::Priority {
         let dependency: ManifestDependency = package.to_dependency(range.clone());
         if self.state.index.packages().register(dependency.clone()) {
+            let dependency = self.patch_map.lookup(&dependency);
             self.request_sink
                 .blocking_send(Request::Package(dependency.clone()))
                 .unwrap();
@@ -317,6 +320,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
         let deps = summary
             .filtered_full_dependencies(dep_filter)
             .cloned()
+            .map(|dependency| self.patch_map.lookup(&dependency).clone())
             .map(|dependency| {
                 let original_dependency = dependency.clone();
                 let dependency = rewrite_path_dependency_source_id(summary.package_id, &dependency);
