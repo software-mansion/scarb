@@ -39,8 +39,8 @@ Scarb is under active development! Expect a lot of new features to appear soon! 
 - [x] Dynamic loading of custom Cairo compiler plugins as Scarb packages
 - [x] `scarb doc`
 - [x] `scarb execute` / `scarb prove` / `scarb verify`
+- [x] Dependency overrides
 - [ ] Dynamic loading of custom targets aka code generators
-- [ ] Dependency overrides
 - [ ] Signing & notarization of Windows & macOS binaries
 
 ## Credits
