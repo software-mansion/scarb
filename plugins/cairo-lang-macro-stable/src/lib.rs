@@ -72,6 +72,7 @@ pub type StableAuxData = StableOption<StableSlice<u8>>;
 pub struct StableDiagnostic {
     pub message: *mut c_char,
     pub severity: StableSeverity,
+    pub span: Option<StableTextSpan>,
 }
 
 /// The severity of a diagnostic.
