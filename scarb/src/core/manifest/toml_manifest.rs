@@ -17,11 +17,13 @@ use smol_str::SmolStr;
 use tracing::trace;
 use url::Url;
 
+use super::{FeatureName, Manifest};
 use crate::compiler::{DefaultForProfile, Profile};
 use crate::core::manifest::maybe_workspace::{MaybeWorkspace, WorkspaceInherit};
 use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Target};
 use crate::core::package::PackageId;
+use crate::core::registry::DEFAULT_REGISTRY_INDEX_PATCH_SOURCE;
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{
     Config, DepKind, DependencyVersionReq, InliningStrategy, ManifestBuilder,
@@ -31,11 +33,10 @@ use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
 use crate::internal::serdex::{RelativeUtf8PathBuf, toml_merge, toml_merge_apply_strategy};
 use crate::internal::to_version::ToVersion;
+use crate::sources::canonical_url::CanonicalUrl;
 use crate::{
     DEFAULT_MODULE_MAIN_FILE, DEFAULT_SOURCE_PATH, DEFAULT_TESTS_PATH, MANIFEST_FILE_NAME,
 };
-
-use super::{FeatureName, Manifest};
 
 /// This type is used to deserialize `Scarb.toml` files.
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -55,6 +56,7 @@ pub struct TomlManifest {
     pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
     pub features: Option<BTreeMap<FeatureName, Vec<FeatureName>>>,
+    pub patch: Option<BTreeMap<SmolStr, BTreeMap<PackageName, TomlDependency>>>,
 }
 
 type MaybeWorkspaceScriptDefinition = MaybeWorkspace<ScriptDefinition, WorkspaceScriptDefinition>;
@@ -481,6 +483,15 @@ impl TomlManifest {
                 .resolve(name.as_str(), inherit_ws)?;
             dependencies.push(toml_dep);
         }
+
+        if self.patch.is_some() {
+            ensure!(
+                workspace_manifest_path == manifest_path,
+                "the `[patch]` section can only be defined in the workspace root manifests\nsection found in manifest: `{}`\nworkspace root manifest: `{}`",
+                manifest_path,
+                workspace_manifest_path
+            );
+        };
 
         let no_core = package.no_core.unwrap_or(false);
 
@@ -986,6 +997,41 @@ impl TomlManifest {
             }
         }
         Ok(())
+    }
+
+    pub fn collect_patch(
+        &self,
+        manifest_path: &Utf8Path,
+    ) -> Result<BTreeMap<CanonicalUrl, Vec<ManifestDependency>>> {
+        if let Some(patch) = self.patch.clone() {
+            patch
+                .into_iter()
+                .map(|(source, patches)| {
+                    let source =
+                        if source == SmolStr::new_static(DEFAULT_REGISTRY_INDEX_PATCH_SOURCE) {
+                            SourceId::default().canonical_url.clone()
+                        } else {
+                            let url = Url::parse(source.as_str())?;
+                            CanonicalUrl::new(&url)?
+                        };
+                    Ok((
+                        source,
+                        patches
+                            .into_iter()
+                            .map(|(name, dep)| {
+                                dep.resolve().to_dependency(
+                                    name.clone(),
+                                    manifest_path,
+                                    DepKind::Normal,
+                                )
+                            })
+                            .collect::<Result<Vec<ManifestDependency>>>()?,
+                    ))
+                })
+                .collect()
+        } else {
+            Ok(BTreeMap::new())
+        }
     }
 }
 

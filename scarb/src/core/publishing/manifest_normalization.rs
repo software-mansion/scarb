@@ -47,6 +47,7 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
         scripts: None,
         tool,
         features: None,
+        patch: None,
     })
 }
 
