@@ -184,6 +184,7 @@ impl PubGrubDependencyProvider {
 
     fn request_dependencies(&self, summary: &Summary) -> Result<(), DependencyProviderError> {
         for original_dependency in summary.dependencies.iter() {
+            let original_dependency = self.patch_map.lookup(original_dependency);
             let dependency = lock_dependency(&self.lockfile, original_dependency.clone())?;
             if self.state.index.packages().register(dependency.clone()) {
                 self.request_sink
@@ -317,6 +318,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
         let deps = summary
             .filtered_full_dependencies(dep_filter)
             .cloned()
+            .map(|dependency| self.patch_map.lookup(&dependency).clone())
             .map(|dependency| {
                 let original_dependency = dependency.clone();
                 let dependency = rewrite_path_dependency_source_id(summary.package_id, &dependency);

@@ -85,6 +85,7 @@ pub async fn resolve(
 
     for summary in summaries {
         for dep in summary.full_dependencies() {
+            let dep = patch_map.lookup(dep);
             let locked_package_id = lockfile.packages_matching(dep.clone());
             let dep = if let Some(locked_package_id) = locked_package_id {
                 rewrite_locked_dependency(dep.clone(), locked_package_id?)
