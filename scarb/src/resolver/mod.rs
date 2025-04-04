@@ -4,6 +4,7 @@ use std::env;
 use crate::core::Summary;
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
+use crate::core::registry::patch_map::PatchMap;
 use crate::core::resolver::Resolve;
 
 mod algorithm;
@@ -30,6 +31,7 @@ mod primitive;
 pub async fn resolve(
     summaries: &[Summary],
     registry: &dyn Registry,
+    patch_map: &PatchMap,
     lockfile: Lockfile,
 ) -> Result<Resolve> {
     let algo_primitive = env::var("SCARB_UNSTABLE_PUBGRUB")
@@ -42,7 +44,7 @@ pub async fn resolve(
     if algo_primitive {
         primitive::resolve(summaries, registry, lockfile).await
     } else {
-        algorithm::resolve(summaries, registry, lockfile).await
+        algorithm::resolve(summaries, registry, patch_map.clone(), lockfile).await
     }
 }
 
@@ -60,6 +62,7 @@ mod tests {
     use crate::core::lockfile::{Lockfile, PackageLock};
     use crate::core::package::PackageName;
     use crate::core::registry::mock::{MockRegistry, deps, locks, pkgs, registry};
+    use crate::core::registry::patch_map::PatchMap;
     use crate::core::{ManifestDependency, PackageId, Resolve, SourceId, TargetKind};
 
     fn check(
@@ -136,7 +139,8 @@ mod tests {
             .collect_vec();
 
         let lockfile = Lockfile::new(locks.iter().cloned());
-        runtime.block_on(super::resolve(&summaries, &registry, lockfile))
+        let patch_map = PatchMap::new();
+        runtime.block_on(super::resolve(&summaries, &registry, &patch_map, lockfile))
     }
 
     fn package_id<S: AsRef<str>>(name: S) -> PackageId {

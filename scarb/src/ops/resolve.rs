@@ -157,6 +157,10 @@ pub fn resolve_workspace_with_opts(
         .block_on(TryFutureExt::into_future(async {
             let mut patch_map = PatchMap::new();
 
+            for (source, patches) in ws.patch() {
+                patch_map.insert(source.clone(), patches.clone());
+            }
+
             let cairo_version = crate::version::get().cairo.version.parse().unwrap();
             let version_req = DependencyVersionReq::exact(&cairo_version);
             patch_map.insert(
@@ -219,7 +223,8 @@ pub fn resolve_workspace_with_opts(
                 read_lockfile(ws)?
             };
 
-            let resolve = resolver::resolve(&members_summaries, &patched, lockfile).await?;
+            let resolve =
+                resolver::resolve(&members_summaries, &patched, &patch_map, lockfile).await?;
 
             write_lockfile(Lockfile::from_resolve(&resolve), ws)?;
 
