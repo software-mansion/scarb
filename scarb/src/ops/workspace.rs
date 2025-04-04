@@ -97,6 +97,8 @@ fn read_workspace_root<'c>(
         None
     };
 
+    let patch = toml_manifest.collect_patch(manifest_path)?;
+
     if let Some(workspace) = toml_workspace {
         let workspace_root = manifest_path
             .parent()
@@ -141,11 +143,12 @@ fn read_workspace_root<'c>(
             config,
             profiles,
             scripts,
+            patch,
         )
     } else {
         // Read single package workspace
         let package = root_package.ok_or_else(|| anyhow!("the [package] section is missing"))?;
-        Workspace::from_single_package(package, config, profiles)
+        Workspace::from_single_package(package, config, profiles, patch)
     }
 }
 

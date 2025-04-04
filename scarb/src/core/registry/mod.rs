@@ -12,6 +12,7 @@ pub mod patcher;
 pub mod source_map;
 
 pub const DEFAULT_REGISTRY_INDEX: &str = "https://scarbs.xyz/";
+pub const DEFAULT_REGISTRY_INDEX_PATCH_SOURCE: &str = "scarbs-xyz";
 
 #[async_trait(?Send)]
 pub trait Registry {
