@@ -1,7 +1,7 @@
 use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::v1::FromSyntaxNode;
 use crate::compiler::plugin::proc_macro::{
-    DeclaredProcMacroInstances, FULL_PATH_MARKER_KEY, ProcMacroInstance,
+    DeclaredProcMacroInstances, ExpansionQuery, FULL_PATH_MARKER_KEY, ProcMacroInstance,
 };
 use crate::core::PackageId;
 use anyhow::{Result, ensure};
@@ -29,7 +29,6 @@ use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{Terminal, TypedStablePtr, TypedSyntaxNode, ast};
-use convert_case::{Case, Casing};
 use itertools::Itertools;
 use scarb_stable_hash::short_hash;
 use smol_str::SmolStr;
@@ -139,18 +138,18 @@ impl ProcMacroHostPlugin {
                     .collect_vec()
             })
             .collect::<Vec<_>>();
-        expansions.sort_unstable_by_key(|e| (e.expansion.name.clone(), e.package_id));
+        expansions.sort_unstable_by_key(|e| (e.expansion.cairo_name.clone(), e.package_id));
         ensure!(
             expansions
                 .windows(2)
-                .all(|w| w[0].expansion.name != w[1].expansion.name),
+                .all(|w| w[0].expansion.cairo_name != w[1].expansion.cairo_name),
             "duplicate expansions defined for procedural macros: {duplicates}",
             duplicates = expansions
                 .windows(2)
-                .filter(|w| w[0].expansion.name == w[1].expansion.name)
+                .filter(|w| w[0].expansion.cairo_name == w[1].expansion.cairo_name)
                 .map(|w| format!(
                     "{} ({} and {})",
-                    w[0].expansion.name.as_str(),
+                    w[0].expansion.cairo_name.as_str(),
                     w[0].package_id,
                     w[1].package_id
                 ))
@@ -336,7 +335,7 @@ impl ProcMacroHostPlugin {
             .try_v1()
             .expect("procedural macro using v2 api used in a context expecting v1 api")
             .generate_code(
-                input.expansion.name.clone(),
+                input.expansion.expansion_name.clone(),
                 args.clone(),
                 token_stream.clone(),
             );
@@ -471,7 +470,7 @@ impl ProcMacroHostPlugin {
             // We ensure that this flag is changed *after* the expansion is found.
             if last {
                 let structured_attr = attr.clone().structurize(db);
-                let found = self.find_expansion(&Expansion::new(
+                let found = self.find_expansion(&ExpansionQuery::with_cairo_name(
                     structured_attr.id.clone(),
                     ExpansionKind::Attr,
                 ));
@@ -534,9 +533,8 @@ impl ProcMacroHostPlugin {
                 };
                 let ident = segment.ident(db);
                 let value = ident.text(db).to_string();
-
-                self.find_expansion(&Expansion::new(
-                    value.to_case(Case::Snake),
+                self.find_expansion(&ExpansionQuery::with_cairo_name(
+                    value,
                     ExpansionKind::Derive,
                 ))
             })
@@ -567,7 +565,7 @@ impl ProcMacroHostPlugin {
                 .try_v1()
                 .expect("procedural macro using v2 api used in a context expecting v1 api")
                 .generate_code(
-                    derive.expansion.name.clone(),
+                    derive.expansion.expansion_name.clone(),
                     TokenStream::empty(),
                     token_stream.clone(),
                 );
@@ -605,7 +603,7 @@ impl ProcMacroHostPlugin {
                     };
                     let derive_names = derives
                         .iter()
-                        .map(|derive| derive.expansion.name.to_string())
+                        .map(|derive| derive.expansion.cairo_name.to_string())
                         .join("`, `");
                     let note = format!("this error originates in {msg}: `{derive_names}`");
                     Some(PluginGeneratedFile {
@@ -643,7 +641,7 @@ impl ProcMacroHostPlugin {
             .try_v1()
             .expect("procedural macro using v2 api used in a context expecting v1 api")
             .generate_code(
-                input.expansion.name.clone(),
+                input.expansion.expansion_name.clone(),
                 args.clone(),
                 token_stream.clone(),
             );
@@ -682,7 +680,7 @@ impl ProcMacroHostPlugin {
             };
         }
 
-        let file_name = format!("proc_{}", input.expansion.name);
+        let file_name = format!("proc_{}", input.expansion.cairo_name);
         let content = result.token_stream.to_string();
         PluginResult {
             code: Some(PluginGeneratedFile {
@@ -691,7 +689,7 @@ impl ProcMacroHostPlugin {
                 content,
                 diagnostics_note: Some(format!(
                     "this error originates in the attribute macro: `{}`",
-                    input.expansion.name
+                    input.expansion.cairo_name
                 )),
                 aux_data: result.aux_data.map(|new_aux_data| {
                     DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
@@ -705,12 +703,10 @@ impl ProcMacroHostPlugin {
         }
     }
 
-    fn find_expansion(&self, expansion: &Expansion) -> Option<ProcMacroId> {
-        self.instances
-            .iter()
-            .find(|m| m.get_expansions().contains(expansion))
-            .map(|m| m.package_id())
-            .map(|package_id| ProcMacroId::new(package_id, expansion.clone()))
+    fn find_expansion(&self, query: &ExpansionQuery) -> Option<ProcMacroId> {
+        let instance = self.find_instance_with_expansion(query)?;
+        let expansion = instance.find_expansion(query)?;
+        Some(ProcMacroId::new(instance.package_id(), expansion.clone()))
     }
 
     pub fn build_plugin_suite(macro_host: Arc<Self>) -> PluginSuite {
@@ -726,7 +722,7 @@ impl ProcMacroHostPlugin {
                     proc_macro.clone(),
                     expansion.clone(),
                 ));
-                suite.add_inline_macro_plugin_ex(expansion.name.as_str(), plugin);
+                suite.add_inline_macro_plugin_ex(expansion.cairo_name.as_str(), plugin);
             }
         }
         // Register procedural macro host plugin.
@@ -1039,7 +1035,9 @@ impl AttrExpansionFound {
     pub fn as_name(&self) -> Option<SmolStr> {
         match self {
             AttrExpansionFound::Some { expansion, .. }
-            | AttrExpansionFound::Last { expansion, .. } => Some(expansion.expansion.name.clone()),
+            | AttrExpansionFound::Last { expansion, .. } => {
+                Some(expansion.expansion.cairo_name.clone())
+            }
             AttrExpansionFound::None => None,
         }
     }
@@ -1067,7 +1065,7 @@ impl ProcMacroInlinePlugin {
     }
 
     pub fn name(&self) -> &str {
-        self.expansion.name.as_str()
+        self.expansion.cairo_name.as_str()
     }
 
     fn instance(&self) -> &ProcMacroInstance {
@@ -1090,7 +1088,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
             .try_v1()
             .expect("procedural macro using v2 api used in a context expecting v1 api")
             .generate_code(
-                self.expansion.name.clone(),
+                self.expansion.expansion_name.clone(),
                 TokenStream::empty(),
                 token_stream,
             );
@@ -1123,7 +1121,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                     aux_data,
                     diagnostics_note: Some(format!(
                         "this error originates in the inline macro: `{}`",
-                        self.expansion.name
+                        self.expansion.cairo_name
                     )),
                 }),
                 diagnostics,
@@ -1133,7 +1131,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
 
     fn documentation(&self) -> Option<String> {
         self.doc
-            .get_or_init(|| self.instance().doc(self.expansion.name.clone()))
+            .get_or_init(|| self.instance().doc(self.expansion.cairo_name.clone()))
             .clone()
     }
 }

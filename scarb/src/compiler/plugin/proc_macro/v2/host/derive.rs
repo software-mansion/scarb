@@ -1,4 +1,5 @@
-use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
+use crate::compiler::plugin::proc_macro::ExpansionQuery;
+use crate::compiler::plugin::proc_macro::expansion::ExpansionKind;
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
 use crate::compiler::plugin::proc_macro::v2::host::conversion::{
     CallSiteLocation, into_cairo_diagnostics,
@@ -16,8 +17,8 @@ use cairo_lang_syntax::node::ast::{Expr, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{Terminal, TypedSyntaxNode, ast};
-use convert_case::{Case, Casing};
 use itertools::Itertools;
+use std::fmt::{Debug, Formatter};
 
 impl ProcMacroHostPlugin {
     /// Handle `#[derive(...)]` attribute.
@@ -49,9 +50,8 @@ impl ProcMacroHostPlugin {
                 };
                 let ident = segment.ident(db);
                 let value = ident.text(db).to_string();
-
-                self.find_expansion(&Expansion::new(
-                    value.to_case(Case::Snake),
+                self.find_expansion(&ExpansionQuery::with_cairo_name(
+                    value,
                     ExpansionKind::Derive,
                 ))
                 .map(|id| DeriveFound {
@@ -99,7 +99,7 @@ impl ProcMacroHostPlugin {
                 .try_v2()
                 .expect("procedural macro using v1 api used in a context expecting v2 api")
                 .generate_code(
-                    derive.expansion.name.clone(),
+                    derive.expansion.expansion_name.clone(),
                     call_site.span.clone(),
                     TokenStream::empty(),
                     token_stream,
@@ -141,7 +141,7 @@ impl ProcMacroHostPlugin {
                 };
                 let derive_names = derives
                     .iter()
-                    .map(|derive| derive.id.expansion.name.to_string())
+                    .map(|derive| derive.id.expansion.cairo_name.to_string())
                     .join("`, `");
                 let note = format!("this error originates in {msg}: `{derive_names}`");
 
@@ -168,6 +168,12 @@ impl ProcMacroHostPlugin {
 struct DeriveFound {
     id: ProcMacroId,
     call_site: CallSiteLocation,
+}
+
+impl Debug for DeriveFound {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DeriveFound").field("id", &self.id).finish()
+    }
 }
 
 pub fn generate_code_mappings_with_offset(

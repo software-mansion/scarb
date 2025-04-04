@@ -36,14 +36,51 @@ impl From<ExpansionKindV2> for ExpansionKind {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Expansion {
-    pub name: SmolStr,
+    /// Name of the expansion function as defined in the macro source code.
+    pub expansion_name: SmolStr,
+    /// Name of the macro as available to the user through Cairo code.
+    /// This is equivalent to `expansion_name` with potentially changed casing.   
+    pub cairo_name: SmolStr,
     pub kind: ExpansionKind,
 }
 
 impl Expansion {
-    pub fn new(name: impl ToString, kind: ExpansionKind) -> Self {
-        Self {
-            name: SmolStr::new(name.to_string()),
+    pub fn matches_query(&self, query: &ExpansionQuery) -> bool {
+        match query {
+            ExpansionQuery::WithCairoName { cairo_name, kind } => {
+                *cairo_name == self.cairo_name && self.kind == *kind
+            }
+            ExpansionQuery::WithExpansionName {
+                expansion_name,
+                kind,
+            } => *expansion_name == self.expansion_name && self.kind == *kind,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ExpansionQuery {
+    WithCairoName {
+        cairo_name: SmolStr,
+        kind: ExpansionKind,
+    },
+    WithExpansionName {
+        expansion_name: SmolStr,
+        kind: ExpansionKind,
+    },
+}
+
+impl ExpansionQuery {
+    pub fn with_cairo_name(name: impl ToString, kind: ExpansionKind) -> Self {
+        Self::WithCairoName {
+            cairo_name: SmolStr::new(name.to_string()),
+            kind,
+        }
+    }
+
+    pub fn with_expansion_name(name: impl ToString, kind: ExpansionKind) -> Self {
+        Self::WithExpansionName {
+            expansion_name: SmolStr::new(name.to_string()),
             kind,
         }
     }

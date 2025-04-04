@@ -6,7 +6,9 @@ use scarb_proc_macro_server_types::methods::{ProcMacroResult, expand::ExpandInli
 
 use super::{Handler, interface_code_mapping_from_cairo};
 use crate::compiler::plugin::proc_macro::v2::generate_code_mappings;
-use crate::compiler::plugin::proc_macro::{Expansion, ProcMacroApiVersion, ProcMacroInstance};
+use crate::compiler::plugin::proc_macro::{
+    DeclaredProcMacroInstances, ExpansionQuery, ProcMacroApiVersion, ProcMacroInstance,
+};
 use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
 use scarb_proc_macro_server_types::conversions::{diagnostic_v1_to_v2, token_stream_v2_to_v1};
@@ -23,7 +25,7 @@ impl Handler for ExpandInline {
             call_site,
         } = params;
 
-        let expansion = Expansion::new(&name, ExpansionKind::Inline);
+        let expansion = ExpansionQuery::with_expansion_name(&name, ExpansionKind::Inline);
         let plugins = workspace_macros.get(&context.component);
         let proc_macro_instance = plugins
             .as_ref()

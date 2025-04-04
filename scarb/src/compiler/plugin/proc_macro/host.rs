@@ -1,9 +1,8 @@
-use crate::compiler::plugin::proc_macro::{Expansion, ProcMacroInstance};
+use crate::compiler::plugin::proc_macro::{ExpansionQuery, ProcMacroInstance};
 use crate::compiler::plugin::{ProcMacroApiVersion, proc_macro};
 use anyhow::Result;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::plugin::PluginSuite;
-use convert_case::{Case, Casing};
 use itertools::Itertools;
 use std::sync::Arc;
 
@@ -60,19 +59,22 @@ impl ProcMacroHostPlugin {
             ProcMacroHostPlugin::V2(_) => ProcMacroApiVersion::V2,
         }
     }
-
-    pub fn find_instance_with_expansion(
-        &self,
-        expansion: &Expansion,
-    ) -> Option<&Arc<ProcMacroInstance>> {
-        self.instances()
-            .iter()
-            .find(|instance| instance.get_expansions().contains(expansion))
-    }
 }
 
 pub trait DeclaredProcMacroInstances {
     fn instances(&self) -> &[Arc<ProcMacroInstance>];
+
+    fn find_instance_with_expansion(
+        &self,
+        expansion: &ExpansionQuery,
+    ) -> Option<&Arc<ProcMacroInstance>> {
+        self.instances().iter().find(|instance| {
+            instance
+                .get_expansions()
+                .iter()
+                .any(|exp| exp.matches_query(expansion))
+        })
+    }
 
     // NOTE: Required for proc macro server. `<ProcMacroHostPlugin as MacroPlugin>::declared_attributes`
     // returns attributes **and** executables. In PMS, we only need the former because the latter is handled separately.
@@ -94,14 +96,13 @@ pub trait DeclaredProcMacroInstances {
         self.instances()
             .iter()
             .flat_map(|m| m.declared_derives())
-            .map(|s| s.to_case(Case::UpperCamel))
             .collect()
     }
 
     fn declared_derives_snake_case(&self) -> Vec<String> {
         self.instances()
             .iter()
-            .flat_map(|m| m.declared_derives())
+            .flat_map(|m| m.declared_derives_snake_case())
             .collect()
     }
 

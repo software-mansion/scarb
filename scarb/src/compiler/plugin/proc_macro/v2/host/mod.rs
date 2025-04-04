@@ -10,7 +10,9 @@ pub use aux_data::ProcMacroAuxData;
 use inline::*;
 
 use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
-use crate::compiler::plugin::proc_macro::{DeclaredProcMacroInstances, ProcMacroInstance};
+use crate::compiler::plugin::proc_macro::{
+    DeclaredProcMacroInstances, ExpansionQuery, ProcMacroInstance,
+};
 use crate::core::{PackageId, edition_variant};
 use anyhow::{Result, ensure};
 use cairo_lang_defs::plugin::{MacroPlugin, MacroPluginMetadata, PluginResult};
@@ -72,18 +74,18 @@ impl ProcMacroHostPlugin {
                     .collect_vec()
             })
             .collect::<Vec<_>>();
-        expansions.sort_unstable_by_key(|e| (e.expansion.name.clone(), e.package_id));
+        expansions.sort_unstable_by_key(|e| (e.expansion.cairo_name.clone(), e.package_id));
         ensure!(
             expansions
                 .windows(2)
-                .all(|w| w[0].expansion.name != w[1].expansion.name),
+                .all(|w| w[0].expansion.cairo_name != w[1].expansion.cairo_name),
             "duplicate expansions defined for procedural macros: {duplicates}",
             duplicates = expansions
                 .windows(2)
-                .filter(|w| w[0].expansion.name == w[1].expansion.name)
+                .filter(|w| w[0].expansion.cairo_name == w[1].expansion.cairo_name)
                 .map(|w| format!(
                     "{} ({} and {})",
-                    w[0].expansion.name.as_str(),
+                    w[0].expansion.cairo_name.as_str(),
                     w[0].package_id,
                     w[1].package_id
                 ))
@@ -96,12 +98,10 @@ impl ProcMacroHostPlugin {
         })
     }
 
-    fn find_expansion(&self, expansion: &Expansion) -> Option<ProcMacroId> {
-        self.instances()
-            .iter()
-            .find(|m| m.get_expansions().contains(expansion))
-            .map(|m| m.package_id())
-            .map(|package_id| ProcMacroId::new(package_id, expansion.clone()))
+    fn find_expansion(&self, query: &ExpansionQuery) -> Option<ProcMacroId> {
+        let instance = self.find_instance_with_expansion(query)?;
+        let expansion = instance.find_expansion(query)?;
+        Some(ProcMacroId::new(instance.package_id(), expansion.clone()))
     }
 
     pub fn build_plugin_suite(macro_host: Arc<Self>) -> PluginSuite {
@@ -117,7 +117,7 @@ impl ProcMacroHostPlugin {
                     proc_macro.clone(),
                     expansion.clone(),
                 ));
-                suite.add_inline_macro_plugin_ex(expansion.name.as_str(), plugin);
+                suite.add_inline_macro_plugin_ex(expansion.cairo_name.as_str(), plugin);
             }
         }
         // Register procedural macro host plugin.
