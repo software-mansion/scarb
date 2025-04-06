@@ -90,6 +90,13 @@ fn patch_scarbs_with_path() {
             foo = {}
         "#, patch.build()})
         .build(&t);
+    // Assert no warnings are emitted.
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("fetch")
+        .assert()
+        .success()
+        .stdout_eq("");
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -143,6 +150,13 @@ fn patch_scarbs_with_git() {
             foo = {}
         "#, git_dep.build().to_string()})
         .build(&t);
+    // Assert no warnings are emitted.
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("fetch")
+        .assert()
+        .success()
+        .stdout_eq("");
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -195,6 +209,13 @@ fn patch_scarbs_with_path_by_full_url() {
             foo = {}
         "#, patch.build()})
         .build(&t);
+    // Assert no warnings are emitted.
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("fetch")
+        .assert()
+        .success()
+        .stdout_eq("");
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -255,6 +276,13 @@ fn patch_not_existing_registry_with_path() {
             foo = {}
         "#, patch.build()})
         .build(&t);
+    // Assert no warnings are emitted.
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("fetch")
+        .assert()
+        .success()
+        .stdout_eq("");
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -313,6 +341,13 @@ fn patch_git_with_path() {
             foo = {}
         "#, git_dep.url(), patch.build()})
         .build(&t);
+    // Assert no warnings are emitted.
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("fetch")
+        .assert()
+        .success()
+        .stdout_eq("");
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -387,6 +422,13 @@ fn patch_git_with_registry() {
         "#, git_dep.url(), registry.to_string()
         })
         .build(&t);
+    // Assert no warnings are emitted.
+    Scarb::quick_snapbox()
+        .current_dir(&t)
+        .arg("fetch")
+        .assert()
+        .success()
+        .stdout_eq("");
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -435,4 +477,105 @@ fn invalid_url() {
         .assert()
         .failure()
         .stdout_eq("error: relative URL without a base\n");
+}
+
+#[test]
+fn warn_unused_patch() {
+    let git_dep = gitx::new("dep1", |t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("2.0.0")
+            .build(&t);
+    });
+    let t = TempDir::new().unwrap();
+    let patch = t.child("patch");
+    ProjectBuilder::start()
+        .name("boo")
+        .version("2.0.0")
+        .build(&patch);
+    ProjectBuilder::start()
+        .name("first")
+        .dep("foo", &git_dep)
+        .build(&t.child("first"));
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .manifest_extra(formatdoc! {r#"
+            [patch."{}"]
+            boo = {}
+        "#, git_dep.url(), patch.build()})
+        .build(&t);
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let packages = metadata
+        .packages
+        .into_iter()
+        .map(|p| p.id.to_string())
+        .sorted()
+        .collect_vec();
+    let expected = vec![
+        "core 2.11.2 (std)".to_string(),
+        "first 1.0.0 (path+file:[..]first[..]Scarb.toml)".to_string(),
+        "foo 2.0.0 (git+file:[..])".to_string(),
+        "second 1.0.0 (path+file:[..]second[..]Scarb.toml)".to_string(),
+        "third 1.0.0 (path+file:[..]third[..]Scarb.toml)".to_string(),
+    ];
+    for (expected, real) in zip(&expected, packages) {
+        snapbox::assert_matches(expected, real);
+    }
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Updating git repository [..]dep1
+            warn: patch `boo` (`[..]Scarb.toml`) for source `file:[..]dep1` has not been used
+        "#});
+}
+
+#[test]
+fn packaging_no_version_dependency_ignores_patches() {
+    let t = TempDir::new().unwrap();
+    let hello = t.child("hello");
+    let path_dep = t.child("path_dep");
+
+    ProjectBuilder::start()
+        .name("foo")
+        .version("1.0.0")
+        .build(&path_dep);
+
+    let git_dep = gitx::new("dep1", |t| {
+        ProjectBuilder::start()
+            .name("foo")
+            .version("2.0.0")
+            .build(&t);
+    });
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("foo", &git_dep)
+        .manifest_extra(formatdoc! {r#"
+            [patch."{}"]
+            foo = {}
+        "#, git_dep.url(), path_dep.with("version", "1.0.0").build()})
+        .build(&hello);
+
+    Scarb::quick_snapbox()
+        .arg("package")
+        .arg("--no-metadata")
+        .arg("--no-verify")
+        .current_dir(&hello)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        [..] Packaging hello v1.0.0 [..]
+        error: dependency `foo` does not specify a version requirement
+        note: all dependencies must have a version specified when packaging
+        note: the `git` specification will be removed from dependency declaration
+        "#});
 }

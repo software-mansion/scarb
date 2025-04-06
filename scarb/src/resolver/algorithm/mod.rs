@@ -69,7 +69,7 @@ mod state;
 pub async fn resolve(
     summaries: &[Summary],
     registry: &dyn Registry,
-    patch_map: PatchMap,
+    patch_map: &PatchMap,
     lockfile: Lockfile,
 ) -> anyhow::Result<Resolve> {
     let state = Arc::new(ResolverState::default());
@@ -104,6 +104,7 @@ pub async fn resolve(
     let (tx, rx) = oneshot::channel();
 
     let cloned_lockfile = lockfile.clone();
+    let cloned_patch_map = patch_map.clone();
     // Run the resolver in a separate thread.
     // The solution will be sent back to the main thread via the `solution_tx` channel.
     thread::Builder::new()
@@ -113,7 +114,7 @@ pub async fn resolve(
                 state,
                 request_sink,
                 tx,
-                patch_map,
+                cloned_patch_map,
                 cloned_lockfile,
                 main_package_ids,
             )

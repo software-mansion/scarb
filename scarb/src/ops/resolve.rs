@@ -227,6 +227,7 @@ pub fn resolve_workspace_with_opts(
                 resolver::resolve(&members_summaries, &patched, &patch_map, lockfile).await?;
 
             write_lockfile(Lockfile::from_resolve(&resolve), ws)?;
+            patch_map.warn_unused(ws.config().ui());
 
             let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
 

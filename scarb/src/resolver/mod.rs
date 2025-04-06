@@ -44,7 +44,7 @@ pub async fn resolve(
     if algo_primitive {
         primitive::resolve(summaries, registry, lockfile).await
     } else {
-        algorithm::resolve(summaries, registry, patch_map.clone(), lockfile).await
+        algorithm::resolve(summaries, registry, patch_map, lockfile).await
     }
 }
 
