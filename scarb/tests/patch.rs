@@ -52,8 +52,8 @@ fn workspace_root_definition_does_not_conflict_with_root_package() {
         .package(ProjectBuilder::start().name("root_pkg"))
         .manifest_extra(formatdoc! {r#"
             [patch.scarbs-xyz]
-            foo = {{ path = "{}" }}
-        "#, patch.to_string_lossy().to_string()})
+            foo = {}
+        "#, patch.build()})
         .build(&t);
     Scarb::quick_snapbox()
         .arg("fetch")
@@ -87,8 +87,8 @@ fn patch_scarbs_with_path() {
         .add_member("second")
         .manifest_extra(formatdoc! {r#"
             [patch.scarbs-xyz]
-            foo = {{ path = "{}" }}
-        "#, patch.to_string_lossy().to_string()})
+            foo = {}
+        "#, patch.build()})
         .build(&t);
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
@@ -192,8 +192,8 @@ fn patch_scarbs_with_path_by_full_url() {
         .add_member("second")
         .manifest_extra(formatdoc! {r#"
             [patch."https://scarbs.xyz/"]
-            foo = {{ path = "{}" }}
-        "#, patch.to_string_lossy().to_string()})
+            foo = {}
+        "#, patch.build()})
         .build(&t);
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
@@ -252,8 +252,8 @@ fn patch_not_existing_registry_with_path() {
         .add_member("second")
         .manifest_extra(formatdoc! {r#"
             [patch."https://this-registry-does-not-exist/"]
-            foo = {{ path = "{}" }}
-        "#, patch.to_string_lossy().to_string()})
+            foo = {}
+        "#, patch.build()})
         .build(&t);
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
@@ -426,8 +426,8 @@ fn invalid_url() {
         .add_member("first")
         .manifest_extra(formatdoc! {r#"
             [patch.scarbs.xyz]
-            foo = {{ path = "{}" }}
-        "#, patch.to_string_lossy().to_string()})
+            foo = {}
+        "#, patch.build()})
         .build(&t);
     Scarb::quick_snapbox()
         .arg("fetch")
