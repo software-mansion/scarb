@@ -4,11 +4,12 @@ use cairo_lang_defs::plugin::GeneratedFileAuxData;
 use cairo_lang_macro::AuxData;
 use cairo_lang_semantic::db::SemanticGroup;
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::collections::HashMap;
 use std::vec::IntoIter;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ProcMacroAuxData {
     value: Vec<u8>,
     macro_id: ProcMacroId,
@@ -26,9 +27,10 @@ impl From<ProcMacroAuxData> for AuxData {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct EmittedAuxData(Vec<ProcMacroAuxData>);
 
+#[typetag::serde]
 impl GeneratedFileAuxData for EmittedAuxData {
     fn as_any(&self) -> &dyn Any {
         self

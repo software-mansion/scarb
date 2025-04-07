@@ -31,6 +31,7 @@ use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 use cairo_lang_syntax::node::{Terminal, TypedStablePtr, TypedSyntaxNode, ast};
 use itertools::Itertools;
 use scarb_stable_hash::short_hash;
+use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::any::Any;
 use std::collections::{HashMap, HashSet};
@@ -57,7 +58,7 @@ impl DeclaredProcMacroInstances for ProcMacroHostPlugin {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ProcMacroId {
     pub package_id: PackageId,
     pub expansion: Expansion,
@@ -72,7 +73,7 @@ impl ProcMacroId {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ProcMacroAuxData {
     value: Vec<u8>,
     macro_id: ProcMacroId,
@@ -90,9 +91,10 @@ impl From<ProcMacroAuxData> for AuxData {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct EmittedAuxData(Vec<ProcMacroAuxData>);
 
+#[typetag::serde]
 impl GeneratedFileAuxData for EmittedAuxData {
     fn as_any(&self) -> &dyn Any {
         self
@@ -479,7 +481,7 @@ impl ProcMacroHostPlugin {
                         let mut args_builder = PatchBuilder::new(db, origin);
                         args_builder.add_node(attr.arguments(db).as_syntax_node());
                         let args = TokenStream::new(args_builder.build().0);
-                        expansion = Some((found, args, attr.stable_ptr().untyped()));
+                        expansion = Some((found, args, attr.stable_ptr(db).untyped()));
                         // Do not add the attribute for found expansion.
                         continue;
                     } else {
@@ -547,7 +549,7 @@ impl ProcMacroHostPlugin {
         item_ast: ast::ModuleItem,
         stream_metadata: TokenStreamMetadata,
     ) -> Option<PluginResult> {
-        let stable_ptr = item_ast.clone().stable_ptr().untyped();
+        let stable_ptr = item_ast.clone().stable_ptr(db).untyped();
         let token_stream =
             TokenStream::from_syntax_node(db, &item_ast).with_metadata(stream_metadata.clone());
 
@@ -863,7 +865,7 @@ impl ProcMacroHostPlugin {
     }
 
     fn calculate_metadata(db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> TokenStreamMetadata {
-        let stable_ptr = item_ast.clone().stable_ptr().untyped();
+        let stable_ptr = item_ast.clone().stable_ptr(db).untyped();
         let file_path = stable_ptr.file_id(db).full_path(db.upcast());
         let file_id = short_hash(file_path.clone());
         TokenStreamMetadata::new(file_path, file_id)
@@ -1080,7 +1082,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
         syntax: &ast::ExprInlineMacro,
         _metadata: &MacroPluginMetadata<'_>,
     ) -> InlinePluginResult {
-        let stable_ptr = syntax.clone().stable_ptr().untyped();
+        let stable_ptr = syntax.clone().stable_ptr(db).untyped();
         let arguments = syntax.arguments(db);
         let token_stream = TokenStream::from_syntax_node(db, &arguments);
         let result = self

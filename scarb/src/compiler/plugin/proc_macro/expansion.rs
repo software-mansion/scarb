@@ -1,8 +1,9 @@
 use cairo_lang_macro::ExpansionKind as ExpansionKindV1;
 use cairo_lang_macro_v1::ExpansionKind as ExpansionKindV2;
+use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ExpansionKind {
     Attr,
     Derive,
@@ -34,12 +35,12 @@ impl From<ExpansionKindV2> for ExpansionKind {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Expansion {
     /// Name of the expansion function as defined in the macro source code.
     pub expansion_name: SmolStr,
     /// Name of the macro as available to the user through Cairo code.
-    /// This is equivalent to `expansion_name` with potentially changed casing.   
+    /// This is equivalent to `expansion_name` with potentially changed casing.
     pub cairo_name: SmolStr,
     pub kind: ExpansionKind,
 }

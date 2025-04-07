@@ -91,6 +91,7 @@ toml_edit.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true
 typed-builder.workspace = true
+typetag.workspace = true
 url.workspace = true
 walkdir.workspace = true
 which.workspace = true

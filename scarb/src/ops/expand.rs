@@ -199,7 +199,7 @@ fn do_expand(
                 let item = ast::UsePath::Leaf(use_item.clone()).get_item(db.upcast());
                 let item = item.use_path(db.upcast());
                 // We need to deduplicate multi-uses (`a::{b, c}`), which are split into multiple leaves.
-                if !seen_uses.insert(item.stable_ptr()) {
+                if !seen_uses.insert(item.stable_ptr(&db)) {
                     continue;
                 }
                 builder.add_str("use ");
