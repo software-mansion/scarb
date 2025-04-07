@@ -345,6 +345,14 @@ fn prepare_archive_recipe(
                 path: CARGO_LOCKFILE_FILE_NAME.into(),
                 contents: ArchiveFileContents::OnDisk(cargo_lockfile_path),
             });
+        } else {
+            ws.config().ui().warn(formatdoc!(
+                r#"
+                `{package_name}` has been packaged without a `Cargo.lock` file
+                help: consider upgrading to Cargo `1.84` or newer to always include the lockfile
+                "#,
+                package_name = pkg.id.name,
+            ));
         }
     }
 
