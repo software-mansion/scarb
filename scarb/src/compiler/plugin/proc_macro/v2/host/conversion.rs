@@ -25,7 +25,7 @@ pub struct CallSiteLocation {
 impl CallSiteLocation {
     pub fn new<T: TypedSyntaxNode>(node: &T, db: &dyn SyntaxGroup) -> Self {
         Self {
-            stable_ptr: node.stable_ptr().untyped(),
+            stable_ptr: node.stable_ptr(db).untyped(),
             span: node.text_span(db),
         }
     }

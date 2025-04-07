@@ -364,7 +364,7 @@ impl PackageRepository {
 
     fn work_dir(&self) -> Result<&Path> {
         self.repo
-            .work_dir()
+            .workdir()
             .context("cannot get repository working directory")
     }
 
