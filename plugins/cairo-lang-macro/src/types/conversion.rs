@@ -410,7 +410,7 @@ impl Diagnostic {
     #[doc(hidden)]
     pub unsafe fn free_owned_stable(diagnostic: StableDiagnostic) {
         free_raw_cstring(diagnostic.message);
-        
+
         for span in diagnostic.span.into_owned() {
             TextSpan::free_owned_stable(span);
         }
