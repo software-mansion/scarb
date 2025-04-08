@@ -1308,7 +1308,7 @@ fn can_emit_diagnostic_with_custom_location() {
                 // Create a custom span from start to end
                 let custom_span = TextSpan::new(start.start, end.end);
 
-                let diag = Diagnostic::error_with_span("Unsupported tuple type", custom_span);
+                let diag = Diagnostic::span_error(custom_span, "Unsupported tuple type");
                 result.with_diagnostics(diag.into())
             } else {
                 result
