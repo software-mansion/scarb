@@ -375,7 +375,7 @@ impl Diagnostic {
         StableDiagnostic {
             message: CString::new(self.message).unwrap().into_raw(),
             severity: self.severity.into_stable(),
-            span,
+            spans: span,
         }
     }
 
@@ -386,7 +386,7 @@ impl Diagnostic {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn from_stable(diagnostic: &StableDiagnostic) -> Self {
-        let (ptr, n) = diagnostic.span.raw_parts();
+        let (ptr, n) = diagnostic.spans.raw_parts();
         let span = if n > 0 {
             let spans = slice::from_raw_parts(ptr, n);
             Some(TextSpan::from_stable(&spans[0]))
@@ -411,7 +411,7 @@ impl Diagnostic {
     pub unsafe fn free_owned_stable(diagnostic: StableDiagnostic) {
         free_raw_cstring(diagnostic.message);
 
-        for span in diagnostic.span.into_owned() {
+        for span in diagnostic.spans.into_owned() {
             TextSpan::free_owned_stable(span);
         }
     }
