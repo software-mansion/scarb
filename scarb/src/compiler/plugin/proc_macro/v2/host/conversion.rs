@@ -48,15 +48,16 @@ pub fn into_cairo_diagnostics(
             let (node_ptr, relative_span) = match diag.span {
                 Some(span) => match find_encompassing_node(&root_syntax_node, db, &span) {
                     Ok(node) => {
+                        let offset = node.offset(db).as_u32();
                         let relative_span = cairo_lang_filesystem::span::TextSpan {
                             start: TextOffset::default()
                                 .add_width(TextWidth::new_for_testing(span.start))
-                                .sub_width(TextWidth::new_for_testing(node.offset().as_u32())),
+                                .sub_width(TextWidth::new_for_testing(offset)),
                             end: TextOffset::default()
                                 .add_width(TextWidth::new_for_testing(span.end))
-                                .sub_width(TextWidth::new_for_testing(node.offset().as_u32())),
+                                .sub_width(TextWidth::new_for_testing(offset)),
                         };
-                        (node.stable_ptr(), Some(relative_span))
+                        (node.stable_ptr(db), Some(relative_span))
                     }
                     Err(_) => (stable_ptr, None),
                 },
@@ -102,7 +103,7 @@ pub fn find_encompassing_node(
 
     let mut current_node = root_syntax_node.lookup_offset(db, start_offset);
     while current_node.span(db).end < end_offset {
-        if let Some(parent) = current_node.parent() {
+        if let Some(parent) = current_node.parent(db) {
             current_node = parent;
         } else {
             return Err(anyhow!("No encompassing node found"));
