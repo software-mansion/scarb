@@ -1,4 +1,5 @@
-use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
+use crate::compiler::plugin::proc_macro::ExpansionQuery;
+use crate::compiler::plugin::proc_macro::expansion::ExpansionKind;
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
 use crate::compiler::plugin::proc_macro::v2::host::conversion::{
     CallSiteLocation, into_cairo_diagnostics,
@@ -190,7 +191,7 @@ impl ProcMacroHostPlugin {
             .try_v2()
             .expect("procedural macro using v1 api used in a context expecting v2 api")
             .generate_code(
-                input.id.expansion.name.clone(),
+                input.id.expansion.expansion_name.clone(),
                 input.call_site.span,
                 input.args,
                 token_stream.clone(),
@@ -333,7 +334,7 @@ impl ProcMacroHostPlugin {
             // We ensure that this flag is changed *after* the expansion is found.
             if last {
                 let structured_attr = attr.clone().structurize(db);
-                let found = self.find_expansion(&Expansion::new(
+                let found = self.find_expansion(&ExpansionQuery::with_cairo_name(
                     structured_attr.id.clone(),
                     ExpansionKind::Attr,
                 ));
@@ -377,7 +378,7 @@ impl ProcMacroHostPlugin {
             .try_v2()
             .expect("procedural macro using v1 api used in a context expecting v2 api")
             .generate_code(
-                input.expansion.name.clone(),
+                input.expansion.expansion_name.clone(),
                 call_site.span,
                 args,
                 token_stream,
@@ -414,7 +415,7 @@ impl ProcMacroHostPlugin {
             };
         }
 
-        let file_name = format!("proc_{}", input.expansion.name);
+        let file_name = format!("proc_{}", input.expansion.cairo_name);
         let code_mappings = generate_code_mappings(&result.token_stream);
         let content = result.token_stream.to_string();
         PluginResult {
@@ -424,7 +425,7 @@ impl ProcMacroHostPlugin {
                 content,
                 diagnostics_note: Some(format!(
                     "this error originates in the attribute macro: `{}`",
-                    input.expansion.name
+                    input.expansion.cairo_name
                 )),
                 aux_data: result.aux_data.map(|new_aux_data| {
                     DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
@@ -455,7 +456,7 @@ impl AttrExpansionFound {
     pub fn as_name(&self) -> Option<SmolStr> {
         match self {
             AttrExpansionFound::Some(args) | AttrExpansionFound::Last(args) => {
-                Some(args.id.expansion.name.clone())
+                Some(args.id.expansion.cairo_name.clone())
             }
             AttrExpansionFound::None => None,
         }

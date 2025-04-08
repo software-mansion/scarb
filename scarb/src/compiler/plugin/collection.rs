@@ -209,7 +209,7 @@ impl ComponentProcMacroHost {
                     .iter()
                     .map(|e| MacroId {
                         package_id: m.package_id(),
-                        expansion_name: e.name.clone(),
+                        expansion_name: e.cairo_name.clone(),
                     })
                     .collect_vec()
             })

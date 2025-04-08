@@ -10,7 +10,8 @@ use super::{Handler, interface_code_mapping_from_cairo};
 use crate::compiler::plugin::collection::WorkspaceProcMacros;
 use crate::compiler::plugin::proc_macro::v2::generate_code_mappings;
 use crate::compiler::plugin::proc_macro::{
-    Expansion, ExpansionKind, ProcMacroApiVersion, ProcMacroInstance,
+    DeclaredProcMacroInstances, ExpansionKind, ExpansionQuery, ProcMacroApiVersion,
+    ProcMacroInstance,
 };
 
 impl Handler for ExpandAttribute {
@@ -25,7 +26,7 @@ impl Handler for ExpandAttribute {
             item,
             call_site,
         } = params;
-        let expansion = Expansion::new(&attr, ExpansionKind::Attr);
+        let expansion = ExpansionQuery::with_expansion_name(&attr, ExpansionKind::Attr);
         let plugins = workspace_macros.get(&context.component);
         let proc_macro_instance = plugins
             .as_ref()

@@ -48,11 +48,16 @@ pub fn execute_script(
         );
     }
 
+    let env_vars = env_vars
+        .into_iter()
+        .map(|(key, value)| (OsString::from(key), OsString::from(value)))
+        .collect();
+
     let runtime = ws.config().tokio_handle();
     let exit_code = runtime.block_on(deno_task_shell::execute(
         list,
         env_vars,
-        (&cwd).as_ref(),
+        cwd.to_owned().into(),
         custom_commands,
         KillSignal::default(),
     ));

@@ -34,7 +34,7 @@ impl<'a> TokenStreamBuilder<'a> {
             .iter()
             .flat_map(|node| {
                 let leaves = node.tokens(self.db);
-                leaves.map(|node| TokenTree::Ident(self.token_from_syntax_node(node.clone(), ctx)))
+                leaves.map(|node| TokenTree::Ident(self.token_from_syntax_node(node, ctx)))
             })
             .collect();
 

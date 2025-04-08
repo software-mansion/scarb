@@ -59,7 +59,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
             .try_v2()
             .expect("procedural macro using v1 api used in a context expecting v2 api")
             .generate_code(
-                self.expansion.name.clone(),
+                self.expansion.expansion_name.clone(),
                 call_site.span,
                 TokenStream::empty(),
                 token_stream,
@@ -94,7 +94,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                     aux_data,
                     diagnostics_note: Some(format!(
                         "this error originates in the inline macro: `{}`",
-                        self.expansion.name
+                        self.expansion.cairo_name
                     )),
                 }),
                 diagnostics,
@@ -104,7 +104,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
 
     fn documentation(&self) -> Option<String> {
         self.doc
-            .get_or_init(|| self.instance().doc(self.expansion.name.clone()))
+            .get_or_init(|| self.instance().doc(self.expansion.cairo_name.clone()))
             .clone()
     }
 }
