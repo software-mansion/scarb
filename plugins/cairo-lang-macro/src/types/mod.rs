@@ -136,6 +136,24 @@ pub enum Severity {
 pub struct Diagnostics(Vec<Diagnostic>);
 
 impl Diagnostic {
+    /// Create new diagnostic with the given severity and message.
+    pub fn new(level: Severity, message: impl ToString) -> Self {
+        Self {
+            message: message.to_string(),
+            severity: level,
+            span: None,
+        }
+    }
+
+    /// Creates new diagnostic with the given span, severity level, and message.
+    pub fn spanned(span: TextSpan, level: Severity, message: impl ToString) -> Self {
+        Self {
+            message: message.to_string(),
+            severity: level,
+            span: Some(span),
+        }
+    }
+
     /// Create new diagnostic with severity [`Severity::Error`].
     pub fn error(message: impl ToString) -> Self {
         Self {
@@ -154,22 +172,14 @@ impl Diagnostic {
         }
     }
 
-    /// Create a new error diagnostic with a custom span.
-    pub fn error_with_span(message: impl ToString, span: TextSpan) -> Self {
-        Self {
-            message: message.to_string(),
-            severity: Severity::Error,
-            span: Some(span),
-        }
+    /// Create new error diagnostic with severity [`Severity::Error`], and the given span and message.
+    pub fn span_error(span: TextSpan, message: impl ToString) -> Self {
+        Self::spanned(span, Severity::Error, message)
     }
 
-    /// Create a new warning diagnostic with a custom span.
-    pub fn warn_with_span(message: impl ToString, span: TextSpan) -> Self {
-        Self {
-            message: message.to_string(),
-            severity: Severity::Warning,
-            span: Some(span),
-        }
+    /// Create new warning diagnostic with severity [`Severity::Warning`], and the given span and message.
+    pub fn span_warning(span: TextSpan, message: impl ToString) -> Self {
+        Self::spanned(span, Severity::Warning, message)
     }
 }
 
