@@ -214,6 +214,20 @@ impl Diagnostics {
         self.0.push(Diagnostic::warn(message));
         self
     }
+
+    /// Create new diagnostic with severity [`Severity::Error`] and the given span
+    /// and push to the vector.
+    pub fn span_error(mut self, span: TextSpan, message: impl ToString) -> Self {
+        self.0.push(Diagnostic::span_error(span, message));
+        self
+    }
+
+    /// Create new diagnostic with severity [`Severity::Warning`] and the given span
+    /// and push to the vector.
+    pub fn span_warning(mut self, span: TextSpan, message: impl ToString) -> Self {
+        self.0.push(Diagnostic::span_warning(span, message));
+        self
+    }
 }
 
 impl IntoIterator for Diagnostics {
