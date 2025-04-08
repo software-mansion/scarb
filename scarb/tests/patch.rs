@@ -635,3 +635,33 @@ fn patch_registry_with_registry() {
         snapbox::assert_matches(expected, real);
     }
 }
+
+#[test]
+fn cannot_define_default_registry_both_short_and_long_name() {
+    let t = TempDir::new().unwrap();
+    let patch = t.child("patch");
+    ProjectBuilder::start()
+        .name("foo")
+        .version("2.0.0")
+        .build(&patch);
+    ProjectBuilder::start()
+        .name("first")
+        .build(&t.child("first"));
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .manifest_extra(formatdoc! {r#"
+            [patch.scarbs-xyz]
+            foo = {}
+            [patch."https://scarbs.xyz/"]
+            foo = {}
+        "#, patch.build(), patch.build()})
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq(indoc! {r#"
+            error: the `[patch]` section cannot specify both `scarbs-xyz` and `https://scarbs.xyz/`
+        "#});
+}

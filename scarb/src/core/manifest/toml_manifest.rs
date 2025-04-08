@@ -23,7 +23,7 @@ use crate::core::manifest::maybe_workspace::{MaybeWorkspace, WorkspaceInherit};
 use crate::core::manifest::scripts::ScriptDefinition;
 use crate::core::manifest::{ManifestDependency, ManifestMetadata, Summary, Target};
 use crate::core::package::PackageId;
-use crate::core::registry::DEFAULT_REGISTRY_INDEX_PATCH_SOURCE;
+use crate::core::registry::{DEFAULT_REGISTRY_INDEX, DEFAULT_REGISTRY_INDEX_PATCH_SOURCE};
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{
     Config, DepKind, DependencyVersionReq, InliningStrategy, ManifestBuilder,
@@ -1004,16 +1004,22 @@ impl TomlManifest {
         manifest_path: &Utf8Path,
     ) -> Result<BTreeMap<CanonicalUrl, Vec<ManifestDependency>>> {
         if let Some(patch) = self.patch.clone() {
+            let default_index_patch_source =
+                SmolStr::new_static(DEFAULT_REGISTRY_INDEX_PATCH_SOURCE);
+            ensure!(
+                !(patch.contains_key(&default_index_patch_source)
+                    && patch.contains_key(DEFAULT_REGISTRY_INDEX)),
+                "the `[patch]` section cannot specify both `{DEFAULT_REGISTRY_INDEX_PATCH_SOURCE}` and `{DEFAULT_REGISTRY_INDEX}`"
+            );
             patch
                 .into_iter()
                 .map(|(source, patches)| {
-                    let source =
-                        if source == SmolStr::new_static(DEFAULT_REGISTRY_INDEX_PATCH_SOURCE) {
-                            SourceId::default().canonical_url.clone()
-                        } else {
-                            let url = Url::parse(source.as_str())?;
-                            CanonicalUrl::new(&url)?
-                        };
+                    let source = if source == default_index_patch_source {
+                        SourceId::default().canonical_url.clone()
+                    } else {
+                        let url = Url::parse(source.as_str())?;
+                        CanonicalUrl::new(&url)?
+                    };
                     Ok((
                         source,
                         patches
