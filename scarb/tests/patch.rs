@@ -156,7 +156,9 @@ fn patch_scarbs_with_git() {
         .arg("fetch")
         .assert()
         .success()
-        .stdout_eq("");
+        .stdout_matches(indoc! {r#"
+            [..]Updating git repository [..]dep1
+        "#});
     let metadata = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
@@ -578,4 +580,58 @@ fn packaging_no_version_dependency_ignores_patches() {
         note: all dependencies must have a version specified when packaging
         note: the `git` specification will be removed from dependency declaration
         "#});
+}
+
+#[test]
+fn patch_registry_with_registry() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("bar")
+            .version("1.0.0")
+            .build(t);
+    });
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("bar")
+            .version("2.0.0")
+            .build(t);
+    });
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("foo")
+        .version("0.1.0")
+        .dep("bar", Dep.version("1").registry(&registry))
+        .manifest_extra(formatdoc! {r#"
+            [patch."{}"]
+            bar = {}
+        "#, registry.url.clone(), Dep.version("2").registry(&registry).build()})
+        .build(&t);
+    // Assert no warnings are emitted.
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq("");
+    let metadata = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+    let packages = metadata
+        .packages
+        .into_iter()
+        .map(|p| p.id.to_string())
+        .sorted()
+        .collect_vec();
+    let expected = vec![
+        "bar 2.0.0 (registry+file:[..])".to_string(),
+        "core 2.11.2 (std)".to_string(),
+        "foo 0.1.0 (path+[..]Scarb.toml)".to_string(),
+    ];
+    for (expected, real) in zip(&expected, packages) {
+        snapbox::assert_matches(expected, real);
+    }
 }
