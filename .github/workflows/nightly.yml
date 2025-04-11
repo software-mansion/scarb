@@ -202,7 +202,7 @@ jobs:
           gh release create \
             "${{ needs.prepare.outputs.nightly_tag }}" \
             --repo software-mansion/scarb-nightlies \
-            --latest \
+            ${{ !inputs.is_dev && '--latest' || '' }} \
             --title "${{ needs.prepare.outputs.nightly_tag }}" \
             --notes-file NIGHTLY_RELEASE_NOTES.md
         env:
