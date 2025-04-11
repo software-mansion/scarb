@@ -39,6 +39,7 @@ on:
 jobs:
   dev-build:
     uses: ./.github/workflows/nightly.yml
+    secrets: inherit
     with:
       dry_run: ${{ inputs.dry_run }}
       upgrade-cairo: ${{ inputs.upgrade-cairo }}

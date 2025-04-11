@@ -61,6 +61,11 @@ on:
         description: "Is this a dev build"
         type: boolean
         default: false
+    secrets:
+      SCARB_NIGHTLIES_CONTENTS_WRITE:
+        required: true
+      SLACK_NIGHTLY_FAILURE_WEBHOOK_URL:
+        required: true
   schedule:
     - cron: '0 0 * * 3,6'
 
