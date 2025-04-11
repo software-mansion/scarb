@@ -24,5 +24,6 @@ pub fn diagnostic_v1_to_v2(diagnostic_v1: &DiagnosticV1) -> DiagnosticV2 {
             SeverityV1::Error => SeverityV2::Error,
             SeverityV1::Warning => SeverityV2::Warning,
         },
+        span: None,
     }
 }

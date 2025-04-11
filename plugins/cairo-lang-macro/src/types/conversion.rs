@@ -361,14 +361,21 @@ impl AuxData {
 }
 
 impl Diagnostic {
-    // Convert to FFI-safe representation.
+    /// Convert to FFI-safe representation.
     ///
     /// # Safety
     #[doc(hidden)]
     pub fn into_stable(self) -> StableDiagnostic {
+        let span = if let Some(span) = self.span {
+            StableSlice::new(vec![span.into_stable()])
+        } else {
+            StableSlice::new(vec![])
+        };
+
         StableDiagnostic {
             message: CString::new(self.message).unwrap().into_raw(),
             severity: self.severity.into_stable(),
+            spans: span,
         }
     }
 
@@ -379,9 +386,18 @@ impl Diagnostic {
     /// # Safety
     #[doc(hidden)]
     pub unsafe fn from_stable(diagnostic: &StableDiagnostic) -> Self {
+        let (ptr, n) = diagnostic.spans.raw_parts();
+        let span = if n > 0 {
+            let spans = slice::from_raw_parts(ptr, n);
+            Some(TextSpan::from_stable(&spans[0]))
+        } else {
+            None
+        };
+
         Self {
             message: from_raw_cstr(diagnostic.message),
             severity: Severity::from_stable(&diagnostic.severity),
+            span,
         }
     }
 
@@ -394,6 +410,10 @@ impl Diagnostic {
     #[doc(hidden)]
     pub unsafe fn free_owned_stable(diagnostic: StableDiagnostic) {
         free_raw_cstring(diagnostic.message);
+
+        for span in diagnostic.spans.into_owned() {
+            TextSpan::free_owned_stable(span);
+        }
     }
 }
 

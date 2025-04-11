@@ -106,6 +106,11 @@ pub struct Diagnostic {
     ///
     /// Defines how this diagnostic should influence the compilation.
     pub severity: Severity,
+    /// Optional custom span for the diagnostic location.
+    ///
+    /// If provided, this span will be used instead of call site span.
+    /// This allows macros to point to specific elements within the annotated item.
+    pub span: Option<TextSpan>,
 }
 
 /// The severity of a diagnostic.
@@ -131,11 +136,30 @@ pub enum Severity {
 pub struct Diagnostics(Vec<Diagnostic>);
 
 impl Diagnostic {
+    /// Create new diagnostic with the given severity and message.
+    pub fn new(level: Severity, message: impl ToString) -> Self {
+        Self {
+            message: message.to_string(),
+            severity: level,
+            span: None,
+        }
+    }
+
+    /// Creates new diagnostic with the given span, severity level, and message.
+    pub fn spanned(span: TextSpan, level: Severity, message: impl ToString) -> Self {
+        Self {
+            message: message.to_string(),
+            severity: level,
+            span: Some(span),
+        }
+    }
+
     /// Create new diagnostic with severity [`Severity::Error`].
     pub fn error(message: impl ToString) -> Self {
         Self {
             message: message.to_string(),
             severity: Severity::Error,
+            span: None,
         }
     }
 
@@ -144,7 +168,18 @@ impl Diagnostic {
         Self {
             message: message.to_string(),
             severity: Severity::Warning,
+            span: None,
         }
+    }
+
+    /// Create new error diagnostic with severity [`Severity::Error`], and the given span and message.
+    pub fn span_error(span: TextSpan, message: impl ToString) -> Self {
+        Self::spanned(span, Severity::Error, message)
+    }
+
+    /// Create new warning diagnostic with severity [`Severity::Warning`], and the given span and message.
+    pub fn span_warning(span: TextSpan, message: impl ToString) -> Self {
+        Self::spanned(span, Severity::Warning, message)
     }
 }
 
@@ -177,6 +212,20 @@ impl Diagnostics {
     /// and push to the vector.
     pub fn warn(mut self, message: impl ToString) -> Self {
         self.0.push(Diagnostic::warn(message));
+        self
+    }
+
+    /// Create new diagnostic with severity [`Severity::Error`] and the given span
+    /// and push to the vector.
+    pub fn span_error(mut self, span: TextSpan, message: impl ToString) -> Self {
+        self.0.push(Diagnostic::span_error(span, message));
+        self
+    }
+
+    /// Create new diagnostic with severity [`Severity::Warning`] and the given span
+    /// and push to the vector.
+    pub fn span_warning(mut self, span: TextSpan, message: impl ToString) -> Self {
+        self.0.push(Diagnostic::span_warning(span, message));
         self
     }
 }
