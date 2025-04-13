@@ -5984,7 +5984,6 @@ dependencies = [
  "smol_str",
  "snapbox",
  "thiserror 2.0.12",
- "walkdir",
 ]
 
 [[package]]
@@ -6112,6 +6111,7 @@ dependencies = [
  "clap",
  "data-encoding",
  "dunce",
+ "expect-test",
  "hyper",
  "indoc",
  "itertools 0.14.0",
@@ -6129,6 +6129,7 @@ dependencies = [
  "toml_edit",
  "tower-http",
  "url",
+ "walkdir",
 ]
 
 [[package]]
