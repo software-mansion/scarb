@@ -14,3 +14,7 @@ scarb-ui = { path = "../../utils/scarb-ui" }
 clap.workspace = true
 anyhow.workspace = true
 camino.workspace = true
+
+[dev-dependencies]
+scarb-test-support = { path = "../../utils/scarb-test-support" }
+assert_fs.workspace = true

@@ -6466,9 +6466,11 @@ name = "scarb-mdbook"
 version = "2.11.2"
 dependencies = [
  "anyhow",
+ "assert_fs",
  "camino",
  "clap",
  "mdbook",
+ "scarb-test-support",
  "scarb-ui",
 ]
 
