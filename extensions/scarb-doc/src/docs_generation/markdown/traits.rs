@@ -374,10 +374,9 @@ fn generate_markdown_from_item_data(
 
     if let Some(sig) = &doc_item.signature() {
         if !sig.is_empty() {
-            // TODO(#1525) add cairo support to mdbook
             writeln!(
                 &mut markdown,
-                "<pre><code class=\"language-rust\">{}</code></pre>\n",
+                "<pre><code class=\"language-cairo\">{}</code></pre>\n",
                 format_signature(sig, doc_item.doc_location_links())
             )?;
         }
