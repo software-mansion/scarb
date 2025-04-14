@@ -2,6 +2,7 @@ pub mod cairo_plugin_project_builder;
 pub mod cargo;
 pub mod command;
 pub mod contracts;
+pub mod expect_dir;
 pub mod filesystem;
 pub mod fsx;
 pub mod gitx;

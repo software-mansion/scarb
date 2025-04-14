@@ -37,5 +37,4 @@ thiserror.workspace = true
 [dev-dependencies]
 assert_fs.workspace = true
 scarb-test-support = { path = "../../utils/scarb-test-support" }
-walkdir.workspace = true
 snapbox.workspace = true
