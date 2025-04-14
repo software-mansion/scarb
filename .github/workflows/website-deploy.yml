@@ -50,7 +50,7 @@ jobs:
         working-directory: ./core
       - name: Apply custom highlighting
         run: |
-          curl -o highlight.js https://raw.githubusercontent.com/software-mansion/scarb/main/extensions/scarb-doc/theme/highlight.js
+          curl -o highlight.js https://raw.githubusercontent.com/software-mansion/scarb/main/extensions/scarb-mdbook/theme/highlight.js
           cp highlight.js ./core/target/doc/core/book/highlight.js
       - uses: actions/upload-artifact@v4
         with:
