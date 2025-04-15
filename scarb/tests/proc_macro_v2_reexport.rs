@@ -75,10 +75,10 @@ fn cairo_plugin_re_export_simple() {
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(t.child("hello"))
         .assert()
-        .failure()
+        .success()
         .stdout_matches(indoc! {r#"
            [..]Compiling world v1.0.0 [..]
            [..]Compiling hello v1.0.0 [..]
-           error: duplicate expansions defined for procedural macros: some (world v1.0.0 ([..]Scarb.toml) and world v1.0.0 ([..]Scarb.toml))
+           [..]Finished `dev` profile target(s) in [..]
         "#});
 }

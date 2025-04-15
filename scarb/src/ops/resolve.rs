@@ -787,7 +787,7 @@ impl<'a> PackageSolutionCollector<'a> {
         )?;
 
         // We iterate over all the compilation unit components to get dependency's version.
-        let mut dependencies: Vec<_> = components
+        let mut dependencies: HashSet<_> = components
             .iter()
             .filter(|component_as_dependency| {
                 dependencies_packages.iter().any(|dependency_summary| {
@@ -807,7 +807,7 @@ impl<'a> PackageSolutionCollector<'a> {
             false
         };
         if !is_integration_test {
-            dependencies.push(CompilationUnitDependency::Library(component.id.clone()));
+            dependencies.insert(CompilationUnitDependency::Library(component.id.clone()));
         }
 
         let plugin_dependencies = dependencies_packages
@@ -821,7 +821,7 @@ impl<'a> PackageSolutionCollector<'a> {
             .collect::<Vec<_>>();
 
         dependencies.extend(plugin_dependencies);
-        Ok(dependencies)
+        Ok(dependencies.into_iter().collect())
     }
 
     pub fn show_warnings(self) {
