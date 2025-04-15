@@ -415,7 +415,7 @@ fn format_signature(input: &str, links: &[DocLocationLink]) -> String {
                 .iter()
                 .find(|&link| i >= link.start && i < link.end)
             {
-                let slice = &input[link.start..link.end];
+                let slice = escape_html(&input[link.start..link.end]);
                 escaped.push_str(&format!(
                     "<a href=\"{}.html\">{}</a>",
                     link.full_path, slice
@@ -424,14 +424,7 @@ fn format_signature(input: &str, links: &[DocLocationLink]) -> String {
                 skip_chars = link.end - link.start - 1;
                 continue;
             } else {
-                match ch {
-                    '<' => escaped.push_str("&lt;"),
-                    '>' => escaped.push_str("&gt;"),
-                    '"' => escaped.push_str("&quot;"),
-                    '&' => escaped.push_str("&amp;"),
-                    '\'' => escaped.push_str("&apos;"),
-                    _ => escaped.push(ch),
-                }
+                escaped.push_str(&escape_html_char(ch));
                 index_pointer += ch.len_utf8();
             }
         } else {
@@ -439,6 +432,21 @@ fn format_signature(input: &str, links: &[DocLocationLink]) -> String {
         }
     }
     escaped
+}
+
+fn escape_html(input: &str) -> String {
+    input.chars().map(escape_html_char).collect::<String>()
+}
+
+fn escape_html_char(ch: char) -> String {
+    match ch {
+        '<' => "&lt;".to_string(),
+        '>' => "&gt;".to_string(),
+        '"' => "&quot;".to_string(),
+        '&' => "&amp;".to_string(),
+        '\'' => "&apos;".to_string(),
+        _ => ch.to_string(),
+    }
 }
 
 pub trait WithPath {
