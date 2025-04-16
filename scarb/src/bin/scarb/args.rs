@@ -62,7 +62,7 @@ pub struct ScarbArgs {
     pub verbose: VerbositySpec,
 
     /// Print machine-readable output in NDJSON format.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_OUTPUT_JSON")]
     pub json: bool,
 
     /// Run without accessing the network.
@@ -163,11 +163,11 @@ pub enum Command {
     Fetch,
     /// Format project files.
     Fmt(FmtArgs),
-    /// Create a new Scarb package in existing directory.
+    /// Create a new Scarb package in the existing directory.
     Init(InitArgs),
-    /// Print path to current Scarb.toml file to standard output.
+    /// Print a path to the current Scarb.toml file to standard output.
     ManifestPath,
-    /// Output the resolved dependencies of a package, the concrete used versions including
+    /// Output the resolved dependencies of a package, the concrete versions used, including
     /// overrides, in machine-readable format.
     Metadata(MetadataArgs),
     /// Create a new Scarb package at <PATH>.
@@ -178,7 +178,7 @@ pub enum Command {
         codes of selected packages. Resulting files will be placed in `target/package` directory.
     ")]
     Package(PackageArgs),
-    /// Start proc macro server.
+    /// Start the proc macro server.
     ProcMacroServer,
     /// Upload a package to the registry.
     #[command(after_help = "\
@@ -239,7 +239,7 @@ pub struct BuildArgs {
     pub features: FeaturesSpec,
 
     /// Do not error on `cairo-version` mismatch.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_IGNORE_CAIRO_VERSION")]
     pub ignore_cairo_version: bool,
 }
 
@@ -254,7 +254,7 @@ pub struct ExpandArgs {
     pub features: FeaturesSpec,
 
     /// Do not error on `cairo-version` mismatch.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_IGNORE_CAIRO_VERSION")]
     pub ignore_cairo_version: bool,
 
     /// Specify the target to expand by target kind.
@@ -278,7 +278,7 @@ pub struct ExpandArgs {
 #[derive(Parser, Clone, Debug)]
 #[clap(trailing_var_arg = true)]
 pub struct ScriptsRunnerArgs {
-    /// The name of the script from manifest file to execute.
+    /// The name of the script from the manifest file to execute.
     pub script: Option<SmolStr>,
 
     #[command(flatten)]
@@ -288,7 +288,7 @@ pub struct ScriptsRunnerArgs {
     #[arg(long, default_value_t = false)]
     pub workspace_root: bool,
 
-    /// Arguments to pass to executed script.
+    /// Arguments to pass to the executed script.
     #[clap(allow_hyphen_values = true)]
     pub args: Vec<OsString>,
 }
@@ -307,7 +307,7 @@ pub struct InitArgs {
     pub name: Option<PackageName>,
 
     /// Do not initialize a new Git repository.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_INIT_NO_VCS")]
     pub no_vcs: bool,
 
     /// Test runner to use. Starts interactive session if not specified.
@@ -330,7 +330,7 @@ pub struct MetadataArgs {
     pub features: FeaturesSpec,
 
     /// Do not error on `cairo-version` mismatch.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_IGNORE_CAIRO_VERSION")]
     pub ignore_cairo_version: bool,
 }
 
@@ -352,7 +352,7 @@ pub struct FmtArgs {
     #[arg(short, long)]
     pub emit: Option<EmitTarget>,
     /// Do not color output.
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, env = "SCARB_FMT_NO_COLOR")]
     pub no_color: bool,
     /// Specify package(s) to format.
     #[command(flatten)]
@@ -477,11 +477,11 @@ pub struct TestArgs {
 #[derive(Parser, Clone, Debug)]
 pub struct PackageSharedArgs {
     /// Allow working directories with uncommitted VCS changes to be packaged.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_PACKAGE_ALLOW_DIRTY")]
     pub allow_dirty: bool,
 
     /// Do not verify the contents by building them.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_PACKAGE_NO_VERIFY")]
     pub no_verify: bool,
 }
 
@@ -507,7 +507,7 @@ pub struct PackageArgs {
     pub features: FeaturesSpec,
 
     /// Do not error on `cairo-version` mismatch.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_IGNORE_CAIRO_VERSION")]
     pub ignore_cairo_version: bool,
 }
 
@@ -529,7 +529,7 @@ pub struct PublishArgs {
     pub features: FeaturesSpec,
 
     /// Do not error on `cairo-version` mismatch.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_IGNORE_CAIRO_VERSION")]
     pub ignore_cairo_version: bool,
 }
 
@@ -548,7 +548,7 @@ pub struct LintArgs {
     pub fix: bool,
 
     /// Do not error on `cairo-version` mismatch.
-    #[arg(long)]
+    #[arg(long, env = "SCARB_IGNORE_CAIRO_VERSION")]
     pub ignore_cairo_version: bool,
 
     /// Specify features to enable.
@@ -556,7 +556,7 @@ pub struct LintArgs {
     pub features: FeaturesSpec,
 
     /// Should fail on any warning.
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long, default_value_t = false, env = "SCARB_LINT_DENY_WARNINGS")]
     pub deny_warnings: bool,
 }
 
@@ -583,7 +583,7 @@ pub struct GitRefGroup {
 #[derive(Parser, Clone, Debug)]
 #[group(multiple = true)]
 pub struct ProfileSpec {
-    /// Specify profile to use by name.
+    /// Specify the profile to use by name.
     #[arg(short = 'P', long, env = "SCARB_PROFILE")]
     pub profile: Option<SmolStr>,
     /// Use release profile.
