@@ -110,7 +110,7 @@ fn patch_scarbs_with_path() {
         .sorted()
         .collect_vec();
     let expected = vec![
-        "core 2.11.2 (std)".to_string(),
+        "core [..] (std)".to_string(),
         "first 1.0.0 (path+file:[..]first[..]Scarb.toml)".to_string(),
         "foo 2.0.0 (path+file:[..]patch[..]Scarb.toml)".to_string(),
         "second 1.0.0 (path+file:[..]second[..]Scarb.toml)".to_string(),
@@ -172,7 +172,7 @@ fn patch_scarbs_with_git() {
         .sorted()
         .collect_vec();
     let expected = vec![
-        "core 2.11.2 (std)".to_string(),
+        "core [..] (std)".to_string(),
         "first 1.0.0 (path+file:[..]first[..]Scarb.toml)".to_string(),
         "foo 2.0.0 (git+file:[..])".to_string(),
         "second 1.0.0 (path+file:[..]second[..]Scarb.toml)".to_string(),
@@ -231,7 +231,7 @@ fn patch_scarbs_with_path_by_full_url() {
         .sorted()
         .collect_vec();
     let expected = vec![
-        "core 2.11.2 (std)".to_string(),
+        "core [..] (std)".to_string(),
         "first 1.0.0 (path+file:[..]first[..]Scarb.toml)".to_string(),
         "foo 2.0.0 (path+file:[..]patch[..]Scarb.toml)".to_string(),
         "second 1.0.0 (path+file:[..]second[..]Scarb.toml)".to_string(),
@@ -298,7 +298,7 @@ fn patch_not_existing_registry_with_path() {
         .sorted()
         .collect_vec();
     let expected = vec![
-        "core 2.11.2 (std)".to_string(),
+        "core [..] (std)".to_string(),
         "first 1.0.0 (path+file:[..]first[..]Scarb.toml)".to_string(),
         "foo 2.0.0 (path+file:[..]patch[..]Scarb.toml)".to_string(),
         "second 1.0.0 (path+file:[..]second[..]Scarb.toml)".to_string(),
@@ -363,7 +363,7 @@ fn patch_git_with_path() {
         .sorted()
         .collect_vec();
     let expected = vec![
-        "core 2.11.2 (std)".to_string(),
+        "core [..] (std)".to_string(),
         "first 1.0.0 (path+file:[..]first[..]Scarb.toml)".to_string(),
         "foo 2.0.0 (path+file:[..]patch[..]Scarb.toml)".to_string(),
         "second 1.0.0 (path+file:[..]second[..]Scarb.toml)".to_string(),
@@ -444,7 +444,7 @@ fn patch_git_with_registry() {
         .sorted()
         .collect_vec();
     let expected = vec![
-        "core 2.11.2 (std)".to_string(),
+        "core [..] (std)".to_string(),
         "first 1.0.0 (path+file:[..]first[..]Scarb.toml)".to_string(),
         "foo 2.0.0 (registry+file:[..])".to_string(),
         "second 1.0.0 (path+file:[..]second[..]Scarb.toml)".to_string(),
@@ -519,7 +519,7 @@ fn warn_unused_patch() {
         .sorted()
         .collect_vec();
     let expected = vec![
-        "core 2.11.2 (std)".to_string(),
+        "core [..] (std)".to_string(),
         "first 1.0.0 (path+file:[..]first[..]Scarb.toml)".to_string(),
         "foo 2.0.0 (git+file:[..])".to_string(),
         "second 1.0.0 (path+file:[..]second[..]Scarb.toml)".to_string(),
@@ -628,7 +628,7 @@ fn patch_registry_with_registry() {
         .collect_vec();
     let expected = vec![
         "bar 2.0.0 (registry+file:[..])".to_string(),
-        "core 2.11.2 (std)".to_string(),
+        "core [..] (std)".to_string(),
         "foo 0.1.0 (path+[..]Scarb.toml)".to_string(),
     ];
     for (expected, real) in zip(&expected, packages) {

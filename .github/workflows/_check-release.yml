@@ -22,7 +22,7 @@ on:
 
 env:
   # TODO(#1915): Use stable toolchain once stwo is stable.
-  RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-01-02"
+  RUST_NIGHTLY_TOOLCHAIN: "nightly-2025-02-13"
 
 jobs:
   test:
