@@ -16,7 +16,7 @@ use create_output_dir::create_output_dir;
 use indoc::formatdoc;
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
 use scarb_ui::Ui;
-use scarb_ui::args::{PackagesFilter, WithManifestPath};
+use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};
 use scarb_ui::components::Status;
 use std::env;
 use std::fs;
@@ -28,7 +28,10 @@ pub(crate) mod output;
 const MAX_ITERATION_COUNT: usize = 10000;
 
 pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
-    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
+    let metadata = MetadataCommand::new()
+        .envs(args.execution.features.clone().to_env_vars())
+        .inherit_stderr()
+        .exec()?;
     let package = args.packages_filter.match_one(&metadata)?;
     execute(&metadata, &package, &args.execution, &ui)
 }
@@ -53,6 +56,7 @@ pub fn execute(
             .arg("build")
             .env("SCARB_PACKAGES_FILTER", filter.to_env())
             .env("SCARB_UI_VERBOSITY", ui.verbosity().to_string())
+            .envs(args.features.clone().to_env_vars())
             .run()?;
     }
 

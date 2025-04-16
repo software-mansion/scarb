@@ -5,7 +5,7 @@ use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
 use scarb_execute::args::ExecutionArgs;
 use scarb_metadata::MetadataCommand;
-use scarb_ui::args::{PackagesFilter, VerbositySpec};
+use scarb_ui::args::{PackagesFilter, ToEnvVars, VerbositySpec};
 use scarb_ui::components::Status;
 use scarb_ui::{OutputFormat, Ui};
 use std::env;
@@ -98,7 +98,10 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
 
     let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
 
-    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
+    let metadata = MetadataCommand::new()
+        .envs(args.execute_args.features.clone().to_env_vars())
+        .inherit_stderr()
+        .exec()?;
     let package = args.packages_filter.match_one(&metadata)?;
 
     let execution_id = match args.execution_id {
