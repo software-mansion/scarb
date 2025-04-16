@@ -73,6 +73,7 @@ impl Compiler for ExecutableCompiler {
                 compiler_config.diagnostics_reporter,
                 ExecutableConfig {
                     allow_syscalls: props.allow_syscalls,
+                    ..ExecutableConfig::default()
                 },
             )?)
         };
