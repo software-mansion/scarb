@@ -13,40 +13,48 @@ fn can_use_quote() {
     CairoPluginProjectBuilder::default()
         .add_primitive_token_dep()
         .lib_rs(indoc! {r##"
-        use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, quote};
-        #[inline_macro]
-        pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
+            use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro, quote};
+            #[inline_macro]
+            pub fn some(_token_stream: TokenStream) -> ProcMacroResult {
                 let tokens = quote! {
                     5
                 };
                 ProcMacroResult::new(tokens)
-        }
+            }
         "##})
         .build(&t);
     let project = temp.child("hello");
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
+            #[executable]
             fn main() -> felt252 { some!() }
         "#})
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
+        .arg("--print-program-output")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .stdout_matches(indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
         [..] Compiling some v1.0.0 [..]
         [..] Compiling hello v1.0.0 [..]
         [..] Finished `dev` profile [..]
-        [..] Running hello
-        Run completed successfully, returning [5]
+        [..]Executing hello
+        Program output:
+        5
+        Saving output to: target/execute/hello/execution1
         "#})
         .success();
 }
@@ -73,8 +81,15 @@ fn can_use_quote_with_token_tree() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
+            #[executable]
             fn main() -> felt252 {
               some!()
             }
@@ -82,19 +97,20 @@ fn can_use_quote_with_token_tree() {
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
+        .arg("--print-program-output")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .stdout_matches(indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
         [..] Compiling some v1.0.0 [..]
         [..] Compiling hello v1.0.0 [..]
         [..] Finished `dev` profile [..]
-        [..] Running hello
-        Run completed successfully, returning [5]
+        [..]Executing hello
+        Program output:
+        5
+        Saving output to: target/execute/hello/execution1
         "#})
         .success();
 }
@@ -121,8 +137,15 @@ fn can_use_quote_with_token_stream() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+        "#})
         .dep("some", &t)
         .lib_cairo(indoc! {r#"
+            #[executable]
             fn main() -> felt252 {
               some!()
             }
@@ -130,19 +153,20 @@ fn can_use_quote_with_token_stream() {
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
+        .arg("--print-program-output")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .stdout_matches(indoc! {r#"
-            warn: `scarb cairo-run` will be deprecated soon
-            help: use `scarb execute` instead
                Compiling some v1.0.0 ([..]Scarb.toml)
                Compiling hello v1.0.0 ([..]Scarb.toml)
                 Finished `dev` profile target(s) in [..]
-                 Running hello
-            Run completed successfully, returning [5]
+            [..]Executing hello
+            Program output:
+            5
+            Saving output to: target/execute/hello/execution1
         "#})
         .success();
 }
