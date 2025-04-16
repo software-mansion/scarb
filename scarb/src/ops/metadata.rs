@@ -352,7 +352,9 @@ where
                                     .id(dependency.component_id().clone().to_metadata_component_id())
                                     .build().
                                     unwrap()
-                            ).collect()
+                            )
+                            .sorted_by_key(|d| d.id.clone())
+                            .collect()
                     )
                 )
                 .build()
