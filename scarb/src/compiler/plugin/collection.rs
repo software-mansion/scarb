@@ -8,6 +8,7 @@ use smol_str::SmolStr;
 use std::vec::IntoIter;
 
 use super::proc_macro::{DeclaredProcMacroInstances, ProcMacroHostPlugin, ProcMacroInstance};
+use crate::compiler::plugin::CairoPlugin;
 use crate::core::PackageId;
 use crate::{
     compiler::{CairoCompilationUnit, CompilationUnitComponentId, CompilationUnitDependency},
@@ -36,9 +37,14 @@ impl PluginsForComponents {
 
         for (component_id, suite) in plugins.iter_mut() {
             if let Some(proc_macro) = proc_macros.get(component_id) {
-                suite.add(proc_macro.build_plugin_suite());
+                suite.add_proc_macro(proc_macro.build_plugin_suite());
             }
         }
+
+        let plugins = plugins
+            .into_iter()
+            .map(|(id, suite)| (id, suite.assemble()))
+            .collect();
 
         Ok(Self {
             plugins,
@@ -117,11 +123,11 @@ impl WorkspaceProcMacros {
 fn collect_builtin_plugins(
     workspace: &Workspace<'_>,
     unit: &CairoCompilationUnit,
-) -> Result<HashMap<CompilationUnitComponentId, PluginSuite>> {
+) -> Result<HashMap<CompilationUnitComponentId, PluginSuiteAssembler>> {
     let mut plugin_suites = HashMap::new();
 
     for component in unit.components.iter() {
-        let mut component_suite = get_default_plugin_suite();
+        let mut component_suite = PluginSuiteAssembler::default();
 
         for dependency in component.dependencies.iter() {
             if !matches!(dependency, CompilationUnitDependency::Plugin(_)) {
@@ -140,15 +146,55 @@ fn collect_builtin_plugins(
 
             let package_id = plugin.package.id;
             let plugin = workspace.config().cairo_plugins().fetch(package_id)?;
-            let instance = plugin.instantiate()?;
-            let suite = instance.plugin_suite();
-            component_suite.add(suite);
+            component_suite.add_builtin(plugin)?;
         }
 
         plugin_suites.insert(component.id.clone(), component_suite);
     }
 
     Ok(plugin_suites)
+}
+
+struct PluginSuiteAssembler {
+    base: PluginSuite,
+    builtin: PluginSuite,
+    proc_macro: PluginSuite,
+    post_proc_macros: PluginSuite,
+}
+
+impl Default for PluginSuiteAssembler {
+    fn default() -> Self {
+        Self {
+            base: get_default_plugin_suite(),
+            builtin: Default::default(),
+            proc_macro: Default::default(),
+            post_proc_macros: Default::default(),
+        }
+    }
+}
+
+impl PluginSuiteAssembler {
+    pub fn add_builtin(&mut self, plugin: &dyn CairoPlugin) -> Result<()> {
+        let post_proc_macros = plugin.post_proc_macros();
+        let instance = plugin.instantiate()?;
+        let suite = instance.plugin_suite();
+        if post_proc_macros {
+            self.post_proc_macros.add(suite);
+        } else {
+            self.builtin.add(suite);
+        }
+        Ok(())
+    }
+    pub fn add_proc_macro(&mut self, suite: PluginSuite) {
+        self.proc_macro.add(suite);
+    }
+    pub fn assemble(self) -> PluginSuite {
+        let mut suite = self.base;
+        suite.add(self.builtin);
+        suite.add(self.proc_macro);
+        suite.add(self.post_proc_macros);
+        suite
+    }
 }
 
 /// Collects [`ProcMacroInstances`]s for each component of the [`CairoCompilationUnit`],

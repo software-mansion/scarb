@@ -273,30 +273,36 @@ fn can_define_multiple_macros() {
         .dep_starknet()
         .dep("some", &t)
         .dep("other", &w)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             #[hello]
             #[beautiful]
             #[world]
+            #[executable]
             fn main() -> felt252 { 12 + 56 + 90 }
         "#})
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            warn: `scarb cairo-run` will be deprecated soon
-            help: use `scarb execute` instead
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            [..]Running hello
-            Run completed successfully, returning [121]
+            [..]Executing hello
+            Saving output to: target/execute/hello/execution1
         "#});
 }
 
