@@ -1,5 +1,5 @@
 
-Type aliases
+[Type aliases](./hello_world-type_aliases.md)
  ---
 | | |
 |:---|:---|

@@ -1,20 +1,19 @@
 # Summary
 
----
-- [Modules](./modules.md)
-  - [hello_world](./hello_world.md)
+- [hello_world](./hello_world.md)
+  - [Modules](./hello_world-modules.md)
     - [sub_module](./hello_world-sub_module.md)
----
-- [Free functions](./free_functions.md)
-  - [main](./hello_world-main.md)
-  - [unique_function_name](./hello_world-unique_function_name.md)
-  - [duplicated_function_name](./hello_world-duplicated_function_name.md)
-  - [sub_module::duplicated_function_name](./hello_world-sub_module-duplicated_function_name.md)
----
-- [Enums](./enums.md)
-  - [DuplicatedEnumName](./hello_world-DuplicatedEnumName.md)
-  - [sub_module::DuplicatedEnumName](./hello_world-sub_module-DuplicatedEnumName.md)
----
-- [Traits](./traits.md)
-  - [DuplicatedTraitName](./hello_world-DuplicatedTraitName.md)
-  - [sub_module::DuplicatedTraitName](./hello_world-sub_module-DuplicatedTraitName.md)
+      - [Free functions](./hello_world-sub_module-free_functions.md)
+          - [duplicated_function_name](./hello_world-sub_module-duplicated_function_name.md)
+      - [Enums](./hello_world-sub_module-enums.md)
+          - [DuplicatedEnumName](./hello_world-sub_module-DuplicatedEnumName.md)
+      - [Traits](./hello_world-sub_module-traits.md)
+          - [DuplicatedTraitName](./hello_world-sub_module-DuplicatedTraitName.md)
+  - [Free functions](./hello_world-free_functions.md)
+      - [main](./hello_world-main.md)
+      - [unique_function_name](./hello_world-unique_function_name.md)
+      - [duplicated_function_name](./hello_world-duplicated_function_name.md)
+  - [Enums](./hello_world-enums.md)
+      - [DuplicatedEnumName](./hello_world-DuplicatedEnumName.md)
+  - [Traits](./hello_world-traits.md)
+      - [DuplicatedTraitName](./hello_world-DuplicatedTraitName.md)

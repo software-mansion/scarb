@@ -1,33 +1,26 @@
 # Summary
 
----
-- [Modules](./modules.md)
-  - [hello_world](./hello_world.md)
+- [hello_world](./hello_world.md)
+  - [Modules](./hello_world-modules.md)
     - [tests](./hello_world-tests.md)
----
-- [Constants](./constants.md)
-  - [FOO](./hello_world-FOO.md)
----
-- [Free functions](./free_functions.md)
-  - [main](./hello_world-main.md)
-  - [test](./hello_world-test.md)
-  - [fib](./hello_world-fib.md)
-  - [it_works](./hello_world-tests-it_works.md)
----
-- [Structs](./structs.md)
-  - [Circle](./hello_world-Circle.md)
----
-- [Enums](./enums.md)
-  - [Color](./hello_world-Color.md)
----
-- [Type aliases](./type_aliases.md)
-  - [Pair](./hello_world-Pair.md)
----
-- [Traits](./traits.md)
-  - [Shape](./hello_world-Shape.md)
----
-- [Impls](./impls.md)
-  - [CircleShape](./hello_world-CircleShape.md)
-  - [CircleDrop](./hello_world-CircleDrop.md)
-  - [CircleSerde](./hello_world-CircleSerde.md)
-  - [CirclePartialEq](./hello_world-CirclePartialEq.md)
+      - [Free functions](./hello_world-tests-free_functions.md)
+          - [it_works](./hello_world-tests-it_works.md)
+  - [Constants](./hello_world-constants.md)
+      - [FOO](./hello_world-FOO.md)
+  - [Free functions](./hello_world-free_functions.md)
+      - [main](./hello_world-main.md)
+      - [test](./hello_world-test.md)
+      - [fib](./hello_world-fib.md)
+  - [Structs](./hello_world-structs.md)
+      - [Circle](./hello_world-Circle.md)
+  - [Enums](./hello_world-enums.md)
+      - [Color](./hello_world-Color.md)
+  - [Type aliases](./hello_world-type_aliases.md)
+      - [Pair](./hello_world-Pair.md)
+  - [Traits](./hello_world-traits.md)
+      - [Shape](./hello_world-Shape.md)
+  - [Impls](./hello_world-impls.md)
+      - [CircleShape](./hello_world-CircleShape.md)
+      - [CircleDrop](./hello_world-CircleDrop.md)
+      - [CircleSerde](./hello_world-CircleSerde.md)
+      - [CirclePartialEq](./hello_world-CirclePartialEq.md)

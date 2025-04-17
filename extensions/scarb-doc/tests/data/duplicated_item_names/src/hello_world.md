@@ -3,13 +3,13 @@
 Fully qualified path: [hello_world](./hello_world.md)
 
 
-Modules
+[Modules](./hello_world-modules.md)
  ---
 | | |
 |:---|:---|
 | [sub_module](./hello_world-sub_module.md) | [...](./hello_world-sub_module.md) |
 
-Free functions
+[Free functions](./hello_world-free_functions.md)
  ---
 | | |
 |:---|:---|
@@ -17,13 +17,13 @@ Free functions
 | [unique_function_name](./hello_world-unique_function_name.md) | [...](./hello_world-unique_function_name.md) |
 | [duplicated_function_name](./hello_world-duplicated_function_name.md) | [...](./hello_world-duplicated_function_name.md) |
 
-Enums
+[Enums](./hello_world-enums.md)
  ---
 | | |
 |:---|:---|
 | [DuplicatedEnumName](./hello_world-DuplicatedEnumName.md) | [...](./hello_world-DuplicatedEnumName.md) |
 
-Traits
+[Traits](./hello_world-traits.md)
  ---
 | | |
 |:---|:---|

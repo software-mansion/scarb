@@ -1,5 +1,5 @@
 
-Enums
+[Enums](./hello_world-enums.md)
  ---
 | | |
 |:---|:---|

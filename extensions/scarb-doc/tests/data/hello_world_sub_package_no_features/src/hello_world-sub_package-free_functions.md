@@ -1,5 +1,5 @@
 
-Free functions
+[Free functions](./hello_world_sub_package-free_functions.md)
  ---
 | | |
 |:---|:---|

@@ -1,5 +1,5 @@
 
-Traits
+[Traits](./hello_world-traits.md)
  ---
 | | |
 |:---|:---|

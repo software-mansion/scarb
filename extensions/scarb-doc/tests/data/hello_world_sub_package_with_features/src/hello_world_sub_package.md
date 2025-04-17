@@ -5,7 +5,7 @@ Sub-package code (with feature)
 Fully qualified path: [hello_world_sub_package](./hello_world_sub_package.md)
 
 
-Free functions
+[Free functions](./hello_world_sub_package-free_functions.md)
  ---
 | | |
 |:---|:---|
