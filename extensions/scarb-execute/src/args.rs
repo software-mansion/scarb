@@ -4,7 +4,7 @@ use cairo_lang_utils::bigint::BigUintAsHex;
 use camino::Utf8PathBuf;
 use clap::{Parser, ValueEnum, arg};
 use num_bigint::BigInt;
-use scarb_ui::args::{PackagesFilter, VerbositySpec};
+use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use std::fs;
 
 /// Compiles a Cairo project and runs a function marked `#[executable]`.
@@ -29,6 +29,10 @@ pub struct ExecutionArgs {
     /// Do not rebuild the package.
     #[arg(long, default_value_t = false)]
     pub no_build: bool,
+
+    /// Specifies features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
 
     #[command(flatten)]
     pub build_target_args: BuildTargetSpecifier,

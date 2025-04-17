@@ -434,6 +434,40 @@ fn maintains_parent_verbosity() {
         .stdout_eq("");
 }
 
+#[test]
+fn can_use_features() {
+    let t = TempDir::new().unwrap();
+    executable_project_builder()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            [cairo]
+            enable-gas = false
+            [features]
+            x = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn f() -> felt252 { 21 }
+
+            #[executable]
+            fn main() -> felt252 { f() }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--features=x")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+        [..]Finished `dev` profile target(s) in [..]
+        [..]Executing hello
+        Saving output to: target/execute/hello/execution1
+        "#});
+}
+
 fn output_assert(output: OutputAssert, expected: &str) {
     #[cfg(windows)]
     output.stdout_matches(format!(
