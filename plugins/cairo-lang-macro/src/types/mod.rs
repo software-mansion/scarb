@@ -147,6 +147,11 @@ impl Diagnostic {
 
     /// Creates new diagnostic with the given span, severity level, and message.
     pub fn spanned(span: TextSpan, level: Severity, message: impl ToString) -> Self {
+        let span = if span.start > span.end {
+            TextSpan::new(span.end, span.start)
+        } else {
+            span
+        };
         Self {
             message: message.to_string(),
             severity: level,
