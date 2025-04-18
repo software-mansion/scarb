@@ -1,4 +1,3 @@
-use anyhow::{Result, anyhow};
 use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_filesystem::span::{TextOffset, TextWidth};
 use cairo_lang_macro::{Diagnostic, Severity, TextSpan};
@@ -46,8 +45,8 @@ pub fn into_cairo_diagnostics(
         .into_iter()
         .map(|diag| {
             let (node_ptr, relative_span) = match diag.span {
-                Some(span) => match find_encompassing_node(&root_syntax_node, db, &span) {
-                    Ok(node) => {
+                Some(span) => {
+                    if let Some(node) = find_encompassing_node(&root_syntax_node, db, &span) {
                         let offset = node.offset(db).as_u32();
                         let relative_span = cairo_lang_filesystem::span::TextSpan {
                             start: TextOffset::default()
@@ -58,8 +57,9 @@ pub fn into_cairo_diagnostics(
                                 .sub_width(TextWidth::new_for_testing(offset)),
                         };
                         (node.stable_ptr(db), Some(relative_span))
+                    } else {
+                        (stable_ptr, None)
                     }
-                    Err(_) => (stable_ptr, None),
                 },
                 None => (stable_ptr, None),
             };
@@ -93,11 +93,12 @@ fn get_root_ptr(db: &dyn SyntaxGroup, stable_ptr: SyntaxStablePtrId) -> SyntaxSt
 }
 
 /// Finds the most specific node that fully encompasses the given text span.
+/// Returns `None` if unable to find such node.
 pub fn find_encompassing_node(
     root_syntax_node: &SyntaxNode,
     db: &dyn SyntaxGroup,
     span: &TextSpan,
-) -> Result<SyntaxNode> {
+) -> Option<SyntaxNode> {
     let start_offset = TextOffset::default().add_width(TextWidth::new_for_testing(span.start));
     let end_offset = TextOffset::default().add_width(TextWidth::new_for_testing(span.end));
 
@@ -106,8 +107,8 @@ pub fn find_encompassing_node(
         if let Some(parent) = current_node.parent(db) {
             current_node = parent;
         } else {
-            return Err(anyhow!("No encompassing node found"));
+            return None;
         }
     }
-    Ok(current_node)
+   Some(current_node)
 }
