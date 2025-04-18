@@ -114,12 +114,10 @@ fn compute_relative_span(
     absolute_span: &TextSpan,
 ) -> cairo_lang_filesystem::span::TextSpan {
     let offset = node.offset(db).as_u32();
+    let relative_start = absolute_span.start.saturating_sub(offset);
+    let relative_end = absolute_span.end.saturating_sub(offset);
     cairo_lang_filesystem::span::TextSpan {
-        start: TextOffset::default()
-            .add_width(TextWidth::new_for_testing(absolute_span.start))
-            .sub_width(TextWidth::new_for_testing(offset)),
-        end: TextOffset::default()
-            .add_width(TextWidth::new_for_testing(absolute_span.end))
-            .sub_width(TextWidth::new_for_testing(offset)),
+        start: TextOffset::default().add_width(TextWidth::new_for_testing(relative_start)),
+        end: TextOffset::default().add_width(TextWidth::new_for_testing(relative_end)),
     }
 }
