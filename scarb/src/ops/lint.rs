@@ -35,6 +35,7 @@ pub struct LintOptions {
     pub ignore_cairo_version: bool,
     pub features: FeaturesOpts,
     pub deny_warnings: bool,
+    pub load_prebuilt_macros: bool,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]

@@ -61,6 +61,7 @@ pub struct CompileOpts {
     pub include_target_names: Vec<SmolStr>,
     pub features: FeaturesOpts,
     pub ignore_cairo_version: bool,
+    pub load_prebuilt_macros: bool,
 }
 
 impl CompileOpts {
@@ -70,6 +71,7 @@ impl CompileOpts {
         test: bool,
         target_names: Vec<String>,
         target_kinds: Vec<String>,
+        load_prebuilt_macros: bool,
     ) -> Result<Self> {
         let (include_targets, exclude_targets): (Vec<TargetKind>, Vec<TargetKind>) = if test {
             (vec![TargetKind::TEST.clone()], Vec::new())
@@ -93,6 +95,7 @@ impl CompileOpts {
                 .collect_vec(),
             features: features.try_into()?,
             ignore_cairo_version,
+            load_prebuilt_macros,
         })
     }
 }
@@ -132,7 +135,7 @@ where
         ws,
         CompilationUnitsOpts {
             ignore_cairo_version: opts.ignore_cairo_version,
-            load_prebuilt_macros: true,
+            load_prebuilt_macros: opts.load_prebuilt_macros,
         },
     )?
     .into_iter()

@@ -27,6 +27,7 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
             check_metadata: true,
             features: features_opts,
             ignore_cairo_version: args.ignore_cairo_version,
+            load_prebuilt_macros: !args.shared_args.no_prebuilt_proc_macros,
         },
     };
 
