@@ -1419,3 +1419,47 @@ fn can_emit_diagnostic_with_inversed_span() {
             error: could not compile `hello` due to previous error
         "#});
 }
+
+#[test]
+fn can_emit_diagnostic_with_out_of_bounds_span() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic, TextSpan};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let diag = Diagnostic::span_warning(TextSpan::new(0, 1000000), "Hello world!");
+            ProcMacroResult::new(token_stream).with_diagnostics(diag.into())
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            warn: Plugin diagnostic: Hello world!
+             --> [..]lib.cairo:1:1
+            #[some]
+            ^^^^^^^
+
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+}
