@@ -92,7 +92,7 @@ impl Config {
             offline: b.offline,
             compilers,
             cairo_plugins: compiler_plugins,
-            proc_macro_repository: ProcMacroRepository::default(),
+            proc_macro_repository: ProcMacroRepository::new(b.load_proc_macros),
             custom_source_patches: b.custom_source_patches,
             tokio_runtime: OnceCell::new(),
             tokio_handle,
@@ -314,6 +314,7 @@ pub struct ConfigBuilder {
     custom_source_patches: Option<Vec<ManifestDependency>>,
     tokio_handle: Option<Handle>,
     profile: Option<Profile>,
+    load_proc_macros: bool,
 }
 
 impl ConfigBuilder {
@@ -333,6 +334,7 @@ impl ConfigBuilder {
             custom_source_patches: None,
             tokio_handle: None,
             profile: None,
+            load_proc_macros: true,
         }
     }
 
@@ -414,6 +416,11 @@ impl ConfigBuilder {
 
     pub fn profile(mut self, profile: Profile) -> Self {
         self.profile = Some(profile);
+        self
+    }
+
+    pub fn load_proc_macros(mut self, load_proc_macros: bool) -> Self {
+        self.load_proc_macros = load_proc_macros;
         self
     }
 }

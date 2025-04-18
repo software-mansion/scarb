@@ -34,6 +34,7 @@ pub struct ExpandOpts {
     pub target_name: Option<SmolStr>,
     pub ugly: bool,
     pub emit: Option<ExpandEmitTarget>,
+    pub load_prebuilt_macros: bool,
 }
 
 pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<()> {
@@ -47,7 +48,7 @@ pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<
         ws,
         CompilationUnitsOpts {
             ignore_cairo_version: opts.ignore_cairo_version,
-            load_prebuilt_macros: true,
+            load_prebuilt_macros: opts.load_prebuilt_macros,
         },
     )?;
 

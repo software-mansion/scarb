@@ -96,6 +96,10 @@ pub struct ScarbArgs {
     )]
     pub target_dir: Option<Utf8PathBuf>,
 
+    /// Do not load any procedural macros.
+    #[arg(long, env = "SCARB_NO_PROC_MACROS")]
+    pub no_proc_macros: bool,
+
     /// Specify the profile to use.
     #[command(flatten)]
     pub profile_spec: ProfileSpec,
@@ -179,7 +183,7 @@ pub enum Command {
     ")]
     Package(PackageArgs),
     /// Start the proc macro server.
-    ProcMacroServer,
+    ProcMacroServer(ProcMacroServerArgs),
     /// Upload a package to the registry.
     #[command(after_help = "\
         This command will create distributable, compressed `.tar.zst` archive containing source \
@@ -241,6 +245,10 @@ pub struct BuildArgs {
     /// Do not error on `cairo-version` mismatch.
     #[arg(long, env = "SCARB_IGNORE_CAIRO_VERSION")]
     pub ignore_cairo_version: bool,
+
+    /// Do not load any prebuilt procedural macros.
+    #[arg(long, env = "SCARB_NO_PREBUILT_PROC_MACROS")]
+    pub no_prebuilt_proc_macros: bool,
 }
 
 /// Arguments accepted by the `expand` command.
@@ -272,6 +280,10 @@ pub struct ExpandArgs {
     /// Emit the expanded file to stdout
     #[arg(short, long)]
     pub emit: Option<EmitTarget>,
+
+    /// Do not load any prebuilt procedural macros.
+    #[arg(long, env = "SCARB_NO_PREBUILT_PROC_MACROS")]
+    pub no_prebuilt_proc_macros: bool,
 }
 
 /// Arguments accepted by the `run` command.
@@ -483,6 +495,10 @@ pub struct PackageSharedArgs {
     /// Do not verify the contents by building them.
     #[arg(long, env = "SCARB_PACKAGE_NO_VERIFY")]
     pub no_verify: bool,
+
+    /// Do not load any prebuilt procedural macros.
+    #[arg(long, env = "SCARB_NO_PREBUILT_PROC_MACROS")]
+    pub no_prebuilt_proc_macros: bool,
 }
 
 /// Arguments accepted by the `package` command.
@@ -509,6 +525,14 @@ pub struct PackageArgs {
     /// Do not error on `cairo-version` mismatch.
     #[arg(long, env = "SCARB_IGNORE_CAIRO_VERSION")]
     pub ignore_cairo_version: bool,
+}
+
+/// Arguments accepted by the `proc-macro-server` command.
+#[derive(Parser, Clone, Debug)]
+pub struct ProcMacroServerArgs {
+    /// Do not load any prebuilt procedural macros.
+    #[arg(long, env = "SCARB_NO_PREBUILT_PROC_MACROS")]
+    pub no_prebuilt_proc_macros: bool,
 }
 
 /// Arguments accepted by the `publish` command.
@@ -558,6 +582,10 @@ pub struct LintArgs {
     /// Should fail on any warning.
     #[arg(short, long, default_value_t = false, env = "SCARB_LINT_DENY_WARNINGS")]
     pub deny_warnings: bool,
+
+    /// Do not load any prebuilt procedural macros.
+    #[arg(long, env = "SCARB_NO_PREBUILT_PROC_MACROS")]
+    pub no_prebuilt_proc_macros: bool,
 }
 
 /// Git reference specification arguments.
