@@ -37,14 +37,14 @@ impl CallSiteLocation {
 pub fn into_cairo_diagnostics(
     db: &dyn SyntaxGroup,
     diagnostics: Vec<Diagnostic>,
-    stable_ptr: SyntaxStablePtrId,
+    call_site_stable_ptr: SyntaxStablePtrId,
 ) -> Vec<PluginDiagnostic> {
-    let root_stable_ptr = get_root_ptr(db, stable_ptr);
+    let root_stable_ptr = get_root_ptr(db, call_site_stable_ptr);
     let root_syntax_node = root_stable_ptr.lookup(db);
     diagnostics
         .into_iter()
         .map(|diag| {
-            let (node_ptr, relative_span) = match diag.span {
+            let (node_stable_ptr, relative_span) = match diag.span {
                 Some(span) => {
                     if let Some(node) = find_encompassing_node(&root_syntax_node, db, &span) {
                         let offset = node.offset(db).as_u32();
@@ -58,14 +58,14 @@ pub fn into_cairo_diagnostics(
                         };
                         (node.stable_ptr(db), Some(relative_span))
                     } else {
-                        (stable_ptr, None)
+                        (call_site_stable_ptr, None)
                     }
                 },
-                None => (stable_ptr, None),
+                None => (call_site_stable_ptr, None),
             };
 
             PluginDiagnostic {
-                stable_ptr: node_ptr,
+                stable_ptr: node_stable_ptr,
                 relative_span,
                 message: diag.message,
                 severity: match diag.severity {
