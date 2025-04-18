@@ -157,7 +157,7 @@ impl ProcMacroHostPlugin {
                     },
                 })
             },
-            diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),
+            diagnostics: into_cairo_diagnostics(db, all_diagnostics, stable_ptr),
             // Note that we don't remove the original item here, unlike for attributes.
             // We do not add the original code to the generated file either.
             remove_original_item: false,
