@@ -138,6 +138,42 @@ fn compile_with_prebuilt_plugins_only_one_allows() {
         "#});
 }
 
+#[test]
+fn compile_valid_prebuilt_disallowed_by_flag() {
+    let t = TempDir::new().unwrap();
+    proc_macro_example(&t.child("dep"));
+    let builder = |name: &str| {
+        ProjectBuilder::start()
+            .name(name)
+            .lib_cairo(indoc! {r#"
+                fn main() -> u32 {
+                    let x = some!(42);
+                    x
+                }
+            "#})
+            .dep("proc_macro_example", t.child("dep"))
+            .manifest_extra(indoc! {r#"
+                [tool.scarb]
+                allow-prebuilt-plugins = ["proc_macro_example"]
+            "#})
+    };
+    builder("a").build(&t.child("a"));
+    WorkspaceBuilder::start().add_member("a").build(&t);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--no-prebuilt-proc-macros")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling proc_macro_example v0.1.0 ([..])
+            [..]Compiling a v1.0.0 ([..]Scarb.toml)
+            [..] Finished `dev` profile target(s) in [..]
+        "#});
+}
+
 fn invalid_prebuilt_project(t: &ChildPath) {
     let name = "invalid_prebuilt_example";
     let version = "0.1.0";
