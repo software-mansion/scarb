@@ -44,24 +44,18 @@ pub fn into_cairo_diagnostics(
     diagnostics
         .into_iter()
         .map(|diag| {
-            let (node_stable_ptr, relative_span) = match diag.span {
-                Some(span) => {
-                    if let Some(node) = find_encompassing_node(&root_syntax_node, db, &span) {
-                        let offset = node.offset(db).as_u32();
-                        let relative_span = cairo_lang_filesystem::span::TextSpan {
-                            start: TextOffset::default()
-                                .add_width(TextWidth::new_for_testing(span.start))
-                                .sub_width(TextWidth::new_for_testing(offset)),
-                            end: TextOffset::default()
-                                .add_width(TextWidth::new_for_testing(span.end))
-                                .sub_width(TextWidth::new_for_testing(offset)),
-                        };
-                        (node.stable_ptr(db), Some(relative_span))
-                    } else {
-                        (call_site_stable_ptr, None)
-                    }
-                },
-                None => (call_site_stable_ptr, None),
+            // Resolve the best possible diagnostic location.
+            // If the diagnostic span is provided, find the encompassing node and compute the span relative to that node.
+            // Fall back to the call-site stable pointer, if diagnostic span is not provided or if the encompassing node cannot be found.
+            let (node_stable_ptr, relative_span) = if let Some(span) = diag.span {
+                if let Some(node) = find_encompassing_node(&root_syntax_node, db, &span) {
+                    let relative_span = compute_relative_span(&node, db, &span);
+                    (node.stable_ptr(db), Some(relative_span))
+                } else {
+                    (call_site_stable_ptr, None)
+                }
+            } else {
+                (call_site_stable_ptr, None)
             };
 
             PluginDiagnostic {
@@ -110,5 +104,22 @@ pub fn find_encompassing_node(
             return None;
         }
     }
-   Some(current_node)
+    Some(current_node)
+}
+
+/// Computes a span relative to `node` from an `absolute_span`.
+fn compute_relative_span(
+    node: &SyntaxNode,
+    db: &dyn SyntaxGroup,
+    absolute_span: &TextSpan,
+) -> cairo_lang_filesystem::span::TextSpan {
+    let offset = node.offset(db).as_u32();
+    cairo_lang_filesystem::span::TextSpan {
+        start: TextOffset::default()
+            .add_width(TextWidth::new_for_testing(absolute_span.start))
+            .sub_width(TextWidth::new_for_testing(offset)),
+        end: TextOffset::default()
+            .add_width(TextWidth::new_for_testing(absolute_span.end))
+            .sub_width(TextWidth::new_for_testing(offset)),
+    }
 }
