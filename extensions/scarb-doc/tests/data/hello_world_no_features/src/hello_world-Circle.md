@@ -15,7 +15,7 @@ struct Circle {
 
 Radius of the circle
 
-Fully qualified path: [hello_world](./hello_world.md)::[Circle](./hello_world-Circle.md)::[radius](./hello_world-Circle-radius.md)
+Fully qualified path: [hello_world](./hello_world.md)::[Circle](./hello_world-Circle.md)::[radius](./hello_world-Circle.md#radius)
 
 <pre><code class="language-cairo">radius: u32</code></pre>
 

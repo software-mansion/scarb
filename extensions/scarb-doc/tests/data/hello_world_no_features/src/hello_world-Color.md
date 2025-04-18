@@ -16,7 +16,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Col
 
 Red color
 
-Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Color.md)::[Red](./hello_world-Color-Red.md)
+Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Color.md)::[Red](./hello_world-Color.md#red)
 
 <pre><code class="language-cairo">Red</code></pre>
 
@@ -25,7 +25,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Col
 
 Green color
 
-Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Color.md)::[Green](./hello_world-Color-Green.md)
+Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Color.md)::[Green](./hello_world-Color.md#green)
 
 <pre><code class="language-cairo">Green</code></pre>
 
@@ -34,7 +34,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Col
 
 Blue color
 
-Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Color.md)::[Blue](./hello_world-Color-Blue.md)
+Fully qualified path: [hello_world](./hello_world.md)::[Color](./hello_world-Color.md)::[Blue](./hello_world-Color.md#blue)
 
 <pre><code class="language-cairo">Blue</code></pre>
 

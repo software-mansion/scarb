@@ -8,7 +8,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[CirclePartialEq](./hello
 
 ### eq
 
-Fully qualified path: [hello_world](./hello_world.md)::[CirclePartialEq](./hello_world-CirclePartialEq.md)::[eq](./hello_world-CirclePartialEq-eq.md)
+Fully qualified path: [hello_world](./hello_world.md)::[CirclePartialEq](./hello_world-CirclePartialEq.md)::[eq](./hello_world-CirclePartialEq.md#eq)
 
 <pre><code class="language-cairo">fn eq(lhs: Circle, rhs: Circle) -&gt; bool</code></pre>
 

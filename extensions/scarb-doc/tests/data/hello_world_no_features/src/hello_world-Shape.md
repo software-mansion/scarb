@@ -12,7 +12,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Sha
 
 Constant for the shape type
 
-Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)::[SHAPE_CONST](./hello_world-Shape-SHAPE_CONST.md)
+Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)::[SHAPE_CONST](./hello_world-Shape.md#shape_const)
 
 <pre><code class="language-cairo">const SHAPE_CONST: felt252;</code></pre>
 
@@ -23,7 +23,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Sha
 
 Calculate the area of the shape
 
-Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)::[area](./hello_world-Shape-area.md)
+Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)::[area](./hello_world-Shape.md#area)
 
 <pre><code class="language-cairo">fn area&lt;T, T&gt;(self: T) -&gt; u32</code></pre>
 
@@ -34,7 +34,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Sha
 
 Type alias for a pair of shapes
 
-Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)::[ShapePair](./hello_world-Shape-ShapePair.md)
+Fully qualified path: [hello_world](./hello_world.md)::[Shape](./hello_world-Shape.md)::[ShapePair](./hello_world-Shape.md#shapepair)
 
 <pre><code class="language-cairo">type ShapePair;</code></pre>
 
