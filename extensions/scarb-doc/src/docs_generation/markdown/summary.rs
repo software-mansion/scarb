@@ -22,7 +22,7 @@ pub fn generate_summary_file_content(crate_: &Crate) -> Result<(String, Vec<(Str
         crate_.root_module.filename(),
         crate_
             .root_module
-            .generate_markdown(&context, BASE_HEADER_LEVEL)?,
+            .generate_markdown(&context, BASE_HEADER_LEVEL, None)?,
     )];
     let (sub_markdown, module_item_summaries) =
         &generate_modules_summary_content(&crate_.root_module, 0, &context)?;
@@ -358,7 +358,7 @@ fn generate_top_level_docs_contents(
         .iter()
         .map(|item| {
             let filename = item.filename();
-            item.generate_markdown(context, BASE_HEADER_LEVEL)
+            item.generate_markdown(context, BASE_HEADER_LEVEL, None)
                 .map(|markdown| (filename, markdown))
         })
         .collect()
