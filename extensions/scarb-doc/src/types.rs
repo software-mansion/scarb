@@ -1,7 +1,5 @@
+use crate::location_links::{DocLocationLink, format_signature};
 use anyhow::Result;
-
-use crate::db::ScarbDocDatabase;
-use crate::location_links::DocLocationLink;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
     ConstantId, EnumId, ExternFunctionId, ExternTypeId, FreeFunctionId, GenericTypeId, ImplAliasId,
@@ -29,6 +27,8 @@ use cairo_lang_syntax::node::{
 };
 use cairo_lang_utils::LookupIntern;
 use serde::Serialize;
+
+use crate::db::ScarbDocDatabase;
 use serde::Serializer;
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -166,7 +166,7 @@ impl Crate {
 }
 
 /// Merges subitems of virtual_module into documented_module so it contains all unique data from both modules.
-/// Note that documented_module might have been created by [`Module::new_virtual`].   
+/// Note that documented_module might have been created by [`Module::new_virtual`].
 fn merge_modules(documented_module: &mut Module, virtual_module: Module) -> &mut Module {
     for constant in virtual_module.constants {
         documented_module.insert_constant(constant);
@@ -745,6 +745,24 @@ impl ItemData {
         }
     }
 
+    /// Crates new ItemData instance. Applies extra formatting to item signature.
+    /// Use only for types whose signatures are valid cairo code.   
+    pub fn new_with_signature_formatting(
+        db: &ScarbDocDatabase,
+        id: impl TopLevelLanguageElementId,
+        documentable_item_id: DocumentableItemId,
+    ) -> Self {
+        let mut item_data = Self::new(db, id, documentable_item_id);
+
+        let (signature_formatted, doc_location_links) = format_signature(
+            item_data.signature.take(),
+            item_data.doc_location_links.clone(),
+        );
+        item_data.signature = signature_formatted;
+        item_data.doc_location_links = doc_location_links;
+        item_data
+    }
+
     pub fn new_without_signature(
         db: &ScarbDocDatabase,
         id: impl TopLevelLanguageElementId,
@@ -810,7 +828,7 @@ impl Constant {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::Constant(id)).into(),
@@ -835,7 +853,7 @@ impl FreeFunction {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::FreeFunction(id)).into(),
@@ -860,7 +878,7 @@ impl Struct {
     pub fn new(db: &ScarbDocDatabase, id: StructId, include_private_items: bool) -> Maybe<Self> {
         let members = db.struct_members(id)?;
 
-        let item_data = ItemData::new(
+        let item_data = ItemData::new_with_signature_formatting(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Struct(id)).into(),
@@ -932,7 +950,7 @@ pub struct Enum {
 impl Enum {
     pub fn new(db: &ScarbDocDatabase, id: EnumId) -> Maybe<Self> {
         let variants = db.enum_variants(id)?;
-        let item_data = ItemData::new(
+        let item_data = ItemData::new_with_signature_formatting(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Enum(id)).into(),
@@ -998,7 +1016,7 @@ impl TypeAlias {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::TypeAlias(id)).into(),
@@ -1023,7 +1041,7 @@ impl ImplAlias {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ImplAlias(id)).into(),
@@ -1048,7 +1066,7 @@ pub struct Trait {
 
 impl Trait {
     pub fn new(db: &ScarbDocDatabase, id: TraitId) -> Maybe<Self> {
-        let item_data = ItemData::new(
+        let item_data = ItemData::new_with_signature_formatting(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Trait(id)).into(),
@@ -1115,7 +1133,7 @@ impl TraitConstant {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Constant(id)).into(),
@@ -1141,7 +1159,7 @@ impl TraitType {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Type(id)).into(),
@@ -1167,7 +1185,7 @@ impl TraitFunction {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::TraitItem(TraitItemId::Function(id)).into(),
@@ -1192,7 +1210,7 @@ pub struct Impl {
 
 impl Impl {
     pub fn new(db: &ScarbDocDatabase, id: ImplDefId) -> Maybe<Self> {
-        let item_data = ItemData::new(
+        let item_data = ItemData::new_with_signature_formatting(
             db,
             id,
             LookupItemId::ModuleItem(ModuleItemId::Impl(id)).into(),
@@ -1259,7 +1277,11 @@ impl ImplType {
         Self {
             id,
             node,
-            item_data: ItemData::new(db, id, LookupItemId::ImplItem(ImplItemId::Type(id)).into()),
+            item_data: ItemData::new_with_signature_formatting(
+                db,
+                id,
+                LookupItemId::ImplItem(ImplItemId::Type(id)).into(),
+            ),
         }
     }
 }
@@ -1281,7 +1303,7 @@ impl ImplConstant {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::ImplItem(ImplItemId::Constant(id)).into(),
@@ -1307,7 +1329,7 @@ impl ImplFunction {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::ImplItem(ImplItemId::Function(id)).into(),
@@ -1332,7 +1354,7 @@ impl ExternType {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternType(id)).into(),
@@ -1357,7 +1379,7 @@ impl ExternFunction {
         Self {
             id,
             node,
-            item_data: ItemData::new(
+            item_data: ItemData::new_with_signature_formatting(
                 db,
                 id,
                 LookupItemId::ModuleItem(ModuleItemId::ExternFunction(id)).into(),

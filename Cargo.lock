@@ -6425,6 +6425,7 @@ dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-doc",
  "cairo-lang-filesystem",
+ "cairo-lang-formatter",
  "cairo-lang-lowering",
  "cairo-lang-parser",
  "cairo-lang-semantic",
