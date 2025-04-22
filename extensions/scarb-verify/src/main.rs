@@ -55,12 +55,10 @@ fn main() -> ExitCode {
 }
 
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
-    let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
-
-    let metadata = MetadataCommand::new().inherit_stderr().exec()?;
-    let package = args.packages_filter.match_one(&metadata)?;
-
     let proof_path = if let Some(execution_id) = args.execution_id {
+        let metadata = MetadataCommand::new().inherit_stderr().exec()?;
+        let package = args.packages_filter.match_one(&metadata)?;
+        let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
         ui.print(Status::new("Verifying", &package.name));
         resolve_proof_path_from_package(&scarb_target_dir, &package, execution_id)?
     } else {
