@@ -10,7 +10,7 @@ use scarb::core::Config;
 use scarb::process::is_executable;
 use scarb_ui::Message;
 
-use crate::args::ScarbArgs;
+use scarb::args::ScarbArgs;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Serialize)]
 enum CommandInfo {

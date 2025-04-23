@@ -11,11 +11,11 @@ use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use smol_str::SmolStr;
 use url::Url;
 
-use scarb::compiler::Profile;
-use scarb::core::PackageName;
-use scarb::manifest_editor::DepId;
-use scarb::manifest_editor::SectionArgs;
-use scarb::version;
+use crate::compiler::Profile;
+use crate::core::PackageName;
+use crate::manifest_editor::DepId;
+use crate::manifest_editor::SectionArgs;
+use crate::{ops, version};
 use scarb_ui::OutputFormat;
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 
@@ -113,6 +113,7 @@ pub struct ScarbArgs {
     pub command: Command,
 }
 
+#[doc(hidden)]
 impl ScarbArgs {
     /// Construct [`OutputFormat`] value from these arguments.
     pub fn output_format(&self) -> OutputFormat {
@@ -214,14 +215,25 @@ pub enum Command {
     External(Vec<OsString>),
 }
 
+#[doc(hidden)]
 #[derive(ValueEnum, Clone, Debug)]
 pub enum EmitTarget {
     Stdout,
 }
 
+#[doc(hidden)]
+impl From<EmitTarget> for ops::FmtEmitTarget {
+    fn from(target: EmitTarget) -> Self {
+        match target {
+            EmitTarget::Stdout => ops::FmtEmitTarget::Stdout,
+        }
+    }
+}
+
 /// Arguments accepted by the `build` command.
 #[derive(Parser, Clone, Debug)]
 pub struct BuildArgs {
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -254,6 +266,7 @@ pub struct BuildArgs {
 /// Arguments accepted by the `expand` command.
 #[derive(Parser, Clone, Debug)]
 pub struct ExpandArgs {
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -289,6 +302,7 @@ pub struct ScriptsRunnerArgs {
     /// The name of the script from the manifest file to execute.
     pub script: Option<SmolStr>,
 
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -301,9 +315,12 @@ pub struct ScriptsRunnerArgs {
     pub args: Vec<OsString>,
 }
 
+/// Specifies the test runner to use for running tests.
 #[derive(ValueEnum, Clone, Debug)]
 pub enum TestRunner {
+    /// Uses the `Starknet Foundry` framework for running tests.
     StarknetFoundry,
+    /// Uses the native Cairo Test framework for running tests.
     CairoTest,
 }
 
@@ -326,7 +343,7 @@ pub struct InitArgs {
 /// Arguments accepted by the `metadata` command.
 #[derive(Parser, Clone, Debug)]
 pub struct MetadataArgs {
-    // Format version.
+    /// Format version.
     #[arg(long, value_name = "VERSION")]
     pub format_version: u64,
     /// Output information only about the workspace members and don't fetch dependencies.
@@ -345,7 +362,9 @@ pub struct MetadataArgs {
 /// Arguments accepted by the `new` command.
 #[derive(Parser, Clone, Debug)]
 pub struct NewArgs {
+    /// Path to the new package directory.
     pub path: Utf8PathBuf,
+    /// Initialization options.
     #[command(flatten)]
     pub init: InitArgs,
 }
@@ -385,6 +404,7 @@ pub struct AddArgs {
     #[arg(long)]
     pub dry_run: bool,
 
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -444,6 +464,7 @@ pub struct RemoveArgs {
     #[arg(long)]
     pub dry_run: bool,
 
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -469,6 +490,7 @@ impl SectionArgs for RemoveSectionArgs {
 /// Arguments accepted by the `test` command.
 #[derive(Parser, Clone, Debug)]
 pub struct TestArgs {
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -504,9 +526,11 @@ pub struct PackageArgs {
     #[arg(long)]
     pub no_metadata: bool,
 
+    /// Shared packaging arguments.
     #[clap(flatten)]
     pub shared_args: PackageSharedArgs,
 
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -526,9 +550,11 @@ pub struct PublishArgs {
     #[arg(long, value_name = "URL")]
     pub index: Option<Url>,
 
+    /// Shared packaging arguments.
     #[clap(flatten)]
     pub shared_args: PackageSharedArgs,
 
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -541,9 +567,10 @@ pub struct PublishArgs {
     pub ignore_cairo_version: bool,
 }
 
+/// Arguments accepted by the `lint` command.
 #[derive(Parser, Clone, Debug)]
 pub struct LintArgs {
-    /// Name of the package.
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -606,6 +633,7 @@ pub struct ProfileSpec {
     pub dev: bool,
 }
 
+#[doc(hidden)]
 impl ProfileSpec {
     pub fn determine(&self) -> Result<Profile> {
         Ok(match &self {

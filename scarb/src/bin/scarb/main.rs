@@ -7,7 +7,7 @@ use clap::Parser;
 use tracing::debug;
 use tracing_subscriber::EnvFilter;
 
-use args::ScarbArgs;
+use scarb::args::ScarbArgs;
 use scarb::core::Config;
 use scarb::core::errors::ScriptExecutionError;
 use scarb::ops;
@@ -15,7 +15,6 @@ use scarb_ui::Ui;
 
 use crate::errors::ErrorWithExitCode;
 
-mod args;
 mod commands;
 mod errors;
 mod interactive;
