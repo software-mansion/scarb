@@ -6405,6 +6405,7 @@ dependencies = [
  "cairo-lang-test-runner",
  "camino",
  "clap",
+ "clap_complete",
  "indoc",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
@@ -6412,6 +6413,16 @@ dependencies = [
  "serde_json",
  "snapbox",
  "test-for-each-example",
+]
+
+[[package]]
+name = "scarb-completions"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "clap_complete",
+ "scarb",
+ "scarb-execute",
 ]
 
 [[package]]
