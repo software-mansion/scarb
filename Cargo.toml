@@ -71,6 +71,7 @@ cairo-vm = "2.0.1"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
+clap_complete = "4"
 console = "0.15"
 convert_case = "0.8.0"
 darling = "0.20"
