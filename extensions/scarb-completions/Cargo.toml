@@ -1,0 +1,10 @@
+[package]
+name = "scarb-completions"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { workspace = true, features = ["derive"] }
+clap_complete.workspace = true
+scarb = { path = "../../scarb" }
+scarb-execute = { path = "../scarb-execute" }
