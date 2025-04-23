@@ -18,6 +18,7 @@ fn can_doc_corelib() {
     // Doc corelib.
     Scarb::quick_snapbox()
         .arg("doc")
+        .arg("--build")
         .current_dir(core)
         .assert()
         .success();
