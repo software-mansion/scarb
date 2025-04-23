@@ -4,7 +4,7 @@ use scarb::core::Config;
 use scarb::manifest_editor::{AddDependency, DepId, DepType, EditManifestOptions, Op};
 use scarb::{manifest_editor, ops};
 
-use crate::args::{AddArgs, AddSectionArgs, AddSourceArgs};
+use scarb::args::{AddArgs, AddSectionArgs, AddSourceArgs};
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: AddArgs, config: &mut Config) -> Result<()> {
