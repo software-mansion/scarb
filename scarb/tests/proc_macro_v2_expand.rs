@@ -698,7 +698,7 @@ fn can_be_expanded() {
 }
 
 #[test]
-fn can_expand_trait_inner_func_attrr() {
+fn can_expand_trait_inner_func_attr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
@@ -880,6 +880,80 @@ fn can_expand_impl_inner_func_attrr() {
             running 1 test
             test hello::tests::test_flow ... ok (gas usage est.: [..])
             test result: ok. 1 passed; 0 failed; 0 ignored; 0 filtered out;
+        "#});
+}
+
+#[test]
+fn code_mappings_preserve_attribute_error_on_inner_trait_locations() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{attribute_macro, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
+
+            #[attribute_macro]
+            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+                ProcMacroResult::new(TokenStream::new(
+                    token_stream
+                    .into_iter()
+                    .map(|TokenTree::Ident(token)| {
+                        if token.content.to_string() == "12" {
+                            TokenTree::Ident(Token::new("34", TextSpan::call_site()))
+                        } else {
+                            dbg!(&token);
+                            TokenTree::Ident(token)
+                        }
+                    })
+                    .collect()
+                ))
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                #[some]
+                fn hello(self: @T) -> u32 {
+                    let x = 12;
+                    x = 2;
+                    x
+                }
+            }
+
+            #[derive(Drop)]
+            struct SomeStruct {}
+
+            impl SomeImpl of Hello<SomeStruct> {}
+
+            fn main() -> u32 {
+                let a = SomeStruct {};
+                a.hello()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Cannot assign to an immutable variable.
+             --> [..]lib.cairo:5:9
+                    x = 2;
+                    ^^^^^^
+            note: this error originates in the attribute macro: `some`
+            
+            error: could not compile `hello` due to previous error
         "#});
 }
 
