@@ -8,7 +8,7 @@ use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::Visibility;
 use cairo_lang_semantic::resolve::ResolvedGenericItem;
 use cairo_lang_syntax::node::helpers::QueryAttrs;
-use cairo_lang_utils::{LookupIntern, Upcast};
+use cairo_lang_utils::LookupIntern;
 use itertools::chain;
 use serde::Serialize;
 
@@ -54,7 +54,7 @@ impl Crate {
 
 fn is_public(db: &ScarbDocDatabase, element_id: &dyn TopLevelLanguageElementId) -> Maybe<bool> {
     let containing_module_id = element_id.parent_module(db);
-    match db.module_item_info_by_name(containing_module_id, element_id.name(db.upcast()))? {
+    match db.module_item_info_by_name(containing_module_id, element_id.name(db))? {
         Some(module_item_info) => Ok(matches!(module_item_info.visibility, Visibility::Public)),
         None => Ok(false),
     }
@@ -183,7 +183,7 @@ impl Module {
         };
 
         let should_include_item = |id: &dyn TopLevelLanguageElementId| {
-            let syntax_node = id.stable_location(db.upcast()).syntax_node(db.upcast());
+            let syntax_node = id.stable_location(db).syntax_node(db);
 
             Ok((include_private_items || is_public(db, id)?)
                 && !is_doc_hidden_attr(db, &syntax_node))
@@ -264,7 +264,7 @@ impl Module {
                 .impl_def_concrete_trait(**impl_def_id)
                 .ok()
                 .map(|concrete_trait_id| {
-                    let args = concrete_trait_id.generic_args(db.upcast());
+                    let args = concrete_trait_id.generic_args(db);
                     if args.is_empty() {
                         return false;
                     }
@@ -615,10 +615,7 @@ impl Struct {
             .iter()
             .filter_map(|(_, semantic_member)| {
                 let visible = matches!(semantic_member.visibility, Visibility::Public);
-                let syntax_node = &semantic_member
-                    .id
-                    .stable_location(db.upcast())
-                    .syntax_node(db.upcast());
+                let syntax_node = &semantic_member.id.stable_location(db).syntax_node(db);
                 if (include_private_items || visible) && !is_doc_hidden_attr(db, syntax_node) {
                     Some(Ok(Member::new(db, semantic_member.id)))
                 } else {

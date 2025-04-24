@@ -2,9 +2,7 @@ use cairo_lang_compiler::project::{ProjectConfig, update_crate_roots_from_projec
 use cairo_lang_defs::db::{DefsDatabase, DefsGroup, init_defs_group, try_ext_as_virtual_impl};
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
-use cairo_lang_filesystem::db::{
-    AsFilesGroupMut, ExternalFiles, FilesDatabase, FilesGroup, init_files_group,
-};
+use cairo_lang_filesystem::db::{ExternalFiles, FilesDatabase, FilesGroup, init_files_group};
 use cairo_lang_filesystem::ids::VirtualFile;
 use cairo_lang_lowering::db::{LoweringDatabase, LoweringGroup};
 use cairo_lang_parser::db::{ParserDatabase, ParserGroup};
@@ -83,12 +81,6 @@ impl salsa::ParallelDatabase for ScarbDocDatabase {
         salsa::Snapshot::new(ScarbDocDatabase {
             storage: self.storage.snapshot(),
         })
-    }
-}
-
-impl AsFilesGroupMut for ScarbDocDatabase {
-    fn as_files_group_mut(&mut self) -> &mut (dyn FilesGroup + 'static) {
-        self
     }
 }
 

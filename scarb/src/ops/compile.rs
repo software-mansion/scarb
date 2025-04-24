@@ -1,7 +1,6 @@
 use anyhow::{Context, Error, Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
-use cairo_lang_utils::Upcast;
 use indoc::formatdoc;
 use itertools::Itertools;
 use scarb_ui::HumanDuration;
@@ -242,7 +241,7 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 
             for plugin in proc_macros {
                 plugin
-                    .post_process(db.upcast())
+                    .post_process(&db)
                     .context("procedural macro post processing callback failed")?;
             }
 

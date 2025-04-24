@@ -4,7 +4,7 @@ use crate::core::{Utf8PathWorkspaceExt, Workspace};
 use anyhow::{Context, bail, ensure};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::ids::NamedLanguageElementId;
-use cairo_lang_filesystem::db::{AsFilesGroupMut, FilesGroup};
+use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::flag::Flag;
 use cairo_lang_filesystem::ids::FlagId;
 use cairo_lang_starknet::contract::ContractDeclaration;
@@ -12,7 +12,6 @@ use cairo_lang_starknet_classes::allowed_libfuncs::{
     AllowedLibfuncsError, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST, ListSelector,
 };
 use cairo_lang_starknet_classes::contract_class::ContractClass;
-use cairo_lang_utils::Upcast;
 use indoc::{formatdoc, writedoc};
 use std::fmt::Write;
 use std::iter::zip;
@@ -21,7 +20,7 @@ use tracing::debug;
 const AUTO_WITHDRAW_GAS_FLAG: &str = "add_withdraw_gas";
 
 pub fn ensure_gas_enabled(db: &mut RootDatabase) -> anyhow::Result<()> {
-    let flag = FlagId::new(db.as_files_group_mut(), AUTO_WITHDRAW_GAS_FLAG);
+    let flag = FlagId::new(db, AUTO_WITHDRAW_GAS_FLAG);
     let flag = db.get_flag(flag);
     ensure!(
         flag.map(|f| matches!(*f, Flag::AddWithdrawGas(true)))
@@ -64,7 +63,7 @@ pub fn check_allowed_libfuncs(
             }) => {
                 found_disallowed = true;
 
-                let contract_name = decl.submodule_id.name(db.upcast());
+                let contract_name = decl.submodule_id.name(db);
                 let mut diagnostic = formatdoc! {r#"
                     libfunc `{invalid_libfunc}` is not allowed in the libfuncs list `{allowed_libfuncs_list_name}`
                      --> contract: {contract_name}
@@ -104,7 +103,7 @@ pub fn check_allowed_libfuncs(
                 return Err(e).with_context(|| {
                     format!(
                         "failed to check allowed libfuncs for contract: {contract_name}",
-                        contract_name = decl.submodule_id.name(db.upcast())
+                        contract_name = decl.submodule_id.name(db)
                     )
                 });
             }
