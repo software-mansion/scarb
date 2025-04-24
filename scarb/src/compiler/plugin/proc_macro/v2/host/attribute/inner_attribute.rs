@@ -2,13 +2,12 @@ use crate::compiler::plugin::proc_macro::v2::host::attribute::AttrExpansionFound
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::EmittedAuxData;
 use crate::compiler::plugin::proc_macro::v2::host::conversion::into_cairo_diagnostics;
 use crate::compiler::plugin::proc_macro::v2::{
-    ProcMacroAuxData, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
+    ProcMacroAuxData, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder, generate_code_mappings,
 };
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, PluginDiagnostic, PluginGeneratedFile, PluginResult,
 };
-use cairo_lang_filesystem::ids::CodeMapping;
 use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
 use cairo_lang_syntax::node::ast::{ImplItem, MaybeImplBody, MaybeTraitBody};
 use cairo_lang_syntax::node::db::SyntaxGroup;
@@ -72,10 +71,14 @@ impl<'a> InnerAttrExpansionContext<'a> {
 
     pub fn into_result(
         self,
-        expanded: String,
-        code_mappings: Vec<CodeMapping>,
+        item_builder: PatchBuilder<'_>,
         attr_names: Vec<SmolStr>,
     ) -> PluginResult {
+        let (expanded, mut code_mappings) = item_builder.build();
+        // PatchBuilder::build() adds additional mapping at the end,
+        // which wraps the whole outputted code.
+        // We remove it, so we can properly translate locations spanning multiple token spans.
+        code_mappings.pop();
         let msg = if attr_names.len() == 1 {
             "the attribute macro"
         } else {
@@ -164,12 +167,12 @@ impl ProcMacroHostPlugin {
                         if all_none {
                             InnerAttrExpansionResult::None
                         } else {
-                            let (code, mappings) = item_builder.build();
-                            InnerAttrExpansionResult::Some(context.into_result(
-                                code,
-                                mappings,
-                                used_attr_names.into_iter().collect(),
-                            ))
+                            InnerAttrExpansionResult::Some(
+                                context.into_result(
+                                    item_builder,
+                                    used_attr_names.into_iter().collect(),
+                                ),
+                            )
                         }
                     }
                 }
@@ -226,12 +229,12 @@ impl ProcMacroHostPlugin {
                         if all_none {
                             InnerAttrExpansionResult::None
                         } else {
-                            let (code, mappings) = item_builder.build();
-                            InnerAttrExpansionResult::Some(context.into_result(
-                                code,
-                                mappings,
-                                used_attr_names.into_iter().collect(),
-                            ))
+                            InnerAttrExpansionResult::Some(
+                                context.into_result(
+                                    item_builder,
+                                    used_attr_names.into_iter().collect(),
+                                ),
+                            )
                         }
                     }
                 }
@@ -271,11 +274,13 @@ impl ProcMacroHostPlugin {
             .expect("procedural macro using v1 api used in a context expecting v2 api")
             .generate_code(
                 input.id.expansion.expansion_name.clone(),
-                input.call_site.span,
+                input.call_site.span.clone(),
                 input.args,
                 token_stream.clone(),
             );
 
+        let code_mappings =
+            generate_code_mappings(&result.token_stream, input.call_site.span.clone());
         let expanded = context.register_result(
             db,
             token_stream.to_string(),
@@ -283,11 +288,7 @@ impl ProcMacroHostPlugin {
             result,
             input.call_site.stable_ptr,
         );
-
-        item_builder.add_modified(RewriteNode::Mapped {
-            origin: func.as_syntax_node().span(db),
-            node: Box::new(RewriteNode::Text(expanded.to_string())),
-        });
+        item_builder.add_modified(RewriteNode::TextAndMapping(expanded, code_mappings));
 
         all_none
     }
