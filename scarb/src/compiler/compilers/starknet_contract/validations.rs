@@ -12,7 +12,6 @@ use cairo_lang_starknet_classes::allowed_libfuncs::{
     AllowedLibfuncsError, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST, ListSelector,
 };
 use cairo_lang_starknet_classes::contract_class::ContractClass;
-use cairo_lang_utils::Upcast;
 use indoc::{formatdoc, writedoc};
 use std::fmt::Write;
 use std::iter::zip;
@@ -64,7 +63,7 @@ pub fn check_allowed_libfuncs(
             }) => {
                 found_disallowed = true;
 
-                let contract_name = decl.submodule_id.name(db.upcast());
+                let contract_name = decl.submodule_id.name(db);
                 let mut diagnostic = formatdoc! {r#"
                     libfunc `{invalid_libfunc}` is not allowed in the libfuncs list `{allowed_libfuncs_list_name}`
                      --> contract: {contract_name}
@@ -104,7 +103,7 @@ pub fn check_allowed_libfuncs(
                 return Err(e).with_context(|| {
                     format!(
                         "failed to check allowed libfuncs for contract: {contract_name}",
-                        contract_name = decl.submodule_id.name(db.upcast())
+                        contract_name = decl.submodule_id.name(db)
                     )
                 });
             }
