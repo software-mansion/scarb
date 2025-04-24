@@ -4,7 +4,7 @@ use crate::core::{Utf8PathWorkspaceExt, Workspace};
 use anyhow::{Context, bail, ensure};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::ids::NamedLanguageElementId;
-use cairo_lang_filesystem::db::{AsFilesGroupMut, FilesGroup};
+use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::flag::Flag;
 use cairo_lang_filesystem::ids::FlagId;
 use cairo_lang_starknet::contract::ContractDeclaration;
@@ -21,7 +21,7 @@ use tracing::debug;
 const AUTO_WITHDRAW_GAS_FLAG: &str = "add_withdraw_gas";
 
 pub fn ensure_gas_enabled(db: &mut RootDatabase) -> anyhow::Result<()> {
-    let flag = FlagId::new(db.as_files_group_mut(), AUTO_WITHDRAW_GAS_FLAG);
+    let flag = FlagId::new(db, AUTO_WITHDRAW_GAS_FLAG);
     let flag = db.get_flag(flag);
     ensure!(
         flag.map(|f| matches!(*f, Flag::AddWithdrawGas(true)))

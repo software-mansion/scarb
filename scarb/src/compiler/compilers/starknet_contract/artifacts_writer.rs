@@ -9,7 +9,6 @@ use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::abi::Contract;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet_classes::contract_class::{ContractClass, ContractEntryPoints};
-use cairo_lang_utils::UpcastMut;
 use cairo_lang_utils::bigint::BigUintAsHex;
 use indoc::formatdoc;
 use itertools::{Itertools, izip};
@@ -144,8 +143,8 @@ impl ArtifactsWriter {
             .unwrap_or_default();
 
         for (declaration, class, casm_class) in izip!(contracts, classes, casm_classes) {
-            let contract_name = declaration.submodule_id.name(db.upcast_mut());
-            let contract_path = declaration.module_id().full_path(db.upcast_mut());
+            let contract_name = declaration.submodule_id.name(db);
+            let contract_path = declaration.module_id().full_path(db);
 
             let contract_selector = ContractSelector(contract_path);
             let package_name = contract_selector.package();
@@ -157,7 +156,7 @@ impl ArtifactsWriter {
                 package_name,
                 &contract_name,
                 contract_selector.full_path().as_str(),
-                &declaration.module_id().full_path(db.upcast_mut()),
+                &declaration.module_id().full_path(db),
             );
 
             if self.sierra {

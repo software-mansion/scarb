@@ -7,7 +7,6 @@ use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
-use cairo_lang_utils::UpcastMut;
 use itertools::Itertools;
 use smol_str::ToSmolStr;
 use tracing::trace_span;
@@ -50,7 +49,7 @@ impl Compiler for TestCompiler {
 
         let contracts = if starknet {
             find_project_contracts(
-                db.upcast_mut(),
+                db,
                 ws.config().ui(),
                 &unit,
                 test_crate_ids.clone(),

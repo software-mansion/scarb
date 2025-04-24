@@ -14,7 +14,6 @@ use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_syntax::node::ast::OptionAliasClause;
-use cairo_lang_utils::UpcastMut;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
@@ -107,7 +106,7 @@ impl Compiler for StarknetContractCompiler {
         let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
 
         let contracts = find_project_contracts(
-            db.upcast_mut(),
+            db,
             ws.config().ui(),
             &unit,
             main_crate_ids.clone(),
@@ -128,7 +127,7 @@ impl Compiler for StarknetContractCompiler {
 
             zip(&contracts, &classes)
                 .map(|(decl, class)| -> Result<_> {
-                    let contract_name = decl.submodule_id.name(db.upcast_mut());
+                    let contract_name = decl.submodule_id.name(db);
                     let casm_class = CasmContractClass::from_contract_class(
                         class.clone(),
                         props.casm_add_pythonic_hints,
@@ -166,7 +165,7 @@ pub fn get_compiled_contracts(
 ) -> Result<CompiledContracts> {
     let contract_paths = contracts
         .iter()
-        .map(|decl| decl.module_id().full_path(db.upcast_mut()))
+        .map(|decl| decl.module_id().full_path(db))
         .collect::<Vec<_>>();
     trace!(contracts = ?contract_paths);
 
@@ -183,7 +182,7 @@ pub fn get_compiled_contracts(
 }
 
 pub fn find_project_contracts(
-    mut db: &dyn SemanticGroup,
+    db: &dyn SemanticGroup,
     ui: Ui,
     unit: &CairoCompilationUnit,
     main_crate_ids: Vec<CrateId>,
@@ -212,7 +211,7 @@ pub fn find_project_contracts(
                     .iter()
                     .find(|component| component.package.id.name.to_smol_str() == name)
                     .and_then(|component| component.id.to_discriminator());
-                db.upcast_mut().intern_crate(CrateLongId::Real {
+                db.intern_crate(CrateLongId::Real {
                     name,
                     discriminator,
                 })
