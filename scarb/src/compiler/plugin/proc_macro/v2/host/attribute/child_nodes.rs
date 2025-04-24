@@ -1,6 +1,6 @@
 use cairo_lang_syntax::node::ast::{
-    Attribute, FunctionWithBody, ItemEnum, ItemExternFunction, ItemExternType, ItemImpl,
-    ItemModule, ItemStruct, ItemTrait,
+    Attribute, FunctionWithBody, ItemConstant, ItemEnum, ItemExternFunction, ItemExternType,
+    ItemImpl, ItemImplAlias, ItemModule, ItemStruct, ItemTrait, ItemTypeAlias, ItemUse,
 };
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::{SyntaxNode, TypedSyntaxNode};
@@ -112,4 +112,41 @@ impl_child_nodes_without_attributes!(
         variants,
         rbrace
     ]
+);
+
+impl_item_with_attributes!(ItemConstant);
+impl_child_nodes_without_attributes!(
+    ItemConstant,
+    [
+        visibility,
+        const_kw,
+        name,
+        type_clause,
+        eq,
+        value,
+        semicolon
+    ]
+);
+
+impl_item_with_attributes!(ItemUse);
+impl_child_nodes_without_attributes!(ItemUse, [visibility, use_kw, use_path, semicolon]);
+
+impl_item_with_attributes!(ItemImplAlias);
+impl_child_nodes_without_attributes!(
+    ItemImplAlias,
+    [
+        visibility,
+        impl_kw,
+        name,
+        generic_params,
+        eq,
+        impl_path,
+        semicolon
+    ]
+);
+
+impl_item_with_attributes!(ItemTypeAlias);
+impl_child_nodes_without_attributes!(
+    ItemTypeAlias,
+    [visibility, type_kw, name, generic_params, eq, ty, semicolon]
 );
