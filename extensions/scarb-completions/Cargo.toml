@@ -6,5 +6,13 @@ edition = "2024"
 [dependencies]
 clap = { workspace = true, features = ["derive"] }
 clap_complete.workspace = true
+anyhow.workspace = true
 scarb = { path = "../../scarb" }
+scarb-ui = { path = "../../utils/scarb-ui" }
 scarb-execute = { path = "../scarb-execute" }
+scarb-prove = { path = "../scarb-prove" }
+scarb-verify = { path = "../scarb-verify" }
+scarb-cairo-run = { path = "../scarb-cairo-run" }
+scarb-cairo-test = { path = "../scarb-cairo-test" }
+scarb-doc = { path = "../scarb-doc" }
+scarb-mdbook = { path = "../scarb-mdbook" }

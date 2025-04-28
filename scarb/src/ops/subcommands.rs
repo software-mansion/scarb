@@ -102,8 +102,8 @@ pub fn execute_test_subcommand(
 fn find_external_subcommand(cmd: &str, path_dirs: &[PathBuf]) -> Result<Option<PathBuf>> {
     let command_exe = format!("{}{}{}", EXTERNAL_CMD_PREFIX, cmd, env::consts::EXE_SUFFIX);
 
-    let exe_path = get_app_exe_path(path_dirs)?;
-    let scarb_dir = exe_path
+    let scarb_exe = get_app_exe_path(path_dirs)?;
+    let scarb_dir = scarb_exe
         .parent()
         .expect("Scarb binary path should always have parent directory.");
     let path_dirs = path_dirs.iter().map(PathBuf::as_path);
@@ -155,7 +155,7 @@ pub fn list_external_subcommands(path_dirs: &[PathBuf]) -> Result<Vec<PathBuf>> 
                         let cmd = name
                             .trim_start_matches(EXTERNAL_CMD_PREFIX)
                             .trim_end_matches(env::consts::EXE_SUFFIX);
-                        if visited.insert(cmd.to_string()) {
+                        if !cmd.is_empty() && visited.insert(cmd.to_string()) {
                             results.push(path);
                         }
                     }
