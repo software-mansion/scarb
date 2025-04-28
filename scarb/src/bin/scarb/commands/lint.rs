@@ -20,6 +20,7 @@ fn do_lint(args: LintArgs, config: &Config) -> Result<()> {
     ops::lint(
         LintOptions {
             packages,
+            target_names: args.target_names,
             test: args.test,
             fix: args.fix,
             ignore_cairo_version: args.ignore_cairo_version,

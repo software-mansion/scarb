@@ -29,6 +29,7 @@ use super::{
 
 pub struct LintOptions {
     pub packages: Vec<Package>,
+    pub target_names: Vec<String>,
     pub test: bool,
     pub fix: bool,
     pub ignore_cairo_version: bool,
@@ -121,7 +122,22 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
             ))?]
         };
 
-        for compilation_unit in package_compilation_units {
+        let filtered_by_target_names_package_compilation_units = if opts.target_names.is_empty() {
+            package_compilation_units
+        } else {
+            package_compilation_units
+                .into_iter()
+                .filter(|compilation_unit| {
+                    compilation_unit
+                        .main_component()
+                        .targets
+                        .iter()
+                        .any(|t| opts.target_names.contains(&t.name.to_string()))
+                })
+                .collect::<Vec<_>>()
+        };
+
+        for compilation_unit in filtered_by_target_names_package_compilation_units {
             match compilation_unit {
                 CompilationUnit::ProcMacro(_) => {
                     continue;

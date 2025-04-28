@@ -518,3 +518,65 @@ fn test_missing_feature() {
             note: to use features, you need to define [features] section in Scarb.toml
         "#});
 }
+
+#[test]
+fn lint_selected_targets() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .lib_cairo(indoc! {r#"
+      fn main() {
+          let first = true;
+          if first == false {
+              println!("x is false");
+          }
+      }
+      "#})
+        .build(&t.child("first"));
+    ProjectBuilder::start()
+        .name("second")
+        .lib_cairo(indoc! {r#"
+      fn main() {
+          let second = true;
+          if second == false {
+              println!("x is false");
+          }
+      }
+      "#})
+        .build(&t.child("second"));
+
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .package(ProjectBuilder::start().name("main").lib_cairo(indoc! {r#"
+      fn main() {
+          let _main = true;
+          if _main == false {
+              println!("x is false");
+          }
+      }
+      "#}))
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("--workspace")
+        .arg("--target-names=first,second")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+           Linting first v1.0.0 ([..]/first/Scarb.toml)
+      warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+       --> [..]/lib.cairo:3:8
+          if first == false {
+             ^^^^^^^^^^^^^^
+
+           Linting second v1.0.0 ([..]/second/Scarb.toml)
+      warn: Plugin diagnostic: Unnecessary comparison with a boolean value. Use the variable directly.
+       --> [..]/lib.cairo:3:8
+          if second == false {
+             ^^^^^^^^^^^^^^^
+
+      "#});
+}
