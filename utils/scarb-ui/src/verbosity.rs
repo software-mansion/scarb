@@ -1,7 +1,7 @@
+use anyhow::Result;
+use clap::ValueEnum;
 use std::env;
 use std::fmt::Display;
-use anyhow::{Result, bail};
-use clap::ValueEnum;
 
 /// The requested verbosity of output.
 ///
@@ -57,9 +57,9 @@ impl Verbosity {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-    use clap::ValueEnum;
     use super::Verbosity;
+    use clap::ValueEnum;
+    use std::env;
 
     #[test]
     fn verbosity_ord() {
@@ -72,10 +72,22 @@ mod tests {
     #[test]
     fn verbosity_from_str() {
         use Verbosity::*;
-        assert_eq!(Verbosity::from_str(&Quiet.to_string(), true).unwrap(), Quiet);
-        assert_eq!(Verbosity::from_str(&NoWarnings.to_string(), true).unwrap(), NoWarnings);
-        assert_eq!(Verbosity::from_str(&Normal.to_string(), true).unwrap(), Normal);
-        assert_eq!(Verbosity::from_str(&Verbose.to_string(), true).unwrap(), Verbose);
+        assert_eq!(
+            Verbosity::from_str(&Quiet.to_string(), true).unwrap(),
+            Quiet
+        );
+        assert_eq!(
+            Verbosity::from_str(&NoWarnings.to_string(), true).unwrap(),
+            NoWarnings
+        );
+        assert_eq!(
+            Verbosity::from_str(&Normal.to_string(), true).unwrap(),
+            Normal
+        );
+        assert_eq!(
+            Verbosity::from_str(&Verbose.to_string(), true).unwrap(),
+            Verbose
+        );
     }
 
     #[test]
