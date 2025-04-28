@@ -6419,10 +6419,18 @@ dependencies = [
 name = "scarb-completions"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "clap",
  "clap_complete",
  "scarb",
+ "scarb-cairo-run",
+ "scarb-cairo-test",
+ "scarb-doc",
  "scarb-execute",
+ "scarb-mdbook",
+ "scarb-prove",
+ "scarb-ui",
+ "scarb-verify",
 ]
 
 [[package]]
