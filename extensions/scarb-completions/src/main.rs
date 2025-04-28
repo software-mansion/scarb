@@ -2,22 +2,22 @@ use anyhow::Result;
 use clap::Command;
 use clap::{CommandFactory, Parser};
 use clap_complete::{Shell as ClapShell, generate};
+use scarb::EXTERNAL_CMD_PREFIX;
 use scarb::args::ScarbArgs;
 use scarb::core::config::get_app_exe_path;
 use scarb::core::dirs::{get_project_dirs, resolve_path_dirs};
 use scarb::ops::list_external_subcommands;
-use scarb_ui::{OutputFormat, Ui, Verbosity};
-use std::{env, io};
-use std::path::PathBuf;
-use std::process::ExitCode;
-use scarb::EXTERNAL_CMD_PREFIX;
 use scarb_cairo_run::args as cairo_run_args;
 use scarb_cairo_test::args as cairo_test_args;
 use scarb_doc::args as doc_args;
 use scarb_execute::args as execute_args;
 use scarb_mdbook::args as mdbook_args;
 use scarb_prove::args as prove_args;
+use scarb_ui::{OutputFormat, Ui, Verbosity};
 use scarb_verify::args as verify_args;
+use std::path::PathBuf;
+use std::process::ExitCode;
+use std::{env, io};
 
 /// Shells supported for completions generation.
 #[derive(clap::ValueEnum, Clone, Debug)]
@@ -90,55 +90,29 @@ fn generate_completions(
             continue;
         };
 
-        // Provide completions only for the bundled subcommands
-        if path.parent() == Some(scarb_dir) {
+        // Generate completions only for the bundled subcommands
+        let subcommand = if path.parent() == Some(scarb_dir) {
             match name.as_str() {
-                "execute" => {
-                    let execute_cmd = execute_args::Args::command().name("execute");
-                    cmd = cmd.subcommand(execute_cmd);
-                }
-                "prove" => {
-                    let prove_cmd = prove_args::Args::command().name("prove");
-                    cmd = cmd.subcommand(prove_cmd);
-                }
-                "verify" => {
-                    let verify_cmd = verify_args::Args::command().name("verify");
-                    cmd = cmd.subcommand(verify_cmd);
-                }
-                "cairo-run" => {
-                    let cairo_run_cmd = cairo_run_args::Args::command().name("cairo-run");
-                    cmd = cmd.subcommand(cairo_run_cmd);
-                }
-                "cairo-test" => {
-                    let cairo_test_cmd = cairo_test_args::Args::command().name("cairo-test");
-                    cmd = cmd.subcommand(cairo_test_cmd);
-                }
-                "doc" => {
-                    let doc_cmd = doc_args::Args::command().name("doc");
-                    cmd = cmd.subcommand(doc_cmd);
-                }
-                "mdbook" => {
-                    let mdbook_cmd = mdbook_args::Args::command().name("mdbook");
-                    cmd = cmd.subcommand(mdbook_cmd);
-                }
                 "cairo-language-server" => {
-                    let ls_cmd =
-                        Command::new("cairo-language-server").about("Start Cairo Language Server");
-                    cmd = cmd.subcommand(ls_cmd);
+                    Command::new("cairo-language-server").about("Start Cairo Language Server")
                 }
-                _ => {
-                    let bundled_cmd = Command::new(&name)
-                        .name(&name)
-                        .about(format!("Bundled '{name}' extension"));
-                    cmd = cmd.subcommand(bundled_cmd);
-                }
+                "cairo-run" => cairo_run_args::Args::command().name("cairo-run"),
+                "cairo-test" => cairo_test_args::Args::command().name("cairo-test"),
+                "doc" => doc_args::Args::command().name("doc"),
+                "execute" => execute_args::Args::command().name("execute"),
+                "mdbook" => mdbook_args::Args::command().name("mdbook"),
+                "prove" => prove_args::Args::command().name("prove"),
+                "verify" => verify_args::Args::command().name("verify"),
+                _ => Command::new(&name)
+                    .name(&name)
+                    .about(format!("Bundled '{name}' extension")),
             }
         } else {
-            let external_cmd = Command::new(&name)
+            Command::new(&name)
                 .name(&name)
-                .about(format!("External '{name}' extension"));
-            cmd = cmd.subcommand(external_cmd);
-        }
+                .about(format!("External '{name}' extension"))
+        };
+        cmd = cmd.subcommand(subcommand);
     }
 
     let clap_shell: ClapShell = shell.into();
