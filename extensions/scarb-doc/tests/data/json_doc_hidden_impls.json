@@ -76,7 +76,20 @@
             }
           ],
           "extern_types": [],
-          "extern_functions": []
+          "extern_functions": [],
+          "pub_uses": {
+            "use_constants": [],
+            "use_free_functions": [],
+            "use_structs": [],
+            "use_enums": [],
+            "use_module_type_aliases": [],
+            "use_impl_aliases": [],
+            "use_traits": [],
+            "use_impl_defs": [],
+            "use_extern_types": [],
+            "use_extern_functions": [],
+            "use_submodules": []
+          }
         }
       },
       "metadata": {
