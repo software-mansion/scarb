@@ -318,9 +318,9 @@ pub struct ScriptsRunnerArgs {
 /// Specifies the test runner to use for running tests.
 #[derive(ValueEnum, Clone, Debug)]
 pub enum TestRunner {
-    /// Uses the `Starknet Foundry` framework for running tests.
+    /// Uses the `Starknet Foundry` test runner.
     StarknetFoundry,
-    /// Uses the native Cairo Test framework for running tests.
+    /// Uses the Cairo Test test runner.
     CairoTest,
 }
 
