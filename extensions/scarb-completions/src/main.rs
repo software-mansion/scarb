@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::Command;
+use clap::{Command, ValueEnum};
 use clap::{CommandFactory, Parser};
 use clap_complete::{Shell as ClapShell, generate};
 use scarb::EXTERNAL_CMD_PREFIX;
@@ -20,7 +20,7 @@ use std::process::ExitCode;
 use std::{env, io};
 
 /// Shells supported for completions generation.
-#[derive(clap::ValueEnum, Clone, Debug)]
+#[derive(ValueEnum, Clone, Debug)]
 pub enum Shell {
     Bash,
     Fish,
