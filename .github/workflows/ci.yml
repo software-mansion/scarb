@@ -33,7 +33,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@nextest
       - name: nextest archive
-        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude cairo-lang-macro
+        run: cargo nextest archive --workspace --all-features --cargo-profile ci --archive-file 'nextest-archive-${{ matrix.platform.os }}.tar.zst' --exclude scarb-prove --exclude scarb-verify --exclude scarb-completions --exclude cairo-lang-macro
       - uses: actions/upload-artifact@v4
         with:
           name: nextest-archive-${{ matrix.platform.os }}
@@ -107,7 +107,7 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - uses: Swatinem/rust-cache@v2
       - name: nextest archive
-        run: cargo nextest archive --all-features --cargo-profile ci --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --package scarb-prove --package scarb-verify
+        run: cargo nextest archive --all-features --cargo-profile ci --archive-file 'nextest-nightly-archive-${{ matrix.platform.os }}.tar.zst' --package scarb-prove --package scarb-verify --package scarb-completions
       - uses: actions/upload-artifact@v4
         with:
           name: nextest-nightly-archive-${{ matrix.platform.os }}
@@ -180,11 +180,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --check
       # TODO(#1915): Build all crates with stable toolchain once stwo is stable.
-      - run: cargo clippy --all-targets --all-features --workspace --exclude scarb-prove --exclude scarb-verify -- --no-deps
+      - run: cargo clippy --all-targets --all-features --workspace --exclude scarb-prove --exclude scarb-verify --exclude scarb-completions -- --no-deps
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTFLAGS: "-Dwarnings"
-      - run: cargo doc --all-features --no-deps --workspace --exclude scarb-prove --exclude scarb-verify
+      - run: cargo doc --all-features --no-deps --workspace --exclude scarb-prove --exclude scarb-verify --exclude scarb-completions
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTDOCFLAGS: "-Dwarnings"
@@ -199,11 +199,11 @@ jobs:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} clippy --all-targets --all-features -p scarb-prove -p scarb-verify -- --no-deps
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} clippy --all-targets --all-features -p scarb-prove -p scarb-verify -p scarb-completions -- --no-deps
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTFLAGS: "-Dwarnings"
-      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} doc --all-features --no-deps -p scarb-prove -p scarb-verify
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} doc --all-features --no-deps -p scarb-prove -p scarb-verify -p scarb-completions
         env:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTDOCFLAGS: "-Dwarnings"
