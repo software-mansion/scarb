@@ -6,8 +6,8 @@ use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevel
 use crate::location_links::DocLocationLink;
 use crate::types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
-    ImplFunction, ImplType, ItemData, Member, Module, Struct, Trait, TraitConstant, TraitFunction,
-    TraitType, TypeAlias, Variant,
+    ImplFunction, ImplType, ItemData, Member, Module, ModulePubUses, Struct, Trait, TraitConstant,
+    TraitFunction, TraitType, TypeAlias, Variant,
 };
 use anyhow::Result;
 use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};
@@ -15,6 +15,8 @@ use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::option::Option;
+
+const RE_EXPORTS_CHAPTER: &str = "Re-exports";
 
 pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     const ITEMS_SUMMARY_FILENAME: &'static str;
@@ -235,6 +237,84 @@ impl MarkdownDocItem for Impl {
     }
 }
 
+fn generate_pub_use_item_markdown(
+    module_pubuses: &ModulePubUses,
+    context: &MarkdownGenerationContext,
+) -> String {
+    let mut buff: String = String::new();
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_constants.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_free_functions.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_structs.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_enums.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_module_type_aliases.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_impl_aliases.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_traits.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_impl_defs.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_extern_types.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_extern_functions.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    buff += &generate_markdown_table_summary_for_reexported_subitems(
+        &module_pubuses.use_submodules.iter().collect_vec(),
+        context,
+    )
+    .unwrap_or("".to_string());
+
+    if !buff.is_empty() {
+        return format!("## {RE_EXPORTS_CHAPTER}\n{}", buff);
+    }
+    buff
+}
+
 impl MarkdownDocItem for Module {
     fn generate_markdown(
         &self,
@@ -299,6 +379,8 @@ impl MarkdownDocItem for Module {
             context,
             &self.markdown_formatted_path(),
         )?;
+
+        markdown += &generate_pub_use_item_markdown(&self.pub_uses, context);
 
         Ok(markdown)
     }
@@ -471,6 +553,33 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
         }
     }
 
+    Ok(markdown)
+}
+
+pub fn generate_markdown_table_summary_for_reexported_subitems<T: TopLevelMarkdownDocItem>(
+    subitems: &[&T],
+    context: &MarkdownGenerationContext,
+) -> Result<String> {
+    let mut markdown = String::new();
+    if !subitems.is_empty() {
+        writeln!(
+            &mut markdown,
+            "\n - ### {}\n\n| | |\n|:---|:---|",
+            T::HEADER,
+        )?;
+        let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
+        for (item, relative_path) in items_with_relative_path {
+            let item_doc = item.get_short_documentation(context);
+            writeln!(
+                &mut markdown,
+                "| {} | {}[...](./{}) |",
+                item.md_ref(relative_path),
+                item_doc,
+                item.filename(),
+            )?;
+        }
+        writeln!(&mut markdown, "\n<br>\n")?;
+    }
     Ok(markdown)
 }
 
