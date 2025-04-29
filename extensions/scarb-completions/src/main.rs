@@ -41,6 +41,7 @@ impl From<Shell> for ClapShell {
     }
 }
 
+/// Generate shell completions
 #[derive(Parser, Clone, Debug)]
 #[clap(version, about = "Generate shell completions for scarb")]
 struct Args {
@@ -96,25 +97,29 @@ fn generate_completions(
         let subcommand = if path.parent() == Some(scarb_dir) {
             match name.as_str() {
                 "cairo-language-server" => {
-                    Command::new("cairo-language-server").about("Start Cairo Language Server")
+                    Some(Command::new("cairo-language-server").about("Start the Cairo Language Server"))
                 }
-                "cairo-run" => cairo_run_args::Args::command().name("cairo-run"),
-                "cairo-test" => cairo_test_args::Args::command().name("cairo-test"),
-                "doc" => doc_args::Args::command().name("doc"),
-                "execute" => execute_args::Args::command().name("execute"),
-                "mdbook" => mdbook_args::Args::command().name("mdbook"),
-                "prove" => prove_args::Args::command().name("prove"),
-                "verify" => verify_args::Args::command().name("verify"),
-                _ => Command::new(&name)
+                "cairo-run" => Some(cairo_run_args::Args::command().name("cairo-run")),
+                "cairo-test" => Some(cairo_test_args::Args::command().name("cairo-test")),
+                "completions" => Some(Args::command().name("completions")),
+                "doc" => Some(doc_args::Args::command().name("doc")),
+                "execute" => Some(execute_args::Args::command().name("execute")),
+                "mdbook" => Some(mdbook_args::Args::command().name("mdbook")),
+                "prove" => Some(prove_args::Args::command().name("prove")),
+                "verify" => Some(verify_args::Args::command().name("verify")),
+                "test-support" => None,
+                _ => Some(Command::new(&name)
                     .name(&name)
-                    .about(format!("Bundled '{name}' extension")),
+                    .about(format!("Bundled '{name}' extension"))),
             }
         } else {
-            Command::new(&name)
+            Some(Command::new(&name)
                 .name(&name)
-                .about(format!("External '{name}' extension"))
+                .about(format!("External '{name}' extension")))
         };
-        cmd = cmd.subcommand(subcommand);
+        if let Some(subcommand) = subcommand {
+            cmd = cmd.subcommand(subcommand);
+        }
     }
 
     let clap_shell: ClapShell = shell.into();
