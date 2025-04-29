@@ -6,7 +6,7 @@ use scarb_ui::args::{PackagesFilter, VerbositySpec};
 #[derive(Default, Debug, Clone, ValueEnum)]
 pub enum OutputFormat {
     /// Generates documentation in Markdown format.
-    /// Generated files are fully compatible with mdBook. For more information visit https://rust-lang.github.io/mdBook.
+    /// Generated files are fully compatible with mdBook. For more information visit <https://rust-lang.github.io/mdBook>.
     #[default]
     Markdown,
     /// Saves information collected from packages in JSON format instead of generating
