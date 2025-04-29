@@ -82,13 +82,15 @@ fn generate_completions(
         .expect("Scarb binary path should always have parent directory.");
 
     for path in external_subcommands {
-        let Some(name) = path.file_name().and_then(|n| n.to_str()).map(|s| {
-            s.trim_start_matches(EXTERNAL_CMD_PREFIX)
-                .trim_end_matches(env::consts::EXE_SUFFIX)
-                .to_owned()
-        }) else {
-            continue;
-        };
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .map(|s| {
+                s.trim_start_matches(EXTERNAL_CMD_PREFIX)
+                    .trim_end_matches(env::consts::EXE_SUFFIX)
+                    .to_owned()
+            })
+            .expect("could not resolve subcommand name");
 
         // Generate completions only for the bundled subcommands
         let subcommand = if path.parent() == Some(scarb_dir) {
