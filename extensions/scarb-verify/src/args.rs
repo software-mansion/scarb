@@ -2,7 +2,7 @@ use camino::Utf8PathBuf;
 use clap::Parser;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
-/// Verifies `scarb prove` output using Stwo verifier.
+/// Verify `scarb prove` output using Stwo verifier
 #[derive(Parser, Clone, Debug)]
 #[clap(version, verbatim_doc_comment)]
 pub struct Args {

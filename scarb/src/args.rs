@@ -157,7 +157,7 @@ pub enum Command {
     Remove(RemoveArgs),
     /// Compile current project.
     Build(BuildArgs),
-    /// Expand macros.
+    /// Expand proc macros.
     Expand(ExpandArgs),
     /// Manipulate packages cache.
     #[clap(subcommand)]
@@ -196,7 +196,7 @@ pub enum Command {
         to a registry.
     ")]
     Publish(PublishArgs),
-    /// Checks a package to catch common mistakes and improve your Cairo code.
+    /// Check a package to catch common mistakes and improve your Cairo code.
     Lint(LintArgs),
     /// Run arbitrary package scripts.
     Run(ScriptsRunnerArgs),

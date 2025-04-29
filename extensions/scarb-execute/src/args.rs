@@ -7,8 +7,7 @@ use num_bigint::BigInt;
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use std::fs;
 
-/// Compiles a Cairo project and runs a function marked `#[executable]`.
-/// Exits with 1 if the compilation or run fails, otherwise 0.
+/// Compilee a Cairo project and run a function marked `#[executable]`
 #[derive(Parser, Clone, Debug)]
 #[clap(version, verbatim_doc_comment)]
 pub struct Args {
