@@ -3,7 +3,7 @@ use crate::core::registry::Registry;
 use crate::core::registry::patch_map::PatchMap;
 use crate::core::{PackageId, Resolve, Summary};
 use crate::resolver::algorithm::provider::{
-    DependencyProviderError, PubGrubDependencyProvider, PubGrubPackage, rewrite_locked_dependency,
+    DependencyProviderError, PubGrubDependencyProvider, PubGrubPackage, lock_dependency,
 };
 use crate::resolver::algorithm::solution::{build_resolve, validate_solution};
 use crate::resolver::algorithm::state::{Request, ResolverState};
@@ -86,12 +86,7 @@ pub async fn resolve(
     for summary in summaries {
         for dep in summary.full_dependencies() {
             let dep = patch_map.lookup(dep);
-            let locked_package_id = lockfile.packages_matching(dep.clone());
-            let dep = if let Some(locked_package_id) = locked_package_id {
-                rewrite_locked_dependency(dep.clone(), locked_package_id?)
-            } else {
-                dep.clone()
-            };
+            let dep = lock_dependency(&lockfile, dep.clone())?;
             if state.index.packages().register(dep.clone()) {
                 request_sink.send(Request::Package(dep.clone())).await?;
             }
