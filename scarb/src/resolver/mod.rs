@@ -548,7 +548,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "TODO(#2031): upgrade lock that matches only part of the deps"]
     fn lock_matching_only_some_deps_is_upgraded() {
         check_with_lock(
             registry![("foo v0.1.0", []), ("foo v0.1.1", [])],
@@ -567,12 +566,6 @@ mod tests {
             // with the following error.
             // Ideally, the lock should be upgraded instead.
             Ok(pkgs!["foo v0.1.1"]),
-            // Current error message:
-            // Err(indoc! { r#"
-            //     version solving failed:
-            //     Because root_2 1.0.0 depends on foo >=0.1.1, <0.2.0 and root_1 1.0.0 depends on foo >=0.1.0, <0.1.1, root_2 1.0.0, root_1 1.0.0 are incompatible.
-            //     And because we are solving dependencies of root_2 1.0.0, root_1 1.0.0 is forbidden.
-            // "#}),
         );
     }
 
