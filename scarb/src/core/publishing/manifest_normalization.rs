@@ -18,10 +18,17 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
     let package = Some(generate_package(pkg));
 
     let dependencies = Some(generate_dependencies(
-        // NOTE: We deliberately do not ask for `full_dependencies` here, because
-        // we do not want to emit requirements for built-in packages like `core`.
+        // NOTE: We deliberately don't ask for `full_dependencies` here because
+        // we don't want to emit requirements for built-in packages like `core`.
         &pkg.manifest.summary.dependencies,
         DepKind::Normal,
+    )?);
+
+    // NOTE: We used to emit an empty ` [dependencies]` table since packaging was introduced,
+    //   so to avoid any potential breakages, we only nullify `[dev-dependencies]`.
+    let dev_dependencies = nullify_table_if_empty(generate_dependencies(
+        &pkg.manifest.summary.dependencies,
+        DepKind::Target(TargetKind::TEST),
     )?);
 
     let tool = pkg.manifest.metadata.tool_metadata.clone().map(|m| {
@@ -36,7 +43,7 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
         package,
         workspace: None,
         dependencies,
-        dev_dependencies: None,
+        dev_dependencies,
         lib: None,
         executable: None,
         cairo_plugin,
@@ -73,7 +80,7 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
         readme: metadata
             .readme
             .clone()
-            .map(|_| MaybeWorkspace::Defined((Utf8PathBuf::from(DEFAULT_README_FILE_NAME)).into())),
+            .map(|_| MaybeWorkspace::Defined(Utf8PathBuf::from(DEFAULT_README_FILE_NAME).into())),
         repository: metadata.repository.clone().map(MaybeWorkspace::Defined),
         include: metadata.include.as_ref().map(|x| {
             // Sort for stability.
@@ -141,7 +148,7 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
         tag: None,
         rev: None,
 
-        // Unless it is default registry, expand registry specification to registry URL.
+        // Unless it is the default registry, expand the registry specification to registry URL.
         //
         // NOTE: Default registry will reject packages with dependencies from other registries.
         registry: if dep.source_id.is_registry() && !dep.source_id.is_default_registry() {
@@ -163,4 +170,8 @@ fn generate_cairo_plugin(pkg: &Package) -> Option<TomlTarget<TomlCairoPluginTarg
             builtin: params.builtin.and_then(|b| b.then_some(true)),
         },
     })
+}
+
+fn nullify_table_if_empty<K, V>(table: BTreeMap<K, V>) -> Option<BTreeMap<K, V>> {
+    if table.is_empty() { None } else { Some(table) }
 }

@@ -55,6 +55,13 @@ fn can_use_both_v1_and_v2_proc_macros() {
         .version("1.0.0")
         .dep("foo", &foo)
         .dep("bar", &bar)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             #[foo]
             fn first() -> felt252 {12}
@@ -62,26 +69,28 @@ fn can_use_both_v1_and_v2_proc_macros() {
             #[bar]
             fn second() -> felt252 {12}
 
+            #[executable]
             fn main() -> felt252 { first() + second() }
         "#})
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
+        .arg("--print-program-output")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            warn: `scarb cairo-run` will be deprecated soon
-            help: use `scarb execute` instead
             [..]Compiling bar v1.0.0 ([..]Scarb.toml)
             [..]Compiling foo v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            [..]Running hello
-            Run completed successfully, returning [68]
+            [..]Executing hello
+            Program output:
+            68
+            Saving output to: target/execute/hello/execution1
         "#});
 }
 

@@ -76,10 +76,11 @@ fn verify_from_path() {
         .assert()
         .success();
 
+    let proof_path = t.join("target/execute/hello/execution1/proof/proof.json");
     Scarb::quick_snapbox()
         .arg("verify")
-        .arg("--proof-file=target/execute/hello/execution1/proof/proof.json")
-        .current_dir(&t)
+        .arg("--proof-file")
+        .arg(proof_path)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"

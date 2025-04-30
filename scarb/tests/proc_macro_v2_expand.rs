@@ -97,12 +97,12 @@ fn diags_from_generated_code_mapped_correctly() {
              --> [..]lib.cairo:2:1
             #[some]
             ^^^^^^^
-            
+
             error[E0006]: Function not found.
              --> [..]lib.cairo:4:5
                 i_don_exist();
                 ^^^^^^^^^^^
-            
+
             error: could not compile `hello` due to previous error
     "#});
 }
@@ -126,32 +126,43 @@ fn can_remove_original_node() {
         .name("hello")
         .version("1.0.0")
         .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             #[some]
+            #[executable]
             fn main() -> felt252 { 12 }
 
+            #[executable]
             fn main() -> felt252 { 34 }
 
             #[some]
+            #[executable]
             fn main() -> felt252 { 56 }
         "#})
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
+        .arg("--print-program-output")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            warn: `scarb cairo-run` will be deprecated soon
-            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            [..]Running hello
-            Run completed successfully, returning [34]
+            [..]Executing hello
+            Program output:
+            34
+            Saving output to: target/execute/hello/execution1
         "#});
 }
 
@@ -179,27 +190,36 @@ fn can_replace_original_node() {
         .name("hello")
         .version("1.0.0")
         .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             #[some]
+            #[executable]
             fn main() -> felt252 { 12 }
         "#})
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
+        .arg("--print-program-output")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            warn: `scarb cairo-run` will be deprecated soon
-            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            [..]Running hello
-            Run completed successfully, returning [34]
+            [..]Executing hello
+            Program output:
+            34
+            Saving output to: target/execute/hello/execution1
         "#});
 }
 
@@ -229,7 +249,15 @@ fn can_implement_inline_macro() {
         .name("hello")
         .version("1.0.0")
         .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
+            #[executable]
             fn main() -> felt252 {
                 let x = some!();
                 x
@@ -238,20 +266,21 @@ fn can_implement_inline_macro() {
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
+        .arg("--print-program-output")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            warn: `scarb cairo-run` will be deprecated soon
-            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            [..]Running hello
-            Run completed successfully, returning [34]
+            [..]Executing hello
+            Program output:
+            34
+            Saving output to: target/execute/hello/execution1
         "#});
 }
 
@@ -296,7 +325,7 @@ fn empty_inline_macro_result() {
              --> [..]lib.cairo:2:14
                 let _x = some!();
                          ^^^^^^^
-            
+
             error: could not compile `hello` due to previous error
         "#});
 }
@@ -351,6 +380,13 @@ fn can_implement_derive_macro() {
         .name("hello")
         .version("1.0.0")
         .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             trait Hello<T> {
                 fn world(self: @T) -> u32;
@@ -359,6 +395,7 @@ fn can_implement_derive_macro() {
             #[derive(CustomDeriveV2, Drop)]
             struct SomeType {}
 
+            #[executable]
             fn main() -> u32 {
                 let a = SomeType {};
                 a.world()
@@ -367,20 +404,21 @@ fn can_implement_derive_macro() {
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
+        .arg("--print-program-output")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            warn: `scarb cairo-run` will be deprecated soon
-            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            [..]Running hello
-            Run completed successfully, returning [32]
+            [..]Executing hello
+            Program output:
+            32
+            Saving output to: target/execute/hello/execution1
         "#});
 }
 
@@ -452,6 +490,13 @@ fn can_use_both_derive_and_attr() {
         .name("hello")
         .version("1.0.0")
         .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             trait Hello<T> {
                 fn world(self: @T) -> u32;
@@ -462,6 +507,7 @@ fn can_use_both_derive_and_attr() {
             #[second_attribute]
             struct SomeType {}
 
+            #[executable]
             fn main() -> u32 {
                 let a = RenamedStruct {};
                 a.world()
@@ -470,20 +516,21 @@ fn can_use_both_derive_and_attr() {
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
+        .arg("--print-program-output")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            warn: `scarb cairo-run` will be deprecated soon
-            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            [..]Running hello
-            Run completed successfully, returning [32]
+            [..]Executing hello
+            Program output:
+            32
+            Saving output to: target/execute/hello/execution1
         "#});
 }
 
@@ -676,6 +723,13 @@ fn can_expand_trait_inner_func_attrr() {
         .name("hello")
         .version("1.0.0")
         .dep("some", &t)
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
         .lib_cairo(indoc! {r#"
             trait Hello<T> {
                 #[some]
@@ -689,6 +743,7 @@ fn can_expand_trait_inner_func_attrr() {
 
             impl SomeImpl of Hello<SomeStruct> {}
 
+            #[executable]
             fn main() -> u32 {
                 let a = SomeStruct {};
                 a.world()
@@ -697,20 +752,21 @@ fn can_expand_trait_inner_func_attrr() {
         .build(&project);
 
     Scarb::quick_snapbox()
-        .arg("cairo-run")
+        .arg("execute")
+        .arg("--print-program-output")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&project)
         .assert()
         .success()
         .stdout_matches(indoc! {r#"
-            warn: `scarb cairo-run` will be deprecated soon
-            help: use `scarb execute` instead
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
-            [..]Running hello
-            Run completed successfully, returning [34]
+            [..]Executing hello
+            Program output:
+            34
+            Saving output to: target/execute/hello/execution1
         "#});
 }
 
@@ -1218,6 +1274,192 @@ fn always_compile_macros_requested_with_package_filter() {
             [..]Compiling other v1.0.0 ([..]Scarb.toml)
             [..]Compiling some v1.0.0 ([..]Scarb.toml)
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
+fn can_emit_diagnostic_with_custom_location() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, TokenTree, attribute_macro, Diagnostic, TextSpan};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let mut start_span = None;
+            let mut end_span = None;
+
+            for token_tree in token_stream.tokens.iter() {
+                let TokenTree::Ident(token) = token_tree;
+                if token.content.as_ref().contains("(") {
+                    start_span = Some(token.span.clone());
+                }
+                if token.content.as_ref().contains(")") {
+                    end_span = Some(token.span.clone());
+                }
+            }
+            let result = ProcMacroResult::new(token_stream);
+
+
+            // Emit error diagnostic if tuple type is found
+            if let (Some(start), Some(end)) = (start_span, end_span) {
+                // Create a custom span from start to end
+                let custom_span = TextSpan::new(start.start, end.end);
+
+                let diag = Diagnostic::span_error(custom_span, "Unsupported tuple type");
+                result.with_diagnostics(diag.into())
+            } else {
+                result
+            }
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            struct X {
+                x: felt252,
+                y: (u32, u64),
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Plugin diagnostic: Unsupported tuple type
+             --> [..]lib.cairo:4:8
+                y: (u32, u64),
+                   ^^^^^^^^^^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn can_emit_diagnostic_with_inversed_span() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, TokenTree, attribute_macro, Diagnostic, TextSpan};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let mut start_span = None;
+            let mut end_span = None;
+
+            for token_tree in token_stream.tokens.iter() {
+                let TokenTree::Ident(token) = token_tree;
+                if token.content.as_ref().contains("(") {
+                    start_span = Some(token.span.clone());
+                }
+                if token.content.as_ref().contains(")") {
+                    end_span = Some(token.span.clone());
+                }
+            }
+            let result = ProcMacroResult::new(token_stream);
+
+
+            // Emit error diagnostic if tuple type is found
+            if let (Some(start), Some(end)) = (start_span, end_span) {
+                // Create a custom span from start to end
+                let custom_span = TextSpan::new(start.start, end.end);
+
+                let diag = Diagnostic::span_error(custom_span, "Unsupported tuple type");
+                result.with_diagnostics(diag.into())
+            } else {
+                result
+            }
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            struct X {
+                x: felt252,
+                y: (u32, u64),
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Plugin diagnostic: Unsupported tuple type
+             --> [..]lib.cairo:4:8
+                y: (u32, u64),
+                   ^^^^^^^^^^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn can_emit_diagnostic_with_out_of_bounds_span() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, Diagnostic, TextSpan};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let diag = Diagnostic::span_warning(TextSpan::new(0, 1000000), "Hello world!");
+            ProcMacroResult::new(token_stream).with_diagnostics(diag.into())
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            fn main() -> felt252 { 12 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            warn: Plugin diagnostic: Hello world!
+             --> [..]lib.cairo:1:1
+            #[some]
+            ^^^^^^^
+
             [..]Finished `dev` profile target(s) in [..]
         "#});
 }

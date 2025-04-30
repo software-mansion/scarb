@@ -14,7 +14,6 @@ use cairo_lang_executable::plugin::{EXECUTABLE_PREFIX, EXECUTABLE_RAW_ATTR};
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_lowering::ids::ConcreteFunctionWithBodyId;
 use cairo_lang_sierra_generator::executables::find_executable_function_ids;
-use cairo_lang_utils::Upcast;
 use camino::Utf8Path;
 use indoc::formatdoc;
 use itertools::Itertools;
@@ -189,7 +188,7 @@ fn find_executable_functions(
 fn originating_function_path(db: &RootDatabase, wrapper: ConcreteFunctionWithBodyId) -> String {
     let semantic = wrapper.base_semantic_function(db);
     let wrapper_name = semantic.name(db);
-    let wrapper_full_path = semantic.full_path(db.upcast());
+    let wrapper_full_path = semantic.full_path(db);
     let Some(function_name) = wrapper_name.strip_prefix(EXECUTABLE_PREFIX) else {
         return wrapper_full_path;
     };

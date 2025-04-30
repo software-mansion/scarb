@@ -2,17 +2,19 @@ use super::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::{
     SHORT_DOCUMENTATION_AVOID_PREFIXES, SHORT_DOCUMENTATION_LEN,
 };
-use crate::docs_generation::{DocItem, PrimitiveDocItem, TopLevelDocItem};
+use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
 use crate::location_links::DocLocationLink;
 use crate::types::{
-    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Module,
-    Struct, Trait, TypeAlias,
+    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
+    ImplFunction, ImplType, ItemData, Member, Module, Struct, Trait, TraitConstant, TraitFunction,
+    TraitType, TypeAlias, Variant,
 };
 use anyhow::Result;
-use cairo_lang_doc::parser::DocumentationCommentToken;
+use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt::Write;
+use std::option::Option;
 
 pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     const ITEMS_SUMMARY_FILENAME: &'static str;
@@ -61,11 +63,40 @@ impl_top_level_markdown_doc_item!(Struct, "structs.md");
 impl_top_level_markdown_doc_item!(Trait, "traits.md");
 impl_top_level_markdown_doc_item!(TypeAlias, "type_aliases.md");
 
+macro_rules! impl_markdown_doc_item {
+    ($ty:ty) => {
+        impl MarkdownDocItem for $ty {
+            fn generate_markdown(
+                &self,
+                context: &MarkdownGenerationContext,
+                header_level: usize,
+                item_suffix: Option<usize>,
+            ) -> Result<String> {
+                generate_markdown_from_item_data(self, context, header_level, item_suffix)
+            }
+
+            fn get_full_path(&self, item_suffix: Option<usize>) -> String {
+                get_full_subitem_path(self, item_suffix)
+            }
+        }
+    };
+}
+
+impl_markdown_doc_item!(Member);
+impl_markdown_doc_item!(ImplFunction);
+impl_markdown_doc_item!(ImplType);
+impl_markdown_doc_item!(TraitFunction);
+impl_markdown_doc_item!(Variant);
+impl_markdown_doc_item!(ImplConstant);
+impl_markdown_doc_item!(TraitConstant);
+impl_markdown_doc_item!(TraitType);
+
 pub trait MarkdownDocItem: DocItem {
     fn generate_markdown(
         &self,
         context: &MarkdownGenerationContext,
         header_level: usize,
+        item_suffix: Option<usize>,
     ) -> Result<String>;
 
     fn get_short_documentation(&self, context: &MarkdownGenerationContext) -> String {
@@ -87,8 +118,7 @@ pub trait MarkdownDocItem: DocItem {
                         }
                     }
                     DocumentationCommentToken::Link(link) => {
-                        let file_path = context.resolve_markdown_file_path_from_link(link);
-                        format!("[{}]({})", link.label.clone(), file_path).replace("\n", " ")
+                        self.format_link_to_path(link, context)
                     }
                 };
                 if !text_formatted.ends_with(' ') {
@@ -112,12 +142,27 @@ pub trait MarkdownDocItem: DocItem {
                 .map(|doc_token| match doc_token {
                     DocumentationCommentToken::Content(content) => content.clone(),
                     DocumentationCommentToken::Link(link) => {
-                        let file_path = context.resolve_markdown_file_path_from_link(link);
-                        format!("[{}]({})", link.label.clone(), file_path)
+                        self.format_link_to_path(link, context)
                     }
                 })
                 .join("")
         })
+    }
+
+    fn format_link_to_path(
+        &self,
+        link: &CommentLinkToken,
+        context: &MarkdownGenerationContext,
+    ) -> String {
+        if let Some(file_path) = context.resolve_markdown_file_path_from_link(link) {
+            format!("[{}]({file_path})", link.label.clone(),)
+        } else {
+            link.label.clone()
+        }
+    }
+
+    fn get_full_path(&self, _item_suffix: Option<usize>) -> String {
+        get_linked_path(self.full_path())
     }
 }
 
@@ -129,8 +174,9 @@ where
         &self,
         context: &MarkdownGenerationContext,
         header_level: usize,
+        _item_suffix: Option<usize>,
     ) -> Result<String> {
-        generate_markdown_from_item_data(self, context, header_level)
+        generate_markdown_from_item_data(self, context, header_level, None)
     }
 }
 
@@ -139,10 +185,16 @@ impl MarkdownDocItem for Enum {
         &self,
         context: &MarkdownGenerationContext,
         header_level: usize,
+        _item_suffix: Option<usize>,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
-
-        markdown += &generate_markdown_for_subitems(&self.variants, context, header_level)?;
+        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
+        markdown += &generate_markdown_for_subitems(
+            &self.variants,
+            context,
+            header_level,
+            &mut suffix_calculator,
+        )?;
 
         Ok(markdown)
     }
@@ -153,12 +205,31 @@ impl MarkdownDocItem for Impl {
         &self,
         context: &MarkdownGenerationContext,
         header_level: usize,
+        _item_suffix: Option<usize>,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
+        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
-        markdown += &generate_markdown_for_subitems(&self.impl_constants, context, header_level)?;
-        markdown += &generate_markdown_for_subitems(&self.impl_functions, context, header_level)?;
-        markdown += &generate_markdown_for_subitems(&self.impl_types, context, header_level)?;
+        markdown += &generate_markdown_for_subitems(
+            &self.impl_constants,
+            context,
+            header_level,
+            &mut suffix_calculator,
+        )?;
+
+        markdown += &generate_markdown_for_subitems(
+            &self.impl_functions,
+            context,
+            header_level,
+            &mut suffix_calculator,
+        )?;
+
+        markdown += &generate_markdown_for_subitems(
+            &self.impl_types,
+            context,
+            header_level,
+            &mut suffix_calculator,
+        )?;
 
         Ok(markdown)
     }
@@ -169,8 +240,9 @@ impl MarkdownDocItem for Module {
         &self,
         context: &MarkdownGenerationContext,
         header_level: usize,
+        _item_suffix: Option<usize>,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
+        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
 
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.submodules.iter().collect_vec(),
@@ -237,10 +309,17 @@ impl MarkdownDocItem for Struct {
         &self,
         context: &MarkdownGenerationContext,
         header_level: usize,
+        _item_suffix: Option<usize>,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
+        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
 
-        markdown += &generate_markdown_for_subitems(&self.members, context, header_level)?;
+        let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
+        markdown += &generate_markdown_for_subitems(
+            &self.members,
+            context,
+            header_level,
+            &mut suffix_calculator,
+        )?;
 
         Ok(markdown)
     }
@@ -251,14 +330,55 @@ impl MarkdownDocItem for Trait {
         &self,
         context: &MarkdownGenerationContext,
         header_level: usize,
+        _item_suffix: Option<usize>,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level)?;
+        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
-        markdown += &generate_markdown_for_subitems(&self.trait_constants, context, header_level)?;
-        markdown += &generate_markdown_for_subitems(&self.trait_functions, context, header_level)?;
-        markdown += &generate_markdown_for_subitems(&self.trait_types, context, header_level)?;
-
+        markdown += &generate_markdown_for_subitems(
+            &self.trait_constants,
+            context,
+            header_level,
+            &mut suffix_calculator,
+        )?;
+        markdown += &generate_markdown_for_subitems(
+            &self.trait_functions,
+            context,
+            header_level,
+            &mut suffix_calculator,
+        )?;
+        markdown += &generate_markdown_for_subitems(
+            &self.trait_types,
+            context,
+            header_level,
+            &mut suffix_calculator,
+        )?;
         Ok(markdown)
+    }
+}
+
+struct ItemSuffixCalculator<'a> {
+    occurrences: HashMap<String, usize>,
+    parent_name: &'a str,
+}
+
+impl<'a> ItemSuffixCalculator<'a> {
+    pub fn new(parent_name: &'a str) -> Self {
+        Self {
+            occurrences: HashMap::new(),
+            parent_name,
+        }
+    }
+
+    pub fn get(&mut self, item: &str) -> Option<usize> {
+        let lowercase_item = item.to_lowercase();
+        let mut count = self.occurrences.get(&lowercase_item).copied().unwrap_or(0);
+        if self.parent_name.to_lowercase() == lowercase_item {
+            count += 1;
+        }
+        let result = if count == 0 { None } else { Some(count) };
+        *self.occurrences.entry(lowercase_item).or_insert(0) += 1;
+        result
     }
 }
 
@@ -354,10 +474,11 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
     Ok(markdown)
 }
 
-fn generate_markdown_for_subitems<T: MarkdownDocItem + PrimitiveDocItem>(
+fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
     subitems: &[T],
     context: &MarkdownGenerationContext,
     header_level: usize,
+    suffix_calculator: &mut ItemSuffixCalculator,
 ) -> Result<String> {
     let mut markdown = String::new();
 
@@ -365,11 +486,13 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + PrimitiveDocItem>(
         let header = str::repeat("#", header_level + 1);
 
         writeln!(&mut markdown, "{header} {}\n", T::HEADER)?;
-        for item in subitems {
+
+        for item in subitems.iter() {
+            let postfix = suffix_calculator.get(item.name());
             writeln!(
                 &mut markdown,
                 "{}",
-                item.generate_markdown(context, header_level + 2)?
+                item.generate_markdown(context, header_level + 2, postfix)?
             )?;
         }
     }
@@ -381,6 +504,7 @@ fn generate_markdown_from_item_data(
     doc_item: &impl MarkdownDocItem,
     context: &MarkdownGenerationContext,
     header_level: usize,
+    item_suffix: Option<usize>,
 ) -> Result<String> {
     let mut markdown = String::new();
 
@@ -392,11 +516,8 @@ fn generate_markdown_from_item_data(
         writeln!(&mut markdown, "{doc}\n")?;
     }
 
-    writeln!(
-        &mut markdown,
-        "Fully qualified path: {}\n",
-        get_linked_path(doc_item.full_path())
-    )?;
+    let full_path = doc_item.get_full_path(item_suffix);
+    writeln!(&mut markdown, "Fully qualified path: {full_path}\n",)?;
 
     if let Some(sig) = &doc_item.signature() {
         if !sig.is_empty() {
@@ -423,6 +544,35 @@ fn get_linked_path(full_path: &str) -> String {
         result.push(formatted);
     }
     result.join("::")
+}
+
+/// Formats markdown path to a relevant chapter within the item parent page.
+/// Differs from parent path by appended suffix that consist of child item name
+/// and number of previous name occurrences within the parent page chapters.       
+fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
+    item: &T,
+    item_suffix: Option<usize>,
+) -> String {
+    if let Some((parent_path, item_path)) = item.full_path().rsplit_once("::") {
+        let last_path = format!(
+            "{}.md#{}{}",
+            parent_path.replace("::", "-"),
+            item_path.to_lowercase(),
+            if let Some(item_suffix) = item_suffix {
+                format!("-{}", item_suffix)
+            } else {
+                "".to_string()
+            }
+        );
+        format!(
+            "{}::[{}](./{})",
+            get_linked_path(parent_path),
+            &item_path,
+            last_path
+        )
+    } else {
+        get_linked_path(item.full_path())
+    }
 }
 
 fn format_signature(input: &str, links: &[DocLocationLink]) -> String {

@@ -14,7 +14,7 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{
-    AsFilesGroupMut, CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
+    CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
 };
 use cairo_lang_filesystem::ids::CrateLongId;
 use cairo_lang_semantic::db::PluginSuiteInput;
@@ -145,8 +145,7 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
         let module_id = ModuleId::CrateRoot(crate_id);
         let file_id = db.module_main_file(module_id).unwrap();
         // Inject virtual lib file wrapper.
-        db.as_files_group_mut()
-            .override_file_content(file_id, Some(Arc::from(content.as_str())));
+        db.override_file_content(file_id, Some(Arc::from(content.as_str())));
     }
 
     Ok(())

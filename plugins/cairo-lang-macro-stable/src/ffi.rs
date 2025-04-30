@@ -37,9 +37,9 @@ impl<T> StableSlice<T> {
 }
 
 /// This struct defines an Option in stable ABI representation.
-#[repr(C)]
+#[repr(C, u8)]
 #[derive(Debug)]
 pub enum StableOption<T> {
-    None,
-    Some(T),
+    None = 0,
+    Some(T) = 1,
 }

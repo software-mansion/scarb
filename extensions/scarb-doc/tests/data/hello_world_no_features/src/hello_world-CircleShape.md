@@ -12,7 +12,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[CircleShape](./hello_wor
 
 Shape constant
 
-Fully qualified path: [hello_world](./hello_world.md)::[CircleShape](./hello_world-CircleShape.md)::[SHAPE_CONST](./hello_world-CircleShape-SHAPE_CONST.md)
+Fully qualified path: [hello_world](./hello_world.md)::[CircleShape](./hello_world-CircleShape.md)::[SHAPE_CONST](./hello_world-CircleShape.md#shape_const)
 
 <pre><code class="language-cairo">const SHAPE_CONST: felt252 = &apos;xyz&apos;;</code></pre>
 
@@ -23,7 +23,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[CircleShape](./hello_wor
 
 Implementation of the area method for Circle
 
-Fully qualified path: [hello_world](./hello_world.md)::[CircleShape](./hello_world-CircleShape.md)::[area](./hello_world-CircleShape-area.md)
+Fully qualified path: [hello_world](./hello_world.md)::[CircleShape](./hello_world-CircleShape.md)::[area](./hello_world-CircleShape.md#area)
 
 <pre><code class="language-cairo">fn area(self: <a href="hello_world-Circle.html">Circle</a>) -&gt; u32</code></pre>
 
@@ -34,7 +34,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[CircleShape](./hello_wor
 
 Type alias for a pair of circles
 
-Fully qualified path: [hello_world](./hello_world.md)::[CircleShape](./hello_world-CircleShape.md)::[ShapePair](./hello_world-CircleShape-ShapePair.md)
+Fully qualified path: [hello_world](./hello_world.md)::[CircleShape](./hello_world-CircleShape.md)::[ShapePair](./hello_world-CircleShape.md#shapepair)
 
 <pre><code class="language-cairo">type ShapePair = (Circle, Circle);</code></pre>
 

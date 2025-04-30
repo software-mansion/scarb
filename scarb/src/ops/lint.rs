@@ -14,7 +14,6 @@ use anyhow::{Context, Result};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::{DiagnosticEntry, Diagnostics, Severity};
 use cairo_lang_semantic::{SemanticDiagnostic, db::SemanticGroup};
-use cairo_lang_utils::Upcast;
 use cairo_lint::CAIRO_LINT_TOOL_NAME;
 use cairo_lint::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
@@ -194,7 +193,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         for (file_id, fixes) in fixes.into_iter() {
                             ws.config()
                                 .ui()
-                                .print(Status::new("Fixing", &file_id.file_name(db.upcast())));
+                                .print(Status::new("Fixing", &file_id.file_name(&db)));
                             apply_file_fixes(file_id, fixes, &db)?;
                         }
                     }

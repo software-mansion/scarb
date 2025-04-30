@@ -13,7 +13,6 @@ use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
 use cairo_lang_parser::db::ParserGroup;
 use cairo_lang_syntax::node::helpers::UsePathEx;
 use cairo_lang_syntax::node::{TypedStablePtr, TypedSyntaxNode, ast};
-use cairo_lang_utils::Upcast;
 use scarb_ui::Message;
 use serde::{Serialize, Serializer};
 use smol_str::SmolStr;
@@ -195,9 +194,9 @@ fn do_expand(
         for item_id in module_items.iter() {
             // We need to handle uses manually, as module data only includes use leaf instead of path.
             if let ModuleItemId::Use(use_id) = item_id {
-                let use_item = use_id.stable_ptr(&db).lookup(db.upcast());
-                let item = ast::UsePath::Leaf(use_item.clone()).get_item(db.upcast());
-                let item = item.use_path(db.upcast());
+                let use_item = use_id.stable_ptr(&db).lookup(&db);
+                let item = ast::UsePath::Leaf(use_item.clone()).get_item(&db);
+                let item = item.use_path(&db);
                 // We need to deduplicate multi-uses (`a::{b, c}`), which are split into multiple leaves.
                 if !seen_uses.insert(item.stable_ptr(&db)) {
                     continue;
