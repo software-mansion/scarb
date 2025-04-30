@@ -25,6 +25,7 @@ pub enum Shell {
     Bash,
     Fish,
     Elvish,
+    #[clap(name = "powershell", alias = "pwsh")]
     PowerShell,
     Zsh,
 }
