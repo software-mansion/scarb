@@ -12,6 +12,7 @@ use tracing::debug;
 use scarb_ui::components::Status;
 
 use crate::core::config::get_app_exe_path;
+use crate::core::dirs::{get_project_dirs, resolve_path_dirs};
 use crate::core::{Config, Package, ScriptDefinition, Workspace};
 use crate::internal::fsx::is_executable;
 use crate::ops;
@@ -29,7 +30,7 @@ pub fn execute_external_subcommand(
     config: &Config,
     target_dir: Option<Utf8PathBuf>,
 ) -> Result<()> {
-    let Some(cmd) = find_external_subcommand(cmd, &config.dirs().path_dirs)? else {
+    let Some(cmd) = find_external_subcommand(cmd, config)? else {
         // TODO(mkaput): Reuse clap's no such command message logic here.
         bail!("no such command: `{cmd}`");
     };
@@ -84,7 +85,6 @@ pub fn execute_test_subcommand(
     }
 }
 
-// TODO: fix docstring
 /// Find an external subcommand executable.
 ///
 /// # Search order
@@ -99,14 +99,15 @@ pub fn execute_test_subcommand(
 /// that would cause more harm than good in practice. For example, if the user is working on a custom build of Scarb,
 /// but has another one installed globally (for example via ASDF), then their custom build would use global extensions
 /// instead of the ones it was built with, which would be very confusing.
-fn find_external_subcommand(cmd: &str, path_dirs: &[PathBuf]) -> Result<Option<PathBuf>> {
+fn find_external_subcommand(cmd: &str, config: &Config) -> Result<Option<PathBuf>> {
     let command_exe = format!("{}{}{}", EXTERNAL_CMD_PREFIX, cmd, env::consts::EXE_SUFFIX);
 
-    let scarb_exe = get_app_exe_path(path_dirs)?;
-    let scarb_dir = scarb_exe
+    let scarb_dir = config
+        .app_exe()?
         .parent()
         .expect("Scarb binary path should always have parent directory.");
-    let path_dirs = path_dirs.iter().map(PathBuf::as_path);
+
+    let path_dirs = config.dirs().path_dirs.iter().map(AsRef::as_ref);
 
     Ok(iter::once(scarb_dir)
         .chain(path_dirs)
