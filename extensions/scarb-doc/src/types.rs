@@ -149,13 +149,70 @@ impl Crate {
             pointer.insert_extern_function(item);
         }
         for item in all_pub_ues.use_submodules.into_iter() {
-            let ancestors = get_ancestors_vector(&mut Vec::new(), item.module_id, db);
-            self.ensure_module_structure(db, ancestors);
-            // todo! replace pointer with a new merged module because it cannot be determined at this point if
-            // pointer was a virtual module. If so, not all module items might be documented as expected.
+            let mut ancestors = get_ancestors_vector(&mut Vec::new(), item.module_id, db);
+            if let Some(last_path) = ancestors.pop() {
+                let pointer = self.ensure_module_structure(db, ancestors);
+                if let Some(index) = pointer
+                    .submodules
+                    .iter()
+                    .position(|module| module.module_id == last_path)
+                {
+                    merge_modules(&mut pointer.submodules[index], item);
+                }
+            }
         }
         self.to_owned()
     }
+}
+
+/// Merges subitems of virtual_module into documented_module so it contains all unique data from both modules.
+/// Note that documented_module might have been created by [`Module::new_virtual`].   
+fn merge_modules(documented_module: &mut Module, virtual_module: Module) -> &mut Module {
+    for constant in virtual_module.constants {
+        documented_module.insert_constant(constant);
+    }
+    for free_function in virtual_module.free_functions {
+        documented_module.insert_free_function(free_function);
+    }
+    for struct_ in virtual_module.structs {
+        documented_module.insert_struct(struct_);
+    }
+    for enum_ in virtual_module.enums {
+        documented_module.insert_enum(enum_);
+    }
+    for type_alias in virtual_module.type_aliases {
+        documented_module.insert_type_alias(type_alias);
+    }
+    for impl_alias in virtual_module.impl_aliases {
+        documented_module.insert_impl_alias(impl_alias);
+    }
+    for trait_ in virtual_module.traits {
+        documented_module.insert_trait(trait_);
+    }
+    for impl_ in virtual_module.impls {
+        documented_module.insert_impl(impl_);
+    }
+    for extern_type in virtual_module.extern_types {
+        documented_module.insert_extern_type(extern_type);
+    }
+    for extern_function in virtual_module.extern_functions {
+        documented_module.insert_extern_function(extern_function);
+    }
+    for submodule2 in virtual_module.submodules {
+        if let Some(submodule_index) = documented_module
+            .submodules
+            .iter()
+            .position(|submodule1| submodule1.module_id == submodule2.module_id)
+        {
+            merge_modules(
+                &mut documented_module.submodules[submodule_index],
+                submodule2,
+            );
+        } else {
+            documented_module.submodules.push(submodule2);
+        }
+    }
+    documented_module
 }
 
 fn get_ancestors_vector(
