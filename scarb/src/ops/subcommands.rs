@@ -18,6 +18,7 @@ use crate::internal::fsx::is_executable;
 use crate::ops;
 use crate::process::exec_replace;
 use crate::subcommands::{EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV, get_env_vars};
+use itertools::Itertools;
 
 /// Prepare environment and execute an external subcommand.
 ///
@@ -95,7 +96,7 @@ pub fn execute_test_subcommand(
 /// 3. `{SCARB LOCAL DATA DIR}/bin`.
 ///
 /// Why is the surrounding of the Scarb binary searched for before the `PATH`?
-/// Although is sounds tempting to allow users to override Scarb extensions bundled in the default installation,
+/// Although it sounds tempting to allow users to override Scarb extensions bundled in the default installation,
 /// that would cause more harm than good in practice. For example, if the user is working on a custom build of Scarb,
 /// but has another one installed globally (for example via ASDF), then their custom build would use global extensions
 /// instead of the ones it was built with, which would be very confusing.
@@ -115,54 +116,74 @@ fn find_external_subcommand(cmd: &str, config: &Config) -> Result<Option<PathBuf
         .find(|file| is_executable(file)))
 }
 
-// TODO: fix docstring
-/// List all external subcommand executables available in the search paths.
+/// Information about an external subcommand.
+pub struct ExternalSubcommand {
+    /// Name of the subcommand without prefix and postfix.
+    pub name: String,
+    /// Path to the subcommand executable.
+    pub path: PathBuf,
+    /// Whether the subcommand is located at the same path as Scarb binary.
+    pub is_bundled: bool,
+}
+
+/// List all unique external subcommand executables available in the search paths,
+/// each represented as an `ExternalSubcommand`.
 ///
 /// # Search order
 ///
-/// This function scans, in order:
+/// This function scans, in order (unless `path_dirs_override` is specified):
 /// 1. The directory containing the Scarb binary.
 /// 2. The directories in the `PATH` environment variable.
 /// 3. `{SCARB LOCAL DATA DIR}/bin`.
 ///
-/// For each directory, it collects files whose names start with `EXTERNAL_CMD_PREFIX`
-/// and end with the platform suffix, filtering to executables, and returns their paths.
+/// For each directory, it collects executables whose names start with `EXTERNAL_CMD_PREFIX`
+/// and end with the platform suffix, and returns them wrapped in `ExternalSubcommand`.
+///
+/// If multiple executables with the same subcommand name are found in different directories,
+/// only the first one found (according to the search order above) is included in the result.
 ///
 /// Why is the surrounding of the Scarb binary searched for before the `PATH`?
-/// Although is sounds tempting to allow users to override Scarb extensions bundled in the default installation,
+/// Although it sounds tempting to allow users to override Scarb extensions bundled in the default installation,
 /// that would cause more harm than good in practice. For example, if the user is working on a custom build of Scarb,
 /// but has another one installed globally (for example via ASDF), then their custom build would use global extensions
 /// instead of the ones it was built with, which would be very confusing.
-pub fn list_external_subcommands(path_dirs: &[PathBuf]) -> Result<Vec<PathBuf>> {
-    let exe_path = get_app_exe_path(path_dirs)?;
-    let mut scan_dirs = Vec::new();
-    if let Some(parent) = exe_path.parent() {
-        scan_dirs.push(parent.to_path_buf());
-    }
-    scan_dirs.extend(path_dirs.to_owned());
+pub fn list_external_subcommands(
+    path_dirs_override: Option<Vec<PathBuf>>,
+) -> Result<Vec<ExternalSubcommand>> {
+    let pd = get_project_dirs()?;
+    let path_dirs = resolve_path_dirs(path_dirs_override, &pd);
+    let scarb_exe = get_app_exe_path(&path_dirs)?;
+    let scarb_dir = scarb_exe
+        .parent()
+        .expect("Scarb binary path should always have parent directory.");
 
-    let mut visited = HashSet::new();
-    let mut results = Vec::new();
-    for dir in scan_dirs {
-        if let Ok(entries) = fs::read_dir(&dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                    if name.starts_with(EXTERNAL_CMD_PREFIX)
-                        && name.ends_with(env::consts::EXE_SUFFIX)
-                        && is_executable(&path)
-                    {
-                        // Avoid duplicate paths for given command name
-                        let cmd = name
-                            .trim_start_matches(EXTERNAL_CMD_PREFIX)
-                            .trim_end_matches(env::consts::EXE_SUFFIX);
-                        if !cmd.is_empty() && visited.insert(cmd.to_string()) {
-                            results.push(path);
-                        }
-                    }
-                }
+    let scan_dirs = iter::once(scarb_dir).chain(path_dirs.iter().map(|p| p.as_path()));
+
+    let subcommands = scan_dirs
+        .filter_map(|dir| fs::read_dir(dir).ok())
+        .flat_map(|entries| entries.flatten())
+        .filter(|entry| is_executable(entry.path()))
+        .filter_map(|entry| {
+            let path = entry.path();
+            let basename = path.file_name()?.to_str()?;
+            if !basename.starts_with(EXTERNAL_CMD_PREFIX) || !basename.ends_with(env::consts::EXE_SUFFIX) {
+                return None;
             }
-        }
-    }
-    Ok(results)
+            let cmd_name = basename
+                .trim_start_matches(EXTERNAL_CMD_PREFIX)
+                .trim_end_matches(env::consts::EXE_SUFFIX)
+                .to_string();
+            if cmd_name.is_empty() {
+                return None;
+            }
+            Some(ExternalSubcommand {
+                name: cmd_name,
+                path: path.clone(),
+                is_bundled: path.parent() == Some(scarb_dir),
+            })
+        })
+        .unique_by(|cmd| cmd.name.clone())
+        .collect::<Vec<_>>();
+
+    Ok(subcommands)
 }
