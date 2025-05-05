@@ -58,13 +58,11 @@ pub fn main(args: Args) -> Result<()> {
     cmd!(sh, "{scarb} test").run()?;
     if args.full {
         cmd!(sh, "{scarb} lint").run()?;
-        cmd!(
-            sh,
-            "{scarb} commands | jq -e 'has(\"cairo-language-server\")'"
-        )
-        .run()?;
-        cmd!(sh, "{scarb} commands | jq -e 'has(\"verify\")'").run()?;
-        cmd!(sh, "{scarb} commands | jq -e 'has(\"prove\")'").run()?;
+        let commands = cmd!(sh, "{scarb} --json commands").read()?;
+        sh.write_file("commands.json", &commands)?;
+        cmd!(sh, "jq -e 'has(\"cairo-language-server\")' commands.json").run()?;
+        cmd!(sh, "jq -e 'has(\"verify\")' commands.json").run()?;
+        cmd!(sh, "jq -e 'has(\"prove\")' commands.json").run()?;
     }
 
     Ok(())
