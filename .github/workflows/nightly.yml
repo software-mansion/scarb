@@ -166,9 +166,10 @@ jobs:
     with:
       scarb-tag: v${{ needs.prepare.outputs.nightly_version }}
       ref: ${{ needs.prepare.outputs.nightly_branch }}
-      include-cairols: ${{ !!inputs.include-cairols }}
-      include-stwo: ${{ !!inputs.include-stwo }}
-      include-lint: ${{ !!inputs.include-lint }}
+      full-verify: ${{ !inputs.is_dev }}
+      include-cairols: ${{ !contains(inputs.include-cairols, 'false') }}
+      include-stwo: ${{ !contains(inputs.include-stwo, 'false') }}
+      include-lint: ${{ !contains(inputs.include-lint, 'false') }}
 
   upload:
     runs-on: ubuntu-latest
