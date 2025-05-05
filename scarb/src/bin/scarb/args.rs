@@ -539,6 +539,10 @@ pub struct LintArgs {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
+    /// Comma separated list of target names to compile.
+    #[arg(long, value_delimiter = ',', env = "SCARB_TARGET_NAMES")]
+    pub target_names: Vec<String>,
+
     /// Should lint the tests.
     #[arg(short, long, default_value_t = false)]
     pub test: bool,
