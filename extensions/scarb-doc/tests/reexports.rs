@@ -127,3 +127,39 @@ fn test_reexports() {
         .expected("./data/json_reexports.json")
         .assert_files_match();
 }
+
+#[test]
+fn test_reexports_merged_modules() {
+    let root_dir = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello_world")
+        .lib_cairo(indoc! {r#"
+                pub mod Alejandro {
+                   pub use crate::Rodrigo;
+                }
+                
+                pub mod Isabella {
+                  pub use crate::Rodrigo::Mariana;
+                }
+                
+                mod Rodrigo {
+                  struct Mariana {}
+                  struct Vicente {}
+                  pub mod Valentina {}
+                }
+          "#})
+        .build(&root_dir);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args(["--output-format", "json"])
+        .current_dir(&root_dir)
+        .assert()
+        .success();
+
+    JsonTargetChecker::default()
+        .actual(&root_dir.path().join("target/doc/output.json"))
+        .expected("./data/json_reexports_merged_module.json")
+        .assert_files_match();
+}
