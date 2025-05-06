@@ -20,7 +20,6 @@ pub fn run(args: BuildArgs, config: &Config) -> Result<()> {
         args.test,
         args.target_names,
         args.target_kinds,
-        !args.no_prebuilt_proc_macros,
     )?;
     ops::check(packages, opts, &ws)
 }

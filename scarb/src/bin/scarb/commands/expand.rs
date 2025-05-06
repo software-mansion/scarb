@@ -17,7 +17,6 @@ pub fn run(args: ExpandArgs, config: &Config) -> Result<()> {
         target_name: args.target_name.map(|n| n.to_smolstr()),
         target_kind: args.target_kind.map(TargetKind::try_new).transpose()?,
         emit: args.emit.map(|e| e.into()),
-        load_prebuilt_macros: !args.no_prebuilt_proc_macros,
     };
     ops::expand(package, opts, &ws)
 }

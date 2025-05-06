@@ -35,7 +35,6 @@ pub struct LintOptions {
     pub ignore_cairo_version: bool,
     pub features: FeaturesOpts,
     pub deny_warnings: bool,
-    pub load_prebuilt_macros: bool,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -50,7 +49,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         ws,
         CompilationUnitsOpts {
             ignore_cairo_version: opts.ignore_cairo_version,
-            load_prebuilt_macros: true,
+            load_prebuilt_macros: ws.config().load_prebuilt_proc_macros(),
         },
     )?;
 

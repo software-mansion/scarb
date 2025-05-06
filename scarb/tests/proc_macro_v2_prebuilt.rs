@@ -173,8 +173,8 @@ fn compile_valid_prebuilt_disallowed_by_flag() {
     builder("a").build(&t.child("a"));
     WorkspaceBuilder::start().add_member("a").build(&t);
     Scarb::quick_snapbox()
-        .arg("build")
         .arg("--no-prebuilt-proc-macros")
+        .arg("build")
         // Disable output from Cargo.
         .env("CARGO_TERM_QUIET", "true")
         .current_dir(&t)

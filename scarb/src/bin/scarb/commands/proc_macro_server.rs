@@ -1,4 +1,3 @@
-use crate::args::ProcMacroServerArgs;
 use anyhow::Result;
 use itertools::Itertools;
 use scarb::compiler::plugin::collection::WorkspaceProcMacros;
@@ -10,7 +9,7 @@ use scarb::{
 };
 
 #[tracing::instrument(skip_all, level = "info")]
-pub fn run(args: ProcMacroServerArgs, config: &Config) -> Result<()> {
+pub fn run(config: &Config) -> Result<()> {
     let ws = ops::read_workspace(config.manifest_path(), config)?;
     let resolve = ops::resolve_workspace(&ws)?;
     let compilation_units = ops::generate_compilation_units(
@@ -22,7 +21,7 @@ pub fn run(args: ProcMacroServerArgs, config: &Config) -> Result<()> {
         &ws,
         CompilationUnitsOpts {
             ignore_cairo_version: true,
-            load_prebuilt_macros: !args.no_prebuilt_proc_macros,
+            load_prebuilt_macros: config.load_prebuilt_proc_macros(),
         },
     )?;
 

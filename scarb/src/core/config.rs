@@ -48,6 +48,7 @@ pub struct Config {
     tokio_handle: OnceCell<Handle>,
     profile: Profile,
     http_client: OnceCell<reqwest::Client>,
+    load_prebuilt_proc_macros: bool,
 }
 
 impl Config {
@@ -93,6 +94,7 @@ impl Config {
             compilers,
             cairo_plugins: compiler_plugins,
             proc_macro_repository: ProcMacroRepository::new(b.load_proc_macros),
+            load_prebuilt_proc_macros: b.load_prebuilt_proc_macros,
             custom_source_patches: b.custom_source_patches,
             tokio_runtime: OnceCell::new(),
             tokio_handle,
@@ -296,6 +298,11 @@ impl Config {
         );
         self.http()
     }
+
+    /// Determines whether the `Config` allows loading of prebuilt procedural macros.
+    pub fn load_prebuilt_proc_macros(&self) -> bool {
+        self.load_prebuilt_proc_macros
+    }
 }
 
 #[derive(Debug)]
@@ -315,6 +322,7 @@ pub struct ConfigBuilder {
     tokio_handle: Option<Handle>,
     profile: Option<Profile>,
     load_proc_macros: bool,
+    load_prebuilt_proc_macros: bool,
 }
 
 impl ConfigBuilder {
@@ -335,6 +343,7 @@ impl ConfigBuilder {
             tokio_handle: None,
             profile: None,
             load_proc_macros: true,
+            load_prebuilt_proc_macros: true,
         }
     }
 
@@ -421,6 +430,11 @@ impl ConfigBuilder {
 
     pub fn load_proc_macros(mut self, load_proc_macros: bool) -> Self {
         self.load_proc_macros = load_proc_macros;
+        self
+    }
+
+    pub fn load_prebuilt_proc_macros(mut self, load_prebuilt_proc_macros: bool) -> Self {
+        self.load_prebuilt_proc_macros = load_prebuilt_proc_macros;
         self
     }
 }

@@ -26,7 +26,6 @@ fn do_lint(args: LintArgs, config: &Config) -> Result<()> {
             ignore_cairo_version: args.ignore_cairo_version,
             features: args.features.try_into()?,
             deny_warnings: args.deny_warnings,
-            load_prebuilt_macros: !args.no_prebuilt_proc_macros,
         },
         &ws,
     )

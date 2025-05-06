@@ -47,7 +47,6 @@ pub struct PackageOpts {
     pub check_metadata: bool,
     pub features: ops::FeaturesOpts,
     pub ignore_cairo_version: bool,
-    pub load_prebuilt_macros: bool,
 }
 
 /// A listing of files to include in the archive, without actually building it yet.
@@ -196,7 +195,6 @@ fn package_one_impl(
             ws,
             opts.features.clone(),
             opts.ignore_cairo_version,
-            opts.load_prebuilt_macros,
         )
         .context("failed to verify package tarball")?
     } else {
@@ -416,7 +414,6 @@ fn run_verify(
     ws: &Workspace<'_>,
     features: ops::FeaturesOpts,
     ignore_cairo_version: bool,
-    load_prebuilt_macros: bool,
 ) -> Result<FileLockGuard> {
     ws.config()
         .ui()
@@ -441,7 +438,6 @@ fn run_verify(
             include_target_names: Vec::new(),
             features,
             ignore_cairo_version,
-            load_prebuilt_macros,
         },
         &ws,
     )?;

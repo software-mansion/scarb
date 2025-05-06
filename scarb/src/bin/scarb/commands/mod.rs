@@ -51,7 +51,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         Metadata(args) => metadata::run(args, config),
         New(args) => new::run(args, config),
         Package(args) => package::run(args, config),
-        ProcMacroServer(args) => proc_macro_server::run(args, config),
+        ProcMacroServer => proc_macro_server::run(config),
         Publish(args) => publish::run(args, config),
         Lint(args) => lint::run(args, config),
         Remove(args) => remove::run(args, config),
