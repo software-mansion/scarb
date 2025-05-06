@@ -61,6 +61,7 @@ pub fn generate_modules_summary_content(
         impls,
         extern_types,
         extern_functions,
+        ..
     } = &module;
 
     top_level_items.modules.extend(submodules);
