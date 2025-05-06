@@ -3,7 +3,7 @@ use cairo_lang_defs::db::{DefsDatabase, DefsGroup, init_defs_group, try_ext_as_v
 use cairo_lang_doc::db::{DocDatabase, DocGroup};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{ExternalFiles, FilesDatabase, FilesGroup, init_files_group};
-use cairo_lang_filesystem::ids::VirtualFile;
+use cairo_lang_filesystem::ids::{CrateLongId, VirtualFile};
 use cairo_lang_lowering::db::{LoweringDatabase, LoweringGroup};
 use cairo_lang_parser::db::{ParserDatabase, ParserGroup};
 use cairo_lang_semantic::db::{
@@ -16,6 +16,8 @@ use cairo_lang_syntax::node::db::{SyntaxDatabase, SyntaxGroup};
 use cairo_lang_utils::Upcast;
 
 use salsa;
+use scarb_metadata::CompilationUnitComponentMetadata;
+use smol_str::ToSmolStr;
 
 /// The Cairo compiler Salsa database tailored for scarb-doc usage.
 #[salsa::database(
@@ -32,13 +34,10 @@ pub struct ScarbDocDatabase {
 }
 
 impl ScarbDocDatabase {
-    pub fn new(project_config: Option<ProjectConfig>) -> Self {
-        let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
-            .into_iter()
-            .fold(PluginSuite::default(), |mut acc, suite| {
-                acc.add(suite);
-                acc
-            });
+    pub fn new(
+        project_config: ProjectConfig,
+        crates_with_starknet: Vec<&CompilationUnitComponentMetadata>,
+    ) -> Self {
         let mut db = Self {
             storage: Default::default(),
         };
@@ -49,12 +48,11 @@ impl ScarbDocDatabase {
 
         db.set_cfg_set(Self::initial_cfg_set().into());
 
-        let interned_plugin_suite = db.intern_plugin_suite(plugin_suite);
+        let interned_plugin_suite = db.intern_plugin_suite(get_default_plugin_suite());
         db.set_default_plugins_from_suite(interned_plugin_suite);
 
-        if let Some(config) = project_config {
-            db.apply_project_config(config);
-        }
+        db.apply_project_config(project_config);
+        db.apply_starknet_plugin(crates_with_starknet);
 
         db
     }
@@ -65,6 +63,23 @@ impl ScarbDocDatabase {
 
     fn apply_project_config(&mut self, config: ProjectConfig) {
         update_crate_roots_from_project_config(self, &config);
+    }
+
+    fn apply_starknet_plugin(&mut self, components: Vec<&CompilationUnitComponentMetadata>) {
+        for component in components {
+            let crate_id = self.intern_crate(CrateLongId::Real {
+                name: component.name.to_smolstr(),
+                discriminator: component.discriminator.as_ref().map(ToSmolStr::to_smolstr),
+            });
+            let plugin_suite = [get_default_plugin_suite(), starknet_plugin_suite()]
+                .into_iter()
+                .fold(PluginSuite::default(), |mut acc, suite| {
+                    acc.add(suite);
+                    acc
+                });
+            let interned_suite = self.intern_plugin_suite(plugin_suite);
+            self.set_override_crate_plugins_from_suite(crate_id, interned_suite);
+        }
     }
 }
 
