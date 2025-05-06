@@ -1,5 +1,7 @@
 use crate::db::ScarbDocDatabase;
-use crate::metadata::compilation::{get_project_config, get_relevant_compilation_unit};
+use crate::metadata::compilation::{
+    crates_with_starknet, get_project_config, get_relevant_compilation_unit,
+};
 use anyhow::Result;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
@@ -61,8 +63,9 @@ pub fn generate_packages_information(
             get_relevant_compilation_unit(metadata, package_metadata.id.clone())?;
         let project_config =
             get_project_config(metadata, package_metadata, compilation_unit_metadata)?;
+        let crates_with_starknet = crates_with_starknet(metadata, compilation_unit_metadata);
 
-        let db = ScarbDocDatabase::new(Some(project_config));
+        let db = ScarbDocDatabase::new(project_config, crates_with_starknet);
 
         let main_component = compilation_unit_metadata
             .components
