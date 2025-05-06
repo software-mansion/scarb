@@ -27,7 +27,10 @@ impl ProcMacroRepository {
     /// Returns the [`ProcMacroInstance`] representing the procedural macros defined in the [`Package`].
     /// Loads the underlying shared library if it has not been loaded yet.
     pub fn get_or_load(&self, package: Package, config: &Config) -> Result<Arc<ProcMacroInstance>> {
-        ensure!(self.load_proc_macros, "procedural macros are disallowed");
+        ensure!(
+            self.load_proc_macros,
+            "procedural macros are disallowed with `--no-proc-macros` flag"
+        );
 
         let Ok(macros) = self.macros.read() else {
             bail!("could not get a read access to the ProcMacroRepository");

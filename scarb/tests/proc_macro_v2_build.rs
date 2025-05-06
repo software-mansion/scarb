@@ -499,6 +499,6 @@ fn can_disallow_loading_macros() {
         .failure()
         .stdout_matches(indoc! {r#"
             [..]Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: procedural macros are disallowed
+            error: procedural macros are disallowed with `--no-proc-macros` flag
         "#});
 }
