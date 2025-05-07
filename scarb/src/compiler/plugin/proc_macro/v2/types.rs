@@ -58,6 +58,14 @@ impl<'a> TokenStreamBuilder<'a> {
     }
 }
 
+impl Extend<SyntaxNode> for TokenStreamBuilder<'_> {
+    fn extend<T: IntoIterator<Item = SyntaxNode>>(&mut self, iter: T) {
+        for node in iter {
+            self.add_node(node);
+        }
+    }
+}
+
 fn whitespace_prefix_len(s: &str) -> u32 {
     s.chars().take_while(|c| c.is_whitespace()).count() as u32
 }

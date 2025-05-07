@@ -99,7 +99,7 @@ impl ProcMacroHostPlugin {
         })
     }
 
-    fn find_expansion(&self, query: &ExpansionQuery) -> Option<ProcMacroId> {
+    pub(crate) fn find_expansion(&self, query: &ExpansionQuery) -> Option<ProcMacroId> {
         let instance = self.find_instance_with_expansion(query)?;
         let expansion = instance.find_expansion(query)?;
         Some(ProcMacroId::new(instance.package_id(), expansion.clone()))
