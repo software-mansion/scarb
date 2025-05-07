@@ -6422,6 +6422,7 @@ dependencies = [
  "anyhow",
  "clap",
  "clap_complete",
+ "indoc",
  "scarb",
  "scarb-cairo-run",
  "scarb-cairo-test",
@@ -6429,6 +6430,7 @@ dependencies = [
  "scarb-execute",
  "scarb-mdbook",
  "scarb-prove",
+ "scarb-test-support",
  "scarb-ui",
  "scarb-verify",
 ]
