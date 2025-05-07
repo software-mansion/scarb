@@ -1,10 +1,12 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::str::FromStr;
 
 use anyhow::{Context, Result, anyhow};
+use itertools::Itertools;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use smallvec::SmallVec;
 use toml_edit::DocumentMut;
 use typed_builder::TypedBuilder;
 
@@ -23,12 +25,44 @@ pub enum LockVersion {
 
 #[derive(Debug, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[serde(from = "serdex::Lockfile", into = "serdex::Lockfile")]
 pub struct Lockfile {
-    pub version: LockVersion,
-    #[serde(rename = "package")]
-    #[serde(default = "BTreeSet::new")]
-    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
-    pub packages: BTreeSet<PackageLock>,
+    version: LockVersion,
+    // Note that the current compilation model will not allow Scarb to emit lock files with multiple
+    // entries for the same package name. This structure allows this for the sake of future-proofing
+    // and being more defensive against lock files tinkered with by hand. Thus, we use `SmallVec`
+    // to optimise for the common case of a single entry only.
+    packages: BTreeMap<PackageName, SmallVec<[PackageLock; 1]>>,
+}
+
+mod serdex {
+    use crate::core::lockfile::{LockVersion, PackageLock};
+    use serde::{Deserialize, Serialize};
+    use std::collections::BTreeSet;
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Lockfile {
+        version: LockVersion,
+        #[serde(rename = "package")]
+        #[serde(default = "BTreeSet::new")]
+        #[serde(skip_serializing_if = "BTreeSet::is_empty")]
+        packages: BTreeSet<PackageLock>,
+    }
+
+    impl From<Lockfile> for super::Lockfile {
+        fn from(value: Lockfile) -> Self {
+            Self::new(value.packages).with_version(value.version)
+        }
+    }
+
+    impl From<super::Lockfile> for Lockfile {
+        fn from(value: super::Lockfile) -> Self {
+            Self {
+                version: value.version,
+                packages: value.packages.into_values().flatten().collect(),
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize, TypedBuilder)]
@@ -57,10 +91,22 @@ fn skip_path_source_id(sid: &Option<SourceId>) -> bool {
 
 impl Lockfile {
     pub fn new(packages: impl IntoIterator<Item = PackageLock>) -> Self {
+        let packages = packages
+            .into_iter()
+            .map(|lock| (lock.name.clone(), lock))
+            .chunk_by(|(name, _)| name.clone());
+        let packages = packages
+            .into_iter()
+            .map(|(name, locks)| (name, locks.into_iter().map(|(_, lock)| lock).collect()))
+            .collect();
         Self {
             version: Default::default(),
-            packages: packages.into_iter().collect(),
+            packages,
         }
+    }
+
+    fn with_version(self, version: LockVersion) -> Self {
+        Self { version, ..self }
     }
 
     pub fn from_resolve(resolve: &Resolve) -> Self {
@@ -87,13 +133,24 @@ impl Lockfile {
     }
 
     pub fn packages(&self) -> impl Iterator<Item = &PackageLock> {
-        self.packages.iter()
+        self.packages.values().flatten()
     }
 
-    pub fn packages_matching(&self, dependency: ManifestDependency) -> Option<Result<PackageId>> {
-        self.packages()
-            .filter(|p| dependency.matches_name_and_version(&p.name, &p.version))
-            .find(|p| {
+    pub fn packages_by_name<'a>(
+        &'a self,
+        name: &PackageName,
+    ) -> Box<dyn Iterator<Item = &'a PackageLock> + 'a> {
+        if let Some(locks) = self.packages.get(name) {
+            Box::new(locks.iter())
+        } else {
+            Box::new(std::iter::empty())
+        }
+    }
+
+    pub fn package_matching(&self, dependency: ManifestDependency) -> Option<Result<PackageId>> {
+        self.packages_by_name(&dependency.name)
+            .find(|p| dependency.matches_name_and_version(&p.name, &p.version))
+            .filter(|p| {
                 p.source
                     .map(|sid| sid.can_lock_source_id(dependency.source_id))
                     // No locking occurs on path sources.

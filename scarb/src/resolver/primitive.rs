@@ -71,7 +71,7 @@ pub async fn resolve(
             for dep in summary.filtered_full_dependencies(dep_filter) {
                 let dep = rewrite_dependency_source_id(registry, &package_id, dep).await?;
 
-                let locked_package_id = lockfile.packages_matching(dep.clone());
+                let locked_package_id = lockfile.package_matching(dep.clone());
                 let dep = if let Some(locked_package_id) = locked_package_id {
                     rewrite_locked_dependency(dep.clone(), locked_package_id?)
                 } else {

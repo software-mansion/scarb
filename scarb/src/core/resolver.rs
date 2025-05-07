@@ -196,7 +196,7 @@ impl Resolve {
     /// In all of these cases, we want to report an error to indicate that something is awry.
     /// Normal execution (esp. just using the default registry) should never run into this.
     pub fn check_checksums(&self, lockfile: &Lockfile) -> Result<()> {
-        for package_lock in &lockfile.packages {
+        for package_lock in lockfile.packages() {
             let (locked, source_id) = match (package_lock.checksum.as_ref(), package_lock.source) {
                 (None, None) => continue,
                 (Some(_), None) => {

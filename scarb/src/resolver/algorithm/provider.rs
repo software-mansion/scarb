@@ -275,7 +275,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
             .collect_vec();
 
         // Choose version.
-        let locked = self.lockfile.packages().find(|p| {
+        let locked = self.lockfile.packages_by_name(&package.name).find(|p| {
             p.name == package.name
                 && range.contains(&p.version)
                 && p.source
@@ -292,7 +292,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
                     .find(|summary| {
                         summary.package_id.name == locked.name
                             && summary.package_id.version == locked.version
-                            && summary.package_id.source_id == locked.source.unwrap()
+                            && summary.package_id.source_id == locked.source.expect("source set to `None` is filtered out when searching the lockfile")
                     })
                     .cloned()
             })
@@ -399,7 +399,7 @@ pub fn lock_dependency(
         return Ok(dep);
     }
     lockfile
-        .packages_matching(dep.clone())
+        .package_matching(dep.clone())
         .map(|locked_package_id| Ok(rewrite_locked_dependency(dep.clone(), locked_package_id?)))
         .unwrap_or(Ok(dep))
 }
