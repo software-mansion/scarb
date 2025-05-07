@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::{Command, CommandFactory};
 use clap_complete::{Shell as ClapShell, generate};
 use scarb::args::ScarbArgs;
-use scarb::ops::list_external_subcommands;
+use scarb::ops::{SubcommandDirs, list_external_subcommands};
 use scarb_cairo_run::args as cairo_run_args;
 use scarb_cairo_test::args as cairo_test_args;
 use scarb_doc::args as doc_args;
@@ -26,7 +26,8 @@ pub fn main_inner(args: Args) -> Result<()> {
 fn build_command() -> Result<Command> {
     let mut cmd = ScarbArgs::command();
 
-    let external_subcommands = list_external_subcommands(None)?;
+    let dirs = SubcommandDirs::new(None)?;
+    let external_subcommands = list_external_subcommands(&dirs)?;
     for external_cmd in external_subcommands {
         // Generate completions only for the bundled subcommands
         let subcommand = if external_cmd.is_bundled {

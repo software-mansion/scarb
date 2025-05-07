@@ -1,6 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::ffi::OsString;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{env, fs, iter};
 
@@ -20,6 +21,48 @@ use crate::process::exec_replace;
 use crate::subcommands::{EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV, get_env_vars};
 use itertools::Itertools;
 
+#[derive(Debug)]
+pub struct SubcommandDirs {
+    pub scarb_exe_dir: PathBuf,
+    pub path_dirs: Vec<PathBuf>,
+}
+
+impl SubcommandDirs {
+    pub fn new(path_dirs_override: Option<Vec<PathBuf>>) -> Result<Self> {
+        let pd = get_project_dirs()?;
+        let path_dirs = resolve_path_dirs(path_dirs_override, &pd);
+        let scarb_exe_dir = get_app_exe_path(&path_dirs)?
+            .parent()
+            .expect("Scarb binary path should always have parent directory.")
+            .to_path_buf();
+        Ok(Self {
+            scarb_exe_dir,
+            path_dirs,
+        })
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Path> {
+        iter::once(self.scarb_exe_dir.as_path()).chain(self.path_dirs.iter().map(|p| p.as_path()))
+    }
+}
+
+impl TryFrom<&Config> for SubcommandDirs {
+    type Error = anyhow::Error;
+
+    fn try_from(config: &Config) -> Result<Self, Self::Error> {
+        let path_dirs = config.dirs().path_dirs.clone();
+        let scarb_exe_dir = config
+            .app_exe()?
+            .parent()
+            .expect("Scarb binary path should always have parent directory.")
+            .to_path_buf();
+        Ok(Self {
+            scarb_exe_dir,
+            path_dirs,
+        })
+    }
+}
+
 /// Prepare environment and execute an external subcommand.
 ///
 /// NOTE: This may replace the current process.
@@ -31,7 +74,8 @@ pub fn execute_external_subcommand(
     config: &Config,
     target_dir: Option<Utf8PathBuf>,
 ) -> Result<()> {
-    let Some(cmd) = find_external_subcommand(cmd, config)? else {
+    let subcommand_dirs = SubcommandDirs::try_from(config)?;
+    let Some(cmd) = find_external_subcommand(cmd, &subcommand_dirs)? else {
         // TODO(mkaput): Reuse clap's no such command message logic here.
         bail!("no such command: `{cmd}`");
     };
@@ -90,7 +134,7 @@ pub fn execute_test_subcommand(
 ///
 /// # Search order
 ///
-/// This function searches for an executable in the following locations, in order:
+/// This function (unless path dirs overrides are specified) searches for an executable in the following locations, in order:
 /// 1. The directory containing the Scarb binary.
 /// 2. The directories in the `PATH` environment variable.
 /// 3. `{SCARB LOCAL DATA DIR}/bin`.
@@ -100,18 +144,13 @@ pub fn execute_test_subcommand(
 /// that would cause more harm than good in practice. For example, if the user is working on a custom build of Scarb,
 /// but has another one installed globally (for example via ASDF), then their custom build would use global extensions
 /// instead of the ones it was built with, which would be very confusing.
-fn find_external_subcommand(cmd: &str, config: &Config) -> Result<Option<PathBuf>> {
+fn find_external_subcommand(
+    cmd: &str,
+    subcommand_dirs: &SubcommandDirs,
+) -> Result<Option<PathBuf>> {
     let command_exe = format!("{}{}{}", EXTERNAL_CMD_PREFIX, cmd, env::consts::EXE_SUFFIX);
-
-    let scarb_dir = config
-        .app_exe()?
-        .parent()
-        .expect("Scarb binary path should always have parent directory.");
-
-    let path_dirs = config.dirs().path_dirs.iter().map(AsRef::as_ref);
-
-    Ok(iter::once(scarb_dir)
-        .chain(path_dirs)
+    Ok(subcommand_dirs
+        .iter()
         .map(|dir| dir.join(&command_exe))
         .find(|file| is_executable(file)))
 }
@@ -131,7 +170,7 @@ pub struct ExternalSubcommand {
 ///
 /// # Search order
 ///
-/// This function scans, in order (unless `path_dirs_override` is specified):
+/// This function (unless path dirs overrides are specified) scans the following locations, in order:
 /// 1. The directory containing the Scarb binary.
 /// 2. The directories in the `PATH` environment variable.
 /// 3. `{SCARB LOCAL DATA DIR}/bin`.
@@ -148,30 +187,26 @@ pub struct ExternalSubcommand {
 /// but has another one installed globally (for example via ASDF), then their custom build would use global extensions
 /// instead of the ones it was built with, which would be very confusing.
 pub fn list_external_subcommands(
-    path_dirs_override: Option<Vec<PathBuf>>,
+    subcommand_dirs: &SubcommandDirs,
 ) -> Result<Vec<ExternalSubcommand>> {
-    let pd = get_project_dirs()?;
-    let path_dirs = resolve_path_dirs(path_dirs_override, &pd);
-    let scarb_exe = get_app_exe_path(&path_dirs)?;
-    let scarb_dir = scarb_exe
-        .parent()
-        .expect("Scarb binary path should always have parent directory.");
+    let prefix = EXTERNAL_CMD_PREFIX;
+    let suffix = env::consts::EXE_SUFFIX;
 
-    let scan_dirs = iter::once(scarb_dir).chain(path_dirs.iter().map(|p| p.as_path()));
-
-    let subcommands = scan_dirs
+    let scarb_dir = &subcommand_dirs.scarb_exe_dir;
+    let subcommands = subcommand_dirs
+        .iter()
         .filter_map(|dir| fs::read_dir(dir).ok())
         .flat_map(|entries| entries.flatten())
         .filter(|entry| is_executable(entry.path()))
         .filter_map(|entry| {
             let path = entry.path();
             let basename = path.file_name()?.to_str()?;
-            if !basename.starts_with(EXTERNAL_CMD_PREFIX) || !basename.ends_with(env::consts::EXE_SUFFIX) {
+            if !basename.starts_with(prefix) || !basename.ends_with(suffix) {
                 return None;
             }
             let cmd_name = basename
-                .trim_start_matches(EXTERNAL_CMD_PREFIX)
-                .trim_end_matches(env::consts::EXE_SUFFIX)
+                .trim_start_matches(prefix)
+                .trim_end_matches(suffix)
                 .to_string();
             if cmd_name.is_empty() {
                 return None;

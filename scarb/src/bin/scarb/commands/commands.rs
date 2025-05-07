@@ -1,13 +1,12 @@
 use std::collections::BTreeMap;
+use std::fmt;
 use std::path::PathBuf;
-use std::{env, fmt, fs};
 
 use anyhow::Result;
 use serde::{Serialize, Serializer};
 
-use scarb::EXTERNAL_CMD_PREFIX;
 use scarb::core::Config;
-use scarb::process::is_executable;
+use scarb::ops::{SubcommandDirs, list_external_subcommands};
 use scarb_ui::Message;
 
 use scarb::args::ScarbArgs;
@@ -48,36 +47,18 @@ impl Message for CommandsList {
 }
 
 fn list_commands(config: &Config, builtins: &BTreeMap<String, Option<String>>) -> CommandsList {
-    let prefix = EXTERNAL_CMD_PREFIX;
-    let suffix = env::consts::EXE_SUFFIX;
-
-    // Directory containing the Scarb executable.
-    let scarb_exe_dir = config
-        .app_exe()
-        .ok()
-        .and_then(|p| p.parent())
-        .map(PathBuf::from);
     let mut commands = BTreeMap::new();
-    for dir in config.dirs().path_dirs.iter().chain(scarb_exe_dir.iter()) {
-        let Ok(entries) = fs::read_dir(dir) else {
-            continue;
-        };
-        for entry in entries.filter_map(|e| e.ok()) {
-            let path = entry.path();
-            let Some(filename) = path.file_name().and_then(|s| s.to_str()) else {
-                continue;
-            };
-            if !filename.starts_with(prefix) || !filename.ends_with(suffix) {
-                continue;
-            }
-            if is_executable(entry.path()) {
-                let end = filename.len() - suffix.len();
-                commands.insert(
-                    filename[prefix.len()..end].to_string(),
-                    CommandInfo::External { path: path.clone() },
-                );
-            }
-        }
+
+    let dirs = SubcommandDirs::try_from(config).expect("Failed to get subcommand directories");
+    for external_command in
+        list_external_subcommands(&dirs).expect("Failed to resolve external subcommands")
+    {
+        commands.insert(
+            external_command.name.clone(),
+            CommandInfo::External {
+                path: external_command.path.clone(),
+            },
+        );
     }
 
     // In case of name conflict, builtin commands take precedence.
