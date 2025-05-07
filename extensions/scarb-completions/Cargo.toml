@@ -16,3 +16,7 @@ scarb-cairo-run = { path = "../scarb-cairo-run" }
 scarb-cairo-test = { path = "../scarb-cairo-test" }
 scarb-doc = { path = "../scarb-doc" }
 scarb-mdbook = { path = "../scarb-mdbook" }
+
+[dev-dependencies]
+scarb-test-support = { path = "../../utils/scarb-test-support" }
+indoc.workspace = true
