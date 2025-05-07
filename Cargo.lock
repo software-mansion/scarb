@@ -6405,7 +6405,6 @@ dependencies = [
  "cairo-lang-test-runner",
  "camino",
  "clap",
- "clap_complete",
  "indoc",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
