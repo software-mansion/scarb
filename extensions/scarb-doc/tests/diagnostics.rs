@@ -107,6 +107,7 @@ fn test_diagnostics_error() {
             }
           
         "#})
+        .dep_starknet()
         .build(&t);
 
     let output = Scarb::quick_snapbox()

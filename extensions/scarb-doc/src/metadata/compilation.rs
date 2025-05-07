@@ -184,3 +184,30 @@ fn build_cfg_set(cfg: &[scarb_metadata::Cfg]) -> Result<CfgSet, CfgParseError> {
         })
         .collect::<Result<CfgSet, CfgParseError>>()
 }
+
+pub fn crates_with_starknet<'a>(
+    metadata: &'a Metadata,
+    unit: &'a CompilationUnitMetadata,
+) -> Vec<&'a CompilationUnitComponentMetadata> {
+    let starknet_package = metadata.packages.iter().find(|p| p.name == "starknet");
+    let starknet_component_id = starknet_package.and_then(|starknet_package| {
+        unit.cairo_plugins
+            .iter()
+            .find(|p| p.package == starknet_package.id)
+            .and_then(|p| p.component_dependency_id.clone())
+    });
+    if let Some(starknet_component_id) = starknet_component_id {
+        unit.components
+            .iter()
+            .filter(|component| {
+                if let Some(deps) = component.dependencies.as_ref() {
+                    deps.iter().any(|dep| dep.id == starknet_component_id)
+                } else {
+                    false
+                }
+            })
+            .collect_vec()
+    } else {
+        Vec::new()
+    }
+}
