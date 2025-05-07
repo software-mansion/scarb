@@ -65,18 +65,18 @@ fn generates_completions_bash() {
             "Missing command: {cmd}"
         );
     }
-    for opt in GLOBAL_OPTIONS {
-        let line = format!("{}{}", opt, ")");
-        assert!(
-            lines.iter().any(|l| l.trim().starts_with(&line)),
-            "Missing option: {opt}"
-        );
-    }
     for ext in EXTERNAL_COMMANDS {
         let line = format!("scarb,{}{}", ext, ")");
         assert!(
             lines.iter().any(|l| l.trim().starts_with(&line)),
             "Missing external command: {ext}"
+        );
+    }
+    for opt in GLOBAL_OPTIONS {
+        let line = format!("{}{}", opt, ")");
+        assert!(
+            lines.iter().any(|l| l.trim().starts_with(&line)),
+            "Missing option: {opt}"
         );
     }
 }
@@ -101,18 +101,18 @@ fn generates_completions_zsh() {
             "Missing command: {cmd}"
         );
     }
-    for opt in GLOBAL_OPTIONS {
-        let line = format!("'{}=", opt);
-        assert!(
-            lines.iter().any(|l| l.trim().starts_with(&line)),
-            "Missing option: {opt}"
-        );
-    }
     for ext in EXTERNAL_COMMANDS {
         let line = format!("({})", ext);
         assert!(
             lines.iter().any(|l| l.trim().starts_with(&line)),
             "Missing external command: {ext}"
+        );
+    }
+    for opt in GLOBAL_OPTIONS {
+        let line = format!("'{}=", opt);
+        assert!(
+            lines.iter().any(|l| l.trim().starts_with(&line)),
+            "Missing option: {opt}"
         );
     }
 }
@@ -129,7 +129,7 @@ fn generates_completions_powershell() {
     let lines: Vec<&str> = stdout.lines().collect();
 
     assert!(lines.iter().any(|l| {
-        l.contains("Register-ArgumentCompleter -Native -CommandName 'scarb' -ScriptBlock {")
+        l.starts_with("Register-ArgumentCompleter -Native -CommandName 'scarb' -ScriptBlock {")
     }));
 
     for cmd in BUILTIN_COMMANDS {
@@ -139,18 +139,18 @@ fn generates_completions_powershell() {
             "Missing command: {cmd}"
         );
     }
-    for opt in GLOBAL_OPTIONS {
-        let line = format!("[CompletionResult]::new('{}'", opt);
-        assert!(
-            lines.iter().any(|l| l.trim().starts_with(&line)),
-            "Missing option: {opt}"
-        );
-    }
     for ext in EXTERNAL_COMMANDS {
         let line = format!("[CompletionResult]::new('{}'", ext);
         assert!(
             lines.iter().any(|l| l.trim().starts_with(&line)),
             "Missing external command: {ext}"
+        );
+    }
+    for opt in GLOBAL_OPTIONS {
+        let line = format!("[CompletionResult]::new('{}'", opt);
+        assert!(
+            lines.iter().any(|l| l.trim().starts_with(&line)),
+            "Missing option: {opt}"
         );
     }
 }
@@ -181,16 +181,6 @@ fn generates_completions_fish() {
             "Missing command: {cmd}"
         );
     }
-    for opt in GLOBAL_OPTIONS {
-        let line = format!(
-            "complete -c scarb -n \"__fish_scarb_needs_command\" -l {}",
-            opt.trim_start_matches('-')
-        );
-        assert!(
-            lines.iter().any(|l| l.trim().starts_with(&line)),
-            "Missing option: {opt}"
-        );
-    }
     for ext in EXTERNAL_COMMANDS {
         let line = format!(
             "complete -c scarb -n \"__fish_scarb_needs_command\" -f -a \"{}\"",
@@ -199,6 +189,16 @@ fn generates_completions_fish() {
         assert!(
             lines.iter().any(|l| l.trim().starts_with(&line)),
             "Missing external command: {ext}"
+        );
+    }
+    for opt in GLOBAL_OPTIONS {
+        let line = format!(
+            "complete -c scarb -n \"__fish_scarb_needs_command\" -l {}",
+            opt.trim_start_matches('-')
+        );
+        assert!(
+            lines.iter().any(|l| l.trim().starts_with(&line)),
+            "Missing option: {opt}"
         );
     }
 }
@@ -217,7 +217,7 @@ fn generates_completions_elvish() {
     assert!(
         lines
             .iter()
-            .any(|l| l.contains("set edit:completion:arg-completer[scarb] = {|@words|"))
+            .any(|l| l.starts_with("set edit:completion:arg-completer[scarb] = {|@words|"))
     );
 
     for cmd in BUILTIN_COMMANDS {
@@ -227,18 +227,18 @@ fn generates_completions_elvish() {
             "Missing command: {cmd}"
         );
     }
-    for opt in GLOBAL_OPTIONS {
-        let line = format!("cand {} ", opt);
-        assert!(
-            lines.iter().any(|l| l.trim().starts_with(&line)),
-            "Missing option: {opt}"
-        );
-    }
     for ext in EXTERNAL_COMMANDS {
         let line = format!("cand {} ", ext);
         assert!(
             lines.iter().any(|l| l.trim().starts_with(&line)),
             "Missing external command:f {ext}"
+        );
+    }
+    for opt in GLOBAL_OPTIONS {
+        let line = format!("cand {} ", opt);
+        assert!(
+            lines.iter().any(|l| l.trim().starts_with(&line)),
+            "Missing option: {opt}"
         );
     }
 }
