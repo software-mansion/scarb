@@ -50,7 +50,7 @@ pub struct AdditionalMetadata {
 const OUTPUT_DIR: &str = "doc";
 const JSON_OUTPUT_FILENAME: &str = "output.json";
 
-fn main_inner(args: Args, ui: Ui) -> Result<()> {
+pub fn main_inner(args: Args, ui: Ui) -> Result<()> {
     ensure!(
         !args.build || matches!(args.output_format, OutputFormat::Markdown),
         "`--build` is only supported for Markdown output format"
