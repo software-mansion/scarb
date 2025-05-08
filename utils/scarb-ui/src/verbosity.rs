@@ -1,14 +1,13 @@
+use anyhow::Result;
+use clap::ValueEnum;
 use std::env;
 use std::fmt::Display;
-use std::str::FromStr;
-
-use anyhow::{Result, bail};
 
 /// The requested verbosity of output.
 ///
 /// # Ordering
 /// [`Verbosity::Quiet`] < [`Verbosity::NoWarnings`] < [`Verbosity::Normal`] < [`Verbosity::Verbose`]
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(ValueEnum, Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Verbosity {
     /// Avoid printing anything to standard output.
     ///
@@ -40,21 +39,6 @@ impl Display for Verbosity {
     }
 }
 
-impl FromStr for Verbosity {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self> {
-        match s {
-            "quiet" => Ok(Verbosity::Quiet),
-            "no-warnings" => Ok(Verbosity::NoWarnings),
-            "normal" => Ok(Verbosity::Normal),
-            "verbose" => Ok(Verbosity::Verbose),
-            "" => bail!("empty string cannot be used as verbosity level"),
-            _ => bail!("invalid verbosity level: {s}"),
-        }
-    }
-}
-
 impl Verbosity {
     /// Get the verbosity level from the given environment variable.
     ///
@@ -62,7 +46,7 @@ impl Verbosity {
     /// See [`Verbosity`] variants documentation for valid values.
     pub fn from_env_var(env_var_name: &str) -> Result<Self> {
         let env_var = env::var(env_var_name)?;
-        Self::from_str(env_var.as_str())
+        Self::from_str(&env_var, true).map_err(|e| anyhow::anyhow!(e.to_string()))
     }
 
     /// Check if the verbosity level is the default one.
@@ -73,9 +57,9 @@ impl Verbosity {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use super::Verbosity;
+    use clap::ValueEnum;
+    use std::env;
 
     #[test]
     fn verbosity_ord() {
@@ -88,13 +72,22 @@ mod tests {
     #[test]
     fn verbosity_from_str() {
         use Verbosity::*;
-        assert_eq!(Quiet.to_string().parse::<Verbosity>().unwrap(), Quiet);
         assert_eq!(
-            NoWarnings.to_string().parse::<Verbosity>().unwrap(),
+            Verbosity::from_str(&Quiet.to_string(), true).unwrap(),
+            Quiet
+        );
+        assert_eq!(
+            Verbosity::from_str(&NoWarnings.to_string(), true).unwrap(),
             NoWarnings
         );
-        assert_eq!(Normal.to_string().parse::<Verbosity>().unwrap(), Normal);
-        assert_eq!(Verbose.to_string().parse::<Verbosity>().unwrap(), Verbose);
+        assert_eq!(
+            Verbosity::from_str(&Normal.to_string(), true).unwrap(),
+            Normal
+        );
+        assert_eq!(
+            Verbosity::from_str(&Verbose.to_string(), true).unwrap(),
+            Verbose
+        );
     }
 
     #[test]

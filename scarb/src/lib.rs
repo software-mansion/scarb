@@ -12,6 +12,7 @@ use camino::Utf8PathBuf;
 use std::sync::LazyLock;
 pub use subcommands::EXTERNAL_CMD_PREFIX;
 
+pub mod args;
 pub mod compiler;
 pub mod core;
 pub mod flock;
@@ -21,7 +22,7 @@ pub mod ops;
 pub mod process;
 mod resolver;
 mod sources;
-mod subcommands;
+pub mod subcommands;
 pub mod version;
 
 pub const SCARB_ENV: &str = "SCARB";

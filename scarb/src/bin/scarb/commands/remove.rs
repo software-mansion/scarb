@@ -4,7 +4,7 @@ use scarb::core::{Config, PackageName};
 use scarb::manifest_editor::{EditManifestOptions, Op, RemoveDependency};
 use scarb::{manifest_editor, ops};
 
-use crate::args::{RemoveArgs, RemoveSectionArgs};
+use scarb::args::{RemoveArgs, RemoveSectionArgs};
 use scarb::manifest_editor::DepType;
 
 #[tracing::instrument(skip_all, level = "info")]

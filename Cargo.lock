@@ -6415,6 +6415,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "scarb-completions"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "clap_complete",
+ "indoc",
+ "scarb",
+ "scarb-cairo-run",
+ "scarb-cairo-test",
+ "scarb-doc",
+ "scarb-execute",
+ "scarb-mdbook",
+ "scarb-prove",
+ "scarb-test-support",
+ "scarb-ui",
+ "scarb-verify",
+]
+
+[[package]]
 name = "scarb-doc"
 version = "2.11.4"
 dependencies = [

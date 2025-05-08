@@ -92,7 +92,7 @@ jobs:
         run: echo "CARGO=cross" >> $GITHUB_ENV
 
       - name: Build
-        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove --exclude scarb-verify ${{ !inputs.include-cairols && '--exclude scarb-cairo-language-server' || ''}} --no-default-features ${{ inputs.include-lint && '--features scarb/scarb-lint' || ''}}
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} --workspace --exclude scarb-prove --exclude scarb-verify --exclude scarb-completions ${{ !inputs.include-cairols && '--exclude scarb-cairo-language-server' || ''}} --no-default-features ${{ inputs.include-lint && '--features scarb/scarb-lint' || ''}}
 
       - uses: dtolnay/rust-toolchain@master
         if: inputs.include-stwo
@@ -111,7 +111,7 @@ jobs:
 
       - name: Build nightly crates
         if: inputs.include-stwo
-        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} -p scarb-prove -p scarb-verify
+        run: ${{ env.CARGO }} build --release --locked --target ${{ matrix.target }} -p scarb-prove -p scarb-verify -p scarb-completions
 
       - name: Create archive
         run: cargo xtask create-archive ${{ !inputs.include-cairols && '--skip-cairols' || '' }} ${{ !inputs.include-stwo && '--skip-stwo' || '' }}

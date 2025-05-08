@@ -6,8 +6,8 @@ use camino::Utf8PathBuf;
 use scarb::core::Config;
 use scarb::ops::{self, VersionControl};
 
-use crate::args::{InitArgs, TestRunner};
 use crate::interactive::get_or_ask_for_test_runner;
+use scarb::args::{InitArgs, TestRunner};
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: InitArgs, config: &Config) -> Result<()> {

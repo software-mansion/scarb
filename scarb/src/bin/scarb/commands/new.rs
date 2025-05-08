@@ -3,8 +3,8 @@ use anyhow::Result;
 use scarb::core::Config;
 use scarb::ops::{self, VersionControl};
 
-use crate::args::{NewArgs, TestRunner};
 use crate::interactive::get_or_ask_for_test_runner;
+use scarb::args::{NewArgs, TestRunner};
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: NewArgs, config: &Config) -> Result<()> {

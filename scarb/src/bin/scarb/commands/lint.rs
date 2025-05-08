@@ -1,5 +1,5 @@
-use crate::args::LintArgs;
 use anyhow::Result;
+use scarb::args::LintArgs;
 use scarb::core::Config;
 
 #[tracing::instrument(skip_all, level = "info")]

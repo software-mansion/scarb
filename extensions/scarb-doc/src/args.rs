@@ -16,7 +16,7 @@ pub enum OutputFormat {
     Json,
 }
 
-/// Arguments for the scarb-doc command.
+/// Generate documentation based on code comments.
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Args {
