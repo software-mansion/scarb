@@ -249,7 +249,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
                 .unwrap();
         }
 
-        // Prioritize by ordering from root.
+        // Prioritize by ordering from the root.
         let priority = self.priority.read().unwrap().get(package).copied();
         if let Some(priority) = priority {
             return Some(PubGrubPriority::Unspecified(Reverse(priority)));
@@ -268,13 +268,38 @@ impl DependencyProvider for PubGrubDependencyProvider {
         // Query available versions.
         let dependency: ManifestDependency = package.to_dependency(range.clone());
         let summaries = self.wait_for_summaries(dependency)?;
+        let summaries = summaries
+            .into_iter()
+            .filter(|summary| range.contains(&summary.package_id.version))
+            .sorted_by_key(|summary| summary.package_id.version.clone())
+            .collect_vec();
 
         // Choose version.
-        let summary = summaries
-            .into_iter()
-            .find(|summary| range.contains(&summary.package_id.version));
+        let locked = self.lockfile.packages_by_name(&package.name).find(|p| {
+            p.name == package.name
+                && range.contains(&p.version)
+                && p.source
+                    .map(|source| {
+                        // Git sources are rewritten to the locked source before fetching summaries.
+                        source.is_registry() && source.can_lock_source_id(package.source_id)
+                    })
+                    .unwrap_or_default()
+        });
+        let summary = locked
+            .and_then(|locked| {
+                summaries
+                    .iter()
+                    .find(|summary| {
+                        summary.package_id.name == locked.name
+                            && summary.package_id.version == locked.version
+                            && summary.package_id.source_id == locked.source.expect("source set to `None` is filtered out when searching the lockfile")
+                    })
+                    .cloned()
+            })
+            // No version locked - using the highest matching summary.
+            .or_else(|| summaries.last().cloned());
 
-        // Store retrieved summary for selected version.
+        // Store retrieved summary for the selected version.
         if let Some(summary) = summary.as_ref() {
             self.packages
                 .write()
@@ -364,12 +389,17 @@ impl From<DependencyVersionReq> for SemverPubgrub {
 
 /// Check lockfile for a matching package.
 /// Rewrite the dependency if a matching package is found.
-fn lock_dependency(
+pub fn lock_dependency(
     lockfile: &Lockfile,
     dep: ManifestDependency,
 ) -> Result<ManifestDependency, DependencyProviderError> {
+    if dep.source_id.is_registry() {
+        // We do not rewrite to the locked version for registry dependencies
+        // because they will be locked in the `choose_version` step of pubgrub.
+        return Ok(dep);
+    }
     lockfile
-        .packages_matching(dep.clone())
+        .package_matching(dep.clone())
         .map(|locked_package_id| Ok(rewrite_locked_dependency(dep.clone(), locked_package_id?)))
         .unwrap_or(Ok(dep))
 }
