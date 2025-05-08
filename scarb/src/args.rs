@@ -179,7 +179,7 @@ pub enum Command {
     /// Output the resolved dependencies of a package, the concrete versions used, including
     /// overrides, in machine-readable format.
     Metadata(MetadataArgs),
-    /// Create a new Scarb package at <PATH>.
+    /// Create a new Scarb package at PATH.
     New(NewArgs),
     /// Assemble the local package into a distributable tarball.
     #[command(after_help = "\
