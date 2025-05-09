@@ -32,6 +32,16 @@ pub fn get_env_vars(
             "SCARB_UI_VERBOSITY".into(),
             config.ui().verbosity().to_string().into(),
         ),
+        (
+            "SCARB_NO_PROC_MACROS".into(),
+            (!config.proc_macro_repository().load_proc_macros())
+                .to_string()
+                .into(),
+        ),
+        (
+            "SCARB_NO_PREBUILT_PROC_MACROS".into(),
+            (!config.load_prebuilt_proc_macros()).to_string().into(),
+        ),
         (SCARB_ENV.into(), config.app_exe()?.into()),
     ];
     if let Some(target_dir) = target_dir {
