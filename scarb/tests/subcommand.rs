@@ -70,6 +70,8 @@ fn env_variables_are_passed() {
                 SCARB_PROFILE
                 SCARB_MANIFEST_PATH
                 SCARB_UI_VERBOSITY
+                SCARB_NO_PROC_MACROS
+                SCARB_NO_PREBUILT_PROC_MACROS
             )
             for v in "${required[@]}"; do
                 if test -z "${!v}"
