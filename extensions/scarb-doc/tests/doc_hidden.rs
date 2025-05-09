@@ -53,7 +53,7 @@ fn hides_impls_of_private_traits() {
         .name("hello_world")
         .lib_cairo(indoc! {r#"
           #[doc(hidden)]
-          struct HiddenStuct {}
+          struct HiddenStruct {}
 
           #[doc(hidden)]
           trait HiddenTrait<T> {}
