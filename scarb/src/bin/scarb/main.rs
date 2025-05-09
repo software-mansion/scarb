@@ -79,6 +79,8 @@ fn cli_main(args: ScarbArgs) -> Result<()> {
         .offline(args.offline)
         .log_filter_directive(Some(scarb_log))
         .profile(args.profile_spec.determine()?)
+        .load_proc_macros(!args.no_proc_macros)
+        .load_prebuilt_proc_macros(!args.no_prebuilt_proc_macros)
         .build()?;
 
     commands::run(args.command, &mut config)

@@ -309,34 +309,38 @@ pub fn generate_compilation_units(
         )?);
     }
 
-    let proc_macro_units = cairo_units
-        .iter()
-        .flat_map(|unit| unit.cairo_plugins.clone())
-        .filter(|plugin| !plugin.builtin)
-        .map(|plugin| (plugin.package.clone(), plugin.prebuilt_allowed))
-        .chain(
-            ws.members()
-                .filter(|member| member.is_cairo_plugin())
-                .map(|member| (member, false)),
-        )
-        // In case some prebuilt macro is allowed for one workspace member and disallowed for
-        // the other, we need to set `prebuilt_allowed` to `false` for that macro package, so that
-        // it is compiled with Cargo.
-        // This works by placing packages with `prebuilt_allowed` set to `false` first
-        // in the iterator and relying on stability of `unique_by` method to skip duplicates with
-        // allowed prebuilt macros (retaining once with disabled).
-        .sorted_by_key(|(_, prebuilt_allowed)| if *prebuilt_allowed { 1 } else { 0 })
-        .unique_by(|(plugin, _)| plugin.id)
-        .map(|(plugin, prebuilt_allowed)| {
-            Ok((
-                plugin.id,
-                generate_cairo_plugin_compilation_units(
-                    &plugin,
-                    opts.load_prebuilt_macros && prebuilt_allowed,
-                )?,
-            ))
-        })
-        .collect::<Result<HashMap<PackageId, ProcMacroCompilationUnit>>>()?;
+    let proc_macro_units = if ws.config().proc_macro_repository().load_proc_macros() {
+        cairo_units
+            .iter()
+            .flat_map(|unit| unit.cairo_plugins.clone())
+            .filter(|plugin| !plugin.builtin)
+            .map(|plugin| (plugin.package.clone(), plugin.prebuilt_allowed))
+            .chain(
+                ws.members()
+                    .filter(|member| member.is_cairo_plugin())
+                    .map(|member| (member, false)),
+            )
+            // In case some prebuilt macro is allowed for one workspace member and disallowed for
+            // the other, we need to set `prebuilt_allowed` to `false` for that macro package, so that
+            // it is compiled with Cargo.
+            // This works by placing packages with `prebuilt_allowed` set to `false` first
+            // in the iterator and relying on stability of `unique_by` method to skip duplicates with
+            // allowed prebuilt macros (retaining once with disabled).
+            .sorted_by_key(|(_, prebuilt_allowed)| if *prebuilt_allowed { 1 } else { 0 })
+            .unique_by(|(plugin, _)| plugin.id)
+            .map(|(plugin, prebuilt_allowed)| {
+                Ok((
+                    plugin.id,
+                    generate_cairo_plugin_compilation_units(
+                        &plugin,
+                        opts.load_prebuilt_macros && prebuilt_allowed,
+                    )?,
+                ))
+            })
+            .collect::<Result<HashMap<PackageId, ProcMacroCompilationUnit>>>()?
+    } else {
+        HashMap::new()
+    };
 
     let units = cairo_units
         .into_iter()

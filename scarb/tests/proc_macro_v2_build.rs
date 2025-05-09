@@ -456,3 +456,49 @@ fn cannot_use_undefined_macro() {
         error: could not compile `hello` due to previous error
         "#});
 }
+
+#[test]
+fn can_disallow_loading_macros() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
+
+        #[attribute_macro]
+        pub fn hello(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let new_token_string = token_stream.to_string().replace("12", "34");
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                new_token_string.clone(),
+                TextSpan { start: 0, end: new_token_string.len() as u32 },
+            ))]);
+            ProcMacroResult::new(token_stream)
+        }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep_starknet()
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[hello]
+            fn main() -> felt252 { 12 + 56 + 90 }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("--no-proc-macros")
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: procedural macros are disallowed with `--no-proc-macros` flag
+        "#});
+}

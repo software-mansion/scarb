@@ -21,7 +21,7 @@ pub fn run(config: &Config) -> Result<()> {
         &ws,
         CompilationUnitsOpts {
             ignore_cairo_version: true,
-            load_prebuilt_macros: true,
+            load_prebuilt_macros: config.load_prebuilt_proc_macros(),
         },
     )?;
 

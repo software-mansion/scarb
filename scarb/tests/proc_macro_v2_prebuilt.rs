@@ -9,6 +9,7 @@ use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 use snapbox::cmd::Command;
 use std::fs;
+use std::sync::LazyLock;
 
 static TRIPLETS: [(&str, &str); 4] = [
     ("aarch64-apple-darwin", ".dylib"),
@@ -17,12 +18,13 @@ static TRIPLETS: [(&str, &str); 4] = [
     ("x86_64-pc-windows-msvc", ".dll"),
 ];
 
-fn proc_macro_example(t: &ChildPath) {
-    let name = "proc_macro_example";
-    let version = "0.1.0";
+static EXAMPLE_NAME: &str = "proc_macro_example";
+static EXAMPLE_VERSION: &str = "0.1.0";
+
+fn build_example_project(t: &impl PathChild) {
     CairoPluginProjectBuilder::default()
-        .name(name)
-        .version(version)
+        .name(EXAMPLE_NAME)
+        .version(EXAMPLE_VERSION)
         .lib_rs(indoc! {r#"
             use cairo_lang_macro::{ProcMacroResult, TokenStream, inline_macro};
             #[inline_macro]
@@ -31,21 +33,32 @@ fn proc_macro_example(t: &ChildPath) {
             }
         "#})
         .build(t);
-    let dll_filename = library_filename(name);
-    let dll_filename = dll_filename.to_string_lossy().to_string();
+}
+
+static BUILT_EXAMPLE_PROJECT: LazyLock<TempDir> = LazyLock::new(|| {
+    let t = TempDir::new().unwrap();
+    build_example_project(&t);
     let build_dir = t.child("cargo_build_dir");
     Command::new("cargo")
         .arg("build")
         .arg("--release")
         .env("CARGO_TARGET_DIR", build_dir.path())
-        .current_dir(t)
+        .current_dir(&t)
         .assert()
         .success();
+    t
+});
+
+fn proc_macro_example(t: &ChildPath) {
+    build_example_project(t);
+    let dll_filename = library_filename(EXAMPLE_NAME);
+    let dll_filename = dll_filename.to_string_lossy().to_string();
+    let build_dir = BUILT_EXAMPLE_PROJECT.child("cargo_build_dir");
     t.child("target/scarb/cairo-plugin")
         .create_dir_all()
         .unwrap();
     for (target, extension) in TRIPLETS {
-        let target_name = format!("{name}_v{version}_{target}{extension}");
+        let target_name = format!("{EXAMPLE_NAME}_v{EXAMPLE_VERSION}_{target}{extension}");
         fs::copy(
             build_dir.child("release").child(dll_filename.clone()),
             t.child("target/scarb/cairo-plugin/").child(target_name),
@@ -134,6 +147,42 @@ fn compile_with_prebuilt_plugins_only_one_allows() {
             [..]Compiling proc_macro_example v0.1.0 ([..])
             [..]Compiling a v1.0.0 ([..]Scarb.toml)
             [..]Compiling b v1.0.0 ([..]Scarb.toml)
+            [..] Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
+fn compile_valid_prebuilt_disallowed_by_flag() {
+    let t = TempDir::new().unwrap();
+    proc_macro_example(&t.child("dep"));
+    let builder = |name: &str| {
+        ProjectBuilder::start()
+            .name(name)
+            .lib_cairo(indoc! {r#"
+                fn main() -> u32 {
+                    let x = some!(42);
+                    x
+                }
+            "#})
+            .dep("proc_macro_example", t.child("dep"))
+            .manifest_extra(indoc! {r#"
+                [tool.scarb]
+                allow-prebuilt-plugins = ["proc_macro_example"]
+            "#})
+    };
+    builder("a").build(&t.child("a"));
+    WorkspaceBuilder::start().add_member("a").build(&t);
+    Scarb::quick_snapbox()
+        .arg("--no-prebuilt-proc-macros")
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling proc_macro_example v0.1.0 ([..])
+            [..]Compiling a v1.0.0 ([..]Scarb.toml)
             [..] Finished `dev` profile target(s) in [..]
         "#});
 }

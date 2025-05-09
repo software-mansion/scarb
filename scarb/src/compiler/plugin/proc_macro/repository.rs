@@ -1,7 +1,7 @@
 use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
 use crate::core::{Config, Package, PackageId};
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, bail, ensure};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
@@ -9,17 +9,29 @@ use std::sync::{Arc, RwLock};
 /// Loads dynamic shared libraries and hides them beside [`ProcMacroInstance`].
 /// Guarantees that every library is loaded exactly once,
 /// but does not prevent loading multiple versions of the same library.
-#[derive(Default)]
 pub struct ProcMacroRepository {
     /// A mapping between the [`PackageId`] of the package which defines the plugin
     /// and the [`ProcMacroInstance`] holding the underlying shared library.
     macros: RwLock<HashMap<PackageId, Arc<ProcMacroInstance>>>,
+    load_proc_macros: bool,
 }
 
 impl ProcMacroRepository {
+    pub fn new(load_proc_macros: bool) -> Self {
+        Self {
+            macros: Default::default(),
+            load_proc_macros,
+        }
+    }
+
     /// Returns the [`ProcMacroInstance`] representing the procedural macros defined in the [`Package`].
     /// Loads the underlying shared library if it has not been loaded yet.
     pub fn get_or_load(&self, package: Package, config: &Config) -> Result<Arc<ProcMacroInstance>> {
+        ensure!(
+            self.load_proc_macros,
+            "procedural macros are disallowed with `--no-proc-macros` flag"
+        );
+
         let Ok(macros) = self.macros.read() else {
             bail!("could not get a read access to the ProcMacroRepository");
         };
@@ -42,5 +54,9 @@ impl ProcMacroRepository {
         macros.insert(package.id, instance.clone());
 
         Ok(instance)
+    }
+
+    pub fn load_proc_macros(&self) -> bool {
+        self.load_proc_macros
     }
 }

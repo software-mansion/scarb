@@ -49,7 +49,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         ws,
         CompilationUnitsOpts {
             ignore_cairo_version: opts.ignore_cairo_version,
-            load_prebuilt_macros: true,
+            load_prebuilt_macros: ws.config().load_prebuilt_proc_macros(),
         },
     )?;
 

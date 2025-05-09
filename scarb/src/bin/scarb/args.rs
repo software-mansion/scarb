@@ -96,6 +96,14 @@ pub struct ScarbArgs {
     )]
     pub target_dir: Option<Utf8PathBuf>,
 
+    /// Do not load any procedural macros.
+    #[arg(long, env = "SCARB_NO_PROC_MACROS")]
+    pub no_proc_macros: bool,
+
+    /// Do not load any prebuilt procedural macros.
+    #[arg(long, env = "SCARB_NO_PREBUILT_PROC_MACROS")]
+    pub no_prebuilt_proc_macros: bool,
+
     /// Specify the profile to use.
     #[command(flatten)]
     pub profile_spec: ProfileSpec,
