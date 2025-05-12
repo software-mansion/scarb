@@ -137,33 +137,57 @@ impl<T: Sized + Eq + Hash> SubTreeFilter<T> {
     }
 }
 
+/// This struct represents a dependency edge in the dependency graph.
+/// A dependency can either be used in any compilation unit, or be restricted to only some target
+/// kinds. For instance, `dev-dependencies` will be represented as `DependencyEdge` restricted to
+/// `TargetKind::TEST` only.
+// Implementation details:
+// This struct keeps a list of `TargetKind`s.
+// Empty target list accepts all target kinds.
+// Otherwise, if the list is not empty, only targets from the list are accepted.
+// E.g, `[dependencies]` table from manifest file will be represented by empty list.
+// `[dev-dependencies]` table will be represented by a list with `TargetKind::TEST`.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct DependencyEdge(SmallVec<[TargetKind; 1]>);
 
 impl DependencyEdge {
-    pub fn new() -> Self {
+    /// Create a new `DependencyEdge` that accepts all target kinds.
+    pub fn for_all_targets() -> Self {
         Self::default()
     }
 
+    /// Create a new `DependencyEdge` that only accepts the given target kind.
+    pub fn for_target(target_kind: TargetKind) -> Self {
+        let mut edge = Self::for_all_targets();
+        edge.0.push(target_kind);
+        edge
+    }
+
+    /// Change the `DependencyEdge`, so it *also* accepts the given target kind.
+    pub fn accept_new(&mut self, target_kind: TargetKind) {
+        if self.accepts_all() {
+            return;
+        }
+        self.0.push(target_kind);
+    }
+
+    /// Change the `DependencyEdge`, so it accepts all target kinds.
+    pub fn accept_all(&mut self) {
+        self.0.clear()
+    }
+
+    /// Check whether this edge accepts all target kinds, or is restricted to only some target kinds.
+    pub fn accepts_all(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    /// Check whether this edge accepts the given target kind.
     pub fn accepts_target(&self, target_kind: TargetKind, is_root: bool) -> bool {
-        if self.0.is_empty() {
-            // Empty target lists accepts all target kinds.
-            // Represents `[dependencies]` table from manifest file.
+        if self.accepts_all() {
             return true;
         }
         // For `TargetKind::TEST`, we should not consider the root package dependencies.
         (is_root || target_kind != TargetKind::TEST) && self.0.contains(&target_kind)
-    }
-
-    pub fn extend(self, target_kind: Option<TargetKind>) -> Self {
-        if let Some(target_kind) = target_kind {
-            let mut edge = self.0;
-            edge.push(target_kind);
-            Self(edge)
-        } else {
-            // For None, create empty vector to accept all targets.
-            Self::default()
-        }
     }
 }
 

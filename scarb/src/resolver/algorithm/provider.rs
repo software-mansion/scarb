@@ -184,32 +184,27 @@ impl PubGrubDependencyProvider {
 
     fn request_dependencies(&self, summary: &Summary) -> Result<(), DependencyProviderError> {
         for original_dependency in summary.dependencies.iter() {
+            let blocking_send = |dependency: ManifestDependency| {
+                if self
+                    .state
+                    .index
+                    .packages()
+                    .register(dependency.clone().into())
+                {
+                    self.request_sink
+                        .blocking_send(Request::Package(dependency))
+                        .unwrap();
+                }
+            };
+
             let original_dependency = self.patch_map.lookup(original_dependency);
             let dependency = lock_dependency(&self.lockfile, original_dependency.clone())?;
-            if self
-                .state
-                .index
-                .packages()
-                .register(dependency.clone().into())
-            {
-                self.request_sink
-                    .blocking_send(Request::Package(dependency))
-                    .unwrap();
-            }
+            blocking_send(dependency);
 
             let dependency =
                 rewrite_path_dependency_source_id(summary.package_id, original_dependency);
             let dependency = lock_dependency(&self.lockfile, dependency)?;
-            if self
-                .state
-                .index
-                .packages()
-                .register(dependency.clone().into())
-            {
-                self.request_sink
-                    .blocking_send(Request::Package(dependency))
-                    .unwrap();
-            }
+            blocking_send(dependency);
         }
         Ok(())
     }

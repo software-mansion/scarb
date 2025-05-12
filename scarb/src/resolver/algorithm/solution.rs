@@ -1,7 +1,5 @@
 use crate::core::resolver::DependencyEdge;
-use crate::core::{
-    DepKind, DependencyFilter, PackageId, PackageName, Resolve, Summary, TargetKind,
-};
+use crate::core::{DepKind, DependencyFilter, PackageId, PackageName, Resolve, Summary};
 use crate::resolver::algorithm::provider::{PubGrubDependencyProvider, PubGrubPackage};
 use anyhow::bail;
 use indoc::indoc;
@@ -38,19 +36,27 @@ pub fn build_resolve(
             provider.main_package_ids().contains(&summary.package_id),
         );
         for dep in summary.filtered_full_dependencies(dep_filter) {
-            let dep_target_kind: Option<TargetKind> = match dep.kind.clone() {
-                DepKind::Normal => None,
-                DepKind::Target(target_kind) => Some(target_kind),
-            };
+            let dep_kind = dep.kind.clone();
             let Some(dep) = summaries.keys().find(|pid| pid.name == dep.name).copied() else {
                 continue;
             };
-            let weight = graph
-                .edge_weight(summary.package_id, dep)
-                .cloned()
-                .unwrap_or_default();
-            let weight = weight.extend(dep_target_kind);
-            graph.add_edge(summary.package_id, dep, weight);
+            let weight = graph.edge_weight_mut(summary.package_id, dep);
+            if let Some(weight) = weight {
+                match dep_kind {
+                    DepKind::Normal => {
+                        weight.accept_all();
+                    }
+                    DepKind::Target(target_kind) => {
+                        weight.accept_new(target_kind);
+                    }
+                };
+            } else {
+                let weight = match dep_kind {
+                    DepKind::Normal => DependencyEdge::for_all_targets(),
+                    DepKind::Target(target_kind) => DependencyEdge::for_target(target_kind),
+                };
+                graph.add_edge(summary.package_id, dep, weight);
+            }
         }
     }
 
