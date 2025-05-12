@@ -29,7 +29,7 @@ impl ResolverState {
                 Some(Response::Package(package, summaries)) => {
                     self.index
                         .packages()
-                        .done(package, Arc::new(VersionsResponse::Found(summaries)));
+                        .done(package.into(), Arc::new(VersionsResponse::Found(summaries)));
                 }
                 None => {}
             }
@@ -44,7 +44,7 @@ impl ResolverState {
     ) -> Result<Option<Response>, DependencyProviderError> {
         match request {
             Request::Package(dependency) => {
-                self.index.packages().register(dependency.clone());
+                self.index.packages().register(dependency.clone().into());
                 let summaries = registry.query(&dependency).await?;
                 Ok(Some(Response::Package(dependency, summaries)))
             }
