@@ -228,12 +228,36 @@ fn inherited_deps_can_override_features_list() {
 
     WorkspaceBuilder::start()
         .add_member("first")
-        .dep("some", Dep.version("1.0.0").registry(&registry))
+        .dep(
+            "some",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["other"].into_iter()),
+        )
         .build(&t);
 
-    Scarb::quick_snapbox()
-        .arg("fetch")
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
         .current_dir(&t)
-        .assert()
-        .success();
+        .stdout_json::<Metadata>();
+
+    let first = meta
+        .packages
+        .into_iter()
+        .find(|p| p.name == "first")
+        .unwrap();
+
+    let dep = first
+        .dependencies
+        .into_iter()
+        .find(|p| p.name == "some")
+        .unwrap();
+    // Note, that the workspace declares `features = ["other"]`,
+    // but the member extends it with `features = ["some"]`.
+    assert_eq!(
+        dep.features,
+        Some(vec!["other".to_string(), "some".to_string()])
+    );
 }
