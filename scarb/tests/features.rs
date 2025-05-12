@@ -2,8 +2,8 @@ use assert_fs::TempDir;
 use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
 use indoc::indoc;
-
-use scarb_metadata::{Cfg, Metadata};
+use itertools::Itertools;
+use scarb_metadata::{Cfg, DepKind, Metadata};
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::gitx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
@@ -604,4 +604,57 @@ fn parse_dependency_features_invalid() {
             Caused by:
                 the name `8x` cannot be used as a package name, names cannot start with a digit
         "#});
+}
+
+#[test]
+fn can_declare_same_dependency_with_different_kinds_and_features() {
+    let t = TempDir::new().unwrap();
+
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("registry_dep")
+            .version("1.0.0")
+            .build(t);
+    });
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep(
+            "registry_dep",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["first"].into_iter()),
+        )
+        .dev_dep(
+            "registry_dep",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["second"].into_iter()),
+        )
+        .build(&t);
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let package = meta.packages.iter().find(|p| p.name == "hello").unwrap();
+
+    let dep = package
+        .dependencies
+        .iter()
+        .filter(|d| d.name == "registry_dep")
+        .collect_vec();
+
+    assert_eq!(dep.len(), 2);
+
+    let normal = dep.iter().find(|d| d.kind.is_none()).unwrap();
+    assert_eq!(normal.features, Some(vec!["first".to_string()]));
+
+    let dev = dep.iter().find(|d| d.kind == Some(DepKind::Dev)).unwrap();
+    assert_eq!(dev.features, Some(vec!["second".to_string()]));
 }
