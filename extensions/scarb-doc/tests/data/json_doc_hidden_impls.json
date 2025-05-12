@@ -70,7 +70,7 @@
               "item_data": {
                 "name": "SecondVisibleImpl",
                 "doc": null,
-                "signature": "impl SecondVisibleImpl of SecondVisibleTrait<<missing>, VisibleStruct>;",
+                "signature": "impl SecondVisibleImpl of SecondVisibleTrait<HiddenStruct, VisibleStruct>;",
                 "full_path": "hello_world::SecondVisibleImpl"
               }
             }
