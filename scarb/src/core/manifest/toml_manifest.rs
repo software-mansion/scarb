@@ -279,6 +279,9 @@ pub struct DetailedTomlDependency {
     pub rev: Option<String>,
 
     pub registry: Option<Url>,
+
+    pub default_features: Option<bool>,
+    pub features: Option<Vec<SmolStr>>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -1187,11 +1190,20 @@ impl DetailedTomlDependency {
             (Some(_), None, None, None) => SourceId::default(),
         };
 
+        let features = self.features.clone().unwrap_or_default();
+        let features = features
+            .into_iter()
+            .map(PackageName::try_new)
+            .collect::<Result<Vec<_>>>()?;
+        let default_features = self.default_features.unwrap_or(true);
+
         Ok(ManifestDependency::builder()
             .name(name)
             .source_id(source_id)
             .version_req(version_req)
             .kind(dep_kind)
+            .features(features)
+            .default_features(default_features)
             .build())
     }
 }
