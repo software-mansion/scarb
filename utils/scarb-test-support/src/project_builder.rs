@@ -208,7 +208,8 @@ pub trait DepBuilder {
         self.with("path", path.to_string())
     }
 
-    fn registry(&self, registry: impl ToString) -> DepWith<'_, Self> {
+    // Taking by reference to disallow dropping the `LocalRegistry`.
+    fn registry(&self, registry: &impl ToString) -> DepWith<'_, Self> {
         self.with("registry", registry.to_string())
     }
 

@@ -1,12 +1,11 @@
 use std::collections::BTreeMap;
 
-use crate::core::{TomlCairoPluginTargetParams, TomlTarget};
+use crate::core::{MaybeWorkspaceTomlDependency, TomlCairoPluginTargetParams, TomlTarget};
 use crate::{
     DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
     core::{
         DepKind, DependencyVersionReq, DetailedTomlDependency, ManifestDependency, MaybeWorkspace,
         Package, PackageName, TargetKind, TomlDependency, TomlManifest, TomlPackage,
-        TomlWorkspaceDependency,
     },
 };
 use anyhow::{Result, bail};
@@ -105,13 +104,13 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
 fn generate_dependencies(
     deps: &[ManifestDependency],
     kind: DepKind,
-) -> Result<BTreeMap<PackageName, MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>>> {
+) -> Result<BTreeMap<PackageName, MaybeWorkspaceTomlDependency>> {
     deps.iter()
         .filter(|dep| dep.kind == kind)
         .map(|dep| {
             let name = dep.name.clone();
             let toml_dep = generate_dependency(dep)?;
-            Ok((name, MaybeWorkspace::Defined(toml_dep)))
+            Ok((name, MaybeWorkspace::Defined(toml_dep).into()))
         })
         .collect()
 }
