@@ -340,6 +340,11 @@ fn generated_manifest() {
         .dep("git_dep", git_dep.version("0.2.0"))
         .dep_starknet()
         .manifest_extra(indoc! {r#"
+            [features]
+            default = ["foo", "bar"]
+            foo = ["bar"]
+            bar = []
+
             [tool.foobar]
             hello-world = { s = "s", n = 1 }
 
@@ -394,6 +399,14 @@ fn generated_manifest() {
             [tool.foobar.hello-world]
             n = 1
             s = "s"
+            
+            [features]
+            bar = []
+            default = [
+                "bar",
+                "foo",
+            ]
+            foo = ["bar"]
         "#},
     );
 }
