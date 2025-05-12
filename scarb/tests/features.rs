@@ -513,18 +513,59 @@ fn parse_dependency_features_simple() {
             "git_dep",
             git_dep
                 .version("0.2.0")
-                .features(vec!["second", "first"].into_iter())
-                .default_features(false),
+                .features(vec!["second", "first"].into_iter()),
         )
         .build(&t);
 
-    Scarb::quick_snapbox()
+    let meta = Scarb::quick_snapbox()
         .arg("--json")
         .arg("metadata")
         .arg("--format-version=1")
         .current_dir(&t)
-        .assert()
-        .success();
+        .stdout_json::<Metadata>();
+
+    let hello = meta
+        .packages
+        .into_iter()
+        .find(|p| p.name == "hello")
+        .unwrap();
+
+    let registry_dep = hello
+        .dependencies
+        .iter()
+        .find(|d| d.name == "registry_dep")
+        .unwrap();
+
+    assert_eq!(
+        registry_dep.features,
+        Some(vec!["first".to_string(), "second".to_string()])
+    );
+    assert_eq!(registry_dep.default_features, Some(false));
+
+    let path_dep = hello
+        .dependencies
+        .iter()
+        .find(|d| d.name == "path_dep")
+        .unwrap();
+
+    assert_eq!(
+        path_dep.features,
+        Some(vec!["first".to_string(), "second".to_string()])
+    );
+    assert_eq!(path_dep.default_features, Some(true));
+
+    let git_dep = hello
+        .dependencies
+        .iter()
+        .find(|d| d.name == "git_dep")
+        .unwrap();
+
+    assert_eq!(
+        git_dep.features,
+        Some(vec!["first".to_string(), "second".to_string()])
+    );
+    // Note there is no `default-features` field in the dependency specification, this is the default.
+    assert_eq!(git_dep.default_features, Some(true));
 }
 
 #[test]
