@@ -538,6 +538,13 @@ impl TomlDependency {
             TomlDependency::Detailed(detailed) => Cow::Borrowed(detailed),
         }
     }
+
+    /// Rewrite the dependency spec with provided features list.
+    pub fn with_features(&self, features: Vec<SmolStr>) -> DetailedTomlDependency {
+        let mut dep = self.resolve().into_owned();
+        dep.features = Some(features);
+        dep
+    }
 }
 
 impl TomlManifest {
@@ -606,13 +613,43 @@ impl TomlManifest {
 
         for ((name, toml_dep), kind) in all_deps {
             let inherit_ws = || {
-                workspace
+                let ws_dep = workspace
                     .dependencies
                     .as_ref()
                     .and_then(|deps| deps.get(name.as_str()))
                     .cloned()
-                    .ok_or_else(|| anyhow!("dependency `{}` not found in workspace", name.clone()))?
-                    .to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                    .ok_or_else(|| {
+                        anyhow!("dependency `{}` not found in workspace", name.clone())
+                    })?;
+
+                // If `TomlWorkspaceDependency` declares `features` list,
+                // extend the inherited ws dependency with this list instead of the shared ws one.
+                let dep = match toml_dep.as_ref() {
+                    MaybeWorkspace::Workspace(w) => w.features.as_ref().map(|features| {
+                        let ws_features = match &ws_dep {
+                            TomlDependency::Detailed(detailed) => {
+                                detailed.features.clone().unwrap_or_default()
+                            }
+                            TomlDependency::Simple(_) => Vec::new(),
+                        };
+                        let features = features
+                            .clone()
+                            .into_iter()
+                            .chain(ws_features.into_iter())
+                            .sorted()
+                            .dedup()
+                            .collect();
+                        ws_dep.with_features(features)
+                    }),
+                    _ => None,
+                };
+
+                dep.map(|dep| {
+                    dep.to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                })
+                .unwrap_or_else(|| {
+                    ws_dep.to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                })
             };
             let toml_dep = toml_dep
                 .clone()
