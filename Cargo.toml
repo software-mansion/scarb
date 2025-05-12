@@ -96,7 +96,7 @@ indoc = "2"
 io_tee = "0.1"
 itertools = "0.14"
 libc = "0.2"
-libloading = "0.8.6"
+libloading = "0.8.7"
 linkme = "0.3"
 mdbook = "0.4"
 ntest = "0.9"
@@ -143,7 +143,7 @@ tower-http = { version = "0.4", features = ["fs"] }
 tracing = "0.1"
 tracing-core = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-trybuild = "1.0.101"
+trybuild = "1.0.105"
 typed-builder = ">=0.17"
 typetag = "0.2"
 url = { version = "2", features = ["serde"] }
