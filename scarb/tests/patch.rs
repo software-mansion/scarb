@@ -469,7 +469,7 @@ fn invalid_url() {
     WorkspaceBuilder::start()
         .add_member("first")
         .manifest_extra(formatdoc! {r#"
-            [patch.scarbs.xyz]
+            [patch."scarbs.xyz"]
             foo = {}
         "#, patch.build()})
         .build(&t);
