@@ -55,6 +55,47 @@ impl WorkspaceResolve {
             .collect_vec()
     }
 
+    pub fn features_unification(
+        &self,
+        root_package: PackageId,
+        target_kind: &TargetKind,
+    ) -> Result<HashMap<PackageId, HashSet<FeatureName>>> {
+        assert!(self.packages.contains_key(&root_package));
+        let solution = self.resolve.solution_of(root_package, target_kind);
+        let mut features: HashMap<PackageId, HashSet<FeatureName>> = HashMap::default();
+        for package_id in solution {
+            let is_unit_root = root_package == package_id;
+            for dep_id in self.resolve.package_dependencies_for_target_kind(
+                package_id,
+                target_kind,
+                is_unit_root,
+            ) {
+                let package = self.packages.get(&package_id).unwrap();
+                let dep = self.packages.get(&dep_id).unwrap();
+                let summary = package.manifest.summary.clone();
+                let target_kind_dependency = summary.full_dependencies().find(|md| {
+                    md.name == dep_id.name && md.kind == DepKind::Target(target_kind.clone())
+                });
+                let normal_dependency = summary
+                    .full_dependencies()
+                    .find(|md| md.name == dep_id.name && md.kind == DepKind::Normal);
+                for manifest_dependency in [target_kind_dependency, normal_dependency]
+                    .into_iter()
+                    .flatten()
+                {
+                    let selected_features = dep.manifest.features.select(
+                        &manifest_dependency.features,
+                        manifest_dependency.default_features,
+                    );
+                    let features = features.entry(dep_id).or_default();
+                    let selected_features: HashSet<FeatureName> = selected_features.try_into()?;
+                    features.extend(selected_features);
+                }
+            }
+        }
+        Ok(features)
+    }
+
     pub fn package_dependencies(
         &self,
         package_id: PackageId,
@@ -667,6 +708,9 @@ impl<'a> PackageSolutionCollector<'a> {
         let allowed_prebuilds = self
             .resolve
             .allowed_prebuilt(self.member.clone(), target_kind)?;
+        let _features_for_deps = self
+            .resolve
+            .features_unification(self.member.id, target_kind)?;
         let mut classes = self
             .resolve
             .solution_of(self.member.id, target_kind)
