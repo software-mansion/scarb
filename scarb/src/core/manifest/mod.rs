@@ -1,12 +1,13 @@
-use std::collections::{BTreeMap, HashSet};
-
 use anyhow::{Result, bail, ensure};
 use cairo_lang_filesystem::db::Edition;
 use camino::Utf8PathBuf;
 use derive_builder::Builder;
+use itertools::Itertools;
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+use std::collections::btree_map::Keys;
+use std::collections::{BTreeMap, HashSet, VecDeque};
 use toml::Value;
 
 pub use compiler_config::*;
@@ -56,7 +57,7 @@ pub struct Manifest {
     #[builder(default)]
     pub scripts: BTreeMap<SmolStr, ScriptDefinition>,
     #[builder(default)]
-    pub features: BTreeMap<FeatureName, Vec<FeatureName>>,
+    pub features: FeaturesDefinition,
     /// Allow experimental features.
     #[builder(default)]
     pub experimental_features: Option<Vec<SmolStr>>,
@@ -140,4 +141,106 @@ pub fn edition_variant(edition: Edition) -> String {
         panic!("Edition should always be a string.")
     };
     edition
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct FeaturesDefinition(BTreeMap<FeatureName, Vec<FeatureName>>);
+
+impl FeaturesDefinition {
+    pub fn new(features: BTreeMap<FeatureName, Vec<FeatureName>>) -> Self {
+        Self(features)
+    }
+
+    pub fn all(&self) -> Keys<'_, FeatureName, Vec<FeatureName>> {
+        self.0.keys()
+    }
+
+    pub fn get(&self, feature: &FeatureName) -> Option<&Vec<FeatureName>> {
+        self.0.get(feature)
+    }
+
+    pub fn contains_key(&self, feature: &FeatureName) -> bool {
+        self.0.contains_key(feature)
+    }
+
+    pub fn default_features(&self) -> Vec<FeatureName> {
+        self.0.get("default").cloned().unwrap_or_default()
+    }
+
+    pub fn select(
+        &self,
+        enabled_features: &[FeatureName],
+        default_enabled: bool,
+    ) -> SelectedFeatures {
+        let available_features = self.all().cloned().collect::<HashSet<FeatureName>>();
+        let mut selected_features: HashSet<FeatureName> =
+            enabled_features.iter().cloned().collect();
+        if default_enabled {
+            selected_features.extend(self.default_features())
+        }
+        // Resolve features that are dependencies of selected features.
+        let mut queue = VecDeque::from_iter(selected_features.clone());
+
+        while let Some(key) = queue.pop_front() {
+            if let Some(neighbors) = self.get(&key) {
+                for neighbor in neighbors.iter() {
+                    if !selected_features.contains(neighbor) {
+                        selected_features.insert(neighbor.clone());
+                        queue.push_back(neighbor.clone());
+                    }
+                }
+            }
+        }
+
+        let not_found_features = selected_features
+            .difference(&available_features)
+            .cloned()
+            .collect();
+        let enabled = available_features
+            .intersection(&selected_features)
+            .cloned()
+            .collect();
+        SelectedFeatures::new(enabled, not_found_features)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&FeatureName, &Vec<FeatureName>)> {
+        self.0.iter()
+    }
+}
+
+impl From<BTreeMap<FeatureName, Vec<FeatureName>>> for FeaturesDefinition {
+    fn from(features: BTreeMap<FeatureName, Vec<FeatureName>>) -> Self {
+        Self::new(features)
+    }
+}
+
+pub struct SelectedFeatures {
+    enabled: HashSet<FeatureName>,
+    not_found: HashSet<FeatureName>,
+}
+
+impl SelectedFeatures {
+    fn new(enabled: HashSet<FeatureName>, not_found: HashSet<FeatureName>) -> Self {
+        Self { enabled, not_found }
+    }
+
+    pub fn enabled(self) -> HashSet<FeatureName> {
+        self.enabled
+    }
+
+    pub fn validate(&self) -> Result<()> {
+        if !self.not_found.is_empty() {
+            bail!("unknown features: {}", self.not_found.iter().join(", "));
+        }
+        Ok(())
+    }
+}
+
+impl TryFrom<SelectedFeatures> for HashSet<FeatureName> {
+    type Error = anyhow::Error;
+
+    fn try_from(value: SelectedFeatures) -> Result<Self> {
+        value.validate()?;
+        Ok(value.enabled())
+    }
 }

@@ -813,7 +813,7 @@ impl TomlManifest {
             .compiler_config(compiler_config)
             .scripts(scripts)
             .experimental_features(experimental_features)
-            .features(features)
+            .features(features.into())
             .build()?;
         Ok(manifest)
     }
