@@ -475,12 +475,22 @@ fn parse_dependency_features_simple() {
     ProjectBuilder::start()
         .name("path_dep")
         .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+                [features]
+                first = []
+                second = []
+            "#})
         .build(&path_dep);
 
     let git_dep = gitx::new("git_dep", |t| {
         ProjectBuilder::start()
             .name("git_dep")
             .version("0.2.0")
+            .manifest_extra(indoc! {r#"
+                [features]
+                first = []
+                second = []
+            "#})
             .build(&t);
     });
 
@@ -489,6 +499,11 @@ fn parse_dependency_features_simple() {
         ProjectBuilder::start()
             .name("registry_dep")
             .version("1.0.0")
+            .manifest_extra(indoc! {r#"
+                [features]
+                first = []
+                second = []
+            "#})
             .build(t);
     });
 
@@ -615,6 +630,11 @@ fn can_declare_same_dependency_with_different_kinds_and_features() {
         ProjectBuilder::start()
             .name("registry_dep")
             .version("1.0.0")
+            .manifest_extra(indoc! {r#"
+                [features]
+                first = []
+                second = []
+            "#})
             .build(t);
     });
 
@@ -657,4 +677,39 @@ fn can_declare_same_dependency_with_different_kinds_and_features() {
 
     let dev = dep.iter().find(|d| d.kind == Some(DepKind::Dev)).unwrap();
     assert_eq!(dev.features, Some(vec!["second".to_string()]));
+}
+
+#[test]
+fn cannot_use_not_existing_features_in_deps() {
+    let t = TempDir::new().unwrap();
+
+    let path_dep = t.child("path_dep");
+    ProjectBuilder::start()
+        .name("path_dep")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+                [features]
+                first = []
+                second = []
+            "#})
+        .build(&path_dep);
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep(
+            "path_dep",
+            path_dep
+                .version("0.1.0")
+                .default_features(true)
+                .features(vec!["first", "third"].into_iter()),
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq("error: unknown features: third\n");
 }
