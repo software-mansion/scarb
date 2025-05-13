@@ -22,7 +22,7 @@ pub mod ops;
 pub mod process;
 mod resolver;
 mod sources;
-pub mod subcommands;
+mod subcommands;
 pub mod version;
 
 pub const SCARB_ENV: &str = "SCARB";
