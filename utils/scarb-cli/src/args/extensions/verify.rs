@@ -25,4 +25,4 @@ pub struct Args {
     /// Logging verbosity.
     #[command(flatten)]
     pub verbose: VerbositySpec,
-}
+} 

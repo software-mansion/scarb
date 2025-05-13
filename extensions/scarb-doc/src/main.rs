@@ -1,15 +1,143 @@
+use anyhow::{Context, Result, ensure};
 use clap::Parser;
-use scarb_doc::args::Args;
-use scarb_ui::{OutputFormat, Ui};
+use scarb_doc::docs_generation::markdown::MarkdownContent;
+use scarb_doc::errors::MetadataCommandError;
+use scarb_doc::metadata::get_target_dir;
+use std::process::ExitCode;
 
-fn main() -> std::process::ExitCode {
+use scarb_metadata::{MetadataCommand, ScarbCommand};
+use scarb_ui::args::{PackagesFilter, ToEnvVars, VerbositySpec};
+
+use scarb_doc::generate_packages_information;
+use scarb_doc::versioned_json_output::VersionedJsonOutput;
+
+use scarb_ui::Ui;
+use scarb_ui::args::FeaturesSpec;
+use scarb_ui::components::Status;
+
+const OUTPUT_DIR: &str = "doc";
+const JSON_OUTPUT_FILENAME: &str = "output.json";
+
+#[derive(Default, Debug, Clone, clap::ValueEnum)]
+enum OutputFormat {
+    /// Generates documentation in Markdown format.
+    /// Generated files are fully compatible with mdBook. For more information visit https://rust-lang.github.io/mdBook.
+    #[default]
+    Markdown,
+    /// Saves information collected from packages in JSON format instead of generating
+    /// documentation.
+    /// This may be useful if you want to generate documentation files by yourself.
+    /// The precise output structure is not guaranteed to be stable.
+    Json,
+}
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[command(flatten)]
+    packages_filter: PackagesFilter,
+
+    /// Specifies a format of generated files.
+    #[arg(long, value_enum, default_value_t)]
+    output_format: OutputFormat,
+
+    /// Generates documentation also for private items.
+    #[arg(long, default_value_t = false)]
+    document_private_items: bool,
+
+    /// Build generated documentation.
+    #[arg(long, default_value_t = false)]
+    build: bool,
+
+    /// Specifies features to enable.
+    #[command(flatten)]
+    pub features: FeaturesSpec,
+
+    /// Logging verbosity.
+    #[command(flatten)]
+    pub verbose: VerbositySpec,
+}
+
+fn main_inner(args: Args, ui: Ui) -> Result<()> {
+    ensure!(
+        !args.build || matches!(args.output_format, OutputFormat::Markdown),
+        "`--build` is only supported for Markdown output format"
+    );
+    let metadata = MetadataCommand::new()
+        .inherit_stderr()
+        .envs(args.features.to_env_vars())
+        .exec()
+        .map_err(MetadataCommandError::from)?;
+    let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
+    let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
+
+    let packages_information = generate_packages_information(
+        &metadata,
+        &metadata_for_packages,
+        args.document_private_items,
+        ui.clone(),
+    )?;
+
+    match args.output_format {
+        OutputFormat::Json => {
+            VersionedJsonOutput::new(packages_information)
+                .save_to_file(&output_dir, JSON_OUTPUT_FILENAME)?;
+
+            let output_path = output_dir
+                .join(JSON_OUTPUT_FILENAME)
+                .strip_prefix(&metadata.workspace.root)
+                .unwrap_or(&output_dir)
+                .to_string();
+            ui.print(Status::new("Saving output to:", &output_path));
+        }
+        OutputFormat::Markdown => {
+            for pkg_information in packages_information {
+                let pkg_output_dir = output_dir.join(&pkg_information.metadata.name);
+
+                MarkdownContent::from_crate(&pkg_information)?
+                    .save(&pkg_output_dir)
+                    .with_context(|| {
+                        format!(
+                            "failed to save docs for package {}",
+                            pkg_information.metadata.name
+                        )
+                    })?;
+
+                let output_path = pkg_output_dir
+                    .strip_prefix(&metadata.workspace.root)
+                    .unwrap_or(&pkg_output_dir)
+                    .to_string();
+                ui.print(Status::new("Saving output to:", &output_path));
+                if args.build {
+                    let build_output_dir = pkg_output_dir.join("book");
+                    ScarbCommand::new()
+                        .arg("mdbook")
+                        .arg("--input")
+                        .arg(pkg_output_dir)
+                        .arg("--output")
+                        .arg(build_output_dir.clone())
+                        .env("SCARB_UI_VERBOSITY", ui.verbosity().to_string())
+                        .run()?;
+                    let output_path = build_output_dir
+                        .strip_prefix(&metadata.workspace.root)
+                        .unwrap_or(&build_output_dir)
+                        .to_string();
+                    ui.print(Status::new("Saving build output to:", &output_path));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn main() -> ExitCode {
     let args = Args::parse();
-    let ui = Ui::new(args.verbose.clone().into(), OutputFormat::Text);
-    match scarb_doc::main_inner(args, ui.clone()) {
-        Ok(()) => std::process::ExitCode::SUCCESS,
+    let ui = Ui::new(args.verbose.clone().into(), scarb_ui::OutputFormat::Text);
+    match main_inner(args, ui.clone()) {
+        Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             ui.error(format!("{error:#}"));
-            std::process::ExitCode::FAILURE
+            ExitCode::FAILURE
         }
     }
 }
