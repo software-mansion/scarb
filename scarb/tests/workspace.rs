@@ -215,6 +215,11 @@ fn inherited_deps_can_override_features_list() {
         ProjectBuilder::start()
             .name("some")
             .version("1.0.0")
+            .manifest_extra(indoc! {r#"
+                [features]
+                some = []
+                other = []
+            "#})
             .build(t);
     });
 
