@@ -6443,9 +6443,15 @@ dependencies = [
  "clap_complete",
  "indoc",
  "scarb",
- "scarb-cli",
+ "scarb-cairo-run",
+ "scarb-cairo-test",
+ "scarb-doc",
+ "scarb-execute",
+ "scarb-mdbook",
+ "scarb-prove",
  "scarb-test-support",
  "scarb-ui",
+ "scarb-verify",
 ]
 
 [[package]]
