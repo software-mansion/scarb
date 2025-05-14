@@ -38,6 +38,14 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
     });
 
     let cairo_plugin = generate_cairo_plugin(pkg);
+    let features = nullify_table_if_empty(
+        pkg.manifest
+            .features
+            .iter()
+            // Sort for stability.
+            .map(|(key, val)| (key.clone(), val.iter().sorted().cloned().collect_vec()))
+            .collect(),
+    );
 
     Ok(TomlManifest {
         package,
@@ -53,7 +61,7 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
         profile: None,
         scripts: None,
         tool,
-        features: None,
+        features,
         patch: None,
     })
 }
