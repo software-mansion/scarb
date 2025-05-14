@@ -13,7 +13,8 @@ use cairo_lang_defs::plugin::{
 };
 use cairo_lang_defs::plugin::{InlineMacroExprPlugin, InlinePluginResult, PluginDiagnostic};
 use cairo_lang_diagnostics::ToOption;
-use cairo_lang_filesystem::ids::CodeMapping;
+use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
+use cairo_lang_filesystem::span::TextSpan;
 use cairo_lang_macro_v1::{
     AuxData, Diagnostic, FullPathMarker, ProcMacroResult, Severity, TokenStream,
     TokenStreamMetadata,
@@ -1118,7 +1119,10 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
             InlinePluginResult {
                 code: Some(PluginGeneratedFile {
                     name: "inline_proc_macro".into(),
-                    code_mappings: Vec::new(),
+                    code_mappings: vec![CodeMapping {
+                        origin: CodeOrigin::Span(syntax.as_syntax_node().span_without_trivia(db)),
+                        span: TextSpan::from_str(&content),
+                    }],
                     content,
                     aux_data,
                     diagnostics_note: Some(format!(
