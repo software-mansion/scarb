@@ -6,65 +6,15 @@ use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_test_plugin::{TestCompilation, TestCompilationMetadata};
 use cairo_lang_test_runner::{CompiledTestRunner, RunProfilerConfig, TestRunConfig};
 use camino::Utf8PathBuf;
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use indoc::formatdoc;
-
+use scarb_cli::extensions::cairo_test::Args;
 use scarb_metadata::{
     Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
 };
-use scarb_ui::args::{PackagesFilter, VerbositySpec};
+use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::{NewLine, Status};
 use scarb_ui::{OutputFormat, Ui};
-
-/// Execute all unit tests of a local package.
-#[derive(Parser, Clone, Debug)]
-#[command(author, version)]
-struct Args {
-    #[command(flatten)]
-    packages_filter: PackagesFilter,
-
-    /// Run only tests whose name contain FILTER.
-    #[arg(short, long, default_value = "")]
-    filter: String,
-
-    /// Run ignored and not ignored tests.
-    #[arg(long, default_value_t = false)]
-    include_ignored: bool,
-
-    /// Run only ignored tests.
-    #[arg(long, default_value_t = false)]
-    ignored: bool,
-
-    /// Choose test kind to run.
-    #[arg(short, long)]
-    test_kind: Option<TestKind>,
-
-    /// Whether to print resource usage after each test.
-    #[arg(long, default_value_t = false)]
-    print_resource_usage: bool,
-
-    /// Logging verbosity.
-    #[command(flatten)]
-    pub verbose: VerbositySpec,
-}
-
-#[derive(ValueEnum, Clone, Debug, Default)]
-pub enum TestKind {
-    Unit,
-    Integration,
-    #[default]
-    All,
-}
-
-impl TestKind {
-    pub fn matches(&self, kind: &str) -> bool {
-        match self {
-            TestKind::Unit => kind == "unit",
-            TestKind::Integration => kind == "integration",
-            TestKind::All => true,
-        }
-    }
-}
 
 fn main() -> Result<()> {
     let args: Args = Args::parse();

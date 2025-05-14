@@ -6,69 +6,21 @@ use cairo_lang_sierra::program::{Function, ProgramArtifact, VersionedProgram};
 use camino::Utf8PathBuf;
 use clap::Parser;
 use indoc::formatdoc;
-use serde::Serializer;
-use std::env;
-use std::fs;
-use std::process::ExitCode;
-
 use scarb_metadata::{
     CompilationUnitMetadata, Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand,
 };
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use scarb_ui::components::Status;
 use scarb_ui::{Message, OutputFormat, Ui};
+use serde::Serializer;
+use std::env;
+use std::fs;
+use std::process::ExitCode;
 
-mod deserialization;
+use scarb_cli::extensions::cairo_run::{Args, deserialization};
 
 const EXECUTABLE_NAME: &str = "main";
 const DEFAULT_MAIN_FUNCTION: &str = "::main";
-
-/// Execute the main function of a package.
-#[derive(Parser, Clone, Debug)]
-#[command(author, version)]
-struct Args {
-    /// Name of the package.
-    #[command(flatten)]
-    packages_filter: PackagesFilter,
-
-    /// Specify name of the function to run.
-    #[arg(long)]
-    function: Option<String>,
-
-    /// Maximum amount of gas available to the program.
-    #[arg(long)]
-    available_gas: Option<usize>,
-
-    /// Print more items in memory.
-    #[arg(long, default_value_t = false)]
-    print_full_memory: bool,
-
-    /// Print detailed resources.
-    #[arg(long, default_value_t = false)]
-    print_resource_usage: bool,
-
-    /// Do not rebuild the package.
-    #[arg(long, default_value_t = false)]
-    no_build: bool,
-
-    /// Logging verbosity.
-    #[command(flatten)]
-    pub verbose: VerbositySpec,
-
-    /// Program arguments.
-    ///
-    /// This should be a JSON array of numbers, decimal bigints or recursive arrays of those. For example, pass `[1]`
-    /// to the following function `fn main(a: u64)`, or pass `[1, "2"]` to `fn main(a: u64, b: u64)`,
-    /// or `[1, 2, [3, 4, 5]]` to `fn main(t: (u64, u64), v: Array<u64>)`.
-    #[arg(default_value = "[]")]
-    arguments: deserialization::Args,
-
-    /// Path to the JSON file containing program arguments.
-    ///
-    /// It specified, `[ARGUMENTS]` CLI parameter will be ignored.
-    #[arg(long)]
-    arguments_file: Option<Utf8PathBuf>,
-}
 
 fn main() -> ExitCode {
     let args: Args = Args::parse();

@@ -2,7 +2,7 @@ use anyhow::{Context, Result, ensure};
 use cairo_lang_runner::Arg;
 use cairo_lang_utils::bigint::BigUintAsHex;
 use camino::Utf8PathBuf;
-use clap::{Parser, ValueEnum, arg};
+use clap::{Parser, ValueEnum};
 use num_bigint::BigInt;
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use std::fs;
@@ -109,6 +109,7 @@ pub enum OutputFormat {
     CairoPie,
     Standard,
 }
+
 impl OutputFormat {
     pub fn default_for_target(target: ExecutionTarget) -> OutputFormat {
         match target {

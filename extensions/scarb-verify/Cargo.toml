@@ -15,11 +15,13 @@ anyhow.workspace = true
 indoc.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
+scarb-cli = { path = "../../utils/scarb-cli" }
 clap.workspace = true
 serde.workspace = true
 camino.workspace = true
 serde_json.workspace = true
 stwo_cairo_prover.workspace = true
+
 
 [dev-dependencies]
 assert_fs.workspace = true

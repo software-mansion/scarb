@@ -6384,6 +6384,7 @@ dependencies = [
  "clap",
  "indoc",
  "num-bigint",
+ "scarb-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
@@ -6406,12 +6407,31 @@ dependencies = [
  "camino",
  "clap",
  "indoc",
+ "scarb-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
  "serde_json",
  "snapbox",
  "test-for-each-example",
+]
+
+[[package]]
+name = "scarb-cli"
+version = "2.11.4"
+dependencies = [
+ "anyhow",
+ "cairo-lang-runner",
+ "cairo-lang-utils",
+ "camino",
+ "clap",
+ "num-bigint",
+ "scarb-ui",
+ "serde",
+ "serde_json",
+ "starknet-types-core",
+ "test-case",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -6423,15 +6443,9 @@ dependencies = [
  "clap_complete",
  "indoc",
  "scarb",
- "scarb-cairo-run",
- "scarb-cairo-test",
- "scarb-doc",
- "scarb-execute",
- "scarb-mdbook",
- "scarb-prove",
+ "scarb-cli",
  "scarb-test-support",
  "scarb-ui",
- "scarb-verify",
 ]
 
 [[package]]
@@ -6457,6 +6471,7 @@ dependencies = [
  "indoc",
  "itertools 0.14.0",
  "rust-analyzer-salsa",
+ "scarb-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
@@ -6484,6 +6499,7 @@ dependencies = [
  "indoc",
  "num-bigint",
  "predicates",
+ "scarb-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
@@ -6501,6 +6517,7 @@ dependencies = [
  "camino",
  "clap",
  "mdbook",
+ "scarb-cli",
  "scarb-test-support",
  "scarb-ui",
 ]
@@ -6565,6 +6582,7 @@ dependencies = [
  "create-output-dir",
  "indoc",
  "predicates",
+ "scarb-cli",
  "scarb-execute",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
@@ -6651,6 +6669,7 @@ dependencies = [
  "camino",
  "clap",
  "indoc",
+ "scarb-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",

@@ -1,5 +1,5 @@
 use clap::Parser;
-use scarb_execute::args::Args;
+use scarb_cli::extensions::execute::Args;
 use scarb_execute::main_inner;
 use scarb_ui::Ui;
 use std::process::ExitCode;

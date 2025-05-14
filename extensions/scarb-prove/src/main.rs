@@ -3,7 +3,8 @@ use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
-use scarb_execute::args::ExecutionArgs;
+use scarb_cli::extensions::execute::ExecutionArgs;
+use scarb_cli::extensions::prove::Args;
 use scarb_metadata::MetadataCommand;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, VerbositySpec};
 use scarb_ui::components::Status;
@@ -16,62 +17,6 @@ use stwo_cairo_prover::cairo_air::prover::{
     ProverConfig, ProverParameters, default_prod_prover_parameters, prove_cairo,
 };
 use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
-
-/// Proves `scarb execute` output using Stwo prover.
-#[derive(Parser, Clone, Debug)]
-#[clap(version, verbatim_doc_comment)]
-struct Args {
-    /// Name of the package.
-    #[command(flatten)]
-    packages_filter: PackagesFilter,
-
-    /// ID of `scarb execute` *standard* output for given package, for which to generate proof.
-    #[arg(
-        long,
-        conflicts_with_all = [
-            "execute",
-            "no_build",
-            "arguments",
-            "arguments_file",
-            "output",
-            "target",
-            "print_program_output",
-            "print_resource_usage",
-            "executable_name",
-            "executable_function"
-        ]
-    )]
-    execution_id: Option<usize>,
-
-    /// Execute the program before proving.
-    #[arg(
-        long,
-        default_value_t = false,
-        required_unless_present = "execution_id"
-    )]
-    execute: bool,
-
-    #[command(flatten)]
-    execute_args: ExecutionArgs,
-
-    #[command(flatten)]
-    prover: ProverArgs,
-
-    /// Logging verbosity.
-    #[command(flatten)]
-    pub verbose: VerbositySpec,
-}
-
-#[derive(Parser, Clone, Debug)]
-struct ProverArgs {
-    /// Track relations during proving.
-    #[arg(long, default_value = "false")]
-    track_relations: bool,
-
-    /// Display components during proving.
-    #[arg(long, default_value = "false")]
-    display_components: bool,
-}
 
 fn main() -> ExitCode {
     let args = Args::parse();

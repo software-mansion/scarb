@@ -2,8 +2,8 @@ use anyhow::{Context, Result, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use indoc::formatdoc;
+use scarb_cli::extensions::verify::Args;
 use scarb_metadata::{MetadataCommand, PackageMetadata};
-use scarb_ui::args::{PackagesFilter, VerbositySpec};
 use scarb_ui::components::Status;
 use scarb_ui::{OutputFormat, Ui};
 use std::env;
@@ -15,31 +15,6 @@ use stwo_cairo_prover::cairo_air::verifier::verify_cairo;
 use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::{
     Blake2sMerkleChannel, Blake2sMerkleHasher,
 };
-
-/// Verifies `scarb prove` output using Stwo verifier.
-#[derive(Parser, Clone, Debug)]
-#[clap(version, verbatim_doc_comment)]
-struct Args {
-    /// Name of the package.
-    #[command(flatten)]
-    packages_filter: PackagesFilter,
-
-    /// ID of `scarb execute` output for given package, for which proof was generated using `scarb prove`.
-    #[arg(long)]
-    execution_id: Option<u32>,
-
-    /// Proof file path.
-    #[arg(
-        long,
-        required_unless_present = "execution_id",
-        conflicts_with = "execution_id"
-    )]
-    proof_file: Option<Utf8PathBuf>,
-
-    /// Logging verbosity.
-    #[command(flatten)]
-    pub verbose: VerbositySpec,
-}
 
 fn main() -> ExitCode {
     let args = Args::parse();

@@ -25,6 +25,7 @@ num-bigint.workspace = true
 predicates.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
+scarb-cli = { path = "../../utils/scarb-cli" }
 serde.workspace = true
 serde_json.workspace = true
 

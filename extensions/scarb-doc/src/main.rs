@@ -1,62 +1,21 @@
 use anyhow::{Context, Result, ensure};
 use clap::Parser;
+use scarb_cli::extensions::doc::{Args, OutputFormat};
 use scarb_doc::docs_generation::markdown::MarkdownContent;
 use scarb_doc::errors::MetadataCommandError;
 use scarb_doc::metadata::get_target_dir;
-use std::process::ExitCode;
-
 use scarb_metadata::{MetadataCommand, ScarbCommand};
-use scarb_ui::args::{PackagesFilter, ToEnvVars, VerbositySpec};
+use scarb_ui::args::ToEnvVars;
+use std::process::ExitCode;
 
 use scarb_doc::generate_packages_information;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
 
 use scarb_ui::Ui;
-use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 
 const OUTPUT_DIR: &str = "doc";
 const JSON_OUTPUT_FILENAME: &str = "output.json";
-
-#[derive(Default, Debug, Clone, clap::ValueEnum)]
-enum OutputFormat {
-    /// Generates documentation in Markdown format.
-    /// Generated files are fully compatible with mdBook. For more information visit https://rust-lang.github.io/mdBook.
-    #[default]
-    Markdown,
-    /// Saves information collected from packages in JSON format instead of generating
-    /// documentation.
-    /// This may be useful if you want to generate documentation files by yourself.
-    /// The precise output structure is not guaranteed to be stable.
-    Json,
-}
-
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    #[command(flatten)]
-    packages_filter: PackagesFilter,
-
-    /// Specifies a format of generated files.
-    #[arg(long, value_enum, default_value_t)]
-    output_format: OutputFormat,
-
-    /// Generates documentation also for private items.
-    #[arg(long, default_value_t = false)]
-    document_private_items: bool,
-
-    /// Build generated documentation.
-    #[arg(long, default_value_t = false)]
-    build: bool,
-
-    /// Specifies features to enable.
-    #[command(flatten)]
-    pub features: FeaturesSpec,
-
-    /// Logging verbosity.
-    #[command(flatten)]
-    pub verbose: VerbositySpec,
-}
 
 fn main_inner(args: Args, ui: Ui) -> Result<()> {
     ensure!(
