@@ -1193,7 +1193,7 @@ impl DetailedTomlDependency {
         let features = self.features.clone().unwrap_or_default();
         let features = features
             .into_iter()
-            .map(PackageName::try_new)
+            .map(FeatureName::try_new)
             .collect::<Result<Vec<_>>>()?;
         let default_features = self.default_features.unwrap_or(true);
 
