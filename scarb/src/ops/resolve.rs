@@ -555,7 +555,7 @@ fn cairo_compilation_unit_for_target(
             let cfg_set = {
                 if package.id == member.id || package_id_rewritten {
                     // This is the main package.
-                    CfgSetBuilder::for_manifest_features(
+                    CfgSetBuilder::from_manifest_features(
                         &package.manifest.features,
                         enabled_features,
                     )
@@ -594,7 +594,7 @@ fn cairo_compilation_unit_for_target(
             .cloned()
             .unwrap_or_default();
         let cfg_set =
-            CfgSetBuilder::for_manifest_features(&member.manifest.features, enabled_features)
+            CfgSetBuilder::from_manifest_features(&member.manifest.features, enabled_features)
                 .with_cfg_set(no_test_cfg_set)
                 .extend_features(dep_features)
                 .into();
@@ -663,7 +663,7 @@ impl CfgSetBuilder {
         }
     }
 
-    pub fn for_manifest_features(
+    pub fn from_manifest_features(
         features_manifest: &FeaturesDefinition,
         enabled_features: &FeaturesOpts,
     ) -> Self {
@@ -707,7 +707,7 @@ pub struct PackageSolutionCollector<'a> {
     resolve: &'a WorkspaceResolve,
     ws: &'a Workspace<'a>,
     warnings: HashSet<String>,
-    collected: Option<ResolutionCollected>,
+    collected: Option<CollectedResolution>,
 }
 
 impl<'a> PackageSolutionCollector<'a> {
@@ -739,7 +739,7 @@ impl<'a> PackageSolutionCollector<'a> {
         &mut self,
         target_kind: &TargetKind,
         ignore_cairo_version: bool,
-    ) -> Result<ResolutionCollected> {
+    ) -> Result<CollectedResolution> {
         let allowed_prebuilds = self
             .resolve
             .allowed_prebuilt(self.member.clone(), target_kind)?;
@@ -816,7 +816,7 @@ impl<'a> PackageSolutionCollector<'a> {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        Ok(ResolutionCollected {
+        Ok(CollectedResolution {
             packages,
             cairo_plugins,
             features_for_deps,
@@ -906,7 +906,7 @@ impl<'a> PackageSolutionCollector<'a> {
     }
 }
 
-struct ResolutionCollected {
+struct CollectedResolution {
     pub packages: Vec<Package>,
     pub cairo_plugins: Vec<CompilationUnitCairoPlugin>,
     pub target_kind: TargetKind,

@@ -677,6 +677,43 @@ fn can_declare_same_dependency_with_different_kinds_and_features() {
 
     let dev = dep.iter().find(|d| d.kind == Some(DepKind::Dev)).unwrap();
     assert_eq!(dev.features, Some(vec!["second".to_string()]));
+
+    let lib_cu = meta
+        .compilation_units
+        .iter()
+        .find(|cu| cu.target.kind == "lib")
+        .unwrap();
+    let lib_component = lib_cu
+        .components
+        .iter()
+        .find(|component| component.name == "registry_dep")
+        .unwrap();
+    assert_eq!(
+        lib_component.cfg.as_ref().unwrap(),
+        &vec![
+            Cfg::KV("feature".to_string(), "first".to_string()),
+            Cfg::KV("target".to_string(), "lib".to_string())
+        ],
+    );
+
+    let test_cu = meta
+        .compilation_units
+        .iter()
+        .find(|cu| cu.target.kind == "test")
+        .unwrap();
+    let test_component = test_cu
+        .components
+        .iter()
+        .find(|component| component.name == "registry_dep")
+        .unwrap();
+    assert_eq!(
+        test_component.cfg.as_ref().unwrap(),
+        &vec![
+            Cfg::KV("feature".to_string(), "first".to_string()),
+            Cfg::KV("feature".to_string(), "second".to_string()),
+            Cfg::KV("target".to_string(), "test".to_string()),
+        ],
+    );
 }
 
 #[test]
@@ -850,14 +887,14 @@ fn dependency_features_in_workspace() {
         .name("first")
         .manifest_extra(indoc! {r#"
             [features]
-            first = []
-            second = []
+            x = []
+            y = []
         "#})
         .lib_cairo(indoc! {r#"
-            #[cfg(feature: 'first')]
+            #[cfg(feature: 'x')]
             fn g() -> felt252 { 21 }
 
-            #[cfg(feature: 'second')]
+            #[cfg(feature: 'y')]
             fn f() -> felt252 { g() }
 
             fn main() -> felt252 {
@@ -870,8 +907,7 @@ fn dependency_features_in_workspace() {
         .name("second")
         .dep(
             "first",
-            Dep.path("../first")
-                .features(vec!["first", "second"].into_iter()),
+            Dep.path("../first").features(vec!["x", "y"].into_iter()),
         )
         .build(&pkg2);
     WorkspaceBuilder::start()
@@ -881,7 +917,7 @@ fn dependency_features_in_workspace() {
 
     Scarb::quick_snapbox()
         .arg("check")
-        .arg("--features=first,second")
+        .arg("--features=x,y")
         .arg("--package=first")
         .current_dir(&t)
         .assert()
@@ -1134,11 +1170,11 @@ fn dependency_features_unification() {
         .dep(
             "path_dep",
             Dep.path(path_dep.path().to_string_lossy())
-                // Note, that `path_dep` requires two features - `x` and `y`. We enable `x` here
-                // explicitly. The `y` is set as default feature in `path_dep`. We do disable default
+                // Note, that `path_dep` requires two features - `x` and `y`. We enable `y` here
+                // explicitly. The `x` is set as default feature in `path_dep`. We do disable default
                 // features here, but `second` depends on `path_dep` enabling default features (and
                 // nothing else). As a result of unification, we will enable default features
-                // (caused by `second`) and `x` (caused by `first`), which means that the package
+                // (caused by `second`) and `y` (caused by `first`), which means that the package
                 // can be compiled successfully.
                 .default_features(false)
                 .features(["y"].iter()),
@@ -1360,5 +1396,164 @@ fn features_unification_does_not_leak_between_units() {
         .stdout_matches(indoc! {r#"
             [..]Checking second v1.0.0 ([..]Scarb.toml)
             [..]Finished checking `dev` profile target(s) in[..]
+        "#});
+}
+
+#[test]
+fn dependency_features_unification_for_test_target() {
+    let t = TempDir::new().unwrap();
+
+    let path_dep = t.child("path_dep");
+    ProjectBuilder::start()
+        .name("path_dep")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [features]
+            default = ["x"]
+            x = []
+            y = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn g() -> felt252 { 21 }
+
+            #[cfg(feature: 'y')]
+            fn f() -> felt252 { g() }
+
+            pub fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .build(&path_dep);
+
+    let hello = TempDir::new().unwrap();
+    let first = hello.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .dep(
+            "path_dep",
+            Dep.path(path_dep.path().to_string_lossy())
+                // Note, that `path_dep` requires two features - `x` and `y`. We enable `y` here
+                // explicitly. The `x` is set as default feature in `path_dep`. We do disable default
+                // features here, but `second` depends on `path_dep` enabling default features (and
+                // nothing else). As a result of unification, we will enable default features
+                // (caused by `second`) and `y` (caused by `first`), which means that the package
+                // can be compiled successfully.
+                .default_features(false)
+                .features(["y"].iter()),
+        )
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+            y = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'y')]
+            fn g() -> felt252 { 21 }
+
+            #[cfg(feature: 'x')]
+            fn f() -> felt252 { g() }
+
+            fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .build(&first);
+
+    let second = hello.child("second");
+    ProjectBuilder::start()
+        .name("second")
+        .dep(
+            "path_dep",
+            Dep.path(path_dep.path().to_string_lossy())
+                .default_features(true),
+        )
+        .build(&second);
+
+    ProjectBuilder::start()
+        .name("hello")
+        .dev_dep("second", Dep.path("./second"))
+        .dev_dep(
+            "first",
+            Dep.path("./first").features(vec!["x", "y"].into_iter()),
+        )
+        .build(&hello);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&hello)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in[..]
+        "#});
+}
+
+#[test]
+fn dev_dep_features_do_not_propagate() {
+    let t = TempDir::new().unwrap();
+
+    let path_dep = t.child("path_dep");
+    ProjectBuilder::start()
+        .name("path_dep")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+            y = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn g() -> felt252 { 21 }
+
+            #[cfg(feature: 'y')]
+            fn f() -> felt252 { g() }
+
+            pub fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .build(&path_dep);
+
+    let first = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("first")
+        .dev_dep(
+            "path_dep",
+            Dep.path(path_dep.path().to_string_lossy())
+                .features(["x", "y"].iter()),
+        )
+        .build(&first);
+
+    let hello = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello")
+        .dep("first", Dep.path(first.path().to_string_lossy()))
+        .dev_dep(
+            "path_dep",
+            // Note we do not enable any features here.
+            // They are enabled in `dev_dep` of `first`, but should not propagate here.
+            // If `first` depended on `path_dep` via normal dependency, features would propagate.
+            Dep.path(path_dep.path().to_string_lossy()),
+        )
+        .build(&hello);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&hello)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling test(hello_unittest) hello v1.0.0 ([..]Scarb.toml)
+            error[E0006]: Function not found.
+             --> [..]lib.cairo:8:5
+                f()
+                ^
+
+            error: could not compile `hello` due to previous error
         "#});
 }
