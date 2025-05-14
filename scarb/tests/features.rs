@@ -5,7 +5,9 @@ use indoc::indoc;
 
 use scarb_metadata::{Cfg, Metadata};
 use scarb_test_support::command::{CommandExt, Scarb};
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::gitx;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use scarb_test_support::registry::local::LocalRegistry;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 fn build_example_program(t: &TempDir) {
@@ -462,5 +464,103 @@ fn features_in_workspace_validated() {
         .stdout_matches(indoc! {r#"
             error: none of the selected packages contains `x` feature
             note: to use features, you need to define [features] section in Scarb.toml
+        "#});
+}
+
+#[test]
+fn parse_dependency_features_simple() {
+    let t = TempDir::new().unwrap();
+
+    let path_dep = t.child("path_dep");
+    ProjectBuilder::start()
+        .name("path_dep")
+        .version("0.1.0")
+        .build(&path_dep);
+
+    let git_dep = gitx::new("git_dep", |t| {
+        ProjectBuilder::start()
+            .name("git_dep")
+            .version("0.2.0")
+            .build(&t);
+    });
+
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("registry_dep")
+            .version("1.0.0")
+            .build(t);
+    });
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep(
+            "registry_dep",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["second", "first"].into_iter())
+                .default_features(false),
+        )
+        .dep(
+            "path_dep",
+            path_dep
+                .version("0.1.0")
+                .default_features(true)
+                .features(vec!["second", "first"].into_iter()),
+        )
+        .dep(
+            "git_dep",
+            git_dep
+                .version("0.2.0")
+                .features(vec!["second", "first"].into_iter())
+                .default_features(false),
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .assert()
+        .success();
+}
+
+#[test]
+fn parse_dependency_features_invalid() {
+    let t = TempDir::new().unwrap();
+
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("registry_dep")
+            .version("1.0.0")
+            .build(t);
+    });
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep(
+            "registry_dep",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["8x"].into_iter())
+                .default_features(false),
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: failed to parse manifest at: [..]Scarb.toml
+
+            Caused by:
+                the name `8x` cannot be used as a package name, names cannot start with a digit
         "#});
 }

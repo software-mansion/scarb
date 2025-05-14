@@ -13,6 +13,7 @@ use anyhow::{Result, bail};
 use camino::Utf8PathBuf;
 use indoc::formatdoc;
 use itertools::Itertools;
+use smol_str::SmolStr;
 
 pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
     let package = Some(generate_package(pkg));
@@ -144,6 +145,17 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
         }
     });
 
+    let features = (!dep.features.is_empty()).then_some(
+        dep.features
+            .clone()
+            .into_iter()
+            .map(SmolStr::from)
+            // Sort for stability.
+            .sorted()
+            .collect_vec(),
+    );
+    let default_features = (!dep.default_features).then_some(false);
+
     Ok(TomlDependency::Detailed(Box::new(DetailedTomlDependency {
         version,
 
@@ -164,6 +176,9 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
         } else {
             None
         },
+
+        features,
+        default_features,
     })))
 }
 
