@@ -1626,6 +1626,80 @@ fn can_declare_default_by_name() {
 }
 
 #[test]
+fn default_cannot_be_used_as_cfg_without_explicit_declaration() {
+    let t = TempDir::new().unwrap();
+
+    let path_dep = t.child("path_dep");
+    ProjectBuilder::start()
+        .name("path_dep")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn g() -> felt252 { 21 }
+
+            #[cfg(feature: 'default')]
+            fn f() -> felt252 { g() }
+
+            pub fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .build(&path_dep);
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn g() -> felt252 { path_dep::main() }
+
+            #[cfg(feature: 'default')]
+            fn f() -> felt252 { g() }
+
+            fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .dep(
+            "path_dep",
+            path_dep
+                .version("0.1.0")
+                .default_features(true)
+                .features(vec!["x"].into_iter()),
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        .arg("--features=x")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Checking hello v1.0.0 ([..]Scarb.toml)
+            error[E0006]: Function not found.
+             --> [..]lib.cairo:8:5
+                f()
+                ^
+
+            error[E0006]: Function not found.
+             --> [..]path_dep[..]lib.cairo:8:5
+                f()
+                ^
+
+            error: could not check `hello` due to previous error
+        "#});
+}
+
+#[test]
 fn can_deserialize_features_enabling_dependency_features() {
     let t = TempDir::new().unwrap();
 
@@ -1662,8 +1736,136 @@ fn can_deserialize_features_enabling_dependency_features() {
         .build(&t);
 
     Scarb::quick_snapbox()
-        .arg("fetch")
+        .arg("build")
+        .arg("--features=z")
         .current_dir(&t)
         .assert()
-        .success();
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
+fn default_features_can_enable_dependency_features() {
+    let t = TempDir::new().unwrap();
+
+    let first = t.child("path_dep");
+    ProjectBuilder::start()
+        .name("first")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+            y = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn g() -> felt252 { 21 }
+
+            #[cfg(feature: 'y')]
+            fn f() -> felt252 { g() }
+
+            pub fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .build(&first);
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .manifest_extra(indoc! {r#"
+            [features]
+            default = ["first/x", "first/y"]
+        "#})
+        .dep("first", &first)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
+}
+
+#[test]
+fn features_unification_for_features_dependant_on_dependency_features() {
+    let t = TempDir::new().unwrap();
+
+    let pkg = |name: &str| {
+        ProjectBuilder::start()
+            .name(name)
+            .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+            y = []
+        "#})
+            .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn g() -> felt252 { 21 }
+
+            #[cfg(feature: 'y')]
+            fn f() -> felt252 { g() }
+
+            pub fn main() -> felt252 {
+                f()
+            }
+        "#})
+    };
+
+    let first = t.child("first");
+    let fourth = t.child("fourth");
+    pkg("first")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = ["fourth/x"]
+            y = []
+        "#})
+        .dep("fourth", &fourth)
+        .build(&first);
+    let second = t.child("second");
+    pkg("second")
+        .dep(
+            "first",
+            Dep.path(first.to_string_lossy()).features(["x"].iter()),
+        )
+        .build(&second);
+    let third = t.child("third");
+    pkg("third")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = ["second/y"]
+            y = ["first/y"]
+        "#})
+        .dep("second", &second)
+        .dep("first", &first)
+        .build(&third);
+    pkg("fourth")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = ["y", "third/y"]
+            y = ["second/x"]
+        "#})
+        .dep("second", &second)
+        .dep(
+            "third",
+            Dep.path(third.to_string_lossy()).features(["x"].iter()),
+        )
+        .build(&fourth);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        .current_dir(&fourth)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Checking fourth v1.0.0 ([..]Scarb.toml)
+            [..]Finished checking `dev` profile target(s) in[..]
+        "#});
 }
