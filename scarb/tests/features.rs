@@ -1624,3 +1624,46 @@ fn can_declare_default_by_name() {
             [..]Finished checking `dev` profile target(s) in[..]
         "#});
 }
+
+#[test]
+fn can_deserialize_features_enabling_dependency_features() {
+    let t = TempDir::new().unwrap();
+
+    let first = t.child("path_dep");
+    ProjectBuilder::start()
+        .name("first")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [features]
+            x = []
+            y = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn g() -> felt252 { 21 }
+
+            #[cfg(feature: 'y')]
+            fn f() -> felt252 { g() }
+
+            pub fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .build(&first);
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .manifest_extra(indoc! {r#"
+            [features]
+            z = ["first/x", "first/y"]
+        "#})
+        .dep("first", &first)
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success();
+}
