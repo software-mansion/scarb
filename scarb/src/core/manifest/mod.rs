@@ -7,7 +7,7 @@ use semver::VersionReq;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::collections::btree_map::Keys;
-use std::collections::{BTreeMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashSet};
 use toml::Value;
 
 pub use compiler_config::*;
@@ -36,6 +36,7 @@ mod toml_manifest;
 mod version_req;
 
 pub type FeatureName = PackageName;
+pub const DEFAULT_FEATURE_NAME: &str = "default";
 
 /// Contains all the information about a package, as loaded from the manifest file.
 /// Construct using [`ManifestBuilder`].
@@ -163,22 +164,24 @@ impl FeaturesDefinition {
         for (key, vals) in features.iter() {
             let dependent_features = vals
                 .iter()
+                // Skip dependency features, as they need to be validated with dependency manifest.
                 .filter(|f| f.package.is_none())
                 .map(|f| &f.feature)
                 .collect::<HashSet<&FeatureName>>();
-            if dependent_features.contains(key) {
-                bail!("feature `{}` depends on itself", key);
-            }
+            ensure!(
+                !dependent_features.contains(key),
+                "feature `{}` depends on itself",
+                key
+            );
             let not_found_features = dependent_features
                 .difference(&available_features)
                 .collect_vec();
-            if !not_found_features.is_empty() {
-                bail!(
-                    "feature `{}` is dependent on `{}` which is not defined",
-                    key,
-                    not_found_features.iter().join(", "),
-                );
-            }
+            ensure!(
+                not_found_features.is_empty(),
+                "feature `{}` is dependent on `{}` which is not defined",
+                key,
+                not_found_features.iter().join(", "),
+            );
         }
         Ok(())
     }
@@ -196,9 +199,14 @@ impl FeaturesDefinition {
     }
 
     pub fn default_features(&self) -> Vec<EnabledFeature> {
-        self.0.get("default").cloned().unwrap_or_default()
+        self.0
+            .get(DEFAULT_FEATURE_NAME)
+            .cloned()
+            .unwrap_or_default()
     }
 
+    /// Return list of features enabled in this package via user args.
+    /// Note: This does not resolve dependant features! Only user input will be returned.
     pub fn select(
         &self,
         enabled_features: &[FeatureName],
@@ -211,33 +219,20 @@ impl FeaturesDefinition {
             let default_features: Vec<FeatureName> = self
                 .default_features()
                 .into_iter()
+                // We filter only features enabled in this package, because we use this list to
+                // find dependant features. Features enabled for dependencies will be collected
+                // separately during dependant features resolution, for all enabled top-level features.
                 .filter(|f| f.package.is_none())
                 .map(|f| f.feature)
                 .collect();
-            selected_features.extend(default_features)
+            selected_features.extend(default_features);
+            selected_features.insert(unsafe { FeatureName::new_unchecked(DEFAULT_FEATURE_NAME) });
         }
-        // Resolve features that are dependencies of selected features.
-        let mut queue = VecDeque::from_iter(selected_features.clone());
-
-        while let Some(key) = queue.pop_front() {
-            if let Some(neighbors) = self.get(&key) {
-                for neighbor in neighbors.iter() {
-                    if neighbor.package.is_some() {
-                        continue;
-                    }
-                    let neighbor = &neighbor.feature;
-                    if !selected_features.contains(neighbor) {
-                        selected_features.insert(neighbor.clone());
-                        queue.push_back(neighbor.clone());
-                    }
-                }
-            }
-        }
-
-        let not_found_features = selected_features
+        let mut not_found_features: HashSet<FeatureName> = selected_features
             .difference(&available_features)
             .cloned()
             .collect();
+        not_found_features.remove(DEFAULT_FEATURE_NAME);
         let enabled = available_features
             .intersection(&selected_features)
             .cloned()

@@ -28,7 +28,7 @@ use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::zip;
 use std::sync::Arc;
 
@@ -58,11 +58,15 @@ impl WorkspaceResolve {
     pub fn features_unification(
         &self,
         root_package: PackageId,
+        selected_features: &HashSet<FeatureName>,
         target_kind: &TargetKind,
     ) -> Result<HashMap<PackageId, HashSet<FeatureName>>> {
         assert!(self.packages.contains_key(&root_package));
         let solution = self.resolve.solution_of(root_package, target_kind);
         let mut features: HashMap<PackageId, HashSet<FeatureName>> = HashMap::default();
+        features.insert(root_package, selected_features.clone());
+
+        // Collect features enabled in manifest dependencies.
         for package_id in solution {
             let is_unit_root = root_package == package_id;
             for dep_id in self.resolve.package_dependencies_for_target_kind(
@@ -93,6 +97,54 @@ impl WorkspaceResolve {
                 }
             }
         }
+
+        // Resolve features that are dependencies of selected features.
+        let mut queue = VecDeque::from_iter(features.iter().flat_map(|(package_id, features)| {
+            features
+                .iter()
+                .map(|feature| (*package_id, feature.clone()))
+        }));
+
+        while let Some((package_id, feature)) = queue.pop_front() {
+            if let Some(dependants) = self
+                .packages
+                .get(&package_id)
+                .and_then(|p| p.manifest.features.get(&feature))
+            {
+                for dependant in dependants.iter() {
+                    let dependant_package_id = if let Some(package_name) =
+                        dependant.package.as_ref()
+                    {
+                        let deps = self.resolve.package_dependencies_for_target_kind(
+                            package_id,
+                            target_kind,
+                            root_package == package_id,
+                        );
+                        let Some(pid) = deps.iter().find(|p| p.name == *package_name) else {
+                            bail!(
+                                "feature `{feature}` of package `{}` depends on feature `{}` from package `{package_name}`, which is not a dependency of `{}`",
+                                &package_id.name,
+                                &dependant.feature,
+                                &package_id.name
+                            );
+                        };
+                        *pid
+                    } else {
+                        package_id
+                    };
+                    if !features
+                        .get(&dependant_package_id)
+                        .unwrap_or(&HashSet::new())
+                        .contains(&dependant.feature)
+                    {
+                        let selected_features = features.entry(dependant_package_id).or_default();
+                        selected_features.insert(dependant.feature.clone());
+                        queue.push_back((dependant_package_id, dependant.feature.clone()));
+                    }
+                }
+            }
+        }
+
         Ok(features)
     }
 
@@ -500,7 +552,21 @@ fn cairo_compilation_unit_for_target(
     solution: &mut PackageSolutionCollector<'_>,
 ) -> Result<CairoCompilationUnit> {
     let member_target = member_targets.first().cloned().unwrap();
-    solution.collect(&member_target.kind, ignore_cairo_version)?;
+
+    let selected_features: Vec<FeatureName> = match &enabled_features.features {
+        FeaturesSelector::AllFeatures => member.manifest.features.all().cloned().collect(),
+        FeaturesSelector::Features(features) => features.clone(),
+    };
+    let selected_features = member
+        .manifest
+        .features
+        .select(&selected_features, !enabled_features.no_default_features);
+
+    solution.collect(
+        &member_target.kind,
+        &selected_features.enabled(),
+        ignore_cairo_version,
+    )?;
     let packages = solution.packages().unwrap();
     let cairo_plugins = solution.cairo_plugins().unwrap();
     let features_for_deps = solution.features_for_deps().unwrap();
@@ -721,7 +787,12 @@ impl<'a> PackageSolutionCollector<'a> {
         }
     }
 
-    pub fn collect(&mut self, target_kind: &TargetKind, ignore_cairo_version: bool) -> Result<()> {
+    pub fn collect(
+        &mut self,
+        target_kind: &TargetKind,
+        selected_features: &HashSet<FeatureName>,
+        ignore_cairo_version: bool,
+    ) -> Result<()> {
         // Do not traverse graph for each target of the same kind.
         if !self
             .collected
@@ -729,7 +800,8 @@ impl<'a> PackageSolutionCollector<'a> {
             .map(|collected| &collected.target_kind == target_kind)
             .unwrap_or(false)
         {
-            let collected = self.pull_from_graph(target_kind, ignore_cairo_version)?;
+            let collected =
+                self.pull_from_graph(target_kind, selected_features, ignore_cairo_version)?;
             self.collected = Some(collected);
         }
         Ok(())
@@ -738,14 +810,15 @@ impl<'a> PackageSolutionCollector<'a> {
     fn pull_from_graph(
         &mut self,
         target_kind: &TargetKind,
+        selected_features: &HashSet<FeatureName>,
         ignore_cairo_version: bool,
     ) -> Result<CollectedResolution> {
         let allowed_prebuilds = self
             .resolve
             .allowed_prebuilt(self.member.clone(), target_kind)?;
-        let features_for_deps = self
-            .resolve
-            .features_unification(self.member.id, target_kind)?;
+        let features_for_deps =
+            self.resolve
+                .features_unification(self.member.id, selected_features, target_kind)?;
         let mut classes = self
             .resolve
             .solution_of(self.member.id, target_kind)
