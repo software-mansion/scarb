@@ -143,19 +143,51 @@ pub fn edition_variant(edition: Edition) -> String {
     edition
 }
 
+#[derive(Clone, Debug)]
+pub struct EnabledFeature {
+    pub package: Option<PackageName>,
+    pub feature: FeatureName,
+}
+
 #[derive(Clone, Debug, Default)]
-pub struct FeaturesDefinition(BTreeMap<FeatureName, Vec<FeatureName>>);
+pub struct FeaturesDefinition(BTreeMap<FeatureName, Vec<EnabledFeature>>);
 
 impl FeaturesDefinition {
-    pub fn new(features: BTreeMap<FeatureName, Vec<FeatureName>>) -> Self {
-        Self(features)
+    pub fn try_new(features: BTreeMap<FeatureName, Vec<EnabledFeature>>) -> Result<Self> {
+        Self::validate(&features)?;
+        Ok(Self(features))
     }
 
-    pub fn all(&self) -> Keys<'_, FeatureName, Vec<FeatureName>> {
+    fn validate(features: &BTreeMap<FeatureName, Vec<EnabledFeature>>) -> Result<()> {
+        let available_features: HashSet<&FeatureName> = features.keys().collect();
+        for (key, vals) in features.iter() {
+            let dependent_features = vals
+                .iter()
+                .filter(|f| f.package.is_none())
+                .map(|f| &f.feature)
+                .collect::<HashSet<&FeatureName>>();
+            if dependent_features.contains(key) {
+                bail!("feature `{}` depends on itself", key);
+            }
+            let not_found_features = dependent_features
+                .difference(&available_features)
+                .collect_vec();
+            if !not_found_features.is_empty() {
+                bail!(
+                    "feature `{}` is dependent on `{}` which is not defined",
+                    key,
+                    not_found_features.iter().join(", "),
+                );
+            }
+        }
+        Ok(())
+    }
+
+    pub fn all(&self) -> Keys<'_, FeatureName, Vec<EnabledFeature>> {
         self.0.keys()
     }
 
-    pub fn get(&self, feature: &FeatureName) -> Option<&Vec<FeatureName>> {
+    pub fn get(&self, feature: &FeatureName) -> Option<&Vec<EnabledFeature>> {
         self.0.get(feature)
     }
 
@@ -163,7 +195,7 @@ impl FeaturesDefinition {
         self.0.contains_key(feature)
     }
 
-    pub fn default_features(&self) -> Vec<FeatureName> {
+    pub fn default_features(&self) -> Vec<EnabledFeature> {
         self.0.get("default").cloned().unwrap_or_default()
     }
 
@@ -176,7 +208,13 @@ impl FeaturesDefinition {
         let mut selected_features: HashSet<FeatureName> =
             enabled_features.iter().cloned().collect();
         if default_enabled {
-            selected_features.extend(self.default_features())
+            let default_features: Vec<FeatureName> = self
+                .default_features()
+                .into_iter()
+                .filter(|f| f.package.is_none())
+                .map(|f| f.feature)
+                .collect();
+            selected_features.extend(default_features)
         }
         // Resolve features that are dependencies of selected features.
         let mut queue = VecDeque::from_iter(selected_features.clone());
@@ -184,6 +222,10 @@ impl FeaturesDefinition {
         while let Some(key) = queue.pop_front() {
             if let Some(neighbors) = self.get(&key) {
                 for neighbor in neighbors.iter() {
+                    if neighbor.package.is_some() {
+                        continue;
+                    }
+                    let neighbor = &neighbor.feature;
                     if !selected_features.contains(neighbor) {
                         selected_features.insert(neighbor.clone());
                         queue.push_back(neighbor.clone());
@@ -203,14 +245,28 @@ impl FeaturesDefinition {
         SelectedFeatures::new(enabled, not_found_features)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&FeatureName, &Vec<FeatureName>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&FeatureName, &Vec<EnabledFeature>)> {
         self.0.iter()
     }
 }
 
-impl From<BTreeMap<FeatureName, Vec<FeatureName>>> for FeaturesDefinition {
-    fn from(features: BTreeMap<FeatureName, Vec<FeatureName>>) -> Self {
-        Self::new(features)
+impl TryFrom<BTreeMap<FeatureName, Vec<TomlFeatureToEnable>>> for FeaturesDefinition {
+    type Error = anyhow::Error;
+    fn try_from(features: BTreeMap<FeatureName, Vec<TomlFeatureToEnable>>) -> Result<Self> {
+        Self::try_new(
+            features
+                .into_iter()
+                .map(|(name, enabled)| {
+                    Ok((
+                        name,
+                        enabled
+                            .into_iter()
+                            .map(TryFrom::try_from)
+                            .collect::<Result<_>>()?,
+                    ))
+                })
+                .collect::<Result<_>>()?,
+        )
     }
 }
 
