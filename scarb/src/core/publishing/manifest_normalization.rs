@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::core::{MaybeWorkspaceTomlDependency, TomlCairoPluginTargetParams, TomlTarget};
+use crate::core::{
+    MaybeWorkspaceTomlDependency, TomlCairoPluginTargetParams, TomlFeatureToEnable, TomlTarget,
+};
 use crate::{
     DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
     core::{
@@ -43,7 +45,16 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
             .features
             .iter()
             // Sort for stability.
-            .map(|(key, val)| (key.clone(), val.iter().sorted().cloned().collect_vec()))
+            .map(|(key, val)| {
+                (
+                    key.clone(),
+                    val.iter()
+                        .cloned()
+                        .map(TomlFeatureToEnable::from)
+                        .sorted()
+                        .collect_vec(),
+                )
+            })
             .collect(),
     );
 
