@@ -289,6 +289,10 @@ pub struct DependencyMetadata {
     pub source: SourceId,
     /// Dependency kind. None denotes normal dependency.
     pub kind: Option<DepKind>,
+    /// Features to be enabled for this dependency.
+    pub features: Option<Vec<String>>,
+    /// Whether to use default features.
+    pub default_features: Option<bool>,
 
     /// Additional data not captured by deserializer.
     #[cfg_attr(feature = "builder", builder(default))]
