@@ -1,9 +1,9 @@
 use anyhow::{Context, Result, ensure};
 use clap::Parser;
-use scarb_cli::extensions::doc::{Args, OutputFormat};
 use scarb_doc::docs_generation::markdown::MarkdownContent;
 use scarb_doc::errors::MetadataCommandError;
 use scarb_doc::metadata::get_target_dir;
+use scarb_extensions_cli::doc::{Args, OutputFormat};
 use scarb_metadata::{MetadataCommand, ScarbCommand};
 use scarb_ui::args::ToEnvVars;
 use std::process::ExitCode;

@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use mdbook::MDBook;
-use scarb_cli::extensions::mdbook::Args;
+use scarb_extensions_cli::mdbook::Args;
 use scarb_ui::Ui;
 use std::fs::File;
 use std::io::Write;

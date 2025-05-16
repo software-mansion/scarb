@@ -22,7 +22,7 @@ members = [
     "utils/scarb-test-support",
     "utils/scarb-ui",
     "utils/test-for-each-example",
-    "utils/scarb-cli",
+    "utils/scarb-extensions-cli",
     "xtask",
 ]
 "resolver" = "2"

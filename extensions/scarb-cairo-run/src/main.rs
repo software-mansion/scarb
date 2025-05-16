@@ -17,7 +17,7 @@ use std::env;
 use std::fs;
 use std::process::ExitCode;
 
-use scarb_cli::extensions::cairo_run::{Args, deserialization};
+use scarb_extensions_cli::cairo_run::{Args, deserialization};
 
 const EXECUTABLE_NAME: &str = "main";
 const DEFAULT_MAIN_FUNCTION: &str = "::main";

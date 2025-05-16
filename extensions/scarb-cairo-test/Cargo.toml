@@ -15,7 +15,7 @@ camino.workspace = true
 clap.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
-scarb-cli = { path = "../../utils/scarb-cli" }
+scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli" }
 serde_json.workspace = true
 indoc.workspace = true
 

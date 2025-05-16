@@ -13,7 +13,7 @@ use cairo_vm::{Felt252, cairo_run};
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use scarb_cli::extensions::execute::{Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat};
+use scarb_extensions_cli::execute::{Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat};
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
 use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};

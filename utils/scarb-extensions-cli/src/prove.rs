@@ -1,4 +1,4 @@
-use crate::extensions::execute::ExecutionArgs;
+use crate::execute::ExecutionArgs;
 use clap::Parser;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 

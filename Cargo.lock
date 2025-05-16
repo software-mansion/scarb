@@ -6314,7 +6314,7 @@ dependencies = [
  "redb",
  "reqwest",
  "scarb-build-metadata",
- "scarb-cli",
+ "scarb-extensions-cli",
  "scarb-metadata 1.14.0",
  "scarb-proc-macro-server-types 0.2.0",
  "scarb-stable-hash 1.0.0",
@@ -6386,7 +6386,7 @@ dependencies = [
  "clap",
  "indoc",
  "num-bigint",
- "scarb-cli",
+ "scarb-extensions-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
@@ -6409,31 +6409,13 @@ dependencies = [
  "camino",
  "clap",
  "indoc",
- "scarb-cli",
+ "scarb-extensions-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
  "serde_json",
  "snapbox",
  "test-for-each-example",
-]
-
-[[package]]
-name = "scarb-cli"
-version = "2.11.4"
-dependencies = [
- "anyhow",
- "cairo-lang-runner",
- "cairo-lang-utils",
- "camino",
- "clap",
- "num-bigint",
- "scarb-ui",
- "serde",
- "serde_json",
- "starknet-types-core",
- "test-case",
- "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -6459,7 +6441,7 @@ dependencies = [
  "indoc",
  "itertools 0.14.0",
  "rust-analyzer-salsa",
- "scarb-cli",
+ "scarb-extensions-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
@@ -6487,13 +6469,31 @@ dependencies = [
  "indoc",
  "num-bigint",
  "predicates",
- "scarb-cli",
+ "scarb-extensions-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
  "serde_json",
  "snapbox",
+]
+
+[[package]]
+name = "scarb-extensions-cli"
+version = "2.11.4"
+dependencies = [
+ "anyhow",
+ "cairo-lang-runner",
+ "cairo-lang-utils",
+ "camino",
+ "clap",
+ "num-bigint",
+ "scarb-ui",
+ "serde",
+ "serde_json",
+ "starknet-types-core",
+ "test-case",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -6505,7 +6505,7 @@ dependencies = [
  "camino",
  "clap",
  "mdbook",
- "scarb-cli",
+ "scarb-extensions-cli",
  "scarb-test-support",
  "scarb-ui",
 ]
@@ -6570,8 +6570,8 @@ dependencies = [
  "create-output-dir",
  "indoc",
  "predicates",
- "scarb-cli",
  "scarb-execute",
+ "scarb-extensions-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
@@ -6657,7 +6657,7 @@ dependencies = [
  "camino",
  "clap",
  "indoc",
- "scarb-cli",
+ "scarb-extensions-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",

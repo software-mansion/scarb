@@ -1,4 +1,4 @@
-use crate::extensions::cairo_run::deserialization;
+use crate::cairo_run::deserialization;
 use camino::Utf8PathBuf;
 use clap::Parser;
 use scarb_ui::args::PackagesFilter;

@@ -2,7 +2,7 @@ use anyhow::{Context, Result, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use indoc::formatdoc;
-use scarb_cli::extensions::verify::Args;
+use scarb_extensions_cli::verify::Args;
 use scarb_metadata::{MetadataCommand, PackageMetadata};
 use scarb_ui::components::Status;
 use scarb_ui::{OutputFormat, Ui};

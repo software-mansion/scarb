@@ -8,7 +8,7 @@ use cairo_lang_test_runner::{CompiledTestRunner, RunProfilerConfig, TestRunConfi
 use camino::Utf8PathBuf;
 use clap::Parser;
 use indoc::formatdoc;
-use scarb_cli::extensions::cairo_test::Args;
+use scarb_extensions_cli::cairo_test::Args;
 use scarb_metadata::{
     Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand, TargetMetadata,
 };

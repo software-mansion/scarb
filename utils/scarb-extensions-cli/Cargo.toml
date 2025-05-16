@@ -1,5 +1,5 @@
 [package]
-name = "scarb-cli"
+name = "scarb-extensions-cli"
 version.workspace = true
 edition.workspace = true
 publish = false
