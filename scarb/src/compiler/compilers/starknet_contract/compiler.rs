@@ -282,7 +282,7 @@ pub fn find_project_contracts(
                             use_alias.unwrap_or_else(|| module_id.name(db.upcast()).to_string());
                         let mut submodules = Vec::new();
                         collect_modules_under(db.upcast(), &mut submodules, module_id);
-                        let found_contracts = submodules
+                        submodules
                             .iter()
                             .filter_map(|module_id| {
                                 let contract = module_contract(db, *module_id)?;
@@ -304,8 +304,7 @@ pub fn find_project_contracts(
                                 matched_selectors.extend(selectors_used);
                                 any_matched.then_some(contract)
                             })
-                            .collect_vec();
-                        found_contracts
+                            .collect_vec()
                     })
                     .collect_vec();
                 filtered_contracts.extend(matched_contracts);

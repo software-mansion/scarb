@@ -152,8 +152,7 @@ impl DependencyEdge {
             return true;
         }
         // For `TargetKind::TEST`, we should not consider the root package dependencies.
-        (is_root || target_kind != TargetKind::TEST)
-            && self.0.iter().any(|name| target_kind == *name)
+        (is_root || target_kind != TargetKind::TEST) && self.0.contains(&target_kind)
     }
 
     pub fn extend(self, target_kind: Option<TargetKind>) -> Self {
