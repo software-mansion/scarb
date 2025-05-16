@@ -9,7 +9,7 @@ use indoc::formatdoc;
 use scarb_metadata::{
     CompilationUnitMetadata, Metadata, MetadataCommand, PackageId, PackageMetadata, ScarbCommand,
 };
-use scarb_ui::args::{PackagesFilter, VerbositySpec};
+use scarb_ui::args::PackagesFilter;
 use scarb_ui::components::Status;
 use scarb_ui::{Message, OutputFormat, Ui};
 use serde::Serializer;
