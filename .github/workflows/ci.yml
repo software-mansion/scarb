@@ -189,6 +189,14 @@ jobs:
           # Make sure CI fails on all warnings, including Clippy lints.
           RUSTDOCFLAGS: "-Dwarnings"
 
+  detect-unused-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Machete
+        uses: bnjbvr/cargo-machete@v0.8.0
+
   check-rust-nightly:
     name: check-rust (nightly)
     runs-on: ubuntu-latest
