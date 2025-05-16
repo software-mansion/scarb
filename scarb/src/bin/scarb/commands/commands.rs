@@ -9,7 +9,7 @@ use scarb::core::Config;
 use scarb::ops::{SubcommandDirs, list_external_subcommands};
 use scarb_ui::Message;
 
-use scarb::args::ScarbArgs;
+use crate::args::ScarbArgs;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Serialize)]
 enum CommandInfo {

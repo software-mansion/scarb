@@ -10,7 +10,7 @@ use scarb::ops;
 use scarb::ops::{PackageOpts, validate_features};
 use scarb_ui::Message;
 
-use scarb::args::PackageArgs;
+use crate::args::PackageArgs;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: PackageArgs, config: &Config) -> Result<()> {

@@ -4,7 +4,7 @@ use scarb::core::Config;
 use scarb::ops;
 use scarb_ui::components::MachineMessage;
 
-use scarb::args::MetadataArgs;
+use crate::args::MetadataArgs;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: MetadataArgs, config: &Config) -> Result<()> {

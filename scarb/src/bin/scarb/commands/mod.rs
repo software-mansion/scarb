@@ -4,7 +4,7 @@ use anyhow::Result;
 
 use scarb::core::Config;
 
-use scarb::args::{CacheSubcommand, Command};
+use crate::args::{CacheSubcommand, Command};
 
 pub mod add;
 pub mod build;

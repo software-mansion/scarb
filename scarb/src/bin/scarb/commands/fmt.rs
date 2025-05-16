@@ -1,8 +1,8 @@
 use anyhow::Result;
 use std::process::ExitCode;
 
+use crate::args::{EmitTarget, FmtArgs};
 use crate::errors::error_with_exit_code;
-use scarb::args::FmtArgs;
 use scarb::core::Config;
 use scarb::ops::{self, FmtAction};
 
@@ -37,5 +37,13 @@ pub fn run(args: FmtArgs, config: &Config) -> Result<()> {
         Ok(())
     } else {
         error_with_exit_code(ExitCode::FAILURE)
+    }
+}
+
+impl From<EmitTarget> for ops::FmtEmitTarget {
+    fn from(target: EmitTarget) -> Self {
+        match target {
+            EmitTarget::Stdout => ops::FmtEmitTarget::Stdout,
+        }
     }
 }

@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use scarb::args::BuildArgs;
+use crate::args::BuildArgs;
 use scarb::core::Config;
 use scarb::ops;
 use scarb::ops::CompileOpts;

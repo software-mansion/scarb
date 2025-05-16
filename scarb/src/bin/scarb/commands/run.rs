@@ -1,8 +1,8 @@
+use crate::args::ScriptsRunnerArgs;
 use crate::errors::ErrorWithExitCode;
 use anyhow::{Result, anyhow};
 use indoc::formatdoc;
 use itertools::Itertools;
-use scarb::args::ScriptsRunnerArgs;
 use scarb::core::errors::ScriptExecutionError;
 use scarb::core::{Config, Package, PackageName, ScriptDefinition, Workspace};
 use scarb::ops;

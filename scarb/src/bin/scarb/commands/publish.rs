@@ -6,7 +6,7 @@ use scarb::core::Config;
 use scarb::core::registry::DEFAULT_REGISTRY_INDEX;
 use scarb::ops::{self, PackageOpts, PublishOpts, validate_features};
 
-use scarb::args::PublishArgs;
+use crate::args::PublishArgs;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: PublishArgs, config: &Config) -> Result<()> {

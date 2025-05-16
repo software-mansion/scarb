@@ -1,4 +1,3 @@
-use crate::args::EmitTarget;
 use crate::compiler::db::{ScarbDatabase, build_scarb_root_database};
 use crate::compiler::helpers::{build_compiler_config, write_string};
 use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
@@ -24,14 +23,6 @@ pub enum ExpandEmitTarget {
     Stdout,
     #[default]
     File,
-}
-
-impl From<EmitTarget> for ExpandEmitTarget {
-    fn from(target: EmitTarget) -> Self {
-        match target {
-            EmitTarget::Stdout => ExpandEmitTarget::Stdout,
-        }
-    }
 }
 
 #[derive(Clone, Debug)]

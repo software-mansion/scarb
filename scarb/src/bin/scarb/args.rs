@@ -11,11 +11,11 @@ use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use smol_str::SmolStr;
 use url::Url;
 
-use crate::compiler::Profile;
-use crate::core::PackageName;
-use crate::manifest_editor::DepId;
-use crate::manifest_editor::SectionArgs;
-use crate::{ops, version};
+use scarb::compiler::Profile;
+use scarb::core::PackageName;
+use scarb::manifest_editor::DepId;
+use scarb::manifest_editor::SectionArgs;
+use scarb::version;
 use clap_complete::Shell as ClapShell;
 use scarb_ui::OutputFormat;
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
@@ -114,7 +114,6 @@ pub struct ScarbArgs {
     pub command: Command,
 }
 
-#[doc(hidden)]
 impl ScarbArgs {
     /// Construct [`OutputFormat`] value from these arguments.
     pub fn output_format(&self) -> OutputFormat {
@@ -199,7 +198,7 @@ pub enum Command {
         to a registry.
     ")]
     Publish(PublishArgs),
-    /// Check a package to catch common mistakes and improve your Cairo code.
+    /// Checks a package to catch common mistakes and improve your Cairo code.
     Lint(LintArgs),
     /// Run arbitrary package scripts.
     Run(ScriptsRunnerArgs),
@@ -218,19 +217,9 @@ pub enum Command {
     External(Vec<OsString>),
 }
 
-#[doc(hidden)]
 #[derive(ValueEnum, Clone, Debug)]
 pub enum EmitTarget {
     Stdout,
-}
-
-#[doc(hidden)]
-impl From<EmitTarget> for ops::FmtEmitTarget {
-    fn from(target: EmitTarget) -> Self {
-        match target {
-            EmitTarget::Stdout => ops::FmtEmitTarget::Stdout,
-        }
-    }
 }
 
 /// Arguments accepted by the `build` command.
@@ -669,7 +658,6 @@ pub struct ProfileSpec {
     pub dev: bool,
 }
 
-#[doc(hidden)]
 impl ProfileSpec {
     pub fn determine(&self) -> Result<Profile> {
         Ok(match &self {

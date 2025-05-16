@@ -1,10 +1,10 @@
 use std::io::{self, IsTerminal};
 
+use crate::args::TestRunner;
 use anyhow::{Result, ensure};
 use dialoguer::Select;
 use dialoguer::theme::ColorfulTheme;
 use indoc::indoc;
-use scarb::args::TestRunner;
 use which::which;
 
 pub fn get_or_ask_for_test_runner(test_runner: Option<TestRunner>) -> Result<TestRunner> {
