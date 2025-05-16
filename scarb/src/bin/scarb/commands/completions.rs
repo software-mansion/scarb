@@ -1,11 +1,11 @@
 use anyhow::Result;
 use clap::{Command, CommandFactory};
 use clap_complete::{Shell as ClapShell, generate};
-use scarb::args::{CompletionsArgs, ScarbArgs};
 use scarb::core::Config;
 use scarb::ops::{SubcommandDirs, list_external_subcommands};
 use std::io;
 
+use crate::args::{CompletionsArgs, ScarbArgs};
 use scarb_extensions_cli::cairo_run as cairo_run_args;
 use scarb_extensions_cli::cairo_test as cairo_test_args;
 use scarb_extensions_cli::doc as doc_args;

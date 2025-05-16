@@ -11,12 +11,12 @@ use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use smol_str::SmolStr;
 use url::Url;
 
+use clap_complete::Shell as ClapShell;
 use scarb::compiler::Profile;
 use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
 use scarb::manifest_editor::SectionArgs;
 use scarb::version;
-use clap_complete::Shell as ClapShell;
 use scarb_ui::OutputFormat;
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 
@@ -381,39 +381,6 @@ pub struct FmtArgs {
     pub path: Option<Utf8PathBuf>,
 }
 
-/// Arguments accepted by the `completions` command.
-#[derive(Parser, Clone, Debug)]
-#[clap(version, about = "Generate shell completions")]
-pub struct CompletionsArgs {
-    /// Target shell for completion generation
-    #[arg(value_enum)]
-    pub shell: Shell,
-}
-
-/// Target shell for completion generation.
-#[doc(hidden)]
-#[derive(ValueEnum, Clone, Debug)]
-pub enum Shell {
-    Bash,
-    Fish,
-    Elvish,
-    #[clap(name = "powershell", alias = "pwsh")]
-    PowerShell,
-    Zsh,
-}
-
-impl From<Shell> for ClapShell {
-    fn from(s: Shell) -> Self {
-        match s {
-            Shell::Bash => ClapShell::Bash,
-            Shell::Elvish => ClapShell::Elvish,
-            Shell::Fish => ClapShell::Fish,
-            Shell::PowerShell => ClapShell::PowerShell,
-            Shell::Zsh => ClapShell::Zsh,
-        }
-    }
-}
-
 /// Arguments accepted by the `add` command.
 #[derive(Parser, Clone, Debug)]
 pub struct AddArgs {
@@ -622,6 +589,40 @@ pub struct LintArgs {
     /// Should fail on any warning.
     #[arg(short, long, default_value_t = false, env = "SCARB_LINT_DENY_WARNINGS")]
     pub deny_warnings: bool,
+}
+
+/// Arguments accepted by the `completions` command.
+#[derive(Parser, Clone, Debug)]
+#[clap(version, about = "Generate shell completions")]
+pub struct CompletionsArgs {
+    /// Target shell for completion generation
+    #[arg(value_enum)]
+    pub shell: Shell,
+}
+
+/// Target shell for completion generation.
+#[doc(hidden)]
+#[derive(ValueEnum, Clone, Debug)]
+pub enum Shell {
+    Bash,
+    Fish,
+    Elvish,
+    #[allow(clippy::enum_variant_names)]
+    #[clap(name = "powershell", alias = "pwsh")]
+    PowerShell,
+    Zsh,
+}
+
+impl From<Shell> for ClapShell {
+    fn from(s: Shell) -> Self {
+        match s {
+            Shell::Bash => ClapShell::Bash,
+            Shell::Elvish => ClapShell::Elvish,
+            Shell::Fish => ClapShell::Fish,
+            Shell::PowerShell => ClapShell::PowerShell,
+            Shell::Zsh => ClapShell::Zsh,
+        }
+    }
 }
 
 /// Git reference specification arguments.
