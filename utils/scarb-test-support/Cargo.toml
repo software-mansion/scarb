@@ -31,3 +31,6 @@ url.workspace = true
 predicates.workspace = true
 expect-test.workspace = true
 walkdir.workspace = true
+
+[package.metadata.cargo-machete]
+ignored = ["dunce"]
