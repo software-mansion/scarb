@@ -3,13 +3,14 @@ use clap::{Command, CommandFactory};
 use clap_complete::{Shell as ClapShell, generate};
 use scarb::args::ScarbArgs;
 use scarb::ops::{SubcommandDirs, list_external_subcommands};
-use scarb_cairo_run::args as cairo_run_args;
-use scarb_cairo_test::args as cairo_test_args;
-use scarb_doc::args as doc_args;
-use scarb_execute::args as execute_args;
-use scarb_mdbook::args as mdbook_args;
-use scarb_prove::args as prove_args;
-use scarb_verify::args as verify_args;
+use scarb_cli::extensions::cairo_run as cairo_run_args;
+use scarb_cli::extensions::cairo_test as cairo_test_args;
+use scarb_cli::extensions::doc as doc_args;
+use scarb_cli::extensions::execute;
+use scarb_cli::extensions::mdbook as mdbook_args;
+use scarb_cli::extensions::prove as prove_args;
+use scarb_cli::extensions::verify as verify_args;
+
 use std::io;
 
 pub mod args;
@@ -39,7 +40,7 @@ fn build_command() -> Result<Command> {
                 "cairo-test" => Some(cairo_test_args::Args::command().name("cairo-test")),
                 "completions" => Some(Args::command().name("completions")),
                 "doc" => Some(doc_args::Args::command().name("doc")),
-                "execute" => Some(execute_args::Args::command().name("execute")),
+                "execute" => Some(execute::Args::command().name("execute")),
                 "mdbook" => Some(mdbook_args::Args::command().name("mdbook")),
                 "prove" => Some(prove_args::Args::command().name("prove")),
                 "verify" => Some(verify_args::Args::command().name("verify")),
