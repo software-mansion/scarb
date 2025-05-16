@@ -14,6 +14,7 @@ pub enum OutputFormat {
     Json,
 }
 
+/// Generate documentation based on code comments
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Args {

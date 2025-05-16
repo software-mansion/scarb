@@ -2,7 +2,7 @@ use crate::execute::ExecutionArgs;
 use clap::Parser;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
-/// Proves `scarb execute` output using Stwo prover.
+/// Prove `scarb execute` output using Stwo prover.
 #[derive(Parser, Clone, Debug)]
 #[clap(version, verbatim_doc_comment)]
 pub struct Args {

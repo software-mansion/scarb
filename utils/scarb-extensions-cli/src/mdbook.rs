@@ -2,6 +2,7 @@ use camino::Utf8PathBuf;
 use clap::Parser;
 use scarb_ui::args::VerbositySpec;
 
+/// Build `mdBook` documentation
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Args {
