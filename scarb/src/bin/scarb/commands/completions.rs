@@ -15,17 +15,17 @@ use scarb_cli::extensions::prove as prove_args;
 use scarb_cli::extensions::verify as verify_args;
 
 #[tracing::instrument(skip_all, level = "info")]
-pub fn run(args: CompletionsArgs, _config: &Config) -> Result<()> {
-    let mut cmd = build_command()?;
+pub fn run(args: CompletionsArgs, config: &Config) -> Result<()> {
+    let mut cmd = build_command(config)?;
     let shell: ClapShell = args.shell.into();
     generate(shell, &mut cmd, "scarb", &mut io::stdout());
     Ok(())
 }
 
-fn build_command() -> Result<Command> {
+fn build_command(config: &Config) -> Result<Command> {
     let mut cmd = ScarbArgs::command();
 
-    let dirs = SubcommandDirs::new(None)?;
+    let dirs = SubcommandDirs::try_from(config).expect("Failed to get subcommand directories");
     let external_subcommands = list_external_subcommands(&dirs)?;
     for external_cmd in external_subcommands {
         // Generate full completions only for the bundled subcommands
