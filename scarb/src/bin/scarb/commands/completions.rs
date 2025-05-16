@@ -6,13 +6,13 @@ use scarb::core::Config;
 use scarb::ops::{SubcommandDirs, list_external_subcommands};
 use std::io;
 
-use scarb_cli::extensions::cairo_run as cairo_run_args;
-use scarb_cli::extensions::cairo_test as cairo_test_args;
-use scarb_cli::extensions::doc as doc_args;
-use scarb_cli::extensions::execute;
-use scarb_cli::extensions::mdbook as mdbook_args;
-use scarb_cli::extensions::prove as prove_args;
-use scarb_cli::extensions::verify as verify_args;
+use scarb_extensions_cli::cairo_run as cairo_run_args;
+use scarb_extensions_cli::cairo_test as cairo_test_args;
+use scarb_extensions_cli::doc as doc_args;
+use scarb_extensions_cli::execute;
+use scarb_extensions_cli::mdbook as mdbook_args;
+use scarb_extensions_cli::prove as prove_args;
+use scarb_extensions_cli::verify as verify_args;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: CompletionsArgs, config: &Config) -> Result<()> {
