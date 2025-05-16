@@ -1,8 +1,11 @@
 use anyhow::Result;
 use clap::{Command, CommandFactory};
 use clap_complete::{Shell as ClapShell, generate};
-use scarb::args::ScarbArgs;
+use scarb::args::{CompletionsArgs, ScarbArgs};
+use scarb::core::Config;
 use scarb::ops::{SubcommandDirs, list_external_subcommands};
+use std::io;
+
 use scarb_cli::extensions::cairo_run as cairo_run_args;
 use scarb_cli::extensions::cairo_test as cairo_test_args;
 use scarb_cli::extensions::doc as doc_args;
@@ -11,16 +14,11 @@ use scarb_cli::extensions::mdbook as mdbook_args;
 use scarb_cli::extensions::prove as prove_args;
 use scarb_cli::extensions::verify as verify_args;
 
-use std::io;
-
-pub mod args;
-use args::Args;
-
-pub fn main_inner(args: Args) -> Result<()> {
+#[tracing::instrument(skip_all, level = "info")]
+pub fn run(args: CompletionsArgs, _config: &Config) -> Result<()> {
     let mut cmd = build_command()?;
-
-    let clap_shell: ClapShell = args.shell.into();
-    generate(clap_shell, &mut cmd, "scarb", &mut io::stdout());
+    let shell: ClapShell = args.shell.into();
+    generate(shell, &mut cmd, "scarb", &mut io::stdout());
     Ok(())
 }
 
@@ -30,7 +28,7 @@ fn build_command() -> Result<Command> {
     let dirs = SubcommandDirs::new(None)?;
     let external_subcommands = list_external_subcommands(&dirs)?;
     for external_cmd in external_subcommands {
-        // Generate completions only for the bundled subcommands
+        // Generate full completions only for the bundled subcommands
         let subcommand = if external_cmd.is_bundled {
             match external_cmd.name.as_str() {
                 "cairo-language-server" => Some(
@@ -38,7 +36,6 @@ fn build_command() -> Result<Command> {
                 ),
                 "cairo-run" => Some(cairo_run_args::Args::command().name("cairo-run")),
                 "cairo-test" => Some(cairo_test_args::Args::command().name("cairo-test")),
-                "completions" => Some(Args::command().name("completions")),
                 "doc" => Some(doc_args::Args::command().name("doc")),
                 "execute" => Some(execute::Args::command().name("execute")),
                 "mdbook" => Some(mdbook_args::Args::command().name("mdbook")),

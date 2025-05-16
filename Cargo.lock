@@ -6278,6 +6278,7 @@ dependencies = [
  "camino",
  "cargo_metadata",
  "clap",
+ "clap_complete",
  "convert_case",
  "create-output-dir",
  "crossbeam-channel",
@@ -6313,6 +6314,7 @@ dependencies = [
  "redb",
  "reqwest",
  "scarb-build-metadata",
+ "scarb-cli",
  "scarb-metadata 1.14.0",
  "scarb-proc-macro-server-types 0.2.0",
  "scarb-stable-hash 1.0.0",
@@ -6432,26 +6434,6 @@ dependencies = [
  "starknet-types-core",
  "test-case",
  "thiserror 2.0.12",
-]
-
-[[package]]
-name = "scarb-completions"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "clap_complete",
- "indoc",
- "scarb",
- "scarb-cairo-run",
- "scarb-cairo-test",
- "scarb-doc",
- "scarb-execute",
- "scarb-mdbook",
- "scarb-prove",
- "scarb-test-support",
- "scarb-ui",
- "scarb-verify",
 ]
 
 [[package]]

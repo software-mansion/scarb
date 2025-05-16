@@ -10,7 +10,6 @@ members = [
     "extensions/scarb-mdbook",
     "extensions/scarb-prove",
     "extensions/scarb-verify",
-    "extensions/scarb-completions",
     "plugins/cairo-lang-macro",
     "plugins/cairo-lang-macro-attributes",
     "plugins/cairo-lang-macro-stable",

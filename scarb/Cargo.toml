@@ -40,6 +40,7 @@ cairo-lang-utils.workspace = true
 cairo-lint = { workspace = true, optional = true }
 camino.workspace = true
 clap.workspace = true
+clap_complete.workspace = true
 convert_case.workspace = true
 create-output-dir = { path = "../utils/create-output-dir" }
 crossbeam-channel = "0.5.15"
@@ -72,6 +73,7 @@ scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }
 scarb-stable-hash = { path = "../utils/scarb-stable-hash" }
 scarb-ui = { path = "../utils/scarb-ui" }
+scarb-cli = { path = "../utils/scarb-cli" }
 semver-pubgrub.workspace = true
 semver.workspace = true
 serde-untagged.workspace = true

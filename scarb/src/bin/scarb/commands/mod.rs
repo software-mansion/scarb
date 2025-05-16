@@ -13,6 +13,7 @@ pub mod cache_path;
 pub mod check;
 pub mod clean;
 pub mod commands;
+mod completions;
 mod expand;
 pub mod external;
 pub mod fetch;
@@ -42,6 +43,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         Cache(CacheSubcommand::Path) => cache_path::run(config),
         Check(args) => check::run(args, config),
         Clean => clean::run(config),
+        Completions(args) => completions::run(args, config),
         Commands => commands::run(config),
         External(args) => external::run(args, config),
         Fetch => fetch::run(config),

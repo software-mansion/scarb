@@ -16,6 +16,7 @@ use crate::core::PackageName;
 use crate::manifest_editor::DepId;
 use crate::manifest_editor::SectionArgs;
 use crate::{ops, version};
+use clap_complete::Shell as ClapShell;
 use scarb_ui::OutputFormat;
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 
@@ -166,6 +167,8 @@ pub enum Command {
     Check(BuildArgs),
     /// Remove generated artifacts.
     Clean,
+    /// Generate shell completions for Scarb.
+    Completions(CompletionsArgs),
     /// List installed commands.
     Commands,
     /// Fetch dependencies of packages from the network.
@@ -387,6 +390,39 @@ pub struct FmtArgs {
     /// Path to a file or directory to format. If provided, only this file or directory will be formatted.
     #[clap(value_name = "PATH")]
     pub path: Option<Utf8PathBuf>,
+}
+
+/// Arguments accepted by the `completions` command.
+#[derive(Parser, Clone, Debug)]
+#[clap(version, about = "Generate shell completions")]
+pub struct CompletionsArgs {
+    /// Target shell for completion generation
+    #[arg(value_enum)]
+    pub shell: Shell,
+}
+
+/// Target shell for completion generation.
+#[doc(hidden)]
+#[derive(ValueEnum, Clone, Debug)]
+pub enum Shell {
+    Bash,
+    Fish,
+    Elvish,
+    #[clap(name = "powershell", alias = "pwsh")]
+    PowerShell,
+    Zsh,
+}
+
+impl From<Shell> for ClapShell {
+    fn from(s: Shell) -> Self {
+        match s {
+            Shell::Bash => ClapShell::Bash,
+            Shell::Elvish => ClapShell::Elvish,
+            Shell::Fish => ClapShell::Fish,
+            Shell::PowerShell => ClapShell::PowerShell,
+            Shell::Zsh => ClapShell::Zsh,
+        }
+    }
 }
 
 /// Arguments accepted by the `add` command.
