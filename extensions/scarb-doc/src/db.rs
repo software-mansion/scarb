@@ -4,7 +4,7 @@ use cairo_lang_doc::db::{DocDatabase, DocGroup};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_filesystem::db::{ExternalFiles, FilesDatabase, FilesGroup, init_files_group};
 use cairo_lang_filesystem::ids::{CrateLongId, VirtualFile};
-use cairo_lang_lowering::db::{LoweringDatabase, LoweringGroup};
+use cairo_lang_lowering::db::{LoweringDatabase, LoweringGroup, UseApproxCodeSizeEstimator};
 use cairo_lang_parser::db::{ParserDatabase, ParserGroup};
 use cairo_lang_semantic::db::{
     PluginSuiteInput, SemanticDatabase, SemanticGroup, init_semantic_group,
@@ -18,6 +18,8 @@ use cairo_lang_utils::Upcast;
 use salsa;
 use scarb_metadata::CompilationUnitComponentMetadata;
 use smol_str::ToSmolStr;
+
+impl UseApproxCodeSizeEstimator for ScarbDocDatabase {}
 
 /// The Cairo compiler Salsa database tailored for scarb-doc usage.
 #[salsa::database(
