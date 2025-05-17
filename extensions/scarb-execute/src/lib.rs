@@ -1,4 +1,3 @@
-use crate::args::{BuildTargetSpecifier, OutputFormat};
 use crate::output::{ExecutionOutput, ExecutionResources, ExecutionSummary};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use bincode::enc::write::Writer;
@@ -14,6 +13,7 @@ use cairo_vm::{Felt252, cairo_run};
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
+use scarb_extensions_cli::execute::{Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat};
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
 use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};
@@ -22,12 +22,11 @@ use std::env;
 use std::fs;
 use std::io::{self, Write};
 
-pub mod args;
 pub(crate) mod output;
 
 const MAX_ITERATION_COUNT: usize = 10000;
 
-pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
+pub fn main_inner(args: Args, ui: Ui) -> Result<usize, anyhow::Error> {
     let metadata = MetadataCommand::new()
         .envs(args.execution.features.clone().to_env_vars())
         .inherit_stderr()
@@ -39,7 +38,7 @@ pub fn main_inner(args: args::Args, ui: Ui) -> Result<usize, anyhow::Error> {
 pub fn execute(
     metadata: &Metadata,
     package: &PackageMetadata,
-    args: &args::ExecutionArgs,
+    args: &ExecutionArgs,
     ui: &Ui,
 ) -> Result<usize, anyhow::Error> {
     let output = args

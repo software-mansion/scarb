@@ -21,9 +21,11 @@ camino.workspace = true
 clap.workspace = true
 create-output-dir = { path = "../../utils/create-output-dir" }
 indoc.workspace = true
+num-bigint.workspace = true
 predicates.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
+scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli" }
 serde.workspace = true
 serde_json.workspace = true
 

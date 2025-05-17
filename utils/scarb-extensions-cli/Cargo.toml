@@ -1,0 +1,23 @@
+[package]
+name = "scarb-extensions-cli"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+
+[dependencies]
+anyhow.workspace = true
+cairo-lang-runner.workspace = true
+cairo-lang-utils.workspace = true
+starknet-types-core.workspace = true
+clap = { workspace = true, features = ["derive"]}
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+thiserror.workspace = true
+num-bigint.workspace = true
+camino.workspace = true
+scarb-ui = { path = "../scarb-ui" }
+
+[dev-dependencies]
+test-case.workspace = true
+
