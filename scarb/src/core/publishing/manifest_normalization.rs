@@ -1,18 +1,18 @@
 use std::collections::BTreeMap;
 
-use crate::core::{TomlCairoPluginTargetParams, TomlTarget};
+use crate::core::{MaybeWorkspaceTomlDependency, TomlCairoPluginTargetParams, TomlTarget};
 use crate::{
     DEFAULT_LICENSE_FILE_NAME, DEFAULT_README_FILE_NAME,
     core::{
         DepKind, DependencyVersionReq, DetailedTomlDependency, ManifestDependency, MaybeWorkspace,
         Package, PackageName, TargetKind, TomlDependency, TomlManifest, TomlPackage,
-        TomlWorkspaceDependency,
     },
 };
 use anyhow::{Result, bail};
 use camino::Utf8PathBuf;
 use indoc::formatdoc;
 use itertools::Itertools;
+use smol_str::SmolStr;
 
 pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
     let package = Some(generate_package(pkg));
@@ -38,6 +38,14 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
     });
 
     let cairo_plugin = generate_cairo_plugin(pkg);
+    let features = nullify_table_if_empty(
+        pkg.manifest
+            .features
+            .iter()
+            // Sort for stability.
+            .map(|(key, val)| (key.clone(), val.iter().sorted().cloned().collect_vec()))
+            .collect(),
+    );
 
     Ok(TomlManifest {
         package,
@@ -53,7 +61,7 @@ pub fn prepare_manifest_for_publish(pkg: &Package) -> Result<TomlManifest> {
         profile: None,
         scripts: None,
         tool,
-        features: None,
+        features,
         patch: None,
     })
 }
@@ -96,13 +104,13 @@ fn generate_package(pkg: &Package) -> Box<TomlPackage> {
 fn generate_dependencies(
     deps: &[ManifestDependency],
     kind: DepKind,
-) -> Result<BTreeMap<PackageName, MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>>> {
+) -> Result<BTreeMap<PackageName, MaybeWorkspaceTomlDependency>> {
     deps.iter()
         .filter(|dep| dep.kind == kind)
         .map(|dep| {
             let name = dep.name.clone();
             let toml_dep = generate_dependency(dep)?;
-            Ok((name, MaybeWorkspace::Defined(toml_dep)))
+            Ok((name, MaybeWorkspace::Defined(toml_dep).into()))
         })
         .collect()
 }
@@ -136,6 +144,17 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
         }
     });
 
+    let features = (!dep.features.is_empty()).then_some(
+        dep.features
+            .clone()
+            .into_iter()
+            .map(SmolStr::from)
+            // Sort for stability.
+            .sorted()
+            .collect_vec(),
+    );
+    let default_features = (!dep.default_features).then_some(false);
+
     Ok(TomlDependency::Detailed(Box::new(DetailedTomlDependency {
         version,
 
@@ -156,6 +175,9 @@ fn generate_dependency(dep: &ManifestDependency) -> Result<TomlDependency> {
         } else {
             None
         },
+
+        features,
+        default_features,
     })))
 }
 

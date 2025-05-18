@@ -4,7 +4,9 @@ use std::ops::Deref;
 use std::sync::Arc;
 use typed_builder::TypedBuilder;
 
-use crate::core::{DependencyVersionReq, PackageId, PackageName, SourceId, Summary, TargetKind};
+use crate::core::{
+    DependencyVersionReq, FeatureName, PackageId, PackageName, SourceId, Summary, TargetKind,
+};
 
 /// See [`ManifestDependencyInner`] for public fields reference.
 #[derive(Clone, Eq, PartialEq, Hash)]
@@ -21,6 +23,10 @@ pub struct ManifestDependencyInner {
     pub source_id: SourceId,
     #[builder(default)]
     pub kind: DepKind,
+    #[builder(default)]
+    pub features: Vec<FeatureName>,
+    #[builder(default = true)]
+    pub default_features: bool,
 }
 
 #[derive(Clone, Default, Eq, PartialEq, Hash)]

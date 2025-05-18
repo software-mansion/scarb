@@ -194,7 +194,7 @@ fn fetch_with_short_ssh_git() {
                   |
                 7 | dep = { git = "git@github.com:a/dep" }
                   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                data did not match any variant of untagged enum TomlDependency
+                data did not match any variant of dependency specification
         "#});
 }
 

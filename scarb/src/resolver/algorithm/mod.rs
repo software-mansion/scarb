@@ -87,7 +87,7 @@ pub async fn resolve(
         for dep in summary.full_dependencies() {
             let dep = patch_map.lookup(dep);
             let dep = lock_dependency(&lockfile, dep.clone())?;
-            if state.index.packages().register(dep.clone()) {
+            if state.index.packages().register(dep.clone().into()) {
                 request_sink.send(Request::Package(dep.clone())).await?;
             }
         }

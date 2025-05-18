@@ -208,8 +208,18 @@ pub trait DepBuilder {
         self.with("path", path.to_string())
     }
 
-    fn registry(&self, registry: impl ToString) -> DepWith<'_, Self> {
+    // Taking by reference to disallow dropping the `LocalRegistry`.
+    fn registry(&self, registry: &impl ToString) -> DepWith<'_, Self> {
         self.with("registry", registry.to_string())
+    }
+
+    fn features(&self, features: impl Iterator<Item = impl ToString>) -> DepWith<'_, Self> {
+        let features = Value::Array(toml_edit::Array::from_iter(features.map(|v| v.to_string())));
+        self.with("features", features)
+    }
+
+    fn default_features(&self, default_features: bool) -> DepWith<'_, Self> {
+        self.with("default-features", default_features)
     }
 }
 

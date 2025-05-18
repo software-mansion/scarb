@@ -2,10 +2,12 @@ use assert_fs::TempDir;
 use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
 use indoc::indoc;
-
-use scarb_metadata::{Cfg, Metadata};
+use itertools::Itertools;
+use scarb_metadata::{Cfg, DepKind, Metadata};
 use scarb_test_support::command::{CommandExt, Scarb};
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::gitx;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use scarb_test_support::registry::local::LocalRegistry;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 fn build_example_program(t: &TempDir) {
@@ -463,4 +465,251 @@ fn features_in_workspace_validated() {
             error: none of the selected packages contains `x` feature
             note: to use features, you need to define [features] section in Scarb.toml
         "#});
+}
+
+#[test]
+fn parse_dependency_features_simple() {
+    let t = TempDir::new().unwrap();
+
+    let path_dep = t.child("path_dep");
+    ProjectBuilder::start()
+        .name("path_dep")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+                [features]
+                first = []
+                second = []
+            "#})
+        .build(&path_dep);
+
+    let git_dep = gitx::new("git_dep", |t| {
+        ProjectBuilder::start()
+            .name("git_dep")
+            .version("0.2.0")
+            .manifest_extra(indoc! {r#"
+                [features]
+                first = []
+                second = []
+            "#})
+            .build(&t);
+    });
+
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("registry_dep")
+            .version("1.0.0")
+            .manifest_extra(indoc! {r#"
+                [features]
+                first = []
+                second = []
+            "#})
+            .build(t);
+    });
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep(
+            "registry_dep",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["second", "first"].into_iter())
+                .default_features(false),
+        )
+        .dep(
+            "path_dep",
+            path_dep
+                .version("0.1.0")
+                .default_features(true)
+                .features(vec!["second", "first"].into_iter()),
+        )
+        .dep(
+            "git_dep",
+            git_dep
+                .version("0.2.0")
+                .features(vec!["second", "first"].into_iter()),
+        )
+        .build(&t);
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let hello = meta
+        .packages
+        .into_iter()
+        .find(|p| p.name == "hello")
+        .unwrap();
+
+    let registry_dep = hello
+        .dependencies
+        .iter()
+        .find(|d| d.name == "registry_dep")
+        .unwrap();
+
+    assert_eq!(
+        registry_dep.features,
+        Some(vec!["first".to_string(), "second".to_string()])
+    );
+    assert_eq!(registry_dep.default_features, Some(false));
+
+    let path_dep = hello
+        .dependencies
+        .iter()
+        .find(|d| d.name == "path_dep")
+        .unwrap();
+
+    assert_eq!(
+        path_dep.features,
+        Some(vec!["first".to_string(), "second".to_string()])
+    );
+    assert_eq!(path_dep.default_features, Some(true));
+
+    let git_dep = hello
+        .dependencies
+        .iter()
+        .find(|d| d.name == "git_dep")
+        .unwrap();
+
+    assert_eq!(
+        git_dep.features,
+        Some(vec!["first".to_string(), "second".to_string()])
+    );
+    // Note there is no `default-features` field in the dependency specification, this is the default.
+    assert_eq!(git_dep.default_features, Some(true));
+}
+
+#[test]
+fn parse_dependency_features_invalid() {
+    let t = TempDir::new().unwrap();
+
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("registry_dep")
+            .version("1.0.0")
+            .build(t);
+    });
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep(
+            "registry_dep",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["8x"].into_iter())
+                .default_features(false),
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: failed to parse manifest at: [..]Scarb.toml
+
+            Caused by:
+                the name `8x` cannot be used as a package name, names cannot start with a digit
+        "#});
+}
+
+#[test]
+fn can_declare_same_dependency_with_different_kinds_and_features() {
+    let t = TempDir::new().unwrap();
+
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("registry_dep")
+            .version("1.0.0")
+            .manifest_extra(indoc! {r#"
+                [features]
+                first = []
+                second = []
+            "#})
+            .build(t);
+    });
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep(
+            "registry_dep",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["first"].into_iter()),
+        )
+        .dev_dep(
+            "registry_dep",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["second"].into_iter()),
+        )
+        .build(&t);
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let package = meta.packages.iter().find(|p| p.name == "hello").unwrap();
+
+    let dep = package
+        .dependencies
+        .iter()
+        .filter(|d| d.name == "registry_dep")
+        .collect_vec();
+
+    assert_eq!(dep.len(), 2);
+
+    let normal = dep.iter().find(|d| d.kind.is_none()).unwrap();
+    assert_eq!(normal.features, Some(vec!["first".to_string()]));
+
+    let dev = dep.iter().find(|d| d.kind == Some(DepKind::Dev)).unwrap();
+    assert_eq!(dev.features, Some(vec!["second".to_string()]));
+}
+
+#[test]
+fn cannot_use_not_existing_features_in_deps() {
+    let t = TempDir::new().unwrap();
+
+    let path_dep = t.child("path_dep");
+    ProjectBuilder::start()
+        .name("path_dep")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+                [features]
+                first = []
+                second = []
+            "#})
+        .build(&path_dep);
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep(
+            "path_dep",
+            path_dep
+                .version("0.1.0")
+                .default_features(true)
+                .features(vec!["first", "third"].into_iter()),
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_eq("error: unknown features: third\n");
 }

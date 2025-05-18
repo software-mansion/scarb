@@ -3,7 +3,7 @@ use crate::core::registry::Registry;
 use crate::core::resolver::DependencyEdge;
 use crate::core::{
     DepKind, DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, Resolve,
-    Summary, TargetKind,
+    Summary,
 };
 use anyhow::{Result, bail};
 use indoc::{formatdoc, indoc};
@@ -84,10 +84,7 @@ pub async fn resolve(
                     bail!("cannot find package {}", dep.name)
                 };
 
-                let dep_target_kind: Option<TargetKind> = match dep.kind.clone() {
-                    DepKind::Normal => None,
-                    DepKind::Target(target_kind) => Some(target_kind),
-                };
+                let dep_kind = dep.kind.clone();
                 let dep = dep_summary.package_id;
 
                 if let Some(existing) = packages.get(dep.name.as_ref()) {
@@ -106,12 +103,24 @@ pub async fn resolve(
                     }
                 }
 
-                let weight = graph
-                    .edge_weight(package_id, dep)
-                    .cloned()
-                    .unwrap_or_default();
-                let weight = weight.extend(dep_target_kind);
-                graph.add_edge(package_id, dep, weight);
+                let weight = graph.edge_weight_mut(summary.package_id, dep);
+                if let Some(weight) = weight {
+                    match dep_kind {
+                        DepKind::Normal => {
+                            weight.accept_all();
+                        }
+                        DepKind::Target(target_kind) => {
+                            weight.accept_new(target_kind);
+                        }
+                    };
+                } else {
+                    let weight = match dep_kind {
+                        DepKind::Normal => DependencyEdge::for_all_targets(),
+                        DepKind::Target(target_kind) => DependencyEdge::for_target(target_kind),
+                    };
+                    graph.add_edge(summary.package_id, dep, weight);
+                }
+
                 summaries.insert(dep, dep_summary.clone());
 
                 if packages.contains_key(dep.name.as_ref()) {

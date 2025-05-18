@@ -13,8 +13,8 @@ use crate::compiler::{
     ProcMacroCompilationUnit,
 };
 use crate::core::{
-    DepKind, DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId, Target,
-    Workspace, edition_variant,
+    DepKind, DependencyVersionReq, FeatureName, ManifestDependency, Package, PackageId, SourceId,
+    Target, Workspace, edition_variant,
 };
 use crate::ops;
 use crate::ops::CompilationUnitsOpts;
@@ -185,6 +185,8 @@ fn collect_dependency_metadata(dependency: &ManifestDependency) -> m::Dependency
         .version_req(version_req)
         .source(wrap_source_id(dependency.source_id))
         .kind(collect_dependency_kind(&dependency.kind))
+        .features(collect_dependency_features(&dependency.features))
+        .default_features(Some(dependency.default_features))
         .build()
         .unwrap()
 }
@@ -200,6 +202,16 @@ fn collect_dependency_kind(kind: &DepKind) -> Option<m::DepKind> {
             }
         }
     }
+}
+
+fn collect_dependency_features(features: &[FeatureName]) -> Option<Vec<String>> {
+    (!features.is_empty()).then_some(
+        features
+            .iter()
+            .map(|x| x.to_string())
+            .sorted()
+            .collect_vec(),
+    )
 }
 
 fn collect_target_metadata(target: &Target) -> m::TargetMetadata {

@@ -335,11 +335,22 @@ fn generated_manifest() {
     ProjectBuilder::start()
         .name("hello")
         .version("1.0.0")
-        .dep("registry_dep", Dep.version("1.0.0").registry(&registry))
-        .dep("path_dep", path_dep.version("0.1.0"))
+        .dep(
+            "registry_dep",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["second", "first"].into_iter())
+                .default_features(false),
+        )
+        .dep("path_dep", path_dep.version("0.1.0").default_features(true))
         .dep("git_dep", git_dep.version("0.2.0"))
         .dep_starknet()
         .manifest_extra(indoc! {r#"
+            [features]
+            default = ["foo", "bar"]
+            foo = ["bar"]
+            bar = []
+
             [tool.foobar]
             hello-world = { s = "s", n = 1 }
 
@@ -384,6 +395,11 @@ fn generated_manifest() {
             [dependencies.registry_dep]
             version = "^1.0.0"
             registry = "file://[..]"
+            default-features = false
+            features = [
+                "first",
+                "second",
+            ]
 
             [dependencies.starknet]
             version = "[..]"
@@ -394,6 +410,14 @@ fn generated_manifest() {
             [tool.foobar.hello-world]
             n = 1
             s = "s"
+            
+            [features]
+            bar = []
+            default = [
+                "bar",
+                "foo",
+            ]
+            foo = ["bar"]
         "#},
     );
 }

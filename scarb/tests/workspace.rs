@@ -5,7 +5,8 @@ use indoc::indoc;
 use scarb_metadata::Metadata;
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx;
-use scarb_test_support::project_builder::ProjectBuilder;
+use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
+use scarb_test_support::registry::local::LocalRegistry;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
 #[test]
@@ -125,4 +126,143 @@ fn target_name_duplicate() {
             error: workspace contains duplicate target definitions `starknet-contract (hello)`
             help: use different target names to resolve the conflict
         "#});
+}
+
+#[test]
+fn inherited_deps_cannot_override_source_version() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("some")
+            .version("1.0.0")
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+
+    let first = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .dep("some", Dep.workspace().version("2.0.0"))
+        .build(&first);
+
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .dep("some", Dep.version("1.0.0").registry(&registry))
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        error: failed to parse manifest at: [..]Scarb.toml
+
+        Caused by:
+            TOML parse error at line 7, column 8
+              |
+            7 | some = { workspace = true, version = "2.0.0" }
+              |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            field `version` is not allowed when inheriting workspace dependency
+        "#});
+}
+
+#[test]
+fn inherited_deps_cannot_override_default_features_flag() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("some")
+            .version("1.0.0")
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+
+    let first = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .dep("some", Dep.workspace().default_features(false))
+        .build(&first);
+
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .dep("some", Dep.version("1.0.0").registry(&registry))
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        error: failed to parse manifest at: [..]Scarb.toml
+
+        Caused by:
+            TOML parse error at line 7, column 8
+              |
+            7 | some = { workspace = true, default-features = false }
+              |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            field `default-features` is not allowed when inheriting workspace dependency
+        "#});
+}
+
+#[test]
+fn inherited_deps_can_override_features_list() {
+    let mut registry = LocalRegistry::create();
+    registry.publish(|t| {
+        ProjectBuilder::start()
+            .name("some")
+            .version("1.0.0")
+            .manifest_extra(indoc! {r#"
+                [features]
+                some = []
+                other = []
+            "#})
+            .build(t);
+    });
+
+    let t = TempDir::new().unwrap();
+
+    let first = t.child("first");
+    ProjectBuilder::start()
+        .name("first")
+        .dep("some", Dep.workspace().features(vec!["some"].into_iter()))
+        .build(&first);
+
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .dep(
+            "some",
+            Dep.version("1.0.0")
+                .registry(&registry)
+                .features(vec!["other"].into_iter()),
+        )
+        .build(&t);
+
+    let meta = Scarb::quick_snapbox()
+        .arg("--json")
+        .arg("metadata")
+        .arg("--format-version=1")
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    let first = meta
+        .packages
+        .into_iter()
+        .find(|p| p.name == "first")
+        .unwrap();
+
+    let dep = first
+        .dependencies
+        .into_iter()
+        .find(|p| p.name == "some")
+        .unwrap();
+    // Note, that the workspace declares `features = ["other"]`,
+    // but the member extends it with `features = ["some"]`.
+    assert_eq!(
+        dep.features,
+        Some(vec!["other".to_string(), "some".to_string()])
+    );
 }

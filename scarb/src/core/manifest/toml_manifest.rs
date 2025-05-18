@@ -1,9 +1,3 @@
-use std::borrow::Cow;
-use std::collections::{BTreeMap, HashSet};
-use std::default::Default;
-use std::fs;
-use std::iter::{repeat, zip};
-
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use cairo_lang_filesystem::db::Edition;
 use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
@@ -14,6 +8,12 @@ use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize, de};
 use serde_untagged::UntaggedEnumVisitor;
 use smol_str::SmolStr;
+use std::borrow::Cow;
+use std::collections::{BTreeMap, HashSet};
+use std::default::Default;
+use std::fs;
+use std::iter::{repeat, zip};
+use std::ops::Deref;
 use tracing::trace;
 use url::Url;
 
@@ -44,8 +44,8 @@ use crate::{
 pub struct TomlManifest {
     pub package: Option<Box<TomlPackage>>,
     pub workspace: Option<TomlWorkspace>,
-    pub dependencies: Option<BTreeMap<PackageName, MaybeTomlWorkspaceDependency>>,
-    pub dev_dependencies: Option<BTreeMap<PackageName, MaybeTomlWorkspaceDependency>>,
+    pub dependencies: Option<BTreeMap<PackageName, MaybeWorkspaceTomlDependency>>,
+    pub dev_dependencies: Option<BTreeMap<PackageName, MaybeWorkspaceTomlDependency>>,
     pub lib: Option<TomlTarget<TomlLibTargetParams>>,
     pub executable: Option<TomlTarget<TomlExecutableTargetParams>>,
     pub cairo_plugin: Option<TomlTarget<TomlCairoPluginTargetParams>>,
@@ -239,9 +239,145 @@ impl From<bool> for PathOrBool {
     }
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(try_from = "serdex::MaybeWorkspaceTomlDependency")]
+pub struct MaybeWorkspaceTomlDependency(MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>);
+
+impl From<MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>>
+    for MaybeWorkspaceTomlDependency
+{
+    fn from(dep: MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>) -> Self {
+        Self(dep)
+    }
+}
+
+impl AsRef<MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>>
+    for MaybeWorkspaceTomlDependency
+{
+    fn as_ref(&self) -> &MaybeWorkspace<TomlDependency, TomlWorkspaceDependency> {
+        &self.0
+    }
+}
+
+impl Deref for MaybeWorkspaceTomlDependency {
+    type Target = MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+mod serdex {
+    use crate::core::{
+        DetailedTomlDependency, MaybeWorkspace, TomlDependency, TomlWorkspaceDependency,
+    };
+    use anyhow::{bail, ensure};
+    use semver::VersionReq;
+    use serde::Deserialize;
+
+    #[derive(Deserialize)]
+    pub struct Detailed {
+        pub workspace: Option<bool>,
+        #[serde(flatten)]
+        pub detailed: DetailedTomlDependency,
+    }
+
+    #[derive(Deserialize)]
+    #[allow(dead_code)]
+    pub struct AnyStruct {}
+
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    #[allow(dead_code)]
+    pub enum CatchAll {
+        AnyStruct(AnyStruct),
+        AnyString(String),
+    }
+
+    /// This is equivalent to `MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>`, but we
+    /// coalesce `DetailedTomlDependency` and `TomlWorkspaceDependency` to be able to validate them
+    /// during deserialization. We cannot validate each of them separately, as deserialization of
+    /// enums attempt to deserialize each branch and returns the first one that successes. This means,
+    /// that on for instance for `{ workspace = true, version = "2" }` we would attempt to
+    /// deserialize into `TomlWorkspaceDependency`, which would fail with error as we make
+    /// overriding `version` illegal, but then it would attempt to deserialize into
+    /// `DetailedTomlDependency` which succeeds, as we do not reject unconsumed tokens.
+    /// Here we can disallow deserializing into `DetailedTomlDependency` if `workspace` field is
+    /// defined and fail with error if validations fail.
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    pub enum MaybeWorkspaceTomlDependency {
+        Simple(VersionReq),
+        Detailed(Box<Detailed>),
+        CatchAll(CatchAll),
+    }
+
+    impl TryFrom<MaybeWorkspaceTomlDependency> for super::MaybeWorkspaceTomlDependency {
+        type Error = anyhow::Error;
+        fn try_from(value: MaybeWorkspaceTomlDependency) -> Result<Self, Self::Error> {
+            Ok(match value {
+                MaybeWorkspaceTomlDependency::Simple(simple) => {
+                    Self(MaybeWorkspace::Defined(TomlDependency::Simple(simple)))
+                }
+                MaybeWorkspaceTomlDependency::Detailed(detailed) => {
+                    if let Some(workspace) = detailed.workspace {
+                        ensure!(
+                            detailed.detailed.version.is_none(),
+                            "field `version` is not allowed when inheriting workspace dependency"
+                        );
+                        ensure!(
+                            detailed.detailed.path.is_none(),
+                            "field `path` is not allowed when inheriting workspace dependency"
+                        );
+                        ensure!(
+                            detailed.detailed.git.is_none(),
+                            "field `git` is not allowed when inheriting workspace dependency"
+                        );
+                        ensure!(
+                            detailed.detailed.branch.is_none(),
+                            "field `branch` is not allowed when inheriting workspace dependency"
+                        );
+                        ensure!(
+                            detailed.detailed.tag.is_none(),
+                            "field `tag` is not allowed when inheriting workspace dependency"
+                        );
+                        ensure!(
+                            detailed.detailed.rev.is_none(),
+                            "field `rev` is not allowed when inheriting workspace dependency"
+                        );
+                        ensure!(
+                            detailed.detailed.registry.is_none(),
+                            "field `registry` is not allowed when inheriting workspace dependency"
+                        );
+                        ensure!(
+                            detailed.detailed.default_features.is_none(),
+                            "field `default-features` is not allowed when inheriting workspace dependency"
+                        );
+                        Self(MaybeWorkspace::Workspace(TomlWorkspaceDependency {
+                            workspace,
+                            features: detailed.detailed.features,
+                        }))
+                    } else {
+                        Self(MaybeWorkspace::Defined(TomlDependency::Detailed(Box::new(
+                            detailed.detailed,
+                        ))))
+                    }
+                }
+                MaybeWorkspaceTomlDependency::CatchAll(_) => {
+                    bail!("data did not match any variant of dependency specification")
+                }
+            })
+        }
+    }
+}
+
+/// When { workspace = true } you cannot define other keys that configure the source of
+/// the dependency such as `version`, `registry`, `path`, `git`, `branch`, `tag`, `rev`.
+/// You can also not define `default-features`.
+/// Only `features` is allowed.
+#[derive(Debug, Default, Clone, Serialize)]
 pub struct TomlWorkspaceDependency {
     pub workspace: bool,
+    pub features: Option<Vec<SmolStr>>,
 }
 
 impl WorkspaceInherit for TomlWorkspaceDependency {
@@ -254,9 +390,7 @@ impl WorkspaceInherit for TomlWorkspaceDependency {
     }
 }
 
-type MaybeTomlWorkspaceDependency = MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>;
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TomlDependency {
     /// [`VersionReq`] specified as a string, e.g. `package = "<version>"`.
@@ -279,6 +413,9 @@ pub struct DetailedTomlDependency {
     pub rev: Option<String>,
 
     pub registry: Option<Url>,
+
+    pub default_features: Option<bool>,
+    pub features: Option<Vec<SmolStr>>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -401,6 +538,13 @@ impl TomlDependency {
             TomlDependency::Detailed(detailed) => Cow::Borrowed(detailed),
         }
     }
+
+    /// Rewrite the dependency spec with provided features list.
+    pub fn with_features(&self, features: Vec<SmolStr>) -> DetailedTomlDependency {
+        let mut dep = self.resolve().into_owned();
+        dep.features = Some(features);
+        dep
+    }
 }
 
 impl TomlManifest {
@@ -469,15 +613,47 @@ impl TomlManifest {
 
         for ((name, toml_dep), kind) in all_deps {
             let inherit_ws = || {
-                workspace
+                let ws_dep = workspace
                     .dependencies
                     .as_ref()
                     .and_then(|deps| deps.get(name.as_str()))
                     .cloned()
-                    .ok_or_else(|| anyhow!("dependency `{}` not found in workspace", name.clone()))?
-                    .to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                    .ok_or_else(|| {
+                        anyhow!("dependency `{}` not found in workspace", name.clone())
+                    })?;
+
+                // If `TomlWorkspaceDependency` declares `features` list,
+                // extend the inherited ws dependency with this list instead of the shared ws one.
+                let dep = match toml_dep.as_ref() {
+                    MaybeWorkspace::Workspace(w) => w.features.as_ref().map(|features| {
+                        let ws_features = match &ws_dep {
+                            TomlDependency::Detailed(detailed) => {
+                                detailed.features.clone().unwrap_or_default()
+                            }
+                            TomlDependency::Simple(_) => Vec::new(),
+                        };
+                        let features = features
+                            .clone()
+                            .into_iter()
+                            .chain(ws_features.into_iter())
+                            .sorted()
+                            .dedup()
+                            .collect();
+                        ws_dep.with_features(features)
+                    }),
+                    _ => None,
+                };
+
+                dep.map(|dep| {
+                    dep.to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                })
+                .unwrap_or_else(|| {
+                    ws_dep.to_dependency(name.clone(), workspace_manifest_path, kind.clone())
+                })
             };
             let toml_dep = toml_dep
+                .clone()
+                .as_ref()
                 .clone()
                 .map(|dep| dep.to_dependency(name.clone(), manifest_path, kind.clone()))?
                 .resolve(name.as_str(), inherit_ws)?;
@@ -637,7 +813,7 @@ impl TomlManifest {
             .compiler_config(compiler_config)
             .scripts(scripts)
             .experimental_features(experimental_features)
-            .features(features)
+            .features(features.into())
             .build()?;
         Ok(manifest)
     }
@@ -1187,11 +1363,20 @@ impl DetailedTomlDependency {
             (Some(_), None, None, None) => SourceId::default(),
         };
 
+        let features = self.features.clone().unwrap_or_default();
+        let features = features
+            .into_iter()
+            .map(FeatureName::try_new)
+            .collect::<Result<Vec<_>>>()?;
+        let default_features = self.default_features.unwrap_or(true);
+
         Ok(ManifestDependency::builder()
             .name(name)
             .source_id(source_id)
             .version_req(version_req)
             .kind(dep_kind)
+            .features(features)
+            .default_features(default_features)
             .build())
     }
 }

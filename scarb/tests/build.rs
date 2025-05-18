@@ -374,7 +374,7 @@ fn compile_with_invalid_non_numeric_dep_version() {
                   |
                 7 |             moo = "y"
                   |                   ^^^
-                data did not match any variant of untagged enum TomlDependency
+                data did not match any variant of dependency specification
         "#});
 }
 
@@ -1865,4 +1865,36 @@ fn add_trace_libfunc_to_tests() {
             .iter()
             .any(|x| x.long_id.generic_id.to_string() == "trace")
     );
+}
+
+#[test]
+fn can_use_dependency_twice_with_different_kinds() {
+    let t = TempDir::new().unwrap();
+    let first = t.child("first");
+    let second = t.child("second");
+    ProjectBuilder::start()
+        .name("first")
+        .lib_cairo(indoc! {r#"
+            pub fn hello() -> felt252 {
+                12
+            }
+        "#})
+        .build(&first);
+    ProjectBuilder::start()
+        .name("second")
+        .lib_cairo(indoc! {r#"
+            fn main() -> felt252 { first::hello() }
+        "#})
+        .dep("first", &first)
+        .dev_dep("first", &first)
+        .build(&second);
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&second)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling second v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+        "#});
 }
