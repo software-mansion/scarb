@@ -3,7 +3,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
-use scarb_execute::args::ExecutionArgs;
+use scarb_extensions_cli::prove::Args;
 use scarb_metadata::MetadataCommand;
 use scarb_ui::args::ToEnvVars;
 use scarb_ui::components::Status;
