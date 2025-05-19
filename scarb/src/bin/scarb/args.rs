@@ -157,7 +157,7 @@ pub enum Command {
     Remove(RemoveArgs),
     /// Compile current project.
     Build(BuildArgs),
-    /// Expand proc macros.
+    /// Expand macros.
     Expand(ExpandArgs),
     /// Manipulate packages cache.
     #[clap(subcommand)]
