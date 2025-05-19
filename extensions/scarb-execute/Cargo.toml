@@ -15,13 +15,11 @@ anyhow.workspace = true
 bincode.workspace = true
 cairo-lang-executable.workspace = true
 cairo-lang-runner.workspace = true
-cairo-lang-utils.workspace = true
 cairo-vm.workspace = true
 camino.workspace = true
 clap.workspace = true
 create-output-dir = { path = "../../utils/create-output-dir" }
 indoc.workspace = true
-num-bigint.workspace = true
 predicates.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
