@@ -3,9 +3,9 @@ use cairo_lang_runner::Arg;
 use cairo_lang_utils::bigint::BigUintAsHex;
 use camino::Utf8PathBuf;
 use clap::{Parser, ValueEnum};
-use num_bigint::BigInt;
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use std::fs;
+use cairo_vm::Felt252;
 
 /// Compile a Cairo project and run a function marked `#[executable]`
 #[derive(Parser, Clone, Debug)]
@@ -77,7 +77,7 @@ pub struct RunArgs {
 pub struct ProgramArguments {
     /// Serialized arguments to the executable function.
     #[arg(long, value_delimiter = ',')]
-    pub arguments: Vec<BigInt>,
+    pub arguments: Vec<Felt252>,
 
     /// Serialized arguments to the executable function from a file.
     #[arg(long, conflicts_with = "arguments")]
@@ -95,11 +95,7 @@ impl ProgramArguments {
                 .map(|v| Arg::Value(v.value.into()))
                 .collect())
         } else {
-            Ok(self
-                .arguments
-                .iter()
-                .map(|v| Arg::Value(v.into()))
-                .collect())
+            Ok(self.arguments.into_iter().map(Arg::Value).collect())
         }
     }
 }

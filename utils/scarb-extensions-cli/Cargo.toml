@@ -16,8 +16,5 @@ serde_json.workspace = true
 thiserror.workspace = true
 num-bigint.workspace = true
 camino.workspace = true
+cairo-vm.workspace = true
 scarb-ui = { path = "../scarb-ui" }
-
-[dev-dependencies]
-test-case.workspace = true
-
