@@ -6,6 +6,7 @@ use scarb::ops::{SubcommandDirs, list_external_subcommands};
 use std::io;
 
 use crate::args::{CompletionsArgs, ScarbArgs};
+use scarb_extensions_cli::cairo_language_server as cairo_language_server_args;
 use scarb_extensions_cli::cairo_run as cairo_run_args;
 use scarb_extensions_cli::cairo_test as cairo_test_args;
 use scarb_extensions_cli::doc as doc_args;
@@ -31,16 +32,16 @@ fn build_command(config: &Config) -> Result<Command> {
         // Generate full completions only for the bundled subcommands
         let subcommand = if external_cmd.is_bundled {
             match external_cmd.name.as_str() {
-                "cairo-language-server" => Some(
-                    Command::new("cairo-language-server").about("Start the Cairo Language Server"),
-                ),
-                "cairo-run" => Some(cairo_run_args::Args::command().name("cairo-run")),
-                "cairo-test" => Some(cairo_test_args::Args::command().name("cairo-test")),
-                "doc" => Some(doc_args::Args::command().name("doc")),
-                "execute" => Some(execute::Args::command().name("execute")),
-                "mdbook" => Some(mdbook_args::Args::command().name("mdbook")),
-                "prove" => Some(prove_args::Args::command().name("prove")),
-                "verify" => Some(verify_args::Args::command().name("verify")),
+                cairo_language_server_args::COMMAND_NAME => {
+                    Some(cairo_language_server_args::Args::command())
+                }
+                cairo_run_args::COMMAND_NAME => Some(cairo_run_args::Args::command()),
+                cairo_test_args::COMMAND_NAME => Some(cairo_test_args::Args::command()),
+                doc_args::COMMAND_NAME => Some(doc_args::Args::command()),
+                execute::COMMAND_NAME => Some(execute::Args::command()),
+                mdbook_args::COMMAND_NAME => Some(mdbook_args::Args::command()),
+                prove_args::COMMAND_NAME => Some(prove_args::Args::command()),
+                verify_args::COMMAND_NAME => Some(verify_args::Args::command()),
                 "test-support" => None,
                 _ => Some(
                     Command::new(&external_cmd.name)

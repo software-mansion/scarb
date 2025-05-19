@@ -1,9 +1,11 @@
 use clap::{Parser, ValueEnum};
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
+pub const COMMAND_NAME: &str = "cairo-test";
+
 /// Execute all unit tests of a local package.
 #[derive(Parser, Clone, Debug)]
-#[command(author, version)]
+#[command(name = COMMAND_NAME, author, version)]
 pub struct Args {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,

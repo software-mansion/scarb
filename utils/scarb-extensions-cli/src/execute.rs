@@ -7,9 +7,11 @@ use num_bigint::BigInt;
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use std::fs;
 
+pub const COMMAND_NAME: &str = "execute";
+
 /// Compile a Cairo project and run a function marked `#[executable]`
 #[derive(Parser, Clone, Debug)]
-#[clap(version, verbatim_doc_comment)]
+#[clap(name = COMMAND_NAME, version, verbatim_doc_comment)]
 pub struct Args {
     /// Name of the package.
     #[command(flatten)]

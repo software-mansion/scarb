@@ -2,9 +2,11 @@ use crate::execute::ExecutionArgs;
 use clap::Parser;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
+pub const COMMAND_NAME: &str = "prove";
+
 /// Prove `scarb execute` output using Stwo prover.
 #[derive(Parser, Clone, Debug)]
-#[clap(version, verbatim_doc_comment)]
+#[clap(name = COMMAND_NAME, version, verbatim_doc_comment)]
 pub struct Args {
     /// Name of the package.
     #[command(flatten)]

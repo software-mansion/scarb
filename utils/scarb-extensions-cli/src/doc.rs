@@ -1,6 +1,8 @@
 use clap::Parser;
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 
+pub const COMMAND_NAME: &str = "doc";
+
 #[derive(Default, Debug, Clone, clap::ValueEnum)]
 pub enum OutputFormat {
     /// Generates documentation in Markdown format.
@@ -16,7 +18,7 @@ pub enum OutputFormat {
 
 /// Generate documentation based on code comments
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(name = COMMAND_NAME, version, about, long_about = None)]
 pub struct Args {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,

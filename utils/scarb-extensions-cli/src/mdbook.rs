@@ -2,9 +2,11 @@ use camino::Utf8PathBuf;
 use clap::Parser;
 use scarb_ui::args::VerbositySpec;
 
+pub const COMMAND_NAME: &str = "mdbook";
+
 /// Build `mdBook` documentation
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(name = COMMAND_NAME, version, about, long_about = None)]
 pub struct Args {
     /// Path to book source directory.
     #[arg(long)]
