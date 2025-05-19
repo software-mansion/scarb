@@ -1,3 +1,7 @@
+#![deny(missing_docs)]
+
+//! Extension CLI arguments datastructures.
+
 use anyhow::{Context, Result, ensure};
 use cairo_lang_runner::Arg;
 use cairo_lang_utils::bigint::BigUintAsHex;
@@ -7,6 +11,7 @@ use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use std::fs;
 use cairo_vm::Felt252;
 
+/// CLI command name.
 pub const COMMAND_NAME: &str = "execute";
 
 /// Compile a Cairo project and run a function marked `#[executable]`
@@ -17,6 +22,7 @@ pub struct Args {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
+    /// Specify execution arguments.
     #[command(flatten)]
     pub execution: ExecutionArgs,
 
@@ -25,6 +31,7 @@ pub struct Args {
     pub verbose: VerbositySpec,
 }
 
+/// Execution arguments.
 #[derive(Parser, Clone, Debug)]
 pub struct ExecutionArgs {
     /// Do not rebuild the package.
@@ -35,13 +42,16 @@ pub struct ExecutionArgs {
     #[command(flatten)]
     pub features: FeaturesSpec,
 
+    /// Choose build target to run.
     #[command(flatten)]
     pub build_target_args: BuildTargetSpecifier,
 
+    /// Specify runner arguments.
     #[command(flatten)]
     pub run: RunArgs,
 }
 
+/// Build target specifier.
 #[derive(Parser, Clone, Debug)]
 pub struct BuildTargetSpecifier {
     /// Choose build target to run by target name.
@@ -53,8 +63,10 @@ pub struct BuildTargetSpecifier {
     pub executable_function: Option<String>,
 }
 
+/// Runner arguments.
 #[derive(Parser, Clone, Debug)]
 pub struct RunArgs {
+    /// Pass arguments to the executable function.
     #[command(flatten)]
     pub arguments: ProgramArguments,
 
@@ -75,6 +87,7 @@ pub struct RunArgs {
     pub print_resource_usage: bool,
 }
 
+/// Arguments to the executable function.
 #[derive(Parser, Debug, Clone)]
 pub struct ProgramArguments {
     /// Serialized arguments to the executable function.
@@ -86,6 +99,7 @@ pub struct ProgramArguments {
     pub arguments_file: Option<Utf8PathBuf>,
 }
 
+#[doc(hidden)]
 impl ProgramArguments {
     pub fn read_arguments(self) -> Result<Vec<Arg>> {
         if let Some(path) = self.arguments_file {
@@ -102,12 +116,16 @@ impl ProgramArguments {
     }
 }
 
+/// Output format for the execution
 #[derive(ValueEnum, Clone, Debug)]
 pub enum OutputFormat {
+    /// Output in Cairo PIE (Program Independent Execution) format
     CairoPie,
+    /// Output in standard format
     Standard,
 }
 
+#[doc(hidden)]
 impl OutputFormat {
     pub fn default_for_target(target: ExecutionTarget) -> OutputFormat {
         match target {
@@ -134,12 +152,16 @@ impl OutputFormat {
     }
 }
 
+/// Execution target for the program.
 #[derive(ValueEnum, Clone, Debug)]
 pub enum ExecutionTarget {
+    /// Bootloader target.
     Bootloader,
+    /// Standalone target.
     Standalone,
 }
 
+#[doc(hidden)]
 impl ExecutionTarget {
     pub fn is_standalone(&self) -> bool {
         matches!(self, ExecutionTarget::Standalone)

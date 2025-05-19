@@ -1,5 +1,10 @@
+#![deny(missing_docs)]
+
+//! Extension CLI arguments datastructures.
+
 use clap::Parser;
 
+/// CLI command name.
 pub const COMMAND_NAME: &str = "cairo-language-server";
 
 /// Start the Cairo Language Server

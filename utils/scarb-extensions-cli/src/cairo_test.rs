@@ -1,12 +1,18 @@
+#![deny(missing_docs)]
+
+//! Extension CLI arguments datastructures.
+
 use clap::{Parser, ValueEnum};
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
+/// CLI command name.
 pub const COMMAND_NAME: &str = "cairo-test";
 
 /// Execute all unit tests of a local package.
 #[derive(Parser, Clone, Debug)]
 #[command(name = COMMAND_NAME, author, version)]
 pub struct Args {
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -35,14 +41,19 @@ pub struct Args {
     pub verbose: VerbositySpec,
 }
 
+/// Test kind to run.
 #[derive(ValueEnum, Clone, Debug, Default)]
 pub enum TestKind {
+    /// Run only unit tests.
     Unit,
+    /// Run only integration tests.
     Integration,
+    /// Run all tests.
     #[default]
     All,
 }
 
+#[doc(hidden)]
 impl TestKind {
     pub fn matches(&self, kind: &str) -> bool {
         match self {

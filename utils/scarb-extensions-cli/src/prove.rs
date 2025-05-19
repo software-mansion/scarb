@@ -1,7 +1,12 @@
+#![deny(missing_docs)]
+
+//! Extension CLI arguments datastructures.
+
 use crate::execute::ExecutionArgs;
 use clap::Parser;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
+/// CLI command name.
 pub const COMMAND_NAME: &str = "prove";
 
 /// Prove `scarb execute` output using Stwo prover.
@@ -38,9 +43,11 @@ pub struct Args {
     )]
     pub execute: bool,
 
+    /// Specify execution arguments.
     #[command(flatten)]
     pub execute_args: ExecutionArgs,
 
+    /// Specify prover arguments.
     #[command(flatten)]
     pub prover: ProverArgs,
 
@@ -49,6 +56,7 @@ pub struct Args {
     pub verbose: VerbositySpec,
 }
 
+/// Prover arguments.
 #[derive(Parser, Clone, Debug)]
 pub struct ProverArgs {
     /// Track relations during proving.
