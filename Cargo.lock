@@ -6538,6 +6538,7 @@ dependencies = [
  "anyhow",
  "cairo-lang-runner",
  "cairo-lang-utils",
+ "cairo-vm 2.0.1",
  "camino",
  "clap",
  "num-bigint",
@@ -6545,7 +6546,6 @@ dependencies = [
  "serde",
  "serde_json",
  "starknet-types-core",
- "test-case",
  "thiserror 2.0.12",
 ]
 
