@@ -10,13 +10,13 @@ use camino::Utf8PathBuf;
 use scarb_ui::args::{FeaturesSpec, ToEnvVars};
 use tracing::debug;
 
-use scarb_ui::components::Status;
 use crate::core::{Config, Package, ScriptDefinition, Workspace};
 use crate::internal::fsx::is_executable;
 use crate::ops;
 use crate::process::exec_replace;
 use crate::subcommands::{EXTERNAL_CMD_PREFIX, SCARB_MANIFEST_PATH_ENV, get_env_vars};
 use itertools::Itertools;
+use scarb_ui::components::Status;
 
 #[derive(Debug)]
 pub struct SubcommandDirs {
