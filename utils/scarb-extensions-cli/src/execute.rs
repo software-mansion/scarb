@@ -5,11 +5,11 @@
 use anyhow::{Context, Result, ensure};
 use cairo_lang_runner::Arg;
 use cairo_lang_utils::bigint::BigUintAsHex;
+use cairo_vm::Felt252;
 use camino::Utf8PathBuf;
 use clap::{Parser, ValueEnum};
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use std::fs;
-use cairo_vm::Felt252;
 
 /// CLI command name.
 pub const COMMAND_NAME: &str = "execute";
