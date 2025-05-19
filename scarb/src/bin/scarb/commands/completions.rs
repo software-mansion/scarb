@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{Command, CommandFactory};
+use clap::{Arg, Command, CommandFactory};
 use clap_complete::{Shell as ClapShell, generate};
 use scarb::core::Config;
 use scarb::ops::{SubcommandDirs, list_external_subcommands};
@@ -25,6 +25,11 @@ pub fn run(args: CompletionsArgs, config: &Config) -> Result<()> {
 
 fn build_command(config: &Config) -> Result<Command> {
     let mut cmd = ScarbArgs::command();
+    let global_args = cmd
+        .get_arguments()
+        .filter(|arg| arg.is_global_set())
+        .map(|arg| arg.get_id().to_string())
+        .collect::<Vec<_>>();
 
     let dirs = SubcommandDirs::try_from(config).expect("Failed to get subcommand directories");
     let external_subcommands = list_external_subcommands(&dirs)?;
@@ -46,14 +51,21 @@ fn build_command(config: &Config) -> Result<Command> {
                 _ => Some(
                     Command::new(&external_cmd.name)
                         .name(&external_cmd.name)
-                        .about(format!("Bundled '{}' extension", external_cmd.name)),
+                        .about(format!("Bundled '{}' extension", external_cmd.name))
+                        .disable_help_flag(true)
+                        .disable_version_flag(true)
+                        .args(global_args.iter().map(|name| Arg::new(name).hide(true))),
                 ),
             }
         } else {
             Some(
                 Command::new(&external_cmd.name)
                     .name(&external_cmd.name)
-                    .about(format!("External '{}' extension", external_cmd.name)),
+                    .about(format!("External '{}' extension", external_cmd.name))
+                    .disable_help_flag(true)
+                    .disable_version_flag(true)
+                    .hide_possible_values(true)
+                    .args(global_args.iter().map(|name| Arg::new(name).hide(true))),
             )
         };
         if let Some(subcommand) = subcommand {
