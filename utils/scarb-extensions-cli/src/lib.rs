@@ -1,8 +1,16 @@
+#[cfg(feature = "cairo-language-server")]
 pub mod cairo_language_server;
+#[cfg(feature = "cairo-run")]
 pub mod cairo_run;
+#[cfg(feature = "cairo-test")]
 pub mod cairo_test;
+#[cfg(feature = "doc")]
 pub mod doc;
+#[cfg(feature = "execute")]
 pub mod execute;
+#[cfg(feature = "mdbook")]
 pub mod mdbook;
+#[cfg(feature = "prove")]
 pub mod prove;
+#[cfg(feature = "verify")]
 pub mod verify;
