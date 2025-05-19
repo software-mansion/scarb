@@ -34,6 +34,8 @@ static GLOBAL_OPTIONS: &[&str] = &[
     "--target-dir",
 ];
 
+// TODO(#1915): Enable `prove` and `verify` checks once stwo is stable.
+// Currently, `prove` and `verify` are not built when running tests on CI, so we cannot check for them.
 static EXTERNAL_COMMANDS: &[&str] = &[
     "cairo-language-server",
     "cairo-run",
@@ -41,8 +43,8 @@ static EXTERNAL_COMMANDS: &[&str] = &[
     "doc",
     "execute",
     "mdbook",
-    "prove",
-    "verify",
+    // "prove",
+    // "verify",
 ];
 
 #[test]
