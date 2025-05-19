@@ -72,7 +72,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: run tests
-        run: cargo test --doc --workspace --exclude scarb-prove --exclude scarb-verify
+        run: cargo test --doc --workspace
 
   scarb-metadata-compatibility:
     name: scarb-metadata compatibility check
