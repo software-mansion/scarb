@@ -12,8 +12,8 @@ pub use source::{GitReference, SourceId, SourceIdInner, SourceKind};
 pub use workspace::{Utf8PathWorkspaceExt, Workspace};
 
 mod checksum;
-pub mod config;
-pub mod dirs;
+pub(crate) mod config;
+mod dirs;
 pub mod errors;
 pub(crate) mod lockfile;
 pub(crate) mod manifest;
