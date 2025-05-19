@@ -23,7 +23,7 @@ indoc.workspace = true
 predicates.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
-scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli" }
+scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["execute"] }
 serde.workspace = true
 serde_json.workspace = true
 

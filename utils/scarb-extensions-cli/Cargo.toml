@@ -6,15 +6,51 @@ publish = false
 
 
 [dependencies]
-anyhow.workspace = true
-cairo-lang-runner.workspace = true
-cairo-lang-utils.workspace = true
-starknet-types-core.workspace = true
-clap = { workspace = true, features = ["derive"]}
-serde = { workspace = true, features = ["derive"] }
-serde_json.workspace = true
-thiserror.workspace = true
-num-bigint.workspace = true
-camino.workspace = true
-cairo-vm.workspace = true
-scarb-ui = { path = "../scarb-ui" }
+anyhow = { workspace = true, optional = true }
+clap.workspace = true
+camino = { workspace = true, optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
+serde_json = { workspace = true, optional = true }
+thiserror = { workspace = true, optional = true }
+num-bigint = { workspace = true, optional = true }
+cairo-lang-runner = { workspace = true, optional = true }
+cairo-lang-utils = { workspace = true, optional = true }
+starknet-types-core = { workspace = true, optional = true }
+cairo-vm = { workspace = true, optional = true }
+scarb-ui = { path = "../scarb-ui", optional = true }
+
+[features]
+cairo-run = [
+    "dep:camino",
+    "dep:serde",
+    "dep:serde_json",
+    "dep:thiserror",
+    "dep:num-bigint",
+    "dep:starknet-types-core",
+    "dep:cairo-lang-runner",
+    "dep:scarb-ui"
+]
+cairo-test = ["dep:scarb-ui"]
+doc = ["dep:scarb-ui"]
+execute = [
+    "dep:anyhow",
+    "dep:cairo-lang-runner",
+    "dep:cairo-lang-utils",
+    "dep:camino",
+    "dep:num-bigint",
+    "dep:serde_json",
+    "dep:cairo-vm",
+    "dep:scarb-ui"
+]
+mdbook = ["dep:camino", "dep:scarb-ui"]
+prove = ["execute", "dep:scarb-ui"]
+verify = ["dep:camino", "dep:scarb-ui"]
+default = [
+    "cairo-run",
+    "cairo-test",
+    "doc",
+    "execute",
+    "mdbook",
+    "prove",
+    "verify",
+]
