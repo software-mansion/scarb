@@ -37,25 +37,19 @@ fn build_command(config: &Config) -> Result<Command> {
     for external_cmd in external_subcommands {
         // Generate full completions only for the known bundled subcommands.
         // For the other subcommands, complete only the command name.
-        let subcommand = if external_cmd.is_bundled {
-            match external_cmd.name.as_str() {
-                cairo_language_server_args::COMMAND_NAME => {
-                    cairo_language_server_args::Args::command()
-                }
-                cairo_run_args::COMMAND_NAME => cairo_run_args::Args::command(),
-                cairo_test_args::COMMAND_NAME => cairo_test_args::Args::command(),
-                doc_args::COMMAND_NAME => doc_args::Args::command(),
-                execute::COMMAND_NAME => execute::Args::command(),
-                mdbook_args::COMMAND_NAME => mdbook_args::Args::command(),
-                prove_args::COMMAND_NAME => prove_args::Args::command(),
-                verify_args::COMMAND_NAME => verify_args::Args::command(),
-                "test-support" => {
-                    continue;
-                }
-                _ => build_placeholder_subcommand(&external_cmd),
+        let subcommand = match (external_cmd.is_bundled, external_cmd.name.as_str()) {
+            (true, cairo_language_server_args::COMMAND_NAME) => {
+                cairo_language_server_args::Args::command()
             }
-        } else {
-            build_placeholder_subcommand(&external_cmd)
+            (true, cairo_run_args::COMMAND_NAME) => cairo_run_args::Args::command(),
+            (true, cairo_test_args::COMMAND_NAME) => cairo_test_args::Args::command(),
+            (true, doc_args::COMMAND_NAME) => doc_args::Args::command(),
+            (true, execute::COMMAND_NAME) => execute::Args::command(),
+            (true, mdbook_args::COMMAND_NAME) => mdbook_args::Args::command(),
+            (true, prove_args::COMMAND_NAME) => prove_args::Args::command(),
+            (true, verify_args::COMMAND_NAME) => verify_args::Args::command(),
+            (true, "test-support") => continue,
+            _ => build_placeholder_subcommand(&external_cmd),
         };
         let subcommand = sanitize_subcommand_args(subcommand, &global_args);
         cmd = cmd.subcommand(subcommand);
