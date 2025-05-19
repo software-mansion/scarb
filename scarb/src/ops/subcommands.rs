@@ -11,9 +11,6 @@ use scarb_ui::args::{FeaturesSpec, ToEnvVars};
 use tracing::debug;
 
 use scarb_ui::components::Status;
-
-use crate::core::config::get_app_exe_path;
-use crate::core::dirs::{get_project_dirs, resolve_path_dirs};
 use crate::core::{Config, Package, ScriptDefinition, Workspace};
 use crate::internal::fsx::is_executable;
 use crate::ops;
@@ -28,19 +25,6 @@ pub struct SubcommandDirs {
 }
 
 impl SubcommandDirs {
-    pub fn new(path_dirs_override: Option<Vec<PathBuf>>) -> Result<Self> {
-        let pd = get_project_dirs()?;
-        let path_dirs = resolve_path_dirs(path_dirs_override, &pd);
-        let scarb_exe_dir = get_app_exe_path(&path_dirs)?
-            .parent()
-            .expect("Scarb binary path should always have parent directory.")
-            .to_path_buf();
-        Ok(Self {
-            scarb_exe_dir,
-            path_dirs,
-        })
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &Path> {
         iter::once(self.scarb_exe_dir.as_path()).chain(self.path_dirs.iter().map(|p| p.as_path()))
     }

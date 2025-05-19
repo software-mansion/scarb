@@ -18,14 +18,33 @@ pub struct AppDirs {
 }
 
 impl AppDirs {
-    pub fn init(
+    pub(crate) fn init(
         cache_dir_override: Option<Utf8PathBuf>,
         config_dir_override: Option<Utf8PathBuf>,
         path_dirs_override: Option<Vec<PathBuf>>,
     ) -> Result<Self> {
-        let pd = get_project_dirs()?;
+        let pd = ProjectDirs::from("com", "swmansion", "scarb").ok_or_else(|| {
+            anyhow!("no valid home directory path could be retrieved from the operating system")
+        })?;
 
-        let path_dirs = resolve_path_dirs(path_dirs_override, &pd);
+        let path_dirs = match path_dirs_override {
+            Some(p) => p,
+            None => {
+                let mut path_dirs = if let Some(val) = env::var_os("PATH") {
+                    env::split_paths(&val).collect()
+                } else {
+                    vec![]
+                };
+
+                let home_bin = pd.data_local_dir().join("bin");
+
+                if !path_dirs.iter().any(|p| p == &home_bin) {
+                    path_dirs.push(home_bin);
+                };
+
+                path_dirs
+            }
+        };
 
         let cache_dir = match cache_dir_override {
             Some(p) => p,
@@ -45,7 +64,7 @@ impl AppDirs {
     }
 
     pub fn path_env(&self) -> OsString {
-        path_env(self.path_dirs.as_ref())
+        env::join_paths(self.path_dirs.iter()).unwrap()
     }
 
     pub fn registry_dir(&self) -> Filesystem {
@@ -64,38 +83,4 @@ impl fmt::Display for AppDirs {
         writeln!(f, "PATH:       {}", self.path_env().to_string_lossy())?;
         Ok(())
     }
-}
-
-pub fn get_project_dirs() -> Result<ProjectDirs> {
-    ProjectDirs::from("com", "swmansion", "scarb").ok_or_else(|| {
-        anyhow!("no valid home directory path could be retrieved from the operating system")
-    })
-}
-
-pub fn resolve_path_dirs(
-    path_dirs_override: Option<Vec<PathBuf>>,
-    pd: &ProjectDirs,
-) -> Vec<PathBuf> {
-    match path_dirs_override {
-        Some(p) => p,
-        None => {
-            let mut path_dirs = if let Some(val) = env::var_os("PATH") {
-                env::split_paths(&val).collect()
-            } else {
-                vec![]
-            };
-
-            let home_bin = pd.data_local_dir().join("bin");
-
-            if !path_dirs.iter().any(|p| p == &home_bin) {
-                path_dirs.push(home_bin);
-            };
-
-            path_dirs
-        }
-    }
-}
-
-pub fn path_env(path_dirs: &[PathBuf]) -> OsString {
-    env::join_paths(path_dirs.iter()).unwrap()
 }
