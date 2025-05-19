@@ -601,21 +601,25 @@ pub struct CompletionsArgs {
 }
 
 /// Target shell for completion generation.
-#[doc(hidden)]
 #[derive(ValueEnum, Clone, Debug)]
 pub enum Shell {
+    /// Generate CLI completions for `bash`.
     Bash,
+    /// Generate CLI completions for `fish`.
     Fish,
+    /// Generate CLI completions for `elvish`.
     Elvish,
+    /// Generate CLI completions for `powershell`.
     #[allow(clippy::enum_variant_names)]
     #[clap(name = "powershell", alias = "pwsh")]
     PowerShell,
+    /// Generate CLI completions for `zsh`.
     Zsh,
 }
 
 impl From<Shell> for ClapShell {
-    fn from(s: Shell) -> Self {
-        match s {
+    fn from(shell: Shell) -> Self {
+        match shell {
             Shell::Bash => ClapShell::Bash,
             Shell::Elvish => ClapShell::Elvish,
             Shell::Fish => ClapShell::Fish,
