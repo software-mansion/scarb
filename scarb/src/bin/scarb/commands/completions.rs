@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::{Arg, Command, CommandFactory};
 use clap_complete::{Shell as ClapShell, generate};
 use scarb::core::Config;
-use scarb::ops::{SubcommandDirs, list_external_subcommands};
+use scarb::ops::{ExternalSubcommand, SubcommandDirs, list_external_subcommands};
 use std::collections::HashSet;
 use std::io;
 
@@ -35,7 +35,8 @@ fn build_command(config: &Config) -> Result<Command> {
     let dirs = SubcommandDirs::try_from(config).expect("Failed to get subcommand directories");
     let external_subcommands = list_external_subcommands(&dirs)?;
     for external_cmd in external_subcommands {
-        // Generate full completions only for the bundled subcommands
+        // Generate full completions only for the known bundled subcommands.
+        // For the other subcommands, complete only the command name.
         let subcommand = if external_cmd.is_bundled {
             match external_cmd.name.as_str() {
                 cairo_language_server_args::COMMAND_NAME => {
@@ -51,23 +52,29 @@ fn build_command(config: &Config) -> Result<Command> {
                 "test-support" => {
                     continue;
                 }
-                _ => Command::new(&external_cmd.name)
-                    .name(&external_cmd.name)
-                    .about(format!("Bundled '{}' extension", external_cmd.name))
-                    .disable_help_flag(true)
-                    .disable_version_flag(true),
+                _ => build_placeholder_subcommand(&external_cmd),
             }
         } else {
-            Command::new(&external_cmd.name)
-                .name(&external_cmd.name)
-                .about(format!("External '{}' extension", external_cmd.name))
-                .disable_help_flag(true)
-                .disable_version_flag(true)
+            build_placeholder_subcommand(&external_cmd)
         };
         let subcommand = sanitize_subcommand_args(subcommand, &global_args);
         cmd = cmd.subcommand(subcommand);
     }
     Ok(cmd)
+}
+
+/// Build a minimal placeholder `Command` for the unknown external subcommand.
+fn build_placeholder_subcommand(external_subcommand: &ExternalSubcommand) -> Command {
+    let about = if external_subcommand.is_bundled {
+        format!("Bundled '{}' extension", external_subcommand.name)
+    } else {
+        format!("External '{}' extension", external_subcommand.name)
+    };
+    Command::new(&external_subcommand.name)
+        .name(&external_subcommand.name)
+        .about(about)
+        .disable_help_flag(true)
+        .disable_version_flag(true)
 }
 
 /// Hide unsupported global args from the subcommand completions by overriding them with local args and marking them as hidden.
