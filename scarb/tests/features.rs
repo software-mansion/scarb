@@ -1557,3 +1557,70 @@ fn dev_dep_features_do_not_propagate() {
             error: could not compile `hello` due to previous error
         "#});
 }
+
+#[test]
+fn can_declare_default_by_name() {
+    let t = TempDir::new().unwrap();
+
+    let path_dep = t.child("path_dep");
+    ProjectBuilder::start()
+        .name("path_dep")
+        .version("0.1.0")
+        .manifest_extra(indoc! {r#"
+            [features]
+            default = ["x"]
+            x = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn g() -> felt252 { 21 }
+
+            #[cfg(feature: 'default')]
+            fn f() -> felt252 { g() }
+
+            pub fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .build(&path_dep);
+
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .manifest_extra(indoc! {r#"
+            [features]
+            default = ["x"]
+            x = []
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[cfg(feature: 'x')]
+            fn g() -> felt252 { path_dep::main() }
+
+            #[cfg(feature: 'default')]
+            fn f() -> felt252 { g() }
+
+            fn main() -> felt252 {
+                f()
+            }
+        "#})
+        .dep(
+            "path_dep",
+            path_dep
+                .version("0.1.0")
+                .default_features(false)
+                .features(vec!["x", "default"].into_iter()),
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("check")
+        .arg("--features=default")
+        .arg("--no-default-features")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            [..]Checking hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished checking `dev` profile target(s) in[..]
+        "#});
+}
