@@ -20,6 +20,7 @@ cairo-vm = { workspace = true, optional = true }
 scarb-ui = { path = "../scarb-ui", optional = true }
 
 [features]
+cairo-language-server = []
 cairo-run = [
     "dep:camino",
     "dep:serde",
@@ -46,6 +47,7 @@ mdbook = ["dep:camino", "dep:scarb-ui"]
 prove = ["execute", "dep:scarb-ui"]
 verify = ["dep:camino", "dep:scarb-ui"]
 default = [
+    "cairo-language-server",
     "cairo-run",
     "cairo-test",
     "doc",
