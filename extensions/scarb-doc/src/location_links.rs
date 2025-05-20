@@ -20,6 +20,7 @@ fn get_documentable_full_path(db: &ScarbDocDatabase, item_id: DocumentableItemId
                 ModuleItemId::ExternFunction(item_id) => item_id.full_path(db),
                 ModuleItemId::Submodule(item_id) => item_id.full_path(db),
                 ModuleItemId::Use(item_id) => item_id.full_path(db),
+                ModuleItemId::MacroDeclaration(item_id) => item_id.full_path(db),
             },
             LookupItemId::TraitItem(item_id) => match item_id {
                 TraitItemId::Function(item_id) => item_id.full_path(db),
