@@ -1649,3 +1649,67 @@ fn inline_macro_diags_mapped_correctly_to_call_site() {
             error: could not compile `hello` due to previous error
        "#});
 }
+
+#[test]
+fn call_site_mapped_correctly_after_expansion_by_two_macros() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
+
+            #[attribute_macro]
+            pub fn simple_attribute_macro_v2(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+                let ts = quote! {
+                    #item
+
+                    fn generated_function_v2() {}
+                    fn generated_function_v2() {}
+                };
+                ProcMacroResult::new(ts)
+            }
+
+            #[attribute_macro]
+            pub fn complex_attribute_macro_v2(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+                let ts = quote! {
+                    #item
+
+                    #[simple_attribute_macro_v2]
+                    fn generated_function_with_other_attribute_v2() {}
+                };
+                ProcMacroResult::new(ts)
+            }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[complex_attribute_macro_v2]
+            fn foo() {}
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: The name `generated_function_v2` is defined multiple times.
+             --> [..]lib.cairo:1:1
+            #[complex_attribute_macro_v2]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            note: this error originates in the attribute macro: `complex_attribute_macro_v2`
+            note: this error originates in the attribute macro: `simple_attribute_macro_v2`
+
+            error: could not compile `hello` due to previous error
+       "#});
+}
