@@ -64,6 +64,7 @@ impl ProcMacroHostPlugin {
             // The items below are not supported.
             ast::ModuleItem::HeaderDoc(_) => AttrExpansionFound::None,
             ast::ModuleItem::Missing(_) => AttrExpansionFound::None,
+            ast::ModuleItem::MacroDeclaration(_) => AttrExpansionFound::None,
             // TODO(#2204): Support inline macro expansion at module item level.
             ast::ModuleItem::InlineMacro(_) => AttrExpansionFound::None,
         };

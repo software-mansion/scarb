@@ -528,6 +528,7 @@ impl ProcMacroHostPlugin {
                 let Expr::Path(path) = value else {
                     return None;
                 };
+                let path = path.segments(db);
                 let path = path.elements(db);
                 let path = path.last()?;
                 let PathSegment::Simple(segment) = path else {
@@ -1152,6 +1153,7 @@ fn into_cairo_diagnostics(
                 Severity::Warning => cairo_lang_diagnostics::Severity::Warning,
             },
             relative_span: Default::default(),
+            inner_span: None,
         })
         .collect_vec()
 }
