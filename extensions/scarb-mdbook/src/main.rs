@@ -1,27 +1,12 @@
 use anyhow::{Context, Result};
-use camino::Utf8PathBuf;
 use clap::Parser;
 use mdbook::MDBook;
+use scarb_extensions_cli::mdbook::Args;
 use scarb_ui::Ui;
-use scarb_ui::args::VerbositySpec;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::ExitCode;
-
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    /// Path to book source directory.
-    #[arg(long)]
-    pub input: Utf8PathBuf,
-    /// Path to book output directory.
-    #[arg(long)]
-    pub output: Utf8PathBuf,
-    /// Logging verbosity.
-    #[command(flatten)]
-    pub verbose: VerbositySpec,
-}
 
 fn main() -> ExitCode {
     let args = Args::parse();

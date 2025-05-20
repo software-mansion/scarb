@@ -11,6 +11,7 @@ repository.workspace = true
 [dependencies]
 mdbook.workspace = true
 scarb-ui = { path = "../../utils/scarb-ui" }
+scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["mdbook"] }
 clap.workspace = true
 anyhow.workspace = true
 camino.workspace = true

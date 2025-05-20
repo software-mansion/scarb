@@ -15,7 +15,9 @@ anyhow.workspace = true
 indoc.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
+scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["verify"] }
 clap.workspace = true
+serde.workspace = true
 camino.workspace = true
 serde_json.workspace = true
 stwo_cairo_prover.workspace = true
