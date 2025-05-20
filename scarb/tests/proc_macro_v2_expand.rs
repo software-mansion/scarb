@@ -1537,3 +1537,115 @@ fn diags_can_be_mapped_to_call_site_correctly() {
             error: could not compile `hello` due to previous error
     "#});
 }
+
+#[test]
+fn attribute_diags_mapped_correctly_to_call_site() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
+
+            #[attribute_macro]
+            pub fn improper_attribute_macro_v2(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+                let ts = quote! {
+                    #item
+
+                    fn added_fun_v2() {
+                        a = b;
+                    }
+                };
+                ProcMacroResult::new(ts)
+            }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[improper_attribute_macro_v2]
+            fn foo() {
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error[E0006]: Identifier not found.
+             --> [..]lib.cairo:1:1
+            #[improper_attribute_macro_v2]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            note: this error originates in the attribute macro: `improper_attribute_macro_v2`
+            
+            error: Invalid left-hand side of assignment.
+             --> [..]lib.cairo:1:1
+            #[improper_attribute_macro_v2]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            note: this error originates in the attribute macro: `improper_attribute_macro_v2`
+            
+            error: could not compile `hello` due to previous error
+       "#});
+}
+
+#[test]
+fn inline_macro_diags_mapped_correctly_to_call_site() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{inline_macro, quote, ProcMacroResult, TokenStream};
+
+            #[inline_macro]
+            pub fn improper_inline_macro_v2(item: TokenStream) -> ProcMacroResult {
+                let ts = quote! {
+                    {
+                        #item;
+                        unbound_identifier_v2
+                    }
+                };
+                ProcMacroResult::new(ts)
+            }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            fn foo() {
+                improper_inline_macro_v2!(10 + 10);
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error[E0006]: Identifier not found.
+             --> [..]lib.cairo:2:5
+                improper_inline_macro_v2!(10 + 10);
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+            error: could not compile `hello` due to previous error
+       "#});
+}
