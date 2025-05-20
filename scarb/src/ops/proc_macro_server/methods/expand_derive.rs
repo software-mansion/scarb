@@ -136,7 +136,8 @@ fn expand_derive_v2(
         item.clone(),
     );
 
-    let code_mappings = generate_code_mappings_with_offset(&result.token_stream, current_width);
+    let code_mappings =
+        generate_code_mappings_with_offset(&result.token_stream, call_site.clone(), current_width);
 
     Ok(ProcMacroResult {
         token_stream: token_stream_v2_to_v1(&result.token_stream),

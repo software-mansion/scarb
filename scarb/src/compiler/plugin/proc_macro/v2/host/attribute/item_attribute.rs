@@ -73,7 +73,7 @@ impl ProcMacroHostPlugin {
             .expect("procedural macro using v1 api used in a context expecting v2 api")
             .generate_code(
                 input.expansion.expansion_name.clone(),
-                call_site.span,
+                call_site.span.clone(),
                 args,
                 token_stream,
             );
@@ -110,7 +110,7 @@ impl ProcMacroHostPlugin {
         }
 
         let file_name = format!("proc_{}", input.expansion.cairo_name);
-        let code_mappings = generate_code_mappings(&result.token_stream);
+        let code_mappings = generate_code_mappings(&result.token_stream, call_site.span.clone());
         let content = result.token_stream.to_string();
         PluginResult {
             code: Some(PluginGeneratedFile {
