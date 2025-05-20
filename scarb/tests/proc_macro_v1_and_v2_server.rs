@@ -1,7 +1,6 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::PathChild;
 use cairo_lang_macro::{TextSpan, Token, TokenStream as TokenStreamV2, TokenTree};
-use scarb_proc_macro_server_types::methods::CodeMapping;
 use scarb_proc_macro_server_types::methods::CodeOrigin::Span;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttribute;
 use scarb_proc_macro_server_types::methods::expand::ExpandAttributeParams;
@@ -9,6 +8,7 @@ use scarb_proc_macro_server_types::methods::expand::ExpandDerive;
 use scarb_proc_macro_server_types::methods::expand::ExpandDeriveParams;
 use scarb_proc_macro_server_types::methods::expand::ExpandInline;
 use scarb_proc_macro_server_types::methods::expand::ExpandInlineMacroParams;
+use scarb_proc_macro_server_types::methods::{CodeMapping, CodeOrigin};
 use scarb_proc_macro_server_types::scope::ProcMacroScope;
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::proc_macro_server::{ProcMacroClient, SIMPLE_MACROS_V1, SIMPLE_MACROS_V2};
@@ -138,10 +138,16 @@ fn expand_attribute() {
             assert!(response.code_mappings.is_some());
             assert_eq!(
                 response.code_mappings.unwrap(),
-                vec![CodeMapping {
-                    span: TextSpan { start: 0, end: 22 },
-                    origin: Span(TextSpan { start: 0, end: 22 })
-                }]
+                vec![
+                    CodeMapping {
+                        span: TextSpan { start: 0, end: 22 },
+                        origin: CodeOrigin::Span(TextSpan { start: 0, end: 22 })
+                    },
+                    CodeMapping {
+                        span: TextSpan { start: 0, end: 22 },
+                        origin: CodeOrigin::CallSite(TextSpan { start: 0, end: 22 })
+                    }
+                ]
             );
         } else {
             assert!(response.code_mappings.is_none());
@@ -186,10 +192,16 @@ fn expand_derive() {
             assert!(response.code_mappings.is_some());
             assert_eq!(
                 response.code_mappings.unwrap(),
-                vec![CodeMapping {
-                    span: TextSpan { start: 0, end: 29 },
-                    origin: Span(TextSpan { start: 0, end: 29 })
-                }]
+                vec![
+                    CodeMapping {
+                        span: TextSpan { start: 0, end: 29 },
+                        origin: Span(TextSpan { start: 0, end: 29 })
+                    },
+                    CodeMapping {
+                        span: TextSpan { start: 0, end: 29 },
+                        origin: CodeOrigin::CallSite(TextSpan { start: 0, end: 19 })
+                    }
+                ]
             );
         } else {
             assert_eq!(
@@ -197,7 +209,7 @@ fn expand_derive() {
                 Some(vec![CodeMapping {
                     span: TextSpan { start: 0, end: 29 },
                     origin: Span(TextSpan { start: 0, end: 19 })
-                }])
+                },])
             );
         }
     }
@@ -263,10 +275,16 @@ fn expand_inline() {
             assert!(response.code_mappings.is_some());
             assert_eq!(
                 response.code_mappings.unwrap(),
-                vec![CodeMapping {
-                    span: TextSpan { start: 0, end: 51 },
-                    origin: Span(TextSpan { start: 0, end: 51 })
-                }]
+                vec![
+                    CodeMapping {
+                        span: TextSpan { start: 0, end: 51 },
+                        origin: Span(TextSpan { start: 0, end: 51 })
+                    },
+                    CodeMapping {
+                        span: TextSpan { start: 0, end: 51 },
+                        origin: CodeOrigin::CallSite(TextSpan { start: 0, end: 51 })
+                    }
+                ]
             );
         } else {
             assert!(response.code_mappings.is_none())

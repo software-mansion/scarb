@@ -60,7 +60,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
             .expect("procedural macro using v1 api used in a context expecting v2 api")
             .generate_code(
                 self.expansion.expansion_name.clone(),
-                call_site.span,
+                call_site.span.clone(),
                 TokenStream::empty(),
                 token_stream,
             );
@@ -85,7 +85,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                 DynGeneratedFileAuxData::new(emitted)
             });
             let content = token_stream.to_string();
-            let code_mappings = generate_code_mappings(&token_stream);
+            let code_mappings = generate_code_mappings(&token_stream, call_site.span.clone());
             InlinePluginResult {
                 code: Some(PluginGeneratedFile {
                     name: "inline_proc_macro".into(),

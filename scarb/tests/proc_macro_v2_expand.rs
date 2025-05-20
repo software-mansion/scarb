@@ -1463,3 +1463,77 @@ fn can_emit_diagnostic_with_out_of_bounds_span() {
             [..]Finished `dev` profile target(s) in [..]
         "#});
 }
+
+#[test]
+fn diags_can_be_mapped_to_call_site_correctly() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{derive_macro, quote, ProcMacroResult, TokenStream};
+
+        #[derive_macro]
+        pub fn improper_derive_macro_v2(_item: TokenStream) -> ProcMacroResult {
+            let ts = quote! {
+                fn generated_function_v2() {
+                    some <$> syntax
+                }
+            };
+            ProcMacroResult::new(ts)
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[derive(ImproperDeriveMacroV2)]
+            struct X {}
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Missing tokens. Expected an expression.
+             --> [..]lib.cairo:1:10
+            #[derive(ImproperDeriveMacroV2)]
+                     ^^^^^^^^^^^^^^^^^^^^^
+            note: this error originates in the derive macro: `ImproperDeriveMacroV2`
+            
+            error: Skipped tokens. Expected: statement.
+             --> [..]lib.cairo:1:10
+            #[derive(ImproperDeriveMacroV2)]
+                     ^^^^^^^^^^^^^^^^^^^^^
+            note: this error originates in the derive macro: `ImproperDeriveMacroV2`
+            
+            error[E0006]: Identifier not found.
+             --> [..]lib.cairo:1:10
+            #[derive(ImproperDeriveMacroV2)]
+                     ^^^^^^^^^^^^^^^^^^^^^
+            note: this error originates in the derive macro: `ImproperDeriveMacroV2`
+            
+            error: Are you missing a `::`?.
+             --> [..]lib.cairo:1:10
+            #[derive(ImproperDeriveMacroV2)]
+                     ^^^^^^^^^^^^^^^^^^^^^
+            note: this error originates in the derive macro: `ImproperDeriveMacroV2`
+            
+            error: Missing semicolon
+             --> [..]lib.cairo:1:10
+            #[derive(ImproperDeriveMacroV2)]
+                     ^^^^^^^^^^^^^^^^^^^^^
+            note: this error originates in the derive macro: `ImproperDeriveMacroV2`
+            
+            error: could not compile `hello` due to previous error
+    "#});
+}
