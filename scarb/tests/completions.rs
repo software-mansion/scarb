@@ -1,3 +1,4 @@
+use indoc::indoc;
 use scarb_test_support::command::Scarb;
 
 static BUILTIN_COMMANDS: &[&str] = &[
@@ -243,4 +244,58 @@ fn generates_completions_elvish() {
             "Missing option: {opt}"
         );
     }
+}
+
+#[test]
+fn generates_completions_without_arg() {
+    let cmd = Scarb::quick_snapbox()
+        .arg("completions")
+        .env("SHELL", "bash")
+        .assert()
+        .success();
+    let output = cmd.get_output().stdout.clone();
+    let stdout = String::from_utf8(output).unwrap();
+    let lines: Vec<&str> = stdout.lines().collect();
+
+    assert!(lines.iter().any(|l| l.trim() == "_scarb() {"));
+
+    for cmd in BUILTIN_COMMANDS {
+        let line = format!("scarb,{}{}", cmd, ")");
+        assert!(
+            lines.iter().any(|l| l.trim().starts_with(&line)),
+            "Missing command: {cmd}"
+        );
+    }
+    for ext in EXTERNAL_COMMANDS {
+        let line = format!("scarb,{}{}", ext, ")");
+        assert!(
+            lines.iter().any(|l| l.trim().starts_with(&line)),
+            "Missing external command: {ext}"
+        );
+    }
+    for opt in GLOBAL_OPTIONS {
+        let line = format!("{}{}", opt, ")");
+        assert!(
+            lines.iter().any(|l| l.trim().starts_with(&line)),
+            "Missing option: {opt}"
+        );
+    }
+}
+
+// Disabled due to `clap_complete::Shell::from_env` defaulting to `PowerShell` on Windows
+#[cfg(not(windows))]
+#[test]
+fn fails_without_arg_and_empty_env() {
+    let cmd = Scarb::quick_snapbox()
+        .arg("completions")
+        .env("SHELL", "")
+        .assert()
+        .failure()
+        .stdout_eq(indoc!(
+            r#"
+            error: could not automatically determine shell to generate completions for.
+            help: specify the shell explicitly: `scarb completions <shell>`.
+            For the list of supported shells, run `scarb completions --help`.
+        "#
+        ));
 }
