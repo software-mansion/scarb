@@ -597,7 +597,7 @@ pub struct LintArgs {
 pub struct CompletionsArgs {
     /// Target shell for completion generation
     #[arg(value_enum)]
-    pub shell: Shell,
+    pub shell: Option<Shell>,
 }
 
 /// Target shell for completion generation.

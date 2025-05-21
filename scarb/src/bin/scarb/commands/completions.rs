@@ -19,7 +19,11 @@ use scarb_extensions_cli::verify as verify_args;
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: CompletionsArgs, config: &Config) -> Result<()> {
     let mut cmd = build_command(config)?;
-    let shell: ClapShell = args.shell.into();
+    let shell: ClapShell = args.shell.map_or(
+        ClapShell::from_env()
+            .expect("Failed to resolve shell from environment, please specify manually."),
+        Into::into,
+    );
     generate(shell, &mut cmd, "scarb", &mut io::stdout());
     Ok(())
 }
