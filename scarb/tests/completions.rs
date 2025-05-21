@@ -286,7 +286,7 @@ fn generates_completions_without_arg() {
 #[cfg(not(windows))]
 #[test]
 fn fails_without_arg_and_empty_env() {
-    let cmd = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("completions")
         .env("SHELL", "")
         .assert()
