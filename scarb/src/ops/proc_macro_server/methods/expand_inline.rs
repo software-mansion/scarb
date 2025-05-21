@@ -71,12 +71,12 @@ fn expand_inline_v2(
 ) -> Result<ProcMacroResult> {
     let result = proc_macro_instance.try_v2()?.generate_code(
         name.into(),
-        call_site,
+        call_site.clone(),
         TokenStreamV2::empty(),
         args,
     );
 
-    let code_mappings = generate_code_mappings(&result.token_stream);
+    let code_mappings = generate_code_mappings(&result.token_stream, call_site);
     Ok(ProcMacroResult {
         token_stream: token_stream_v2_to_v1(&result.token_stream),
         diagnostics: result.diagnostics,

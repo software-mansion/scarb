@@ -15,7 +15,7 @@ pub trait SpanSource {
 impl<T: TypedSyntaxNode> SpanSource for T {
     fn text_span(&self, db: &dyn SyntaxGroup) -> TextSpan {
         let node = self.as_syntax_node();
-        let span = node.span(db);
+        let span = node.span_without_trivia(db);
         TextSpan::new(span.start.as_u32(), span.end.as_u32())
     }
 }

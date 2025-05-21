@@ -13,7 +13,6 @@ cairo-lang-sierra.workspace = true
 camino.workspace = true
 clap.workspace = true
 indoc.workspace = true
-num-bigint.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde.workspace = true

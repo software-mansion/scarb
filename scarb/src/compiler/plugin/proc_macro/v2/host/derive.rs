@@ -11,7 +11,7 @@ use crate::compiler::plugin::proc_macro::v2::{
 use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginGeneratedFile, PluginResult};
 use cairo_lang_filesystem::ids::CodeMapping;
 use cairo_lang_filesystem::span::TextWidth;
-use cairo_lang_macro::{AllocationContext, Diagnostic, TokenStream, TokenStreamMetadata};
+use cairo_lang_macro::{AllocationContext, Diagnostic, TextSpan, TokenStream, TokenStreamMetadata};
 use cairo_lang_syntax::attribute::structured::{AttributeArgVariant, AttributeStructurize};
 use cairo_lang_syntax::node::ast::{Expr, PathSegment};
 use cairo_lang_syntax::node::db::SyntaxGroup;
@@ -124,6 +124,7 @@ impl ProcMacroHostPlugin {
 
             code_mappings.extend(generate_code_mappings_with_offset(
                 &result.token_stream,
+                call_site.span.clone(),
                 current_width,
             ));
             current_width = current_width + TextWidth::from_str(&result.token_stream.to_string());
@@ -178,9 +179,10 @@ impl Debug for DeriveFound {
 
 pub fn generate_code_mappings_with_offset(
     token_stream: &TokenStream,
+    call_site: TextSpan,
     offset: TextWidth,
 ) -> Vec<CodeMapping> {
-    let mut mappings = generate_code_mappings(token_stream);
+    let mut mappings = generate_code_mappings(token_stream, call_site);
     for mapping in &mut mappings {
         mapping.span.start = mapping.span.start.add_width(offset);
         mapping.span.end = mapping.span.end.add_width(offset);

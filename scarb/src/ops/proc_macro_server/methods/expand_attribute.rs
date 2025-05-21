@@ -77,11 +77,12 @@ fn expand_attribute_v2(
     args: TokenStreamV2,
     item: TokenStreamV2,
 ) -> Result<ProcMacroResult> {
-    let result = proc_macro_instance
-        .try_v2()?
-        .generate_code(attr.into(), call_site, args, item);
+    let result =
+        proc_macro_instance
+            .try_v2()?
+            .generate_code(attr.into(), call_site.clone(), args, item);
 
-    let code_mappings = generate_code_mappings(&result.token_stream);
+    let code_mappings = generate_code_mappings(&result.token_stream, call_site);
     Ok(ProcMacroResult {
         token_stream: token_stream_v2_to_v1(&result.token_stream),
         diagnostics: result.diagnostics,

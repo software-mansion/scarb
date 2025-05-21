@@ -11,6 +11,7 @@ use clap::{Parser, ValueEnum};
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
 use std::fs;
 
+/// Compile a Cairo project and run a function marked `#[executable]`
 /// CLI command name.
 pub const COMMAND_NAME: &str = "execute";
 
@@ -22,7 +23,6 @@ pub struct Args {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
-    /// Specify execution arguments.
     #[command(flatten)]
     pub execution: ExecutionArgs,
 

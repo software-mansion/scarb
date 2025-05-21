@@ -2,6 +2,7 @@ use anyhow::{Context, Result, anyhow, bail, ensure};
 use cairo_lang_filesystem::db::Edition;
 use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
 use camino::{Utf8Path, Utf8PathBuf};
+use indoc::formatdoc;
 use itertools::Itertools;
 use pathdiff::diff_utf8_paths;
 use semver::{Version, VersionReq};
@@ -9,7 +10,7 @@ use serde::{Deserialize, Serialize, de};
 use serde_untagged::UntaggedEnumVisitor;
 use smol_str::SmolStr;
 use std::borrow::Cow;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::default::Default;
 use std::fs;
 use std::iter::{repeat, zip};
@@ -26,7 +27,7 @@ use crate::core::package::PackageId;
 use crate::core::registry::{DEFAULT_REGISTRY_INDEX, DEFAULT_REGISTRY_INDEX_PATCH_SOURCE};
 use crate::core::source::{GitReference, SourceId};
 use crate::core::{
-    Config, DepKind, DependencyVersionReq, InliningStrategy, ManifestBuilder,
+    Config, DepKind, DependencyVersionReq, EnabledFeature, InliningStrategy, ManifestBuilder,
     ManifestCompilerConfig, PackageName, TargetKind, TestTargetProps, TestTargetType,
 };
 use crate::internal::fsx;
@@ -55,7 +56,7 @@ pub struct TomlManifest {
     pub profile: Option<TomlProfilesDefinition>,
     pub scripts: Option<BTreeMap<SmolStr, MaybeWorkspaceScriptDefinition>>,
     pub tool: Option<BTreeMap<SmolStr, MaybeWorkspaceTomlTool>>,
-    pub features: Option<BTreeMap<FeatureName, Vec<FeatureName>>>,
+    pub features: Option<BTreeMap<FeatureName, Vec<TomlFeatureToEnable>>>,
     pub patch: Option<BTreeMap<SmolStr, BTreeMap<PackageName, TomlDependency>>>,
 }
 
@@ -514,6 +515,55 @@ pub struct TomlToolScarbMetadata {
     pub allow_prebuilt_plugins: Option<Vec<String>>,
 }
 
+const DEPENDENCY_FEATURE_SEPARATOR: &str = "/";
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, PartialOrd, Eq, Ord)]
+pub struct TomlFeatureToEnable(String);
+
+impl From<EnabledFeature> for TomlFeatureToEnable {
+    fn from(value: EnabledFeature) -> Self {
+        if let Some(package_name) = value.package {
+            Self(format!(
+                "{}{}{}",
+                package_name, DEPENDENCY_FEATURE_SEPARATOR, value.feature
+            ))
+        } else {
+            Self(value.feature.to_string())
+        }
+    }
+}
+
+impl TryFrom<TomlFeatureToEnable> for EnabledFeature {
+    type Error = anyhow::Error;
+
+    fn try_from(value: TomlFeatureToEnable) -> Result<Self, Self::Error> {
+        let Some((package, feature)) = value.0.split_once(DEPENDENCY_FEATURE_SEPARATOR) else {
+            return Ok(Self {
+                package: None,
+                feature: FeatureName::try_new(value.0)?,
+            });
+        };
+        ensure!(
+            !feature.contains(DEPENDENCY_FEATURE_SEPARATOR),
+            formatdoc! {r#"
+                    feature `{feature}` for package `{package}` contains invalid character `{DEPENDENCY_FEATURE_SEPARATOR}`
+                    help: you can use `{DEPENDENCY_FEATURE_SEPARATOR}` to separate package name from feature name
+                "#}
+        );
+
+        let context = || {
+            formatdoc! {r#"
+                    failed to deserialize package name from `{package}{DEPENDENCY_FEATURE_SEPARATOR}{feature}`
+                    help: you can use `{DEPENDENCY_FEATURE_SEPARATOR}` to separate package name from feature name
+                "#}
+        };
+
+        let package = Some(PackageName::try_new(package).with_context(context)?);
+        let feature = FeatureName::try_new(feature).with_context(context)?;
+        Ok(Self { feature, package })
+    }
+}
+
 impl TomlManifest {
     pub fn read_from_path(path: &Utf8Path) -> Result<Self> {
         let contents = fs::read_to_string(path)
@@ -802,7 +852,6 @@ impl TomlManifest {
         let experimental_features = package.experimental_features.clone();
 
         let features = self.features.clone().unwrap_or_default();
-        Self::check_features(&features)?;
 
         let manifest = ManifestBuilder::default()
             .summary(summary)
@@ -813,7 +862,7 @@ impl TomlManifest {
             .compiler_config(compiler_config)
             .scripts(scripts)
             .experimental_features(experimental_features)
-            .features(features.into())
+            .features(features.try_into()?)
             .build()?;
         Ok(manifest)
     }
@@ -1152,27 +1201,6 @@ impl TomlManifest {
                 }
             })
             .transpose()
-    }
-
-    fn check_features(features: &BTreeMap<FeatureName, Vec<FeatureName>>) -> Result<()> {
-        let available_features: HashSet<&FeatureName> = features.keys().collect();
-        for (key, vals) in features.iter() {
-            let dependent_features = vals.iter().collect::<HashSet<&FeatureName>>();
-            if dependent_features.contains(key) {
-                bail!("feature `{}` depends on itself", key);
-            }
-            let not_found_features = dependent_features
-                .difference(&available_features)
-                .collect_vec();
-            if !not_found_features.is_empty() {
-                bail!(
-                    "feature `{}` is dependent on `{}` which is not defined",
-                    key,
-                    not_found_features.iter().join(", "),
-                );
-            }
-        }
-        Ok(())
     }
 
     pub fn collect_patch(

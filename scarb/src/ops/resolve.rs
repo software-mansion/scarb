@@ -28,7 +28,7 @@ use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use futures::TryFutureExt;
 use indoc::formatdoc;
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::zip;
 use std::sync::Arc;
 
@@ -58,11 +58,15 @@ impl WorkspaceResolve {
     pub fn features_unification(
         &self,
         root_package: PackageId,
+        selected_features: &HashSet<FeatureName>,
         target_kind: &TargetKind,
     ) -> Result<HashMap<PackageId, HashSet<FeatureName>>> {
         assert!(self.packages.contains_key(&root_package));
         let solution = self.resolve.solution_of(root_package, target_kind);
         let mut features: HashMap<PackageId, HashSet<FeatureName>> = HashMap::default();
+        features.insert(root_package, selected_features.clone());
+
+        // Collect features enabled in manifest dependencies.
         for package_id in solution {
             let is_unit_root = root_package == package_id;
             for dep_id in self.resolve.package_dependencies_for_target_kind(
@@ -93,6 +97,54 @@ impl WorkspaceResolve {
                 }
             }
         }
+
+        // Resolve features that are dependencies of selected features.
+        let mut queue = VecDeque::from_iter(features.iter().flat_map(|(package_id, features)| {
+            features
+                .iter()
+                .map(|feature| (*package_id, feature.clone()))
+        }));
+
+        while let Some((package_id, feature)) = queue.pop_front() {
+            if let Some(dependants) = self
+                .packages
+                .get(&package_id)
+                .and_then(|p| p.manifest.features.get(&feature))
+            {
+                for dependant in dependants.iter() {
+                    let dependant_package_id = if let Some(package_name) =
+                        dependant.package.as_ref()
+                    {
+                        let deps = self.resolve.package_dependencies_for_target_kind(
+                            package_id,
+                            target_kind,
+                            root_package == package_id,
+                        );
+                        let Some(pid) = deps.iter().find(|p| p.name == *package_name) else {
+                            bail!(
+                                "feature `{feature}` of package `{}` depends on feature `{}` from package `{package_name}`, which is not a dependency of `{}`",
+                                &package_id.name,
+                                &dependant.feature,
+                                &package_id.name
+                            );
+                        };
+                        *pid
+                    } else {
+                        package_id
+                    };
+                    if !features
+                        .get(&dependant_package_id)
+                        .unwrap_or(&HashSet::new())
+                        .contains(&dependant.feature)
+                    {
+                        let selected_features = features.entry(dependant_package_id).or_default();
+                        selected_features.insert(dependant.feature.clone());
+                        queue.push_back((dependant_package_id, dependant.feature.clone()));
+                    }
+                }
+            }
+        }
+
         Ok(features)
     }
 
@@ -500,21 +552,31 @@ fn cairo_compilation_unit_for_target(
     solution: &mut PackageSolutionCollector<'_>,
 ) -> Result<CairoCompilationUnit> {
     let member_target = member_targets.first().cloned().unwrap();
-    solution.collect(&member_target.kind, ignore_cairo_version)?;
-    let packages = solution.packages.as_ref().unwrap();
-    let cairo_plugins = solution.cairo_plugins.as_ref().unwrap();
 
-    let cfg_set = build_cfg_set(&member_target, &member.manifest.compiler_config);
-    let no_test_cfg_set = cfg_set
+    let selected_features: Vec<FeatureName> = match &enabled_features.features {
+        FeaturesSelector::AllFeatures => member.manifest.features.all().cloned().collect(),
+        FeaturesSelector::Features(features) => features.clone(),
+    };
+    let selected_features = member
+        .manifest
+        .features
+        .select(&selected_features, !enabled_features.no_default_features);
+
+    solution.collect(
+        &member_target.kind,
+        &selected_features.enabled(),
+        ignore_cairo_version,
+    )?;
+    let packages = solution.packages().unwrap();
+    let cairo_plugins = solution.cairo_plugins().unwrap();
+    let features_for_deps = solution.features_for_deps().unwrap();
+
+    let unit_cfg_set = build_cfg_set(&member_target, &member.manifest.compiler_config);
+    let no_test_cfg_set: CfgSet = unit_cfg_set
         .iter()
         .filter(|cfg| **cfg != Cfg::name("test"))
         .cloned()
         .collect();
-    let no_test_cfg_set = if no_test_cfg_set != cfg_set {
-        Some(no_test_cfg_set)
-    } else {
-        None
-    };
 
     let props: TestTargetProps = member_target.props()?;
     let is_integration_test = props.test_type == TestTargetType::Integration;
@@ -552,19 +614,28 @@ fn cairo_compilation_unit_for_target(
                 package
             };
 
+            let dep_features = features_for_deps
+                .get(&package.id)
+                .cloned()
+                .unwrap_or_default();
             let cfg_set = {
                 if package.id == member.id || package_id_rewritten {
                     // This is the main package.
-                    get_cfg_with_features(
-                        cfg_set.clone(),
+                    CfgSetBuilder::from_manifest_features(
                         &package.manifest.features,
                         enabled_features,
-                    )?
+                    )
+                    .with_cfg_set(unit_cfg_set.clone())
+                    .extend_features(dep_features)
+                    .into()
                 } else {
-                    no_test_cfg_set.clone()
+                    CfgSetBuilder::new()
+                        .with_cfg_set(no_test_cfg_set.clone())
+                        .extend_features(dep_features)
+                        .into()
                 }
             };
-
+            let cfg_set = (cfg_set != unit_cfg_set).then_some(cfg_set);
             CompilationUnitComponent::try_new(package, targets, cfg_set)
         })
         .collect::<Result<_>>()?;
@@ -584,15 +655,21 @@ fn cairo_compilation_unit_for_target(
                 )
             });
 
+        let dep_features = features_for_deps
+            .get(&member.id)
+            .cloned()
+            .unwrap_or_default();
+        let cfg_set =
+            CfgSetBuilder::from_manifest_features(&member.manifest.features, enabled_features)
+                .with_cfg_set(no_test_cfg_set)
+                .extend_features(dep_features)
+                .into();
+        let cfg_set = (cfg_set != unit_cfg_set).then_some(cfg_set);
         // Add `lib` target for tested package, to be available as dependency.
         components.push(CompilationUnitComponent::try_new(
             member.clone(),
             vec![target],
-            get_cfg_with_features(
-                no_test_cfg_set.unwrap_or(CfgSet::new()),
-                &member.manifest.features,
-                enabled_features,
-            )?,
+            cfg_set,
         )?);
 
         // Set test package as main package for this compilation unit.
@@ -635,40 +712,68 @@ fn cairo_compilation_unit_for_target(
         cairo_plugins: cairo_plugins.clone(),
         profile: profile.clone(),
         compiler_config: member.manifest.compiler_config.clone(),
-        cfg_set,
+        cfg_set: unit_cfg_set,
     })
 }
 
-fn get_cfg_with_features(
-    mut cfg_set: CfgSet,
-    features_manifest: &FeaturesDefinition,
-    enabled_features: &FeaturesOpts,
-) -> Result<Option<CfgSet>> {
-    let selected_features: Vec<FeatureName> = match &enabled_features.features {
-        FeaturesSelector::AllFeatures => features_manifest.all().cloned().collect(),
-        FeaturesSelector::Features(features) => features.clone(),
-    };
+struct CfgSetBuilder {
+    features: HashSet<FeatureName>,
+    cfg_set: CfgSet,
+}
 
-    let selected_features =
-        features_manifest.select(&selected_features, !enabled_features.no_default_features);
+impl CfgSetBuilder {
+    pub fn new() -> Self {
+        Self {
+            cfg_set: Default::default(),
+            features: Default::default(),
+        }
+    }
 
-    selected_features
-        .enabled()
-        .into_iter()
-        .map(|f| Cfg::kv("feature", f.to_string()))
-        .for_each(|f| cfg_set.insert(f));
+    pub fn from_manifest_features(
+        features_manifest: &FeaturesDefinition,
+        enabled_features: &FeaturesOpts,
+    ) -> Self {
+        let selected_features: Vec<FeatureName> = match &enabled_features.features {
+            FeaturesSelector::AllFeatures => features_manifest.all().cloned().collect(),
+            FeaturesSelector::Features(features) => features.clone(),
+        };
+        let selected_features =
+            features_manifest.select(&selected_features, !enabled_features.no_default_features);
+        let features = selected_features.enabled();
+        Self::new().extend_features(features)
+    }
 
-    Ok(Some(cfg_set))
+    pub fn with_cfg_set(mut self, cfg_set: CfgSet) -> Self {
+        self.cfg_set = cfg_set;
+        self
+    }
+
+    pub fn extend_features(mut self, features: HashSet<FeatureName>) -> Self {
+        self.features.extend(features);
+        self
+    }
+
+    pub fn build(self) -> CfgSet {
+        let mut cfg_set = self.cfg_set;
+        for feature in self.features {
+            cfg_set.insert(Cfg::kv("feature", feature.to_string()));
+        }
+        cfg_set
+    }
+}
+
+impl From<CfgSetBuilder> for CfgSet {
+    fn from(builder: CfgSetBuilder) -> Self {
+        builder.build()
+    }
 }
 
 pub struct PackageSolutionCollector<'a> {
     member: &'a Package,
     resolve: &'a WorkspaceResolve,
     ws: &'a Workspace<'a>,
-    packages: Option<Vec<Package>>,
-    cairo_plugins: Option<Vec<CompilationUnitCairoPlugin>>,
-    target_kind: Option<TargetKind>,
     warnings: HashSet<String>,
+    collected: Option<CollectedResolution>,
 }
 
 impl<'a> PackageSolutionCollector<'a> {
@@ -677,25 +782,27 @@ impl<'a> PackageSolutionCollector<'a> {
             member,
             resolve,
             ws,
-            packages: None,
-            cairo_plugins: None,
-            target_kind: None,
             warnings: HashSet::new(),
+            collected: Default::default(),
         }
     }
 
-    pub fn collect(&mut self, target_kind: &TargetKind, ignore_cairo_version: bool) -> Result<()> {
+    pub fn collect(
+        &mut self,
+        target_kind: &TargetKind,
+        selected_features: &HashSet<FeatureName>,
+        ignore_cairo_version: bool,
+    ) -> Result<()> {
         // Do not traverse graph for each target of the same kind.
         if !self
-            .target_kind
+            .collected
             .as_ref()
-            .map(|tk| tk == target_kind)
+            .map(|collected| &collected.target_kind == target_kind)
             .unwrap_or(false)
         {
-            let (p, c) = self.pull_from_graph(target_kind, ignore_cairo_version)?;
-            self.packages = Some(p.clone());
-            self.cairo_plugins = Some(c.clone());
-            self.target_kind = Some(target_kind.clone());
+            let collected =
+                self.pull_from_graph(target_kind, selected_features, ignore_cairo_version)?;
+            self.collected = Some(collected);
         }
         Ok(())
     }
@@ -703,14 +810,15 @@ impl<'a> PackageSolutionCollector<'a> {
     fn pull_from_graph(
         &mut self,
         target_kind: &TargetKind,
+        selected_features: &HashSet<FeatureName>,
         ignore_cairo_version: bool,
-    ) -> Result<(Vec<Package>, Vec<CompilationUnitCairoPlugin>)> {
+    ) -> Result<CollectedResolution> {
         let allowed_prebuilds = self
             .resolve
             .allowed_prebuilt(self.member.clone(), target_kind)?;
-        let _features_for_deps = self
-            .resolve
-            .features_unification(self.member.id, target_kind)?;
+        let features_for_deps =
+            self.resolve
+                .features_unification(self.member.id, selected_features, target_kind)?;
         let mut classes = self
             .resolve
             .solution_of(self.member.id, target_kind)
@@ -781,7 +889,12 @@ impl<'a> PackageSolutionCollector<'a> {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        Ok((packages, cairo_plugins))
+        Ok(CollectedResolution {
+            packages,
+            cairo_plugins,
+            features_for_deps,
+            target_kind: target_kind.clone(),
+        })
     }
 
     pub fn component_dependencies(
@@ -791,7 +904,7 @@ impl<'a> PackageSolutionCollector<'a> {
         main_package_id: PackageId,
     ) -> Result<Vec<CompilationUnitDependency>> {
         let package_id = component.id.package_id;
-        let component_target_kind = self.target_kind.as_ref().unwrap();
+        let component_target_kind = self.target_kind().unwrap();
 
         // Those are direct dependencies of the component.
         let dependencies_packages = self.resolve.package_dependencies(
@@ -843,6 +956,34 @@ impl<'a> PackageSolutionCollector<'a> {
             self.ws.config().ui().warn(warning);
         }
     }
+
+    fn target_kind(&self) -> Option<&TargetKind> {
+        self.collected
+            .as_ref()
+            .map(|collected| &collected.target_kind)
+    }
+
+    pub fn packages(&self) -> Option<&Vec<Package>> {
+        self.collected.as_ref().map(|collected| &collected.packages)
+    }
+    pub fn cairo_plugins(&self) -> Option<&Vec<CompilationUnitCairoPlugin>> {
+        self.collected
+            .as_ref()
+            .map(|collected| &collected.cairo_plugins)
+    }
+
+    pub fn features_for_deps(&self) -> Option<&HashMap<PackageId, HashSet<FeatureName>>> {
+        self.collected
+            .as_ref()
+            .map(|collected| &collected.features_for_deps)
+    }
+}
+
+struct CollectedResolution {
+    pub packages: Vec<Package>,
+    pub cairo_plugins: Vec<CompilationUnitCairoPlugin>,
+    pub target_kind: TargetKind,
+    pub features_for_deps: HashMap<PackageId, HashSet<FeatureName>>,
 }
 
 /// Build a set of `cfg` items to enable while building the compilation unit.
