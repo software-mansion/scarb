@@ -6439,7 +6439,6 @@ dependencies = [
  "camino",
  "clap",
  "indoc",
- "num-bigint",
  "scarb-extensions-cli",
  "scarb-metadata 1.14.0",
  "scarb-test-support",
@@ -6447,8 +6446,6 @@ dependencies = [
  "serde",
  "serde_json",
  "snapbox",
- "starknet-types-core",
- "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -6627,7 +6624,6 @@ dependencies = [
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
- "serde",
  "serde_json",
  "snapbox",
  "stwo-cairo-adapter",
@@ -6713,7 +6709,6 @@ dependencies = [
  "scarb-metadata 1.14.0",
  "scarb-test-support",
  "scarb-ui",
- "serde",
  "serde_json",
  "snapbox",
  "stwo_cairo_prover",
