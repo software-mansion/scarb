@@ -82,7 +82,8 @@ fn build_placeholder_subcommand(
         .disable_version_flag(true)
 }
 
-/// Hide unsupported global args from the subcommand completions by overriding them with local args and marking them as hidden.
+/// Hide unsupported global args from the subcommand completions
+/// by overriding them with local args of the same name, and marking those as hidden.
 fn sanitize_subcommand_args(mut cmd: Command, global_args: &HashSet<String>) -> Command {
     let local_args: HashSet<String> = cmd
         .get_arguments()
