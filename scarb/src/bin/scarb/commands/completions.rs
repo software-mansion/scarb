@@ -1,12 +1,10 @@
-use anyhow::Result;
+use crate::args::{CompletionsArgs, ScarbArgs};
+use anyhow::{Result, anyhow};
 use clap::{Arg, Command, CommandFactory};
 use clap_complete::{Shell, generate};
+use indoc::indoc;
 use scarb::core::Config;
 use scarb::ops::{ExternalSubcommand, SubcommandDirs, list_external_subcommands};
-use std::collections::HashSet;
-use std::io;
-
-use crate::args::{CompletionsArgs, ScarbArgs};
 use scarb_extensions_cli::cairo_language_server as cairo_language_server_args;
 use scarb_extensions_cli::cairo_run as cairo_run_args;
 use scarb_extensions_cli::cairo_test as cairo_test_args;
@@ -15,14 +13,19 @@ use scarb_extensions_cli::execute;
 use scarb_extensions_cli::mdbook as mdbook_args;
 use scarb_extensions_cli::prove as prove_args;
 use scarb_extensions_cli::verify as verify_args;
+use std::collections::HashSet;
+use std::io;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn run(args: CompletionsArgs, config: &Config) -> Result<()> {
     let mut cmd = build_command(config)?;
-    let shell = args.shell.unwrap_or(
-        Shell::from_env()
-            .expect("Failed to resolve shell from environment, please specify manually."),
-    );
+    let shell = args.shell.or_else(Shell::from_env).ok_or_else(|| {
+        anyhow!(indoc! {r#"
+            could not automatically determine shell to generate completions for.
+            help: specify the shell explicitly: `scarb completions <shell>`.
+            For the list of supported shells, run `scarb completions --help`.
+        "#})
+    })?;
     generate(shell, &mut cmd, "scarb", &mut io::stdout());
     Ok(())
 }
