@@ -39,11 +39,13 @@ fn build_command(config: &Config) -> Result<Command> {
         .collect();
 
     let dirs = SubcommandDirs::try_from(config).expect("Failed to get subcommand directories");
+    let scarb_exe_dir = &dirs.scarb_exe_dir;
     let external_subcommands = list_external_subcommands(&dirs)?;
     for external_cmd in external_subcommands {
+        let is_bundled = external_cmd.path.parent() == Some(scarb_exe_dir.as_path());
         // Generate full completions only for the known bundled subcommands.
         // For the other subcommands, complete only the command name.
-        let subcommand = match (external_cmd.is_bundled, external_cmd.name.as_str()) {
+        let subcommand = match (is_bundled, external_cmd.name.as_str()) {
             (true, cairo_language_server_args::COMMAND_NAME) => {
                 cairo_language_server_args::Args::command()
             }
@@ -55,7 +57,7 @@ fn build_command(config: &Config) -> Result<Command> {
             (true, prove_args::COMMAND_NAME) => prove_args::Args::command(),
             (true, verify_args::COMMAND_NAME) => verify_args::Args::command(),
             (true, "test-support") => continue,
-            _ => build_placeholder_subcommand(&external_cmd),
+            _ => build_placeholder_subcommand(&external_cmd, is_bundled),
         };
         let subcommand = sanitize_subcommand_args(subcommand, &global_args);
         cmd = cmd.subcommand(subcommand);
@@ -64,8 +66,11 @@ fn build_command(config: &Config) -> Result<Command> {
 }
 
 /// Build a minimal placeholder `Command` for the unknown external subcommand.
-fn build_placeholder_subcommand(external_subcommand: &ExternalSubcommand) -> Command {
-    let about = if external_subcommand.is_bundled {
+fn build_placeholder_subcommand(
+    external_subcommand: &ExternalSubcommand,
+    is_bundled: bool,
+) -> Command {
+    let about = if is_bundled {
         format!("Bundled '{}' extension", external_subcommand.name)
     } else {
         format!("External '{}' extension", external_subcommand.name)

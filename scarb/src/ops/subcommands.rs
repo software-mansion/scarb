@@ -145,8 +145,6 @@ pub struct ExternalSubcommand {
     pub name: String,
     /// Path to the subcommand executable.
     pub path: PathBuf,
-    /// Whether the subcommand is located at the same path as Scarb binary.
-    pub is_bundled: bool,
 }
 
 /// List all unique external subcommand executables available in the search paths,
@@ -176,7 +174,6 @@ pub fn list_external_subcommands(
     let prefix = EXTERNAL_CMD_PREFIX;
     let suffix = env::consts::EXE_SUFFIX;
 
-    let scarb_dir = &subcommand_dirs.scarb_exe_dir;
     let subcommands = subcommand_dirs
         .iter()
         .filter_map(|dir| fs::read_dir(dir).ok())
@@ -198,7 +195,6 @@ pub fn list_external_subcommands(
             Some(ExternalSubcommand {
                 name: cmd_name,
                 path: path.clone(),
-                is_bundled: path.parent() == Some(scarb_dir),
             })
         })
         .unique_by(|cmd| cmd.name.clone())
