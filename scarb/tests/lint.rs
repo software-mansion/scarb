@@ -580,3 +580,136 @@ fn lint_selected_targets() {
 
       "#});
 }
+
+#[test]
+fn lint_specific_file() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            mod other;
+
+            fn main() {
+                let x = true;
+                if x == false {
+                    println!("x is false");
+                }
+            }
+        "#})
+        .build(&t);
+
+    t.child("src/other.cairo")
+        .write_str(indoc! {r#"
+        fn main() {
+            loop {
+                break ();
+            }
+        }
+    "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("src/other.cairo")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+             Linting hello v1.0.0 ([..]/Scarb.toml)
+        warn: Plugin diagnostic: unnecessary double parentheses found after break. Consider removing them.
+         --> [..]/src/other.cairo:3:9
+                break ();
+                ^^^^^^^^^
+
+        "#});
+}
+
+#[test]
+fn lint_specific_module() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            mod my_module;
+
+            fn main() {
+                let res_val: Result<i32> = Result::Err('err');
+                // This is just a variable.
+                let _a = match res_val {
+                    Result::Ok(x) => Option::Some(x),
+                    Result::Err(_) => Option::None,
+                };
+            }
+        "#})
+        .build(&t);
+
+    t.child("src/my_module/a.cairo")
+        .write_str(indoc! {r#"
+            fn a_func() {
+                loop {
+                    break ();
+                }
+            }
+        "#})
+        .unwrap();
+
+    t.child("src/my_module/b.cairo")
+        .write_str(indoc! {r#"
+            fn test_clone_felt252() {
+                let a: felt252 = 'hello';
+                let _b = a.clone();
+            }
+        "#})
+        .unwrap();
+
+    t.child("src/my_module/c.cairo")
+        .write_str(indoc! {r#"
+            fn c_func() {
+                let x = 42;
+                let _y = x * 1;
+            }
+        "#})
+        .unwrap();
+
+    t.child("src/my_module.cairo")
+        .write_str(indoc! {r#"
+            mod a;
+            mod b;
+            mod c;
+
+            fn main() {
+                let res_val: Result<i32> = Result::Err('err');
+                // This is just a variable.
+                let _a = match res_val {
+                    Result::Ok(x) => Option::Some(x),
+                    Result::Err(_) => Option::None,
+                };
+            }
+        "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("src/my_module")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+              Linting hello v1.0.0 ([..]/Scarb.toml)
+         warn: Plugin diagnostic: unnecessary double parentheses found after break. Consider removing them.
+          --> [..]/src/my_module/a.cairo:3:9
+                 break ();
+                 ^^^^^^^^^
+         
+         warn: Plugin diagnostic: using `clone` on type which implements `Copy` trait
+          --> [..]/src/my_module/b.cairo:3:14
+             let _b = a.clone();
+                      ^^^^^^^^^
+
+         warn: Plugin diagnostic: This operation doesn't change the value and can be simplified.
+          --> [..]/src/my_module/c.cairo:3:14
+             let _y = x * 1;
+                      ^^^^^
+
+        "#});
+}

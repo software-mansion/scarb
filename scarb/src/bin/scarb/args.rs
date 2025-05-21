@@ -570,6 +570,10 @@ pub struct LintArgs {
     /// Should fail on any warning.
     #[arg(short, long, default_value_t = false, env = "SCARB_LINT_DENY_WARNINGS")]
     pub deny_warnings: bool,
+
+    /// Path to a file or directory to lint. If provided, only this file or directory will be linted.
+    #[clap(value_name = "PATH")]
+    pub path: Option<Utf8PathBuf>,
 }
 
 /// Git reference specification arguments.

@@ -19,9 +19,11 @@ use cairo_lint::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
     plugin::cairo_lint_plugin_suite,
 };
+use camino::Utf8PathBuf;
 use scarb_ui::components::Status;
 
 use crate::core::{Package, Workspace};
+use crate::internal::fsx::canonicalize;
 
 use super::{
     CompilationUnitsOpts, FeaturesOpts, compile_unit, plugins_required_for_units, validate_features,
@@ -35,6 +37,7 @@ pub struct LintOptions {
     pub ignore_cairo_version: bool,
     pub features: FeaturesOpts,
     pub deny_warnings: bool,
+    pub path: Option<Utf8PathBuf>,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -52,6 +55,8 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
             load_prebuilt_macros: ws.config().load_prebuilt_proc_macros(),
         },
     )?;
+
+    let absolute_path = opts.path.as_ref().and_then(|path| canonicalize(path).ok());
 
     // Select proc macro units that need to be compiled for Cairo compilation units.
     let required_plugins = plugins_required_for_units(&compilation_units);
@@ -166,7 +171,26 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .iter()
                         .flat_map(|diags| {
                             let all_diags = diags.get_all();
-                            all_diags.iter().for_each(|diag| match diag.severity() {
+
+                            let filtered = match &absolute_path {
+                                Some(path) => all_diags
+                                    .into_iter()
+                                    .filter_map(|diag| {
+                                        let file_id = diag.stable_location.file_id(&db);
+                                        let diag_path =
+                                            canonicalize(file_id.full_path(&db)).ok()?;
+
+                                        let path_matches = (path.is_dir()
+                                            && diag_path.starts_with(path))
+                                            || (path.is_file() && diag_path == *path);
+
+                                        if path_matches { Some(diag) } else { None }
+                                    })
+                                    .collect(),
+                                None => all_diags,
+                            };
+
+                            filtered.iter().for_each(|diag| match diag.severity() {
                                 Severity::Error => {
                                     if let Some(code) = diag.error_code() {
                                         ws.config().ui().error_with_code(
@@ -188,7 +212,8 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                                     }
                                 }
                             });
-                            all_diags
+
+                            filtered
                         })
                         .collect::<Vec<_>>();
 
