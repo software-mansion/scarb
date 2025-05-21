@@ -85,6 +85,10 @@ fn main() {
 After running `scarb doc`, inside the target directory, you will see the generated documentation in `mdBook` format which consists of:
 
 - The `src` directory, which contains the contents of your book in files with markdown format.
-- The `book.toml` which contains contains settings for describing how to build your book.
+- The `book.toml` which contains settings for describing how to build your book.
 
 Running `scarb doc --output-format json` will result in a single JSON file inside the target directory with collected documentation inside.
+
+Check out the link below to see how a bigger project would look like:
+
+- [The Cairo Core Libarary Docs](https://docs.cairo-lang.org/core/)
