@@ -13,13 +13,10 @@ cairo-lang-sierra.workspace = true
 camino.workspace = true
 clap.workspace = true
 indoc.workspace = true
-num-bigint.workspace = true
 scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde.workspace = true
 serde_json.workspace = true
-starknet-types-core.workspace = true
-thiserror.workspace = true
 scarb-extensions-cli = { path = "../../utils/scarb-extensions-cli", default-features = false, features = ["cairo-run"] }
 
 [dev-dependencies]
