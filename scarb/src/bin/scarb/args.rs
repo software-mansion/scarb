@@ -11,7 +11,7 @@ use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use smol_str::SmolStr;
 use url::Url;
 
-use clap_complete::Shell as ClapShell;
+use clap_complete::Shell;
 use scarb::compiler::Profile;
 use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
@@ -598,35 +598,6 @@ pub struct CompletionsArgs {
     /// Target shell for completion generation
     #[arg(value_enum)]
     pub shell: Option<Shell>,
-}
-
-/// Target shell for completion generation.
-#[derive(ValueEnum, Clone, Debug)]
-pub enum Shell {
-    /// Generate CLI completions for `bash`.
-    Bash,
-    /// Generate CLI completions for `fish`.
-    Fish,
-    /// Generate CLI completions for `elvish`.
-    Elvish,
-    /// Generate CLI completions for `powershell`.
-    #[allow(clippy::enum_variant_names)]
-    #[clap(name = "powershell", alias = "pwsh")]
-    PowerShell,
-    /// Generate CLI completions for `zsh`.
-    Zsh,
-}
-
-impl From<Shell> for ClapShell {
-    fn from(shell: Shell) -> Self {
-        match shell {
-            Shell::Bash => ClapShell::Bash,
-            Shell::Elvish => ClapShell::Elvish,
-            Shell::Fish => ClapShell::Fish,
-            Shell::PowerShell => ClapShell::PowerShell,
-            Shell::Zsh => ClapShell::Zsh,
-        }
-    }
 }
 
 /// Git reference specification arguments.
