@@ -118,7 +118,7 @@ pub fn execute_test_subcommand(
 ///
 /// # Search order
 ///
-/// This function (unless path dirs overrides are specified) searches for an executable in the following locations, in order:
+/// This function searches for an executable in the following locations, in order:
 /// 1. The directory containing the Scarb binary.
 /// 2. The directories in the `PATH` environment variable.
 /// 3. `{SCARB LOCAL DATA DIR}/bin`.
@@ -154,7 +154,7 @@ pub struct ExternalSubcommand {
 ///
 /// # Search order
 ///
-/// This function (unless path dirs overrides are specified) scans the following locations, in order:
+/// This function scans the following locations, in order:
 /// 1. The directory containing the Scarb binary.
 /// 2. The directories in the `PATH` environment variable.
 /// 3. `{SCARB LOCAL DATA DIR}/bin`.
