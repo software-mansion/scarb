@@ -596,17 +596,16 @@ fn lint_specific_file() {
                 }
             }
         "#})
+        .src(
+            "src/other.cairo",
+            indoc! {r#"
+            fn main() {
+                loop {
+                    break ();
+                }
+            }"#},
+        )
         .build(&t);
-
-    t.child("src/other.cairo")
-        .write_str(indoc! {r#"
-        fn main() {
-            loop {
-                break ();
-            }
-        }
-    "#})
-        .unwrap();
 
     Scarb::quick_snapbox()
         .arg("lint")
@@ -625,7 +624,7 @@ fn lint_specific_file() {
 }
 
 #[test]
-fn lint_specific_module() {
+fn lint_specific_directory() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
         .name("hello")
@@ -641,38 +640,9 @@ fn lint_specific_module() {
                 };
             }
         "#})
-        .build(&t);
-
-    t.child("src/my_module/a.cairo")
-        .write_str(indoc! {r#"
-            fn a_func() {
-                loop {
-                    break ();
-                }
-            }
-        "#})
-        .unwrap();
-
-    t.child("src/my_module/b.cairo")
-        .write_str(indoc! {r#"
-            fn test_clone_felt252() {
-                let a: felt252 = 'hello';
-                let _b = a.clone();
-            }
-        "#})
-        .unwrap();
-
-    t.child("src/my_module/c.cairo")
-        .write_str(indoc! {r#"
-            fn c_func() {
-                let x = 42;
-                let _y = x * 1;
-            }
-        "#})
-        .unwrap();
-
-    t.child("src/my_module.cairo")
-        .write_str(indoc! {r#"
+        .src(
+            "src/my_module.cairo",
+            indoc! {r#"
             mod a;
             mod b;
             mod c;
@@ -684,9 +654,34 @@ fn lint_specific_module() {
                     Result::Ok(x) => Option::Some(x),
                     Result::Err(_) => Option::None,
                 };
-            }
-        "#})
-        .unwrap();
+            }"#},
+        )
+        .src(
+            "src/my_module/a.cairo",
+            indoc! {r#"
+            fn a_func() {
+                loop {
+                    break ();
+                }
+            }"#},
+        )
+        .src(
+            "src/my_module/b.cairo",
+            indoc! {r#"
+            fn test_clone_felt252() {
+                let a: felt252 = 'hello';
+                let _b = a.clone();
+            }"#},
+        )
+        .src(
+            "src/my_module/c.cairo",
+            indoc! {r#"
+            fn c_func() {
+                let x = 42;
+                let _y = x * 1;
+            }"#},
+        )
+        .build(&t);
 
     Scarb::quick_snapbox()
         .arg("lint")
@@ -711,5 +706,42 @@ fn lint_specific_module() {
              let _y = x * 1;
                       ^^^^^
 
+        "#});
+}
+
+#[test]
+fn lint_non_existing_file() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            mod other;
+
+            fn main() {
+                let x = true;
+                if x == false {
+                    println!("x is false");
+                }
+            }
+        "#})
+        .src(
+            "src/other.cairo",
+            indoc! {r#"
+            fn main() {
+                loop {
+                    break ();
+                }
+            }"#},
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("wrong.cairo")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: Provided `SCARB_ACTION_PATH` is not valid
         "#});
 }

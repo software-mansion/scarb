@@ -366,7 +366,7 @@ pub struct FmtArgs {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
     /// Path to a file or directory to format. If provided, only this file or directory will be formatted.
-    #[clap(value_name = "PATH")]
+    #[clap(value_name = "SCARB_ACTION_PATH")]
     pub path: Option<Utf8PathBuf>,
 }
 
@@ -572,7 +572,7 @@ pub struct LintArgs {
     pub deny_warnings: bool,
 
     /// Path to a file or directory to lint. If provided, only this file or directory will be linted.
-    #[clap(value_name = "PATH")]
+    #[clap(value_name = "SCARB_ACTION_PATH")]
     pub path: Option<Utf8PathBuf>,
 }
 
