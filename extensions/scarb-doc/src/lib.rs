@@ -17,6 +17,7 @@ use serde::Serialize;
 use smol_str::ToSmolStr;
 use types::Crate;
 
+pub mod attributes;
 pub mod db;
 pub mod docs_generation;
 pub mod errors;
