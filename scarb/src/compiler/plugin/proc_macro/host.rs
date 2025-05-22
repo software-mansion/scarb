@@ -6,7 +6,7 @@ use cairo_lang_semantic::plugin::PluginSuite;
 use itertools::Itertools;
 use std::sync::Arc;
 
-pub const FULL_PATH_MARKER_KEY: &str = "macro::full_path_marker";
+pub const FULL_PATH_MARKER_KEY: &str = "proc_macro::full_path_marker";
 
 pub enum ProcMacroHostPlugin {
     V1(Arc<proc_macro::v1::ProcMacroHostPlugin>),

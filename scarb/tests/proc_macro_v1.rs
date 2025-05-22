@@ -865,7 +865,7 @@ fn can_resolve_full_path_markers() {
             let full_path_markers = vec!["some-key".to_string()];
 
             let code = format!(
-                r#"#[macro::full_path_marker("some-key")] {}"#,
+                r#"#[proc_macro::full_path_marker("some-key")] {}"#,
                 token_stream.to_string().replace("12", "34")
             );
 
