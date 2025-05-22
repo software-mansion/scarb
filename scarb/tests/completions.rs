@@ -293,9 +293,9 @@ fn fails_without_arg_and_empty_env() {
         .failure()
         .stdout_eq(indoc!(
             r#"
-            error: could not automatically determine shell to generate completions for.
-            help: specify the shell explicitly: `scarb completions <shell>`.
-            For the list of supported shells, run `scarb completions --help`.
+            error: could not automatically determine shell to generate completions for
+            help: specify the shell explicitly: `scarb completions <shell>`
+            for the list of supported shells, run `scarb completions --help`
         "#
         ));
 }
