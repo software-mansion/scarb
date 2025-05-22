@@ -21,9 +21,9 @@ pub fn run(args: CompletionsArgs, config: &Config) -> Result<()> {
     let mut cmd = build_command(config)?;
     let shell = args.shell.or_else(Shell::from_env).ok_or_else(|| {
         anyhow!(indoc! {r#"
-            could not automatically determine shell to generate completions for.
-            help: specify the shell explicitly: `scarb completions <shell>`.
-            For the list of supported shells, run `scarb completions --help`.
+            could not automatically determine shell to generate completions for
+            help: specify the shell explicitly: `scarb completions <shell>`
+            for the list of supported shells, run `scarb completions --help`
         "#})
     })?;
     generate(shell, &mut cmd, "scarb", &mut io::stdout());
