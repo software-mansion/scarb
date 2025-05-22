@@ -1787,3 +1787,71 @@ fn call_site_mapped_correctly_after_expansion_by_two_macros() {
             error: could not compile `hello` due to previous error
        "#});
 }
+
+#[test]
+fn span_offsets_calculated_correctly_for_function_with_non_macro_attrs() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
+            use cairo_lang_parser::utils::SimpleParserDatabase;
+            use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+            #[attribute_macro]
+            pub fn simple_attr(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+                let db_val = SimpleParserDatabase::default();
+                let db = &db_val;
+                let (body, _diagnostics) = db.parse_token_stream(&item);
+                let body = SyntaxNodeWithDb::new(&body, db);
+                // Note we generate a new function here.
+                // We only do this to ensure, that the resulting code differs from the original one.
+                // Otherwise, as an optimization, Scarb won't rewrite the AST node.
+                let ts = quote! {
+                    fn other() {}
+
+                    #body
+                };
+                ProcMacroResult::new(ts)
+            }
+
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_builtin("assert_macros")
+        .lib_cairo(indoc! {r#"
+            #[doc(hidden)]
+            #[simple_attr]
+            fn foo() {
+                assert(1 + 1 == 2, 'fail')
+                let _a = 1;
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Missing semicolon
+             --> [..]lib.cairo:4:30
+                assert(1 + 1 == 2, 'fail')
+                                         ^
+            note: this error originates in the attribute macro: `simple_attr`
+
+            error: could not compile `hello` due to previous error
+       "#});
+}

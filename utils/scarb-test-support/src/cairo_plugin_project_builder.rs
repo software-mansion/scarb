@@ -127,6 +127,14 @@ impl CairoPluginProjectBuilder {
         self.add_dep(r#"cairo-lang-primitive-token = "1""#)
     }
 
+    pub fn add_cairo_lang_parser_dep(self) -> Self {
+        self.add_dep(r#"cairo-lang-parser = "2.11""#)
+    }
+
+    pub fn add_cairo_lang_syntax_dep(self) -> Self {
+        self.add_dep(r#"cairo-lang-syntax = "2.11""#)
+    }
+
     pub fn default_v1() -> Self {
         let default_name = "some";
         let default_code = indoc! {r#"
