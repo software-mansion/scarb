@@ -742,6 +742,6 @@ fn lint_non_existing_file() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: Provided `SCARB_ACTION_PATH` is not valid
+            error: Provided `SCARB_ACTION_PATH` is invalid
         "#});
 }

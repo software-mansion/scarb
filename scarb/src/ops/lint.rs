@@ -184,7 +184,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                             .filter(|diag| {
                                 let file_id = diag.stable_location.file_id(&db);
 
-                                if let Some(diag_path) = canonicalize(file_id.full_path(&db)).ok() {
+                                if let Ok(diag_path) = canonicalize(file_id.full_path(&db)) {
                                     (path.is_dir() && diag_path.starts_with(path))
                                         || (path.is_file() && diag_path == *path)
                                 } else {
