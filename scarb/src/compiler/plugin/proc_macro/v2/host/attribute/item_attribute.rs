@@ -51,7 +51,21 @@ impl ProcMacroHostPlugin {
             ast::ModuleItem::Enum(ast) => {
                 parse_item(&ast, db, self, &mut token_stream_builder, ctx)
             }
-            _ => AttrExpansionFound::None,
+            ast::ModuleItem::Constant(ast) => {
+                parse_item(&ast, db, self, &mut token_stream_builder, ctx)
+            }
+            ast::ModuleItem::Use(ast) => parse_item(&ast, db, self, &mut token_stream_builder, ctx),
+            ast::ModuleItem::ImplAlias(ast) => {
+                parse_item(&ast, db, self, &mut token_stream_builder, ctx)
+            }
+            ast::ModuleItem::TypeAlias(ast) => {
+                parse_item(&ast, db, self, &mut token_stream_builder, ctx)
+            }
+            // The items below are not supported.
+            ast::ModuleItem::HeaderDoc(_) => AttrExpansionFound::None,
+            ast::ModuleItem::Missing(_) => AttrExpansionFound::None,
+            // TODO(#2204): Support inline macro expansion at module item level.
+            ast::ModuleItem::InlineMacro(_) => AttrExpansionFound::None,
         };
         let token_stream = token_stream_builder.build(ctx);
         (input, token_stream)
