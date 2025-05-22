@@ -4,9 +4,11 @@ use clap::Parser;
 use scarb_ui::args::PackagesFilter;
 use scarb_ui::args::VerbositySpec;
 
+pub const COMMAND_NAME: &str = "cairo-run";
+
 /// Execute the main function of a package.
 #[derive(Parser, Clone, Debug)]
-#[command(author, version)]
+#[command(name = COMMAND_NAME, author, version)]
 pub struct Args {
     /// Name of the package.
     #[command(flatten)]

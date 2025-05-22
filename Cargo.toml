@@ -22,6 +22,7 @@ members = [
     "utils/scarb-test-support",
     "utils/scarb-ui",
     "utils/test-for-each-example",
+    "utils/scarb-extensions-cli",
     "xtask",
 ]
 "resolver" = "2"
@@ -71,6 +72,7 @@ cairo-vm = "2.0.1"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
 clap = { version = "4", features = ["derive", "env", "string"] }
+clap_complete = "4"
 console = "0.15"
 convert_case = "0.8.0"
 darling = "0.20"

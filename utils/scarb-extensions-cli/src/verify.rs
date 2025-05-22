@@ -1,10 +1,17 @@
+#![deny(missing_docs)]
+
+//! Extension CLI arguments datastructures.
+
 use camino::Utf8PathBuf;
 use clap::Parser;
 use scarb_ui::args::{PackagesFilter, VerbositySpec};
 
+/// CLI command name.
+pub const COMMAND_NAME: &str = "verify";
+
 /// Verify `scarb prove` output using Stwo verifier
 #[derive(Parser, Clone, Debug)]
-#[clap(version, verbatim_doc_comment)]
+#[clap(name = COMMAND_NAME, version, verbatim_doc_comment)]
 pub struct Args {
     /// Name of the package.
     #[command(flatten)]

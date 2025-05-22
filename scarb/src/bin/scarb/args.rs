@@ -11,6 +11,7 @@ use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use smol_str::SmolStr;
 use url::Url;
 
+use clap_complete::Shell;
 use scarb::compiler::Profile;
 use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
@@ -165,6 +166,8 @@ pub enum Command {
     Check(BuildArgs),
     /// Remove generated artifacts.
     Clean,
+    /// Generate shell completions for Scarb.
+    Completions(CompletionsArgs),
     /// List installed commands.
     Commands,
     /// Fetch dependencies of packages from the network.
@@ -178,7 +181,7 @@ pub enum Command {
     /// Output the resolved dependencies of a package, the concrete versions used, including
     /// overrides, in machine-readable format.
     Metadata(MetadataArgs),
-    /// Create a new Scarb package at <PATH>.
+    /// Create a new Scarb package at PATH.
     New(NewArgs),
     /// Assemble the local package into a distributable tarball.
     #[command(after_help = "\
@@ -222,6 +225,7 @@ pub enum EmitTarget {
 /// Arguments accepted by the `build` command.
 #[derive(Parser, Clone, Debug)]
 pub struct BuildArgs {
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -254,6 +258,7 @@ pub struct BuildArgs {
 /// Arguments accepted by the `expand` command.
 #[derive(Parser, Clone, Debug)]
 pub struct ExpandArgs {
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -289,6 +294,7 @@ pub struct ScriptsRunnerArgs {
     /// The name of the script from the manifest file to execute.
     pub script: Option<SmolStr>,
 
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -301,9 +307,12 @@ pub struct ScriptsRunnerArgs {
     pub args: Vec<OsString>,
 }
 
+/// Specifies the test runner to use for running tests.
 #[derive(ValueEnum, Clone, Debug)]
 pub enum TestRunner {
+    /// Uses the `Starknet Foundry` test runner.
     StarknetFoundry,
+    /// Uses the Cairo Test test runner.
     CairoTest,
 }
 
@@ -326,7 +335,7 @@ pub struct InitArgs {
 /// Arguments accepted by the `metadata` command.
 #[derive(Parser, Clone, Debug)]
 pub struct MetadataArgs {
-    // Format version.
+    /// Format version.
     #[arg(long, value_name = "VERSION")]
     pub format_version: u64,
     /// Output information only about the workspace members and don't fetch dependencies.
@@ -345,7 +354,9 @@ pub struct MetadataArgs {
 /// Arguments accepted by the `new` command.
 #[derive(Parser, Clone, Debug)]
 pub struct NewArgs {
+    /// Path to the new package directory.
     pub path: Utf8PathBuf,
+    /// Initialization options.
     #[command(flatten)]
     pub init: InitArgs,
 }
@@ -385,6 +396,7 @@ pub struct AddArgs {
     #[arg(long)]
     pub dry_run: bool,
 
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -444,6 +456,7 @@ pub struct RemoveArgs {
     #[arg(long)]
     pub dry_run: bool,
 
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -469,6 +482,7 @@ impl SectionArgs for RemoveSectionArgs {
 /// Arguments accepted by the `test` command.
 #[derive(Parser, Clone, Debug)]
 pub struct TestArgs {
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -504,9 +518,11 @@ pub struct PackageArgs {
     #[arg(long)]
     pub no_metadata: bool,
 
+    /// Shared packaging arguments.
     #[clap(flatten)]
     pub shared_args: PackageSharedArgs,
 
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -526,9 +542,11 @@ pub struct PublishArgs {
     #[arg(long, value_name = "URL")]
     pub index: Option<Url>,
 
+    /// Shared packaging arguments.
     #[clap(flatten)]
     pub shared_args: PackageSharedArgs,
 
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -541,9 +559,10 @@ pub struct PublishArgs {
     pub ignore_cairo_version: bool,
 }
 
+/// Arguments accepted by the `lint` command.
 #[derive(Parser, Clone, Debug)]
 pub struct LintArgs {
-    /// Name of the package.
+    /// Specify package(s) to operate on.
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
 
@@ -570,6 +589,15 @@ pub struct LintArgs {
     /// Should fail on any warning.
     #[arg(short, long, default_value_t = false, env = "SCARB_LINT_DENY_WARNINGS")]
     pub deny_warnings: bool,
+}
+
+/// Arguments accepted by the `completions` command.
+#[derive(Parser, Clone, Debug)]
+#[clap(version, about = "Generate shell completions")]
+pub struct CompletionsArgs {
+    /// Target shell for completion generation
+    #[arg(value_enum)]
+    pub shell: Option<Shell>,
 }
 
 /// Git reference specification arguments.

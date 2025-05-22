@@ -1,3 +1,5 @@
+#[cfg(feature = "cairo-language-server")]
+pub mod cairo_language_server;
 #[cfg(feature = "cairo-run")]
 pub mod cairo_run;
 #[cfg(feature = "cairo-test")]
