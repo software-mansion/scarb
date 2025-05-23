@@ -999,7 +999,7 @@ fn empty_inline_macro_result() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Inline macro `some` failed.
+            error: Inline macro `some` not found.
              --> [..]lib.cairo:2:14
                 let _x = some!();
                          ^^^^^^^

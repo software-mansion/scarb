@@ -321,7 +321,7 @@ fn empty_inline_macro_result() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Inline macro `some` failed.
+            error: Inline macro `some` not found.
              --> [..]lib.cairo:2:14
                 let _x = some!();
                          ^^^^^^^
@@ -1578,13 +1578,19 @@ fn diags_can_be_mapped_to_call_site_correctly() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Missing tokens. Expected an expression.
+            error: Placeholder expression ($expression) is allowed only in the context of a macro rule.
              --> [..]lib.cairo:1:10
             #[derive(ImproperDeriveMacroV2)]
                      ^^^^^^^^^^^^^^^^^^^^^
             note: this error originates in the derive macro: `ImproperDeriveMacroV2`
             
-            error: Skipped tokens. Expected: statement.
+            error: Missing tokens. Expected a path segment.
+             --> [..]lib.cairo:1:10
+            #[derive(ImproperDeriveMacroV2)]
+                     ^^^^^^^^^^^^^^^^^^^^^
+            note: this error originates in the derive macro: `ImproperDeriveMacroV2`
+            
+            error: Consecutive comparison operators are not allowed: '<' followed by '>'
              --> [..]lib.cairo:1:10
             #[derive(ImproperDeriveMacroV2)]
                      ^^^^^^^^^^^^^^^^^^^^^
@@ -1597,12 +1603,6 @@ fn diags_can_be_mapped_to_call_site_correctly() {
             note: this error originates in the derive macro: `ImproperDeriveMacroV2`
             
             error: Are you missing a `::`?.
-             --> [..]lib.cairo:1:10
-            #[derive(ImproperDeriveMacroV2)]
-                     ^^^^^^^^^^^^^^^^^^^^^
-            note: this error originates in the derive macro: `ImproperDeriveMacroV2`
-            
-            error: Missing semicolon
              --> [..]lib.cairo:1:10
             #[derive(ImproperDeriveMacroV2)]
                      ^^^^^^^^^^^^^^^^^^^^^

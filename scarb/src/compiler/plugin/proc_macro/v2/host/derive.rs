@@ -43,6 +43,7 @@ impl ProcMacroHostPlugin {
                 let Expr::Path(path) = value else {
                     return None;
                 };
+                let path = path.segments(db);
                 let path = path.elements(db);
                 let path = path.last()?;
                 let PathSegment::Simple(segment) = path else {
