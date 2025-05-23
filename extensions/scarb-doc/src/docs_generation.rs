@@ -73,6 +73,7 @@ trait DocItem {
     fn full_path(&self) -> &str;
     fn doc_location_links(&self) -> &Vec<DocLocationLink>;
     fn markdown_formatted_path(&self) -> String;
+    fn group_name(&self) -> &Option<String>;
 }
 
 macro_rules! impl_doc_item {
@@ -102,6 +103,10 @@ macro_rules! impl_doc_item {
 
             fn markdown_formatted_path(&self) -> String {
                 self.full_path().replace("::", "-")
+            }
+
+            fn group_name(&self) -> &Option<String> {
+                &self.item_data.group
             }
         }
     };
