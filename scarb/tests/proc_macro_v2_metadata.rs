@@ -153,7 +153,7 @@ fn can_resolve_full_path_markers() {
                     .collect(),
             );
             let code = quote!(
-                #[macro::full_path_marker("some-key")]
+                #[proc_macro::full_path_marker("some-key")]
                 #token_stream
             );
             ProcMacroResult::new(code)
