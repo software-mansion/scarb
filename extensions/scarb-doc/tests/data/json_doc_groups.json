@@ -6,14 +6,47 @@
         "root_module": {
           "item_data": {
             "name": "hello_world",
-            "doc": "Fibonacci sequence calculator",
+            "doc": null,
             "signature": null,
             "full_path": "hello_world",
             "groups": []
           },
           "submodules": [],
           "constants": [],
-          "free_functions": [],
+          "free_functions": [
+            {
+              "item_data": {
+                "name": "test_2",
+                "doc": null,
+                "signature": "fn test_2()",
+                "full_path": "hello_world::test_2",
+                "groups": [
+                  "test"
+                ]
+              }
+            },
+            {
+              "item_data": {
+                "name": "test_1",
+                "doc": null,
+                "signature": "fn test_1()",
+                "full_path": "hello_world::test_1",
+                "groups": [
+                  "test",
+                  "test2"
+                ]
+              }
+            },
+            {
+              "item_data": {
+                "name": "main",
+                "doc": null,
+                "signature": "fn main()",
+                "full_path": "hello_world::main",
+                "groups": []
+              }
+            }
+          ],
           "structs": [],
           "enums": [],
           "type_aliases": [],

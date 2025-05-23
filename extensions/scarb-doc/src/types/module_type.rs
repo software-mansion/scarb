@@ -1,4 +1,10 @@
 use crate::db::ScarbDocDatabase;
+use crate::types::groups::{
+    Group, aggregate_constants_groups, aggregate_enums_groups, aggregate_extern_functions_by_group,
+    aggregate_extern_types_groups, aggregate_free_functions_by_group,
+    aggregate_impl_aliases_groups, aggregate_impls_groups, aggregate_structs_groups,
+    aggregate_traits_groups, aggregate_type_aliases_groups,
+};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Struct,
     Trait, TypeAlias,
@@ -147,6 +153,8 @@ pub struct Module {
     pub extern_types: Vec<ExternType>,
     pub extern_functions: Vec<ExternFunction>,
     pub pub_uses: ModulePubUses,
+    #[serde(skip)]
+    pub groups: Vec<Group>,
 }
 
 #[derive(Clone, Default, Serialize)]
@@ -423,6 +431,19 @@ impl Module {
                 Module::new(db, ModuleId::Submodule(*id), include_private_items)
             })?;
 
+        let mut group_map: HashMap<String, Group> = HashMap::new();
+        aggregate_constants_groups(&constants, &mut group_map);
+        aggregate_free_functions_by_group(&free_functions, &mut group_map);
+        aggregate_structs_groups(&structs, &mut group_map);
+        aggregate_enums_groups(&enums, &mut group_map);
+        aggregate_type_aliases_groups(&type_aliases, &mut group_map);
+        aggregate_impl_aliases_groups(&impl_aliases, &mut group_map);
+        aggregate_traits_groups(&traits, &mut group_map);
+        aggregate_impls_groups(&impls, &mut group_map);
+        aggregate_extern_types_groups(&extern_types, &mut group_map);
+        aggregate_extern_functions_by_group(&extern_functions, &mut group_map);
+        let groups = group_map.into_values().collect();
+
         Ok(Self {
             module_id,
             item_data,
@@ -438,6 +459,7 @@ impl Module {
             extern_types,
             extern_functions,
             pub_uses: module_pubuses,
+            groups,
         })
     }
 
@@ -465,6 +487,7 @@ impl Module {
             extern_types: Default::default(),
             extern_functions: Default::default(),
             pub_uses: Default::default(),
+            groups: vec![], // todo! check me out
         }
     }
 

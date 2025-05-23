@@ -8,7 +8,8 @@
             "name": "hello_world",
             "doc": null,
             "signature": null,
-            "full_path": "hello_world"
+            "full_path": "hello_world",
+            "groups": []
           },
           "submodules": [],
           "constants": [],
@@ -18,7 +19,8 @@
                 "name": "main",
                 "doc": "main",
                 "signature": "fn main()",
-                "full_path": "hello_world::main"
+                "full_path": "hello_world::main",
+                "groups": []
               }
             }
           ],
