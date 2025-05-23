@@ -231,7 +231,8 @@
               }
             ]
           }
-        }
+        },
+        "groups": []
       },
       "metadata": {
         "name": "hello_world",

@@ -35,7 +35,8 @@
             "use_extern_functions": [],
             "use_submodules": []
           }
-        }
+        },
+        "groups": []
       },
       "metadata": {
         "name": "hello_world",
