@@ -1,4 +1,10 @@
 use crate::db::ScarbDocDatabase;
+use crate::types::groups::{
+    Group, aggregate_constants_groups, aggregate_enums_groups, aggregate_extern_functions_groups,
+    aggregate_extern_types_groups, aggregate_free_functions_groups, aggregate_impl_aliases_groups,
+    aggregate_impls_groups, aggregate_modules_groups, aggregate_structs_groups,
+    aggregate_traits_groups, aggregate_type_aliases_groups,
+};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Struct,
     Trait, TypeAlias,
@@ -41,6 +47,8 @@ pub struct Module {
     pub extern_types: Vec<ExternType>,
     pub extern_functions: Vec<ExternFunction>,
     pub pub_uses: ModulePubUses,
+    #[serde(skip_serializing)]
+    pub groups: Vec<Group>,
 }
 
 #[derive(Clone, Default, Serialize)]
@@ -208,45 +216,47 @@ impl Module {
         let module_pubuses = ModulePubUses::new(db, module_id, include_private_items)?;
 
         let module_constants = db.module_constants(module_id)?;
-        let constants =
+        let mut constants =
             filter_map_item_id_to_item(module_constants.keys(), should_include_item, |id| {
                 Ok(Constant::new(db, *id))
             })?;
 
         let module_free_functions = db.module_free_functions(module_id)?;
 
-        let free_functions =
+        let mut free_functions =
             filter_map_item_id_to_item(module_free_functions.keys(), should_include_item, |id| {
                 Ok(FreeFunction::new(db, *id))
             })?;
 
         let module_structs = db.module_structs(module_id)?;
-        let structs =
+        let mut structs =
             filter_map_item_id_to_item(module_structs.keys(), should_include_item, |id| {
                 Struct::new(db, *id, include_private_items)
             })?;
 
         let module_enums = db.module_enums(module_id)?;
-        let enums = filter_map_item_id_to_item(module_enums.keys(), should_include_item, |id| {
-            Enum::new(db, *id)
-        })?;
+        let mut enums =
+            filter_map_item_id_to_item(module_enums.keys(), should_include_item, |id| {
+                Enum::new(db, *id)
+            })?;
 
         let module_type_aliases = db.module_type_aliases(module_id)?;
-        let type_aliases =
+        let mut type_aliases =
             filter_map_item_id_to_item(module_type_aliases.keys(), should_include_item, |id| {
                 Ok(TypeAlias::new(db, *id))
             })?;
 
         let module_impl_aliases = db.module_impl_aliases(module_id)?;
-        let impl_aliases =
+        let mut impl_aliases =
             filter_map_item_id_to_item(module_impl_aliases.keys(), should_include_item, |id| {
                 Ok(ImplAlias::new(db, *id))
             })?;
 
         let module_traits = db.module_traits(module_id)?;
-        let traits = filter_map_item_id_to_item(module_traits.keys(), should_include_item, |id| {
-            Trait::new(db, *id)
-        })?;
+        let mut traits =
+            filter_map_item_id_to_item(module_traits.keys(), should_include_item, |id| {
+                Trait::new(db, *id)
+            })?;
 
         let module_impls = db.module_impls(module_id)?;
         let hide_impls_for_hidden_traits = |impl_def_id: &&ImplDefId| {
@@ -293,29 +303,43 @@ impl Module {
 
             !(all_generic_args_are_hidden || trait_is_hidden)
         };
-        let impls = filter_map_item_id_to_item(
+        let mut impls = filter_map_item_id_to_item(
             module_impls.keys().filter(hide_impls_for_hidden_traits),
             should_include_item,
             |id| Impl::new(db, *id),
         )?;
 
         let module_extern_types = db.module_extern_types(module_id)?;
-        let extern_types =
+        let mut extern_types =
             filter_map_item_id_to_item(module_extern_types.keys(), should_include_item, |id| {
                 Ok(ExternType::new(db, *id))
             })?;
 
         let module_extern_functions = db.module_extern_functions(module_id)?;
-        let extern_functions = filter_map_item_id_to_item(
+        let mut extern_functions = filter_map_item_id_to_item(
             module_extern_functions.keys(),
             should_include_item,
             |id| Ok(ExternFunction::new(db, *id)),
         )?;
         let module_submodules = db.module_submodules(module_id)?;
-        let submodules: Vec<Module> =
+        let mut submodules: Vec<Module> =
             filter_map_item_id_to_item(module_submodules.keys(), should_include_item, |id| {
                 Module::new(db, ModuleId::Submodule(*id), include_private_items)
             })?;
+
+        let mut group_map: HashMap<String, Group> = HashMap::new();
+        constants = aggregate_constants_groups(&constants, &mut group_map);
+        free_functions = aggregate_free_functions_groups(&free_functions, &mut group_map);
+        structs = aggregate_structs_groups(&structs, &mut group_map);
+        enums = aggregate_enums_groups(&enums, &mut group_map);
+        type_aliases = aggregate_type_aliases_groups(&type_aliases, &mut group_map);
+        impl_aliases = aggregate_impl_aliases_groups(&impl_aliases, &mut group_map);
+        traits = aggregate_traits_groups(&traits, &mut group_map);
+        impls = aggregate_impls_groups(&impls, &mut group_map);
+        extern_types = aggregate_extern_types_groups(&extern_types, &mut group_map);
+        extern_functions = aggregate_extern_functions_groups(&extern_functions, &mut group_map);
+        submodules = aggregate_modules_groups(&submodules, &mut group_map);
+        let groups = group_map.into_values().collect();
 
         Ok(Self {
             module_id,
@@ -332,6 +356,7 @@ impl Module {
             extern_types,
             extern_functions,
             pub_uses: module_pubuses,
+            groups,
         })
     }
 
@@ -359,6 +384,7 @@ impl Module {
             extern_types: Default::default(),
             extern_functions: Default::default(),
             pub_uses: Default::default(),
+            groups: vec![],
         }
     }
 

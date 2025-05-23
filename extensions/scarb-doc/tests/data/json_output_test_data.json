@@ -8,7 +8,8 @@
             "name": "hello_world",
             "doc": "Fibonacci sequence calculator",
             "signature": null,
-            "full_path": "hello_world"
+            "full_path": "hello_world",
+            "group": null
           },
           "submodules": [],
           "constants": [],
