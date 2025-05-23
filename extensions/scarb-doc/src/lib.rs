@@ -2,6 +2,9 @@ use crate::db::ScarbDocDatabase;
 use crate::metadata::compilation::{
     crates_with_starknet, get_project_config, get_relevant_compilation_unit,
 };
+
+use crate::types::crate_type::Crate;
+
 use anyhow::Result;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
@@ -15,7 +18,6 @@ use scarb_metadata::{CompilationUnitMetadata, Metadata, PackageMetadata};
 use scarb_ui::Ui;
 use serde::Serialize;
 use smol_str::ToSmolStr;
-use types::Crate;
 
 pub mod attributes;
 pub mod db;
