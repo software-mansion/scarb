@@ -377,7 +377,7 @@ pub struct FmtArgs {
     #[command(flatten)]
     pub packages_filter: PackagesFilter,
     /// Path to a file or directory to format. If provided, only this file or directory will be formatted.
-    #[clap(value_name = "PATH")]
+    #[clap(value_name = "SCARB_ACTION_PATH")]
     pub path: Option<Utf8PathBuf>,
 }
 
@@ -589,6 +589,10 @@ pub struct LintArgs {
     /// Should fail on any warning.
     #[arg(short, long, default_value_t = false, env = "SCARB_LINT_DENY_WARNINGS")]
     pub deny_warnings: bool,
+
+    /// Path to a file or directory to lint. If provided, only this file or directory will be linted.
+    #[clap(value_name = "SCARB_ACTION_PATH")]
+    pub path: Option<Utf8PathBuf>,
 }
 
 /// Arguments accepted by the `completions` command.
