@@ -4,6 +4,7 @@ use crate::docs_generation::markdown::{
 };
 use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
 use crate::location_links::DocLocationLink;
+use crate::types::groups::Group;
 use crate::types::module_type::{Module, ModulePubUses};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
@@ -383,6 +384,11 @@ impl MarkdownDocItem for Module {
 
         markdown += &generate_pub_use_item_markdown(&self.pub_uses, context);
 
+        markdown += &generate_markdown_table_summary_for_top_level_group_items(
+            &self.groups.iter().collect_vec(),
+            context,
+        )?;
+
         Ok(markdown)
     }
 }
@@ -552,6 +558,53 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
                 item.filename(),
             )?;
         }
+    }
+
+    Ok(markdown)
+}
+
+pub fn generate_markdown_table_summary_for_top_level_group_items(
+    groups: &[&Group],
+    context: &MarkdownGenerationContext,
+) -> Result<String> {
+    let mut markdown = String::new();
+
+    if !groups.is_empty() {
+        for group in groups {
+            writeln!(&mut markdown, "\n## {} - group", group.name)?;
+            writeln!(&mut markdown, "\n| | |\n|:---|:---|")?;
+            markdown += &append_markdown_for_group_items(context, &group.submodules)?;
+            markdown += &append_markdown_for_group_items(context, &group.constants)?;
+            markdown += &append_markdown_for_group_items(context, &group.free_functions)?;
+            markdown += &append_markdown_for_group_items(context, &group.structs)?;
+            markdown += &append_markdown_for_group_items(context, &group.enums)?;
+            markdown += &append_markdown_for_group_items(context, &group.type_aliases)?;
+            markdown += &append_markdown_for_group_items(context, &group.impl_aliases)?;
+            markdown += &append_markdown_for_group_items(context, &group.traits)?;
+            markdown += &append_markdown_for_group_items(context, &group.impls)?;
+            markdown += &append_markdown_for_group_items(context, &group.extern_types)?;
+            markdown += &append_markdown_for_group_items(context, &group.extern_functions)?;
+        }
+    }
+    Ok(markdown)
+}
+
+fn append_markdown_for_group_items<T: TopLevelMarkdownDocItem>(
+    context: &MarkdownGenerationContext,
+    items: &[T],
+) -> Result<String> {
+    let mut markdown = String::new();
+    let items_vec = items.iter().collect::<Vec<_>>();
+    let items_with_relative_path = mark_duplicated_item_with_relative_path::<T>(&items_vec);
+    for (item, relative_path) in items_with_relative_path {
+        let item_doc = item.get_short_documentation(context);
+        writeln!(
+            markdown,
+            "| {} | {}[...](./{}) |",
+            item.md_ref(relative_path),
+            item_doc,
+            item.filename(),
+        )?;
     }
 
     Ok(markdown)

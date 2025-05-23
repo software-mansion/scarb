@@ -1,4 +1,5 @@
 use crate::location_links::DocLocationLink;
+use crate::types::groups::Group;
 use crate::types::module_type::Module;
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
@@ -22,6 +23,7 @@ struct TopLevelItems<'a> {
     pub impls: Vec<&'a Impl>,
     pub extern_types: Vec<&'a ExternType>,
     pub extern_functions: Vec<&'a ExternFunction>,
+    pub groups: Vec<&'a Group>,
 }
 
 // Trait for items with no descendants.

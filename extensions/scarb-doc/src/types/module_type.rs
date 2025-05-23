@@ -2,8 +2,8 @@ use crate::db::ScarbDocDatabase;
 use crate::types::groups::{
     Group, aggregate_constants_groups, aggregate_enums_groups, aggregate_extern_functions_by_group,
     aggregate_extern_types_groups, aggregate_free_functions_by_group,
-    aggregate_impl_aliases_groups, aggregate_impls_groups, aggregate_structs_groups,
-    aggregate_traits_groups, aggregate_type_aliases_groups,
+    aggregate_impl_aliases_groups, aggregate_impls_groups, aggregate_modules_by_group,
+    aggregate_structs_groups, aggregate_traits_groups, aggregate_type_aliases_groups,
 };
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Struct,
@@ -153,7 +153,6 @@ pub struct Module {
     pub extern_types: Vec<ExternType>,
     pub extern_functions: Vec<ExternFunction>,
     pub pub_uses: ModulePubUses,
-    #[serde(skip)]
     pub groups: Vec<Group>,
 }
 
@@ -442,6 +441,7 @@ impl Module {
         aggregate_impls_groups(&impls, &mut group_map);
         aggregate_extern_types_groups(&extern_types, &mut group_map);
         aggregate_extern_functions_by_group(&extern_functions, &mut group_map);
+        aggregate_modules_by_group(&submodules, &mut group_map);
         let groups = group_map.into_values().collect();
 
         Ok(Self {

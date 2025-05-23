@@ -26,6 +26,7 @@ pub fn generate_summary_file_content(crate_: &Crate) -> Result<(String, Vec<(Str
             .root_module
             .generate_markdown(&context, BASE_HEADER_LEVEL, None)?,
     )];
+    // TODO! (global?) groups summary files
     let (sub_markdown, module_item_summaries) =
         &generate_modules_summary_content(&crate_.root_module, 0, &context)?;
 
@@ -63,6 +64,7 @@ pub fn generate_modules_summary_content(
         impls,
         extern_types,
         extern_functions,
+        groups,
         ..
     } = &module;
 
@@ -77,6 +79,7 @@ pub fn generate_modules_summary_content(
     top_level_items.impls.extend(impls);
     top_level_items.extern_types.extend(extern_types);
     top_level_items.extern_functions.extend(extern_functions);
+    top_level_items.groups.extend(groups);
 
     let mut doc_files = generate_summary_files_for_module_items(
         &top_level_items,
