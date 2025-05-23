@@ -256,7 +256,8 @@
                     "use_extern_types": [],
                     "use_extern_functions": [],
                     "use_submodules": []
-                  }
+                  },
+                  "groups": []
                 },
                 {
                   "item_data": {
@@ -493,7 +494,8 @@
                     "use_extern_types": [],
                     "use_extern_functions": [],
                     "use_submodules": []
-                  }
+                  },
+                  "groups": []
                 },
                 {
                   "item_data": {
@@ -730,7 +732,8 @@
                     "use_extern_types": [],
                     "use_extern_functions": [],
                     "use_submodules": []
-                  }
+                  },
+                  "groups": []
                 }
               ],
               "constants": [],
@@ -959,7 +962,8 @@
                 "use_extern_types": [],
                 "use_extern_functions": [],
                 "use_submodules": []
-              }
+              },
+              "groups": []
             },
             {
               "item_data": {
@@ -1205,7 +1209,8 @@
                     "use_extern_types": [],
                     "use_extern_functions": [],
                     "use_submodules": []
-                  }
+                  },
+                  "groups": []
                 },
                 {
                   "item_data": {
@@ -1442,7 +1447,8 @@
                     "use_extern_types": [],
                     "use_extern_functions": [],
                     "use_submodules": []
-                  }
+                  },
+                  "groups": []
                 },
                 {
                   "item_data": {
@@ -1679,7 +1685,8 @@
                     "use_extern_types": [],
                     "use_extern_functions": [],
                     "use_submodules": []
-                  }
+                  },
+                  "groups": []
                 }
               ],
               "constants": [],
@@ -1908,7 +1915,8 @@
                 "use_extern_types": [],
                 "use_extern_functions": [],
                 "use_submodules": []
-              }
+              },
+              "groups": []
             },
             {
               "item_data": {
@@ -2154,7 +2162,8 @@
                     "use_extern_types": [],
                     "use_extern_functions": [],
                     "use_submodules": []
-                  }
+                  },
+                  "groups": []
                 },
                 {
                   "item_data": {
@@ -2391,7 +2400,8 @@
                     "use_extern_types": [],
                     "use_extern_functions": [],
                     "use_submodules": []
-                  }
+                  },
+                  "groups": []
                 },
                 {
                   "item_data": {
@@ -2628,7 +2638,8 @@
                     "use_extern_types": [],
                     "use_extern_functions": [],
                     "use_submodules": []
-                  }
+                  },
+                  "groups": []
                 }
               ],
               "constants": [],
@@ -2857,7 +2868,8 @@
                 "use_extern_types": [],
                 "use_extern_functions": [],
                 "use_submodules": []
-              }
+              },
+              "groups": []
             }
           ],
           "constants": [],
@@ -3095,7 +3107,8 @@
             "use_extern_types": [],
             "use_extern_functions": [],
             "use_submodules": []
-          }
+          },
+          "groups": []
         }
       },
       "metadata": {

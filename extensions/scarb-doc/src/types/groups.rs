@@ -3,9 +3,10 @@ use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Struct, Trait,
     TypeAlias,
 };
+use serde::Serialize;
 use std::collections::HashMap;
 
-#[derive(Clone)]
+#[derive(Serialize, Clone)]
 pub struct Group {
     pub name: String,
     pub submodules: Vec<Module>,
@@ -68,3 +69,4 @@ aggregate_groups!(
     extern_functions,
     ExternFunction
 );
+aggregate_groups!(aggregate_modules_by_group, submodules, Module);
