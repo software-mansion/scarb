@@ -1,6 +1,6 @@
 
-[Impls](./hello_world-impls.md)
- ---
+## [Impls](./hello_world-impls.md)
+
 | | |
 |:---|:---|
 | [CircleShape](./hello_world-CircleShape.md) | Implementation of the Shape trait for Circle[...](./hello_world-CircleShape.md) |

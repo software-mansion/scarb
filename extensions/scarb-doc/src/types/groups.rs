@@ -3,9 +3,10 @@ use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Struct, Trait,
     TypeAlias,
 };
+use serde::Serialize;
 use std::collections::HashMap;
 
-#[derive(Clone)]
+#[derive(Serialize, Clone)]
 pub struct Group {
     pub name: String,
     pub submodules: Vec<Module>,
@@ -19,6 +20,15 @@ pub struct Group {
     pub impls: Vec<Impl>,
     pub extern_types: Vec<ExternType>,
     pub extern_functions: Vec<ExternFunction>,
+}
+
+impl Group {
+    pub fn filename(&self) -> String {
+        format!("{}.md", self.get_name_normalized())
+    }
+    pub fn get_name_normalized(&self) -> String {
+        self.name.replace(" ", "_")
+    }
 }
 
 macro_rules! aggregate_groups {

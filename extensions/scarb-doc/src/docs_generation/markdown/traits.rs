@@ -1,9 +1,11 @@
 use super::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::{
-    SHORT_DOCUMENTATION_AVOID_PREFIXES, SHORT_DOCUMENTATION_LEN,
+    BASE_MODULE_CHAPTER_PREFIX, GROUP_CHAPTER_PREFIX, SHORT_DOCUMENTATION_AVOID_PREFIXES,
+    SHORT_DOCUMENTATION_LEN,
 };
 use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
 use crate::location_links::DocLocationLink;
+use crate::types::groups::Group;
 use crate::types::module_type::{Module, ModulePubUses};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
@@ -17,7 +19,8 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::option::Option;
 
-const RE_EXPORTS_CHAPTER: &str = "Re-exports";
+const RE_EXPORTS_CHAPTER: &str = "\n\n---\n \n# Re-exports: \n";
+const GROUPS_CHAPTER: &str = "\n\n---\n \n# Groups: \n";
 
 pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     const ITEMS_SUMMARY_FILENAME: &'static str;
@@ -311,7 +314,7 @@ fn generate_pub_use_item_markdown(
     .unwrap_or("".to_string());
 
     if !buff.is_empty() {
-        return format!("## {RE_EXPORTS_CHAPTER}\n{}", buff);
+        return format!("{RE_EXPORTS_CHAPTER}{buff}");
     }
     buff
 }
@@ -329,60 +332,78 @@ impl MarkdownDocItem for Module {
             &self.submodules.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.constants.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.free_functions.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.structs.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.enums.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.type_aliases.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.impl_aliases.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.traits.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.impls.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.extern_types.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.extern_functions.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
 
         markdown += &generate_pub_use_item_markdown(&self.pub_uses, context);
 
+        if !self.groups.is_empty() {
+            markdown += GROUPS_CHAPTER;
+            markdown += &generate_markdown_table_summary_for_top_level_groups_items(
+                &self.groups.iter().collect_vec(),
+                context,
+            )?;
+        }
         Ok(markdown)
     }
 }
@@ -527,7 +548,8 @@ pub fn mark_duplicated_item_with_relative_path<'a, T: TopLevelMarkdownDocItem + 
 pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdownDocItem>(
     subitems: &[&T],
     context: &MarkdownGenerationContext,
-    markdown_formatted_path: &String,
+    module_name: &String,
+    prefix: &str,
 ) -> Result<String> {
     let mut markdown = String::new();
 
@@ -535,11 +557,15 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
         let linked = format!(
             "[{}](./{}-{})",
             T::HEADER,
-            markdown_formatted_path,
+            module_name,
             T::ITEMS_SUMMARY_FILENAME
         );
 
-        writeln!(&mut markdown, "\n{}\n ---\n| | |\n|:---|:---|", linked,)?;
+        writeln!(
+            &mut markdown,
+            "\n{} {}\n\n| | |\n|:---|:---|",
+            prefix, linked,
+        )?;
 
         let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
         for (item, relative_path) in items_with_relative_path {
@@ -554,6 +580,88 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
         }
     }
 
+    Ok(markdown)
+}
+
+pub fn generate_markdown_table_summary_for_top_level_groups_items(
+    groups: &[&Group],
+    context: &MarkdownGenerationContext,
+) -> Result<String> {
+    let mut markdown = String::new();
+
+    if !groups.is_empty() {
+        for group in groups {
+            markdown += &format!("\n## [{}]({})\n", group.name, group.filename(),);
+
+            let fake_module_name = group.get_name_normalized();
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.submodules.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.constants.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.free_functions.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.structs.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.enums.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.type_aliases.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.impl_aliases.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.traits.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.impls.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.extern_types.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.extern_functions.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+        }
+    }
     Ok(markdown)
 }
 
@@ -628,6 +736,11 @@ fn generate_markdown_from_item_data(
 
     let full_path = doc_item.get_full_path(item_suffix);
     writeln!(&mut markdown, "Fully qualified path: {full_path}\n",)?;
+
+    if let Some(group_name) = doc_item.group_name() {
+        let group_path = format!("[{}](./{}.md)", group_name, group_name.replace(" ", "_"),);
+        writeln!(&mut markdown, "Part of the group: {group_path}\n",)?;
+    }
 
     if let Some(sig) = &doc_item.signature() {
         if !sig.is_empty() {

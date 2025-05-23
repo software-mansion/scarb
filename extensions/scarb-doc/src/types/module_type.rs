@@ -339,7 +339,8 @@ impl Module {
         extern_types = aggregate_extern_types_groups(&extern_types, &mut group_map);
         extern_functions = aggregate_extern_functions_groups(&extern_functions, &mut group_map);
         submodules = aggregate_modules_groups(&submodules, &mut group_map);
-        let groups = group_map.into_values().collect();
+        let mut groups: Vec<Group> = group_map.into_values().collect();
+        groups.sort_by(|a, b| a.name.cmp(&b.name));
 
         Ok(Self {
             module_id,

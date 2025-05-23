@@ -93,9 +93,12 @@ pub fn generate_packages_information(
             setup_diagnostics_reporter(&db, main_crate_id, package_compilation_unit, &ui)
                 .skip_lowering_diagnostics();
 
-        let crate_ =
-            Crate::new_with_virtual_modules(&db, main_crate_id, should_document_private_items)
-                .map_err(|_| DiagnosticError(package_metadata.name.clone()));
+        let crate_ = Crate::new_with_virtual_modules_and_groups(
+            &db,
+            main_crate_id,
+            should_document_private_items,
+        )
+        .map_err(|_| DiagnosticError(package_metadata.name.clone()));
 
         if crate_.is_err() {
             diagnostics_reporter.ensure(&db)?;
