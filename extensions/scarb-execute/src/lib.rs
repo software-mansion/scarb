@@ -26,7 +26,7 @@ pub(crate) mod output;
 
 const MAX_ITERATION_COUNT: usize = 10000;
 
-pub fn main_inner(args: Args, ui: Ui) -> Result<usize, anyhow::Error> {
+pub fn main_inner(args: Args, ui: Ui) -> Result<Option<usize>, anyhow::Error> {
     let metadata = MetadataCommand::new()
         .envs(args.execution.features.clone().to_env_vars())
         .inherit_stderr()
@@ -40,7 +40,7 @@ pub fn execute(
     package: &PackageMetadata,
     args: &ExecutionArgs,
     ui: &Ui,
-) -> Result<usize, anyhow::Error> {
+) -> Result<Option<usize>, anyhow::Error> {
     let output = args
         .run
         .output
@@ -165,6 +165,10 @@ pub fn execute(
             .transpose()?,
     });
 
+    if output.is_none() {
+        return Ok(None);
+    }
+
     let output_dir = scarb_target_dir.join("execute").join(&package.name);
     create_output_dir(output_dir.as_std_path())?;
 
@@ -215,7 +219,7 @@ pub fn execute(
         fs::write(air_private_input_path, output_value)?;
     }
 
-    Ok(execution_id)
+    Ok(Some(execution_id))
 }
 
 fn find_build_target<'a>(
