@@ -75,20 +75,19 @@ impl ProcMacroHostPlugin {
     pub fn expand_attribute(
         &self,
         db: &dyn SyntaxGroup,
-        input: ProcMacroId,
         last: bool,
         args: TokenStream,
         token_stream: TokenStream,
-        call_site: CallSiteLocation,
+        input: AttrExpansionArgs,
     ) -> PluginResult {
         let original = token_stream.to_string();
         let result = self
-            .instance(input.package_id)
+            .instance(input.id.package_id)
             .try_v2()
             .expect("procedural macro using v1 api used in a context expecting v2 api")
             .generate_code(
-                input.expansion.expansion_name.clone(),
-                call_site.span.clone(),
+                input.id.expansion.expansion_name.clone(),
+                input.call_site.span.clone(),
                 args,
                 token_stream,
             );
@@ -97,14 +96,18 @@ impl ProcMacroHostPlugin {
         if result.token_stream.is_empty() {
             // Remove original code
             return PluginResult {
-                diagnostics: into_cairo_diagnostics(db, result.diagnostics, call_site.stable_ptr),
+                diagnostics: into_cairo_diagnostics(
+                    db,
+                    result.diagnostics,
+                    input.call_site.stable_ptr,
+                ),
                 code: None,
                 remove_original_item: true,
             };
         }
 
         // Full path markers require code modification.
-        self.register_full_path_markers(input.package_id, result.full_path_markers.clone());
+        self.register_full_path_markers(input.id.package_id, result.full_path_markers.clone());
 
         // This is a minor optimization.
         // If the expanded macro attribute is the only one that will be expanded by `ProcMacroHost`
@@ -120,12 +123,17 @@ impl ProcMacroHostPlugin {
             return PluginResult {
                 code: None,
                 remove_original_item: false,
-                diagnostics: into_cairo_diagnostics(db, result.diagnostics, call_site.stable_ptr),
+                diagnostics: into_cairo_diagnostics(
+                    db,
+                    result.diagnostics,
+                    input.call_site.stable_ptr,
+                ),
             };
         }
 
-        let file_name = format!("proc_{}", input.expansion.cairo_name);
-        let code_mappings = generate_code_mappings(&result.token_stream, call_site.span.clone());
+        let file_name = format!("proc_{}", input.id.expansion.cairo_name);
+        let code_mappings =
+            generate_code_mappings(&result.token_stream, input.call_site.span.clone());
         let content = result.token_stream.to_string();
         PluginResult {
             code: Some(PluginGeneratedFile {
@@ -134,16 +142,16 @@ impl ProcMacroHostPlugin {
                 content,
                 diagnostics_note: Some(format!(
                     "this error originates in the attribute macro: `{}`",
-                    input.expansion.cairo_name
+                    input.id.expansion.cairo_name
                 )),
                 aux_data: result.aux_data.map(|new_aux_data| {
                     DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
                         new_aux_data.into(),
-                        input,
+                        input.id,
                     )))
                 }),
             }),
-            diagnostics: into_cairo_diagnostics(db, result.diagnostics, call_site.stable_ptr),
+            diagnostics: into_cairo_diagnostics(db, result.diagnostics, input.call_site.stable_ptr),
             remove_original_item: true,
         }
     }
@@ -172,6 +180,8 @@ pub struct AttrExpansionArgs {
     pub id: ProcMacroId,
     pub args: TokenStream,
     pub call_site: CallSiteLocation,
+    pub attr_token_offset: TextOffset,
+    pub attr_token_length: TextWidth,
 }
 
 impl AttrExpansionFound {
