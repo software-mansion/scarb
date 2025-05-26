@@ -742,6 +742,9 @@ fn lint_non_existing_file() {
         .assert()
         .failure()
         .stdout_matches(indoc! {r#"
-            error: Provided `SCARB_ACTION_PATH` is invalid
+            error: failed to get absolute path of `wrong.cairo`
+
+            Caused by:
+                No such file or directory (os error 2)
         "#});
 }

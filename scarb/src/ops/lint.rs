@@ -57,13 +57,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         },
     )?;
 
-    let absolute_path = opts
-        .path
-        .as_ref()
-        .map(|path| {
-            canonicalize(path).map_err(|_| anyhow!("Provided `SCARB_ACTION_PATH` is invalid"))
-        })
-        .transpose()?;
+    let absolute_path = opts.path.map(canonicalize).transpose()?;
 
     // Select proc macro units that need to be compiled for Cairo compilation units.
     let required_plugins = plugins_required_for_units(&compilation_units);
