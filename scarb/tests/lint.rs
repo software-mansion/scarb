@@ -580,3 +580,171 @@ fn lint_selected_targets() {
 
       "#});
 }
+
+#[test]
+fn lint_specific_file() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            mod other;
+
+            fn main() {
+                let x = true;
+                if x == false {
+                    println!("x is false");
+                }
+            }
+        "#})
+        .src(
+            "src/other.cairo",
+            indoc! {r#"
+            fn main() {
+                loop {
+                    break ();
+                }
+            }"#},
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("src/other.cairo")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+             Linting hello v1.0.0 ([..]/Scarb.toml)
+        warn: Plugin diagnostic: unnecessary double parentheses found after break. Consider removing them.
+         --> [..]/src/other.cairo:3:9
+                break ();
+                ^^^^^^^^^
+
+        "#});
+}
+
+#[test]
+fn lint_specific_directory() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            mod my_module;
+
+            fn main() {
+                let res_val: Result<i32> = Result::Err('err');
+                // This is just a variable.
+                let _a = match res_val {
+                    Result::Ok(x) => Option::Some(x),
+                    Result::Err(_) => Option::None,
+                };
+            }
+        "#})
+        .src(
+            "src/my_module.cairo",
+            indoc! {r#"
+            mod a;
+            mod b;
+            mod c;
+
+            fn main() {
+                let res_val: Result<i32> = Result::Err('err');
+                // This is just a variable.
+                let _a = match res_val {
+                    Result::Ok(x) => Option::Some(x),
+                    Result::Err(_) => Option::None,
+                };
+            }"#},
+        )
+        .src(
+            "src/my_module/a.cairo",
+            indoc! {r#"
+            fn a_func() {
+                loop {
+                    break ();
+                }
+            }"#},
+        )
+        .src(
+            "src/my_module/b.cairo",
+            indoc! {r#"
+            fn test_clone_felt252() {
+                let a: felt252 = 'hello';
+                let _b = a.clone();
+            }"#},
+        )
+        .src(
+            "src/my_module/c.cairo",
+            indoc! {r#"
+            fn c_func() {
+                let x = 42;
+                let _y = x * 1;
+            }"#},
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("src/my_module")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+              Linting hello v1.0.0 ([..]/Scarb.toml)
+         warn: Plugin diagnostic: unnecessary double parentheses found after break. Consider removing them.
+          --> [..]/src/my_module/a.cairo:3:9
+                 break ();
+                 ^^^^^^^^^
+         
+         warn: Plugin diagnostic: using `clone` on type which implements `Copy` trait
+          --> [..]/src/my_module/b.cairo:3:14
+             let _b = a.clone();
+                      ^^^^^^^^^
+
+         warn: Plugin diagnostic: This operation doesn't change the value and can be simplified.
+          --> [..]/src/my_module/c.cairo:3:14
+             let _y = x * 1;
+                      ^^^^^
+
+        "#});
+}
+
+#[test]
+fn lint_non_existing_file() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            mod other;
+
+            fn main() {
+                let x = true;
+                if x == false {
+                    println!("x is false");
+                }
+            }
+        "#})
+        .src(
+            "src/other.cairo",
+            indoc! {r#"
+            fn main() {
+                loop {
+                    break ();
+                }
+            }"#},
+        )
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("wrong.cairo")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: failed to get absolute path of `wrong.cairo`
+
+            Caused by:
+                [..]
+        "#});
+}
