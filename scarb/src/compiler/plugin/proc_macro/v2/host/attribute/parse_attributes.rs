@@ -1,7 +1,7 @@
 use crate::compiler::plugin::proc_macro::v2::host::attribute::{
-    AttrExpansionArgs, AttrExpansionFound,
+    AttrExpansionArgs, AttrExpansionFound, ExpandableAttrLocation,
 };
-use crate::compiler::plugin::proc_macro::v2::host::conversion::{CallSiteLocation, SpanSource};
+use crate::compiler::plugin::proc_macro::v2::host::conversion::CallSiteLocation;
 use crate::compiler::plugin::proc_macro::v2::{ProcMacroHostPlugin, TokenStreamBuilder};
 use crate::compiler::plugin::proc_macro::{ExpansionKind, ExpansionQuery};
 use cairo_lang_macro::AllocationContext;
@@ -45,8 +45,7 @@ impl ProcMacroHostPlugin {
                             id: found,
                             args,
                             call_site: CallSiteLocation::new(&attr, db),
-                            attr_token_offset: attr.text_span(db).start,
-                            attr_token_length: attr.as_syntax_node().width(db),
+                            attribute_location: ExpandableAttrLocation::new(&attr, db),
                         });
                         // Do not add the attribute for found expansion.
                         continue;
