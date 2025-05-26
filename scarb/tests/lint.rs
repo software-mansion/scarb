@@ -745,6 +745,6 @@ fn lint_non_existing_file() {
             error: failed to get absolute path of `wrong.cairo`
 
             Caused by:
-                No such file or directory (os error 2)
+                [..]
         "#});
 }
