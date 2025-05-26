@@ -900,7 +900,6 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations() {
                         if token.content.to_string() == "12" {
                             TokenTree::Ident(Token::new("34", TextSpan::call_site()))
                         } else {
-                            dbg!(&token);
                             TokenTree::Ident(token)
                         }
                     })
