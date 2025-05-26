@@ -45,15 +45,12 @@ impl<'a> TokenStreamBuilder<'a> {
     }
 
     pub fn token_from_syntax_node(&self, node: SyntaxNode, ctx: &AllocationContext) -> Token {
-        let span = node.span(self.db);
+        let span = node.span_without_trivia(self.db);
         let text = node.get_text(self.db);
-        // We skip the whitespace prefix, so that diagnostics start where the actual token contents is.
-        let start = span.start.as_u32() + whitespace_prefix_len(&text);
-        // Then we also skip the whitespace suffix, for the same reason.
-        let end = span.end.as_u32() - whitespace_suffix_len(&text);
-        // This handles the case of a whitespace only string.
-        let end = if end < start { start } else { end };
-        let span = TextSpan { start, end };
+        let span = TextSpan {
+            start: span.start.as_u32(),
+            end: span.end.as_u32(),
+        };
         Token::new_in(text, span, ctx)
     }
 }
@@ -64,14 +61,6 @@ impl Extend<SyntaxNode> for TokenStreamBuilder<'_> {
             self.add_node(node);
         }
     }
-}
-
-fn whitespace_prefix_len(s: &str) -> u32 {
-    s.chars().take_while(|c| c.is_whitespace()).count() as u32
-}
-
-fn whitespace_suffix_len(s: &str) -> u32 {
-    s.chars().rev().take_while(|c| c.is_whitespace()).count() as u32
 }
 
 #[cfg(test)]
