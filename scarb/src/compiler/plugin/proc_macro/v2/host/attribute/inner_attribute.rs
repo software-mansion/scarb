@@ -1,4 +1,5 @@
-use crate::compiler::plugin::proc_macro::v2::host::attribute::AttrExpansionFound;
+use crate::compiler::plugin::proc_macro::v2::host::attribute::token_span::TokenStreamAdaptedLocation;
+use crate::compiler::plugin::proc_macro::v2::host::attribute::{AttrExpansionFound, token_span};
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::EmittedAuxData;
 use crate::compiler::plugin::proc_macro::v2::host::conversion::into_cairo_diagnostics;
 use crate::compiler::plugin::proc_macro::v2::{
@@ -8,7 +9,7 @@ use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, PluginDiagnostic, PluginGeneratedFile, PluginResult,
 };
-use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
+use cairo_lang_macro::{AllocationContext, ProcMacroResult};
 use cairo_lang_syntax::node::ast::{ImplItem, MaybeImplBody, MaybeTraitBody};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
@@ -150,7 +151,7 @@ impl ProcMacroHostPlugin {
                             token_stream_builder.add_node(func.declaration(db).as_syntax_node());
                             token_stream_builder.add_node(func.body(db).as_syntax_node());
                             let token_stream = token_stream_builder.build(&ctx);
-
+                            let token_stream = token_span::move_spans(&found, token_stream);
                             all_none = all_none
                                 && self.do_expand_inner_attr(
                                     db,
@@ -213,6 +214,7 @@ impl ProcMacroHostPlugin {
                             token_stream_builder.add_node(func.declaration(db).as_syntax_node());
                             token_stream_builder.add_node(func.body(db).as_syntax_node());
                             let token_stream = token_stream_builder.build(&ctx);
+                            let token_stream = token_span::move_spans(&found, token_stream);
                             all_none = all_none
                                 && self.do_expand_inner_attr(
                                     db,
@@ -250,7 +252,7 @@ impl ProcMacroHostPlugin {
         item_builder: &mut PatchBuilder<'_>,
         found: AttrExpansionFound,
         func: &impl TypedSyntaxNode,
-        token_stream: TokenStream,
+        token_stream: TokenStreamAdaptedLocation,
     ) -> bool {
         let mut all_none = true;
         let input = match found {
@@ -274,13 +276,15 @@ impl ProcMacroHostPlugin {
             .expect("procedural macro using v1 api used in a context expecting v2 api")
             .generate_code(
                 input.id.expansion.expansion_name.clone(),
-                input.call_site.span.clone(),
+                input.attribute_location.adapted_call_site.clone(),
                 input.args,
-                token_stream.clone(),
+                token_stream.clone().into(),
             );
 
         let code_mappings =
             generate_code_mappings(&result.token_stream, input.call_site.span.clone());
+        let code_mappings =
+            token_span::move_mappings_by_expanded_attr(code_mappings, input.attribute_location);
         let expanded = context.register_result(
             db,
             token_stream.to_string(),
