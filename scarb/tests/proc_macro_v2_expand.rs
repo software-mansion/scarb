@@ -1029,7 +1029,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations_with_parser()
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Cannot assign to an immutable variable.
-             --> [..]lib.cairo:5:9
+             --> [..]lib.cairo:6:9
                     x = 2;
                     ^^^^^^
             note: this error originates in the attribute macro: `some`
