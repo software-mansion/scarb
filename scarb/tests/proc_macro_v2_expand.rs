@@ -951,6 +951,88 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations() {
                     x = 2;
                     ^^^^^^
             note: this error originates in the attribute macro: `some`
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
+fn code_mappings_preserve_attribute_error_on_inner_trait_locations_with_parser() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_cairo_lang_syntax_dep().add_cairo_lang_parser_dep().add_primitive_token_dep()
+        .lib_rs(indoc! {r##"
+            use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream, TokenTree, Token, TextSpan};
+            use cairo_lang_parser::utils::SimpleParserDatabase;
+            use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+            #[attribute_macro]
+            pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+                let token_stream = TokenStream::new(
+                    token_stream
+                    .into_iter()
+                    .map(|TokenTree::Ident(token)| {
+                        if token.content.to_string() == "12" {
+                            TokenTree::Ident(Token::new("34", TextSpan::call_site()))
+                        } else {
+                            TokenTree::Ident(token)
+                        }
+                    })
+                    .collect()
+                );
+                let db_val = SimpleParserDatabase::default();
+                let db = &db_val;
+                let (body, _diagnostics) = db.parse_token_stream(&token_stream);
+                let body = SyntaxNodeWithDb::new(&body, db);
+                ProcMacroResult::new(quote!(#body))
+            }
+        "##})
+        .build(&t);
+
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            trait Hello<T> {
+                #[doc(hidden)]
+                #[some]
+                fn hello(self: @T) -> u32 {
+                    let x = 12;
+                    x = 2;
+                    x
+                }
+            }
+
+            #[derive(Drop)]
+            struct SomeStruct {}
+
+            impl SomeImpl of Hello<SomeStruct> {}
+
+            fn main() -> u32 {
+                let a = SomeStruct {};
+                a.hello()
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Cannot assign to an immutable variable.
+             --> [..]lib.cairo:5:9
+                    x = 2;
+                    ^^^^^^
+            note: this error originates in the attribute macro: `some`
             
             error: could not compile `hello` due to previous error
         "#});
