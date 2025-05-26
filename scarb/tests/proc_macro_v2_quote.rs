@@ -486,7 +486,7 @@ fn can_parse_incoming_token_stream() {
             error: Unexpected return type. Expected: "core::integer::u32", found: "core::bool".
              --> [..]lib.cairo:2:14
             fn main() -> u32 {
-                         ^^^^
+                         ^^^
 
             error: could not check `hello` due to previous error
         "#});
