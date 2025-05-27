@@ -53,6 +53,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         None => {
             assert!(args.execute);
             scarb_execute::execute(&metadata, &package, &args.execute_args, &ui)?
+                .ok_or(anyhow::anyhow!("no execution output found"))?
         }
     };
     ui.print(Status::new("Proving", &package.name));

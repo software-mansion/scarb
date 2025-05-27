@@ -123,6 +123,8 @@ pub enum OutputFormat {
     CairoPie,
     /// Output in standard format
     Standard,
+    /// No output
+    None,
 }
 
 #[doc(hidden)]
@@ -149,6 +151,9 @@ impl OutputFormat {
     }
     pub fn is_cairo_pie(&self) -> bool {
         matches!(self, OutputFormat::CairoPie)
+    }
+    pub fn is_none(&self) -> bool {
+        matches!(self, OutputFormat::None)
     }
 }
 
