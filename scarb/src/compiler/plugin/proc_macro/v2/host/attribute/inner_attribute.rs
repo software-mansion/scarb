@@ -1,13 +1,16 @@
-use crate::compiler::plugin::proc_macro::v2::host::attribute::AttrExpansionFound;
+use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::{
+    AdaptedDiagnostic, AdaptedTokenStream,
+};
+use crate::compiler::plugin::proc_macro::v2::host::attribute::{
+    AttrExpansionArgs, AttrExpansionFound, AttributePluginResult,
+};
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::EmittedAuxData;
 use crate::compiler::plugin::proc_macro::v2::host::conversion::into_cairo_diagnostics;
 use crate::compiler::plugin::proc_macro::v2::{
-    ProcMacroAuxData, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder, generate_code_mappings,
+    ProcMacroAuxData, ProcMacroHostPlugin, TokenStreamBuilder, generate_code_mappings,
 };
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
-use cairo_lang_defs::plugin::{
-    DynGeneratedFileAuxData, PluginDiagnostic, PluginGeneratedFile, PluginResult,
-};
+use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginDiagnostic, PluginGeneratedFile};
 use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
 use cairo_lang_syntax::node::ast::{ImplItem, MaybeImplBody, MaybeTraitBody};
 use cairo_lang_syntax::node::db::SyntaxGroup;
@@ -19,7 +22,7 @@ use std::collections::HashSet;
 
 pub enum InnerAttrExpansionResult {
     None,
-    Some(PluginResult),
+    Some(AttributePluginResult),
 }
 
 pub struct InnerAttrExpansionContext<'a> {
@@ -40,40 +43,52 @@ impl<'a> InnerAttrExpansionContext<'a> {
         }
     }
 
-    pub fn register_result(
+    fn register_diagnotics(
         &mut self,
         db: &dyn SyntaxGroup,
-        original: String,
-        input: ProcMacroId,
-        result: ProcMacroResult,
+        diagnostics: Vec<AdaptedDiagnostic>,
         stable_ptr: SyntaxStablePtrId,
-    ) -> String {
+    ) {
+        let diagnostics = diagnostics.into_iter().map(Into::into).collect();
+        self.diagnostics
+            .extend(into_cairo_diagnostics(db, diagnostics, stable_ptr));
+    }
+
+    pub fn register_result_metadata(
+        &mut self,
+        db: &dyn SyntaxGroup,
+        input: &AttrExpansionArgs,
+        original: String,
+        result: ProcMacroResult,
+    ) -> TokenStream {
         let result_str = result.token_stream.to_string();
         let changed = result_str != original;
 
         if changed {
             self.host
-                .register_full_path_markers(input.package_id, result.full_path_markers.clone());
+                .register_full_path_markers(input.id.package_id, result.full_path_markers.clone());
         }
 
-        self.diagnostics
-            .extend(into_cairo_diagnostics(db, result.diagnostics, stable_ptr));
+        let diagnostics = input
+            .attribute_location
+            .adapt_diagnostics(result.diagnostics);
+        self.register_diagnotics(db, diagnostics, input.call_site.stable_ptr);
 
         if let Some(new_aux_data) = result.aux_data {
             self.aux_data
-                .push(ProcMacroAuxData::new(new_aux_data.into(), input));
+                .push(ProcMacroAuxData::new(new_aux_data.into(), input.id.clone()));
         }
 
         self.any_changed = self.any_changed || changed;
 
-        result_str
+        result.token_stream
     }
 
     pub fn into_result(
         self,
         item_builder: PatchBuilder<'_>,
         attr_names: Vec<SmolStr>,
-    ) -> PluginResult {
+    ) -> AttributePluginResult {
         let (expanded, mut code_mappings) = item_builder.build();
         // PatchBuilder::build() adds additional mapping at the end,
         // which wraps the whole outputted code.
@@ -86,8 +101,10 @@ impl<'a> InnerAttrExpansionContext<'a> {
         };
         let derive_names = attr_names.iter().map(ToString::to_string).join("`, `");
         let note = format!("this error originates in {msg}: `{derive_names}`");
-        PluginResult {
-            code: Some(PluginGeneratedFile {
+        AttributePluginResult::new()
+            .with_remove_original_item(true)
+            .with_plugin_diagnostics(self.diagnostics)
+            .with_plugin_generated_file(PluginGeneratedFile {
                 name: "proc_attr_inner".into(),
                 content: expanded,
                 aux_data: if self.aux_data.is_empty() {
@@ -97,10 +114,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
                 },
                 code_mappings,
                 diagnostics_note: Some(note),
-            }),
-            diagnostics: self.diagnostics,
-            remove_original_item: true,
-        }
+            })
     }
 }
 
@@ -150,7 +164,7 @@ impl ProcMacroHostPlugin {
                             token_stream_builder.add_node(func.declaration(db).as_syntax_node());
                             token_stream_builder.add_node(func.body(db).as_syntax_node());
                             let token_stream = token_stream_builder.build(&ctx);
-
+                            let token_stream = found.adapt_token_stream(token_stream);
                             all_none = all_none
                                 && self.do_expand_inner_attr(
                                     db,
@@ -213,6 +227,7 @@ impl ProcMacroHostPlugin {
                             token_stream_builder.add_node(func.declaration(db).as_syntax_node());
                             token_stream_builder.add_node(func.body(db).as_syntax_node());
                             let token_stream = token_stream_builder.build(&ctx);
+                            let token_stream = found.adapt_token_stream(token_stream);
                             all_none = all_none
                                 && self.do_expand_inner_attr(
                                     db,
@@ -250,7 +265,7 @@ impl ProcMacroHostPlugin {
         item_builder: &mut PatchBuilder<'_>,
         found: AttrExpansionFound,
         func: &impl TypedSyntaxNode,
-        token_stream: TokenStream,
+        token_stream: AdaptedTokenStream,
     ) -> bool {
         let mut all_none = true;
         let input = match found {
@@ -268,28 +283,26 @@ impl ProcMacroHostPlugin {
             }
         };
 
-        let result = self
-            .instance(input.id.package_id)
-            .try_v2()
-            .expect("procedural macro using v1 api used in a context expecting v2 api")
-            .generate_code(
-                input.id.expansion.expansion_name.clone(),
-                input.call_site.span.clone(),
-                input.args,
-                token_stream.clone(),
-            );
-
-        let code_mappings =
-            generate_code_mappings(&result.token_stream, input.call_site.span.clone());
-        let expanded = context.register_result(
-            db,
-            token_stream.to_string(),
-            input.id,
-            result,
-            input.call_site.stable_ptr,
+        let result = self.generate_attribute_code(
+            input.id.package_id,
+            input.id.expansion.expansion_name.clone(),
+            input.attribute_location.adapted_call_site.clone(),
+            input.args.clone(),
+            token_stream.clone(),
         );
-        item_builder.add_modified(RewriteNode::TextAndMapping(expanded, code_mappings));
+
+        let result_token_stream =
+            context.register_result_metadata(db, &input, token_stream.to_string(), result);
+        item_builder.add_modified(result_rewrite_node(result_token_stream, &input));
 
         all_none
     }
+}
+
+fn result_rewrite_node(token_stream: TokenStream, input: &AttrExpansionArgs) -> RewriteNode {
+    let code_mappings = generate_code_mappings(&token_stream, input.call_site.span.clone());
+    let code_mappings = input.attribute_location.adapt_code_mappings(code_mappings);
+    let code_mappings = code_mappings.into_iter().map(Into::into).collect_vec();
+    let expanded = token_stream.to_string();
+    RewriteNode::TextAndMapping(expanded, code_mappings)
 }

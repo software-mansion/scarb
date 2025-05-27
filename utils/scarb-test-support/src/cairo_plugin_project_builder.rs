@@ -127,6 +127,14 @@ impl CairoPluginProjectBuilder {
         self.add_dep(r#"cairo-lang-primitive-token = "1""#)
     }
 
+    pub fn add_cairo_lang_parser_dep(self) -> Self {
+        self.add_dep(r#"cairo-lang-parser = { git = "https://github.com/starkware-libs/cairo.git", rev = "df9b4ea9a8aa0467ff98b7e70a447209c9c7ee89" }"#)
+    }
+
+    pub fn add_cairo_lang_syntax_dep(self) -> Self {
+        self.add_dep(r#"cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo.git", rev = "df9b4ea9a8aa0467ff98b7e70a447209c9c7ee89" }"#)
+    }
+
     pub fn default_v1() -> Self {
         let default_name = "some";
         let default_code = indoc! {r#"

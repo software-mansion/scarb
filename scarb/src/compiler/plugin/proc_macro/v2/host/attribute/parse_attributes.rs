@@ -1,3 +1,4 @@
+use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::ExpandableAttrLocation;
 use crate::compiler::plugin::proc_macro::v2::host::attribute::{
     AttrExpansionArgs, AttrExpansionFound,
 };
@@ -45,6 +46,7 @@ impl ProcMacroHostPlugin {
                             id: found,
                             args,
                             call_site: CallSiteLocation::new(&attr, db),
+                            attribute_location: ExpandableAttrLocation::new(&attr, db),
                         });
                         // Do not add the attribute for found expansion.
                         continue;
