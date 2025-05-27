@@ -1,5 +1,7 @@
 use crate::compiler::plugin::proc_macro::v2::host::attribute::token_span::TokenStreamAdaptedLocation;
-use crate::compiler::plugin::proc_macro::v2::host::attribute::{AttrExpansionFound, token_span};
+use crate::compiler::plugin::proc_macro::v2::host::attribute::{
+    AttrExpansionFound, ExpandableAttrLocation, token_span,
+};
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::EmittedAuxData;
 use crate::compiler::plugin::proc_macro::v2::host::conversion::into_cairo_diagnostics;
 use crate::compiler::plugin::proc_macro::v2::{
@@ -48,6 +50,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
         input: ProcMacroId,
         result: ProcMacroResult,
         stable_ptr: SyntaxStablePtrId,
+        attribute_span: &ExpandableAttrLocation,
     ) -> String {
         let result_str = result.token_stream.to_string();
         let changed = result_str != original;
@@ -57,8 +60,10 @@ impl<'a> InnerAttrExpansionContext<'a> {
                 .register_full_path_markers(input.package_id, result.full_path_markers.clone());
         }
 
+        let diagnostics =
+            token_span::move_diagnostics_span_by_expanded_attr(result.diagnostics, attribute_span);
         self.diagnostics
-            .extend(into_cairo_diagnostics(db, result.diagnostics, stable_ptr));
+            .extend(into_cairo_diagnostics(db, diagnostics, stable_ptr));
 
         if let Some(new_aux_data) = result.aux_data {
             self.aux_data
@@ -284,13 +289,14 @@ impl ProcMacroHostPlugin {
         let code_mappings =
             generate_code_mappings(&result.token_stream, input.call_site.span.clone());
         let code_mappings =
-            token_span::move_mappings_by_expanded_attr(code_mappings, input.attribute_location);
+            token_span::move_mappings_by_expanded_attr(code_mappings, &input.attribute_location);
         let expanded = context.register_result(
             db,
             token_stream.to_string(),
             input.id,
             result,
             input.call_site.stable_ptr,
+            &input.attribute_location,
         );
         item_builder.add_modified(RewriteNode::TextAndMapping(expanded, code_mappings));
 

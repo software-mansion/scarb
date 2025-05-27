@@ -3,7 +3,7 @@ use crate::compiler::plugin::proc_macro::v2::host::attribute::child_nodes::{
 };
 use crate::compiler::plugin::proc_macro::v2::host::attribute::token_span;
 use crate::compiler::plugin::proc_macro::v2::host::attribute::token_span::{
-    TokenStreamAdaptedLocation, adapt_call_site_span,
+    TokenStreamAdaptedLocation, adapt_call_site_span, move_diagnostics_span_by_expanded_attr,
 };
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
 use crate::compiler::plugin::proc_macro::v2::host::conversion::{
@@ -120,7 +120,10 @@ impl ProcMacroHostPlugin {
             return PluginResult {
                 diagnostics: into_cairo_diagnostics(
                     db,
-                    result.diagnostics,
+                    move_diagnostics_span_by_expanded_attr(
+                        result.diagnostics,
+                        &input.attribute_location,
+                    ),
                     input.call_site.stable_ptr,
                 ),
                 code: None,
@@ -147,7 +150,10 @@ impl ProcMacroHostPlugin {
                 remove_original_item: false,
                 diagnostics: into_cairo_diagnostics(
                     db,
-                    result.diagnostics,
+                    move_diagnostics_span_by_expanded_attr(
+                        result.diagnostics,
+                        &input.attribute_location,
+                    ),
                     input.call_site.stable_ptr,
                 ),
             };
@@ -157,7 +163,7 @@ impl ProcMacroHostPlugin {
         let code_mappings =
             generate_code_mappings(&result.token_stream, input.call_site.span.clone());
         let code_mappings =
-            token_span::move_mappings_by_expanded_attr(code_mappings, input.attribute_location);
+            token_span::move_mappings_by_expanded_attr(code_mappings, &input.attribute_location);
         let content = result.token_stream.to_string();
         PluginResult {
             code: Some(PluginGeneratedFile {
@@ -175,7 +181,14 @@ impl ProcMacroHostPlugin {
                     )))
                 }),
             }),
-            diagnostics: into_cairo_diagnostics(db, result.diagnostics, input.call_site.stable_ptr),
+            diagnostics: into_cairo_diagnostics(
+                db,
+                move_diagnostics_span_by_expanded_attr(
+                    result.diagnostics,
+                    &input.attribute_location,
+                ),
+                input.call_site.stable_ptr,
+            ),
             remove_original_item: true,
         }
     }

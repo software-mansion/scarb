@@ -1620,6 +1620,118 @@ fn can_emit_diagnostic_with_out_of_bounds_span() {
 }
 
 #[test]
+fn can_emit_diagnostic_with_custom_location_with_parser() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_cairo_lang_parser_dep().add_cairo_lang_syntax_dep()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream, TokenTree, TextSpan, Diagnostic};
+        use cairo_lang_parser::utils::SimpleParserDatabase;
+        use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let first_attr_start_span = token_stream
+                .tokens
+                .first()
+                .map(|tt| match tt {
+                    TokenTree::Ident(token) => token.span.clone(),
+                })
+                .unwrap();
+            let first_attr_end_span = token_stream
+                .tokens
+                .iter()
+                .find(|tt| match tt {
+                    TokenTree::Ident(token) => token.content.as_ref() == "]\n",
+                })
+                .map(|tt| match tt {
+                    TokenTree::Ident(token) => token.span.clone(),
+                })
+                .unwrap();
+
+            let mut start_span = None;
+            let mut end_span = None;
+
+            for token_tree in token_stream.tokens.iter() {
+                let TokenTree::Ident(token) = token_tree;
+                if token.content.as_ref().contains("(") {
+                    start_span = Some(token.span.clone());
+                }
+                if token.content.as_ref().contains(")") {
+                    end_span = Some(token.span.clone());
+                }
+            }
+            let db_val = SimpleParserDatabase::default();
+            let db = &db_val;
+            let (body, _diagnostics) = db.parse_token_stream(&token_stream);
+            let body = SyntaxNodeWithDb::new(&body, db);
+            let result = ProcMacroResult::new(quote!{
+                fn other() {}
+
+                #body
+            });
+
+            // Emit error diagnostic if tuple type is found
+            if let (Some(start), Some(end)) = (start_span, end_span) {
+                // Create a custom span from start to end
+                let custom_span = TextSpan::new(start.start, end.end);
+                let diag1 = Diagnostic::span_error(custom_span, "Unsupported tuple type");
+
+                let custom_span = TextSpan::new(first_attr_start_span.start, first_attr_end_span.end);
+                let diag2 = Diagnostic::span_warning(
+                    custom_span,
+                    "This is a warning from the macro.",
+                );
+
+                result.with_diagnostics(vec![diag1, diag2].into())
+            } else {
+                result
+            }
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[doc(hidden)]
+            #[some]
+            struct X {
+                x: felt252,
+                y: (u32, u64),
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Plugin diagnostic: Unsupported tuple type
+             --> [..]lib.cairo:5:8
+                y: (u32, u64),
+                   ^^^^^^^^^^
+
+            warn: Plugin diagnostic: This is a warning from the macro.
+             --> [..]lib.cairo:1:1
+            #[doc(hidden)]
+            ^^^^^^^^^^^^^^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
 fn diags_can_be_mapped_to_call_site_correctly() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
