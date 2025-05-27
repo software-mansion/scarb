@@ -72,16 +72,25 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
                     ScarbCommand::new()
                         .arg("mdbook")
                         .arg("--input")
-                        .arg(pkg_output_dir)
+                        .arg(pkg_output_dir.clone())
                         .arg("--output")
                         .arg(build_output_dir.clone())
                         .env("SCARB_UI_VERBOSITY", ui.verbosity().to_string())
                         .run()?;
-                    let output_path = build_output_dir
+                    let build_output_path = build_output_dir
                         .strip_prefix(&metadata.workspace.root)
                         .unwrap_or(&build_output_dir)
                         .to_string();
-                    ui.print(Status::new("Saving build output to:", &output_path));
+                    ui.print(Status::new("Saving build output to:", &build_output_path));
+                    ui.print(format!(
+                        "\nRun the following to see the results: \n`mdbook serve {output_path}`\
+                         \n\nOr open the following in your browser: \n`{pkg_output_dir}/book/index.html`",
+                    ));
+                } else {
+                    ui.print(format!(
+                        "\nRun the following to see the results: \n`mdbook serve {output_path}`\n(you will need to have mdbook installed)\
+                        \n\nOr build html docs by running `scarb doc --build`",
+                    ));
                 }
             }
         }
