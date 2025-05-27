@@ -1,23 +1,19 @@
+use crate::compiler::plugin::proc_macro::v2::host::attribute::AttributePluginResult;
 use crate::compiler::plugin::proc_macro::v2::host::attribute::child_nodes::{
     ChildNodesWithoutAttributes, ItemWithAttributes,
 };
-use crate::compiler::plugin::proc_macro::v2::host::attribute::token_span;
-use crate::compiler::plugin::proc_macro::v2::host::attribute::token_span::{
-    TokenStreamAdaptedLocation, adapt_call_site_span, move_diagnostics_span_by_expanded_attr,
+use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::{
+    AdaptedTokenStream, ExpandableAttrLocation,
 };
-use crate::compiler::plugin::proc_macro::v2::host::aux_data::{EmittedAuxData, ProcMacroAuxData};
-use crate::compiler::plugin::proc_macro::v2::host::conversion::{
-    CallSiteLocation, SpanSource, into_cairo_diagnostics,
-};
+use crate::compiler::plugin::proc_macro::v2::host::conversion::CallSiteLocation;
 use crate::compiler::plugin::proc_macro::v2::host::generate_code_mappings;
 use crate::compiler::plugin::proc_macro::v2::{
     ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
-use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginGeneratedFile, PluginResult};
-use cairo_lang_filesystem::span::TextWidth;
-use cairo_lang_macro::{AllocationContext, TextOffset, TextSpan, TokenStream};
+use crate::core::PackageId;
+use cairo_lang_macro::{AllocationContext, ProcMacroResult, TextSpan, TokenStream};
+use cairo_lang_syntax::node::ast;
 use cairo_lang_syntax::node::db::SyntaxGroup;
-use cairo_lang_syntax::node::{TypedSyntaxNode, ast};
 use smol_str::SmolStr;
 
 impl ProcMacroHostPlugin {
@@ -45,7 +41,7 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         item_ast: ast::ModuleItem,
         ctx: &AllocationContext,
-    ) -> (AttrExpansionFound, TokenStreamAdaptedLocation) {
+    ) -> (AttrExpansionFound, AdaptedTokenStream) {
         let mut token_stream_builder = TokenStreamBuilder::new(db);
         let input = match item_ast.clone() {
             ast::ModuleItem::Trait(ast) => {
@@ -89,9 +85,22 @@ impl ProcMacroHostPlugin {
             // TODO(#2204): Support inline macro expansion at module item level.
             ast::ModuleItem::InlineMacro(_) => AttrExpansionFound::None,
         };
-        let token_stream = token_stream_builder.build(ctx);
-        let token_stream = token_span::move_spans(&input, token_stream);
+        let token_stream = input.adapt_token_stream(token_stream_builder.build(ctx));
         (input, token_stream)
+    }
+
+    pub(crate) fn generate_attribute_code(
+        &self,
+        package_id: PackageId,
+        item_name: SmolStr,
+        call_site: TextSpan,
+        attr: TokenStream,
+        token_stream: AdaptedTokenStream,
+    ) -> ProcMacroResult {
+        self.instance(package_id)
+            .try_v2()
+            .expect("procedural macro using v1 api used in a context expecting v2 api")
+            .generate_code(item_name, call_site, attr, token_stream.into())
     }
 
     pub fn expand_attribute(
@@ -99,36 +108,30 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         last: bool,
         args: TokenStream,
-        token_stream: TokenStreamAdaptedLocation,
+        token_stream: AdaptedTokenStream,
         input: AttrExpansionArgs,
-    ) -> PluginResult {
+    ) -> AttributePluginResult {
         let original = token_stream.to_string();
-        let result = self
-            .instance(input.id.package_id)
-            .try_v2()
-            .expect("procedural macro using v1 api used in a context expecting v2 api")
-            .generate_code(
-                input.id.expansion.expansion_name.clone(),
-                input.attribute_location.adapted_call_site.clone(),
-                args,
-                token_stream.into(),
-            );
+        let result = self.generate_attribute_code(
+            input.id.package_id,
+            input.id.expansion.expansion_name.clone(),
+            input.attribute_location.adapted_call_site.clone(),
+            args,
+            token_stream,
+        );
 
         // Handle token stream.
         if result.token_stream.is_empty() {
             // Remove original code
-            return PluginResult {
-                diagnostics: into_cairo_diagnostics(
+            return AttributePluginResult::new()
+                .with_remove_original_item(true)
+                .with_diagnostics(
                     db,
-                    move_diagnostics_span_by_expanded_attr(
-                        result.diagnostics,
-                        &input.attribute_location,
-                    ),
                     input.call_site.stable_ptr,
-                ),
-                code: None,
-                remove_original_item: true,
-            };
+                    input
+                        .attribute_location
+                        .adapt_diagnostics(result.diagnostics),
+                );
         }
 
         // Full path markers require code modification.
@@ -145,52 +148,37 @@ impl ProcMacroHostPlugin {
         // called again for this AST item.
         // This optimization limits the number of generated nodes a bit.
         if last && result.aux_data.is_none() && original == result.token_stream.to_string() {
-            return PluginResult {
-                code: None,
-                remove_original_item: false,
-                diagnostics: into_cairo_diagnostics(
-                    db,
-                    move_diagnostics_span_by_expanded_attr(
-                        result.diagnostics,
-                        &input.attribute_location,
-                    ),
-                    input.call_site.stable_ptr,
-                ),
-            };
+            return AttributePluginResult::new().with_diagnostics(
+                db,
+                input.call_site.stable_ptr,
+                input
+                    .attribute_location
+                    .adapt_diagnostics(result.diagnostics),
+            );
         }
 
         let file_name = format!("proc_{}", input.id.expansion.cairo_name);
         let code_mappings =
             generate_code_mappings(&result.token_stream, input.call_site.span.clone());
-        let code_mappings =
-            token_span::move_mappings_by_expanded_attr(code_mappings, &input.attribute_location);
+        let code_mappings = input.attribute_location.adapt_code_mappings(code_mappings);
         let content = result.token_stream.to_string();
-        PluginResult {
-            code: Some(PluginGeneratedFile {
-                name: file_name.into(),
-                code_mappings,
-                content,
-                diagnostics_note: Some(format!(
-                    "this error originates in the attribute macro: `{}`",
-                    input.id.expansion.cairo_name
-                )),
-                aux_data: result.aux_data.map(|new_aux_data| {
-                    DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
-                        new_aux_data.into(),
-                        input.id,
-                    )))
-                }),
-            }),
-            diagnostics: into_cairo_diagnostics(
+
+        AttributePluginResult::new()
+            .with_remove_original_item(true)
+            .with_diagnostics(
                 db,
-                move_diagnostics_span_by_expanded_attr(
-                    result.diagnostics,
-                    &input.attribute_location,
-                ),
                 input.call_site.stable_ptr,
-            ),
-            remove_original_item: true,
-        }
+                input
+                    .attribute_location
+                    .adapt_diagnostics(result.diagnostics),
+            )
+            .with_code(
+                file_name.into(),
+                content,
+                code_mappings,
+                result.aux_data,
+                input.id,
+            )
     }
 }
 
@@ -227,24 +215,6 @@ impl AttrExpansionFound {
                 Some(args.id.expansion.cairo_name.clone())
             }
             AttrExpansionFound::None => None,
-        }
-    }
-}
-
-pub struct ExpandableAttrLocation {
-    pub token_offset: TextOffset,
-    pub token_length: TextWidth,
-    pub adapted_call_site: TextSpan,
-}
-
-impl ExpandableAttrLocation {
-    pub fn new<T: TypedSyntaxNode>(node: &T, db: &dyn SyntaxGroup) -> Self {
-        let text_span = node.text_span(db);
-        let token_length = text_span.end - text_span.start;
-        Self {
-            token_offset: text_span.start,
-            token_length: TextWidth::new_for_testing(token_length + 1),
-            adapted_call_site: adapt_call_site_span(node.text_span(db), text_span.start),
         }
     }
 }
