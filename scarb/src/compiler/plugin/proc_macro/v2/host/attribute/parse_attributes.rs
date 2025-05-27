@@ -1,5 +1,6 @@
+use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::ExpandableAttrLocation;
 use crate::compiler::plugin::proc_macro::v2::host::attribute::{
-    AttrExpansionArgs, AttrExpansionFound, ExpandableAttrLocation,
+    AttrExpansionArgs, AttrExpansionFound,
 };
 use crate::compiler::plugin::proc_macro::v2::host::conversion::CallSiteLocation;
 use crate::compiler::plugin::proc_macro::v2::{ProcMacroHostPlugin, TokenStreamBuilder};

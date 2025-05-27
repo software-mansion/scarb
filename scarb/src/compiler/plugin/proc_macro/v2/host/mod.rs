@@ -160,7 +160,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
         // Handle inner functions.
         if let InnerAttrExpansionResult::Some(result) = self.expand_inner_attr(db, item_ast.clone())
         {
-            return result;
+            return result.into();
         }
 
         // Expand first attribute.
@@ -178,7 +178,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
             let token_stream = body.with_metadata(stream_metadata.clone());
             self.expand_attribute(db, last, input.args.clone(), token_stream, input)
         }) {
-            return result;
+            return result.into();
         }
 
         // Expand all derives.
