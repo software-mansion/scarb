@@ -58,7 +58,9 @@ use crate::compiler::plugin::proc_macro::v2::host::attribute::{
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
 use cairo_lang_filesystem::span::TextSpan as CairoTextSpan;
 use cairo_lang_filesystem::span::TextWidth;
-use cairo_lang_macro::{TextOffset, TextSpan, TokenStream, TokenStreamMetadata, TokenTree};
+use cairo_lang_macro::{
+    Diagnostic, TextOffset, TextSpan, TokenStream, TokenStreamMetadata, TokenTree,
+};
 use std::fmt::Display;
 
 /// Move spans in the `TokenStream` for macro expansion input.
@@ -94,7 +96,7 @@ pub fn move_spans(
 /// Move code mappings to account for the removed expandable attribute for the expansion output.
 pub fn move_mappings_by_expanded_attr(
     code_mappings: Vec<CodeMapping>,
-    attribute_span: ExpandableAttrLocation,
+    attribute_span: &ExpandableAttrLocation,
 ) -> Vec<CodeMapping> {
     let attr_offset = attribute_span.token_offset;
     let attr_length = attribute_span.token_length;
@@ -126,6 +128,29 @@ pub fn move_mappings_by_expanded_attr(
                 span: code_mapping.span,
                 origin,
             }
+        })
+        .collect()
+}
+
+pub fn move_diagnostics_span_by_expanded_attr(
+    diagnostics: Vec<Diagnostic>,
+    attribute_span: &ExpandableAttrLocation,
+) -> Vec<Diagnostic> {
+    diagnostics
+        .into_iter()
+        .map(|mut diagnostic| {
+            if let Some(span) = diagnostic.span.as_mut() {
+                if span.start < attribute_span.token_length.as_u32() {
+                    span.start += attribute_span.token_offset;
+                    span.end += attribute_span.token_offset;
+                } else if span.start
+                    < attribute_span.token_length.as_u32() + attribute_span.token_offset
+                {
+                    span.start -= attribute_span.token_length.as_u32();
+                    span.end -= attribute_span.token_length.as_u32();
+                }
+            }
+            diagnostic
         })
         .collect()
 }
