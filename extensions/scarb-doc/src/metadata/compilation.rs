@@ -137,6 +137,9 @@ fn get_crate_settings_for_component(
         associated_item_constraints: package
             .experimental_features
             .contains(&String::from("associated_item_constraints")),
+        user_defined_inline_macros: package
+            .experimental_features
+            .contains(&String::from("user_defined_inline_macros")),
     };
 
     let dependencies = component
