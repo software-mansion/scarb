@@ -44,8 +44,10 @@
             "use_extern_types": [],
             "use_extern_functions": [],
             "use_submodules": []
-          }
-        }
+          },
+          "groups": []
+        },
+        "groups": []
       },
       "metadata": {
         "name": "hello_world",
