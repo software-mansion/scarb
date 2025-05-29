@@ -1,7 +1,8 @@
 use crate::location_links::DocLocationLink;
-use crate::types::{
+use crate::types::module_type::Module;
+use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
-    ImplFunction, ImplType, Member, Module, Struct, Trait, TraitConstant, TraitFunction, TraitType,
+    ImplFunction, ImplType, Member, Struct, Trait, TraitConstant, TraitFunction, TraitType,
     TypeAlias, Variant,
 };
 use cairo_lang_doc::parser::DocumentationCommentToken;
