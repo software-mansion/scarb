@@ -8,7 +8,8 @@
             "name": "hello_world",
             "doc": null,
             "signature": null,
-            "full_path": "hello_world"
+            "full_path": "hello_world",
+            "group": null
           },
           "submodules": [
             {
@@ -16,7 +17,8 @@
                 "name": "Alejandro",
                 "doc": null,
                 "signature": null,
-                "full_path": "hello_world::Alejandro"
+                "full_path": "hello_world::Alejandro",
+                "group": null
               },
               "submodules": [],
               "constants": [],
@@ -46,7 +48,8 @@
                       "name": "Rodrigo",
                       "doc": null,
                       "signature": null,
-                      "full_path": "hello_world::Rodrigo"
+                      "full_path": "hello_world::Rodrigo",
+                      "group": null
                     },
                     "submodules": [
                       {
@@ -54,7 +57,8 @@
                           "name": "Valentina",
                           "doc": null,
                           "signature": null,
-                          "full_path": "hello_world::Rodrigo::Valentina"
+                          "full_path": "hello_world::Rodrigo::Valentina",
+                          "group": null
                         },
                         "submodules": [],
                         "constants": [],
@@ -114,7 +118,8 @@
                 "name": "Isabella",
                 "doc": null,
                 "signature": null,
-                "full_path": "hello_world::Isabella"
+                "full_path": "hello_world::Isabella",
+                "group": null
               },
               "submodules": [],
               "constants": [],
@@ -137,7 +142,8 @@
                       "name": "Mariana",
                       "doc": null,
                       "signature": "struct Mariana {}",
-                      "full_path": "hello_world::Rodrigo::Mariana"
+                      "full_path": "hello_world::Rodrigo::Mariana",
+                      "group": null
                     }
                   }
                 ],
@@ -156,7 +162,8 @@
                 "name": "Rodrigo",
                 "doc": null,
                 "signature": null,
-                "full_path": "hello_world::Rodrigo"
+                "full_path": "hello_world::Rodrigo",
+                "group": null
               },
               "submodules": [
                 {
@@ -164,7 +171,8 @@
                     "name": "Valentina",
                     "doc": null,
                     "signature": null,
-                    "full_path": "hello_world::Rodrigo::Valentina"
+                    "full_path": "hello_world::Rodrigo::Valentina",
+                    "group": null
                   },
                   "submodules": [],
                   "constants": [],
@@ -201,7 +209,8 @@
                     "name": "Mariana",
                     "doc": null,
                     "signature": "struct Mariana {}",
-                    "full_path": "hello_world::Rodrigo::Mariana"
+                    "full_path": "hello_world::Rodrigo::Mariana",
+                    "group": null
                   }
                 }
               ],
