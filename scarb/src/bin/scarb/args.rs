@@ -183,6 +183,11 @@ pub enum Command {
     Metadata(MetadataArgs),
     /// Create a new Scarb package at PATH.
     New(NewArgs),
+    /// Display a tree visualisation of a dependency graph.
+    #[command(after_help = "\
+        WARNING: The JSON output of this command is unstable across Scarb releases.
+    ")]
+    Tree(TreeCommandArgs),
     /// Assemble the local package into a distributable tarball.
     #[command(after_help = "\
         This command will create distributable, compressed `.tar.zst` archives containing source \
@@ -602,6 +607,30 @@ pub struct CompletionsArgs {
     /// Target shell for completion generation
     #[arg(value_enum)]
     pub shell: Option<Shell>,
+}
+
+/// Arguments accepted by the `tree` command.
+#[derive(Parser, Clone, Debug)]
+pub struct TreeCommandArgs {
+    /// Specify the package(s) to operate on.
+    #[command(flatten)]
+    pub packages_filter: PackagesFilter,
+
+    /// Prune the given package(s) from the display of the dependency tree.
+    #[arg(long)]
+    pub prune: Vec<PackageName>,
+
+    /// Maximum display depth of the dependency tree.
+    #[arg(long)]
+    pub depth: Option<usize>,
+
+    /// Do not de-duplicate repeated dependencies.
+    #[arg(long)]
+    pub no_dedupe: bool,
+
+    /// Include the `core` package in the dependency tree.
+    #[arg(long)]
+    pub core: bool,
 }
 
 /// Git reference specification arguments.
