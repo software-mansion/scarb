@@ -29,6 +29,7 @@ pub mod publish;
 pub mod remove;
 pub mod run;
 pub mod test;
+mod tree;
 mod update;
 
 pub fn run(command: Command, config: &mut Config) -> Result<()> {
@@ -59,6 +60,7 @@ pub fn run(command: Command, config: &mut Config) -> Result<()> {
         Remove(args) => remove::run(args, config),
         Run(args) => run::run(args, config),
         Test(args) => test::run(args, config),
+        Tree(args) => tree::run(args, config),
         Update => update::run(config),
     }
 }
