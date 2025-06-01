@@ -255,7 +255,7 @@ jobs:
     needs: [ cleanup, upload, release, prepare ]
     steps:
       - name: Notifying about Nightly fail!
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@v2.1.0
         with:
           webhook: ${{ secrets.SLACK_NIGHTLY_FAILURE_WEBHOOK_URL }}
           webhook-type: webhook-trigger
@@ -272,7 +272,7 @@ jobs:
     needs: [ check, notify_failed ]
     steps:
       - name: Notifying about check fail!
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@v2.1.0
         with:
           webhook: ${{ secrets.SLACK_NIGHTLY_CHECK_FAILURE_WEBHOOK_URL }}
           webhook-type: webhook-trigger
