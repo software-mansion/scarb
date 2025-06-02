@@ -2048,3 +2048,82 @@ fn span_offsets_calculated_correctly_for_function_with_non_macro_attrs() {
             error: could not compile `hello` due to previous error
        "#});
 }
+
+#[test]
+fn token_stream_parsed_with_correct_spans() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
+            use cairo_lang_parser::utils::SimpleParserDatabase;
+            use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+            #[attribute_macro]
+            pub fn simple_attr(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+                let db_val = SimpleParserDatabase::default();
+                let db = &db_val;
+                let (body, _diagnostics) = db.parse_token_stream(&item);
+                let body = SyntaxNodeWithDb::new(&body, db);
+                let ts = quote! {
+                    #body
+                };
+                for token in &ts.tokens {
+                    println!("{:?}", &token);
+                }
+                ProcMacroResult::new(ts)
+            }
+
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_builtin("assert_macros")
+        // Note we add leading whitespace before function declaration.
+        // This cannot affect the span in resulting token stream.
+        .lib_cairo(indoc! {r#"
+            #[doc(hidden)]
+            fn other() {}
+
+
+            #[simple_attr]
+              fn foo() {
+                let _a = 1;
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r##"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            Ident(Token { content: "  fn ", span: TextSpan { start: 48, end: 50 } })
+            Ident(Token { content: "foo", span: TextSpan { start: 51, end: 54 } })
+            Ident(Token { content: "(", span: TextSpan { start: 54, end: 55 } })
+            Ident(Token { content: ") ", span: TextSpan { start: 55, end: 56 } })
+            Ident(Token { content: "{
+            ", span: TextSpan { start: 57, end: 58 } })
+            Ident(Token { content: "    let ", span: TextSpan { start: 63, end: 66 } })
+            Ident(Token { content: "_a ", span: TextSpan { start: 67, end: 69 } })
+            Ident(Token { content: "= ", span: TextSpan { start: 70, end: 71 } })
+            Ident(Token { content: "1", span: TextSpan { start: 72, end: 73 } })
+            Ident(Token { content: ";
+            ", span: TextSpan { start: 73, end: 74 } })
+            Ident(Token { content: "}
+            ", span: TextSpan { start: 75, end: 76 } })
+            Ident(Token { content: "", span: TextSpan { start: 77, end: 77 } })
+            [..]Finished `dev` profile target(s) in [..]
+      "##});
+}
