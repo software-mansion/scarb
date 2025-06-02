@@ -113,14 +113,15 @@ impl ExpandableAttrLocation {
     pub fn new<T: TypedSyntaxNode>(node: &T, db: &dyn SyntaxGroup) -> Self {
         let text_span = node.text_span(db);
         let token_offset = text_span.start;
-        let token_length = text_span.end - text_span.start;
+        let span_with_trivia = node.as_syntax_node().span(db);
+        let token_length = span_with_trivia.end.as_u32() - span_with_trivia.start.as_u32();
         let adapted_call_site = TextSpan {
             start: 0,
             end: text_span.end - token_offset,
         };
         Self {
             token_offset,
-            token_length: TextWidth::new_for_testing(token_length + 1),
+            token_length: TextWidth::new_for_testing(token_length),
             adapted_call_site,
         }
     }
