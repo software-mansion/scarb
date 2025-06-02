@@ -1644,7 +1644,7 @@ fn can_emit_diagnostic_with_custom_location_with_parser() {
                 .tokens
                 .iter()
                 .find(|tt| match tt {
-                    TokenTree::Ident(token) => token.content.as_ref() == "]\n",
+                    TokenTree::Ident(token) => token.content.as_ref() == "]",
                 })
                 .map(|tt| match tt {
                     TokenTree::Ident(token) => token.span.clone(),
