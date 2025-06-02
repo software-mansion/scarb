@@ -65,7 +65,7 @@ use cairo_lang_syntax::node::db::SyntaxGroup;
 use std::fmt::Display;
 
 /// [`TokenStream`] with token spans adapted for expansion input.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AdaptedTokenStream(TokenStream);
 
 impl AdaptedTokenStream {
@@ -86,6 +86,7 @@ impl Display for AdaptedTokenStream {
     }
 }
 
+#[derive(Debug)]
 pub struct AdaptedCodeMapping(CodeMapping);
 
 impl From<AdaptedCodeMapping> for CodeMapping {
