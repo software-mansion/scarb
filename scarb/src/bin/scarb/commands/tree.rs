@@ -31,118 +31,141 @@ fn build(
     resolve: &ops::WorkspaceResolve,
     args: &TreeCommandArgs,
 ) -> Result<Tree> {
-    let mut forest = Tree::default();
-
-    // Tracks visited packages to avoid duplicates.
-    let mut visited = HashSet::<PackageId>::new();
-
-    fn visit(
-        package_id: PackageId,
+    struct Visitor<'a> {
         main_package_id: PackageId,
-        tree: &mut Tree,
-        depth: usize,
-        visited: &mut HashSet<PackageId>,
-        resolve: &ops::WorkspaceResolve,
-        args: &TreeCommandArgs,
-    ) -> Result<(), BuildError> {
-        // Only show the core package if explicitly requested.
-        if package_id.is_core() && !args.core {
-            return Err(BuildError::Pruned);
-        }
-
-        // Skip if this package should be pruned.
-        if args.prune.contains(&package_id.name) {
-            return Err(BuildError::Pruned);
-        }
-
-        // Check if we've reached the maximum depth.
-        // For max_depth=0, we want to list roots only, hence we use strict equality.
-        if let Some(max_depth) = args.depth {
-            if depth > max_depth {
-                tree.max_depth_reached = true;
-                return Err(BuildError::MaxDepthReached);
-            }
-        }
-
-        tree.package = Some(package_id);
-
-        // Recursively visit dependencies if we haven't visited this package before
-        // or if no_dedupe is true.
-        let already_visited = visited.contains(&package_id);
-        tree.already_visited_duplicate = already_visited && !args.no_dedupe;
-        if !tree.already_visited_duplicate {
-            visited.insert(package_id);
-
-            let mut for_each_dep = |deps: &[Package], tree: &mut Tree| {
-                for dep in deps {
-                    let branch = tree.branch();
-                    match visit(
-                        dep.id,
-                        main_package_id,
-                        branch,
-                        depth + 1,
-                        visited,
-                        resolve,
-                        args,
-                    ) {
-                        Ok(()) => {}
-                        Err(BuildError::Pruned) => {
-                            tree.rollback();
-                        }
-                        Err(BuildError::MaxDepthReached) => {
-                            // Avoid emitting multiple `max_depth_reached` stubs.
-                            break;
-                        }
-                        err @ Err(BuildError::Anyhow(_)) => {
-                            return err;
-                        }
-                    }
-                }
-                Ok(())
-            };
-
-            // Collect normal dependencies.
-            let normal_deps =
-                resolve.package_dependencies(package_id, &TargetKind::LIB, main_package_id)?;
-            for_each_dep(&normal_deps, tree)?;
-
-            // Collect dev dependencies and put them in a grouping branch.
-            let dev_tree = tree.branch();
-            dev_tree.group = Some("dev-dependencies");
-
-            let mut dev_deps =
-                resolve.package_dependencies(package_id, &TargetKind::TEST, main_package_id)?;
-
-            // We're only interested in packages that are ONLY dev dependencies here.
-            let normal_deps_ids: HashSet<PackageId> = normal_deps.iter().map(|p| p.id).collect();
-            dev_deps.retain(|pkg| !normal_deps_ids.contains(&pkg.id));
-
-            for_each_dep(&dev_deps, dev_tree)?;
-
-            // Roll back the branch if no dev dependencies were found.
-            // We use rollbacks instead of checking `dev_deps` for emptiness to account pruning.
-            if dev_tree.branches.is_empty() {
-                tree.rollback();
-            }
-        }
-
-        Ok(())
+        // Tracks visited packages to avoid duplicates among separate branches.
+        visited: &'a mut HashSet<PackageId>,
+        // Tracks visited packages to avoid cycles within a branch.
+        stack: Vec<PackageId>,
+        resolve: &'a ops::WorkspaceResolve,
+        args: &'a TreeCommandArgs,
     }
 
+    impl Visitor<'_> {
+        fn visit(
+            &mut self,
+            package_id: PackageId,
+            tree: &mut Tree,
+            depth: usize,
+        ) -> Result<(), BuildError> {
+            self.stack.push(package_id);
+            let result = self.visit_inner(package_id, tree, depth);
+            self.stack.pop();
+            result
+        }
+
+        fn visit_inner(
+            &mut self,
+            package_id: PackageId,
+            tree: &mut Tree,
+            depth: usize,
+        ) -> Result<(), BuildError> {
+            // Only show the core package if explicitly requested.
+            if package_id.is_core() && !self.args.core {
+                return Err(BuildError::Pruned);
+            }
+
+            // Skip if this package should be pruned.
+            if self.args.prune.contains(&package_id.name) {
+                return Err(BuildError::Pruned);
+            }
+
+            // Check if we've reached the maximum depth.
+            // For max_depth=0, we want to list roots only, hence we use strict equality.
+            if let Some(max_depth) = self.args.depth {
+                if depth > max_depth {
+                    tree.max_depth_reached = true;
+                    return Err(BuildError::MaxDepthReached);
+                }
+            }
+
+            tree.package = Some(package_id);
+
+            // Recursively visit dependencies if we haven't visited this package before
+            // or if no_dedupe is true, or if there is a cycle.
+            let already_visited = self.visited.contains(&package_id) && !self.args.no_dedupe;
+            let is_cycle = self.stack.iter().filter(|p| **p == package_id).count() > 1;
+            tree.already_visited_duplicate = already_visited || is_cycle;
+            if !tree.already_visited_duplicate {
+                self.visited.insert(package_id);
+
+                // Collect normal dependencies.
+                let normal_deps = self.resolve.package_dependencies(
+                    package_id,
+                    &TargetKind::LIB,
+                    self.main_package_id,
+                )?;
+
+                self.visit_deps(&normal_deps, tree, depth)?;
+
+                // Collect dev dependencies and put them in a grouping branch.
+                let mut dev_deps = self.resolve.package_dependencies(
+                    package_id,
+                    &TargetKind::TEST,
+                    self.main_package_id,
+                )?;
+
+                let dev_tree = tree.branch();
+                dev_tree.group = Some("dev-dependencies");
+
+                // We're only interested in packages that are ONLY dev dependencies here.
+                let normal_deps_ids: HashSet<PackageId> =
+                    normal_deps.iter().map(|p| p.id).collect();
+                dev_deps.retain(|pkg| !normal_deps_ids.contains(&pkg.id));
+
+                self.visit_deps(&dev_deps, dev_tree, depth)?;
+
+                // Roll back the branch if no dev dependencies were found.
+                // We use rollbacks instead of checking `dev_deps` for emptiness to account pruning.
+                if dev_tree.branches.is_empty() {
+                    tree.rollback();
+                }
+            }
+
+            Ok(())
+        }
+
+        fn visit_deps(
+            &mut self,
+            deps: &[Package],
+            tree: &mut Tree,
+            depth: usize,
+        ) -> Result<(), BuildError> {
+            for dep in deps {
+                let branch = tree.branch();
+                match self.visit(dep.id, branch, depth + 1) {
+                    Ok(()) => {}
+                    Err(BuildError::Pruned) => {
+                        tree.rollback();
+                    }
+                    Err(BuildError::MaxDepthReached) => {
+                        // Avoid emitting multiple `max_depth_reached` stubs.
+                        break;
+                    }
+                    err @ Err(BuildError::Anyhow(_)) => {
+                        return err;
+                    }
+                }
+            }
+            Ok(())
+        }
+    }
+
+    let mut forest = Tree::default();
+    let mut visited = Default::default();
     for package_id in packages {
-        if let Err(BuildError::Anyhow(err)) = visit(
-            package_id,
-            package_id,
-            forest.branch(),
-            0,
-            &mut visited,
+        let mut visitor = Visitor {
+            main_package_id: package_id,
+            visited: &mut visited,
+            stack: Default::default(),
             resolve,
             args,
-        ) {
+        };
+
+        if let Err(BuildError::Anyhow(err)) = visitor.visit(package_id, forest.branch(), 0) {
             return Err(err);
         }
     }
-
     Ok(forest)
 }
 

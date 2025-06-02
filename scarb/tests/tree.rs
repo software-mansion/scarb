@@ -95,10 +95,18 @@ fn requires_workspace() {
 fn no_dedupe() {
     let t = TempDir::new().unwrap();
 
+    let common_dep = t.child("common_dep");
+    ProjectBuilder::start()
+        .name("common_dep")
+        .version("0.1.0")
+        .build(&common_dep);
+
     let common = t.child("common");
     ProjectBuilder::start()
         .name("common")
         .version("0.1.0")
+        .dep("common_dep", &common_dep)
+        .dep_builtin("starknet")
         .build(&common);
 
     let dep1 = t.child("dep1");
@@ -133,8 +141,12 @@ fn no_dedupe() {
             root v0.1.0 ([..])
             ├── dep1 v0.1.0 ([..])
             │   └── common v0.1.0 ([..])
+            │       ├── common_dep v0.1.0 ([..])
+            │       └── starknet v[..] (std)
             └── dep2 v0.1.0 ([..])
                 └── common v0.1.0 ([..])
+                    ├── common_dep v0.1.0 ([..])
+                    └── starknet v[..] (std)
         "#});
 }
 
@@ -437,5 +449,66 @@ fn workspace_members() {
             ├── common v0.1.0 ([..]) (*)
             └── [dev-dependencies]
                 └── starknet v[..] (std)
+        "#});
+}
+
+#[test]
+fn cycle() {
+    let t = TempDir::new().unwrap();
+
+    let root = t.child("root");
+    let dep1 = t.child("dep1");
+    ProjectBuilder::start()
+        .name("dep1")
+        .version("0.1.0")
+        .dep("root", &root)
+        .build(&dep1);
+
+    ProjectBuilder::start()
+        .name("root")
+        .version("0.1.0")
+        .dep("dep1", &dep1)
+        .build(&root);
+
+    Scarb::quick_snapbox()
+        .arg("tree")
+        .current_dir(&root)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            root v0.1.0 ([..])
+            └── dep1 v0.1.0 ([..])
+                └── root v0.1.0 ([..]) (*)
+        "#});
+}
+
+#[test]
+fn no_dedupe_cycle() {
+    let t = TempDir::new().unwrap();
+
+    let root = t.child("root");
+    let dep1 = t.child("dep1");
+    ProjectBuilder::start()
+        .name("dep1")
+        .version("0.1.0")
+        .dep("root", &root)
+        .build(&dep1);
+
+    ProjectBuilder::start()
+        .name("root")
+        .version("0.1.0")
+        .dep("dep1", &dep1)
+        .build(&root);
+
+    Scarb::quick_snapbox()
+        .arg("tree")
+        .arg("--no-dedupe")
+        .current_dir(&root)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+            root v0.1.0 ([..])
+            └── dep1 v0.1.0 ([..])
+                └── root v0.1.0 ([..]) (*)
         "#});
 }
