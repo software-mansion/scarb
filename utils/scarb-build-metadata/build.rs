@@ -63,7 +63,7 @@ fn cairo_version() {
     let compiler_dep = scarb_node
         .deps
         .iter()
-        .find(|dep| dep.name == "cairo_lang_compiler")
+        .find(|dep| dep.name.as_str() == "cairo_lang_compiler")
         .unwrap();
     let compiler_package = metadata
         .packages
