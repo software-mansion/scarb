@@ -66,7 +66,7 @@ fn get_cargo_package_version(package: &Package) -> Result<String> {
     let package = metadata
         .packages
         .iter()
-        .find(|pkg| pkg.name == cargo_package_name)
+        .find(|pkg| pkg.name.as_str() == cargo_package_name)
         .ok_or_else(|| anyhow!("could not get `{cargo_package_name}` package from metadata"))?;
 
     Ok(package.version.to_string())
