@@ -21,6 +21,7 @@ use smol_str::ToSmolStr;
 
 pub mod attributes;
 pub mod db;
+pub mod diagnostics;
 pub mod docs_generation;
 pub mod errors;
 pub mod location_links;
