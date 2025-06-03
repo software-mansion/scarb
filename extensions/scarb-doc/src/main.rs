@@ -1,5 +1,6 @@
 use anyhow::{Context, Result, ensure};
 use clap::Parser;
+use scarb_doc::diagnostics::print_diagnostics;
 use scarb_doc::docs_generation::markdown::MarkdownContent;
 use scarb_doc::errors::MetadataCommandError;
 use scarb_doc::metadata::get_target_dir;
@@ -36,6 +37,7 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         args.document_private_items,
         ui.clone(),
     )?;
+    print_diagnostics(&ui);
 
     match args.output_format {
         OutputFormat::Json => {

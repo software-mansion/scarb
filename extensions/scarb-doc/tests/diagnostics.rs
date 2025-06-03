@@ -156,3 +156,47 @@ fn failure_assert(output: OutputAssert, expected: &str) {
     #[cfg(not(windows))]
     output.stdout_matches(expected);
 }
+
+#[test]
+fn test_diagnostics_warnings() {
+    let t = TempDir::new().unwrap();
+
+    ProjectBuilder::start()
+        .name("hello_world")
+        .edition("2023_01")
+        .lib_cairo(indoc! {r#"
+            #[doc(group = "wrong syntax")]
+            fn wrong_syntax() {}
+            
+            #[doc(group: "wrong syntax2")]
+            fn wrong_syntax2() {}
+            
+            #[doc(wrong_argument_name: 'group name')]
+            fn wrong_argument_name() {}
+            
+            #[doc(hiddens)]
+            fn typo() {}
+            
+            #[doc(hidden)]
+            fn correct_doc_hidden() {}
+        "#})
+        .dep_starknet()
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("doc")
+        .args(["--document-private-items", "--output-format", "json"])
+        .current_dir(&t)
+        .assert()
+        .stdout_matches(indoc! {r#"
+            warn: Invalid attribute `#doc(group = "wrong syntax")]` in hello_world::wrong_syntax.
+            Use `#[doc(group: 'group name')]'` or `#[doc(hidden)]`, instead
+            warn: Invalid attribute `group: "wrong syntax2"` in hello_world::wrong_syntax2.
+            Use `group: 'group name'` instead.
+            warn: Invalid attribute `wrong_argument_name: 'group name'` in hello_world::wrong_argument_name.
+            Use `group: 'group name'` instead.
+            warn: Invalid attribute `#doc(hiddens)]` in hello_world::typo.
+            Use `#[doc(group: 'group name')]'` or `#[doc(hidden)]`, instead
+            Saving output to: target/doc/output.json
+        "#});
+}

@@ -1,4 +1,5 @@
 use crate::db::ScarbDocDatabase;
+use crate::diagnostics::add_diagnostic_message;
 use cairo_lang_defs::ids::TopLevelLanguageElementId;
 use cairo_lang_syntax::attribute::structured::{AttributeArgVariant, AttributeStructurize};
 use cairo_lang_syntax::node::Terminal;
@@ -14,13 +15,35 @@ pub fn find_groups_from_attributes(
 
     if let Some(attr) = node.find_attr(db, "doc") {
         for arg in attr.structurize(db).args {
+            let text = arg.text(db);
             if let AttributeArgVariant::Named { value, name } = arg.variant {
                 if name.text == "group" {
                     if let Expr::ShortString(value) = value {
                         let text = value.text(db);
                         return Some(text.replace("'", ""));
+                    } else {
+                        let diagnostic_message = format!(
+                            "Invalid attribute `{}` in {}.\nUse `group: \'group name\'` instead.",
+                            text,
+                            id.full_path(db),
+                        );
+                        add_diagnostic_message(diagnostic_message);
                     }
+                } else {
+                    let diagnostic_message = format!(
+                        "Invalid attribute `{}` in {}.\nUse `group: \'group name\'` instead.",
+                        text,
+                        id.full_path(db),
+                    );
+                    add_diagnostic_message(diagnostic_message);
                 }
+            } else {
+                let diagnostic_message = format!(
+                    "Invalid attribute `#doc({})]` in {}.\nUse `#[doc(group: 'group name')]'` or `#[doc(hidden)]`, instead",
+                    text,
+                    id.full_path(db)
+                );
+                add_diagnostic_message(diagnostic_message);
             }
         }
     }
