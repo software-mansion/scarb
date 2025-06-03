@@ -82,7 +82,7 @@ fn build(
             tree.package = Some(package_id);
 
             // Recursively visit dependencies if we haven't visited this package before
-            // or if no_dedupe is true, or if there is a cycle.
+            // or if no_dedupe is true, unless there is a cycle.
             let already_visited = self.visited.contains(&package_id) && !self.args.no_dedupe;
             let is_cycle = self.stack.iter().filter(|p| **p == package_id).count() > 1;
             tree.already_visited_duplicate = already_visited || is_cycle;
