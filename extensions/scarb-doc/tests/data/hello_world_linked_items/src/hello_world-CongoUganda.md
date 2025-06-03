@@ -49,13 +49,13 @@ Fully qualified path: [hello_world](./hello_world.md)::[CongoUganda](./hello_wor
 
 Fully qualified path: [hello_world](./hello_world.md)::[CongoUganda](./hello_world-CongoUganda.md)::[Rwanda](./hello_world-CongoUganda.md#rwanda-2)
 
-<pre><code class="language-cairo">type Rwanda = (Guinea, Congo);</code></pre>
+<pre><code class="language-cairo">type Rwanda = (<a href="hello_world-Guinea.html">Guinea</a>, <a href="hello_world-Congo.html">Congo</a>);</code></pre>
 
 
 ### Uganda
 
 Fully qualified path: [hello_world](./hello_world.md)::[CongoUganda](./hello_world-CongoUganda.md)::[Uganda](./hello_world-CongoUganda.md#uganda-2)
 
-<pre><code class="language-cairo">type Uganda = (Congo, Congo);</code></pre>
+<pre><code class="language-cairo">type Uganda = (<a href="hello_world-Congo.html">Congo</a>, <a href="hello_world-Congo.html">Congo</a>);</code></pre>
 
 

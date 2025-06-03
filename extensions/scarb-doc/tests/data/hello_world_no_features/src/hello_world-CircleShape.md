@@ -36,6 +36,6 @@ Type alias for a pair of circles
 
 Fully qualified path: [hello_world](./hello_world.md)::[CircleShape](./hello_world-CircleShape.md)::[ShapePair](./hello_world-CircleShape.md#shapepair)
 
-<pre><code class="language-cairo">type ShapePair = (Circle, Circle);</code></pre>
+<pre><code class="language-cairo">type ShapePair = (<a href="hello_world-Circle.html">Circle</a>, <a href="hello_world-Circle.html">Circle</a>);</code></pre>
 
 
