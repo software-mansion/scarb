@@ -97,7 +97,7 @@ pub fn get_cargo_library_name(package: &Package, config: &Config) -> anyhow::Res
     let package = metadata
         .packages
         .iter()
-        .find(|pkg| pkg.name == cargo_package_name)
+        .find(|pkg| pkg.name.as_str() == cargo_package_name)
         .ok_or_else(|| anyhow!("could not get `{cargo_package_name}` package from metadata"))?;
 
     let cdylib_target = package
