@@ -3,7 +3,7 @@ use crate::compiler::plugin::proc_macro::v2::host::attribute::child_nodes::{
     ChildNodesWithoutAttributes, ItemWithAttributes,
 };
 use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::{
-    AdaptedTokenStream, ExpandableAttrLocation,
+    AdaptedTextSpan, AdaptedTokenStream, ExpandableAttrLocation,
 };
 use crate::compiler::plugin::proc_macro::v2::host::conversion::CallSiteLocation;
 use crate::compiler::plugin::proc_macro::v2::host::generate_code_mappings;
@@ -11,7 +11,7 @@ use crate::compiler::plugin::proc_macro::v2::{
     ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
 use crate::core::PackageId;
-use cairo_lang_macro::{AllocationContext, ProcMacroResult, TextSpan, TokenStream};
+use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
 use cairo_lang_syntax::node::ast;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use smol_str::SmolStr;
@@ -93,14 +93,14 @@ impl ProcMacroHostPlugin {
         &self,
         package_id: PackageId,
         item_name: SmolStr,
-        call_site: TextSpan,
+        call_site: AdaptedTextSpan,
         attr: TokenStream,
         token_stream: AdaptedTokenStream,
     ) -> ProcMacroResult {
         self.instance(package_id)
             .try_v2()
             .expect("procedural macro using v1 api used in a context expecting v2 api")
-            .generate_code(item_name, call_site, attr, token_stream.into())
+            .generate_code(item_name, call_site.into(), attr, token_stream.into())
     }
 
     pub fn expand_attribute(
@@ -115,7 +115,7 @@ impl ProcMacroHostPlugin {
         let result = self.generate_attribute_code(
             input.id.package_id,
             input.id.expansion.expansion_name.clone(),
-            input.attribute_location.adapted_call_site.clone(),
+            input.attribute_location.adapted_call_site(),
             args,
             token_stream,
         );
@@ -189,8 +189,9 @@ fn parse_item<T: ItemWithAttributes + ChildNodesWithoutAttributes>(
     token_stream_builder: &mut TokenStreamBuilder<'_>,
     ctx: &AllocationContext,
 ) -> AttrExpansionFound {
+    let span = ast.span_with_trivia(db);
     let attrs = ast.item_attributes(db);
-    let expansion = host.parse_attrs(db, token_stream_builder, attrs, ctx);
+    let expansion = host.parse_attrs(db, token_stream_builder, attrs, span.start, ctx);
     token_stream_builder.extend(ast.child_nodes_without_attributes(db));
     expansion
 }
