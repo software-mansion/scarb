@@ -5,10 +5,10 @@
 //! If an attribute representing an expandable procedural macro is found,
 //! it's removed from the attributes list for the expansion input.
 //! This poses a problem, as procedural macro implementation must assume that the `TokenStream`
-//! provided as an input is consecutive. This limitation comes from how the token stream parser
-//! works, as it only sets the initial offset, and generates the rest of the spans as it would
-//! when parsing a source file. Obviously, when we remove the attribute from the `TokenStream`
-//! built, it's no longer consecutive.
+//! provided as an input is consecutive, i.e. it represents some part of a Cairo source code,
+//! without any gaps. This limitation comes from how the token stream parser works, as it only sets
+//! the initial offset, and generates the rest of the spans as it would when parsing a source file.
+//! Obviously, when we remove the attribute from the `TokenStream` built, it's no longer consecutive.
 //!
 //! See [`crate::compiler::plugin::proc_macro::v2::ProcMacroHostPlugin::parse_attribute`] for more context.
 //!
