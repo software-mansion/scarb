@@ -5,6 +5,7 @@ use crate::compiler::plugin::proc_macro::v2::host::attribute::{
 use crate::compiler::plugin::proc_macro::v2::host::conversion::CallSiteLocation;
 use crate::compiler::plugin::proc_macro::v2::{ProcMacroHostPlugin, TokenStreamBuilder};
 use crate::compiler::plugin::proc_macro::{ExpansionKind, ExpansionQuery};
+use cairo_lang_filesystem::span::TextOffset;
 use cairo_lang_macro::AllocationContext;
 use cairo_lang_syntax::attribute::structured::AttributeStructurize;
 use cairo_lang_syntax::node::db::SyntaxGroup;
@@ -15,7 +16,8 @@ impl ProcMacroHostPlugin {
         &self,
         db: &dyn SyntaxGroup,
         builder: &mut TokenStreamBuilder<'_>,
-        attrs: Vec<ast::Attribute>,
+        item_attrs: Vec<ast::Attribute>,
+        item_start_offset: TextOffset,
         ctx: &AllocationContext,
     ) -> AttrExpansionFound {
         // This function parses attributes of the item,
@@ -29,7 +31,7 @@ impl ProcMacroHostPlugin {
         // nor will they cause the item to be rewritten.
         let mut expansion = None;
         let mut last = true;
-        for attr in attrs {
+        for attr in item_attrs {
             // We ensure that this flag is changed *after* the expansion is found.
             if last {
                 let structured_attr = attr.clone().structurize(db);
@@ -46,7 +48,11 @@ impl ProcMacroHostPlugin {
                             id: found,
                             args,
                             call_site: CallSiteLocation::new(&attr, db),
-                            attribute_location: ExpandableAttrLocation::new(&attr, db),
+                            attribute_location: ExpandableAttrLocation::new(
+                                &attr,
+                                item_start_offset,
+                                db,
+                            ),
                         });
                         // Do not add the attribute for found expansion.
                         continue;

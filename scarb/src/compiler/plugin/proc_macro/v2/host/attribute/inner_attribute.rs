@@ -129,6 +129,7 @@ impl ProcMacroHostPlugin {
         let mut used_attr_names: HashSet<SmolStr> = Default::default();
         let mut all_none = true;
         let ctx = AllocationContext::default();
+        let item_start_offset = item_ast.as_syntax_node().span(db).start;
 
         match item_ast.clone() {
             ast::ModuleItem::Trait(trait_ast) => {
@@ -156,8 +157,13 @@ impl ProcMacroHostPlugin {
 
                             let mut token_stream_builder = TokenStreamBuilder::new(db);
                             let attrs = func.attributes(db).elements(db);
-                            let found =
-                                self.parse_attrs(db, &mut token_stream_builder, attrs, &ctx);
+                            let found = self.parse_attrs(
+                                db,
+                                &mut token_stream_builder,
+                                attrs,
+                                item_start_offset,
+                                &ctx,
+                            );
                             if let Some(name) = found.as_name() {
                                 used_attr_names.insert(name);
                             }
@@ -218,8 +224,13 @@ impl ProcMacroHostPlugin {
 
                             let mut token_stream_builder = TokenStreamBuilder::new(db);
                             let attrs = func.attributes(db).elements(db);
-                            let found =
-                                self.parse_attrs(db, &mut token_stream_builder, attrs, &ctx);
+                            let found = self.parse_attrs(
+                                db,
+                                &mut token_stream_builder,
+                                attrs,
+                                item_start_offset,
+                                &ctx,
+                            );
                             if let Some(name) = found.as_name() {
                                 used_attr_names.insert(name);
                             }
@@ -286,7 +297,7 @@ impl ProcMacroHostPlugin {
         let result = self.generate_attribute_code(
             input.id.package_id,
             input.id.expansion.expansion_name.clone(),
-            input.attribute_location.adapted_call_site.clone(),
+            input.attribute_location.adapted_call_site(),
             input.args.clone(),
             token_stream.clone(),
         );

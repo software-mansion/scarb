@@ -41,22 +41,22 @@
 //! The code mapping modifications happen after the macro expansion, in `expand_attribute` method.
 //! This can be visualized as:
 //! Original file:
-//! |(0) some attributes |(start offset) expandable attribute |(end offset) other attributes and body|
+//! |(first token offset) some attributes |(start offset) expandable attribute |(end offset) other attributes and body|
 //! Expansion input:
 //! -> some attributes += attribute length
 //! -> expandable attribute -= start offset
-//! |(0) expandable attribute |(attribute length) some attributes |(end offset) other attributes and body|
+//! |(first token offset) expandable attribute |(attribute length) some attributes |(end offset) other attributes and body|
 //! Expansion output:
 //! -> some attributes -= attribute length
 //! -> expandable attribute += start offset
-//! |(0) some attributes |(start offset) expandable attribute |(end offset) other attributes and body|
+//! |(first token offset) some attributes |(start offset) expandable attribute |(end offset) other attributes and body|
 //! Remember, we only move the spans, not the actual code!
 
 use crate::compiler::plugin::proc_macro::v2::host::attribute::AttrExpansionFound;
 use crate::compiler::plugin::proc_macro::v2::host::conversion::SpanSource;
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
-use cairo_lang_filesystem::span::TextSpan as CairoTextSpan;
 use cairo_lang_filesystem::span::TextWidth;
+use cairo_lang_filesystem::span::{TextOffset as CairoTextOffset, TextSpan as CairoTextSpan};
 use cairo_lang_macro::{
     Diagnostic, TextOffset, TextSpan, TokenStream, TokenStreamMetadata, TokenTree,
 };
@@ -103,40 +103,82 @@ impl From<AdaptedDiagnostic> for Diagnostic {
     }
 }
 
+#[derive(Debug)]
+pub struct AdaptedTextSpan(TextSpan);
+
+impl From<AdaptedTextSpan> for TextSpan {
+    fn from(value: AdaptedTextSpan) -> Self {
+        value.0
+    }
+}
+
+/// This struct represents the location of the attribute expansion call site (expandable attribute).
+///
+/// It contains both the original location of the attribute in the source code file and the adapted
+/// location, i.e. as if the attribute was the first attribute in the attributes list of that token
+/// stream.
 pub struct ExpandableAttrLocation {
-    pub token_offset: TextOffset,
-    pub token_length: TextWidth,
-    pub adapted_call_site: TextSpan,
+    span_with_trivia: TextSpan,
+    span_without_trivia: TextSpan,
+    item_start_offset: TextOffset,
 }
 
 impl ExpandableAttrLocation {
-    pub fn new<T: TypedSyntaxNode>(node: &T, db: &dyn SyntaxGroup) -> Self {
-        let text_span = node.text_span(db);
-        let token_offset = text_span.start;
+    pub fn new<T: TypedSyntaxNode>(
+        node: &T,
+        item_start_offset: CairoTextOffset,
+        db: &dyn SyntaxGroup,
+    ) -> Self {
+        let span_without_trivia = node.text_span(db);
         let span_with_trivia = node.as_syntax_node().span(db);
-        let token_length = span_with_trivia.end.as_u32() - span_with_trivia.start.as_u32();
-        let adapted_call_site = TextSpan {
-            start: 0,
-            end: text_span.end - token_offset,
-        };
         Self {
-            token_offset,
-            token_length: TextWidth::new_for_testing(token_length),
-            adapted_call_site,
+            span_with_trivia: TextSpan {
+                start: span_with_trivia.start.as_u32(),
+                end: span_with_trivia.end.as_u32(),
+            },
+            span_without_trivia,
+            item_start_offset: item_start_offset.as_u32(),
         }
+    }
+
+    pub fn start_offset_with_trivia(&self) -> TextOffset {
+        self.span_with_trivia.start
+    }
+
+    fn end_offset_with_trivia(&self) -> TextOffset {
+        self.span_with_trivia.end
+    }
+
+    pub fn width_with_trivia(&self) -> u32 {
+        self.span_with_trivia.end - self.span_with_trivia.start
+    }
+
+    pub fn width_without_trivia(&self) -> u32 {
+        self.span_without_trivia.end - self.span_without_trivia.start
+    }
+
+    pub fn adapted_call_site(&self) -> AdaptedTextSpan {
+        AdaptedTextSpan(TextSpan {
+            start: self.item_start_offset,
+            end: self.item_start_offset + self.width_without_trivia(),
+        })
     }
 
     /// Move spans in the `TokenStream` for macro expansion input.
     pub fn adapt_token_stream(&self, token_stream: TokenStream) -> AdaptedTokenStream {
-        let (start, len) = (self.token_offset, self.token_length.as_u32());
+        let start = self.start_offset_with_trivia();
+        let width = self.width_with_trivia();
         let token_stream = TokenStream::new(
             token_stream
                 .into_iter()
                 .map(|tree| match tree {
                     TokenTree::Ident(mut token) => {
                         if token.span.start < start {
-                            token.span.start += len;
-                            token.span.end += len;
+                            token.span.start += width;
+                            token.span.end += width;
+                        } else if token.span.end < self.end_offset_with_trivia() {
+                            token.span.start -= start - self.item_start_offset;
+                            token.span.end -= start - self.item_start_offset;
                         }
                         TokenTree::Ident(token)
                     }
@@ -148,24 +190,28 @@ impl ExpandableAttrLocation {
 
     /// Move code mappings to account for the removed expandable attribute for the expansion output.
     pub fn adapt_code_mappings(&self, code_mappings: Vec<CodeMapping>) -> Vec<AdaptedCodeMapping> {
-        let attr_offset = self.token_offset;
-        let attr_length = self.token_length;
+        let attr_offset = self.start_offset_with_trivia();
+        let attr_length = self.width_with_trivia();
         code_mappings
             .into_iter()
             .map(|code_mapping| {
                 let origin = match code_mapping.origin {
                     CodeOrigin::Span(span) => {
-                        let span = if span.start < attr_length.as_offset() {
+                        let span = if span.start.as_u32() < attr_length {
+                            CairoTextSpan {
+                                start: span.start.add_width(TextWidth::new_for_testing(
+                                    attr_offset - self.item_start_offset,
+                                )),
+                                end: span.end.add_width(TextWidth::new_for_testing(
+                                    attr_offset - self.item_start_offset,
+                                )),
+                            }
+                        } else if span.start.as_u32() < self.end_offset_with_trivia() {
                             CairoTextSpan {
                                 start: span
                                     .start
-                                    .add_width(TextWidth::new_for_testing(attr_offset)),
-                                end: span.end.add_width(TextWidth::new_for_testing(attr_offset)),
-                            }
-                        } else if span.start.as_u32() < attr_length.as_u32() + attr_offset {
-                            CairoTextSpan {
-                                start: span.start.sub_width(attr_length),
-                                end: span.end.sub_width(attr_length),
+                                    .sub_width(TextWidth::new_for_testing(attr_length)),
+                                end: span.end.sub_width(TextWidth::new_for_testing(attr_length)),
                             }
                         } else {
                             span
@@ -185,16 +231,18 @@ impl ExpandableAttrLocation {
 
     /// Move spans in diagnostics to account for the removed expandable attribute for the expansion output.
     pub fn adapt_diagnostics(&self, diagnostics: Vec<Diagnostic>) -> Vec<AdaptedDiagnostic> {
+        let offset = self.start_offset_with_trivia();
+        let width = self.width_with_trivia();
         diagnostics
             .into_iter()
             .map(|mut diagnostic| {
                 if let Some(span) = diagnostic.span.as_mut() {
-                    if span.start < self.token_length.as_u32() {
-                        span.start += self.token_offset;
-                        span.end += self.token_offset;
-                    } else if span.start < self.token_length.as_u32() + self.token_offset {
-                        span.start -= self.token_length.as_u32();
-                        span.end -= self.token_length.as_u32();
+                    if span.start < width {
+                        span.start += offset - self.item_start_offset;
+                        span.end += offset - self.item_start_offset;
+                    } else if span.start < self.end_offset_with_trivia() {
+                        span.start -= width;
+                        span.end -= width;
                     }
                 }
                 diagnostic
