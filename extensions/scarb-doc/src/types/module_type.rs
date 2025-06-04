@@ -2,8 +2,8 @@ use crate::db::ScarbDocDatabase;
 use crate::types::groups::{
     Group, aggregate_constants_groups, aggregate_enums_groups, aggregate_extern_functions_groups,
     aggregate_extern_types_groups, aggregate_free_functions_groups, aggregate_impl_aliases_groups,
-    aggregate_impls_groups, aggregate_modules_groups, aggregate_structs_groups,
-    aggregate_traits_groups, aggregate_type_aliases_groups,
+    aggregate_impls_groups, aggregate_modules_groups, aggregate_pub_uses_groups,
+    aggregate_structs_groups, aggregate_traits_groups, aggregate_type_aliases_groups,
 };
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Struct,
@@ -170,6 +170,9 @@ macro_rules! define_insert_function {
                     .iter()
                     .any(|existing_item| existing_item.id == item.id)
                 {
+                    return;
+                } else if item.item_data.group.is_some() {
+                    // avoid duplicating items in module.groups and module.pub_uses
                     return;
                 }
                 self.$field_name.push(item);
@@ -339,6 +342,9 @@ impl Module {
         extern_types = aggregate_extern_types_groups(&extern_types, &mut group_map);
         extern_functions = aggregate_extern_functions_groups(&extern_functions, &mut group_map);
         submodules = aggregate_modules_groups(&submodules, &mut group_map);
+        if !include_private_items {
+            aggregate_pub_uses_groups(&module_pubuses, &mut group_map);
+        }
         let mut groups: Vec<Group> = group_map.into_values().collect();
         groups.sort_by(|a, b| a.name.cmp(&b.name));
 
