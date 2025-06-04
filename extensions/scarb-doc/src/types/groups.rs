@@ -1,4 +1,4 @@
-use crate::types::module_type::Module;
+use crate::types::module_type::{Module, ModulePubUses};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Struct, Trait,
     TypeAlias,
@@ -87,3 +87,20 @@ aggregate_groups!(
     extern_functions
 );
 aggregate_groups!(aggregate_modules_groups, Module, submodules);
+
+pub fn aggregate_pub_uses_groups(
+    module_pubuses: &ModulePubUses,
+    group_map: &mut HashMap<String, Group>,
+) {
+    aggregate_constants_groups(&module_pubuses.use_constants, group_map);
+    aggregate_free_functions_groups(&module_pubuses.use_free_functions, group_map);
+    aggregate_structs_groups(&module_pubuses.use_structs, group_map);
+    aggregate_enums_groups(&module_pubuses.use_enums, group_map);
+    aggregate_type_aliases_groups(&module_pubuses.use_module_type_aliases, group_map);
+    aggregate_impl_aliases_groups(&module_pubuses.use_impl_aliases, group_map);
+    aggregate_traits_groups(&module_pubuses.use_traits, group_map);
+    aggregate_impls_groups(&module_pubuses.use_impl_defs, group_map);
+    aggregate_extern_types_groups(&module_pubuses.use_extern_types, group_map);
+    aggregate_extern_functions_groups(&module_pubuses.use_extern_functions, group_map);
+    aggregate_modules_groups(&module_pubuses.use_submodules, group_map);
+}
