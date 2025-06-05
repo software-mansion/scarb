@@ -197,7 +197,9 @@ fn can_print_panic_reason() {
         .lib_cairo(indoc! {r#"
             #[executable]
             fn main() -> felt252 {
-                panic!("abcd");
+                if true {
+                    panic!("abcd");
+                }
                 42
             }
         "#})
