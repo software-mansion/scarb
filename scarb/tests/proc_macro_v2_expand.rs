@@ -2109,21 +2109,30 @@ fn token_stream_parsed_with_correct_spans() {
         .stdout_matches(indoc! {r##"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            Ident(Token { content: "  fn ", span: TextSpan { start: 48, end: 50 } })
+            Ident(Token { content: "  ", span: TextSpan { start: 46, end: 48 } })
+            Ident(Token { content: "fn", span: TextSpan { start: 48, end: 50 } })
+            Ident(Token { content: " ", span: TextSpan { start: 50, end: 51 } })
             Ident(Token { content: "foo", span: TextSpan { start: 51, end: 54 } })
             Ident(Token { content: "(", span: TextSpan { start: 54, end: 55 } })
-            Ident(Token { content: ") ", span: TextSpan { start: 55, end: 56 } })
-            Ident(Token { content: "{
-            ", span: TextSpan { start: 57, end: 58 } })
-            Ident(Token { content: "    let ", span: TextSpan { start: 63, end: 66 } })
-            Ident(Token { content: "_a ", span: TextSpan { start: 67, end: 69 } })
-            Ident(Token { content: "= ", span: TextSpan { start: 70, end: 71 } })
+            Ident(Token { content: ")", span: TextSpan { start: 55, end: 56 } })
+            Ident(Token { content: " ", span: TextSpan { start: 56, end: 57 } })
+            Ident(Token { content: "{", span: TextSpan { start: 57, end: 58 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 58, end: 59 } })
+            Ident(Token { content: "    ", span: TextSpan { start: 59, end: 63 } })
+            Ident(Token { content: "let", span: TextSpan { start: 63, end: 66 } })
+            Ident(Token { content: " ", span: TextSpan { start: 66, end: 67 } })
+            Ident(Token { content: "_a", span: TextSpan { start: 67, end: 69 } })
+            Ident(Token { content: " ", span: TextSpan { start: 69, end: 70 } })
+            Ident(Token { content: "=", span: TextSpan { start: 70, end: 71 } })
+            Ident(Token { content: " ", span: TextSpan { start: 71, end: 72 } })
             Ident(Token { content: "1", span: TextSpan { start: 72, end: 73 } })
-            Ident(Token { content: ";
-            ", span: TextSpan { start: 73, end: 74 } })
-            Ident(Token { content: "}
-            ", span: TextSpan { start: 75, end: 76 } })
-            Ident(Token { content: "", span: TextSpan { start: 77, end: 77 } })
+            Ident(Token { content: ";", span: TextSpan { start: 73, end: 74 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 74, end: 75 } })
+            Ident(Token { content: "}", span: TextSpan { start: 75, end: 76 } })
+            Ident(Token { content: "
+            ", span: TextSpan { start: 76, end: 77 } })
             [..]Finished `dev` profile target(s) in [..]
       "##});
 }
