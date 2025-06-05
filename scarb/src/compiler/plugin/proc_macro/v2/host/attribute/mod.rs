@@ -9,16 +9,16 @@ use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::{
 };
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::EmittedAuxData;
 use crate::compiler::plugin::proc_macro::v2::host::conversion::into_cairo_diagnostics;
-use crate::compiler::plugin::proc_macro::v2::{ProcMacroAuxData, ProcMacroId};
+use cairo_lang_defs::patcher::PatchBuilder;
 use cairo_lang_defs::plugin::{
     DynGeneratedFileAuxData, PluginDiagnostic, PluginGeneratedFile, PluginResult,
 };
-use cairo_lang_macro::AuxData;
+use cairo_lang_filesystem::ids::CodeMapping;
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 pub use inner_attribute::*;
 pub use item_attribute::*;
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 
 #[derive(Default)]
 pub struct AttributePluginResult {
@@ -53,36 +53,8 @@ impl AttributePluginResult {
         self
     }
 
-    pub fn with_code(
-        mut self,
-        name: SmolStr,
-        content: String,
-        code_mappings: Vec<AdaptedCodeMapping>,
-        aux_data: Option<AuxData>,
-        id: ProcMacroId,
-    ) -> Self {
-        let diagnostics_note = Some(format!(
-            "this error originates in the attribute macro: `{}`",
-            id.expansion.cairo_name
-        ));
-        let aux_data = aux_data.map(|new_aux_data| {
-            DynGeneratedFileAuxData::new(EmittedAuxData::new(ProcMacroAuxData::new(
-                new_aux_data.into(),
-                id.clone(),
-            )))
-        });
-        self.code = Some(PluginGeneratedFile {
-            name,
-            content,
-            code_mappings: code_mappings.into_iter().map(Into::into).collect(),
-            aux_data,
-            diagnostics_note,
-        });
-        self
-    }
-
-    pub fn with_plugin_generated_file(mut self, generated_file: PluginGeneratedFile) -> Self {
-        self.code = Some(generated_file);
+    pub fn with_generated_file(mut self, generated_file: AttributeGeneratedFile) -> Self {
+        self.code = Some(generated_file.into());
         self
     }
 }
@@ -93,6 +65,77 @@ impl From<AttributePluginResult> for PluginResult {
             diagnostics: value.diagnostics,
             remove_original_item: value.remove_original_item,
             code: value.code,
+        }
+    }
+}
+
+pub struct AttributeGeneratedFile {
+    name: SmolStr,
+    content: String,
+    code_mappings: Vec<CodeMapping>,
+    aux_data: Option<DynGeneratedFileAuxData>,
+    diagnostics_note: Option<String>,
+}
+
+impl AttributeGeneratedFile {
+    pub fn new(name: impl ToSmolStr) -> Self {
+        Self {
+            name: name.to_smolstr(),
+            content: Default::default(),
+            code_mappings: Default::default(),
+            aux_data: Default::default(),
+            diagnostics_note: Default::default(),
+        }
+    }
+
+    pub fn from_patch_builder(name: impl ToSmolStr, item_builder: PatchBuilder<'_>) -> Self {
+        let (expanded, mut code_mappings) = item_builder.build();
+        // PatchBuilder::build() adds additional mapping at the end,
+        // which wraps the whole outputted code.
+        // We remove it, so we can properly translate locations spanning multiple token spans.
+        code_mappings.pop();
+        Self {
+            name: name.to_smolstr(),
+            content: expanded,
+            code_mappings,
+            aux_data: Default::default(),
+            diagnostics_note: Default::default(),
+        }
+    }
+
+    pub fn with_content(mut self, content: impl ToString) -> Self {
+        self.content = content.to_string();
+        self
+    }
+
+    pub fn with_code_mappings(mut self, code_mappings: Vec<AdaptedCodeMapping>) -> Self {
+        self.code_mappings = code_mappings.into_iter().map(Into::into).collect();
+        self
+    }
+
+    pub fn with_aux_data(mut self, aux_data: EmittedAuxData) -> Self {
+        if aux_data.is_empty() {
+            self.aux_data = None;
+        } else {
+            self.aux_data = Some(DynGeneratedFileAuxData::new(aux_data));
+        }
+        self
+    }
+
+    pub fn with_diagnostics_note(mut self, diagnostics_note: impl ToString) -> Self {
+        self.diagnostics_note = Some(diagnostics_note.to_string());
+        self
+    }
+}
+
+impl From<AttributeGeneratedFile> for PluginGeneratedFile {
+    fn from(value: AttributeGeneratedFile) -> Self {
+        PluginGeneratedFile {
+            name: value.name,
+            content: value.content,
+            code_mappings: value.code_mappings,
+            aux_data: value.aux_data,
+            diagnostics_note: value.diagnostics_note,
         }
     }
 }
