@@ -6,7 +6,6 @@ use crate::{
         db::{ScarbDatabase, build_scarb_root_database},
     },
     core::{PackageId, TargetKind},
-    internal::serdex::toml_merge,
     ops,
 };
 
@@ -14,7 +13,6 @@ use anyhow::anyhow;
 use anyhow::{Context, Result};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
-use cairo_lang_formatter::FormatterConfig;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lint::CAIRO_LINT_TOOL_NAME;
 use cairo_lint::{
