@@ -3,6 +3,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 use anyhow::{Context, Result, anyhow};
+use cairo_lang_formatter::FormatterConfig;
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::Deserialize;
 
@@ -13,6 +14,7 @@ use scarb_ui::args::WithManifestPath;
 use crate::core::manifest::Manifest;
 use crate::core::{Target, TargetKind, TomlToolScarbMetadata};
 use crate::internal::fsx;
+use crate::internal::serdex::toml_merge;
 
 mod id;
 mod name;
@@ -148,6 +150,15 @@ impl Package {
 
     pub fn manifest_mut(&mut self) -> &mut Manifest {
         &mut Arc::make_mut(&mut self.0).manifest
+    }
+
+    pub fn fmt_config(&self) -> Result<FormatterConfig> {
+        let formatter_config = FormatterConfig::default();
+        if let Some(overrides) = self.tool_metadata("fmt") {
+            toml_merge(&formatter_config, overrides)
+        } else {
+            Ok(formatter_config)
+        }
     }
 }
 

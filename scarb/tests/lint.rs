@@ -1,6 +1,7 @@
 use assert_fs::fixture::FileWriteStr;
 use assert_fs::{TempDir, prelude::PathChild};
 use indoc::{formatdoc, indoc};
+use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::{
     command::Scarb, project_builder::ProjectBuilder, workspace_builder::WorkspaceBuilder,
 };
@@ -747,4 +748,59 @@ fn lint_non_existing_file() {
             Caused by:
                 [..]
         "#});
+}
+
+#[test]
+fn test_fixer_formatting() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            use starknet::SyscallResultTrait;
+            use starknet::storage_access::{storage_address_from_base, storage_base_address_from_felt252};
+            use starknet::syscalls::storage_read_syscall;
+
+            fn main() {
+               let storage_address = storage_base_address_from_felt252(3534535754756246375475423547453);
+             let result = storage_read_syscall(0, storage_address_from_base(storage_address));
+              result.unwrap();
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        .arg("--fix")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+                 Linting hello v1.0.0 ([..]/Scarb.toml)
+            warn: Unused import: `hello::SyscallResultTrait`
+             --> [..]/src/lib.cairo:1:15
+            use starknet::SyscallResultTrait;
+                          ^^^^^^^^^^^^^^^^^^
+            
+            warn: Plugin diagnostic: consider using `unwrap_syscall` instead of `unwrap`
+             --> [..]/src/lib.cairo:8:3
+              result.unwrap();
+              ^^^^^^^^^^^^^^^
+            
+                  Fixing lib.cairo
+        "#});
+    let content = t.child("src/lib.cairo").read_to_string();
+    assert_eq!(
+        content,
+        indoc! {r#"
+            use starknet::SyscallResultTrait;
+            use starknet::storage_access::{storage_address_from_base, storage_base_address_from_felt252};
+            use starknet::syscalls::storage_read_syscall;
+
+            fn main() {
+                let storage_address = storage_base_address_from_felt252(3534535754756246375475423547453);
+                let result = storage_read_syscall(0, storage_address_from_base(storage_address));
+                result.unwrap_syscall();
+            }
+        "#}
+    );
 }

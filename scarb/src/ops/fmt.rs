@@ -5,7 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use anyhow::Result;
 use cairo_lang_diagnostics::Severity;
 use cairo_lang_formatter::cairo_formatter::FormattingError;
-use cairo_lang_formatter::{CairoFormatter, FormatOutcome, FormatterConfig};
+use cairo_lang_formatter::{CairoFormatter, FormatOutcome};
 use camino::Utf8PathBuf;
 use ignore::WalkState::{Continue, Skip};
 use ignore::{DirEntry, Error, ParallelVisitor, ParallelVisitorBuilder, WalkState};
@@ -15,7 +15,6 @@ use tracing::{info, warn};
 use crate::core::workspace::Workspace;
 use crate::core::{Package, PackageId};
 use crate::internal::fsx::canonicalize;
-use crate::internal::serdex::toml_merge;
 
 #[derive(Debug, Clone)]
 pub enum FmtEmitTarget {
@@ -77,10 +76,7 @@ fn format_package(
     ws: &Workspace<'_>,
     all_correct: &AtomicBool,
 ) -> Result<()> {
-    let mut config = FormatterConfig::default();
-    if let Some(overrides) = package.tool_metadata("fmt") {
-        config = toml_merge(&config, overrides)?;
-    }
+    let config = package.fmt_config()?;
     let fmt = CairoFormatter::new(config);
 
     let walk = if let Some(path) = &opts.path {
@@ -113,10 +109,7 @@ fn format_single_file(
         .find(|member| absolute_file_path.starts_with(member.root()))
         .ok_or_else(|| anyhow::anyhow!("file {:?} is not part of the workspace.", file))?;
 
-    let mut config = FormatterConfig::default();
-    if let Some(overrides) = pkg.tool_metadata("fmt") {
-        config = toml_merge(&config, overrides)?;
-    }
+    let config = pkg.fmt_config()?;
     let fmt = CairoFormatter::new(config);
 
     let success = match &opts.action {

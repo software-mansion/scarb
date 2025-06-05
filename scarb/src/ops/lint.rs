@@ -73,6 +73,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
 
     for package in opts.packages {
         let package_name = &package.id.name;
+        let formatter_config = package.fmt_config()?;
         let package_compilation_units = if opts.test {
             let mut result = vec![];
             let integration_test_compilation_unit =
@@ -232,7 +233,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                             ws.config()
                                 .ui()
                                 .print(Status::new("Fixing", &file_id.file_name(&db)));
-                            apply_file_fixes(file_id, fixes, &db)?;
+                            apply_file_fixes(file_id, fixes, &db, formatter_config.clone())?;
                         }
                     }
                 }
