@@ -2,7 +2,7 @@ use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::{
     AdaptedDiagnostic, AdaptedTokenStream,
 };
 use crate::compiler::plugin::proc_macro::v2::host::attribute::{
-    AttrExpansionArgs, AttrExpansionFound, AttributePluginResult,
+    AttrExpansionArgs, AttrExpansionFound, AttributeGeneratedFile, AttributePluginResult,
 };
 use crate::compiler::plugin::proc_macro::v2::host::aux_data::EmittedAuxData;
 use crate::compiler::plugin::proc_macro::v2::host::conversion::into_cairo_diagnostics;
@@ -10,12 +10,12 @@ use crate::compiler::plugin::proc_macro::v2::{
     ProcMacroAuxData, ProcMacroHostPlugin, TokenStreamBuilder, generate_code_mappings,
 };
 use cairo_lang_defs::patcher::{PatchBuilder, RewriteNode};
-use cairo_lang_defs::plugin::{DynGeneratedFileAuxData, PluginDiagnostic, PluginGeneratedFile};
+use cairo_lang_defs::plugin::PluginDiagnostic;
 use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
 use cairo_lang_syntax::node::ast::{ImplItem, MaybeImplBody, MaybeTraitBody};
 use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
-use cairo_lang_syntax::node::{TypedSyntaxNode, ast};
+use cairo_lang_syntax::node::{SyntaxNode, TypedSyntaxNode, ast};
 use itertools::Itertools;
 use smol_str::SmolStr;
 use std::collections::HashSet;
@@ -31,16 +31,26 @@ pub struct InnerAttrExpansionContext<'a> {
     diagnostics: Vec<PluginDiagnostic>,
     aux_data: EmittedAuxData,
     any_changed: bool,
+    item_builder: PatchBuilder<'a>,
 }
 
 impl<'a> InnerAttrExpansionContext<'a> {
-    pub fn new<'b: 'a>(host: &'b ProcMacroHostPlugin) -> Self {
+    pub fn new<'b: 'a>(
+        host: &'b ProcMacroHostPlugin,
+        db: &'a dyn SyntaxGroup,
+        item_ast: &'a ast::ModuleItem,
+    ) -> Self {
         Self {
             diagnostics: Vec::new(),
             aux_data: EmittedAuxData::default(),
             any_changed: false,
+            item_builder: PatchBuilder::new(db, item_ast),
             host,
         }
+    }
+
+    pub fn add_node(&mut self, node: SyntaxNode) {
+        self.item_builder.add_node(node);
     }
 
     fn register_diagnotics(
@@ -60,7 +70,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
         input: &AttrExpansionArgs,
         original: String,
         result: ProcMacroResult,
-    ) -> TokenStream {
+    ) {
         let result_str = result.token_stream.to_string();
         let changed = result_str != original;
 
@@ -81,19 +91,14 @@ impl<'a> InnerAttrExpansionContext<'a> {
 
         self.any_changed = self.any_changed || changed;
 
-        result.token_stream
+        self.item_builder
+            .add_modified(rewrite_node_patch_from_expansion_result(
+                result.token_stream,
+                input,
+            ));
     }
 
-    pub fn into_result(
-        self,
-        item_builder: PatchBuilder<'_>,
-        attr_names: Vec<SmolStr>,
-    ) -> AttributePluginResult {
-        let (expanded, mut code_mappings) = item_builder.build();
-        // PatchBuilder::build() adds additional mapping at the end,
-        // which wraps the whole outputted code.
-        // We remove it, so we can properly translate locations spanning multiple token spans.
-        code_mappings.pop();
+    pub fn into_result(self, attr_names: Vec<SmolStr>) -> AttributePluginResult {
         let msg = if attr_names.len() == 1 {
             "the attribute macro"
         } else {
@@ -104,18 +109,23 @@ impl<'a> InnerAttrExpansionContext<'a> {
         AttributePluginResult::new()
             .with_remove_original_item(true)
             .with_plugin_diagnostics(self.diagnostics)
-            .with_plugin_generated_file(PluginGeneratedFile {
-                name: "proc_attr_inner".into(),
-                content: expanded,
-                aux_data: if self.aux_data.is_empty() {
-                    None
-                } else {
-                    Some(DynGeneratedFileAuxData::new(self.aux_data))
-                },
-                code_mappings,
-                diagnostics_note: Some(note),
-            })
+            .with_generated_file(
+                AttributeGeneratedFile::from_patch_builder("proc_attr_inner", self.item_builder)
+                    .with_diagnostics_note(note)
+                    .with_aux_data(self.aux_data),
+            )
     }
+}
+
+fn rewrite_node_patch_from_expansion_result(
+    token_stream: TokenStream,
+    input: &AttrExpansionArgs,
+) -> RewriteNode {
+    let code_mappings = generate_code_mappings(&token_stream, input.call_site.span.clone());
+    let code_mappings = input.attribute_location.adapt_code_mappings(code_mappings);
+    let code_mappings = code_mappings.into_iter().map(Into::into).collect_vec();
+    let expanded = token_stream.to_string();
+    RewriteNode::TextAndMapping(expanded, code_mappings)
 }
 
 impl ProcMacroHostPlugin {
@@ -124,8 +134,7 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         item_ast: ast::ModuleItem,
     ) -> InnerAttrExpansionResult {
-        let mut context = InnerAttrExpansionContext::new(self);
-        let mut item_builder = PatchBuilder::new(db, &item_ast);
+        let mut context = InnerAttrExpansionContext::new(self, db, &item_ast);
         let mut used_attr_names: HashSet<SmolStr> = Default::default();
         let mut all_none = true;
         let ctx = AllocationContext::default();
@@ -133,25 +142,25 @@ impl ProcMacroHostPlugin {
 
         match item_ast.clone() {
             ast::ModuleItem::Trait(trait_ast) => {
-                item_builder.add_node(trait_ast.attributes(db).as_syntax_node());
-                item_builder.add_node(trait_ast.visibility(db).as_syntax_node());
-                item_builder.add_node(trait_ast.trait_kw(db).as_syntax_node());
-                item_builder.add_node(trait_ast.name(db).as_syntax_node());
-                item_builder.add_node(trait_ast.generic_params(db).as_syntax_node());
+                context.add_node(trait_ast.attributes(db).as_syntax_node());
+                context.add_node(trait_ast.visibility(db).as_syntax_node());
+                context.add_node(trait_ast.trait_kw(db).as_syntax_node());
+                context.add_node(trait_ast.name(db).as_syntax_node());
+                context.add_node(trait_ast.generic_params(db).as_syntax_node());
 
                 // Parser attributes for inner functions.
                 match trait_ast.body(db) {
                     MaybeTraitBody::None(terminal) => {
-                        item_builder.add_node(terminal.as_syntax_node());
+                        context.add_node(terminal.as_syntax_node());
                         InnerAttrExpansionResult::None
                     }
                     MaybeTraitBody::Some(body) => {
-                        item_builder.add_node(body.lbrace(db).as_syntax_node());
+                        context.add_node(body.lbrace(db).as_syntax_node());
 
                         let item_list = body.items(db);
                         for item in item_list.elements(db).iter() {
                             let ast::TraitItem::Function(func) = item else {
-                                item_builder.add_node(item.as_syntax_node());
+                                context.add_node(item.as_syntax_node());
                                 continue;
                             };
 
@@ -175,23 +184,19 @@ impl ProcMacroHostPlugin {
                                 && self.do_expand_inner_attr(
                                     db,
                                     &mut context,
-                                    &mut item_builder,
                                     found,
                                     func,
                                     token_stream,
                                 );
                         }
 
-                        item_builder.add_node(body.rbrace(db).as_syntax_node());
+                        context.add_node(body.rbrace(db).as_syntax_node());
 
                         if all_none {
                             InnerAttrExpansionResult::None
                         } else {
                             InnerAttrExpansionResult::Some(
-                                context.into_result(
-                                    item_builder,
-                                    used_attr_names.into_iter().collect(),
-                                ),
+                                context.into_result(used_attr_names.into_iter().collect()),
                             )
                         }
                     }
@@ -199,26 +204,26 @@ impl ProcMacroHostPlugin {
             }
 
             ast::ModuleItem::Impl(impl_ast) => {
-                item_builder.add_node(impl_ast.attributes(db).as_syntax_node());
-                item_builder.add_node(impl_ast.visibility(db).as_syntax_node());
-                item_builder.add_node(impl_ast.impl_kw(db).as_syntax_node());
-                item_builder.add_node(impl_ast.name(db).as_syntax_node());
-                item_builder.add_node(impl_ast.generic_params(db).as_syntax_node());
-                item_builder.add_node(impl_ast.of_kw(db).as_syntax_node());
-                item_builder.add_node(impl_ast.trait_path(db).as_syntax_node());
+                context.add_node(impl_ast.attributes(db).as_syntax_node());
+                context.add_node(impl_ast.visibility(db).as_syntax_node());
+                context.add_node(impl_ast.impl_kw(db).as_syntax_node());
+                context.add_node(impl_ast.name(db).as_syntax_node());
+                context.add_node(impl_ast.generic_params(db).as_syntax_node());
+                context.add_node(impl_ast.of_kw(db).as_syntax_node());
+                context.add_node(impl_ast.trait_path(db).as_syntax_node());
 
                 match impl_ast.body(db) {
                     MaybeImplBody::None(terminal) => {
-                        item_builder.add_node(terminal.as_syntax_node());
+                        context.add_node(terminal.as_syntax_node());
                         InnerAttrExpansionResult::None
                     }
                     MaybeImplBody::Some(body) => {
-                        item_builder.add_node(body.lbrace(db).as_syntax_node());
+                        context.add_node(body.lbrace(db).as_syntax_node());
 
                         let items = body.items(db);
                         for item in items.elements(db) {
                             let ImplItem::Function(func) = item else {
-                                item_builder.add_node(item.as_syntax_node());
+                                context.add_node(item.as_syntax_node());
                                 continue;
                             };
 
@@ -243,23 +248,19 @@ impl ProcMacroHostPlugin {
                                 && self.do_expand_inner_attr(
                                     db,
                                     &mut context,
-                                    &mut item_builder,
                                     found,
                                     &func,
                                     token_stream,
                                 );
                         }
 
-                        item_builder.add_node(body.rbrace(db).as_syntax_node());
+                        context.add_node(body.rbrace(db).as_syntax_node());
 
                         if all_none {
                             InnerAttrExpansionResult::None
                         } else {
                             InnerAttrExpansionResult::Some(
-                                context.into_result(
-                                    item_builder,
-                                    used_attr_names.into_iter().collect(),
-                                ),
+                                context.into_result(used_attr_names.into_iter().collect()),
                             )
                         }
                     }
@@ -273,7 +274,6 @@ impl ProcMacroHostPlugin {
         &self,
         db: &dyn SyntaxGroup,
         context: &mut InnerAttrExpansionContext<'_>,
-        item_builder: &mut PatchBuilder<'_>,
         found: AttrExpansionFound,
         func: &impl TypedSyntaxNode,
         token_stream: AdaptedTokenStream,
@@ -289,7 +289,7 @@ impl ProcMacroHostPlugin {
                 input
             }
             AttrExpansionFound::None => {
-                item_builder.add_node(func.as_syntax_node());
+                context.add_node(func.as_syntax_node());
                 return all_none;
             }
         };
@@ -302,18 +302,8 @@ impl ProcMacroHostPlugin {
             token_stream.clone(),
         );
 
-        let result_token_stream =
-            context.register_result_metadata(db, &input, token_stream.to_string(), result);
-        item_builder.add_modified(result_rewrite_node(result_token_stream, &input));
+        context.register_result_metadata(db, &input, token_stream.to_string(), result);
 
         all_none
     }
-}
-
-fn result_rewrite_node(token_stream: TokenStream, input: &AttrExpansionArgs) -> RewriteNode {
-    let code_mappings = generate_code_mappings(&token_stream, input.call_site.span.clone());
-    let code_mappings = input.attribute_location.adapt_code_mappings(code_mappings);
-    let code_mappings = code_mappings.into_iter().map(Into::into).collect_vec();
-    let expanded = token_stream.to_string();
-    RewriteNode::TextAndMapping(expanded, code_mappings)
 }

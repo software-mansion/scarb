@@ -1,14 +1,17 @@
-use crate::compiler::plugin::proc_macro::v2::host::attribute::AttributePluginResult;
 use crate::compiler::plugin::proc_macro::v2::host::attribute::child_nodes::{
     ChildNodesWithoutAttributes, ItemWithAttributes,
 };
 use crate::compiler::plugin::proc_macro::v2::host::attribute::span_adapter::{
     AdaptedTextSpan, AdaptedTokenStream, ExpandableAttrLocation,
 };
+use crate::compiler::plugin::proc_macro::v2::host::attribute::{
+    AttributeGeneratedFile, AttributePluginResult,
+};
+use crate::compiler::plugin::proc_macro::v2::host::aux_data::EmittedAuxData;
 use crate::compiler::plugin::proc_macro::v2::host::conversion::CallSiteLocation;
 use crate::compiler::plugin::proc_macro::v2::host::generate_code_mappings;
 use crate::compiler::plugin::proc_macro::v2::{
-    ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
+    ProcMacroAuxData, ProcMacroHostPlugin, ProcMacroId, TokenStreamBuilder,
 };
 use crate::core::PackageId;
 use cairo_lang_macro::{AllocationContext, ProcMacroResult, TokenStream};
@@ -172,12 +175,25 @@ impl ProcMacroHostPlugin {
                     .attribute_location
                     .adapt_diagnostics(result.diagnostics),
             )
-            .with_code(
-                file_name.into(),
-                content,
-                code_mappings,
-                result.aux_data,
-                input.id,
+            .with_generated_file(
+                AttributeGeneratedFile::new(file_name)
+                    .with_content(content)
+                    .with_code_mappings(code_mappings)
+                    .with_aux_data(
+                        result
+                            .aux_data
+                            .map(|new_aux_data| {
+                                EmittedAuxData::new(ProcMacroAuxData::new(
+                                    new_aux_data.into(),
+                                    input.id.clone(),
+                                ))
+                            })
+                            .unwrap_or_default(),
+                    )
+                    .with_diagnostics_note(format!(
+                        "this error originates in the attribute macro: `{}`",
+                        input.id.expansion.cairo_name
+                    )),
             )
     }
 }
