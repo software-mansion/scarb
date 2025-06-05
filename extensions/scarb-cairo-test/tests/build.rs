@@ -378,8 +378,8 @@ fn can_choose_test_kind_to_run() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Testing hello
             running 2 tests
-            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 33350)
-            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 33350)
+            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 37970)
+            test hello_integrationtest::[..]::tests::it_works ... ok (gas usage est.: 37970)
             test result: ok. 2 passed; 0 failed; 0 ignored; 0 filtered out;
         "#});
 }
