@@ -800,7 +800,7 @@ fn test_fixer_formatting() {
                 let storage_address = storage_base_address_from_felt252(3534535754756246375475423547453);
                 let result = storage_read_syscall(0, storage_address_from_base(storage_address));
                 result.unwrap_syscall();
-            }g
+            }
         "#}
     );
 }

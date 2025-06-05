@@ -77,10 +77,7 @@ fn format_package(
     ws: &Workspace<'_>,
     all_correct: &AtomicBool,
 ) -> Result<()> {
-    let mut config = FormatterConfig::default();
-    if let Some(overrides) = package.tool_metadata("fmt") {
-        config = toml_merge(&config, overrides)?;
-    }
+    let config = package.fmt_config()?;
     let fmt = CairoFormatter::new(config);
 
     let walk = if let Some(path) = &opts.path {
@@ -113,10 +110,7 @@ fn format_single_file(
         .find(|member| absolute_file_path.starts_with(member.root()))
         .ok_or_else(|| anyhow::anyhow!("file {:?} is not part of the workspace.", file))?;
 
-    let mut config = FormatterConfig::default();
-    if let Some(overrides) = pkg.tool_metadata("fmt") {
-        config = toml_merge(&config, overrides)?;
-    }
+    let config = pkg.fmt_config()?;
     let fmt = CairoFormatter::new(config);
 
     let success = match &opts.action {

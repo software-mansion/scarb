@@ -75,10 +75,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
 
     for package in opts.packages {
         let package_name = &package.id.name;
-        let mut formatter_config = FormatterConfig::default();
-        if let Some(overrides) = package.tool_metadata("fmt") {
-            formatter_config = toml_merge(&formatter_config, overrides)?;
-        }
+        let formatter_config = package.fmt_config()?;
         let package_compilation_units = if opts.test {
             let mut result = vec![];
             let integration_test_compilation_unit =
