@@ -6,6 +6,7 @@ use crate::{
         db::{ScarbDatabase, build_scarb_root_database},
     },
     core::{PackageId, TargetKind},
+    internal::serdex::toml_merge,
     ops,
 };
 
@@ -13,6 +14,7 @@ use anyhow::anyhow;
 use anyhow::{Context, Result};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
+use cairo_lang_formatter::FormatterConfig;
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lint::CAIRO_LINT_TOOL_NAME;
 use cairo_lint::{
@@ -73,6 +75,10 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
 
     for package in opts.packages {
         let package_name = &package.id.name;
+        let mut formatter_config = FormatterConfig::default();
+        if let Some(overrides) = package.tool_metadata("fmt") {
+            formatter_config = toml_merge(&formatter_config, overrides)?;
+        }
         let package_compilation_units = if opts.test {
             let mut result = vec![];
             let integration_test_compilation_unit =
@@ -232,7 +238,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                             ws.config()
                                 .ui()
                                 .print(Status::new("Fixing", &file_id.file_name(&db)));
-                            apply_file_fixes(file_id, fixes, &db)?;
+                            apply_file_fixes(file_id, fixes, &db, formatter_config.clone())?;
                         }
                     }
                 }

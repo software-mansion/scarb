@@ -206,6 +206,8 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
                         coupons: experimental_features.contains(&SmolStr::new_inline("coupons")),
                         associated_item_constraints: experimental_features
                             .contains(&SmolStr::new_static("associated_item_constraints")),
+                        user_defined_inline_macros: false
+                            
                     },
                 },
             )
