@@ -1,5 +1,6 @@
 use anyhow::Result;
 
+use crate::attributes::find_groups_from_attributes;
 use crate::db::ScarbDocDatabase;
 use crate::location_links::DocLocationLink;
 use crate::types::module_type::is_doc_hidden_attr;
@@ -36,6 +37,7 @@ pub struct ItemData {
     pub full_path: String,
     #[serde(skip_serializing)]
     pub doc_location_links: Vec<DocLocationLink>,
+    pub group: Option<String>,
 }
 
 impl ItemData {
@@ -50,7 +52,7 @@ impl ItemData {
             .iter()
             .map(|link| DocLocationLink::new(link.start, link.end, link.item_id, db))
             .collect::<Vec<_>>();
-
+        let group = find_groups_from_attributes(db, &id);
         Self {
             id: documentable_item_id,
             name: id.name(db).into(),
@@ -59,6 +61,7 @@ impl ItemData {
             full_path: id.full_path(db),
             parent_full_path: Some(id.parent_module(db).full_path(db)),
             doc_location_links,
+            group,
         }
     }
 
@@ -75,6 +78,7 @@ impl ItemData {
             full_path: id.full_path(db),
             parent_full_path: Some(id.parent_module(db).full_path(db)),
             doc_location_links: vec![],
+            group: find_groups_from_attributes(db, &id),
         }
     }
 
@@ -88,6 +92,7 @@ impl ItemData {
             full_path: ModuleId::CrateRoot(id).full_path(db),
             parent_full_path: None,
             doc_location_links: vec![],
+            group: None,
         }
     }
 }
