@@ -4,10 +4,11 @@ use crate::docs_generation::markdown::{
 };
 use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
 use crate::location_links::DocLocationLink;
-use crate::types::{
+use crate::types::module_type::{Module, ModulePubUses};
+use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
-    ImplFunction, ImplType, ItemData, Member, Module, ModulePubUses, Struct, Trait, TraitConstant,
-    TraitFunction, TraitType, TypeAlias, Variant,
+    ImplFunction, ImplType, ItemData, Member, Struct, Trait, TraitConstant, TraitFunction,
+    TraitType, TypeAlias, Variant,
 };
 use anyhow::Result;
 use cairo_lang_doc::parser::{CommentLinkToken, DocumentationCommentToken};

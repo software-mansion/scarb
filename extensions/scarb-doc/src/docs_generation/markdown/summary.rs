@@ -6,9 +6,11 @@ use crate::docs_generation::markdown::context::{MarkdownGenerationContext, path_
 use crate::docs_generation::markdown::traits::TopLevelMarkdownDocItem;
 use crate::docs_generation::markdown::{BASE_HEADER_LEVEL, Filename};
 use crate::docs_generation::{DocItem, TopLevelItems};
-use crate::types::{
-    Constant, Crate, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Module,
-    Struct, Trait, TypeAlias,
+use crate::types::crate_type::Crate;
+use crate::types::module_type::Module;
+use crate::types::other_types::{
+    Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, Struct, Trait,
+    TypeAlias,
 };
 use anyhow::Result;
 use itertools::chain;
