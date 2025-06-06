@@ -212,7 +212,7 @@ pub fn generate_code_mappings(
     token_stream: &TokenStream,
     call_site: MacroTextSpan,
 ) -> Vec<CodeMapping> {
-    let mut mappings: Vec<CodeMapping> = token_stream
+    let mappings: Vec<CodeMapping> = token_stream
         .tokens
         .iter()
         .scan(TextOffset::default(), |current_pos, token| {
@@ -236,6 +236,34 @@ pub fn generate_code_mappings(
             Some(mapping)
         })
         .collect();
+    let mut mappings = mappings
+        .clone()
+        .into_iter()
+        // Emit additional mappings at the start of a span for zero-width diagnostics.
+        .flat_map(|mapping| match &mapping.origin {
+            CodeOrigin::Span(origin) => {
+                if origin.start.as_u32() == call_site.start && origin.end.as_u32() == call_site.end
+                {
+                    // Call site should always be matched in full.
+                    return None;
+                }
+                Some(CodeMapping {
+                    span: TextSpan {
+                        start: mapping.span.start,
+                        end: mapping.span.start.add_width(TextWidth::new_for_testing(1)),
+                    },
+                    origin: CodeOrigin::Span(TextSpan {
+                        start: TextOffset::default()
+                            .add_width(TextWidth::new_for_testing(origin.start.as_u32())),
+                        end: TextOffset::default()
+                            .add_width(TextWidth::new_for_testing(origin.start.as_u32())),
+                    }),
+                })
+            }
+            _ => None,
+        })
+        .chain(mappings)
+        .collect_vec();
     let call_site = TextSpan {
         start: TextOffset::default().add_width(TextWidth::new_for_testing(call_site.start)),
         end: TextOffset::default().add_width(TextWidth::new_for_testing(call_site.end)),

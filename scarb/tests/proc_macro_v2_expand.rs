@@ -949,7 +949,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations() {
             error: Cannot assign to an immutable variable.
              --> [..]lib.cairo:5:9
                     x = 2;
-                    ^^^^^
+                    ^^^^^^
             note: this error originates in the attribute macro: `some`
 
             error: could not compile `hello` due to previous error
@@ -1031,7 +1031,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations_with_parser()
             error: Cannot assign to an immutable variable.
              --> [..]lib.cairo:6:9
                     x = 2;
-                    ^^^^^
+                    ^^^^^^
             note: this error originates in the attribute macro: `some`
             
             error: could not compile `hello` due to previous error
@@ -1200,7 +1200,7 @@ fn code_mappings_preserve_attribute_error_locations() {
             error: Cannot assign to an immutable variable.
              --> [..]lib.cairo:4:5
                 x = 2;
-                ^^^^^
+                ^^^^^^
             note: this error originates in the attribute macro: `some`
 
             error: could not compile `hello` due to previous error
@@ -2040,9 +2040,9 @@ fn span_offsets_calculated_correctly_for_function_with_non_macro_attrs() {
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Missing semicolon
-             --> [..]lib.cairo:4:30
+             --> [..]lib.cairo:4:31
                 assert(1 + 1 == 2, 'fail')
-                                         ^
+                                          ^
             note: this error originates in the attribute macro: `simple_attr`
 
             error: could not compile `hello` due to previous error
