@@ -45,7 +45,57 @@
             "use_extern_functions": [],
             "use_submodules": []
           }
-        }
+        },
+        "groups": [
+          {
+            "name": "test",
+            "submodules": [],
+            "constants": [],
+            "free_functions": [
+              {
+                "item_data": {
+                  "name": "test_2",
+                  "doc": null,
+                  "signature": "fn test_2()",
+                  "full_path": "hello_world::test_2",
+                  "group": "test"
+                }
+              }
+            ],
+            "structs": [],
+            "enums": [],
+            "type_aliases": [],
+            "impl_aliases": [],
+            "traits": [],
+            "impls": [],
+            "extern_types": [],
+            "extern_functions": []
+          },
+          {
+            "name": "test2",
+            "submodules": [],
+            "constants": [],
+            "free_functions": [
+              {
+                "item_data": {
+                  "name": "test_1",
+                  "doc": null,
+                  "signature": "fn test_1()",
+                  "full_path": "hello_world::test_1",
+                  "group": "test2"
+                }
+              }
+            ],
+            "structs": [],
+            "enums": [],
+            "type_aliases": [],
+            "impl_aliases": [],
+            "traits": [],
+            "impls": [],
+            "extern_types": [],
+            "extern_functions": []
+          }
+        ]
       },
       "metadata": {
         "name": "hello_world",
