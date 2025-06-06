@@ -177,8 +177,8 @@ fn can_use_quote_with_syntax_node() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .add_primitive_token_dep()
-        .add_dep(r#"cairo-lang-syntax = "2.9.1""#)
-        .add_dep(r#"cairo-lang-parser = "2.9.1""#)
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, quote};
         use cairo_lang_parser::utils::SimpleParserDatabase;
@@ -249,8 +249,8 @@ fn can_use_quote_with_cairo_specific_syntax() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default().add_primitive_token_dep()
-        .add_dep(r#"cairo-lang-syntax = "2.9.1""#)
-        .add_dep(r#"cairo-lang-parser = "2.9.1""#)
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, quote};
         use cairo_lang_parser::utils::SimpleParserDatabase;
@@ -405,8 +405,8 @@ fn can_parse_incoming_token_stream() {
     let t = temp.child("some");
     CairoPluginProjectBuilder::default()
         .add_primitive_token_dep()
-        .add_dep(r#"cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo", rev = "b5fdf14a8bd2e4973e2adcec17abf1ae5c1ddfdc" }"#)
-        .add_dep(r#"cairo-lang-parser = { git = "https://github.com/starkware-libs/cairo", rev = "b5fdf14a8bd2e4973e2adcec17abf1ae5c1ddfdc" }"#)
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
         .lib_rs(indoc! {r##"
         use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, quote};
         use cairo_lang_macro::{TokenTree, Token, TextSpan};
@@ -486,7 +486,7 @@ fn can_parse_incoming_token_stream() {
             error: Unexpected return type. Expected: "core::integer::u32", found: "core::bool".
              --> [..]lib.cairo:2:14
             fn main() -> u32 {
-                         ^^^^
+                         ^^^
 
             error: could not check `hello` due to previous error
         "#});
