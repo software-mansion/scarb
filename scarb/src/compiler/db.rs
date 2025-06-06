@@ -90,14 +90,14 @@ fn try_load_cached_corelib(
         let cache_path = cache_dir.child(&cache_filename);
 
         if !cache_path.exists() {
-            println!("corelib cache file does not exist, will not use it.");
+            trace!("corelib cache file does not exist, will not use it.");
             return Ok(());
         }
 
         let file = cache_dir.open_ro(&cache_filename, &cache_filename, ws.config())?;
 
         if check_corelib_fingerprint_fresh(unit, ws, false)? {
-            println!("corelib cache is fresh, using it.");
+            trace!("corelib cache is fresh, using it.");
             let blob_id =
                 db.intern_blob(BlobLongId::OnDisk(file.path().as_std_path().to_path_buf()));
             if let Some(mut core_conf) = db.crate_config(core_crate_id) {
@@ -105,7 +105,7 @@ fn try_load_cached_corelib(
                 db.set_crate_config(core_crate_id, Some(core_conf));
             }
         } else {
-            println!("corelib cache is not fresh, will not use it.");
+            trace!("corelib cache is not fresh, will not use it.");
         }
     }
     Ok(())
