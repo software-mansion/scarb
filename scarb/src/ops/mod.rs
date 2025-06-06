@@ -7,6 +7,7 @@ pub use clean::*;
 pub use compile::*;
 pub use expand::*;
 pub use fmt::*;
+pub use incremental::*;
 pub use manifest::*;
 pub use metadata::*;
 pub use new::*;
@@ -23,6 +24,7 @@ mod clean;
 mod compile;
 mod expand;
 mod fmt;
+mod incremental;
 mod lockfile;
 mod manifest;
 mod metadata;
@@ -37,5 +39,6 @@ mod workspace;
 
 #[cfg(feature = "scarb-lint")]
 mod lint;
+
 #[cfg(feature = "scarb-lint")]
 pub use lint::*;

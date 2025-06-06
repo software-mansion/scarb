@@ -32,6 +32,8 @@ pub const LOCK_FILE_NAME: &str = "Scarb.lock";
 pub const DEFAULT_MODULE_MAIN_FILE: &str = "lib.cairo";
 pub const DEFAULT_TESTS_PATH: &str = "tests";
 pub const DEFAULT_TARGET_DIR_NAME: &str = "target";
+pub const FINGERPRINT_DIR_NAME: &str = ".fingerprint";
+pub const INCREMENTAL_DIR_NAME: &str = "incremental";
 pub const SCARB_IGNORE_FILE_NAME: &str = ".scarbignore";
 pub static DEFAULT_SOURCE_PATH: LazyLock<Utf8PathBuf> =
     LazyLock::new(|| ["src", "lib.cairo"].iter().collect());

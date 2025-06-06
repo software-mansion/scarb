@@ -7,6 +7,7 @@ use crate::compiler::{
     CompilationUnitDependency,
 };
 use crate::core::Workspace;
+use crate::ops::{check_corelib_fingerprint_fresh, corelib_cache_dir};
 use anyhow::{Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
@@ -16,7 +17,7 @@ use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::db::{
     CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
 };
-use cairo_lang_filesystem::ids::CrateLongId;
+use cairo_lang_filesystem::ids::{BlobLongId, CrateLongId};
 use cairo_lang_semantic::db::PluginSuiteInput;
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
@@ -64,6 +65,8 @@ pub(crate) fn build_scarb_root_database(
     }
     let mut db = b.build()?;
 
+    try_load_cached_corelib(&mut db, unit, ws)?;
+
     apply_plugins(&mut db, plugins);
     inject_virtual_wrapper_lib(&mut db, unit)?;
 
@@ -72,6 +75,40 @@ pub(crate) fn build_scarb_root_database(
         .flat_map(|hosts| hosts.into_iter())
         .collect();
     Ok(ScarbDatabase { db, proc_macros })
+}
+
+fn try_load_cached_corelib(
+    db: &mut RootDatabase,
+    unit: &CairoCompilationUnit,
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    if let Some(core_component) = unit.core_package_component() {
+        let core_crate_id = core_component.crate_id(db);
+
+        let cache_dir = corelib_cache_dir(unit, ws);
+        let cache_filename = core_component.package.id.cache_filename();
+        let cache_path = cache_dir.child(&cache_filename);
+
+        if !cache_path.exists() {
+            println!("corelib cache file does not exist, will not use it.");
+            return Ok(());
+        }
+
+        let file = cache_dir.open_ro(&cache_filename, &cache_filename, ws.config())?;
+
+        if check_corelib_fingerprint_fresh(unit, ws, false)? {
+            println!("corelib cache is fresh, using it.");
+            let blob_id =
+                db.intern_blob(BlobLongId::OnDisk(file.path().as_std_path().to_path_buf()));
+            if let Some(mut core_conf) = db.crate_config(core_crate_id) {
+                core_conf.cache_file = Some(blob_id);
+                db.set_crate_config(core_crate_id, Some(core_conf));
+            }
+        } else {
+            println!("corelib cache is not fresh, will not use it.");
+        }
+    }
+    Ok(())
 }
 
 #[cfg(feature = "scarb-lint")]

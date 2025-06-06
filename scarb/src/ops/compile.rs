@@ -1,6 +1,8 @@
 use anyhow::{Context, Error, Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
+use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_lowering::cache::generate_crate_cache;
 use indoc::formatdoc;
 use itertools::Itertools;
 use scarb_ui::HumanDuration;
@@ -20,7 +22,10 @@ use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
 use crate::ops;
-use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
+use crate::ops::{
+    CompilationUnitsOpts, corelib_cache_dir, create_corelib_fingerprint, get_test_package_ids,
+    validate_features,
+};
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -237,7 +242,8 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 proc_macros,
             } = build_scarb_root_database(&unit, ws, Default::default())?;
             check_starknet_dependency(&unit, ws, &db, &package_name);
-            let result = ws.config().compilers().compile(unit, &mut db, ws);
+            let result = ws.config().compilers().compile(unit.clone(), &mut db, ws);
+            try_save_corelib_cache(&db, &unit, ws).context("failed to save corelib cache")?;
 
             for plugin in proc_macros {
                 plugin
@@ -256,6 +262,28 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 
         anyhow!("could not compile `{package_name}` due to previous error")
     })
+}
+
+fn try_save_corelib_cache(
+    db: &RootDatabase,
+    unit: &CairoCompilationUnit,
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    if let Some(core) = unit.core_package_component() {
+        let core_id = CrateId::core(db);
+        if let Ok(cache_bytes) = generate_crate_cache(db, core_id) {
+            let cache_filename = core.package.id.cache_filename();
+            let cache_file = corelib_cache_dir(unit, ws).create_rw(
+                &cache_filename,
+                &cache_filename,
+                ws.config(),
+            )?;
+            create_corelib_fingerprint(unit, ws)?;
+            std::fs::write(cache_file.path(), &*cache_bytes)
+                .context("Failed to write corelib cache blob")?;
+        }
+    }
+    Ok(())
 }
 
 fn check_units(

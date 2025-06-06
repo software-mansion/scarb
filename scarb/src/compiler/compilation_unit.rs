@@ -16,6 +16,7 @@ use crate::core::{
     ManifestCompilerConfig, Package, PackageId, PackageName, Target, TargetKind, Workspace,
 };
 use crate::flock::Filesystem;
+use crate::{FINGERPRINT_DIR_NAME, INCREMENTAL_DIR_NAME};
 use scarb_stable_hash::StableHasher;
 
 /// An object that has enough information so that Scarb knows how to build it.
@@ -308,8 +309,29 @@ impl CairoCompilationUnit {
         }
     }
 
+    pub fn core_package_digest(&self) -> Option<String> {
+        if let Some(core) = self.core_package_component() {
+            let mut hasher = StableHasher::new();
+            core.package.id.hash(&mut hasher);
+            self.profile.hash(&mut hasher);
+            self.compiler_config.hash(&mut hasher);
+            self.cfg_set.hash(&mut hasher);
+            Some(hasher.finish_as_short_hash())
+        } else {
+            None
+        }
+    }
+
     pub fn target_dir(&self, ws: &Workspace<'_>) -> Filesystem {
         ws.target_dir().child(self.profile.as_str())
+    }
+
+    pub fn fingerprint_dir(&self, ws: &Workspace<'_>) -> Filesystem {
+        self.target_dir(ws).child(FINGERPRINT_DIR_NAME)
+    }
+
+    pub fn incremental_dir(&self, ws: &Workspace<'_>) -> Filesystem {
+        self.target_dir(ws).child(INCREMENTAL_DIR_NAME)
     }
 
     /// Rewrite single compilation unit with multiple targets, into multiple compilation units

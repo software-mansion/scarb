@@ -106,6 +106,11 @@ impl PackageId {
         base.push_str(".tar.zst");
         base
     }
+
+    /// Filename of the crate cache file
+    pub fn cache_filename(&self) -> String {
+        format!("{}.cache", self.name)
+    }
 }
 
 impl Deref for PackageId {
