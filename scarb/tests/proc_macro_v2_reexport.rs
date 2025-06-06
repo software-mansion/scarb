@@ -82,3 +82,101 @@ fn cairo_plugin_re_export_simple() {
            [..]Finished `dev` profile target(s) in [..]
         "#});
 }
+
+#[test]
+fn components_in_the_same_unit_can_depend_on_conflicting_plugins() {
+    let t = TempDir::new().unwrap();
+    CairoPluginProjectBuilder::default()
+        .name("first_macro")
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let new_token_string = token_stream.to_string().replace("12", "34");
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                new_token_string.clone(),
+                TextSpan { start: 0, end: new_token_string.len() as u32 },
+            ))]);
+            ProcMacroResult::new(token_stream)
+        }
+        "##})
+        .build(&t.child("first_macro"));
+    CairoPluginProjectBuilder::default()
+        .name("second_macro")
+        .lib_rs(indoc! {r##"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, attribute_macro, TokenTree, Token, TextSpan};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let new_token_string = token_stream.to_string().replace("56", "78");
+            let token_stream = TokenStream::new(vec![TokenTree::Ident(Token::new(
+                new_token_string.clone(),
+                TextSpan { start: 0, end: new_token_string.len() as u32 },
+            ))]);
+            ProcMacroResult::new(token_stream)
+        }
+        "##})
+        .build(&t.child("second_macro"));
+    ProjectBuilder::start()
+        .name("first_dep")
+        .lib_cairo(
+            r#"
+            #[some]
+            pub fn main() -> felt252 {
+                12
+            }
+        "#,
+        )
+        .dep("first_macro", t.child("first_macro"))
+        .build(&t.child("first_dep"));
+    ProjectBuilder::start()
+        .name("second_dep")
+        .lib_cairo(
+            r#"
+            #[some]
+            pub fn main() -> felt252 {
+                56
+            }
+        "#,
+        )
+        .dep("second_macro", t.child("second_macro"))
+        .build(&t.child("second_dep"));
+    ProjectBuilder::start()
+        .name("hello")
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            pub fn main() -> felt252 {
+                first_dep::main() + second_dep::main()
+            }
+        "#})
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .dep("first_dep", t.child("first_dep"))
+        .dep("second_dep", t.child("second_dep"))
+        .build(&t.child("hello"));
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--print-program-output")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(t.child("hello"))
+        .assert()
+        .success()
+        // 112 = 34 + 78
+        .stdout_matches(indoc! {r#"
+            [..] Compiling first_macro v1.0.0 ([..]Scarb.toml)
+            [..] Compiling second_macro v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing hello
+            Program output:
+            112
+            Saving output to: target/execute/hello/execution1
+        "#});
+}
