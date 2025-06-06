@@ -983,7 +983,7 @@ version = "0.2.0"
 dependencies = [
  "bumpalo",
  "cairo-lang-macro-attributes 0.2.0",
- "cairo-lang-macro-stable 2.0.0",
+ "cairo-lang-macro-stable 2.0.0-rc.0",
  "cairo-lang-primitive-token",
  "cairo-lang-quote 0.1.0",
  "linkme",
@@ -999,7 +999,7 @@ source = "git+https://github.com/software-mansion/scarb.git?rev=af5795e3b04ee39a
 dependencies = [
  "bumpalo",
  "cairo-lang-macro-attributes 0.2.0 (git+https://github.com/software-mansion/scarb.git?rev=af5795e3b04ee39a15debaabf77db2d96b9031b8)",
- "cairo-lang-macro-stable 2.0.0 (git+https://github.com/software-mansion/scarb.git?rev=af5795e3b04ee39a15debaabf77db2d96b9031b8)",
+ "cairo-lang-macro-stable 2.0.0",
  "cairo-lang-primitive-token",
  "cairo-lang-quote 0.1.0 (git+https://github.com/software-mansion/scarb.git?rev=af5795e3b04ee39a15debaabf77db2d96b9031b8)",
  "linkme",
@@ -1044,7 +1044,7 @@ checksum = "c49906d6b1c215e5814be7c5c65ecf2328898b335bee8c2409ec07cfb5530daf"
 
 [[package]]
 name = "cairo-lang-macro-stable"
-version = "2.0.0"
+version = "2.0.0-rc.0"
 
 [[package]]
 name = "cairo-lang-macro-stable"
@@ -6319,7 +6319,7 @@ dependencies = [
  "cairo-lang-macro 0.1.1",
  "cairo-lang-macro 0.2.0",
  "cairo-lang-macro-stable 1.0.0",
- "cairo-lang-macro-stable 2.0.0",
+ "cairo-lang-macro-stable 2.0.0-rc.0",
  "cairo-lang-parser",
  "cairo-lang-semantic",
  "cairo-lang-sierra",
