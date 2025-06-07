@@ -1,5 +1,5 @@
-use super::CompilationUnitComponentId;
 use super::plugin::collection::PluginsForComponents;
+use super::{CairoCompilationUnitWithCore, CompilationUnitComponentId};
 use crate::DEFAULT_MODULE_MAIN_FILE;
 use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
 use crate::compiler::{
@@ -7,7 +7,7 @@ use crate::compiler::{
     CompilationUnitDependency,
 };
 use crate::core::Workspace;
-use crate::ops::{check_corelib_fingerprint_fresh, corelib_cache_dir};
+use crate::ops::check_corelib_fingerprint_fresh;
 use anyhow::{Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
@@ -82,31 +82,36 @@ fn try_load_cached_corelib(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
 ) -> Result<()> {
-    if let Some(core_component) = unit.core_package_component() {
-        let core_crate_id = core_component.crate_id(db);
+    let Some(unit) = CairoCompilationUnitWithCore::try_new(unit).ok() else {
+        return Ok(());
+    };
 
-        let cache_dir = corelib_cache_dir(unit, ws);
-        let cache_filename = core_component.package.id.cache_filename();
-        let cache_path = cache_dir.child(&cache_filename);
+    let core = unit.core_package_component();
+    let core_crate_id = core.crate_id(db);
 
-        if !cache_path.exists() {
-            trace!("corelib cache file does not exist, will not use it.");
-            return Ok(());
+    let cache_dir = &unit.core_cache_dir(ws);
+    let cache_filename = core.package.id.cache_filename();
+    let cache_path = cache_dir.child(&cache_filename);
+
+    if !cache_path.exists() {
+        trace!("corelib cache file does not exist, will not use it.");
+        return Ok(());
+    }
+
+    let cache_file = cache_dir.open_ro(&cache_filename, &cache_filename, ws.config())?;
+
+    if check_corelib_fingerprint_fresh(&unit, ws, false)? {
+        trace!("corelib cache is fresh, using it.");
+
+        let blob_id = db.intern_blob(BlobLongId::OnDisk(
+            cache_file.path().as_std_path().to_path_buf(),
+        ));
+        if let Some(mut core_conf) = db.crate_config(core_crate_id) {
+            core_conf.cache_file = Some(blob_id);
+            db.set_crate_config(core_crate_id, Some(core_conf));
         }
-
-        let file = cache_dir.open_ro(&cache_filename, &cache_filename, ws.config())?;
-
-        if check_corelib_fingerprint_fresh(unit, ws, false)? {
-            trace!("corelib cache is fresh, using it.");
-            let blob_id =
-                db.intern_blob(BlobLongId::OnDisk(file.path().as_std_path().to_path_buf()));
-            if let Some(mut core_conf) = db.crate_config(core_crate_id) {
-                core_conf.cache_file = Some(blob_id);
-                db.set_crate_config(core_crate_id, Some(core_conf));
-            }
-        } else {
-            trace!("corelib cache is not fresh, will not use it.");
-        }
+    } else {
+        trace!("corelib cache is not fresh, will not use it.");
     }
     Ok(())
 }

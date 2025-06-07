@@ -107,9 +107,14 @@ impl PackageId {
         base
     }
 
-    /// Filename of the crate cache file
+    /// Filename of the cache file that would be created for this package.
     pub fn cache_filename(&self) -> String {
         format!("{}.cache", self.name)
+    }
+
+    /// Filename of the fingerprint hash file that would be created for this package.
+    pub fn fingerprint_filename(&self) -> String {
+        format!("{}", self.name)
     }
 }
 

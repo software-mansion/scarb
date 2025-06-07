@@ -17,14 +17,15 @@ use crate::compiler::db::{
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::plugin::proc_macro;
-use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
+use crate::compiler::{
+    CairoCompilationUnit, CairoCompilationUnitWithCore, CompilationUnit, CompilationUnitAttributes,
+};
 use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
 use crate::ops;
 use crate::ops::{
-    CompilationUnitsOpts, corelib_cache_dir, create_corelib_fingerprint, get_test_package_ids,
-    validate_features,
+    CompilationUnitsOpts, create_corelib_fingerprint, get_test_package_ids, validate_features,
 };
 
 #[derive(Debug, Clone)]
@@ -269,19 +270,19 @@ fn try_save_corelib_cache(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
 ) -> Result<()> {
-    if let Some(core) = unit.core_package_component() {
-        let core_id = CrateId::core(db);
-        if let Ok(cache_bytes) = generate_crate_cache(db, core_id) {
-            let cache_filename = core.package.id.cache_filename();
-            let cache_file = corelib_cache_dir(unit, ws).create_rw(
-                &cache_filename,
-                &cache_filename,
-                ws.config(),
-            )?;
-            create_corelib_fingerprint(unit, ws)?;
-            std::fs::write(cache_file.path(), &*cache_bytes)
-                .context("Failed to write corelib cache blob")?;
-        }
+    let Some(unit) = CairoCompilationUnitWithCore::try_new(unit).ok() else {
+        return Ok(());
+    };
+    let core = unit.core_package_component();
+    let core_crate_id = CrateId::core(db);
+
+    if let Ok(cache_blob) = generate_crate_cache(db, core_crate_id) {
+        let cache_dir = unit.core_cache_dir(ws);
+        let cache_filename = core.package.id.cache_filename();
+        let cache_file = cache_dir.create_rw(&cache_filename, &cache_filename, ws.config())?;
+        create_corelib_fingerprint(&unit, ws)?;
+        std::fs::write(cache_file.path(), &*cache_blob)
+            .context("Failed to write corelib cache blob")?;
     }
     Ok(())
 }
