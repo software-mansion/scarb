@@ -288,7 +288,7 @@ fn try_save_corelib_cache(
     let cache_filename = core.package.id.cache_filename();
     let cache_file = cache_dir.create_rw(&cache_filename, &cache_filename, ws.config())?;
     std::fs::write(cache_file.path(), &*cache_blob)
-        .context("Failed to write corelib cache blob")?;
+        .context("failed to write corelib cache blob")?;
 
     create_corelib_fingerprint(&unit, ws)?;
 }

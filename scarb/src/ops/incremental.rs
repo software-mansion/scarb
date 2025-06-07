@@ -22,7 +22,7 @@ pub fn create_corelib_fingerprint(
     let hash = fingerprint.short_hash();
     hash_file
         .write_all(hash.to_string().as_bytes())
-        .context("Failed to write corelib fingerprint")?;
+        .context("failed to write corelib fingerprint")?;
     Ok(())
 }
 
