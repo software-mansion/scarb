@@ -39,7 +39,7 @@ pub struct Fingerprint {
 }
 
 impl Fingerprint {
-    pub fn try_new(unit: &CairoCompilationUnitWithCore<'_>, ws: &Workspace<'_>) -> Result<Self> {
+    pub fn try_new_for_corelib(unit: &CairoCompilationUnitWithCore<'_>, ws: &Workspace<'_>) -> Result<Self> {
         let core = unit.core_package_component();
         let version_tag = core_version_tag();
         let profile = ws.current_profile()?;
