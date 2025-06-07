@@ -1,8 +1,8 @@
-use crate::compiler::{CairoCompilationUnit, Profile};
+use crate::compiler::{CairoCompilationUnitWithCore, Profile};
 use crate::core::{ManifestCompilerConfig, Workspace};
 use crate::sources::core_version_tag;
 use crate::version::VersionInfo;
-use anyhow::{Result, ensure};
+use anyhow::Result;
 use cairo_lang_filesystem::cfg::CfgSet;
 use scarb_stable_hash::StableHasher;
 use std::hash::Hash;
@@ -28,6 +28,9 @@ pub struct Fingerprint {
     /// The version tag of the corelib.
     version_tag: String,
 
+    /// The source path of the corelib.
+    source_path: String,
+
     /// Cairo compiler configuration parameters used in the unit.
     compiler_config: ManifestCompilerConfig,
 
@@ -36,23 +39,22 @@ pub struct Fingerprint {
 }
 
 impl Fingerprint {
-    pub fn try_new_for_corelib(unit: &CairoCompilationUnit, ws: &Workspace<'_>) -> Result<Self> {
-        ensure!(
-            unit.core_package_component().is_some(),
-            "compilation unit must have a core component"
-        );
+    pub fn try_new(unit: &CairoCompilationUnitWithCore<'_>, ws: &Workspace<'_>) -> Result<Self> {
+        let core = unit.core_package_component();
         let version_tag = core_version_tag();
         let profile = ws.current_profile()?;
         let scarb_path = ws.config().app_exe()?.to_string_lossy().to_string();
-        let cfg_set = unit.cfg_set.clone();
         let scarb_version = crate::version::get();
+        let source_path = core.first_target().source_path.clone().to_string();
         let compiler_config = unit.compiler_config.clone();
+        let cfg_set = unit.cfg_set.clone();
 
         Ok(Self {
             scarb_path,
             scarb_version,
             profile,
             version_tag,
+            source_path,
             compiler_config,
             cfg_set,
         })
@@ -64,6 +66,7 @@ impl Fingerprint {
         self.scarb_version.long().hash(&mut hasher);
         self.profile.hash(&mut hasher);
         self.version_tag.hash(&mut hasher);
+        self.source_path.hash(&mut hasher);
         self.compiler_config.hash(&mut hasher);
         self.cfg_set.hash(&mut hasher);
         hasher.finish_as_short_hash()

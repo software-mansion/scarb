@@ -18,7 +18,7 @@ pub fn create_corelib_fingerprint(
     let hash_file =
         fingerprint_dir.create_rw(hash_file, "corelib fingerprint file", ws.config())?;
     let mut hash_file = BufWriter::new(&*hash_file);
-    let fingerprint = Fingerprint::try_new_for_corelib(unit, ws)?;
+    let fingerprint = Fingerprint::try_new(unit, ws)?;
     let hash = fingerprint.short_hash();
     hash_file
         .write_all(hash.to_string().as_bytes())
@@ -44,7 +44,7 @@ pub fn check_corelib_fingerprint_fresh(
     }
     let old_hash_path =
         fingerprint_dir.open_ro(fingerprint_filename, "fingerprint file", ws.config())?;
-    let new_fingerprint = Fingerprint::try_new_for_corelib(unit, ws)?;
+    let new_fingerprint = Fingerprint::try_new(unit, ws)?;
 
     Ok(check_fingerprint_fresh(
         old_hash_path.path(),

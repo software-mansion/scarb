@@ -14,7 +14,7 @@ use crate::ops::{
     CompilationUnitsOpts, check_corelib_fingerprint_fresh, create_corelib_fingerprint,
     get_test_package_ids, validate_features,
 };
-use anyhow::{Context, Error, Result, anyhow, bail};
+use anyhow::{Context, Error, Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
 use cairo_lang_filesystem::ids::CrateId;
@@ -27,7 +27,7 @@ use scarb_ui::components::Status;
 use smol_str::{SmolStr, ToSmolStr};
 use std::collections::HashSet;
 use std::thread;
-use tracing::{error, trace};
+use tracing::trace;
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -281,8 +281,9 @@ fn try_save_corelib_cache(
     let core = unit.core_package_component();
     let core_crate_id = CrateId::core(db);
 
-    let cache_blob = generate_crate_cache(db, core_crate_id)
-        .context("failed to generate core cache blob")?;
+    let Some(cache_blob) = generate_crate_cache(db, core_crate_id).ok() else {
+        return Err(anyhow!("failed to generate corelib cache blob"));
+    };
 
     let cache_dir = unit.core_cache_dir(ws);
     let cache_filename = core.package.id.cache_filename();
@@ -291,6 +292,7 @@ fn try_save_corelib_cache(
         .context("failed to write corelib cache blob")?;
 
     create_corelib_fingerprint(&unit, ws)?;
+    Ok(())
 }
 
 fn check_units(
