@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::fmt::Write;
 use std::hash::{Hash, Hasher};
+use std::ops::Deref;
 use std::sync::Arc;
 use typed_builder::TypedBuilder;
 
@@ -16,6 +17,7 @@ use crate::core::{
     ManifestCompilerConfig, Package, PackageId, PackageName, Target, TargetKind, Workspace,
 };
 use crate::flock::Filesystem;
+use crate::{FINGERPRINT_DIR_NAME, INCREMENTAL_DIR_NAME};
 use scarb_stable_hash::StableHasher;
 
 /// An object that has enough information so that Scarb knows how to build it.
@@ -308,8 +310,29 @@ impl CairoCompilationUnit {
         }
     }
 
+    pub fn core_package_digest(&self) -> Option<String> {
+        if let Some(core) = self.core_package_component() {
+            let mut hasher = StableHasher::new();
+            core.package.id.hash(&mut hasher);
+            self.profile.hash(&mut hasher);
+            self.compiler_config.hash(&mut hasher);
+            self.cfg_set.hash(&mut hasher);
+            Some(hasher.finish_as_short_hash())
+        } else {
+            None
+        }
+    }
+
     pub fn target_dir(&self, ws: &Workspace<'_>) -> Filesystem {
         ws.target_dir().child(self.profile.as_str())
+    }
+
+    pub fn fingerprint_dir(&self, ws: &Workspace<'_>) -> Filesystem {
+        self.target_dir(ws).child(FINGERPRINT_DIR_NAME)
+    }
+
+    pub fn incremental_dir(&self, ws: &Workspace<'_>) -> Filesystem {
+        self.target_dir(ws).child(INCREMENTAL_DIR_NAME)
     }
 
     /// Rewrite single compilation unit with multiple targets, into multiple compilation units
@@ -421,5 +444,48 @@ impl CompilationUnitComponent {
     fn hash(&self, hasher: &mut impl Hasher) {
         self.package.id.hash(hasher);
         self.targets.hash(hasher);
+    }
+}
+
+pub struct CairoCompilationUnitWithCore<'a>(&'a CairoCompilationUnit);
+
+impl<'a> CairoCompilationUnitWithCore<'a> {
+    pub fn try_new(unit: &'a CairoCompilationUnit) -> Result<Self> {
+        ensure!(
+            unit.core_package_component().is_some(),
+            "compilation unit must have a core component"
+        );
+        Ok(Self(unit))
+    }
+
+    pub fn core_package_component(&self) -> &CompilationUnitComponent {
+        self.0.core_package_component().unwrap()
+    }
+
+    pub fn core_package_digest(&self) -> String {
+        self.0.core_package_digest().unwrap()
+    }
+
+    /// Directory name to use for the core package in the form `core-<digest>`.
+    pub fn core_package_dirname(&self) -> String {
+        let core = self.core_package_component();
+        let digest = self.core_package_digest();
+
+        format!("{}-{}", core.package.id.name, digest)
+    }
+
+    pub fn core_cache_dir(&self, ws: &Workspace<'_>) -> Filesystem {
+        self.incremental_dir(ws).child(self.core_package_dirname())
+    }
+
+    pub fn core_fingerprint_dir(&self, ws: &Workspace<'_>) -> Filesystem {
+        self.fingerprint_dir(ws).child(self.core_package_dirname())
+    }
+}
+
+impl Deref for CairoCompilationUnitWithCore<'_> {
+    type Target = CairoCompilationUnit;
+    fn deref(&self) -> &Self::Target {
+        self.0
     }
 }

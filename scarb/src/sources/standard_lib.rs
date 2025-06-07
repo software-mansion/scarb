@@ -94,7 +94,7 @@ impl fmt::Debug for StandardLibSource<'_> {
     }
 }
 
-fn core_version_tag() -> String {
+pub fn core_version_tag() -> String {
     let core_version_info = crate::version::get().cairo;
     core_version_info
         .commit_info

@@ -1,6 +1,24 @@
+use crate::compiler::db::{
+    ScarbDatabase, build_scarb_root_database, has_plugin, is_starknet_plugin,
+};
+use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
+use crate::compiler::plugin::proc_macro;
+use crate::compiler::{
+    CairoCompilationUnit, CairoCompilationUnitWithCore, CompilationUnit, CompilationUnitAttributes,
+};
+use crate::core::{
+    FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
+};
+use crate::ops;
+use crate::ops::{
+    CompilationUnitsOpts, check_corelib_fingerprint_fresh, create_corelib_fingerprint,
+    get_test_package_ids, validate_features,
+};
 use anyhow::{Context, Error, Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsError;
+use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_lowering::cache::generate_crate_cache;
 use indoc::formatdoc;
 use itertools::Itertools;
 use scarb_ui::HumanDuration;
@@ -9,18 +27,7 @@ use scarb_ui::components::Status;
 use smol_str::{SmolStr, ToSmolStr};
 use std::collections::HashSet;
 use std::thread;
-
-use crate::compiler::db::{
-    ScarbDatabase, build_scarb_root_database, has_plugin, is_starknet_plugin,
-};
-use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
-use crate::compiler::plugin::proc_macro;
-use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes};
-use crate::core::{
-    FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
-};
-use crate::ops;
-use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
+use tracing::trace;
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -237,7 +244,8 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 proc_macros,
             } = build_scarb_root_database(&unit, ws, Default::default())?;
             check_starknet_dependency(&unit, ws, &db, &package_name);
-            let result = ws.config().compilers().compile(unit, &mut db, ws);
+            let result = ws.config().compilers().compile(unit.clone(), &mut db, ws);
+            try_save_corelib_cache(&db, &unit, ws).context("failed to save corelib cache")?;
 
             for plugin in proc_macros {
                 plugin
@@ -256,6 +264,35 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
 
         anyhow!("could not compile `{package_name}` due to previous error")
     })
+}
+
+fn try_save_corelib_cache(
+    db: &RootDatabase,
+    unit: &CairoCompilationUnit,
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    let Some(unit) = CairoCompilationUnitWithCore::try_new(unit).ok() else {
+        return Ok(());
+    };
+    if check_corelib_fingerprint_fresh(&unit, ws, false)? {
+        trace!("corelib fingerprint is fresh, skipping cache generation.");
+        return Ok(());
+    }
+    let core = unit.core_package_component();
+    let core_crate_id = CrateId::core(db);
+
+    let Some(cache_blob) = generate_crate_cache(db, core_crate_id).ok() else {
+        return Err(anyhow!("failed to generate corelib cache blob"));
+    };
+
+    let cache_dir = unit.core_cache_dir(ws);
+    let cache_filename = core.package.id.cache_filename();
+    let cache_file = cache_dir.create_rw(&cache_filename, &cache_filename, ws.config())?;
+    std::fs::write(cache_file.path(), &*cache_blob)
+        .context("failed to write corelib cache blob")?;
+
+    create_corelib_fingerprint(&unit, ws)?;
+    Ok(())
 }
 
 fn check_units(
