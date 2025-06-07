@@ -281,9 +281,8 @@ fn try_save_corelib_cache(
     let core = unit.core_package_component();
     let core_crate_id = CrateId::core(db);
 
-    let cache_blob = generate_crate_cache(db, core_crate_id).map_err(|err| {
-        error!("Failed to generate corelib cache blob: {err}");
-    });
+    let cache_blob = generate_crate_cache(db, core_crate_id)
+        .context("failed to generate core cache blob")?;
 
     let cache_dir = unit.core_cache_dir(ws);
     let cache_filename = core.package.id.cache_filename();
