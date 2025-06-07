@@ -1,17 +1,3 @@
-use anyhow::{Context, Error, Result, anyhow};
-use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_compiler::diagnostics::DiagnosticsError;
-use cairo_lang_filesystem::ids::CrateId;
-use cairo_lang_lowering::cache::generate_crate_cache;
-use indoc::formatdoc;
-use itertools::Itertools;
-use scarb_ui::HumanDuration;
-use scarb_ui::args::FeaturesSpec;
-use scarb_ui::components::Status;
-use smol_str::{SmolStr, ToSmolStr};
-use std::collections::HashSet;
-use std::thread;
-
 use crate::compiler::db::{
     ScarbDatabase, build_scarb_root_database, has_plugin, is_starknet_plugin,
 };
@@ -25,8 +11,23 @@ use crate::core::{
 };
 use crate::ops;
 use crate::ops::{
-    CompilationUnitsOpts, create_corelib_fingerprint, get_test_package_ids, validate_features,
+    CompilationUnitsOpts, check_corelib_fingerprint_fresh, create_corelib_fingerprint,
+    get_test_package_ids, validate_features,
 };
+use anyhow::{Context, Error, Result, anyhow, bail};
+use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_compiler::diagnostics::DiagnosticsError;
+use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_lowering::cache::generate_crate_cache;
+use indoc::formatdoc;
+use itertools::Itertools;
+use scarb_ui::HumanDuration;
+use scarb_ui::args::FeaturesSpec;
+use scarb_ui::components::Status;
+use smol_str::{SmolStr, ToSmolStr};
+use std::collections::HashSet;
+use std::thread;
+use tracing::{error, trace};
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -273,18 +274,24 @@ fn try_save_corelib_cache(
     let Some(unit) = CairoCompilationUnitWithCore::try_new(unit).ok() else {
         return Ok(());
     };
+    if check_corelib_fingerprint_fresh(&unit, ws, false)? {
+        trace!("corelib fingerprint is fresh, skipping cache generation.");
+        return Ok(());
+    }
     let core = unit.core_package_component();
     let core_crate_id = CrateId::core(db);
 
-    if let Ok(cache_blob) = generate_crate_cache(db, core_crate_id) {
-        let cache_dir = unit.core_cache_dir(ws);
-        let cache_filename = core.package.id.cache_filename();
-        let cache_file = cache_dir.create_rw(&cache_filename, &cache_filename, ws.config())?;
-        create_corelib_fingerprint(&unit, ws)?;
-        std::fs::write(cache_file.path(), &*cache_blob)
-            .context("Failed to write corelib cache blob")?;
-    }
-    Ok(())
+    let cache_blob = generate_crate_cache(db, core_crate_id).map_err(|err| {
+        error!("Failed to generate corelib cache blob: {err}");
+    });
+
+    let cache_dir = unit.core_cache_dir(ws);
+    let cache_filename = core.package.id.cache_filename();
+    let cache_file = cache_dir.create_rw(&cache_filename, &cache_filename, ws.config())?;
+    std::fs::write(cache_file.path(), &*cache_blob)
+        .context("Failed to write corelib cache blob")?;
+
+    create_corelib_fingerprint(&unit, ws)?;
 }
 
 fn check_units(
