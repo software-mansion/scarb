@@ -32,12 +32,38 @@ pub fn generate_summary_file_content(crate_: &Crate) -> Result<(String, Vec<(Str
     markdown += sub_markdown;
     summary_files.extend(module_item_summaries.to_owned());
 
+    let (foreign_modules_markdown, foreign_modules_files) =
+        generate_foreign_crates_summary_content(&crate_.foreign_crates, &context)?;
+
+    markdown += &foreign_modules_markdown;
+    summary_files.extend(foreign_modules_files.to_owned());
+
     let (groups_markdown, groups_files) =
         generate_global_groups_summary_content(&crate_.groups, &context)?;
     markdown += &groups_markdown;
     summary_files.extend(groups_files.to_owned());
 
     Ok((markdown, summary_files))
+}
+
+fn generate_foreign_crates_summary_content(
+    foreign_modules: &Vec<Module>,
+    context: &MarkdownGenerationContext,
+) -> Result<(String, Vec<(String, String)>)> {
+    let mut markdown = String::new();
+    let mut summary_files = vec![];
+
+    for module in foreign_modules {
+        summary_files.extend(vec![(
+            module.filename(),
+            module.generate_markdown(context, BASE_HEADER_LEVEL, None)?,
+        )]);
+        let (sub_markdown, module_item_summaries) =
+            &generate_modules_summary_content(module, 0, context)?;
+        markdown += sub_markdown;
+        summary_files.extend(module_item_summaries.to_owned());
+    }
+    Ok((markdown.to_string(), summary_files.to_owned()))
 }
 
 pub fn generate_modules_summary_content(

@@ -11,7 +11,203 @@
             "full_path": "hello_world",
             "group": null
           },
-          "submodules": [],
+          "submodules": [
+            {
+              "item_data": {
+                "name": "sub_package",
+                "doc": null,
+                "signature": null,
+                "full_path": "sub_package",
+                "group": null
+              },
+              "submodules": [
+                {
+                  "item_data": {
+                    "name": "inside_sub_module",
+                    "doc": null,
+                    "signature": null,
+                    "full_path": "sub_package::inside_sub_module",
+                    "group": null
+                  },
+                  "submodules": [],
+                  "constants": [],
+                  "free_functions": [],
+                  "structs": [],
+                  "enums": [],
+                  "type_aliases": [],
+                  "impl_aliases": [],
+                  "traits": [],
+                  "impls": [],
+                  "extern_types": [],
+                  "extern_functions": [],
+                  "pub_uses": {
+                    "use_constants": [],
+                    "use_free_functions": [],
+                    "use_structs": [],
+                    "use_enums": [],
+                    "use_module_type_aliases": [],
+                    "use_impl_aliases": [],
+                    "use_traits": [],
+                    "use_impl_defs": [],
+                    "use_extern_types": [],
+                    "use_extern_functions": [],
+                    "use_submodules": []
+                  }
+                }
+              ],
+              "constants": [
+                {
+                  "item_data": {
+                    "name": "ABC",
+                    "doc": null,
+                    "signature": "pub const ABC: u32 = 44;",
+                    "full_path": "sub_package::ABC",
+                    "group": null
+                  }
+                }
+              ],
+              "free_functions": [
+                {
+                  "item_data": {
+                    "name": "display",
+                    "doc": null,
+                    "signature": "pub fn display()",
+                    "full_path": "sub_package::display",
+                    "group": null
+                  }
+                }
+              ],
+              "structs": [
+                {
+                  "members": [],
+                  "item_data": {
+                    "name": "TestStruct",
+                    "doc": null,
+                    "signature": "pub struct TestStruct {\n    abc: u32,\n}",
+                    "full_path": "sub_package::TestStruct",
+                    "group": null
+                  }
+                }
+              ],
+              "enums": [
+                {
+                  "variants": [
+                    {
+                      "item_data": {
+                        "name": "Var1",
+                        "doc": null,
+                        "signature": "Var1",
+                        "full_path": "sub_package::TestEnum::Var1",
+                        "group": null
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "TestEnum",
+                    "doc": null,
+                    "signature": "pub enum TestEnum {\n    Var1,\n}",
+                    "full_path": "sub_package::TestEnum",
+                    "group": null
+                  }
+                }
+              ],
+              "type_aliases": [
+                {
+                  "item_data": {
+                    "name": "Type",
+                    "doc": null,
+                    "signature": "pub type Type = u32;",
+                    "full_path": "sub_package::Type",
+                    "group": null
+                  }
+                }
+              ],
+              "impl_aliases": [],
+              "traits": [
+                {
+                  "trait_constants": [],
+                  "trait_types": [],
+                  "trait_functions": [
+                    {
+                      "item_data": {
+                        "name": "test",
+                        "doc": null,
+                        "signature": "fn test()",
+                        "full_path": "sub_package::TestTrait::test",
+                        "group": null
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "TestTrait",
+                    "doc": null,
+                    "signature": "pub trait TestTrait",
+                    "full_path": "sub_package::TestTrait",
+                    "group": null
+                  }
+                }
+              ],
+              "impls": [
+                {
+                  "impl_types": [],
+                  "impl_constants": [],
+                  "impl_functions": [
+                    {
+                      "item_data": {
+                        "name": "test",
+                        "doc": null,
+                        "signature": "fn test()",
+                        "full_path": "sub_package::TestImpl::test",
+                        "group": null
+                      }
+                    }
+                  ],
+                  "item_data": {
+                    "name": "TestImpl",
+                    "doc": null,
+                    "signature": "pub impl TestImpl of TestTrait;",
+                    "full_path": "sub_package::TestImpl",
+                    "group": null
+                  }
+                }
+              ],
+              "extern_types": [
+                {
+                  "item_data": {
+                    "name": "ExternalType",
+                    "doc": null,
+                    "signature": "pub extern type ExternalType;",
+                    "full_path": "sub_package::ExternalType",
+                    "group": null
+                  }
+                }
+              ],
+              "extern_functions": [
+                {
+                  "item_data": {
+                    "name": "extern_function",
+                    "doc": null,
+                    "signature": "pub extern fn extern_function() -> u32 nopanic;",
+                    "full_path": "sub_package::extern_function",
+                    "group": null
+                  }
+                }
+              ],
+              "pub_uses": {
+                "use_constants": [],
+                "use_free_functions": [],
+                "use_structs": [],
+                "use_enums": [],
+                "use_module_type_aliases": [],
+                "use_impl_aliases": [],
+                "use_traits": [],
+                "use_impl_defs": [],
+                "use_extern_types": [],
+                "use_extern_functions": [],
+                "use_submodules": []
+              }
+            }
+          ],
           "constants": [],
           "free_functions": [],
           "structs": [],
