@@ -1511,7 +1511,7 @@ dependencies = [
  "lsp-types",
  "memchr",
  "rust-analyzer-salsa",
- "scarb-metadata 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "scarb-metadata 1.14.0",
  "scarb-proc-macro-server-types 0.2.0",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "semver 1.0.26",
@@ -1549,7 +1549,7 @@ dependencies = [
  "lsp-types",
  "num-bigint",
  "rust-analyzer-salsa",
- "scarb-metadata 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "scarb-metadata 1.14.0",
  "tempfile",
  "which",
 ]
@@ -6371,7 +6371,7 @@ dependencies = [
  "reqwest",
  "scarb-build-metadata",
  "scarb-extensions-cli",
- "scarb-metadata 1.14.0",
+ "scarb-metadata 1.15.0",
  "scarb-proc-macro-server-types 0.3.0-rc.0",
  "scarb-stable-hash 1.0.0",
  "scarb-test-support",
@@ -6442,7 +6442,7 @@ dependencies = [
  "clap",
  "indoc",
  "scarb-extensions-cli",
- "scarb-metadata 1.14.0",
+ "scarb-metadata 1.15.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -6463,7 +6463,7 @@ dependencies = [
  "clap",
  "indoc",
  "scarb-extensions-cli",
- "scarb-metadata 1.14.0",
+ "scarb-metadata 1.15.0",
  "scarb-test-support",
  "scarb-ui",
  "serde_json",
@@ -6495,7 +6495,7 @@ dependencies = [
  "itertools 0.14.0",
  "rust-analyzer-salsa",
  "scarb-extensions-cli",
- "scarb-metadata 1.14.0",
+ "scarb-metadata 1.15.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -6521,7 +6521,7 @@ dependencies = [
  "indoc",
  "predicates",
  "scarb-extensions-cli",
- "scarb-metadata 1.14.0",
+ "scarb-metadata 1.15.0",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -6564,6 +6564,19 @@ dependencies = [
 [[package]]
 name = "scarb-metadata"
 version = "1.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f580d215bb85d42e9a1489aa869cae7878aff343384b73e235753334e8fb72b4"
+dependencies = [
+ "camino",
+ "semver 1.0.26",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "scarb-metadata"
+version = "1.15.0"
 dependencies = [
  "assert_fs",
  "cairo-lang-filesystem",
@@ -6573,19 +6586,6 @@ dependencies = [
  "serde",
  "serde_json",
  "snapbox",
- "thiserror 2.0.12",
-]
-
-[[package]]
-name = "scarb-metadata"
-version = "1.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f580d215bb85d42e9a1489aa869cae7878aff343384b73e235753334e8fb72b4"
-dependencies = [
- "camino",
- "semver 1.0.26",
- "serde",
- "serde_json",
  "thiserror 2.0.12",
 ]
 
@@ -6623,7 +6623,7 @@ dependencies = [
  "predicates",
  "scarb-execute",
  "scarb-extensions-cli",
- "scarb-metadata 1.14.0",
+ "scarb-metadata 1.15.0",
  "scarb-test-support",
  "scarb-ui",
  "serde_json",
@@ -6691,7 +6691,7 @@ dependencies = [
  "clap",
  "console",
  "indicatif",
- "scarb-metadata 1.14.0",
+ "scarb-metadata 1.15.0",
  "serde",
  "serde_json",
  "test-case",
@@ -6708,7 +6708,7 @@ dependencies = [
  "clap",
  "indoc",
  "scarb-extensions-cli",
- "scarb-metadata 1.14.0",
+ "scarb-metadata 1.15.0",
  "scarb-test-support",
  "scarb-ui",
  "serde_json",
