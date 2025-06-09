@@ -250,7 +250,7 @@ pub fn generate_code_mappings(
                 Some(CodeMapping {
                     span: TextSpan {
                         start: mapping.span.start,
-                        end: mapping.span.start.add_width(TextWidth::new_for_testing(1)),
+                        end: mapping.span.start,
                     },
                     origin: CodeOrigin::Span(TextSpan {
                         start: TextOffset::default()
