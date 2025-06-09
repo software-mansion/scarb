@@ -194,7 +194,7 @@ fn expand_derive() {
                 response.code_mappings.unwrap(),
                 vec![
                     CodeMapping {
-                        span: TextSpan { start: 0, end: 1 },
+                        span: TextSpan { start: 0, end: 0 },
                         origin: Span(TextSpan { start: 0, end: 0 })
                     },
                     CodeMapping {

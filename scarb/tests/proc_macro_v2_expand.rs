@@ -2040,9 +2040,9 @@ fn span_offsets_calculated_correctly_for_function_with_non_macro_attrs() {
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
             error: Missing semicolon
-             --> [..]lib.cairo:4:30
+             --> [..]lib.cairo:4:31
                 assert(1 + 1 == 2, 'fail')
-                                         ^
+                                          ^
             note: this error originates in the attribute macro: `simple_attr`
 
             error: could not compile `hello` due to previous error
