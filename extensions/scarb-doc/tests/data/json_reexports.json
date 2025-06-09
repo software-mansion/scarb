@@ -8,7 +8,8 @@
             "name": "hello_world",
             "doc": null,
             "signature": null,
-            "full_path": "hello_world"
+            "full_path": "hello_world",
+            "group": null
           },
           "submodules": [],
           "constants": [],
@@ -38,7 +39,8 @@
                   "name": "sub_package",
                   "doc": null,
                   "signature": null,
-                  "full_path": "sub_package"
+                  "full_path": "sub_package",
+                  "group": null
                 },
                 "submodules": [
                   {
@@ -46,7 +48,8 @@
                       "name": "inside_sub_module",
                       "doc": null,
                       "signature": null,
-                      "full_path": "sub_package::inside_sub_module"
+                      "full_path": "sub_package::inside_sub_module",
+                      "group": null
                     },
                     "submodules": [],
                     "constants": [],
@@ -80,7 +83,8 @@
                       "name": "ABC",
                       "doc": null,
                       "signature": "pub const ABC: u32 = 44;",
-                      "full_path": "sub_package::ABC"
+                      "full_path": "sub_package::ABC",
+                      "group": null
                     }
                   }
                 ],
@@ -90,7 +94,8 @@
                       "name": "display",
                       "doc": null,
                       "signature": "pub fn display()",
-                      "full_path": "sub_package::display"
+                      "full_path": "sub_package::display",
+                      "group": null
                     }
                   }
                 ],
@@ -101,7 +106,8 @@
                       "name": "TestStruct",
                       "doc": null,
                       "signature": "pub struct TestStruct {\n    abc: u32,\n}",
-                      "full_path": "sub_package::TestStruct"
+                      "full_path": "sub_package::TestStruct",
+                      "group": null
                     }
                   }
                 ],
@@ -113,7 +119,8 @@
                           "name": "Var1",
                           "doc": null,
                           "signature": "Var1",
-                          "full_path": "sub_package::TestEnum::Var1"
+                          "full_path": "sub_package::TestEnum::Var1",
+                          "group": null
                         }
                       }
                     ],
@@ -121,7 +128,8 @@
                       "name": "TestEnum",
                       "doc": null,
                       "signature": "pub enum TestEnum {\n    Var1,\n}",
-                      "full_path": "sub_package::TestEnum"
+                      "full_path": "sub_package::TestEnum",
+                      "group": null
                     }
                   }
                 ],
@@ -131,7 +139,8 @@
                       "name": "Type",
                       "doc": null,
                       "signature": "pub type Type = u32;",
-                      "full_path": "sub_package::Type"
+                      "full_path": "sub_package::Type",
+                      "group": null
                     }
                   }
                 ],
@@ -146,7 +155,8 @@
                           "name": "test",
                           "doc": null,
                           "signature": "fn test()",
-                          "full_path": "sub_package::TestTrait::test"
+                          "full_path": "sub_package::TestTrait::test",
+                          "group": null
                         }
                       }
                     ],
@@ -154,7 +164,8 @@
                       "name": "TestTrait",
                       "doc": null,
                       "signature": "pub trait TestTrait",
-                      "full_path": "sub_package::TestTrait"
+                      "full_path": "sub_package::TestTrait",
+                      "group": null
                     }
                   }
                 ],
@@ -168,7 +179,8 @@
                           "name": "test",
                           "doc": null,
                           "signature": "fn test()",
-                          "full_path": "sub_package::TestImpl::test"
+                          "full_path": "sub_package::TestImpl::test",
+                          "group": null
                         }
                       }
                     ],
@@ -176,7 +188,8 @@
                       "name": "TestImpl",
                       "doc": null,
                       "signature": "pub impl TestImpl of TestTrait;",
-                      "full_path": "sub_package::TestImpl"
+                      "full_path": "sub_package::TestImpl",
+                      "group": null
                     }
                   }
                 ],
@@ -186,7 +199,8 @@
                       "name": "ExternalType",
                       "doc": null,
                       "signature": "pub extern type ExternalType;",
-                      "full_path": "sub_package::ExternalType"
+                      "full_path": "sub_package::ExternalType",
+                      "group": null
                     }
                   }
                 ],
@@ -196,7 +210,8 @@
                       "name": "extern_function",
                       "doc": null,
                       "signature": "pub extern fn extern_function() -> u32 nopanic;",
-                      "full_path": "sub_package::extern_function"
+                      "full_path": "sub_package::extern_function",
+                      "group": null
                     }
                   }
                 ],

@@ -8,7 +8,8 @@
             "name": "hello_world",
             "doc": null,
             "signature": null,
-            "full_path": "hello_world"
+            "full_path": "hello_world",
+            "group": null
           },
           "submodules": [],
           "constants": [],
@@ -20,7 +21,8 @@
                 "name": "VisibleStruct",
                 "doc": null,
                 "signature": "struct VisibleStruct {}",
-                "full_path": "hello_world::VisibleStruct"
+                "full_path": "hello_world::VisibleStruct",
+                "group": null
               }
             }
           ],
@@ -36,7 +38,8 @@
                 "name": "VisibleTrait",
                 "doc": null,
                 "signature": "trait VisibleTrait<T>",
-                "full_path": "hello_world::VisibleTrait"
+                "full_path": "hello_world::VisibleTrait",
+                "group": null
               }
             },
             {
@@ -47,7 +50,8 @@
                 "name": "SecondVisibleTrait",
                 "doc": null,
                 "signature": "trait SecondVisibleTrait<T, Y>",
-                "full_path": "hello_world::SecondVisibleTrait"
+                "full_path": "hello_world::SecondVisibleTrait",
+                "group": null
               }
             }
           ],
@@ -60,7 +64,8 @@
                 "name": "VisibleImpl",
                 "doc": null,
                 "signature": "impl VisibleImpl of VisibleTrait<VisibleStruct>;",
-                "full_path": "hello_world::VisibleImpl"
+                "full_path": "hello_world::VisibleImpl",
+                "group": null
               }
             },
             {
@@ -71,7 +76,8 @@
                 "name": "SecondVisibleImpl",
                 "doc": null,
                 "signature": "impl SecondVisibleImpl of SecondVisibleTrait<HiddenStruct, VisibleStruct>;",
-                "full_path": "hello_world::SecondVisibleImpl"
+                "full_path": "hello_world::SecondVisibleImpl",
+                "group": null
               }
             }
           ],
