@@ -2136,3 +2136,97 @@ fn token_stream_parsed_with_correct_spans() {
             [..]Finished `dev` profile target(s) in [..]
       "##});
 }
+
+#[test]
+fn zero_width_diags_mapped_correctly_at_token_starts() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .add_cairo_lang_parser_dep()
+        .add_cairo_lang_syntax_dep()
+        .lib_rs(indoc! {r#"
+            use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
+            use cairo_lang_parser::utils::SimpleParserDatabase;
+            use cairo_lang_syntax::node::with_db::SyntaxNodeWithDb;
+
+            fn parse_item(item: TokenStream) -> TokenStream {
+                let db_val = SimpleParserDatabase::default();
+                let db = &db_val;
+                let (body, _diagnostics) = db.parse_token_stream(&item);
+                let body = SyntaxNodeWithDb::new(&body, db);
+                quote!(#body)
+            }
+
+            #[attribute_macro]
+            pub fn first_attr(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+                let body = parse_item(item);
+                // Note we generate a new function here.
+                // We only do this to ensure, that the resulting code differs from the original one.
+                // Otherwise, as an optimization, Scarb won't rewrite the AST node.
+                let ts = quote! {
+                    fn other_1() {}
+
+                    #body
+                };
+                ProcMacroResult::new(ts)
+            }
+          
+            #[attribute_macro]
+            pub fn second_attr(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+                let body = parse_item(item);
+                // Note we generate a new function here.
+                // We only do this to ensure, that the resulting code differs from the original one.
+                // Otherwise, as an optimization, Scarb won't rewrite the AST node.
+                let ts = quote! {
+                    fn other_2() {}
+
+                    #body
+                };
+                ProcMacroResult::new(ts)
+            }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .dep_builtin("assert_macros")
+        .lib_cairo(indoc! {r#"
+            #[first_attr]
+            #[doc(hidden)]
+            #[second_attr]
+            fn foo() {
+                let y = x;
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..] Compiling some v1.0.0 ([..]Scarb.toml)
+            [..] Compiling hello v1.0.0 ([..]Scarb.toml)
+            error[E0006]: Identifier not found.
+             --> [..]lib.cairo:5:13
+                let y = x;
+                        ^
+            note: this error originates in the attribute macro: `first_attr`
+            note: this error originates in the attribute macro: `second_attr`
+            
+            warn[E0001]: Unused variable. Consider ignoring by prefixing with `_`.
+             --> [..]lib.cairo:5:9
+                let y = x;
+                    ^
+            note: this error originates in the attribute macro: `first_attr`
+            note: this error originates in the attribute macro: `second_attr`
+            
+            error: could not compile `hello` due to previous error
+       "#});
+}
