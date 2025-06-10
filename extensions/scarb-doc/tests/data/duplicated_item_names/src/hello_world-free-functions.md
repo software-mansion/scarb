@@ -1,6 +1,6 @@
 
-[Free functions](./hello_world-free_functions.md)
- ---
+## [Free functions](./hello_world-free_functions.md)
+
 | | |
 |:---|:---|
 | [main](./hello_world-main.md) | [...](./hello_world-main.md) |

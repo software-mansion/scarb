@@ -9,6 +9,7 @@ use crate::errors::{IODirectoryCreationError, IOWriteError};
 
 mod book_toml;
 mod context;
+mod groups;
 mod summary;
 mod traits;
 
@@ -17,6 +18,8 @@ const SOURCE_DIRECTORY: &str = "src";
 const BOOK_TOML_FILENAME: &str = "book.toml";
 pub const SUMMARY_FILENAME: &str = "SUMMARY.md";
 const SHORT_DOCUMENTATION_LEN: usize = 200;
+pub const BASE_MODULE_CHAPTER_PREFIX: &str = "##";
+pub const GROUP_CHAPTER_PREFIX: &str = "- ###";
 
 /// Prefixes that indicate the start of complex markdown structures,
 /// such as tables. These should be avoided in brief documentation to maintain simple text

@@ -1,4 +1,5 @@
 use crate::db::ScarbDocDatabase;
+use crate::types::groups::Group;
 use crate::types::module_type::{
     Module, ModulePubUses, collect_pubuses, get_ancestors_vector, merge_modules,
 };
@@ -6,6 +7,7 @@ use cairo_lang_defs::ids::{LanguageElementId, ModuleId};
 use cairo_lang_diagnostics::Maybe;
 use cairo_lang_filesystem::ids::CrateId;
 use serde::Serialize;
+use std::collections::HashMap;
 
 macro_rules! process_virtual_module_items {
     ($all_pub_ues:expr, $self:expr, $db:expr, $(($field:ident, $insert_fn:ident)),*) => {
@@ -23,6 +25,7 @@ macro_rules! process_virtual_module_items {
 #[derive(Serialize, Clone)]
 pub struct Crate {
     pub root_module: Module,
+    pub groups: Vec<Group>,
 }
 
 impl Crate {
@@ -33,16 +36,23 @@ impl Crate {
     ) -> Maybe<Self> {
         let root_module_id = ModuleId::CrateRoot(crate_id);
         let root_module = Module::new(db, root_module_id, include_private_items)?;
-        Ok(Self { root_module })
+        Ok(Self {
+            root_module,
+            groups: vec![],
+        })
     }
 
-    pub fn new_with_virtual_modules(
+    pub fn new_with_virtual_modules_and_groups(
         db: &ScarbDocDatabase,
         crate_id: CrateId,
         include_private_items: bool,
     ) -> Maybe<Self> {
         let mut root = Self::new(db, crate_id, include_private_items)?;
         root.process_virtual_modules(db);
+        let mut groups: Vec<Group> = root.collect_groups().into_values().collect();
+        groups.sort_by(|a, b| a.name.cmp(&b.name));
+        root.groups = groups;
+
         Ok(root)
     }
 
@@ -104,5 +114,54 @@ impl Crate {
             }
         }
         self.to_owned()
+    }
+
+    pub fn collect_groups(&self) -> HashMap<String, Group> {
+        let mut merged_groups = HashMap::new();
+        Self::collect_groups_from_module(&self.root_module, &mut merged_groups);
+        merged_groups
+    }
+
+    fn collect_groups_from_module(module: &Module, merged_groups: &mut HashMap<String, Group>) {
+        for group in &module.groups {
+            let entry = merged_groups
+                .entry(group.name.clone())
+                .or_insert_with(|| Group {
+                    name: group.name.clone(),
+                    submodules: vec![],
+                    constants: vec![],
+                    free_functions: vec![],
+                    structs: vec![],
+                    enums: vec![],
+                    type_aliases: vec![],
+                    impl_aliases: vec![],
+                    traits: vec![],
+                    impls: vec![],
+                    extern_types: vec![],
+                    extern_functions: vec![],
+                });
+
+            entry.submodules.extend(group.submodules.clone());
+            entry.constants.extend(group.constants.clone());
+            entry.free_functions.extend(group.free_functions.clone());
+            entry.structs.extend(group.structs.clone());
+            entry.enums.extend(group.enums.clone());
+            entry.type_aliases.extend(group.type_aliases.clone());
+            entry.impl_aliases.extend(group.impl_aliases.clone());
+            entry.traits.extend(group.traits.clone());
+            entry.impls.extend(group.impls.clone());
+            entry.extern_types.extend(group.extern_types.clone());
+            entry
+                .extern_functions
+                .extend(group.extern_functions.clone());
+
+            for submodule in group.submodules.iter() {
+                Self::collect_groups_from_module(submodule, merged_groups);
+            }
+        }
+
+        for submodule in &module.submodules {
+            Self::collect_groups_from_module(submodule, merged_groups);
+        }
     }
 }
