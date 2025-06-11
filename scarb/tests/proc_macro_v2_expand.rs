@@ -1505,6 +1505,79 @@ fn can_emit_diagnostic_with_custom_location() {
 }
 
 #[test]
+fn can_emit_diagnostic_with_custom_location_on_node_with_trivia() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .lib_rs(indoc! {r#"
+        use cairo_lang_macro::{ProcMacroResult, TokenStream, TokenTree, attribute_macro, Diagnostic, TextSpan};
+
+        #[attribute_macro]
+        pub fn some(_attr: TokenStream, token_stream: TokenStream) -> ProcMacroResult {
+            let mut start_span = None;
+            let mut end_span = None;
+
+            for token_tree in token_stream.tokens.iter() {
+                let TokenTree::Ident(token) = token_tree;
+                if token.content.as_ref().contains("(") {
+                    start_span = Some(token.span.clone());
+                }
+                if token.content.as_ref().contains(")") {
+                    end_span = Some(token.span.clone());
+                }
+            }
+            let result = ProcMacroResult::new(token_stream);
+
+
+            // Emit error diagnostic if tuple type is found
+            if let (Some(start), Some(end)) = (start_span, end_span) {
+                // Create a custom span from start to end
+                let custom_span = TextSpan::new(start.start, end.end);
+
+                let diag = Diagnostic::span_error(custom_span, "Unsupported tuple type");
+                result.with_diagnostics(diag.into())
+            } else {
+                result
+            }
+        }
+        "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+            #[some]
+            struct X {
+                x: felt252,
+                y:
+                    // Some node trivia to move offsets a bit.
+                    (u32, u64),
+            }
+        "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling some v1.0.0 ([..]Scarb.toml)
+            [..]Compiling hello v1.0.0 ([..]Scarb.toml)
+            error: Plugin diagnostic: Unsupported tuple type
+             --> [..]lib.cairo:6:9
+                    (u32, u64),
+                    ^^^^^^^^^^
+
+            error: could not compile `hello` due to previous error
+        "#});
+}
+
+#[test]
 fn can_emit_diagnostic_with_inversed_span() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
