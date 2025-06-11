@@ -6,10 +6,10 @@ pub use same_parent_mod::nested_same_parent_mod::internal_reeksport;
 
 fn top_level_function() {}
 
-#[doc(group: 'test group')]
+#[doc(group: "test group")]
 mod same_parent_mod {
     pub(crate) mod nested_same_parent_mod {
-        #[doc(group: 'test group')]
+        #[doc(group: "test group")]
         pub(crate) fn internal_reeksport() {}
     }
 }
