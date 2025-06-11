@@ -21,6 +21,8 @@ pub struct ExpandAttributeParams {
     pub item: TokenStream,
     /// The span of the macro call code
     pub call_site: TextSpan,
+    /// The span of the "adapted" call site
+    pub adapted_call_site: TextSpan,
 }
 
 /// Represents a request to expand a single attribute macro.

@@ -25,6 +25,7 @@ impl Handler for ExpandAttribute {
             args,
             item,
             call_site,
+            adapted_call_site,
         } = params;
         let expansion = ExpansionQuery::with_expansion_name(&attr, ExpansionKind::Attr);
         let plugins = workspace_macros.get(&context.component);
@@ -46,9 +47,14 @@ impl Handler for ExpandAttribute {
                 token_stream_v2_to_v1(&args),
                 token_stream_v2_to_v1(&item),
             ),
-            ProcMacroApiVersion::V2 => {
-                expand_attribute_v2(proc_macro_instance, attr, call_site, args, item)
-            }
+            ProcMacroApiVersion::V2 => expand_attribute_v2(
+                proc_macro_instance,
+                attr,
+                call_site,
+                adapted_call_site,
+                args,
+                item,
+            ),
         }
     }
 }
@@ -74,13 +80,16 @@ fn expand_attribute_v2(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     attr: String,
     call_site: TextSpan,
+    adapted_call_site: TextSpan,
     args: TokenStreamV2,
     item: TokenStreamV2,
 ) -> Result<ProcMacroResult> {
-    let result =
-        proc_macro_instance
-            .try_v2()?
-            .generate_code(attr.into(), call_site.clone(), args, item);
+    let result = proc_macro_instance.try_v2()?.generate_code(
+        attr.into(),
+        adapted_call_site.clone(),
+        args,
+        item,
+    );
 
     let code_mappings = generate_code_mappings(&result.token_stream, call_site);
     Ok(ProcMacroResult {
