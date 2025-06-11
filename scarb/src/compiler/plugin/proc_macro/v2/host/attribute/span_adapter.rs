@@ -95,6 +95,7 @@ impl From<AdaptedCodeMapping> for CodeMapping {
     }
 }
 
+#[derive(Debug)]
 pub struct AdaptedDiagnostic(Diagnostic);
 
 impl From<AdaptedDiagnostic> for Diagnostic {
@@ -158,9 +159,11 @@ impl ExpandableAttrLocation {
     }
 
     pub fn adapted_call_site(&self) -> AdaptedTextSpan {
+        let start =
+            self.item_start_offset + self.span_without_trivia.start - self.span_with_trivia.start;
         AdaptedTextSpan(TextSpan {
-            start: self.item_start_offset,
-            end: self.item_start_offset + self.width_without_trivia(),
+            start,
+            end: start + self.width_without_trivia(),
         })
     }
 
@@ -199,7 +202,7 @@ impl ExpandableAttrLocation {
             .map(|code_mapping| {
                 let origin = match code_mapping.origin {
                     CodeOrigin::Span(span) => {
-                        let span = if span.start.as_u32() < attr_width {
+                        let span = if span.start.as_u32() < self.item_start_offset + attr_width {
                             CairoTextSpan {
                                 start: span.start.add_width(TextWidth::new_for_testing(
                                     attr_start - self.item_start_offset,
@@ -236,17 +239,19 @@ impl ExpandableAttrLocation {
         let attr_width = self.width_with_trivia();
         diagnostics
             .into_iter()
-            .map(|mut diagnostic| {
-                if let Some(span) = diagnostic.span.as_mut() {
-                    if span.start < attr_width {
+            .map(|diagnostic| {
+                if let Some(mut span) = diagnostic.span() {
+                    if span.start < self.item_start_offset + attr_width {
                         span.start += attr_start - self.item_start_offset;
                         span.end += attr_start - self.item_start_offset;
                     } else if span.start < attr_end {
                         span.start -= attr_width;
                         span.end -= attr_width;
                     }
+                    Diagnostic::spanned(span, diagnostic.severity(), diagnostic.message())
+                } else {
+                    diagnostic
                 }
-                diagnostic
             })
             .map(AdaptedDiagnostic)
             .collect()
