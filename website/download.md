@@ -136,6 +136,8 @@ complete -o default -F _scarb scarb
 # END SCARB COMPLETIONS
 ```
 
+Run `source ~/.bashrc` (or `source ~/.bash_profile`), or open a new terminal session to apply the changes.
+
 </details>
 
 <details>
@@ -157,6 +159,8 @@ autoload -Uz compinit && compinit
 # END SCARB COMPLETIONS
 ```
 
+Run `source ~/.zshrc`, or open a new terminal session to apply the changes.
+
 </details>
 
 <details>
@@ -176,6 +180,8 @@ end
 complete -c scarb -f -a '(_scarb)'
 # END SCARB COMPLETIONS
 ```
+
+Run `source ~/.config/fish/config.fish`, or open a new terminal session to apply the changes.
 
 </details>
 
@@ -198,6 +204,8 @@ set edit:completion:arg-completer[scarb] = $scarb:complete~
 # END SCARB COMPLETIONS
 ```
 
+Run `source ~/.config/elvish/rc.elv`, or open a new terminal session to apply the changes.
+
 </details>
 
 <details>
@@ -217,12 +225,15 @@ try {
     Invoke-Expression -Command $(scarb completions powershell | Out-String)
 } catch {}
 # END SCARB COMPLETIONS
-``` 
-At the start of the PowerShell session, you may encounter an error due to a restrictive `ExecutionPolicy`. You can resolve this issue by running the following command:
-
-```bash
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
+Start a new PowerShell session to apply the changes.
+
+> [!WARNING]
+> At the start of the PowerShell session, you may encounter an error due to a restrictive `ExecutionPolicy`. You can resolve this issue by running the following command:
+> 
+> ```bash
+> Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
 </details>
 
 
