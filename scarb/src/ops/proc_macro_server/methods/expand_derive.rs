@@ -30,6 +30,7 @@ impl Handler for ExpandDerive {
         let mut derived_code = String::new();
         let mut all_diagnostics = vec![];
         let mut code_mappings = vec![];
+        let mut package_ids = vec![];
         // Needed to provide offset for code mappings in v2-style macros
         let mut current_width = TextWidth::default();
 
@@ -80,6 +81,8 @@ impl Handler for ExpandDerive {
 
             // Register diagnostics.
             all_diagnostics.extend(result.diagnostics);
+
+            package_ids.extend(result.package_ids);
             // Add generated code.
             derived_code.push_str(&result.token_stream.to_string());
         }
@@ -88,6 +91,7 @@ impl Handler for ExpandDerive {
             token_stream: TokenStreamV1::new(derived_code),
             diagnostics: all_diagnostics,
             code_mappings: Some(code_mappings),
+            package_ids,
         })
     }
 }
@@ -119,6 +123,7 @@ fn expand_derive_v1(
         token_stream: result.token_stream,
         diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),
         code_mappings,
+        package_ids: vec![proc_macro_instance.package_id().to_serialized_string()],
     })
 }
 
@@ -148,5 +153,6 @@ fn expand_derive_v2(
                 .map(interface_code_mapping_from_cairo)
                 .collect(),
         ),
+        package_ids: vec![proc_macro_instance.package_id().to_serialized_string()],
     })
 }

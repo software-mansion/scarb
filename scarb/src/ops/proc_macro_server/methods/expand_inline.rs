@@ -60,6 +60,7 @@ fn expand_inline_v1(
         token_stream: result.token_stream,
         diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),
         code_mappings: None,
+        package_ids: vec![proc_macro_instance.package_id().to_serialized_string()],
     })
 }
 
@@ -86,5 +87,6 @@ fn expand_inline_v2(
                 .map(interface_code_mapping_from_cairo)
                 .collect(),
         ),
+        package_ids: vec![proc_macro_instance.package_id().to_serialized_string()],
     })
 }
