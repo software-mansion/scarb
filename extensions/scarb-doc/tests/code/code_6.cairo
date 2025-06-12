@@ -26,3 +26,8 @@ impl CongoUganda of Uganda<Congo> {
     fn rwanda(self: Congo) -> u32;
     fn uganda() {};
 }
+
+#[doc(hidden)]
+pub struct ThisShouldNotBeLinked() {}
+
+pub fn test_hidden_in_location_links(param: ThisShouldNotBeLinked) {}

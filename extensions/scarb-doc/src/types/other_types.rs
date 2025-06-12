@@ -50,6 +50,13 @@ impl ItemData {
             db.get_item_signature_with_links(documentable_item_id);
         let doc_location_links = doc_location_links
             .iter()
+            .filter(|link| {
+                if let Some(stable_location) = link.item_id.stable_location(db) {
+                    !is_doc_hidden_attr(db, &stable_location.syntax_node(db))
+                } else {
+                    false
+                }
+            })
             .map(|link| DocLocationLink::new(link.start, link.end, link.item_id, db))
             .collect::<Vec<_>>();
         let group = find_groups_from_attributes(db, &id);
