@@ -18,12 +18,11 @@ use cairo_lang_macro_v1::Diagnostic as DiagnosticV1;
 use cairo_lang_macro_v1::Severity as SeverityV1;
 /// Downcasts new diagnostic struct to the old one.
 pub fn diagnostic_v1_to_v2(diagnostic_v1: &DiagnosticV1) -> DiagnosticV2 {
-    DiagnosticV2 {
-        message: diagnostic_v1.message.clone(),
-        severity: match diagnostic_v1.severity {
+    DiagnosticV2::new(
+        match diagnostic_v1.severity {
             SeverityV1::Error => SeverityV2::Error,
             SeverityV1::Warning => SeverityV2::Warning,
         },
-        span: None,
-    }
+        diagnostic_v1.message.clone(),
+    )
 }

@@ -47,7 +47,7 @@ pub fn into_cairo_diagnostics(
             // Resolve the best possible diagnostic location.
             // If the diagnostic span is provided, find the encompassing node and compute the span relative to that node.
             // Fall back to the call-site stable pointer, if diagnostic span is not provided or if the encompassing node cannot be found.
-            let (node_stable_ptr, relative_span) = if let Some(span) = diag.span {
+            let (node_stable_ptr, relative_span) = if let Some(span) = diag.span() {
                 if let Some(node) = find_encompassing_node(&root_syntax_node, db, &span) {
                     let relative_span = compute_relative_span(&node, db, &span);
                     (node.stable_ptr(db), Some(relative_span))
@@ -61,8 +61,8 @@ pub fn into_cairo_diagnostics(
             PluginDiagnostic {
                 stable_ptr: node_stable_ptr,
                 relative_span,
-                message: diag.message,
-                severity: match diag.severity {
+                message: diag.message().to_string(),
+                severity: match diag.severity() {
                     Severity::Error => cairo_lang_diagnostics::Severity::Error,
                     Severity::Warning => cairo_lang_diagnostics::Severity::Warning,
                 },
