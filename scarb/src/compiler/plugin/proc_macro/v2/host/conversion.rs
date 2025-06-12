@@ -47,26 +47,25 @@ pub fn into_cairo_diagnostics(
             // Resolve the best possible diagnostic location.
             // If the diagnostic span is provided, find the encompassing node and compute the span relative to that node.
             // Fall back to the call-site stable pointer, if diagnostic span is not provided or if the encompassing node cannot be found.
-            let (node_stable_ptr, relative_span) = if let Some(span) = diag.span() {
+            let (node_stable_ptr, inner_span) = if let Some(span) = diag.span() {
                 if let Some(node) = find_encompassing_node(&root_syntax_node, db, &span) {
-                    let relative_span = compute_relative_span(&node, db, &span);
-                    (node.stable_ptr(db), Some(relative_span))
+                    let inner_span = compute_relative_span(&node, db, &span);
+                    (node.stable_ptr(db), Some(inner_span))
                 } else {
                     (call_site_stable_ptr, None)
                 }
             } else {
                 (call_site_stable_ptr, None)
             };
-
             PluginDiagnostic {
                 stable_ptr: node_stable_ptr,
-                relative_span,
                 message: diag.message().to_string(),
                 severity: match diag.severity() {
                     Severity::Error => cairo_lang_diagnostics::Severity::Error,
                     Severity::Warning => cairo_lang_diagnostics::Severity::Warning,
                 },
-                inner_span: None,
+                relative_span: None,
+                inner_span,
             }
         })
         .collect_vec()
@@ -113,12 +112,12 @@ fn compute_relative_span(
     node: &SyntaxNode,
     db: &dyn SyntaxGroup,
     absolute_span: &TextSpan,
-) -> cairo_lang_filesystem::span::TextSpan {
+) -> (TextWidth, TextWidth) {
     let offset = node.offset(db).as_u32();
     let relative_start = absolute_span.start.saturating_sub(offset);
     let relative_end = absolute_span.end.saturating_sub(offset);
-    cairo_lang_filesystem::span::TextSpan {
-        start: TextOffset::default().add_width(TextWidth::new_for_testing(relative_start)),
-        end: TextOffset::default().add_width(TextWidth::new_for_testing(relative_end)),
-    }
+    (
+        TextWidth::new_for_testing(relative_start),
+        TextWidth::new_for_testing(relative_end - relative_start),
+    )
 }
