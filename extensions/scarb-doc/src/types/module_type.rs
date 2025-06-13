@@ -153,6 +153,20 @@ impl ModulePubUses {
             use_submodules,
         })
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.use_constants.is_empty()
+            && self.use_free_functions.is_empty()
+            && self.use_structs.is_empty()
+            && self.use_enums.is_empty()
+            && self.use_module_type_aliases.is_empty()
+            && self.use_impl_aliases.is_empty()
+            && self.use_traits.is_empty()
+            && self.use_impl_defs.is_empty()
+            && self.use_extern_types.is_empty()
+            && self.use_extern_functions.is_empty()
+            && self.use_submodules.is_empty()
+    }
 }
 
 macro_rules! define_insert_function {
@@ -171,11 +185,42 @@ macro_rules! define_insert_function {
                     .any(|existing_item| existing_item.id == item.id)
                 {
                     return;
-                } else if item.item_data.group.is_some() {
+                } else if let Some(item_group_name)  = item.item_data.group.as_ref() {
                     // avoid duplicating items in module.groups and module.pub_uses
+                    for group in self.groups.iter_mut() {
+                        if &group.name == item_group_name {
+                            for existing_item in group.$field_name.iter() {
+                                if existing_item.id == item.id {
+                                    // PubUses do not guarantee uniquness, and Group must do so.
+                                    return;
+                                }
+                            }
+                            group.$field_name.push(item);
+                            return;
+                        }
+                    }
+
+                    let mut group = Group {
+                        name: item_group_name.clone(),
+                        submodules: vec![],
+                        constants: vec![],
+                        free_functions: vec![],
+                        structs: vec![],
+                        enums: vec![],
+                        type_aliases: vec![],
+                        impl_aliases: vec![],
+                        traits: vec![],
+                        impls: vec![],
+                        extern_types: vec![],
+                        extern_functions: vec![],
+                    };
+                    group.$field_name.push(item);
+                    self.groups.push(group);
                     return;
-                }
+
+                } else {
                 self.$field_name.push(item);
+                }
             }
         )*
     };
@@ -505,10 +550,15 @@ pub(crate) fn get_ancestors_vector(
     module_id: ModuleId,
     db: &ScarbDocDatabase,
 ) -> Vec<ModuleId> {
-    if let ModuleId::Submodule(submodule_id) = module_id {
-        ancestors.insert(0, module_id);
-        let parent = submodule_id.parent_module(db);
-        get_ancestors_vector(ancestors, parent, db);
+    match module_id {
+        ModuleId::Submodule(submodule_id) => {
+            ancestors.insert(0, module_id);
+            let parent = submodule_id.parent_module(db);
+            get_ancestors_vector(ancestors, parent, db);
+        }
+        ModuleId::CrateRoot(_) => {
+            ancestors.insert(0, module_id);
+        }
     }
     ancestors.clone()
 }
