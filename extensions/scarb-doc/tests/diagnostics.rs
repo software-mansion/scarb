@@ -168,7 +168,7 @@ fn test_diagnostics_warnings() {
             #[doc(group = "wrong syntax")]
             fn wrong_syntax() {}
             
-            #[doc(group: "wrong syntax2")]
+            #[doc(group: 'wrong syntax2')]
             fn wrong_syntax2() {}
             
             #[doc(wrong_argument_name: 'group name')]
@@ -190,13 +190,13 @@ fn test_diagnostics_warnings() {
         .assert()
         .stdout_matches(indoc! {r#"
             warn: Invalid attribute `#doc(group = "wrong syntax")]` in hello_world::wrong_syntax.
-            Use `#[doc(group: 'group name')]'` or `#[doc(hidden)]`, instead
-            warn: Invalid attribute `group: "wrong syntax2"` in hello_world::wrong_syntax2.
-            Use `group: 'group name'` instead.
+            Use `#[doc(group: "group name")]'` or `#[doc(hidden)]`, instead
+            warn: Invalid attribute `group: 'wrong syntax2'` in hello_world::wrong_syntax2.
+            Use `group: "group name"` instead.
             warn: Invalid attribute `wrong_argument_name: 'group name'` in hello_world::wrong_argument_name.
-            Use `group: 'group name'` instead.
+            Use `group: "group name"` instead.
             warn: Invalid attribute `#doc(hiddens)]` in hello_world::typo.
-            Use `#[doc(group: 'group name')]'` or `#[doc(hidden)]`, instead
+            Use `#[doc(group: "group name")]'` or `#[doc(hidden)]`, instead
             Saving output to: target/doc/output.json
         "#});
 }

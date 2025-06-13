@@ -14,13 +14,13 @@ fn doc_groups_json() {
     ProjectBuilder::start()
         .name("hello_world")
         .lib_cairo(indoc! {r#"
-          #[doc(group: 'test')]
+          #[doc(group: "test")]
           fn test_2() {
-              println!('test2');
+              println!("test2");
           }
-          #[doc(group: 'test2')]
+          #[doc(group: "test2")]
           fn test_1() {
-              println!('test1');
+              println!("test1");
           }
           fn main() {
               println!("hellow")

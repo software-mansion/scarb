@@ -18,12 +18,12 @@ pub fn find_groups_from_attributes(
             let text = arg.text(db);
             if let AttributeArgVariant::Named { value, name } = arg.variant {
                 if name.text == "group" {
-                    if let Expr::ShortString(value) = value {
+                    if let Expr::String(value) = value {
                         let text = value.text(db);
-                        return Some(text.replace("'", ""));
+                        return Some(text.replace("\"", ""));
                     } else {
                         let diagnostic_message = format!(
-                            "Invalid attribute `{}` in {}.\nUse `group: \'group name\'` instead.",
+                            "Invalid attribute `{}` in {}.\nUse `group: \"group name\"` instead.",
                             text,
                             id.full_path(db),
                         );
@@ -31,7 +31,7 @@ pub fn find_groups_from_attributes(
                     }
                 } else {
                     let diagnostic_message = format!(
-                        "Invalid attribute `{}` in {}.\nUse `group: \'group name\'` instead.",
+                        "Invalid attribute `{}` in {}.\nUse `group: \"group name\"` instead.",
                         text,
                         id.full_path(db),
                     );
@@ -39,7 +39,7 @@ pub fn find_groups_from_attributes(
                 }
             } else {
                 let diagnostic_message = format!(
-                    "Invalid attribute `#doc({})]` in {}.\nUse `#[doc(group: 'group name')]'` or `#[doc(hidden)]`, instead",
+                    "Invalid attribute `#doc({})]` in {}.\nUse `#[doc(group: \"group name\")]'` or `#[doc(hidden)]`, instead",
                     text,
                     id.full_path(db)
                 );
