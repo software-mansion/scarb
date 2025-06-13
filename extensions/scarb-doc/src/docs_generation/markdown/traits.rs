@@ -1,7 +1,7 @@
 use super::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::{
     BASE_MODULE_CHAPTER_PREFIX, GROUP_CHAPTER_PREFIX, SHORT_DOCUMENTATION_AVOID_PREFIXES,
-    SHORT_DOCUMENTATION_LEN,
+    SHORT_DOCUMENTATION_LEN, SummaryIndexMap,
 };
 use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
 use crate::location_links::DocLocationLink;
@@ -29,23 +29,21 @@ pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
         format!("{}.md", self.markdown_formatted_path())
     }
 
-    fn md_ref(&self, relative_path: Option<String>) -> String {
+    fn md_ref_formatted(&self, relative_path: Option<String>) -> String {
+        let (path, filename) = self.md_ref(relative_path);
+        format!("[{path}](./{filename})")
+    }
+
+    fn md_ref(&self, relative_path: Option<String>) -> (String, String) {
         match relative_path {
-            Some(path) => format!("[{}](./{})", path, self.filename()),
-            None => format!("[{}](./{})", self.name(), self.filename()),
+            Some(path) => (path, self.filename()),
+            None => (self.name().to_string(), self.filename()),
         }
     }
 
-    fn generate_markdown_nested_list_item(
-        &self,
-        relative_path: Option<String>,
-        nesting_level: usize,
-    ) -> String {
-        format!(
-            "{}- {}",
-            "  ".repeat(nesting_level),
-            self.md_ref(relative_path)
-        )
+    fn get_markdown_nested_list_item(&self, relative_path: Option<String>) -> (String, String) {
+        let (path, filename) = self.md_ref(relative_path);
+        (format!("./{}", filename), path)
     }
 }
 
@@ -77,8 +75,15 @@ macro_rules! impl_markdown_doc_item {
                 context: &MarkdownGenerationContext,
                 header_level: usize,
                 item_suffix: Option<usize>,
+                summary_index_map: &SummaryIndexMap,
             ) -> Result<String> {
-                generate_markdown_from_item_data(self, context, header_level, item_suffix)
+                generate_markdown_from_item_data(
+                    self,
+                    context,
+                    header_level,
+                    item_suffix,
+                    summary_index_map,
+                )
             }
 
             fn get_full_path(&self, item_suffix: Option<usize>) -> String {
@@ -103,6 +108,7 @@ pub trait MarkdownDocItem: DocItem {
         context: &MarkdownGenerationContext,
         header_level: usize,
         item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String>;
 
     fn get_short_documentation(&self, context: &MarkdownGenerationContext) -> String {
@@ -181,8 +187,9 @@ where
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        generate_markdown_from_item_data(self, context, header_level, None)
+        generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)
     }
 }
 
@@ -192,14 +199,17 @@ impl MarkdownDocItem for Enum {
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
         markdown += &generate_markdown_for_subitems(
             &self.variants,
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
 
         Ok(markdown)
@@ -212,8 +222,10 @@ impl MarkdownDocItem for Impl {
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
         markdown += &generate_markdown_for_subitems(
@@ -221,6 +233,7 @@ impl MarkdownDocItem for Impl {
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
 
         markdown += &generate_markdown_for_subitems(
@@ -228,6 +241,7 @@ impl MarkdownDocItem for Impl {
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
 
         markdown += &generate_markdown_for_subitems(
@@ -235,6 +249,7 @@ impl MarkdownDocItem for Impl {
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
 
         Ok(markdown)
@@ -325,8 +340,10 @@ impl MarkdownDocItem for Module {
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
 
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.submodules.iter().collect_vec(),
@@ -414,8 +431,10 @@ impl MarkdownDocItem for Struct {
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
 
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
         markdown += &generate_markdown_for_subitems(
@@ -423,6 +442,7 @@ impl MarkdownDocItem for Struct {
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
 
         Ok(markdown)
@@ -435,8 +455,10 @@ impl MarkdownDocItem for Trait {
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
         markdown += &generate_markdown_for_subitems(
@@ -444,18 +466,21 @@ impl MarkdownDocItem for Trait {
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
         markdown += &generate_markdown_for_subitems(
             &self.trait_functions,
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
         markdown += &generate_markdown_for_subitems(
             &self.trait_types,
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
         Ok(markdown)
     }
@@ -573,7 +598,7 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
             writeln!(
                 &mut markdown,
                 "| {} | {}[...](./{}) |",
-                item.md_ref(relative_path),
+                item.md_ref_formatted(relative_path),
                 item_doc,
                 item.filename(),
             )?;
@@ -682,7 +707,7 @@ pub fn generate_markdown_table_summary_for_reexported_subitems<T: TopLevelMarkdo
             writeln!(
                 &mut markdown,
                 "| {} | {}[...](./{}) |",
-                item.md_ref(relative_path),
+                item.md_ref_formatted(relative_path),
                 item_doc,
                 item.filename(),
             )?;
@@ -697,6 +722,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
     context: &MarkdownGenerationContext,
     header_level: usize,
     suffix_calculator: &mut ItemSuffixCalculator,
+    summary_index_map: &SummaryIndexMap,
 ) -> Result<String> {
     let mut markdown = String::new();
 
@@ -710,7 +736,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
             writeln!(
                 &mut markdown,
                 "{}",
-                item.generate_markdown(context, header_level + 2, postfix)?
+                item.generate_markdown(context, header_level + 2, postfix, summary_index_map)?
             )?;
         }
     }
@@ -723,6 +749,7 @@ fn generate_markdown_from_item_data(
     context: &MarkdownGenerationContext,
     header_level: usize,
     item_suffix: Option<usize>,
+    summary_index_map: &SummaryIndexMap,
 ) -> Result<String> {
     let mut markdown = String::new();
 
@@ -747,7 +774,7 @@ fn generate_markdown_from_item_data(
             writeln!(
                 &mut markdown,
                 "<pre><code class=\"language-cairo\">{}</code></pre>\n",
-                format_signature(sig, doc_item.doc_location_links())
+                format_signature(sig, doc_item.doc_location_links(), summary_index_map)
             )?;
         }
     }
@@ -798,7 +825,7 @@ fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
     }
 }
 
-fn format_signature(input: &str, links: &[DocLocationLink]) -> String {
+fn format_signature(input: &str, links: &[DocLocationLink], index_map: &SummaryIndexMap) -> String {
     let mut escaped = String::with_capacity(input.len());
     let mut index_pointer = 0;
 
@@ -814,14 +841,19 @@ fn format_signature(input: &str, links: &[DocLocationLink]) -> String {
                 .iter()
                 .find(|&link| i >= link.start && i < link.end)
             {
-                let slice = escape_html(&input[link.start..link.end]);
-                escaped.push_str(&format!(
-                    "<a href=\"{}.html\">{}</a>",
-                    link.full_path, slice
-                ));
-                index_pointer = link.end;
-                skip_chars = link.end - link.start - 1;
-                continue;
+                if index_map.contains_key(&format!("./{}.md", &link.full_path)) {
+                    let slice = escape_html(&input[link.start..link.end]);
+                    escaped.push_str(&format!(
+                        "<a href=\"{}.html\">{}</a>",
+                        link.full_path, slice
+                    ));
+                    index_pointer = link.end;
+                    skip_chars = link.end - link.start - 1;
+                    continue;
+                } else {
+                    escaped.push_str(&escape_html_char(ch));
+                    index_pointer += ch.len_utf8();
+                }
             } else {
                 escaped.push_str(&escape_html_char(ch));
                 index_pointer += ch.len_utf8();
