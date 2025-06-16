@@ -1,6 +1,8 @@
 use assert_fs::fixture::FileWriteStr;
 use assert_fs::{TempDir, prelude::PathChild};
+use cairo_lang_syntax::node::ast::SyntaxFile;
 use indoc::{formatdoc, indoc};
+use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::{
     command::Scarb, project_builder::ProjectBuilder, workspace_builder::WorkspaceBuilder,
@@ -803,4 +805,159 @@ fn test_fixer_formatting() {
             }
         "#}
     );
+}
+
+#[test]
+fn test_linter_with_attribute_macros() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+      .add_primitive_token_dep()
+      .lib_rs(indoc! {r#"
+          use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
+
+          #[attribute_macro]
+          pub fn simple_attribute_macro_v2(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+              let ts = quote! {
+                  // even other comment
+                  #item
+
+                  fn generated_function_v2() {
+                      let _should_not_lint = (1 == 1);
+                  }
+              };
+              ProcMacroResult::new(ts)
+          }
+      "#})
+      .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+          #[simple_attribute_macro_v2]
+          fn foo() {
+              let a = 1;
+              let b = 2;
+              if a == 1 {
+                  if b == 2 {
+                      println!("a is 1 and b is 2");
+                  }
+              }
+              // test comment
+              let _should_lint = (1 == 1);
+          }
+      "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+           Compiling some v1.0.0 ([..]/Scarb.toml)
+             Linting hello v1.0.0 ([..]/Scarb.toml)
+        warn: Plugin diagnostic: Each `if`-statement adds one level of nesting, which makes code look more complex than it really is.
+         --> [..]/src/lib.cairo:5:5-9:5
+              if a == 1 {
+         _____^
+        | ...
+        |     }
+        |_____^
+
+        warn: Plugin diagnostic: Comparison with identical operands, this operation always results in true and may indicate a logic error
+         --> [..]/src/lib.cairo:11:24
+            let _should_lint = (1 == 1);
+                               ^^^^^^^^
+
+        "#});
+}
+
+#[test]
+fn test_linter_with_attribute_macros_complex() {
+    let temp = TempDir::new().unwrap();
+    let t = temp.child("some");
+    CairoPluginProjectBuilder::default()
+        .add_primitive_token_dep()
+        .lib_rs(indoc! {r#"
+          use cairo_lang_macro::{attribute_macro, quote, ProcMacroResult, TokenStream};
+
+          #[attribute_macro]
+          pub fn simple_attribute_macro_v2(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+              let ts = quote! {
+                  // just an item
+                  #item
+
+                  fn generated_function_v2() {
+                      let _should_not_lint = (1 == 1);
+                  }
+              };
+              ProcMacroResult::new(ts)
+          }
+
+          #[attribute_macro]
+          pub fn complex_attribute_macro_v2(_args: TokenStream, item: TokenStream) -> ProcMacroResult {
+              let ts = quote! {
+                  // another item
+                  #item
+
+                  #[simple_attribute_macro_v2]
+                  fn generated_function_with_other_attribute_v2() {
+                      let _should_not_lint_other = (1 == 1);
+                  }
+              };
+              ProcMacroResult::new(ts)
+          }
+    "#})
+        .build(&t);
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("some", &t)
+        .lib_cairo(indoc! {r#"
+        // This is a comment
+        #[complex_attribute_macro_v2]
+        fn foo() {
+            let a = 1;
+            let b = 2;
+            if a == 1 {
+                if b == 2 {
+                    println!("a is 1 and b is 2");
+                }
+            }
+            // test comment
+            let _should_lint = (1 == 1);
+        }
+    "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+           Compiling some v1.0.0 ([..]/Scarb.toml)
+             Linting hello v1.0.0 ([..]/Scarb.toml)
+        warn: Plugin diagnostic: Each `if`-statement adds one level of nesting, which makes code look more complex than it really is.
+         --> [..]/src/lib.cairo:6:5-10:5
+              if a == 1 {
+         _____^
+        | ...
+        |     }
+        |_____^
+
+        warn: Plugin diagnostic: Comparison with identical operands, this operation always results in true and may indicate a logic error
+         --> [..]/src/lib.cairo:12:24
+            let _should_lint = (1 == 1);
+                               ^^^^^^^^
+        
+        "#});
 }
