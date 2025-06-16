@@ -2,6 +2,7 @@ use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 
 pub use compilation_unit::*;
+pub use fingerprint::*;
 pub use profile::*;
 pub use repository::*;
 
@@ -10,6 +11,7 @@ use crate::core::{TargetKind, Workspace};
 mod compilation_unit;
 mod compilers;
 pub mod db;
+mod fingerprint;
 pub mod helpers;
 pub mod plugin;
 mod profile;
