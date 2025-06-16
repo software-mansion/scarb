@@ -490,6 +490,8 @@ pub struct TomlCairo {
     pub panic_backtrace: Option<bool>,
     /// Inlining strategy.
     pub inlining_strategy: Option<InliningStrategy>,
+    /// Whether to enable incremental compilation.
+    pub incremental: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
@@ -1164,6 +1166,9 @@ impl TomlManifest {
             }
             if let Some(panic_backtrace) = cairo.panic_backtrace {
                 compiler_config.panic_backtrace = panic_backtrace;
+            }
+            if let Some(incremental) = cairo.incremental {
+                compiler_config.incremental = incremental;
             }
         }
         Ok(compiler_config)
