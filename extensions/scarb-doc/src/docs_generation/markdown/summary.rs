@@ -2,7 +2,6 @@ pub mod content;
 pub mod files;
 pub mod group_files;
 
-use super::traits::MarkdownDocItem;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::summary::content::{
     generate_foreign_crates_summary_content, generate_global_groups_summary_content,
@@ -11,7 +10,7 @@ use crate::docs_generation::markdown::summary::content::{
 use crate::docs_generation::markdown::summary::files::{
     generate_foreign_crates_summary_files, generate_modules_summary_files,
 };
-use crate::docs_generation::markdown::traits::TopLevelMarkdownDocItem;
+use crate::docs_generation::markdown::traits::{MarkdownDocItem, TopLevelMarkdownDocItem};
 use crate::docs_generation::markdown::{BASE_HEADER_LEVEL, SummaryIndexMap};
 use crate::types::crate_type::Crate;
 use anyhow::Result;
