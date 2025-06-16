@@ -1,3 +1,4 @@
+use cairo_lang_filesystem::span::TextSpan;
 use cairo_lang_syntax::node::ast::{
     Attribute, FunctionWithBody, ItemConstant, ItemEnum, ItemExternFunction, ItemExternType,
     ItemImpl, ItemImplAlias, ItemModule, ItemStruct, ItemTrait, ItemTypeAlias, ItemUse,
@@ -7,6 +8,7 @@ use cairo_lang_syntax::node::{SyntaxNode, TypedSyntaxNode};
 
 pub trait ItemWithAttributes {
     fn item_attributes(&self, db: &dyn SyntaxGroup) -> Vec<Attribute>;
+    fn span_with_trivia(&self, db: &dyn SyntaxGroup) -> TextSpan;
 }
 
 pub trait ChildNodesWithoutAttributes {
@@ -36,6 +38,10 @@ macro_rules! impl_item_with_attributes {
         impl ItemWithAttributes for $t {
             fn item_attributes(&self, db: &dyn SyntaxGroup) -> Vec<Attribute> {
                 self.attributes(db).elements(db)
+            }
+
+            fn span_with_trivia(&self, db: &dyn SyntaxGroup) -> TextSpan {
+                self.as_syntax_node().span(db)
             }
         }
     };
