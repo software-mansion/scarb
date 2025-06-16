@@ -101,7 +101,7 @@ jobs:
 
       - name: Upgrade CairoLS to latest main commit
         if: ${{ !contains(inputs.upgrade-cairols, 'false') }}
-        run: cargo xtask upgrade cairols --rev $(git ls-remote --refs "https://github.com/software-mansion/cairols" main | awk '{print $1}')
+        run: cargo xtask upgrade cairols --rev e16643bb076f7be1100b6bebf5895368634d9e88
 
       - name: Upgrade Cairo-lint to latest main commit
         if: ${{ !contains(inputs.upgrade-cairolint, 'false') }}
