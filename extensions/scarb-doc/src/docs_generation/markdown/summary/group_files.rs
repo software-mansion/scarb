@@ -1,6 +1,6 @@
 use crate::docs_generation::TopLevelItems;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
-use crate::docs_generation::markdown::summary::{
+use crate::docs_generation::markdown::summary::files::{
     generate_doc_files_for_module_items, generate_modules_summary_files,
     generate_summary_files_for_module_items,
 };
