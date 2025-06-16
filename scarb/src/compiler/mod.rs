@@ -11,6 +11,7 @@ mod compilation_unit;
 mod compilers;
 pub mod db;
 pub mod helpers;
+mod incremental;
 pub mod plugin;
 mod profile;
 mod repository;

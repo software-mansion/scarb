@@ -36,6 +36,11 @@ pub struct ManifestCompilerConfig {
     pub panic_backtrace: bool,
     /// Inlining strategy.
     pub inlining_strategy: InliningStrategy,
+    /// Whether to enable incremental compilation.
+    ///
+    /// If this is set to `true`, the compiler will emit compilation artifacts and attempt to reuse
+    /// them in subsequent builds.
+    pub incremental: bool,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Eq, PartialEq, Hash, Clone)]
@@ -109,6 +114,7 @@ impl DefaultForProfile for ManifestCompilerConfig {
             unstable_add_statements_code_locations_debug_info: false,
             panic_backtrace: false,
             inlining_strategy: InliningStrategy::default(),
+            incremental: true,
         }
     }
 }
@@ -127,6 +133,7 @@ impl From<ManifestCompilerConfig> for TomlCairo {
             ),
             panic_backtrace: Some(config.panic_backtrace),
             inlining_strategy: Some(config.inlining_strategy),
+            incremental: Some(config.incremental),
         }
     }
 }
