@@ -15,6 +15,8 @@ set -u
 
 SCARB_REPO="https://github.com/software-mansion/scarb"
 SCARB_NIGHTLIES_REPO="https://github.com/software-mansion/scarb-nightlies"
+SCARB_COMPLETIONS_DOCS="https://docs.swmansion.com/scarb/download.html#shell-completions-optional"
+
 XDG_DATA_HOME="${XDG_DATA_HOME:-"${HOME}/.local/share"}"
 INSTALL_ROOT="${XDG_DATA_HOME}/scarb-install"
 LOCAL_BIN="${HOME}/.local/bin"
@@ -27,9 +29,9 @@ The installer for Scarb
 Usage: install.sh [OPTIONS]
 
 Options:
-  -p, --no-modify-path   Skip PATH variable modification
-  -h, --help             Print help
-  -v, --version          Specify Scarb version to install
+  -p, --no-modify-profile   Skip shell profile file modification
+  -h, --help                Print help
+  -v, --version             Specify Scarb version to install
 
 For more information, check out https://docs.swmansion.com/scarb/download.html.
 EOF
@@ -50,19 +52,20 @@ main() {
   for arg in "$@"; do
     shift
     case "$arg" in
-      '--help')           set -- "$@" '-h'   ;;
-      '--no-modify-path') set -- "$@" '-p'   ;;
-      '--version')        set -- "$@" '-v'   ;;
-      *)                  set -- "$@" "$arg" ;;
+      '--help')              set -- "$@" '-h'   ;;
+      '--no-modify-path')    set -- "$@" '-p'   ;; # Keep this flag for backwards compatibility
+      '--no-modify-profile') set -- "$@" '-p'   ;;
+      '--version')           set -- "$@" '-v'   ;;
+      *)                     set -- "$@" "$arg" ;;
     esac
   done
 
   local _requested_version="latest"
-  local _do_modify_path=1
+  local _do_modify_profile=1
   while getopts ":hpv:" opt; do
     case $opt in
     p)
-      _do_modify_path=0
+      _do_modify_profile=0
       ;;
     h)
       usage
@@ -112,14 +115,20 @@ main() {
     echo "Scarb has been successfully installed and should be already available in your PATH."
     echo "Run 'scarb --version' to verify your installation. Happy coding!"
   else
-    if [ $_do_modify_path -eq 1 ]; then
+    if [ $_do_modify_profile -eq 1 ]; then
       add_local_bin_to_path
       _retval=$?
     else
-      echo "Skipping PATH modification, please manually add '${LOCAL_BIN_ESCAPED}' to your PATH."
+      echo "Skipping PATH modification due to disabled profile modification, please manually add '${LOCAL_BIN_ESCAPED}' to your PATH."
     fi
 
     echo "Then, run 'scarb --version' to verify your installation. Happy coding!"
+  fi
+
+  if [ $_do_modify_profile -eq 1 ]; then
+    add_completions_to_profile
+  else
+    echo "Skipping shell completions setup due to disabled profile modification. To manually set up shell completions for Scarb, see ${SCARB_COMPLETIONS_DOCS}."
   fi
 
   ignore rm -rf "$_tempdir"
@@ -521,6 +530,101 @@ add_local_bin_to_path() {
   echo \
     "Detected your preferred shell is ${_pref_shell} and added '${LOCAL_BIN_ESCAPED}' to PATH." \
     "Run 'source ${_profile}' or start a new terminal session to use Scarb."
+}
+
+add_completions_to_profile() {
+  local _profile
+  local _pref_shell
+  case ${SHELL:-""} in
+  */zsh)
+    _profile=$HOME/.zshrc
+    _pref_shell=zsh
+    add_completions_block_to_profile "$_profile" zsh_completion_block
+    ;;
+  */bash)
+    _profile=$HOME/.bashrc
+    _pref_shell=bash
+    add_completions_block_to_profile "$_profile" bash_completion_block
+    ;;
+  */fish)
+    _profile=$HOME/.config/fish/config.fish
+    _pref_shell=fish
+    add_completions_block_to_profile "$_profile" fish_completion_block
+    ;;
+  *)
+    echo \
+      "Skipping shell completions setup: could not detect shell, or completions are not supported for this shell." \
+      "To set up shell completions for Scarb manually, see ${SCARB_COMPLETIONS_DOCS}."
+    ;;
+  esac
+}
+
+add_completions_block_to_profile() {
+  local profile="$1"
+  local completions_block_fn="$2"
+
+  local block_begin_marker='# BEGIN SCARB COMPLETIONS'
+  local block_end_marker='# END SCARB COMPLETIONS'
+
+  ensure mkdir -p "$(dirname "$profile")"
+  touch "$profile"
+
+  local block
+  block="$($completions_block_fn)"
+
+  # Remove existing completion block if present
+  if grep -F "$block_begin_marker" "$profile" >/dev/null 2>&1; then
+    local tmp
+    tmp=$(mktemp) || return 1
+    sed "/$block_begin_marker/,/$block_end_marker/d" "$profile" >"$tmp" && mv "$tmp" "$profile"
+  fi
+
+  {
+    printf "\n%s\n" "$block_begin_marker"
+    printf "%s\n" "$block"
+    printf "\n%s\n" "$block_end_marker"
+  } >>"$profile"
+}
+
+
+zsh_completions_block() {
+  cat <<'EOF'
+_scarb() {
+  if ! scarb completions zsh >/dev/null 2>&1; then
+    return 0
+  fi
+  eval "$(scarb completions zsh)"
+  _scarb "$@"
+}
+compdef _scarb scarb
+autoload -Uz compinit && compinit
+EOF
+}
+
+bash_completions_block() {
+  cat <<'EOF'
+_scarb() {
+  if ! scarb completions bash >/dev/null 2>&1; then
+    return 0
+  fi
+  source <(scarb completions bash)
+  _scarb "$@"
+}
+complete -o default -F _scarb scarb
+EOF
+}
+
+fish_completions_block() {
+  cat <<'EOF'
+function _scarb
+  if not scarb completions fish >/dev/null 2>&1
+    return 0
+  end
+  source (scarb completions fish | psub)
+  complete -C (commandline -cp)
+end
+complete -c scarb -f -a '(_scarb)'
+EOF
 }
 
 main "$@" || exit 1
