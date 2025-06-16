@@ -171,11 +171,11 @@ Add the following to `~/.config/fish/config.fish`:
 ```sh
 # BEGIN SCARB COMPLETIONS
 function _scarb
-    if not scarb completions fish >/dev/null 2>&1
-        return 0
-    end
-    source (scarb completions fish | psub)
-    complete -C (commandline -cp)
+  if not scarb completions fish >/dev/null 2>&1
+    return 0
+  end
+  source (scarb completions fish | psub)
+  complete -C (commandline -cp)
 end
 complete -c scarb -f -a '(_scarb)'
 # END SCARB COMPLETIONS
