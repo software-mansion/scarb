@@ -321,6 +321,10 @@ impl CairoCompilationUnit {
         ws.target_dir().child(self.profile.as_str())
     }
 
+    pub fn fingerprint_dir(&self, ws: &Workspace<'_>) -> Filesystem {
+        self.target_dir(ws).child(".fingerprint")
+    }
+
     /// Rewrite single compilation unit with multiple targets, into multiple compilation units
     /// with single targets.
     pub fn rewrite_to_single_source_paths(&self) -> Vec<Self> {
@@ -484,5 +488,12 @@ impl ComponentTarget {
         P: Default + Serialize + Deserialize<'de>,
     {
         self.targets()[0].props::<P>()
+    }
+
+    pub fn source_paths(&self) -> Vec<String> {
+        self.targets()
+            .iter()
+            .map(|t| t.source_path.to_string())
+            .collect()
     }
 }
