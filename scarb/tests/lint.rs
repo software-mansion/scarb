@@ -961,3 +961,36 @@ fn test_linter_with_attribute_macros_complex() {
         
         "#});
 }
+
+#[test]
+fn test_with_derive_macro() {
+    let temp = TempDir::new().unwrap();
+    let project = temp.child("hello");
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .lib_cairo(indoc! {r#"
+          #[derive(Drop)]
+          enum MyEnum {
+              Data: u8,
+              Empty: () // Comment
+          }
+  "#})
+        .build(&project);
+
+    Scarb::quick_snapbox()
+        .arg("lint")
+        // Disable output from Cargo.
+        .env("CARGO_TERM_QUIET", "true")
+        .current_dir(&project)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+             Linting hello v1.0.0 ([..]/Scarb.toml)
+        warn: Plugin diagnostic: redundant parentheses in enum variant definition
+         --> [..]/src/lib.cairo:4:5
+            Empty: () // Comment
+            ^^^^^^^^^
+      
+      "#});
+}
