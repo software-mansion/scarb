@@ -9,7 +9,6 @@ use std::fs;
 
 mod book_toml;
 mod context;
-mod groups;
 mod summary;
 mod traits;
 
