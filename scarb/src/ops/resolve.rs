@@ -4,7 +4,7 @@ use crate::compiler::plugin::{CairoPluginProps, fetch_cairo_plugin};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
     CompilationUnitComponent, CompilationUnitComponentId, CompilationUnitDependency,
-    ProcMacroCompilationUnit, Profile,
+    ComponentTarget, ProcMacroCompilationUnit, Profile,
 };
 use crate::core::lockfile::Lockfile;
 use crate::core::package::{Package, PackageClass, PackageId};
@@ -594,11 +594,15 @@ fn cairo_compilation_unit_for_target(
             // building. Otherwise, assume library target for all dependency packages,
             // because that's what it is for.
             let targets = if package.id == member.id {
-                member_targets.clone()
+                if member_targets.len() == 1 && member_targets[0].group_id.is_none() {
+                    ComponentTarget::new_single(member_targets[0].clone())
+                } else {
+                    ComponentTarget::try_new_group(member_targets.clone())?
+                }
             } else {
                 // We can safely unwrap here, because compilation unit generator ensures
                 // that all dependencies have library target.
-                vec![package.fetch_target(&TargetKind::LIB).unwrap().clone()]
+                ComponentTarget::new_single(package.fetch_target(&TargetKind::LIB).unwrap().clone())
             };
 
             // For integration tests target, rewrite package with prefixed name.
@@ -668,7 +672,7 @@ fn cairo_compilation_unit_for_target(
         // Add `lib` target for tested package, to be available as dependency.
         components.push(CompilationUnitComponent::try_new(
             member.clone(),
-            vec![target],
+            ComponentTarget::new_single(target),
             cfg_set,
         )?);
 
@@ -925,8 +929,8 @@ impl<'a> PackageSolutionCollector<'a> {
             .collect();
 
         // Adds itself to dependencies
-        let is_integration_test = if component.first_target().kind.is_test() {
-            let props: Option<TestTargetProps> = component.first_target().props().ok();
+        let is_integration_test = if component.targets.target_kind().is_test() {
+            let props: Option<TestTargetProps> = component.targets.target_props().ok();
             props
                 .map(|props| props.test_type == TestTargetType::Integration)
                 .unwrap_or_default()
@@ -1055,13 +1059,13 @@ pub fn generate_cairo_plugin_compilation_units(
         .flatten();
     let components = vec![CompilationUnitComponent::try_new(
         member.clone(),
-        vec![
+        ComponentTarget::new_single(
             member
                 .fetch_target(&TargetKind::CAIRO_PLUGIN)
                 .cloned()
                 // Safe to unwrap, as member.is_cairo_plugin() has been ensured before.
                 .expect("main component of procedural macro must define `cairo-plugin` target"),
-        ],
+        ),
         None,
     )?];
     Ok(ProcMacroCompilationUnit {

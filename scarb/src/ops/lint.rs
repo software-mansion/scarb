@@ -138,6 +138,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                     compilation_unit
                         .main_component()
                         .targets
+                        .targets()
                         .iter()
                         .any(|t| opts.target_names.contains(&t.name.to_string()))
                 })
