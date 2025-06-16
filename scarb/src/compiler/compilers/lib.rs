@@ -47,7 +47,7 @@ impl Compiler for LibCompiler {
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
-        let props: Props = unit.main_component().target_props()?;
+        let props: Props = unit.main_component().targets.target_props()?;
         if !props.sierra && !props.casm && !props.sierra_text {
             ws.config().ui().warn(
                 "Sierra, textual Sierra and CASM lib targets have been disabled, \

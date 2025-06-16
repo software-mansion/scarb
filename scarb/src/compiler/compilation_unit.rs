@@ -1,7 +1,8 @@
-use anyhow::{Result, ensure};
+use anyhow::{Result, anyhow, ensure};
 use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::{CrateIdentifier, FilesGroup};
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use camino::Utf8Path;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
@@ -87,8 +88,16 @@ pub struct CompilationUnitComponent {
     pub id: CompilationUnitComponentId,
     /// The Scarb [`Package`] to be built.
     pub package: Package,
-    /// Information about the specific target to build, out of the possible targets in `package`.
-    pub targets: Vec<Target>,
+    /// Information about the specific targets to build, out of the possible targets in `package`.
+    ///
+    /// This can either be a single target, or a group of targets that share the same kind and params.
+    ///
+    /// The latter acts as an optimization that allows building multiple source files (identified
+    /// by target source paths) in a single compilation unit (e.g. separate tests files from `tests/`
+    /// directory in the same package).
+    ///
+    /// This translates to `group-id` field in the toml manifest of the project.
+    pub targets: ComponentTarget,
     /// Items for the Cairo's `#[cfg(...)]` attribute to be enabled in this component.
     pub cfg_set: Option<CfgSet>,
     /// Dependencies of this component.
@@ -318,10 +327,11 @@ impl CairoCompilationUnit {
         let rewritten_main = self
             .main_component()
             .targets
+            .targets()
             .iter()
             .map(|target| {
                 let mut main = self.main_component().clone();
-                main.targets = vec![target.clone()];
+                main.targets = ComponentTarget::new_ungrouped(target.clone());
                 main
             })
             .collect_vec();
@@ -345,13 +355,54 @@ impl CompilationUnitComponent {
     /// Validate input and create new [CompilationUnitComponent] instance.
     pub fn try_new(
         package: Package,
-        targets: Vec<Target>,
+        targets: ComponentTarget,
         cfg_set: Option<CfgSet>,
     ) -> Result<Self> {
+        Ok(Self {
+            id: CompilationUnitComponentId {
+                package_id: package.id,
+            },
+            package,
+            targets,
+            cfg_set,
+            dependencies: vec![],
+        })
+    }
+
+    pub fn target_kind(&self) -> TargetKind {
+        self.targets.target_kind()
+    }
+
+    pub fn target_name(&self) -> SmolStr {
+        self.targets.target_name()
+    }
+
+    pub fn cairo_package_name(&self) -> SmolStr {
+        self.package.id.name.to_smol_str()
+    }
+
+    fn hash(&self, hasher: &mut impl Hasher) {
+        self.package.id.hash(hasher);
+        self.targets.hash(hasher);
+    }
+}
+
+#[derive(Clone, Debug, Hash)]
+pub enum ComponentTarget {
+    Single(Target),
+    Group(Vec<Target>),
+    Ungrouped(Target),
+}
+
+impl ComponentTarget {
+    pub fn try_new_group(targets: Vec<Target>) -> Result<Self> {
         ensure!(
             !targets.is_empty(),
             "a compilation unit component must have at least one target"
         );
+        if targets.len() == 1 {
+            return Ok(Self::Single(targets.into_iter().next().unwrap()));
+        }
         ensure!(
             targets
                 .iter()
@@ -375,51 +426,63 @@ impl CompilationUnitComponent {
                 .all(|p| p == targets[0].source_root()),
             "all targets in a compilation unit component must have the same source path parent"
         );
-        if targets.len() > 1 {
-            ensure!(
-                targets.iter().all(|t| t.group_id.is_some()),
-                "all targets in a compilation unit component with multiple targets must have group_id defined"
-            );
-        }
-        Ok(Self {
-            id: CompilationUnitComponentId {
-                package_id: package.id,
-            },
-            package,
-            targets,
-            cfg_set,
-            dependencies: vec![],
-        })
+        ensure!(
+            targets.iter().all(|t| t.group_id.is_some()),
+            "all targets in a compilation unit component with multiple targets must have group_id defined"
+        );
+        Ok(Self::Group(targets))
     }
 
-    pub fn first_target(&self) -> &Target {
-        &self.targets[0]
+    pub fn new_single(target: Target) -> Self {
+        Self::Single(target)
+    }
+
+    pub fn new_ungrouped(target: Target) -> Self {
+        Self::Ungrouped(target)
+    }
+
+    pub fn targets(&self) -> &[Target] {
+        match self {
+            Self::Single(target) => std::slice::from_ref(target),
+            Self::Ungrouped(target) => std::slice::from_ref(target),
+            Self::Group(targets) => targets,
+        }
+    }
+
+    pub fn extract_single(&self) -> Result<&Target> {
+        match self {
+            Self::Single(target) => Ok(target),
+            Self::Ungrouped(target) => Ok(target),
+            Self::Group(_) => Err(anyhow!("expected a single target, found target group")),
+        }
+    }
+
+    pub fn source_root(&self) -> &Utf8Path {
+        self.targets()[0].source_root()
+    }
+
+    pub fn target_name(&self) -> SmolStr {
+        let grouped_target_name = |target: &Target| {
+            target
+                .group_id
+                .clone()
+                .unwrap_or_else(|| target.name.clone())
+        };
+        match self {
+            Self::Ungrouped(target) => target.name.clone(),
+            Self::Single(target) => grouped_target_name(target),
+            Self::Group(targets) => grouped_target_name(&targets[0]),
+        }
     }
 
     pub fn target_kind(&self) -> TargetKind {
-        self.first_target().kind.clone()
+        self.targets()[0].kind.clone()
     }
 
     pub fn target_props<'de, P>(&self) -> Result<P>
     where
         P: Default + Serialize + Deserialize<'de>,
     {
-        self.first_target().props::<P>()
-    }
-
-    pub fn target_name(&self) -> SmolStr {
-        self.first_target()
-            .group_id
-            .clone()
-            .unwrap_or(self.first_target().name.clone())
-    }
-
-    pub fn cairo_package_name(&self) -> SmolStr {
-        self.package.id.name.to_smol_str()
-    }
-
-    fn hash(&self, hasher: &mut impl Hasher) {
-        self.package.id.hash(hasher);
-        self.targets.hash(hasher);
+        self.targets()[0].props::<P>()
     }
 }

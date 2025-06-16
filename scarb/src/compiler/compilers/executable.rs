@@ -55,7 +55,7 @@ impl Compiler for ExecutableCompiler {
 
         check_executable_plugin_dependency(&unit, ws, db, &unit.main_component().package.id.name);
 
-        let props: Props = unit.main_component().target_props()?;
+        let props: Props = unit.main_component().targets.target_props()?;
 
         let target_dir = unit.target_dir(ws);
         let main_crate_ids = collect_main_crate_ids(&unit, db);

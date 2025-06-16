@@ -1,12 +1,12 @@
-use super::CompilationUnitComponentId;
 use super::plugin::collection::PluginsForComponents;
+use super::{CompilationUnitComponentId, ComponentTarget};
 use crate::DEFAULT_MODULE_MAIN_FILE;
 use crate::compiler::plugin::proc_macro::ProcMacroHostPlugin;
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
     CompilationUnitDependency,
 };
-use crate::core::Workspace;
+use crate::core::{Target, Workspace};
 use anyhow::{Result, anyhow};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::{AllCratesConfig, ProjectConfig, ProjectConfigContent};
@@ -111,14 +111,18 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
         .filter(|component| !component.package.id.is_core())
         // Skip components defining the default source path, as they already define lib.cairo files.
         .filter(|component| {
-            !component.targets.is_empty()
-                && (component.targets.len() > 1
-                    || component
-                        .first_target()
-                        .source_path
-                        .file_name()
-                        .map(|file_name| file_name != DEFAULT_MODULE_MAIN_FILE)
-                        .unwrap_or(false))
+            let is_default_source_path = |target: &Target| {
+                target
+                    .source_path
+                    .file_name()
+                    .map(|file_name| file_name != DEFAULT_MODULE_MAIN_FILE)
+                    .unwrap_or(false)
+            };
+            match &component.targets {
+                ComponentTarget::Single(target) => is_default_source_path(target),
+                ComponentTarget::Ungrouped(target) => is_default_source_path(target),
+                ComponentTarget::Group(_targets) => true,
+            }
         })
         .collect();
 
@@ -127,6 +131,7 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
 
         let file_stems = component
             .targets
+            .targets()
             .iter()
             .map(|target| {
                 target
@@ -158,7 +163,7 @@ fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
         .map(|component| {
             (
                 component.id.to_crate_identifier(),
-                component.first_target().source_root().into(),
+                component.targets.source_root().into(),
             )
         })
         .collect();

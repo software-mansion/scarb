@@ -34,7 +34,7 @@ pub struct ManifestCompilerConfig {
     pub unstable_add_statements_code_locations_debug_info: bool,
     /// Whether to add panic backtrace handling to the generated code.
     pub panic_backtrace: bool,
-    // Inlining strategy.
+    /// Inlining strategy.
     pub inlining_strategy: InliningStrategy,
 }
 
