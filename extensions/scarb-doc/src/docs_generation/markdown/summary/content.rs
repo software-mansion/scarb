@@ -1,11 +1,23 @@
-use super::super::traits::mark_duplicated_item_with_relative_path;
 use crate::docs_generation::markdown::context::path_to_file_link;
-
-use crate::docs_generation::markdown::traits::TopLevelMarkdownDocItem;
+use crate::docs_generation::markdown::traits::{
+    TopLevelMarkdownDocItem, mark_duplicated_item_with_relative_path,
+};
 use crate::docs_generation::markdown::{SummaryIndexMap, SummaryListItem};
 use crate::docs_generation::{DocItem, TopLevelItems};
 use crate::types::groups::Group;
 use crate::types::module_type::Module;
+
+macro_rules! insert_multiple_summaries {
+    ($summary_index_map:expr, $items:expr, $nesting_level:expr, $path:expr, [ $( $field:ident ),* ]) => {
+        $(
+            $summary_index_map.extend(generate_markdown_list_summary_for_module_items(
+                &$items.$field,
+                $nesting_level,
+                $path,
+            ));
+        )*
+    };
+}
 
 pub fn generate_module_summary_content(
     module: &Module,
@@ -19,8 +31,6 @@ pub fn generate_module_summary_content(
 
     let mut top_level_items = TopLevelItems::default();
     let Module {
-        module_id: _module_id,
-        item_data: _item_data,
         submodules,
         constants,
         free_functions,
@@ -65,56 +75,24 @@ pub fn generate_module_summary_content(
         nesting_level -= 1;
     }
 
-    summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-        &top_level_items.constants,
+    insert_multiple_summaries!(
+        summary_index_map,
+        top_level_items,
         nesting_level,
         &module.markdown_formatted_path(),
-    ));
-    summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-        &top_level_items.free_functions,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    ));
-    summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-        &top_level_items.structs,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    ));
-    summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-        &top_level_items.enums,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    ));
-    summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-        &top_level_items.type_aliases,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    ));
-    summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-        &top_level_items.impl_aliases,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    ));
-    summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-        &top_level_items.traits,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    ));
-    summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-        &top_level_items.impls,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    ));
-    summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-        &top_level_items.extern_types,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    ));
-    summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-        &top_level_items.extern_functions,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    ));
+        [
+            constants,
+            free_functions,
+            structs,
+            enums,
+            type_aliases,
+            impl_aliases,
+            traits,
+            impls,
+            extern_types,
+            extern_functions
+        ]
+    );
 }
 
 pub fn generate_foreign_crates_summary_content(
@@ -141,7 +119,6 @@ pub fn generate_global_groups_summary_content(
         for group in groups.iter() {
             let mut top_level_items = TopLevelItems::default();
             let Group {
-                name: _,
                 submodules,
                 constants,
                 free_functions,
@@ -153,6 +130,7 @@ pub fn generate_global_groups_summary_content(
                 impls,
                 extern_types,
                 extern_functions,
+                ..
             } = &group;
 
             top_level_items.modules.extend(submodules);
@@ -188,57 +166,24 @@ pub fn generate_global_groups_summary_content(
                 }
                 nesting_level -= 1;
             };
-
-            summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-                &top_level_items.constants,
+            insert_multiple_summaries!(
+                summary_index_map,
+                top_level_items,
                 nesting_level,
                 &markdown_formatted_path,
-            ));
-            summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-                &top_level_items.free_functions,
-                nesting_level,
-                &markdown_formatted_path,
-            ));
-            summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-                &top_level_items.structs,
-                nesting_level,
-                &markdown_formatted_path,
-            ));
-            summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-                &top_level_items.enums,
-                nesting_level,
-                &markdown_formatted_path,
-            ));
-            summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-                &top_level_items.type_aliases,
-                nesting_level,
-                &markdown_formatted_path,
-            ));
-            summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-                &top_level_items.impl_aliases,
-                nesting_level,
-                &markdown_formatted_path,
-            ));
-            summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-                &top_level_items.traits,
-                nesting_level,
-                &markdown_formatted_path,
-            ));
-            summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-                &top_level_items.impls,
-                nesting_level,
-                &markdown_formatted_path,
-            ));
-            summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-                &top_level_items.extern_types,
-                nesting_level,
-                &markdown_formatted_path,
-            ));
-            summary_index_map.extend(generate_markdown_list_summary_for_module_items(
-                &top_level_items.extern_functions,
-                nesting_level,
-                &markdown_formatted_path,
-            ));
+                [
+                    constants,
+                    free_functions,
+                    structs,
+                    enums,
+                    type_aliases,
+                    impl_aliases,
+                    traits,
+                    impls,
+                    extern_types,
+                    extern_functions
+                ]
+            );
         }
     }
 }
