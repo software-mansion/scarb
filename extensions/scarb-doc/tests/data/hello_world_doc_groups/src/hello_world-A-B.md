@@ -9,7 +9,7 @@ Part of the group: [test group 4](./test_group_4.md)
 
 | | |
 |:---|:---|
-| [five](./hello_world-A-B-five.md) | [...](./hello_world-A-B-five.md) |
+| [five](./hello_world-A-B-five.md) | — |
 
 
 ---
@@ -22,10 +22,10 @@ Part of the group: [test group 4](./test_group_4.md)
 
 | | |
 |:---|:---|
-| [four](./hello_world-A-B-four.md) | [...](./hello_world-A-B-four.md) |
+| [four](./hello_world-A-B-four.md) | — |
 
 - ### [Structs](./this_is_visible_only_within_the_scope-structs.md)
 
 | | |
 |:---|:---|
-| [Six](./hello_world-A-B-Six.md) | [...](./hello_world-A-B-Six.md) |
+| [Six](./hello_world-A-B-Six.md) | — |

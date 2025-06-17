@@ -122,7 +122,7 @@ pub trait MarkdownDocItem: DocItem {
                             .iter()
                             .any(|prefix| content.starts_with(prefix))
                         {
-                            return short_doc_buff.trim().to_string();
+                            return format!("{}...", short_doc_buff.trim());
                         } else if !content.eq("\n") {
                             content.replace("\n", " ")
                         } else {
@@ -138,13 +138,20 @@ pub trait MarkdownDocItem: DocItem {
                 }
 
                 if short_doc_buff.len() + text_formatted.len() > SHORT_DOCUMENTATION_LEN {
-                    return short_doc_buff.trim().to_string();
+                    return format!("{}...", short_doc_buff.trim());
                 } else {
                     short_doc_buff.push_str(&text_formatted);
                 }
             }
+
+            let short_doc = short_doc_buff.trim().to_string();
+            return if short_doc.is_empty() {
+                "—".to_string()
+            } else {
+                short_doc
+            };
         }
-        short_doc_buff.trim().to_string()
+        "—".to_string()
     }
 
     fn get_documentation(&self, context: &MarkdownGenerationContext) -> Option<String> {
@@ -597,10 +604,9 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
             let item_doc = item.get_short_documentation(context);
             writeln!(
                 &mut markdown,
-                "| {} | {}[...](./{}) |",
+                "| {} | {} |",
                 item.md_ref_formatted(relative_path),
                 item_doc,
-                item.filename(),
             )?;
         }
     }
@@ -706,10 +712,9 @@ pub fn generate_markdown_table_summary_for_reexported_subitems<T: TopLevelMarkdo
             let item_doc = item.get_short_documentation(context);
             writeln!(
                 &mut markdown,
-                "| {} | {}[...](./{}) |",
+                "| {} | {} |",
                 item.md_ref_formatted(relative_path),
                 item_doc,
-                item.filename(),
             )?;
         }
         writeln!(&mut markdown, "\n<br>\n")?;
