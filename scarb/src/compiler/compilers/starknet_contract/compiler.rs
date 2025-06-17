@@ -75,7 +75,7 @@ impl Compiler for StarknetContractCompiler {
 
     fn compile(
         &self,
-        unit: CairoCompilationUnit,
+        unit: &CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -101,14 +101,14 @@ impl Compiler for StarknetContractCompiler {
 
         let target_dir = unit.target_dir(ws);
 
-        let main_crate_ids = collect_main_crate_ids(&unit, db);
+        let main_crate_ids = collect_main_crate_ids(unit, db);
 
-        let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ws);
 
         let contracts = find_project_contracts(
             db,
             ws.config().ui(),
-            &unit,
+            unit,
             main_crate_ids.clone(),
             props.build_external_contracts.clone(),
         )?;
@@ -119,7 +119,7 @@ impl Compiler for StarknetContractCompiler {
             classes,
         } = get_compiled_contracts(contracts, compiler_config, db)?;
 
-        check_allowed_libfuncs(&props, &contracts, &classes, db, &unit, ws)?;
+        check_allowed_libfuncs(&props, &contracts, &classes, db, unit, ws)?;
 
         let casm_classes: Vec<Option<CasmContractClass>> = if props.casm {
             let span = trace_span!("compile_starknet_casm");

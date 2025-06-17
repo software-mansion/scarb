@@ -22,7 +22,7 @@ pub trait Compiler: Sync {
 
     fn compile(
         &self,
-        unit: CairoCompilationUnit,
+        unit: &CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()>;
