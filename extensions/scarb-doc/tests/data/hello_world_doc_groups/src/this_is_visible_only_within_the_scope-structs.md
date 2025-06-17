@@ -3,4 +3,4 @@
 
 | | |
 |:---|:---|
-| [Six](./hello_world-A-B-Six.md) | [...](./hello_world-A-B-Six.md) |
+| [Six](./hello_world-A-B-Six.md) | — |

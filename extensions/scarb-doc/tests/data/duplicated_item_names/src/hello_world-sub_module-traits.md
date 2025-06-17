@@ -3,4 +3,4 @@
 
 | | |
 |:---|:---|
-| [DuplicatedTraitName](./hello_world-sub_module-DuplicatedTraitName.md) | [...](./hello_world-sub_module-DuplicatedTraitName.md) |
+| [DuplicatedTraitName](./hello_world-sub_module-DuplicatedTraitName.md) | — |
