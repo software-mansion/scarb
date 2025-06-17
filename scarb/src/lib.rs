@@ -45,3 +45,4 @@ pub const CARGO_MANIFEST_FILE_NAME: &str = "Cargo.toml";
 pub const CARGO_LOCKFILE_FILE_NAME: &str = "Cargo.lock";
 pub const EXECUTABLE_PLUGIN_NAME: &str = "cairo_execute";
 pub const FINGERPRINT_DIR_NAME: &str = ".fingerprint";
+pub const INCREMENTAL_DIR_NAME: &str = "incremental";
