@@ -36,7 +36,7 @@ impl Compiler for ExecutableCompiler {
 
     fn compile(
         &self,
-        unit: CairoCompilationUnit,
+        unit: &CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -53,18 +53,18 @@ impl Compiler for ExecutableCompiler {
             }
         );
 
-        check_executable_plugin_dependency(&unit, ws, db, &unit.main_component().package.id.name);
+        check_executable_plugin_dependency(unit, ws, db, &unit.main_component().package.id.name);
 
         let props: Props = unit.main_component().targets.target_props()?;
 
         let target_dir = unit.target_dir(ws);
-        let main_crate_ids = collect_main_crate_ids(&unit, db);
-        let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
+        let main_crate_ids = collect_main_crate_ids(unit, db);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ws);
         let span = trace_span!("compile_executable");
         let executable = {
             let _guard = span.enter();
             Executable::new(compile_executable(
-                &unit,
+                unit,
                 db,
                 ws,
                 props.function.as_deref(),
