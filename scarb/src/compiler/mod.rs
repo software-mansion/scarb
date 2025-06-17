@@ -12,7 +12,7 @@ mod compilers;
 pub mod db;
 mod fingerprint;
 pub mod helpers;
-mod incremental;
+pub mod incremental;
 pub mod plugin;
 mod profile;
 mod repository;
