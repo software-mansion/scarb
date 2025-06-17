@@ -3,4 +3,4 @@
 
 | | |
 |:---|:---|
-| [CongoUganda](./hello_world-CongoUganda.md) | [...](./hello_world-CongoUganda.md) |
+| [CongoUganda](./hello_world-CongoUganda.md) | — |

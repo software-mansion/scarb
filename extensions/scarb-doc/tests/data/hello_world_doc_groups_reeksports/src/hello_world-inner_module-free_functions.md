@@ -3,4 +3,4 @@
 
 | | |
 |:---|:---|
-| [visible_in_reeksports](./hello_world-inner_module-visible_in_reeksports.md) | [...](./hello_world-inner_module-visible_in_reeksports.md) |
+| [visible_in_reeksports](./hello_world-inner_module-visible_in_reeksports.md) | — |

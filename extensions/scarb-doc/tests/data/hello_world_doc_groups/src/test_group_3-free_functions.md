@@ -3,4 +3,4 @@
 
 | | |
 |:---|:---|
-| [one](./hello_world-A-one.md) | Lorem ipsum dolor sit amet[...](./hello_world-A-one.md) |
+| [one](./hello_world-A-one.md) | Lorem ipsum dolor sit amet |

@@ -3,4 +3,4 @@
 
 | | |
 |:---|:---|
-| [Uganda](./hello_world-Uganda.md) | [...](./hello_world-Uganda.md) |
+| [Uganda](./hello_world-Uganda.md) | — |

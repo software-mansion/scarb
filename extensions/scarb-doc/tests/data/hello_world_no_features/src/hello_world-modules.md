@@ -3,4 +3,4 @@
 
 | | |
 |:---|:---|
-| [tests](./hello_world-tests.md) | Tests module[...](./hello_world-tests.md) |
+| [tests](./hello_world-tests.md) | Tests module |

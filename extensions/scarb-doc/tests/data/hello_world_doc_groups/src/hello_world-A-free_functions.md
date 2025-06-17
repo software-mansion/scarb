@@ -3,4 +3,4 @@
 
 | | |
 |:---|:---|
-| [two](./hello_world-A-two.md) | [...](./hello_world-A-two.md) |
+| [two](./hello_world-A-two.md) | — |

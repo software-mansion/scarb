@@ -12,7 +12,7 @@ Fully qualified path: [target_package](./target_package.md)::[no_guarantee_of_un
 
 | | |
 |:---|:---|
-| [foreign_top_level_function](./foreign_package-foreign_top_level_function.md) | [...](./foreign_package-foreign_top_level_function.md) |
+| [foreign_top_level_function](./foreign_package-foreign_top_level_function.md) | — |
 
 <br>
 
@@ -28,4 +28,4 @@ Fully qualified path: [target_package](./target_package.md)::[no_guarantee_of_un
 
 | | |
 |:---|:---|
-| [foreign_top_level_function](./foreign_package-foreign_top_level_function.md) | [...](./foreign_package-foreign_top_level_function.md) |
+| [foreign_top_level_function](./foreign_package-foreign_top_level_function.md) | — |

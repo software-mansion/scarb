@@ -7,7 +7,7 @@ Fully qualified path: [hello_world](./hello_world.md)::[A](./hello_world-A.md)
 
 | | |
 |:---|:---|
-| [two](./hello_world-A-two.md) | [...](./hello_world-A-two.md) |
+| [two](./hello_world-A-two.md) | — |
 
 
 ---
@@ -20,13 +20,13 @@ Fully qualified path: [hello_world](./hello_world.md)::[A](./hello_world-A.md)
 
 | | |
 |:---|:---|
-| [one](./hello_world-A-one.md) | Lorem ipsum dolor sit amet[...](./hello_world-A-one.md) |
+| [one](./hello_world-A-one.md) | Lorem ipsum dolor sit amet |
 
 - ### [Structs](./test_group_3-structs.md)
 
 | | |
 |:---|:---|
-| [Three](./hello_world-A-Three.md) | [...](./hello_world-A-Three.md) |
+| [Three](./hello_world-A-Three.md) | — |
 
 ## [test group 4](test_group_4.md)
 
@@ -34,4 +34,4 @@ Fully qualified path: [hello_world](./hello_world.md)::[A](./hello_world-A.md)
 
 | | |
 |:---|:---|
-| [B](./hello_world-A-B.md) | [...](./hello_world-A-B.md) |
+| [B](./hello_world-A-B.md) | — |
