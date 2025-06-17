@@ -3,4 +3,4 @@
 
 | | |
 |:---|:---|
-| [Congo](./hello_world-Congo.md) | [...](./hello_world-Congo.md) |
+| [Congo](./hello_world-Congo.md) | — |

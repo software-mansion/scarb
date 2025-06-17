@@ -5,4 +5,4 @@
 
 | | |
 |:---|:---|
-| [C](./hello_world-C.md) | [...](./hello_world-C.md) |
+| [C](./hello_world-C.md) | — |

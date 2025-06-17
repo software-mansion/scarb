@@ -14,4 +14,4 @@ Fully qualified path: [target_package](./target_package.md)::[same_parent_mod](.
 
 | | |
 |:---|:---|
-| [internal_reeksport](./target_package-same_parent_mod-nested_same_parent_mod-internal_reeksport.md) | [...](./target_package-same_parent_mod-nested_same_parent_mod-internal_reeksport.md) |
+| [internal_reeksport](./target_package-same_parent_mod-nested_same_parent_mod-internal_reeksport.md) | — |
