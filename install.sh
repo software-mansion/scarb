@@ -596,8 +596,8 @@ _scarb() {
   eval "$(scarb completions zsh)"
   _scarb "$@"
 }
-compdef _scarb scarb
 autoload -Uz compinit && compinit
+compdef _scarb scarb
 EOF
 }
 
