@@ -109,7 +109,7 @@ version number.
 curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v {{ rel.sampleVersion }}
 ```
 
-## Shell completions (Optional)
+## Shell completions
 
 Shell completions allow your terminal to suggest and automatically complete commands and options when you press `Tab`.
 
