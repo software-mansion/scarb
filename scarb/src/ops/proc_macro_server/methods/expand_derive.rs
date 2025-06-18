@@ -1,18 +1,15 @@
 use std::sync::Arc;
 
-use super::{Handler, interface_code_mapping_from_cairo};
-use crate::compiler::plugin::proc_macro::v2::derive::generate_code_mappings_with_offset;
+use super::Handler;
 use crate::compiler::plugin::proc_macro::{
     DeclaredProcMacroInstances, Expansion, ExpansionQuery, ProcMacroApiVersion, ProcMacroInstance,
 };
 use crate::compiler::plugin::{collection::WorkspaceProcMacros, proc_macro::ExpansionKind};
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use cairo_lang_filesystem::span::TextWidth;
-use cairo_lang_macro::{TextSpan, TokenStream as TokenStreamV2};
 use cairo_lang_macro_v1::TokenStream as TokenStreamV1;
-use scarb_proc_macro_server_types::conversions::{diagnostic_v1_to_v2, token_stream_v2_to_v1};
 use scarb_proc_macro_server_types::methods::{
-    CodeMapping, CodeOrigin, ProcMacroResult, expand::ExpandDerive,
+    expand::ExpandDerive, ProcMacroResult,
 };
 
 impl Handler for ExpandDerive {
@@ -24,7 +21,6 @@ impl Handler for ExpandDerive {
             context,
             derives,
             item,
-            call_site,
         } = params;
 
         let mut derived_code = String::new();
@@ -59,17 +55,10 @@ impl Handler for ExpandDerive {
                 ProcMacroApiVersion::V1 => expand_derive_v1(
                     proc_macro_instance,
                     current_width,
-                    call_site.clone(),
                     expansion,
-                    token_stream_v2_to_v1(&item),
-                ),
-                ProcMacroApiVersion::V2 => expand_derive_v2(
-                    proc_macro_instance,
-                    current_width,
-                    expansion,
-                    call_site.clone(),
                     item.clone(),
                 ),
+                ProcMacroApiVersion::V2 => Err(anyhow!("v2 used")),
             }?;
 
             current_width = current_width + TextWidth::from_str(&result.token_stream.to_string());
@@ -95,7 +84,6 @@ impl Handler for ExpandDerive {
 fn expand_derive_v1(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     current_width: TextWidth,
-    call_site: TextSpan,
     expansion: &Expansion,
     item: TokenStreamV1,
 ) -> Result<ProcMacroResult> {
@@ -105,48 +93,39 @@ fn expand_derive_v1(
         item,
     );
 
-    // Default mapping for v1 derives
-    let added_length = TextWidth::from_str(&result.token_stream.to_string());
-    let code_mappings = Some(vec![CodeMapping {
-        span: TextSpan {
-            start: current_width.as_u32(),
-            end: (current_width + added_length).as_u32(),
-        },
-        origin: CodeOrigin::Span(call_site.clone()),
-    }]);
 
     Ok(ProcMacroResult {
         token_stream: result.token_stream,
-        diagnostics: result.diagnostics.iter().map(diagnostic_v1_to_v2).collect(),
-        code_mappings,
-    })
-}
-
-fn expand_derive_v2(
-    proc_macro_instance: &Arc<ProcMacroInstance>,
-    current_width: TextWidth,
-    expansion: &Expansion,
-    call_site: TextSpan,
-    item: TokenStreamV2,
-) -> Result<ProcMacroResult> {
-    let result = proc_macro_instance.try_v2()?.generate_code(
-        expansion.expansion_name.clone(),
-        call_site.clone(),
-        TokenStreamV2::empty(),
-        item.clone(),
-    );
-
-    let code_mappings =
-        generate_code_mappings_with_offset(&result.token_stream, call_site.clone(), current_width);
-
-    Ok(ProcMacroResult {
-        token_stream: token_stream_v2_to_v1(&result.token_stream),
         diagnostics: result.diagnostics,
-        code_mappings: Some(
-            code_mappings
-                .into_iter()
-                .map(interface_code_mapping_from_cairo)
-                .collect(),
-        ),
+        code_mappings: None,
     })
 }
+
+// fn expand_derive_v2(
+//     proc_macro_instance: &Arc<ProcMacroInstance>,
+//     current_width: TextWidth,
+//     expansion: &Expansion,
+//     call_site: TextSpan,
+//     item: TokenStreamV2,
+// ) -> Result<ProcMacroResult> {
+//     let result = proc_macro_instance.try_v2()?.generate_code(
+//         expansion.expansion_name.clone(),
+//         call_site.clone(),
+//         TokenStreamV2::empty(),
+//         item.clone(),
+//     );
+//
+//     let code_mappings =
+//         generate_code_mappings_with_offset(&result.token_stream, call_site.clone(), current_width);
+//
+//     Ok(ProcMacroResult {
+//         token_stream: token_stream_v2_to_v1(&result.token_stream),
+//         diagnostics: result.diagnostics,
+//         code_mappings: Some(
+//             code_mappings
+//                 .into_iter()
+//                 .map(interface_code_mapping_from_cairo)
+//                 .collect(),
+//         ),
+//     })
+// }
