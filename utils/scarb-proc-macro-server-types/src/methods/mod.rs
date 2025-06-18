@@ -24,6 +24,8 @@ pub struct ProcMacroResult {
     pub diagnostics: Vec<DiagnosticV2>,
     /// A list of code mappings produced by the macro
     pub code_mappings: Option<Vec<CodeMapping>>,
+    /// A list of package ids of macro crates used when resolving this request.
+    pub package_ids: Vec<String>,
 }
 
 impl Default for ProcMacroResult {
@@ -32,6 +34,7 @@ impl Default for ProcMacroResult {
             token_stream: TokenStreamV1::empty(),
             diagnostics: Vec::new(),
             code_mappings: None,
+            package_ids: Default::default(),
         }
     }
 }
