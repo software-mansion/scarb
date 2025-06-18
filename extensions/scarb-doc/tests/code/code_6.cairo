@@ -26,3 +26,8 @@ impl CongoUganda of Uganda<Congo> {
     fn rwanda(self: Congo) -> u32;
     fn uganda() {};
 }
+
+#[doc(hidden)]
+struct Swaziland {}
+
+fn function_with_doc_hidden_param(not_linked_param: Swaziland) {}
