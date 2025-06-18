@@ -1,3 +1,4 @@
+use cairo_lang_filesystem::span::TextWidth;
 use cairo_lang_macro::{
     AllocationContext, TextSpan, Token, TokenStream, TokenStreamMetadata, TokenTree,
 };
@@ -34,7 +35,9 @@ impl<'a> TokenStreamBuilder<'a> {
             .iter()
             .flat_map(|node| {
                 let leaves = node.tokens(self.db);
-                leaves.map(|node| TokenTree::Ident(self.token_from_syntax_node(node, ctx)))
+                leaves
+                    .flat_map(|node| self.token_from_syntax_node(node, ctx))
+                    .map(TokenTree::Ident)
             })
             .collect();
 
@@ -44,17 +47,46 @@ impl<'a> TokenStreamBuilder<'a> {
         }
     }
 
-    pub fn token_from_syntax_node(&self, node: SyntaxNode, ctx: &AllocationContext) -> Token {
-        let span = node.span(self.db);
+    pub fn token_from_syntax_node(&self, node: SyntaxNode, ctx: &AllocationContext) -> Vec<Token> {
+        let span_without_trivia = node.span_without_trivia(self.db);
+        let span_with_trivia = node.span(self.db);
         let text = node.get_text(self.db);
-        // We skip the whitespace prefix, so that diagnostics start where the actual token contents is.
-        let start = span.start.as_u32() + whitespace_prefix_len(&text);
-        // Then we also skip the whitespace suffix, for the same reason.
-        let end = span.end.as_u32() - whitespace_suffix_len(&text);
-        // This handles the case of a whitespace only string.
-        let end = if end < start { start } else { end };
-        let span = TextSpan { start, end };
-        Token::new_in(text, span, ctx)
+        let mut result = Vec::new();
+        let prefix_len = span_without_trivia.start - span_with_trivia.start;
+        let (prefix, rest) = text.split_at(prefix_len.as_u32() as usize);
+        if prefix_len > TextWidth::ZERO {
+            result.push(Token::new_in(
+                prefix,
+                TextSpan {
+                    start: span_with_trivia.start.as_u32(),
+                    end: span_without_trivia.start.as_u32(),
+                },
+                ctx,
+            ))
+        }
+        let suffix_len = span_with_trivia.end - span_without_trivia.end;
+        let (content, suffix) = rest.split_at(rest.len() - suffix_len.as_u32() as usize);
+        if !content.is_empty() {
+            result.push(Token::new_in(
+                content,
+                TextSpan {
+                    start: span_without_trivia.start.as_u32(),
+                    end: span_without_trivia.end.as_u32(),
+                },
+                ctx,
+            ));
+        }
+        if suffix_len > TextWidth::ZERO {
+            result.push(Token::new_in(
+                suffix,
+                TextSpan {
+                    start: span_without_trivia.end.as_u32(),
+                    end: span_with_trivia.end.as_u32(),
+                },
+                ctx,
+            ));
+        }
+        result
     }
 }
 
@@ -66,14 +98,6 @@ impl Extend<SyntaxNode> for TokenStreamBuilder<'_> {
     }
 }
 
-fn whitespace_prefix_len(s: &str) -> u32 {
-    s.chars().take_while(|c| c.is_whitespace()).count() as u32
-}
-
-fn whitespace_suffix_len(s: &str) -> u32 {
-    s.chars().rev().take_while(|c| c.is_whitespace()).count() as u32
-}
-
 #[cfg(test)]
 mod tests {
     use crate::compiler::plugin::proc_macro::v2::TokenStreamBuilder;
@@ -82,7 +106,7 @@ mod tests {
     use indoc::indoc;
 
     #[test]
-    fn whitespace_skipped() {
+    fn tokens_built_correctly() {
         let db = SimpleParserDatabase::default();
         let mut builder = TokenStreamBuilder::new(&db);
         let content = indoc! {r#"
@@ -97,18 +121,89 @@ mod tests {
         let token_at = |token_stream: &TokenStream, idx: usize| {
             let token: TokenTree = token_stream.tokens[idx].clone();
             match token {
-                TokenTree::Ident(token) => token,
+                TokenTree::Ident(token) => (token.content.as_ref().to_string(), token.span.clone()),
             }
         };
-        let token = token_at(&token_stream, 4);
-        assert_eq!(token.content.as_ref(), "{\n");
-        assert_eq!(token.span, TextSpan { start: 10, end: 11 });
-        let token = token_at(&token_stream, 5);
-        assert_eq!(token.content.as_ref(), "    let ");
-        // Note we skip 4 whitespaces characters in the span.
-        assert_eq!(token.span, TextSpan { start: 16, end: 19 });
-        let token = token_at(&token_stream, 6);
-        assert_eq!(token.content.as_ref(), "x ");
-        assert_eq!(token.span, TextSpan { start: 20, end: 21 });
+        assert_eq!(token_stream.tokens.len(), 20);
+        assert_eq!(
+            token_at(&token_stream, 0),
+            ("fn".to_string(), TextSpan { start: 0, end: 2 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 1),
+            (" ".to_string(), TextSpan { start: 2, end: 3 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 2),
+            ("main".to_string(), TextSpan { start: 3, end: 7 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 3),
+            ("(".to_string(), TextSpan { start: 7, end: 8 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 4),
+            (")".to_string(), TextSpan { start: 8, end: 9 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 5),
+            (" ".to_string(), TextSpan { start: 9, end: 10 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 6),
+            ("{".to_string(), TextSpan { start: 10, end: 11 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 7),
+            ("\n".to_string(), TextSpan { start: 11, end: 12 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 8),
+            ("    ".to_string(), TextSpan { start: 12, end: 16 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 9),
+            ("let".to_string(), TextSpan { start: 16, end: 19 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 10),
+            (" ".to_string(), TextSpan { start: 19, end: 20 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 11),
+            ("x".to_string(), TextSpan { start: 20, end: 21 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 12),
+            (" ".to_string(), TextSpan { start: 21, end: 22 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 13),
+            ("=".to_string(), TextSpan { start: 22, end: 23 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 14),
+            (" ".to_string(), TextSpan { start: 23, end: 24 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 15),
+            ("42".to_string(), TextSpan { start: 24, end: 26 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 16),
+            (";".to_string(), TextSpan { start: 26, end: 27 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 17),
+            ("\n".to_string(), TextSpan { start: 27, end: 28 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 18),
+            ("}".to_string(), TextSpan { start: 28, end: 29 }),
+        );
+        assert_eq!(
+            token_at(&token_stream, 19),
+            ("\n".to_string(), TextSpan { start: 29, end: 30 }),
+        );
     }
 }

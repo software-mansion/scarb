@@ -1,10 +1,16 @@
-use super::traits::{
-    MarkdownDocItem, generate_markdown_table_summary_for_top_level_subitems,
-    mark_duplicated_item_with_relative_path,
+pub(crate) mod content;
+
+use super::traits::{MarkdownDocItem, generate_markdown_table_summary_for_top_level_subitems};
+use crate::docs_generation::markdown::context::MarkdownGenerationContext;
+use crate::docs_generation::markdown::groups::generate_global_groups_summary_files;
+use crate::docs_generation::markdown::summary::content::{
+    generate_foreign_crates_summary_content, generate_global_groups_summary_content,
+    generate_module_summary_content,
 };
-use crate::docs_generation::markdown::context::{MarkdownGenerationContext, path_to_file_link};
 use crate::docs_generation::markdown::traits::TopLevelMarkdownDocItem;
-use crate::docs_generation::markdown::{BASE_HEADER_LEVEL, Filename};
+use crate::docs_generation::markdown::{
+    BASE_HEADER_LEVEL, BASE_MODULE_CHAPTER_PREFIX, Filename, SummaryIndexMap,
+};
 use crate::docs_generation::{DocItem, TopLevelItems};
 use crate::types::crate_type::Crate;
 use crate::types::module_type::Module;
@@ -14,40 +20,69 @@ use crate::types::other_types::{
 };
 use anyhow::Result;
 use itertools::chain;
-use std::fmt::Write;
 
-pub fn generate_summary_file_content(crate_: &Crate) -> Result<(String, Vec<(String, String)>)> {
-    let mut markdown = "# Summary\n\n".to_string();
+pub fn generate_summary_file_content(
+    crate_: &Crate,
+) -> Result<(SummaryIndexMap, Vec<(String, String)>)> {
+    let mut summary_index_map = SummaryIndexMap::new();
     let context = MarkdownGenerationContext::from_crate(crate_);
+
+    generate_module_summary_content(&crate_.root_module, 0, &mut summary_index_map);
+    generate_foreign_crates_summary_content(&crate_.foreign_crates, &mut summary_index_map);
+    generate_global_groups_summary_content(&crate_.groups, &mut summary_index_map);
 
     let mut summary_files = vec![(
         crate_.root_module.filename(),
-        crate_
-            .root_module
-            .generate_markdown(&context, BASE_HEADER_LEVEL, None)?,
+        crate_.root_module.generate_markdown(
+            &context,
+            BASE_HEADER_LEVEL,
+            None,
+            &summary_index_map,
+        )?,
     )];
-    let (sub_markdown, module_item_summaries) =
-        &generate_modules_summary_content(&crate_.root_module, 0, &context)?;
 
-    markdown += sub_markdown;
+    let module_item_summaries =
+        &generate_modules_summary_files(&crate_.root_module, &context, &summary_index_map)?;
     summary_files.extend(module_item_summaries.to_owned());
-    Ok((markdown, summary_files))
-}
 
-pub fn generate_modules_summary_content(
-    module: &Module,
-    mut nesting_level: usize,
-    context: &MarkdownGenerationContext,
-) -> Result<(String, Vec<(String, String)>)> {
-    let mut markdown = String::new();
-    writeln!(
-        markdown,
-        "{}- [{}]({})",
-        "  ".repeat(nesting_level),
-        module.item_data.name,
-        path_to_file_link(module.full_path())
+    let foreign_modules_files = generate_foreign_crates_summary_files(
+        &crate_.foreign_crates,
+        &context,
+        &summary_index_map,
     )?;
 
+    summary_files.extend(foreign_modules_files);
+
+    let groups_files =
+        generate_global_groups_summary_files(&crate_.groups, &context, &summary_index_map)?;
+    summary_files.extend(groups_files.to_owned());
+    Ok((summary_index_map, summary_files))
+}
+
+fn generate_foreign_crates_summary_files(
+    foreign_modules: &Vec<Module>,
+    context: &MarkdownGenerationContext,
+    summary_index_map: &SummaryIndexMap,
+) -> Result<Vec<(String, String)>> {
+    let mut summary_files = vec![];
+
+    for module in foreign_modules {
+        summary_files.extend(vec![(
+            module.filename(),
+            module.generate_markdown(context, BASE_HEADER_LEVEL, None, summary_index_map)?,
+        )]);
+        let module_item_summaries =
+            &generate_modules_summary_files(module, context, summary_index_map)?;
+        summary_files.extend(module_item_summaries.to_owned());
+    }
+    Ok(summary_files)
+}
+
+pub fn generate_modules_summary_files(
+    module: &Module,
+    context: &MarkdownGenerationContext,
+    summary_index_map: &SummaryIndexMap,
+) -> Result<Vec<(String, String)>> {
     let mut top_level_items = TopLevelItems::default();
     let Module {
         module_id: _module_id,
@@ -85,238 +120,164 @@ pub fn generate_modules_summary_content(
     )?;
 
     doc_files.extend::<Vec<(String, String)>>(
-        generate_doc_files_for_module_items(&top_level_items, context)?.to_owned(),
+        generate_doc_files_for_module_items(&top_level_items, context, summary_index_map)?
+            .to_owned(),
     );
 
-    nesting_level += 1;
     if !top_level_items.modules.is_empty() {
-        writeln!(
-            &mut markdown,
-            "{}- [{}](./{}-{})",
-            "  ".repeat(nesting_level),
-            Module::HEADER,
-            module.markdown_formatted_path(),
-            Module::ITEMS_SUMMARY_FILENAME
-        )?;
-        nesting_level += 1;
         for submodule in module.submodules.iter() {
-            let (sub_markdown, sub_summaries) =
-                &generate_modules_summary_content(submodule, nesting_level, context)?;
-            markdown += sub_markdown;
+            let sub_summaries =
+                &generate_modules_summary_files(submodule, context, summary_index_map)?;
             doc_files.extend::<Vec<(String, String)>>(sub_summaries.to_owned());
         }
-        nesting_level -= 1;
     }
-
-    markdown += &generate_markdown_list_summary_for_module_items(
-        &top_level_items.constants,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    )?;
-    markdown += &generate_markdown_list_summary_for_module_items(
-        &top_level_items.free_functions,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    )?;
-    markdown += &generate_markdown_list_summary_for_module_items(
-        &top_level_items.structs,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    )?;
-    markdown += &generate_markdown_list_summary_for_module_items(
-        &top_level_items.enums,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    )?;
-    markdown += &generate_markdown_list_summary_for_module_items(
-        &top_level_items.type_aliases,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    )?;
-    markdown += &generate_markdown_list_summary_for_module_items(
-        &top_level_items.impl_aliases,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    )?;
-    markdown += &generate_markdown_list_summary_for_module_items(
-        &top_level_items.traits,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    )?;
-    markdown += &generate_markdown_list_summary_for_module_items(
-        &top_level_items.impls,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    )?;
-    markdown += &generate_markdown_list_summary_for_module_items(
-        &top_level_items.extern_types,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    )?;
-    markdown += &generate_markdown_list_summary_for_module_items(
-        &top_level_items.extern_functions,
-        nesting_level,
-        &module.markdown_formatted_path(),
-    )?;
-    Ok((markdown.to_string(), doc_files))
+    Ok(doc_files)
 }
 
-fn generate_doc_files_for_module_items(
+pub fn generate_doc_files_for_module_items(
     top_level_items: &TopLevelItems,
     context: &MarkdownGenerationContext,
+    summary_index_map: &SummaryIndexMap,
 ) -> Result<Vec<(String, String)>> {
     Ok(chain!(
-        generate_top_level_docs_contents(&top_level_items.modules, context)?,
-        generate_top_level_docs_contents(&top_level_items.constants, context)?,
-        generate_top_level_docs_contents(&top_level_items.free_functions, context)?,
-        generate_top_level_docs_contents(&top_level_items.structs, context)?,
-        generate_top_level_docs_contents(&top_level_items.enums, context)?,
-        generate_top_level_docs_contents(&top_level_items.type_aliases, context)?,
-        generate_top_level_docs_contents(&top_level_items.impl_aliases, context)?,
-        generate_top_level_docs_contents(&top_level_items.traits, context)?,
-        generate_top_level_docs_contents(&top_level_items.impls, context)?,
-        generate_top_level_docs_contents(&top_level_items.extern_types, context)?,
-        generate_top_level_docs_contents(&top_level_items.extern_functions, context)?,
+        generate_top_level_docs_contents(&top_level_items.modules, context, summary_index_map)?,
+        generate_top_level_docs_contents(&top_level_items.constants, context, summary_index_map)?,
+        generate_top_level_docs_contents(
+            &top_level_items.free_functions,
+            context,
+            summary_index_map
+        )?,
+        generate_top_level_docs_contents(&top_level_items.structs, context, summary_index_map)?,
+        generate_top_level_docs_contents(&top_level_items.enums, context, summary_index_map)?,
+        generate_top_level_docs_contents(
+            &top_level_items.type_aliases,
+            context,
+            summary_index_map
+        )?,
+        generate_top_level_docs_contents(
+            &top_level_items.impl_aliases,
+            context,
+            summary_index_map,
+        )?,
+        generate_top_level_docs_contents(&top_level_items.traits, context, summary_index_map,)?,
+        generate_top_level_docs_contents(&top_level_items.impls, context, summary_index_map,)?,
+        generate_top_level_docs_contents(
+            &top_level_items.extern_types,
+            context,
+            summary_index_map,
+        )?,
+        generate_top_level_docs_contents(
+            &top_level_items.extern_functions,
+            context,
+            summary_index_map,
+        )?,
     )
     .collect::<Vec<(String, String)>>())
 }
 
-fn generate_summary_files_for_module_items(
+pub fn generate_summary_files_for_module_items(
     top_level_items: &TopLevelItems,
-    markdown_formatted_path: String,
+    module_name: String,
     context: &MarkdownGenerationContext,
 ) -> Result<Vec<(String, String)>> {
     Ok(vec![
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                Module::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, Module::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.modules,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                Constant::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, Constant::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.constants,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                FreeFunction::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, FreeFunction::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.free_functions,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                Struct::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, Struct::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.structs,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                Enum::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, Enum::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.enums,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                TypeAlias::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, TypeAlias::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.type_aliases,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                ImplAlias::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, ImplAlias::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.impl_aliases,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                Trait::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, Trait::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.traits,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                Impl::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, Impl::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.impls,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                ExternType::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, ExternType::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.extern_types,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
         (
-            format!(
-                "{}-{}",
-                markdown_formatted_path,
-                ExternFunction::ITEMS_SUMMARY_FILENAME
-            ),
+            format!("{}-{}", module_name, ExternFunction::ITEMS_SUMMARY_FILENAME),
             generate_markdown_table_summary_for_top_level_subitems(
                 &top_level_items.extern_functions,
                 context,
-                &markdown_formatted_path,
+                &module_name,
+                BASE_MODULE_CHAPTER_PREFIX,
             )?,
         ),
     ]
@@ -325,44 +286,16 @@ fn generate_summary_files_for_module_items(
     .collect::<Vec<_>>())
 }
 
-fn generate_markdown_list_summary_for_module_items<T: TopLevelMarkdownDocItem>(
-    subitems: &[&T],
-    mut nesting_level: usize,
-    module_name: &String,
-) -> Result<String> {
-    let mut markdown = String::new();
-    if !subitems.is_empty() {
-        writeln!(
-            &mut markdown,
-            "{}- [{}](./{}-{})",
-            "  ".repeat(nesting_level),
-            T::HEADER,
-            module_name,
-            T::ITEMS_SUMMARY_FILENAME
-        )?;
-        nesting_level += 1;
-        let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
-        for (item, relative_path) in items_with_relative_path {
-            writeln!(
-                &mut markdown,
-                "  {}",
-                item.generate_markdown_nested_list_item(relative_path, nesting_level)
-            )?;
-        }
-    }
-    Ok(markdown)
-}
-
 fn generate_top_level_docs_contents(
     items: &[&impl TopLevelMarkdownDocItem],
     context: &MarkdownGenerationContext,
+    summary_index_map: &SummaryIndexMap,
 ) -> Result<Vec<(Filename, String)>> {
     items
         .iter()
         .map(|item| {
-            let filename = item.filename();
-            item.generate_markdown(context, BASE_HEADER_LEVEL, None)
-                .map(|markdown| (filename, markdown))
+            item.generate_markdown(context, BASE_HEADER_LEVEL, None, summary_index_map)
+                .map(|markdown| (item.filename(), markdown))
         })
         .collect()
 }

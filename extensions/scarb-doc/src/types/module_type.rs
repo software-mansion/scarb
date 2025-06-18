@@ -2,8 +2,8 @@ use crate::db::ScarbDocDatabase;
 use crate::types::groups::{
     Group, aggregate_constants_groups, aggregate_enums_groups, aggregate_extern_functions_groups,
     aggregate_extern_types_groups, aggregate_free_functions_groups, aggregate_impl_aliases_groups,
-    aggregate_impls_groups, aggregate_modules_groups, aggregate_structs_groups,
-    aggregate_traits_groups, aggregate_type_aliases_groups,
+    aggregate_impls_groups, aggregate_modules_groups, aggregate_pub_uses_groups,
+    aggregate_structs_groups, aggregate_traits_groups, aggregate_type_aliases_groups,
 };
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ItemData, Struct,
@@ -153,6 +153,20 @@ impl ModulePubUses {
             use_submodules,
         })
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.use_constants.is_empty()
+            && self.use_free_functions.is_empty()
+            && self.use_structs.is_empty()
+            && self.use_enums.is_empty()
+            && self.use_module_type_aliases.is_empty()
+            && self.use_impl_aliases.is_empty()
+            && self.use_traits.is_empty()
+            && self.use_impl_defs.is_empty()
+            && self.use_extern_types.is_empty()
+            && self.use_extern_functions.is_empty()
+            && self.use_submodules.is_empty()
+    }
 }
 
 macro_rules! define_insert_function {
@@ -171,8 +185,42 @@ macro_rules! define_insert_function {
                     .any(|existing_item| existing_item.id == item.id)
                 {
                     return;
-                }
+                } else if let Some(item_group_name)  = item.item_data.group.as_ref() {
+                    // avoid duplicating items in module.groups and module.pub_uses
+                    for group in self.groups.iter_mut() {
+                        if &group.name == item_group_name {
+                            for existing_item in group.$field_name.iter() {
+                                if existing_item.id == item.id {
+                                    // PubUses do not guarantee uniquness, and Group must do so.
+                                    return;
+                                }
+                            }
+                            group.$field_name.push(item);
+                            return;
+                        }
+                    }
+
+                    let mut group = Group {
+                        name: item_group_name.clone(),
+                        submodules: vec![],
+                        constants: vec![],
+                        free_functions: vec![],
+                        structs: vec![],
+                        enums: vec![],
+                        type_aliases: vec![],
+                        impl_aliases: vec![],
+                        traits: vec![],
+                        impls: vec![],
+                        extern_types: vec![],
+                        extern_functions: vec![],
+                    };
+                    group.$field_name.push(item);
+                    self.groups.push(group);
+                    return;
+
+                } else {
                 self.$field_name.push(item);
+                }
             }
         )*
     };
@@ -339,7 +387,11 @@ impl Module {
         extern_types = aggregate_extern_types_groups(&extern_types, &mut group_map);
         extern_functions = aggregate_extern_functions_groups(&extern_functions, &mut group_map);
         submodules = aggregate_modules_groups(&submodules, &mut group_map);
-        let groups = group_map.into_values().collect();
+        if !include_private_items {
+            aggregate_pub_uses_groups(&module_pubuses, &mut group_map);
+        }
+        let mut groups: Vec<Group> = group_map.into_values().collect();
+        groups.sort_by(|a, b| a.name.cmp(&b.name));
 
         Ok(Self {
             module_id,
@@ -498,10 +550,15 @@ pub(crate) fn get_ancestors_vector(
     module_id: ModuleId,
     db: &ScarbDocDatabase,
 ) -> Vec<ModuleId> {
-    if let ModuleId::Submodule(submodule_id) = module_id {
-        ancestors.insert(0, module_id);
-        let parent = submodule_id.parent_module(db);
-        get_ancestors_vector(ancestors, parent, db);
+    match module_id {
+        ModuleId::Submodule(submodule_id) => {
+            ancestors.insert(0, module_id);
+            let parent = submodule_id.parent_module(db);
+            get_ancestors_vector(ancestors, parent, db);
+        }
+        ModuleId::CrateRoot(_) => {
+            ancestors.insert(0, module_id);
+        }
     }
     ancestors.clone()
 }

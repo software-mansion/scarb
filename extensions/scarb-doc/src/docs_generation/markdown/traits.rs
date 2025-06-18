@@ -1,9 +1,11 @@
 use super::context::MarkdownGenerationContext;
 use crate::docs_generation::markdown::{
-    SHORT_DOCUMENTATION_AVOID_PREFIXES, SHORT_DOCUMENTATION_LEN,
+    BASE_MODULE_CHAPTER_PREFIX, GROUP_CHAPTER_PREFIX, SHORT_DOCUMENTATION_AVOID_PREFIXES,
+    SHORT_DOCUMENTATION_LEN, SummaryIndexMap,
 };
 use crate::docs_generation::{DocItem, PrimitiveDocItem, SubPathDocItem, TopLevelDocItem};
 use crate::location_links::DocLocationLink;
+use crate::types::groups::Group;
 use crate::types::module_type::{Module, ModulePubUses};
 use crate::types::other_types::{
     Constant, Enum, ExternFunction, ExternType, FreeFunction, Impl, ImplAlias, ImplConstant,
@@ -17,7 +19,8 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::option::Option;
 
-const RE_EXPORTS_CHAPTER: &str = "Re-exports";
+const RE_EXPORTS_CHAPTER: &str = "\n\n---\n \n# Re-exports: \n";
+const GROUPS_CHAPTER: &str = "\n\n---\n \n# Groups: \n";
 
 pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
     const ITEMS_SUMMARY_FILENAME: &'static str;
@@ -26,23 +29,21 @@ pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
         format!("{}.md", self.markdown_formatted_path())
     }
 
-    fn md_ref(&self, relative_path: Option<String>) -> String {
+    fn md_ref_formatted(&self, relative_path: Option<String>) -> String {
+        let (path, filename) = self.md_ref(relative_path);
+        format!("[{path}](./{filename})")
+    }
+
+    fn md_ref(&self, relative_path: Option<String>) -> (String, String) {
         match relative_path {
-            Some(path) => format!("[{}](./{})", path, self.filename()),
-            None => format!("[{}](./{})", self.name(), self.filename()),
+            Some(path) => (path, self.filename()),
+            None => (self.name().to_string(), self.filename()),
         }
     }
 
-    fn generate_markdown_nested_list_item(
-        &self,
-        relative_path: Option<String>,
-        nesting_level: usize,
-    ) -> String {
-        format!(
-            "{}- {}",
-            "  ".repeat(nesting_level),
-            self.md_ref(relative_path)
-        )
+    fn get_markdown_nested_list_item(&self, relative_path: Option<String>) -> (String, String) {
+        let (path, filename) = self.md_ref(relative_path);
+        (format!("./{}", filename), path)
     }
 }
 
@@ -74,8 +75,15 @@ macro_rules! impl_markdown_doc_item {
                 context: &MarkdownGenerationContext,
                 header_level: usize,
                 item_suffix: Option<usize>,
+                summary_index_map: &SummaryIndexMap,
             ) -> Result<String> {
-                generate_markdown_from_item_data(self, context, header_level, item_suffix)
+                generate_markdown_from_item_data(
+                    self,
+                    context,
+                    header_level,
+                    item_suffix,
+                    summary_index_map,
+                )
             }
 
             fn get_full_path(&self, item_suffix: Option<usize>) -> String {
@@ -100,6 +108,7 @@ pub trait MarkdownDocItem: DocItem {
         context: &MarkdownGenerationContext,
         header_level: usize,
         item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String>;
 
     fn get_short_documentation(&self, context: &MarkdownGenerationContext) -> String {
@@ -178,8 +187,9 @@ where
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        generate_markdown_from_item_data(self, context, header_level, None)
+        generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)
     }
 }
 
@@ -189,14 +199,17 @@ impl MarkdownDocItem for Enum {
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
         markdown += &generate_markdown_for_subitems(
             &self.variants,
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
 
         Ok(markdown)
@@ -209,8 +222,10 @@ impl MarkdownDocItem for Impl {
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
         markdown += &generate_markdown_for_subitems(
@@ -218,6 +233,7 @@ impl MarkdownDocItem for Impl {
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
 
         markdown += &generate_markdown_for_subitems(
@@ -225,6 +241,7 @@ impl MarkdownDocItem for Impl {
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
 
         markdown += &generate_markdown_for_subitems(
@@ -232,6 +249,7 @@ impl MarkdownDocItem for Impl {
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
 
         Ok(markdown)
@@ -311,7 +329,7 @@ fn generate_pub_use_item_markdown(
     .unwrap_or("".to_string());
 
     if !buff.is_empty() {
-        return format!("## {RE_EXPORTS_CHAPTER}\n{}", buff);
+        return format!("{RE_EXPORTS_CHAPTER}{buff}");
     }
     buff
 }
@@ -322,67 +340,87 @@ impl MarkdownDocItem for Module {
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
 
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.submodules.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.constants.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.free_functions.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.structs.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.enums.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.type_aliases.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.impl_aliases.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.traits.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.impls.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.extern_types.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
         markdown += &generate_markdown_table_summary_for_top_level_subitems(
             &self.extern_functions.iter().collect_vec(),
             context,
             &self.markdown_formatted_path(),
+            BASE_MODULE_CHAPTER_PREFIX,
         )?;
 
         markdown += &generate_pub_use_item_markdown(&self.pub_uses, context);
 
+        if !self.groups.is_empty() {
+            markdown += GROUPS_CHAPTER;
+            markdown += &generate_markdown_table_summary_for_top_level_groups_items(
+                &self.groups.iter().collect_vec(),
+                context,
+            )?;
+        }
         Ok(markdown)
     }
 }
@@ -393,8 +431,10 @@ impl MarkdownDocItem for Struct {
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
 
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
         markdown += &generate_markdown_for_subitems(
@@ -402,6 +442,7 @@ impl MarkdownDocItem for Struct {
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
 
         Ok(markdown)
@@ -414,8 +455,10 @@ impl MarkdownDocItem for Trait {
         context: &MarkdownGenerationContext,
         header_level: usize,
         _item_suffix: Option<usize>,
+        summary_index_map: &SummaryIndexMap,
     ) -> Result<String> {
-        let mut markdown = generate_markdown_from_item_data(self, context, header_level, None)?;
+        let mut markdown =
+            generate_markdown_from_item_data(self, context, header_level, None, summary_index_map)?;
         let mut suffix_calculator = ItemSuffixCalculator::new(self.name());
 
         markdown += &generate_markdown_for_subitems(
@@ -423,18 +466,21 @@ impl MarkdownDocItem for Trait {
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
         markdown += &generate_markdown_for_subitems(
             &self.trait_functions,
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
         markdown += &generate_markdown_for_subitems(
             &self.trait_types,
             context,
             header_level,
             &mut suffix_calculator,
+            summary_index_map,
         )?;
         Ok(markdown)
     }
@@ -527,7 +573,8 @@ pub fn mark_duplicated_item_with_relative_path<'a, T: TopLevelMarkdownDocItem + 
 pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdownDocItem>(
     subitems: &[&T],
     context: &MarkdownGenerationContext,
-    markdown_formatted_path: &String,
+    module_name: &String,
+    prefix: &str,
 ) -> Result<String> {
     let mut markdown = String::new();
 
@@ -535,11 +582,15 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
         let linked = format!(
             "[{}](./{}-{})",
             T::HEADER,
-            markdown_formatted_path,
+            module_name,
             T::ITEMS_SUMMARY_FILENAME
         );
 
-        writeln!(&mut markdown, "\n{}\n ---\n| | |\n|:---|:---|", linked,)?;
+        writeln!(
+            &mut markdown,
+            "\n{} {}\n\n| | |\n|:---|:---|",
+            prefix, linked,
+        )?;
 
         let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
         for (item, relative_path) in items_with_relative_path {
@@ -547,13 +598,95 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
             writeln!(
                 &mut markdown,
                 "| {} | {}[...](./{}) |",
-                item.md_ref(relative_path),
+                item.md_ref_formatted(relative_path),
                 item_doc,
                 item.filename(),
             )?;
         }
     }
 
+    Ok(markdown)
+}
+
+pub fn generate_markdown_table_summary_for_top_level_groups_items(
+    groups: &[&Group],
+    context: &MarkdownGenerationContext,
+) -> Result<String> {
+    let mut markdown = String::new();
+
+    if !groups.is_empty() {
+        for group in groups {
+            markdown += &format!("\n## [{}]({})\n", group.name, group.filename(),);
+
+            let fake_module_name = group.get_name_normalized();
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.submodules.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.constants.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.free_functions.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.structs.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.enums.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.type_aliases.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.impl_aliases.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.traits.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.impls.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.extern_types.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+            markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &group.extern_functions.iter().collect_vec(),
+                context,
+                &fake_module_name,
+                GROUP_CHAPTER_PREFIX,
+            )?;
+        }
+    }
     Ok(markdown)
 }
 
@@ -574,7 +707,7 @@ pub fn generate_markdown_table_summary_for_reexported_subitems<T: TopLevelMarkdo
             writeln!(
                 &mut markdown,
                 "| {} | {}[...](./{}) |",
-                item.md_ref(relative_path),
+                item.md_ref_formatted(relative_path),
                 item_doc,
                 item.filename(),
             )?;
@@ -589,6 +722,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
     context: &MarkdownGenerationContext,
     header_level: usize,
     suffix_calculator: &mut ItemSuffixCalculator,
+    summary_index_map: &SummaryIndexMap,
 ) -> Result<String> {
     let mut markdown = String::new();
 
@@ -602,7 +736,7 @@ fn generate_markdown_for_subitems<T: MarkdownDocItem + SubPathDocItem>(
             writeln!(
                 &mut markdown,
                 "{}",
-                item.generate_markdown(context, header_level + 2, postfix)?
+                item.generate_markdown(context, header_level + 2, postfix, summary_index_map)?
             )?;
         }
     }
@@ -615,6 +749,7 @@ fn generate_markdown_from_item_data(
     context: &MarkdownGenerationContext,
     header_level: usize,
     item_suffix: Option<usize>,
+    summary_index_map: &SummaryIndexMap,
 ) -> Result<String> {
     let mut markdown = String::new();
 
@@ -629,12 +764,17 @@ fn generate_markdown_from_item_data(
     let full_path = doc_item.get_full_path(item_suffix);
     writeln!(&mut markdown, "Fully qualified path: {full_path}\n",)?;
 
+    if let Some(group_name) = doc_item.group_name() {
+        let group_path = format!("[{}](./{}.md)", group_name, group_name.replace(" ", "_"),);
+        writeln!(&mut markdown, "Part of the group: {group_path}\n",)?;
+    }
+
     if let Some(sig) = &doc_item.signature() {
         if !sig.is_empty() {
             writeln!(
                 &mut markdown,
                 "<pre><code class=\"language-cairo\">{}</code></pre>\n",
-                format_signature(sig, doc_item.doc_location_links())
+                format_signature(sig, doc_item.doc_location_links(), summary_index_map)
             )?;
         }
     }
@@ -685,7 +825,7 @@ fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
     }
 }
 
-fn format_signature(input: &str, links: &[DocLocationLink]) -> String {
+fn format_signature(input: &str, links: &[DocLocationLink], index_map: &SummaryIndexMap) -> String {
     let mut escaped = String::with_capacity(input.len());
     let mut index_pointer = 0;
 
@@ -701,14 +841,19 @@ fn format_signature(input: &str, links: &[DocLocationLink]) -> String {
                 .iter()
                 .find(|&link| i >= link.start && i < link.end)
             {
-                let slice = escape_html(&input[link.start..link.end]);
-                escaped.push_str(&format!(
-                    "<a href=\"{}.html\">{}</a>",
-                    link.full_path, slice
-                ));
-                index_pointer = link.end;
-                skip_chars = link.end - link.start - 1;
-                continue;
+                if index_map.contains_key(&format!("./{}.md", &link.full_path)) {
+                    let slice = escape_html(&input[link.start..link.end]);
+                    escaped.push_str(&format!(
+                        "<a href=\"{}.html\">{}</a>",
+                        link.full_path, slice
+                    ));
+                    index_pointer = link.end;
+                    skip_chars = link.end - link.start - 1;
+                    continue;
+                } else {
+                    escaped.push_str(&escape_html_char(ch));
+                    index_pointer += ch.len_utf8();
+                }
             } else {
                 escaped.push_str(&escape_html_char(ch));
                 index_pointer += ch.len_utf8();

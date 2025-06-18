@@ -101,16 +101,16 @@ pub struct Diagnostic {
     ///
     /// This message will not be parsed by the compiler,
     /// but rather shown to the user as an explanation.
-    pub message: String,
+    message: String,
     /// The severity of the [`Diagnostic`].
     ///
     /// Defines how this diagnostic should influence the compilation.
-    pub severity: Severity,
+    severity: Severity,
     /// Optional custom span for the diagnostic location.
     ///
     /// If provided, this span will be used instead of call site span.
     /// This allows macros to point to specific elements within the annotated item.
-    pub span: Option<TextSpan>,
+    span: Option<TextSpan>,
 }
 
 /// The severity of a diagnostic.
@@ -185,6 +185,18 @@ impl Diagnostic {
     /// Create new warning diagnostic with severity [`Severity::Warning`], and the given span and message.
     pub fn span_warning(span: TextSpan, message: impl ToString) -> Self {
         Self::spanned(span, Severity::Warning, message)
+    }
+
+    pub fn span(&self) -> Option<TextSpan> {
+        self.span.clone()
+    }
+
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+
+    pub fn severity(&self) -> Severity {
+        self.severity
     }
 }
 
