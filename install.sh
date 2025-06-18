@@ -15,7 +15,7 @@ set -u
 
 SCARB_REPO="https://github.com/software-mansion/scarb"
 SCARB_NIGHTLIES_REPO="https://github.com/software-mansion/scarb-nightlies"
-SCARB_COMPLETIONS_DOCS="https://docs.swmansion.com/scarb/download.html#shell-completions-optional"
+SCARB_COMPLETIONS_DOCS="https://docs.swmansion.com/scarb/download.html#shell-completions"
 
 XDG_DATA_HOME="${XDG_DATA_HOME:-"${HOME}/.local/share"}"
 INSTALL_ROOT="${XDG_DATA_HOME}/scarb-install"
