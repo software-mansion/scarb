@@ -149,6 +149,7 @@ where
                 || cu
                     .main_component()
                     .targets
+                    .targets()
                     .iter()
                     .any(|t| opts.include_target_names.contains(&t.name)));
         let is_selected = packages.contains(&cu.main_package_id());

@@ -10,7 +10,7 @@ use scarb_ui::args::PackagesSource;
 
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
-    ProcMacroCompilationUnit,
+    ComponentTarget, ProcMacroCompilationUnit,
 };
 use crate::core::{
     DepKind, DependencyVersionReq, FeatureName, ManifestDependency, Package, PackageId, SourceId,
@@ -281,19 +281,15 @@ fn collect_cairo_compilation_unit_metadata(
         .map(|c| c.package.to_string())
         .collect::<Vec<_>>();
 
-    assert_eq!(
-        compilation_unit.main_component().targets.len(),
-        1,
-        "compilation unit should have been rewritten to have a single target"
-    );
-
     m::CompilationUnitMetadataBuilder::default()
         .id(compilation_unit.id())
         .package(wrap_package_id(compilation_unit.main_package_id()))
         .target(collect_target_metadata(
-            // We use first_target, as compilation units with multiple targets
-            // have already been rewritten to single target ones.
-            &compilation_unit.main_component().first_target().clone(),
+            compilation_unit
+                .main_component()
+                .targets
+                .extract_single()
+                .expect("compilation unit should have been rewritten to have a single target"),
         ))
         .components(components)
         .cairo_plugins(cairo_plugins)
@@ -311,16 +307,22 @@ fn collect_proc_macro_compilation_unit_metadata(
     compilation_unit: &ProcMacroCompilationUnit,
 ) -> m::CompilationUnitMetadata {
     let components = collect_compilation_unit_components(compilation_unit.components.iter());
-    assert_eq!(
-        compilation_unit.main_component().targets.len(),
-        1,
+    assert!(
+        matches!(
+            compilation_unit.main_component().targets,
+            ComponentTarget::Single(_)
+        ),
         "proc macro compilation unit should have only one target"
     );
     m::CompilationUnitMetadataBuilder::default()
         .id(compilation_unit.id())
         .package(wrap_package_id(compilation_unit.main_package_id()))
         .target(collect_target_metadata(
-            &compilation_unit.main_component().first_target().clone(),
+            compilation_unit
+                .main_component()
+                .targets
+                .extract_single()
+                .expect("proc macro compilation unit should have only one target"),
         ))
         .components(components)
         .cairo_plugins(Vec::new())
@@ -342,9 +344,8 @@ where
             m::CompilationUnitComponentMetadataBuilder::default()
                 .package(wrap_package_id(c.package.id))
                 .name(c.cairo_package_name())
-                // We use first_target, as compilation units with multiple targets
-                // have already been rewritten to single target ones.
-                .source_path(c.first_target().source_path.clone())
+                .source_path(c.targets.extract_single().expect("compilation unit should have been rewritten to have a single target")
+                    .source_path.clone())
                 .cfg(c.cfg_set.as_ref().map(|cfg_set| cfg_set
                     .iter()
                     .map(|cfg| {
