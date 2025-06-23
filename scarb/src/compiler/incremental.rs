@@ -1,13 +1,14 @@
 use crate::compiler::fingerprint::{Fingerprint, is_fresh};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
-use crate::internal::fsx;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::{FilesGroup, FilesGroupEx};
 use cairo_lang_filesystem::ids::BlobLongId;
 use cairo_lang_lowering::cache::generate_crate_cache;
 use std::env;
+use std::io::Write;
+use std::ops::Deref;
 
 const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
@@ -121,19 +122,24 @@ fn save_component_cache(
         let fingerprint_dir = fingerprint_dir.child(&component_id);
         let fingerprint_file =
             fingerprint_dir.create_rw(&component_id, "fingerprint file", ws.config())?;
-        fsx::write(fingerprint_file.path(), &digest).with_context(|| {
-            format!(
-                "failed to write fingerprint to `{}`",
-                fingerprint_file.path()
-            )
-        })?;
+        fingerprint_file
+            .deref()
+            .write_all(digest.as_bytes())
+            .with_context(|| {
+                format!(
+                    "failed to write fingerprint to `{}`",
+                    fingerprint_file.path()
+                )
+            })?;
         let cache_file =
             cache_dir.create_rw(format!("{}.bin", component_id), "cache file", ws.config())?;
         let crate_id = component.crate_id(db);
         let Some(cache_blob) = generate_crate_cache(db, crate_id).ok() else {
             return Ok(());
         };
-        fsx::write(cache_file.path(), &cache_blob)
+        cache_file
+            .deref()
+            .write_all(&cache_blob)
             .with_context(|| format!("failed to write cache to `{}`", cache_file.path()))?;
     }
     Ok(())
