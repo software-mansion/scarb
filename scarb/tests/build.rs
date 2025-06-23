@@ -36,7 +36,10 @@ fn compile_simple() {
         .success();
 
     assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
-    assert_eq!(t.child("target/dev").files(), vec!["hello.sierra.json"]);
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec![".fingerprint", "hello.sierra.json", "incremental",]
+    );
 
     cache_dir
         .child("registry/std")
@@ -688,7 +691,12 @@ fn workspace_as_dep() {
     );
     assert_eq!(
         second_t.child("target/dev").files(),
-        vec!["fourth.sierra.json", "third.sierra.json"]
+        vec![
+            ".fingerprint",
+            "fourth.sierra.json",
+            "incremental",
+            "third.sierra.json"
+        ]
     );
     second_t.child("target/dev/third.sierra.json").assert(
         predicates::str::contains(r#""debug_name":"third::example""#)

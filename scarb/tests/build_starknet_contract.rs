@@ -73,8 +73,10 @@ fn compile_starknet_contract() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
+            ".fingerprint",
             "hello.starknet_artifacts.json",
-            "hello_Balance.contract_class.json"
+            "hello_Balance.contract_class.json",
+            "incremental",
         ]
     );
 
@@ -115,8 +117,10 @@ fn compile_starknet_contract_to_casm() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
+            ".fingerprint",
             "hello.starknet_artifacts.json",
-            "hello_Balance.compiled_contract_class.json"
+            "hello_Balance.compiled_contract_class.json",
+            "incremental",
         ]
     );
 
@@ -167,6 +171,7 @@ fn compile_many_contracts() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
+            ".fingerprint",
             "a.starknet_artifacts.json",
             "a_Balance.contract_class.json",
             "a_FortyTwo.contract_class.json",
@@ -176,6 +181,7 @@ fn compile_many_contracts() {
             "hello.casm",
             "hello.sierra",
             "hello.sierra.json",
+            "incremental",
         ]
     );
 
@@ -227,9 +233,11 @@ fn compile_same_name_contracts() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
+            ".fingerprint",
             "hello.starknet_artifacts.json",
             "hello_hello_forty_two_FortyTwo.contract_class.json",
             "hello_hello_world_FortyTwo.contract_class.json",
+            "incremental",
         ]
     );
 
@@ -332,9 +340,11 @@ fn compile_starknet_contract_only_with_cfg() {
     assert_eq!(
         t.child("target/dev").files(),
         vec![
+            ".fingerprint",
             "hello.sierra.json",
             "hello.starknet_artifacts.json",
-            "hello_Balance.contract_class.json"
+            "hello_Balance.contract_class.json",
+            "incremental",
         ]
     );
 
@@ -444,6 +454,8 @@ fn do_not_compile_dep_contracts() {
             .sorted()
             .collect::<Vec<&String>>(),
         vec![
+            ".fingerprint",
+            "incremental",
             "world.starknet_artifacts.json",
             "world_FortyTwo.contract_class.json",
             "world_HelloContract.contract_class.json",
