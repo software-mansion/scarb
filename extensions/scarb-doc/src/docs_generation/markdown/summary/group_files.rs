@@ -1,6 +1,6 @@
 use crate::docs_generation::TopLevelItems;
 use crate::docs_generation::markdown::context::MarkdownGenerationContext;
-use crate::docs_generation::markdown::summary::{
+use crate::docs_generation::markdown::summary::files::{
     generate_doc_files_for_module_items, generate_modules_summary_files,
     generate_summary_files_for_module_items,
 };
@@ -8,6 +8,19 @@ use crate::docs_generation::markdown::traits::generate_markdown_table_summary_fo
 use crate::docs_generation::markdown::{GROUP_CHAPTER_PREFIX, SummaryIndexMap};
 use crate::types::groups::Group;
 use itertools::Itertools;
+
+macro_rules! generate_group_markdown {
+    ($markdown:expr, $group:expr, $context:expr, $path:expr, $prefix:expr, [ $( $field:ident ),* ]) => {
+        $(
+            $markdown += &generate_markdown_table_summary_for_top_level_subitems(
+                &$group.$field.iter().collect_vec(),
+                $context,
+                $path,
+                $prefix,
+            )?;
+        )*
+    };
+}
 
 pub fn generate_global_groups_summary_files(
     groups: &[Group],
@@ -20,7 +33,6 @@ pub fn generate_global_groups_summary_files(
         for group in groups.iter() {
             let mut top_level_items = TopLevelItems::default();
             let Group {
-                name: _,
                 submodules,
                 constants,
                 free_functions,
@@ -32,6 +44,7 @@ pub fn generate_global_groups_summary_files(
                 impls,
                 extern_types,
                 extern_functions,
+                ..
             } = &group;
 
             top_level_items.modules.extend(submodules);
@@ -79,74 +92,27 @@ pub fn generate_markdown_for_group(
     context: &MarkdownGenerationContext,
 ) -> anyhow::Result<String> {
     let mut markdown = format!("\n# {}\n", group.name).to_string();
-
     let markdown_formatted_path = group.get_name_normalized();
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.submodules.iter().collect_vec(),
+    generate_group_markdown!(
+        markdown,
+        group,
         context,
         &markdown_formatted_path,
         GROUP_CHAPTER_PREFIX,
-    )?;
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.constants.iter().collect_vec(),
-        context,
-        &markdown_formatted_path,
-        GROUP_CHAPTER_PREFIX,
-    )?;
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.free_functions.iter().collect_vec(),
-        context,
-        &markdown_formatted_path,
-        GROUP_CHAPTER_PREFIX,
-    )?;
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.structs.iter().collect_vec(),
-        context,
-        &markdown_formatted_path,
-        GROUP_CHAPTER_PREFIX,
-    )?;
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.enums.iter().collect_vec(),
-        context,
-        &markdown_formatted_path,
-        GROUP_CHAPTER_PREFIX,
-    )?;
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.type_aliases.iter().collect_vec(),
-        context,
-        &markdown_formatted_path,
-        GROUP_CHAPTER_PREFIX,
-    )?;
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.impl_aliases.iter().collect_vec(),
-        context,
-        &markdown_formatted_path,
-        GROUP_CHAPTER_PREFIX,
-    )?;
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.traits.iter().collect_vec(),
-        context,
-        &markdown_formatted_path,
-        GROUP_CHAPTER_PREFIX,
-    )?;
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.impls.iter().collect_vec(),
-        context,
-        &markdown_formatted_path,
-        GROUP_CHAPTER_PREFIX,
-    )?;
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.extern_types.iter().collect_vec(),
-        context,
-        &markdown_formatted_path,
-        GROUP_CHAPTER_PREFIX,
-    )?;
-    markdown += &generate_markdown_table_summary_for_top_level_subitems(
-        &group.extern_functions.iter().collect_vec(),
-        context,
-        &markdown_formatted_path,
-        GROUP_CHAPTER_PREFIX,
-    )?;
+        [
+            submodules,
+            constants,
+            free_functions,
+            structs,
+            enums,
+            type_aliases,
+            impl_aliases,
+            traits,
+            impls,
+            extern_types,
+            extern_functions
+        ]
+    );
 
     Ok(markdown)
 }

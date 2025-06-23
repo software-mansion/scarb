@@ -9,4 +9,4 @@ Part of the group: [test group](./test_group.md)
 
 | | |
 |:---|:---|
-| [nested_same_parent_mod](./target_package-same_parent_mod-nested_same_parent_mod.md) | [...](./target_package-same_parent_mod-nested_same_parent_mod.md) |
+| [nested_same_parent_mod](./target_package-same_parent_mod-nested_same_parent_mod.md) | — |

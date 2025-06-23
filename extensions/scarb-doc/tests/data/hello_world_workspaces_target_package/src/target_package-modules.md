@@ -7,8 +7,8 @@ Fully qualified path: [foreign_package](./foreign_package.md)
 
 | | |
 |:---|:---|
-| [foreign_module](./foreign_package-foreign_module.md) | [...](./foreign_package-foreign_module.md) |
-| [mod_with_group_item](./foreign_package-mod_with_group_item.md) | [...](./foreign_package-mod_with_group_item.md) |
+| [foreign_module](./foreign_package-foreign_module.md) | — |
+| [mod_with_group_item](./foreign_package-mod_with_group_item.md) | — |
 
 
 ---
@@ -21,4 +21,4 @@ Fully qualified path: [foreign_package](./foreign_package.md)
 
 | | |
 |:---|:---|
-| [foreign_top_level_function](./foreign_package-foreign_top_level_function.md) | [...](./foreign_package-foreign_top_level_function.md) |
+| [foreign_top_level_function](./foreign_package-foreign_top_level_function.md) | — |

@@ -3,4 +3,4 @@
 
 | | |
 |:---|:---|
-| [DuplicatedEnumName](./hello_world-sub_module-DuplicatedEnumName.md) | [...](./hello_world-sub_module-DuplicatedEnumName.md) |
+| [DuplicatedEnumName](./hello_world-sub_module-DuplicatedEnumName.md) | — |

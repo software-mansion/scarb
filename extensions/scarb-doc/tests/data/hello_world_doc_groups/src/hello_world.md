@@ -7,7 +7,7 @@ Fully qualified path: [hello_world](./hello_world.md)
 
 | | |
 |:---|:---|
-| [A](./hello_world-A.md) | [...](./hello_world-A.md) |
+| [A](./hello_world-A.md) | — |
 
 
 ---
@@ -20,4 +20,4 @@ Fully qualified path: [hello_world](./hello_world.md)
 
 | | |
 |:---|:---|
-| [C](./hello_world-C.md) | [...](./hello_world-C.md) |
+| [C](./hello_world-C.md) | — |

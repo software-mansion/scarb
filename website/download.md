@@ -109,7 +109,136 @@ version number.
 curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v {{ rel.sampleVersion }}
 ```
 
-### Uninstall
+## Shell completions
+
+Shell completions allow your terminal to suggest and automatically complete commands and options when you press `Tab`.
+
+> [!WARNING]
+> Most users **DO NOT** need to install shell completions manually.
+> [Starkup](#install-via-starkup-installation-script) and [Scarb installation script](#install-via-installation-script) automatically set up shell completions for the supported shells.
+> However, if these installation methods do not support the target shell (e.g. Windows installation), or for any reason fail to set up completions, you can follow the instructions below to set them up manually.
+
+<details>
+  <summary><strong>Bash</strong></summary>
+
+Add the following to `~/.bashrc` or `~/.bash_profile` (macOS):
+
+```bash
+# BEGIN SCARB COMPLETIONS
+_scarb() {
+  if ! scarb completions bash >/dev/null 2>&1; then
+    return 0
+  fi
+  source <(scarb completions bash)
+  _scarb "$@"
+}
+complete -o default -F _scarb scarb
+# END SCARB COMPLETIONS
+```
+
+Run `source ~/.bashrc` (or `source ~/.bash_profile`), or open a new terminal session to apply the changes.
+
+</details>
+
+<details>
+  <summary><strong>ZSH</strong></summary>
+
+Add the following to `~/.zshrc`:
+
+```zsh
+# BEGIN SCARB COMPLETIONS
+_scarb() {
+  if ! scarb completions zsh >/dev/null 2>&1; then
+    return 0
+  fi
+  eval "$(scarb completions zsh)"
+  _scarb "$@"
+}
+autoload -Uz compinit && compinit
+compdef _scarb scarb
+# END SCARB COMPLETIONS
+```
+
+Run `source ~/.zshrc`, or open a new terminal session to apply the changes.
+
+</details>
+
+<details>
+  <summary><strong>Fish</strong></summary>
+
+Add the following to `~/.config/fish/config.fish`:
+
+```sh
+# BEGIN SCARB COMPLETIONS
+function _scarb
+  if not scarb completions fish >/dev/null 2>&1
+    return 0
+  end
+  source (scarb completions fish | psub)
+  complete -C (commandline -cp)
+end
+complete -c scarb -f -a '(_scarb)'
+# END SCARB COMPLETIONS
+```
+
+Run `source ~/.config/fish/config.fish`, or open a new terminal session to apply the changes.
+
+</details>
+
+<details>
+  <summary><strong>Elvish</strong></summary>
+
+Add the following to your `~/.config/elvish/rc.elv` file:
+
+```sh
+# BEGIN SCARB COMPLETIONS
+fn scarb:complete [@args]{
+  try {
+    var script = (scarb_build completions elvish | slurp)
+  } catch {
+    return
+  }
+  source $script
+}
+set edit:completion:arg-completer[scarb] = $scarb:complete~
+# END SCARB COMPLETIONS
+```
+
+Run `source ~/.config/elvish/rc.elv`, or open a new terminal session to apply the changes.
+
+</details>
+
+<details>
+  <summary><strong>PowerShell</strong></summary>
+Open your profile script with:
+
+```bash
+mkdir -Path (Split-Path -Parent $profile) -ErrorAction SilentlyContinue
+notepad $profile
+```
+
+Add the following lines to the opened file:
+
+```sh
+# BEGIN SCARB COMPLETIONS
+try {
+    Invoke-Expression -Command $(scarb completions powershell | Out-String)
+} catch {}
+# END SCARB COMPLETIONS
+```
+
+Start a new PowerShell session to apply the changes.
+
+> [!WARNING]
+> At the start of the PowerShell session, you may encounter an error due to a restrictive `ExecutionPolicy`. You can resolve this issue by running the following command:
+>
+> ```bash
+> Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
+
+</details>
+
+## Uninstall
 
 The installation script does not have uninstalling logic built-in.
 It tries to minimize changes performed to the system, though, to keep the number of manual steps to remove Scarb low.

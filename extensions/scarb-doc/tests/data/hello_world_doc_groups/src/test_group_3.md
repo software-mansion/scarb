@@ -5,10 +5,10 @@
 
 | | |
 |:---|:---|
-| [one](./hello_world-A-one.md) | Lorem ipsum dolor sit amet[...](./hello_world-A-one.md) |
+| [one](./hello_world-A-one.md) | Lorem ipsum dolor sit amet |
 
 - ### [Structs](./test_group_3-structs.md)
 
 | | |
 |:---|:---|
-| [Three](./hello_world-A-Three.md) | [...](./hello_world-A-Three.md) |
+| [Three](./hello_world-A-Three.md) | — |
