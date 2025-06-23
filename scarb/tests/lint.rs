@@ -1,6 +1,5 @@
 use assert_fs::fixture::FileWriteStr;
 use assert_fs::{TempDir, prelude::PathChild};
-use cairo_lang_syntax::node::ast::SyntaxFile;
 use indoc::{formatdoc, indoc};
 use scarb_test_support::cairo_plugin_project_builder::CairoPluginProjectBuilder;
 use scarb_test_support::fsx::ChildPathEx;
@@ -870,9 +869,9 @@ fn test_linter_with_attribute_macros() {
         |_____^
 
         warn: Plugin diagnostic: Comparison with identical operands, this operation always results in true and may indicate a logic error
-         --> [..]/src/lib.cairo:11:24
+         --> [..]/src/lib.cairo:11:25
             let _should_lint = (1 == 1);
-                               ^^^^^^^^
+                                ^^^^^^
 
         "#});
 }
@@ -955,9 +954,9 @@ fn test_linter_with_attribute_macros_complex() {
         |_____^
 
         warn: Plugin diagnostic: Comparison with identical operands, this operation always results in true and may indicate a logic error
-         --> [..]/src/lib.cairo:12:24
+         --> [..]/src/lib.cairo:12:25
             let _should_lint = (1 == 1);
-                               ^^^^^^^^
+                                ^^^^^^
         
         "#});
 }

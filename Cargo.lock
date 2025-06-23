@@ -1529,7 +1529,7 @@ dependencies = [
 [[package]]
 name = "cairo-lint"
 version = "2.11.4"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=7290b895bde0a8a5adfdd1f37ebb384f5017aa6d#7290b895bde0a8a5adfdd1f37ebb384f5017aa6d"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=58a224c3afb39a363b36ec176b65e4043af6a3cb#58a224c3afb39a363b36ec176b65e4043af6a3cb"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
