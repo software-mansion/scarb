@@ -161,8 +161,10 @@ impl ProcMacroHostPlugin {
         }
 
         let file_name = format!("proc_{}", input.id.expansion.cairo_name);
-        let code_mappings =
-            generate_code_mappings(&result.token_stream, input.call_site.span.clone());
+        let code_mappings = generate_code_mappings(
+            &result.token_stream,
+            input.attribute_location.adapted_call_site().into(),
+        );
         let code_mappings = input.attribute_location.adapt_code_mappings(code_mappings);
         let content = result.token_stream.to_string();
 
