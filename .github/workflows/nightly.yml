@@ -101,7 +101,7 @@ jobs:
 
       - name: Upgrade CairoLS to latest main commit
         if: ${{ !contains(inputs.upgrade-cairols, 'false') }}
-        run: cargo xtask upgrade cairols --rev e16643bb076f7be1100b6bebf5895368634d9e88
+        run: cargo xtask upgrade cairols --rev c217c9993f040bf31847898012644d5802138ca9
 
       - name: Upgrade Cairo-lint to latest main commit
         if: ${{ !contains(inputs.upgrade-cairolint, 'false') }}
