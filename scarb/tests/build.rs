@@ -1906,3 +1906,70 @@ fn can_use_dependency_twice_with_different_kinds() {
             [..]Finished `dev` profile target(s) in [..]
         "#});
 }
+
+#[test]
+fn incremental_artifacts_emitted() {
+    let cache_dir = TempDir::new().unwrap().child("c");
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start().name("hello").build(&t);
+
+    Scarb::quick_snapbox()
+        .env("SCARB_CACHE", cache_dir.path())
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec![".fingerprint", "hello.sierra.json", "incremental",]
+    );
+    let fingerprints = t.child("target/dev/.fingerprint").files();
+    // We search the dir, as fingerprints will change with different temp dir, so we cannot hardcode
+    // the name here.
+    let tag = fingerprints
+        .iter()
+        .find(|t| t.starts_with("core-"))
+        .unwrap();
+    assert_eq!(tag.len(), 5 + 13); // 5 for "core-" and 13 for the hash
+    assert_eq!(
+        t.child("target/dev/incremental").files(),
+        vec![format!("{tag}.bin")]
+    );
+    assert_eq!(
+        t.child("target/dev/.fingerprint").files(),
+        vec![tag.as_str()]
+    );
+    assert_eq!(
+        t.child(format!("target/dev/.fingerprint/{tag}")).files(),
+        vec![tag.as_str()]
+    );
+
+    Scarb::quick_snapbox()
+        .env("SCARB_CACHE", cache_dir.path())
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .success();
+
+    // The project has not been modified, so the incremental artifacts should not change.
+    assert_eq!(t.child("target").files(), vec!["CACHEDIR.TAG", "dev"]);
+    assert_eq!(
+        t.child("target/dev").files(),
+        vec![".fingerprint", "hello.sierra.json", "incremental",]
+    );
+    assert_eq!(
+        t.child("target/dev/incremental").files(),
+        vec![format!("{tag}.bin")]
+    );
+    assert_eq!(
+        t.child("target/dev/.fingerprint").files(),
+        vec![tag.as_str()]
+    );
+    assert_eq!(
+        t.child(format!("target/dev/.fingerprint/{tag}")).files(),
+        vec![tag.as_str()]
+    );
+}
