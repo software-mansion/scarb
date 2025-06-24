@@ -144,7 +144,7 @@ jobs:
             os: macos-14
 
           - target: x86_64-pc-windows-msvc
-            os: windows-2019
+            os: windows-latest
 
     steps:
       - uses: actions/checkout@v4
