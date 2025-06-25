@@ -121,7 +121,10 @@ fn rewrite_node_patch_from_expansion_result(
     token_stream: TokenStream,
     input: &AttrExpansionArgs,
 ) -> RewriteNode {
-    let code_mappings = generate_code_mappings(&token_stream, input.call_site.span.clone());
+    let code_mappings = generate_code_mappings(
+        &token_stream,
+        input.attribute_location.adapted_call_site().into(),
+    );
     let code_mappings = input.attribute_location.adapt_code_mappings(code_mappings);
     let code_mappings = code_mappings.into_iter().map(Into::into).collect_vec();
     let expanded = token_stream.to_string();

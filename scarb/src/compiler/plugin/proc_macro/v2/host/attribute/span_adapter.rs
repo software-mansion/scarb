@@ -197,6 +197,7 @@ impl ExpandableAttrLocation {
         let attr_start = self.start_offset_with_trivia();
         let attr_width = self.width_with_trivia();
         let attr_end = self.end_offset_with_trivia();
+        let call_site_moved_by = TextWidth::new_for_testing(attr_start - self.item_start_offset);
         code_mappings
             .into_iter()
             .map(|code_mapping| {
@@ -204,12 +205,8 @@ impl ExpandableAttrLocation {
                     CodeOrigin::Span(span) => {
                         let span = if span.start.as_u32() < self.item_start_offset + attr_width {
                             CairoTextSpan {
-                                start: span.start.add_width(TextWidth::new_for_testing(
-                                    attr_start - self.item_start_offset,
-                                )),
-                                end: span.end.add_width(TextWidth::new_for_testing(
-                                    attr_start - self.item_start_offset,
-                                )),
+                                start: span.start.add_width(call_site_moved_by),
+                                end: span.end.add_width(call_site_moved_by),
                             }
                         } else if span.start.as_u32() < attr_end {
                             CairoTextSpan {
@@ -220,6 +217,13 @@ impl ExpandableAttrLocation {
                             span
                         };
                         CodeOrigin::Span(span)
+                    }
+                    CodeOrigin::CallSite(span) => {
+                        let call_site = CairoTextSpan {
+                            start: span.start.add_width(call_site_moved_by),
+                            end: span.end.add_width(call_site_moved_by),
+                        };
+                        CodeOrigin::CallSite(call_site)
                     }
                     origin => origin,
                 };
