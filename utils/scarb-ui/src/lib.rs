@@ -152,9 +152,11 @@ impl Ui {
 
     /// Print a warning to the user.
     pub fn warn_with_code(&self, code: impl AsRef<str>, message: impl AsRef<str>) {
-        self.print(
-            TypedMessage::styled("warn", "yellow", message.as_ref()).with_code(code.as_ref()),
-        )
+        if self.verbosity > Verbosity::NoWarnings {
+            self.print(
+                TypedMessage::styled("warn", "yellow", message.as_ref()).with_code(code.as_ref()),
+            )
+        }
     }
 
     /// Print an error to the user.
