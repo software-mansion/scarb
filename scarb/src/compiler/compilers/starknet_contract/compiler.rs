@@ -79,7 +79,7 @@ impl Compiler for StarknetContractCompiler {
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
-        let props: Props = unit.main_component().target_props()?;
+        let props: Props = unit.main_component().targets.target_props()?;
         if !props.sierra && !props.casm {
             ws.config().ui().warn(
                 "both Sierra and CASM Starknet contract targets have been disabled, \

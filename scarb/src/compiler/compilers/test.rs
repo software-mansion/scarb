@@ -147,7 +147,7 @@ fn compile_contracts(
 fn external_contracts_selectors(
     unit: &CairoCompilationUnit,
 ) -> Result<Option<Vec<ContractSelector>>> {
-    let test_props: TestTargetProps = unit.main_component().target_props()?;
+    let test_props: TestTargetProps = unit.main_component().targets.target_props()?;
     Ok(test_props
         .build_external_contracts
         .map(|contracts| contracts.into_iter().map(ContractSelector).collect_vec()))

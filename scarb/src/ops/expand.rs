@@ -83,7 +83,7 @@ pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<
                 && target_kind.as_ref().is_none_or(|kind| unit.main_component().target_kind() == *kind)
                 && opts
                     .target_name
-                    .as_ref().is_none_or(|name| unit.main_component().first_target().name == *name)
+                    .as_ref().is_none_or(|name| unit.main_component().targets.target_name() == *name)
         })
         .map(|unit| match unit {
             CompilationUnit::Cairo(unit) => Ok(unit),
@@ -247,11 +247,7 @@ impl ExpandEmitTarget {
             Self::File => {
                 let file_name = format!(
                     "{}.expanded.cairo",
-                    compilation_unit
-                        .main_component()
-                        .first_target()
-                        .name
-                        .clone()
+                    compilation_unit.main_component().target_name()
                 );
                 let target_dir = compilation_unit.target_dir(ws);
                 write_string(file_name.as_str(), "output file", &target_dir, ws, content)?;
@@ -272,12 +268,7 @@ impl EmittedText {
         Self {
             expanded,
             package_id: compilation_unit.main_package_id(),
-            target: compilation_unit
-                .main_component()
-                .first_target()
-                .name
-                .clone()
-                .to_string(),
+            target: compilation_unit.main_component().target_name().to_string(),
         }
     }
 }
