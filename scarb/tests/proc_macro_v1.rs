@@ -1514,7 +1514,7 @@ fn can_expand_trait_inner_func_attrr() {
 }
 
 #[test]
-fn can_expand_impl_inner_func_attrr() {
+fn can_expand_impl_inner_func_attr() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
     CairoPluginProjectBuilder::default_v1()
