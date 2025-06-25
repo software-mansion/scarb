@@ -95,6 +95,35 @@ impl Fingerprint {
         })
     }
 
+    /// Returns a fingerprint identifier.
+    ///
+    /// The identifier is used to decide whether the cache should be overwritten or not, by defining
+    /// the cache directory location for the component associated with this fingerprint.
+    /// If a subsequent compilation run has the same identifier, it's cache's fingerprint will be
+    /// checked for freshness. If it's fresh - it can be reused. If not - the cache will be
+    /// overwritten.
+    /// Note: this is not enough to determine if the cache can be reused or not! Please use
+    /// `Fingerprint::digest` for that.
+    /// Broadly speaking, the identifier is a less strict version of the digest.
+    pub fn id(&self) -> String {
+        let mut hasher = StableHasher::new();
+        self.scarb_path.hash(&mut hasher);
+        self.scarb_version.long().hash(&mut hasher);
+        self.profile.hash(&mut hasher);
+        self.cairo_name.hash(&mut hasher);
+        self.edition.hash(&mut hasher);
+        self.component_discriminator.hash(&mut hasher);
+        self.source_paths.hash(&mut hasher);
+        self.compiler_config.hash(&mut hasher);
+        self.cfg_set.hash(&mut hasher);
+        self.experimental_features.hash(&mut hasher);
+        hasher.finish_as_short_hash()
+    }
+
+    /// Returns a string representation of the fingerprint digest.
+    ///
+    /// This uniquely identifies the compilation environment for a component,
+    /// allowing to determine if the cache can be reused or if a recompilation is needed.
     pub fn digest(&self) -> String {
         let mut hasher = StableHasher::new();
         self.scarb_path.hash(&mut hasher);
@@ -116,8 +145,7 @@ pub fn is_fresh(
     fingerprint_dir: &Filesystem,
     target_name: &str,
 ) -> Result<bool> {
-    let digest = fingerprint.digest();
-    let component = format!("{target_name}-{digest}");
+    let component = format!("{target_name}-{}", fingerprint.id());
     let fingerprint_dir = fingerprint_dir.child(&component);
     let fingerprint_dir = fingerprint_dir.path_unchecked();
     let old_digest_path = fingerprint_dir.join(target_name);
@@ -129,5 +157,5 @@ pub fn is_fresh(
     let old_digest = fsx::read_to_string(&old_digest_path)
         .with_context(|| format!("failed to read fingerprint from `{old_digest_path}`"))?;
 
-    Ok(old_digest == digest)
+    Ok(old_digest == fingerprint.digest())
 }
