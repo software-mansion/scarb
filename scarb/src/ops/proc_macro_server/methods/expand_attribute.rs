@@ -24,7 +24,6 @@ impl Handler for ExpandAttribute {
             attr,
             args,
             item,
-            call_site,
             adapted_call_site,
         } = params;
         let expansion = ExpansionQuery::with_expansion_name(&attr, ExpansionKind::Attr);
@@ -47,14 +46,9 @@ impl Handler for ExpandAttribute {
                 token_stream_v2_to_v1(&args),
                 token_stream_v2_to_v1(&item),
             ),
-            ProcMacroApiVersion::V2 => expand_attribute_v2(
-                proc_macro_instance,
-                attr,
-                call_site,
-                adapted_call_site,
-                args,
-                item,
-            ),
+            ProcMacroApiVersion::V2 => {
+                expand_attribute_v2(proc_macro_instance, attr, adapted_call_site, args, item)
+            }
         }
     }
 }
@@ -79,7 +73,6 @@ fn expand_attribute_v1(
 fn expand_attribute_v2(
     proc_macro_instance: &Arc<ProcMacroInstance>,
     attr: String,
-    call_site: TextSpan,
     adapted_call_site: TextSpan,
     args: TokenStreamV2,
     item: TokenStreamV2,
@@ -91,7 +84,7 @@ fn expand_attribute_v2(
         item,
     );
 
-    let code_mappings = generate_code_mappings(&result.token_stream, call_site);
+    let code_mappings = generate_code_mappings(&result.token_stream, adapted_call_site);
     Ok(ProcMacroResult {
         token_stream: token_stream_v2_to_v1(&result.token_stream),
         diagnostics: result.diagnostics,

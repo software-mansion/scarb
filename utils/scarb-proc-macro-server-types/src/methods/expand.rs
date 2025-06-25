@@ -19,8 +19,6 @@ pub struct ExpandAttributeParams {
     pub args: TokenStream,
     /// The token stream representing the item on which the macro is applied.
     pub item: TokenStream,
-    /// The span of the macro call code
-    pub call_site: TextSpan,
     /// The span of the "adapted" call site
     pub adapted_call_site: TextSpan,
 }
