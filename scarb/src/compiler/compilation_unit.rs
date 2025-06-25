@@ -11,6 +11,7 @@ use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use typed_builder::TypedBuilder;
 
+use crate::FINGERPRINT_DIR_NAME;
 use crate::compiler::Profile;
 use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::core::{
@@ -321,6 +322,10 @@ impl CairoCompilationUnit {
         ws.target_dir().child(self.profile.as_str())
     }
 
+    pub fn fingerprint_dir(&self, ws: &Workspace<'_>) -> Filesystem {
+        self.target_dir(ws).child(FINGERPRINT_DIR_NAME)
+    }
+
     /// Rewrite single compilation unit with multiple targets, into multiple compilation units
     /// with single targets.
     pub fn rewrite_to_single_source_paths(&self) -> Vec<Self> {
@@ -484,5 +489,12 @@ impl ComponentTarget {
         P: Default + Serialize + Deserialize<'de>,
     {
         self.targets()[0].props::<P>()
+    }
+
+    pub fn source_paths(&self) -> Vec<String> {
+        self.targets()
+            .iter()
+            .map(|t| t.source_path.to_string())
+            .collect()
     }
 }
