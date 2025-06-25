@@ -10,6 +10,7 @@ use smol_str::SmolStr;
 use crate::compiler::compilers::{
     ExecutableCompiler, LibCompiler, StarknetContractCompiler, TestCompiler,
 };
+use crate::compiler::fingerprint::UnitFingerprint;
 use crate::compiler::incremental::{load_incremental_artifacts, save_incremental_artifacts};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::Workspace;
@@ -55,9 +56,10 @@ impl CompilerRepository {
         let Some(compiler) = self.compilers.get(target_kind.as_str()) else {
             bail!("unknown compiler for target `{target_kind}`");
         };
-        load_incremental_artifacts(db, &unit, ws)?;
+        let fingerprints = UnitFingerprint::new(&unit, ws);
+        load_incremental_artifacts(&fingerprints, &unit, db, ws)?;
         compiler.compile(&unit, db, ws)?;
-        save_incremental_artifacts(db, &unit, ws)?;
+        save_incremental_artifacts(&fingerprints, &unit, db, ws)?;
         Ok(())
     }
 }
