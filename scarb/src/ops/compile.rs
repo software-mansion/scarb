@@ -215,6 +215,7 @@ pub fn compile_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     })
 }
 
+#[tracing::instrument(skip_all, level = "trace")]
 fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
     let package_name = unit.main_package_id().name.clone();
 
