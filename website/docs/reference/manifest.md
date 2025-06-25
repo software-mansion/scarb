@@ -368,6 +368,18 @@ By default, this flag is set to `false`, as it won't be available on Starknet.
 panic-backtrace = false
 ```
 
+### `incremental`
+
+If enabled, after project compilation Scarb will emit additional cache artifacts. This artifacts will be attempted to be
+reused in subsequent builds.
+By default, this flag is set to `true`.
+This can also be disabled globally via `SCARB_INCREMENTAL` environment variable.
+
+```toml
+[cairo]
+incremental = true
+```
+
 ### `unstable-add-statements-functions-debug-info`
 
 > [!WARNING]
