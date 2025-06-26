@@ -1,15 +1,3 @@
-use anyhow::{Context, Error, Result, anyhow};
-use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_compiler::diagnostics::DiagnosticsError;
-use indoc::formatdoc;
-use itertools::Itertools;
-use scarb_ui::HumanDuration;
-use scarb_ui::args::FeaturesSpec;
-use scarb_ui::components::Status;
-use smol_str::{SmolStr, ToSmolStr};
-use std::collections::HashSet;
-use std::thread;
-
 use crate::compiler::db::{
     ScarbDatabase, build_scarb_root_database, has_plugin, is_starknet_plugin,
 };
@@ -21,6 +9,18 @@ use crate::core::{
 };
 use crate::ops;
 use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
+use anyhow::{Context, Error, Result, anyhow};
+use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_compiler::diagnostics::DiagnosticsError;
+use indoc::formatdoc;
+use itertools::Itertools;
+use scarb_ui::HumanDuration;
+use scarb_ui::args::FeaturesSpec;
+use scarb_ui::components::Status;
+use smol_str::{SmolStr, ToSmolStr};
+use std::collections::HashSet;
+use std::thread;
+use tracing::trace_span;
 
 #[derive(Debug, Clone)]
 pub enum FeaturesSelector {
@@ -247,6 +247,12 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                     .context("procedural macro post processing callback failed")?;
             }
 
+            let span = trace_span!("drop_db");
+            {
+                let _guard = span.enter();
+                drop(db);
+            }
+
             result
         }
     };
@@ -296,10 +302,16 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
             let main_crate_ids = collect_main_crate_ids(&unit, &db);
             check_starknet_dependency(&unit, ws, &db, &package_name);
             let mut compiler_config = build_compiler_config(&db, &unit, &main_crate_ids, ws);
-            compiler_config
+            let result = compiler_config
                 .diagnostics_reporter
                 .ensure(&db)
-                .map_err(|err| err.into())
+                .map_err(|err| err.into());
+            let span = trace_span!("drop_db");
+            {
+                let _guard = span.enter();
+                drop(db);
+            }
+            result
         }
     };
 
