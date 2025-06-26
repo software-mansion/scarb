@@ -76,7 +76,7 @@ fn macro_helper(
                 .to_compile_error()
                 .into();
         }
-        format!("{}::{}", value, original_item_name)
+        format!("{value}::{original_item_name}")
     } else {
         original_item_name
     };

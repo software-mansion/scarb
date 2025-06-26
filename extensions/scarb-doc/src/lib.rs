@@ -177,6 +177,6 @@ fn allows_warnings(compulation_unit: &CompilationUnitMetadata) -> bool {
 
 pub fn edition_from_string(edition_str: &str) -> Result<Edition, serde_json::Error> {
     // Format `edition` to be a valid JSON string.
-    let edition = format!("\"{}\"", edition_str);
+    let edition = format!("\"{edition_str}\"");
     serde_json::from_str(&edition)
 }

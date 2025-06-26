@@ -83,8 +83,7 @@ mod serdex {
                     "default" => Ok(Self::Default),
                     "avoid" => Ok(Self::Avoid),
                     _ => Err(serde::de::Error::custom(format!(
-                        "unknown inlining strategy: `{}`\nuse one of: `default`, `avoid` or a number",
-                        name
+                        "unknown inlining strategy: `{name}`\nuse one of: `default`, `avoid` or a number"
                     ))),
                 },
             }

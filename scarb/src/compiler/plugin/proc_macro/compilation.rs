@@ -76,12 +76,12 @@ pub fn get_crate_archive_basename(package: &Package) -> Result<String> {
     let package_name = get_cargo_package_name(package)?;
     let package_version = get_cargo_package_version(package)?;
 
-    Ok(format!("{}-{}", package_name, package_version))
+    Ok(format!("{package_name}-{package_version}"))
 }
 
 pub fn unpack_crate(package: &Package, config: &Config) -> Result<()> {
     let archive_basename = get_crate_archive_basename(package)?;
-    let archive_name = format!("{}.crate", archive_basename);
+    let archive_name = format!("{archive_basename}.crate");
 
     let tar = package
         .target_path(config)

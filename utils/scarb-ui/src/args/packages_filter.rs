@@ -422,7 +422,7 @@ mod tests {
     fn mock_package(name: &str) -> MockPackage {
         MockPackage {
             name: name.into(),
-            manifest_path: Utf8PathBuf::from(format!("package/{}", name)),
+            manifest_path: Utf8PathBuf::from(format!("package/{name}")),
         }
     }
 

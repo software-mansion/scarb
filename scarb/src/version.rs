@@ -112,7 +112,7 @@ impl fmt::Display for CommitInfo {
         write!(f, "{}", self.short_commit_hash)?;
 
         if let Some(date) = &self.commit_date {
-            write!(f, " {}", date)?;
+            write!(f, " {date}")?;
         }
 
         Ok(())

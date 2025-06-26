@@ -203,7 +203,7 @@ impl WorkspaceScriptsList {
 fn write_scripts(scripts: &BTreeMap<String, String>) -> String {
     let mut text = String::new();
     for (name, definition) in scripts {
-        writeln!(text, "{:<22}: {}", name, definition).unwrap();
+        writeln!(text, "{name:<22}: {definition}").unwrap();
     }
     text
 }

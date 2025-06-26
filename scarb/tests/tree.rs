@@ -156,9 +156,9 @@ fn depth() {
 
     // Create a deep dependency tree: dep0 -> dep1 -> dep2 -> dep3 -> dep4.
     for i in (0..=4).rev() {
-        let dep = t.child(format!("dep{}", i));
+        let dep = t.child(format!("dep{i}"));
         let mut b = ProjectBuilder::start()
-            .name(format!("dep{}", i))
+            .name(format!("dep{i}"))
             .version("0.1.0");
 
         if i < 4 {

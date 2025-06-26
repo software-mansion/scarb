@@ -105,14 +105,14 @@ fn main() -> Result<()> {
 }
 
 fn deserialize_test_compilation(target_dir: &Utf8PathBuf, name: String) -> Result<TestCompilation> {
-    let file_path = target_dir.join(format!("{}.test.json", name));
+    let file_path = target_dir.join(format!("{name}.test.json"));
     let test_comp_metadata = serde_json::from_str::<TestCompilationMetadata>(
         &fs::read_to_string(file_path.clone())
             .with_context(|| format!("failed to read file: {file_path}"))?,
     )
     .with_context(|| format!("failed to deserialize compiled tests metadata file: {file_path}"))?;
 
-    let file_path = target_dir.join(format!("{}.test.sierra.json", name));
+    let file_path = target_dir.join(format!("{name}.test.sierra.json"));
     let sierra_program = serde_json::from_str::<VersionedProgram>(
         &fs::read_to_string(file_path.clone())
             .with_context(|| format!("failed to read file: {file_path}"))?,
@@ -172,8 +172,7 @@ fn check_scarb_version(metadata: &Metadata, ui: &Ui) {
     if app_version != scarb_version {
         ui.print(format!(
             "warn: the version of cairo-test does not match the version of scarb.\
-         cairo-test: `{}`, scarb: `{}`",
-            app_version, scarb_version,
+         cairo-test: `{app_version}`, scarb: `{scarb_version}`",
         ));
     }
 }

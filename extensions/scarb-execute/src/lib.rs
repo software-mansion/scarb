@@ -333,7 +333,7 @@ fn load_prebuilt_executable(path: &Utf8Path, filename: String) -> Result<Executa
 
 fn incremental_create_output_dir(path: &Utf8Path) -> Result<(Utf8PathBuf, usize)> {
     for i in 1..=MAX_ITERATION_COUNT {
-        let filepath = path.join(format!("execution{}", i));
+        let filepath = path.join(format!("execution{i}"));
         let result = fs::create_dir(&filepath);
         return match result {
             Err(e) => {

@@ -43,7 +43,7 @@ pub trait TopLevelMarkdownDocItem: MarkdownDocItem + TopLevelDocItem {
 
     fn get_markdown_nested_list_item(&self, relative_path: Option<String>) -> (String, String) {
         let (path, filename) = self.md_ref(relative_path);
-        (format!("./{}", filename), path)
+        (format!("./{filename}"), path)
     }
 }
 
@@ -593,11 +593,7 @@ pub fn generate_markdown_table_summary_for_top_level_subitems<T: TopLevelMarkdow
             T::ITEMS_SUMMARY_FILENAME
         );
 
-        writeln!(
-            &mut markdown,
-            "\n{} {}\n\n| | |\n|:---|:---|",
-            prefix, linked,
-        )?;
+        writeln!(&mut markdown, "\n{prefix} {linked}\n\n| | |\n|:---|:---|",)?;
 
         let items_with_relative_path = mark_duplicated_item_with_relative_path(subitems);
         for (item, relative_path) in items_with_relative_path {
@@ -795,7 +791,7 @@ fn get_linked_path(full_path: &str) -> String {
             current_path.push('-');
         }
         current_path.push_str(element);
-        let formatted = format!("[{}](./{}.md)", element, current_path);
+        let formatted = format!("[{element}](./{current_path}.md)");
         result.push(formatted);
     }
     result.join("::")
@@ -814,7 +810,7 @@ fn get_full_subitem_path<T: MarkdownDocItem + SubPathDocItem>(
             parent_path.replace("::", "-"),
             item_path.to_lowercase(),
             if let Some(item_suffix) = item_suffix {
-                format!("-{}", item_suffix)
+                format!("-{item_suffix}")
             } else {
                 "".to_string()
             }
