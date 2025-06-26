@@ -164,6 +164,49 @@ impl ProcMacroHostPlugin {
         })
     }
 
+    fn uses_proc_macros(&self, db: &dyn SyntaxGroup, item_ast: &ast::ModuleItem) -> bool {
+        // Check on inner attributes too.
+        let inner_attrs: HashSet<_> = match item_ast {
+            ast::ModuleItem::Impl(imp) => {
+                if let MaybeImplBody::Some(body) = imp.body(db) {
+                    body.items(db)
+                        .elements(db)
+                        .into_iter()
+                        .flat_map(|item| item.attributes_elements(db))
+                        .map(|attr| attr.attr(db).as_syntax_node().get_text_without_trivia(db))
+                        .collect()
+                } else {
+                    Default::default()
+                }
+            }
+            ast::ModuleItem::Trait(trt) => {
+                if let MaybeTraitBody::Some(body) = trt.body(db) {
+                    body.items(db)
+                        .elements(db)
+                        .into_iter()
+                        .flat_map(|item| item.attributes_elements(db))
+                        .map(|attr| attr.attr(db).as_syntax_node().get_text_without_trivia(db))
+                        .collect()
+                } else {
+                    Default::default()
+                }
+            }
+            _ => Default::default(),
+        };
+
+        if !DeclaredProcMacroInstances::declared_attributes(self).into_iter().any(|declared_attr|
+            item_ast.has_attr(db, &declared_attr) || inner_attrs.contains(&declared_attr)
+        )
+            // Plugins can implement own derives.
+            && !item_ast.has_attr(db, "derive")
+            // Plugins does not declare module inline macros they support.
+            && !matches!(item_ast, ast::ModuleItem::InlineMacro(_))
+        {
+            return false;
+        };
+        true
+    }
+
     fn expand_inner_attr(
         &self,
         db: &dyn SyntaxGroup,
@@ -961,6 +1004,12 @@ impl MacroPlugin for ProcMacroHostPlugin {
         item_ast: ast::ModuleItem,
         _metadata: &MacroPluginMetadata<'_>,
     ) -> PluginResult {
+        // We first check if the ast item uses any proc macros. If not, we exit early.
+        // This is strictly a performance optimization, as gathering expansion metadata can be costly.
+        if !self.uses_proc_macros(db, &item_ast) {
+            return Default::default();
+        };
+
         let stream_metadata = Self::calculate_metadata(db, item_ast.clone());
 
         // Handle inner functions.
