@@ -1821,7 +1821,7 @@ fn compiler_config_collected_properly() {
             "sierra_replace_ids": false,
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,
-            "panic_backtrace": false,
+            "panic_backtrace": false,"unsafe_panic": false,
             "incremental": true
         })
     );
@@ -1878,7 +1878,7 @@ fn compiler_config_collected_properly_in_workspace() {
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,
-            "panic_backtrace": false,
+            "panic_backtrace": false,"unsafe_panic": false,
             "incremental": true
         })
     );
@@ -1922,7 +1922,7 @@ fn profile_can_override_cairo_section() {
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,
-            "panic_backtrace": false,
+            "panic_backtrace": false,"unsafe_panic": false,
             "incremental": true
         })
     );
@@ -1967,6 +1967,7 @@ fn cairo_section_overrides_profile_defaults() {
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,
             "panic_backtrace": false,
+            "unsafe_panic": false,
             "incremental": true
         })
     );
@@ -2008,6 +2009,7 @@ fn can_specify_inlining_strategy_by_weight() {
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,
             "panic_backtrace": false,
+            "unsafe_panic": false,
             "incremental": true
         })
     );

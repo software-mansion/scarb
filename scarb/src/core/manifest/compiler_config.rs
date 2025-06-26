@@ -34,6 +34,8 @@ pub struct ManifestCompilerConfig {
     pub unstable_add_statements_code_locations_debug_info: bool,
     /// Whether to add panic backtrace handling to the generated code.
     pub panic_backtrace: bool,
+    /// Do not generate panic handling code. This might be useful for client side proving.  
+    pub unsafe_panic: bool,
     /// Inlining strategy.
     pub inlining_strategy: InliningStrategy,
     /// Whether to enable incremental compilation.
@@ -112,6 +114,7 @@ impl DefaultForProfile for ManifestCompilerConfig {
             unstable_add_statements_functions_debug_info: false,
             unstable_add_statements_code_locations_debug_info: false,
             panic_backtrace: false,
+            unsafe_panic: false,
             inlining_strategy: InliningStrategy::default(),
             incremental: true,
         }
@@ -131,6 +134,7 @@ impl From<ManifestCompilerConfig> for TomlCairo {
                 config.unstable_add_statements_code_locations_debug_info,
             ),
             panic_backtrace: Some(config.panic_backtrace),
+            unsafe_panic: Some(config.unsafe_panic),
             inlining_strategy: Some(config.inlining_strategy),
             incremental: Some(config.incremental),
         }
