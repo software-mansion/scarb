@@ -115,16 +115,15 @@ fn save_component_cache(
         &unit.fingerprint_dir(ws),
         &component.target_name(),
     )? {
-        let digest = fingerprint.digest();
         let fingerprint_dir = unit.fingerprint_dir(ws);
         let cache_dir = unit.incremental_cache_dir(ws);
-        let component_id = format!("{}-{}", component.target_name(), digest);
+        let component_id = format!("{}-{}", component.target_name(), fingerprint.id());
         let fingerprint_dir = fingerprint_dir.child(&component_id);
         let fingerprint_file =
             fingerprint_dir.create_rw(&component_id, "fingerprint file", ws.config())?;
         fingerprint_file
             .deref()
-            .write_all(digest.as_bytes())
+            .write_all(fingerprint.digest().as_bytes())
             .with_context(|| {
                 format!(
                     "failed to write fingerprint to `{}`",
