@@ -36,8 +36,8 @@ fn main() -> ExitCode {
 }
 
 fn init_logging(verbose: VerbositySpec, ui: &Ui) -> Option<impl Drop> {
+    use chrono::Local;
     use std::fs;
-    use std::time::SystemTime;
 
     use std::path::PathBuf;
     use tracing_chrome::ChromeLayerBuilder;
@@ -70,7 +70,7 @@ fn init_logging(verbose: VerbositySpec, ui: &Ui) -> Option<impl Drop> {
     let profile_layer = if tracing_profile {
         let mut path = PathBuf::from(format!(
             "./scarb-profile-{}.json",
-            SystemTime::UNIX_EPOCH.elapsed().unwrap().as_micros()
+            Local::now().to_rfc3339()
         ));
 
         // Create the file now, so that we early panic, and `fs::canonicalize` will work.
