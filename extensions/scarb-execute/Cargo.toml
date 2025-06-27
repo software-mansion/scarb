@@ -13,6 +13,7 @@ version.workspace = true
 [dependencies]
 anyhow.workspace = true
 bincode.workspace = true
+cairo-lang-casm.workspace = true
 cairo-lang-executable.workspace = true
 cairo-lang-runner.workspace = true
 cairo-lang-utils.workspace = true
@@ -27,6 +28,7 @@ scarb-metadata = { path = "../../scarb-metadata" }
 scarb-ui = { path = "../../utils/scarb-ui" }
 serde.workspace = true
 serde_json.workspace = true
+starknet-core.workspace = true
 
 [dev-dependencies]
 assert_fs.workspace = true
