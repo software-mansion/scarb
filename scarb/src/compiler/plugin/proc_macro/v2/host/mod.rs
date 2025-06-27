@@ -24,11 +24,13 @@ use cairo_lang_macro::{
     AllocationContext, TextSpan as MacroTextSpan, TokenStream, TokenStreamMetadata, TokenTree,
 };
 use cairo_lang_semantic::plugin::PluginSuite;
+use cairo_lang_syntax::node::ast::{MaybeImplBody, MaybeTraitBody};
 use cairo_lang_syntax::node::db::SyntaxGroup;
+use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{TypedStablePtr, TypedSyntaxNode, ast};
 use itertools::Itertools;
 use scarb_stable_hash::short_hash;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock};
 
@@ -101,6 +103,49 @@ impl ProcMacroHostPlugin {
         })
     }
 
+    fn uses_proc_macros(&self, db: &dyn SyntaxGroup, item_ast: &ast::ModuleItem) -> bool {
+        // Check on inner attributes too.
+        let inner_attrs: HashSet<_> = match item_ast {
+            ast::ModuleItem::Impl(imp) => {
+                if let MaybeImplBody::Some(body) = imp.body(db) {
+                    body.items(db)
+                        .elements(db)
+                        .into_iter()
+                        .flat_map(|item| item.attributes_elements(db))
+                        .map(|attr| attr.attr(db).as_syntax_node().get_text_without_trivia(db))
+                        .collect()
+                } else {
+                    Default::default()
+                }
+            }
+            ast::ModuleItem::Trait(trt) => {
+                if let MaybeTraitBody::Some(body) = trt.body(db) {
+                    body.items(db)
+                        .elements(db)
+                        .into_iter()
+                        .flat_map(|item| item.attributes_elements(db))
+                        .map(|attr| attr.attr(db).as_syntax_node().get_text_without_trivia(db))
+                        .collect()
+                } else {
+                    Default::default()
+                }
+            }
+            _ => Default::default(),
+        };
+
+        if !DeclaredProcMacroInstances::declared_attributes(self).into_iter().any(|declared_attr|
+            item_ast.has_attr(db, &declared_attr) || inner_attrs.contains(&declared_attr)
+        )
+            // Plugins can implement own derives.
+            && !item_ast.has_attr(db, "derive")
+            // Plugins does not declare module inline macros they support.
+            && !matches!(item_ast, ast::ModuleItem::InlineMacro(_))
+        {
+            return false;
+        };
+        true
+    }
+
     pub(crate) fn find_expansion(&self, query: &ExpansionQuery) -> Option<ProcMacroId> {
         let instance = self.find_instance_with_expansion(query)?;
         let expansion = instance.find_expansion(query)?;
@@ -155,6 +200,12 @@ impl MacroPlugin for ProcMacroHostPlugin {
         item_ast: ast::ModuleItem,
         metadata: &MacroPluginMetadata<'_>,
     ) -> PluginResult {
+        // We first check if the ast item uses any proc macros. If not, we exit early.
+        // This is strictly a performance optimization, as gathering expansion metadata can be costly.
+        if !self.uses_proc_macros(db, &item_ast) {
+            return Default::default();
+        };
+
         let stream_metadata = Self::calculate_metadata(db, item_ast.clone(), metadata.edition);
 
         // Handle inner functions.
@@ -163,7 +214,7 @@ impl MacroPlugin for ProcMacroHostPlugin {
             return result.into();
         }
 
-        // Expand first attribute.
+        // Expand the first attribute.
         // Note that we only expand the first attribute, as we assume that the rest of the attributes
         // will be handled by a subsequent call to this function.
         let ctx = AllocationContext::default();
