@@ -195,7 +195,7 @@ fn originating_function_path(db: &RootDatabase, wrapper: ConcreteFunctionWithBod
     let Some(wrapper_path_to_module) = wrapper_full_path.strip_suffix(wrapper_name.as_str()) else {
         return wrapper_full_path;
     };
-    format!("{}{}", wrapper_path_to_module, function_name)
+    format!("{wrapper_path_to_module}{function_name}")
 }
 
 fn check_executable_plugin_dependency(

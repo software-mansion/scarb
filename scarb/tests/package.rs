@@ -96,10 +96,7 @@ impl PackageChecker {
         let missing: Vec<&PathBuf> = expected_files.difference(&actual_files).collect();
         let extra: Vec<&PathBuf> = actual_files.difference(&expected_files).collect();
         if !missing.is_empty() || !extra.is_empty() {
-            panic!(
-                "package tarball does not match.\nMissing: {:?}\nExtra: {:?}\n",
-                missing, extra
-            );
+            panic!("package tarball does not match.\nMissing: {missing:?}\nExtra: {extra:?}\n");
         }
         self
     }

@@ -155,17 +155,10 @@ impl ExpectDir {
         match fs::metadata(path) {
             Ok(metadata) => {
                 if metadata.is_file() {
-                    panic!(
-                        "Given path ({wrong_path}) is not a directory.",
-                        wrong_path = path
-                    )
+                    panic!("Given path ({path}) is not a directory.")
                 }
             }
-            Err(e) => panic!(
-                "Failed to get metadata for {wrong_path}, {error}",
-                wrong_path = path,
-                error = e
-            ),
+            Err(e) => panic!("Failed to get metadata for {path}, {e}"),
         }
         true
     }

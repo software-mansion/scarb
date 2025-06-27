@@ -183,7 +183,7 @@ impl RegistryClient for HttpRegistryClient<'_> {
                     .clone()
                     .ok_or_else(|| anyhow!("failed to fetch registry upload url"))?,
             )
-            .header(AUTHORIZATION, format!("Bearer {}", auth_token))
+            .header(AUTHORIZATION, format!("Bearer {auth_token}"))
             .multipart(form)
             .send()
             .await?;
@@ -204,13 +204,11 @@ impl RegistryClient for HttpRegistryClient<'_> {
 
                 let error_message = match trace_id {
                     Some(id) => format!(
-                        "upload failed with status code: `{}`, `{}` (trace-id: {:?})",
-                        status, error_message, id
+                        "upload failed with status code: `{status}`, `{error_message}` (trace-id: {id:?})"
                     ),
-                    None => format!(
-                        "upload failed with status code: `{}`, `{}`",
-                        status, error_message,
-                    ),
+                    None => {
+                        format!("upload failed with status code: `{status}`, `{error_message}`",)
+                    }
                 };
                 RegistryUpload::Failure(anyhow!(error_message))
             }

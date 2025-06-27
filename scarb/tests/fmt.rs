@@ -441,7 +441,7 @@ fn format_all_files_in_path() {
 
     // Create multiple Cairo files with unformatted content
     for i in 1..=3 {
-        t.child(format!("src/fmt/file{}.cairo", i))
+        t.child(format!("src/fmt/file{i}.cairo"))
             .write_str(SIMPLE_ORIGINAL)
             .unwrap();
     }
@@ -460,7 +460,7 @@ fn format_all_files_in_path() {
 
     // Check that all files in the src directory were formatted
     for i in 1..=3 {
-        let content = t.child(format!("src/fmt/file{}.cairo", i)).read_to_string();
+        let content = t.child(format!("src/fmt/file{i}.cairo")).read_to_string();
         assert_eq!(content, SIMPLE_FORMATTED);
     }
 

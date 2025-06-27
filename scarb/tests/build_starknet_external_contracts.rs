@@ -20,7 +20,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
             [[target.starknet-contract]]
         "#})
         .dep_starknet()
-        .lib_cairo(format!("{}\n{}", BALANCE_CONTRACT, HELLO_CONTRACT))
+        .lib_cairo(format!("{BALANCE_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(hello);
 
     ProjectBuilder::start()
@@ -33,7 +33,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
             {target_extra}
         "#})
         .dep_starknet()
-        .lib_cairo(format!("{}\n{}", FORTY_TWO_CONTRACT, HELLO_CONTRACT))
+        .lib_cairo(format!("{FORTY_TWO_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(world);
 
     Scarb::quick_snapbox()
@@ -197,7 +197,7 @@ fn build_external_full_path() {
         )
         .src(
             "src/lorem/ipsum.cairo",
-            format!("{}\n{}", BALANCE_CONTRACT, HELLO_CONTRACT),
+            format!("{BALANCE_CONTRACT}\n{HELLO_CONTRACT}"),
         )
         .build(&hello);
 
@@ -214,7 +214,7 @@ fn build_external_full_path() {
             ]
         "#})
         .dep_starknet()
-        .lib_cairo(format!("{}\n{}", FORTY_TWO_CONTRACT, HELLO_CONTRACT))
+        .lib_cairo(format!("{FORTY_TWO_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(&world);
 
     Scarb::quick_snapbox()
@@ -408,7 +408,7 @@ fn compile_with_bad_glob_path() {
             [[target.starknet-contract]]
         "#})
         .dep_starknet()
-        .lib_cairo(format!("{}\n{}", BALANCE_CONTRACT, HELLO_CONTRACT))
+        .lib_cairo(format!("{BALANCE_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(&hello);
 
     ProjectBuilder::start()
@@ -420,7 +420,7 @@ fn compile_with_bad_glob_path() {
             build-external-contracts = ["hello::**",]
         "#})
         .dep_starknet()
-        .lib_cairo(format!("{}\n{}", FORTY_TWO_CONTRACT, HELLO_CONTRACT))
+        .lib_cairo(format!("{FORTY_TWO_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(&world);
 
     Scarb::quick_snapbox()
@@ -461,7 +461,7 @@ fn will_warn_about_unmatched_paths() {
         )
         .src(
             "src/lorem/ipsum.cairo",
-            format!("{}\n{}", BALANCE_CONTRACT, HELLO_CONTRACT),
+            format!("{BALANCE_CONTRACT}\n{HELLO_CONTRACT}"),
         )
         .build(&hello);
 
@@ -478,7 +478,7 @@ fn will_warn_about_unmatched_paths() {
             ]
         "#})
         .dep_starknet()
-        .lib_cairo(format!("{}\n{}", FORTY_TWO_CONTRACT, HELLO_CONTRACT))
+        .lib_cairo(format!("{FORTY_TWO_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(&world);
 
     Scarb::quick_snapbox()

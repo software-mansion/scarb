@@ -20,7 +20,7 @@ enum CommandInfo {
 impl fmt::Display for CommandInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CommandInfo::BuiltIn { about: Some(about) } => write!(f, "{}", about),
+            CommandInfo::BuiltIn { about: Some(about) } => write!(f, "{about}"),
             CommandInfo::BuiltIn { about: None } => write!(f, "",),
             CommandInfo::External { path } => write!(f, "{}", path.display()),
         }
@@ -36,7 +36,7 @@ impl Message for CommandsList {
     fn text(self) -> String {
         let mut text = String::from("Installed Commands:\n");
         for (name, info) in self.commands {
-            text.push_str(&format!("{:<22}: {}\n", name, info));
+            text.push_str(&format!("{name:<22}: {info}\n"));
         }
         text
     }

@@ -21,7 +21,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
             [[target.starknet-contract]]
         "#})
         .dep_starknet()
-        .lib_cairo(format!("{}\n{}", BALANCE_CONTRACT, HELLO_CONTRACT))
+        .lib_cairo(format!("{BALANCE_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(hello);
 
     ProjectBuilder::start()
@@ -34,7 +34,7 @@ fn compile_dep_test_case(hello: &ChildPath, world: &ChildPath, target_extra: &st
             {target_extra}
         "#})
         .dep_starknet()
-        .lib_cairo(format!("{}\n{}", FORTY_TWO_CONTRACT, HELLO_CONTRACT))
+        .lib_cairo(format!("{FORTY_TWO_CONTRACT}\n{HELLO_CONTRACT}"))
         .build(world);
 
     Scarb::quick_snapbox()
