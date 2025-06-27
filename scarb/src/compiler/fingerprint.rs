@@ -127,7 +127,7 @@ pub fn is_fresh(
     }
 
     let old_digest = fsx::read_to_string(&old_digest_path)
-        .with_context(|| format!("failed to read fingerprint from `{}`", old_digest_path))?;
+        .with_context(|| format!("failed to read fingerprint from `{old_digest_path}`"))?;
 
     Ok(old_digest == digest)
 }

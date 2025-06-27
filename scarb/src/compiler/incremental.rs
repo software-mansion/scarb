@@ -132,7 +132,7 @@ fn save_component_cache(
                 )
             })?;
         let cache_file =
-            cache_dir.create_rw(format!("{}.bin", component_id), "cache file", ws.config())?;
+            cache_dir.create_rw(format!("{component_id}.bin"), "cache file", ws.config())?;
         let crate_id = component.crate_id(db);
         let Some(cache_blob) = generate_crate_cache(db, crate_id).ok() else {
             return Ok(());
