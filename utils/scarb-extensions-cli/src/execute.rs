@@ -85,6 +85,10 @@ pub struct RunArgs {
     /// Whether to print detailed execution resources.
     #[arg(long, default_value_t = false)]
     pub print_resource_usage: bool,
+
+    /// Enable experimental oracles support.
+    #[arg(long, default_value_t = false, env = "SCARB_EXPERIMENTAL_ORACLES")]
+    pub experimental_oracles: bool,
 }
 
 /// Arguments to the executable function.
