@@ -124,7 +124,7 @@ fn expand_attribute() {
                 attr: macro_name.to_string(),
                 args: TokenStreamV2::empty(),
                 item,
-                call_site: span,
+                adapted_call_site: span,
             })
             .unwrap();
 
