@@ -159,6 +159,7 @@ impl Plugin {
     ///
     /// # Safety
     /// This function is unsafe because it calls the FFI interface of procedural macro package.
+    #[tracing::instrument(level = "trace", skip_all)]
     pub(crate) fn generate_code(
         &self,
         item_name: SmolStr,

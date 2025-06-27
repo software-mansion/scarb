@@ -194,6 +194,7 @@ impl ProcMacroHostPlugin {
 }
 
 impl MacroPlugin for ProcMacroHostPlugin {
+    #[tracing::instrument(level = "trace", skip_all)]
     fn generate_code(
         &self,
         db: &dyn SyntaxGroup,

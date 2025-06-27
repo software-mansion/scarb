@@ -74,7 +74,9 @@ impl Compiler for LibCompiler {
             program_artifact.into()
         };
 
+        let span = trace_span!("serialize_sierra_json");
         if props.sierra {
+            let _guard = span.enter();
             write_json(
                 format!("{}.sierra.json", unit.main_component().target_name()).as_str(),
                 "output file",
@@ -90,7 +92,9 @@ impl Compiler for LibCompiler {
             })?;
         }
 
+        let span = trace_span!("serialize_sierra_text");
         if props.sierra_text {
+            let _guard = span.enter();
             write_string(
                 format!("{}.sierra", unit.main_component().target_name()).as_str(),
                 "output file",
@@ -127,13 +131,17 @@ impl Compiler for LibCompiler {
                 cairo_lang_sierra_to_casm::compiler::compile(&program, &metadata, sierra_to_casm)?
             };
 
-            write_string(
-                format!("{}.casm", unit.main_component().target_name()).as_str(),
-                "output file",
-                &target_dir,
-                ws,
-                cairo_program,
-            )?;
+            let span = trace_span!("serialize_casm");
+            {
+                let _guard = span.enter();
+                write_string(
+                    format!("{}.casm", unit.main_component().target_name()).as_str(),
+                    "output file",
+                    &target_dir,
+                    ws,
+                    cairo_program,
+                )?;
+            }
         }
 
         Ok(())

@@ -122,7 +122,7 @@ impl Compiler for StarknetContractCompiler {
         check_allowed_libfuncs(&props, &contracts, &classes, db, &unit, ws)?;
 
         let casm_classes: Vec<Option<CasmContractClass>> = if props.casm {
-            let span = trace_span!("compile_sierra");
+            let span = trace_span!("compile_starknet_casm");
             let _guard = span.enter();
 
             zip(&contracts, &classes)

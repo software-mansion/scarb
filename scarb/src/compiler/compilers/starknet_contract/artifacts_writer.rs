@@ -15,6 +15,7 @@ use itertools::{Itertools, izip};
 use scarb_stable_hash::short_hash;
 use serde::Serialize;
 use smol_str::SmolStr;
+use tracing::trace_span;
 
 const MAX_SIERRA_PROGRAM_FELTS: usize = 81290;
 const MAX_CASM_PROGRAM_FELTS: usize = 81290;
@@ -135,6 +136,9 @@ impl ArtifactsWriter {
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> anyhow::Result<()> {
+        let span = trace_span!("serialize_starknet");
+        let _guard = span.enter();
+
         let mut artifacts = StarknetArtifacts::default();
         let mut file_stem_calculator = ContractFileStemCalculator::new(contract_paths);
         let extension_prefix = self

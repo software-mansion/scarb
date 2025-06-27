@@ -25,8 +25,8 @@ cairo-lang-formatter.workspace = true
 cairo-lang-lowering.workspace = true
 cairo-lang-macro = { path = "../plugins/cairo-lang-macro", version = "0.2.0-rc.0" }
 cairo-lang-macro-stable = { path = "../plugins/cairo-lang-macro-stable" }
-cairo-lang-macro-v1.workspace = true
 cairo-lang-macro-stable-v1 = { version = "1", package = "cairo-lang-macro-stable" }
+cairo-lang-macro-v1.workspace = true
 cairo-lang-parser.workspace = true
 cairo-lang-semantic.workspace = true
 cairo-lang-sierra-generator.workspace = true
@@ -39,6 +39,8 @@ cairo-lang-test-plugin.workspace = true
 cairo-lang-utils.workspace = true
 cairo-lint = { workspace = true, optional = true }
 camino.workspace = true
+cargo_metadata.workspace = true
+chrono.workspace = true
 clap.workspace = true
 clap_complete.workspace = true
 convert_case.workspace = true
@@ -50,10 +52,11 @@ derive_builder.workspace = true
 dialoguer.workspace = true
 directories.workspace = true
 dunce.workspace = true
+flate2.workspace = true
 fs4.workspace = true
 futures.workspace = true
-gix.workspace = true
 gix-path.workspace = true
+gix.workspace = true
 glob.workspace = true
 ignore.workspace = true
 include_dir.workspace = true
@@ -65,14 +68,14 @@ once_map = { path = "../utils/once-map" }
 pathdiff.workspace = true
 petgraph.workspace = true
 pubgrub.workspace = true
-scarb-proc-macro-server-types = { path = "../utils/scarb-proc-macro-server-types" }
 ra_ap_toolchain.workspace = true
 redb.workspace = true
 reqwest.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
-scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }
-scarb-stable-hash = { path = "../utils/scarb-stable-hash" }
 scarb-extensions-cli = { path = "../utils/scarb-extensions-cli" }
+scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }
+scarb-proc-macro-server-types = { path = "../utils/scarb-proc-macro-server-types" }
+scarb-stable-hash = { path = "../utils/scarb-stable-hash" }
 scarb-ui = { path = "../utils/scarb-ui" }
 semver-pubgrub.workspace = true
 semver.workspace = true
@@ -85,11 +88,13 @@ sha2.workspace = true
 smallvec.workspace = true
 smol_str.workspace = true
 tar.workspace = true
+target-triple.workspace = true
 thiserror.workspace = true
-tokio.workspace = true
 tokio-stream.workspace = true
+tokio.workspace = true
 toml.workspace = true
 toml_edit.workspace = true
+tracing-chrome.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true
 typed-builder.workspace = true
@@ -99,9 +104,6 @@ walkdir.workspace = true
 which.workspace = true
 windows-sys.workspace = true
 zstd.workspace = true
-cargo_metadata.workspace = true
-flate2.workspace = true
-target-triple.workspace = true
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]
 reqwest = { workspace = true, default-features = true }
