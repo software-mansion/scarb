@@ -368,6 +368,17 @@ By default, this flag is set to `false`, as it won't be available on Starknet.
 panic-backtrace = false
 ```
 
+### `unsafe-panic`
+
+If enabled, code for handling runtime panics of the compiled project will not be generated.
+This might be useful for client side proving.
+By default, this flag is set to `false`.
+
+```toml
+[cairo]
+unsafe-panic = false
+```
+
 ### `incremental`
 
 If enabled, after project compilation Scarb will emit additional cache artifacts. This artifacts will be attempted to be

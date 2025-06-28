@@ -488,6 +488,8 @@ pub struct TomlCairo {
     pub unstable_add_statements_code_locations_debug_info: Option<bool>,
     /// Whether to add panic backtrace handling to the generated code.
     pub panic_backtrace: Option<bool>,
+    /// Do not generate panic handling code. This might be useful for client side proving.
+    pub unsafe_panic: Option<bool>,
     /// Inlining strategy.
     pub inlining_strategy: Option<InliningStrategy>,
     /// Whether to enable incremental compilation.
@@ -1166,6 +1168,9 @@ impl TomlManifest {
             }
             if let Some(panic_backtrace) = cairo.panic_backtrace {
                 compiler_config.panic_backtrace = panic_backtrace;
+            }
+            if let Some(unsafe_panic) = cairo.unsafe_panic {
+                compiler_config.unsafe_panic = unsafe_panic;
             }
             if let Some(incremental) = cairo.incremental {
                 compiler_config.incremental = incremental;

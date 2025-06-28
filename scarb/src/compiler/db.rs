@@ -62,6 +62,9 @@ pub(crate) fn build_scarb_root_database(
     if unit.compiler_config.panic_backtrace {
         b.with_panic_backtrace();
     }
+    if unit.compiler_config.unsafe_panic {
+        b.with_unsafe_panic();
+    }
     let mut db = b.build()?;
 
     apply_plugins(&mut db, plugins);
