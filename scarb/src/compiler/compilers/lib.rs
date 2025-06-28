@@ -43,7 +43,7 @@ impl Compiler for LibCompiler {
 
     fn compile(
         &self,
-        unit: CairoCompilationUnit,
+        unit: &CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -57,11 +57,11 @@ impl Compiler for LibCompiler {
 
         let target_dir = unit.target_dir(ws);
 
-        let main_crate_ids = collect_main_crate_ids(&unit, db);
+        let main_crate_ids = collect_main_crate_ids(unit, db);
 
-        let compiler_config = build_compiler_config(db, &unit, &main_crate_ids, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ws);
 
-        validate_compiler_config(db, &compiler_config, &unit, ws);
+        validate_compiler_config(db, &compiler_config, unit, ws);
 
         let span = trace_span!("compile_sierra");
         let sierra_program: VersionedProgram = {
