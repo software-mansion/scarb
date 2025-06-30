@@ -63,20 +63,21 @@ fn oracle_invoke_direct() {
         .dep_starknet()
         .lib_cairo(indoc! {r#"
         #[executable]
-        fn main() {
+        fn main() -> Span<felt252> {
             let mut inputs: Array<felt252> = array![];
             let connection_string: ByteArray = "connection string";
             connection_string.serialize(ref inputs);
             'pow'.serialize(ref inputs);
             (4).serialize(ref inputs);
             (2).serialize(ref inputs);
-            starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+            starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span())
         }
         "#})
         .build(&t);
 
     Scarb::quick_snapbox()
         .arg("execute")
+        .arg("--print-program-output")
         .arg("--experimental-oracles")
         .current_dir(&t)
         .assert()
@@ -85,6 +86,11 @@ fn oracle_invoke_direct() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
+            Program output:
+            3
+            0
+            1
+            9876543210
             Saving output to: target/execute/oracle_test/execution1
         "#});
 }
