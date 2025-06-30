@@ -1,6 +1,6 @@
 use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_test_support::command::{OutputAssertExt, Scarb};
+use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 fn setup_fib_three_felt_args(t: &TempDir) {
@@ -87,7 +87,7 @@ fn invalid_number_of_args() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
                Compiling hello v0.1.0 ([..]/Scarb.toml)
@@ -112,7 +112,7 @@ fn array_instead_of_felt() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
                Compiling hello v0.1.0 ([..]Scarb.toml)
@@ -247,7 +247,7 @@ fn invalid_struct_deserialization() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
                Compiling hello v0.1.0 ([..]Scarb.toml)
@@ -329,7 +329,7 @@ fn cannot_set_gas_limit_for_package_with_disabled_gas_calculation() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
             error: gas calculation disabled for package `hello`, cannot define custom gas limit

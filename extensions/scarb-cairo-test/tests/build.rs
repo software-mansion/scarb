@@ -1,7 +1,7 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::PathChild;
 use indoc::{formatdoc, indoc};
-use scarb_test_support::command::{OutputAssertExt, Scarb};
+use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
@@ -166,7 +166,7 @@ fn features_test_build_failed() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
             error[E0006]: Function not found.
              --> [..]/src/lib.cairo[..]

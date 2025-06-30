@@ -1,6 +1,5 @@
 use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_test_support::command::OutputAssertExt;
 use scarb_test_support::{command::Scarb, project_builder::ProjectBuilder};
 
 #[test]
@@ -115,7 +114,7 @@ fn test_diagnostics_error() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: Expected either ';' or '{' after module name. Use ';' for an external module declaration or '{' for a module with a body.
              --> [..]lib.cairo:2:33
             pub(crate) mod DualCaseERC20Mock 

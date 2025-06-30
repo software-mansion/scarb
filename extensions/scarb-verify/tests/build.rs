@@ -1,6 +1,6 @@
 use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_test_support::command::{OutputAssertExt, Scarb};
+use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 fn build_executable_project() -> TempDir {
@@ -98,7 +98,7 @@ fn verify_fails_when_execution_output_not_found() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             [..]Verifying hello
             error: execution directory does not exist at path: [..]/target/execute/hello/execution1
             help: make sure to run `scarb prove --execute` first
@@ -117,7 +117,7 @@ fn verify_fails_when_proof_file_not_found() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             [..]Verifying proof
             error: proof file does not exist at path: nonexistent.json
         "#});

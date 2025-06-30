@@ -5,7 +5,7 @@ use assert_fs::prelude::PathChild;
 use indoc::{formatdoc, indoc};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
-use scarb_test_support::command::{OutputAssertExt, Scarb};
+use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 const EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH: &str = "tests/data/hello_world_no_features";
@@ -108,7 +108,7 @@ fn test_workspace_without_features_in_manifest() {
         .current_dir(&root_dir)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: metadata command failed: `scarb metadata` exited with error
 
             stdout:
@@ -301,7 +301,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
         .current_dir(&root_dir)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: metadata command failed: `scarb metadata` exited with error
 
             stdout:
@@ -345,7 +345,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         .current_dir(&root_dir)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: metadata command failed: `scarb metadata` exited with error
     
             stdout:

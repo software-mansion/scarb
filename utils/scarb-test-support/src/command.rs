@@ -140,21 +140,3 @@ impl CommandExt for SnapboxCommand {
         panic!("Failed to deserialize stdout to JSON");
     }
 }
-
-pub trait OutputAssertExt {
-    /// A variant of [`OutputAssert::stdout_matches`] that accounts for Windows-only extra output
-    /// on process failures.
-    fn stdout_matches_with_windows_exit_code_error(self, expected: impl Into<String>) -> Self;
-}
-
-impl OutputAssertExt for OutputAssert {
-    fn stdout_matches_with_windows_exit_code_error(self, expected: impl Into<String>) -> Self {
-        let expected = expected.into();
-
-        #[cfg(windows)]
-        let expected =
-            format!("{expected}error: process did not exit successfully: exit code: 1\n");
-
-        self.stdout_matches(expected)
-    }
-}

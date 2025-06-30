@@ -1,7 +1,7 @@
 use assert_fs::TempDir;
 use indoc::indoc;
 
-use scarb_test_support::command::{OutputAssertExt, Scarb};
+use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
@@ -77,7 +77,7 @@ fn no_entrypoint_fails() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
@@ -109,7 +109,7 @@ fn no_debug_build_fails() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
@@ -176,7 +176,7 @@ fn ambiguous_executables_will_fail() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
@@ -216,7 +216,7 @@ fn ambiguous_executables_will_fail_no_debug_names() {
         .assert()
         .failure()
         // Note that we cannot list available executables, as we don't know their debug names.
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
@@ -298,7 +298,7 @@ fn cannot_choose_non_executable_if_any_present() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
@@ -367,7 +367,7 @@ fn choose_not_existing_function() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)

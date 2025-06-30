@@ -2,7 +2,7 @@ use assert_fs::TempDir;
 use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
 use indoc::indoc;
-use scarb_test_support::command::{OutputAssertExt, Scarb};
+use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 fn build_executable_project() -> TempDir {
@@ -125,7 +125,7 @@ fn prove_fails_when_execution_output_not_found() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             [..]Proving hello
             warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
             error: execution directory not found: [..]/target/execute/hello/execution1
@@ -159,7 +159,7 @@ fn prove_fails_when_cairo_pie_output() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             [..]Proving hello
             warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
             error: proving cairo pie output is not supported: [..]/target/execute/hello/execution1/cairo_pie.zip
@@ -206,7 +206,7 @@ fn prove_fails_on_windows() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: `scarb prove` is not supported on Windows
             help: use WSL or a Linux/macOS machine instead
 

@@ -3,7 +3,6 @@ use indoc::indoc;
 use snapbox::cmd::{Command, cargo_bin};
 
 use scarb_test_support::cargo::manifest_dir;
-use scarb_test_support::command::OutputAssertExt;
 
 #[test]
 fn scarb_build_is_called() {
@@ -58,7 +57,7 @@ fn build_can_be_skipped() {
         .current_dir(example)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
             error: package has not been compiled, file does not exist: `hello_world.sierra.json`
@@ -123,7 +122,7 @@ fn can_disable_gas() {
         .current_dir(example)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
                Compiling hello_world v0.1.0 ([..]Scarb.toml)

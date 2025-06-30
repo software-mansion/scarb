@@ -3,7 +3,7 @@ use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
 use indoc::indoc;
 use predicates::prelude::*;
-use scarb_test_support::command::{OutputAssertExt, Scarb};
+use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::predicates::is_file_empty;
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -113,7 +113,7 @@ fn cannot_produce_trace_file_for_bootloader_target() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: Standard output format is not supported for bootloader execution target
         "#});
 }
@@ -128,7 +128,7 @@ fn cannot_produce_cairo_pie_for_standalone_target() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: Cairo pie output format is not supported for standalone execution target
         "#});
 }
@@ -158,7 +158,7 @@ fn fails_when_attr_missing() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
             error: Requested `#[executable]` not found.
             error: could not compile `hello` due to previous error
@@ -171,7 +171,7 @@ fn fails_when_attr_missing() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             [..]Executing hello
             error: package has not been compiled, file does not exist: `hello.executable.json`
             help: run `scarb build` to compile the package
@@ -201,7 +201,7 @@ fn can_print_panic_reason() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing hello
@@ -240,7 +240,7 @@ fn no_target_defined() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: no executable target found for package `hello_world`
             help: you can add `executable` target to the package manifest with following excerpt
             -> Scarb.toml
@@ -286,7 +286,7 @@ fn undefined_target_specified() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: no executable target with name `secondary` found for package `hello_world`
         "#});
 
@@ -297,7 +297,7 @@ fn undefined_target_specified() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: no executable target with executable function `secondary` found for package `hello_world`
         "#});
 }
@@ -382,7 +382,7 @@ fn executable_must_be_chosen() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             error: more than one executable target found for package `hello_world`
             help: specify the target with `--executable-name` or `--executable-function`
     
