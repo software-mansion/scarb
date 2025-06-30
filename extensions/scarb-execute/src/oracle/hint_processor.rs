@@ -51,6 +51,8 @@ impl<'a> OracleHintProcessor<'a> {
             };
         }
 
+        // TODO(#1915): This code should use feature(let_chains) and feature(inherent_str_constructors).
+        //   It is in this ugly form to persist the original structure from 18592d55.
         if let Some(Hint::Starknet(StarknetHint::Cheatcode {
             selector,
             input_start,
@@ -58,45 +60,47 @@ impl<'a> OracleHintProcessor<'a> {
             output_start,
             output_end,
         })) = hint_data.downcast_ref::<Hint>()
-            && let Ok(selector) = str::from_utf8(&selector.value.to_bytes_be().1)
-            && selector == "oracle_invoke"
         {
-            if !self.experiment_enabled {
-                return ControlFlow::Break(Err(HintError::AssertionFailed(
-                    "Oracles are experimental feature. \
-                    To enable, pass --experimental-oracles CLI flag."
-                        .into(),
-                )));
+            if let Ok(selector) = std::str::from_utf8(&selector.value.to_bytes_be().1) {
+                if selector == "oracle_invoke" {
+                    if !self.experiment_enabled {
+                        return ControlFlow::Break(Err(HintError::AssertionFailed(
+                            "Oracles are experimental feature. \
+                             To enable, pass --experimental-oracles CLI flag."
+                                .into(),
+                        )));
+                    }
+
+                    // Extract the inputs.
+                    let input_start = t!(extract_relocatable(vm, input_start));
+                    let input_end = t!(extract_relocatable(vm, input_end));
+                    let inputs = t!(vm_get_range(vm, input_start, input_end));
+
+                    // Prepare output segment.
+                    let mut res_segment = MemBuffer::new_segment(vm);
+                    let res_segment_start = res_segment.ptr;
+
+                    // Route selector to particular execution methods.
+                    match selector {
+                        "oracle_invoke" => t!(self.execute_invoke(inputs, &mut res_segment)),
+                        _ => return ControlFlow::Continue(()),
+                    };
+
+                    // Store output and terminate execution.
+                    let res_segment_end = res_segment.ptr;
+                    t!(insert_value_to_cellref!(
+                        vm,
+                        output_start,
+                        res_segment_start
+                    ));
+                    t!(insert_value_to_cellref!(vm, output_end, res_segment_end));
+
+                    return ControlFlow::Break(Ok(()));
+                }
             }
-
-            // Extract the inputs.
-            let input_start = t!(extract_relocatable(vm, input_start));
-            let input_end = t!(extract_relocatable(vm, input_end));
-            let inputs = t!(vm_get_range(vm, input_start, input_end));
-
-            // Prepare output segment.
-            let mut res_segment = MemBuffer::new_segment(vm);
-            let res_segment_start = res_segment.ptr;
-
-            // Route selector to particular execution methods.
-            match selector {
-                "oracle_invoke" => t!(self.execute_invoke(inputs, &mut res_segment)),
-                _ => return ControlFlow::Continue(()),
-            };
-
-            // Store output and terminate execution.
-            let res_segment_end = res_segment.ptr;
-            t!(insert_value_to_cellref!(
-                vm,
-                output_start,
-                res_segment_start
-            ));
-            t!(insert_value_to_cellref!(vm, output_end, res_segment_end));
-
-            ControlFlow::Break(Ok(()))
-        } else {
-            ControlFlow::Continue(())
         }
+
+        ControlFlow::Continue(())
     }
 
     /// Execute the `oracle_invoke` cheat code.
@@ -112,7 +116,7 @@ impl<'a> OracleHintProcessor<'a> {
 
         let _selector = {
             let felt = Felt252::decode_iter(&mut inputs_iter).map_err(input_decode_error)?;
-            str::from_utf8(&felt.to_bytes_be())
+            std::str::from_utf8(&felt.to_bytes_be())
                 .map_err(|_| HintError::CustomHint("Non-UTF-8 oracle selector.".into()))?
                 .to_owned()
         };
