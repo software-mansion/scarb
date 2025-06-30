@@ -11,12 +11,9 @@ use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::vm::errors::vm_errors::VirtualMachineError;
 use cairo_vm::vm::runners::cairo_runner::{ResourceTracker, RunResources};
 use cairo_vm::vm::vm_core::VirtualMachine;
-use starknet_core::codec::{Decode, Error as CodecError};
-use starknet_core::types::ByteArray;
 use std::any::Any;
 use std::collections::HashMap;
 use std::ops::ControlFlow;
-use std::string::FromUtf8Error;
 
 pub struct OracleHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
@@ -107,7 +104,7 @@ impl<'a> OracleHintProcessor<'a> {
     /// Execute the `oracle_invoke` cheat code.
     fn execute_invoke(
         &mut self,
-        inputs: Vec<Felt252>,
+        _inputs: Vec<Felt252>,
         res_segment: &mut MemBuffer,
     ) -> Result<(), HintError> {
         let response: Vec<Felt252> = vec![]; // TODO
@@ -165,12 +162,4 @@ impl<'a> ResourceTracker for OracleHintProcessor<'a> {
     fn run_resources(&self) -> &RunResources {
         self.cairo_hint_processor.run_resources()
     }
-}
-
-fn input_decode_error(e: CodecError) -> HintError {
-    HintError::CustomHint(format!("Failed to decode input: {e}").into())
-}
-
-fn from_utf8_error(what: &str) -> impl FnOnce(FromUtf8Error) -> HintError {
-    move |e| HintError::CustomHint(format!("Received non-UTF-8 {what}: {e}").into())
 }
