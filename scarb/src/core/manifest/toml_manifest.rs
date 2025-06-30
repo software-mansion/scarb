@@ -271,45 +271,44 @@ mod serdex {
     use crate::core::{
         DetailedTomlDependency, MaybeWorkspace, TomlDependency, TomlWorkspaceDependency,
     };
-    use anyhow::{bail, ensure};
+    use anyhow::ensure;
     use semver::VersionReq;
-    use serde::Deserialize;
+    use serde::{Deserialize, Deserializer, de};
+    use serde_untagged::UntaggedEnumVisitor;
 
     #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
     pub struct Detailed {
         pub workspace: Option<bool>,
         #[serde(flatten)]
         pub detailed: DetailedTomlDependency,
     }
 
-    #[derive(Deserialize)]
-    #[allow(dead_code)]
-    pub struct AnyStruct {}
-
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    #[allow(dead_code)]
-    pub enum CatchAll {
-        AnyStruct(AnyStruct),
-        AnyString(String),
-    }
-
     /// This is equivalent to `MaybeWorkspace<TomlDependency, TomlWorkspaceDependency>`, but we
     /// coalesce `DetailedTomlDependency` and `TomlWorkspaceDependency` to be able to validate them
-    /// during deserialization. We cannot validate each of them separately, as deserialization of
-    /// enums attempt to deserialize each branch and returns the first one that successes. This means,
-    /// that on for instance for `{ workspace = true, version = "2" }` we would attempt to
-    /// deserialize into `TomlWorkspaceDependency`, which would fail with error as we make
-    /// overriding `version` illegal, but then it would attempt to deserialize into
-    /// `DetailedTomlDependency` which succeeds, as we do not reject unconsumed tokens.
-    /// Here we can disallow deserializing into `DetailedTomlDependency` if `workspace` field is
-    /// defined and fail with error if validations fail.
-    #[derive(Deserialize)]
-    #[serde(untagged)]
+    /// during deserialization and emit easy to understand errors.
     pub enum MaybeWorkspaceTomlDependency {
         Simple(VersionReq),
         Detailed(Box<Detailed>),
-        CatchAll(CatchAll),
+    }
+
+    impl<'de> Deserialize<'de> for MaybeWorkspaceTomlDependency {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            UntaggedEnumVisitor::new()
+                .string(|value| {
+                    VersionReq::parse(value)
+                        .map(MaybeWorkspaceTomlDependency::Simple)
+                        .map_err(de::Error::custom)
+                })
+                .map(|map| {
+                    map.deserialize()
+                        .map(MaybeWorkspaceTomlDependency::Detailed)
+                })
+                .deserialize(deserializer)
+        }
     }
 
     impl TryFrom<MaybeWorkspaceTomlDependency> for super::MaybeWorkspaceTomlDependency {
@@ -362,9 +361,6 @@ mod serdex {
                             detailed.detailed,
                         ))))
                     }
-                }
-                MaybeWorkspaceTomlDependency::CatchAll(_) => {
-                    bail!("data did not match any variant of dependency specification")
                 }
             })
         }
