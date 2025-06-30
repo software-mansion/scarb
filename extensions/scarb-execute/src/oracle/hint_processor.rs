@@ -20,7 +20,7 @@ use std::ops::ControlFlow;
 pub struct OracleHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
     /// Whether `--experimental-oracles` flag has been enabled.
-    pub experiment_enabled: bool,
+    experiment_enabled: bool,
 }
 
 impl<'a> OracleHintProcessor<'a> {
