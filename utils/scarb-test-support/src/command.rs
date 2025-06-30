@@ -1,7 +1,7 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use serde::de::DeserializeOwned;
-use snapbox::cmd::{Command as SnapboxCommand, OutputAssert};
+use snapbox::cmd::Command as SnapboxCommand;
 use std::ffi::OsString;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
