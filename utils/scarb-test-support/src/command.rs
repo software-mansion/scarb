@@ -1,7 +1,7 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use serde::de::DeserializeOwned;
-use snapbox::cmd::Command as SnapboxCommand;
+use snapbox::cmd::{Command as SnapboxCommand, OutputAssert};
 use std::ffi::OsString;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
@@ -138,5 +138,23 @@ impl CommandExt for SnapboxCommand {
         }
         // help: make sure that the command outputs NDJSON (`--json` flag).
         panic!("Failed to deserialize stdout to JSON");
+    }
+}
+
+pub trait OutputAssertExt {
+    /// A variant of [`OutputAssert::stdout_matches`] that accounts for Windows-only extra output
+    /// on process failures.
+    fn stdout_matches_with_windows_exit_code_error(self, expected: impl Into<String>) -> Self;
+}
+
+impl OutputAssertExt for OutputAssert {
+    fn stdout_matches_with_windows_exit_code_error(self, expected: impl Into<String>) -> Self {
+        let expected = expected.into();
+
+        #[cfg(windows)]
+        let expected =
+            format!("{expected}error: process did not exit successfully: exit code: 1\n");
+
+        self.stdout_matches(expected)
     }
 }

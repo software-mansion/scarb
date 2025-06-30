@@ -1,8 +1,9 @@
 use assert_fs::TempDir;
 use indoc::indoc;
-use snapbox::cmd::{Command, OutputAssert, cargo_bin};
+use snapbox::cmd::{Command, cargo_bin};
 
 use scarb_test_support::cargo::manifest_dir;
+use scarb_test_support::command::OutputAssertExt;
 
 #[test]
 fn scarb_build_is_called() {
@@ -50,23 +51,19 @@ fn build_can_be_skipped() {
     // Command::new and .env("SCARB_TARGET_DIR", t.path()) are used here, because this test is run
     // on a project from examples directory. In that case, the target dir (examples/hello_world/target)
     // is shared by all the tests, hence no need to create it multiple times.
-    let snapbox = Command::new(cargo_bin("scarb"))
+    Command::new(cargo_bin("scarb"))
         .env("SCARB_TARGET_DIR", t.path())
         .arg("cairo-run")
         .arg("--no-build")
         .current_dir(example)
         .assert()
-        .failure();
-
-    output_assert(
-        snapbox,
-        indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
-        error: package has not been compiled, file does not exist: `hello_world.sierra.json`
-        help: run `scarb build` to compile the package
-    "#},
-    );
+        .failure()
+        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+            error: package has not been compiled, file does not exist: `hello_world.sierra.json`
+            help: run `scarb build` to compile the package
+        "#});
 }
 
 #[test]
@@ -118,33 +115,20 @@ fn can_disable_gas() {
     // Command::new and .env("SCARB_TARGET_DIR", t.path()) are used here, because this test is run
     // on a project from examples directory. In that case, the target dir (examples/hello_world/target)
     // is shared by all the tests, hence no need to create it multiple times.
-    let snapbox = Command::new(cargo_bin("scarb"))
+    Command::new(cargo_bin("scarb"))
         .env("SCARB_TARGET_DIR", t.path())
         .arg("cairo-run")
         .arg("--available-gas")
         .arg("0")
         .current_dir(example)
         .assert()
-        .failure();
-
-    output_assert(
-        snapbox,
-        indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
-           Compiling hello_world v0.1.0 ([..]Scarb.toml)
-            Finished `dev` profile target(s) in [..]
-             Running hello_world
-        error: program requires gas counter, please provide `--available-gas` argument
-    "#},
-    );
-}
-
-fn output_assert(output: OutputAssert, expected: &str) {
-    #[cfg(windows)]
-    output.stdout_matches(format!(
-        "{expected}error: process did not exit successfully: exit code: 1\n"
-    ));
-    #[cfg(not(windows))]
-    output.stdout_matches(expected);
+        .failure()
+        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+               Compiling hello_world v0.1.0 ([..]Scarb.toml)
+                Finished `dev` profile target(s) in [..]
+                 Running hello_world
+            error: program requires gas counter, please provide `--available-gas` argument
+        "#});
 }

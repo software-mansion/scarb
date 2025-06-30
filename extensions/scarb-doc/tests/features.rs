@@ -5,7 +5,7 @@ use assert_fs::prelude::PathChild;
 use indoc::{formatdoc, indoc};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
-use scarb_test_support::command::Scarb;
+use scarb_test_support::command::{OutputAssertExt, Scarb};
 use scarb_test_support::project_builder::ProjectBuilder;
 
 const EXPECTED_ROOT_PACKAGE_NO_FEATURES_PATH: &str = "tests/data/hello_world_no_features";
@@ -95,7 +95,7 @@ fn test_workspace_without_features_in_manifest() {
         .lib_cairo(COMMON_CODE_WITHOUT_FEATURE)
         .build(&child_dir);
 
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .env("RUST_BACKTRACE", "0")
         .arg("doc")
         .args([
@@ -107,30 +107,15 @@ fn test_workspace_without_features_in_manifest() {
         ])
         .current_dir(&root_dir)
         .assert()
-        .failure();
+        .failure()
+        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+            error: metadata command failed: `scarb metadata` exited with error
 
-    #[cfg(windows)]
-    snapbox.stdout_matches(indoc! {r#"
-        error: metadata command failed: `scarb metadata` exited with error
+            stdout:
+            error: none of the selected packages contains `test_feature` feature
+            note: to use features, you need to define [features] section in Scarb.toml
 
-        stdout:
-        error: none of the selected packages contains `test_feature` feature
-        note: to use features, you need to define [features] section in Scarb.toml
-
-        stderr:
-        
-        error: process did not exit successfully: exit code: 1
-        "#});
-
-    #[cfg(not(windows))]
-    snapbox.stdout_matches(indoc! {r#"
-        error: metadata command failed: `scarb metadata` exited with error
-
-        stdout:
-        error: none of the selected packages contains `test_feature` feature
-        note: to use features, you need to define [features] section in Scarb.toml
-
-        stderr:
+            stderr:
 
         "#});
 }
@@ -303,7 +288,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
         .lib_cairo(COMMON_CODE_WITH_FEATURE)
         .build(&child_dir);
 
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .env("RUST_BACKTRACE", "0")
         .arg("doc")
         .args([
@@ -315,31 +300,17 @@ fn test_workspace_without_features_in_manifest_and_present_in_sub_package_code()
         ])
         .current_dir(&root_dir)
         .assert()
-        .failure();
-    #[cfg(windows)]
-    snapbox.stdout_matches(indoc! {r#"
+        .failure()
+        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
             error: metadata command failed: `scarb metadata` exited with error
-    
-            stdout:
-            error: none of the selected packages contains `test_feature` feature
-            note: to use features, you need to define [features] section in Scarb.toml
-    
-            stderr:
-            
-            error: process did not exit successfully: exit code: 1
-            "#});
 
-    #[cfg(not(windows))]
-    snapbox.stdout_matches(indoc! {r#"
-            error: metadata command failed: `scarb metadata` exited with error
-    
             stdout:
             error: none of the selected packages contains `test_feature` feature
             note: to use features, you need to define [features] section in Scarb.toml
-    
+
             stderr:
-    
-            "#});
+
+        "#});
 }
 
 #[test]
@@ -361,7 +332,7 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         .lib_cairo(COMMON_CODE_WITH_FEATURE)
         .build(&child_dir);
 
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .env("RUST_BACKTRACE", "0")
         .arg("doc")
         .args([
@@ -373,30 +344,15 @@ fn test_workspace_without_features_in_manifest_and_present_in_root_package_code(
         ])
         .current_dir(&root_dir)
         .assert()
-        .failure();
-
-    #[cfg(windows)]
-    snapbox.stdout_matches(indoc! {r#"
-        error: metadata command failed: `scarb metadata` exited with error
-
-        stdout:
-        error: none of the selected packages contains `test_feature` feature
-        note: to use features, you need to define [features] section in Scarb.toml
-
-        stderr:
-        
-        error: process did not exit successfully: exit code: 1
-        "#});
-
-    #[cfg(not(windows))]
-    snapbox.stdout_matches(indoc! {r#"
-        error: metadata command failed: `scarb metadata` exited with error
-
-        stdout:
-        error: none of the selected packages contains `test_feature` feature
-        note: to use features, you need to define [features] section in Scarb.toml
-
-        stderr:
+        .failure()
+        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+            error: metadata command failed: `scarb metadata` exited with error
+    
+            stdout:
+            error: none of the selected packages contains `test_feature` feature
+            note: to use features, you need to define [features] section in Scarb.toml
+    
+            stderr:
 
         "#});
 }

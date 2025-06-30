@@ -2,9 +2,8 @@ use assert_fs::TempDir;
 use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
 use indoc::indoc;
-use scarb_test_support::command::Scarb;
+use scarb_test_support::command::{OutputAssertExt, Scarb};
 use scarb_test_support::project_builder::ProjectBuilder;
-use snapbox::cmd::OutputAssert;
 
 fn build_executable_project() -> TempDir {
     let t = TempDir::new().unwrap();
@@ -120,22 +119,20 @@ fn prove_with_display_components() {
 fn prove_fails_when_execution_output_not_found() {
     let t = build_executable_project();
 
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("prove")
-            .arg("--execution-id=1")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        [..]Proving hello
-        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
-        error: execution directory not found: [..]/target/execute/hello/execution1
-        help: make sure to run `scarb execute` first
-        and then run `scarb prove` with correct execution ID
+    Scarb::quick_snapbox()
+        .arg("prove")
+        .arg("--execution-id=1")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+            [..]Proving hello
+            warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
+            error: execution directory not found: [..]/target/execute/hello/execution1
+            help: make sure to run `scarb execute` first
+            and then run `scarb prove` with correct execution ID
 
-        "#},
-    )
+        "#});
 }
 
 #[test]
@@ -156,22 +153,20 @@ fn prove_fails_when_cairo_pie_output() {
         .assert(predicates::path::exists());
 
     // Then try to prove it
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("prove")
-            .arg("--execution-id=1")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        [..]Proving hello
-        warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
-        error: proving cairo pie output is not supported: [..]/target/execute/hello/execution1/cairo_pie.zip
-        help: run `scarb execute --output=standard` first
-        and then run `scarb prove` with correct execution ID
+    Scarb::quick_snapbox()
+        .arg("prove")
+        .arg("--execution-id=1")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+            [..]Proving hello
+            warn: soundness of proof is not yet guaranteed by Stwo, use at your own risk
+            error: proving cairo pie output is not supported: [..]/target/execute/hello/execution1/cairo_pie.zip
+            help: run `scarb execute --output=standard` first
+            and then run `scarb prove` with correct execution ID
 
-        "#},
-    );
+        "#});
 }
 
 #[test]
@@ -205,26 +200,15 @@ fn prove_with_execute() {
 fn prove_fails_on_windows() {
     let t = build_executable_project();
 
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("prove")
-            .arg("--execute")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        error: `scarb prove` is not supported on Windows
-        help: use WSL or a Linux/macOS machine instead
+    Scarb::quick_snapbox()
+        .arg("prove")
+        .arg("--execute")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+            error: `scarb prove` is not supported on Windows
+            help: use WSL or a Linux/macOS machine instead
 
-        "#},
-    )
-}
-
-fn output_assert(output: OutputAssert, expected: &str) {
-    #[cfg(windows)]
-    output.stdout_matches(format!(
-        "{expected}error: process did not exit successfully: exit code: 1\n"
-    ));
-    #[cfg(not(windows))]
-    output.stdout_matches(expected);
+        "#});
 }

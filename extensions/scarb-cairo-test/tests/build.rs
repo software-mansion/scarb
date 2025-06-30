@@ -1,7 +1,7 @@
 use assert_fs::TempDir;
 use assert_fs::prelude::PathChild;
 use indoc::{formatdoc, indoc};
-use scarb_test_support::command::Scarb;
+use scarb_test_support::command::{OutputAssertExt, Scarb};
 use scarb_test_support::project_builder::ProjectBuilder;
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
 
@@ -161,33 +161,20 @@ fn features_test_build_success() {
 fn features_test_build_failed() {
     let t = TempDir::new().unwrap();
     get_features_test_build(&t);
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("cairo-test")
         .current_dir(&t)
         .assert()
-        .failure();
+        .failure()
+        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+            [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
+            error[E0006]: Function not found.
+             --> [..]/src/lib.cairo[..]
+            fn main() -> felt252 { f() }
+                                   ^
 
-    #[cfg(not(windows))]
-    snapbox.stdout_matches(indoc! {r#"
-        [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
-        error[E0006]: Function not found.
-         --> [..]/src/lib.cairo[..]
-        fn main() -> felt252 { f() }
-                               ^
-        
-        error: could not compile `hello` due to previous error[..]
-    "#});
-    #[cfg(windows)]
-    snapbox.stdout_matches(indoc! {r#"
-        [..]Compiling test(hello_unittest) hello v1.0.0 ([..])
-        error[E0006]: Function not found.
-         --> [..]/src/lib.cairo[..]
-        fn main() -> felt252 { f() }
-                               ^
-        
-        error: could not compile `hello` due to previous error[..]
-        error: process did not exit successfully: exit code: 1
-    "#});
+            error: could not compile `hello` due to previous error[..]
+        "#});
 }
 
 #[test]
