@@ -1,3 +1,6 @@
+use super::connection::ConnectionManager;
+use crate::oracle::encodable_result::EncodableResult;
+use anyhow::Result;
 use cairo_lang_casm::hints::{Hint, StarknetHint};
 use cairo_lang_runner::casm_run::{
     MemBuffer, cell_ref_to_relocatable, extract_relocatable, vm_get_range,
@@ -11,6 +14,8 @@ use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::vm::errors::vm_errors::VirtualMachineError;
 use cairo_vm::vm::runners::cairo_runner::{ResourceTracker, RunResources};
 use cairo_vm::vm::vm_core::VirtualMachine;
+use starknet_core::codec::{Decode, Encode};
+use starknet_core::types::ByteArray;
 use std::any::Any;
 use std::collections::HashMap;
 use std::ops::ControlFlow;
@@ -19,6 +24,7 @@ pub struct OracleHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
     /// Whether `--experimental-oracles` flag has been enabled.
     experiment_enabled: bool,
+    connections: ConnectionManager,
 }
 
 impl<'a> OracleHintProcessor<'a> {
@@ -27,6 +33,7 @@ impl<'a> OracleHintProcessor<'a> {
         Self {
             cairo_hint_processor,
             experiment_enabled,
+            connections: ConnectionManager::new(),
         }
     }
 
@@ -100,11 +107,35 @@ impl<'a> OracleHintProcessor<'a> {
     /// Execute the `oracle_invoke` cheat code.
     fn execute_invoke(
         &mut self,
-        _inputs: Vec<Felt252>,
+        inputs: Vec<Felt252>,
         res_segment: &mut MemBuffer,
     ) -> Result<(), HintError> {
-        let response: Vec<Felt252> = vec![]; // TODO
+        let mut invoke = move || -> Result<Vec<Felt252>> {
+            let mut inputs_iter = inputs.iter();
+
+            let connection_string = ByteArray::decode_iter(&mut inputs_iter)?.try_into()?;
+
+            let selector = Felt252::decode_iter(&mut inputs_iter)?
+                .to_bytes_be()
+                .to_vec()
+                .try_into()?;
+
+            let calldata = inputs_iter.as_slice();
+
+            self.connections
+                .connect(connection_string)?
+                .call(selector, calldata)
+        };
+
+        let result = invoke();
+
+        let mut response: Vec<Felt252> = vec![];
+        EncodableResult::from(result)
+            .encode(&mut response)
+            .expect("response encoding should never fail");
+
         res_segment.write_data(response.into_iter())?;
+
         Ok(())
     }
 }
