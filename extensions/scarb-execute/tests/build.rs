@@ -287,7 +287,7 @@ fn undefined_target_specified() {
         .assert()
         .failure()
         .stdout_matches_with_windows_exit_code_error(indoc! {r#"
-            error: no executable target with name `secondary` found for package `hello_world`,
+            error: no executable target with name `secondary` found for package `hello_world`
         "#});
 
     Scarb::quick_snapbox()
