@@ -1,6 +1,6 @@
 use assert_fs::TempDir;
 use indoc::indoc;
-use scarb_test_support::command::{OutputAssertExt, Scarb};
+use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 // TODO(mkaput): Remove starknet dependency in favour of the oracle package.
@@ -33,7 +33,7 @@ fn oracle_invoke_without_experimental_flag_fails() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_matches_with_windows_exit_code_error(indoc! {r#"
+        .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
