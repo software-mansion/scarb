@@ -110,26 +110,8 @@ impl<'a> OracleHintProcessor<'a> {
         inputs: Vec<Felt252>,
         res_segment: &mut MemBuffer,
     ) -> Result<(), HintError> {
-        let mut inputs_iter = inputs.iter();
-
-        let _connection_string: String = ByteArray::decode_iter(&mut inputs_iter)
-            .map_err(input_decode_error)?
-            .try_into()
-            .map_err(from_utf8_error("connection string"))?;
-
-        let _selector: String = Felt252::decode_iter(&mut inputs_iter)
-            .map_err(input_decode_error)?
-            .to_bytes_be()
-            .to_vec()
-            .try_into()
-            .map_err(from_utf8_error("oracle selector"))?;
-
-        let _calldata = inputs_iter.as_slice();
-
         let response: Vec<Felt252> = vec![]; // TODO
-
         res_segment.write_data(response.into_iter())?;
-
         Ok(())
     }
 }
