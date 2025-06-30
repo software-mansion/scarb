@@ -16,6 +16,7 @@ use starknet_core::types::ByteArray;
 use std::any::Any;
 use std::collections::HashMap;
 use std::ops::ControlFlow;
+use std::string::FromUtf8Error;
 
 pub struct OracleHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
@@ -111,15 +112,17 @@ impl<'a> OracleHintProcessor<'a> {
     ) -> Result<(), HintError> {
         let mut inputs_iter = inputs.iter();
 
-        let _connection_string =
-            ByteArray::decode_iter(&mut inputs_iter).map_err(input_decode_error)?;
+        let _connection_string: String = ByteArray::decode_iter(&mut inputs_iter)
+            .map_err(input_decode_error)?
+            .try_into()
+            .map_err(from_utf8_error("connection string"))?;
 
-        let _selector = {
-            let felt = Felt252::decode_iter(&mut inputs_iter).map_err(input_decode_error)?;
-            std::str::from_utf8(&felt.to_bytes_be())
-                .map_err(|_| HintError::CustomHint("Non-UTF-8 oracle selector.".into()))?
-                .to_owned()
-        };
+        let _selector: String = Felt252::decode_iter(&mut inputs_iter)
+            .map_err(input_decode_error)?
+            .to_bytes_be()
+            .to_vec()
+            .try_into()
+            .map_err(from_utf8_error("oracle selector"))?;
 
         let _calldata = inputs_iter.as_slice();
 
@@ -184,4 +187,8 @@ impl<'a> ResourceTracker for OracleHintProcessor<'a> {
 
 fn input_decode_error(e: CodecError) -> HintError {
     HintError::CustomHint(format!("Failed to decode input: {e}").into())
+}
+
+fn from_utf8_error(what: &str) -> impl FnOnce(FromUtf8Error) -> HintError {
+    move |e| HintError::CustomHint(format!("Received non-UTF-8 {what}: {e}").into())
 }
