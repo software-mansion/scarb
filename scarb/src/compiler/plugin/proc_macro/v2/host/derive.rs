@@ -26,8 +26,12 @@ impl ProcMacroHostPlugin {
     /// Returns a list of expansions that this plugin should apply.
     fn parse_derive(&self, db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> Vec<DeriveFound> {
         let attrs = match item_ast {
-            ast::ModuleItem::Struct(struct_ast) => Some(struct_ast.query_attr(db, DERIVE_ATTR)),
-            ast::ModuleItem::Enum(enum_ast) => Some(enum_ast.query_attr(db, DERIVE_ATTR)),
+            ast::ModuleItem::Struct(struct_ast) => {
+                Some(struct_ast.query_attr(db, DERIVE_ATTR).collect_vec())
+            }
+            ast::ModuleItem::Enum(enum_ast) => {
+                Some(enum_ast.query_attr(db, DERIVE_ATTR).collect_vec())
+            }
             _ => None,
         };
 
@@ -57,7 +61,7 @@ impl ProcMacroHostPlugin {
                 ))
                 .map(|id| DeriveFound {
                     id,
-                    call_site: CallSiteLocation::new(segment, db),
+                    call_site: CallSiteLocation::new(&segment, db),
                 })
             })
             .collect_vec()

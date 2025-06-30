@@ -110,8 +110,7 @@ impl ProcMacroHostPlugin {
                 if let MaybeImplBody::Some(body) = imp.body(db) {
                     body.items(db)
                         .elements(db)
-                        .into_iter()
-                        .flat_map(|item| item.attributes_elements(db))
+                        .flat_map(|item| item.attributes_elements(db).collect_vec())
                         .map(|attr| attr.attr(db).as_syntax_node().get_text_without_trivia(db))
                         .collect()
                 } else {
@@ -122,8 +121,7 @@ impl ProcMacroHostPlugin {
                 if let MaybeTraitBody::Some(body) = trt.body(db) {
                     body.items(db)
                         .elements(db)
-                        .into_iter()
-                        .flat_map(|item| item.attributes_elements(db))
+                        .flat_map(|item| item.attributes_elements(db).collect_vec())
                         .map(|attr| attr.attr(db).as_syntax_node().get_text_without_trivia(db))
                         .collect()
                 } else {

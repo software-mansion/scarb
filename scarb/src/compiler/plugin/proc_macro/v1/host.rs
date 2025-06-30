@@ -171,8 +171,7 @@ impl ProcMacroHostPlugin {
                 if let MaybeImplBody::Some(body) = imp.body(db) {
                     body.items(db)
                         .elements(db)
-                        .into_iter()
-                        .flat_map(|item| item.attributes_elements(db))
+                        .flat_map(|item| item.attributes_elements(db).collect_vec())
                         .map(|attr| attr.attr(db).as_syntax_node().get_text_without_trivia(db))
                         .collect()
                 } else {
@@ -183,8 +182,7 @@ impl ProcMacroHostPlugin {
                 if let MaybeTraitBody::Some(body) = trt.body(db) {
                     body.items(db)
                         .elements(db)
-                        .into_iter()
-                        .flat_map(|item| item.attributes_elements(db))
+                        .flat_map(|item| item.attributes_elements(db).collect_vec())
                         .map(|attr| attr.attr(db).as_syntax_node().get_text_without_trivia(db))
                         .collect()
                 } else {
@@ -235,15 +233,15 @@ impl ProcMacroHostPlugin {
                         item_builder.add_node(body.lbrace(db).as_syntax_node());
 
                         let item_list = body.items(db);
-                        for item in item_list.elements(db).iter() {
+                        for item in item_list.elements(db) {
                             let ast::TraitItem::Function(func) = item else {
                                 item_builder.add_node(item.as_syntax_node());
                                 continue;
                             };
 
-                            let mut func_builder = PatchBuilder::new(db, func);
-                            let attrs = func.attributes(db).elements(db);
-                            let found = self.parse_attrs(db, &mut func_builder, attrs, func);
+                            let mut func_builder = PatchBuilder::new(db, &func);
+                            let attrs = func.attributes(db).elements(db).collect();
+                            let found = self.parse_attrs(db, &mut func_builder, attrs, &func);
                             if let Some(name) = found.as_name() {
                                 used_attr_names.insert(name);
                             }
@@ -257,7 +255,7 @@ impl ProcMacroHostPlugin {
                                     &mut context,
                                     &mut item_builder,
                                     found,
-                                    func,
+                                    &func,
                                     token_stream,
                                 );
                         }
@@ -303,7 +301,7 @@ impl ProcMacroHostPlugin {
                             };
 
                             let mut func_builder = PatchBuilder::new(db, &func);
-                            let attrs = func.attributes(db).elements(db);
+                            let attrs = func.attributes(db).elements(db).collect();
                             let found = self.parse_attrs(db, &mut func_builder, attrs, &func);
                             if let Some(name) = found.as_name() {
                                 used_attr_names.insert(name);
@@ -405,7 +403,7 @@ impl ProcMacroHostPlugin {
         let mut item_builder = PatchBuilder::new(db, &item_ast);
         let input = match item_ast.clone() {
             ast::ModuleItem::Trait(trait_ast) => {
-                let attrs = trait_ast.attributes(db).elements(db);
+                let attrs = trait_ast.attributes(db).elements(db).collect();
                 let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(trait_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(trait_ast.trait_kw(db).as_syntax_node());
@@ -415,7 +413,7 @@ impl ProcMacroHostPlugin {
                 expansion
             }
             ast::ModuleItem::Impl(impl_ast) => {
-                let attrs = impl_ast.attributes(db).elements(db);
+                let attrs = impl_ast.attributes(db).elements(db).collect();
                 let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(impl_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(impl_ast.impl_kw(db).as_syntax_node());
@@ -427,7 +425,7 @@ impl ProcMacroHostPlugin {
                 expansion
             }
             ast::ModuleItem::Module(module_ast) => {
-                let attrs = module_ast.attributes(db).elements(db);
+                let attrs = module_ast.attributes(db).elements(db).collect();
                 let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(module_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(module_ast.module_kw(db).as_syntax_node());
@@ -436,7 +434,7 @@ impl ProcMacroHostPlugin {
                 expansion
             }
             ast::ModuleItem::FreeFunction(free_func_ast) => {
-                let attrs = free_func_ast.attributes(db).elements(db);
+                let attrs = free_func_ast.attributes(db).elements(db).collect();
                 let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(free_func_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(free_func_ast.declaration(db).as_syntax_node());
@@ -444,7 +442,7 @@ impl ProcMacroHostPlugin {
                 expansion
             }
             ast::ModuleItem::ExternFunction(extern_func_ast) => {
-                let attrs = extern_func_ast.attributes(db).elements(db);
+                let attrs = extern_func_ast.attributes(db).elements(db).collect();
                 let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(extern_func_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(extern_func_ast.extern_kw(db).as_syntax_node());
@@ -453,7 +451,7 @@ impl ProcMacroHostPlugin {
                 expansion
             }
             ast::ModuleItem::ExternType(extern_type_ast) => {
-                let attrs = extern_type_ast.attributes(db).elements(db);
+                let attrs = extern_type_ast.attributes(db).elements(db).collect();
                 let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(extern_type_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(extern_type_ast.extern_kw(db).as_syntax_node());
@@ -464,7 +462,7 @@ impl ProcMacroHostPlugin {
                 expansion
             }
             ast::ModuleItem::Struct(struct_ast) => {
-                let attrs = struct_ast.attributes(db).elements(db);
+                let attrs = struct_ast.attributes(db).elements(db).collect();
                 let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(struct_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(struct_ast.struct_kw(db).as_syntax_node());
@@ -476,7 +474,7 @@ impl ProcMacroHostPlugin {
                 expansion
             }
             ast::ModuleItem::Enum(enum_ast) => {
-                let attrs = enum_ast.attributes(db).elements(db);
+                let attrs = enum_ast.attributes(db).elements(db).collect();
                 let expansion = self.parse_attrs(db, &mut item_builder, attrs, &item_ast);
                 item_builder.add_node(enum_ast.visibility(db).as_syntax_node());
                 item_builder.add_node(enum_ast.enum_kw(db).as_syntax_node());
@@ -554,8 +552,12 @@ impl ProcMacroHostPlugin {
     /// Returns a list of expansions that this plugin should apply.
     fn parse_derive(&self, db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> Vec<ProcMacroId> {
         let attrs = match item_ast {
-            ast::ModuleItem::Struct(struct_ast) => Some(struct_ast.query_attr(db, DERIVE_ATTR)),
-            ast::ModuleItem::Enum(enum_ast) => Some(enum_ast.query_attr(db, DERIVE_ATTR)),
+            ast::ModuleItem::Struct(struct_ast) => {
+                Some(struct_ast.query_attr(db, DERIVE_ATTR).collect_vec())
+            }
+            ast::ModuleItem::Enum(enum_ast) => {
+                Some(enum_ast.query_attr(db, DERIVE_ATTR).collect_vec())
+            }
             _ => None,
         };
 
