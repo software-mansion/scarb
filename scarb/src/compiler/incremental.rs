@@ -120,8 +120,11 @@ fn save_component_cache(
         let cache_dir = unit.incremental_cache_dir(ws);
         let component_id = format!("{}-{}", component.target_name(), digest);
         let fingerprint_dir = fingerprint_dir.child(&component_id);
-        let fingerprint_file =
-            fingerprint_dir.create_rw(&component_id, "fingerprint file", ws.config())?;
+        let fingerprint_file = fingerprint_dir.create_rw(
+            component.target_name().as_str(),
+            "fingerprint file",
+            ws.config(),
+        )?;
         fingerprint_file
             .deref()
             .write_all(digest.as_bytes())

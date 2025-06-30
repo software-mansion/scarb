@@ -120,7 +120,7 @@ pub fn is_fresh(
     let component = format!("{target_name}-{digest}");
     let fingerprint_dir = fingerprint_dir.child(&component);
     let fingerprint_dir = fingerprint_dir.path_unchecked();
-    let old_digest_path = fingerprint_dir.join(&component);
+    let old_digest_path = fingerprint_dir.join(target_name);
 
     if !old_digest_path.exists() {
         return Ok(false);

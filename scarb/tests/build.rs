@@ -1944,7 +1944,12 @@ fn incremental_artifacts_emitted() {
     );
     assert_eq!(
         t.child(format!("target/dev/.fingerprint/{tag}")).files(),
-        vec![tag.as_str()]
+        vec!["core"]
+    );
+    assert_eq!(
+        t.child(format!("target/dev/.fingerprint/{tag}/core"))
+            .read_to_string(),
+        tag.get(5..).unwrap()
     );
 
     Scarb::quick_snapbox()
@@ -1970,6 +1975,11 @@ fn incremental_artifacts_emitted() {
     );
     assert_eq!(
         t.child(format!("target/dev/.fingerprint/{tag}")).files(),
-        vec![tag.as_str()]
+        vec!["core"]
+    );
+    assert_eq!(
+        t.child(format!("target/dev/.fingerprint/{tag}/core"))
+            .read_to_string(),
+        tag.get(5..).unwrap()
     );
 }
