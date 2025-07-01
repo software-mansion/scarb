@@ -7,6 +7,7 @@ use cairo_vm::Felt252;
 use camino::Utf8PathBuf;
 use clap::{Parser, ValueEnum};
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
+use std::fmt::Display;
 
 /// CLI command name.
 pub const COMMAND_NAME: &str = "execute";
@@ -48,6 +49,25 @@ pub struct ExecutionArgs {
     pub run: RunArgs,
 }
 
+impl ToArgs for ExecutionArgs {
+    fn to_args(&self) -> Vec<String> {
+        let Self {
+            no_build,
+            build_target_args,
+            run,
+            // Should be passed via env.
+            features: _,
+        } = self;
+        let mut args = Vec::new();
+        if *no_build {
+            args.push("--no-build".to_string());
+        }
+        args.extend(build_target_args.to_args());
+        args.extend(run.to_args());
+        args
+    }
+}
+
 /// Build target specifier.
 #[derive(Parser, Clone, Debug)]
 pub struct BuildTargetSpecifier {
@@ -58,6 +78,25 @@ pub struct BuildTargetSpecifier {
     /// Choose build target to run by function path.
     #[arg(long, conflicts_with = "executable_name")]
     pub executable_function: Option<String>,
+}
+
+impl ToArgs for BuildTargetSpecifier {
+    fn to_args(&self) -> Vec<String> {
+        let Self {
+            executable_name,
+            executable_function,
+        } = self;
+        if let Some(executable_name) = executable_name {
+            return vec!["--executable-name".to_string(), executable_name.to_string()];
+        }
+        if let Some(executable_function) = executable_function {
+            return vec![
+                "--executable-function".to_string(),
+                executable_function.to_string(),
+            ];
+        }
+        Vec::new()
+    }
 }
 
 /// Runner arguments.
@@ -84,6 +123,32 @@ pub struct RunArgs {
     pub print_resource_usage: bool,
 }
 
+impl ToArgs for RunArgs {
+    fn to_args(&self) -> Vec<String> {
+        let Self {
+            arguments,
+            output,
+            target,
+            print_program_output,
+            print_resource_usage,
+        } = self;
+        let mut args = arguments.to_args();
+        if let Some(output) = output {
+            args.push("--output".to_string());
+            args.push(output.to_string());
+        }
+        args.push("--target".to_string());
+        args.push(target.to_string());
+        if *print_program_output {
+            args.push("--print-program-output".to_string());
+        }
+        if *print_resource_usage {
+            args.push("--print-resource-usage".to_string());
+        }
+        args
+    }
+}
+
 /// Arguments to the executable function.
 #[derive(Parser, Debug, Clone)]
 pub struct ProgramArguments {
@@ -94,6 +159,27 @@ pub struct ProgramArguments {
     /// Serialized arguments to the executable function from a file.
     #[arg(long, conflicts_with = "arguments")]
     pub arguments_file: Option<Utf8PathBuf>,
+}
+
+impl ToArgs for ProgramArguments {
+    fn to_args(&self) -> Vec<String> {
+        let Self {
+            arguments,
+            arguments_file,
+        } = self;
+        if let Some(arguments_file) = arguments_file {
+            return vec!["--arguments-file".to_string(), arguments_file.to_string()];
+        }
+        if arguments.is_empty() {
+            return vec![];
+        }
+        let arguments = arguments
+            .iter()
+            .map(|a| a.to_string())
+            .collect::<Vec<String>>()
+            .join(",");
+        vec!["--arguments".to_string(), arguments]
+    }
 }
 
 /// Output format for the execution
@@ -137,6 +223,16 @@ impl OutputFormat {
     }
 }
 
+impl Display for OutputFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OutputFormat::CairoPie => write!(f, "cairo-pie"),
+            OutputFormat::Standard => write!(f, "standard"),
+            OutputFormat::None => write!(f, "none"),
+        }
+    }
+}
+
 /// Execution target for the program.
 #[derive(ValueEnum, Clone, Debug)]
 pub enum ExecutionTarget {
@@ -154,4 +250,19 @@ impl ExecutionTarget {
     pub fn is_bootloader(&self) -> bool {
         matches!(self, ExecutionTarget::Bootloader)
     }
+}
+
+impl Display for ExecutionTarget {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ExecutionTarget::Bootloader => write!(f, "bootloader"),
+            ExecutionTarget::Standalone => write!(f, "standalone"),
+        }
+    }
+}
+
+#[doc(hidden)]
+pub trait ToArgs {
+    /// Convert parsed args to an array of arguments.
+    fn to_args(&self) -> Vec<String>;
 }
