@@ -11,9 +11,10 @@ use crate::{
 
 use anyhow::anyhow;
 use anyhow::{Context, Result};
+use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
-use cairo_lang_semantic::db::SemanticGroup;
+use cairo_lang_semantic::{SemanticDiagnostic, db::SemanticGroup};
 use cairo_lint::CAIRO_LINT_TOOL_NAME;
 use cairo_lint::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
@@ -74,6 +75,9 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     for package in opts.packages {
         let package_name = &package.id.name;
         let formatter_config = package.fmt_config()?;
+        let mut was_error_in_package = false;
+        let mut diagnostics_per_cu: Vec<(RootDatabase, Vec<SemanticDiagnostic>)> =
+            Default::default();
         let package_compilation_units = if opts.test {
             let mut result = vec![];
             let integration_test_compilation_unit =
@@ -223,20 +227,25 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         matches!(diag.severity(), Severity::Error)
                             || (!warnings_allowed && matches!(diag.severity(), Severity::Warning))
                     }) {
-                        return Err(anyhow!(
-                            "lint checking `{package_name}` failed due to previous errors"
-                        ));
+                        was_error_in_package = true;
                     }
-
-                    if opts.fix {
-                        let fixes = get_fixes(&db, diagnostics);
-                        for (file_id, fixes) in fixes.into_iter() {
-                            ws.config()
-                                .ui()
-                                .print(Status::new("Fixing", &file_id.file_name(&db)));
-                            apply_file_fixes(file_id, fixes, &db, formatter_config.clone())?;
-                        }
-                    }
+                    diagnostics_per_cu.push((db, diagnostics));
+                }
+            }
+        }
+        if was_error_in_package {
+            return Err(anyhow!(
+                "lint checking `{package_name}` failed due to previous errors"
+            ));
+        }
+        if opts.fix {
+            for (cu_db, cu_diagnostics) in diagnostics_per_cu.into_iter() {
+                let fixes = get_fixes(&cu_db, cu_diagnostics);
+                for (file_id, fixes) in fixes.into_iter() {
+                    ws.config()
+                        .ui()
+                        .print(Status::new("Fixing", &file_id.file_name(&cu_db)));
+                    apply_file_fixes(file_id, fixes, &cu_db, formatter_config.clone())?;
                 }
             }
         }
