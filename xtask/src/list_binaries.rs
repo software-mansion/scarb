@@ -28,5 +28,11 @@ pub fn list_binaries() -> Result<Vec<String>> {
         let entry = entry?;
         bins.push(entry.file_name().to_string_lossy().to_string());
     }
+    for entry in fs::read_dir("nightly")? {
+        let entry = entry?;
+        if entry.file_type()?.is_dir() {
+            bins.push(entry.file_name().to_string_lossy().to_string());
+        }
+    }
     Ok(bins)
 }

@@ -43,11 +43,11 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test --profile=ci --all-features --no-fail-fast --workspace --exclude scarb-prove --exclude scarb-verify
+      - run: cargo test --profile=ci --all-features --no-fail-fast --workspace
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test --profile=ci --no-fail-fast -p scarb-prove -p scarb-verify
+      - run: cargo +${{ env.RUST_NIGHTLY_TOOLCHAIN }} test --manifest-path=./nightly/Cargo.toml --target-dir=./target --profile=ci --no-fail-fast --workspace
 
   snforge-init:
     runs-on: ubuntu-latest

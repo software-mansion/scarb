@@ -26,6 +26,24 @@ updates:
           - "salsa"
           - "cairo-vm"
 
+  - package-ecosystem: "cargo"
+    directory: "/nightly/"
+    schedule:
+      interval: "weekly"
+    groups:
+      non critical:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "cairo-lang-*"
+          - "cairo-felt"
+          - "starknet-types-core"
+          - "deno_task_shell"
+          - "gix"
+          - "semver"
+          - "salsa"
+          - "cairo-vm"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
