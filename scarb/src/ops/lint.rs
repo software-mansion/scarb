@@ -5,7 +5,7 @@ use crate::{
         CompilationUnit, CompilationUnitAttributes,
         db::{ScarbDatabase, build_scarb_root_database},
     },
-    core::{PackageId, TargetKind},
+    core::{PackageId, PackageName, TargetKind},
     ops,
 };
 
@@ -14,6 +14,7 @@ use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
+use cairo_lang_formatter::FormatterConfig;
 use cairo_lang_semantic::{SemanticDiagnostic, db::SemanticGroup};
 use cairo_lint::CAIRO_LINT_TOOL_NAME;
 use cairo_lint::{
@@ -30,6 +31,12 @@ use crate::internal::fsx::canonicalize;
 use super::{
     CompilationUnitsOpts, FeaturesOpts, compile_unit, plugins_required_for_units, validate_features,
 };
+
+struct CompilationUnitDiagnostics {
+    pub db: RootDatabase,
+    pub diagnostics: Vec<SemanticDiagnostic>,
+    pub formatter_config: FormatterConfig,
+}
 
 pub struct LintOptions {
     pub packages: Vec<Package>,
@@ -72,12 +79,14 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         }
     }
 
+    // We store the state of the workspace diagnostics, so we can decide upon throwing an error later on.
+    // Also we want to apply fixes only if there were no previous errors.
+    let mut packages_with_error: Vec<PackageName> = Default::default();
+    let mut diagnostics_per_cu: Vec<CompilationUnitDiagnostics> = Default::default();
+
     for package in opts.packages {
         let package_name = &package.id.name;
         let formatter_config = package.fmt_config()?;
-        let mut was_error_in_package = false;
-        let mut diagnostics_per_cu: Vec<(RootDatabase, Vec<SemanticDiagnostic>)> =
-            Default::default();
         let package_compilation_units = if opts.test {
             let mut result = vec![];
             let integration_test_compilation_unit =
@@ -227,29 +236,53 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         matches!(diag.severity(), Severity::Error)
                             || (!warnings_allowed && matches!(diag.severity(), Severity::Warning))
                     }) {
-                        was_error_in_package = true;
+                        packages_with_error.push(package_name.clone());
                     }
-                    diagnostics_per_cu.push((db, diagnostics));
-                }
-            }
-        }
-        if was_error_in_package {
-            return Err(anyhow!(
-                "lint checking `{package_name}` failed due to previous errors"
-            ));
-        }
-        if opts.fix {
-            for (cu_db, cu_diagnostics) in diagnostics_per_cu.into_iter() {
-                let fixes = get_fixes(&cu_db, cu_diagnostics);
-                for (file_id, fixes) in fixes.into_iter() {
-                    ws.config()
-                        .ui()
-                        .print(Status::new("Fixing", &file_id.file_name(&cu_db)));
-                    apply_file_fixes(file_id, fixes, &cu_db, formatter_config.clone())?;
+                    diagnostics_per_cu.push(CompilationUnitDiagnostics {
+                        db,
+                        diagnostics,
+                        formatter_config: formatter_config.clone(),
+                    });
                 }
             }
         }
     }
+
+    if !packages_with_error.is_empty() {
+        if packages_with_error.len() == 1 {
+            let package_name = packages_with_error[0].to_string();
+            return Err(anyhow!(
+                "lint checking `{package_name}` failed due to previous errors"
+            ));
+        } else {
+            let package_names = packages_with_error
+                .iter()
+                .map(|name| format!("`{name}`"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            return Err(anyhow!(
+                "lint checking {package_names} packages failed due to previous errors"
+            ));
+        }
+    }
+
+    if opts.fix {
+        for CompilationUnitDiagnostics {
+            db,
+            diagnostics,
+            formatter_config,
+        } in diagnostics_per_cu.into_iter()
+        {
+            let fixes = get_fixes(&db, diagnostics);
+            for (file_id, fixes) in fixes.into_iter() {
+                ws.config()
+                    .ui()
+                    .print(Status::new("Fixing", &file_id.file_name(&db)));
+                apply_file_fixes(file_id, fixes, &db, formatter_config.clone())?;
+            }
+        }
+    }
+
     Ok(())
 }
 
