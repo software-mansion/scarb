@@ -3,17 +3,13 @@ use assert_fs::prelude::*;
 use serde::de::DeserializeOwned;
 use snapbox::cmd::Command as SnapboxCommand;
 use std::ffi::OsString;
+use std::fs;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::sync::LazyLock;
-use std::{fs, iter};
 
 use crate::cargo::cargo_bin;
-use scarb::core::Config;
-use scarb_ui::Verbosity;
-
-use crate::fsx::{AssertFsUtf8Ext, PathUtf8Ext};
 
 pub struct Scarb {
     cache: EnvPath,
@@ -32,7 +28,8 @@ impl Scarb {
         }
     }
 
-    pub fn from_config(config: &Config) -> Self {
+    #[cfg(feature = "scarb-config")]
+    pub fn from_config(config: &scarb::core::Config) -> Self {
         Self {
             cache: EnvPath::borrow(config.dirs().cache_dir.path_unchecked().as_std_path()),
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
@@ -74,15 +71,18 @@ impl Scarb {
         }
     }
 
-    pub fn test_config(manifest: impl AssertFsUtf8Ext) -> Config {
+    #[cfg(feature = "scarb-config")]
+    pub fn test_config(manifest: impl crate::fsx::AssertFsUtf8Ext) -> scarb::core::Config {
+        use crate::fsx::PathUtf8Ext;
+
         let cache_dir = TempDir::new().unwrap();
         let config_dir = TempDir::new().unwrap();
 
-        Config::builder(manifest.utf8_path())
+        scarb::core::Config::builder(manifest.utf8_path())
             .global_cache_dir_override(Some(cache_dir.try_as_utf8().unwrap()))
             .global_config_dir_override(Some(config_dir.try_as_utf8().unwrap()))
-            .path_env_override(Some(iter::empty::<PathBuf>()))
-            .ui_verbosity(Verbosity::Verbose)
+            .path_env_override(Some(std::iter::empty::<PathBuf>()))
+            .ui_verbosity(scarb_ui::Verbosity::Verbose)
             .log_filter_directive(Some("scarb=trace"))
             .build()
             .unwrap()
@@ -95,6 +95,7 @@ impl Default for Scarb {
     }
 }
 
+#[allow(dead_code)]
 enum EnvPath {
     Managed(TempDir),
     Unmanaged(PathBuf),
@@ -105,6 +106,7 @@ impl EnvPath {
         Self::Managed(TempDir::new().unwrap())
     }
 
+    #[cfg(feature = "scarb-config")]
     fn borrow(path: impl AsRef<Path>) -> Self {
         Self::Unmanaged(path.as_ref().to_path_buf())
     }
