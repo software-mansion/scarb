@@ -4,6 +4,7 @@ use bincode::enc::write::Writer;
 use cairo_lang_executable::executable::{EntryPointKind, Executable};
 use cairo_lang_runner::casm_run::format_for_panic;
 use cairo_lang_runner::{Arg, CairoHintProcessor, build_hints_dict};
+use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_vm::cairo_run::CairoRunConfig;
 use cairo_vm::cairo_run::cairo_run_program;
 use cairo_vm::types::layout_name::LayoutName;
@@ -13,7 +14,9 @@ use cairo_vm::{Felt252, cairo_run};
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use scarb_extensions_cli::execute::{Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat};
+use scarb_extensions_cli::execute::{
+    Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
+};
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
 use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};
@@ -33,6 +36,20 @@ pub fn main_inner(args: Args, ui: Ui) -> Result<Option<usize>, anyhow::Error> {
         .exec()?;
     let package = args.packages_filter.match_one(&metadata)?;
     execute(&metadata, &package, &args.execution, &ui)
+}
+
+fn read_arguments(arguments: ProgramArguments) -> Result<Vec<Arg>> {
+    if let Some(path) = arguments.arguments_file {
+        let file = fs::File::open(&path).with_context(|| "reading arguments file failed")?;
+        let as_vec: Vec<BigUintAsHex> =
+            serde_json::from_reader(file).with_context(|| "deserializing arguments file failed")?;
+        Ok(as_vec
+            .into_iter()
+            .map(|v| Arg::Value(v.value.into()))
+            .collect())
+    } else {
+        Ok(arguments.arguments.into_iter().map(Arg::Value).collect())
+    }
 }
 
 pub fn execute(
@@ -118,9 +135,9 @@ pub fn execute(
 
     let mut hint_processor = CairoHintProcessor {
         runner: None,
-        user_args: vec![vec![Arg::Array(
-            args.run.arguments.clone().read_arguments()?,
-        )]],
+        user_args: vec![vec![Arg::Array(read_arguments(
+            args.run.arguments.clone(),
+        )?)]],
         string_to_hint,
         starknet_state: Default::default(),
         run_resources: Default::default(),

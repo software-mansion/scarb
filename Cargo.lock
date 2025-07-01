@@ -6510,6 +6510,7 @@ dependencies = [
  "bincode",
  "cairo-lang-executable",
  "cairo-lang-runner",
+ "cairo-lang-utils",
  "cairo-vm 2.2.0",
  "camino",
  "clap",
@@ -6531,7 +6532,6 @@ version = "2.11.4"
 dependencies = [
  "anyhow",
  "cairo-lang-runner",
- "cairo-lang-utils",
  "cairo-vm 2.2.0",
  "camino",
  "clap",
