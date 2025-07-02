@@ -6534,6 +6534,7 @@ dependencies = [
  "serde_json",
  "snapbox",
  "starknet-core",
+ "url",
 ]
 
 [[package]]

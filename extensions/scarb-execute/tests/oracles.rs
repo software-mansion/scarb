@@ -99,7 +99,7 @@ fn oracle_invoke_direct() {
             #[executable]
             fn main() -> Span<felt252> {
                 let mut inputs: Array<felt252> = array![];
-                let connection_string: ByteArray = "connection string";
+                let connection_string: ByteArray = "stdio:///usr/bin/yes";
                 connection_string.serialize(ref inputs);
                 'pow'.serialize(ref inputs);
                 (4).serialize(ref inputs);
