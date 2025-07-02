@@ -120,3 +120,61 @@ fn oracle_invoke_direct() {
         "#})
         .check();
 }
+
+#[test]
+fn oracle_invoke_unknown_scheme() {
+    CheckBuilder::default()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> Span<felt252> {
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "unknown:///test";
+                connection_string.serialize(ref inputs);
+                'foo'.serialize(ref inputs);
+                starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span())
+            }
+        "#})
+        .stdout_matches(indoc! {r#"
+            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing oracle_test
+            Program output:
+            6
+            1
+            2
+            207483411438877580353294659239743526304552878075996279388406236699584444960
+            207483195021718066238408598638464296832048553964527060380624812834802656612
+            47426803201199958030142006097326119757199817928544
+            21
+            Saving output to: target/execute/oracle_test/execution1
+        "#})
+        .check();
+}
+
+#[test]
+fn oracle_invoke_invalid_url() {
+    CheckBuilder::default()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() -> Span<felt252> {
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "not a url";
+                connection_string.serialize(ref inputs);
+                'foo'.serialize(ref inputs);
+                starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span())
+            }
+        "#})
+        .stdout_matches(indoc! {r#"
+            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing oracle_test
+            Program output:
+            4
+            1
+            0
+            47059860942695082274439840499915880576917699309467653746311918437
+            27
+            Saving output to: target/execute/oracle_test/execution1
+        "#})
+        .check();
+}
