@@ -2,7 +2,6 @@ use assert_fs::TempDir;
 use indoc::indoc;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
-use snapbox::cmd::OutputAssert;
 
 fn setup_fib_three_felt_args(t: &TempDir) {
     ProjectBuilder::start()
@@ -81,28 +80,24 @@ fn invalid_number_of_args() {
     let t = TempDir::new().unwrap();
     setup_fib_three_felt_args(&t);
 
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("cairo-run")
         .arg("--")
         .arg(r#"[0, 1, 2, 3]"#)
         .current_dir(&t)
         .assert()
-        .failure();
-
-    output_assert(
-        snapbox,
-        indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
-           Compiling hello v0.1.0 ([..]/Scarb.toml)
-            Finished `dev` profile target(s) in [..]
-             Running hello
-        error: failed to run the function
-
-        Caused by:
-            Function expects arguments of size 3 and received 4 instead.
-    "#},
-    );
+        .failure()
+        .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+               Compiling hello v0.1.0 ([..]/Scarb.toml)
+                Finished `dev` profile target(s) in [..]
+                 Running hello
+            error: failed to run the function
+    
+            Caused by:
+                Function expects arguments of size 3 and received 4 instead.
+        "#});
 }
 
 #[test]
@@ -110,17 +105,14 @@ fn array_instead_of_felt() {
     let t = TempDir::new().unwrap();
     setup_fib_three_felt_args(&t);
 
-    let snapbox = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("cairo-run")
         .arg("--")
         .arg(r#"[0, 1, [17]]"#)
         .current_dir(&t)
         .assert()
-        .failure();
-
-    output_assert(
-        snapbox,
-        indoc! {r#"
+        .failure()
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
                Compiling hello v0.1.0 ([..]Scarb.toml)
@@ -130,8 +122,7 @@ fn array_instead_of_felt() {
 
             Caused by:
                 Function param 2 only partially contains argument 2.
-        "#},
-    );
+        "#});
 }
 
 #[test]
@@ -248,29 +239,25 @@ fn invalid_struct_deserialization() {
         "#})
         .build(&t);
 
-    let snapbox = Scarb::quick_snapbox()
+    // Received 2, because arrays in Cairo are represented as [begin_addr, end_addr]
+    Scarb::quick_snapbox()
         .arg("cairo-run")
         .arg("--")
         .arg(r#"[[0, 1, 2]]"#)
         .current_dir(&t)
         .assert()
-        .failure();
-
-    // Received 2, because arrays in Cairo are represented as [begin_addr, end_addr]
-    output_assert(
-        snapbox,
-        indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
-           Compiling hello v0.1.0 ([..]Scarb.toml)
-            Finished `dev` profile target(s) in [..]
-             Running hello
-        error: failed to run the function
-
-        Caused by:
-            Function expects arguments of size 3 and received 2 instead.
-    "#},
-    );
+        .failure()
+        .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+               Compiling hello v0.1.0 ([..]Scarb.toml)
+                Finished `dev` profile target(s) in [..]
+                 Running hello
+            error: failed to run the function
+    
+            Caused by:
+                Function expects arguments of size 3 and received 2 instead.
+        "#});
 }
 
 #[test]
@@ -335,22 +322,18 @@ fn cannot_set_gas_limit_for_package_with_disabled_gas_calculation() {
             enable-gas = false
         "#})
         .build(&t);
-    let output = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("cairo-run")
         .arg("--available-gas")
         .arg("10")
         .current_dir(&t)
         .assert()
-        .failure();
-
-    output_assert(
-        output,
-        indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
-        error: gas calculation disabled for package `hello`, cannot define custom gas limit
-    "#},
-    );
+        .failure()
+        .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+            error: gas calculation disabled for package `hello`, cannot define custom gas limit
+        "#});
 }
 
 #[test]
@@ -374,13 +357,4 @@ fn can_control_verbosity() {
         .stdout_matches(indoc! {r#"
         something
         "#});
-}
-
-fn output_assert(output: OutputAssert, expected: &str) {
-    #[cfg(windows)]
-    output.stdout_matches(format!(
-        "{expected}error: process did not exit successfully: exit code: 1\n"
-    ));
-    #[cfg(not(windows))]
-    output.stdout_matches(expected);
 }

@@ -2,7 +2,6 @@ use assert_fs::TempDir;
 use indoc::indoc;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
-use snapbox::cmd::OutputAssert;
 
 fn build_executable_project() -> TempDir {
     let t = TempDir::new().unwrap();
@@ -93,46 +92,33 @@ fn verify_from_path() {
 fn verify_fails_when_execution_output_not_found() {
     let t = build_executable_project();
 
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("verify")
-            .arg("--execution-id=1")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        [..]Verifying hello
-        error: execution directory does not exist at path: [..]/target/execute/hello/execution1
-        help: make sure to run `scarb prove --execute` first
-        and that the execution ID is correct
+    Scarb::quick_snapbox()
+        .arg("verify")
+        .arg("--execution-id=1")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Verifying hello
+            error: execution directory does not exist at path: [..]/target/execute/hello/execution1
+            help: make sure to run `scarb prove --execute` first
+            and that the execution ID is correct
 
-        "#},
-    )
+        "#});
 }
 
 #[test]
 fn verify_fails_when_proof_file_not_found() {
     let t = build_executable_project();
 
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("verify")
-            .arg("--proof-file=nonexistent.json")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        [..]Verifying proof
-        error: proof file does not exist at path: nonexistent.json
-        "#},
-    )
-}
-
-fn output_assert(output: OutputAssert, expected: &str) {
-    #[cfg(windows)]
-    output.stdout_matches(format!(
-        "{expected}error: process did not exit successfully: exit code: 1\n"
-    ));
-    #[cfg(not(windows))]
-    output.stdout_matches(expected);
+    Scarb::quick_snapbox()
+        .arg("verify")
+        .arg("--proof-file=nonexistent.json")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Verifying proof
+            error: proof file does not exist at path: nonexistent.json
+        "#});
 }

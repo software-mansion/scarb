@@ -1,7 +1,6 @@
 use assert_fs::TempDir;
 use indoc::indoc;
 use scarb_test_support::{command::Scarb, project_builder::ProjectBuilder};
-use snapbox::cmd::OutputAssert;
 
 #[test]
 fn test_diagnostics_success() {
@@ -110,15 +109,12 @@ fn test_diagnostics_error() {
         .dep_starknet()
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("doc")
         .current_dir(&t)
         .assert()
-        .failure();
-
-    failure_assert(
-        output,
-        indoc! {r#"
+        .failure()
+        .stdout_matches(indoc! {r#"
             error: Expected either ';' or '{' after module name. Use ';' for an external module declaration or '{' for a module with a body.
              --> [..]lib.cairo:2:33
             pub(crate) mod DualCaseERC20Mock 
@@ -144,17 +140,7 @@ fn test_diagnostics_error() {
             |________________________________^
             
             error: Compilation failed.
-        "#},
-    );
-}
-
-fn failure_assert(output: OutputAssert, expected: &str) {
-    #[cfg(windows)]
-    output.stdout_matches(format!(
-        "{expected}error: process did not exit successfully: exit code: 1\n"
-    ));
-    #[cfg(not(windows))]
-    output.stdout_matches(expected);
+        "#});
 }
 
 #[test]

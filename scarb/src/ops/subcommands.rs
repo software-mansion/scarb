@@ -73,7 +73,7 @@ pub fn execute_external_subcommand(
         cmd.envs(env);
     }
 
-    exec_replace(&mut cmd)
+    exec_replace(cmd)
 }
 
 #[tracing::instrument(level = "debug", skip(ws))]

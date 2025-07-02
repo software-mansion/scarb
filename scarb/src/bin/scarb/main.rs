@@ -9,6 +9,7 @@ use args::ScarbArgs;
 use scarb::core::Config;
 use scarb::core::errors::ScriptExecutionError;
 use scarb::ops;
+use scarb::process::WillExecReplace;
 use scarb_ui::Ui;
 use scarb_ui::args::VerbositySpec;
 
@@ -21,18 +22,28 @@ mod fsx;
 mod interactive;
 
 fn main() -> ExitCode {
+    // NOTE: Never ever create droppable objects in `main`.
+    match main_that_can_exec_replace() {
+        Ok(exit_code) => exit_code,
+        Err(err) => err.take_over(),
+    }
+}
+
+fn main_that_can_exec_replace() -> Result<ExitCode, WillExecReplace> {
     let args = ScarbArgs::parse();
 
-    // Pre-create Ui used in logging & error reporting, because we will move `args` to `cli_main`.
+    // Pre-create Ui used in logging and error reporting, because we will move `args` to `cli_main`.
     let ui = Ui::new(args.verbose.clone().into(), args.output_format());
 
     let _guard = init_logging(args.verbose.clone(), &ui);
 
-    if let Err(err) = cli_main(args) {
-        return exit_with_error(err, &ui);
+    match cli_main(args) {
+        Ok(()) => Ok(ExitCode::SUCCESS),
+        Err(err) => match err.downcast::<WillExecReplace>() {
+            Ok(err) => Err(err),
+            Err(err) => Ok(exit_with_error(err, &ui)),
+        },
     }
-
-    ExitCode::SUCCESS
 }
 
 fn init_logging(verbose: VerbositySpec, ui: &Ui) -> Option<impl Drop> {
@@ -59,7 +70,7 @@ fn init_logging(verbose: VerbositySpec, ui: &Ui) -> Option<impl Drop> {
                 .from_env_lossy(),
         );
 
-    let tracing_profile = std::env::var("SCARB_TRACING_PROFILE")
+    let tracing_profile = env::var("SCARB_TRACING_PROFILE")
         .ok()
         .map(|var| {
             let s = var.as_str();
@@ -76,7 +87,7 @@ fn init_logging(verbose: VerbositySpec, ui: &Ui) -> Option<impl Drop> {
         // Create the file now, so that we early panic, and `fs::canonicalize` will work.
         let profile_file = fs::File::create(&path).expect("failed to create profile file");
 
-        // Try to canonicalize the path so that it's easier to find the file from logs.
+        // Try to canonicalise the path so that it is easier to find the file from logs.
         if let Ok(canonical) = fsx::canonicalize(&path) {
             path = canonical;
         }
@@ -94,7 +105,7 @@ fn init_logging(verbose: VerbositySpec, ui: &Ui) -> Option<impl Drop> {
             .include_args(true)
             .build();
 
-        // Filter out less important logs because they are too verbose,
+        // Filter out less important logs because they're too verbose,
         // and with them the profile file quickly grows to several GBs of data.
         let profile_layer = profile_layer.with_filter(
             Targets::new()

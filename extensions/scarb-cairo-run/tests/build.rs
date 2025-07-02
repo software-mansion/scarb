@@ -1,6 +1,5 @@
 use assert_fs::TempDir;
 use indoc::indoc;
-use snapbox::cmd::OutputAssert;
 
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -73,21 +72,19 @@ fn no_entrypoint_fails() {
         "#})
         .dep_cairo_run()
         .build(&t);
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("cairo-run")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
-        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished `dev` profile target(s) in [..]
-        [..]Running hello
-        error: Function with suffix `::main` to run not found.
-        "#},
-    )
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Running hello
+            error: Function with suffix `::main` to run not found.
+        "#});
 }
 
 #[test]
@@ -107,21 +104,19 @@ fn no_debug_build_fails() {
         "#})
         .dep_cairo_run()
         .build(&t);
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("cairo-run")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
-        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished `dev` profile target(s) in [..]
-        [..]Running hello
-        error: Function with suffix `::main` to run not found.
-        "#},
-    )
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Running hello
+            error: Function with suffix `::main` to run not found.
+        "#});
 }
 
 #[test]
@@ -176,23 +171,21 @@ fn ambiguous_executables_will_fail() {
         "#})
         .dep_cairo_run()
         .build(&t);
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("cairo-run")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
-        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished `dev` profile target(s) in [..]
-        [..]Running hello
-        error: multiple executable functions found
-        please choose a function to run from the list:
-        `hello::hello`, `hello::world`
-        "#},
-    )
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Running hello
+            error: multiple executable functions found
+            please choose a function to run from the list:
+            `hello::hello`, `hello::world`
+        "#});
 }
 
 #[test]
@@ -217,23 +210,21 @@ fn ambiguous_executables_will_fail_no_debug_names() {
         "#})
         .dep_cairo_run()
         .build(&t);
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("cairo-run")
-            .current_dir(&t)
-            .assert()
-            .failure(),
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        .current_dir(&t)
+        .assert()
+        .failure()
         // Note that we cannot list available executables, as we don't know their debug names.
-        indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
-        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished `dev` profile target(s) in [..]
-        [..]Running hello
-        error: multiple executable functions found
-        please only mark a single function as executable or enable debug ids and choose function by name
-        "#},
-    )
+        .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Running hello
+            error: multiple executable functions found
+            please only mark a single function as executable or enable debug ids and choose function by name
+        "#});
 }
 
 #[test]
@@ -300,23 +291,21 @@ fn cannot_choose_non_executable_if_any_present() {
         "#})
         .dep_cairo_run()
         .build(&t);
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("cairo-run")
-            .arg("--function")
-            .arg("a")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        .arg("--function")
+        .arg("a")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
             warn: `scarb cairo-run` will be deprecated soon
             help: use `scarb execute` instead
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Running hello
             error: Function with suffix `::a` to run not found.
-        "#},
-    )
+        "#});
 }
 
 #[test]
@@ -371,30 +360,19 @@ fn choose_not_existing_function() {
             }
         "#})
         .build(&t);
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("cairo-run")
-            .arg("--function")
-            .arg("b")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        warn: `scarb cairo-run` will be deprecated soon
-        help: use `scarb execute` instead
-        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished `dev` profile target(s) in [..]
-        [..]Running hello
-        [..]error: Function with suffix `::b` to run not found.
-    "#},
-    )
-}
-
-fn output_assert(output: OutputAssert, expected: &str) {
-    #[cfg(windows)]
-    output.stdout_matches(format!(
-        "{expected}error: process did not exit successfully: exit code: 1\n"
-    ));
-    #[cfg(not(windows))]
-    output.stdout_matches(expected);
+    Scarb::quick_snapbox()
+        .arg("cairo-run")
+        .arg("--function")
+        .arg("b")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            warn: `scarb cairo-run` will be deprecated soon
+            help: use `scarb execute` instead
+            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Running hello
+            [..]error: Function with suffix `::b` to run not found.
+        "#});
 }

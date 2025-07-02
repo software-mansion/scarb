@@ -1,10 +1,10 @@
+use anyhow::{Context, Result, anyhow, bail};
+use std::error::Error;
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Read};
 use std::process::{Command, Stdio};
 use std::sync::Arc;
-use std::{fmt, thread};
-
-use anyhow::{Context, Result, anyhow, bail};
+use std::{fmt, mem, thread};
 use tracing::{Span, debug, debug_span, warn};
 
 use scarb_ui::components::{Spinner, Status};
@@ -14,23 +14,64 @@ pub use crate::internal::fsx::is_executable;
 
 /// Replaces the current process with the target process.
 ///
-/// On Unix, this executes the process using the Unix syscall `execvp`, which will block this
-/// process, and will only return if there is an error.
+/// # Flow
+/// This function just throws a special [`WillExecReplace`] error used to perform the syscall at
+/// the very end of the `main` function. This allows running all destructors waiting higher up
+/// the call stack.
 ///
-/// On Windows this isn't technically possible. Instead we emulate it to the best of our ability.
+/// # Implementation details
+/// On Unix, this executes the process using the Unix syscall `execvp`, which will block this
+/// process and will only return if there is an error.
+///
+/// On Windows this isn't technically possible. Instead, we emulate it to the best of our ability.
 /// One aspect we fix here is that we specify a handler for the Ctrl-C handler.
 /// In doing so (and by effectively ignoring it) we should emulate proxying Ctrl-C handling to
 /// the application at hand, which will either terminate or handle it itself.
 /// According to Microsoft's documentation at
-/// <https://docs.microsoft.com/en-us/windows/console/ctrl-c-and-ctrl-break-signals>.
+/// <https://docs.microsoft.com/en-us/windows/console/ctrl-c-and-ctrl-break-signals>
 /// the Ctrl-C signal is sent to all processes attached to a terminal, which should include our
-/// child process. If the child terminates then we'll reap them in Cargo pretty quickly, and if
-/// the child handles the signal then we won't terminate (and we shouldn't!) until the process
-/// itself later exits.
-#[tracing::instrument(level = "debug", skip_all)]
-pub fn exec_replace(cmd: &mut Command) -> Result<()> {
-    debug!("{}", shlex_join(cmd));
-    imp::exec_replace(cmd)
+/// child process. If the child terminates, then we will terminate Scarb quickly and silently,
+/// and if the child handles the signal, then we won't terminate (and we shouldn't!) until
+/// the process itself later exits.
+///
+/// # Drop semantics
+/// [`WillExecReplace`] implements the _Drop Bomb_ pattern, which means it will panic if dropped
+/// without [`WillExecReplace::take_over`] being called.
+pub fn exec_replace(command: Command) -> Result<()> {
+    let err = WillExecReplace(Some(Box::new(command)));
+    debug!("{err}");
+    Err(err.into())
+}
+
+/// Error object thrown from [`exec_replace`].
+///
+/// See [`exec_replace`] for details.
+#[derive(Debug)]
+pub struct WillExecReplace(Option<Box<Command>>);
+
+impl WillExecReplace {
+    /// Performs or emulates process replacement and defuses the drop bomb.
+    pub fn take_over(mut self) -> ! {
+        let command = self.0.take().unwrap();
+        mem::forget(self); // Defuse the drop bomb.
+        imp::exec_replace(*command);
+    }
+}
+
+impl fmt::Display for WillExecReplace {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("EXEC")?;
+        f.write_str(&shlex_join(self.0.as_ref().unwrap()))?;
+        Ok(())
+    }
+}
+
+impl Error for WillExecReplace {}
+
+impl Drop for WillExecReplace {
+    fn drop(&mut self) {
+        panic!("not defused: {self}");
+    }
 }
 
 #[cfg(unix)]
@@ -38,19 +79,17 @@ mod imp {
     use std::os::unix::process::CommandExt;
     use std::process::Command;
 
-    use anyhow::{Result, bail};
-
-    pub fn exec_replace(cmd: &mut Command) -> Result<()> {
+    pub fn exec_replace(mut cmd: Command) -> ! {
         let err = cmd.exec();
-        bail!("process did not exit successfully: {err}")
+        panic!("{err}");
     }
 }
 
 #[cfg(windows)]
 mod imp {
+    use std::process;
     use std::process::Command;
 
-    use anyhow::{Context, Result, bail};
     use windows_sys::Win32::Foundation::{BOOL, FALSE, TRUE};
     use windows_sys::Win32::System::Console::SetConsoleCtrlHandler;
 
@@ -59,31 +98,23 @@ mod imp {
         TRUE
     }
 
-    pub fn exec_replace(cmd: &mut Command) -> Result<()> {
+    pub fn exec_replace(mut cmd: Command) -> ! {
         unsafe {
             if SetConsoleCtrlHandler(Some(ctrlc_handler), TRUE) == FALSE {
                 panic!("Could not set Ctrl-C handler.");
             }
         }
 
-        // Just execute the process as normal.
+        // Execute the process as normal.
 
         let exit_status = cmd
             .spawn()
-            .with_context(|| format!("failed to spawn: {}", cmd.get_program().to_string_lossy()))?
+            .expect("failed to spawn a subprocess")
             .wait()
-            .with_context(|| {
-                format!(
-                    "failed to wait for process to finish: {}",
-                    cmd.get_program().to_string_lossy()
-                )
-            })?;
+            .expect("failed to wait for the subprocess process to finish");
 
-        if exit_status.success() {
-            Ok(())
-        } else {
-            bail!("process did not exit successfully: {exit_status}");
-        }
+        let exit_code = exit_status.code().unwrap_or(1);
+        process::exit(exit_code);
     }
 }
 

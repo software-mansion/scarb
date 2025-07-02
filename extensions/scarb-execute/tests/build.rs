@@ -7,7 +7,6 @@ use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::predicates::is_file_empty;
 use scarb_test_support::project_builder::ProjectBuilder;
-use snapbox::cmd::OutputAssert;
 
 fn executable_project_builder() -> ProjectBuilder {
     ProjectBuilder::start()
@@ -107,37 +106,31 @@ fn can_execute_bootloader_target() {
 #[test]
 fn cannot_produce_trace_file_for_bootloader_target() {
     let t = build_executable_project();
-    let output = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("execute")
         .arg("--target=bootloader")
         .arg("--output=standard")
         .current_dir(&t)
         .assert()
-        .failure();
-    output_assert(
-        output,
-        indoc! {r#"
-        error: Standard output format is not supported for bootloader execution target
-        "#},
-    );
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: Standard output format is not supported for bootloader execution target
+        "#});
 }
 
 #[test]
 fn cannot_produce_cairo_pie_for_standalone_target() {
     let t = build_executable_project();
-    let output = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("execute")
         .arg("--target=standalone")
         .arg("--output=cairo-pie")
         .current_dir(&t)
         .assert()
-        .failure();
-    output_assert(
-        output,
-        indoc! {r#"
-        error: Cairo pie output format is not supported for standalone execution target
-        "#},
-    );
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: Cairo pie output format is not supported for standalone execution target
+        "#});
 }
 
 #[test]
@@ -160,34 +153,30 @@ fn fails_when_attr_missing() {
         "#})
         .build(&t);
 
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("execute")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        error: Requested `#[executable]` not found.
-        error: could not compile `hello` due to previous error
-        error: `scarb metadata` exited with error
-        "#},
-    );
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+            error: Requested `#[executable]` not found.
+            error: could not compile `hello` due to previous error
+            error: `scarb metadata` exited with error
+        "#});
 
-    output_assert(
-        Scarb::quick_snapbox()
-            .arg("execute")
-            .arg("--no-build")
-            .current_dir(&t)
-            .assert()
-            .failure(),
-        indoc! {r#"
-        [..]Executing hello
-        error: package has not been compiled, file does not exist: `hello.executable.json`
-        help: run `scarb build` to compile the package
+    Scarb::quick_snapbox()
+        .arg("execute")
+        .arg("--no-build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Executing hello
+            error: package has not been compiled, file does not exist: `hello.executable.json`
+            help: run `scarb build` to compile the package
 
-        "#},
-    );
+        "#});
 }
 
 #[test]
@@ -204,23 +193,20 @@ fn can_print_panic_reason() {
             }
         "#})
         .build(&t);
-    let output = Scarb::quick_snapbox()
+
+    Scarb::quick_snapbox()
         .arg("execute")
         .arg("--print-program-output")
         .arg("--print-resource-usage")
         .current_dir(&t)
         .assert()
-        .failure();
-
-    output_assert(
-        output,
-        indoc! {r#"
-        [..]Compiling hello v0.1.0 ([..]Scarb.toml)
-        [..]Finished `dev` profile target(s) in [..]
-        [..]Executing hello
-        error: Panicked with "abcd".
-        "#},
-    );
+        .failure()
+        .stdout_matches(indoc! {r#"
+            [..]Compiling hello v0.1.0 ([..]Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing hello
+            error: Panicked with "abcd".
+        "#});
 }
 
 #[test]
@@ -248,25 +234,22 @@ fn no_target_defined() {
         "#})
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("execute")
         .arg("--no-build")
         .current_dir(&t)
         .assert()
-        .failure();
-    output_assert(
-        output,
-        indoc! {r#"
-        error: no executable target found for package `hello_world`
-        help: you can add `executable` target to the package manifest with following excerpt
-        -> Scarb.toml
-            [executable]
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: no executable target found for package `hello_world`
+            help: you can add `executable` target to the package manifest with following excerpt
+            -> Scarb.toml
+                [executable]
 
-            [dependencies]
-            cairo_execute = "[..].[..].[..]"
+                [dependencies]
+                cairo_execute = "[..].[..].[..]"
 
-    "#},
-    );
+        "#});
 }
 
 #[test]
@@ -296,29 +279,27 @@ fn undefined_target_specified() {
         "#})
         .build(&t);
 
-    let output = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("execute")
         .arg("--executable-name=secondary")
         .arg("--no-build")
         .current_dir(&t)
         .assert()
-        .failure();
-    output_assert(
-        output,
-        "error: no executable target with name `secondary` found for package `hello_world`\n",
-    );
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: no executable target with name `secondary` found for package `hello_world`
+        "#});
 
-    let output = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("execute")
         .arg("--executable-function=secondary")
         .arg("--no-build")
         .current_dir(&t)
         .assert()
-        .failure();
-    output_assert(
-        output,
-        "error: no executable target with executable function `secondary` found for package `hello_world`\n",
-    );
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: no executable target with executable function `secondary` found for package `hello_world`
+        "#});
 }
 
 fn two_targets() -> ProjectBuilder {
@@ -395,21 +376,17 @@ fn executable_must_be_chosen() {
     let t = TempDir::new().unwrap();
     two_targets().build(&t);
 
-    let output = Scarb::quick_snapbox()
+    Scarb::quick_snapbox()
         .arg("execute")
         .arg("--no-build")
         .current_dir(&t)
         .assert()
-        .failure();
-
-    output_assert(
-        output,
-        indoc! {r#"
+        .failure()
+        .stdout_matches(indoc! {r#"
             error: more than one executable target found for package `hello_world`
             help: specify the target with `--executable-name` or `--executable-function`
-            
-        "#},
-    );
+    
+        "#});
 }
 
 #[test]
@@ -468,13 +445,4 @@ fn can_use_features() {
         [..]Executing hello
         Saving output to: target/execute/hello/execution1
         "#});
-}
-
-fn output_assert(output: OutputAssert, expected: &str) {
-    #[cfg(windows)]
-    output.stdout_matches(format!(
-        "{expected}error: process did not exit successfully: exit code: 1\n"
-    ));
-    #[cfg(not(windows))]
-    output.stdout_matches(expected);
 }
