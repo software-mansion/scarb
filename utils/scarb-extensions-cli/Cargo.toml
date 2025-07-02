@@ -14,7 +14,6 @@ serde_json = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
 num-bigint = { workspace = true, optional = true }
 cairo-lang-runner = { workspace = true, optional = true }
-cairo-lang-utils = { workspace = true, optional = true }
 starknet-types-core = { workspace = true, optional = true }
 cairo-vm = { workspace = true, optional = true }
 scarb-ui = { path = "../scarb-ui", optional = true }
@@ -35,8 +34,6 @@ cairo-test = ["dep:scarb-ui"]
 doc = ["dep:scarb-ui"]
 execute = [
     "dep:anyhow",
-    "dep:cairo-lang-runner",
-    "dep:cairo-lang-utils",
     "dep:camino",
     "dep:num-bigint",
     "dep:serde_json",

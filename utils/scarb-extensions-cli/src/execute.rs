@@ -2,14 +2,11 @@
 
 //! Extension CLI arguments datastructures.
 
-use anyhow::{Context, Result, ensure};
-use cairo_lang_runner::Arg;
-use cairo_lang_utils::bigint::BigUintAsHex;
+use anyhow::{Result, ensure};
 use cairo_vm::Felt252;
 use camino::Utf8PathBuf;
 use clap::{Parser, ValueEnum};
 use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
-use std::fs;
 
 /// CLI command name.
 pub const COMMAND_NAME: &str = "execute";
@@ -97,23 +94,6 @@ pub struct ProgramArguments {
     /// Serialized arguments to the executable function from a file.
     #[arg(long, conflicts_with = "arguments")]
     pub arguments_file: Option<Utf8PathBuf>,
-}
-
-#[doc(hidden)]
-impl ProgramArguments {
-    pub fn read_arguments(self) -> Result<Vec<Arg>> {
-        if let Some(path) = self.arguments_file {
-            let file = fs::File::open(&path).with_context(|| "reading arguments file failed")?;
-            let as_vec: Vec<BigUintAsHex> = serde_json::from_reader(file)
-                .with_context(|| "deserializing arguments file failed")?;
-            Ok(as_vec
-                .into_iter()
-                .map(|v| Arg::Value(v.value.into()))
-                .collect())
-        } else {
-            Ok(self.arguments.into_iter().map(Arg::Value).collect())
-        }
-    }
 }
 
 /// Output format for the execution
