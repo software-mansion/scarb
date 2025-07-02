@@ -6534,6 +6534,7 @@ dependencies = [
  "camino",
  "clap",
  "create-output-dir",
+ "derive_builder",
  "indoc",
  "predicates",
  "scarb-extensions-cli",
