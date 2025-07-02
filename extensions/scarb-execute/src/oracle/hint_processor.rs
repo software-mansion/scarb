@@ -113,17 +113,15 @@ impl<'a> OracleHintProcessor<'a> {
         let mut invoke = move || -> Result<Vec<Felt252>> {
             let mut inputs_iter = inputs.iter();
 
-            let connection_string = ByteArray::decode_iter(&mut inputs_iter)?.try_into()?;
+            let connection_string: String = ByteArray::decode_iter(&mut inputs_iter)?.try_into()?;
 
-            let selector = Felt252::decode_iter(&mut inputs_iter)?
-                .to_bytes_be()
-                .to_vec()
-                .try_into()?;
+            let selector = Felt252::decode_iter(&mut inputs_iter)?.to_bytes_be();
+            let selector = std::str::from_utf8(&selector)?;
 
             let calldata = inputs_iter.as_slice();
 
             self.connections
-                .connect(connection_string)?
+                .connect(&connection_string)?
                 .call(selector, calldata)
         };
 
