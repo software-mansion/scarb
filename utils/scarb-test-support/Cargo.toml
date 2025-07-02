@@ -4,6 +4,10 @@ version = "1.0.0"
 edition.workspace = true
 publish = false
 
+[features]
+default = []
+scarb-config = ["dep:scarb"]
+
 [dependencies]
 anyhow.workspace = true
 assert_fs.workspace = true
@@ -15,7 +19,7 @@ dunce.workspace = true
 hyper = "0.14"
 indoc.workspace = true
 itertools.workspace = true
-scarb = { path = "../../scarb", default-features = false }
+scarb = { path = "../../scarb", default-features = false, optional = true }
 scarb-build-metadata = { path = "../scarb-build-metadata" }
 scarb-proc-macro-server-types = { path = "../scarb-proc-macro-server-types" }
 scarb-ui = { path = "../scarb-ui" }
