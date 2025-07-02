@@ -41,8 +41,10 @@ impl Check {
                 enable-gas = false
             "#})
             .dep_cairo_execute()
-            // TODO(mkaput): Remove starknet dependency in favour of the oracle package.
-            .dep_starknet()
+            .dep(
+                "oracle",
+                Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../..", "/oracle")),
+            )
             .dep(
                 "oracle_asserts",
                 Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/oracle_asserts")),
@@ -74,7 +76,7 @@ fn oracle_invoke_without_experimental_flag_fails() {
         .lib_cairo(indoc! {r#"
             #[executable]
             fn main() {
-                starknet::testing::cheatcode::<'oracle_invoke'>(array![].span());
+                oracle::cheatcode::<'oracle_invoke'>(array![].span());
             }
         "#})
         .enable_experimental_oracles_flag(false)
@@ -105,7 +107,7 @@ fn oracle_invoke_direct() {
                 'pow'.serialize(ref inputs);
                 (4).serialize(ref inputs);
                 (2).serialize(ref inputs);
-                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                let result = oracle::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<Span<felt252>>(result);
             }
         "#})
@@ -129,7 +131,7 @@ fn oracle_invoke_unknown_scheme() {
                 let connection_string: ByteArray = "unknown:///test";
                 connection_string.serialize(ref inputs);
                 'foo'.serialize(ref inputs);
-                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                let result = oracle::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<ByteArray>(result);
             }
         "#})
@@ -137,8 +139,8 @@ fn oracle_invoke_unknown_scheme() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("unsupported connection scheme: unknown:///test
-            note: supported schemes are: `stdio`")
+            Result::Err(oracle::Error(@"unsupported connection scheme: unknown:///test
+            note: supported schemes are: `stdio`"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -154,7 +156,7 @@ fn oracle_invoke_invalid_url() {
                 let connection_string: ByteArray = "not a url";
                 connection_string.serialize(ref inputs);
                 'foo'.serialize(ref inputs);
-                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                let result = oracle::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<ByteArray>(result);
             }
         "#})
@@ -162,7 +164,7 @@ fn oracle_invoke_invalid_url() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("relative URL without a base")
+            Result::Err(oracle::Error(@"relative URL without a base"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
