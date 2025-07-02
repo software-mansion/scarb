@@ -248,6 +248,11 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         }
     }
 
+    packages_with_error = packages_with_error
+        .into_iter()
+        .unique_by(|name| name.to_string())
+        .collect();
+
     if !packages_with_error.is_empty() {
         if packages_with_error.len() == 1 {
             let package_name = packages_with_error[0].to_string();
