@@ -1,21 +1,24 @@
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result, bail, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use create_output_dir::create_output_dir;
 use indoc::{formatdoc, indoc};
+use scarb_extensions_cli::execute::ToArgs;
 use scarb_extensions_cli::prove::Args;
-use scarb_metadata::MetadataCommand;
-use scarb_ui::args::ToEnvVars;
+use scarb_metadata::{Metadata, MetadataCommand, ScarbCommand};
+use scarb_ui::args::{PackagesFilter, ToEnvVars};
 use scarb_ui::components::Status;
 use scarb_ui::{OutputFormat, Ui};
-use std::env;
 use std::fs;
 use std::process::ExitCode;
+use std::{env, io};
 use stwo_cairo_adapter::vm_import::adapt_vm_output;
 use stwo_cairo_prover::cairo_air::prover::{
     ProverConfig, ProverParameters, default_prod_prover_parameters, prove_cairo,
 };
 use stwo_cairo_prover::stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleChannel;
+
+const MAX_ITERATION_COUNT: usize = 10000;
 
 fn main() -> ExitCode {
     let args = Args::parse();
@@ -52,8 +55,23 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
         Some(id) => id,
         None => {
             assert!(args.execute);
-            scarb_execute::execute(&metadata, &package, &args.execute_args, &ui)?
-                .ok_or(anyhow::anyhow!("no execution output found"))?
+            let scarb_target_dir = Utf8PathBuf::from(env::var("SCARB_TARGET_DIR")?);
+            let output_dir = scarb_target_dir.join("execute").join(&package.name);
+            create_output_dir(output_dir.as_std_path())?;
+            let (_execution_output_dir, execution_id) = incremental_create_output_dir(&output_dir)?;
+
+            let filter = PackagesFilter::generate_for::<Metadata>(vec![package.clone()].iter());
+            ScarbCommand::new()
+                .arg("execute")
+                .args(args.execute_args.to_args())
+                .env("SCARB_EXECUTION_ID", execution_id.to_string())
+                .env("SCARB_PACKAGES_FILTER", filter.to_env())
+                .env("SCARB_UI_VERBOSITY", ui.verbosity().to_string())
+                .envs(args.execute_args.features.clone().to_env_vars())
+                .run()
+                .with_context(|| "execution failed")?;
+
+            execution_id
         }
     };
     ui.print(Status::new("Proving", &package.name));
@@ -137,4 +155,21 @@ fn display_path(scarb_target_dir: &Utf8Path, output_path: &Utf8Path) -> String {
         Ok(stripped) => Utf8PathBuf::from("target").join(stripped).to_string(),
         Err(_) => output_path.to_string(),
     }
+}
+
+fn incremental_create_output_dir(path: &Utf8Path) -> Result<(Utf8PathBuf, usize)> {
+    for i in 1..=MAX_ITERATION_COUNT {
+        let filepath = path.join(format!("execution{i}"));
+        let result = fs::create_dir(&filepath);
+        return match result {
+            Err(e) => {
+                if e.kind() == io::ErrorKind::AlreadyExists {
+                    continue;
+                }
+                Err(e.into())
+            }
+            Ok(_) => Ok((filepath, i)),
+        };
+    }
+    bail!("failed to create output directory")
 }

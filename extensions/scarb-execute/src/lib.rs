@@ -28,8 +28,9 @@ use std::io::{self, Write};
 pub(crate) mod output;
 
 const MAX_ITERATION_COUNT: usize = 10000;
+const EXECUTION_ID_ENV: &str = "SCARB_EXECUTION_ID";
 
-pub fn main_inner(args: Args, ui: Ui) -> Result<Option<usize>, anyhow::Error> {
+pub fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let metadata = MetadataCommand::new()
         .envs(args.execution.features.clone().to_env_vars())
         .inherit_stderr()
@@ -57,7 +58,7 @@ pub fn execute(
     package: &PackageMetadata,
     args: &ExecutionArgs,
     ui: &Ui,
-) -> Result<Option<usize>, anyhow::Error> {
+) -> Result<()> {
     let output = args
         .run
         .output
@@ -183,13 +184,13 @@ pub fn execute(
     });
 
     if output.is_none() {
-        return Ok(None);
+        return Ok(());
     }
 
     let output_dir = scarb_target_dir.join("execute").join(&package.name);
     create_output_dir(output_dir.as_std_path())?;
 
-    let (execution_output_dir, execution_id) = incremental_create_output_dir(&output_dir)?;
+    let execution_output_dir = get_or_create_output_dir(&output_dir)?;
 
     if output.is_cairo_pie() {
         let output_value = runner.get_cairo_pie()?;
@@ -236,7 +237,7 @@ pub fn execute(
         fs::write(air_private_input_path, output_value)?;
     }
 
-    Ok(Some(execution_id))
+    Ok(())
 }
 
 fn find_build_target<'a>(
@@ -348,7 +349,24 @@ fn load_prebuilt_executable(path: &Utf8Path, filename: String) -> Result<Executa
         .with_context(|| format!("failed to deserialize executable program: `{file_path}`"))
 }
 
-fn incremental_create_output_dir(path: &Utf8Path) -> Result<(Utf8PathBuf, usize)> {
+fn get_or_create_output_dir(output_dir: &Utf8Path) -> Result<Utf8PathBuf> {
+    if let Some(execution_id) = env::var_os(EXECUTION_ID_ENV) {
+        dbg!(&execution_id);
+        let execution_id: usize = execution_id
+            .to_string_lossy()
+            .parse()
+            .map_err(|_| anyhow!("invalid execution id in environment variable"))?;
+        let execution_output_dir = output_dir.join(format!("execution{execution_id}"));
+        ensure!(
+            execution_output_dir.exists(),
+            "execution output directory does not exist"
+        );
+        return Ok(execution_output_dir);
+    }
+    incremental_create_output_dir(output_dir)
+}
+
+fn incremental_create_output_dir(path: &Utf8Path) -> Result<Utf8PathBuf> {
     for i in 1..=MAX_ITERATION_COUNT {
         let filepath = path.join(format!("execution{i}"));
         let result = fs::create_dir(&filepath);
@@ -359,7 +377,7 @@ fn incremental_create_output_dir(path: &Utf8Path) -> Result<(Utf8PathBuf, usize)
                 }
                 Err(e.into())
             }
-            Ok(_) => Ok((filepath, i)),
+            Ok(_) => Ok(filepath),
         };
     }
     bail!("failed to create output directory")

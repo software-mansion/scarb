@@ -9,7 +9,7 @@ fn main() -> ExitCode {
     let ui = Ui::new(args.verbose.clone().into(), scarb_ui::OutputFormat::Text);
 
     match main_inner(args, ui.clone()) {
-        Ok(_execution_id) => ExitCode::SUCCESS,
+        Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             ui.error(format!("{error:#}"));
             ExitCode::FAILURE
