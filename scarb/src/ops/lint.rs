@@ -116,11 +116,12 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                 result.push(integration_test_compilation_unit);
             }
 
+            // If there is no compilation unit for the package, we skip it.
             if result.is_empty() {
-                return Err(anyhow!(
-                    "No Cairo compilation unit found for package {}.",
-                    package.id
-                ));
+                ws.config()
+                    .ui()
+                    .print(Status::new("Skipping package", package_name.as_str()));
+                continue;
             }
 
             result
@@ -136,10 +137,17 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         }
                         _ => false,
                     });
-            vec![found_compilation_unit.ok_or(anyhow!(
-                "No Cairo compilation unit found for package {}. Try running `--test` to include tests.",
-                package.id
-            ))?]
+
+            // If there is no compilation unit for the package, we skip it.
+            match found_compilation_unit {
+                Some(cu) => vec![cu],
+                None => {
+                    ws.config()
+                        .ui()
+                        .print(Status::new("Skipping package", package_name.as_str()));
+                    continue;
+                }
+            }
         };
 
         let filtered_by_target_names_package_compilation_units = if opts.target_names.is_empty() {
