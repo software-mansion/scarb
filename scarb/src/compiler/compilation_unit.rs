@@ -11,13 +11,13 @@ use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use typed_builder::TypedBuilder;
 
-use crate::FINGERPRINT_DIR_NAME;
 use crate::compiler::Profile;
 use crate::compiler::plugin::proc_macro::ProcMacroInstance;
 use crate::core::{
     ManifestCompilerConfig, Package, PackageId, PackageName, Target, TargetKind, Workspace,
 };
 use crate::flock::Filesystem;
+use crate::{FINGERPRINT_DIR_NAME, INCREMENTAL_DIR_NAME};
 use scarb_stable_hash::StableHasher;
 
 /// An object that has enough information so that Scarb knows how to build it.
@@ -324,6 +324,10 @@ impl CairoCompilationUnit {
 
     pub fn fingerprint_dir(&self, ws: &Workspace<'_>) -> Filesystem {
         self.target_dir(ws).child(FINGERPRINT_DIR_NAME)
+    }
+
+    pub fn incremental_cache_dir(&self, ws: &Workspace<'_>) -> Filesystem {
+        self.target_dir(ws).child(INCREMENTAL_DIR_NAME)
     }
 
     /// Rewrite single compilation unit with multiple targets, into multiple compilation units

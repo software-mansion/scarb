@@ -12,7 +12,7 @@ mod compilers;
 pub mod db;
 mod fingerprint;
 pub mod helpers;
-mod incremental;
+pub mod incremental;
 pub mod plugin;
 mod profile;
 mod repository;
@@ -22,7 +22,7 @@ pub trait Compiler: Sync {
 
     fn compile(
         &self,
-        unit: CairoCompilationUnit,
+        unit: &CairoCompilationUnit,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()>;

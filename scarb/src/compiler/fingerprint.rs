@@ -1,10 +1,9 @@
-#![allow(dead_code)]
-
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent, Profile};
 use crate::core::{ManifestCompilerConfig, Workspace};
+use crate::flock::Filesystem;
 use crate::internal::fsx;
 use crate::version::VersionInfo;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::Edition;
 use itertools::Itertools;
@@ -110,4 +109,25 @@ impl Fingerprint {
         self.experimental_features.hash(&mut hasher);
         hasher.finish_as_short_hash()
     }
+}
+
+pub fn is_fresh(
+    fingerprint: &Fingerprint,
+    fingerprint_dir: &Filesystem,
+    target_name: &str,
+) -> Result<bool> {
+    let digest = fingerprint.digest();
+    let component = format!("{target_name}-{digest}");
+    let fingerprint_dir = fingerprint_dir.child(&component);
+    let fingerprint_dir = fingerprint_dir.path_unchecked();
+    let old_digest_path = fingerprint_dir.join(target_name);
+
+    if !old_digest_path.exists() {
+        return Ok(false);
+    }
+
+    let old_digest = fsx::read_to_string(&old_digest_path)
+        .with_context(|| format!("failed to read fingerprint from `{old_digest_path}`"))?;
+
+    Ok(old_digest == digest)
 }
