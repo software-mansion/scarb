@@ -28,11 +28,11 @@ pub use crate::internal::fsx::is_executable;
 /// In doing so (and by effectively ignoring it) we should emulate proxying Ctrl-C handling to
 /// the application at hand, which will either terminate or handle it itself.
 /// According to Microsoft's documentation at
-/// <https://docs.microsoft.com/en-us/windows/console/ctrl-c-and-ctrl-break-signals>.
-/// The Ctrl-C signal is sent to all processes attached to a terminal, which should include our
-/// child process. If the child terminates, then we will reap them in Cargo pretty quickly, and if
-/// the child handles the signal, then we won't terminate (and we shouldn't!) until the process
-/// itself later exits.
+/// <https://docs.microsoft.com/en-us/windows/console/ctrl-c-and-ctrl-break-signals>
+/// the Ctrl-C signal is sent to all processes attached to a terminal, which should include our
+/// child process. If the child terminates, then we will terminate Scarb quickly and silently,
+/// and if the child handles the signal, then we won't terminate (and we shouldn't!) until
+/// the process itself later exits.
 ///
 /// # Drop semantics
 /// [`WillExecReplace`] implements the _Drop Bomb_ pattern, which means it will panic if dropped
