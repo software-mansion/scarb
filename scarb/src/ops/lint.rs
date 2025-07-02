@@ -5,15 +5,17 @@ use crate::{
         CompilationUnit, CompilationUnitAttributes,
         db::{ScarbDatabase, build_scarb_root_database},
     },
-    core::{PackageId, TargetKind},
+    core::{PackageId, PackageName, TargetKind},
     ops,
 };
 
 use anyhow::anyhow;
 use anyhow::{Context, Result};
+use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
-use cairo_lang_semantic::db::SemanticGroup;
+use cairo_lang_formatter::FormatterConfig;
+use cairo_lang_semantic::{SemanticDiagnostic, db::SemanticGroup};
 use cairo_lint::CAIRO_LINT_TOOL_NAME;
 use cairo_lint::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
@@ -29,6 +31,12 @@ use crate::internal::fsx::canonicalize;
 use super::{
     CompilationUnitsOpts, FeaturesOpts, compile_unit, plugins_required_for_units, validate_features,
 };
+
+struct CompilationUnitDiagnostics {
+    pub db: RootDatabase,
+    pub diagnostics: Vec<SemanticDiagnostic>,
+    pub formatter_config: FormatterConfig,
+}
 
 pub struct LintOptions {
     pub packages: Vec<Package>,
@@ -70,6 +78,11 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
             }
         }
     }
+
+    // We store the state of the workspace diagnostics, so we can decide upon throwing an error later on.
+    // Also we want to apply fixes only if there were no previous errors.
+    let mut packages_with_error: Vec<PackageName> = Default::default();
+    let mut diagnostics_per_cu: Vec<CompilationUnitDiagnostics> = Default::default();
 
     for package in opts.packages {
         let package_name = &package.id.name;
@@ -223,24 +236,58 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         matches!(diag.severity(), Severity::Error)
                             || (!warnings_allowed && matches!(diag.severity(), Severity::Warning))
                     }) {
-                        return Err(anyhow!(
-                            "lint checking `{package_name}` failed due to previous errors"
-                        ));
+                        packages_with_error.push(package_name.clone());
                     }
-
-                    if opts.fix {
-                        let fixes = get_fixes(&db, diagnostics);
-                        for (file_id, fixes) in fixes.into_iter() {
-                            ws.config()
-                                .ui()
-                                .print(Status::new("Fixing", &file_id.file_name(&db)));
-                            apply_file_fixes(file_id, fixes, &db, formatter_config.clone())?;
-                        }
-                    }
+                    diagnostics_per_cu.push(CompilationUnitDiagnostics {
+                        db,
+                        diagnostics,
+                        formatter_config: formatter_config.clone(),
+                    });
                 }
             }
         }
     }
+
+    packages_with_error = packages_with_error
+        .into_iter()
+        .unique_by(|name| name.to_string())
+        .collect();
+
+    if !packages_with_error.is_empty() {
+        if packages_with_error.len() == 1 {
+            let package_name = packages_with_error[0].to_string();
+            return Err(anyhow!(
+                "lint checking `{package_name}` failed due to previous errors"
+            ));
+        } else {
+            let package_names = packages_with_error
+                .iter()
+                .map(|name| format!("`{name}`"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            return Err(anyhow!(
+                "lint checking {package_names} packages failed due to previous errors"
+            ));
+        }
+    }
+
+    if opts.fix {
+        for CompilationUnitDiagnostics {
+            db,
+            diagnostics,
+            formatter_config,
+        } in diagnostics_per_cu.into_iter()
+        {
+            let fixes = get_fixes(&db, diagnostics);
+            for (file_id, fixes) in fixes.into_iter() {
+                ws.config()
+                    .ui()
+                    .print(Status::new("Fixing", &file_id.file_name(&db)));
+                apply_file_fixes(file_id, fixes, &db, formatter_config.clone())?;
+            }
+        }
+    }
+
     Ok(())
 }
 
