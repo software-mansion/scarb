@@ -32,5 +32,6 @@ starknet-core.workspace = true
 
 [dev-dependencies]
 assert_fs.workspace = true
+derive_builder.workspace = true
 scarb-test-support = { path = "../../utils/scarb-test-support" }
 snapbox.workspace = true
