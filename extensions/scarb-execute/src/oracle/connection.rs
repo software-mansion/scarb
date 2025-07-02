@@ -15,9 +15,9 @@ impl ConnectionManager {
     ///
     /// If the connection already exists in the pool, the existing connection is reused.
     /// The same applies to connection errors, the pool will never reattempt to reconnect.
-    pub fn connect(&mut self, connection_string: String) -> Result<&mut Connection> {
+    pub fn connect(&mut self, connection_string: &str) -> Result<&mut Connection> {
         self.0
-            .entry(connection_string.clone())
+            .entry(connection_string.into())
             .or_insert_with(|| Connection::connect(connection_string).map_err(Rc::new))
             .as_mut()
             .map_err(|e| {
@@ -31,12 +31,12 @@ impl ConnectionManager {
 pub struct Connection {}
 
 impl Connection {
-    fn connect(_connection_string: String) -> Result<Self> {
+    fn connect(_connection_string: &str) -> Result<Self> {
         // TODO
         Ok(Self {})
     }
 
-    pub fn call(&mut self, _selector: String, _calldata: &[Felt252]) -> Result<Vec<Felt252>> {
+    pub fn call(&mut self, _selector: &str, _calldata: &[Felt252]) -> Result<Vec<Felt252>> {
         // TODO
         Ok(vec![Felt252::from(9876543210u64)])
     }
