@@ -3,6 +3,7 @@ use derive_builder::Builder;
 use indoc::indoc;
 use scarb_test_support::command::Scarb;
 use scarb_test_support::project_builder::ProjectBuilder;
+use std::path::Path;
 
 #[derive(Builder)]
 struct Check {
@@ -30,7 +31,6 @@ impl CheckBuilder {
 impl Check {
     fn check(self) {
         let t = TempDir::new().unwrap();
-
         ProjectBuilder::start()
             .name("oracle_test")
             .version("0.1.0")
@@ -43,13 +43,14 @@ impl Check {
             .dep_cairo_execute()
             // TODO(mkaput): Remove starknet dependency in favour of the oracle package.
             .dep_starknet()
+            .dep(
+                "oracle_asserts",
+                Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/oracle_asserts")),
+            )
             .lib_cairo(self.lib_cairo)
             .build(&t);
 
-        let mut snapbox = Scarb::quick_snapbox()
-            .arg("execute")
-            .arg("--print-program-output")
-            .current_dir(&t);
+        let mut snapbox = Scarb::quick_snapbox().arg("execute").current_dir(&t);
 
         if self.enable_experimental_oracles_flag {
             snapbox = snapbox.arg("--experimental-oracles");
@@ -97,25 +98,22 @@ fn oracle_invoke_direct() {
     CheckBuilder::default()
         .lib_cairo(indoc! {r#"
             #[executable]
-            fn main() -> Span<felt252> {
+            fn main() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "stdio:///usr/bin/yes";
                 connection_string.serialize(ref inputs);
                 'pow'.serialize(ref inputs);
                 (4).serialize(ref inputs);
                 (2).serialize(ref inputs);
-                starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span())
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<Span<felt252>>(result);
             }
         "#})
         .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Program output:
-            3
-            0
-            1
-            9876543210
+            Result::Ok([9876543210])
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -126,26 +124,21 @@ fn oracle_invoke_unknown_scheme() {
     CheckBuilder::default()
         .lib_cairo(indoc! {r#"
             #[executable]
-            fn main() -> Span<felt252> {
+            fn main() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "unknown:///test";
                 connection_string.serialize(ref inputs);
                 'foo'.serialize(ref inputs);
-                starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span())
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<ByteArray>(result);
             }
         "#})
         .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Program output:
-            6
-            1
-            2
-            207483411438877580353294659239743526304552878075996279388406236699584444960
-            207483195021718066238408598638464296832048553964527060380624812834802656612
-            47426803201199958030142006097326119757199817928544
-            21
+            Result::Err("unsupported connection scheme: unknown:///test
+            note: supported schemes are: `stdio`")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -156,24 +149,20 @@ fn oracle_invoke_invalid_url() {
     CheckBuilder::default()
         .lib_cairo(indoc! {r#"
             #[executable]
-            fn main() -> Span<felt252> {
+            fn main() {
                 let mut inputs: Array<felt252> = array![];
                 let connection_string: ByteArray = "not a url";
                 connection_string.serialize(ref inputs);
                 'foo'.serialize(ref inputs);
-                starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span())
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<ByteArray>(result);
             }
         "#})
         .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Program output:
-            4
-            1
-            0
-            47059860942695082274439840499915880576917699309467653746311918437
-            27
+            Result::Err("relative URL without a base")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
