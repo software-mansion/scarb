@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use assert_fs::fixture::ChildPath;
@@ -233,11 +234,7 @@ impl DepBuilder for Dep {
 
 impl DepBuilder for &ChildPath {
     fn build(&self) -> Value {
-        Dep.with(
-            "path",
-            ChildPath::path(self).try_to_utf8().unwrap().to_string(),
-        )
-        .build()
+        ChildPath::path(self).build()
     }
 }
 
@@ -254,6 +251,19 @@ impl DepBuilder for &GitProject {
 }
 
 impl DepBuilder for GitProject {
+    fn build(&self) -> Value {
+        (&self).build()
+    }
+}
+
+impl DepBuilder for &Path {
+    fn build(&self) -> Value {
+        Dep.with("path", self.try_to_utf8().unwrap().to_string())
+            .build()
+    }
+}
+
+impl DepBuilder for Path {
     fn build(&self) -> Value {
         (&self).build()
     }
