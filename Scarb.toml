@@ -1,2 +1,2 @@
 [workspace]
-members = ["oracle"]
+members = ["cairo/*"]

@@ -43,7 +43,11 @@ impl Check {
             .dep_cairo_execute()
             .dep(
                 "oracle",
-                Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../..", "/oracle")),
+                Path::new(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/../..",
+                    "/cairo/oracle"
+                )),
             )
             .dep(
                 "oracle_asserts",
