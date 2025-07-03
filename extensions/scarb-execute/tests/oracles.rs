@@ -80,7 +80,7 @@ fn oracle_invoke_without_experimental_flag_fails() {
         .lib_cairo(indoc! {r#"
             #[executable]
             fn main() {
-                oracle::cheatcode::<'oracle_invoke'>(array![].span());
+                oracle::internal::cheatcode::<'oracle_invoke'>(array![].span());
             }
         "#})
         .enable_experimental_oracles_flag(false)
@@ -111,7 +111,7 @@ fn oracle_invoke_direct() {
                 'pow'.serialize(ref inputs);
                 (4).serialize(ref inputs);
                 (2).serialize(ref inputs);
-                let result = oracle::cheatcode::<'oracle_invoke'>(inputs.span());
+                let result = oracle::internal::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<Span<felt252>>(result);
             }
         "#})
@@ -135,7 +135,7 @@ fn oracle_invoke_unknown_scheme() {
                 let connection_string: ByteArray = "unknown:///test";
                 connection_string.serialize(ref inputs);
                 'foo'.serialize(ref inputs);
-                let result = oracle::cheatcode::<'oracle_invoke'>(inputs.span());
+                let result = oracle::internal::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<ByteArray>(result);
             }
         "#})
@@ -160,7 +160,7 @@ fn oracle_invoke_invalid_url() {
                 let connection_string: ByteArray = "not a url";
                 connection_string.serialize(ref inputs);
                 'foo'.serialize(ref inputs);
-                let result = oracle::cheatcode::<'oracle_invoke'>(inputs.span());
+                let result = oracle::internal::cheatcode::<'oracle_invoke'>(inputs.span());
                 oracle_asserts::print::<ByteArray>(result);
             }
         "#})
