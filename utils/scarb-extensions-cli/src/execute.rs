@@ -135,6 +135,7 @@ impl ToArgs for RunArgs {
             target,
             print_program_output,
             print_resource_usage,
+            experimental_oracles,
         } = self;
         let mut args = arguments.to_args();
         if let Some(output) = output {
@@ -148,6 +149,9 @@ impl ToArgs for RunArgs {
         }
         if *print_resource_usage {
             args.push("--print-resource-usage".to_string());
+        }
+        if *experimental_oracles {
+            args.push("--experimental-oracles".to_string());
         }
         args
     }
