@@ -1,0 +1,4 @@
+[package]
+name = "oracle_asserts"
+version = "1.0.0"
+edition = "2024_07"
