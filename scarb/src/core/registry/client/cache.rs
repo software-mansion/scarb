@@ -421,10 +421,17 @@ impl CacheDatabase {
             }
             {
                 let mut table = tx.open_multimap_table(RECORDS)?;
-                table.remove_all(package_name)?;
+                let removed = table.remove_all(package_name)?;
+                let allowed_versions: Vec<_> = removed
+                    .filter_map(Result::ok)
+                    .map(|r| r.value().0.to_owned())
+                    .collect();
 
                 for record in records {
                     let raw_version = record.version.to_string();
+                    if record.is_yanked & !allowed_versions.contains(&raw_version) {
+                        continue;
+                    }
                     let raw_record = serde_json::to_vec(&record)?;
                     table.insert(package_name, (raw_version.as_str(), raw_record.as_slice()))?;
                 }

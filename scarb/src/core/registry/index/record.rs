@@ -15,6 +15,7 @@ pub struct IndexRecord {
     pub checksum: Checksum,
     #[serde(default = "default_false", skip_serializing_if = "is_false")]
     pub no_core: bool,
+    pub is_yanked: bool,
 }
 
 pub type IndexDependencies = Vec<IndexDependency>;
