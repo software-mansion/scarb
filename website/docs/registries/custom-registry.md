@@ -61,13 +61,18 @@ A structure of an example `foo` package index file looks like this:
         "req": "^0.1.3"
       }
     ],
-    "cksum": "sha256:5917642282d772423e8120a013b4796607a3b860f35f55738360ff5ddb9e3f89"
+    "cksum": "sha256:5917642282d772423e8120a013b4796607a3b860f35f55738360ff5ddb9e3f89",
+    "yanked": true
   }
 ]
 ```
 
-As you can see, it is a JSON array with each entry representing a version of the `foo` package available in the registry.
-An entry consists of the `v` key that describes the version, a `deps` array describing each version's dependency requirements, and a `cksum`, which is a `sha256` hash used to verify integrity.
+As you can see, it is a JSON array with each entry representing a version of the `foo` package available in the registry, consisting as follows:
+
+- `v` - key that describes the version.
+- `deps` - array describing each version's dependency requirements.
+- `cksum` - a `sha256` hash used to verify integrity.
+- `yanked` - optional boolean indicating if this version has been deprecated (yanked), and should no longer be used for new installations.
 
 ### Package archive
 

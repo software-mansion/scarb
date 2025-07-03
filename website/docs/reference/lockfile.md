@@ -113,4 +113,5 @@ dependencies = [
 To update all versions locked by the lockfile, run `scarb update` command.
 This will perform project resolution ignoring the existing lockfile, then write out a new `Scarb.lock`
 with the new version information.
-Note that the `Scarb.toml` manifest file will not be changed, and all version requirements from it will be preserved.
+Note that the `Scarb.toml` manifest file will not be changed.
+If the project previously used any "yanked" versions (i.e., versions that have been marked as unusable for reasons such as critical bugs or security vulnerabilities), the `scarb update` command will invalidate its usages.

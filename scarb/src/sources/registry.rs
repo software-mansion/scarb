@@ -19,16 +19,22 @@ use crate::core::{
 };
 use crate::flock::FileLockGuard;
 use crate::sources::PathSource;
+use std::collections::HashSet;
 
 pub struct RegistrySource<'c> {
     source_id: SourceId,
     config: &'c Config,
     client: RegistryClientCache<'c>,
     package_sources: PackageSourceStore<'c>,
+    yanked_whitelist: HashSet<PackageId>,
 }
 
 impl<'c> RegistrySource<'c> {
-    pub fn new(source_id: SourceId, config: &'c Config) -> Result<Self> {
+    pub fn new(
+        source_id: SourceId,
+        config: &'c Config,
+        yanked_whitelist: &HashSet<PackageId>,
+    ) -> Result<Self> {
         let client = Self::create_client(source_id, config)?;
         let client = RegistryClientCache::new(source_id, client, config)?;
 
@@ -39,6 +45,7 @@ impl<'c> RegistrySource<'c> {
             config,
             client,
             package_sources,
+            yanked_whitelist: yanked_whitelist.clone(),
         })
     }
 
@@ -89,6 +96,9 @@ impl Source for RegistrySource<'_> {
                 self.source_id,
             );
 
+            if record.yanked && !self.yanked_whitelist.contains(&package_id) {
+                return None;
+            }
             let dependencies = record
                 .dependencies
                 .iter()
@@ -101,22 +111,28 @@ impl Source for RegistrySource<'_> {
                 })
                 .collect();
 
-            Summary::builder()
-                .package_id(package_id)
-                .dependencies(dependencies)
-                .no_core(record.no_core)
-                .checksum(Some(record.checksum.clone()))
-                .build()
+            Some(
+                Summary::builder()
+                    .package_id(package_id)
+                    .dependencies(dependencies)
+                    .no_core(record.no_core)
+                    .checksum(Some(record.checksum.clone()))
+                    .build(),
+            )
         };
-
         Ok(records
             .iter()
             // NOTE: We filter based on IndexRecords here, to avoid unnecessarily allocating
             //   PackageIds just to abandon them soon after.
             // NOTE: Technically, RegistryClientCache may already have filtered the records,
             //   but it is not required to do so, so we do it here again as a safety measure.
-            .filter(|record| dependency.version_req.matches(&record.version))
-            .map(build_summary_from_index_record)
+            .filter_map(|record| {
+                if dependency.version_req.matches(&record.version) {
+                    build_summary_from_index_record(record)
+                } else {
+                    None
+                }
+            })
             .collect())
     }
 

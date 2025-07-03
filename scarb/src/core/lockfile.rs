@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::str::FromStr;
 
 use anyhow::{Context, Result, anyhow};
@@ -182,6 +182,19 @@ impl Lockfile {
         }
 
         Ok(doc)
+    }
+
+    /// Creates a set of [`PackageId`]s with source [`crate::core::source::SourceKind::Registry`] present in Lockfile.
+    pub fn create_yanked_whitelist(&self) -> HashSet<PackageId> {
+        self.packages
+            .values()
+            .flatten()
+            .filter_map(|p| {
+                p.source
+                    .filter(|source| source.is_registry())
+                    .map(|source| PackageId::new(p.name.clone(), p.version.clone(), source))
+            })
+            .collect::<HashSet<_>>()
     }
 
     pub fn render(&self) -> Result<String> {
