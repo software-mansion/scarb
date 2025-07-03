@@ -14,6 +14,7 @@ use cairo_vm::{Felt252, cairo_run};
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
+use oracle::hint_processor::OracleHintProcessor;
 use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
 };
@@ -25,6 +26,7 @@ use std::env;
 use std::fs;
 use std::io::{self, Write};
 
+mod oracle;
 pub(crate) mod output;
 
 const MAX_ITERATION_COUNT: usize = 10000;
@@ -134,7 +136,7 @@ pub fn execute(
     }
     .with_context(|| "failed setting up program")?;
 
-    let mut hint_processor = CairoHintProcessor {
+    let cairo_hint_processor = CairoHintProcessor {
         runner: None,
         user_args: vec![vec![Arg::Array(read_arguments(
             args.run.arguments.clone(),
@@ -147,6 +149,9 @@ pub fn execute(
         markers: Default::default(),
         panic_traceback: Default::default(),
     };
+
+    let mut hint_processor =
+        OracleHintProcessor::new(cairo_hint_processor, args.run.experimental_oracles);
 
     let proof_mode = args.run.target.is_standalone();
 
@@ -163,7 +168,7 @@ pub fn execute(
 
     let mut runner =
         cairo_run_program(&program, &cairo_run_config, &mut hint_processor).map_err(|err| {
-            if let Some(panic_data) = hint_processor.markers.last() {
+            if let Some(panic_data) = hint_processor.cairo_hint_processor.markers.last() {
                 anyhow!(format_for_panic(panic_data.iter().copied()))
             } else {
                 anyhow::Error::from(err).context("Cairo program run failed")
@@ -179,7 +184,7 @@ pub fn execute(
         resources: args
             .run
             .print_resource_usage
-            .then(|| ExecutionResources::try_new(&runner, hint_processor))
+            .then(|| ExecutionResources::try_new(&runner, hint_processor.cairo_hint_processor))
             .transpose()?,
     });
 
