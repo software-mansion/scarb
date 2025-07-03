@@ -301,20 +301,22 @@ pub fn resolve_workspace_with_opts(
                 );
             }
 
-            let source_map = SourceMap::preloaded(ws.members(), ws.config());
-            let cached = RegistryCache::new(&source_map);
-            let patched = RegistryPatcher::new(&cached, &patch_map);
-
             let members_summaries = ws
                 .members()
                 .map(|pkg| pkg.manifest.summary.clone())
                 .collect::<Vec<_>>();
 
-            let lockfile: Lockfile = if opts.update {
-                Lockfile::new([])
+            let (lockfile, yanked_whitelist) = if opts.update {
+                (Lockfile::new([]), HashSet::new())
             } else {
-                read_lockfile(ws)?
+                let lockfile = read_lockfile(ws)?;
+                let yanked_whitelist = lockfile.create_yanked_whitelist();
+                (lockfile, yanked_whitelist)
             };
+
+            let source_map = SourceMap::preloaded(ws.members(), ws.config(), yanked_whitelist);
+            let cached = RegistryCache::new(&source_map);
+            let patched = RegistryPatcher::new(&cached, &patch_map);
 
             let resolve =
                 resolver::resolve(&members_summaries, &patched, &patch_map, lockfile).await?;

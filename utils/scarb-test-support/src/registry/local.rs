@@ -1,9 +1,11 @@
-use std::fmt;
-
-use assert_fs::TempDir;
-use url::Url;
-
 use crate::command::Scarb;
+use anyhow::Result;
+use assert_fs::TempDir;
+use serde::{Deserialize, Serialize};
+use std::io::{Read, Write};
+use std::path::Path;
+use std::{fmt, fs};
+use url::Url;
 
 pub struct LocalRegistry {
     pub t: TempDir,
@@ -49,4 +51,32 @@ impl fmt::Display for LocalRegistry {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.url, f)
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct Package {
+    pub v: String,
+    pub deps: Vec<String>,
+    pub cksum: String,
+    pub yanked: Option<bool>,
+}
+
+/// Marks test package yanked. Warning: does not modify cache.
+pub fn yank(file_path: &Path, version: &str) -> Result<()> {
+    let mut file = fs::File::open(file_path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+    let mut packages: Vec<Package> = serde_json::from_str(&contents)
+        .map_err(|e| anyhow::anyhow!("Failed to deserialize JSON: {}", e))?;
+    match packages.iter_mut().find(|package| package.v == version) {
+        Some(package) => package.yanked = Some(true),
+        None => panic!("Package with version '{version}' not found."),
+    }
+    let modified_contents = serde_json::to_string_pretty(&packages)
+        .map_err(|e| anyhow::anyhow!("Failed to serialize modified packages: {e}"))?;
+
+    let mut file = fs::File::create(file_path)?;
+    file.write_all(modified_contents.as_bytes())?;
+    file.sync_all()?;
+    Ok(())
 }
