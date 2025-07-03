@@ -807,6 +807,7 @@ fn test_fixer_formatting() {
 }
 
 #[test]
+#[ignore = "TODO(cairo-lint#381): Macro support in linter has been reverted."]
 fn test_linter_with_attribute_macros() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -877,6 +878,7 @@ fn test_linter_with_attribute_macros() {
 }
 
 #[test]
+#[ignore = "TODO(cairo-lint#381): Macro support in linter has been reverted."]
 fn test_linter_with_attribute_macros_complex() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");

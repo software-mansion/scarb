@@ -37,7 +37,7 @@ macro_rules! impl_item_with_attributes {
     ($t:ty) => {
         impl ItemWithAttributes for $t {
             fn item_attributes(&self, db: &dyn SyntaxGroup) -> Vec<Attribute> {
-                self.attributes(db).elements(db)
+                self.attributes(db).elements(db).collect()
             }
 
             fn span_with_trivia(&self, db: &dyn SyntaxGroup) -> TextSpan {

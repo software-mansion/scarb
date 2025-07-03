@@ -161,14 +161,14 @@ impl ProcMacroHostPlugin {
                         context.add_node(body.lbrace(db).as_syntax_node());
 
                         let item_list = body.items(db);
-                        for item in item_list.elements(db).iter() {
+                        for item in item_list.elements(db) {
                             let ast::TraitItem::Function(func) = item else {
                                 context.add_node(item.as_syntax_node());
                                 continue;
                             };
 
                             let mut token_stream_builder = TokenStreamBuilder::new(db);
-                            let attrs = func.attributes(db).elements(db);
+                            let attrs = func.attributes(db).elements(db).collect();
                             let found = self.parse_attrs(
                                 db,
                                 &mut token_stream_builder,
@@ -188,7 +188,7 @@ impl ProcMacroHostPlugin {
                                     db,
                                     &mut context,
                                     found,
-                                    func,
+                                    &func,
                                     token_stream,
                                 );
                         }
@@ -231,7 +231,7 @@ impl ProcMacroHostPlugin {
                             };
 
                             let mut token_stream_builder = TokenStreamBuilder::new(db);
-                            let attrs = func.attributes(db).elements(db);
+                            let attrs = func.attributes(db).elements(db).collect();
                             let found = self.parse_attrs(
                                 db,
                                 &mut token_stream_builder,

@@ -4,6 +4,7 @@ use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
 use anyhow::{Result, bail, ensure};
+use cairo_lang_compiler::DbWarmupContext;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_executable::compile::{
@@ -96,6 +97,8 @@ fn compile_executable(
     mut diagnostics_reporter: DiagnosticsReporter<'_>,
     config: ExecutableConfig,
 ) -> Result<CompiledFunction> {
+    let context = DbWarmupContext::new();
+    context.ensure_diagnostics(db, &mut diagnostics_reporter)?;
     let executables = find_executable_functions(db, main_crate_ids, executable_path);
 
     let executable = match executables.len() {
@@ -123,7 +126,7 @@ fn compile_executable(
         }
     };
 
-    compile_executable_function_in_prepared_db(db, executable, diagnostics_reporter, config)
+    compile_executable_function_in_prepared_db(db, executable, config, context)
 }
 
 fn multiple_executables_error_message(executables: Vec<String>, scarb_toml: &Utf8Path) -> String {
