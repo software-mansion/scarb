@@ -377,7 +377,7 @@ fn compile_with_invalid_non_numeric_dep_version() {
                   |
                 7 |             moo = "y"
                   |                   ^^^
-                data did not match any variant of dependency specification
+                unexpected character 'y' while parsing major version number
         "#});
 }
 

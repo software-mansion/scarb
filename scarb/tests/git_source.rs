@@ -172,8 +172,6 @@ fn fetch_with_nested_paths() {
         .success();
 }
 
-// TODO(#130): Redo TomlDependency deserializer to stick parsing particular variant
-//   if specific keyword appears.
 #[test]
 fn fetch_with_short_ssh_git() {
     let t = TempDir::new().unwrap();
@@ -197,7 +195,40 @@ fn fetch_with_short_ssh_git() {
                   |
                 7 | dep = { git = "git@github.com:a/dep" }
                   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                data did not match any variant of dependency specification
+                relative URL without a base: "git@github.com:a/dep"
+        "#});
+}
+
+#[test]
+fn fetch_with_invalid_keyword() {
+    let git_dep = gitx::new("dep", |t| {
+        ProjectBuilder::start()
+            .name("dep")
+            .lib_cairo("fn hello() -> felt252 { 42 }")
+            .build(&t)
+    });
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep", git_dep.with("commit", "some-rev"))
+        .lib_cairo("fn world() -> felt252 { dep::hello() }")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            error: failed to parse manifest at: [..]
+
+            Caused by:
+                TOML parse error at line 7, column 7
+                  |
+                7 | dep = { git = "[..]", commit = "some-rev" }
+                  |       ^[..]^
+                unknown field `commit`
         "#});
 }
 
