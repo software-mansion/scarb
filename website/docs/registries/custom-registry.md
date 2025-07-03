@@ -51,7 +51,8 @@ A structure of an example `foo` package index file looks like this:
   {
     "v": "0.1.0",
     "deps": [],
-    "cksum": "sha256:6607a3b860f35f55738360ff55917642282d772423e8120a013b479ddb9e3f89"
+    "cksum": "sha256:6607a3b860f35f55738360ff55917642282d772423e8120a013b479ddb9e3f89",
+    "is_yanked": false
   },
   {
     "v": "0.1.1",
@@ -61,7 +62,8 @@ A structure of an example `foo` package index file looks like this:
         "req": "^0.1.3"
       }
     ],
-    "cksum": "sha256:5917642282d772423e8120a013b4796607a3b860f35f55738360ff5ddb9e3f89"
+    "cksum": "sha256:5917642282d772423e8120a013b4796607a3b860f35f55738360ff5ddb9e3f89",
+    "is_yanked": false
   }
 ]
 ```
