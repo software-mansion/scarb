@@ -1,4 +1,6 @@
-use crate::compiler::fingerprint::{ComponentFingerprint, Fingerprint, UnitFingerprint, is_fresh};
+use crate::compiler::incremental::fingerprint::{
+    ComponentFingerprint, Fingerprint, UnitFingerprint, is_fresh,
+};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
 use anyhow::{Context, Result};
@@ -9,6 +11,7 @@ use cairo_lang_lowering::cache::generate_crate_cache;
 use std::env;
 use std::io::Write;
 use std::ops::Deref;
+use tracing::debug;
 
 const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
@@ -70,6 +73,10 @@ fn load_component_cache(
         &component.target_name(),
         &fingerprint_digest,
     )? {
+        debug!(
+            "component `{}` is fresh, loading cache artifacts",
+            component.target_name()
+        );
         let cache_dir = unit.incremental_cache_dir(ws);
         let cache_dir = cache_dir.path_unchecked();
         let cache_file = cache_dir.join(component.cache_filename(fingerprint));
@@ -130,6 +137,10 @@ fn save_component_cache(
         &component.target_name(),
         &fingerprint_digest,
     )? {
+        debug!(
+            "component `{}` is not fresh, saving new cache artifacts",
+            component.target_name()
+        );
         let fingerprint_dir = unit.fingerprint_dir(ws);
         let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(fingerprint));
         let fingerprint_file = fingerprint_dir.create_rw(
