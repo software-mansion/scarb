@@ -1,4 +1,6 @@
-use crate::compiler::fingerprint::{ComponentFingerprint, Fingerprint, UnitFingerprint, is_fresh};
+use crate::compiler::incremental::fingerprint::{
+    ComponentFingerprint, Fingerprint, UnitFingerprint, is_fresh,
+};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
 use anyhow::{Context, Result};
@@ -30,10 +32,6 @@ pub fn load_incremental_artifacts(
     let fingerprints = UnitFingerprint::new(unit, ws);
 
     for component in unit.components.iter() {
-        // TODO(maciektr): Enable caching for all components.
-        if !component.package.id.is_core() {
-            continue;
-        }
         let fingerprint = fingerprints
             .get(&component.id)
             .expect("component fingerprint must exist in unit fingerprints");
@@ -93,10 +91,6 @@ pub fn save_incremental_artifacts(
         return Ok(());
     };
     for component in unit.components.iter() {
-        // TODO(maciektr): Enable caching for all components.
-        if !component.package.id.is_core() {
-            continue;
-        }
         let fingerprint = fingerprints
             .get(&component.id)
             .expect("component fingerprint must exist in unit fingerprints");

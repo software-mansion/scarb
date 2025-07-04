@@ -10,7 +10,6 @@ use crate::core::{TargetKind, Workspace};
 mod compilation_unit;
 mod compilers;
 pub mod db;
-mod fingerprint;
 pub mod helpers;
 pub mod incremental;
 pub mod plugin;
