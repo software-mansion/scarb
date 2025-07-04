@@ -1,3 +1,4 @@
+use crate::compiler::incremental::source::create_local_fingerprints;
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent,
     CompilationUnitComponentId, CompilationUnitDependency, Profile,
@@ -9,6 +10,7 @@ use crate::version::VersionInfo;
 use anyhow::{Context, Result};
 use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::Edition;
+use camino::Utf8PathBuf;
 use itertools::Itertools;
 use scarb_stable_hash::StableHasher;
 use smol_str::SmolStr;
@@ -59,6 +61,15 @@ pub struct Fingerprint {
 
     /// Dependencies of the component.
     deps: RefCell<Vec<DepFingerprint>>,
+
+    /// Local files that should be checked for freshness.
+    local: Vec<LocalFingerprint>,
+}
+
+#[derive(Debug)]
+pub struct LocalFingerprint {
+    pub path: Utf8PathBuf,
+    pub checksum: u64,
 }
 
 #[derive(Debug)]
@@ -86,6 +97,7 @@ pub enum ComponentFingerprint {
 pub struct UnitFingerprint(HashMap<CompilationUnitComponentId, Rc<ComponentFingerprint>>);
 
 impl UnitFingerprint {
+    #[tracing::instrument(level = "trace", skip_all)]
     pub fn new(unit: &CairoCompilationUnit, ws: &Workspace<'_>) -> Self {
         let mut fingerprints = HashMap::new();
         for component in unit.components.iter() {
@@ -188,7 +200,8 @@ impl Fingerprint {
         let source_paths = component
             .targets
             .source_paths()
-            .into_iter()
+            .iter()
+            .map(ToString::to_string)
             .sorted()
             .collect_vec();
         let compiler_config = unit.compiler_config.clone();
@@ -216,6 +229,7 @@ impl Fingerprint {
             cairo_name,
             component_discriminator,
             experimental_features,
+            local: create_local_fingerprints(component.targets.source_paths()),
             deps: Default::default(),
         })
     }
@@ -249,6 +263,7 @@ impl Fingerprint {
     ///
     /// This uniquely identifies the compilation environment for a component,
     /// allowing to determine if the cache can be reused or if a recompilation is needed.
+    #[tracing::instrument(level = "trace", skip_all)]
     pub fn digest(&self) -> String {
         // We use the set to avoid cycles when calculating digests recursively for deps.
         let mut seen = HashSet::<SmolStr>::new();
@@ -268,6 +283,15 @@ impl Fingerprint {
         fingerprint.compiler_config.hash(&mut hasher);
         fingerprint.cfg_set.hash(&mut hasher);
         fingerprint.experimental_features.hash(&mut hasher);
+        hasher.write_usize(fingerprint.local.len());
+        for local in fingerprint
+            .local
+            .iter()
+            .sorted_by_key(|local| local.path.clone())
+        {
+            local.path.hash(&mut hasher);
+            local.checksum.hash(&mut hasher);
+        }
         hasher.write_usize(fingerprint.deps.borrow().len());
         for dep in fingerprint
             .deps

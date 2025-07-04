@@ -495,10 +495,10 @@ impl ComponentTarget {
         self.targets()[0].props::<P>()
     }
 
-    pub fn source_paths(&self) -> Vec<String> {
+    pub fn source_paths(&self) -> Vec<&Utf8Path> {
         self.targets()
             .iter()
-            .map(|t| t.source_path.to_string())
+            .map(|t| t.source_path.as_path())
             .collect()
     }
 }
