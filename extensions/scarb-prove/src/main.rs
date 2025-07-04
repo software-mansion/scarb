@@ -1,3 +1,6 @@
+#![deny(clippy::dbg_macro)]
+#![deny(clippy::disallowed_methods)]
+
 use anyhow::{Context, Result, bail, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;

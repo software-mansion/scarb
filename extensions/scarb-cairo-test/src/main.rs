@@ -1,3 +1,6 @@
+#![deny(clippy::dbg_macro)]
+#![deny(clippy::disallowed_methods)]
+
 use std::collections::HashSet;
 use std::{env, fs};
 
