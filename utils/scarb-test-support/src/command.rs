@@ -142,3 +142,13 @@ impl CommandExt for SnapboxCommand {
         panic!("Failed to deserialize stdout to JSON");
     }
 }
+
+pub trait ScarbSnapboxExt {
+    fn scarb_cache(self, path: impl AsRef<Path>) -> SnapboxCommand;
+}
+
+impl ScarbSnapboxExt for SnapboxCommand {
+    fn scarb_cache(self, path: impl AsRef<Path>) -> SnapboxCommand {
+        self.env("SCARB_CACHE", path.as_ref())
+    }
+}
