@@ -1,3 +1,6 @@
+#![deny(clippy::dbg_macro)]
+#![deny(clippy::disallowed_methods)]
+
 use crate::output::{ExecutionOutput, ExecutionResources, ExecutionSummary};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use bincode::enc::write::Writer;
@@ -351,7 +354,6 @@ fn load_prebuilt_executable(path: &Utf8Path, filename: String) -> Result<Executa
 
 fn get_or_create_output_dir(output_dir: &Utf8Path) -> Result<Utf8PathBuf> {
     if let Some(execution_id) = env::var_os(EXECUTION_ID_ENV) {
-        dbg!(&execution_id);
         let execution_id: usize = execution_id
             .to_string_lossy()
             .parse()
