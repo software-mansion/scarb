@@ -1,5 +1,4 @@
-use crate::compiler::plugin::proc_macro::ProcMacroInstance;
-use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::{ProcMacroInstance, ProcMacroPathsProvider};
 use crate::compiler::plugin::{CairoPluginProps, fetch_cairo_plugin};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitCairoPlugin,
@@ -889,6 +888,7 @@ impl<'a> PackageSolutionCollector<'a> {
                     .builtin(props.builtin)
                     .prebuilt_allowed(prebuilt_allowed)
                     .prebuilt(None)
+                    .cached_shared_lib_path(Default::default())
                     .build())
             })
             .collect::<Result<Vec<_>>>()?;
