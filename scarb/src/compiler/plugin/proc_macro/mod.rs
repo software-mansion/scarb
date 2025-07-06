@@ -13,4 +13,4 @@ pub use expansion::*;
 pub use host::*;
 pub use instance::*;
 pub use repository::*;
-pub use shared_library_provider::SharedLibraryProvider;
+pub use shared_library_provider::{ProcMacroPathsProvider, SharedLibraryProvider};
