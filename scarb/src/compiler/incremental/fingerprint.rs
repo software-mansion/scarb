@@ -1,4 +1,5 @@
 use crate::compiler::incremental::source::create_local_fingerprints;
+use crate::compiler::plugin::proc_macro::{ProcMacroPathsProvider, SharedLibraryProvider};
 use crate::compiler::{
     CairoCompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent,
     CompilationUnitComponentId, CompilationUnitDependency, Profile,
@@ -12,7 +13,7 @@ use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::Edition;
 use camino::Utf8PathBuf;
 use itertools::Itertools;
-use scarb_stable_hash::StableHasher;
+use scarb_stable_hash::{StableHasher, u64_hash};
 use smol_str::SmolStr;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -76,6 +77,14 @@ pub struct LocalFingerprint {
 pub struct PluginFingerprint {
     /// Component discriminator, which uniquely identifies the component within the compilation unit.
     component_discriminator: SmolStr,
+    /// Whether the plugin is a built-in plugin or not.
+    ///
+    /// Builtin plugins should not have local files to check, as they are always tied to the Scarb version.
+    is_builtin: bool,
+    /// Whether a prebuilt plugin binary is available.
+    is_prebuilt: bool,
+    /// Local files that should be checked for freshness.
+    local: Vec<LocalFingerprint>,
 }
 
 #[derive(Debug)]
@@ -169,18 +178,59 @@ impl PluginFingerprint {
     pub fn try_from_plugin(
         component: &CompilationUnitCairoPlugin,
         _unit: &CairoCompilationUnit,
-        _ws: &Workspace<'_>,
+        ws: &Workspace<'_>,
     ) -> Result<Self> {
         let component_discriminator =
             SmolStr::from(component.component_dependency_id.to_crate_identifier());
+        let is_builtin = component.builtin;
+        let is_prebuilt = component.prebuilt.is_some();
+        // Note that we only check built binary files. If a local plugin has changed, it would be
+        // rebuilt by Cargo at this point, as we compile proc macros before Cairo compilation units.
+        let local = if is_builtin {
+            // Builtin plugins do not have local files to check.
+            Vec::new()
+        } else if is_prebuilt {
+            // If the plugin is loaded from prebuilt, we do not need to check the locally built one.
+            let lib_path = component.package.prebuilt_lib_path();
+            let Some(lib_path) = lib_path else {
+                unreachable!(
+                    "plugin `{}` is loaded from prebuilt, but prebuilt path is not known",
+                    component.package.id
+                );
+            };
+            let content = fsx::read(&lib_path)
+                .with_context(|| format!("failed to read shared library at `{lib_path}`",))?;
+            vec![LocalFingerprint {
+                path: lib_path,
+                checksum: u64_hash(content),
+            }]
+        } else {
+            let lib_path = component.shared_lib_path(ws.config())?;
+            let content = fsx::read(&lib_path)
+                .with_context(|| format!("failed to read shared library at `{lib_path}`",))?;
+            vec![LocalFingerprint {
+                path: lib_path,
+                checksum: u64_hash(content),
+            }]
+        };
         Ok(Self {
             component_discriminator,
+            is_builtin,
+            is_prebuilt,
+            local,
         })
     }
 
     pub fn digest(&self) -> String {
         let mut hasher = StableHasher::new();
         self.component_discriminator.hash(&mut hasher);
+        self.is_builtin.hash(&mut hasher);
+        self.is_prebuilt.hash(&mut hasher);
+        hasher.write_usize(self.local.len());
+        for local in self.local.iter().sorted_by_key(|local| local.path.clone()) {
+            local.path.hash(&mut hasher);
+            local.checksum.hash(&mut hasher);
+        }
         hasher.finish_as_short_hash()
     }
 }
