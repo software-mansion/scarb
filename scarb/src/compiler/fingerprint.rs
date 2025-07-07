@@ -1,4 +1,7 @@
-use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent, Profile};
+use crate::compiler::{
+    CairoCompilationUnit, CompilationUnitCairoPlugin, CompilationUnitComponent,
+    CompilationUnitComponentId, CompilationUnitDependency, Profile,
+};
 use crate::core::{ManifestCompilerConfig, Workspace};
 use crate::flock::Filesystem;
 use crate::internal::fsx;
@@ -9,7 +12,11 @@ use cairo_lang_filesystem::db::Edition;
 use itertools::Itertools;
 use scarb_stable_hash::StableHasher;
 use smol_str::SmolStr;
-use std::hash::Hash;
+use std::cell::RefCell;
+use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
+use std::ops::Deref;
+use std::rc::{Rc, Weak};
 
 /// A fingerprint is a hash that represents the state of the compilation environment for a package,
 /// allowing to determine if the cache can be reused or if a recompilation is needed.
@@ -17,7 +24,6 @@ use std::hash::Hash;
 /// If the fingerprint is missing (the first time the unit is compiled), the cache is dirty and will not be used.
 /// If the fingerprint changes, the cache is dirty and will not be used.
 /// If the fingerprint is the same between compilation runs, the cache is clean and can be used.
-// TODO(maciektr): Handle information about component dependencies.
 // TODO(maciektr): Handle information about filesystem changes.
 #[derive(Debug)]
 pub struct Fingerprint {
@@ -50,9 +56,127 @@ pub struct Fingerprint {
 
     /// Experimental compiler features enabled for the component.
     experimental_features: Vec<SmolStr>,
+
+    /// Dependencies of the component.
+    deps: RefCell<Vec<DepFingerprint>>,
+}
+
+#[derive(Debug)]
+pub struct PluginFingerprint {
+    /// Component discriminator, which uniquely identifies the component within the compilation unit.
+    component_discriminator: SmolStr,
+}
+
+#[derive(Debug)]
+pub struct DepFingerprint {
+    /// Component discriminator, which uniquely identifies the component within the compilation unit.
+    component_discriminator: SmolStr,
+    /// Fingerprint created for the component.
+    ///
+    /// We store fingerprints as a `Weak` reference to allow cyclic dependencies.
+    fingerprint: Weak<ComponentFingerprint>,
+}
+
+#[derive(Debug)]
+pub enum ComponentFingerprint {
+    Library(Box<Fingerprint>),
+    Plugin(PluginFingerprint),
+}
+
+pub struct UnitFingerprint(HashMap<CompilationUnitComponentId, Rc<ComponentFingerprint>>);
+
+impl UnitFingerprint {
+    pub fn new(unit: &CairoCompilationUnit, ws: &Workspace<'_>) -> Self {
+        let mut fingerprints = HashMap::new();
+        for component in unit.components.iter() {
+            let fingerprint = Fingerprint::try_from_component(component, unit, ws)
+                .expect("failed to create fingerprint for component");
+            fingerprints.insert(
+                component.id.clone(),
+                Rc::new(ComponentFingerprint::Library(Box::new(fingerprint))),
+            );
+        }
+        for plugin in unit.cairo_plugins.iter() {
+            let fingerprint = PluginFingerprint::try_from_plugin(plugin, unit, ws)
+                .expect("failed to create fingerprint for plugin");
+            fingerprints.insert(
+                plugin.component_dependency_id.clone(),
+                Rc::new(ComponentFingerprint::Plugin(fingerprint)),
+            );
+        }
+        for component in unit.components.iter() {
+            for dep in component
+                .dependencies
+                .iter()
+                .sorted_by_key(|dep| dep.component_id())
+            {
+                let dep_component_id = match dep {
+                    CompilationUnitDependency::Library(component_id) => component_id,
+                    CompilationUnitDependency::Plugin(component_id) => component_id,
+                };
+                let fingerprint = fingerprints.get(dep_component_id);
+                let fingerprint =
+                    fingerprint.expect("component fingerprint must exist in unit fingerprints");
+                let fingerprint = Rc::downgrade(fingerprint);
+                let component_fingerprint = fingerprints
+                    .get_mut(&component.id)
+                    .expect("component fingerprint must exist in unit fingerprints");
+                match &**component_fingerprint {
+                    ComponentFingerprint::Library(lib) => {
+                        lib.deps.borrow_mut().push(DepFingerprint {
+                            component_discriminator: SmolStr::from(
+                                dep_component_id.to_crate_identifier(),
+                            ),
+                            fingerprint,
+                        });
+                    }
+                    ComponentFingerprint::Plugin(_) => {
+                        panic!("plugin components should not have dependencies");
+                    }
+                }
+            }
+        }
+        Self(fingerprints)
+    }
+
+    pub fn get(&self, id: &CompilationUnitComponentId) -> Option<Rc<ComponentFingerprint>> {
+        self.0.get(id).cloned()
+    }
+}
+
+impl ComponentFingerprint {
+    pub fn digest(&self) -> String {
+        match self {
+            ComponentFingerprint::Library(lib) => lib.digest(),
+            ComponentFingerprint::Plugin(plugin) => plugin.digest(),
+        }
+    }
+}
+
+impl PluginFingerprint {
+    pub fn try_from_plugin(
+        component: &CompilationUnitCairoPlugin,
+        _unit: &CairoCompilationUnit,
+        _ws: &Workspace<'_>,
+    ) -> Result<Self> {
+        let component_discriminator =
+            SmolStr::from(component.component_dependency_id.to_crate_identifier());
+        Ok(Self {
+            component_discriminator,
+        })
+    }
+
+    pub fn digest(&self) -> String {
+        let mut hasher = StableHasher::new();
+        self.component_discriminator.hash(&mut hasher);
+        hasher.finish_as_short_hash()
+    }
 }
 
 impl Fingerprint {
+    /// Create new fingerprint from component.
+    ///
+    /// Note: this does not fill the component dependencies!
     pub fn try_from_component(
         component: &CompilationUnitComponent,
         unit: &CairoCompilationUnit,
@@ -92,6 +216,7 @@ impl Fingerprint {
             cairo_name,
             component_discriminator,
             experimental_features,
+            deps: Default::default(),
         })
     }
 
@@ -125,17 +250,50 @@ impl Fingerprint {
     /// This uniquely identifies the compilation environment for a component,
     /// allowing to determine if the cache can be reused or if a recompilation is needed.
     pub fn digest(&self) -> String {
+        // We use the set to avoid cycles when calculating digests recursively for deps.
+        let mut seen = HashSet::<SmolStr>::new();
+        seen.insert(self.component_discriminator.clone());
+        Self::do_digest(self, &mut seen)
+    }
+
+    fn do_digest(fingerprint: &Fingerprint, seen: &mut HashSet<SmolStr>) -> String {
         let mut hasher = StableHasher::new();
-        self.scarb_path.hash(&mut hasher);
-        self.scarb_version.long().hash(&mut hasher);
-        self.profile.hash(&mut hasher);
-        self.cairo_name.hash(&mut hasher);
-        self.edition.hash(&mut hasher);
-        self.component_discriminator.hash(&mut hasher);
-        self.source_paths.hash(&mut hasher);
-        self.compiler_config.hash(&mut hasher);
-        self.cfg_set.hash(&mut hasher);
-        self.experimental_features.hash(&mut hasher);
+        fingerprint.scarb_path.hash(&mut hasher);
+        fingerprint.scarb_version.long().hash(&mut hasher);
+        fingerprint.profile.hash(&mut hasher);
+        fingerprint.cairo_name.hash(&mut hasher);
+        fingerprint.edition.hash(&mut hasher);
+        fingerprint.component_discriminator.hash(&mut hasher);
+        fingerprint.source_paths.hash(&mut hasher);
+        fingerprint.compiler_config.hash(&mut hasher);
+        fingerprint.cfg_set.hash(&mut hasher);
+        fingerprint.experimental_features.hash(&mut hasher);
+        hasher.write_usize(fingerprint.deps.borrow().len());
+        for dep in fingerprint
+            .deps
+            .borrow()
+            .iter()
+            .sorted_by_key(|dep| dep.component_discriminator.clone())
+        {
+            // Avoid dependency cycles.
+            if seen.insert(dep.component_discriminator.clone()) {
+                let dep_fingerprint = dep.fingerprint.clone();
+                if let Some(dep_fingerprint) = dep_fingerprint.upgrade() {
+                    match dep_fingerprint.deref() {
+                        ComponentFingerprint::Library(dep_fingerprint) => {
+                            Self::do_digest(dep_fingerprint.deref(), seen).hash(&mut hasher);
+                        }
+                        ComponentFingerprint::Plugin(dep_fingerprint) => {
+                            dep_fingerprint.digest().hash(&mut hasher);
+                        }
+                    }
+                } else {
+                    unreachable!(
+                        "dependency fingerprint should never be dropped, as long as unit fingerprint is alive"
+                    )
+                };
+            }
+        }
         hasher.finish_as_short_hash()
     }
 }

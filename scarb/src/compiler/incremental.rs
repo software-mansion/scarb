@@ -1,4 +1,4 @@
-use crate::compiler::fingerprint::{Fingerprint, is_fresh};
+use crate::compiler::fingerprint::{ComponentFingerprint, Fingerprint, UnitFingerprint, is_fresh};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
 use anyhow::{Context, Result};
@@ -12,22 +12,38 @@ use std::ops::Deref;
 
 const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
+pub enum IncrementalContext {
+    Disabled,
+    Enabled { fingerprints: UnitFingerprint },
+}
+
 #[tracing::instrument(skip_all, level = "info")]
 pub fn load_incremental_artifacts(
-    db: &mut RootDatabase,
     unit: &CairoCompilationUnit,
+    db: &mut RootDatabase,
     ws: &Workspace<'_>,
-) -> Result<()> {
+) -> Result<IncrementalContext> {
     if !incremental_allowed(unit) {
-        return Ok(());
+        return Ok(IncrementalContext::Disabled);
     }
+
+    let fingerprints = UnitFingerprint::new(unit, ws);
 
     for component in unit.components.iter() {
         // TODO(maciektr): Enable caching for all components.
         if !component.package.id.is_core() {
             continue;
         }
-        load_component_cache(db, unit, component, ws).with_context(|| {
+        let fingerprint = fingerprints
+            .get(&component.id)
+            .expect("component fingerprint must exist in unit fingerprints");
+        let fingerprint = match fingerprint.deref() {
+            ComponentFingerprint::Library(lib) => lib,
+            ComponentFingerprint::Plugin(_plugin) => {
+                unreachable!("we iterate through components not plugins");
+            }
+        };
+        load_component_cache(fingerprint, db, unit, component, ws).with_context(|| {
             format!(
                 "failed to load cache for `{}` component",
                 component.target_name()
@@ -35,32 +51,27 @@ pub fn load_incremental_artifacts(
         })?;
     }
 
-    Ok(())
+    Ok(IncrementalContext::Enabled { fingerprints })
 }
 
 #[tracing::instrument(skip_all, level = "trace")]
 fn load_component_cache(
+    fingerprint: &Fingerprint,
     db: &mut RootDatabase,
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
     ws: &Workspace<'_>,
 ) -> Result<()> {
-    let fingerprint = Fingerprint::try_from_component(component, unit, ws).with_context(|| {
-        format!(
-            "failed to create fingerprint for `{}` component",
-            component.target_name()
-        )
-    })?;
     let fingerprint_digest = fingerprint.digest();
     if is_fresh(
         &unit.fingerprint_dir(ws),
-        &component.fingerprint_dirname(&fingerprint),
+        &component.fingerprint_dirname(fingerprint),
         &component.target_name(),
         &fingerprint_digest,
     )? {
         let cache_dir = unit.incremental_cache_dir(ws);
         let cache_dir = cache_dir.path_unchecked();
-        let cache_file = cache_dir.join(component.cache_filename(&fingerprint));
+        let cache_file = cache_dir.join(component.cache_filename(fingerprint));
         let crate_id = component.crate_id(db);
         let blob_id = db.intern_blob(BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()));
         if let Some(mut core_conf) = db.crate_config(crate_id) {
@@ -73,19 +84,25 @@ fn load_component_cache(
 
 #[tracing::instrument(skip_all, level = "info")]
 pub fn save_incremental_artifacts(
-    db: &RootDatabase,
     unit: &CairoCompilationUnit,
+    db: &RootDatabase,
+    ctx: IncrementalContext,
     ws: &Workspace<'_>,
 ) -> Result<()> {
-    if !incremental_allowed(unit) {
+    let IncrementalContext::Enabled { fingerprints } = ctx else {
         return Ok(());
-    }
+    };
     for component in unit.components.iter() {
-        // TODO(maciektr): Enable caching for all components.
-        if !component.package.id.is_core() {
-            continue;
-        }
-        save_component_cache(db, unit, component, ws).with_context(|| {
+        let fingerprint = fingerprints
+            .get(&component.id)
+            .expect("component fingerprint must exist in unit fingerprints");
+        let fingerprint = match fingerprint.deref() {
+            ComponentFingerprint::Library(lib) => lib,
+            ComponentFingerprint::Plugin(_plugin) => {
+                unreachable!("we iterate through components not plugins");
+            }
+        };
+        save_component_cache(fingerprint, db, unit, component, ws).with_context(|| {
             format!(
                 "failed to save cache for `{}` component",
                 component.target_name()
@@ -98,26 +115,21 @@ pub fn save_incremental_artifacts(
 
 #[tracing::instrument(skip_all, level = "trace")]
 fn save_component_cache(
+    fingerprint: &Fingerprint,
     db: &RootDatabase,
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
     ws: &Workspace<'_>,
 ) -> Result<()> {
-    let fingerprint = Fingerprint::try_from_component(component, unit, ws).with_context(|| {
-        format!(
-            "failed to create fingerprint for `{}` component",
-            component.target_name()
-        )
-    })?;
     let fingerprint_digest = fingerprint.digest();
     if !is_fresh(
         &unit.fingerprint_dir(ws),
-        &component.fingerprint_dirname(&fingerprint),
+        &component.fingerprint_dirname(fingerprint),
         &component.target_name(),
         &fingerprint_digest,
     )? {
         let fingerprint_dir = unit.fingerprint_dir(ws);
-        let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(&fingerprint));
+        let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(fingerprint));
         let fingerprint_file = fingerprint_dir.create_rw(
             component.target_name().as_str(),
             "fingerprint file",
@@ -134,7 +146,7 @@ fn save_component_cache(
             })?;
         let cache_dir = unit.incremental_cache_dir(ws);
         let cache_file = cache_dir.create_rw(
-            component.cache_filename(&fingerprint),
+            component.cache_filename(fingerprint),
             "cache file",
             ws.config(),
         )?;
