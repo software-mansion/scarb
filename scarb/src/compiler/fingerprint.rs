@@ -141,12 +141,12 @@ impl Fingerprint {
 }
 
 pub fn is_fresh(
-    fingerprint: &Fingerprint,
     fingerprint_dir: &Filesystem,
+    fingerprint_dirname: &str,
     target_name: &str,
+    new_digest: &str,
 ) -> Result<bool> {
-    let component = format!("{target_name}-{}", fingerprint.id());
-    let fingerprint_dir = fingerprint_dir.child(&component);
+    let fingerprint_dir = fingerprint_dir.child(fingerprint_dirname);
     let fingerprint_dir = fingerprint_dir.path_unchecked();
     let old_digest_path = fingerprint_dir.join(target_name);
 
@@ -157,5 +157,5 @@ pub fn is_fresh(
     let old_digest = fsx::read_to_string(&old_digest_path)
         .with_context(|| format!("failed to read fingerprint from `{old_digest_path}`"))?;
 
-    Ok(old_digest == fingerprint.digest())
+    Ok(old_digest == new_digest)
 }
