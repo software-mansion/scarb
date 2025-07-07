@@ -137,7 +137,7 @@ impl<'a> OracleHintProcessor<'a> {
             let connection_string: String = ByteArray::decode_iter(&mut inputs_iter)?.try_into()?;
 
             let selector = Felt252::decode_iter(&mut inputs_iter)?.to_bytes_be();
-            let selector = std::str::from_utf8(&selector)?;
+            let selector = str::from_utf8(&selector)?;
 
             let calldata = inputs_iter.as_slice();
 
