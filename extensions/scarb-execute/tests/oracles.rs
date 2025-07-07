@@ -41,7 +41,7 @@ impl Check {
                 enable-gas = false
             "#})
             .dep_cairo_execute()
-            // TODO(mkaput): Remove starknet dependency in favour of the oracle package.
+            // NOTE: We use this just to access `cheatcode` libfunc.
             .dep_starknet()
             .dep(
                 "oracle_asserts",
