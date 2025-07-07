@@ -1929,28 +1929,28 @@ fn incremental_artifacts_emitted() {
     let fingerprints = t.child("target/dev/.fingerprint").files();
     // We search the dir, as fingerprints will change with different temp dir, so we cannot hardcode
     // the name here.
-    let tag = fingerprints
+    let component_id = fingerprints
         .iter()
         .find(|t| t.starts_with("core-"))
         .unwrap();
-    assert_eq!(tag.len(), 5 + 13); // 5 for "core-" and 13 for the hash
+    assert_eq!(component_id.len(), 5 + 13); // 5 for "core-" and 13 for the hash
     assert_eq!(
         t.child("target/dev/incremental").files(),
-        vec![format!("{tag}.bin")]
+        vec![format!("{component_id}.bin")]
     );
     assert_eq!(
         t.child("target/dev/.fingerprint").files(),
-        vec![tag.as_str()]
+        vec![component_id.as_str()]
     );
     assert_eq!(
-        t.child(format!("target/dev/.fingerprint/{tag}")).files(),
+        t.child(format!("target/dev/.fingerprint/{component_id}"))
+            .files(),
         vec!["core"]
     );
-    assert_eq!(
-        t.child(format!("target/dev/.fingerprint/{tag}/core"))
-            .read_to_string(),
-        tag.get(5..).unwrap()
-    );
+    let component_digest = t
+        .child(format!("target/dev/.fingerprint/{component_id}/core"))
+        .read_to_string();
+    assert_eq!(component_digest.len(), 13);
 
     Scarb::quick_snapbox()
         .env("SCARB_CACHE", cache_dir.path())
@@ -1967,19 +1967,20 @@ fn incremental_artifacts_emitted() {
     );
     assert_eq!(
         t.child("target/dev/incremental").files(),
-        vec![format!("{tag}.bin")]
+        vec![format!("{component_id}.bin")]
     );
     assert_eq!(
         t.child("target/dev/.fingerprint").files(),
-        vec![tag.as_str()]
+        vec![component_id.as_str()]
     );
     assert_eq!(
-        t.child(format!("target/dev/.fingerprint/{tag}")).files(),
+        t.child(format!("target/dev/.fingerprint/{component_id}"))
+            .files(),
         vec!["core"]
     );
     assert_eq!(
-        t.child(format!("target/dev/.fingerprint/{tag}/core"))
+        t.child(format!("target/dev/.fingerprint/{component_id}/core"))
             .read_to_string(),
-        tag.get(5..).unwrap()
+        component_digest
     );
 }

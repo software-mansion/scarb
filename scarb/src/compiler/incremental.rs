@@ -51,17 +51,16 @@ fn load_component_cache(
             component.target_name()
         )
     })?;
-
+    let fingerprint_digest = fingerprint.digest();
     if is_fresh(
-        &fingerprint,
         &unit.fingerprint_dir(ws),
+        &component.fingerprint_dirname(&fingerprint),
         &component.target_name(),
+        &fingerprint_digest,
     )? {
         let cache_dir = unit.incremental_cache_dir(ws);
-        let digest = fingerprint.digest();
-        let component_id = format!("{}-{}.bin", component.target_name(), digest);
         let cache_dir = cache_dir.path_unchecked();
-        let cache_file = cache_dir.join(&component_id);
+        let cache_file = cache_dir.join(component.cache_filename(&fingerprint));
         let crate_id = component.crate_id(db);
         let blob_id = db.intern_blob(BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()));
         if let Some(mut core_conf) = db.crate_config(crate_id) {
@@ -110,15 +109,15 @@ fn save_component_cache(
             component.target_name()
         )
     })?;
+    let fingerprint_digest = fingerprint.digest();
     if !is_fresh(
-        &fingerprint,
         &unit.fingerprint_dir(ws),
+        &component.fingerprint_dirname(&fingerprint),
         &component.target_name(),
+        &fingerprint_digest,
     )? {
         let fingerprint_dir = unit.fingerprint_dir(ws);
-        let cache_dir = unit.incremental_cache_dir(ws);
-        let component_id = format!("{}-{}", component.target_name(), fingerprint.id());
-        let fingerprint_dir = fingerprint_dir.child(&component_id);
+        let fingerprint_dir = fingerprint_dir.child(component.fingerprint_dirname(&fingerprint));
         let fingerprint_file = fingerprint_dir.create_rw(
             component.target_name().as_str(),
             "fingerprint file",
@@ -126,15 +125,19 @@ fn save_component_cache(
         )?;
         fingerprint_file
             .deref()
-            .write_all(fingerprint.digest().as_bytes())
+            .write_all(fingerprint_digest.as_bytes())
             .with_context(|| {
                 format!(
                     "failed to write fingerprint to `{}`",
                     fingerprint_file.path()
                 )
             })?;
-        let cache_file =
-            cache_dir.create_rw(format!("{component_id}.bin"), "cache file", ws.config())?;
+        let cache_dir = unit.incremental_cache_dir(ws);
+        let cache_file = cache_dir.create_rw(
+            component.cache_filename(&fingerprint),
+            "cache file",
+            ws.config(),
+        )?;
         let crate_id = component.crate_id(db);
         let Some(cache_blob) = generate_crate_cache(db, crate_id).ok() else {
             return Ok(());
@@ -145,6 +148,21 @@ fn save_component_cache(
             .with_context(|| format!("failed to write cache to `{}`", cache_file.path()))?;
     }
     Ok(())
+}
+
+trait IncrementalArtifactsProvider {
+    fn fingerprint_dirname(&self, fingerprint: &Fingerprint) -> String;
+
+    fn cache_filename(&self, fingerprint: &Fingerprint) -> String;
+}
+
+impl IncrementalArtifactsProvider for CompilationUnitComponent {
+    fn fingerprint_dirname(&self, fingerprint: &Fingerprint) -> String {
+        format!("{}-{}", self.target_name(), fingerprint.id())
+    }
+    fn cache_filename(&self, fingerprint: &Fingerprint) -> String {
+        format!("{}.bin", self.fingerprint_dirname(fingerprint))
+    }
 }
 
 pub fn incremental_allowed(unit: &CairoCompilationUnit) -> bool {
