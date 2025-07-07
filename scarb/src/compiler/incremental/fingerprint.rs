@@ -74,6 +74,10 @@ pub struct LocalFingerprint {
 
 #[derive(Debug)]
 pub struct PluginFingerprint {
+    /// Path to the Scarb binary.
+    scarb_path: String,
+    /// Version of Scarb and Cairo.
+    scarb_version: VersionInfo,
     /// Component discriminator, which uniquely identifies the component within the compilation unit.
     component_discriminator: SmolStr,
     /// Whether the plugin is a built-in plugin or not.
@@ -99,7 +103,7 @@ pub struct DepFingerprint {
 #[derive(Debug)]
 pub enum ComponentFingerprint {
     Library(Box<Fingerprint>),
-    Plugin(PluginFingerprint),
+    Plugin(Box<PluginFingerprint>),
 }
 
 pub struct UnitFingerprint(HashMap<CompilationUnitComponentId, Rc<ComponentFingerprint>>);
@@ -121,7 +125,7 @@ impl UnitFingerprint {
                 .expect("failed to create fingerprint for plugin");
             fingerprints.insert(
                 plugin.component_dependency_id.clone(),
-                Rc::new(ComponentFingerprint::Plugin(fingerprint)),
+                Rc::new(ComponentFingerprint::Plugin(Box::new(fingerprint))),
             );
         }
         for component in unit.components.iter() {
@@ -179,6 +183,8 @@ impl PluginFingerprint {
         _unit: &CairoCompilationUnit,
         ws: &Workspace<'_>,
     ) -> Result<Self> {
+        let scarb_path = fsx::canonicalize_utf8(ws.config().app_exe()?)?.to_string();
+        let scarb_version = crate::version::get();
         let component_discriminator =
             SmolStr::from(component.component_dependency_id.to_crate_identifier());
         let is_builtin = component.builtin;
@@ -213,24 +219,13 @@ impl PluginFingerprint {
             }]
         };
         Ok(Self {
+            scarb_path,
+            scarb_version,
             component_discriminator,
             is_builtin,
             is_prebuilt,
             local,
         })
-    }
-
-    pub fn digest(&self) -> String {
-        let mut hasher = StableHasher::new();
-        self.component_discriminator.hash(&mut hasher);
-        self.is_builtin.hash(&mut hasher);
-        self.is_prebuilt.hash(&mut hasher);
-        hasher.write_usize(self.local.len());
-        for local in self.local.iter().sorted_by_key(|local| local.path.clone()) {
-            local.path.hash(&mut hasher);
-            local.checksum.hash(&mut hasher);
-        }
-        hasher.finish_as_short_hash()
     }
 }
 
@@ -283,43 +278,6 @@ impl Fingerprint {
         })
     }
 
-    /// Returns a fingerprint identifier.
-    ///
-    /// The identifier is used to decide whether the cache should be overwritten or not, by defining
-    /// the cache directory location for the component associated with this fingerprint.
-    /// If a subsequent compilation run has the same identifier, it's cache's fingerprint will be
-    /// checked for freshness. If it's fresh - it can be reused. If not - the cache will be
-    /// overwritten.
-    /// Note: this is not enough to determine if the cache can be reused or not! Please use
-    /// `Fingerprint::digest` for that.
-    /// Broadly speaking, the identifier is a less strict version of the digest.
-    pub fn id(&self) -> String {
-        let mut hasher = StableHasher::new();
-        self.scarb_path.hash(&mut hasher);
-        self.scarb_version.long().hash(&mut hasher);
-        self.profile.hash(&mut hasher);
-        self.cairo_name.hash(&mut hasher);
-        self.edition.hash(&mut hasher);
-        self.component_discriminator.hash(&mut hasher);
-        self.source_paths.hash(&mut hasher);
-        self.compiler_config.hash(&mut hasher);
-        self.cfg_set.hash(&mut hasher);
-        self.experimental_features.hash(&mut hasher);
-        hasher.finish_as_short_hash()
-    }
-
-    /// Returns a string representation of the fingerprint digest.
-    ///
-    /// This uniquely identifies the compilation environment for a component,
-    /// allowing to determine if the cache can be reused or if a recompilation is needed.
-    #[tracing::instrument(level = "trace", skip_all)]
-    pub fn digest(&self) -> String {
-        // We use the set to avoid cycles when calculating digests recursively for deps.
-        let mut seen = HashSet::<SmolStr>::new();
-        seen.insert(self.component_discriminator.clone());
-        Self::do_digest(self, &mut seen)
-    }
-
     fn do_digest(fingerprint: &Fingerprint, seen: &mut HashSet<SmolStr>) -> String {
         let mut hasher = StableHasher::new();
         fingerprint.scarb_path.hash(&mut hasher);
@@ -368,6 +326,90 @@ impl Fingerprint {
             }
         }
         hasher.finish_as_short_hash()
+    }
+}
+
+pub trait FingerprintDigest {
+    /// Returns a fingerprint identifier.
+    ///
+    /// The identifier is used to decide whether the cache should be overwritten or not, by defining
+    /// the cache directory location for the component associated with this fingerprint.
+    /// If a subsequent compilation run has the same identifier, it's cache's fingerprint will be
+    /// checked for freshness. If it's fresh - it can be reused. If not - the cache will be
+    /// overwritten.
+    /// Note: this is not enough to determine if the cache can be reused or not! Please use
+    /// `Fingerprint::digest` for that.
+    /// Broadly speaking, the identifier is a less strict version of the digest.
+    fn id(&self) -> String;
+
+    /// Returns a string representation of the fingerprint digest.
+    ///
+    /// This uniquely identifies the compilation environment for a component,
+    /// allowing to determine if the cache can be reused or if a recompilation is needed.
+    fn digest(&self) -> String;
+}
+
+impl FingerprintDigest for Fingerprint {
+    fn id(&self) -> String {
+        let mut hasher = StableHasher::new();
+        self.scarb_path.hash(&mut hasher);
+        self.scarb_version.long().hash(&mut hasher);
+        self.profile.hash(&mut hasher);
+        self.cairo_name.hash(&mut hasher);
+        self.edition.hash(&mut hasher);
+        self.component_discriminator.hash(&mut hasher);
+        self.source_paths.hash(&mut hasher);
+        self.compiler_config.hash(&mut hasher);
+        self.cfg_set.hash(&mut hasher);
+        self.experimental_features.hash(&mut hasher);
+        hasher.finish_as_short_hash()
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    fn digest(&self) -> String {
+        // We use the set to avoid cycles when calculating digests recursively for deps.
+        let mut seen = HashSet::<SmolStr>::new();
+        seen.insert(self.component_discriminator.clone());
+        Self::do_digest(self, &mut seen)
+    }
+}
+
+impl FingerprintDigest for PluginFingerprint {
+    fn id(&self) -> String {
+        let mut hasher = StableHasher::new();
+        self.component_discriminator.hash(&mut hasher);
+        hasher.finish_as_short_hash()
+    }
+
+    fn digest(&self) -> String {
+        let mut hasher = StableHasher::new();
+        self.component_discriminator.hash(&mut hasher);
+        self.scarb_path.hash(&mut hasher);
+        self.scarb_version.long().hash(&mut hasher);
+        self.is_builtin.hash(&mut hasher);
+        self.is_prebuilt.hash(&mut hasher);
+        hasher.write_usize(self.local.len());
+        for local in self.local.iter().sorted_by_key(|local| local.path.clone()) {
+            local.path.hash(&mut hasher);
+            local.checksum.hash(&mut hasher);
+        }
+        hasher.finish_as_short_hash()
+    }
+}
+
+impl FingerprintDigest for ComponentFingerprint {
+    fn id(&self) -> String {
+        match self {
+            ComponentFingerprint::Library(lib) => lib.id(),
+            ComponentFingerprint::Plugin(plugin) => plugin.id(),
+        }
+    }
+
+    fn digest(&self) -> String {
+        match self {
+            ComponentFingerprint::Library(lib) => lib.digest(),
+            ComponentFingerprint::Plugin(plugin) => plugin.digest(),
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::compiler::incremental::fingerprint::{
-    ComponentFingerprint, Fingerprint, UnitFingerprint, is_fresh,
+    ComponentFingerprint, Fingerprint, FingerprintDigest, UnitFingerprint, is_fresh,
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitComponent};
 use crate::core::Workspace;
