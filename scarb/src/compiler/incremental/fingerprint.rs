@@ -27,7 +27,6 @@ use std::rc::{Rc, Weak};
 /// If the fingerprint is missing (the first time the unit is compiled), the cache is dirty and will not be used.
 /// If the fingerprint changes, the cache is dirty and will not be used.
 /// If the fingerprint is the same between compilation runs, the cache is clean and can be used.
-// TODO(maciektr): Handle information about filesystem changes.
 #[derive(Debug)]
 pub struct Fingerprint {
     /// Path to the Scarb binary.
