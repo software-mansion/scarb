@@ -12,6 +12,7 @@ use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateId;
 use itertools::Itertools;
 use serde::Serialize;
+use std::collections::HashSet;
 use std::io::{BufWriter, Write};
 
 pub struct CountingWriter<W> {
@@ -44,6 +45,7 @@ pub fn build_compiler_config<'c>(
     db: &RootDatabase,
     unit: &CairoCompilationUnit,
     main_crate_ids: &[CrateId],
+    cached_crates: &[CrateId],
     ws: &Workspace<'c>,
 ) -> CompilerConfig<'c> {
     let ignore_warnings_crates = db
@@ -51,6 +53,12 @@ pub fn build_compiler_config<'c>(
         .into_iter()
         .filter(|crate_id| !main_crate_ids.contains(crate_id))
         .collect_vec();
+    let crates_to_check: HashSet<CrateId> = db
+        .crates()
+        .into_iter()
+        .filter(|crate_id| !cached_crates.contains(crate_id))
+        .chain(main_crate_ids.iter().cloned())
+        .collect();
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
 
@@ -77,7 +85,13 @@ pub fn build_compiler_config<'c>(
             };
         }
     })
-    .with_ignore_warnings_crates(&ignore_warnings_crates);
+    .with_ignore_warnings_crates(&ignore_warnings_crates)
+    // If a crate is cached, we do not need to check it for diagnostics,
+    // as the cache can only be produced if the crate is diagnostic-free.
+    // So if there were any diagnotics here to show, it would mean that the cache is outdated - thus
+    // we should not use it in the first place.
+    // Note we still add the main crate, as we want it to be checked for warnings.
+    .with_crates(&crates_to_check.into_iter().collect_vec());
     CompilerConfig {
         diagnostics_reporter: if unit.compiler_config.allow_warnings {
             diagnostics_reporter.allow_warnings()

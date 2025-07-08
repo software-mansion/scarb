@@ -31,6 +31,7 @@ impl Compiler for TestCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
+        cached_crates: &[CrateId],
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -60,7 +61,8 @@ impl Compiler for TestCompiler {
         };
 
         let diagnostics_reporter =
-            build_compiler_config(db, unit, &test_crate_ids, ws).diagnostics_reporter;
+            build_compiler_config(db, unit, &test_crate_ids, cached_crates, ws)
+                .diagnostics_reporter;
 
         let span = trace_span!("compile_test");
         let test_compilation = {
@@ -101,9 +103,12 @@ impl Compiler for TestCompiler {
             // Note: this will only search for contracts in the main CU component and
             // `build-external-contracts`. It will not collect contracts from all dependencies.
             compile_contracts(
-                test_crate_ids,
-                contracts,
-                build_external_contracts,
+                ContractsCompilationArgs {
+                    main_crate_ids: test_crate_ids,
+                    cached_crates: cached_crates.to_vec(),
+                    contracts,
+                    build_external_contracts,
+                },
                 target_dir,
                 unit,
                 db,
@@ -115,22 +120,33 @@ impl Compiler for TestCompiler {
     }
 }
 
-fn compile_contracts(
+struct ContractsCompilationArgs {
     main_crate_ids: Vec<CrateId>,
+    cached_crates: Vec<CrateId>,
     contracts: Vec<ContractDeclaration>,
     build_external_contracts: Option<Vec<ContractSelector>>,
+}
+
+fn compile_contracts(
+    args: ContractsCompilationArgs,
     target_dir: Filesystem,
     unit: &CairoCompilationUnit,
     db: &mut RootDatabase,
     ws: &Workspace<'_>,
 ) -> Result<()> {
+    let ContractsCompilationArgs {
+        main_crate_ids,
+        cached_crates,
+        contracts,
+        build_external_contracts,
+    } = args;
     ensure_gas_enabled(db)?;
     let target_name = unit.main_component().target_name();
     let props = StarknetContractProps {
         build_external_contracts,
         ..StarknetContractProps::default()
     };
-    let mut compiler_config = build_compiler_config(db, unit, &main_crate_ids, ws);
+    let mut compiler_config = build_compiler_config(db, unit, &main_crate_ids, &cached_crates, ws);
     compiler_config.diagnostics_reporter = DiagnosticsReporter::ignoring().allow_warnings();
     let CompiledContracts {
         contract_paths,
