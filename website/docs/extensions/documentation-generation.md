@@ -45,7 +45,7 @@ Let's take, for example, a simple Cairo project initialized using `scarb new`. L
 
 
 /// Example Enum. It's really similar to [ExampleStruct]
-enum ExampleEnum {
+pub enum ExampleEnum {
     /// First enum variant.
     VARIANT_A,
     /// Second enum variant.
@@ -53,7 +53,7 @@ enum ExampleEnum {
 }
 
 /// Example struct. Contains a public field and a private one.
-struct ExampleStruct {
+pub struct ExampleStruct {
     /// Private field.
     field_a: felt252,
     /// Public field.
@@ -69,13 +69,13 @@ struct ExampleStruct {
 ///         test();
 ///     }
 /// ```
-fn test() {
+pub fn test() {
     println!("test");
 }
 
 /// Main function that Cairo runs as a binary entrypoint.
 /// This function uses [test] function.
-fn main() {
+pub fn main() {
     //! This is an inner comment. It refers to it's parent which is the main function.
     println!("hello_world");
     test();
