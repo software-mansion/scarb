@@ -56,7 +56,7 @@ impl CompilerRepository {
             bail!("unknown compiler for target `{target_kind}`");
         };
         let ctx = load_incremental_artifacts(&unit, db, ws)?;
-        compiler.compile(&unit, db, ws)?;
+        compiler.compile(&unit, ctx.cached_crates(), db, ws)?;
         save_incremental_artifacts(&unit, db, ctx, ws)?;
         Ok(())
     }

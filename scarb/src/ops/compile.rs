@@ -301,7 +301,7 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 build_scarb_root_database(&unit, ws, Default::default())?;
             let main_crate_ids = collect_main_crate_ids(&unit, &db);
             check_starknet_dependency(&unit, ws, &db, &package_name);
-            let mut compiler_config = build_compiler_config(&db, &unit, &main_crate_ids, ws);
+            let mut compiler_config = build_compiler_config(&db, &unit, &main_crate_ids, &[], ws);
             let result = compiler_config
                 .diagnostics_reporter
                 .ensure(&db)

@@ -76,6 +76,7 @@ impl Compiler for StarknetContractCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
+        cached_crates: &[CrateId],
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -103,7 +104,7 @@ impl Compiler for StarknetContractCompiler {
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
 
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, cached_crates, ws);
 
         let contracts = find_project_contracts(
             db,
