@@ -9,7 +9,7 @@ def main():
     recv(expect_id=send_id)
 
     for request in listen():
-        request_id = request["id"]
+        request_id = request.get("id")
 
         method = request.get("method")
         if not method:
@@ -66,7 +66,7 @@ def send(
         response["result"] = result
 
     if error is not None:
-        response["error"] = {"message": str(error)}
+        response["error"] = {"code": 0, "message": str(error)}
 
     print(json.dumps(response), flush=True)
 
@@ -83,13 +83,10 @@ def recv(*, expect_id: Optional[int] = None) -> dict[str, Any]:
     if message.get("jsonrpc") != "2.0":
         fatal_error(f"expected JSON-RPC 2.0, got {message.get('jsonrpc')!r}")
 
-    if message.get("id") is None:
-        fatal_error(f"expected message with ID, got {message!r}")
-
-    if expect_id is not None and message["id"] != expect_id:
+    if expect_id is not None and message.get("id") != expect_id:
         fatal_error(
-            f"expected message with ID {expect_id!r}, got {message['id']!r}",
-            in_reply_to=message["id"],
+            f"expected message with ID {expect_id!r}, got {message.get('id')!r}",
+            in_reply_to=message.get("id"),
         )
 
     return message
