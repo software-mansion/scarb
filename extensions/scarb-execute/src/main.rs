@@ -24,7 +24,6 @@ fn main() -> ExitCode {
 fn init_logging(verbose: VerbositySpec, ui: &Ui) {
     use tracing_subscriber::filter::EnvFilter;
     use tracing_subscriber::fmt::time::Uptime;
-    use tracing_subscriber::prelude::*;
 
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
