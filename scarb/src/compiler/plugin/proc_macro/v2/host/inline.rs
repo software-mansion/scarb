@@ -97,6 +97,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                         "this error originates in the inline macro: `{}`",
                         self.expansion.cairo_name
                     )),
+                    is_unhygienic: false,
                 }),
                 diagnostics,
             }

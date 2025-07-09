@@ -664,6 +664,7 @@ impl ProcMacroHostPlugin {
                             Some(DynGeneratedFileAuxData::new(aux_data))
                         },
                         diagnostics_note: Some(note),
+                        is_unhygienic: false,
                     })
                 },
                 diagnostics: into_cairo_diagnostics(all_diagnostics, stable_ptr),
@@ -745,6 +746,7 @@ impl ProcMacroHostPlugin {
                         input,
                     )))
                 }),
+                is_unhygienic: false,
             }),
             diagnostics: into_cairo_diagnostics(result.diagnostics, stable_ptr),
             remove_original_item: true,
@@ -987,6 +989,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
                 },
                 code_mappings,
                 diagnostics_note: Some(note),
+                is_unhygienic: false,
             }),
             diagnostics: self.diagnostics,
             remove_original_item: true,
@@ -1179,6 +1182,7 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
                         "this error originates in the inline macro: `{}`",
                         self.expansion.cairo_name
                     )),
+                    is_unhygienic: false,
                 }),
                 diagnostics,
             }

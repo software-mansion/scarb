@@ -136,6 +136,7 @@ impl From<AttributeGeneratedFile> for PluginGeneratedFile {
             code_mappings: value.code_mappings,
             aux_data: value.aux_data,
             diagnostics_note: value.diagnostics_note,
+            is_unhygienic: false,
         }
     }
 }
