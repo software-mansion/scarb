@@ -1,4 +1,5 @@
 use cairo_lang_casm::hints::{Hint, StarknetHint};
+use cairo_lang_casm::operand::{CellRef, ResOperand};
 use cairo_lang_runner::casm_run::{
     MemBuffer, cell_ref_to_relocatable, extract_relocatable, vm_get_range,
 };
@@ -13,12 +14,32 @@ use cairo_vm::vm::runners::cairo_runner::{ResourceTracker, RunResources};
 use cairo_vm::vm::vm_core::VirtualMachine;
 use std::any::Any;
 use std::collections::HashMap;
-use std::ops::ControlFlow;
 
 pub struct OracleHintProcessor<'a> {
     pub cairo_hint_processor: CairoHintProcessor<'a>,
     /// Whether `--experimental-oracles` flag has been enabled.
     experiment_enabled: bool,
+}
+
+enum MySelector {
+    OracleInvoke,
+}
+
+impl MySelector {
+    fn from_str(selector: &str) -> Option<Self> {
+        match selector {
+            "oracle_invoke" => Some(Self::OracleInvoke),
+            _ => None,
+        }
+    }
+}
+
+struct MyCheatcode<'a> {
+    selector: MySelector,
+    input_start: &'a ResOperand,
+    input_end: &'a ResOperand,
+    output_start: &'a CellRef,
+    output_end: &'a CellRef,
 }
 
 impl<'a> OracleHintProcessor<'a> {
@@ -31,24 +52,8 @@ impl<'a> OracleHintProcessor<'a> {
     }
 
     /// Gracefully look if this is one of the cheat codes supported by us.
-    /// Take over execution just right when we learn this is "our" cheat code.
-    /// Any errors will be created by the following [`CairoHintProcessor::execute_hint`] call.
-    fn execute_cheatcode(
-        &mut self,
-        vm: &mut VirtualMachine,
-        _exec_scopes: &mut ExecutionScopes,
-        hint_data: &Box<dyn Any>,
-        _constants: &HashMap<String, Felt252>,
-    ) -> ControlFlow<Result<(), HintError>> {
-        macro_rules! t {
-            ($expr:expr) => {
-                match $expr {
-                    Ok(v) => v,
-                    Err(e) => return ControlFlow::Break(Err(e.into())),
-                }
-            };
-        }
-
+    /// This function prepares context for proper hint execution.
+    fn hijack_my_cheatcode<'b>(&self, hint_data: &'b Box<dyn Any>) -> Option<MyCheatcode<'b>> {
         if let Some(Hint::Starknet(StarknetHint::Cheatcode {
             selector,
             input_start,
@@ -57,44 +62,60 @@ impl<'a> OracleHintProcessor<'a> {
             output_end,
         })) = hint_data.downcast_ref::<Hint>()
             && let Ok(selector) = str::from_utf8(&selector.value.to_bytes_be().1)
-            && selector == "oracle_invoke"
+            && let Some(selector) = MySelector::from_str(selector)
         {
-            if !self.experiment_enabled {
-                return ControlFlow::Break(Err(HintError::AssertionFailed(
-                    "Oracles are experimental feature. \
-                    To enable, pass --experimental-oracles CLI flag."
-                        .into(),
-                )));
-            }
-
-            // Extract the inputs.
-            let input_start = t!(extract_relocatable(vm, input_start));
-            let input_end = t!(extract_relocatable(vm, input_end));
-            let inputs = t!(vm_get_range(vm, input_start, input_end));
-
-            // Prepare output segment.
-            let mut res_segment = MemBuffer::new_segment(vm);
-            let res_segment_start = res_segment.ptr;
-
-            // Route selector to particular execution methods.
-            match selector {
-                "oracle_invoke" => t!(self.execute_invoke(inputs, &mut res_segment)),
-                _ => return ControlFlow::Continue(()),
-            };
-
-            // Store output and terminate execution.
-            let res_segment_end = res_segment.ptr;
-            t!(insert_value_to_cellref!(
-                vm,
+            Some(MyCheatcode {
+                selector,
+                input_start,
+                input_end,
                 output_start,
-                res_segment_start
-            ));
-            t!(insert_value_to_cellref!(vm, output_end, res_segment_end));
-
-            ControlFlow::Break(Ok(()))
+                output_end,
+            })
         } else {
-            ControlFlow::Continue(())
+            None
         }
+    }
+
+    /// Take over execution just right when we learn this is "our" cheat code.
+    fn execute_my_cheatcode(
+        &mut self,
+        vm: &mut VirtualMachine,
+        MyCheatcode {
+            selector,
+            input_start,
+            input_end,
+            output_start,
+            output_end,
+        }: MyCheatcode<'_>,
+    ) -> Result<(), HintError> {
+        if !self.experiment_enabled {
+            return Err(HintError::AssertionFailed(
+                "Oracles are experimental feature. \
+                    To enable, pass --experimental-oracles CLI flag."
+                    .into(),
+            ));
+        }
+
+        // Extract the inputs.
+        let input_start = extract_relocatable(vm, input_start)?;
+        let input_end = extract_relocatable(vm, input_end)?;
+        let inputs = vm_get_range(vm, input_start, input_end)?;
+
+        // Prepare output segment.
+        let mut res_segment = MemBuffer::new_segment(vm);
+        let res_segment_start = res_segment.ptr;
+
+        // Route selector to particular execution methods.
+        match selector {
+            MySelector::OracleInvoke => self.execute_invoke(inputs, &mut res_segment)?,
+        };
+
+        // Store output and terminate execution.
+        let res_segment_end = res_segment.ptr;
+        insert_value_to_cellref!(vm, output_start, res_segment_start)?;
+        insert_value_to_cellref!(vm, output_end, res_segment_end)?;
+
+        Ok(())
     }
 
     /// Execute the `oracle_invoke` cheat code.
@@ -117,13 +138,12 @@ impl<'a> HintProcessorLogic for OracleHintProcessor<'a> {
         hint_data: &Box<dyn Any>,
         constants: &HashMap<String, Felt252>,
     ) -> Result<(), HintError> {
-        match self.execute_cheatcode(vm, exec_scopes, hint_data, constants) {
-            ControlFlow::Break(res) => return res,
-            ControlFlow::Continue(()) => {}
+        if let Some(cheatcode) = self.hijack_my_cheatcode(hint_data) {
+            self.execute_my_cheatcode(vm, cheatcode)
+        } else {
+            self.cairo_hint_processor
+                .execute_hint(vm, exec_scopes, hint_data, constants)
         }
-
-        self.cairo_hint_processor
-            .execute_hint(vm, exec_scopes, hint_data, constants)
     }
 
     fn compile_hint(
