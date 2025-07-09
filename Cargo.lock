@@ -6519,6 +6519,7 @@ dependencies = [
  "anyhow",
  "assert_fs",
  "bincode",
+ "cairo-lang-casm",
  "cairo-lang-executable",
  "cairo-lang-runner",
  "cairo-lang-utils",
