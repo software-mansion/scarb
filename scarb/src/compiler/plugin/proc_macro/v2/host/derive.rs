@@ -161,6 +161,7 @@ impl ProcMacroHostPlugin {
                     } else {
                         Some(DynGeneratedFileAuxData::new(aux_data))
                     },
+                    is_unhygienic: false,
                 })
             },
             diagnostics: into_cairo_diagnostics(db, all_diagnostics, stable_ptr),
