@@ -77,6 +77,18 @@ async fn run() {
         read(&mut stdout).await,
         json!({
             "jsonrpc": "2.0",
+            "method": "cairo/serverStatus",
+            "params": {
+                "event": "AnalysisStarted",
+                "idle": false,
+            }
+        })
+    );
+
+    assert_eq!(
+        read(&mut stdout).await,
+        json!({
+            "jsonrpc": "2.0",
             "id": 1,
             "method": "client/registerCapability",
             "params": {
