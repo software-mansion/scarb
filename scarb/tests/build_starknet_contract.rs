@@ -435,6 +435,11 @@ fn compile_starknet_contract_without_starknet_dep() {
                     self.value.write( self.value.read() + a );
                                ^^^^^
 
+        error: Ambiguous method call. More than one applicable trait function with a suitable self type was found: core::starknet::storage::map::StorageMapReadAccess::read and core::starknet::storage::StoragePointerReadAccess::read. Consider adding type annotations or explicitly refer to the impl function.
+         --> [..]lib.cairo:29:42
+                    self.value.write( self.value.read() + a );
+                                                 ^^^^
+
         error: could not check `hello` due to previous error
         "#});
 }
