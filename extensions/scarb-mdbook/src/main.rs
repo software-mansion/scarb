@@ -1,3 +1,6 @@
+#![deny(clippy::dbg_macro)]
+#![deny(clippy::disallowed_methods)]
+
 use anyhow::{Context, Result};
 use clap::Parser;
 use mdbook::MDBook;

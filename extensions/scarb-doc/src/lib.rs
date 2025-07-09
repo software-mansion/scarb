@@ -1,3 +1,6 @@
+#![deny(clippy::dbg_macro)]
+#![deny(clippy::disallowed_methods)]
+
 use crate::db::ScarbDocDatabase;
 use crate::metadata::compilation::{
     crates_with_starknet, get_project_config, get_relevant_compilation_unit,
