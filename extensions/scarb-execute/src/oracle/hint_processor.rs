@@ -1,11 +1,12 @@
 use super::connection::ConnectionManager;
 use crate::oracle::encodable_result::EncodableResult;
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use cairo_lang_casm::hints::{Hint, StarknetHint};
 use cairo_lang_casm::operand::{CellRef, ResOperand};
 use cairo_lang_runner::casm_run::{
     MemBuffer, cell_ref_to_relocatable, extract_relocatable, vm_get_range,
 };
+use cairo_lang_runner::short_string::as_cairo_short_string;
 use cairo_lang_runner::{CairoHintProcessor, insert_value_to_cellref};
 use cairo_vm::Felt252;
 use cairo_vm::hint_processor::hint_processor_definition::{HintProcessorLogic, HintReference};
@@ -136,14 +137,15 @@ impl<'a> OracleHintProcessor<'a> {
 
             let connection_string: String = ByteArray::decode_iter(&mut inputs_iter)?.try_into()?;
 
-            let selector = Felt252::decode_iter(&mut inputs_iter)?.to_bytes_be();
-            let selector = str::from_utf8(&selector)?;
+            let selector = Felt252::decode_iter(&mut inputs_iter)?;
+            let selector = as_cairo_short_string(&selector)
+                .ok_or_else(|| anyhow!("invalid selector: {selector}"))?;
 
             let calldata = inputs_iter.as_slice();
 
             self.connections
                 .connect(&connection_string)?
-                .call(selector, calldata)
+                .call(&selector, calldata)
         };
 
         let result = invoke();
