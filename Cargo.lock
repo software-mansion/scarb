@@ -977,6 +977,20 @@ dependencies = [
 [[package]]
 name = "cairo-lang-macro"
 version = "0.2.0-rc.0"
+source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
+dependencies = [
+ "bumpalo",
+ "cairo-lang-macro-attributes 0.2.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
+ "cairo-lang-macro-stable 2.0.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
+ "cairo-lang-primitive-token",
+ "cairo-lang-quote 0.1.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
+ "linkme",
+ "serde",
+]
+
+[[package]]
+name = "cairo-lang-macro"
+version = "0.2.0-rc.1"
 dependencies = [
  "bumpalo",
  "cairo-lang-macro-attributes 0.2.0-rc.0",
@@ -987,20 +1001,6 @@ dependencies = [
  "serde",
  "serde_json",
  "trybuild",
-]
-
-[[package]]
-name = "cairo-lang-macro"
-version = "0.2.0-rc.0"
-source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
-dependencies = [
- "bumpalo",
- "cairo-lang-macro-attributes 0.2.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
- "cairo-lang-macro-stable 2.0.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
- "cairo-lang-primitive-token",
- "cairo-lang-quote 0.1.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
- "linkme",
- "serde",
 ]
 
 [[package]]
@@ -1485,7 +1485,7 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-lowering",
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
+ "cairo-lang-macro 0.2.0-rc.0",
  "cairo-lang-parser",
  "cairo-lang-project",
  "cairo-lang-semantic",
@@ -6329,7 +6329,7 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-lowering",
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.0",
+ "cairo-lang-macro 0.2.0-rc.1",
  "cairo-lang-macro-stable 1.0.0",
  "cairo-lang-macro-stable 2.0.0-rc.0",
  "cairo-lang-parser",
@@ -6613,7 +6613,7 @@ name = "scarb-proc-macro-server-types"
 version = "0.3.0-rc.0"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.0",
+ "cairo-lang-macro 0.2.0-rc.1",
  "serde",
  "serde_json",
 ]
@@ -6624,7 +6624,7 @@ version = "0.3.0-rc.0"
 source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
+ "cairo-lang-macro 0.2.0-rc.0",
  "serde",
  "serde_json",
 ]
