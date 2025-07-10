@@ -1844,12 +1844,6 @@ fn diags_can_be_mapped_to_call_site_correctly() {
         .stdout_matches(indoc! {r#"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            error: Placeholder expression ($expression) is allowed only in the context of a macro rule.
-             --> [..]lib.cairo:1:10
-            #[derive(ImproperDeriveMacroV2)]
-                     ^^^^^^^^^^^^^^^^^^^^^
-            note: this error originates in the derive macro: `ImproperDeriveMacroV2`
-            
             error: Missing tokens. Expected a path segment.
              --> [..]lib.cairo:1:10
             #[derive(ImproperDeriveMacroV2)]

@@ -126,7 +126,10 @@ fn compile_executable(
         }
     };
 
-    compile_executable_function_in_prepared_db(db, executable, config, context)
+    Ok(
+        compile_executable_function_in_prepared_db(db, executable, config, context)?
+            .compiled_function,
+    )
 }
 
 fn multiple_executables_error_message(executables: Vec<String>, scarb_toml: &Utf8Path) -> String {
