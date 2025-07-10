@@ -980,7 +980,7 @@ version = "0.2.0-rc.0"
 source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
 dependencies = [
  "bumpalo",
- "cairo-lang-macro-attributes 0.2.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
+ "cairo-lang-macro-attributes 0.2.0-rc.0",
  "cairo-lang-macro-stable 2.0.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
  "cairo-lang-primitive-token",
  "cairo-lang-quote 0.1.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
@@ -993,7 +993,7 @@ name = "cairo-lang-macro"
 version = "0.2.0-rc.1"
 dependencies = [
  "bumpalo",
- "cairo-lang-macro-attributes 0.2.0-rc.0",
+ "cairo-lang-macro-attributes 0.2.0-rc.1",
  "cairo-lang-macro-stable 2.0.0-rc.0",
  "cairo-lang-primitive-token",
  "cairo-lang-quote 0.1.0-rc.0",
@@ -1017,6 +1017,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-macro-attributes"
 version = "0.2.0-rc.0"
+source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
 dependencies = [
  "quote",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1025,8 +1026,7 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-macro-attributes"
-version = "0.2.0-rc.0"
-source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
+version = "0.2.0-rc.1"
 dependencies = [
  "quote",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
