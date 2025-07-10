@@ -1,8 +1,11 @@
 use assert_fs::TempDir;
+use assert_fs::prelude::*;
 use derive_builder::Builder;
 use indoc::indoc;
 use scarb_test_support::command::Scarb;
+use scarb_test_support::fsx::make_executable;
 use scarb_test_support::project_builder::ProjectBuilder;
+use std::env;
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -47,12 +50,18 @@ impl Check {
             .dep_starknet()
             .dep(
                 "oracle_asserts",
-                Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/oracle_asserts")),
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/oracle_asserts"),
             )
             .lib_cairo(self.lib_cairo)
+            .cp("tests/test_oracle.py", "test_oracle.py")
             .build(&t);
 
-        let mut snapbox = Scarb::quick_snapbox().arg("execute").current_dir(&t);
+        make_executable(t.child("test_oracle.py").path());
+
+        let mut snapbox = Scarb::quick_snapbox()
+            .env("RUST_BACKTRACE", "0")
+            .arg("execute")
+            .current_dir(&t);
 
         if self.enable_experimental_oracles_flag {
             snapbox = snapbox.arg("--experimental-oracles");
@@ -96,13 +105,13 @@ fn oracle_invoke_without_experimental_flag_fails() {
 }
 
 #[test]
-fn oracle_invoke_direct() {
+fn oracle_invoke_non_jsonrpc_command() {
     CheckBuilder::default()
         .lib_cairo(indoc! {r#"
             #[executable]
             fn main() {
                 let mut inputs: Array<felt252> = array![];
-                let connection_string: ByteArray = "stdio:///usr/bin/yes";
+                let connection_string: ByteArray = "stdio:/usr/bin/yes";
                 connection_string.serialize(ref inputs);
                 'pow'.serialize(ref inputs);
                 (4).serialize(ref inputs);
@@ -115,7 +124,7 @@ fn oracle_invoke_direct() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Ok([9876543210])
+            Result::Err("oracle process is misbehaving: expected JSON-RPC message starting with '{', got byte: 'y'")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -222,4 +231,111 @@ fn oracle_json_rpc_smoke_test() {
     // Wait for a process to terminate.
     let status = process.wait().unwrap();
     assert!(status.success(), "oracle process should exit successfully");
+}
+
+#[test]
+fn oracle_invoke_non_existent_file() {
+    CheckBuilder::default()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() {
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "stdio:i_definitelly_do_not_exist.exe";
+                connection_string.serialize(ref inputs);
+                'hello'.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<Span<felt252>>(result);
+            }
+        "#})
+        .stdout_matches(indoc! {r#"
+            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing oracle_test
+            Result::Err("failed to spawn oracle process")
+            Saving output to: target/execute/oracle_test/execution1
+        "#})
+        .check();
+}
+
+#[test]
+fn oracle_invoke_non_executable_file() {
+    CheckBuilder::default()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() {
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "stdio:Scarb.toml";
+                connection_string.serialize(ref inputs);
+                'hello'.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<Span<felt252>>(result);
+            }
+        "#})
+        .stdout_matches(indoc! {r#"
+            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing oracle_test
+            Result::Err("failed to spawn oracle process")
+            Saving output to: target/execute/oracle_test/execution1
+        "#})
+        .check();
+}
+
+/// If the `./ ` prefix is omitted from the path, then the oracle should be looked for in $PATH,
+/// which doesn't have `.` in it.
+#[test]
+fn oracle_invoke_test_oracle_without_dot_slash() {
+    CheckBuilder::default()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() {
+                let mut inputs: Array<felt252> = array![];
+                let connection_string: ByteArray = "stdio:test_oracle.py";
+                connection_string.serialize(ref inputs);
+                'panic'.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<Span<felt252>>(result);
+            }
+        "#})
+        .stdout_matches(indoc! {r#"
+            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing oracle_test
+            Result::Err("failed to spawn oracle process")
+            Saving output to: target/execute/oracle_test/execution1
+        "#})
+        .check();
+}
+
+#[test]
+fn oracle_invoke_test_oracle() {
+    CheckBuilder::default()
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn main() {
+                let connection_string: ByteArray = "stdio:./test_oracle.py";
+
+                let mut inputs: Array<felt252> = array![];
+                connection_string.serialize(ref inputs);
+                'sqrt'.serialize(ref inputs);
+                (16).serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<Span<felt252>>(result);
+
+                let mut inputs: Array<felt252> = array![];
+                connection_string.serialize(ref inputs);
+                'panic'.serialize(ref inputs);
+                let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
+                oracle_asserts::print::<Span<felt252>>(result);
+            }
+        "#})
+        .stdout_matches(indoc! {r#"
+            [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
+            [..]Finished `dev` profile target(s) in [..]
+            [..]Executing oracle_test
+            Result::Ok([4])
+            Result::Err("oops")
+            Saving output to: target/execute/oracle_test/execution1
+        "#})
+        .check();
 }
