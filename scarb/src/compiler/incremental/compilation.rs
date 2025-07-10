@@ -6,7 +6,7 @@ use crate::core::Workspace;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::{FilesGroup, FilesGroupEx};
-use cairo_lang_filesystem::ids::BlobLongId;
+use cairo_lang_filesystem::ids::{BlobLongId, CrateId};
 use cairo_lang_lowering::cache::generate_crate_cache;
 use std::env;
 use std::io::Write;
@@ -17,7 +17,22 @@ const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
 pub enum IncrementalContext {
     Disabled,
-    Enabled { fingerprints: UnitFingerprint },
+    Enabled {
+        fingerprints: UnitFingerprint,
+        cached_crates: Vec<CrateId>,
+    },
+}
+
+impl IncrementalContext {
+    pub fn cached_crates(&self) -> &[CrateId] {
+        match self {
+            IncrementalContext::Disabled => &[],
+            IncrementalContext::Enabled {
+                fingerprints: _,
+                cached_crates,
+            } => cached_crates,
+        }
+    }
 }
 
 #[tracing::instrument(skip_all, level = "info")]
@@ -31,6 +46,7 @@ pub fn load_incremental_artifacts(
     }
 
     let fingerprints = UnitFingerprint::new(unit, ws);
+    let mut cached_crates = Vec::new();
 
     for component in unit.components.iter() {
         let fingerprint = fingerprints
@@ -42,17 +58,28 @@ pub fn load_incremental_artifacts(
                 unreachable!("we iterate through components not plugins");
             }
         };
-        load_component_cache(fingerprint, db, unit, component, ws).with_context(|| {
-            format!(
-                "failed to load cache for `{}` component",
-                component.target_name()
-            )
-        })?;
+        let loaded =
+            load_component_cache(fingerprint, db, unit, component, ws).with_context(|| {
+                format!(
+                    "failed to load cache for `{}` component",
+                    component.target_name()
+                )
+            })?;
+        if loaded {
+            cached_crates.push(component.crate_id(db));
+        }
     }
 
-    Ok(IncrementalContext::Enabled { fingerprints })
+    Ok(IncrementalContext::Enabled {
+        fingerprints,
+        cached_crates,
+    })
 }
 
+/// Loads the cache for a specific component if it is fresh.
+///
+/// Returns `Ok(true)` if the cache was loaded successfully, or `Ok(false)` if the component
+/// is not fresh and no cache was loaded.
 #[tracing::instrument(skip_all, level = "trace")]
 fn load_component_cache(
     fingerprint: &Fingerprint,
@@ -60,7 +87,7 @@ fn load_component_cache(
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
     ws: &Workspace<'_>,
-) -> Result<()> {
+) -> Result<bool> {
     let fingerprint_digest = fingerprint.digest();
     if is_fresh(
         &unit
@@ -82,8 +109,10 @@ fn load_component_cache(
             core_conf.cache_file = Some(blob_id);
             db.set_crate_config(crate_id, Some(core_conf));
         }
+        Ok(true)
+    } else {
+        Ok(false)
     }
-    Ok(())
 }
 
 #[tracing::instrument(skip_all, level = "info")]
@@ -93,7 +122,11 @@ pub fn save_incremental_artifacts(
     ctx: IncrementalContext,
     ws: &Workspace<'_>,
 ) -> Result<()> {
-    let IncrementalContext::Enabled { fingerprints } = ctx else {
+    let IncrementalContext::Enabled {
+        fingerprints,
+        cached_crates: _,
+    } = ctx
+    else {
         return Ok(());
     };
     for component in unit.components.iter() {

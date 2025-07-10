@@ -44,6 +44,7 @@ pub fn build_compiler_config<'c>(
     db: &RootDatabase,
     unit: &CairoCompilationUnit,
     main_crate_ids: &[CrateId],
+    cached_crates: &[CrateId],
     ws: &Workspace<'c>,
 ) -> CompilerConfig<'c> {
     let ignore_warnings_crates = db
@@ -51,6 +52,16 @@ pub fn build_compiler_config<'c>(
         .into_iter()
         .filter(|crate_id| !main_crate_ids.contains(crate_id))
         .collect_vec();
+    let crates_to_check = db
+        .crates()
+        .into_iter()
+        .filter(|crate_id| !cached_crates.contains(crate_id))
+        .collect_vec();
+    let crates_to_check = if crates_to_check.is_empty() {
+        main_crate_ids.to_vec()
+    } else {
+        crates_to_check
+    };
     let diagnostics_reporter = DiagnosticsReporter::callback({
         let config = ws.config();
 
@@ -77,7 +88,12 @@ pub fn build_compiler_config<'c>(
             };
         }
     })
-    .with_ignore_warnings_crates(&ignore_warnings_crates);
+    .with_ignore_warnings_crates(&ignore_warnings_crates)
+    // If a crate is cached, we do not need to check it for diagnostics,
+    // as the cache can only be produced if the crate is diagnostic-free.
+    // So if there were any diagnotics here to show, it would mean that the cache is outdated - thus
+    // we should not use it in the first place.
+    .with_crates(&crates_to_check);
     CompilerConfig {
         diagnostics_reporter: if unit.compiler_config.allow_warnings {
             diagnostics_reporter.allow_warnings()

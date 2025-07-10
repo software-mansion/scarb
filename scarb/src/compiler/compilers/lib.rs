@@ -3,6 +3,7 @@ use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::MacroPlugin;
+use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
@@ -44,6 +45,7 @@ impl Compiler for LibCompiler {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
+        cached_crates: &[CrateId],
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -59,7 +61,7 @@ impl Compiler for LibCompiler {
 
         let main_crate_ids = collect_main_crate_ids(unit, db);
 
-        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, ws);
+        let compiler_config = build_compiler_config(db, unit, &main_crate_ids, cached_crates, ws);
 
         validate_compiler_config(db, &compiler_config, unit, ws);
 
