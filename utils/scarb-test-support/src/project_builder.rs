@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use assert_fs::fixture::ChildPath;
@@ -87,6 +87,10 @@ impl ProjectBuilder {
 
     pub fn lock(self, source: impl ToString) -> Self {
         self.src("Scarb.lock", source.to_string())
+    }
+
+    pub fn cp(self, from: impl AsRef<Path>, to: impl Into<Utf8PathBuf>) -> Self {
+        self.src(to, std::fs::read_to_string(from.as_ref()).unwrap())
     }
 
     pub fn dep(mut self, name: impl ToString, dep: impl DepBuilder) -> Self {
@@ -266,6 +270,18 @@ impl DepBuilder for &Path {
 impl DepBuilder for Path {
     fn build(&self) -> Value {
         (&self).build()
+    }
+}
+
+impl DepBuilder for &PathBuf {
+    fn build(&self) -> Value {
+        self.as_path().build()
+    }
+}
+
+impl DepBuilder for PathBuf {
+    fn build(&self) -> Value {
+        self.as_path().build()
     }
 }
 
