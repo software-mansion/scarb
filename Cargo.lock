@@ -6556,6 +6556,7 @@ dependencies = [
  "serde_json",
  "snapbox",
  "starknet-core",
+ "tracing",
  "tracing-subscriber",
  "url",
 ]
