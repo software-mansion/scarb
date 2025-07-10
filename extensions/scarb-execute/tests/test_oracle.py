@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
 import sys
-from typing import Any, Iterator, Optional, Union
+from typing import Any, Iterator, Optional, Union, List
 
 
 def main():
@@ -19,17 +19,17 @@ def main():
         elif method == "invoke":
             params = request.get("params", {})
             selector = params.get("selector", "")
-            calldata = params.get("calldata", [])
+            calldata = decode(params.get("calldata", []))
             try:
                 result = route_invoke(selector, calldata)
-                send(id=request_id, result=result)
+                send(id=request_id, result=encode(result))
             except Exception as e:
                 send(id=request_id, error=e)
         else:
             send(id=request_id, error=f"unknown method {method!r}")
 
 
-def route_invoke(selector, calldata):
+def route_invoke(selector, calldata: List[int]) -> List[int]:
     if selector == "sqrt":
         return [int(calldata[0] ** 0.5)]
     elif selector == "panic":
@@ -105,6 +105,14 @@ def fatal_error(err: str, /, in_reply_to: Optional[int] = None):
     if in_reply_to is not None:
         send(id=in_reply_to, error=err)
     sys.exit(1)
+
+
+def encode(result: List[int]) -> List[str]:
+    return [hex(felt) for felt in result]
+
+
+def decode(calldata: List[Union[int, str]]) -> List[int]:
+    return [int(felt, 0) if isinstance(felt, str) else felt for felt in calldata]
 
 
 if __name__ == "__main__":

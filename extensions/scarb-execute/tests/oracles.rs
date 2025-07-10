@@ -177,10 +177,8 @@ fn oracle_invoke_invalid_url() {
     ignore = "This test relies on UNIX shebangs."
 )]
 fn oracle_json_rpc_smoke_test() {
-    let oracle_path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/test_oracle.py"));
-
     // Spawn test_oracle.py process and grab it's I/O.
-    let mut process = Command::new(oracle_path)
+    let mut process = Command::new("tests/test_oracle.py")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
@@ -207,9 +205,9 @@ fn oracle_json_rpc_smoke_test() {
     send(r#"{"jsonrpc": "2.0", "id": 0, "result": {}}"#);
 
     send(
-        r#"{"jsonrpc": "2.0", "id": 0, "method": "invoke", "params": {"selector": "sqrt", "calldata": [16]}}"#,
+        r#"{"jsonrpc": "2.0", "id": 0, "method": "invoke", "params": {"selector": "sqrt", "calldata": ["0x10"]}}"#,
     );
-    recv(r#"{"jsonrpc": "2.0", "id": 0, "result": [4]}"#);
+    recv(r#"{"jsonrpc": "2.0", "id": 0, "result": ["0x4"]}"#);
 
     send(
         r#"{"jsonrpc": "2.0", "id": 1, "method": "invoke", "params": {"selector": "panic", "calldata": []}}"#,
