@@ -127,7 +127,7 @@ fn oracle_invoke_non_jsonrpc_command_from_path() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("oracle process is misbehaving: expected JSON-RPC message starting with '{', got byte: '[..]'")
+            Result::Err((0, "oracle process is misbehaving: expected JSON-RPC message starting with '{', got byte: '[..]'"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -151,8 +151,8 @@ fn oracle_invoke_unknown_scheme() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("unsupported connection scheme: "unknown:///test"
-            note: supported schemes are: `stdio`")
+            Result::Err((0, "unsupported connection scheme: "unknown:///test"
+            note: supported schemes are: `stdio`"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -176,8 +176,8 @@ fn oracle_invoke_missing_connection_scheme() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("unsupported connection scheme: "no scheme"
-            note: supported schemes are: `stdio`")
+            Result::Err((0, "unsupported connection scheme: "no scheme"
+            note: supported schemes are: `stdio`"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -255,7 +255,7 @@ fn oracle_invoke_non_existent_file() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("failed to spawn oracle process")
+            Result::Err((0, "failed to spawn oracle process"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -279,7 +279,7 @@ fn oracle_invoke_non_executable_file() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("failed to spawn oracle process")
+            Result::Err((0, "failed to spawn oracle process"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -305,7 +305,7 @@ fn oracle_invoke_test_oracle_without_dot_slash() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("failed to spawn oracle process")
+            Result::Err((0, "failed to spawn oracle process"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -344,7 +344,7 @@ fn oracle_invoke_test_oracle() {
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
             Result::Ok([4])
-            Result::Err("oops")
+            Result::Err((0, "oops"))
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();

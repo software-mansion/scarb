@@ -23,11 +23,12 @@ where
     fn encode<W: FeltWriter>(&self, writer: &mut W) -> Result<(), CodecError> {
         match self {
             EncodableResult::Ok(value) => {
-                writer.write(Felt::ZERO);
+                writer.write(Felt::ZERO); // Result::Ok marker
                 value.encode(writer)
             }
             EncodableResult::Err(value) => {
-                writer.write(Felt::ONE);
+                writer.write(Felt::ONE); // Result::Err marker
+                writer.write(Felt::ZERO); // oracle::ErrorInner::ErrorMessage marker
                 let byte_array: ByteArray = value.to_string().as_str().into();
                 byte_array.encode(writer)
             }
