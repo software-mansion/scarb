@@ -37,13 +37,25 @@ pub fn short_hash(hashable: impl Hash) -> String {
     hasher.finish_as_short_hash()
 }
 
+pub fn u64_hash(hashable: impl Hash) -> u64 {
+    let mut hasher = StableHasher::new();
+    hashable.hash(&mut hasher);
+    hasher.finish()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::short_hash;
+    use super::{short_hash, u64_hash};
 
     #[test]
     fn short_hash_is_stable() {
         assert_eq!(short_hash("abcd"), "e1p6jp2ak1nmk");
         assert_eq!(short_hash(123), "8fupdqgl2ulsq");
+    }
+
+    #[test]
+    fn u64_hash_is_stable() {
+        assert_eq!(u64_hash("abcd"), 7669524933955383920);
+        assert_eq!(u64_hash(123), 14819964381690264899);
     }
 }

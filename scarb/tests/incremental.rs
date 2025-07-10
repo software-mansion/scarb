@@ -1,5 +1,5 @@
 use assert_fs::TempDir;
-use assert_fs::prelude::PathChild;
+use assert_fs::prelude::{FileWriteStr, PathChild};
 use scarb_test_support::command::Scarb;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::ProjectBuilder;
@@ -123,15 +123,24 @@ fn deps_are_fingerprinted() {
 
     let first = t.child("first");
     let third = t.child("third");
+    let fifth = t.child("fifth");
     ProjectBuilder::start()
         .name("first")
         .dep("second", t.child("second"))
+        .dep("fourth", t.child("fourth"))
         .build(&first);
+
     ProjectBuilder::start()
         .name("second")
         .dep("third", &third)
         .build(&t.child("second"));
     ProjectBuilder::start().name("third").build(&third);
+
+    ProjectBuilder::start()
+        .name("fourth")
+        .dep("fifth", &fifth)
+        .build(&t.child("fourth"));
+    ProjectBuilder::start().name("fifth").build(&fifth);
 
     Scarb::quick_snapbox()
         .env("SCARB_CACHE", cache_dir.path())
@@ -141,22 +150,44 @@ fn deps_are_fingerprinted() {
         .success();
 
     let fingerprints = t.child("first/target/dev/.fingerprint").files();
-    let component_id = fingerprints
-        .iter()
-        .find(|t| t.starts_with("first-"))
-        .unwrap();
-    let digest = t
-        .child(format!(
-            "first/target/dev/.fingerprint/{component_id}/first"
+
+    let component_id = |name: &str| {
+        fingerprints
+            .iter()
+            .find(|t| t.starts_with(&format!("{name}-")))
+            .unwrap()
+            .to_string()
+    };
+    let digest = |component_id: &str| {
+        let (name, _) = component_id.split_once("-").unwrap();
+        t.child(format!(
+            "first/target/dev/.fingerprint/{component_id}/{name}"
         ))
-        .read_to_string();
-    assert_eq!(digest.len(), 13);
+        .read_to_string()
+    };
+
+    let first_component_id = component_id("first");
+    let first_digest = digest(first_component_id.as_str());
+    assert_eq!(first_digest.len(), 13);
+
+    let second_component_id = component_id("second");
+    let second_digest = digest(second_component_id.as_str());
+    assert_eq!(second_digest.len(), 13);
+
+    let fourth_component_id = component_id("fourth");
+    let fourth_digest = digest(fourth_component_id.as_str());
+    assert_eq!(fourth_digest.len(), 13);
 
     // Modify the third package.
     ProjectBuilder::start()
         .name("third")
         .version("2.0.0")
         .build(&third);
+    // Modify the fifth package.
+    fifth
+        .child("src/lib.cairo")
+        .write_str("fn f() -> felt252 { 42 }")
+        .unwrap();
 
     Scarb::quick_snapbox()
         .env("SCARB_CACHE", cache_dir.path())
@@ -165,11 +196,7 @@ fn deps_are_fingerprinted() {
         .assert()
         .success();
 
-    assert_ne!(
-        t.child(format!(
-            "first/target/dev/.fingerprint/{component_id}/first"
-        ))
-        .read_to_string(),
-        digest
-    );
+    assert_ne!(digest(first_component_id.as_str()), first_digest);
+    assert_ne!(digest(second_component_id.as_str()), second_digest);
+    assert_ne!(digest(fourth_component_id.as_str()), fourth_digest);
 }
