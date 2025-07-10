@@ -1,7 +1,7 @@
 use crate::compiler::plugin::proc_macro;
 use crate::compiler::plugin::proc_macro::expansion::{Expansion, ExpansionKind};
 use crate::compiler::plugin::proc_macro::ffi::SharedPluginLibrary;
-use crate::compiler::plugin::proc_macro::{ExpansionQuery, SharedLibraryProvider};
+use crate::compiler::plugin::proc_macro::{ExpansionQuery, ProcMacroPathsProvider};
 use crate::core::{Package, PackageId};
 use anyhow::{Context, Result, anyhow};
 use camino::{Utf8Path, Utf8PathBuf};

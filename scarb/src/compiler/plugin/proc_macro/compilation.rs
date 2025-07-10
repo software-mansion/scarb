@@ -1,6 +1,6 @@
 use crate::CARGO_MANIFEST_FILE_NAME;
 use crate::compiler::ProcMacroCompilationUnit;
-use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::shared_library_provider::ProcMacroPathsProvider;
 use crate::core::{Config, Package, Workspace};
 use crate::internal::fsx;
 use crate::ops::PackageOpts;

@@ -13,7 +13,7 @@ use scarb_ui::components::Status;
 use scarb_ui::{HumanBytes, HumanCount};
 use serde::Serialize;
 
-use crate::compiler::plugin::proc_macro::SharedLibraryProvider;
+use crate::compiler::plugin::proc_macro::ProcMacroPathsProvider;
 use crate::compiler::plugin::proc_macro::compilation::{
     get_crate_archive_basename, package_crate, unpack_crate,
 };

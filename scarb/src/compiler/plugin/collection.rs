@@ -224,9 +224,10 @@ fn collect_proc_macros(
                 continue;
             }
 
-            let proc_macro = plugin.prebuilt.clone().map(Ok).unwrap_or_else(|| {
-                proc_macro_repository.get_or_load(plugin.package.clone(), workspace.config())
-            })?;
+            let proc_macro =
+                plugin.prebuilt.clone().map(Ok).unwrap_or_else(|| {
+                    proc_macro_repository.get_or_load(plugin, workspace.config())
+                })?;
 
             component_proc_macro_instances.push(proc_macro);
         }

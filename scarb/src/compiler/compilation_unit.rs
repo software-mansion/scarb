@@ -2,13 +2,13 @@ use anyhow::{Result, anyhow, ensure};
 use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::{CrateIdentifier, FilesGroup};
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
-use camino::Utf8Path;
+use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::fmt::Write;
 use std::hash::{Hash, Hasher};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use typed_builder::TypedBuilder;
 
 use crate::compiler::Profile;
@@ -158,9 +158,12 @@ pub struct CompilationUnitCairoPlugin {
     pub package: Package,
     /// Indicate whether the plugin is built into Scarb, or compiled from source.
     pub builtin: bool,
+    /// Indicate whether a prebuilt plugin binary should be attempted to be loaded.
     pub prebuilt_allowed: bool,
     /// Instance of the proc macro loaded from prebuilt library, if available.
     pub prebuilt: Option<Arc<ProcMacroInstance>>,
+    /// Location of the shared library for the package.
+    pub cached_shared_lib_path: Arc<OnceLock<Utf8PathBuf>>,
 }
 
 /// Unique identifier of the compilation unit component.
