@@ -2,14 +2,12 @@ use crate::oracle::connection::Connection;
 use crate::oracle::jsonrpc;
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use cairo_vm::Felt252;
-use camino::Utf8Path;
 use serde::Serialize;
 use serde_json::Value::Null;
 use serde_json::json;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdout, Command, Stdio};
 use tracing::{trace, warn};
-use url::Url;
 
 #[derive(Serialize)]
 struct InvokeParams {
@@ -23,12 +21,10 @@ pub struct StdioJsonRpcConnection {
 }
 
 impl StdioJsonRpcConnection {
-    #[tracing::instrument(skip_all, fields(url = %connection_url))]
-    pub fn connect(connection_url: Url) -> Result<Self> {
-        let path = parse_connection_url(&connection_url)?;
-
+    #[tracing::instrument]
+    pub fn connect(command: &str) -> Result<Self> {
         let io = Io::spawn(
-            Command::new(path)
+            Command::new(command)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 // TODO(next PR): Pipe stderr to logs like in scarb::process::exec_piping.
@@ -224,68 +220,5 @@ impl Io {
             }
             Err(err) => Some(Err(err).context("failed to read bytes from oracle")),
         }
-    }
-}
-
-fn parse_connection_url(url: &Url) -> Result<&Utf8Path> {
-    // This is guaranteed by scheme routing logic.
-    assert_eq!(url.scheme(), "stdio");
-
-    ensure!(!url.has_authority(), "authority not allowed in oracle url");
-    ensure!(
-        url.query().is_none(),
-        "query parameters not allowed in oracle url"
-    );
-    ensure!(
-        url.fragment().is_none(),
-        "fragments not allowed in oracle url"
-    );
-
-    Ok(Utf8Path::new(url.path()))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_connection_url() {
-        fn check(url: &str, expected: Result<&str, &str>) {
-            let url = Url::parse(url).unwrap();
-            let actual = parse_connection_url(&url).map_err(|e| e.to_string());
-            let actual = actual.as_ref().map(|p| p.as_str()).map_err(|e| e.as_str());
-            assert_eq!(actual, expected);
-        }
-
-        check("stdio:/foo/bar.txt", Ok("/foo/bar.txt"));
-        check("stdio:foo/bar.txt", Ok("foo/bar.txt"));
-        check("stdio:./foo/bar.txt", Ok("./foo/bar.txt"));
-        check("stdio:/", Ok("/"));
-        check("stdio:foo", Ok("foo"));
-
-        check(
-            "stdio://host/user@host/path",
-            Err("authority not allowed in oracle url"),
-        );
-        check(
-            "stdio://user:pass@host/path",
-            Err("authority not allowed in oracle url"),
-        );
-        check(
-            "stdio:/path?query=1",
-            Err("query parameters not allowed in oracle url"),
-        );
-        check(
-            "stdio:host/path?name=value",
-            Err("query parameters not allowed in oracle url"),
-        );
-        check(
-            "stdio:/path#fragment",
-            Err("fragments not allowed in oracle url"),
-        );
-        check(
-            "stdio:host/path#section",
-            Err("fragments not allowed in oracle url"),
-        );
     }
 }
