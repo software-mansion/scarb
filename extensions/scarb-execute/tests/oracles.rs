@@ -310,7 +310,13 @@ fn oracle_invoke_test_oracle_without_dot_slash() {
         .check();
 }
 
+// TODO: Support basic shell (shlex_split-based) lines invocations, so that we'll be able to pass
+//   `python test_oracle.py` or `npx -y my_oracle` here.
 #[test]
+#[cfg_attr(
+    not(target_family = "unix"),
+    ignore = "This test relies on UNIX shebangs."
+)]
 fn oracle_invoke_test_oracle() {
     CheckBuilder::default()
         .lib_cairo(indoc! {r#"
