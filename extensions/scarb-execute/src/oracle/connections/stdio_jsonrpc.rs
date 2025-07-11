@@ -23,8 +23,15 @@ pub struct StdioJsonRpcConnection {
 impl StdioJsonRpcConnection {
     #[tracing::instrument]
     pub fn connect(command: &str) -> Result<Self> {
+        let command_words =
+            shell_words::split(command).context("failed to parse oracle command")?;
+        let (command, args) = command_words
+            .split_first()
+            .ok_or_else(|| anyhow!("empty oracle command"))?;
+
         let io = Io::spawn(
             Command::new(command)
+                .args(args)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 // TODO(next PR): Pipe stderr to logs like in scarb::process::exec_piping.
