@@ -17,17 +17,19 @@ You can find an example of the Scarb setup in the following workflow file:
 name: CI
 on:
   push:
+    branches: [main]
   merge_group:
   pull_request:
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: software-mansion/setup-scarb@v1
         with:
           scarb-version: "{{ rel.sampleVersion }}"
       - run: scarb fmt --check
+      - run: scarb lint
       - run: scarb test
 ```
 
@@ -58,6 +60,7 @@ scarb:
     - apt-get update && apt-get install -y curl
     - export PATH="$HOME/.local/bin:$PATH" && curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v $SCARB_VERSION
     - scarb fmt --check
+    - scarb lint
     - scarb build
 ```
 
@@ -86,6 +89,7 @@ jobs:
             source "$BASH_ENV"
             curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v << pipeline.parameters.scarb_version >>
       - run: scarb fmt --check
+      - run: scarb lint
       - run: scarb build
 
 workflows:
