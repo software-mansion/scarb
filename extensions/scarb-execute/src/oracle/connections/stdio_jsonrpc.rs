@@ -7,7 +7,8 @@ use serde_json::Value::Null;
 use serde_json::json;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdout, Command, Stdio};
-use tracing::{trace, warn};
+use std::thread;
+use tracing::{debug_span, trace, warn};
 
 #[derive(Serialize)]
 struct InvokeParams {
@@ -29,14 +30,7 @@ impl StdioJsonRpcConnection {
             .split_first()
             .ok_or_else(|| anyhow!("empty oracle command"))?;
 
-        let io = Io::spawn(
-            Command::new(command)
-                .args(args)
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                // TODO(next PR): Pipe stderr to logs like in scarb::process::exec_piping.
-                .stderr(Stdio::inherit()),
-        )?;
+        let io = Io::spawn(Command::new(command).args(args))?;
 
         let mut connection = Self {
             io,
@@ -165,7 +159,12 @@ struct Io {
 
 impl Io {
     fn spawn(command: &mut Command) -> Result<Self> {
-        let mut process = command.spawn().context("failed to spawn oracle process")?;
+        let mut process = command
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .context("failed to spawn oracle process")?;
 
         let stdout = BufReader::new(
             process
@@ -173,6 +172,24 @@ impl Io {
                 .take()
                 .expect("failed to get stdout from oracle process"),
         );
+
+        let stderr = BufReader::new(
+            process
+                .stderr
+                .take()
+                .expect("failed to get stderr from oracle process"),
+        );
+
+        let err_span = debug_span!("err");
+        thread::spawn(move || {
+            let _span = err_span.enter();
+            for line in stderr.lines() {
+                match line {
+                    Ok(line) => trace!("{line}"),
+                    Err(err) => warn!("{err:?}"),
+                }
+            }
+        });
 
         Ok(Self { process, stdout })
     }
