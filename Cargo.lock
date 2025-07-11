@@ -6558,7 +6558,6 @@ dependencies = [
  "starknet-core",
  "tracing",
  "tracing-subscriber",
- "url",
 ]
 
 [[package]]
