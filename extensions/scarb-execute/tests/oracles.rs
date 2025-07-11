@@ -104,14 +104,17 @@ fn oracle_invoke_without_experimental_flag_fails() {
         .check();
 }
 
+/// This tests checks two things at once:
+/// 1. That we react to binaries that don't talk JSON-RPC.
+/// 2. That we look for binaries in $PATH.
 #[test]
-fn oracle_invoke_non_jsonrpc_command() {
+fn oracle_invoke_non_jsonrpc_command_from_path() {
     CheckBuilder::default()
         .lib_cairo(indoc! {r#"
             #[executable]
             fn main() {
                 let mut inputs: Array<felt252> = array![];
-                let connection_string: ByteArray = "stdio:/usr/bin/yes";
+                let connection_string: ByteArray = "stdio:whoami";
                 connection_string.serialize(ref inputs);
                 'pow'.serialize(ref inputs);
                 (4).serialize(ref inputs);
@@ -124,7 +127,7 @@ fn oracle_invoke_non_jsonrpc_command() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("oracle process is misbehaving: expected JSON-RPC message starting with '{', got byte: 'y'")
+            Result::Err("oracle process is misbehaving: expected JSON-RPC message starting with '{', got byte: '[..]'")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
