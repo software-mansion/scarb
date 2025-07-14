@@ -255,6 +255,15 @@ impl Fingerprint {
         self.compiler_config.hash(&mut hasher);
         self.cfg_set.hash(&mut hasher);
         self.experimental_features.hash(&mut hasher);
+        for component_discriminator in self
+            .deps
+            .borrow()
+            .iter()
+            .map(|dep| dep.component_discriminator.clone())
+            .sorted()
+        {
+            component_discriminator.hash(&mut hasher);
+        }
         hasher.finish_as_short_hash()
     }
 
