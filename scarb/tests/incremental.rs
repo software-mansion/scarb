@@ -157,10 +157,11 @@ fn deps_are_fingerprinted() {
         .assert()
         .success();
 
-    let fingerprints = t.child("first/target/dev/.fingerprint").files();
+    let fingerprints = || t.child("first/target/dev/.fingerprint").files();
+    assert_eq!(fingerprints().len(), 6); // core, first, second, third, fourth, fifth
 
     let component_id = |name: &str| {
-        fingerprints
+        fingerprints()
             .iter()
             .find(|t| t.starts_with(&format!("{name}-")))
             .unwrap()
@@ -205,8 +206,19 @@ fn deps_are_fingerprinted() {
         .success();
 
     assert_ne!(digest(first_component_id.as_str()), first_digest);
-    assert_ne!(digest(second_component_id.as_str()), second_digest);
     assert_ne!(digest(fourth_component_id.as_str()), fourth_digest);
+
+    // Note we have changed the version of the third.
+    // Since second depends on third, and direct deps package ids are part of the fingerprint id,
+    // second will change its id.
+    assert_eq!(fingerprints().len(), 8); // core, first, second, second, third, third, fourth, fifth
+    assert_eq!(digest(second_component_id.as_str()), second_digest);
+    let new_second_component_id = fingerprints()
+        .iter()
+        .find(|t| t.starts_with("second-") && t.as_str() != second_component_id)
+        .unwrap()
+        .to_string();
+    assert_ne!(digest(new_second_component_id.as_str()), second_digest);
 }
 
 #[test]
