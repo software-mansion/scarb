@@ -149,7 +149,7 @@ tracing = "0.1"
 tracing-chrome = "0.7"
 tracing-core = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-trybuild = "1.0.105"
+trybuild = "1.0.106"
 typed-builder = ">=0.17"
 typetag = "0.2"
 url = { version = "2", features = ["serde"] }
