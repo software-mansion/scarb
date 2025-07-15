@@ -4,7 +4,7 @@ use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Read};
 use std::process::{Command, Stdio};
 use std::sync::Arc;
-use std::{fmt, mem, thread};
+use std::{fmt, iter, mem, thread};
 use tracing::{Span, debug, debug_span, warn};
 
 use scarb_ui::components::{Spinner, Status};
@@ -197,33 +197,10 @@ pub fn exec_piping(
     }
 }
 
-/// Python's [`shlex.join`] for [`Command`].
-///
-/// [`shlex.join`]: https://docs.python.org/3/library/shlex.html#shlex.join
 fn shlex_join(cmd: &Command) -> String {
-    ShlexJoin(cmd).to_string()
-}
-
-struct ShlexJoin<'a>(&'a Command);
-
-impl fmt::Display for ShlexJoin<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn write_quoted(f: &mut fmt::Formatter<'_>, s: &OsStr) -> fmt::Result {
-            let utf = s.to_string_lossy();
-            if utf.contains('"') {
-                write!(f, "{s:?}")
-            } else {
-                write!(f, "{utf}")
-            }
-        }
-
-        let cmd = &self.0;
-        write_quoted(f, cmd.get_program())?;
-
-        for arg in cmd.get_args() {
-            write!(f, " ")?;
-            write_quoted(f, arg)?;
-        }
-        Ok(())
-    }
+    shell_words::join(
+        iter::once(cmd.get_program())
+            .chain(cmd.get_args())
+            .map(OsStr::to_string_lossy),
+    )
 }
