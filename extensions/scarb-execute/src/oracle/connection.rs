@@ -3,7 +3,6 @@ use anyhow::{Result, bail};
 use cairo_vm::Felt252;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-use url::Url;
 
 pub trait Connection {
     fn call(&mut self, selector: &str, calldata: &[Felt252]) -> Result<Vec<Felt252>>;
@@ -31,13 +30,13 @@ impl ConnectionManager {
     }
 
     fn create_connection(connection_string: &str) -> Result<Box<dyn Connection + 'static>> {
-        let connection_url = Url::parse(connection_string)?;
-        match connection_url.scheme() {
-            "stdio" => Ok(Box::new(StdioJsonRpcConnection::connect(connection_url)?)),
-            _ => bail!(
-                "unsupported connection scheme: {connection_string}\n\
+        if let Some(command) = connection_string.strip_prefix("stdio:") {
+            Ok(Box::new(StdioJsonRpcConnection::connect(command)?))
+        } else {
+            bail!(
+                "unsupported connection scheme: {connection_string:?}\n\
                 note: supported schemes are: `stdio`"
-            ),
+            )
         }
     }
 }

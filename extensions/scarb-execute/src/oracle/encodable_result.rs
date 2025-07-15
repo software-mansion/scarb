@@ -1,5 +1,6 @@
 use starknet_core::codec::{Encode, Error as CodecError, FeltWriter};
 use starknet_core::types::{ByteArray, Felt};
+use std::fmt;
 
 pub enum EncodableResult<T, E> {
     Ok(T),
@@ -18,7 +19,7 @@ impl<T, E> From<Result<T, E>> for EncodableResult<T, E> {
 impl<T, E> Encode for EncodableResult<T, E>
 where
     T: Encode,
-    E: ToString,
+    E: fmt::Debug,
 {
     fn encode<W: FeltWriter>(&self, writer: &mut W) -> Result<(), CodecError> {
         match self {
@@ -28,7 +29,7 @@ where
             }
             EncodableResult::Err(value) => {
                 writer.write(Felt::ONE);
-                let byte_array: ByteArray = value.to_string().as_str().into();
+                let byte_array: ByteArray = format!("{value:?}").as_str().into();
                 byte_array.encode(writer)
             }
         }

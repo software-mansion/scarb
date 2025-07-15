@@ -2,8 +2,6 @@
 //! It is surprising how complex existing JSON-RPC Rust implementations are,
 //! we don't need any kinds of async, extendibility or network stuff that they provide.
 
-#![allow(dead_code, unused)] // TODO: Remove in next PRs
-
 use anyhow::{Result, bail};
 use serde::de::{Unexpected, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
