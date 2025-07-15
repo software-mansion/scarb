@@ -184,36 +184,32 @@ impl Io {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all)]
     fn send(&mut self, message: impl Into<jsonrpc::Message>) -> Result<()> {
-        let message = message.into();
-        return inner(self, &message);
+        let stdin = self
+            .process
+            .stdin
+            .as_mut()
+            .ok_or_else(|| anyhow!("oracle is already dead"))?;
 
-        // Minimize monomorphisation effects.
-        fn inner(this: &mut Io, message: &jsonrpc::Message) -> Result<()> {
-            let stdin = this
-                .process
-                .stdin
-                .as_mut()
-                .ok_or_else(|| anyhow!("oracle is already dead"))?;
+        // Serialise the message to string as a whole to avoid emitting unterminated messages.
+        let line = serde_json::to_string(&message.into())
+            .context("failed to serialize message to oracle")?;
 
-            // Serialise the message to string as a whole to avoid emitting unterminated messages.
-            let line =
-                serde_json::to_string(&message).context("failed to serialize message to oracle")?;
+        trace!("{line}");
+        writeln!(stdin, "{line}").context("failed to write message to oracle")?;
+        stdin.flush().context("failed to flush oracle stdin")?;
 
-            trace!("send: {line}");
-            writeln!(stdin, "{line}").context("failed to write message to oracle")?;
-            stdin.flush().context("failed to flush oracle stdin")?;
-
-            Ok(())
-        }
+        Ok(())
     }
 
+    #[tracing::instrument(skip_all)]
     fn recv(&mut self) -> Option<Result<jsonrpc::Message>> {
         let mut buf = String::new();
         match self.stdout.read_line(&mut buf) {
             Ok(0) => None,
             Ok(_n) => {
-                trace!("recv: {buf}");
+                trace!("{}", buf.trim_end_matches('\n'));
                 Some(
                     serde_json::from_str(buf.trim()).context("failed to parse message from oracle"),
                 )
