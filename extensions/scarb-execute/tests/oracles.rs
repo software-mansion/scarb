@@ -185,13 +185,10 @@ fn oracle_invoke_missing_connection_scheme() {
 
 /// Smoke tests that `test_oracle.py` actually works as intended.
 #[test]
-#[cfg_attr(
-    not(target_family = "unix"),
-    ignore = "This test relies on UNIX shebangs."
-)]
 fn oracle_json_rpc_smoke_test() {
     // Spawn test_oracle.py process and grab it's I/O.
-    let mut process = Command::new("tests/test_oracle.py")
+    let mut process = Command::new("python3")
+        .arg("tests/test_oracle.py")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
