@@ -255,7 +255,10 @@ fn oracle_invoke_non_existent_file() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("failed to spawn oracle process")
+            Result::Err("failed to spawn oracle process
+
+            Caused by:
+                [..]")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -279,7 +282,10 @@ fn oracle_invoke_non_executable_file() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("failed to spawn oracle process")
+            Result::Err("failed to spawn oracle process
+
+            Caused by:
+                [..]")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
@@ -305,7 +311,10 @@ fn oracle_invoke_test_oracle_without_dot_slash() {
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Err("failed to spawn oracle process")
+            Result::Err("failed to spawn oracle process
+
+            Caused by:
+                [..]")
             Saving output to: target/execute/oracle_test/execution1
         "#})
         .check();
