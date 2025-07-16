@@ -8,7 +8,7 @@ use serde_json::json;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdout, Command, Stdio};
 use std::thread;
-use tracing::{debug_span, trace, warn};
+use tracing::{debug, debug_span, trace, warn};
 
 #[derive(Serialize)]
 struct InvokeParams {
@@ -185,7 +185,7 @@ impl Io {
             let _span = err_span.enter();
             for line in stderr.lines() {
                 match line {
-                    Ok(line) => trace!("{line}"),
+                    Ok(line) => debug!("{line}"),
                     Err(err) => warn!("{err:?}"),
                 }
             }
