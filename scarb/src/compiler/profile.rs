@@ -21,7 +21,10 @@ impl Profile {
             "cannot use empty string as profile name"
         );
         ensure!(
-            !["_", "package", "build", "debug", "doc", "test"].contains(&name.as_str()),
+            ![
+                "_", "package", "build", "debug", "doc", "execute", "prove", "test"
+            ]
+            .contains(&name.as_str()),
             format!("profile name `{name}` is not allowed")
         );
         ensure!(
