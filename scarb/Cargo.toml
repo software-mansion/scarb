@@ -71,6 +71,7 @@ pubgrub.workspace = true
 ra_ap_toolchain.workspace = true
 redb.workspace = true
 reqwest.workspace = true
+salsa.workspace = true
 scarb-build-metadata = { path = "../utils/scarb-build-metadata" }
 scarb-extensions-cli = { path = "../utils/scarb-extensions-cli" }
 scarb-metadata = { path = "../scarb-metadata", default-features = false, features = ["builder"] }

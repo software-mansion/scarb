@@ -17,7 +17,7 @@ use cairo_lang_filesystem::db::{
     CrateIdentifier, CrateSettings, DependencySettings, FilesGroup, FilesGroupEx,
 };
 use cairo_lang_filesystem::ids::CrateLongId;
-use cairo_lang_semantic::db::PluginSuiteInput;
+use cairo_lang_semantic::db::{PluginSuiteInput, SemanticGroup};
 use cairo_lang_semantic::plugin::PluginSuite;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use smol_str::SmolStr;
@@ -87,8 +87,8 @@ fn append_lint_plugin(_suite: &mut PluginSuite) {}
 
 /// Sets the plugin suites for crates related to the library components
 /// according to the `plugins_for_components` mapping.
-fn apply_plugins(
-    db: &mut RootDatabase,
+pub fn apply_plugins(
+    db: &mut dyn SemanticGroup,
     plugins_for_components: HashMap<CompilationUnitComponentId, PluginSuite>,
 ) {
     for (component_id, suite) in plugins_for_components {
@@ -107,7 +107,7 @@ fn apply_plugins(
 /// This approach allows compiling crates that do not define `lib.cairo` file.
 /// For example, single file crates can be created this way.
 /// The actual single file modules are defined as `mod` items in created lib file.
-fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit) -> Result<()> {
+pub fn inject_virtual_wrapper_lib(db: &mut dyn DefsGroup, unit: &CairoCompilationUnit) -> Result<()> {
     let components: Vec<&CompilationUnitComponent> = unit
         .components
         .iter()
@@ -159,7 +159,7 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
     Ok(())
 }
 
-fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
+pub fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
     let crate_roots: OrderedHashMap<CrateIdentifier, PathBuf> = unit
         .components
         .iter()

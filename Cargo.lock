@@ -1526,7 +1526,6 @@ dependencies = [
 [[package]]
 name = "cairo-lint"
 version = "2.11.4"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=3cb99ece36b89338a2efd300a88ac22ebdb5a70e#3cb99ece36b89338a2efd300a88ac22ebdb5a70e"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -6393,6 +6392,7 @@ dependencies = [
  "ra_ap_toolchain",
  "redb",
  "reqwest",
+ "rust-analyzer-salsa",
  "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.0",
