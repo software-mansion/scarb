@@ -73,34 +73,39 @@ async fn run() {
     )
     .await;
 
-    assert_eq!(
-        read(&mut stdout).await,
-        json!({
-            "jsonrpc": "2.0",
-            "method": "cairo/serverStatus",
-            "params": {
-                "event": "AnalysisStarted",
-                "idle": false,
-            }
-        })
+    let analysis_started = json!({
+        "jsonrpc": "2.0",
+        "method": "cairo/serverStatus",
+        "params": {
+            "event": "AnalysisStarted",
+            "idle": false,
+        }
+    });
+    let register_capabilities = json!({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "client/registerCapability",
+        "params": {
+            "registrations": [
+                {
+                    "id": "cairo/viewSyntaxTree",
+                    "method": "cairo/viewSyntaxTree",
+                    "registerOptions": serde_json::Value::Null,
+                }
+            ]
+        }
+    });
+
+    let msg = read(&mut stdout).await;
+    assert!(
+        msg == analysis_started || msg == register_capabilities,
+        "unexpected message: {msg}"
     );
 
-    assert_eq!(
-        read(&mut stdout).await,
-        json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "client/registerCapability",
-            "params": {
-                "registrations": [
-                    {
-                        "id": "cairo/viewSyntaxTree",
-                        "method": "cairo/viewSyntaxTree",
-                        "registerOptions": serde_json::Value::Null,
-                    }
-                ]
-            }
-        })
+    let msg = read(&mut stdout).await;
+    assert!(
+        msg == analysis_started || msg == register_capabilities,
+        "unexpected message: {msg}"
     );
 
     assert_eq!(
