@@ -1,5 +1,4 @@
 use super::connection::ConnectionManager;
-use crate::oracle::encodable_result::EncodableResult;
 use anyhow::{Result, anyhow};
 use cairo_lang_casm::hints::{Hint, StarknetHint};
 use cairo_lang_casm::operand::{CellRef, ResOperand};
@@ -148,14 +147,24 @@ impl<'a> OracleHintProcessor<'a> {
                 .call(&selector, calldata)
         };
 
-        let result = invoke();
-
-        let mut response: Vec<Felt252> = vec![];
-        EncodableResult::from(result)
-            .encode(&mut response)
-            .expect("response encoding should never fail");
-
-        res_segment.write_data(response.into_iter())?;
+        // Encode the result as Result<[felt252; N], ByteArray>. The oracle package interprets this
+        // as Result<T, oracle::Error>, where T is user-defined, and oracle::Error has an implicit
+        // invariant that it can always deserialise from encoded byte arrays.
+        match invoke() {
+            Ok(result) => {
+                res_segment.write(Felt252::ZERO)?;
+                res_segment.write_data(result.into_iter())?;
+            }
+            Err(err) => {
+                res_segment.write(Felt252::ONE)?;
+                let byte_array: ByteArray = format!("{err:?}").as_str().into();
+                let mut encoded = vec![];
+                byte_array
+                    .encode(&mut encoded)
+                    .expect("byte array encoding never fails");
+                res_segment.write_data(encoded.into_iter())?;
+            }
+        }
 
         Ok(())
     }

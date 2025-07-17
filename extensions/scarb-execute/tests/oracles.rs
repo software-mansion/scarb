@@ -330,20 +330,20 @@ fn oracle_invoke_test_oracle() {
                 'sqrt'.serialize(ref inputs);
                 (16).serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
-                oracle_asserts::print::<Span<felt252>>(result);
+                oracle_asserts::print::<felt252>(result);
 
                 let mut inputs: Array<felt252> = array![];
                 connection_string.serialize(ref inputs);
                 'panic'.serialize(ref inputs);
                 let result = starknet::testing::cheatcode::<'oracle_invoke'>(inputs.span());
-                oracle_asserts::print::<Span<felt252>>(result);
+                oracle_asserts::print::<felt252>(result);
             }
         "#})
         .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
             [..]Finished `dev` profile target(s) in [..]
             [..]Executing oracle_test
-            Result::Ok([4])
+            Result::Ok(4)
             Result::Err("oops")
             Saving output to: target/execute/oracle_test/execution1
         "#})
