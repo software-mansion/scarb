@@ -2,7 +2,11 @@ import { Octokit } from "@octokit/core";
 import semver from "semver";
 import { cached } from "./.vitepress/data/cache";
 
-const octokit = new Octokit();
+const octokit = new Octokit({
+  // We only authenticate to avoid rate limits on GitHub API requests.
+  // All resources we download are public and providing the token is not required.
+  auth: process.env.GITHUB_TOKEN || undefined,
+});
 
 export default {
   async load() {
