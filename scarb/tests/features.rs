@@ -1629,6 +1629,7 @@ fn can_declare_default_by_name() {
 fn default_cannot_be_used_as_cfg_without_explicit_declaration() {
     let t = TempDir::new().unwrap();
 
+    let hello = t.child("hello");
     let path_dep = t.child("path_dep");
     ProjectBuilder::start()
         .name("path_dep")
@@ -1675,15 +1676,24 @@ fn default_cannot_be_used_as_cfg_without_explicit_declaration() {
                 .default_features(true)
                 .features(vec!["x"].into_iter()),
         )
-        .build(&t);
+        .build(&hello);
 
-    Scarb::quick_snapbox()
+    let output = Scarb::quick_snapbox()
         .arg("check")
         .arg("--features=x")
-        .current_dir(&t)
-        .assert()
-        .failure()
-        .stdout_matches(indoc! {r#"
+        .current_dir(&hello)
+        .output()
+        .unwrap();
+    assert!(
+        !output.status.success(),
+        "Command succeeded, but should fail:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout)
+        .to_string()
+        .replace("\\", "/");
+    snapbox::assert_matches(
+        indoc! {r#"
             [..]Checking hello v1.0.0 ([..]Scarb.toml)
             error[E0006]: Function not found.
              --> [..]lib.cairo:8:5
@@ -1691,12 +1701,25 @@ fn default_cannot_be_used_as_cfg_without_explicit_declaration() {
                 ^
 
             error[E0006]: Function not found.
-             --> [..]path_dep[..]lib.cairo:8:5
+             --> [..]lib.cairo:8:5
                 f()
                 ^
 
             error: could not check `hello` due to previous error
-        "#});
+        "#},
+        &stdout,
+    );
+
+    assert_eq!(
+        stdout.matches("/path_dep/src/lib.cairo:8:5").count(),
+        1,
+        "there should be two errors - one from path_dep, and one from hello"
+    );
+    assert_eq!(
+        stdout.matches("/hello/src/lib.cairo:8:5").count(),
+        1,
+        "there should be two errors - one from path_dep, and one from hello"
+    );
 }
 
 #[test]
