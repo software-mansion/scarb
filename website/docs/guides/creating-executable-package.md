@@ -14,7 +14,7 @@ In your `Scarb.toml` file:
 
 Below we have an example of the manifest file of a simple executable
 
-```
+```toml-vue
 [package]
 name = "test_execute"
 version = "0.1.0"
@@ -31,7 +31,7 @@ cairo_execute = "{{ rel.stable.starknetPackageVersionReq }}"
 
 Now we can move on to the code itself. An executable project must have **exactly one function** annotated with the `#[executable]` attribute. Consider the following simple `lib.cairo` file of an executable project:
 
-```
+```cairo
 #[executable]
 fn main(num: u8) -> u8 {
     num
@@ -40,7 +40,7 @@ fn main(num: u8) -> u8 {
 
 You can now run:
 
-```
+```shell
 scarb execute -p test_execute --print-program-output --arguments 5
 ```
 
