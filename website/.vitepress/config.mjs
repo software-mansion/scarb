@@ -68,6 +68,7 @@ const sidebar = {
         p("Profiles", "/docs/reference/profiles"),
         p("Scripts", "/docs/reference/scripts"),
         p("Specifying dependencies", "/docs/reference/specifying-dependencies"),
+        p("Overriding dependencies", "/docs/reference/overriding-dependencies"),
         p("Targets", "/docs/reference/targets"),
         p("Corelib documentation", "https://docs.cairo-lang.org/core/"),
       ],
