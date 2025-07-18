@@ -478,7 +478,12 @@ fn invalid_url() {
         .current_dir(&t)
         .assert()
         .failure()
-        .stdout_eq("error: relative URL without a base\n");
+        .stdout_eq(indoc! { r#"
+        error: failed to parse `scarbs.xyz` as patch source url
+
+        Caused by:
+            relative URL without a base
+        "#});
 }
 
 #[test]
