@@ -198,7 +198,7 @@ try {
 # END SCARB COMPLETIONS
 ```
 
-Run `source ~/.config/elvish/rc.elv`, or open a new terminal session to apply the changes.
+Run `eval (slurp <  ~/.config/elvish/rc.elv)`, or open a new terminal session to apply the changes.
 
 </details>
 
