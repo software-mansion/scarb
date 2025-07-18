@@ -192,19 +192,13 @@ Add the following to your `~/.config/elvish/rc.elv` file:
 
 ```sh
 # BEGIN SCARB COMPLETIONS
-fn scarb:complete [@args]{
-  try {
-    var script = (scarb_build completions elvish | slurp)
-  } catch {
-    return
-  }
-  source $script
-}
-set edit:completion:arg-completer[scarb] = $scarb:complete~
+try {
+  eval (scarb completions elvish | slurp)
+} catch { return }
 # END SCARB COMPLETIONS
 ```
 
-Run `source ~/.config/elvish/rc.elv`, or open a new terminal session to apply the changes.
+Run `eval (slurp <  ~/.config/elvish/rc.elv)`, or open a new terminal session to apply the changes.
 
 </details>
 
