@@ -751,7 +751,26 @@ impl TomlManifest {
             .try_collect()?;
 
         // Following Cargo convention, pull profile config from workspace root only.
-        let profile_source = workspace_manifest.unwrap_or(self);
+        let profile_source = if let Some(workspace_manifest) = workspace_manifest {
+            let warn_msg = |section: &str| {
+                config.ui().warn(formatdoc!(
+                    r#"
+                    in context of a workspace, only the `{section}` set in the workspace manifest is applied,
+                    but the `{package}` package also defines `{section}` in the manifest
+                    "#, package = package_id.name.as_str()
+                ))
+            };
+            let is_root_package = manifest_path == workspace_manifest_path;
+            if !is_root_package && self.cairo.is_some() {
+                warn_msg("profile");
+            }
+            if !is_root_package && self.profile.is_some() {
+                warn_msg("profile");
+            }
+            workspace_manifest
+        } else {
+            self
+        };
         let profile_definition = profile_source.collect_profile_definition(profile.clone())?;
 
         let compiler_config = self.collect_compiler_config(&profile, profile_definition.clone())?;
