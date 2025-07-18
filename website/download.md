@@ -192,11 +192,9 @@ Add the following to your `~/.config/elvish/rc.elv` file:
 
 ```sh
 # BEGIN SCARB COMPLETIONS
-
 try {
   eval (scarb completions elvish | slurp)
 } catch { return }
-
 # END SCARB COMPLETIONS
 ```
 
