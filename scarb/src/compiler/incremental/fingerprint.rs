@@ -303,14 +303,28 @@ impl Fingerprint {
         self.compiler_config.hash(&mut hasher);
         self.cfg_set.hash(&mut hasher);
         self.experimental_features.hash(&mut hasher);
-        for component_discriminator in self
+        for dep in self
             .deps
             .borrow()
             .iter()
-            .map(|dep| dep.component_discriminator.clone())
-            .sorted()
+            .sorted_by_key(|dep| dep.component_discriminator.clone())
         {
-            component_discriminator.hash(&mut hasher);
+            dep.component_discriminator.hash(&mut hasher);
+            let dep_fingerprint = dep.fingerprint.upgrade()
+                .expect(
+                "dependency fingerprint should never be dropped, as long as unit fingerprint is alive"
+            );
+            if let ComponentFingerprint::Library(dep_fingerprint) = dep_fingerprint.deref() {
+                // We hash the dependency `cfg_set` as well to accommodate compilation units for tests.
+                // We emit compilation units for unit and integration tests separately.
+                // In unit tests, there is a component for the main package, with `cfg(test)` enabled.
+                // In integration tests, `cfg(test)` is not enabled for the main component of the
+                // tested package. It's only enabled for a separate integration test component, and
+                // the main package component is treated as its dependency.
+                // If we did not include the `cfg_set` in the fingerprint, the cache would be
+                // overwritten between unit and integration test runs.
+                dep_fingerprint.cfg_set.hash(&mut hasher);
+            };
         }
         hasher.finish_as_short_hash()
     }
