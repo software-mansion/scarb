@@ -150,7 +150,7 @@ fn compile_contracts(
     // We already did check the Db for diagnostics when compiling tests, so we can ignore them here.
     compiler_config.diagnostics_reporter = DiagnosticsReporter::ignoring()
         .allow_warnings()
-        .with_crates(&main_crate_ids.iter().cloned().collect_vec());
+        .with_crates(&[]);
     let CompiledContracts {
         contract_paths,
         contracts,
