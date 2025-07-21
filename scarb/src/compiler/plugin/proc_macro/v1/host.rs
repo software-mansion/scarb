@@ -782,22 +782,37 @@ impl ProcMacroHostPlugin {
 
     #[tracing::instrument(level = "trace", skip_all)]
     pub fn post_process(&self, db: &dyn SemanticGroup) -> Result<()> {
-        let markers = self.collect_full_path_markers(db);
-
         let aux_data = self.collect_aux_data(db);
+        // Only collect full path markers if any have been registered by macros.
+        let any_markers = !self
+            .full_path_markers
+            .read()
+            .unwrap()
+            .values()
+            .all(|v| v.is_empty());
+        let markers = if any_markers {
+            self.collect_full_path_markers(db)
+        } else {
+            Default::default()
+        };
         for instance in self.instances.iter() {
             let _ = trace_span!(
                 "post_process_callback",
                 instance = %instance.package_id()
             )
             .entered();
-            let instance_markers = self
-                .full_path_markers
-                .read()
-                .unwrap()
-                .get(&instance.package_id())
-                .cloned()
-                .unwrap_or_default();
+            let instance_markers = if any_markers {
+                {
+                    self.full_path_markers
+                        .read()
+                        .unwrap()
+                        .get(&instance.package_id())
+                        .cloned()
+                        .unwrap_or_default()
+                }
+            } else {
+                Default::default()
+            };
             let markers_for_instance = markers
                 .iter()
                 .filter(|(key, _)| instance_markers.contains(key))
@@ -819,9 +834,9 @@ impl ProcMacroHostPlugin {
         Ok(())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     fn collect_full_path_markers(&self, db: &dyn SemanticGroup) -> HashMap<String, String> {
         let mut markers: HashMap<String, String> = HashMap::new();
-        // FULL_PATH_MARKER_KEY
         for crate_id in db.crates() {
             let modules = db.crate_modules(crate_id);
             for module_id in modules.iter() {
@@ -871,6 +886,7 @@ impl ProcMacroHostPlugin {
         None
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     fn collect_aux_data(
         &self,
         db: &dyn SemanticGroup,

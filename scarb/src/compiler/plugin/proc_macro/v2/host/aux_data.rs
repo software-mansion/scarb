@@ -65,6 +65,7 @@ impl IntoIterator for EmittedAuxData {
 }
 
 impl ProcMacroHostPlugin {
+    #[tracing::instrument(level = "trace", skip_all)]
     pub(crate) fn collect_aux_data(
         &self,
         db: &dyn SemanticGroup,
