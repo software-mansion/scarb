@@ -123,6 +123,7 @@ impl Compiler for TestCompiler {
                 },
                 target_dir,
                 unit,
+                artifacts_writer,
                 db,
                 ws,
             )?;
@@ -143,6 +144,7 @@ fn compile_contracts(
     args: ContractsCompilationArgs,
     target_dir: Filesystem,
     unit: &CairoCompilationUnit,
+    artifacts_writer: mpsc::Sender<Request>,
     db: &mut RootDatabase,
     ws: &Workspace<'_>,
 ) -> Result<()> {
@@ -168,10 +170,10 @@ fn compile_contracts(
         contracts,
         classes,
     } = get_compiled_contracts(contracts, compiler_config, db)?;
-    let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props)
+    let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props, artifacts_writer)
         .with_extension_prefix("test".to_string());
     let casm_classes: Vec<Option<CasmContractClass>> = classes.iter().map(|_| None).collect();
-    writer.write(contract_paths, &contracts, &classes, &casm_classes, db, ws)?;
+    writer.write(contract_paths, &contracts, classes, &casm_classes, db, ws)?;
     Ok(())
 }
 

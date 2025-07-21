@@ -149,8 +149,8 @@ impl Compiler for StarknetContractCompiler {
 
         let target_name = &unit.main_component().target_name();
 
-        let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props);
-        writer.write(contract_paths, &contracts, &classes, &casm_classes, db, ws)?;
+        let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props, artifacts_writer);
+        writer.write(contract_paths, &contracts, classes, &casm_classes, db, ws)?;
 
         Ok(())
     }

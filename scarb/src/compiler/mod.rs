@@ -18,6 +18,9 @@ pub mod plugin;
 mod profile;
 mod repository;
 
+pub(crate) const MAX_SIERRA_PROGRAM_FELTS: usize = 81290;
+pub(crate) const MAX_CONTRACT_CLASS_BYTES: usize = 4089446;
+
 pub trait Compiler: Sync {
     fn target_kind(&self) -> TargetKind;
 
