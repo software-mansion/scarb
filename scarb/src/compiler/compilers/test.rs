@@ -3,7 +3,6 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
-use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
@@ -88,9 +87,19 @@ impl Compiler for TestCompiler {
         let span = trace_span!("serialize_test");
         {
             let _guard = span.enter();
-            let sierra_program: VersionedProgram = test_compilation.sierra_program.clone().into();
-            let file_name = format!("{}.test.sierra.json", unit.main_component().target_name());
-            write_json(&file_name, "output file", &target_dir, ws, &sierra_program)?;
+            artifacts_writer
+                .send(Request::ProgramArtifact {
+                    file: File {
+                        file_name: format!(
+                            "{}.test.sierra.json",
+                            unit.main_component().target_name()
+                        ),
+                        description: "output file".to_string(),
+                        target_dir: target_dir.clone(),
+                    },
+                    value: Box::new(test_compilation.sierra_program),
+                })
+                .expect("failed to send program artifact request");
 
             let file_name = format!("{}.test.json", unit.main_component().target_name());
             write_json(
