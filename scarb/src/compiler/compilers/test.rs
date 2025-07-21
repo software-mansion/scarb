@@ -13,7 +13,7 @@ use tracing::trace_span;
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
 use crate::compiler::compilers::{
-    ArtifactsWriter, CompiledContracts, ContractSelector, ensure_gas_enabled,
+    Artifacts, ArtifactsWriter, CompiledContracts, ContractSelector, ensure_gas_enabled,
     find_project_contracts, get_compiled_contracts,
 };
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_json};
@@ -127,6 +127,7 @@ impl Compiler for TestCompiler {
                 },
                 target_dir,
                 unit,
+                offloader,
                 db,
                 ws,
             )?;
@@ -147,6 +148,7 @@ fn compile_contracts(
     args: ContractsCompilationArgs,
     target_dir: Filesystem,
     unit: &CairoCompilationUnit,
+    offloader: &Offloader<'_>,
     db: &mut RootDatabase,
     ws: &Workspace<'_>,
 ) -> Result<()> {
@@ -175,7 +177,17 @@ fn compile_contracts(
     let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props)
         .with_extension_prefix("test".to_string());
     let casm_classes: Vec<Option<CasmContractClass>> = classes.iter().map(|_| None).collect();
-    writer.write(contract_paths, &contracts, &classes, &casm_classes, db, ws)?;
+    writer.write(
+        Artifacts {
+            contract_paths,
+            contracts,
+            classes,
+            casm_classes,
+        },
+        offloader,
+        db,
+        ws,
+    )?;
     Ok(())
 }
 
