@@ -22,7 +22,6 @@ interface for oracle interactions.
 The documentation for this package provides a bird's-eye overview, guidelines, and instructions on how to invoke oracles
 from Cairo code.
 
-
 <BigLink href="https://docs.swmansion.com/cairo-oracle">
   Go to oracle documentation
 </BigLink>

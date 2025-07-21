@@ -116,7 +116,5 @@ When the oracle process is no longer needed, the executor asks it to terminate g
 
 ```jsonc
 // executor to oracle
-{"jsonrpc":"2.0","method":"shutdown"}
-
-// executor waits for oracle process to terminate...
+{ "jsonrpc": "2.0", "method": "shutdown" }
 ```
