@@ -14,7 +14,7 @@
     "@octokit/core": "6.1.4",
     "cairo-tm-grammar": "github:software-mansion-labs/cairo-tm-grammar",
     "mermaid": "11.4.1",
-    "prettier": "3.3.2",
+    "prettier": "3.6.2",
     "semver": "7.6.2",
     "vitepress": "1.2.3",
     "vitepress-plugin-mermaid": "2.0.17",
