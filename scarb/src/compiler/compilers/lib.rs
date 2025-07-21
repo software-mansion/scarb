@@ -4,12 +4,11 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::ids::CrateId;
-use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
 use indoc::formatdoc;
 use serde::{Deserialize, Serialize};
-use std::sync::mpsc;
+use std::sync::{Arc, mpsc};
 use tracing::{debug, trace_span};
 
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_string};
@@ -69,11 +68,12 @@ impl Compiler for LibCompiler {
         let span = trace_span!("compile_sierra");
         let program_artifact = {
             let _guard = span.enter();
-            cairo_lang_compiler::compile_prepared_db_program_artifact(
+            let program_artifact = cairo_lang_compiler::compile_prepared_db_program_artifact(
                 db,
                 main_crate_ids,
                 compiler_config,
-            )?
+            )?;
+            Arc::new(program_artifact)
         };
 
         let span = trace_span!("serialize_sierra_json");
@@ -86,27 +86,30 @@ impl Compiler for LibCompiler {
                         description: "output file".to_string(),
                         target_dir: target_dir.clone(),
                     },
-                    value: Box::new(program_artifact.clone()),
+                    // We only clone Arc, not the underlying program, so it's inexpensive.
+                    value: program_artifact.clone(),
                 })
                 .expect("failed to send program artifact request");
         }
 
-        let sierra_program: VersionedProgram = program_artifact.into();
-
         let span = trace_span!("serialize_sierra_text");
         if props.sierra_text {
             let _guard = span.enter();
-            write_string(
-                format!("{}.sierra", unit.main_component().target_name()).as_str(),
-                "output file",
-                &target_dir,
-                ws,
-                &sierra_program,
-            )?;
+            artifacts_writer
+                .send(Request::ProgramArtifactText {
+                    file: File {
+                        file_name: format!("{}.sierra", unit.main_component().target_name()),
+                        description: "output file".to_string(),
+                        target_dir: target_dir.clone(),
+                    },
+                    // We only clone Arc, not the underlying program, so it's inexpensive.
+                    value: program_artifact.clone(),
+                })
+                .expect("failed to send program artifact request");
         }
 
         if props.casm {
-            let program = sierra_program.into_v1().unwrap().program;
+            let program = &program_artifact.program;
 
             let span = trace_span!("casm_calc_metadata");
             let metadata = {
@@ -114,10 +117,10 @@ impl Compiler for LibCompiler {
 
                 if unit.compiler_config.enable_gas {
                     debug!("calculating Sierra variables");
-                    calc_metadata(&program, Default::default())
+                    calc_metadata(program, Default::default())
                 } else {
                     debug!("calculating Sierra variables with no gas validation");
-                    calc_metadata_ap_change_only(&program)
+                    calc_metadata_ap_change_only(program)
                 }
                 .context("failed calculating Sierra variables")?
             };
@@ -129,7 +132,7 @@ impl Compiler for LibCompiler {
                     gas_usage_check: unit.compiler_config.enable_gas,
                     max_bytecode_size: usize::MAX,
                 };
-                cairo_lang_sierra_to_casm::compiler::compile(&program, &metadata, sierra_to_casm)?
+                cairo_lang_sierra_to_casm::compiler::compile(program, &metadata, sierra_to_casm)?
             };
 
             let span = trace_span!("serialize_casm");

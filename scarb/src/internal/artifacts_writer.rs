@@ -1,16 +1,20 @@
-use crate::compiler::helpers::write_json;
+use crate::compiler::helpers::{write_json, write_string};
 use crate::core::Workspace;
 use crate::flock::Filesystem;
 use anyhow::{Context, Result};
 use cairo_lang_sierra::program::{ProgramArtifact, VersionedProgram};
-use std::sync::mpsc;
+use std::sync::{Arc, mpsc};
 use std::{mem, thread};
 use tracing::trace_span;
 
 pub enum Request {
     ProgramArtifact {
         file: File,
-        value: Box<ProgramArtifact>,
+        value: Arc<ProgramArtifact>,
+    },
+    ProgramArtifactText {
+        file: File,
+        value: Arc<ProgramArtifact>,
     },
 }
 
@@ -78,8 +82,29 @@ fn handle_request(request: Request, ws: &Workspace<'_>) -> Result<()> {
                 },
             value,
         } => {
-            let sierra_program: VersionedProgram = (*value).into();
+            // Cloning the underlying program is expensive, but we can afford it here,
+            // as we are on a dedicated thread anyway.
+            let sierra_program: VersionedProgram = value.as_ref().clone().into();
             write_json(
+                file_name.as_str(),
+                description.as_str(),
+                &target_dir,
+                ws,
+                &sierra_program,
+            )?;
+        }
+        Request::ProgramArtifactText {
+            file:
+                File {
+                    file_name,
+                    description,
+                    target_dir,
+                },
+            value,
+        } => {
+            // vide supra
+            let sierra_program: VersionedProgram = value.as_ref().clone().into();
+            write_string(
                 file_name.as_str(),
                 description.as_str(),
                 &target_dir,
