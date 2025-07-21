@@ -70,6 +70,13 @@ const sidebar = {
         p("Specifying dependencies", "/docs/reference/specifying-dependencies"),
         p("Overriding dependencies", "/docs/reference/overriding-dependencies"),
         p("Targets", "/docs/reference/targets"),
+        {
+          text: "Oracles",
+          items: [
+            p("Overview", "/docs/reference/oracles/overview"),
+            p("stdio protocol", "/docs/reference/oracles/stdio"),
+          ],
+        },
         p("Corelib documentation", "https://docs.cairo-lang.org/core/"),
       ],
     },
