@@ -3,6 +3,7 @@ use crate::compiler::helpers::write_json;
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
+use crate::internal::artifacts_writer::Request;
 use anyhow::{Result, bail, ensure};
 use cairo_lang_compiler::DbWarmupContext;
 use cairo_lang_compiler::db::RootDatabase;
@@ -19,6 +20,7 @@ use camino::Utf8Path;
 use indoc::formatdoc;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::sync::mpsc;
 use tracing::trace_span;
 
 pub struct ExecutableCompiler;
@@ -39,6 +41,7 @@ impl Compiler for ExecutableCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
+        _artifacts_writer: mpsc::Sender<Request>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {

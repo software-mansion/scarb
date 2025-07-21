@@ -1,3 +1,4 @@
+pub mod artifacts_writer;
 pub mod async_cache;
 pub mod cloneable_error;
 pub mod fsx;
