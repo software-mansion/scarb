@@ -79,7 +79,7 @@ impl Compiler for StarknetContractCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
-        artifacts_writer: mpsc::Sender<Request>,
+        _artifacts_writer: mpsc::Sender<Request>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {

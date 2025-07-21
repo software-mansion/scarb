@@ -8,7 +8,7 @@ use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
 use itertools::Itertools;
 use smol_str::ToSmolStr;
-use std::sync::mpsc;
+use std::sync::{Arc, mpsc};
 use tracing::trace_span;
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
@@ -97,7 +97,7 @@ impl Compiler for TestCompiler {
                         description: "output file".to_string(),
                         target_dir: target_dir.clone(),
                     },
-                    value: Box::new(test_compilation.sierra_program),
+                    value: Arc::new(test_compilation.sierra_program),
                 })
                 .expect("failed to send program artifact request");
 
