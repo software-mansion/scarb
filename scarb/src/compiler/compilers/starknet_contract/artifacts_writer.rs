@@ -1,6 +1,6 @@
 use crate::compiler::compilers::Props;
 use crate::compiler::compilers::starknet_contract::{ContractFileStemCalculator, ContractSelector};
-use crate::compiler::helpers::write_json_with_byte_count;
+use crate::compiler::helpers::write_json;
 use crate::core::{PackageName, Workspace};
 use crate::flock::Filesystem;
 use crate::internal::artifacts_writer::{File, Request};
@@ -9,16 +9,12 @@ use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet_classes::contract_class::ContractClass;
-use indoc::formatdoc;
 use itertools::{Itertools, izip};
 use scarb_stable_hash::short_hash;
 use serde::Serialize;
 use smol_str::SmolStr;
 use std::sync::{Arc, mpsc};
 use tracing::trace_span;
-
-const MAX_CASM_PROGRAM_FELTS: usize = 81290;
-const MAX_COMPILED_CONTRACT_CLASS_BYTES: usize = 4089446;
 
 #[derive(Debug, Serialize)]
 struct StarknetArtifacts {
@@ -116,7 +112,7 @@ impl ArtifactsWriter {
         contract_paths: Vec<String>,
         contracts: &Vec<ContractDeclaration>,
         classes: Vec<ContractClass>,
-        casm_classes: &[Option<CasmContractClass>],
+        casm_classes: Vec<Option<CasmContractClass>>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> anyhow::Result<()> {
@@ -130,7 +126,8 @@ impl ArtifactsWriter {
             .map(|ext| format!(".{ext}"))
             .unwrap_or_default();
 
-        for (declaration, class, casm_class) in izip!(contracts, classes.into_iter(), casm_classes)
+        for (declaration, class, casm_class) in
+            izip!(contracts, classes.into_iter(), casm_classes.into_iter())
         {
             let contract_name = declaration.submodule_id.name(db);
             let contract_path = declaration.module_id().full_path(db);
@@ -168,30 +165,21 @@ impl ArtifactsWriter {
 
             if self.casm {
                 if let Some(casm_class) = casm_class {
-                    let casm_felts = casm_class.bytecode.len();
-                    if casm_felts > MAX_CASM_PROGRAM_FELTS {
-                        ws.config().ui().warn(formatdoc! {r#"
-                            CASM program exceeds maximum byte-code size on Starknet for contract `{}`:
-                            {MAX_CASM_PROGRAM_FELTS} felts allowed. Actual size: {casm_felts} felts.
-                        "#, contract_stem.clone()});
-                    }
-
                     let file_name =
                         format!("{file_stem}{extension_prefix}.compiled_contract_class.json");
 
-                    let compiled_class_size = write_json_with_byte_count(
-                        &file_name,
-                        "output file",
-                        &self.target_dir,
-                        ws,
-                        casm_class,
-                    )?;
-                    if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
-                        ws.config().ui().warn(formatdoc! {r#"
-                            Compiled contract class size exceeds maximum allowed size on Starknet for contract `{}`:
-                            {MAX_COMPILED_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {compiled_class_size} bytes.
-                        "#, contract_stem.clone()});
-                    }
+                    self.artifacts_writer
+                        .send(Request::CasmContractClassArtifact {
+                            file: File {
+                                file_name: file_name.clone(),
+                                description: "output file".to_string(),
+                                target_dir: self.target_dir.clone(),
+                            },
+                            value: Arc::new(casm_class),
+                            contract_stem: contract_stem.clone(),
+                        })
+                        .expect("failed to send program artifact request");
+
                     artifact.artifacts.casm = Some(file_name);
                 }
             }
@@ -201,7 +189,7 @@ impl ArtifactsWriter {
 
         artifacts.finish();
 
-        write_json_with_byte_count(
+        write_json(
             &format!(
                 "{}{extension_prefix}.starknet_artifacts.json",
                 self.target_name

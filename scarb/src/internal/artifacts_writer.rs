@@ -1,10 +1,14 @@
 use crate::compiler::helpers::{write_json, write_json_with_byte_count, write_string};
-use crate::compiler::{MAX_CONTRACT_CLASS_BYTES, MAX_SIERRA_PROGRAM_FELTS};
+use crate::compiler::{
+    MAX_CASM_PROGRAM_FELTS, MAX_COMPILED_CONTRACT_CLASS_BYTES, MAX_CONTRACT_CLASS_BYTES,
+    MAX_SIERRA_PROGRAM_FELTS,
+};
 use crate::core::Workspace;
 use crate::flock::Filesystem;
 use anyhow::{Context, Result};
 use cairo_lang_sierra::program::{ProgramArtifact, VersionedProgram};
 use cairo_lang_starknet_classes::abi::Contract;
+use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_starknet_classes::contract_class::{ContractClass, ContractEntryPoints};
 use cairo_lang_utils::bigint::BigUintAsHex;
 use indoc::formatdoc;
@@ -25,6 +29,11 @@ pub enum Request {
     ContractClassArtifact {
         file: File,
         value: Arc<ContractClass>,
+        contract_stem: String,
+    },
+    CasmContractClassArtifact {
+        file: File,
+        value: Arc<CasmContractClass>,
         contract_stem: String,
     },
 }
@@ -128,6 +137,11 @@ fn handle_request(request: Request, ws: &Workspace<'_>) -> Result<()> {
             value,
             contract_stem,
         } => write_contract_class(file, value, contract_stem, ws)?,
+        Request::CasmContractClassArtifact {
+            file,
+            value,
+            contract_stem,
+        } => write_casm_contract_class(file, value, contract_stem, ws)?,
     }
     Ok(())
 }
@@ -187,4 +201,33 @@ impl<'a> ContractClassNoDebug<'a> {
             abi: &contract_class.abi,
         }
     }
+}
+
+fn write_casm_contract_class(
+    File {
+        file_name,
+        description,
+        target_dir,
+    }: File,
+    casm_class: Arc<CasmContractClass>,
+    contract_stem: String,
+    ws: &Workspace<'_>,
+) -> Result<()> {
+    let casm_felts = casm_class.bytecode.len();
+    if casm_felts > MAX_CASM_PROGRAM_FELTS {
+        ws.config().ui().warn(formatdoc! {r#"
+                CASM program exceeds maximum byte-code size on Starknet for contract `{}`:
+                {MAX_CASM_PROGRAM_FELTS} felts allowed. Actual size: {casm_felts} felts.
+            "#, contract_stem.clone()});
+    }
+
+    let compiled_class_size =
+        write_json_with_byte_count(&file_name, &description, &target_dir, ws, casm_class)?;
+    if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
+        ws.config().ui().warn(formatdoc! {r#"
+                Compiled contract class size exceeds maximum allowed size on Starknet for contract `{}`:
+                {MAX_COMPILED_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {compiled_class_size} bytes.
+            "#, contract_stem.clone()});
+    }
+    Ok(())
 }

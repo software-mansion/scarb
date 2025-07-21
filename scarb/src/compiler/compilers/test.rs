@@ -173,7 +173,7 @@ fn compile_contracts(
     let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props, artifacts_writer)
         .with_extension_prefix("test".to_string());
     let casm_classes: Vec<Option<CasmContractClass>> = classes.iter().map(|_| None).collect();
-    writer.write(contract_paths, &contracts, classes, &casm_classes, db, ws)?;
+    writer.write(contract_paths, &contracts, classes, casm_classes, db, ws)?;
     Ok(())
 }
 

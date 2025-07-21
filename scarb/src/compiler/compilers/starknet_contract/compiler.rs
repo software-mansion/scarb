@@ -79,7 +79,7 @@ impl Compiler for StarknetContractCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
-        _artifacts_writer: mpsc::Sender<Request>,
+        artifacts_writer: mpsc::Sender<Request>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -150,7 +150,7 @@ impl Compiler for StarknetContractCompiler {
         let target_name = &unit.main_component().target_name();
 
         let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props, artifacts_writer);
-        writer.write(contract_paths, &contracts, classes, &casm_classes, db, ws)?;
+        writer.write(contract_paths, &contracts, classes, casm_classes, db, ws)?;
 
         Ok(())
     }
