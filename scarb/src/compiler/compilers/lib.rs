@@ -12,12 +12,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::mpsc;
 use tracing::{debug, trace_span};
 
-use crate::compiler::helpers::{
-    build_compiler_config, collect_main_crate_ids, write_json, write_string,
-};
+use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_string};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Utf8PathWorkspaceExt, Workspace};
-use crate::internal::artifacts_writer::Request;
+use crate::internal::artifacts_writer::{File, Request};
 
 pub struct LibCompiler;
 
@@ -48,7 +46,7 @@ impl Compiler for LibCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
-        _artifacts_writer: mpsc::Sender<Request>,
+        artifacts_writer: mpsc::Sender<Request>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -69,33 +67,31 @@ impl Compiler for LibCompiler {
         validate_compiler_config(db, &compiler_config, unit, ws);
 
         let span = trace_span!("compile_sierra");
-        let sierra_program: VersionedProgram = {
+        let program_artifact = {
             let _guard = span.enter();
-            let program_artifact = cairo_lang_compiler::compile_prepared_db_program_artifact(
+            cairo_lang_compiler::compile_prepared_db_program_artifact(
                 db,
                 main_crate_ids,
                 compiler_config,
-            )?;
-            program_artifact.into()
+            )?
         };
 
         let span = trace_span!("serialize_sierra_json");
         if props.sierra {
             let _guard = span.enter();
-            write_json(
-                format!("{}.sierra.json", unit.main_component().target_name()).as_str(),
-                "output file",
-                &target_dir,
-                ws,
-                &sierra_program,
-            )
-            .with_context(|| {
-                format!(
-                    "failed to serialize Sierra program {}",
-                    unit.main_component().target_name()
-                )
-            })?;
+            artifacts_writer
+                .send(Request::ProgramArtifact {
+                    file: File {
+                        file_name: format!("{}.sierra.json", unit.main_component().target_name()),
+                        description: "output file".to_string(),
+                        target_dir: target_dir.clone(),
+                    },
+                    value: Box::new(program_artifact.clone()),
+                })
+                .expect("failed to send program artifact request");
         }
+
+        let sierra_program: VersionedProgram = program_artifact.into();
 
         let span = trace_span!("serialize_sierra_text");
         if props.sierra_text {
