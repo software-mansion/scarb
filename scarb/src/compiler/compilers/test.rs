@@ -9,6 +9,7 @@ use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_lang_test_plugin::{TestsCompilationConfig, compile_test_prepared_db};
 use itertools::Itertools;
 use smol_str::ToSmolStr;
+use std::sync::mpsc;
 use tracing::trace_span;
 
 use crate::compiler::compilers::starknet_contract::Props as StarknetContractProps;
@@ -20,6 +21,7 @@ use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, wr
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, SourceId, TargetKind, TestTargetProps, Workspace};
 use crate::flock::Filesystem;
+use crate::internal::artifacts_writer::{File, Request};
 
 pub struct TestCompiler;
 
@@ -32,6 +34,7 @@ impl Compiler for TestCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
+        artifacts_writer: mpsc::Sender<Request>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
