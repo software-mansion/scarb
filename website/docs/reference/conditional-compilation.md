@@ -165,7 +165,7 @@ keccak = []
 
 If your package depends on a package `foo` which enables the `poseidon` and `pedersen` features of `hashes`, and another
 dependency `bar` which enables the `pedersen` and `keccak` features of `hashes`, then `hashes` will be built with all
-four of those features enabled.
+three of those features enabled.
 
 > [!WARNING]
 > A consequence of this is that **features should be additive**. That is, enabling a feature should not disable functionality,

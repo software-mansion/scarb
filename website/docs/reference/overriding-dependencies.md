@@ -1,7 +1,7 @@
 # Overriding Dependencies
 
 Overriding dependencies is a powerful feature in Scarb that allows you to replace all usages of some dependency with
-another revision, coming from a different source, during the workspace resolution.
+another revision, for instance coming from a different source, during the workspace resolution.
 
 The desire to override a dependency can arise through a number of scenarios.
 Most of them, however, boil down to the ability to work with a package before it’s been published to
@@ -22,7 +22,7 @@ You can specify overrides for packages in your dependency tree in the `[patch]` 
 > If you specify it in a workspace member manifest, Scarb will exit with an error.
 
 The `[patch]` section consists of a set of sub-tables, identified by the source URL of the dependency you want to override.
-Each of the sub-tables can be defined with syntax identical as `[dependency]` section.
+Each of the sub-tables can be defined with syntax identical to `[dependency]` section.
 To override the default registry, you can use the `scarbs-xyz` identifier, without the need to provide full URL.
 See [specifying dependencies](./specifying-dependencies.md) for more details of the syntax.
 
