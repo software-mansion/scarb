@@ -116,3 +116,75 @@ For example, in the provided scenario:
 - Running `scarb build` would enable `poseidon` and `pedersen` features.
 - `scarb build --features keccak` would enable `poseidon`, `pedersen`, and `keccak` features.
 - `scarb build --no-default-features --features keccak` would enable only the `keccak` feature.
+
+## Dependency features
+
+Features of dependencies can be enabled within the dependency declaration. The features key indicates which features to enable:
+
+```toml
+[dependencies]
+hashes = { path = '../hashes', features = ["poseidon", "pedersen"] }
+```
+
+The default features can be disabled using default-features = false:
+
+```toml
+[dependencies]
+hashes = { path = '../hashes', features = ["poseidon"], default-features = false }
+```
+
+> [!WARNING]
+> Note: This may not ensure the default features are disabled. If another dependency includes `hashes` without specifying `default-features = false`, then the default features will be enabled. See feature unification below for more details.
+
+Features of dependencies can also be enabled in the `[features]` table. The syntax is `package-name/feature-name`. For example:
+
+```toml
+[dependencies]
+hashes = { version = "0.1.0", default-features = false }
+
+[features]
+poseidon = ["hashes/poseidon"]
+```
+
+## Feature unification
+
+Features are unique to the package that defines them.
+Enabling a feature on a package does not enable a feature of the same name on other packages.
+
+When a dependency is used by multiple packages, Scarb will use the union of all features enabled on that dependency
+when building it.
+
+For example, assume a package called `hashes` that defines the features `poseidon`, `pedersen`, and `keccak`.
+
+```toml
+[features]
+poseidon = []
+pedersen = []
+keccak = []
+```
+
+If your package depends on a package `foo` which enables the `poseidon` and `pedersen` features of `hashes`, and another
+dependency `bar` which enables the `pedersen` and `keccak` features of `hashes`, then `hashes` will be built with all
+three of those features enabled.
+
+> [!WARNING]
+> A consequence of this is that **features should be additive**. That is, enabling a feature should not disable functionality,
+> and it should usually be **safe to enable any combination of features**.
+> A feature should not introduce a SemVer-incompatible change.
+
+## SemVer compatibility
+
+Enabling a feature should not introduce a SemVer-incompatible change. For example, the feature shouldn’t change an
+existing API in a way that could break existing uses.
+
+Care should be taken when adding and removing feature definitions and optional dependencies, as these can sometimes be
+backwards-incompatible changes.
+In short, follow these rules:
+
+- The following is usually safe to do in a minor release:
+  - Add a new feature or optional dependency.
+  - Change the features used on a dependency.
+- The following should usually not be done in a minor release:
+  - Remove a feature or optional dependency.
+  - Moving existing public code behind a feature.
+  - Remove a feature from a feature list.

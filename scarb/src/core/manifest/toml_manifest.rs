@@ -1246,7 +1246,9 @@ impl TomlManifest {
                     let source = if source == default_index_patch_source {
                         SourceId::default().canonical_url.clone()
                     } else {
-                        let url = Url::parse(source.as_str())?;
+                        let url = Url::parse(source.as_str()).with_context(|| {
+                            format!("failed to parse `{}` as patch source url", source.as_str())
+                        })?;
                         CanonicalUrl::new(&url)?
                     };
                     Ok((
