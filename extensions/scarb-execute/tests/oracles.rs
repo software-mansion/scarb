@@ -20,6 +20,9 @@ struct Check {
 
     #[builder(default = "true")]
     enable_experimental_oracles_flag: bool,
+
+    #[builder(default, setter(custom))]
+    profile: Option<String>,
 }
 
 impl CheckBuilder {
@@ -29,6 +32,11 @@ impl CheckBuilder {
 
     fn failure(&mut self) -> &mut Self {
         self.failure = Some(true);
+        self
+    }
+
+    fn profile(&mut self, profile: String) -> &mut Self {
+        self.profile = Some(Some(profile));
         self
     }
 }
@@ -58,10 +66,13 @@ impl Check {
 
         make_executable(t.child("test_oracle.py").path());
 
-        let mut snapbox = Scarb::quick_snapbox()
-            .env("RUST_BACKTRACE", "0")
-            .arg("execute")
-            .current_dir(&t);
+        let mut snapbox = Scarb::quick_snapbox().env("RUST_BACKTRACE", "0");
+
+        if let Some(profile) = &self.profile {
+            snapbox = snapbox.args(vec!["--profile", profile]);
+        }
+
+        snapbox = snapbox.arg("execute").current_dir(&t);
 
         if self.enable_experimental_oracles_flag {
             snapbox = snapbox.arg("--experimental-oracles");
@@ -89,10 +100,11 @@ fn oracle_invoke_without_experimental_flag_fails() {
             }
         "#})
         .enable_experimental_oracles_flag(false)
+        .profile("release".to_string())
         .failure()
         .stdout_matches(indoc! {r#"
             [..]Compiling oracle_test v0.1.0 ([..]/Scarb.toml)
-            [..]Finished `dev` profile target(s) in [..]
+            [..]Finished `release` profile target(s) in [..]
             [..]Executing oracle_test
             error: Cairo program run failed: Error at pc=0:33:
             Got an exception while executing a hint: Oracles are experimental feature. To enable, pass --experimental-oracles CLI flag.
