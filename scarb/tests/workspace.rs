@@ -266,3 +266,29 @@ fn inherited_deps_can_override_features_list() {
         Some(vec!["other".to_string(), "some".to_string()])
     );
 }
+
+#[test]
+fn warn_on_compiler_config_in_ws_member() {
+    let t = TempDir::new().unwrap().child("test_workspace");
+    ProjectBuilder::start()
+        .name("first")
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            sierra-replace-ids = true
+        "#})
+        .build(&t.child("first"));
+    WorkspaceBuilder::start()
+        .add_member("first")
+        .add_member("second")
+        .build(&t);
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_eq(indoc!{r#"
+            warn: in context of a workspace, only the `profile` set in the workspace manifest is applied,
+            but the `first` package also defines `profile` in the manifest
+
+        "#});
+}
