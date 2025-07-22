@@ -148,8 +148,8 @@ fn deps_are_fingerprinted() {
     let first_component_id = component_id("first");
     let first_digest = digest(first_component_id.as_str());
 
-    let second_component_id = component_id("second");
-    let second_digest = digest(second_component_id.as_str());
+    let third_component_id = component_id("third");
+    let third_digest = digest(third_component_id.as_str());
 
     let fourth_component_id = component_id("fourth");
     let fourth_digest = digest(fourth_component_id.as_str());
@@ -157,7 +157,7 @@ fn deps_are_fingerprinted() {
     // Modify the third package.
     ProjectBuilder::start()
         .name("third")
-        .version("2.0.0")
+        .edition("2023_01")
         .build(&third);
     // Modify the fifth package.
     fifth
@@ -174,18 +174,17 @@ fn deps_are_fingerprinted() {
 
     assert_ne!(digest(first_component_id.as_str()), first_digest);
     assert_ne!(digest(fourth_component_id.as_str()), fourth_digest);
+    assert_eq!(digest(third_component_id.as_str()), third_digest);
 
-    // Note we have changed the version of the third.
-    // Since second depends on third, and direct deps package ids are part of the fingerprint id,
-    // second will change its id.
-    assert_eq!(fingerprints().len(), 8); // core, first, second, second, third, third, fourth, fifth
-    assert_eq!(digest(second_component_id.as_str()), second_digest);
-    let new_second_component_id = fingerprints()
+    // Note we have changed the edition of the third.
+    // Since editions are part of the fingerprint id, the third will change its id.
+    assert_eq!(fingerprints().len(), 7); // core, first, second, third, third, fourth, fifth
+    let new_third_component_id = fingerprints()
         .iter()
-        .find(|t| t.starts_with("second-") && t.as_str() != second_component_id)
+        .find(|t| t.starts_with("third-") && t.as_str() != third_component_id)
         .unwrap()
         .to_string();
-    assert_ne!(digest(new_second_component_id.as_str()), second_digest);
+    assert_ne!(digest(new_third_component_id.as_str()), third_digest);
 }
 
 #[test]

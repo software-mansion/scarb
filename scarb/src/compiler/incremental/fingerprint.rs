@@ -292,39 +292,57 @@ impl Fingerprint {
     /// `Fingerprint::digest` for that.
     /// Broadly speaking, the identifier is a less strict version of the digest.
     pub fn id(&self) -> String {
+        // We use the set to avoid cycles when calculating digests recursively for deps.
+        let mut seen = HashSet::<SmolStr>::new();
+        seen.insert(self.component_discriminator.clone());
         let mut hasher = StableHasher::new();
         self.scarb_path.hash(&mut hasher);
         self.scarb_version.long().hash(&mut hasher);
         self.profile.hash(&mut hasher);
         self.cairo_name.hash(&mut hasher);
         self.edition.hash(&mut hasher);
-        self.component_discriminator.hash(&mut hasher);
         self.source_paths.hash(&mut hasher);
         self.compiler_config.hash(&mut hasher);
-        self.cfg_set.hash(&mut hasher);
         self.experimental_features.hash(&mut hasher);
-        for dep in self
+        Self::calculate_id(self, &mut seen, &mut hasher)
+    }
+
+    pub fn calculate_id(
+        fingerprint: &Fingerprint,
+        seen: &mut HashSet<SmolStr>,
+        mut hasher: &mut StableHasher,
+    ) -> String {
+        fingerprint.component_discriminator.hash(hasher);
+        // We hash the dependency `cfg_set` as well to accommodate compilation units for tests.
+        // We emit compilation units for unit and integration tests separately.
+        // In unit tests, there is a component for the main package, with `cfg(test)` enabled.
+        // In integration tests, `cfg(test)` is not enabled for the main component of the
+        // tested package. It's only enabled for a separate integration test component, and
+        // the main package component is treated as its dependency.
+        // If we did not include the `cfg_set` in the fingerprint, the cache would be
+        // overwritten between unit and integration test runs.
+        fingerprint.cfg_set.hash(hasher);
+        for dep in fingerprint
             .deps
             .borrow()
             .iter()
             .sorted_by_key(|dep| dep.component_discriminator.clone())
         {
-            dep.component_discriminator.hash(&mut hasher);
-            let dep_fingerprint = dep.fingerprint.upgrade()
-                .expect(
-                "dependency fingerprint should never be dropped, as long as unit fingerprint is alive"
-            );
-            if let ComponentFingerprint::Library(dep_fingerprint) = dep_fingerprint.deref() {
-                // We hash the dependency `cfg_set` as well to accommodate compilation units for tests.
-                // We emit compilation units for unit and integration tests separately.
-                // In unit tests, there is a component for the main package, with `cfg(test)` enabled.
-                // In integration tests, `cfg(test)` is not enabled for the main component of the
-                // tested package. It's only enabled for a separate integration test component, and
-                // the main package component is treated as its dependency.
-                // If we did not include the `cfg_set` in the fingerprint, the cache would be
-                // overwritten between unit and integration test runs.
-                dep_fingerprint.cfg_set.hash(&mut hasher);
-            };
+            // Avoid dependency cycles.
+            if seen.insert(dep.component_discriminator.clone()) {
+                let dep_fingerprint = dep.fingerprint.upgrade()
+                    .expect(
+                    "dependency fingerprint should never be dropped, as long as unit fingerprint is alive"
+                );
+                match dep_fingerprint.deref() {
+                    ComponentFingerprint::Library(dep_fingerprint) => {
+                        Self::calculate_id(dep_fingerprint.deref(), seen, hasher).hash(hasher);
+                    }
+                    ComponentFingerprint::Plugin(dep_fingerprint) => {
+                        dep_fingerprint.component_discriminator.hash(&mut hasher);
+                    }
+                }
+            }
         }
         hasher.finish_as_short_hash()
     }
