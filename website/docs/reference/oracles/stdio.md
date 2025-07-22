@@ -87,7 +87,7 @@ The oracle process announces that it is ready to accept commands and waits for t
 ## Function invocation
 
 Cairo program calls oracle functions via the `invoke` cheatcode. The executor translates this to `invoke` requests that
-is sends to the oracle. Oracle responds with JSON-RPC responses containing results or errors. This step runs in a
+it sends to the oracle. Oracle responds with JSON-RPC responses containing results or errors. This step runs in a
 synchronous loop throughout Cairo program execution.
 
 ```jsonc
