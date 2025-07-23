@@ -6,7 +6,7 @@ pub use profile::*;
 pub use repository::*;
 
 use crate::core::{TargetKind, Workspace};
-use crate::internal::artifacts_writer::ArtifactsWriterRequestSink;
+use crate::internal::offloader::Offloader;
 
 mod compilation_unit;
 mod compilers;
@@ -24,7 +24,7 @@ pub trait Compiler: Sync {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
-        artifacts_writer: ArtifactsWriterRequestSink,
+        offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()>;

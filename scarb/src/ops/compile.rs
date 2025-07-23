@@ -7,7 +7,7 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttr
 use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
-use crate::internal::artifacts_writer::ArtifactsWriter;
+use crate::internal::offloader::Offloader;
 use crate::ops;
 use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
 use anyhow::{Context, Error, Result, anyhow};
@@ -20,7 +20,6 @@ use scarb_ui::args::FeaturesSpec;
 use scarb_ui::components::Status;
 use smol_str::{SmolStr, ToSmolStr};
 use std::collections::HashSet;
-use std::sync::mpsc;
 use std::thread;
 use tracing::trace_span;
 
@@ -242,33 +241,35 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
             } = build_scarb_root_database(&unit, ws, Default::default())?;
             check_starknet_dependency(&unit, ws, &db, &package_name);
 
-            let (request_sink, receiver_stream) = mpsc::channel();
-            let artifacts_writer = ArtifactsWriter::new(receiver_stream, ws);
+            // This scope limits the offloader lifetime.
+            thread::scope(|s| {
+                let offloader = Offloader::new(s, ws);
 
-            let result = ws
-                .config()
-                .compilers()
-                .compile(unit, request_sink, &mut db, ws);
+                let result = ws
+                    .config()
+                    .compilers()
+                    .compile(unit, &offloader, &mut db, ws);
 
-            for plugin in proc_macros {
-                plugin
-                    .post_process(&db)
-                    .context("procedural macro post processing callback failed")?;
-            }
+                for plugin in proc_macros {
+                    plugin
+                        .post_process(&db)
+                        .context("procedural macro post processing callback failed")?;
+                }
 
-            let span = trace_span!("drop_db");
-            {
-                let _guard = span.enter();
-                drop(db);
-            }
+                let span = trace_span!("drop_db");
+                {
+                    let _guard = span.enter();
+                    drop(db);
+                }
 
-            let span = trace_span!("artifacts_writer_join");
-            {
-                let _guard = span.enter();
-                artifacts_writer.join()?;
-            }
+                let span = trace_span!("offloader_join");
+                {
+                    let _guard = span.enter();
+                    offloader.join()?;
+                }
 
-            result
+                result
+            })
         }
     };
 

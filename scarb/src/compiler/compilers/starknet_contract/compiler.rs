@@ -28,7 +28,7 @@ use crate::compiler::compilers::{ArtifactsWriter, ensure_gas_enabled};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Workspace};
-use crate::internal::artifacts_writer::ArtifactsWriterRequestSink;
+use crate::internal::offloader::Offloader;
 use crate::internal::serdex::RelativeUtf8PathBuf;
 use scarb_ui::Ui;
 
@@ -78,7 +78,7 @@ impl Compiler for StarknetContractCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
-        _artifacts_writer: ArtifactsWriterRequestSink,
+        _offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {

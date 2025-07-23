@@ -12,7 +12,7 @@ use crate::compiler::compilers::{
 use crate::compiler::incremental::{load_incremental_artifacts, save_incremental_artifacts};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::Workspace;
-use crate::internal::artifacts_writer::ArtifactsWriterRequestSink;
+use crate::internal::offloader::Offloader;
 
 pub struct CompilerRepository {
     compilers: HashMap<SmolStr, Box<dyn Compiler>>,
@@ -48,7 +48,7 @@ impl CompilerRepository {
     pub fn compile(
         &self,
         unit: CairoCompilationUnit,
-        artifacts_writer: ArtifactsWriterRequestSink,
+        offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -57,7 +57,7 @@ impl CompilerRepository {
             bail!("unknown compiler for target `{target_kind}`");
         };
         let ctx = load_incremental_artifacts(&unit, db, ws)?;
-        compiler.compile(&unit, ctx.cached_crates(), artifacts_writer.clone(), db, ws)?;
+        compiler.compile(&unit, ctx.cached_crates(), offloader, db, ws)?;
         save_incremental_artifacts(&unit, db, ctx, ws)?;
         Ok(())
     }

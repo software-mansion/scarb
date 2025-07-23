@@ -3,7 +3,7 @@ use crate::compiler::helpers::write_json;
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace};
-use crate::internal::artifacts_writer::ArtifactsWriterRequestSink;
+use crate::internal::offloader::Offloader;
 use anyhow::{Result, bail, ensure};
 use cairo_lang_compiler::DbWarmupContext;
 use cairo_lang_compiler::db::RootDatabase;
@@ -40,7 +40,7 @@ impl Compiler for ExecutableCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
-        _artifacts_writer: ArtifactsWriterRequestSink,
+        _offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {

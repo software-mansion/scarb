@@ -4,6 +4,7 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::MacroPlugin;
 use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
 use indoc::formatdoc;
@@ -11,10 +12,12 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::{debug, trace_span};
 
-use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_string};
+use crate::compiler::helpers::{
+    build_compiler_config, collect_main_crate_ids, write_json, write_string,
+};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Utf8PathWorkspaceExt, Workspace};
-use crate::internal::artifacts_writer::{ArtifactsWriterRequestSink, File, Request};
+use crate::internal::offloader::Offloader;
 
 pub struct LibCompiler;
 
@@ -45,7 +48,7 @@ impl Compiler for LibCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
-        artifacts_writer: ArtifactsWriterRequestSink,
+        offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -79,33 +82,45 @@ impl Compiler for LibCompiler {
         let span = trace_span!("serialize_sierra_json");
         if props.sierra {
             let _guard = span.enter();
-            artifacts_writer
-                .send(Request::ProgramArtifact {
-                    file: File {
-                        file_name: format!("{}.sierra.json", unit.main_component().target_name()),
-                        description: "output file".to_string(),
-                        target_dir: target_dir.clone(),
-                    },
-                    // We only clone Arc, not the underlying program, so it's inexpensive.
-                    value: program_artifact.clone(),
-                })
-                .expect("failed to send program artifact request");
+            let target_name = unit.main_component().target_name();
+            let target_dir = target_dir.clone();
+            // We only clone Arc, not the underlying program, so it's inexpensive.
+            let program = program_artifact.clone();
+            offloader.offload("output file", move |ws| {
+                // Cloning the underlying program is expensive, but we can afford it here,
+                // as we are on a dedicated thread anyway.
+                let sierra_program: VersionedProgram = program.as_ref().clone().into();
+                write_json(
+                    &format!("{target_name}.sierra.json"),
+                    "output file",
+                    &target_dir,
+                    ws,
+                    &sierra_program,
+                )?;
+                Ok(())
+            });
         }
 
         let span = trace_span!("serialize_sierra_text");
         if props.sierra_text {
             let _guard = span.enter();
-            artifacts_writer
-                .send(Request::ProgramArtifactText {
-                    file: File {
-                        file_name: format!("{}.sierra", unit.main_component().target_name()),
-                        description: "output file".to_string(),
-                        target_dir: target_dir.clone(),
-                    },
-                    // We only clone Arc, not the underlying program, so it's inexpensive.
-                    value: program_artifact.clone(),
-                })
-                .expect("failed to send program artifact request");
+            let target_name = unit.main_component().target_name();
+            let target_dir = target_dir.clone();
+            // We only clone Arc, not the underlying program, so it's inexpensive.
+            let program = program_artifact.clone();
+            offloader.offload("output file", move |ws| {
+                // Cloning the underlying program is expensive, but we can afford it here,
+                // as we are on a dedicated thread anyway.
+                let sierra_program: VersionedProgram = program.as_ref().clone().into();
+                write_string(
+                    &format!("{target_name}.sierra"),
+                    "output file",
+                    &target_dir,
+                    ws,
+                    &sierra_program,
+                )?;
+                Ok(())
+            });
         }
 
         if props.casm {
