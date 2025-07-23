@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.1.7 (2024-07-23)
+- Add a "ProfileSpec" argument parser.
+
 ## 0.1.6 (2024-07-10)
 - Make `Verbosity` a `clap::ValueEnum`.
 - Add `Verbosity::is_default` method.
