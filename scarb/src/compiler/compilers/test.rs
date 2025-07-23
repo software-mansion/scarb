@@ -20,6 +20,7 @@ use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, wr
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{PackageName, SourceId, TargetKind, TestTargetProps, Workspace};
 use crate::flock::Filesystem;
+use crate::internal::offloader::Offloader;
 
 pub struct TestCompiler;
 
@@ -32,6 +33,7 @@ impl Compiler for TestCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
+        offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -85,9 +87,23 @@ impl Compiler for TestCompiler {
         let span = trace_span!("serialize_test");
         {
             let _guard = span.enter();
-            let sierra_program: VersionedProgram = test_compilation.sierra_program.clone().into();
-            let file_name = format!("{}.test.sierra.json", unit.main_component().target_name());
-            write_json(&file_name, "output file", &target_dir, ws, &sierra_program)?;
+            {
+                let target_name = unit.main_component().target_name();
+                let target_dir = target_dir.clone();
+                offloader.offload("output file", move |ws| {
+                    // Cloning the underlying program is expensive, but we can afford it here,
+                    // as we are on a dedicated thread anyway.
+                    let sierra_program: VersionedProgram = test_compilation.sierra_program.into();
+                    write_json(
+                        &format!("{target_name}.test.sierra.json"),
+                        "output file",
+                        &target_dir,
+                        ws,
+                        &sierra_program,
+                    )?;
+                    Ok(())
+                });
+            }
 
             let file_name = format!("{}.test.json", unit.main_component().target_name());
             write_json(

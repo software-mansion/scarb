@@ -7,6 +7,7 @@ use crate::compiler::{CairoCompilationUnit, CompilationUnit, CompilationUnitAttr
 use crate::core::{
     FeatureName, PackageId, PackageName, TargetKind, Utf8PathWorkspaceExt, Workspace,
 };
+use crate::internal::offloader::Offloader;
 use crate::ops;
 use crate::ops::{CompilationUnitsOpts, get_test_package_ids, validate_features};
 use anyhow::{Context, Error, Result, anyhow};
@@ -239,21 +240,36 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 proc_macros,
             } = build_scarb_root_database(&unit, ws, Default::default())?;
             check_starknet_dependency(&unit, ws, &db, &package_name);
-            let result = ws.config().compilers().compile(unit, &mut db, ws);
 
-            for plugin in proc_macros {
-                plugin
-                    .post_process(&db)
-                    .context("procedural macro post processing callback failed")?;
-            }
+            // This scope limits the offloader lifetime.
+            thread::scope(|s| {
+                let offloader = Offloader::new(s, ws);
 
-            let span = trace_span!("drop_db");
-            {
-                let _guard = span.enter();
-                drop(db);
-            }
+                let result = ws
+                    .config()
+                    .compilers()
+                    .compile(unit, &offloader, &mut db, ws);
 
-            result
+                for plugin in proc_macros {
+                    plugin
+                        .post_process(&db)
+                        .context("procedural macro post processing callback failed")?;
+                }
+
+                let span = trace_span!("drop_db");
+                {
+                    let _guard = span.enter();
+                    drop(db);
+                }
+
+                let span = trace_span!("offloader_join");
+                {
+                    let _guard = span.enter();
+                    offloader.join()?;
+                }
+
+                result
+            })
         }
     };
 
