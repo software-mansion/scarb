@@ -1341,7 +1341,7 @@ fn ambiguous_executable_function() {
             error: more than one executable found in the main crate:
             [..]hello_world::main
             [..]hello_world::secondary
-            help: add a separate `executable` target for each of your executable functions
+            help: specify a separate `executable` target for each of your executable functions
             -> Scarb.toml
             [[target.executable]]
             name = "main"
@@ -1491,4 +1491,66 @@ fn test_target_builds_contracts_with_warning() {
             "incremental",
         ]
     );
+}
+
+#[test]
+fn executable_target_validation() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .dep_cairo_test()
+        .dep_cairo_execute()
+        .manifest_extra(indoc! {r#"
+            [executable]
+            name = "first"
+
+            [[target.executable]]
+            name = "second"
+            function = "hello_world::a"
+
+            [[target.executable]]
+            name = "third"
+            function = "hello_world::b"
+
+            [cairo]
+            enable-gas = false
+        "#})
+        .lib_cairo(indoc! {r#"
+            #[executable]
+            fn a() -> felt252 {
+                12
+            }
+            #[executable]
+            fn b() -> felt252 {
+                34
+            }
+        "#})
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+            warn: you have specified multiple executable targets
+            some of them specify different `function` names, some do not specify `function` name at all
+            this is probably a mistake
+            if your project defines more than one executable function, you need to specify `function` name
+
+
+            [..]Compiling executable(first) [..] v1.0.0 ([..]Scarb.toml)
+            error: more than one executable found in the main crate:
+                pkg0::a
+            	pkg0::b
+            help: specify a separate `executable` target for each of your executable functions
+            -> Scarb.toml
+            [[target.executable]]
+            name = "a"
+            function = "pkg0::a"
+
+            [[target.executable]]
+            name = "b"
+            function = "pkg0::b"
+            error: could not compile `pkg0` due to previous error
+        "#});
 }

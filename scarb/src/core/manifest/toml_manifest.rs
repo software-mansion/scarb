@@ -1,23 +1,3 @@
-use anyhow::{Context, Result, anyhow, bail, ensure};
-use cairo_lang_filesystem::db::Edition;
-use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
-use camino::{Utf8Path, Utf8PathBuf};
-use indoc::formatdoc;
-use itertools::Itertools;
-use pathdiff::diff_utf8_paths;
-use semver::{Version, VersionReq};
-use serde::{Deserialize, Serialize, de};
-use serde_untagged::UntaggedEnumVisitor;
-use smol_str::SmolStr;
-use std::borrow::Cow;
-use std::collections::BTreeMap;
-use std::default::Default;
-use std::fs;
-use std::iter::{repeat, zip};
-use std::ops::Deref;
-use tracing::trace;
-use url::Url;
-
 use super::{FeatureName, Manifest};
 use crate::compiler::{DefaultForProfile, Profile};
 use crate::core::manifest::maybe_workspace::{MaybeWorkspace, WorkspaceInherit};
@@ -38,6 +18,26 @@ use crate::sources::canonical_url::CanonicalUrl;
 use crate::{
     DEFAULT_MODULE_MAIN_FILE, DEFAULT_SOURCE_PATH, DEFAULT_TESTS_PATH, MANIFEST_FILE_NAME,
 };
+use anyhow::{Context, Result, anyhow, bail, ensure};
+use cairo_lang_filesystem::db::Edition;
+use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
+use camino::{Utf8Path, Utf8PathBuf};
+use indoc::{formatdoc, indoc};
+use itertools::Itertools;
+use pathdiff::diff_utf8_paths;
+use scarb_ui::Ui;
+use semver::{Version, VersionReq};
+use serde::{Deserialize, Serialize, de};
+use serde_untagged::UntaggedEnumVisitor;
+use smol_str::SmolStr;
+use std::borrow::Cow;
+use std::collections::BTreeMap;
+use std::default::Default;
+use std::fs;
+use std::iter::{repeat, zip};
+use std::ops::Deref;
+use tracing::trace;
+use url::Url;
 
 /// This type is used to deserialize `Scarb.toml` files.
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -721,7 +721,7 @@ impl TomlManifest {
 
         let no_core = package.no_core.unwrap_or(false);
 
-        let targets = self.collect_targets(package.name.to_smol_str(), root)?;
+        let targets = self.collect_targets(package.name.to_smol_str(), root, config.ui())?;
 
         let publish = package.publish.unwrap_or(true);
 
@@ -886,7 +886,12 @@ impl TomlManifest {
         Ok(manifest)
     }
 
-    fn collect_targets(&self, package_name: SmolStr, root: &Utf8Path) -> Result<Vec<Target>> {
+    fn collect_targets(
+        &self,
+        package_name: SmolStr,
+        root: &Utf8Path,
+        ui: Ui,
+    ) -> Result<Vec<Target>> {
         let mut targets = Vec::new();
 
         targets.extend(Self::collect_target(
@@ -940,7 +945,34 @@ impl TomlManifest {
         let auto_detect = !targets.iter().any(Target::is_cairo_plugin);
         self.collect_test_targets(&mut targets, package_name.clone(), root, auto_detect)?;
 
+        Self::validate_targets(&targets, ui)?;
+
         Ok(targets)
+    }
+
+    fn validate_targets(targets: &[Target], ui: Ui) -> Result<()> {
+        // Validate executable targets.
+        let executable_functions = targets
+            .iter()
+            .filter(|target| target.kind == TargetKind::EXECUTABLE)
+            .map(|target| target.params.get("function").cloned())
+            .collect_vec();
+        let unspecified = executable_functions.iter().any(Option::is_none);
+        let specified = executable_functions
+            .iter()
+            .filter_map(|func| func.as_ref().and_then(|v| v.as_str()))
+            .unique()
+            .count();
+        if unspecified && specified > 1 {
+            ui.warn(indoc! {r#"
+                you have specified multiple executable targets
+                some of them specify different `function` names, some do not specify `function` name at all
+                this is probably a mistake
+                if your project defines more than one executable function, you need to specify `function` name
+
+            "#})
+        }
+        Ok(())
     }
 
     fn collect_test_targets(
@@ -951,7 +983,7 @@ impl TomlManifest {
         auto_detect: bool,
     ) -> Result<()> {
         if let Some(test) = self.test.as_ref() {
-            // Read test targets from manifest file.
+            // Read test targets from a manifest file.
             for test_toml in test {
                 targets.extend(Self::collect_target(
                     TargetKind::TEST,
@@ -1009,8 +1041,8 @@ impl TomlManifest {
                 result
             };
             if tests_path.join(DEFAULT_MODULE_MAIN_FILE).exists() {
-                // Tests directory contains `lib.cairo` file.
-                // Treat whole tests directory as single module.
+                // Tests directory contains a `lib.cairo` file.
+                // Treat the whole tests directory as a single module.
                 let source_path = tests_path.join(DEFAULT_MODULE_MAIN_FILE);
                 let target_name: SmolStr = format!("{package_name}_{DEFAULT_TESTS_PATH}").into();
                 let target_config = integration_target_config(target_name, source_path)?;
@@ -1022,8 +1054,8 @@ impl TomlManifest {
                     None,
                 )?);
             } else {
-                // Tests directory does not contain `lib.cairo` file.
-                // Each file will be treated as separate crate.
+                // Tests directory does not contain a `lib.cairo` file.
+                // Each file will be treated as a separate crate.
                 if let Ok(entries) = fs::read_dir(tests_path) {
                     for entry in entries.flatten() {
                         if !entry.file_type()?.is_file() {
