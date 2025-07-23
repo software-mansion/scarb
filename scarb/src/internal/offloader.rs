@@ -21,7 +21,7 @@ impl<'a> Offloader<'a> {
         let ws = unsafe {
             // This should be safe, as we know we will join the artifact writer thread before
             // the workspace is dropped.
-            mem::transmute::<&Workspace<'_>, &Workspace<'_>>(ws)
+            mem::transmute::<&Workspace<'a>, &Workspace<'static>>(ws)
         };
         let (sink, stream): (OffloaderSink<'a>, OffloaderStream<'a>) = mpsc::channel();
         let handle = thread::Builder::new()
