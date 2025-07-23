@@ -3,6 +3,7 @@ use crate::compiler::compilers::starknet_contract::{ContractFileStemCalculator, 
 use crate::compiler::helpers::write_json_with_byte_count;
 use crate::core::{PackageName, Workspace};
 use crate::flock::Filesystem;
+use crate::internal::offloader::Offloader;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_starknet::contract::ContractDeclaration;
@@ -129,10 +130,13 @@ impl ArtifactsWriter {
 
     pub fn write(
         self,
-        contract_paths: Vec<String>,
-        contracts: &Vec<ContractDeclaration>,
-        classes: &[ContractClass],
-        casm_classes: &[Option<CasmContractClass>],
+        Artifacts {
+            contract_paths,
+            contracts,
+            classes,
+            casm_classes,
+        }: Artifacts,
+        offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> anyhow::Result<()> {
@@ -146,7 +150,8 @@ impl ArtifactsWriter {
             .map(|ext| format!(".{ext}"))
             .unwrap_or_default();
 
-        for (declaration, class, casm_class) in izip!(contracts, classes, casm_classes) {
+        for (declaration, class, casm_class) in izip!(contracts, classes.into_iter(), casm_classes)
+        {
             let contract_name = declaration.submodule_id.name(db);
             let contract_path = declaration.module_id().full_path(db);
 
@@ -164,64 +169,83 @@ impl ArtifactsWriter {
             );
 
             if self.sierra {
-                let sierra_felts = class.sierra_program.len();
-                if sierra_felts > MAX_SIERRA_PROGRAM_FELTS {
-                    ws.config().ui().warn(formatdoc! {r#"
-                        Sierra program exceeds maximum byte-code size on Starknet for contract `{}`:
-                        {MAX_SIERRA_PROGRAM_FELTS} felts allowed. Actual size: {sierra_felts} felts.
-                    "#, contract_stem.clone()});
-                }
-
                 let file_name = format!("{file_stem}{extension_prefix}.contract_class.json");
 
-                let class_size = write_json_with_byte_count(
-                    &file_name,
-                    "output file",
-                    &self.target_dir,
-                    ws,
-                    class,
-                )?;
-                if class_size > MAX_CONTRACT_CLASS_BYTES {
-                    // Debug info is omitted on Starknet.
-                    // Only warn if size without debug info exceeds the limit as well.
-                    let rpc_class = ContractClassNoDebug::new(class);
-                    let rpc_class_size = serde_json::to_vec(&rpc_class)?.len();
+                {
+                    let file_name = file_name.clone();
+                    let contract_stem = contract_stem.clone();
+                    let target_dir = self.target_dir.clone();
+                    offloader.offload("output file", move |ws| {
+                        let sierra_felts = class.sierra_program.len();
+                        if sierra_felts > MAX_SIERRA_PROGRAM_FELTS {
+                            ws.config().ui().warn(formatdoc! {r#"
+                        Sierra program exceeds maximum byte-code size on Starknet for contract `{}`:
+                        {MAX_SIERRA_PROGRAM_FELTS} felts allowed. Actual size: {sierra_felts} felts.
+                    "#, &contract_stem});
+                        }
 
-                    if rpc_class_size > MAX_CONTRACT_CLASS_BYTES {
-                        ws.config().ui().warn(formatdoc! {r#"
+
+                        let class_size = write_json_with_byte_count(
+                            &file_name,
+                            "output file",
+                            &target_dir,
+                            ws,
+                            &class,
+                        )?;
+                        if class_size > MAX_CONTRACT_CLASS_BYTES {
+                            // Debug info is omitted on Starknet.
+                            // Only warn if size without debug info exceeds the limit as well.
+                            let rpc_class = ContractClassNoDebug::new(&class);
+                            let rpc_class_size = serde_json::to_vec(&rpc_class)?.len();
+
+                            if rpc_class_size > MAX_CONTRACT_CLASS_BYTES {
+                                ws.config().ui().warn(formatdoc! {r#"
                             Contract class size exceeds maximum allowed size on Starknet for contract `{}`:
                             {MAX_CONTRACT_CLASS_BYTES} bytes allowed. Actual size (without debug info): {rpc_class_size} bytes.
-                        "#, contract_stem.clone()});
-                    }
+                        "#, &contract_stem});
+                            }
+                        }
+                        Ok(())
+                    });
                 }
+
                 artifact.artifacts.sierra = Some(file_name);
             }
 
             if self.casm {
                 if let Some(casm_class) = casm_class {
-                    let casm_felts = casm_class.bytecode.len();
-                    if casm_felts > MAX_CASM_PROGRAM_FELTS {
-                        ws.config().ui().warn(formatdoc! {r#"
-                            CASM program exceeds maximum byte-code size on Starknet for contract `{}`:
-                            {MAX_CASM_PROGRAM_FELTS} felts allowed. Actual size: {casm_felts} felts.
-                        "#, contract_stem.clone()});
-                    }
-
                     let file_name =
                         format!("{file_stem}{extension_prefix}.compiled_contract_class.json");
+                    {
+                        let file_name = file_name.clone();
+                        let contract_stem = contract_stem.clone();
+                        let target_dir = self.target_dir.clone();
+                        offloader.offload("output file", move |ws| {
 
-                    let compiled_class_size = write_json_with_byte_count(
-                        &file_name,
-                        "output file",
-                        &self.target_dir,
-                        ws,
-                        casm_class,
-                    )?;
-                    if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
-                        ws.config().ui().warn(formatdoc! {r#"
-                            Compiled contract class size exceeds maximum allowed size on Starknet for contract `{}`:
-                            {MAX_COMPILED_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {compiled_class_size} bytes.
-                        "#, contract_stem.clone()});
+                            let casm_felts = casm_class.bytecode.len();
+                            if casm_felts > MAX_CASM_PROGRAM_FELTS {
+                                ws.config().ui().warn(formatdoc! {r#"
+                                CASM program exceeds maximum byte-code size on Starknet for contract `{}`:
+                                {MAX_CASM_PROGRAM_FELTS} felts allowed. Actual size: {casm_felts} felts.
+                            "#, &contract_stem});
+                            }
+
+
+                            let compiled_class_size = write_json_with_byte_count(
+                                &file_name,
+                                "output file",
+                                &target_dir,
+                                ws,
+                                casm_class,
+                            )?;
+                            if compiled_class_size > MAX_COMPILED_CONTRACT_CLASS_BYTES {
+                                ws.config().ui().warn(formatdoc! {r#"
+                                Compiled contract class size exceeds maximum allowed size on Starknet for contract `{}`:
+                                {MAX_COMPILED_CONTRACT_CLASS_BYTES} bytes allowed. Actual size: {compiled_class_size} bytes.
+                            "#, &contract_stem});
+                            }
+                            Ok(())
+                        });
                     }
                     artifact.artifacts.casm = Some(file_name);
                 }
@@ -245,4 +269,11 @@ impl ArtifactsWriter {
 
         Ok(())
     }
+}
+
+pub struct Artifacts {
+    pub contract_paths: Vec<String>,
+    pub contracts: Vec<ContractDeclaration>,
+    pub classes: Vec<ContractClass>,
+    pub casm_classes: Vec<Option<CasmContractClass>>,
 }

@@ -22,6 +22,7 @@ use std::iter::zip;
 use tracing::{debug, trace, trace_span};
 
 use super::contract_selector::ContractSelector;
+use crate::compiler::compilers::starknet_contract::artifacts_writer::Artifacts;
 use crate::compiler::compilers::starknet_contract::contract_selector::GLOB_PATH_SELECTOR;
 use crate::compiler::compilers::starknet_contract::validations::check_allowed_libfuncs;
 use crate::compiler::compilers::{ArtifactsWriter, ensure_gas_enabled};
@@ -78,7 +79,7 @@ impl Compiler for StarknetContractCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
-        _offloader: &Offloader<'_>,
+        offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -149,7 +150,17 @@ impl Compiler for StarknetContractCompiler {
         let target_name = &unit.main_component().target_name();
 
         let writer = ArtifactsWriter::new(target_name.clone(), target_dir, props);
-        writer.write(contract_paths, &contracts, &classes, &casm_classes, db, ws)?;
+        writer.write(
+            Artifacts {
+                contract_paths,
+                contracts,
+                classes,
+                casm_classes,
+            },
+            offloader,
+            db,
+            ws,
+        )?;
 
         Ok(())
     }
