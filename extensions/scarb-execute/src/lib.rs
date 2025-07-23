@@ -17,11 +17,11 @@ use cairo_vm::{Felt252, cairo_run};
 use camino::{Utf8Path, Utf8PathBuf};
 use create_output_dir::create_output_dir;
 use indoc::formatdoc;
-use oracle::hint_processor::OracleHintProcessor;
 use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
 };
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
+use scarb_oracle_hint_processor::OracleHintProcessor;
 use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};
 use scarb_ui::components::Status;
@@ -29,7 +29,6 @@ use std::env;
 use std::fs;
 use std::io::{self, Write};
 
-mod oracle;
 pub(crate) mod output;
 
 const MAX_ITERATION_COUNT: usize = 10000;

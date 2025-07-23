@@ -1,4 +1,4 @@
-use crate::oracle::connections::stdio_jsonrpc::StdioJsonRpcConnection;
+use crate::connections::stdio_jsonrpc::StdioJsonRpcConnection;
 use anyhow::{Result, bail};
 use cairo_vm::Felt252;
 use std::collections::HashMap;

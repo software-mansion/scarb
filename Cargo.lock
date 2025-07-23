@@ -6729,6 +6729,17 @@ dependencies = [
 [[package]]
 name = "scarb-oracle-hint-processor"
 version = "2.11.4"
+dependencies = [
+ "anyhow",
+ "cairo-lang-casm",
+ "cairo-lang-runner",
+ "cairo-vm 2.2.0",
+ "serde",
+ "serde_json",
+ "shell-words",
+ "starknet-core",
+ "tracing",
+]
 
 [[package]]
 name = "scarb-proc-macro-server-types"
