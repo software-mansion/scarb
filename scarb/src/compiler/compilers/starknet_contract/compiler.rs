@@ -19,7 +19,6 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use std::collections::HashSet;
 use std::iter::zip;
-use std::sync::mpsc;
 use tracing::{debug, trace, trace_span};
 
 use super::contract_selector::ContractSelector;
@@ -29,7 +28,7 @@ use crate::compiler::compilers::{ArtifactsWriter, ensure_gas_enabled};
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Workspace};
-use crate::internal::artifacts_writer::Request;
+use crate::internal::artifacts_writer::ArtifactsWriterRequestSink;
 use crate::internal::serdex::RelativeUtf8PathBuf;
 use scarb_ui::Ui;
 
@@ -79,7 +78,7 @@ impl Compiler for StarknetContractCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
-        _artifacts_writer: mpsc::Sender<Request>,
+        _artifacts_writer: ArtifactsWriterRequestSink,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {

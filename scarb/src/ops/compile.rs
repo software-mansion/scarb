@@ -262,7 +262,11 @@ fn compile_unit_inner(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 drop(db);
             }
 
-            artifacts_writer.join()?;
+            let span = trace_span!("artifacts_writer_join");
+            {
+                let _guard = span.enter();
+                artifacts_writer.join()?;
+            }
 
             result
         }

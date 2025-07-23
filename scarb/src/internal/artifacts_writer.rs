@@ -5,7 +5,9 @@ use anyhow::{Context, Result};
 use cairo_lang_sierra::program::{ProgramArtifact, VersionedProgram};
 use std::sync::{Arc, mpsc};
 use std::{mem, thread};
-use tracing::trace_span;
+
+pub type ArtifactsWriterRequestSink = mpsc::Sender<Request>;
+pub type ArtifactsWriterRequestStream = mpsc::Receiver<Request>;
 
 pub enum Request {
     ProgramArtifact {
@@ -29,7 +31,7 @@ pub struct ArtifactsWriter {
 }
 
 impl ArtifactsWriter {
-    pub fn new(request_stream: mpsc::Receiver<Request>, ws: &Workspace<'_>) -> Self {
+    pub fn new(request_stream: ArtifactsWriterRequestStream, ws: &Workspace<'_>) -> Self {
         let ws = unsafe {
             // This should be safe, as we know we will join the artifact writer thread before
             // the workspace is dropped.
@@ -38,9 +40,7 @@ impl ArtifactsWriter {
         let handle = thread::Builder::new()
             .name("scarb-artifacts-writer".into())
             .spawn(move || {
-                let span = trace_span!("writer requests");
                 for request in request_stream.iter() {
-                    let _guard = span.enter();
                     handle_request(request, ws)
                         .with_context(|| "failed to handle artifact writer request")?;
                 }
@@ -53,12 +53,11 @@ impl ArtifactsWriter {
     }
 
     pub fn join(mut self) -> Result<()> {
-        let result = if let Some(handle) = self.handle.take() {
-            handle
+        let result = match self.handle.take() {
+            Some(handle) => handle
                 .join()
-                .expect("failed to join artifacts writer thread")
-        } else {
-            Ok(())
+                .expect("failed to join artifacts writer thread"),
+            None => Ok(()),
         };
         mem::forget(self); // Defuse the drop bomb.
         result
@@ -71,6 +70,7 @@ impl Drop for ArtifactsWriter {
     }
 }
 
+#[tracing::instrument(level = "trace", skip_all)]
 fn handle_request(request: Request, ws: &Workspace<'_>) -> Result<()> {
     match request {
         Request::ProgramArtifact {

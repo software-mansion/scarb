@@ -5,7 +5,6 @@ use smol_str::SmolStr;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::fmt;
-use std::sync::mpsc;
 
 use crate::compiler::compilers::{
     ExecutableCompiler, LibCompiler, StarknetContractCompiler, TestCompiler,
@@ -13,7 +12,7 @@ use crate::compiler::compilers::{
 use crate::compiler::incremental::{load_incremental_artifacts, save_incremental_artifacts};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::Workspace;
-use crate::internal::artifacts_writer::Request;
+use crate::internal::artifacts_writer::ArtifactsWriterRequestSink;
 
 pub struct CompilerRepository {
     compilers: HashMap<SmolStr, Box<dyn Compiler>>,
@@ -49,7 +48,7 @@ impl CompilerRepository {
     pub fn compile(
         &self,
         unit: CairoCompilationUnit,
-        artifacts_writer: mpsc::Sender<Request>,
+        artifacts_writer: ArtifactsWriterRequestSink,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {

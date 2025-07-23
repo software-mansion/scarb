@@ -8,13 +8,13 @@ use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
 use indoc::formatdoc;
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, mpsc};
+use std::sync::Arc;
 use tracing::{debug, trace_span};
 
 use crate::compiler::helpers::{build_compiler_config, collect_main_crate_ids, write_string};
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Utf8PathWorkspaceExt, Workspace};
-use crate::internal::artifacts_writer::{File, Request};
+use crate::internal::artifacts_writer::{ArtifactsWriterRequestSink, File, Request};
 
 pub struct LibCompiler;
 
@@ -45,7 +45,7 @@ impl Compiler for LibCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
-        artifacts_writer: mpsc::Sender<Request>,
+        artifacts_writer: ArtifactsWriterRequestSink,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
