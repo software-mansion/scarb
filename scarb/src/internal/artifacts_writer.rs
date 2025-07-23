@@ -3,6 +3,7 @@ use crate::core::Workspace;
 use crate::flock::Filesystem;
 use anyhow::{Context, Result};
 use cairo_lang_sierra::program::{ProgramArtifact, VersionedProgram};
+use std::marker::PhantomData;
 use std::sync::{Arc, mpsc};
 use std::{mem, thread};
 
@@ -26,12 +27,13 @@ pub struct File {
     pub target_dir: Filesystem,
 }
 
-pub struct ArtifactsWriter {
+pub struct ArtifactsWriter<'a> {
     handle: Option<thread::JoinHandle<Result<()>>>,
+    _phantom_data: PhantomData<Workspace<'a>>,
 }
 
-impl ArtifactsWriter {
-    pub fn new(request_stream: ArtifactsWriterRequestStream, ws: &Workspace<'_>) -> Self {
+impl<'a> ArtifactsWriter<'a> {
+    pub fn new(request_stream: ArtifactsWriterRequestStream, ws: &Workspace<'a>) -> Self {
         let ws = unsafe {
             // This should be safe, as we know we will join the artifact writer thread before
             // the workspace is dropped.
@@ -49,6 +51,7 @@ impl ArtifactsWriter {
             .expect("failed to spawn artifacts writer thread");
         Self {
             handle: Some(handle),
+            _phantom_data: PhantomData,
         }
     }
 
@@ -64,7 +67,7 @@ impl ArtifactsWriter {
     }
 }
 
-impl Drop for ArtifactsWriter {
+impl<'a> Drop for ArtifactsWriter<'a> {
     fn drop(&mut self) {
         panic!("not defused: ArtifactsWriter dropped without join");
     }
