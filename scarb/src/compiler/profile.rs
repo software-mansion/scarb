@@ -1,10 +1,8 @@
 use anyhow::{Result, ensure};
+use scarb_ui::args::ProfileSpec;
 use serde::{Deserialize, Serialize};
-use smol_str::SmolStr;
+use smol_str::{SmolStr, ToSmolStr};
 use std::fmt;
-
-#[cfg(doc)]
-use crate::core::Target;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
 pub struct Profile(SmolStr);
@@ -13,9 +11,9 @@ impl Profile {
     pub const RELEASE: Self = Self(SmolStr::new_inline("release"));
     pub const DEV: Self = Self(SmolStr::new_inline("dev"));
 
-    /// Create new `Profile` struct.
-    /// Validates profile name to ensure it can be used as a valid subdirectory name.
-    pub fn new(name: SmolStr) -> Result<Self> {
+    /// Create a new ` Profile ` struct.
+    /// Validates a profile name to ensure it can be used as a valid subdirectory name.
+    pub fn try_new(name: SmolStr) -> Result<Self> {
         ensure!(
             name.as_str() != "",
             "cannot use empty string as profile name"
@@ -29,7 +27,7 @@ impl Profile {
         );
         ensure!(
             !name.to_string().starts_with(".."),
-            format!("profile name cannot start with `..` prefix")
+            "profile name cannot start with `..` prefix"
         );
         ensure!(
             name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-'),
@@ -73,6 +71,19 @@ impl From<Profile> for SmolStr {
     }
 }
 
+impl TryFrom<ProfileSpec> for Profile {
+    type Error = anyhow::Error;
+
+    fn try_from(value: ProfileSpec) -> Result<Profile, Self::Error> {
+        Ok(value
+            .specified()
+            .map(|v| v.to_smolstr())
+            .map(Profile::try_new)
+            .transpose()?
+            .unwrap_or_default())
+    }
+}
+
 pub trait DefaultForProfile {
     fn default_for_profile(profile: &Profile) -> Self;
 }
@@ -86,7 +97,7 @@ mod tests {
     #[test_case("foo")]
     #[test_case("foo-bar")]
     fn validate_correct_profile_name(name: &str) {
-        assert!(Profile::new(name.into()).is_ok())
+        assert!(Profile::try_new(name.into()).is_ok())
     }
 
     #[test_case("" => "cannot use empty string as profile name")]
@@ -98,6 +109,6 @@ mod tests {
     #[test_case(".." => "profile name cannot start with `..` prefix")]
     #[test_case("foo/bar" => "profile name `foo/bar` is not allowed, only alphanumeric characters and `-` can be used")]
     fn validate_incorrect_profile_name(name: &str) -> String {
-        Profile::new(name.into()).unwrap_err().to_string()
+        Profile::try_new(name.into()).unwrap_err().to_string()
     }
 }
