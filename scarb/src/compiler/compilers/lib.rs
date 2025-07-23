@@ -9,6 +9,7 @@ use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
 use indoc::formatdoc;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tracing::{debug, trace_span};
 
 use crate::compiler::helpers::{
@@ -16,6 +17,7 @@ use crate::compiler::helpers::{
 };
 use crate::compiler::{CairoCompilationUnit, CompilationUnitAttributes, Compiler};
 use crate::core::{TargetKind, Utf8PathWorkspaceExt, Workspace};
+use crate::internal::offloader::Offloader;
 
 pub struct LibCompiler;
 
@@ -46,6 +48,7 @@ impl Compiler for LibCompiler {
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateId],
+        offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
@@ -66,48 +69,62 @@ impl Compiler for LibCompiler {
         validate_compiler_config(db, &compiler_config, unit, ws);
 
         let span = trace_span!("compile_sierra");
-        let sierra_program: VersionedProgram = {
+        let program_artifact = {
             let _guard = span.enter();
             let program_artifact = cairo_lang_compiler::compile_prepared_db_program_artifact(
                 db,
                 main_crate_ids,
                 compiler_config,
             )?;
-            program_artifact.into()
+            Arc::new(program_artifact)
         };
 
         let span = trace_span!("serialize_sierra_json");
         if props.sierra {
             let _guard = span.enter();
-            write_json(
-                format!("{}.sierra.json", unit.main_component().target_name()).as_str(),
-                "output file",
-                &target_dir,
-                ws,
-                &sierra_program,
-            )
-            .with_context(|| {
-                format!(
-                    "failed to serialize Sierra program {}",
-                    unit.main_component().target_name()
-                )
-            })?;
+            let target_name = unit.main_component().target_name();
+            let target_dir = target_dir.clone();
+            // We only clone Arc, not the underlying program, so it's inexpensive.
+            let program = program_artifact.clone();
+            offloader.offload("output file", move |ws| {
+                // Cloning the underlying program is expensive, but we can afford it here,
+                // as we are on a dedicated thread anyway.
+                let sierra_program: VersionedProgram = program.as_ref().clone().into();
+                write_json(
+                    &format!("{target_name}.sierra.json"),
+                    "output file",
+                    &target_dir,
+                    ws,
+                    &sierra_program,
+                )?;
+                Ok(())
+            });
         }
 
         let span = trace_span!("serialize_sierra_text");
         if props.sierra_text {
             let _guard = span.enter();
-            write_string(
-                format!("{}.sierra", unit.main_component().target_name()).as_str(),
-                "output file",
-                &target_dir,
-                ws,
-                &sierra_program,
-            )?;
+            let target_name = unit.main_component().target_name();
+            let target_dir = target_dir.clone();
+            // We only clone Arc, not the underlying program, so it's inexpensive.
+            let program = program_artifact.clone();
+            offloader.offload("output file", move |ws| {
+                // Cloning the underlying program is expensive, but we can afford it here,
+                // as we are on a dedicated thread anyway.
+                let sierra_program: VersionedProgram = program.as_ref().clone().into();
+                write_string(
+                    &format!("{target_name}.sierra"),
+                    "output file",
+                    &target_dir,
+                    ws,
+                    &sierra_program,
+                )?;
+                Ok(())
+            });
         }
 
         if props.casm {
-            let program = sierra_program.into_v1().unwrap().program;
+            let program = &program_artifact.program;
 
             let span = trace_span!("casm_calc_metadata");
             let metadata = {
@@ -115,10 +132,10 @@ impl Compiler for LibCompiler {
 
                 if unit.compiler_config.enable_gas {
                     debug!("calculating Sierra variables");
-                    calc_metadata(&program, Default::default())
+                    calc_metadata(program, Default::default())
                 } else {
                     debug!("calculating Sierra variables with no gas validation");
-                    calc_metadata_ap_change_only(&program)
+                    calc_metadata_ap_change_only(program)
                 }
                 .context("failed calculating Sierra variables")?
             };
@@ -130,7 +147,7 @@ impl Compiler for LibCompiler {
                     gas_usage_check: unit.compiler_config.enable_gas,
                     max_bytecode_size: usize::MAX,
                 };
-                cairo_lang_sierra_to_casm::compiler::compile(&program, &metadata, sierra_to_casm)?
+                cairo_lang_sierra_to_casm::compiler::compile(program, &metadata, sierra_to_casm)?
             };
 
             let span = trace_span!("serialize_casm");
