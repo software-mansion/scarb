@@ -53,6 +53,13 @@ const sidebar = {
           "/docs/extensions/documentation-generation",
         ),
         p("Linter", "/docs/extensions/linter"),
+        {
+          text: "Oracles",
+          items: [
+            p("Overview", "/docs/extensions/oracles/overview"),
+            p("stdio protocol", "/docs/extensions/oracles/stdio"),
+          ],
+        },
       ],
     },
     {
