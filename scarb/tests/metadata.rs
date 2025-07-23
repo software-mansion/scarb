@@ -1962,7 +1962,7 @@ fn cairo_section_overrides_profile_defaults() {
         json!({
             "allow_warnings": true,
             "enable_gas": true,
-            "inlining_strategy": "default",
+            "inlining_strategy": "avoid",
             "sierra_replace_ids": true,
             "unstable_add_statements_code_locations_debug_info": false,
             "unstable_add_statements_functions_debug_info": false,

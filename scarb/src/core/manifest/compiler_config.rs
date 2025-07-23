@@ -115,7 +115,11 @@ impl DefaultForProfile for ManifestCompilerConfig {
             unstable_add_statements_code_locations_debug_info: false,
             panic_backtrace: false,
             unsafe_panic: false,
-            inlining_strategy: InliningStrategy::default(),
+            inlining_strategy: if profile.is_dev() {
+                InliningStrategy::Avoid
+            } else {
+                Default::default()
+            },
             incremental: true,
         }
     }
