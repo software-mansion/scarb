@@ -157,7 +157,7 @@ fn multiple_executables_error_message(executables: Vec<String>, scarb_toml: &Utf
     formatdoc! {r#"
         more than one executable found in the main crate:
             {}
-        help: add a separate `executable` target for each of your executable functions
+        help: specify a separate `executable` target for each of your executable functions
         -> {scarb_toml}
         {manifest}
         "#,
