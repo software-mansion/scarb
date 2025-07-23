@@ -1,0 +1,17 @@
+[package]
+name = "scarb-oracle-hint-processor"
+version.workspace = true
+edition.workspace = true
+
+authors.workspace = true
+categories = ["development-tools"]
+description = "Oracle hint processor for Scarb"
+homepage.workspace = true
+keywords = ["cairo-lang", "starknet", "scarb", "oracle"]
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+
+[dependencies]
+
+[dev-dependencies]

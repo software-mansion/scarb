@@ -6655,6 +6655,7 @@ dependencies = [
  "predicates",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.0",
+ "scarb-oracle-hint-processor",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -6724,6 +6725,10 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.12",
 ]
+
+[[package]]
+name = "scarb-oracle-hint-processor"
+version = "2.11.4"
 
 [[package]]
 name = "scarb-proc-macro-server-types"
