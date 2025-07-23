@@ -336,6 +336,8 @@ This flag cannot be set to `false` while compiling the `starknet-contract` targe
 This field is responsible for setting the inlining strategy to be used by compiler when building the package.
 The possible values are `default`, `avoid` or a numerical value.
 If `avoid` strategy is set, the compiler will only inline function annotated with `#[inline(always)]` attribute.
+By default, Scarb will use `avoid` strategy in `dev` profile and `default` strategy in `release` profile.
+
 Example usage:
 
 ```toml
