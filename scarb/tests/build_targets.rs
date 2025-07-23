@@ -1341,7 +1341,7 @@ fn ambiguous_executable_function() {
             error: more than one executable found in the main crate:
             [..]hello_world::main
             [..]hello_world::secondary
-            help: add a separate `executable` target for each of your executable functions
+            help: specify a separate `executable` target for each of your executable functions
             -> Scarb.toml
             [[target.executable]]
             name = "main"
