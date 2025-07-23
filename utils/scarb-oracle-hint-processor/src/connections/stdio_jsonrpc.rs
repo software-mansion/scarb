@@ -1,5 +1,5 @@
-use crate::oracle::connection::Connection;
-use crate::oracle::jsonrpc;
+use crate::connection::Connection;
+use crate::jsonrpc;
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use cairo_vm::Felt252;
 use serde::Serialize;

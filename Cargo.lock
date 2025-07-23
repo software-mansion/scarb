@@ -6642,7 +6642,6 @@ dependencies = [
  "anyhow",
  "assert_fs",
  "bincode",
- "cairo-lang-casm",
  "cairo-lang-executable",
  "cairo-lang-runner",
  "cairo-lang-utils",
@@ -6655,14 +6654,12 @@ dependencies = [
  "predicates",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.0",
+ "scarb-oracle-hint-processor",
  "scarb-test-support",
  "scarb-ui",
  "serde",
  "serde_json",
- "shell-words",
  "snapbox",
- "starknet-core",
- "tracing",
  "tracing-subscriber",
 ]
 
@@ -6723,6 +6720,21 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.12",
+]
+
+[[package]]
+name = "scarb-oracle-hint-processor"
+version = "2.11.4"
+dependencies = [
+ "anyhow",
+ "cairo-lang-casm",
+ "cairo-lang-runner",
+ "cairo-vm 2.2.0",
+ "serde",
+ "serde_json",
+ "shell-words",
+ "starknet-core",
+ "tracing",
 ]
 
 [[package]]
