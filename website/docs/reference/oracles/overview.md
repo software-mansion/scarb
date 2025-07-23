@@ -6,8 +6,8 @@
 > Support is also planned in future versions of **`cairo-test`** and **`snforge`**.
 
 An oracle is an external process (like a script, binary, or web service) that exposes custom logic or data to a Cairo
-program. You use it to perform tasks the Cairo VM can't, such as accessing real-world data or executing complex,
-non-provable computations.
+program at runtime. You use it to perform tasks the Cairo VM can't, such as accessing real-world data or executing
+complex, non-provable computations.
 
 ## Using oracles
 
