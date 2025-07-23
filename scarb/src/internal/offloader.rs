@@ -13,7 +13,7 @@ pub type OffloaderStream<'a> = mpsc::Receiver<(&'static str, BoxedWorkload<'a>)>
 pub struct Offloader<'a> {
     handle: Option<thread::ScopedJoinHandle<'a, Result<()>>>,
     _phantom_data: PhantomData<Workspace<'a>>,
-    sink: OffloaderSink<'a>,
+    sink: Option<OffloaderSink<'a>>,
 }
 
 impl<'a> Offloader<'a> {
@@ -34,13 +34,16 @@ impl<'a> Offloader<'a> {
             })
             .expect("failed to spawn artifacts writer thread");
         Self {
-            sink,
+            sink: Some(sink),
             handle: Some(handle),
             _phantom_data: PhantomData,
         }
     }
 
     pub fn join(mut self) -> Result<()> {
+        if let Some(sink) = self.sink.take() {
+            drop(sink); // Close the channel to signal the thread to finish.
+        }
         let result = match self.handle.take() {
             Some(handle) => handle
                 .join()
@@ -57,6 +60,8 @@ impl<'a> Offloader<'a> {
         workload: impl FnOnce(&Workspace<'_>) -> Result<()> + Send + 'static,
     ) {
         self.sink
+            .as_ref()
+            .expect("offloader not initialized")
             .send((what, Box::new(workload)))
             .expect("failed to send request to offloader");
     }
