@@ -6642,7 +6642,6 @@ dependencies = [
  "anyhow",
  "assert_fs",
  "bincode",
- "cairo-lang-casm",
  "cairo-lang-executable",
  "cairo-lang-runner",
  "cairo-lang-utils",
@@ -6660,10 +6659,7 @@ dependencies = [
  "scarb-ui",
  "serde",
  "serde_json",
- "shell-words",
  "snapbox",
- "starknet-core",
- "tracing",
  "tracing-subscriber",
 ]
 
