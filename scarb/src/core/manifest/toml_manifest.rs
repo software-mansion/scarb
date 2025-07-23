@@ -1099,7 +1099,7 @@ impl TomlManifest {
                 toml_profiles
                     .keys()
                     .cloned()
-                    .map(Profile::new)
+                    .map(Profile::try_new)
                     .try_collect()
             })
             .unwrap_or(Ok(vec![]))
@@ -1115,7 +1115,7 @@ impl TomlManifest {
         let parent_profile = profile_definition
             .as_ref()
             .and_then(|p| p.inherits.clone())
-            .map(Profile::new)
+            .map(Profile::try_new)
             .unwrap_or_else(|| {
                 if profile.is_custom() {
                     Ok(Profile::default())

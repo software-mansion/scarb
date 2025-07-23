@@ -5,20 +5,18 @@
 use std::collections::BTreeMap;
 use std::ffi::OsString;
 
-use anyhow::Result;
 use camino::Utf8PathBuf;
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use smol_str::SmolStr;
 use url::Url;
 
 use clap_complete::Shell;
-use scarb::compiler::Profile;
 use scarb::core::PackageName;
 use scarb::manifest_editor::DepId;
 use scarb::manifest_editor::SectionArgs;
 use scarb::version;
 use scarb_ui::OutputFormat;
-use scarb_ui::args::{FeaturesSpec, PackagesFilter, VerbositySpec};
+use scarb_ui::args::{FeaturesSpec, PackagesFilter, ProfileSpec, VerbositySpec};
 
 /// The Cairo package manager.
 #[derive(Parser, Clone, Debug)]
@@ -650,35 +648,6 @@ pub struct GitRefGroup {
     /// This is the catch-all, handling hashes to named references in remote repositories.
     #[arg(long)]
     pub rev: Option<String>,
-}
-
-/// Profile specifier.
-#[derive(Parser, Clone, Debug)]
-#[group(multiple = true)]
-pub struct ProfileSpec {
-    /// Specify the profile to use by name.
-    #[arg(short = 'P', long, env = "SCARB_PROFILE")]
-    pub profile: Option<SmolStr>,
-    /// Use release profile.
-    #[arg(long, hide_short_help = true, group = "ProfileShortcuts")]
-    pub release: bool,
-    /// Use dev profile.
-    #[arg(long, hide_short_help = true, group = "ProfileShortcuts")]
-    pub dev: bool,
-}
-
-impl ProfileSpec {
-    pub fn determine(&self) -> Result<Profile> {
-        Ok(match &self {
-            Self { release: true, .. } => Profile::RELEASE,
-            Self { dev: true, .. } => Profile::DEV,
-            Self {
-                profile: Some(profile),
-                ..
-            } => Profile::new(profile.clone())?,
-            _ => Profile::default(),
-        })
-    }
 }
 
 #[cfg(test)]

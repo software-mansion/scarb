@@ -162,7 +162,7 @@ fn cli_main(args: ScarbArgs) -> Result<()> {
         .ui_output_format(ui_output_format)
         .offline(args.offline)
         .log_filter_directive(Some(scarb_log))
-        .profile(args.profile_spec.determine()?)
+        .profile(args.profile_spec.try_into()?)
         .load_proc_macros(!args.no_proc_macros)
         .load_prebuilt_proc_macros(!args.no_prebuilt_proc_macros)
         .build()?;

@@ -2,10 +2,12 @@
 
 pub use features::*;
 pub use packages_filter::*;
+pub use profile::*;
 pub use verbosity::*;
 
 mod features;
 mod packages_filter;
+mod profile;
 mod verbosity;
 
 /// This trait can be used to convert CLI argument into a set of environment variables.
