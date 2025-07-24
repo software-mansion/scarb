@@ -12,51 +12,38 @@
 //!
 //! See [`crate::compiler::plugin::proc_macro::v2::ProcMacroHostPlugin::parse_attribute`] for more context.
 //!
-//! We mitigate this problem, by following logic:
+//! We mitigate this problem by following logic:
 //! Spans in the expansion input and code mappings generated from the expansion output are moved
-//! around, as if the expandable attribute was the first attribute in the attributes list.
+//! around, as if the expandable attribute was the last token in the built token stream.
 //! *Note that no code is actually rewritten - only the corresponding token spans are modified.*
 //! Input `TokenStream` is built by the following rules:
-//! - All spans of tokens before the expandable attribute are moved towards the end of the file
-//!   by the expandable attribute length.
+//! - All spans of tokens before the expandable attribute are moved towards the beginning of the
+//!   file, so that the first token start offset is 0.
 //! - Tokens representing the expandable attribute are skipped.
-//! - All tokens after the expandable attribute are added as is. We can do it this way, as sum
-//!   of the lengths of tokens before the expandable attribute plus the length of the
-//!   expandable attribute is always the same, regardless of their order.
+//! - All tokens after the expandable attribute are moved towards the beginning of the file, so that
+//!   they start consecutively after the attributes described above.
 //! - We save the start offset of the removed attribute alongside the expansion arguments, to be
 //!   used later when generating code mappings.
-//! - As call site, we pass the span between beginning of the token stream and attribute length - as if
-//!   the expandable attribute was the first attribute in the attributes list.
-//!   Code mappings for the `TokenStream` are generated according to following rules:
-//! - We iterate over the resulting `TokenStream`.
-//! - Spans that end after the end offset of the removed attribute (i.e. start offset + length),
-//!   are left as is. Those spans have not been moved before neither.
-//! - Spans that start after the expandable attribute length, but before the end offset of the
-//!   expandable attribute, are moved towards the beginning of the file by the expandable
-//!   attribute length.
-//! - Spans that start before the expandable attribute length, are moved towards the end of
-//!   the file by the start offset of the expandable attribute.
-//! - This includes moving the call site.
+//! - As call site, we pass the span after the length of the not removed code and the expandable
+//!   attribute length - as if the expandable attribute was the last token we pass to the token stream.
 //!
+//! Code mappings for the `TokenStream` are generated so that we revert the move described above.
 //! The code mapping modifications happen after the macro expansion, in `expand_attribute` method.
+
 //! This can be visualized as:
 //! Original file:
 //! |(first token offset) some attributes |(start offset) expandable attribute |(end offset) other attributes and body|
 //! Expansion input:
-//! -> some attributes += attribute length
-//! -> expandable attribute -= start offset
-//! |(first token offset) expandable attribute |(attribute length) some attributes |(end offset) other attributes and body|
+//! |(0) some attributes |(start offset - first token offset) other attributes and body | (end offset - first token offset - expandable attribute width) expandable attribute
 //! Expansion output:
-//! -> some attributes -= attribute length
-//! -> expandable attribute += start offset
 //! |(first token offset) some attributes |(start offset) expandable attribute |(end offset) other attributes and body|
 //! Remember, we only move the spans, not the actual code!
 
 use crate::compiler::plugin::proc_macro::v2::host::attribute::AttrExpansionFound;
 use crate::compiler::plugin::proc_macro::v2::host::conversion::SpanSource;
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
+use cairo_lang_filesystem::span::TextSpan as CairoTextSpan;
 use cairo_lang_filesystem::span::TextWidth;
-use cairo_lang_filesystem::span::{TextOffset as CairoTextOffset, TextSpan as CairoTextSpan};
 use cairo_lang_macro::{
     Diagnostic, TextOffset, TextSpan, TokenStream, TokenStreamMetadata, TokenTree,
 };
@@ -121,13 +108,14 @@ impl From<AdaptedTextSpan> for TextSpan {
 pub struct ExpandableAttrLocation {
     span_with_trivia: TextSpan,
     span_without_trivia: TextSpan,
-    item_start_offset: TextOffset,
+    // This refers to the whole TokenStream we build.
+    whole_item_span: TextSpan,
 }
 
 impl ExpandableAttrLocation {
     pub fn new<T: TypedSyntaxNode>(
         node: &T,
-        item_start_offset: CairoTextOffset,
+        item_span: CairoTextSpan,
         db: &dyn SyntaxGroup,
     ) -> Self {
         let span_without_trivia = node.text_span(db);
@@ -138,7 +126,10 @@ impl ExpandableAttrLocation {
                 end: span_with_trivia.end.as_u32(),
             },
             span_without_trivia,
-            item_start_offset: item_start_offset.as_u32(),
+            whole_item_span: TextSpan {
+                start: item_span.start.as_u32(),
+                end: item_span.end.as_u32(),
+            },
         }
     }
 
@@ -160,7 +151,7 @@ impl ExpandableAttrLocation {
 
     pub fn adapted_call_site(&self) -> AdaptedTextSpan {
         let start =
-            self.item_start_offset + self.span_without_trivia.start - self.span_with_trivia.start;
+            self.whole_item_span.end - self.width_without_trivia() - self.whole_item_span.start;
         AdaptedTextSpan(TextSpan {
             start,
             end: start + self.width_without_trivia(),
@@ -172,17 +163,24 @@ impl ExpandableAttrLocation {
         let attr_start = self.start_offset_with_trivia();
         let attr_end = self.end_offset_with_trivia();
         let attr_width = self.width_with_trivia();
+        let whole_item_width = self.whole_item_span.end - self.whole_item_span.start;
         let token_stream = TokenStream::new(
             token_stream
                 .into_iter()
                 .map(|tree| match tree {
                     TokenTree::Ident(mut token) => {
                         if token.span.start < attr_start {
-                            token.span.start += attr_width;
-                            token.span.end += attr_width;
+                            // Some attributes before the expandable attribute.
+                            token.span.start -= self.whole_item_span.start;
+                            token.span.end -= self.whole_item_span.start;
                         } else if token.span.end < attr_end {
-                            token.span.start -= attr_start - self.item_start_offset;
-                            token.span.end -= attr_start - self.item_start_offset;
+                            // The expandable attribute itself.
+                            token.span.start += whole_item_width - attr_width - attr_start;
+                            token.span.end += whole_item_width - attr_width - attr_start;
+                        } else {
+                            // The code after the expandable attribute.
+                            token.span.start -= attr_width + self.whole_item_span.start;
+                            token.span.end -= attr_width + self.whole_item_span.start;
                         }
                         TokenTree::Ident(token)
                     }
@@ -196,35 +194,54 @@ impl ExpandableAttrLocation {
     pub fn adapt_code_mappings(&self, code_mappings: Vec<CodeMapping>) -> Vec<AdaptedCodeMapping> {
         let attr_start = self.start_offset_with_trivia();
         let attr_width = self.width_with_trivia();
-        let attr_end = self.end_offset_with_trivia();
-        let call_site_moved_by = TextWidth::new_for_testing(attr_start - self.item_start_offset);
+        let whole_item_width = self.whole_item_span.end - self.whole_item_span.start;
+        let move_callsite = |span: CairoTextSpan| CairoTextSpan {
+            start: span
+                .start
+                .add_width(TextWidth::new_for_testing(
+                    self.width_without_trivia() + self.span_without_trivia.start,
+                ))
+                .sub_width(TextWidth::new_for_testing(whole_item_width)),
+            end: span
+                .end
+                .add_width(TextWidth::new_for_testing(
+                    self.width_without_trivia() + self.span_without_trivia.start,
+                ))
+                .sub_width(TextWidth::new_for_testing(whole_item_width)),
+        };
         code_mappings
             .into_iter()
             .map(|code_mapping| {
                 let origin = match code_mapping.origin {
                     CodeOrigin::Span(span) => {
-                        let span = if span.start.as_u32() < self.item_start_offset + attr_width {
+                        let span = if span.start.as_u32() < attr_start - self.whole_item_span.start
+                        {
+                            // Some attributes before the expandable attribute.
                             CairoTextSpan {
-                                start: span.start.add_width(call_site_moved_by),
-                                end: span.end.add_width(call_site_moved_by),
+                                start: span.start.add_width(TextWidth::new_for_testing(
+                                    self.whole_item_span.start,
+                                )),
+                                end: span.end.add_width(TextWidth::new_for_testing(
+                                    self.whole_item_span.start,
+                                )),
                             }
-                        } else if span.start.as_u32() < attr_end {
+                        } else if span.start.as_u32() < whole_item_width - attr_width {
+                            // The code after the expandable attribute.
                             CairoTextSpan {
-                                start: span.start.sub_width(TextWidth::new_for_testing(attr_width)),
-                                end: span.end.sub_width(TextWidth::new_for_testing(attr_width)),
+                                start: span.start.add_width(TextWidth::new_for_testing(
+                                    attr_width + self.whole_item_span.start,
+                                )),
+                                end: span.end.add_width(TextWidth::new_for_testing(
+                                    attr_width + self.whole_item_span.start,
+                                )),
                             }
                         } else {
-                            span
+                            // The expandable attribute itself.
+                            move_callsite(span)
                         };
                         CodeOrigin::Span(span)
                     }
-                    CodeOrigin::CallSite(span) => {
-                        let call_site = CairoTextSpan {
-                            start: span.start.add_width(call_site_moved_by),
-                            end: span.end.add_width(call_site_moved_by),
-                        };
-                        CodeOrigin::CallSite(call_site)
-                    }
+                    CodeOrigin::CallSite(span) => CodeOrigin::CallSite(move_callsite(span)),
                     origin => origin,
                 };
                 CodeMapping {
@@ -239,18 +256,26 @@ impl ExpandableAttrLocation {
     /// Move spans in diagnostics to account for the removed expandable attribute for the expansion output.
     pub fn adapt_diagnostics(&self, diagnostics: Vec<Diagnostic>) -> Vec<AdaptedDiagnostic> {
         let attr_start = self.start_offset_with_trivia();
-        let attr_end = self.end_offset_with_trivia();
         let attr_width = self.width_with_trivia();
+        let whole_item_width = self.whole_item_span.end - self.whole_item_span.start;
         diagnostics
             .into_iter()
             .map(|diagnostic| {
                 if let Some(mut span) = diagnostic.span() {
-                    if span.start < self.item_start_offset + attr_width {
-                        span.start += attr_start - self.item_start_offset;
-                        span.end += attr_start - self.item_start_offset;
-                    } else if span.start < attr_end {
-                        span.start -= attr_width;
-                        span.end -= attr_width;
+                    if span.start < attr_start - self.whole_item_span.start {
+                        // Some attributes before the expandable attribute.
+                        span.start += self.whole_item_span.start;
+                        span.end += self.whole_item_span.start;
+                    } else if span.start < whole_item_width - attr_width {
+                        // The code after the expandable attribute.
+                        span.start += attr_width + self.whole_item_span.start;
+                        span.end += attr_width + self.whole_item_span.start;
+                    } else {
+                        // The expandable attribute itself.
+                        span.start += self.width_without_trivia() + self.span_without_trivia.start
+                            - whole_item_width;
+                        span.end += self.width_without_trivia() + self.span_without_trivia.start
+                            - whole_item_width;
                     }
                     Diagnostic::spanned(span, diagnostic.severity(), diagnostic.message())
                 } else {
