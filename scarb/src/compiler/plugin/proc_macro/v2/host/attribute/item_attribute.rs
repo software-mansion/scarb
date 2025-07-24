@@ -163,7 +163,7 @@ impl ProcMacroHostPlugin {
         let file_name = format!("proc_{}", input.id.expansion.cairo_name);
         let code_mappings = generate_code_mappings(
             &result.token_stream,
-            input.attribute_location.adapted_call_site().into(),
+            (input.attribute_location.adapted_call_site()).into(),
         );
         let code_mappings = input.attribute_location.adapt_code_mappings(code_mappings);
         let content = result.token_stream.to_string();
@@ -209,7 +209,7 @@ fn parse_item<T: ItemWithAttributes + ChildNodesWithoutAttributes>(
 ) -> AttrExpansionFound {
     let span = ast.span_with_trivia(db);
     let attrs = ast.item_attributes(db);
-    let expansion = host.parse_attrs(db, token_stream_builder, attrs, span.start, ctx);
+    let expansion = host.parse_attrs(db, token_stream_builder, attrs, span, ctx);
     token_stream_builder.extend(ast.child_nodes_without_attributes(db));
     expansion
 }

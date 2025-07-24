@@ -55,8 +55,8 @@
 use crate::compiler::plugin::proc_macro::v2::host::attribute::AttrExpansionFound;
 use crate::compiler::plugin::proc_macro::v2::host::conversion::SpanSource;
 use cairo_lang_filesystem::ids::{CodeMapping, CodeOrigin};
+use cairo_lang_filesystem::span::TextSpan as CairoTextSpan;
 use cairo_lang_filesystem::span::TextWidth;
-use cairo_lang_filesystem::span::{TextOffset as CairoTextOffset, TextSpan as CairoTextSpan};
 use cairo_lang_macro::{
     Diagnostic, TextOffset, TextSpan, TokenStream, TokenStreamMetadata, TokenTree,
 };
@@ -121,13 +121,14 @@ impl From<AdaptedTextSpan> for TextSpan {
 pub struct ExpandableAttrLocation {
     span_with_trivia: TextSpan,
     span_without_trivia: TextSpan,
-    item_start_offset: TextOffset,
+    // This refers to the whole TokenStream we build.
+    whole_item_span: TextSpan,
 }
 
 impl ExpandableAttrLocation {
     pub fn new<T: TypedSyntaxNode>(
         node: &T,
-        item_start_offset: CairoTextOffset,
+        item_span: CairoTextSpan,
         db: &dyn SyntaxGroup,
     ) -> Self {
         let span_without_trivia = node.text_span(db);
@@ -138,7 +139,10 @@ impl ExpandableAttrLocation {
                 end: span_with_trivia.end.as_u32(),
             },
             span_without_trivia,
-            item_start_offset: item_start_offset.as_u32(),
+            whole_item_span: TextSpan {
+                start: item_span.start.as_u32(),
+                end: item_span.end.as_u32(),
+            },
         }
     }
 
@@ -160,7 +164,7 @@ impl ExpandableAttrLocation {
 
     pub fn adapted_call_site(&self) -> AdaptedTextSpan {
         let start =
-            self.item_start_offset + self.span_without_trivia.start - self.span_with_trivia.start;
+            self.whole_item_span.end - self.width_without_trivia() - self.whole_item_span.start;
         AdaptedTextSpan(TextSpan {
             start,
             end: start + self.width_without_trivia(),
@@ -178,11 +182,18 @@ impl ExpandableAttrLocation {
                 .map(|tree| match tree {
                     TokenTree::Ident(mut token) => {
                         if token.span.start < attr_start {
-                            token.span.start += attr_width;
-                            token.span.end += attr_width;
+                            token.span.start -= self.whole_item_span.start;
+                            token.span.end -= self.whole_item_span.start;
                         } else if token.span.end < attr_end {
-                            token.span.start -= attr_start - self.item_start_offset;
-                            token.span.end -= attr_start - self.item_start_offset;
+                            token.span.start +=
+                                self.whole_item_span.end - self.whole_item_span.start - attr_width;
+                            token.span.end +=
+                                self.whole_item_span.end - self.whole_item_span.start - attr_width;
+                            token.span.start -= attr_start;
+                            token.span.end -= attr_start;
+                        } else {
+                            token.span.start -= attr_width + self.whole_item_span.start;
+                            token.span.end -= attr_width + self.whole_item_span.start;
                         }
                         TokenTree::Ident(token)
                     }
@@ -196,32 +207,76 @@ impl ExpandableAttrLocation {
     pub fn adapt_code_mappings(&self, code_mappings: Vec<CodeMapping>) -> Vec<AdaptedCodeMapping> {
         let attr_start = self.start_offset_with_trivia();
         let attr_width = self.width_with_trivia();
-        let attr_end = self.end_offset_with_trivia();
-        let call_site_moved_by = TextWidth::new_for_testing(attr_start - self.item_start_offset);
         code_mappings
             .into_iter()
             .map(|code_mapping| {
                 let origin = match code_mapping.origin {
                     CodeOrigin::Span(span) => {
-                        let span = if span.start.as_u32() < self.item_start_offset + attr_width {
+                        let span = if span.start.as_u32() < attr_start - self.whole_item_span.start
+                        {
                             CairoTextSpan {
-                                start: span.start.add_width(call_site_moved_by),
-                                end: span.end.add_width(call_site_moved_by),
+                                start: span.start.add_width(TextWidth::new_for_testing(
+                                    self.whole_item_span.start,
+                                )),
+                                end: span.end.add_width(TextWidth::new_for_testing(
+                                    self.whole_item_span.start,
+                                )),
                             }
-                        } else if span.start.as_u32() < attr_end {
+                        } else if span.start.as_u32()
+                            < self.whole_item_span.end - self.whole_item_span.start - attr_width
+                        {
                             CairoTextSpan {
-                                start: span.start.sub_width(TextWidth::new_for_testing(attr_width)),
-                                end: span.end.sub_width(TextWidth::new_for_testing(attr_width)),
+                                start: span.start.add_width(TextWidth::new_for_testing(
+                                    attr_width + self.whole_item_span.start,
+                                )),
+                                end: span.end.add_width(TextWidth::new_for_testing(
+                                    attr_width + self.whole_item_span.start,
+                                )),
                             }
                         } else {
-                            span
+                            CairoTextSpan {
+                                start: span
+                                    .start
+                                    .add_width(TextWidth::new_for_testing(
+                                        self.whole_item_span.start
+                                            + self.width_without_trivia()
+                                            + self.span_without_trivia.start,
+                                    ))
+                                    .sub_width(TextWidth::new_for_testing(
+                                        self.whole_item_span.end,
+                                    )),
+                                end: span
+                                    .end
+                                    .add_width(TextWidth::new_for_testing(
+                                        self.whole_item_span.start
+                                            + self.width_without_trivia()
+                                            + self.span_without_trivia.start,
+                                    ))
+                                    .sub_width(TextWidth::new_for_testing(
+                                        self.whole_item_span.end,
+                                    )),
+                            }
                         };
                         CodeOrigin::Span(span)
                     }
                     CodeOrigin::CallSite(span) => {
                         let call_site = CairoTextSpan {
-                            start: span.start.add_width(call_site_moved_by),
-                            end: span.end.add_width(call_site_moved_by),
+                            start: span
+                                .start
+                                .add_width(TextWidth::new_for_testing(
+                                    self.whole_item_span.start
+                                        + self.width_without_trivia()
+                                        + self.span_without_trivia.start,
+                                ))
+                                .sub_width(TextWidth::new_for_testing(self.whole_item_span.end)),
+                            end: span
+                                .end
+                                .add_width(TextWidth::new_for_testing(
+                                    self.whole_item_span.start
+                                        + self.width_without_trivia()
+                                        + self.span_without_trivia.start,
+                                ))
+                                .sub_width(TextWidth::new_for_testing(self.whole_item_span.end)),
                         };
                         CodeOrigin::CallSite(call_site)
                     }
@@ -245,12 +300,21 @@ impl ExpandableAttrLocation {
             .into_iter()
             .map(|diagnostic| {
                 if let Some(mut span) = diagnostic.span() {
-                    if span.start < self.item_start_offset + attr_width {
-                        span.start += attr_start - self.item_start_offset;
-                        span.end += attr_start - self.item_start_offset;
-                    } else if span.start < attr_end {
-                        span.start -= attr_width;
-                        span.end -= attr_width;
+                    if span.start < attr_start - self.whole_item_span.start {
+                        span.start += self.whole_item_span.start;
+                        span.end += self.whole_item_span.start;
+                    } else if span.start
+                        < self.whole_item_span.end - self.whole_item_span.start - attr_width
+                    {
+                        span.start += attr_width + self.whole_item_span.start;
+                        span.end += attr_width + self.whole_item_span.start;
+                    } else {
+                        span.start +=
+                            self.whole_item_span.start + attr_end + self.span_without_trivia.start
+                                - self.whole_item_span.end;
+                        span.end +=
+                            self.whole_item_span.start + attr_end + self.span_without_trivia.start
+                                - self.whole_item_span.end;
                     }
                     Diagnostic::spanned(span, diagnostic.severity(), diagnostic.message())
                 } else {
