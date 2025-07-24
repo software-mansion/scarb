@@ -5,7 +5,7 @@ use crate::compiler::plugin::proc_macro::v2::host::attribute::{
 use crate::compiler::plugin::proc_macro::v2::host::conversion::CallSiteLocation;
 use crate::compiler::plugin::proc_macro::v2::{ProcMacroHostPlugin, TokenStreamBuilder};
 use crate::compiler::plugin::proc_macro::{ExpansionKind, ExpansionQuery};
-use cairo_lang_filesystem::span::TextOffset;
+use cairo_lang_filesystem::span::TextSpan;
 use cairo_lang_macro::AllocationContext;
 use cairo_lang_syntax::attribute::structured::AttributeStructurize;
 use cairo_lang_syntax::node::db::SyntaxGroup;
@@ -17,7 +17,7 @@ impl ProcMacroHostPlugin {
         db: &dyn SyntaxGroup,
         builder: &mut TokenStreamBuilder<'_>,
         item_attrs: Vec<ast::Attribute>,
-        item_start_offset: TextOffset,
+        item_span: TextSpan,
         ctx: &AllocationContext,
     ) -> AttrExpansionFound {
         // This function parses attributes of the item,
@@ -48,11 +48,7 @@ impl ProcMacroHostPlugin {
                             id: found,
                             args,
                             call_site: CallSiteLocation::new(&attr, db),
-                            attribute_location: ExpandableAttrLocation::new(
-                                &attr,
-                                item_start_offset,
-                                db,
-                            ),
+                            attribute_location: ExpandableAttrLocation::new(&attr, item_span, db),
                         });
                         // Do not add the attribute for found expansion.
                         continue;

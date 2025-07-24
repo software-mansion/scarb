@@ -209,7 +209,7 @@ fn parse_item<T: ItemWithAttributes + ChildNodesWithoutAttributes>(
 ) -> AttrExpansionFound {
     let span = ast.span_with_trivia(db);
     let attrs = ast.item_attributes(db);
-    let expansion = host.parse_attrs(db, token_stream_builder, attrs, span.start, ctx);
+    let expansion = host.parse_attrs(db, token_stream_builder, attrs, span, ctx);
     token_stream_builder.extend(ast.child_nodes_without_attributes(db));
     expansion
 }
