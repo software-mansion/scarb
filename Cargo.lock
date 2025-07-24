@@ -6648,6 +6648,7 @@ dependencies = [
  "cairo-vm 2.2.0",
  "camino",
  "clap",
+ "console",
  "create-output-dir",
  "derive_builder",
  "indoc",
@@ -6660,6 +6661,7 @@ dependencies = [
  "serde",
  "serde_json",
  "snapbox",
+ "thousands",
  "tracing-subscriber",
 ]
 
@@ -7999,6 +8001,12 @@ checksum = "a3ad459d94dd517257cc96add8a43190ee620011bb6e6cdc82dafd97dfafafea"
 dependencies = [
  "thiserror-impl-no-std",
 ]
+
+[[package]]
+name = "thousands"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bf63baf9f5039dadc247375c29eb13706706cfde997d0330d05aa63a77d8820"
 
 [[package]]
 name = "thread_local"
