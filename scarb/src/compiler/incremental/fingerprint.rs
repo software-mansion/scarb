@@ -227,7 +227,7 @@ impl PluginFingerprint {
         // HACK: turns out the `snforge-scarb-plugin` is non-deterministic.
         // To support it, we check the env variable that it uses as an input.
         // It's hardcoded here, as we need to support older versions of snforge.
-        // TODO(maciektr): Remove this hack.
+        // TODO(#2444): Fix me.
         if !self.is_builtin
             && self
                 .component_discriminator
