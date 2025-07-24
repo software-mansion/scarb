@@ -224,6 +224,19 @@ impl PluginFingerprint {
             local.path.hash(&mut hasher);
             local.checksum.hash(&mut hasher);
         }
+        // HACK: turns out the `snforge-scarb-plugin` is non-deterministic.
+        // To support it, we check the env variable that it uses as an input.
+        // It's hardcoded here, as we need to support older versions of snforge.
+        // TODO(#2444): Fix me.
+        if !self.is_builtin
+            && self
+                .component_discriminator
+                .contains("snforge_scarb_plugin")
+        {
+            std::env::var("SNFORGE_TEST_FILTER")
+                .unwrap_or_default()
+                .hash(&mut hasher);
+        }
         hasher.finish_as_short_hash()
     }
 }
