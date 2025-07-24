@@ -1,25 +1,38 @@
-use std::vec;
+use std::{collections::HashMap, sync::Arc, vec};
 
 use crate::{
+    DEFAULT_MODULE_MAIN_FILE,
     compiler::{
-        CompilationUnit, CompilationUnitAttributes,
-        db::{ScarbDatabase, build_scarb_root_database},
+        CairoCompilationUnit, CompilationUnit, CompilationUnitAttributes, CompilationUnitComponent,
+        CompilationUnitComponentId, ComponentTarget,
+        db::{append_lint_plugin, build_project_config},
+        plugin::collection::PluginsForComponents,
     },
-    core::{PackageId, PackageName, TargetKind},
+    core::{PackageId, PackageName, Target, TargetKind},
     ops,
 };
 
 use anyhow::anyhow;
 use anyhow::{Context, Result};
-use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_defs::db::DefsGroup;
+use cairo_lang_defs::{db::DefsGroup, diagnostic_utils::StableLocation, ids::ModuleId};
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
+use cairo_lang_filesystem::{
+    db::{FilesGroup, FilesGroupEx},
+    ids::CrateLongId,
+};
 use cairo_lang_formatter::FormatterConfig;
-use cairo_lang_semantic::{SemanticDiagnostic, db::SemanticGroup};
-use cairo_lint::CAIRO_LINT_TOOL_NAME;
+use cairo_lang_semantic::{
+    SemanticDiagnostic,
+    db::{PluginSuiteInput, SemanticGroup},
+    diagnostic::SemanticDiagnosticKind,
+    plugin::PluginSuite,
+};
+use cairo_lint::{
+    CAIRO_LINT_TOOL_NAME, CorelibContext, LinterAnalysisDatabase, LinterDiagnosticParams,
+    LinterGroup,
+};
 use cairo_lint::{
     CairoLintToolMetadata, apply_file_fixes, diagnostics::format_diagnostic, get_fixes,
-    plugin::cairo_lint_plugin_suite,
 };
 use camino::Utf8PathBuf;
 use itertools::Itertools;
@@ -33,7 +46,9 @@ use super::{
 };
 
 struct CompilationUnitDiagnostics {
-    pub db: RootDatabase,
+    pub db: LinterAnalysisDatabase,
+    pub corelib_context: CorelibContext,
+    pub linter_params: LinterDiagnosticParams,
     pub diagnostics: Vec<SemanticDiagnostic>,
     pub formatter_config: FormatterConfig,
 }
@@ -85,6 +100,10 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     let mut diagnostics_per_cu: Vec<CompilationUnitDiagnostics> = Default::default();
 
     for package in opts.packages {
+        let linter_params = LinterDiagnosticParams {
+            only_generated_files: false,
+            tool_metadata: cairo_lint_tool_metadata(&package)?,
+        };
         let package_name = &package.id.name;
         let formatter_config = package.fmt_config()?;
         let package_compilation_units = if opts.test {
@@ -176,11 +195,8 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                         .ui()
                         .print(Status::new("Linting", &compilation_unit.name()));
 
-                    let additional_plugins = vec![cairo_lint_plugin_suite(
-                        cairo_lint_tool_metadata(&package)?,
-                    )?];
-                    let ScarbDatabase { db, .. } =
-                        build_scarb_root_database(compilation_unit, ws, additional_plugins)?;
+                    let db = build_lint_database(compilation_unit, ws)?;
+                    let corelib_context = CorelibContext::new(&db);
 
                     let main_component = compilation_unit.main_component();
                     let crate_id = main_component.crate_id(&db);
@@ -190,15 +206,38 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                     let diags = db
                         .crate_modules(crate_id)
                         .iter()
-                        .flat_map(|module_id| db.module_semantic_diagnostics(*module_id).ok())
-                        .flat_map(|diags| diags.get_all())
+                        .flat_map(|module_id| {
+                            let linter_diags = db
+                                .linter_diagnostics(
+                                    corelib_context.clone(),
+                                    linter_params.clone(),
+                                    *module_id,
+                                )
+                                .into_iter()
+                                .map(|diag| {
+                                    SemanticDiagnostic::new(
+                                        StableLocation::new(diag.stable_ptr),
+                                        SemanticDiagnosticKind::PluginDiagnostic(diag),
+                                    )
+                                });
+
+                            if let Some(semantic_diags) =
+                                db.module_semantic_diagnostics(*module_id).ok()
+                            {
+                                linter_diags
+                                    .chain(semantic_diags.get_all())
+                                    .collect::<Vec<_>>()
+                            } else {
+                                linter_diags.collect::<Vec<_>>()
+                            }
+                        })
                         .collect_vec();
 
                     // Filter diagnostics if `SCARB_ACTION_PATH` was provided.
                     let diagnostics = match &absolute_path {
                         Some(path) => diags
                             .into_iter()
-                            .filter(|diag| {
+                            .filter(|diag: &SemanticDiagnostic| {
                                 let file_id = diag.stable_location.file_id(&db);
 
                                 if let Ok(diag_path) = canonicalize(file_id.full_path(&db)) {
@@ -248,6 +287,8 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                     }
                     diagnostics_per_cu.push(CompilationUnitDiagnostics {
                         db,
+                        corelib_context,
+                        linter_params: linter_params.clone(),
                         diagnostics,
                         formatter_config: formatter_config.clone(),
                     });
@@ -282,11 +323,13 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     if opts.fix {
         for CompilationUnitDiagnostics {
             db,
+            corelib_context,
+            linter_params,
             diagnostics,
             formatter_config,
         } in diagnostics_per_cu.into_iter()
         {
-            let fixes = get_fixes(&db, diagnostics);
+            let fixes = get_fixes(&db, &corelib_context, &linter_params, diagnostics);
             for (file_id, fixes) in fixes.into_iter() {
                 ws.config()
                     .ui()
@@ -325,4 +368,111 @@ fn find_integration_test_package_id(package: &Package) -> Option<PackageId> {
             .id
             .for_test_target(target.group_id.clone().unwrap_or(target.name.clone()))
     })
+}
+
+fn build_lint_database(
+    unit: &CairoCompilationUnit,
+    ws: &Workspace<'_>,
+) -> Result<LinterAnalysisDatabase> {
+    let mut b = LinterAnalysisDatabase::builder();
+    b.with_project_config(build_project_config(unit)?);
+    b.with_cfg(unit.cfg_set.clone());
+    b.with_inlining_strategy(unit.compiler_config.inlining_strategy.clone().into());
+
+    let PluginsForComponents { mut plugins, .. } = PluginsForComponents::collect(ws, unit)?;
+
+    append_lint_plugin(plugins.get_mut(&unit.main_component().id).unwrap());
+
+    if !unit.compiler_config.enable_gas {
+        b.skip_auto_withdraw_gas();
+    }
+    if unit.compiler_config.panic_backtrace {
+        b.with_panic_backtrace();
+    }
+    if unit.compiler_config.unsafe_panic {
+        b.with_unsafe_panic();
+    }
+    let mut db = b.build()?;
+
+    apply_plugins(&mut db, plugins);
+    inject_virtual_wrapper_lib(&mut db, unit)?;
+
+    Ok(db)
+}
+
+/// Sets the plugin suites for crates related to the library components
+/// according to the `plugins_for_components` mapping.
+fn apply_plugins(
+    db: &mut LinterAnalysisDatabase,
+    plugins_for_components: HashMap<CompilationUnitComponentId, PluginSuite>,
+) {
+    for (component_id, suite) in plugins_for_components {
+        let crate_id = db.intern_crate(CrateLongId::Real {
+            name: component_id.cairo_package_name(),
+            discriminator: component_id.to_discriminator(),
+        });
+
+        let interned_suite = db.intern_plugin_suite(suite);
+        db.set_override_crate_plugins_from_suite(crate_id, interned_suite);
+    }
+}
+
+/// Generates a wrapper lib file for appropriate compilation units.
+///
+/// This approach allows compiling crates that do not define `lib.cairo` file.
+/// For example, single file crates can be created this way.
+/// The actual single file modules are defined as `mod` items in created lib file.
+fn inject_virtual_wrapper_lib(
+    db: &mut LinterAnalysisDatabase,
+    unit: &CairoCompilationUnit,
+) -> Result<()> {
+    let components: Vec<&CompilationUnitComponent> = unit
+        .components
+        .iter()
+        .filter(|component| !component.package.id.is_core())
+        // Skip components defining the default source path, as they already define lib.cairo files.
+        .filter(|component| {
+            let is_default_source_path = |target: &Target| {
+                target
+                    .source_path
+                    .file_name()
+                    .map(|file_name| file_name != DEFAULT_MODULE_MAIN_FILE)
+                    .unwrap_or(false)
+            };
+            match &component.targets {
+                ComponentTarget::Single(target) => is_default_source_path(target),
+                ComponentTarget::Ungrouped(target) => is_default_source_path(target),
+                ComponentTarget::Group(_targets) => true,
+            }
+        })
+        .collect();
+
+    for component in components {
+        let crate_id = component.crate_id(db);
+
+        let file_stems = component
+            .targets
+            .targets()
+            .iter()
+            .map(|target| {
+                target
+                    .source_path
+                    .file_stem()
+                    .map(|file_stem| format!("mod {file_stem};"))
+                    .ok_or_else(|| {
+                        anyhow!(
+                            "failed to get file stem for component {}",
+                            target.source_path
+                        )
+                    })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let content = file_stems.join("\n");
+        let module_id = ModuleId::CrateRoot(crate_id);
+        let file_id = db.module_main_file(module_id).unwrap();
+        // Inject virtual lib file wrapper.
+        db.override_file_content(file_id, Some(Arc::from(content.as_str())));
+    }
+
+    Ok(())
 }
