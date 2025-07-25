@@ -75,9 +75,6 @@ impl<'a> PackageSourceStore<'a> {
         trace!(?output_path);
         assert_eq!(parent_path.join(&prefix), output_path);
 
-        // It is not known for sure whether relying on the global package cache lock
-        // for extracting an archive for verification is completely safe, and it might be
-        // a problem in the future.
         protected_run_if_not_ok!(&fs, config.package_cache_lock(), {
             debug!("starting extraction");
 

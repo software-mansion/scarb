@@ -4,11 +4,12 @@ use std::sync::{Arc, Barrier};
 use std::thread;
 
 use assert_fs::fixture::PathChild;
+use indoc::formatdoc;
 use indoc::indoc;
 use io_tee::TeeReader;
 use ntest::timeout;
-
 use scarb_test_support::command::Scarb;
+use scarb_test_support::filesystem::hash_path;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
@@ -122,9 +123,10 @@ async fn locking_package_cache() {
     let ecode = proc.wait().unwrap();
     assert!(ecode.success());
 
+    let manifest_path_hashed = hash_path(config.manifest_path().as_str());
     snapbox::assert_matches(
-        indoc! {r#"
-        [..]  Blocking waiting for file lock on package cache
+        formatdoc! {r#"
+            [..]  Blocking waiting for file lock on {manifest_path_hashed} package cache
         "#},
         stdout_acc,
     );
