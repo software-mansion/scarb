@@ -162,8 +162,8 @@ pub fn execute(
         layout: LayoutName::all_cairo,
         proof_mode,
         secure_run: None,
-        relocate_mem: output.is_standard(),
-        trace_enabled: output.is_standard(),
+        relocate_mem: output.is_standard() || args.run.print_resource_usage,
+        trace_enabled: output.is_standard() || args.run.print_resource_usage,
         disable_trace_padding: proof_mode,
         ..Default::default()
     };
