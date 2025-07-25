@@ -30,7 +30,7 @@ If you do not add the `cairo_run` package to your dependencies - it's required t
 with [`sierra-replace-ids`](../reference/manifest#sierra-replace-ids) flag enabled.
 You can also provide a function name argument with `--function` flag.
 
-The precedense of the function to run is as follows:
+The precedence of the function to run is as follows:
 
 1. If a `#[main]` attribute is specified on a function, it will be run.
 2. If more than one function is marked with the `#[main]` attribute and debug names (`sierra-replace-ids`) are enabled,

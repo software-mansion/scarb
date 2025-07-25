@@ -91,4 +91,4 @@ Running `scarb doc --output-format json` will result in a single JSON file insid
 
 Check out the link below to see how a bigger project would look like:
 
-- [The Cairo Core Libarary Docs](https://docs.cairo-lang.org/core/)
+- [The Cairo Core Library Docs](https://docs.cairo-lang.org/core/)

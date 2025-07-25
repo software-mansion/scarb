@@ -88,7 +88,7 @@ pub fn build_compiler_config<'c>(
     .with_ignore_warnings_crates(&ignore_warnings_crates)
     // If a crate is cached, we do not need to check it for diagnostics,
     // as the cache can only be produced if the crate is diagnostic-free.
-    // So if there were any diagnotics here to show, it would mean that the cache is outdated - thus
+    // So if there were any diagnostics here to show, it would mean that the cache is outdated - thus
     // we should not use it in the first place.
     // Note we still add the main crate, as we want it to be checked for warnings.
     .with_crates(&crates_to_check.into_iter().collect_vec());
