@@ -974,7 +974,7 @@ fn code_mappings_preserve_attribute_error_on_inner_trait_locations_with_parser()
                     .into_iter()
                     .map(|TokenTree::Ident(token)| {
                         if token.content.to_string() == "12" {
-                            TokenTree::Ident(Token::new("34", TextSpan::call_site()))
+                            TokenTree::Ident(Token::new("34", TextSpan::new(0,2)))
                         } else {
                             TokenTree::Ident(token)
                         }
@@ -2176,30 +2176,30 @@ fn token_stream_parsed_with_correct_spans() {
         .stdout_matches(indoc! {r##"
             [..] Compiling some v1.0.0 ([..]Scarb.toml)
             [..] Compiling hello v1.0.0 ([..]Scarb.toml)
-            Ident(Token { content: "  ", span: TextSpan { start: 46, end: 48 } })
-            Ident(Token { content: "fn", span: TextSpan { start: 48, end: 50 } })
-            Ident(Token { content: " ", span: TextSpan { start: 50, end: 51 } })
-            Ident(Token { content: "foo", span: TextSpan { start: 51, end: 54 } })
-            Ident(Token { content: "(", span: TextSpan { start: 54, end: 55 } })
-            Ident(Token { content: ")", span: TextSpan { start: 55, end: 56 } })
-            Ident(Token { content: " ", span: TextSpan { start: 56, end: 57 } })
-            Ident(Token { content: "{", span: TextSpan { start: 57, end: 58 } })
+            Ident(Token { content: "  ", span: TextSpan { start: 0, end: 2 } })
+            Ident(Token { content: "fn", span: TextSpan { start: 2, end: 4 } })
+            Ident(Token { content: " ", span: TextSpan { start: 4, end: 5 } })
+            Ident(Token { content: "foo", span: TextSpan { start: 5, end: 8 } })
+            Ident(Token { content: "(", span: TextSpan { start: 8, end: 9 } })
+            Ident(Token { content: ")", span: TextSpan { start: 9, end: 10 } })
+            Ident(Token { content: " ", span: TextSpan { start: 10, end: 11 } })
+            Ident(Token { content: "{", span: TextSpan { start: 11, end: 12 } })
             Ident(Token { content: "
-            ", span: TextSpan { start: 58, end: 59 } })
-            Ident(Token { content: "    ", span: TextSpan { start: 59, end: 63 } })
-            Ident(Token { content: "let", span: TextSpan { start: 63, end: 66 } })
-            Ident(Token { content: " ", span: TextSpan { start: 66, end: 67 } })
-            Ident(Token { content: "_a", span: TextSpan { start: 67, end: 69 } })
-            Ident(Token { content: " ", span: TextSpan { start: 69, end: 70 } })
-            Ident(Token { content: "=", span: TextSpan { start: 70, end: 71 } })
-            Ident(Token { content: " ", span: TextSpan { start: 71, end: 72 } })
-            Ident(Token { content: "1", span: TextSpan { start: 72, end: 73 } })
-            Ident(Token { content: ";", span: TextSpan { start: 73, end: 74 } })
+            ", span: TextSpan { start: 12, end: 13 } })
+            Ident(Token { content: "    ", span: TextSpan { start: 13, end: 17 } })
+            Ident(Token { content: "let", span: TextSpan { start: 17, end: 20 } })
+            Ident(Token { content: " ", span: TextSpan { start: 20, end: 21 } })
+            Ident(Token { content: "_a", span: TextSpan { start: 21, end: 23 } })
+            Ident(Token { content: " ", span: TextSpan { start: 23, end: 24 } })
+            Ident(Token { content: "=", span: TextSpan { start: 24, end: 25 } })
+            Ident(Token { content: " ", span: TextSpan { start: 25, end: 26 } })
+            Ident(Token { content: "1", span: TextSpan { start: 26, end: 27 } })
+            Ident(Token { content: ";", span: TextSpan { start: 27, end: 28 } })
             Ident(Token { content: "
-            ", span: TextSpan { start: 74, end: 75 } })
-            Ident(Token { content: "}", span: TextSpan { start: 75, end: 76 } })
+            ", span: TextSpan { start: 28, end: 29 } })
+            Ident(Token { content: "}", span: TextSpan { start: 29, end: 30 } })
             Ident(Token { content: "
-            ", span: TextSpan { start: 76, end: 77 } })
+            ", span: TextSpan { start: 30, end: 31 } })
             [..]Finished `dev` profile target(s) in [..]
       "##});
 }
