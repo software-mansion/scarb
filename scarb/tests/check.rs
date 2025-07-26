@@ -3,6 +3,8 @@ use assert_fs::assert::PathAssert;
 use assert_fs::fixture::PathChild;
 use indoc::indoc;
 use scarb_test_support::command::Scarb;
+use scarb_test_support::filesystem::hash_path;
+use scarb_test_support::fsx;
 use scarb_test_support::project_builder::ProjectBuilder;
 
 #[test]
@@ -14,6 +16,13 @@ fn check_simple() {
         .name("hello")
         .version("0.1.0")
         .build(&t);
+
+    let hashed_manifest_path = hash_path(
+        fsx::canonicalize(t.child("Scarb.toml"))
+            .unwrap()
+            .to_str()
+            .unwrap(),
+    );
 
     Scarb::quick_snapbox()
         .env("SCARB_CACHE", cache_dir.path())
@@ -28,10 +37,10 @@ fn check_simple() {
         .success();
 
     cache_dir
-        .child("registry/std")
+        .child(format!("{hashed_manifest_path}/registry/std"))
         .assert(predicates::path::exists());
     cache_dir
-        .child("CACHEDIR.TAG")
+        .child(format!("{hashed_manifest_path}/CACHEDIR.TAG"))
         .assert(predicates::path::exists());
 }
 

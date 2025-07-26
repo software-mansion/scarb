@@ -12,6 +12,8 @@ use scarb_build_metadata::CAIRO_VERSION;
 use scarb_metadata::Metadata;
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::contracts::BALANCE_CONTRACT;
+use scarb_test_support::filesystem::hash_path;
+use scarb_test_support::fsx;
 use scarb_test_support::fsx::ChildPathEx;
 use scarb_test_support::project_builder::{Dep, DepBuilder, ProjectBuilder};
 use scarb_test_support::workspace_builder::WorkspaceBuilder;
@@ -41,11 +43,18 @@ fn compile_simple() {
         vec![".fingerprint", "hello.sierra.json", "incremental",]
     );
 
+    let hashed_manifest_path = hash_path(
+        fsx::canonicalize(t.child("Scarb.toml"))
+            .unwrap()
+            .to_str()
+            .unwrap(),
+    );
+
     cache_dir
-        .child("registry/std")
+        .child(format!("{hashed_manifest_path}/registry/std"))
         .assert(predicates::path::exists());
     cache_dir
-        .child("CACHEDIR.TAG")
+        .child(format!("{hashed_manifest_path}/CACHEDIR.TAG"))
         .assert(predicates::path::exists());
 }
 

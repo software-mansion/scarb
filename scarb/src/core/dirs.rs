@@ -19,6 +19,7 @@ pub struct AppDirs {
 
 impl AppDirs {
     pub(crate) fn init(
+        manifest_path_hashed: String,
         cache_dir_override: Option<Utf8PathBuf>,
         config_dir_override: Option<Utf8PathBuf>,
         path_dirs_override: Option<Vec<PathBuf>>,
@@ -49,7 +50,8 @@ impl AppDirs {
         let cache_dir = match cache_dir_override {
             Some(p) => p,
             None => pd.cache_dir().try_to_utf8()?,
-        };
+        }
+        .join(manifest_path_hashed);
 
         let config_dir = match config_dir_override {
             Some(p) => p,

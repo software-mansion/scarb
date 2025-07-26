@@ -220,6 +220,15 @@ impl Filesystem {
         }
     }
 
+    /// Creates a new [`Filesystem`] rooted at a parent directory of this one.
+    pub fn parent(&self) -> Filesystem {
+        let path = self
+            .path_unchecked()
+            .parent()
+            .expect("Failed to get parent directory.");
+        Filesystem::new(Utf8PathBuf::from(path))
+    }
+
     /// Like [`Utf8Path::join`], creates a new [`Filesystem`] rooted at a subdirectory of this one.
     ///
     /// Unlike [`Filesystem::child`], this method consumes the current [`Filesystem`].

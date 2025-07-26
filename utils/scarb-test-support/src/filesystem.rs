@@ -5,6 +5,8 @@ use std::{env, iter, vec};
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use indoc::indoc;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 use crate::fsx::make_executable;
 
@@ -52,4 +54,11 @@ pub fn path_with_temp_dir(t: &TempDir) -> OsString {
     let os_path = os_path_without_asdf_dir();
     let other_paths = env::split_paths(&os_path);
     env::join_paths(script_path.chain(other_paths)).unwrap()
+}
+
+pub fn hash_path(path: &str) -> String {
+    let mut hasher = DefaultHasher::new();
+    path.hash(&mut hasher);
+    let hash_value = hasher.finish();
+    hash_value.to_string()
 }

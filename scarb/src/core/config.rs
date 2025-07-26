@@ -1,12 +1,14 @@
+use anyhow::{Context, Result, anyhow, ensure};
+use camino::{Utf8Path, Utf8PathBuf};
+use once_cell::sync::OnceCell;
+use std::collections::hash_map::DefaultHasher;
 use std::ffi::{OsStr, OsString};
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{env, mem};
 
-use anyhow::{Context, Result, anyhow, ensure};
-use camino::{Utf8Path, Utf8PathBuf};
-use once_cell::sync::OnceCell;
 use tokio::runtime::{Builder, Handle, Runtime};
 use tracing::trace;
 use which::which_in;
@@ -61,7 +63,9 @@ impl Config {
 
         let ui = Ui::new(b.ui_verbosity, b.ui_output_format);
 
+        let manifest_path_hashed = hash_path(&b.manifest_path);
         let dirs = Arc::new(AppDirs::init(
+            manifest_path_hashed,
             b.global_cache_dir_override,
             b.global_config_dir_override,
             b.path_env_override,
@@ -188,12 +192,14 @@ impl Config {
     }
 
     pub fn package_cache_lock<'a>(&'a self) -> &'a AdvisoryLock<'a> {
+        let manifest_path_hashed = hash_path(&self.manifest_path);
         // UNSAFE: These mem::transmute calls only change generic lifetime parameters.
         let static_al: &AdvisoryLock<'static> = self.package_cache_lock.get_or_init(|| {
-            let not_static_al =
-                self.dirs()
-                    .cache_dir
-                    .advisory_lock(".package-cache.lock", "package cache", self);
+            let not_static_al = self.dirs().cache_dir.advisory_lock(
+                ".package-cache.lock",
+                format!("{manifest_path_hashed} package cache"),
+                self,
+            );
             unsafe { mem::transmute(not_static_al) }
         });
         let not_static_al: &AdvisoryLock<'a> = unsafe { mem::transmute(static_al) };
@@ -437,4 +443,12 @@ impl ConfigBuilder {
         self.load_prebuilt_proc_macros = load_prebuilt_proc_macros;
         self
     }
+}
+
+/// Creates creates unique, deterministic identifier for given `Utf8PathBuf`.
+fn hash_path(path: &Utf8PathBuf) -> String {
+    let mut hasher = DefaultHasher::new();
+    path.as_str().hash(&mut hasher);
+    let hash_value = hasher.finish();
+    hash_value.to_string()
 }

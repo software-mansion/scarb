@@ -1,5 +1,8 @@
+use crate::cargo::cargo_bin;
+use crate::fsx;
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
+use camino::Utf8PathBuf;
 use serde::de::DeserializeOwned;
 use snapbox::cmd::Command as SnapboxCommand;
 use std::ffi::OsString;
@@ -8,8 +11,6 @@ use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::Command as StdCommand;
 use std::sync::LazyLock;
-
-use crate::cargo::cargo_bin;
 
 pub struct Scarb {
     cache: EnvPath,
@@ -31,7 +32,14 @@ impl Scarb {
     #[cfg(feature = "scarb-config")]
     pub fn from_config(config: &scarb::core::Config) -> Self {
         Self {
-            cache: EnvPath::borrow(config.dirs().cache_dir.path_unchecked().as_std_path()),
+            cache: EnvPath::borrow(
+                config
+                    .dirs()
+                    .cache_dir
+                    .parent()
+                    .path_unchecked()
+                    .as_std_path(),
+            ),
             config: EnvPath::borrow(config.dirs().config_dir.path_unchecked().as_std_path()),
             log: config.log_filter_directive().to_os_string(),
             scarb_bin: cargo_bin("scarb"),
@@ -75,10 +83,11 @@ impl Scarb {
     pub fn test_config(manifest: impl crate::fsx::AssertFsUtf8Ext) -> scarb::core::Config {
         use crate::fsx::PathUtf8Ext;
 
+        let manifest_path = fsx::canonicalize(&manifest.utf8_path()).unwrap();
         let cache_dir = TempDir::new().unwrap();
         let config_dir = TempDir::new().unwrap();
 
-        scarb::core::Config::builder(manifest.utf8_path())
+        scarb::core::Config::builder(Utf8PathBuf::from_path_buf(manifest_path).unwrap())
             .global_cache_dir_override(Some(cache_dir.try_as_utf8().unwrap()))
             .global_config_dir_override(Some(config_dir.try_as_utf8().unwrap()))
             .path_env_override(Some(std::iter::empty::<PathBuf>()))
