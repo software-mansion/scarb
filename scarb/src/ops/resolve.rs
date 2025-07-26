@@ -320,7 +320,11 @@ pub fn resolve_workspace_with_opts(
             let resolve =
                 resolver::resolve(&members_summaries, &patched, &patch_map, lockfile).await?;
 
-            write_lockfile(Lockfile::from_resolve(&resolve), ws)?;
+            let lockfile = tokio::spawn(write_lockfile(
+                Lockfile::from_resolve(&resolve),
+                ws.lockfile_path(),
+            ));
+
             patch_map.warn_unused(ws.config().ui());
 
             let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
@@ -330,6 +334,8 @@ pub fn resolve_workspace_with_opts(
                 .filter(|p| p.is_cairo_plugin())
                 .map(|p| fetch_cairo_plugin(p, ws))
                 .collect::<Result<Vec<()>>>()?;
+
+            lockfile.await??;
 
             Ok(WorkspaceResolve { resolve, packages })
         }))
