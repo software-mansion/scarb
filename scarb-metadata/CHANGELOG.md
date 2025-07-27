@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Fix the error message for Scarb exiting with error in `ScarbCommand`.
+
 ## 1.15.0 (2025-06-09)
 - Use `2024` edition.
 - Add `features` and `default_features` fields to `DependencyMetadata`.
