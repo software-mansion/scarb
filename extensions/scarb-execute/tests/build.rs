@@ -162,7 +162,7 @@ fn fails_when_attr_missing() {
             [..]Compiling hello v0.1.0 ([..]Scarb.toml)
             error: Requested `#[executable]` not found.
             error: could not compile `hello` due to previous error
-            error: `scarb metadata` exited with error
+            error: `scarb` command exited with error
         "#});
 
     Scarb::quick_snapbox()

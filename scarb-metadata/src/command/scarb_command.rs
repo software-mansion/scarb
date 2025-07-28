@@ -13,7 +13,7 @@ pub enum ScarbCommandError {
     #[error("failed to read `scarb` output")]
     Io(#[from] io::Error),
     /// Error during execution of `scarb` command.
-    #[error("`scarb metadata` exited with error")]
+    #[error("`scarb` command exited with error")]
     ScarbError,
 }
 
