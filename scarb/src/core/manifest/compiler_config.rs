@@ -83,6 +83,7 @@ mod serdex {
                 }
                 InliningStrategy::Predefined(name) => match name.as_str() {
                     "default" => Ok(Self::Default),
+                    "release" => Ok(Self::Default),
                     "avoid" => Ok(Self::Avoid),
                     _ => Err(serde::de::Error::custom(format!(
                         "unknown inlining strategy: `{name}`\nuse one of: `default`, `avoid` or a number"
