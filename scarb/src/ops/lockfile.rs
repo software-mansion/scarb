@@ -1,6 +1,7 @@
 use crate::core::Workspace;
 use crate::core::lockfile::Lockfile;
 use anyhow::{Context, Result};
+use camino::Utf8PathBuf;
 use fs4::FileExt;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
@@ -25,8 +26,8 @@ pub fn read_lockfile(ws: &Workspace<'_>) -> Result<Lockfile> {
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
-pub fn write_lockfile(lockfile: Lockfile, ws: &Workspace<'_>) -> Result<()> {
-    let mut file = File::create(ws.lockfile_path()).context("failed to create lockfile")?;
+pub async fn write_lockfile(lockfile: Lockfile, lockfile_path: Utf8PathBuf) -> Result<()> {
+    let mut file = File::create(lockfile_path).context("failed to create lockfile")?;
 
     file.lock_exclusive()
         .context("failed to acquire exclusive lockfile access")?;

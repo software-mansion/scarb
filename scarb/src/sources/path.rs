@@ -1,9 +1,8 @@
-use std::fmt;
-use std::ops::Deref;
-
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use camino::Utf8Path;
+use std::sync::Arc;
+use std::{fmt, mem};
 use tokio::sync::OnceCell;
 
 use crate::core::config::Config;
@@ -126,7 +125,7 @@ type PackagesScanner = dyn Fn(SourceId, &Config) -> Result<Vec<Package>> + Send 
 
 struct PackagesCell {
     cell: OnceCell<Vec<Package>>,
-    scanner: Option<Box<PackagesScanner>>,
+    scanner: Option<Arc<PackagesScanner>>,
 }
 
 impl PackagesCell {
@@ -135,7 +134,7 @@ impl PackagesCell {
     ) -> Self {
         Self {
             cell: OnceCell::new(),
-            scanner: Some(Box::new(scanner)),
+            scanner: Some(Arc::new(scanner)),
         }
     }
 
@@ -149,13 +148,11 @@ impl PackagesCell {
     async fn try_get(&self, source_id: SourceId, config: &Config) -> Result<&[Package]> {
         self.cell
             .get_or_try_init(|| async {
-                // FIXME: Technically one should wrap `f` call in `smol::unblock` in order to avoid
-                //   blocking async executor. But quick local benchmarks on our test suite at the
-                //   time of writing this actually pointed out that this slows them down by few %.
-                //   In the future, it is possible that `smol::unblock` may actually help, or this
-                //   has to be debunked with proper benchmarks.
-                let f = self.scanner.as_ref().unwrap().deref();
-                f(source_id, config)
+                // HACK: We know that we will not use &Config outside the scope of this function,
+                //   but `tokio::spawn` lifetime bounds force us to think so.
+                let config: &'static Config = unsafe { mem::transmute(config) };
+                let f = self.scanner.as_ref().unwrap().clone();
+                tokio::spawn(async move { f(source_id, config) }).await?
             })
             .await
             .map(|v| v.as_slice())

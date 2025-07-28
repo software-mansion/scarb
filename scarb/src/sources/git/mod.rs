@@ -79,8 +79,8 @@ impl<'c> GitSource<'c> {
         let requested_reference = self.requested_reference.clone();
         let locked_rev = self.locked_rev;
 
-        // HACK: We know that we will not use &Config outside scope of this function,
-        //   but `smol::unblock` lifetime bounds force us to think so.
+        // HACK: We know that we will not use &Config outside the scope of this function,
+        //   but `tokio::spawn` lifetime bounds force us to think so.
         let config: &'static Config = unsafe { mem::transmute(self.config) };
 
         return spawn_blocking(move || {
