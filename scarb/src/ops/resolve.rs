@@ -314,6 +314,12 @@ pub fn resolve_workspace_with_opts(
             };
 
             let source_map = SourceMap::preloaded(ws.members(), ws.config(), yanked_whitelist);
+
+            // RegistryCache below acquires registry-db-cache, if there is a parallel build it can acquire package-cache-lock
+            // before collect_packages_from_resolve_graph of the first build is called.
+            // Then the first build awaits package-cache-lock and the second awaits registry-db-lock
+            // resulting in deadlock.
+            let lock = ws.config().package_cache_lock().acquire_async().await?;
             let cached = RegistryCache::new(&source_map);
             let patched = RegistryPatcher::new(&cached, &patch_map);
 
@@ -328,7 +334,7 @@ pub fn resolve_workspace_with_opts(
             patch_map.warn_unused(ws.config().ui());
 
             let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
-
+            drop(lock);
             packages
                 .values()
                 .filter(|p| p.is_cairo_plugin())
