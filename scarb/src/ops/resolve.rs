@@ -24,7 +24,7 @@ use crate::ops::{FeaturesOpts, FeaturesSelector};
 use crate::{DEFAULT_SOURCE_PATH, resolver};
 use anyhow::{Result, bail};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
-use futures::TryFutureExt;
+use futures::{FutureExt, StreamExt, TryFutureExt, stream};
 use indoc::formatdoc;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -320,7 +320,11 @@ pub fn resolve_workspace_with_opts(
             let resolve =
                 resolver::resolve(&members_summaries, &patched, &patch_map, lockfile).await?;
 
-            write_lockfile(Lockfile::from_resolve(&resolve), ws)?;
+            let lockfile = tokio::spawn(write_lockfile(
+                Lockfile::from_resolve(&resolve),
+                ws.lockfile_path(),
+            ));
+
             patch_map.warn_unused(ws.config().ui());
 
             let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
@@ -330,6 +334,8 @@ pub fn resolve_workspace_with_opts(
                 .filter(|p| p.is_cairo_plugin())
                 .map(|p| fetch_cairo_plugin(p, ws))
                 .collect::<Result<Vec<()>>>()?;
+
+            lockfile.await??;
 
             Ok(WorkspaceResolve { resolve, packages })
         }))
@@ -346,10 +352,14 @@ async fn collect_packages_from_resolve_graph(
     registry: &dyn Registry,
 ) -> Result<HashMap<PackageId, Package>> {
     let mut packages = HashMap::with_capacity(resolve.package_ids().size_hint().0);
-    // TODO(#6): Parallelize this loop.
-    for package_id in resolve.package_ids() {
-        let package = registry.download(package_id).await?;
-        packages.insert(package_id, package);
+    let mut response_stream = stream::iter(resolve.package_ids())
+        .map(|package_id| registry.download(package_id).boxed_local())
+        // Note: This value limits the number of concurrent downloads.
+        // It's chosen rather arbitrarily, so may be subject to more tuning in the future.
+        .buffer_unordered(16);
+    while let Some(package) = response_stream.next().await {
+        let package = package?;
+        packages.insert(package.id, package);
     }
     Ok(packages)
 }

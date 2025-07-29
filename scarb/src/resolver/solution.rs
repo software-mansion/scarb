@@ -1,6 +1,6 @@
 use crate::core::resolver::DependencyEdge;
 use crate::core::{DepKind, DependencyFilter, PackageId, PackageName, Resolve, Summary};
-use crate::resolver::algorithm::provider::{PubGrubDependencyProvider, PubGrubPackage};
+use crate::resolver::provider::{PubGrubDependencyProvider, PubGrubPackage};
 use anyhow::bail;
 use indoc::indoc;
 use itertools::Itertools;

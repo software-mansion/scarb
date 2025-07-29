@@ -488,6 +488,37 @@ fn compiler_config_set_for_all_profiles() {
 }
 
 #[test]
+fn inlining_strategy_can_be_set_by_alias() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .manifest_extra(indoc! {r#"
+            [cairo]
+            inlining-strategy = "release"
+        "#})
+        .build(&t);
+
+    let metadata = Scarb::quick_snapbox()
+        .args(["--json", "metadata", "--format-version", "1"])
+        .current_dir(&t)
+        .stdout_json::<Metadata>();
+
+    assert_eq!(metadata.current_profile, "dev".to_string());
+    assert!(!metadata.compilation_units.is_empty());
+    for cu in metadata.compilation_units {
+        let compiler_config = cu.compiler_config;
+        assert_eq!(
+            compiler_config
+                .get("inlining_strategy")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "default"
+        );
+    }
+}
+
+#[test]
 fn can_set_replace_ids_in_profile() {
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()

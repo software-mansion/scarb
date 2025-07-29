@@ -15,7 +15,7 @@ use camino::Utf8PathBuf;
 use itertools::Itertools;
 use scarb_stable_hash::{StableHasher, u64_hash};
 use smol_str::SmolStr;
-use std::cell::RefCell;
+use std::cell::{OnceCell, RefCell};
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
@@ -64,6 +64,12 @@ pub struct Fingerprint {
 
     /// Local files that should be checked for freshness.
     local: Vec<LocalFingerprint>,
+
+    /// Cached fingerprint digest.
+    ///
+    /// Calculating digests multiple times over the span of compilation is dangerous,
+    /// as the underlying inputs may change during the compilation.
+    digest: OnceCell<String>,
 }
 
 #[derive(Debug)]
@@ -224,6 +230,19 @@ impl PluginFingerprint {
             local.path.hash(&mut hasher);
             local.checksum.hash(&mut hasher);
         }
+        // HACK: turns out the `snforge-scarb-plugin` is non-deterministic.
+        // To support it, we check the env variable that it uses as an input.
+        // It's hardcoded here, as we need to support older versions of snforge.
+        // TODO(#2444): Fix me.
+        if !self.is_builtin
+            && self
+                .component_discriminator
+                .contains("snforge_scarb_plugin")
+        {
+            std::env::var("SNFORGE_TEST_FILTER")
+                .unwrap_or_default()
+                .hash(&mut hasher);
+        }
         hasher.finish_as_short_hash()
     }
 }
@@ -278,6 +297,7 @@ impl Fingerprint {
                 &ws.config().ui(),
             ),
             deps: Default::default(),
+            digest: OnceCell::new(),
         })
     }
 
@@ -332,8 +352,8 @@ impl Fingerprint {
             if seen.insert(dep.component_discriminator.clone()) {
                 let dep_fingerprint = dep.fingerprint.upgrade()
                     .expect(
-                    "dependency fingerprint should never be dropped, as long as unit fingerprint is alive"
-                );
+                        "dependency fingerprint should never be dropped, as long as unit fingerprint is alive"
+                    );
                 match dep_fingerprint.deref() {
                     ComponentFingerprint::Library(dep_fingerprint) => {
                         Self::calculate_id(dep_fingerprint.deref(), seen, hasher).hash(hasher);
@@ -353,10 +373,14 @@ impl Fingerprint {
     /// allowing to determine if the cache can be reused or if a recompilation is needed.
     #[tracing::instrument(level = "trace", skip_all)]
     pub fn digest(&self) -> String {
-        // We use the set to avoid cycles when calculating digests recursively for deps.
-        let mut seen = HashSet::<SmolStr>::new();
-        seen.insert(self.component_discriminator.clone());
-        Self::calculate_digest(self, &mut seen)
+        self.digest
+            .get_or_init(|| {
+                // We use the set to avoid cycles when calculating digests recursively for deps.
+                let mut seen = HashSet::<SmolStr>::new();
+                seen.insert(self.component_discriminator.clone());
+                Self::calculate_digest(self, &mut seen)
+            })
+            .clone()
     }
 
     fn calculate_digest(fingerprint: &Fingerprint, seen: &mut HashSet<SmolStr>) -> String {

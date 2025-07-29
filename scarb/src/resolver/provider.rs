@@ -4,8 +4,8 @@ use crate::core::{
     DependencyFilter, DependencyVersionReq, ManifestDependency, PackageId, PackageName, SourceId,
     Summary,
 };
-use crate::resolver::algorithm::in_memory_index::VersionsResponse;
-use crate::resolver::algorithm::{Request, ResolverState};
+use crate::resolver::in_memory_index::VersionsResponse;
+use crate::resolver::{Request, ResolverState};
 use itertools::Itertools;
 use pubgrub::{Dependencies, DependencyProvider, Range};
 use pubgrub::{Ranges, VersionSet};
