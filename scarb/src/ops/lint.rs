@@ -221,8 +221,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                                     )
                                 });
 
-                            if let Ok(semantic_diags) = db.module_semantic_diagnostics(*module_id)
-                            {
+                            if let Ok(semantic_diags) = db.module_semantic_diagnostics(*module_id) {
                                 linter_diags
                                     .chain(semantic_diags.get_all())
                                     .collect::<Vec<_>>()

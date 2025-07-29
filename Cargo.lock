@@ -1530,7 +1530,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.11.4"
-source = "git+https://github.com/software-mansion/cairols?rev=7ecba29dd8a72690af0c5d2c533a48e291662f2c#7ecba29dd8a72690af0c5d2c533a48e291662f2c"
+source = "git+https://github.com/software-mansion/cairols?rev=79eab67cfd9e461a71e4144bf0c2a093ce8bbf53#79eab67cfd9e461a71e4144bf0c2a093ce8bbf53"
 dependencies = [
  "anyhow",
  "bincode",
