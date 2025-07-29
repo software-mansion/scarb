@@ -1,7 +1,7 @@
 use crate::core::registry::Registry;
 use crate::core::{ManifestDependency, Summary};
-use crate::resolver::algorithm::in_memory_index::{InMemoryIndex, VersionsResponse};
-use crate::resolver::algorithm::provider::DependencyProviderError;
+use crate::resolver::in_memory_index::{InMemoryIndex, VersionsResponse};
+use crate::resolver::provider::DependencyProviderError;
 use futures::{FutureExt, StreamExt};
 use std::sync::Arc;
 use tokio::sync::mpsc;
