@@ -1564,9 +1564,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-language-server"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b44022b49c5aadccf13e061fec74f9ae00a067d5c968c0fbd30be04ad7d7ea2b"
+checksum = "a665461794d350e5e55f7176c0626b2310160924e1f4d611610ccd49f8c7f05e"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1619,9 +1619,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-lint"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b4cd5a589e1d026718e9c164d61e631ad3f2425d6f200c36bfc824457a0dadf"
+checksum = "22f115826d493f16d13a5f5bd9899277e85855603cc493ba53c7f268eb379707"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -6468,7 +6468,7 @@ dependencies = [
 
 [[package]]
 name = "scarb"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6579,7 +6579,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-build-metadata"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "cargo_metadata",
  "semver 1.0.26",
@@ -6587,7 +6587,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-language-server"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "assert_fs",
  "cairo-language-server",
@@ -6599,7 +6599,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-run"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6619,7 +6619,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-cairo-test"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6640,7 +6640,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-doc"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6674,7 +6674,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-execute"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6705,7 +6705,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-extensions-cli"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "anyhow",
  "cairo-lang-runner",
@@ -6722,7 +6722,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-mdbook"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6786,7 +6786,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-prove"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -6873,7 +6873,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-verify"
-version = "2.12.0-rc.2"
+version = "2.12.0-rc.4"
 dependencies = [
  "anyhow",
  "assert_fs",
@@ -7637,7 +7637,7 @@ dependencies = [
 [[package]]
 name = "stwo-cairo-adapter"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/stwo-cairo?rev=d869658ca0af584c1ae04706b22a8eeaf15713e2#d869658ca0af584c1ae04706b22a8eeaf15713e2"
+source = "git+https://github.com/starkware-libs/stwo-cairo?rev=714b6b43f94c3d0d6d7ce1601a1606988c4d67ed#714b6b43f94c3d0d6d7ce1601a1606988c4d67ed"
 dependencies = [
  "bytemuck",
  "cairo-lang-casm",
@@ -7656,7 +7656,7 @@ dependencies = [
 [[package]]
 name = "stwo-cairo-common"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/stwo-cairo?rev=d869658ca0af584c1ae04706b22a8eeaf15713e2#d869658ca0af584c1ae04706b22a8eeaf15713e2"
+source = "git+https://github.com/starkware-libs/stwo-cairo?rev=714b6b43f94c3d0d6d7ce1601a1606988c4d67ed#714b6b43f94c3d0d6d7ce1601a1606988c4d67ed"
 dependencies = [
  "bytemuck",
  "itertools 0.12.1",
@@ -7673,7 +7673,7 @@ dependencies = [
 [[package]]
 name = "stwo-cairo-serialize"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/stwo-cairo?rev=d869658ca0af584c1ae04706b22a8eeaf15713e2#d869658ca0af584c1ae04706b22a8eeaf15713e2"
+source = "git+https://github.com/starkware-libs/stwo-cairo?rev=714b6b43f94c3d0d6d7ce1601a1606988c4d67ed#714b6b43f94c3d0d6d7ce1601a1606988c4d67ed"
 dependencies = [
  "starknet-ff",
  "stwo-cairo-serialize-derive",
@@ -7683,7 +7683,7 @@ dependencies = [
 [[package]]
 name = "stwo-cairo-serialize-derive"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/stwo-cairo?rev=d869658ca0af584c1ae04706b22a8eeaf15713e2#d869658ca0af584c1ae04706b22a8eeaf15713e2"
+source = "git+https://github.com/starkware-libs/stwo-cairo?rev=714b6b43f94c3d0d6d7ce1601a1606988c4d67ed#714b6b43f94c3d0d6d7ce1601a1606988c4d67ed"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7715,7 +7715,7 @@ dependencies = [
 [[package]]
 name = "stwo_cairo_prover"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/stwo-cairo?rev=d869658ca0af584c1ae04706b22a8eeaf15713e2#d869658ca0af584c1ae04706b22a8eeaf15713e2"
+source = "git+https://github.com/starkware-libs/stwo-cairo?rev=714b6b43f94c3d0d6d7ce1601a1606988c4d67ed#714b6b43f94c3d0d6d7ce1601a1606988c4d67ed"
 dependencies = [
  "bytemuck",
  "cairo-lang-casm",
@@ -7744,7 +7744,7 @@ dependencies = [
 [[package]]
 name = "stwo_cairo_utils"
 version = "0.1.0"
-source = "git+https://github.com/starkware-libs/stwo-cairo?rev=d869658ca0af584c1ae04706b22a8eeaf15713e2#d869658ca0af584c1ae04706b22a8eeaf15713e2"
+source = "git+https://github.com/starkware-libs/stwo-cairo?rev=714b6b43f94c3d0d6d7ce1601a1606988c4d67ed#714b6b43f94c3d0d6d7ce1601a1606988c4d67ed"
 dependencies = [
  "cairo-vm 2.0.0-rc4",
  "clap",
