@@ -8,9 +8,9 @@ use anyhow::{Context, Result, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use fs4::tokio::AsyncFileExt;
 use fs4::{FileExt, lock_contended_error};
-use tokio::sync::Mutex;
-
 use scarb_ui::components::Status;
+use std::mem;
+use tokio::sync::Mutex;
 
 use crate::core::Config;
 use crate::internal::fsx;
@@ -168,11 +168,18 @@ impl AdvisoryLock<'_> {
         let file_lock_arc = match slot.upgrade() {
             Some(arc) => arc,
             None => {
-                let arc = Arc::new(self.filesystem.create_rw(
-                    &self.path,
-                    &self.description,
-                    self.config,
-                )?);
+                let filesystem = self.filesystem.clone();
+                let path = self.path.clone();
+                let description = self.description.clone();
+
+                // HACK: We know that we will not use &Config outside scope of this function,
+                //   but `tokio::spawn_blocking` lifetime bounds force us to think so.
+                let config: &'static Config = unsafe { mem::transmute(self.config) };
+                let lock = tokio::task::spawn_blocking(move || {
+                    filesystem.create_rw(&path, &description, config)
+                })
+                .await??;
+                let arc = Arc::new(lock);
                 *slot = Arc::downgrade(&arc);
                 arc
             }
