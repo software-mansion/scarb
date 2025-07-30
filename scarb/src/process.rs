@@ -90,8 +90,9 @@ mod imp {
     use std::process;
     use std::process::Command;
 
-    use windows_sys::Win32::Foundation::{BOOL, FALSE, TRUE};
+    use windows_sys::Win32::Foundation::{FALSE, TRUE};
     use windows_sys::Win32::System::Console::SetConsoleCtrlHandler;
+    use windows_sys::core::BOOL;
 
     unsafe extern "system" fn ctrlc_handler(_: u32) -> BOOL {
         // Do nothing; let the child process handle it.
