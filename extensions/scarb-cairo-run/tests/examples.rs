@@ -84,7 +84,7 @@ fn can_limit_gas() {
         .env("SCARB_TARGET_DIR", t.path())
         .arg("cairo-run")
         .arg("--available-gas")
-        .arg("100000000")
+        .arg("100000")
         .current_dir(example)
         .assert()
         .success()
@@ -95,7 +95,7 @@ fn can_limit_gas() {
                 Finished `dev` profile target(s) in [..]
                  Running hello_world
             Run completed successfully, returning [987]
-            Remaining gas: 99804810
+            Remaining gas: 69790
         "#});
 }
 

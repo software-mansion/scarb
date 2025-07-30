@@ -333,9 +333,12 @@ This flag cannot be set to `false` while compiling the `starknet-contract` targe
 
 ### `inlining-strategy`
 
-This field is responsible for setting the inlining strategy to be used by compiler when building the package.
-The possible values are `default`, `avoid` or a numerical value.
+This field is responsible for setting the inlining strategy to be used by the compiler when building the package.
+The possible values are `default`, `release`, `avoid` or a numerical value.
+The `default` strategy is an alias for `release` strategy.
 If `avoid` strategy is set, the compiler will only inline function annotated with `#[inline(always)]` attribute.
+By default, Scarb will use `release` strategy in both `dev` and `release` profile.
+
 Example usage:
 
 ```toml
@@ -353,9 +356,10 @@ inlining-strategy = 18
 ```
 
 > [!WARNING]
-> Using the `avoid` strategy may result in a slower execution of the compiled code.
-> Please use with caution, only if your tooling requires that.
-> You can use profile settings overwriting, for more granular control of which builds use the avoid strategy.
+> Using the `avoid` strategy may result in faster compilation, but slower execution of the compiled code.
+> Please use with caution.
+> If you need to deploy your contracts on Starknet, it is recommended to use the `release` strategy for their compilation.
+> You can use profile settings overwriting, for more granular control of which builds use the `avoid` and `release` strategy.
 
 ### `panic-backtrace`
 
