@@ -8,6 +8,7 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::{FilesGroup, FilesGroupEx};
 use cairo_lang_filesystem::ids::{BlobLongId, CrateId};
 use cairo_lang_lowering::cache::generate_crate_cache;
+use itertools::Itertools;
 use std::env;
 use std::io::Write;
 use std::ops::Deref;
@@ -133,23 +134,40 @@ pub fn save_incremental_artifacts(
     else {
         return Ok(());
     };
-    for component in unit.components.iter() {
-        let fingerprint = fingerprints
-            .get(&component.id)
-            .expect("component fingerprint must exist in unit fingerprints");
-        let fingerprint = match fingerprint.deref() {
-            ComponentFingerprint::Library(lib) => lib,
-            ComponentFingerprint::Plugin(_plugin) => {
-                unreachable!("we iterate through components not plugins");
-            }
-        };
-        save_component_cache(fingerprint, db, unit, component, ws).with_context(|| {
-            format!(
-                "failed to save cache for `{}` component",
-                component.target_name()
-            )
-        })?;
-    }
+
+    let components = unit
+        .components
+        .iter()
+        .map(|component| {
+            let fingerprint = fingerprints
+                .get(&component.id)
+                .expect("component fingerprint must exist in unit fingerprints");
+            (component, fingerprint)
+        })
+        .collect_vec();
+
+    let snapshot = salsa::ParallelDatabase::snapshot(db);
+    rayon::scope(move |s| {
+        for (component, fingerprint) in components.into_iter() {
+            let snapshot = salsa::ParallelDatabase::snapshot(&*snapshot);
+            s.spawn(move |_| {
+                let fingerprint = match fingerprint.deref() {
+                    ComponentFingerprint::Library(lib) => lib,
+                    ComponentFingerprint::Plugin(_plugin) => {
+                        unreachable!("we iterate through components not plugins");
+                    }
+                };
+                save_component_cache(fingerprint, snapshot, unit, component, ws)
+                    .with_context(|| {
+                        format!(
+                            "failed to save cache for `{}` component",
+                            component.target_name()
+                        )
+                    })
+                    .unwrap();
+            });
+        }
+    });
 
     Ok(())
 }
@@ -157,7 +175,7 @@ pub fn save_incremental_artifacts(
 #[tracing::instrument(skip_all, level = "trace")]
 fn save_component_cache(
     fingerprint: &Fingerprint,
-    db: &RootDatabase,
+    db: salsa::Snapshot<RootDatabase>,
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
     ws: &Workspace<'_>,
@@ -196,8 +214,8 @@ fn save_component_cache(
             "cache file",
             ws.config(),
         )?;
-        let crate_id = component.crate_id(db);
-        let Some(cache_blob) = generate_crate_cache(db, crate_id).ok() else {
+        let crate_id = component.crate_id(&*db);
+        let Some(cache_blob) = generate_crate_cache(&*db, crate_id).ok() else {
             return Ok(());
         };
         cache_file
