@@ -21,6 +21,7 @@ use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
+use tracing::trace_span;
 
 /// A fingerprint is a hash that represents the state of the compilation environment for a package,
 /// allowing to determine if the cache can be reused or if a recompilation is needed.
@@ -204,10 +205,12 @@ impl PluginFingerprint {
         let is_prebuilt = component.prebuilt.is_some();
         // Note that we only check built binary files. If a local plugin has changed, it would be
         // rebuilt by Cargo at this point, as we compile proc macros before Cairo compilation units.
+        let span = trace_span!("plugin_local_checksum");
         let local = if is_builtin {
             // Builtin plugins do not have local files to check.
             Vec::new()
         } else if is_prebuilt {
+            let _guard = span.enter();
             // If the plugin is loaded from prebuilt, we do not need to check the locally built one.
             let lib_path = component.package.prebuilt_lib_path().unwrap_or_else(|| {
                 unreachable!(
@@ -222,6 +225,7 @@ impl PluginFingerprint {
                 checksum: u64_hash(content),
             }]
         } else {
+            let _guard = span.enter();
             let lib_path = component.shared_lib_path(ws.config())?;
             let content = fsx::read(&lib_path)
                 .with_context(|| format!("failed to read shared library at `{lib_path}`",))?;
