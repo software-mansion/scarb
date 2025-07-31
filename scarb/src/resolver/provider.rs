@@ -324,7 +324,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
     }
 
     #[tracing::instrument(level = "trace", skip_all)]
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn get_dependencies(
         &self,
         package: &Self::P,
