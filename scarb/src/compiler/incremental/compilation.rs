@@ -45,7 +45,11 @@ pub fn load_incremental_artifacts(
         return Ok(IncrementalContext::Disabled);
     }
 
-    let fingerprints = UnitFingerprint::new(unit, ws);
+    let fingerprints = ws
+        .config()
+        .tokio_handle()
+        .block_on(UnitFingerprint::new(unit, ws));
+
     let mut cached_crates = Vec::new();
 
     for component in unit.components.iter() {
