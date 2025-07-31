@@ -203,14 +203,25 @@ impl PluginFingerprint {
             SmolStr::from(component.component_dependency_id.to_crate_identifier());
         let is_builtin = component.builtin;
         let is_prebuilt = component.prebuilt.is_some();
+        let hash = |path: Utf8PathBuf| {
+            tokio::spawn(async move {
+                let span = trace_span!("plugin_local_checksum");
+                let _guard = span.enter();
+                let content = fsx::read(&path)
+                    .with_context(|| format!("failed to read shared library at `{path}`",))?;
+
+                anyhow::Ok(vec![LocalFingerprint {
+                    path,
+                    checksum: u64_hash(content),
+                }])
+            })
+        };
         // Note that we only check built binary files. If a local plugin has changed, it would be
         // rebuilt by Cargo at this point, as we compile proc macros before Cairo compilation units.
-        let span = trace_span!("plugin_local_checksum");
         let local = if is_builtin {
             // Builtin plugins do not have local files to check.
             Vec::new()
         } else if is_prebuilt {
-            let _guard = span.enter();
             // If the plugin is loaded from prebuilt, we do not need to check the locally built one.
             let lib_path = component.package.prebuilt_lib_path().unwrap_or_else(|| {
                 unreachable!(
@@ -218,21 +229,10 @@ impl PluginFingerprint {
                     component.package.id
                 )
             });
-            let content = fsx::read(&lib_path)
-                .with_context(|| format!("failed to read shared library at `{lib_path}`",))?;
-            vec![LocalFingerprint {
-                path: lib_path,
-                checksum: u64_hash(content),
-            }]
+            hash(lib_path).await??
         } else {
-            let _guard = span.enter();
             let lib_path = component.shared_lib_path(ws.config())?;
-            let content = fsx::read(&lib_path)
-                .with_context(|| format!("failed to read shared library at `{lib_path}`",))?;
-            vec![LocalFingerprint {
-                path: lib_path,
-                checksum: u64_hash(content),
-            }]
+            hash(lib_path).await??
         };
         Ok(Self {
             component_discriminator,
