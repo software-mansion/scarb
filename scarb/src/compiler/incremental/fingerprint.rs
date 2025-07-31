@@ -12,14 +12,16 @@ use anyhow::{Context, Result};
 use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::Edition;
 use camino::Utf8PathBuf;
+use futures::{StreamExt, stream};
 use itertools::Itertools;
 use scarb_stable_hash::{StableHasher, u64_hash};
 use smol_str::SmolStr;
-use std::cell::{OnceCell, RefCell};
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
-use std::rc::{Rc, Weak};
+use std::sync::{Arc, OnceLock, RwLock, Weak};
+use tokio::task::JoinSet;
+use tracing::trace_span;
 
 /// A fingerprint is a hash that represents the state of the compilation environment for a package,
 /// allowing to determine if the cache can be reused or if a recompilation is needed.
@@ -60,7 +62,7 @@ pub struct Fingerprint {
     experimental_features: Vec<SmolStr>,
 
     /// Dependencies of the component.
-    deps: RefCell<Vec<DepFingerprint>>,
+    deps: RwLock<Vec<DepFingerprint>>,
 
     /// Local files that should be checked for freshness.
     local: Vec<LocalFingerprint>,
@@ -69,7 +71,7 @@ pub struct Fingerprint {
     ///
     /// Calculating digests multiple times over the span of compilation is dangerous,
     /// as the underlying inputs may change during the compilation.
-    digest: OnceCell<String>,
+    digest: OnceLock<String>,
 }
 
 #[derive(Debug)]
@@ -108,27 +110,44 @@ pub enum ComponentFingerprint {
     Plugin(PluginFingerprint),
 }
 
-pub struct UnitFingerprint(HashMap<CompilationUnitComponentId, Rc<ComponentFingerprint>>);
+pub struct UnitFingerprint(HashMap<CompilationUnitComponentId, Arc<ComponentFingerprint>>);
 
 impl UnitFingerprint {
     #[tracing::instrument(level = "trace", skip_all)]
-    pub fn new(unit: &CairoCompilationUnit, ws: &Workspace<'_>) -> Self {
+    pub async fn new(unit: &CairoCompilationUnit, ws: &Workspace<'_>) -> Self {
         let mut fingerprints = HashMap::new();
-        for component in unit.components.iter() {
-            let fingerprint = Fingerprint::try_from_component(component, unit, ws)
-                .expect("failed to create fingerprint for component");
-            fingerprints.insert(
-                component.id.clone(),
-                Rc::new(ComponentFingerprint::Library(Box::new(fingerprint))),
-            );
+
+        enum ToFingerprint<'a> {
+            Library(&'a CompilationUnitComponent),
+            Plugin(&'a CompilationUnitCairoPlugin),
         }
-        for plugin in unit.cairo_plugins.iter() {
-            let fingerprint = PluginFingerprint::try_from_plugin(plugin, unit, ws)
-                .expect("failed to create fingerprint for plugin");
-            fingerprints.insert(
-                plugin.component_dependency_id.clone(),
-                Rc::new(ComponentFingerprint::Plugin(fingerprint)),
-            );
+
+        let mut futures = stream::iter(
+            unit.components
+                .iter()
+                .map(ToFingerprint::Library)
+                .chain(unit.cairo_plugins.iter().map(ToFingerprint::Plugin)),
+        )
+        .map(|component| async move {
+            match component {
+                ToFingerprint::Library(component) => (
+                    component.id.clone(),
+                    Fingerprint::try_from_component(component, unit, ws)
+                        .await
+                        .map(|f| ComponentFingerprint::Library(Box::new(f))),
+                ),
+                ToFingerprint::Plugin(plugin) => (
+                    plugin.component_dependency_id.clone(),
+                    PluginFingerprint::try_from_plugin(plugin, unit, ws)
+                        .await
+                        .map(ComponentFingerprint::Plugin),
+                ),
+            }
+        })
+        .buffer_unordered(usize::MAX);
+        while let Some((id, future)) = futures.next().await {
+            let fingerprint = future.expect("failed to create fingerprint for component");
+            fingerprints.insert(id, Arc::new(fingerprint));
         }
         for component in unit.components.iter() {
             for dep in component
@@ -139,14 +158,14 @@ impl UnitFingerprint {
             {
                 let fingerprint = fingerprints
                     .get(dep)
-                    .map(Rc::downgrade)
+                    .map(Arc::downgrade)
                     .expect("component fingerprint must exist in unit fingerprints");
                 let component_fingerprint = fingerprints
                     .get_mut(&component.id)
                     .expect("component fingerprint must exist in unit fingerprints");
                 match &**component_fingerprint {
                     ComponentFingerprint::Library(lib) => {
-                        lib.deps.borrow_mut().push(DepFingerprint {
+                        lib.deps.write().unwrap().push(DepFingerprint {
                             component_discriminator: SmolStr::from(dep.to_crate_identifier()),
                             fingerprint,
                         });
@@ -157,10 +176,25 @@ impl UnitFingerprint {
                 }
             }
         }
+
+        // Calculate digests for all fingerprints.
+        let mut set = JoinSet::new();
+        for fingerprint in fingerprints.values() {
+            if let ComponentFingerprint::Plugin(_) = fingerprint.deref() {
+                // We only care about warming up the library fingerprints.
+                continue;
+            };
+            let fingerprint = fingerprint.clone();
+            set.spawn(async move {
+                fingerprint.digest();
+            });
+        }
+        set.join_all().await;
+
         Self(fingerprints)
     }
 
-    pub fn get(&self, id: &CompilationUnitComponentId) -> Option<Rc<ComponentFingerprint>> {
+    pub fn get(&self, id: &CompilationUnitComponentId) -> Option<Arc<ComponentFingerprint>> {
         self.0.get(id).cloned()
     }
 }
@@ -175,7 +209,7 @@ impl ComponentFingerprint {
 }
 
 impl PluginFingerprint {
-    pub fn try_from_plugin(
+    pub async fn try_from_plugin(
         component: &CompilationUnitCairoPlugin,
         _unit: &CairoCompilationUnit,
         ws: &Workspace<'_>,
@@ -184,6 +218,19 @@ impl PluginFingerprint {
             SmolStr::from(component.component_dependency_id.to_crate_identifier());
         let is_builtin = component.builtin;
         let is_prebuilt = component.prebuilt.is_some();
+        let hash = |path: Utf8PathBuf| {
+            tokio::spawn(async move {
+                let span = trace_span!("plugin_local_checksum");
+                let _guard = span.enter();
+                let content = fsx::read(&path)
+                    .with_context(|| format!("failed to read shared library at `{path}`",))?;
+
+                anyhow::Ok(vec![LocalFingerprint {
+                    path,
+                    checksum: u64_hash(content),
+                }])
+            })
+        };
         // Note that we only check built binary files. If a local plugin has changed, it would be
         // rebuilt by Cargo at this point, as we compile proc macros before Cairo compilation units.
         let local = if is_builtin {
@@ -197,20 +244,10 @@ impl PluginFingerprint {
                     component.package.id
                 )
             });
-            let content = fsx::read(&lib_path)
-                .with_context(|| format!("failed to read shared library at `{lib_path}`",))?;
-            vec![LocalFingerprint {
-                path: lib_path,
-                checksum: u64_hash(content),
-            }]
+            hash(lib_path).await??
         } else {
             let lib_path = component.shared_lib_path(ws.config())?;
-            let content = fsx::read(&lib_path)
-                .with_context(|| format!("failed to read shared library at `{lib_path}`",))?;
-            vec![LocalFingerprint {
-                path: lib_path,
-                checksum: u64_hash(content),
-            }]
+            hash(lib_path).await??
         };
         Ok(Self {
             component_discriminator,
@@ -251,7 +288,7 @@ impl Fingerprint {
     /// Create new fingerprint from component.
     ///
     /// Note: this does not fill the component dependencies!
-    pub fn try_from_component(
+    async fn try_from_component(
         component: &CompilationUnitComponent,
         unit: &CairoCompilationUnit,
         ws: &Workspace<'_>,
@@ -280,6 +317,22 @@ impl Fingerprint {
             .into_iter()
             .sorted()
             .collect_vec();
+
+        let local = {
+            let source_paths = component
+                .targets
+                .source_paths()
+                .iter()
+                .map(|p| p.to_path_buf())
+                .collect_vec();
+            let target_name = component.targets.target_name();
+            let ui = ws.config().ui();
+            tokio::task::spawn(
+                async move { create_local_fingerprints(source_paths, target_name, ui) },
+            )
+            .await?
+        };
+
         Ok(Self {
             scarb_path,
             scarb_version,
@@ -291,13 +344,9 @@ impl Fingerprint {
             cairo_name,
             component_discriminator,
             experimental_features,
-            local: create_local_fingerprints(
-                component.targets.source_paths(),
-                component.targets.target_name(),
-                &ws.config().ui(),
-            ),
+            local,
             deps: Default::default(),
-            digest: OnceCell::new(),
+            digest: OnceLock::new(),
         })
     }
 
@@ -342,9 +391,8 @@ impl Fingerprint {
         // If we did not include the `cfg_set` in the fingerprint, the cache would be
         // overwritten between unit and integration test runs.
         fingerprint.cfg_set.hash(hasher);
-        for dep in fingerprint
-            .deps
-            .borrow()
+        let deps = fingerprint.deps.read().unwrap();
+        for dep in deps
             .iter()
             .sorted_by_key(|dep| dep.component_discriminator.clone())
         {
@@ -404,10 +452,11 @@ impl Fingerprint {
             local.path.hash(&mut hasher);
             local.checksum.hash(&mut hasher);
         }
-        hasher.write_usize(fingerprint.deps.borrow().len());
+        hasher.write_usize(fingerprint.deps.read().unwrap().len());
         for dep in fingerprint
             .deps
-            .borrow()
+            .read()
+            .unwrap()
             .iter()
             .sorted_by_key(|dep| dep.component_discriminator.clone())
         {
