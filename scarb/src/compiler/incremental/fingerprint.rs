@@ -12,6 +12,7 @@ use anyhow::{Context, Result};
 use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::Edition;
 use camino::Utf8PathBuf;
+use futures::{StreamExt, stream};
 use itertools::Itertools;
 use scarb_stable_hash::{StableHasher, u64_hash};
 use smol_str::SmolStr;
@@ -112,23 +113,40 @@ pub struct UnitFingerprint(HashMap<CompilationUnitComponentId, Rc<ComponentFinge
 
 impl UnitFingerprint {
     #[tracing::instrument(level = "trace", skip_all)]
-    pub fn new(unit: &CairoCompilationUnit, ws: &Workspace<'_>) -> Self {
+    pub async fn new(unit: &CairoCompilationUnit, ws: &Workspace<'_>) -> Self {
         let mut fingerprints = HashMap::new();
-        for component in unit.components.iter() {
-            let fingerprint = Fingerprint::try_from_component(component, unit, ws)
-                .expect("failed to create fingerprint for component");
-            fingerprints.insert(
-                component.id.clone(),
-                Rc::new(ComponentFingerprint::Library(Box::new(fingerprint))),
-            );
+
+        enum ToFingerprint<'a> {
+            Library(&'a CompilationUnitComponent),
+            Plugin(&'a CompilationUnitCairoPlugin),
         }
-        for plugin in unit.cairo_plugins.iter() {
-            let fingerprint = PluginFingerprint::try_from_plugin(plugin, unit, ws)
-                .expect("failed to create fingerprint for plugin");
-            fingerprints.insert(
-                plugin.component_dependency_id.clone(),
-                Rc::new(ComponentFingerprint::Plugin(fingerprint)),
-            );
+
+        let mut futures = stream::iter(
+            unit.components
+                .iter()
+                .map(ToFingerprint::Library)
+                .chain(unit.cairo_plugins.iter().map(ToFingerprint::Plugin)),
+        )
+        .map(|component| async move {
+            match component {
+                ToFingerprint::Library(component) => (
+                    component.id.clone(),
+                    Fingerprint::try_from_component(component, unit, ws)
+                        .await
+                        .map(|f| ComponentFingerprint::Library(Box::new(f))),
+                ),
+                ToFingerprint::Plugin(plugin) => (
+                    plugin.component_dependency_id.clone(),
+                    PluginFingerprint::try_from_plugin(plugin, unit, ws)
+                        .await
+                        .map(ComponentFingerprint::Plugin),
+                ),
+            }
+        })
+        .buffer_unordered(usize::MAX);
+        while let Some((id, future)) = futures.next().await {
+            let fingerprint = future.expect("failed to create fingerprint for component");
+            fingerprints.insert(id, Rc::new(fingerprint));
         }
         for component in unit.components.iter() {
             for dep in component
@@ -175,7 +193,7 @@ impl ComponentFingerprint {
 }
 
 impl PluginFingerprint {
-    pub fn try_from_plugin(
+    pub async fn try_from_plugin(
         component: &CompilationUnitCairoPlugin,
         _unit: &CairoCompilationUnit,
         ws: &Workspace<'_>,
@@ -251,7 +269,7 @@ impl Fingerprint {
     /// Create new fingerprint from component.
     ///
     /// Note: this does not fill the component dependencies!
-    pub fn try_from_component(
+    async fn try_from_component(
         component: &CompilationUnitComponent,
         unit: &CairoCompilationUnit,
         ws: &Workspace<'_>,
@@ -280,6 +298,22 @@ impl Fingerprint {
             .into_iter()
             .sorted()
             .collect_vec();
+
+        let local = {
+            let source_paths = component
+                .targets
+                .source_paths()
+                .iter()
+                .map(|p| p.to_path_buf())
+                .collect_vec();
+            let target_name = component.targets.target_name();
+            let ui = ws.config().ui();
+            tokio::task::spawn(
+                async move { create_local_fingerprints(source_paths, target_name, ui) },
+            )
+            .await?
+        };
+
         Ok(Self {
             scarb_path,
             scarb_version,
@@ -291,11 +325,7 @@ impl Fingerprint {
             cairo_name,
             component_discriminator,
             experimental_features,
-            local: create_local_fingerprints(
-                component.targets.source_paths(),
-                component.targets.target_name(),
-                &ws.config().ui(),
-            ),
+            local,
             deps: Default::default(),
             digest: OnceCell::new(),
         })
