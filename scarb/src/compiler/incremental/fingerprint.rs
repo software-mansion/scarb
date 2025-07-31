@@ -16,11 +16,11 @@ use futures::{StreamExt, stream};
 use itertools::Itertools;
 use scarb_stable_hash::{StableHasher, u64_hash};
 use smol_str::SmolStr;
-use std::cell::{OnceCell, RefCell};
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
-use std::rc::{Rc, Weak};
+use std::sync::{Arc, OnceLock, RwLock, Weak};
+use tokio::task::JoinSet;
 use tracing::trace_span;
 
 /// A fingerprint is a hash that represents the state of the compilation environment for a package,
@@ -62,7 +62,7 @@ pub struct Fingerprint {
     experimental_features: Vec<SmolStr>,
 
     /// Dependencies of the component.
-    deps: RefCell<Vec<DepFingerprint>>,
+    deps: RwLock<Vec<DepFingerprint>>,
 
     /// Local files that should be checked for freshness.
     local: Vec<LocalFingerprint>,
@@ -71,7 +71,7 @@ pub struct Fingerprint {
     ///
     /// Calculating digests multiple times over the span of compilation is dangerous,
     /// as the underlying inputs may change during the compilation.
-    digest: OnceCell<String>,
+    digest: OnceLock<String>,
 }
 
 #[derive(Debug)]
@@ -110,7 +110,7 @@ pub enum ComponentFingerprint {
     Plugin(PluginFingerprint),
 }
 
-pub struct UnitFingerprint(HashMap<CompilationUnitComponentId, Rc<ComponentFingerprint>>);
+pub struct UnitFingerprint(HashMap<CompilationUnitComponentId, Arc<ComponentFingerprint>>);
 
 impl UnitFingerprint {
     #[tracing::instrument(level = "trace", skip_all)]
@@ -147,7 +147,7 @@ impl UnitFingerprint {
         .buffer_unordered(usize::MAX);
         while let Some((id, future)) = futures.next().await {
             let fingerprint = future.expect("failed to create fingerprint for component");
-            fingerprints.insert(id, Rc::new(fingerprint));
+            fingerprints.insert(id, Arc::new(fingerprint));
         }
         for component in unit.components.iter() {
             for dep in component
@@ -158,14 +158,14 @@ impl UnitFingerprint {
             {
                 let fingerprint = fingerprints
                     .get(dep)
-                    .map(Rc::downgrade)
+                    .map(Arc::downgrade)
                     .expect("component fingerprint must exist in unit fingerprints");
                 let component_fingerprint = fingerprints
                     .get_mut(&component.id)
                     .expect("component fingerprint must exist in unit fingerprints");
                 match &**component_fingerprint {
                     ComponentFingerprint::Library(lib) => {
-                        lib.deps.borrow_mut().push(DepFingerprint {
+                        lib.deps.write().unwrap().push(DepFingerprint {
                             component_discriminator: SmolStr::from(dep.to_crate_identifier()),
                             fingerprint,
                         });
@@ -176,10 +176,25 @@ impl UnitFingerprint {
                 }
             }
         }
+
+        // Calculate digests for all fingerprints.
+        let mut set = JoinSet::new();
+        for fingerprint in fingerprints.values() {
+            if let ComponentFingerprint::Plugin(_) = fingerprint.deref() {
+                // We only care about warming up the library fingerprints.
+                continue;
+            };
+            let fingerprint = fingerprint.clone();
+            set.spawn(async move {
+                fingerprint.digest();
+            });
+        }
+        set.join_all().await;
+
         Self(fingerprints)
     }
 
-    pub fn get(&self, id: &CompilationUnitComponentId) -> Option<Rc<ComponentFingerprint>> {
+    pub fn get(&self, id: &CompilationUnitComponentId) -> Option<Arc<ComponentFingerprint>> {
         self.0.get(id).cloned()
     }
 }
@@ -331,7 +346,7 @@ impl Fingerprint {
             experimental_features,
             local,
             deps: Default::default(),
-            digest: OnceCell::new(),
+            digest: OnceLock::new(),
         })
     }
 
@@ -376,9 +391,8 @@ impl Fingerprint {
         // If we did not include the `cfg_set` in the fingerprint, the cache would be
         // overwritten between unit and integration test runs.
         fingerprint.cfg_set.hash(hasher);
-        for dep in fingerprint
-            .deps
-            .borrow()
+        let deps = fingerprint.deps.read().unwrap();
+        for dep in deps
             .iter()
             .sorted_by_key(|dep| dep.component_discriminator.clone())
         {
@@ -438,10 +452,11 @@ impl Fingerprint {
             local.path.hash(&mut hasher);
             local.checksum.hash(&mut hasher);
         }
-        hasher.write_usize(fingerprint.deps.borrow().len());
+        hasher.write_usize(fingerprint.deps.read().unwrap().len());
         for dep in fingerprint
             .deps
-            .borrow()
+            .read()
+            .unwrap()
             .iter()
             .sorted_by_key(|dep| dep.component_discriminator.clone())
         {
