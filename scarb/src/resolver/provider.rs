@@ -209,6 +209,7 @@ impl PubGrubDependencyProvider {
         Ok(())
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     fn wait_for_summaries(
         &self,
         dependency: ManifestDependency,
@@ -246,6 +247,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
     type VS = SemverPubgrub;
     type M = CustomIncompatibility;
 
+    #[tracing::instrument(level = "trace", skip_all)]
     fn prioritize(&self, package: &Self::P, range: &Self::VS) -> Self::Priority {
         let dependency: ManifestDependency = package.to_dependency(range.clone());
         if self
@@ -270,6 +272,7 @@ impl DependencyProvider for PubGrubDependencyProvider {
     type Priority = Option<PubGrubPriority>;
     type Err = DependencyProviderError;
 
+    #[tracing::instrument(level = "trace", skip_all)]
     fn choose_version(
         &self,
         package: &Self::P,
@@ -320,6 +323,8 @@ impl DependencyProvider for PubGrubDependencyProvider {
         Ok(summary.map(|summary| summary.package_id.version.clone()))
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
+    #[allow(clippy::type_complexity)]
     fn get_dependencies(
         &self,
         package: &Self::P,
