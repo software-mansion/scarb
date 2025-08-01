@@ -232,7 +232,127 @@ fn fetch_with_invalid_keyword() {
         "#});
 }
 
-// TODO(#133): Add tests with submodules.
+// Tests for submodules in Git dependencies.
+
+#[test]
+fn dep_with_submodule() {
+    let git_dep = gitx::new("dep1", |t| {
+        ProjectBuilder::start()
+            .name("dep1")
+            .lib_cairo("pub fn hello() -> felt252 { 42 }")
+            .build(&t)
+    });
+    let git_dep2 = gitx::new("dep2", |t| {
+        ProjectBuilder::start()
+            .name("dep2")
+            .lib_cairo("pub fn world() -> felt252 { 21 }")
+            .build(&t)
+    });
+
+    // Add dep2 as a submodule to dep1
+    git_dep.add_submodule(&git_dep2.url(), std::path::Path::new("subdep"));
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep1", &git_dep)
+        .lib_cairo("fn test() -> felt252 { dep1::hello() }")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]  Updating git repository file://[..]/dep1
+        [..]  Updating git submodule file://[..]/dep2
+        "#});
+}
+
+#[test]
+fn dep_with_relative_submodule() {
+    let _git_dep2 = gitx::new("dep2", |t| {
+        ProjectBuilder::start()
+            .name("dep2")
+            .lib_cairo("pub fn world() -> felt252 { 84 }")
+            .build(&t)
+    });
+    let git_dep = gitx::new("dep1", |t| {
+        ProjectBuilder::start()
+            .name("dep1")
+            .lib_cairo("pub fn hello() -> felt252 { 24 }")
+            .build(&t)
+    });
+
+    // Add dep2 as a relative submodule to dep1
+    git_dep.add_submodule("../dep2", std::path::Path::new("subdep"));
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep1", &git_dep)
+        .lib_cairo("fn test() -> felt252 { dep1::hello() }")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]  Updating git repository file://[..]/dep1
+        [..]  Updating git submodule file://[..]/dep2
+        "#});
+}
+
+#[test]
+fn dep_with_nested_submodules() {
+    let git_dep3 = gitx::new("dep3", |t| {
+        ProjectBuilder::start()
+            .name("dep3")
+            .lib_cairo("pub fn deep() -> felt252 { 168 }")
+            .build(&t)
+    });
+    let git_dep2 = gitx::new("dep2", |t| {
+        ProjectBuilder::start()
+            .name("dep2")
+            .lib_cairo("pub fn world() -> felt252 { 99 }")
+            .build(&t)
+    });
+    let git_dep = gitx::new("dep1", |t| {
+        ProjectBuilder::start()
+            .name("dep1")
+            .lib_cairo("pub fn hello() -> felt252 { 33 }")
+            .build(&t)
+    });
+
+    // Add dep3 as a submodule to dep2
+    git_dep2.add_submodule(&git_dep3.url(), std::path::Path::new("nested"));
+    // Add dep2 as a submodule to dep1
+    git_dep.add_submodule(&git_dep2.url(), std::path::Path::new("middle"));
+
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .version("1.0.0")
+        .dep("dep1", &git_dep)
+        .lib_cairo("fn test() -> felt252 { dep1::hello() }")
+        .build(&t);
+
+    Scarb::quick_snapbox()
+        .arg("fetch")
+        .current_dir(&t)
+        .assert()
+        .success()
+        .stdout_matches(indoc! {r#"
+        [..]  Updating git repository file://[..]/dep1
+        [..]  Updating git submodule file://[..]/dep2
+        [..]  Updating git submodule file://[..]/dep3
+        "#});
+}
 
 #[test]
 fn stale_cached_version() {
