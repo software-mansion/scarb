@@ -6767,6 +6767,7 @@ dependencies = [
  "data-encoding",
  "dunce",
  "expect-test",
+ "gix",
  "hyper 0.14.32",
  "indoc",
  "itertools 0.14.0",
