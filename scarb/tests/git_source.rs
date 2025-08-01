@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 use std::fs;
+use std::path::Path;
 
 use assert_fs::TempDir;
 use assert_fs::prelude::*;
 use gix::refs::transaction::PreviousValue;
 use indoc::indoc;
 use scarb_metadata::Metadata;
+use snapbox::cmd::Command;
 
 use scarb_test_support::command::{CommandExt, Scarb};
 use scarb_test_support::fsx::ChildPathEx;
@@ -234,6 +236,23 @@ fn fetch_with_invalid_keyword() {
 
 // Tests for submodules in Git dependencies.
 
+/// Add a submodule to a Git repository.
+fn add_submodule(git_project: &gitx::GitProject, url: &str, path: &Path) {
+    // Use git CLI to add submodule since gix submodule functionality is limited
+    // Configure git to allow file protocol for testing
+    Command::new("git")
+        .env_remove("GIT_DIR")
+        .env_remove("GIT_WORK_TREE")
+        .env_remove("GIT_INDEX_FILE")
+        .env_remove("GIT_OBJECT_DIRECTORY")
+        .env_remove("GIT_ALTERNATE_OBJECT_DIRECTORIES")
+        .args(["-c", "protocol.file.allow=always", "submodule", "add", url, &path.to_string_lossy()])
+        .current_dir(git_project.child("").path())
+        .assert()
+        .success();
+    git_project.commit();
+}
+
 #[test]
 fn dep_with_submodule() {
     let git_dep = gitx::new("dep1", |t| {
@@ -250,7 +269,7 @@ fn dep_with_submodule() {
     });
 
     // Add dep2 as a submodule to dep1
-    git_dep.add_submodule(&git_dep2.url(), std::path::Path::new("subdep"));
+    add_submodule(&git_dep, &git_dep2.url(), std::path::Path::new("subdep"));
 
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -303,7 +322,7 @@ fn dep_with_relative_submodule() {
     });
 
     // Add dep2 as a relative submodule to dep1
-    git_dep.add_submodule("../dep2", std::path::Path::new("subdep"));
+    add_submodule(&git_dep, "../dep2", std::path::Path::new("subdep"));
 
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
@@ -345,9 +364,9 @@ fn dep_with_nested_submodules() {
     });
 
     // Add dep3 as a submodule to dep2
-    git_dep2.add_submodule(&git_dep3.url(), std::path::Path::new("nested"));
+    add_submodule(&git_dep2, &git_dep3.url(), std::path::Path::new("nested"));
     // Add dep2 as a submodule to dep1
-    git_dep.add_submodule(&git_dep2.url(), std::path::Path::new("middle"));
+    add_submodule(&git_dep, &git_dep2.url(), std::path::Path::new("middle"));
 
     let t = TempDir::new().unwrap();
     ProjectBuilder::start()
