@@ -42,6 +42,13 @@ impl GitProject {
     pub fn tag(&self, name: &str) {
         self.git(["tag", "-a", name, "-m", "test tag"])
     }
+
+    /// Add a submodule to this Git repository.
+    pub fn add_submodule(&self, url: &str, path: &Path) {
+        let repo = gix::open(self.p.path()).expect("Failed to open repository");
+        add_submodule(&repo, url, path);
+        commit(self.p.path());
+    }
 }
 
 impl fmt::Display for GitProject {
@@ -98,6 +105,17 @@ pub fn git(cwd: impl GitContext, args: impl IntoIterator<Item = impl AsRef<std::
     git_command()
         .args(args)
         .current_dir(cwd.git_path())
+        .assert()
+        .success();
+}
+
+/// Add a submodule to a Git repository.
+pub fn add_submodule(repo: &gix::Repository, url: &str, path: &Path) {
+    // Use git CLI to add submodule since gix submodule functionality is limited
+    // Configure git to allow file protocol for testing
+    git_command()
+        .args(["-c", "protocol.file.allow=always", "submodule", "add", url, &path.to_string_lossy()])
+        .current_dir(repo.workdir().expect("Repository should have a working directory"))
         .assert()
         .success();
 }
