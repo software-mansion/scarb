@@ -112,8 +112,9 @@ pub fn git(cwd: impl GitContext, args: impl IntoIterator<Item = impl AsRef<std::
 /// Add a submodule to a Git repository.
 pub fn add_submodule(repo: &gix::Repository, url: &str, path: &Path) {
     // Use git CLI to add submodule since gix submodule functionality is limited
+    // Configure git to allow file protocol for testing
     git_command()
-        .args(["submodule", "add", url, &path.to_string_lossy()])
+        .args(["-c", "protocol.file.allow=always", "submodule", "add", url, &path.to_string_lossy()])
         .current_dir(repo.workdir().expect("Repository should have a working directory"))
         .assert()
         .success();
