@@ -245,7 +245,7 @@ fn keyword_name() {
         .assert()
         .failure()
         .stdout_eq(indoc! {r#"
-            error: the name `as` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://docs.cairo-lang.org/language_constructs/keywords.html
+            error: the name `as` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html
         "#});
     Scarb::quick_snapbox()
         .arg("new")
@@ -254,7 +254,7 @@ fn keyword_name() {
         .assert()
         .failure()
         .stdout_eq(indoc! {r#"
-            error: the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://docs.cairo-lang.org/language_constructs/keywords.html
+            error: the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html
         "#});
 }
 
@@ -401,7 +401,7 @@ fn init_keyword_name() {
         .assert()
         .failure()
         .stdout_eq(indoc! {r#"
-            error: the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://docs.cairo-lang.org/language_constructs/keywords.html
+            error: the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html
         "#});
 }
 

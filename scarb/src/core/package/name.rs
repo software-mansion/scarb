@@ -103,8 +103,7 @@ impl PackageName {
         if restricted_names::is_keyword(name.as_str()) {
             bail!(
                 "the name `{name}` cannot be used as a package name, \
-                names cannot use Cairo keywords see the full list at \
-                https://docs.cairo-lang.org/language_constructs/keywords.html"
+                names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html"
             )
         }
 
@@ -217,8 +216,8 @@ mod tests {
     #[test_case("0foo" => "the name `0foo` cannot be used as a package name, names cannot start with a digit")]
     #[test_case("fo-o" => "invalid character `-` in package name: `fo-o`, characters must be ASCII lowercase letters, ASCII numbers or underscore")]
     #[test_case("baR" => "invalid package name: `baR`\nnote: usage of ASCII uppercase letters in the package name has been disallowed\nhelp: change package name to: bar")]
-    #[test_case("loop" => "the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://docs.cairo-lang.org/language_constructs/keywords.html")]
-    #[test_case("as" => "the name `as` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://docs.cairo-lang.org/language_constructs/keywords.html")]
+    #[test_case("loop" => "the name `loop` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html")]
+    #[test_case("as" => "the name `as` cannot be used as a package name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html")]
     fn validate_incorrect_package_name(name: &str) -> String {
         PackageName::try_new(name).unwrap_err().to_string()
     }
