@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+// Removed unused imports: Read, Write
 use std::net::TcpListener;
 use std::thread;
 
@@ -15,10 +15,10 @@ fn https_something_happens() {
         let addr = server.local_addr().unwrap();
         let port = addr.port();
         ts.spawn(move || {
-            let mut conn = server.accept().unwrap().0;
-            drop(conn.write(b"1234"));
-            drop(conn.shutdown(std::net::Shutdown::Write));
-            drop(conn.read(&mut [0; 16]));
+            let conn = server.accept().unwrap().0;
+            // Immediately drop the connection to simulate a server that's not responding properly
+            // This is more deterministic than writing invalid data and trying to shutdown gracefully
+            drop(conn);
         });
 
         let t = TempDir::new().unwrap();
