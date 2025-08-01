@@ -777,15 +777,15 @@ fn test_fixer_formatting() {
         .success()
         .stdout_matches(indoc! {r#"
                  Linting hello v1.0.0 ([..]/Scarb.toml)
-            warn: Unused import: `hello::SyscallResultTrait`
-             --> [..]/src/lib.cairo:1:15
-            use starknet::SyscallResultTrait;
-                          ^^^^^^^^^^^^^^^^^^
-            
             warn: Plugin diagnostic: consider using `unwrap_syscall` instead of `unwrap`
              --> [..]/src/lib.cairo:8:3
               result.unwrap();
               ^^^^^^^^^^^^^^^
+
+            warn: Unused import: `hello::SyscallResultTrait`
+             --> [..]/src/lib.cairo:1:15
+            use starknet::SyscallResultTrait;
+                          ^^^^^^^^^^^^^^^^^^
             
                   Fixing lib.cairo
         "#});
@@ -807,7 +807,6 @@ fn test_fixer_formatting() {
 }
 
 #[test]
-#[ignore = "TODO(cairo-lint#381): Macro support in linter has been reverted."]
 fn test_linter_with_attribute_macros() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
@@ -878,7 +877,6 @@ fn test_linter_with_attribute_macros() {
 }
 
 #[test]
-#[ignore = "TODO(cairo-lint#381): Macro support in linter has been reverted."]
 fn test_linter_with_attribute_macros_complex() {
     let temp = TempDir::new().unwrap();
     let t = temp.child("some");
