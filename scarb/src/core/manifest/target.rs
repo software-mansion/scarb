@@ -1,14 +1,13 @@
-use std::hash::{Hash, Hasher};
-use std::ops::Deref;
-use std::sync::Arc;
-
-use anyhow::Result;
+use crate::core::{TargetKind, TomlExternalTargetParams};
+use crate::internal::restricted_names;
+use crate::internal::serdex::toml_merge;
+use anyhow::{Result, bail};
 use camino::{Utf8Path, Utf8PathBuf};
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
-
-use crate::core::{TargetKind, TomlExternalTargetParams};
-use crate::internal::serdex::toml_merge;
+use std::hash::{Hash, Hasher};
+use std::ops::Deref;
+use std::sync::Arc;
 
 /// See [`TargetInner`] for public fields reference.
 #[derive(Clone, Debug, Hash)]
@@ -67,12 +66,75 @@ impl Target {
     pub fn try_from_structured_params(
         kind: TargetKind,
         name: impl Into<SmolStr>,
-        source_path: impl Into<Utf8PathBuf>,
+        source_path: impl Into<Utf8PathBuf> + Clone,
         group_id: Option<SmolStr>,
         params: impl Serialize,
     ) -> Result<Self> {
+        Self::validate_test_target_file_stem(source_path.clone().into())?;
         let params = toml::Value::try_from(params)?;
         Ok(Self::new(kind, name, source_path, group_id, params))
+    }
+
+    pub fn validate_test_target_file_stem(source_path: Utf8PathBuf) -> Result<()> {
+        let file_stem = source_path.file_stem().expect("failed to get file stem");
+
+        if file_stem == ".cairo" {
+            bail!(
+                "empty string cannot be used as a test target name \
+                consider renaming file: {}",
+                source_path
+            );
+        }
+
+        if file_stem == "_" {
+            bail!(
+                "underscore cannot be used as a test target name \
+                consider renaming file: {}",
+                source_path
+            );
+        }
+
+        let mut chars = file_stem.chars();
+        if let Some(ch) = chars.next() {
+            if ch.is_ascii_digit() {
+                bail!(
+                    "the name `{file_stem}` cannot be used as a test target, \
+                    names cannot start with a digit \
+                    consider renaming file: {}",
+                    source_path
+                );
+            }
+
+            if !(ch.is_ascii_alphabetic() || ch == '_') {
+                bail!(
+                    "invalid character `{ch}` in test target name: `{file_stem}`, \
+                    the first character must be an ASCII lowercase letter or underscore \
+                    consider renaming file: {}",
+                    source_path
+                )
+            }
+        }
+        for ch in chars {
+            if !(ch.is_ascii_alphanumeric() || ch == '_') {
+                bail!(
+                    "invalid character `{ch}` in test target name: `{file_stem}`, \
+                    characters must be ASCII letters, ASCII numbers or underscore \
+                    consider renaming file: {}",
+                    source_path
+                )
+            }
+        }
+
+        if restricted_names::is_keyword(file_stem) {
+            bail!(
+                "the name `{file_stem}` cannot be used as a test target name, \
+                names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html \
+                consider renaming file: {}",
+                source_path
+            )
+        }
+
+        Ok(())
     }
 
     pub fn is_lib(&self) -> bool {
@@ -146,5 +208,33 @@ impl TryInto<TomlExternalTargetParams> for TestTargetProps {
 
     fn try_into(self) -> Result<TomlExternalTargetParams, Self::Error> {
         Ok(toml::Value::try_into(toml::Value::try_from(self)?)?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Target;
+    use camino::Utf8PathBuf;
+    use test_case::test_case;
+
+    #[test_case("foo")]
+    #[test_case("_bar")]
+    fn validate_correct_test_target_name(name: &str) {
+        assert!(Target::validate_test_target_file_stem(name.into()).is_ok())
+    }
+
+    #[test_case("" => "empty string cannot be used as a test target name consider renaming file: parent/.cairo"; "empty string")]
+    #[test_case("_" => "underscore cannot be used as a test target name consider renaming file: parent/_.cairo"; "underscore")]
+    #[test_case("1" => "the name `1` cannot be used as a test target, names cannot start with a digit consider renaming file: parent/1.cairo"; "digit")]
+    #[test_case("123" => "the name `123` cannot be used as a test target, names cannot start with a digit consider renaming file: parent/123.cairo"; "digits")]
+    #[test_case("0foo" => "the name `0foo` cannot be used as a test target, names cannot start with a digit consider renaming file: parent/0foo.cairo"; "digit_and_alphabetic")]
+    #[test_case("*abc" => "invalid character `*` in test target name: `*abc`, the first character must be an ASCII lowercase letter or underscore consider renaming file: parent/*abc.cairo"; "not_alphanumeric_start")]
+    #[test_case("fo-o" => "invalid character `-` in test target name: `fo-o`, characters must be ASCII letters, ASCII numbers or underscore consider renaming file: parent/fo-o.cairo"; "invalid_character")]
+    #[test_case("hint" => "the name `hint` cannot be used as a test target name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html consider renaming file: parent/hint.cairo"; "keyword")]
+    fn validate_incorrect_test_target_name(name: &str) -> String {
+        let source_path = Utf8PathBuf::from(format!("parent/{name}.cairo"));
+        Target::validate_test_target_file_stem(source_path)
+            .unwrap_err()
+            .to_string()
     }
 }
