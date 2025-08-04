@@ -1554,3 +1554,40 @@ fn executable_target_validation() {
             error: could not compile `pkg0` due to previous error
         "#});
 }
+
+#[test]
+fn disallowed_test_target_names() {
+    let t = TempDir::new().unwrap();
+    ProjectBuilder::start()
+        .name("hello")
+        .edition("2023_01")
+        .dep_cairo_test()
+        .lib_cairo(r#"fn f() -> felt252 { 42 }"#)
+        .build(&t);
+    t.child("tests").create_dir_all().unwrap();
+    t.child("tests/hint.cairo")
+        .write_str(indoc! {r#"
+        #[cfg(test)]
+        mod tests {
+            use hello::f;
+            #[test]
+            fn it_works() {
+                assert(f() == 42, 'it works!');
+            }
+        }
+         "#})
+        .unwrap();
+
+    Scarb::quick_snapbox()
+        .arg("build")
+        .arg("--test")
+        .current_dir(&t)
+        .assert()
+        .failure()
+        .stdout_matches(indoc! {r#"
+        error: failed to parse manifest at: [..]/Scarb.toml
+
+        Caused by:
+            the name `hint` cannot be used as a test target name, names cannot use Cairo keywords see the full list at https://starknet.io/cairo-book/appendix-01-keywords.html consider renaming file: [..]
+        "#});
+}
