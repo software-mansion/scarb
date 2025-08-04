@@ -6500,7 +6500,7 @@ dependencies = [
  "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
- "scarb-proc-macro-server-types 0.3.0-rc.1",
+ "scarb-proc-macro-server-types 0.3.0",
  "scarb-stable-hash 1.0.0",
  "scarb-test-support",
  "scarb-ui",
@@ -6752,7 +6752,7 @@ dependencies = [
 
 [[package]]
 name = "scarb-proc-macro-server-types"
-version = "0.3.0-rc.1"
+version = "0.3.0"
 dependencies = [
  "cairo-lang-macro 0.1.1",
  "cairo-lang-macro 0.2.0",
@@ -6817,7 +6817,7 @@ dependencies = [
  "predicates",
  "scarb",
  "scarb-build-metadata",
- "scarb-proc-macro-server-types 0.3.0-rc.1",
+ "scarb-proc-macro-server-types 0.3.0",
  "scarb-ui",
  "semver 1.0.26",
  "serde",
