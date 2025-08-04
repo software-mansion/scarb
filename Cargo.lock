@@ -1048,7 +1048,7 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-macro"
-version = "0.2.0-rc.1"
+version = "0.2.0"
 dependencies = [
  "bumpalo",
  "cairo-lang-macro-attributes 0.2.0",
@@ -6444,7 +6444,7 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-lowering",
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.1",
+ "cairo-lang-macro 0.2.0",
  "cairo-lang-macro-stable 1.0.0",
  "cairo-lang-macro-stable 2.0.0",
  "cairo-lang-parser",
@@ -6755,7 +6755,7 @@ name = "scarb-proc-macro-server-types"
 version = "0.3.0-rc.1"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.1",
+ "cairo-lang-macro 0.2.0",
  "serde",
  "serde_json",
 ]
