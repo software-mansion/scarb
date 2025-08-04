@@ -28,7 +28,7 @@ members = [
 "resolver" = "2"
 
 [workspace.package]
-version = "2.12.0-rc.2"
+version = "2.12.0"
 edition = "2024"
 
 authors = ["Software Mansion <contact@swmansion.com>"]
@@ -44,31 +44,31 @@ async-trait = "0.1"
 axum = { version = "0.6", features = ["http2"] }
 bincode = "2.0.1"
 bumpalo = "=3.17.0"
-cairo-lang-casm = "2.12.0-rc.2"
-cairo-lang-compiler = "2.12.0-rc.2"
-cairo-lang-defs = "2.12.0-rc.2"
-cairo-lang-diagnostics = "2.12.0-rc.2"
-cairo-lang-doc = "2.12.0-rc.2"
-cairo-lang-executable = "2.12.0-rc.2"
-cairo-lang-filesystem = "2.12.0-rc.2"
-cairo-lang-formatter = "2.12.0-rc.2"
-cairo-lang-lowering = "2.12.0-rc.2"
+cairo-lang-casm = "2.12.0"
+cairo-lang-compiler = "2.12.0"
+cairo-lang-defs = "2.12.0"
+cairo-lang-diagnostics = "2.12.0"
+cairo-lang-doc = "2.12.0"
+cairo-lang-executable = "2.12.0"
+cairo-lang-filesystem = "2.12.0"
+cairo-lang-formatter = "2.12.0"
+cairo-lang-lowering = "2.12.0"
 cairo-lang-macro-v1 = { version = "0.1", package = "cairo-lang-macro", features = ["serde"] }
-cairo-lang-parser = "2.12.0-rc.2"
+cairo-lang-parser = "2.12.0"
 cairo-lang-primitive-token = "1"
-cairo-lang-runner = "2.12.0-rc.2"
-cairo-lang-semantic = "2.12.0-rc.2"
-cairo-lang-sierra = "2.12.0-rc.2"
-cairo-lang-sierra-generator = "2.12.0-rc.2"
-cairo-lang-sierra-to-casm = "2.12.0-rc.2"
-cairo-lang-starknet = "2.12.0-rc.2"
-cairo-lang-starknet-classes = "2.12.0-rc.2"
-cairo-lang-syntax = "2.12.0-rc.2"
-cairo-lang-test-plugin = "2.12.0-rc.2"
-cairo-lang-test-runner = "2.12.0-rc.2"
-cairo-lang-utils = { version = "2.12.0-rc.2", features = ["env_logger"] }
-cairo-language-server = "2.12.0-rc.2"
-cairo-lint = "2.12.0-rc.2"
+cairo-lang-runner = "2.12.0"
+cairo-lang-semantic = "2.12.0"
+cairo-lang-sierra = "2.12.0"
+cairo-lang-sierra-generator = "2.12.0"
+cairo-lang-sierra-to-casm = "2.12.0"
+cairo-lang-starknet = "2.12.0"
+cairo-lang-starknet-classes = "2.12.0"
+cairo-lang-syntax = "2.12.0"
+cairo-lang-test-plugin = "2.12.0"
+cairo-lang-test-runner = "2.12.0"
+cairo-lang-utils = { version = "2.12.0", features = ["env_logger"] }
+cairo-language-server = "2.12.0"
+cairo-lint = "2.12.0"
 cairo-vm = "2.2.0"
 camino = { version = "1", features = ["serde1"] }
 cargo_metadata = ">=0.18"
@@ -132,8 +132,8 @@ smol_str = { version = "0.3", features = ["serde"] }
 snapbox = { version = "0.4", features = ["cmd", "path"] }
 starknet-core = "0.14.0"
 starknet-types-core = "0.1"
-stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "d869658ca0af584c1ae04706b22a8eeaf15713e2", features = ["std"] }
-stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "d869658ca0af584c1ae04706b22a8eeaf15713e2" }
+stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd", features = ["std"] }
+stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
 syn = "2"
 tar = "0.4"
 target-triple = "0.1"
