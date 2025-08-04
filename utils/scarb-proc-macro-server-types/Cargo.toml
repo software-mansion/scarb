@@ -1,6 +1,6 @@
 [package]
 name = "scarb-proc-macro-server-types"
-version = "0.3.0-rc.1"
+version = "0.3.0"
 description = "Types for interacting with an RPC server set up by the `scarb proc-macro-server` command."
 readme = "README.md"
 edition.workspace = true
