@@ -1047,7 +1047,7 @@ name = "cairo-lang-macro"
 version = "0.2.0-rc.1"
 dependencies = [
  "bumpalo",
- "cairo-lang-macro-attributes 0.2.0-rc.1",
+ "cairo-lang-macro-attributes 0.2.0",
  "cairo-lang-macro-stable 2.0.0-rc.0",
  "cairo-lang-primitive-token",
  "cairo-lang-quote 0.1.0-rc.0",
@@ -1064,7 +1064,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78c2717fc698bed6895b7bd0117e296ff750b3038a12709e5eca50b86daef1ea"
 dependencies = [
  "bumpalo",
- "cairo-lang-macro-attributes 0.2.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-macro-attributes 0.2.0-rc.1",
  "cairo-lang-macro-stable 2.0.0-rc.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-lang-primitive-token",
  "cairo-lang-quote 0.1.0-rc.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1086,6 +1086,8 @@ dependencies = [
 [[package]]
 name = "cairo-lang-macro-attributes"
 version = "0.2.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2babcf3fd15dec9c413ed72ffc1561fbc852f3a4b5e6709370bc4a16616fdc1"
 dependencies = [
  "quote",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1094,9 +1096,7 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-macro-attributes"
-version = "0.2.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2babcf3fd15dec9c413ed72ffc1561fbc852f3a4b5e6709370bc4a16616fdc1"
+version = "0.2.0"
 dependencies = [
  "quote",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
