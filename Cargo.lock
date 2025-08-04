@@ -954,7 +954,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-syntax",
  "cairo-lang-utils",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "indoc",
  "itertools 0.14.0",
  "serde",
@@ -1201,7 +1201,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-sierra-type-size",
  "cairo-lang-utils",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "itertools 0.14.0",
  "thiserror 2.0.12",
 ]
@@ -1222,7 +1222,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-starknet",
  "cairo-lang-utils",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "itertools 0.14.0",
  "keccak",
  "num-bigint",
@@ -1657,9 +1657,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-vm"
-version = "2.2.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d2a2f6d93aa279509d396d6f5c1992fa63d7d32c2b8d61ffa3398617c2cd0cd"
+checksum = "2afc2bb5cf948599994a1f1634edc81934c3952e2f32c8e49efbde63d767fa69"
 dependencies = [
  "anyhow",
  "bincode",
@@ -6645,7 +6645,7 @@ dependencies = [
  "cairo-lang-executable",
  "cairo-lang-runner",
  "cairo-lang-utils",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "camino",
  "clap",
  "console",
@@ -6671,7 +6671,7 @@ version = "2.11.4"
 dependencies = [
  "anyhow",
  "cairo-lang-runner",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "camino",
  "clap",
  "num-bigint",
@@ -6731,7 +6731,7 @@ dependencies = [
  "anyhow",
  "cairo-lang-casm",
  "cairo-lang-runner",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "serde",
  "serde_json",
  "shell-words",
@@ -7533,12 +7533,10 @@ dependencies = [
 
 [[package]]
 name = "starknet-types-core"
-version = "0.1.9"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87af771d7f577931913089f9ca9a9f85d8a6238d59b2977f4c383d133c8abd3b"
+checksum = "4037bcb26ce7c508448d221e570d075196fd4f6912ae6380981098937af9522a"
 dependencies = [
- "blake2",
- "digest 0.10.7",
  "lambdaworks-crypto",
  "lambdaworks-math",
  "lazy_static",
