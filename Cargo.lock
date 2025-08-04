@@ -1045,21 +1045,6 @@ dependencies = [
 [[package]]
 name = "cairo-lang-macro"
 version = "0.2.0-rc.1"
-dependencies = [
- "bumpalo",
- "cairo-lang-macro-attributes 0.2.0",
- "cairo-lang-macro-stable 2.0.0",
- "cairo-lang-primitive-token",
- "cairo-lang-quote 0.1.0",
- "linkme",
- "serde",
- "serde_json",
- "trybuild",
-]
-
-[[package]]
-name = "cairo-lang-macro"
-version = "0.2.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78c2717fc698bed6895b7bd0117e296ff750b3038a12709e5eca50b86daef1ea"
 dependencies = [
@@ -1070,6 +1055,21 @@ dependencies = [
  "cairo-lang-quote 0.1.0-rc.0",
  "linkme",
  "serde",
+]
+
+[[package]]
+name = "cairo-lang-macro"
+version = "0.2.0"
+dependencies = [
+ "bumpalo",
+ "cairo-lang-macro-attributes 0.2.0",
+ "cairo-lang-macro-stable 2.0.0",
+ "cairo-lang-primitive-token",
+ "cairo-lang-quote 0.1.0",
+ "linkme",
+ "serde",
+ "serde_json",
+ "trybuild",
 ]
 
 [[package]]
@@ -1579,7 +1579,7 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-lowering",
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-macro 0.2.0-rc.1",
  "cairo-lang-parser",
  "cairo-lang-project",
  "cairo-lang-semantic",
@@ -6481,7 +6481,7 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-lowering",
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.1",
+ "cairo-lang-macro 0.2.0",
  "cairo-lang-macro-stable 1.0.0",
  "cairo-lang-macro-stable 2.0.0",
  "cairo-lang-parser",
@@ -6767,7 +6767,7 @@ name = "scarb-proc-macro-server-types"
 version = "0.3.0-rc.1"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.1",
+ "cairo-lang-macro 0.2.0",
  "serde",
  "serde_json",
 ]
@@ -6779,7 +6779,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f15d86b4986eb201963894cfe9b90d436c3c942254ad6c32dd963500a69e424"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-lang-macro 0.2.0-rc.1",
  "serde",
  "serde_json",
 ]
