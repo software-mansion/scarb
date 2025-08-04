@@ -1041,7 +1041,7 @@ dependencies = [
  "cairo-lang-macro-attributes 0.2.0-rc.0",
  "cairo-lang-macro-stable 2.0.0-rc.0",
  "cairo-lang-primitive-token",
- "cairo-lang-quote 0.1.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
+ "cairo-lang-quote 0.1.0-rc.0",
  "linkme",
  "serde",
 ]
@@ -1054,7 +1054,7 @@ dependencies = [
  "cairo-lang-macro-attributes 0.2.0",
  "cairo-lang-macro-stable 2.0.0",
  "cairo-lang-primitive-token",
- "cairo-lang-quote 0.1.0-rc.0",
+ "cairo-lang-quote 0.1.0",
  "linkme",
  "serde",
  "serde_json",
@@ -1175,6 +1175,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-quote"
 version = "0.1.0-rc.0"
+source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1182,8 +1183,7 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-quote"
-version = "0.1.0-rc.0"
-source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
+version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
