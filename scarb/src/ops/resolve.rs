@@ -30,6 +30,7 @@ use itertools::Itertools;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::zip;
 use std::sync::Arc;
+use std::thread;
 
 pub struct WorkspaceResolve {
     pub resolve: Resolve,
@@ -234,8 +235,17 @@ pub struct ResolveOpts {
 }
 
 pub fn resolve_workspace(ws: &Workspace<'_>) -> Result<WorkspaceResolve> {
-    let opts: ResolveOpts = Default::default();
-    resolve_workspace_with_opts(ws, &opts)
+    thread::scope(|s| {
+        thread::Builder::new()
+            .name("scarb-resolve-workspace".to_string())
+            .spawn_scoped(s, || {
+                let opts: ResolveOpts = Default::default();
+                resolve_workspace_with_opts(ws, &opts)
+            })
+            .expect("Failed to spawn Scarb thread.")
+            .join()
+            .expect("Scarb thread has panicked.")
+    })
 }
 
 /// Resolves workspace dependencies and downloads missing packages.

@@ -27,7 +27,7 @@ jobs:
     needs: [ check ]
     steps:
       - name: Notifying about failed tests!
-        uses: slackapi/slack-github-action@v2.1.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           webhook: ${{ secrets.SLACK_SCHEDULED_TESTS_FAILURE_WEBHOOK_URL }}
           webhook-type: webhook-trigger

@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 0.3.0 (2025-08-04)
+- Promote `0.3.0-rc.1` to stable release.
+
 ## 0.3.0-rc.1 (2025-07-10)
 - Pass `adapted_call_site` in expand attributes.
 - Disallow creating cairo_lang_macro::Diagnostic without the constructor.

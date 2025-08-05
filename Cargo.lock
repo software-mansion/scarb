@@ -954,7 +954,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-syntax",
  "cairo-lang-utils",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "indoc",
  "itertools 0.14.0",
  "serde",
@@ -1039,22 +1039,22 @@ source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee40
 dependencies = [
  "bumpalo",
  "cairo-lang-macro-attributes 0.2.0-rc.0",
- "cairo-lang-macro-stable 2.0.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
+ "cairo-lang-macro-stable 2.0.0-rc.0",
  "cairo-lang-primitive-token",
- "cairo-lang-quote 0.1.0-rc.0 (git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961)",
+ "cairo-lang-quote 0.1.0-rc.0",
  "linkme",
  "serde",
 ]
 
 [[package]]
 name = "cairo-lang-macro"
-version = "0.2.0-rc.1"
+version = "0.2.0"
 dependencies = [
  "bumpalo",
- "cairo-lang-macro-attributes 0.2.0-rc.1",
- "cairo-lang-macro-stable 2.0.0-rc.0",
+ "cairo-lang-macro-attributes 0.2.0",
+ "cairo-lang-macro-stable 2.0.0",
  "cairo-lang-primitive-token",
- "cairo-lang-quote 0.1.0-rc.0",
+ "cairo-lang-quote 0.1.0",
  "linkme",
  "serde",
  "serde_json",
@@ -1084,7 +1084,7 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-macro-attributes"
-version = "0.2.0-rc.1"
+version = "0.2.0"
 dependencies = [
  "quote",
  "scarb-stable-hash 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1100,11 +1100,11 @@ checksum = "c49906d6b1c215e5814be7c5c65ecf2328898b335bee8c2409ec07cfb5530daf"
 [[package]]
 name = "cairo-lang-macro-stable"
 version = "2.0.0-rc.0"
+source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
 
 [[package]]
 name = "cairo-lang-macro-stable"
-version = "2.0.0-rc.0"
-source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
+version = "2.0.0"
 
 [[package]]
 name = "cairo-lang-parser"
@@ -1175,6 +1175,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-quote"
 version = "0.1.0-rc.0"
+source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1182,8 +1183,7 @@ dependencies = [
 
 [[package]]
 name = "cairo-lang-quote"
-version = "0.1.0-rc.0"
-source = "git+https://github.com/software-mansion/scarb.git?rev=a7b5dce2aea8ee404c51057c0180de721950f961#a7b5dce2aea8ee404c51057c0180de721950f961"
+version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1201,7 +1201,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-sierra-type-size",
  "cairo-lang-utils",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "itertools 0.14.0",
  "thiserror 2.0.12",
 ]
@@ -1222,7 +1222,7 @@ dependencies = [
  "cairo-lang-sierra-to-casm",
  "cairo-lang-starknet",
  "cairo-lang-utils",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "itertools 0.14.0",
  "keccak",
  "num-bigint",
@@ -1659,9 +1659,9 @@ dependencies = [
 
 [[package]]
 name = "cairo-vm"
-version = "2.2.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d2a2f6d93aa279509d396d6f5c1992fa63d7d32c2b8d61ffa3398617c2cd0cd"
+checksum = "2afc2bb5cf948599994a1f1634edc81934c3952e2f32c8e49efbde63d767fa69"
 dependencies = [
  "anyhow",
  "bincode",
@@ -2127,9 +2127,9 @@ checksum = "2a2330da5de22e8a3cb63252ce2abb30116bf5265e89c0e01bc17015ce30a476"
 
 [[package]]
 name = "deno_error"
-version = "0.6.1"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "612ec3fc481fea759141b0c57810889b0a4fb6fee8f10748677bfe492fd30486"
+checksum = "dde60bd153886964234c5012d3d9caf788287f28d81fb24a884436904101ef10"
 dependencies = [
  "deno_error_macro",
  "libc",
@@ -2138,9 +2138,9 @@ dependencies = [
 
 [[package]]
 name = "deno_error_macro"
-version = "0.6.1"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8380a4224d5d2c3f84da4d764c4326cac62e9a1e3d4960442d29136fc07be863"
+checksum = "409f265785bd946d3006756955aaf40b0e4deb25752eae6a990afe54a31cfd83"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2149,9 +2149,9 @@ dependencies = [
 
 [[package]]
 name = "deno_path_util"
-version = "0.5.2"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "995a5563d815755b07c0f4b7a25a99cd3ef1c2f261ed7d1e9a53eae050a3f77e"
+checksum = "bfe02936964b2910719bd488841f6e884349360113c7abf6f4c6b28ca9cd7a19"
 dependencies = [
  "deno_error",
  "percent-encoding",
@@ -2162,9 +2162,9 @@ dependencies = [
 
 [[package]]
 name = "deno_task_shell"
-version = "0.25.3"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f21502a83ad5d8fc650ec6a06d6a811c8514a3f23ed718fe6457c43e87df8e5"
+checksum = "8ec9c589f733da0f5dfdf475d44cd01e2087425839a55162538d9898e94556e8"
 dependencies = [
  "anyhow",
  "deno_path_util",
@@ -4022,7 +4022,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2",
+ "socket2 0.5.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -6013,9 +6013,9 @@ dependencies = [
 
 [[package]]
 name = "redb"
-version = "2.6.0"
+version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cef6a6d3a65ea334d6cdfb31fa2525c20184b7aa7bd1ad1e2e37502610d4609f"
+checksum = "fef838cd981b5c46e9e91e20e4623e43b29b5c251eb245b34da0cbd2da09ab27"
 dependencies = [
  "libc",
 ]
@@ -6446,9 +6446,9 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-lowering",
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.1",
+ "cairo-lang-macro 0.2.0",
  "cairo-lang-macro-stable 1.0.0",
- "cairo-lang-macro-stable 2.0.0-rc.0",
+ "cairo-lang-macro-stable 2.0.0",
  "cairo-lang-parser",
  "cairo-lang-semantic",
  "cairo-lang-sierra",
@@ -6502,7 +6502,7 @@ dependencies = [
  "scarb-build-metadata",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
- "scarb-proc-macro-server-types 0.3.0-rc.1",
+ "scarb-proc-macro-server-types 0.3.0",
  "scarb-stable-hash 1.0.0",
  "scarb-test-support",
  "scarb-ui",
@@ -6527,7 +6527,7 @@ dependencies = [
  "thiserror 2.0.12",
  "tokio",
  "tokio-stream",
- "toml 0.9.2",
+ "toml 0.9.3",
  "toml_edit",
  "tracing",
  "tracing-chrome",
@@ -6537,7 +6537,7 @@ dependencies = [
  "url",
  "walkdir",
  "which 8.0.0",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
  "zip",
  "zstd",
 ]
@@ -6647,7 +6647,7 @@ dependencies = [
  "cairo-lang-executable",
  "cairo-lang-runner",
  "cairo-lang-utils",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "camino",
  "clap",
  "console",
@@ -6673,7 +6673,7 @@ version = "2.11.4"
 dependencies = [
  "anyhow",
  "cairo-lang-runner",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "camino",
  "clap",
  "num-bigint",
@@ -6733,7 +6733,7 @@ dependencies = [
  "anyhow",
  "cairo-lang-casm",
  "cairo-lang-runner",
- "cairo-vm 2.2.0",
+ "cairo-vm 2.3.1",
  "serde",
  "serde_json",
  "shell-words",
@@ -6754,10 +6754,10 @@ dependencies = [
 
 [[package]]
 name = "scarb-proc-macro-server-types"
-version = "0.3.0-rc.1"
+version = "0.3.0"
 dependencies = [
  "cairo-lang-macro 0.1.1",
- "cairo-lang-macro 0.2.0-rc.1",
+ "cairo-lang-macro 0.2.0",
  "serde",
  "serde_json",
 ]
@@ -6819,7 +6819,7 @@ dependencies = [
  "predicates",
  "scarb",
  "scarb-build-metadata",
- "scarb-proc-macro-server-types 0.3.0-rc.1",
+ "scarb-proc-macro-server-types 0.3.0",
  "scarb-ui",
  "semver 1.0.26",
  "serde",
@@ -7337,6 +7337,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "socket2"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "233504af464074f9d066d7b5416c5f9b894a5862a6506e306f7b816cdd6f1807"
+dependencies = [
+ "libc",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "sonic-number"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7525,12 +7535,10 @@ dependencies = [
 
 [[package]]
 name = "starknet-types-core"
-version = "0.1.9"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87af771d7f577931913089f9ca9a9f85d8a6238d59b2977f4c383d133c8abd3b"
+checksum = "4037bcb26ce7c508448d221e570d075196fd4f6912ae6380981098937af9522a"
 dependencies = [
- "blake2",
- "digest 0.10.7",
  "lambdaworks-crypto",
  "lambdaworks-math",
  "lazy_static",
@@ -8079,9 +8087,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.46.1"
+version = "1.47.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cc3a2344dafbe23a245241fe8b09735b521110d30fcefbbd5feb1797ca35d17"
+checksum = "43864ed400b6043a4757a25c7a64a8efde741aed79a056a2fb348a406701bb35"
 dependencies = [
  "backtrace",
  "bytes",
@@ -8091,9 +8099,9 @@ dependencies = [
  "pin-project-lite",
  "signal-hook-registry",
  "slab",
- "socket2",
+ "socket2 0.6.0",
  "tokio-macros",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -8186,9 +8194,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.9.2"
+version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed0aee96c12fa71097902e0bb061a5e1ebd766a6636bb605ba401c45c1650eac"
+checksum = "e06723639aaded957e5a80be250c1f82f274b9d23ebb4d94163668470623461c"
 dependencies = [
  "indexmap 2.10.0",
  "serde",
@@ -8454,7 +8462,7 @@ dependencies = [
  "serde_json",
  "target-triple",
  "termcolor",
- "toml 0.9.2",
+ "toml 0.9.3",
 ]
 
 [[package]]

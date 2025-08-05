@@ -349,7 +349,7 @@ fn compiler_config_defaults_in_dev() {
                 .unwrap()
                 .as_str()
                 .unwrap(),
-            "avoid"
+            "default"
         );
     }
 }
