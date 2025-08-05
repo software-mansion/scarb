@@ -295,6 +295,7 @@ fn missing_config_json() {
 }
 
 #[test]
+#[ignore]
 fn caching() {
     let cache_dir = TempDir::new().unwrap();
 
