@@ -428,32 +428,6 @@ fn caching() {
         304 Not Modified
         content-length: 0
         etag: ...
-
-        ###
-
-        GET /index/3/b/bar.json
-        accept: */*
-        accept-encoding: gzip, br, deflate
-        host: ...
-        if-none-match: ...
-        user-agent: ...
-
-        304 Not Modified
-        content-length: 0
-        etag: ...
-
-        ###
-
-        GET /index/3/b/bar.json
-        accept: */*
-        accept-encoding: gzip, br, deflate
-        host: ...
-        if-none-match: ...
-        user-agent: ...
-
-        304 Not Modified
-        content-length: 0
-        etag: ...
     "#]];
     expected.assert_eq(&registry.logs());
 }
