@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SCARB_REGISTRY_AUTH_TOKEN: ${{ secrets.SCARB_REGISTRY_AUTH_TOKEN }}
+      DEV_REGISTRY_URL: https://scarbs.dev/
 
     steps:
       - uses: actions/checkout@v4
@@ -62,3 +63,27 @@ jobs:
         run: |
           pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/assert_macros
           scarb publish
+
+      - name: Publish starknet (dev registry)
+        if: steps.check-plugins.outputs.starknet_exists != 'true'
+        run: |
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/starknet
+          scarb publish --index=$DEV_REGISTRY_URL
+
+      - name: Publish cairo_run (dev registry)
+        if: steps.check-plugins.outputs.cairo_run_exists != 'true'
+        run: |
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/cairo_run
+          scarb publish --index=$DEV_REGISTRY_URL
+
+      - name: Publish cairo_test (dev registry)
+        if: steps.check-plugins.outputs.cairo_test_exists != 'true'
+        run: |
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/test_plugin
+          scarb publish --index=$DEV_REGISTRY_URL
+
+      - name: Publish assert_macros (dev registry)
+        if: steps.check-plugins.outputs.assert_macros_exists != 'true'
+        run: |
+          pushd $(scarb cache path)/registry/std/v${{ steps.scarb-init.outputs.CAIRO_VERSION }}/assert_macros
+          scarb publish --index=$DEV_REGISTRY_URL
