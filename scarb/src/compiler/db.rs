@@ -31,6 +31,7 @@ pub struct ScarbDatabase {
     pub proc_macros: Vec<ProcMacroHostPlugin>,
 }
 
+/// If you change something here, make sure you also change the `build_lint_database` in `scarb/src/ops/lint.rs`.
 pub(crate) fn build_scarb_root_database(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,

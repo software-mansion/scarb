@@ -368,6 +368,7 @@ fn find_integration_test_package_id(package: &Package) -> Option<PackageId> {
     })
 }
 
+/// Keep it in sync with [crate::compiler::db::build_scarb_root_database].
 fn build_lint_database(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
