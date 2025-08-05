@@ -4,7 +4,7 @@ use crate::resolver::in_memory_index::{InMemoryIndex, VersionsResponse};
 use crate::resolver::provider::DependencyProviderError;
 use futures::{FutureExt, StreamExt};
 use std::sync::Arc;
-use tokio::sync::mpsc;
+use tokio::sync::{Notify, mpsc};
 use tokio_stream::wrappers::ReceiverStream;
 
 #[derive(Default)]
@@ -17,6 +17,7 @@ impl ResolverState {
         self: Arc<Self>,
         registry: &dyn Registry,
         request_stream: mpsc::Receiver<Request>,
+        notify: Arc<Notify>,
     ) -> Result<(), DependencyProviderError> {
         let mut response_stream = ReceiverStream::new(request_stream)
             .map(|request| self.process_request(request, registry).boxed_local())
@@ -34,6 +35,11 @@ impl ResolverState {
                 None => {}
             }
         }
+
+        // This acts as a barrier that ensures this future will not complete before the resolution
+        // completes.
+        notify.notified().await;
+
         Ok(())
     }
 
