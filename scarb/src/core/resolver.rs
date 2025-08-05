@@ -1,5 +1,5 @@
 use crate::core::lockfile::Lockfile;
-use crate::core::{PackageId, Summary, TargetKind};
+use crate::core::{DepKind, DependencyFilter, Package, PackageId, Summary, TargetKind};
 use anyhow::{Result, bail};
 use indoc::formatdoc;
 use itertools::Itertools;
@@ -24,6 +24,54 @@ pub struct Resolve {
 }
 
 impl Resolve {
+    /// This translates the representation of the solution produced by the PubGrub algorithm into the
+    /// representation used by Scarb internally.
+    pub fn new(
+        packages: &HashMap<PackageId, Package>,
+        main_package_ids: HashSet<PackageId>,
+    ) -> Self {
+        let summaries: HashMap<PackageId, Summary> = packages
+            .iter()
+            .map(|(package_id, package)| (*package_id, package.manifest.summary.clone()))
+            .collect();
+
+        let mut graph: DiGraphMap<PackageId, DependencyEdge> = Default::default();
+
+        for pid in summaries.keys() {
+            graph.add_node(*pid);
+        }
+
+        for summary in summaries.values() {
+            let dep_filter =
+                DependencyFilter::propagation(main_package_ids.contains(&summary.package_id));
+            for dep in summary.filtered_full_dependencies(dep_filter) {
+                let dep_kind = dep.kind.clone();
+                let Some(dep) = summaries.keys().find(|pid| pid.name == dep.name).copied() else {
+                    continue;
+                };
+                let weight = graph.edge_weight_mut(summary.package_id, dep);
+                if let Some(weight) = weight {
+                    match dep_kind {
+                        DepKind::Normal => {
+                            weight.accept_all();
+                        }
+                        DepKind::Target(target_kind) => {
+                            weight.accept_new(target_kind);
+                        }
+                    };
+                } else {
+                    let weight = match dep_kind {
+                        DepKind::Normal => DependencyEdge::for_all_targets(),
+                        DepKind::Target(target_kind) => DependencyEdge::for_target(target_kind),
+                    };
+                    graph.add_edge(summary.package_id, dep, weight);
+                }
+            }
+        }
+
+        Self { graph, summaries }
+    }
+
     /// Iterator over all [`PackageId`]s (nodes) present in this graph.
     ///
     /// This is an easier to discover shortcut for `self.graph.nodes()`.

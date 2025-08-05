@@ -21,6 +21,7 @@ use crate::core::{
 use crate::internal::to_version::ToVersion;
 use crate::ops::lockfile::{read_lockfile, write_lockfile};
 use crate::ops::{FeaturesOpts, FeaturesSelector};
+use crate::resolver::SelectedPackages;
 use crate::{DEFAULT_SOURCE_PATH, resolver};
 use anyhow::{Result, bail};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
@@ -328,12 +329,21 @@ pub fn resolve_workspace_with_opts(
                 &members_summaries,
                 &patched,
                 &patch_map,
-                lockfile,
+                lockfile.clone(),
                 yanked_whitelist,
                 require_audits,
                 require_audits_whitelist,
             )
             .await?;
+
+            let packages = collect_packages(resolve, &patched).await?;
+
+            let main_package_ids: HashSet<PackageId> =
+                HashSet::from_iter(members_summaries.iter().map(|sum| sum.package_id));
+
+            let resolve = Resolve::new(&packages, main_package_ids);
+
+            resolve.check_checksums(&lockfile)?;
 
             let lockfile = tokio::spawn(write_lockfile(
                 Lockfile::from_resolve(&resolve),
@@ -341,8 +351,6 @@ pub fn resolve_workspace_with_opts(
             ));
 
             patch_map.warn_unused(ws.config().ui());
-
-            let packages = collect_packages_from_resolve_graph(&resolve, &patched).await?;
 
             packages
                 .values()
@@ -362,13 +370,13 @@ pub fn resolve_workspace_with_opts(
 /// Currently, it is expected that all packages are already downloaded during resolution,
 /// so the `download` calls in this method should be cheap, but this may change the future.
 #[tracing::instrument(level = "trace", skip_all)]
-async fn collect_packages_from_resolve_graph(
-    resolve: &Resolve,
+async fn collect_packages(
+    selected: SelectedPackages,
     registry: &dyn Registry,
 ) -> Result<HashMap<PackageId, Package>> {
-    let mut packages = HashMap::with_capacity(resolve.package_ids().size_hint().0);
-    let mut response_stream = stream::iter(resolve.package_ids())
-        .map(|package_id| registry.download(package_id).boxed_local())
+    let mut packages = HashMap::with_capacity(selected.len());
+    let mut response_stream = stream::iter(selected.iter())
+        .map(|package_id| registry.download(*package_id).boxed_local())
         // Note: This value limits the number of concurrent downloads.
         // It's chosen rather arbitrarily, so may be subject to more tuning in the future.
         .buffer_unordered(16);

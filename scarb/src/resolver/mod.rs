@@ -1,19 +1,19 @@
 use crate::core::lockfile::Lockfile;
 use crate::core::registry::Registry;
 use crate::core::registry::patch_map::PatchMap;
-use crate::core::{PackageId, PackageName, Resolve, Summary};
+use crate::core::{PackageId, PackageName, Summary};
 use crate::resolver::provider::{
     DependencyProviderError, PubGrubDependencyProvider, PubGrubPackage, lock_dependency,
 };
-use crate::resolver::solution::{build_resolve, validate_solution};
+use crate::resolver::solution::validate_solution;
 use crate::resolver::state::{Request, ResolverState};
 use anyhow::{Error, anyhow, bail, format_err};
 use futures::{FutureExt, TryFutureExt};
 use indoc::formatdoc;
 use itertools::Itertools;
-use pubgrub::PubGrubError;
 use pubgrub::{DefaultStringReporter, Reporter};
 use pubgrub::{Incompatibility, State};
+use pubgrub::{PubGrubError, SelectedDependencies};
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::thread;
@@ -74,7 +74,7 @@ pub async fn resolve(
     yanked_whitelist: HashSet<PackageId>,
     require_audits: bool,
     require_audits_whitelist: HashSet<PackageName>,
-) -> anyhow::Result<Resolve> {
+) -> anyhow::Result<SelectedPackages> {
     let state = Arc::new(ResolverState::default());
 
     let (request_sink, request_stream): (mpsc::Sender<Request>, mpsc::Receiver<Request>) =
@@ -126,10 +126,34 @@ pub async fn resolve(
             .map_err(|_| DependencyProviderError::ChannelClosed.into())
             .and_then(|result| result)
     };
-
     let (_, resolve) = tokio::try_join!(requests_fut, resolve_fut)?;
-    resolve.check_checksums(&lockfile)?;
     Ok(resolve)
+}
+
+#[derive(Debug, Clone)]
+pub struct SelectedPackages(Vec<PackageId>);
+
+impl From<SelectedDependencies<PubGrubDependencyProvider>> for SelectedPackages {
+    fn from(solution: SelectedDependencies<PubGrubDependencyProvider>) -> Self {
+        SelectedPackages(
+            solution
+                .into_iter()
+                .map(|(package, version)| {
+                    PackageId::new(package.name.clone(), version.clone(), package.source_id)
+                })
+                .collect_vec(),
+        )
+    }
+}
+
+impl SelectedPackages {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &PackageId> {
+        self.0.iter()
+    }
 }
 
 /// Run dependency resolution with PubGrub algorithm.
@@ -137,7 +161,7 @@ pub async fn resolve(
 fn scarb_resolver(
     state: Arc<ResolverState>,
     request_sink: mpsc::Sender<Request>,
-    solution_tx: oneshot::Sender<Result<Resolve, Error>>,
+    solution_tx: oneshot::Sender<Result<SelectedPackages, Error>>,
     patch_map: PatchMap,
     lockfile: Lockfile,
     main_package_ids: HashSet<PackageId>,
@@ -191,7 +215,7 @@ fn scarb_resolver(
             pubgrub::resolve_state(&provider, &mut state, package).map_err(format_error)?;
 
         validate_solution(&solution)?;
-        build_resolve(&provider, solution)
+        Ok(solution.into())
     };
     let result = result();
     solution_tx.send(result).unwrap();
@@ -258,7 +282,8 @@ mod tests {
     use crate::core::package::PackageName;
     use crate::core::registry::mock::{MockRegistry, deps, locks, pkgs, registry};
     use crate::core::registry::patch_map::PatchMap;
-    use crate::core::{ManifestDependency, PackageId, Resolve, SourceId, TargetKind};
+    use crate::core::{ManifestDependency, PackageId, SourceId};
+    use crate::resolver::SelectedPackages;
 
     fn check(
         registry: MockRegistry,
@@ -286,8 +311,8 @@ mod tests {
 
         let resolve = resolve
             .map(|r| {
-                r.graph
-                    .nodes()
+                r.iter()
+                    .cloned()
                     .filter(|id| {
                         !id.name.as_str().starts_with("root_")
                             && id.name != PackageName::CORE
@@ -306,18 +331,11 @@ mod tests {
         assert_serde_eq!(expected, resolve);
     }
 
-    fn resolve(
-        registry: MockRegistry,
-        roots: Vec<(&[ManifestDependency], PackageId)>,
-    ) -> Result<Resolve> {
-        resolve_with_lock(registry, roots, &[])
-    }
-
     fn resolve_with_lock(
         mut registry: MockRegistry,
         roots: Vec<(&[ManifestDependency], PackageId)>,
         locks: &[PackageLock],
-    ) -> Result<Resolve> {
+    ) -> Result<SelectedPackages> {
         let runtime = Builder::new_multi_thread().build().unwrap();
 
         let summaries = roots
@@ -637,45 +655,6 @@ mod tests {
                 ("boo", "1.0.0")
             ]],
             Ok(pkgs!["boo v1.0.0", "foo v1.0.0"]),
-        );
-    }
-
-    #[test]
-    fn can_resolve_target_kind_dep() {
-        let root = package_id("bar");
-        let resolve = resolve(
-            registry![("foo v1.0.0", []), ("boo v1.0.0", [])],
-            vec![(
-                deps![
-                    ("foo", "1.0.0", (), "test"),
-                    ("foo", "1.0.0", (), "dojo"),
-                    ("boo", "1.0.0")
-                ],
-                root,
-            )],
-        )
-        .unwrap();
-
-        let mut test_solution = resolve.solution_of(root, &TargetKind::TEST);
-        test_solution.sort();
-        assert_eq!(test_solution.len(), 4);
-        assert_eq!(
-            test_solution
-                .iter()
-                .map(|p| p.name.clone().to_string())
-                .collect_vec(),
-            vec!["bar", "boo", "core", "foo"],
-        );
-
-        let mut lib_solution = resolve.solution_of(root, &TargetKind::LIB);
-        lib_solution.sort();
-        assert_eq!(lib_solution.len(), 3);
-        assert_eq!(
-            lib_solution
-                .into_iter()
-                .map(|p| p.name.clone().to_string())
-                .collect_vec(),
-            vec!["bar", "boo", "core"],
         );
     }
 
