@@ -198,7 +198,7 @@ cairo-lang-test-runner = { git = "https://github.com/starkware-libs/cairo", rev 
 cairo-lang-test-utils = { git = "https://github.com/starkware-libs/cairo", rev = "v2.12.0" }
 cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo", rev = "v2.12.0" }
 cairo-language-server = { git = "https://github.com/software-mansion/cairols", rev = "2fea49701b254d058433aade26b57b2826fb2462" }
-cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "387d793e6cd2143917bd8487572f1d2d6efbe305" }
+cairo-lint = { git = "https://github.com/software-mansion/cairo-lint", rev = "c743765bb4329439815a385b09816afc7294b9d2" }
 stwo-cairo-adapter = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
 stwo_cairo_prover = { git = "https://github.com/starkware-libs/stwo-cairo", rev = "08ddec7125cd77104b3e0e3a84298a9d988778dd" }
 
