@@ -9,8 +9,11 @@ publish = false
 anyhow.workspace = true
 cairo-toolchain-xtasks = "1"
 clap.workspace = true
+# reqwest with TLS support for HTTPS URL checking in link checker
+reqwest = { workspace = true, features = ["rustls-tls"] }
 semver.workspace = true
 serde_json.workspace = true
 time.workspace = true
+tokio.workspace = true
 walkdir.workspace = true
 xshell.workspace = true
