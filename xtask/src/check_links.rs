@@ -5,8 +5,8 @@
 //! links are still accessible.
 //!
 //! Usage:
-//!   cargo xtask check-links       # Check all URLs
-//!   cargo xtask check-links --offline   # Extract URLs only, no network requests
+//!   cargo xtask check-links              # Check all URLs with network requests
+//!   cargo xtask check-links --offline    # Extract URLs only, no network requests
 
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -18,7 +18,7 @@ use walkdir::WalkDir;
 /// Check links in Scarb error and warning messages
 #[derive(Parser)]
 pub struct Args {
-    /// Skip network checks and only validate URL extraction  
+    /// Extract URLs only without making network requests
     #[clap(long)]
     offline: bool,
 }
@@ -64,17 +64,9 @@ pub fn main(args: Args) -> Result<()> {
         println!("  {}", url);
     }
     
-    // Check if we're in an offline environment or if user requested offline mode
-    let is_ci = std::env::var("CI").is_ok() || std::env::var("GITHUB_ACTIONS").is_ok();
-    let should_run_offline = args.offline || is_ci;
-    
-    if should_run_offline {
-        if args.offline {
-            println!("\n🔍 Running in offline mode - URL extraction only");
-        } else {
-            println!("\n🔍 CI environment detected - running in offline mode");
-            println!("💡 Use --offline flag explicitly to suppress this message");
-        }
+    // Check if user requested offline mode
+    if args.offline {
+        println!("\n🔍 Running in offline mode - URL extraction only");
         return Ok(());
     }
     
