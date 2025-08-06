@@ -1649,14 +1649,14 @@ dependencies = [
 
 [[package]]
 name = "cairo-toolchain-xtasks"
-version = "1.2.2"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "343b6ecbb4cddb4dd21e398cc440f8edf474e5bf43f05a057683dfcee4db7d64"
+checksum = "76dd9ee665354ab4b90283e69cfcc6803733a055da96feae2721e5edbeb0187e"
 dependencies = [
  "anyhow",
  "clap",
  "semver 1.0.26",
- "toml_edit",
+ "toml_edit 0.23.2",
  "xshell",
 ]
 
@@ -5779,7 +5779,7 @@ version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edce586971a4dfaa28950c6f18ed55e0406c1ab88bbce2c6f6293a7aaba73d35"
 dependencies = [
- "toml_edit",
+ "toml_edit 0.22.27",
 ]
 
 [[package]]
@@ -6563,7 +6563,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "toml 0.9.3",
- "toml_edit",
+ "toml_edit 0.23.2",
  "tracing",
  "tracing-chrome",
  "tracing-subscriber",
@@ -6849,7 +6849,7 @@ dependencies = [
  "sha2",
  "snapbox",
  "tokio",
- "toml_edit",
+ "toml_edit 0.23.2",
  "tower-http 0.4.4",
  "url",
  "walkdir",
@@ -8207,7 +8207,7 @@ dependencies = [
  "serde",
  "serde_spanned 0.6.9",
  "toml_datetime 0.6.11",
- "toml_edit",
+ "toml_edit 0.22.27",
 ]
 
 [[package]]
@@ -8254,6 +8254,21 @@ dependencies = [
  "serde_spanned 0.6.9",
  "toml_datetime 0.6.11",
  "toml_write",
+ "winnow",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.23.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1dee9dc43ac2aaf7d3b774e2fba5148212bf2bd9374f4e50152ebe9afd03d42"
+dependencies = [
+ "indexmap 2.10.0",
+ "serde",
+ "serde_spanned 1.0.0",
+ "toml_datetime 0.7.0",
+ "toml_parser",
+ "toml_writer",
  "winnow",
 ]
 
