@@ -86,12 +86,31 @@ pub fn main(args: Args) -> Result<()> {
         match check_url(url) {
             Ok(()) => println!("✅ OK"),
             Err(e) => {
+                // Get the root cause error to understand what really happened
                 let error_msg = e.to_string();
-                if error_msg.contains("Failed to send HTTP request") || 
-                   error_msg.contains("dns error") ||
-                   error_msg.contains("timed out") ||
-                   error_msg.contains("connection") {
-                    println!("🔌 NETWORK ERROR: {}", e);
+                let mut root_cause = e.source();
+                let mut deepest_error = error_msg.clone();
+                
+                // Walk down the error chain to find the root cause
+                while let Some(source) = root_cause {
+                    deepest_error = source.to_string();
+                    root_cause = source.source();
+                }
+                let root_error = deepest_error.to_lowercase();
+                
+                // Check if this is a real HTTP error (like 404, 500) vs network issue
+                if error_msg.starts_with("HTTP ") {
+                    println!("❌ FAILED: {}", e);
+                    broken_links.push((url.clone(), e));
+                } else if root_error.contains("dns error") ||
+                          root_error.contains("name resolution") ||
+                          root_error.contains("temporary failure") ||
+                          root_error.contains("invalid peer certificate") ||
+                          root_error.contains("certificate") ||
+                          root_error.contains("timed out") ||
+                          root_error.contains("connection refused") ||
+                          root_error.contains("no route to host") {
+                    println!("🔌 NETWORK ERROR: {} (root cause: {})", error_msg, deepest_error);
                     network_errors.push((url.clone(), e));
                 } else {
                     println!("❌ FAILED: {}", e);
@@ -111,18 +130,29 @@ pub fn main(args: Args) -> Result<()> {
     }
     
     if !network_errors.is_empty() {
-        println!("🔌 Found {} network errors:", network_errors.len());
+        println!("🔌 Found {} network connectivity issues:", network_errors.len());
         for (link, error) in &network_errors {
             println!("  {} - {}", link, error);
         }
+        println!();
         
         if connectivity_test_failed {
-            println!("💡 Network connectivity issues detected - this might be due to firewall restrictions");
-            println!("💡 In CI environments or restricted networks, use: cargo xtask check-links --offline");
+            println!("💡 Network connectivity test failed - this indicates the environment has network restrictions");
+            println!("💡 Common causes:");
+            println!("   • Firewall blocking outgoing connections");
+            println!("   • DNS resolution blocked/restricted"); 
+            println!("   • Corporate proxy/security policies");
+            println!("   • TLS certificate validation issues in restricted environments");
+            println!();
+            println!("💡 In CI environments:");
+            println!("   • Links are not actually being tested due to network restrictions");
+            println!("   • Consider using --offline flag for URL extraction only");
+            println!("   • Or allowlist required domains in your CI environment");
         } else {
-            println!("💡 Network errors might indicate connectivity issues or blocked domains");
+            println!("💡 Network errors detected - domains may be blocked or unreachable");
             println!("💡 Try running with --offline flag to only validate URL extraction");
         }
+        println!();
     }
     
     // Determine exit status
@@ -132,9 +162,13 @@ pub fn main(args: Args) -> Result<()> {
     } else if !broken_links.is_empty() {
         anyhow::bail!("Found {} broken links (returning HTTP errors)", broken_links.len())
     } else {
-        // Only network errors - don't fail the build
-        println!("⚠️  Only network connectivity issues found - no HTTP errors from servers");
-        println!("⚠️  This is likely due to firewall restrictions or network configuration");
+        // Only network errors - provide clear guidance
+        println!("⚠️  Link validation could not be completed due to network connectivity issues");
+        println!("⚠️  No actual HTTP requests reached the target servers");
+        println!("⚠️  This is likely due to DNS blocking, firewalls, or other network restrictions");
+        println!();
+        println!("🔍 {} URLs were found and would be tested in an unrestricted environment:", all_urls.len());
+        println!("   Use --offline flag to only validate URL extraction without network requests");
         Ok(())
     }
 }
@@ -353,7 +387,9 @@ fn check_url(url: &str) -> Result<()> {
             .head(url)
             .send()
             .await
-            .with_context(|| format!("Failed to send HTTP request to {}", url))?;
+            .with_context(|| {
+                format!("Failed to send HTTP request to {}", url)
+            })?;
         
         if response.status().is_success() {
             Ok(())
