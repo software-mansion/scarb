@@ -7,7 +7,7 @@ use std::{env, fs};
 use anyhow::{Context, Result};
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_test_plugin::{TestCompilation, TestCompilationMetadata};
-use cairo_lang_test_runner::{CompiledTestRunner, RunProfilerConfig, TestRunConfig};
+use cairo_lang_test_runner::{CompiledTestRunner, TestRunConfig};
 use camino::Utf8PathBuf;
 use clap::Parser;
 use indoc::formatdoc;
@@ -95,9 +95,9 @@ fn main() -> Result<()> {
                 filter: args.filter.clone(),
                 include_ignored: args.include_ignored,
                 ignored: args.ignored,
-                run_profiler: RunProfilerConfig::None,
                 gas_enabled: is_gas_enabled(&metadata, &package.id, target),
                 print_resource_usage: args.print_resource_usage,
+                profiler_config: None,
             };
             let runner = CompiledTestRunner::new(test_compilation, config);
             runner.run(None)?;

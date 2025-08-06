@@ -90,7 +90,7 @@ impl CairoPluginProjectBuilder {
         let macro_lib_version_req = match self.macro_version {
             CairoPluginProjectVersion::V1 => "\"0.1\"".to_string(),
             CairoPluginProjectVersion::V2 => {
-                format!("{{ path = {macro_lib_path}, version = \"0.2.0-rc.0\" }}")
+                format!("{{ path = {macro_lib_path}, version = \"0.2.0\" }}")
             }
         };
         formatdoc! {r#"
@@ -128,11 +128,11 @@ impl CairoPluginProjectBuilder {
     }
 
     pub fn add_cairo_lang_parser_dep(self) -> Self {
-        self.add_dep(r#"cairo-lang-parser = "2.12.0-rc.3""#)
+        self.add_dep(r#"cairo-lang-parser = "2.12.0""#)
     }
 
     pub fn add_cairo_lang_syntax_dep(self) -> Self {
-        self.add_dep(r#"cairo-lang-syntax = "2.12.0-rc.3""#)
+        self.add_dep(r#"cairo-lang-syntax = "2.12.0""#)
     }
 
     pub fn default_v1() -> Self {
