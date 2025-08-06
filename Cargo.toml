@@ -146,7 +146,7 @@ time = "0.3"
 tokio = { version = "1", features = ["macros", "io-util", "process", "rt", "rt-multi-thread", "sync"] }
 tokio-stream = "0.1"
 toml = "0.9"
-toml_edit = { version = "0.22", features = ["serde"] }
+toml_edit = { version = "0.23", features = ["serde"] }
 tower-http = { version = "0.4", features = ["fs"] }
 tracing = "0.1"
 tracing-chrome = "0.7"
