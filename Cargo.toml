@@ -114,7 +114,7 @@ proc-macro2 = "1"
 pubgrub = { git = "https://github.com/software-mansion-labs/pubgrub.git", branch = "dev" }
 quote = "1"
 ra_ap_toolchain = "0.0.218"
-redb = "2.6.1"
+redb = "2.6.2"
 reqwest = { version = "0.11", features = ["gzip", "brotli", "deflate", "json", "stream", "multipart"], default-features = false }
 salsa = { package = "rust-analyzer-salsa", version = "0.17.0-pre.6" }
 semver = { version = "1", features = ["serde"] }
@@ -152,7 +152,7 @@ tracing = "0.1"
 tracing-chrome = "0.7"
 tracing-core = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-trybuild = "1.0.106"
+trybuild = "1.0.110"
 typed-builder = ">=0.17"
 typetag = "0.2"
 url = { version = "2", features = ["serde"] }
