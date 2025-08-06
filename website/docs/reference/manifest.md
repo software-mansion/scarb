@@ -383,6 +383,9 @@ By default, this flag is set to `false`.
 unsafe-panic = false
 ```
 
+> [!WARNING]
+> This feature is still not stabilized and may cause unexpected issues / crashes during the compilation.
+
 ### `incremental`
 
 If enabled, after project compilation Scarb will emit additional cache artifacts. This artifacts will be attempted to be
