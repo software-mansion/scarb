@@ -1,3 +1,13 @@
+//! Link checker for URLs in Scarb error and warning messages
+//! 
+//! This tool scans the Scarb codebase for HTTP/HTTPS URLs that appear in user-facing
+//! contexts (error messages, warnings, help text, etc.) and validates that these 
+//! links are still accessible.
+//!
+//! Usage:
+//!   cargo xtask check-links       # Check all URLs
+//!   cargo xtask check-links --offline   # Extract URLs only, no network requests
+
 use anyhow::{Context, Result};
 use clap::Parser;
 use std::collections::HashSet;
@@ -5,9 +15,10 @@ use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
 
+/// Check links in Scarb error and warning messages
 #[derive(Parser)]
 pub struct Args {
-    /// Skip network checks and only validate URL extraction
+    /// Skip network checks and only validate URL extraction  
     #[clap(long)]
     offline: bool,
 }

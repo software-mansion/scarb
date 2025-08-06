@@ -258,3 +258,13 @@ jobs:
           name: nextest-archive-ubuntu-latest
       - uses: foundry-rs/setup-snfoundry@v4
       - run: cargo nextest run --archive-file 'nextest-archive-ubuntu-latest.tar.zst' --run-ignored=all --filterset 'test(new_simple)'
+
+  check-links:
+    name: check links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Check documentation links
+        run: cargo xtask check-links
