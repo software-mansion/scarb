@@ -3,7 +3,7 @@ use crate::compiler::incremental::fingerprint::LocalFingerprint;
 use crate::internal::fsx;
 use crate::internal::fsx::PathUtf8Ext;
 use cairo_lang_filesystem::ids::CAIRO_FILE_EXTENSION;
-use camino::Utf8Path;
+use camino::Utf8PathBuf;
 use ignore::WalkState::Continue;
 use ignore::types::TypesBuilder;
 use ignore::{DirEntry, WalkBuilder};
@@ -17,15 +17,17 @@ use tracing::warn;
 
 #[tracing::instrument(skip_all, level = "info")]
 pub(crate) fn create_local_fingerprints(
-    source_paths: Vec<&Utf8Path>,
+    source_paths: Vec<Utf8PathBuf>,
     target_name: SmolStr,
-    ui: &Ui,
+    ui: Ui,
 ) -> Vec<LocalFingerprint> {
     let source_paths = source_paths
         .into_iter()
         .map(|p| {
             if !p.is_dir() {
-                p.parent().expect("source path must have a parent")
+                p.parent()
+                    .expect("source path must have a parent")
+                    .to_path_buf()
             } else {
                 p
             }
