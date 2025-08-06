@@ -661,7 +661,7 @@ fn cairo_plugin() {
                 crate-type = ["cdylib"]
 
                 [dependencies]
-                cairo-lang-macro = { path = "[..]", version = "0.2.0-rc.0" }
+                cairo-lang-macro = { path = "[..]", version = "0.2.0" }
             "#},
         )
         .file_matches(
