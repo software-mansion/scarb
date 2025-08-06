@@ -6473,7 +6473,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "toml 0.9.5",
- "toml_edit 0.22.27",
+ "toml_edit 0.23.2",
  "tracing",
  "tracing-chrome",
  "tracing-subscriber",
@@ -6772,7 +6772,7 @@ dependencies = [
  "sha2",
  "snapbox",
  "tokio",
- "toml_edit 0.22.27",
+ "toml_edit 0.23.2",
  "tower-http",
  "url",
  "walkdir",
@@ -8191,6 +8191,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d1dee9dc43ac2aaf7d3b774e2fba5148212bf2bd9374f4e50152ebe9afd03d42"
 dependencies = [
  "indexmap 2.10.0",
+ "serde",
+ "serde_spanned 1.0.0",
  "toml_datetime 0.7.0",
  "toml_parser",
  "toml_writer",
