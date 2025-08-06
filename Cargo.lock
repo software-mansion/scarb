@@ -1530,7 +1530,7 @@ dependencies = [
 [[package]]
 name = "cairo-language-server"
 version = "2.11.4"
-source = "git+https://github.com/software-mansion/cairols?rev=7ecba29dd8a72690af0c5d2c533a48e291662f2c#7ecba29dd8a72690af0c5d2c533a48e291662f2c"
+source = "git+https://github.com/software-mansion/cairols?rev=2fea49701b254d058433aade26b57b2826fb2462#2fea49701b254d058433aade26b57b2826fb2462"
 dependencies = [
  "anyhow",
  "bincode",
@@ -1584,7 +1584,7 @@ dependencies = [
 [[package]]
 name = "cairo-lint"
 version = "2.11.4"
-source = "git+https://github.com/software-mansion/cairo-lint?rev=3cb99ece36b89338a2efd300a88ac22ebdb5a70e#3cb99ece36b89338a2efd300a88ac22ebdb5a70e"
+source = "git+https://github.com/software-mansion/cairo-lint?rev=387d793e6cd2143917bd8487572f1d2d6efbe305#387d793e6cd2143917bd8487572f1d2d6efbe305"
 dependencies = [
  "anyhow",
  "cairo-lang-compiler",
@@ -1592,8 +1592,10 @@ dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
  "cairo-lang-formatter",
+ "cairo-lang-lowering",
  "cairo-lang-parser",
  "cairo-lang-semantic",
+ "cairo-lang-sierra-generator",
  "cairo-lang-syntax",
  "cairo-lang-test-plugin",
  "cairo-lang-utils",
