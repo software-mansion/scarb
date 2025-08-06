@@ -22,6 +22,7 @@ macro_rules! command {
 }
 
 command!(Command(
+    check_links,
     create_archive,
     get_nightly_version,
     list_binaries,
