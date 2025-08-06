@@ -31,6 +31,7 @@ pub struct ScarbDatabase {
     pub proc_macros: Vec<ProcMacroHostPlugin>,
 }
 
+/// If you change something here, make sure you also change the `build_lint_database` in `scarb/src/ops/lint.rs`.
 pub(crate) fn build_scarb_root_database(
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
@@ -78,12 +79,12 @@ pub(crate) fn build_scarb_root_database(
 }
 
 #[cfg(feature = "scarb-lint")]
-fn append_lint_plugin(suite: &mut PluginSuite) {
+pub(crate) fn append_lint_plugin(suite: &mut PluginSuite) {
     suite.add_analyzer_plugin::<cairo_lint::plugin::CairoLintAllow>();
 }
 
 #[cfg(not(feature = "scarb-lint"))]
-fn append_lint_plugin(_suite: &mut PluginSuite) {}
+pub(crate) fn append_lint_plugin(_suite: &mut PluginSuite) {}
 
 /// Sets the plugin suites for crates related to the library components
 /// according to the `plugins_for_components` mapping.
@@ -159,7 +160,7 @@ fn inject_virtual_wrapper_lib(db: &mut RootDatabase, unit: &CairoCompilationUnit
     Ok(())
 }
 
-fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
+pub(crate) fn build_project_config(unit: &CairoCompilationUnit) -> Result<ProjectConfig> {
     let crate_roots: OrderedHashMap<CrateIdentifier, PathBuf> = unit
         .components
         .iter()
