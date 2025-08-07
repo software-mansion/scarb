@@ -219,10 +219,10 @@ impl Message for Summary {
             }
         }
 
-        if self.gas_defined {
-            if let Some(gas) = self.result.gas_counter {
-                println!("Remaining gas: {gas}");
-            }
+        if self.gas_defined
+            && let Some(gas) = self.result.gas_counter
+        {
+            println!("Remaining gas: {gas}");
         }
 
         if self.print_full_memory {

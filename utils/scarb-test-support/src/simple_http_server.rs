@@ -208,6 +208,8 @@ async fn set_etag<B>(request: Request<B>, next: Next<B>) -> Response<Body> {
     let digest = HEXLOWER.encode(&digest);
     let digest = HeaderValue::from_str(&digest).unwrap();
 
+    // TODO(#1915): Remove this line when we will use stable toolchain for entire repo again.
+    #[allow(clippy::collapsible_if)]
     if let Some(if_none_match) = if_none_match {
         if digest == if_none_match {
             parts.status = StatusCode::NOT_MODIFIED;
