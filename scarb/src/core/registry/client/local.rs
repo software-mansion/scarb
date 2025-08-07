@@ -15,7 +15,7 @@ use crate::core::registry::client::{
 };
 use crate::core::registry::index::{IndexDependency, IndexRecord, IndexRecords, TemplateUrl};
 use crate::core::{Checksum, Config, Digest, Package, PackageId, PackageName, Summary};
-use crate::flock::{FileLockGuard, Filesystem};
+use crate::flock::{Filesystem, LockedFile};
 use crate::internal::fsx;
 use crate::internal::fsx::PathBufUtf8Ext;
 
@@ -132,7 +132,7 @@ impl RegistryClient for LocalRegistryClient<'_> {
         &self,
         package: PackageId,
         _: CreateScratchFileCallback,
-    ) -> Result<RegistryDownload<FileLockGuard>> {
+    ) -> Result<RegistryDownload<LockedFile>> {
         let dl_path = self.dl_path(package).try_into_utf8()?;
         let base_path = dl_path
             .parent()
@@ -150,7 +150,7 @@ impl RegistryClient for LocalRegistryClient<'_> {
         Ok(true)
     }
 
-    async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
+    async fn publish(&self, package: Package, tarball: LockedFile) -> Result<RegistryUpload> {
         let summary = package.manifest.summary.clone();
         let records_path = self.records_path(&summary.package_id.name);
         let dl_path = self.dl_path(summary.package_id);
@@ -163,7 +163,7 @@ impl RegistryClient for LocalRegistryClient<'_> {
 
 fn publish_impl(
     summary: Summary,
-    tarball: FileLockGuard,
+    tarball: LockedFile,
     records_path: PathBuf,
     dl_path: PathBuf,
 ) -> Result<RegistryUpload, Error> {

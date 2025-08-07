@@ -17,7 +17,7 @@ use crate::core::registry::client::{
 };
 use crate::core::registry::index::{IndexRecord, IndexRecords};
 use crate::core::{Checksum, Config, ManifestDependency, PackageId, SourceId};
-use crate::flock::{AdvisoryLockGuard, FileLockGuard, Filesystem};
+use crate::flock::{AdvisoryLockGuard, Filesystem, LockedFile};
 use crate::internal::fsx;
 
 // FIXME(mkaput): Avoid creating database if inner client does not trigger cache writes.
@@ -140,7 +140,7 @@ impl<'c> RegistryClientCache<'c> {
     pub async fn download_and_verify_with_cache(
         &self,
         package: PackageId,
-    ) -> Result<(FileLockGuard, Checksum)> {
+    ) -> Result<(LockedFile, Checksum)> {
         // Skip downloading if the package already has been.
         if self.is_package_downloaded(package).await {
             trace!("found cached archive which is not empty, skipping download");
@@ -219,8 +219,8 @@ impl<'c> RegistryClientCache<'c> {
         &self,
         package: PackageId,
         checksum: &Checksum,
-        mut file: FileLockGuard,
-    ) -> Result<FileLockGuard> {
+        mut file: LockedFile,
+    ) -> Result<LockedFile> {
         let checksum = checksum.clone();
         spawn_blocking(move || -> Result<_> {
             file.seek(SeekFrom::Start(0))?;

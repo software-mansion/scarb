@@ -24,14 +24,14 @@ pub enum FileLockKind {
 }
 
 #[derive(Debug)]
-pub struct FileLockGuard {
+pub struct LockedFile {
     // NOTE: File will become unlocked when this structure is dropped.
     file: File,
     path: Utf8PathBuf,
     lock_kind: FileLockKind,
 }
 
-impl FileLockGuard {
+impl LockedFile {
     pub fn path(&self) -> &Utf8Path {
         self.path.as_path()
     }
@@ -56,8 +56,8 @@ impl FileLockGuard {
         Ok(self)
     }
 
-    pub fn into_async(mut self) -> AsyncFileLockGuard {
-        AsyncFileLockGuard {
+    pub fn into_async(mut self) -> AsyncLockedFile {
+        AsyncLockedFile {
             file: tokio::fs::File::from_std(self.file),
             path: mem::take(&mut self.path),
             lock_kind: self.lock_kind,
@@ -65,7 +65,7 @@ impl FileLockGuard {
     }
 }
 
-impl Deref for FileLockGuard {
+impl Deref for LockedFile {
     type Target = File;
 
     fn deref(&self) -> &Self::Target {
@@ -73,21 +73,21 @@ impl Deref for FileLockGuard {
     }
 }
 
-impl DerefMut for FileLockGuard {
+impl DerefMut for LockedFile {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.file
     }
 }
 
 #[derive(Debug)]
-pub struct AsyncFileLockGuard {
+pub struct AsyncLockedFile {
     // NOTE: File will become unlocked when this structure is dropped.
     file: tokio::fs::File,
     path: Utf8PathBuf,
     lock_kind: FileLockKind,
 }
 
-impl AsyncFileLockGuard {
+impl AsyncLockedFile {
     pub fn path(&self) -> &Utf8Path {
         self.path.as_path()
     }
@@ -96,8 +96,8 @@ impl AsyncFileLockGuard {
         self.lock_kind
     }
 
-    pub async fn into_sync(mut self) -> FileLockGuard {
-        FileLockGuard {
+    pub async fn into_sync(mut self) -> LockedFile {
+        LockedFile {
             file: self.file.into_std().await,
             path: mem::take(&mut self.path),
             lock_kind: self.lock_kind,
@@ -105,7 +105,7 @@ impl AsyncFileLockGuard {
     }
 }
 
-impl Deref for AsyncFileLockGuard {
+impl Deref for AsyncLockedFile {
     type Target = tokio::fs::File;
 
     fn deref(&self) -> &Self::Target {
@@ -113,7 +113,7 @@ impl Deref for AsyncFileLockGuard {
     }
 }
 
-impl DerefMut for AsyncFileLockGuard {
+impl DerefMut for AsyncLockedFile {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.file
     }
@@ -127,14 +127,14 @@ pub struct AdvisoryLock<'f> {
         // This Arc is shared between all guards within the process.
         // Here it is Weak, because AdvisoryLock itself does not keep the lock
         // (only guards do).
-        Weak<FileLockGuard>,
+        Weak<LockedFile>,
     >,
     filesystem: &'f Filesystem,
     config: &'f Config,
 }
 
 pub struct AdvisoryLockGuard {
-    _inner: Arc<FileLockGuard>,
+    _inner: Arc<LockedFile>,
 }
 
 impl AdvisoryLock<'_> {
@@ -246,7 +246,7 @@ impl Filesystem {
         path: impl AsRef<Utf8Path>,
         description: &str,
         config: &Config,
-    ) -> Result<FileLockGuard> {
+    ) -> Result<LockedFile> {
         self.open(
             path.as_ref(),
             OpenOptions::new()
@@ -275,7 +275,7 @@ impl Filesystem {
         path: impl AsRef<Utf8Path>,
         description: &str,
         config: &Config,
-    ) -> Result<FileLockGuard> {
+    ) -> Result<LockedFile> {
         self.open(
             path.as_ref(),
             OpenOptions::new().read(true),
@@ -300,7 +300,7 @@ impl Filesystem {
         path: impl AsRef<Utf8Path>,
         description: &str,
         config: &Config,
-    ) -> Result<FileLockGuard> {
+    ) -> Result<LockedFile> {
         self.open(
             path.as_ref(),
             OpenOptions::new().read(true),
@@ -317,7 +317,7 @@ impl Filesystem {
         lock_kind: FileLockKind,
         description: &str,
         config: &Config,
-    ) -> Result<FileLockGuard> {
+    ) -> Result<LockedFile> {
         let path = self.root.as_existent()?.join(path);
 
         let file = opts
@@ -347,7 +347,7 @@ impl Filesystem {
             }
         }
 
-        Ok(FileLockGuard {
+        Ok(LockedFile {
             file,
             path,
             lock_kind,

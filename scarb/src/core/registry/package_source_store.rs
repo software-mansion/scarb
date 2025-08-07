@@ -7,7 +7,7 @@ use tokio::task::spawn_blocking;
 use tracing::{debug, trace};
 
 use crate::core::{Config, PackageId, SourceId};
-use crate::flock::{FileLockGuard, Filesystem, OK_FILE, protected_run_if_not_ok};
+use crate::flock::{Filesystem, LockedFile, OK_FILE, protected_run_if_not_ok};
 use crate::internal::fsx::PathUtf8Ext;
 use crate::internal::restricted_names::is_windows_restricted_path;
 
@@ -32,7 +32,7 @@ impl<'a> PackageSourceStore<'a> {
     ///
     /// This function takes the archive by ownership for implementation simplicity.
     #[tracing::instrument(level = "debug", skip_all)]
-    pub async fn extract(&self, pkg: PackageId, archive: FileLockGuard) -> Result<Utf8PathBuf> {
+    pub async fn extract(&self, pkg: PackageId, archive: LockedFile) -> Result<Utf8PathBuf> {
         trace!("attempting to extract `{pkg}`");
         trace!(archive = ?archive.path());
 
@@ -51,10 +51,10 @@ impl<'a> PackageSourceStore<'a> {
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn extract_to(
         pkg: PackageId,
-        archive: FileLockGuard,
+        archive: LockedFile,
         fs: &Filesystem,
         config: &Config,
-    ) -> Result<(Utf8PathBuf, FileLockGuard)> {
+    ) -> Result<(Utf8PathBuf, LockedFile)> {
         trace!("attempting to extract `{pkg}`");
         trace!(archive = ?archive.path());
 
@@ -65,10 +65,10 @@ impl<'a> PackageSourceStore<'a> {
 
     async fn extract_impl(
         prefix: String,
-        mut archive: FileLockGuard,
+        mut archive: LockedFile,
         fs: &Filesystem,
         config: &Config,
-    ) -> Result<(Utf8PathBuf, FileLockGuard)> {
+    ) -> Result<(Utf8PathBuf, LockedFile)> {
         let parent_path = fs.path_existent()?.to_owned();
         let fs = fs.child(&prefix);
         let output_path = fs.path_existent()?.to_owned();
@@ -86,7 +86,7 @@ impl<'a> PackageSourceStore<'a> {
                 fs.recreate()?;
             }
 
-            archive = spawn_blocking(move || -> Result<FileLockGuard> {
+            archive = spawn_blocking(move || -> Result<LockedFile> {
                 // FIXME(mkaput): Verify VERSION is 1.
 
                 let mut tar = {
