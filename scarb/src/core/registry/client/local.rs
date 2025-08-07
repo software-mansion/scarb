@@ -6,7 +6,6 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Error, Result, ensure};
 use async_trait::async_trait;
-use fs4::FileExt;
 use tokio::task::spawn_blocking;
 use tracing::trace;
 use url::Url;
@@ -218,7 +217,7 @@ fn edit_records(records_path: &Path, func: impl FnOnce(&mut IndexRecords)) -> Re
         .open(records_path)
         .context("failed to open file")?;
 
-    file.lock_exclusive()
+    file.lock()
         .context("failed to acquire exclusive file access")?;
 
     let is_empty = file.metadata().context("failed to read metadata")?.len() == 0;

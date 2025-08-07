@@ -1,4 +1,4 @@
-use std::fs::{File, OpenOptions};
+use std::fs::{File, OpenOptions, TryLockError};
 use std::ops::{Deref, DerefMut};
 use std::path::Path;
 use std::sync::{Arc, Weak};
@@ -6,10 +6,9 @@ use std::{fmt, io};
 
 use anyhow::{Context, Result, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
-use fs4::tokio::AsyncFileExt;
-use fs4::{FileExt, lock_contended_error};
 use scarb_ui::components::Status;
 use std::mem;
+use tokio::runtime::Handle;
 use tokio::sync::Mutex;
 
 use crate::core::Config;
@@ -83,7 +82,7 @@ impl DerefMut for FileLockGuard {
 impl Drop for FileLockGuard {
     fn drop(&mut self) {
         if let Some(file) = self.file.take() {
-            let _ = FileExt::unlock(&file);
+            let _ = file.unlock();
         }
     }
 }
@@ -110,7 +109,7 @@ impl AsyncFileLockGuard {
                 None => None,
                 Some(file) => Some(file.into_std().await),
             },
-            path: std::mem::take(&mut self.path),
+            path: mem::take(&mut self.path),
             lock_kind: self.lock_kind,
         }
     }
@@ -133,7 +132,19 @@ impl DerefMut for AsyncFileLockGuard {
 impl Drop for AsyncFileLockGuard {
     fn drop(&mut self) {
         if let Some(file) = self.file.take() {
-            let _ = file.unlock();
+            match file.try_into_std() {
+                Ok(file) => {
+                    let _ = file.unlock();
+                }
+                Err(file) => {
+                    // NOTE: This is a very unlikely code branch. At the moment of writing this
+                    //   code, all code paths in our codebase never hit it as they synchronise IO
+                    //   before exiting the scope.
+                    Handle::current().block_on(async move {
+                        let _ = file.into_std().await.unlock();
+                    });
+                }
+            }
         }
     }
 }
@@ -350,8 +361,8 @@ impl Filesystem {
                     &path,
                     description,
                     config,
-                    &FileExt::try_lock_exclusive,
-                    &FileExt::lock_exclusive,
+                    &File::try_lock,
+                    &File::lock,
                 )?;
             }
             FileLockKind::Shared => {
@@ -360,8 +371,8 @@ impl Filesystem {
                     &path,
                     description,
                     config,
-                    &FileExt::try_lock_shared,
-                    &FileExt::lock_shared,
+                    &File::try_lock_shared,
+                    &File::lock_shared,
                 )?;
             }
         }
@@ -468,19 +479,19 @@ fn acquire(
     path: &Utf8Path,
     description: &str,
     config: &Config,
-    lock_try: &dyn Fn(&File) -> io::Result<()>,
+    lock_try: &dyn Fn(&File) -> Result<(), TryLockError>,
     lock_block: &dyn Fn(&File) -> io::Result<()>,
 ) -> Result<()> {
     match lock_try(file) {
         Ok(()) => return Ok(()),
-        Err(err) if err.kind() == io::ErrorKind::Unsupported => {
+        Err(TryLockError::WouldBlock) => {
+            // Pass-through
+        }
+        Err(TryLockError::Error(err)) if err.kind() == io::ErrorKind::Unsupported => {
             // Ignore locking on filesystems that look like they don't implement file locking.
             return Ok(());
         }
-        Err(err) if is_lock_contended_error(&err) => {
-            // Pass-through
-        }
-        Err(err) => {
+        Err(TryLockError::Error(err)) => {
             Err(err).with_context(|| format!("failed to lock file: {path}"))?;
         }
     }
@@ -494,9 +505,4 @@ fn acquire(
     lock_block(file).with_context(|| format!("failed to lock file: {path}"))?;
 
     Ok(())
-}
-
-fn is_lock_contended_error(err: &io::Error) -> bool {
-    let t = lock_contended_error();
-    err.raw_os_error() == t.raw_os_error() || err.kind() == t.kind()
 }
