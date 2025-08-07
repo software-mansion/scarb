@@ -78,6 +78,8 @@ impl PackagesFilter {
 
         // Check for current package.
         // If none (in case of virtual workspace), run for all members.
+        // TODO(#1915): Remove this line when we will use stable toolchain for entire repo again.
+        #[allow(clippy::collapsible_if)]
         if self.current_selected(&specs) {
             if let Some(pkg) = self.current_package(source)? {
                 return Ok(pkg);
@@ -119,6 +121,8 @@ impl PackagesFilter {
 
         // Check for current package.
         // If none (in case of virtual workspace), run for all members.
+        // TODO(#1915): Remove this line when we will use stable toolchain for entire repo again.
+        #[allow(clippy::collapsible_if)]
         if self.current_selected(&specs) {
             if let Some(pkg) = self.current_package(source)? {
                 return Ok(vec![pkg]);

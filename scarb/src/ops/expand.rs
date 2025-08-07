@@ -17,6 +17,7 @@ use scarb_ui::Message;
 use serde::{Serialize, Serializer};
 use smol_str::SmolStr;
 use std::collections::{BTreeMap, HashSet};
+use std::slice;
 
 #[derive(Debug, Clone, Default)]
 pub enum ExpandEmitTarget {
@@ -36,7 +37,7 @@ pub struct ExpandOpts {
 }
 
 pub fn expand(package: Package, opts: ExpandOpts, ws: &Workspace<'_>) -> Result<()> {
-    validate_features(&[package.clone()], &opts.features)?;
+    validate_features(slice::from_ref(&package), &opts.features)?;
 
     let package_name = package.id.name.to_string();
     let resolve = ops::resolve_workspace(ws)?;

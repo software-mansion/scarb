@@ -166,16 +166,16 @@ impl Lockfile {
 
         for packages in doc["package"].as_array_of_tables_mut().iter_mut() {
             for pkg in packages.iter_mut() {
-                if let Some(deps) = pkg.get_mut("dependencies") {
-                    if let Some(deps) = deps.as_array_mut() {
-                        deps.iter_mut().for_each(|dep| {
-                            dep.decor_mut().set_prefix("\n ");
-                        });
-                        if deps.len() > 1 {
-                            deps.set_trailing("\n");
-                        } else {
-                            deps.set_trailing(",\n");
-                        }
+                if let Some(deps) = pkg.get_mut("dependencies")
+                    && let Some(deps) = deps.as_array_mut()
+                {
+                    deps.iter_mut().for_each(|dep| {
+                        dep.decor_mut().set_prefix("\n ");
+                    });
+                    if deps.len() > 1 {
+                        deps.set_trailing("\n");
+                    } else {
+                        deps.set_trailing(",\n");
                     }
                 }
             }
