@@ -3,6 +3,7 @@ use anyhow::{Result, bail};
 use cairo_vm::Felt252;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
+use std::fmt;
 
 pub trait Connection {
     fn call(&mut self, selector: &str, calldata: &[Felt252]) -> Result<Vec<Felt252>>;
