@@ -9,7 +9,7 @@
 
 mod connection;
 mod connections;
-mod hint_processor;
+mod hint_service;
 mod jsonrpc;
 
-pub use hint_processor::OracleHintProcessor;
+pub use hint_service::OracleHintService;

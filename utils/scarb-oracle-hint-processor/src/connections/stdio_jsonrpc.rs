@@ -1,10 +1,10 @@
 use crate::connection::Connection;
 use crate::jsonrpc;
 use anyhow::{Context, Result, anyhow, bail, ensure};
-use cairo_vm::Felt252;
 use serde::Serialize;
 use serde_json::Value::Null;
 use serde_json::json;
+use starknet_core::types::Felt;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdout, Command, Stdio};
 use std::thread;
@@ -13,7 +13,7 @@ use tracing::{debug, debug_span, trace, warn};
 #[derive(Serialize)]
 struct InvokeParams {
     selector: String,
-    calldata: Vec<Felt252>,
+    calldata: Vec<Felt>,
 }
 
 pub struct StdioJsonRpcConnection {
@@ -109,7 +109,7 @@ impl StdioJsonRpcConnection {
 
 impl Connection for StdioJsonRpcConnection {
     #[tracing::instrument(skip(self, calldata))]
-    fn call(&mut self, selector: &str, calldata: &[Felt252]) -> Result<Vec<Felt252>> {
+    fn call(&mut self, selector: &str, calldata: &[Felt]) -> Result<Vec<Felt>> {
         let invoke_request = self.mf.request(
             "invoke",
             InvokeParams {
