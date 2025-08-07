@@ -1,6 +1,6 @@
-# `scarb-oracle-hint-processor`
+# `scarb-oracle-hint-service`
 
-Oracle hint processor from [Scarb](https://docs.swmansion.com/scarb).
+Oracle hint service from [Scarb](https://docs.swmansion.com/scarb).
 
 This crate provides oracle functionality for Cairo programs as executed by Scarb.
 It handles oracle hints and manages connections to external oracle services through various protocols.

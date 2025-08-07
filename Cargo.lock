@@ -6647,7 +6647,7 @@ dependencies = [
  "predicates",
  "scarb-extensions-cli",
  "scarb-metadata 1.15.1",
- "scarb-oracle-hint-processor",
+ "scarb-oracle-hint-service",
  "scarb-test-support",
  "scarb-ui",
  "serde",
@@ -6717,8 +6717,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "scarb-oracle-hint-processor"
-version = "2.12.0"
+name = "scarb-oracle-hint-service"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "serde",
