@@ -8,7 +8,6 @@ use anyhow::{Context, Result, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
 use scarb_ui::components::Status;
 use std::mem;
-use tokio::runtime::Handle;
 use tokio::sync::Mutex;
 
 use crate::core::Config;
@@ -26,7 +25,8 @@ pub enum FileLockKind {
 
 #[derive(Debug)]
 pub struct FileLockGuard {
-    file: Option<File>,
+    // NOTE: File will become unlocked when this structure is dropped.
+    file: File,
     path: Utf8PathBuf,
     lock_kind: FileLockKind,
 }
@@ -58,8 +58,8 @@ impl FileLockGuard {
 
     pub fn into_async(mut self) -> AsyncFileLockGuard {
         AsyncFileLockGuard {
-            file: self.file.take().map(tokio::fs::File::from_std),
-            path: std::mem::take(&mut self.path),
+            file: tokio::fs::File::from_std(self.file),
+            path: mem::take(&mut self.path),
             lock_kind: self.lock_kind,
         }
     }
@@ -69,27 +69,20 @@ impl Deref for FileLockGuard {
     type Target = File;
 
     fn deref(&self) -> &Self::Target {
-        self.file.as_ref().unwrap()
+        &self.file
     }
 }
 
 impl DerefMut for FileLockGuard {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.file.as_mut().unwrap()
-    }
-}
-
-impl Drop for FileLockGuard {
-    fn drop(&mut self) {
-        if let Some(file) = self.file.take() {
-            let _ = file.unlock();
-        }
+        &mut self.file
     }
 }
 
 #[derive(Debug)]
 pub struct AsyncFileLockGuard {
-    file: Option<tokio::fs::File>,
+    // NOTE: File will become unlocked when this structure is dropped.
+    file: tokio::fs::File,
     path: Utf8PathBuf,
     lock_kind: FileLockKind,
 }
@@ -105,10 +98,7 @@ impl AsyncFileLockGuard {
 
     pub async fn into_sync(mut self) -> FileLockGuard {
         FileLockGuard {
-            file: match self.file.take() {
-                None => None,
-                Some(file) => Some(file.into_std().await),
-            },
+            file: self.file.into_std().await,
             path: mem::take(&mut self.path),
             lock_kind: self.lock_kind,
         }
@@ -119,33 +109,13 @@ impl Deref for AsyncFileLockGuard {
     type Target = tokio::fs::File;
 
     fn deref(&self) -> &Self::Target {
-        self.file.as_ref().unwrap()
+        &self.file
     }
 }
 
 impl DerefMut for AsyncFileLockGuard {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.file.as_mut().unwrap()
-    }
-}
-
-impl Drop for AsyncFileLockGuard {
-    fn drop(&mut self) {
-        if let Some(file) = self.file.take() {
-            match file.try_into_std() {
-                Ok(file) => {
-                    let _ = file.unlock();
-                }
-                Err(file) => {
-                    // NOTE: This is a very unlikely code branch. At the moment of writing this
-                    //   code, all code paths in our codebase never hit it as they synchronise IO
-                    //   before exiting the scope.
-                    Handle::current().block_on(async move {
-                        let _ = file.into_std().await.unlock();
-                    });
-                }
-            }
-        }
+        &mut self.file
     }
 }
 
@@ -378,7 +348,7 @@ impl Filesystem {
         }
 
         Ok(FileLockGuard {
-            file: Some(file),
+            file,
             path,
             lock_kind,
         })
