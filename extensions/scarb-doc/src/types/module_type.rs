@@ -12,7 +12,7 @@ use crate::types::other_types::{
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{
     GenericTypeId, ImplDefId, LanguageElementId, LookupItemId, ModuleId, ModuleItemId,
-    NamedLanguageElementId, TopLevelLanguageElementId,
+    NamedLanguageElementLongId, TopLevelLanguageElementId,
 };
 use cairo_lang_diagnostics::{DiagnosticAdded, Maybe};
 use cairo_lang_doc::documentable_item::DocumentableItemId;
@@ -25,51 +25,50 @@ use cairo_lang_semantic::resolve::ResolvedGenericItem;
 use cairo_lang_semantic::{ConcreteTypeId, GenericArgumentId, TypeLongId};
 use cairo_lang_syntax::node::helpers::QueryAttrs;
 use cairo_lang_syntax::node::{SyntaxNode, TypedSyntaxNode};
-use cairo_lang_utils::LookupIntern;
 use serde::Serialize;
 use std::collections::HashMap;
 
 #[derive(Serialize, Clone)]
-pub struct Module {
+pub struct Module<'db> {
     #[serde(skip)]
-    pub module_id: ModuleId,
-    pub item_data: ItemData,
+    pub module_id: ModuleId<'db>,
+    pub item_data: ItemData<'db>,
 
-    pub submodules: Vec<Module>,
-    pub constants: Vec<Constant>,
-    pub free_functions: Vec<FreeFunction>,
-    pub structs: Vec<Struct>,
-    pub enums: Vec<Enum>,
-    pub type_aliases: Vec<TypeAlias>,
-    pub impl_aliases: Vec<ImplAlias>,
-    pub traits: Vec<Trait>,
-    pub impls: Vec<Impl>,
-    pub extern_types: Vec<ExternType>,
-    pub extern_functions: Vec<ExternFunction>,
-    pub pub_uses: ModulePubUses,
+    pub submodules: Vec<Module<'db>>,
+    pub constants: Vec<Constant<'db>>,
+    pub free_functions: Vec<FreeFunction<'db>>,
+    pub structs: Vec<Struct<'db>>,
+    pub enums: Vec<Enum<'db>>,
+    pub type_aliases: Vec<TypeAlias<'db>>,
+    pub impl_aliases: Vec<ImplAlias<'db>>,
+    pub traits: Vec<Trait<'db>>,
+    pub impls: Vec<Impl<'db>>,
+    pub extern_types: Vec<ExternType<'db>>,
+    pub extern_functions: Vec<ExternFunction<'db>>,
+    pub pub_uses: ModulePubUses<'db>,
     #[serde(skip_serializing)]
-    pub groups: Vec<Group>,
+    pub groups: Vec<Group<'db>>,
 }
 
 #[derive(Clone, Default, Serialize)]
-pub struct ModulePubUses {
-    pub use_constants: Vec<Constant>,
-    pub use_free_functions: Vec<FreeFunction>,
-    pub use_structs: Vec<Struct>,
-    pub use_enums: Vec<Enum>,
-    pub use_module_type_aliases: Vec<TypeAlias>,
-    pub use_impl_aliases: Vec<ImplAlias>,
-    pub use_traits: Vec<Trait>,
-    pub use_impl_defs: Vec<Impl>,
-    pub use_extern_types: Vec<ExternType>,
-    pub use_extern_functions: Vec<ExternFunction>,
-    pub use_submodules: Vec<Module>,
+pub struct ModulePubUses<'db> {
+    pub use_constants: Vec<Constant<'db>>,
+    pub use_free_functions: Vec<FreeFunction<'db>>,
+    pub use_structs: Vec<Struct<'db>>,
+    pub use_enums: Vec<Enum<'db>>,
+    pub use_module_type_aliases: Vec<TypeAlias<'db>>,
+    pub use_impl_aliases: Vec<ImplAlias<'db>>,
+    pub use_traits: Vec<Trait<'db>>,
+    pub use_impl_defs: Vec<Impl<'db>>,
+    pub use_extern_types: Vec<ExternType<'db>>,
+    pub use_extern_functions: Vec<ExternFunction<'db>>,
+    pub use_submodules: Vec<Module<'db>>,
 }
 
-impl ModulePubUses {
+impl<'db> ModulePubUses<'db> {
     pub fn new(
-        db: &ScarbDocDatabase,
-        module_id: ModuleId,
+        db: &'db ScarbDocDatabase,
+        module_id: ModuleId<'db>,
         include_private_items: bool,
     ) -> Maybe<Self> {
         let module_use_items: Vec<ResolvedGenericItem> = db
@@ -77,7 +76,7 @@ impl ModulePubUses {
             .iter()
             .filter_map(|(use_id, _)| {
                 let visibility = db
-                    .module_item_info_by_name(module_id, use_id.name(db))
+                    .module_item_info_by_name(module_id, use_id.long(db).name(db).into())
                     .unwrap()
                     .unwrap()
                     .visibility;
@@ -226,23 +225,23 @@ macro_rules! define_insert_function {
     };
 }
 
-impl Module {
+impl<'db> Module<'db> {
     define_insert_function!(
-        insert_constant, constants, Constant;
-        insert_free_function, free_functions, FreeFunction;
-        insert_struct, structs, Struct;
-        insert_enum, enums, Enum;
-        insert_type_alias, type_aliases, TypeAlias;
-        insert_impl_alias, impl_aliases, ImplAlias;
-        insert_trait, traits, Trait;
-        insert_impl, impls, Impl;
-        insert_extern_type, extern_types, ExternType;
-        insert_extern_function, extern_functions, ExternFunction
+        insert_constant, constants, Constant<'db>;
+        insert_free_function, free_functions, FreeFunction<'db>;
+        insert_struct, structs, Struct<'db>;
+        insert_enum, enums, Enum<'db>;
+        insert_type_alias, type_aliases, TypeAlias<'db>;
+        insert_impl_alias, impl_aliases, ImplAlias<'db>;
+        insert_trait, traits, Trait<'db>;
+        insert_impl, impls, Impl<'db>;
+        insert_extern_type, extern_types, ExternType<'db>;
+        insert_extern_function, extern_functions, ExternFunction<'db>
     );
 
     pub fn new(
-        db: &ScarbDocDatabase,
-        module_id: ModuleId,
+        db: &'db ScarbDocDatabase,
+        module_id: ModuleId<'db>,
         include_private_items: bool,
     ) -> Maybe<Self> {
         let item_data = match module_id {
@@ -252,9 +251,12 @@ impl Module {
                 submodule_id,
                 LookupItemId::ModuleItem(ModuleItemId::Submodule(submodule_id)).into(),
             ),
+            ModuleId::MacroCall { .. } => {
+                todo!("TODO(#2262): Correctly handle declarative macros.")
+            }
         };
 
-        let should_include_item = |id: &dyn TopLevelLanguageElementId| {
+        let should_include_item = |id: &dyn TopLevelLanguageElementId<'db>| {
             let syntax_node = id.stable_location(db).syntax_node(db);
 
             Ok((include_private_items || is_public(db, id)?)
@@ -330,8 +332,7 @@ impl Module {
                             let GenericArgumentId::Type(type_id) = arg_id else {
                                 return None;
                             };
-                            let TypeLongId::Concrete(concrete_type_id) = type_id.lookup_intern(db)
-                            else {
+                            let TypeLongId::Concrete(concrete_type_id) = type_id.long(db) else {
                                 return None;
                             };
                             let concrete_id: &dyn SemanticQueryAttrs = match &concrete_type_id {
@@ -412,7 +413,7 @@ impl Module {
         })
     }
 
-    pub(crate) fn new_virtual(db: &ScarbDocDatabase, module_id: ModuleId) -> Self {
+    pub(crate) fn new_virtual(db: &'db ScarbDocDatabase, module_id: ModuleId<'db>) -> Self {
         let item_data = match module_id {
             ModuleId::CrateRoot(crate_id) => ItemData::new_crate(db, crate_id),
             ModuleId::Submodule(submodule_id) => ItemData::new_without_signature(
@@ -420,6 +421,9 @@ impl Module {
                 submodule_id,
                 LookupItemId::ModuleItem(ModuleItemId::Submodule(submodule_id)).into(),
             ),
+            ModuleId::MacroCall { .. } => {
+                todo!("TODO(#2262): Correctly handle declarative macros.")
+            }
         };
         Self {
             module_id,
@@ -496,8 +500,11 @@ impl Module {
 }
 
 /// Merges subitems of virtual_module into documented_module so it contains all unique data from both modules.
-/// Note that documented_module might have been created by [`Module::new_virtual`].   
-pub(crate) fn merge_modules(documented_module: &mut Module, virtual_module: Module) -> &mut Module {
+/// Note that documented_module might have been created by [`Module::new_virtual`].
+pub(crate) fn merge_modules<'a, 'db>(
+    documented_module: &'a mut Module<'db>,
+    virtual_module: Module<'db>,
+) -> &'a mut Module<'db> {
     for constant in virtual_module.constants {
         documented_module.insert_constant(constant);
     }
@@ -545,11 +552,11 @@ pub(crate) fn merge_modules(documented_module: &mut Module, virtual_module: Modu
     documented_module
 }
 
-pub(crate) fn get_ancestors_vector(
-    ancestors: &mut Vec<ModuleId>,
-    module_id: ModuleId,
-    db: &ScarbDocDatabase,
-) -> Vec<ModuleId> {
+pub(crate) fn get_ancestors_vector<'db>(
+    ancestors: &mut Vec<ModuleId<'db>>,
+    module_id: ModuleId<'db>,
+    db: &'db ScarbDocDatabase,
+) -> Vec<ModuleId<'db>> {
     match module_id {
         ModuleId::Submodule(submodule_id) => {
             ancestors.insert(0, module_id);
@@ -559,11 +566,17 @@ pub(crate) fn get_ancestors_vector(
         ModuleId::CrateRoot(_) => {
             ancestors.insert(0, module_id);
         }
+        ModuleId::MacroCall { .. } => {
+            todo!("TODO(#2262): Correctly handle declarative macros.")
+        }
     }
     ancestors.clone()
 }
 
-pub(crate) fn collect_pubuses(all_pub_uses: &mut ModulePubUses, module: Module) -> ModulePubUses {
+pub(crate) fn collect_pubuses<'db>(
+    all_pub_uses: &mut ModulePubUses<'db>,
+    module: Module<'db>,
+) -> ModulePubUses<'db> {
     all_pub_uses
         .use_constants
         .extend(module.pub_uses.use_constants);
@@ -598,13 +611,19 @@ pub(crate) fn collect_pubuses(all_pub_uses: &mut ModulePubUses, module: Module) 
     all_pub_uses.to_owned()
 }
 
-pub(crate) fn is_doc_hidden_attr(db: &ScarbDocDatabase, syntax_node: &SyntaxNode) -> bool {
+pub(crate) fn is_doc_hidden_attr<'db>(
+    db: &'db ScarbDocDatabase,
+    syntax_node: &SyntaxNode<'db>,
+) -> bool {
     syntax_node.has_attr_with_arg(db, "doc", "hidden")
 }
 
-fn is_public(db: &ScarbDocDatabase, element_id: &dyn TopLevelLanguageElementId) -> Maybe<bool> {
+fn is_public<'db>(
+    db: &'db ScarbDocDatabase,
+    element_id: &dyn TopLevelLanguageElementId<'db>,
+) -> Maybe<bool> {
     let containing_module_id = element_id.parent_module(db);
-    match db.module_item_info_by_name(containing_module_id, element_id.name(db))? {
+    match db.module_item_info_by_name(containing_module_id, element_id.name(db).into())? {
         Some(module_item_info) => Ok(matches!(module_item_info.visibility, Visibility::Public)),
         None => Ok(false),
     }
@@ -617,15 +636,16 @@ fn is_public(db: &ScarbDocDatabase, element_id: &dyn TopLevelLanguageElementId) 
 /// F - function that checks whether the id should be included in the result Vector.
 /// G - A closure (as a function), which generates an item based on the item's ID.
 /// K - Type of generated item.
-fn filter_map_item_id_to_item<'a, T, F, G, K>(
+fn filter_map_item_id_to_item<'a, 'db, T, F, G, K>(
     items: impl Iterator<Item = &'a T>,
     should_include_item_function: F,
     generate_item_function: G,
 ) -> anyhow::Result<Vec<K>, DiagnosticAdded>
 where
-    T: 'a + Copy + TopLevelLanguageElementId,
-    F: Fn(&'a dyn TopLevelLanguageElementId) -> Result<bool, DiagnosticAdded>,
+    T: 'a + Copy + TopLevelLanguageElementId<'db>,
+    F: Fn(&'a dyn TopLevelLanguageElementId<'db>) -> Result<bool, DiagnosticAdded>,
     G: Fn(&'a T) -> Maybe<K>,
+    'db: 'a,
 {
     items
         .filter_map(|id| match should_include_item_function(id) {
@@ -640,9 +660,9 @@ where
         .collect::<Maybe<Maybe<Vec<K>>>>()?
 }
 
-fn is_doc_hidden_attr_semantic(
-    db: &dyn SemanticGroup,
-    node: &dyn SemanticQueryAttrs,
+fn is_doc_hidden_attr_semantic<'db>(
+    db: &'db dyn SemanticGroup,
+    node: &'db dyn SemanticQueryAttrs<'db>,
 ) -> Maybe<bool> {
     node.has_attr_with_arg(db, "doc", "hidden")
 }

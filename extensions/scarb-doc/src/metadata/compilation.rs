@@ -2,7 +2,6 @@ use scarb_metadata::{
     CompilationUnitComponentDependencyMetadata, CompilationUnitComponentMetadata,
     CompilationUnitMetadata, Metadata, PackageId, PackageMetadata,
 };
-use smol_str::ToSmolStr;
 use std::path::PathBuf;
 
 use anyhow::{Result, bail};
@@ -162,14 +161,14 @@ fn get_crate_settings_for_component(
             Some((
                 dependency_component.name.clone(),
                 DependencySettings {
-                    discriminator: dependency_component.discriminator.as_ref().map(ToSmolStr::to_smolstr)
+                    discriminator: dependency_component.discriminator.as_ref().map(ToString::to_string)
                 },
             ))
         })
         .collect();
 
     Ok(CrateSettings {
-        name: Some(component.name.to_smolstr()),
+        name: Some(component.name.to_string()),
         edition,
         cfg_set,
         experimental_features,

@@ -37,17 +37,17 @@ macro_rules! collect_items {
 }
 
 #[derive(Serialize, Clone)]
-pub struct Crate {
-    pub root_module: Module,
+pub struct Crate<'db> {
+    pub root_module: Module<'db>,
     #[serde(skip_serializing)]
-    pub foreign_crates: Vec<Module>,
-    pub groups: Vec<Group>,
+    pub foreign_crates: Vec<Module<'db>>,
+    pub groups: Vec<Group<'db>>,
 }
 
-impl Crate {
+impl<'db> Crate<'db> {
     pub fn new(
-        db: &ScarbDocDatabase,
-        crate_id: CrateId,
+        db: &'db ScarbDocDatabase,
+        crate_id: CrateId<'db>,
         include_private_items: bool,
     ) -> Maybe<Self> {
         let root_module_id = ModuleId::CrateRoot(crate_id);
@@ -60,23 +60,21 @@ impl Crate {
     }
 
     pub fn new_with_virtual_modules_and_groups(
-        db: &ScarbDocDatabase,
-        crate_id: CrateId,
+        db: &'db ScarbDocDatabase,
+        crate_id: CrateId<'db>,
         include_private_items: bool,
     ) -> Maybe<Self> {
         let mut root = Self::new(db, crate_id, include_private_items)?;
         root.process_virtual_modules(db);
-        let groups = root.collect_groups();
-        root.groups = groups;
-
+        root.collect_groups();
         Ok(root)
     }
 
     fn ensure_module_structure(
         &mut self,
-        db: &ScarbDocDatabase,
-        module_ids: Vec<ModuleId>,
-    ) -> &mut Module {
+        db: &'db ScarbDocDatabase,
+        module_ids: Vec<ModuleId<'db>>,
+    ) -> &mut Module<'db> {
         let mut current_module = {
             if let Some(first_ancestor) = module_ids.first() {
                 if &self.root_module.module_id != first_ancestor {
@@ -115,7 +113,7 @@ impl Crate {
         current_module
     }
 
-    fn process_virtual_modules(&mut self, db: &ScarbDocDatabase) -> Self {
+    fn process_virtual_modules(&mut self, db: &'db ScarbDocDatabase) -> Self {
         let mut pub_uses = ModulePubUses::default();
         let all_pub_ues = collect_pubuses(&mut pub_uses, self.root_module.clone());
 
@@ -153,7 +151,7 @@ impl Crate {
         self.to_owned()
     }
 
-    pub fn collect_groups(&mut self) -> Vec<Group> {
+    pub fn collect_groups(&mut self) {
         let mut merged_groups = HashMap::new();
 
         // must guarantee uniqueness of all group items
@@ -166,13 +164,13 @@ impl Crate {
 
         let mut groups: Vec<Group> = merged_groups.into_values().collect();
         groups.sort_by(|a, b| a.name.cmp(&b.name));
-        groups
+        self.groups = groups;
     }
 
     fn collect_groups_from_module(
-        module: &Module,
-        merged_groups: &mut HashMap<String, Group>,
-        collected_ids: &mut HashSet<DocumentableItemId>,
+        module: &Module<'db>,
+        merged_groups: &mut HashMap<String, Group<'db>>,
+        collected_ids: &mut HashSet<DocumentableItemId<'db>>,
     ) {
         for group in &module.groups {
             let entry = merged_groups

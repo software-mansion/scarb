@@ -55,17 +55,17 @@ macro_rules! impl_top_level_markdown_doc_item {
     };
 }
 
-impl_top_level_markdown_doc_item!(Constant, "constants.md");
-impl_top_level_markdown_doc_item!(Enum, "enums.md");
-impl_top_level_markdown_doc_item!(ExternFunction, "extern_functions.md");
-impl_top_level_markdown_doc_item!(ExternType, "extern_types.md");
-impl_top_level_markdown_doc_item!(FreeFunction, "free_functions.md");
-impl_top_level_markdown_doc_item!(Impl, "impls.md");
-impl_top_level_markdown_doc_item!(ImplAlias, "impl_aliases.md");
-impl_top_level_markdown_doc_item!(Module, "modules.md");
-impl_top_level_markdown_doc_item!(Struct, "structs.md");
-impl_top_level_markdown_doc_item!(Trait, "traits.md");
-impl_top_level_markdown_doc_item!(TypeAlias, "type_aliases.md");
+impl_top_level_markdown_doc_item!(Constant<'_>, "constants.md");
+impl_top_level_markdown_doc_item!(Enum<'_>, "enums.md");
+impl_top_level_markdown_doc_item!(ExternFunction<'_>, "extern_functions.md");
+impl_top_level_markdown_doc_item!(ExternType<'_>, "extern_types.md");
+impl_top_level_markdown_doc_item!(FreeFunction<'_>, "free_functions.md");
+impl_top_level_markdown_doc_item!(Impl<'_>, "impls.md");
+impl_top_level_markdown_doc_item!(ImplAlias<'_>, "impl_aliases.md");
+impl_top_level_markdown_doc_item!(Module<'_>, "modules.md");
+impl_top_level_markdown_doc_item!(Struct<'_>, "structs.md");
+impl_top_level_markdown_doc_item!(Trait<'_>, "traits.md");
+impl_top_level_markdown_doc_item!(TypeAlias<'_>, "type_aliases.md");
 
 macro_rules! impl_markdown_doc_item {
     ($ty:ty) => {
@@ -93,14 +93,14 @@ macro_rules! impl_markdown_doc_item {
     };
 }
 
-impl_markdown_doc_item!(Member);
-impl_markdown_doc_item!(ImplFunction);
-impl_markdown_doc_item!(ImplType);
-impl_markdown_doc_item!(TraitFunction);
-impl_markdown_doc_item!(Variant);
-impl_markdown_doc_item!(ImplConstant);
-impl_markdown_doc_item!(TraitConstant);
-impl_markdown_doc_item!(TraitType);
+impl_markdown_doc_item!(Member<'_>);
+impl_markdown_doc_item!(ImplFunction<'_>);
+impl_markdown_doc_item!(ImplType<'_>);
+impl_markdown_doc_item!(TraitFunction<'_>);
+impl_markdown_doc_item!(Variant<'_>);
+impl_markdown_doc_item!(ImplConstant<'_>);
+impl_markdown_doc_item!(TraitConstant<'_>);
+impl_markdown_doc_item!(TraitType<'_>);
 
 pub trait MarkdownDocItem: DocItem {
     fn generate_markdown(
@@ -200,7 +200,7 @@ where
     }
 }
 
-impl MarkdownDocItem for Enum {
+impl<'db> MarkdownDocItem for Enum<'db> {
     fn generate_markdown(
         &self,
         context: &MarkdownGenerationContext,
@@ -223,7 +223,7 @@ impl MarkdownDocItem for Enum {
     }
 }
 
-impl MarkdownDocItem for Impl {
+impl<'db> MarkdownDocItem for Impl<'db> {
     fn generate_markdown(
         &self,
         context: &MarkdownGenerationContext,
@@ -341,7 +341,7 @@ fn generate_pub_use_item_markdown(
     buff
 }
 
-impl MarkdownDocItem for Module {
+impl<'db> MarkdownDocItem for Module<'db> {
     fn generate_markdown(
         &self,
         context: &MarkdownGenerationContext,
@@ -432,7 +432,7 @@ impl MarkdownDocItem for Module {
     }
 }
 
-impl MarkdownDocItem for Struct {
+impl<'db> MarkdownDocItem for Struct<'db> {
     fn generate_markdown(
         &self,
         context: &MarkdownGenerationContext,
@@ -456,7 +456,7 @@ impl MarkdownDocItem for Struct {
     }
 }
 
-impl MarkdownDocItem for Trait {
+impl<'db> MarkdownDocItem for Trait<'db> {
     fn generate_markdown(
         &self,
         context: &MarkdownGenerationContext,
@@ -905,7 +905,7 @@ impl<T: WithItemData> WithPath for T {
     }
 }
 
-impl WithItemData for ItemData {
+impl<'db> WithItemData for ItemData<'db> {
     fn item_data(&self) -> &ItemData {
         self
     }
