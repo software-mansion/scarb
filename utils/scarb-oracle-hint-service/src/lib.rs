@@ -1,4 +1,4 @@
-//! Oracle hint processor for Scarb.
+//! Oracle hint service for Scarb.
 //!
 //! This crate provides oracle functionality for Cairo programs executed by Scarb.
 //! It handles oracle hints and manages connections to external oracle services.

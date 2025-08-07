@@ -11,7 +11,7 @@ use cairo_vm::vm::errors::hint_errors::HintError;
 use cairo_vm::vm::errors::vm_errors::VirtualMachineError;
 use cairo_vm::vm::runners::cairo_runner::{ResourceTracker, RunResources};
 use cairo_vm::vm::vm_core::VirtualMachine;
-use scarb_oracle_hint_processor::OracleHintService;
+use scarb_oracle_hint_service::OracleHintService;
 use std::any::Any;
 use std::collections::HashMap;
 
