@@ -82,14 +82,16 @@ fn cairo_version() {
     let mut rev = format!("refs/tags/v{version}");
     if let Some(source) = &compiler_package.source {
         let source = source.to_string();
-        if source.starts_with("git+")
-            && let Some((_, commit)) = source.split_once('#')
-        {
-            println!("cargo:rustc-env=SCARB_CAIRO_COMMIT_HASH={commit}");
-            let mut short_commit = commit.to_string();
-            short_commit.truncate(9);
-            println!("cargo:rustc-env=SCARB_CAIRO_SHORT_COMMIT_HASH={short_commit}");
-            rev = commit.to_string();
+        // TODO(#1915): Remove this line when we will use stable toolchain for entire repo again.
+        #[allow(clippy::collapsible_if)]
+        if source.starts_with("git+") {
+            if let Some((_, commit)) = source.split_once('#') {
+                println!("cargo:rustc-env=SCARB_CAIRO_COMMIT_HASH={commit}");
+                let mut short_commit = commit.to_string();
+                short_commit.truncate(9);
+                println!("cargo:rustc-env=SCARB_CAIRO_SHORT_COMMIT_HASH={short_commit}");
+                rev = commit.to_string();
+            }
         }
     }
     println!("cargo:rustc-env=SCARB_CAIRO_COMMIT_REV={rev}");
