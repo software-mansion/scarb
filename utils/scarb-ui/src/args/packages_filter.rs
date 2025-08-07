@@ -78,10 +78,12 @@ impl PackagesFilter {
 
         // Check for current package.
         // If none (in case of virtual workspace), run for all members.
-        if self.current_selected(&specs)
-            && let Some(pkg) = self.current_package(source)?
-        {
-            return Ok(pkg);
+        // TODO(#1915): Remove this line when we will use stable toolchain for entire repo again.
+        #[allow(clippy::collapsible_if)]
+        if self.current_selected(&specs) {
+            if let Some(pkg) = self.current_package(source)? {
+                return Ok(pkg);
+            }
         }
 
         let members = source.members();
@@ -119,10 +121,12 @@ impl PackagesFilter {
 
         // Check for current package.
         // If none (in case of virtual workspace), run for all members.
-        if self.current_selected(&specs)
-            && let Some(pkg) = self.current_package(source)?
-        {
-            return Ok(vec![pkg]);
+        // TODO(#1915): Remove this line when we will use stable toolchain for entire repo again.
+        #[allow(clippy::collapsible_if)]
+        if self.current_selected(&specs) {
+            if let Some(pkg) = self.current_package(source)? {
+                return Ok(vec![pkg]);
+            }
         }
 
         let members = source.members();
