@@ -9,8 +9,8 @@ use scarb_metadata::{MetadataCommand, ScarbCommand};
 use scarb_ui::args::ToEnvVars;
 use std::process::ExitCode;
 
-use scarb_doc::generate_packages_information;
 use scarb_doc::versioned_json_output::VersionedJsonOutput;
+use scarb_doc::{generate_package_context, generate_package_information};
 
 use scarb_ui::Ui;
 use scarb_ui::components::Status;
@@ -31,12 +31,17 @@ fn main_inner(args: Args, ui: Ui) -> Result<()> {
     let metadata_for_packages = args.packages_filter.match_many(&metadata)?;
     let output_dir = get_target_dir(&metadata).join(OUTPUT_DIR);
 
-    let packages_information = generate_packages_information(
+    let context = generate_package_context(
         &metadata,
         &metadata_for_packages,
         args.document_private_items,
-        ui.clone(),
     )?;
+
+    let packages_information = context
+        .iter()
+        .map(|pkg| generate_package_information(pkg, ui.clone()))
+        .collect::<Result<Vec<_>>>()?;
+
     print_diagnostics(&ui);
 
     match args.output_format {

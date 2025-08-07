@@ -10,18 +10,18 @@ use cairo_lang_doc::parser::DocumentationCommentToken;
 pub mod markdown;
 
 #[derive(Default)]
-struct TopLevelItems<'a> {
-    pub modules: Vec<&'a Module>,
-    pub constants: Vec<&'a Constant>,
-    pub free_functions: Vec<&'a FreeFunction>,
-    pub structs: Vec<&'a Struct>,
-    pub enums: Vec<&'a Enum>,
-    pub type_aliases: Vec<&'a TypeAlias>,
-    pub impl_aliases: Vec<&'a ImplAlias>,
-    pub traits: Vec<&'a Trait>,
-    pub impls: Vec<&'a Impl>,
-    pub extern_types: Vec<&'a ExternType>,
-    pub extern_functions: Vec<&'a ExternFunction>,
+struct TopLevelItems<'a, 'db> {
+    pub modules: Vec<&'a Module<'db>>,
+    pub constants: Vec<&'a Constant<'db>>,
+    pub free_functions: Vec<&'a FreeFunction<'db>>,
+    pub structs: Vec<&'a Struct<'db>>,
+    pub enums: Vec<&'a Enum<'db>>,
+    pub type_aliases: Vec<&'a TypeAlias<'db>>,
+    pub impl_aliases: Vec<&'a ImplAlias<'db>>,
+    pub traits: Vec<&'a Trait<'db>>,
+    pub impls: Vec<&'a Impl<'db>>,
+    pub extern_types: Vec<&'a ExternType<'db>>,
+    pub extern_functions: Vec<&'a ExternFunction<'db>>,
 }
 
 // Trait for items with no descendants.
@@ -29,39 +29,39 @@ struct TopLevelItems<'a> {
 
 trait PrimitiveDocItem: DocItem {}
 
-impl PrimitiveDocItem for Constant {}
-impl PrimitiveDocItem for ExternFunction {}
-impl PrimitiveDocItem for ExternType {}
-impl PrimitiveDocItem for FreeFunction {}
-impl PrimitiveDocItem for ImplAlias {}
-impl PrimitiveDocItem for TypeAlias {}
+impl PrimitiveDocItem for Constant<'_> {}
+impl PrimitiveDocItem for ExternFunction<'_> {}
+impl PrimitiveDocItem for ExternType<'_> {}
+impl PrimitiveDocItem for FreeFunction<'_> {}
+impl PrimitiveDocItem for ImplAlias<'_> {}
+impl PrimitiveDocItem for TypeAlias<'_> {}
 
 trait SubPathDocItem: DocItem {}
 
-impl SubPathDocItem for Member {}
-impl SubPathDocItem for Variant {}
-impl SubPathDocItem for TraitFunction {}
-impl SubPathDocItem for ImplFunction {}
-impl SubPathDocItem for ImplType {}
-impl SubPathDocItem for ImplConstant {}
-impl SubPathDocItem for TraitConstant {}
-impl SubPathDocItem for TraitType {}
+impl SubPathDocItem for Member<'_> {}
+impl SubPathDocItem for Variant<'_> {}
+impl SubPathDocItem for TraitFunction<'_> {}
+impl SubPathDocItem for ImplFunction<'_> {}
+impl SubPathDocItem for ImplType<'_> {}
+impl SubPathDocItem for ImplConstant<'_> {}
+impl SubPathDocItem for TraitConstant<'_> {}
+impl SubPathDocItem for TraitType<'_> {}
 
 // Trait for items that have their own documentation page.
 // Used to enforce constraints on generic implementations of traits like `TopLevelMarkdownDocItem`.
 trait TopLevelDocItem: DocItem {}
 
-impl TopLevelDocItem for Constant {}
-impl TopLevelDocItem for Enum {}
-impl TopLevelDocItem for ExternFunction {}
-impl TopLevelDocItem for ExternType {}
-impl TopLevelDocItem for FreeFunction {}
-impl TopLevelDocItem for Impl {}
-impl TopLevelDocItem for ImplAlias {}
-impl TopLevelDocItem for Module {}
-impl TopLevelDocItem for Struct {}
-impl TopLevelDocItem for Trait {}
-impl TopLevelDocItem for TypeAlias {}
+impl TopLevelDocItem for Constant<'_> {}
+impl TopLevelDocItem for Enum<'_> {}
+impl TopLevelDocItem for ExternFunction<'_> {}
+impl TopLevelDocItem for ExternType<'_> {}
+impl TopLevelDocItem for FreeFunction<'_> {}
+impl TopLevelDocItem for Impl<'_> {}
+impl TopLevelDocItem for ImplAlias<'_> {}
+impl TopLevelDocItem for Module<'_> {}
+impl TopLevelDocItem for Struct<'_> {}
+impl TopLevelDocItem for Trait<'_> {}
+impl TopLevelDocItem for TypeAlias<'_> {}
 
 // Wrapper trait over a documentable item to hide implementation details of the item type.
 trait DocItem {
@@ -112,22 +112,22 @@ macro_rules! impl_doc_item {
     };
 }
 
-impl_doc_item!(Constant, "Constants");
-impl_doc_item!(Enum, "Enums");
-impl_doc_item!(ExternFunction, "Extern functions");
-impl_doc_item!(ExternType, "Extern types");
-impl_doc_item!(FreeFunction, "Free functions");
-impl_doc_item!(Impl, "Impls");
-impl_doc_item!(ImplAlias, "Impl aliases");
-impl_doc_item!(ImplConstant, "Impl constants");
-impl_doc_item!(ImplFunction, "Impl functions");
-impl_doc_item!(ImplType, "Impl types");
-impl_doc_item!(Member, "Members");
-impl_doc_item!(Module, "Modules");
-impl_doc_item!(Struct, "Structs");
-impl_doc_item!(Trait, "Traits");
-impl_doc_item!(TraitConstant, "Trait constants");
-impl_doc_item!(TraitType, "Trait types");
-impl_doc_item!(TraitFunction, "Trait functions");
-impl_doc_item!(TypeAlias, "Type aliases");
-impl_doc_item!(Variant, "Variants");
+impl_doc_item!(Constant<'_>, "Constants");
+impl_doc_item!(Enum<'_>, "Enums");
+impl_doc_item!(ExternFunction<'_>, "Extern functions");
+impl_doc_item!(ExternType<'_>, "Extern types");
+impl_doc_item!(FreeFunction<'_>, "Free functions");
+impl_doc_item!(Impl<'_>, "Impls");
+impl_doc_item!(ImplAlias<'_>, "Impl aliases");
+impl_doc_item!(ImplConstant<'_>, "Impl constants");
+impl_doc_item!(ImplFunction<'_>, "Impl functions");
+impl_doc_item!(ImplType<'_>, "Impl types");
+impl_doc_item!(Member<'_>, "Members");
+impl_doc_item!(Module<'_>, "Modules");
+impl_doc_item!(Struct<'_>, "Structs");
+impl_doc_item!(Trait<'_>, "Traits");
+impl_doc_item!(TraitConstant<'_>, "Trait constants");
+impl_doc_item!(TraitType<'_>, "Trait types");
+impl_doc_item!(TraitFunction<'_>, "Trait functions");
+impl_doc_item!(TypeAlias<'_>, "Type aliases");
+impl_doc_item!(Variant<'_>, "Variants");

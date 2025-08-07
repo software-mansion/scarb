@@ -6,14 +6,17 @@ use cairo_lang_doc::documentable_item::DocumentableItemId;
 use cairo_lang_doc::parser::CommentLinkToken;
 use std::collections::HashMap;
 
-pub type IncludedItems<'a> = HashMap<DocumentableItemId, &'a dyn WithPath>;
+pub type IncludedItems<'a, 'db> = HashMap<DocumentableItemId<'db>, &'a dyn WithPath>;
 
-pub struct MarkdownGenerationContext<'a> {
-    included_items: IncludedItems<'a>,
+pub struct MarkdownGenerationContext<'a, 'db> {
+    included_items: IncludedItems<'a, 'db>,
 }
 
-impl<'a> MarkdownGenerationContext<'a> {
-    pub fn from_crate(crate_: &'a Crate) -> Self {
+impl<'a, 'db> MarkdownGenerationContext<'a, 'db> {
+    pub fn from_crate(crate_: &'a Crate<'db>) -> Self
+    where
+        'a: 'db,
+    {
         let included_items = crate_.root_module.get_all_item_ids();
         Self {
             included_items: included_items

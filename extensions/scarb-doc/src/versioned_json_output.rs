@@ -10,13 +10,13 @@ use std::fs;
 const FORMAT_VERSION: u8 = 1;
 
 #[derive(Serialize)]
-pub struct VersionedJsonOutput {
+pub struct VersionedJsonOutput<'db> {
     format_version: u8,
-    packages_information: Vec<PackageInformation>,
+    packages_information: Vec<PackageInformation<'db>>,
 }
 
-impl VersionedJsonOutput {
-    pub fn new(packages_information: Vec<PackageInformation>) -> Self {
+impl<'db> VersionedJsonOutput<'db> {
+    pub fn new(packages_information: Vec<PackageInformation<'db>>) -> Self {
         Self {
             format_version: FORMAT_VERSION,
             packages_information,
