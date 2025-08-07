@@ -9,11 +9,12 @@ pub trait Connection {
 }
 
 /// Maintains a collection of oracle [`Connection`]s.
+#[derive(Default)]
 pub struct ConnectionManager(HashMap<String, Box<dyn Connection + 'static>>);
 
 impl ConnectionManager {
     pub fn new() -> Self {
-        Self(Default::default())
+        Self::default()
     }
 
     /// Establishes a connection to a given connection string and stores it in the connection pool.
@@ -38,5 +39,15 @@ impl ConnectionManager {
                 note: supported schemes are: `stdio`"
             )
         }
+    }
+}
+
+impl fmt::Debug for ConnectionManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut connection_strings = self.0.keys().collect::<Vec<_>>();
+        connection_strings.sort();
+        f.debug_tuple("ConnectionManager")
+            .field(&connection_strings)
+            .finish()
     }
 }
