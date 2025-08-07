@@ -379,15 +379,15 @@ fn prepare_archive_recipe(
     });
 
     // Add VCS info file.
-    if let Ok(repo) = PackageRepository::open(pkg) {
-        if let Some(vcs_info) = extract_vcs_info(repo, opts)? {
-            recipe.push(ArchiveFile {
-                path: VCS_INFO_FILE_NAME.into(),
-                contents: ArchiveFileContents::Generated({
-                    Box::new(move || Ok(serde_json::to_string(&vcs_info)?.into_bytes()))
-                }),
-            });
-        }
+    if let Ok(repo) = PackageRepository::open(pkg)
+        && let Some(vcs_info) = extract_vcs_info(repo, opts)?
+    {
+        recipe.push(ArchiveFile {
+            path: VCS_INFO_FILE_NAME.into(),
+            contents: ArchiveFileContents::Generated({
+                Box::new(move || Ok(serde_json::to_string(&vcs_info)?.into_bytes()))
+            }),
+        });
     };
 
     // Put generated files in right order within the recipe.

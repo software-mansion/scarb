@@ -72,11 +72,11 @@ fn build(
 
             // Check if we've reached the maximum depth.
             // For max_depth=0, we want to list roots only, hence we use strict equality.
-            if let Some(max_depth) = self.args.depth {
-                if depth > max_depth {
-                    tree.max_depth_reached = true;
-                    return Err(BuildError::MaxDepthReached);
-                }
+            if let Some(max_depth) = self.args.depth
+                && depth > max_depth
+            {
+                tree.max_depth_reached = true;
+                return Err(BuildError::MaxDepthReached);
             }
 
             tree.package = Some(package_id);

@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::slice;
 use std::str::FromStr;
 use url::Url;
 
@@ -18,7 +19,7 @@ pub fn run(args: PublishArgs, config: &Config) -> Result<()> {
     };
 
     let features_opts = args.features.try_into()?;
-    validate_features(&[package.clone()], &features_opts)?;
+    validate_features(slice::from_ref(&package), &features_opts)?;
     let ops = PublishOpts {
         index_url: index,
         package_opts: PackageOpts {

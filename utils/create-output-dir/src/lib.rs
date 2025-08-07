@@ -47,10 +47,10 @@ pub fn create_output_dir(path: &Path) -> Result<()> {
     // thread or process as success, hence the check below to follow the existing behavior.
     // If we get an error at `fs::rename()` and suddenly the directory (which didn't exist a moment
     // earlier) exists we can infer from it that another application process is doing work here.
-    if let Err(e) = fs::rename(tempdir.path(), path) {
-        if !path.exists() {
-            return Err(e.into());
-        }
+    if let Err(e) = fs::rename(tempdir.path(), path)
+        && !path.exists()
+    {
+        return Err(e.into());
     }
 
     Ok(())
