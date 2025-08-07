@@ -212,15 +212,16 @@ impl ArtifactsWriter {
                 artifact.artifacts.sierra = Some(file_name);
             }
 
-            if self.casm {
-                if let Some(casm_class) = casm_class {
-                    let file_name =
-                        format!("{file_stem}{extension_prefix}.compiled_contract_class.json");
-                    {
-                        let file_name = file_name.clone();
-                        let contract_stem = contract_stem.clone();
-                        let target_dir = self.target_dir.clone();
-                        offloader.offload("output file", move |ws| {
+            if self.casm
+                && let Some(casm_class) = casm_class
+            {
+                let file_name =
+                    format!("{file_stem}{extension_prefix}.compiled_contract_class.json");
+                {
+                    let file_name = file_name.clone();
+                    let contract_stem = contract_stem.clone();
+                    let target_dir = self.target_dir.clone();
+                    offloader.offload("output file", move |ws| {
 
                             let casm_felts = casm_class.bytecode.len();
                             if casm_felts > MAX_CASM_PROGRAM_FELTS {
@@ -246,9 +247,8 @@ impl ArtifactsWriter {
                             }
                             Ok(())
                         });
-                    }
-                    artifact.artifacts.casm = Some(file_name);
                 }
+                artifact.artifacts.casm = Some(file_name);
             }
 
             artifacts.contracts.push(artifact);

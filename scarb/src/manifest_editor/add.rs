@@ -63,10 +63,8 @@ impl Op for AddDependency {
         let dep_key = dep.toml_key().to_string();
         dep.upsert(tab.as_table_like_mut().unwrap().entry(&dep_key));
 
-        if was_sorted {
-            if let Some(table) = tab.as_table_like_mut() {
-                table.sort_values();
-            }
+        if was_sorted && let Some(table) = tab.as_table_like_mut() {
+            table.sort_values();
         }
 
         if let Some(t) = tab.as_inline_table_mut() {

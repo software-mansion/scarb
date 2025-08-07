@@ -87,10 +87,10 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
 
     // We process all proc-macro units that are required by Cairo compilation units beforehand.
     for compilation_unit in compilation_units.iter() {
-        if let CompilationUnit::ProcMacro(_) = compilation_unit {
-            if required_plugins.contains(&compilation_unit.main_package_id()) {
-                compile_unit(compilation_unit.clone(), ws)?;
-            }
+        if let CompilationUnit::ProcMacro(_) = compilation_unit
+            && required_plugins.contains(&compilation_unit.main_package_id())
+        {
+            compile_unit(compilation_unit.clone(), ws)?;
         }
     }
 

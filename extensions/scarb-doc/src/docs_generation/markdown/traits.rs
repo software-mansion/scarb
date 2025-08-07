@@ -770,14 +770,14 @@ fn generate_markdown_from_item_data(
         writeln!(&mut markdown, "Part of the group: {group_path}\n",)?;
     }
 
-    if let Some(sig) = &doc_item.signature() {
-        if !sig.is_empty() {
-            writeln!(
-                &mut markdown,
-                "<pre><code class=\"language-cairo\">{}</code></pre>\n",
-                format_signature(sig, doc_item.doc_location_links(), summary_index_map)
-            )?;
-        }
+    if let Some(sig) = &doc_item.signature()
+        && !sig.is_empty()
+    {
+        writeln!(
+            &mut markdown,
+            "<pre><code class=\"language-cairo\">{}</code></pre>\n",
+            format_signature(sig, doc_item.doc_location_links(), summary_index_map)
+        )?;
     }
     Ok(markdown)
 }
