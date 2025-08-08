@@ -16,7 +16,7 @@ pub fn read_lockfile(ws: &Workspace<'_>) -> Result<Lockfile> {
         .open(ws.lockfile_path())
         .context("failed to open lockfile")?;
 
-    file.lock()
+    file.lock_shared()
         .context("failed to acquire shared lockfile access")?;
 
     let mut content = String::new();
