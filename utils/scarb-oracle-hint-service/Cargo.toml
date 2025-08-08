@@ -1,11 +1,11 @@
 [package]
-name = "scarb-oracle-hint-processor"
-version.workspace = true
+name = "scarb-oracle-hint-service"
+version = "1.0.0"
 edition.workspace = true
 
 authors.workspace = true
 categories = ["development-tools"]
-description = "Oracle hint processor used by Scarb"
+description = "Oracle hint service used by Scarb"
 homepage.workspace = true
 keywords = ["cairo-lang", "starknet", "scarb", "oracle"]
 license.workspace = true
