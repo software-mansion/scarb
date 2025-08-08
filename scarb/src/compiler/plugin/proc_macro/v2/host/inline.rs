@@ -43,12 +43,12 @@ impl ProcMacroInlinePlugin {
 
 impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
     #[tracing::instrument(level = "trace", skip_all)]
-    fn generate_code(
+    fn generate_code<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        syntax: &ast::ExprInlineMacro,
+        db: &'db dyn SyntaxGroup,
+        syntax: &ast::ExprInlineMacro<'db>,
         _metadata: &MacroPluginMetadata<'_>,
-    ) -> InlinePluginResult {
+    ) -> InlinePluginResult<'db> {
         let call_site = CallSiteLocation::new(syntax, db);
         let ctx = AllocationContext::default();
         let arguments = syntax.arguments(db);

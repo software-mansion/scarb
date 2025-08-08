@@ -128,16 +128,16 @@ impl ArtifactsWriter {
         }
     }
 
-    pub fn write(
+    pub fn write<'db>(
         self,
         Artifacts {
             contract_paths,
             contracts,
             classes,
             casm_classes,
-        }: Artifacts,
+        }: Artifacts<'db>,
         offloader: &Offloader<'_>,
-        db: &mut RootDatabase,
+        db: &'db mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> anyhow::Result<()> {
         let span = trace_span!("serialize_starknet");
@@ -271,9 +271,9 @@ impl ArtifactsWriter {
     }
 }
 
-pub struct Artifacts {
+pub struct Artifacts<'db> {
     pub contract_paths: Vec<String>,
-    pub contracts: Vec<ContractDeclaration>,
+    pub contracts: Vec<ContractDeclaration<'db>>,
     pub classes: Vec<ContractClass>,
     pub casm_classes: Vec<Option<CasmContractClass>>,
 }

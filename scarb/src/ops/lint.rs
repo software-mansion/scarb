@@ -19,6 +19,7 @@ use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
 use cairo_lang_filesystem::{
     db::{FilesGroup, FilesGroupEx},
     ids::CrateLongId,
+    override_file_content,
 };
 use cairo_lang_formatter::FormatterConfig;
 use cairo_lang_semantic::{
@@ -470,7 +471,7 @@ fn inject_virtual_wrapper_lib(
         let module_id = ModuleId::CrateRoot(crate_id);
         let file_id = db.module_main_file(module_id).unwrap();
         // Inject virtual lib file wrapper.
-        db.override_file_content(file_id, Some(Arc::from(content.as_str())));
+        override_file_content!(db, file_id, Some(Arc::from(content.as_str())));
     }
 
     Ok(())

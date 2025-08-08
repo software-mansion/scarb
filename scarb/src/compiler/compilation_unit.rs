@@ -108,7 +108,7 @@ pub struct CompilationUnitComponent {
 
 impl CompilationUnitComponent {
     /// Returns a [`CrateId`] of a crate associated with the [`CompilationUnitComponent`].
-    pub fn crate_id(&self, db: &dyn FilesGroup) -> CrateId {
+    pub fn crate_id<'db>(&self, db: &'db dyn FilesGroup) -> CrateId<'db> {
         db.intern_crate(CrateLongId::Real {
             name: self.cairo_package_name(),
             discriminator: self.id.to_discriminator(),
@@ -176,8 +176,8 @@ pub struct CompilationUnitComponentId {
 
 impl CompilationUnitComponentId {
     /// Returns a name of the corresponding package.
-    pub fn cairo_package_name(&self) -> SmolStr {
-        self.package_id.name.to_smol_str()
+    pub fn cairo_package_name(&self) -> String {
+        self.package_id.name.to_string()
     }
 }
 
@@ -186,7 +186,7 @@ impl CompilationUnitComponentId {
         self.package_id.to_serialized_string().into()
     }
 
-    pub fn to_discriminator(&self) -> Option<SmolStr> {
+    pub fn to_discriminator(&self) -> Option<String> {
         if self.package_id.name == PackageName::CORE {
             None
         } else {
@@ -389,8 +389,8 @@ impl CompilationUnitComponent {
         self.targets.target_name()
     }
 
-    pub fn cairo_package_name(&self) -> SmolStr {
-        self.package.id.name.to_smol_str()
+    pub fn cairo_package_name(&self) -> String {
+        self.package.id.name.to_string()
     }
 
     fn hash(&self, hasher: &mut impl Hasher) {

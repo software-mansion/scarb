@@ -41,13 +41,13 @@ pub struct Fingerprint {
     profile: Profile,
 
     /// Name by which the component can be referred to in Cairo code.
-    cairo_name: SmolStr,
+    cairo_name: String,
 
     /// Cairo edition used for the component.
     edition: Edition,
 
     /// Component discriminator, which uniquely identifies the component within the compilation unit.
-    component_discriminator: SmolStr,
+    component_discriminator: String,
 
     /// Compiled source paths.
     source_paths: Vec<String>,
@@ -83,7 +83,7 @@ pub struct LocalFingerprint {
 #[derive(Debug)]
 pub struct PluginFingerprint {
     /// Component discriminator, which uniquely identifies the component within the compilation unit.
-    component_discriminator: SmolStr,
+    component_discriminator: String,
     /// Whether the plugin is a built-in plugin or not.
     ///
     /// Builtin plugins should not have local files to check, as they are always tied to the Scarb version.
@@ -97,7 +97,7 @@ pub struct PluginFingerprint {
 #[derive(Debug)]
 pub struct DepFingerprint {
     /// Component discriminator, which uniquely identifies the component within the compilation unit.
-    component_discriminator: SmolStr,
+    component_discriminator: String,
     /// Fingerprint created for the component.
     ///
     /// We store fingerprints as a `Weak` reference to allow cyclic dependencies.
@@ -166,7 +166,7 @@ impl UnitFingerprint {
                 match &**component_fingerprint {
                     ComponentFingerprint::Library(lib) => {
                         lib.deps.write().unwrap().push(DepFingerprint {
-                            component_discriminator: SmolStr::from(dep.to_crate_identifier()),
+                            component_discriminator: dep.to_crate_identifier().into(),
                             fingerprint,
                         });
                     }
@@ -214,8 +214,10 @@ impl PluginFingerprint {
         _unit: &CairoCompilationUnit,
         ws: &Workspace<'_>,
     ) -> Result<Self> {
-        let component_discriminator =
-            SmolStr::from(component.component_dependency_id.to_crate_identifier());
+        let component_discriminator = component
+            .component_dependency_id
+            .to_crate_identifier()
+            .into();
         let is_builtin = component.builtin;
         let is_prebuilt = component.prebuilt.is_some();
         let hash = |path: Utf8PathBuf| {
@@ -307,7 +309,7 @@ impl Fingerprint {
         let cfg_set = component.cfg_set.clone().unwrap_or(unit.cfg_set.clone());
         let edition = component.package.manifest.edition;
         let cairo_name = component.cairo_package_name();
-        let component_discriminator = SmolStr::from(component.id.to_crate_identifier());
+        let component_discriminator = component.id.to_crate_identifier().into();
         let experimental_features = component
             .package
             .manifest
@@ -362,7 +364,7 @@ impl Fingerprint {
     /// Broadly speaking, the identifier is a less strict version of the digest.
     pub fn id(&self) -> String {
         // We use the set to avoid cycles when calculating digests recursively for deps.
-        let mut seen = HashSet::<SmolStr>::new();
+        let mut seen = HashSet::<String>::new();
         seen.insert(self.component_discriminator.clone());
         let mut hasher = StableHasher::new();
         self.scarb_path.hash(&mut hasher);
@@ -378,7 +380,7 @@ impl Fingerprint {
 
     pub fn calculate_id(
         fingerprint: &Fingerprint,
-        seen: &mut HashSet<SmolStr>,
+        seen: &mut HashSet<String>,
         mut hasher: &mut StableHasher,
     ) -> String {
         fingerprint.component_discriminator.hash(hasher);
@@ -424,14 +426,14 @@ impl Fingerprint {
         self.digest
             .get_or_init(|| {
                 // We use the set to avoid cycles when calculating digests recursively for deps.
-                let mut seen = HashSet::<SmolStr>::new();
+                let mut seen = HashSet::<String>::new();
                 seen.insert(self.component_discriminator.clone());
                 Self::calculate_digest(self, &mut seen)
             })
             .clone()
     }
 
-    fn calculate_digest(fingerprint: &Fingerprint, seen: &mut HashSet<SmolStr>) -> String {
+    fn calculate_digest(fingerprint: &Fingerprint, seen: &mut HashSet<String>) -> String {
         let mut hasher = StableHasher::new();
         fingerprint.scarb_path.hash(&mut hasher);
         fingerprint.scarb_version.long().hash(&mut hasher);

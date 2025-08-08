@@ -164,7 +164,11 @@ impl ProcMacroHostPlugin {
         })
     }
 
-    fn uses_proc_macros(&self, db: &dyn SyntaxGroup, item_ast: &ast::ModuleItem) -> bool {
+    fn uses_proc_macros<'db>(
+        &self,
+        db: &'db dyn SyntaxGroup,
+        item_ast: &ast::ModuleItem<'db>,
+    ) -> bool {
         // Check on inner attributes too.
         let inner_attrs: HashSet<_> = match item_ast {
             ast::ModuleItem::Impl(imp) => {
@@ -172,7 +176,12 @@ impl ProcMacroHostPlugin {
                     body.items(db)
                         .elements(db)
                         .flat_map(|item| item.attributes_elements(db).collect_vec())
-                        .map(|attr| attr.attr(db).as_syntax_node().get_text_without_trivia(db))
+                        .map(|attr| {
+                            attr.attr(db)
+                                .as_syntax_node()
+                                .get_text_without_trivia(db)
+                                .to_string()
+                        })
                         .collect()
                 } else {
                     Default::default()
@@ -183,7 +192,12 @@ impl ProcMacroHostPlugin {
                     body.items(db)
                         .elements(db)
                         .flat_map(|item| item.attributes_elements(db).collect_vec())
-                        .map(|attr| attr.attr(db).as_syntax_node().get_text_without_trivia(db))
+                        .map(|attr| {
+                            attr.attr(db)
+                                .as_syntax_node()
+                                .get_text_without_trivia(db)
+                                .to_string()
+                        })
                         .collect()
                 } else {
                     Default::default()
@@ -205,11 +219,11 @@ impl ProcMacroHostPlugin {
         true
     }
 
-    fn expand_inner_attr(
+    fn expand_inner_attr<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        item_ast: ast::ModuleItem,
-    ) -> InnerAttrExpansionResult {
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
+    ) -> InnerAttrExpansionResult<'db> {
         let mut context = InnerAttrExpansionContext::new(self);
         let mut item_builder = PatchBuilder::new(db, &item_ast);
         let mut used_attr_names: HashSet<SmolStr> = Default::default();
@@ -267,6 +281,7 @@ impl ProcMacroHostPlugin {
                         } else {
                             let (code, mappings) = item_builder.build();
                             InnerAttrExpansionResult::Some(context.into_result(
+                                db,
                                 code,
                                 mappings,
                                 used_attr_names.into_iter().collect(),
@@ -328,6 +343,7 @@ impl ProcMacroHostPlugin {
                         } else {
                             let (code, mappings) = item_builder.build();
                             InnerAttrExpansionResult::Some(context.into_result(
+                                db,
                                 code,
                                 mappings,
                                 used_attr_names.into_iter().collect(),
@@ -340,13 +356,13 @@ impl ProcMacroHostPlugin {
         }
     }
 
-    fn do_expand_inner_attr(
+    fn do_expand_inner_attr<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        context: &mut InnerAttrExpansionContext<'_>,
-        item_builder: &mut PatchBuilder<'_>,
-        found: AttrExpansionFound,
-        func: &impl TypedSyntaxNode,
+        db: &'db dyn SyntaxGroup,
+        context: &mut InnerAttrExpansionContext<'_, 'db>,
+        item_builder: &mut PatchBuilder<'db>,
+        found: AttrExpansionFound<'db>,
+        func: &impl TypedSyntaxNode<'db>,
         token_stream: TokenStream,
     ) -> bool {
         let mut all_none = true;
@@ -395,11 +411,11 @@ impl ProcMacroHostPlugin {
     /// Find first attribute procedural macros that should be expanded.
     ///
     /// Remove the attribute from the code.
-    fn parse_attribute(
+    fn parse_attribute<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        item_ast: ast::ModuleItem,
-    ) -> (AttrExpansionFound, TokenStream) {
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
+    ) -> (AttrExpansionFound<'db>, TokenStream) {
         let mut item_builder = PatchBuilder::new(db, &item_ast);
         let input = match item_ast.clone() {
             ast::ModuleItem::Trait(trait_ast) => {
@@ -491,13 +507,13 @@ impl ProcMacroHostPlugin {
         (input, token_stream)
     }
 
-    fn parse_attrs(
+    fn parse_attrs<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        builder: &mut PatchBuilder<'_>,
-        attrs: Vec<ast::Attribute>,
-        origin: &impl TypedSyntaxNode,
-    ) -> AttrExpansionFound {
+        db: &'db dyn SyntaxGroup,
+        builder: &mut PatchBuilder<'db>,
+        attrs: Vec<ast::Attribute<'db>>,
+        origin: &impl TypedSyntaxNode<'db>,
+    ) -> AttrExpansionFound<'db> {
         // This function parses attributes of the item,
         // checking if those attributes correspond to a procedural macro that should be fired.
         // The proc macro attribute found is removed from attributes list,
@@ -550,7 +566,11 @@ impl ProcMacroHostPlugin {
     /// Handle `#[derive(...)]` attribute.
     ///
     /// Returns a list of expansions that this plugin should apply.
-    fn parse_derive(&self, db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> Vec<ProcMacroId> {
+    fn parse_derive<'db>(
+        &self,
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
+    ) -> Vec<ProcMacroId> {
         let attrs = match item_ast {
             ast::ModuleItem::Struct(struct_ast) => {
                 Some(struct_ast.query_attr(db, DERIVE_ATTR).collect_vec())
@@ -589,12 +609,12 @@ impl ProcMacroHostPlugin {
             .collect_vec()
     }
 
-    fn expand_derives(
+    fn expand_derives<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        item_ast: ast::ModuleItem,
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
         stream_metadata: TokenStreamMetadata,
-    ) -> Option<PluginResult> {
+    ) -> Option<PluginResult<'db>> {
         let stable_ptr = item_ast.clone().stable_ptr(db).untyped();
         let token_stream =
             TokenStream::from_syntax_node(db, &item_ast).with_metadata(stream_metadata.clone());
@@ -677,14 +697,14 @@ impl ProcMacroHostPlugin {
         None
     }
 
-    fn expand_attribute(
+    fn expand_attribute<'db>(
         &self,
         input: ProcMacroId,
         last: bool,
         args: TokenStream,
         token_stream: TokenStream,
-        stable_ptr: SyntaxStablePtrId,
-    ) -> PluginResult {
+        stable_ptr: SyntaxStablePtrId<'db>,
+    ) -> PluginResult<'db> {
         let result = self
             .instance(input.package_id)
             .try_v1()
@@ -872,7 +892,7 @@ impl ProcMacroHostPlugin {
         markers
     }
 
-    fn extract_key(db: &dyn SemanticGroup, attr: Attribute) -> Option<String> {
+    fn extract_key<'db>(db: &'db dyn SemanticGroup, attr: Attribute<'db>) -> Option<String> {
         if attr.id != FULL_PATH_MARKER_KEY {
             return None;
         }
@@ -928,7 +948,10 @@ impl ProcMacroHostPlugin {
             .or_insert(markers);
     }
 
-    fn calculate_metadata(db: &dyn SyntaxGroup, item_ast: ast::ModuleItem) -> TokenStreamMetadata {
+    fn calculate_metadata<'db>(
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
+    ) -> TokenStreamMetadata {
         let stable_ptr = item_ast.clone().stable_ptr(db).untyped();
         let file_path = stable_ptr.file_id(db).full_path(db.upcast());
         let file_id = short_hash(file_path.clone());
@@ -936,15 +959,15 @@ impl ProcMacroHostPlugin {
     }
 }
 
-struct InnerAttrExpansionContext<'a> {
+struct InnerAttrExpansionContext<'a, 'db> {
     host: &'a ProcMacroHostPlugin,
     // Metadata returned for expansions.
-    diagnostics: Vec<PluginDiagnostic>,
+    diagnostics: Vec<PluginDiagnostic<'db>>,
     aux_data: EmittedAuxData,
     any_changed: bool,
 }
 
-impl<'a> InnerAttrExpansionContext<'a> {
+impl<'a, 'db> InnerAttrExpansionContext<'a, 'db> {
     pub fn new<'b: 'a>(host: &'b ProcMacroHostPlugin) -> Self {
         Self {
             diagnostics: Vec::new(),
@@ -959,7 +982,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
         original: String,
         input: ProcMacroId,
         result: ProcMacroResult,
-        stable_ptr: SyntaxStablePtrId,
+        stable_ptr: SyntaxStablePtrId<'db>,
     ) -> String {
         let expanded = result.token_stream.to_string();
         let changed = expanded.as_str() != original;
@@ -983,10 +1006,11 @@ impl<'a> InnerAttrExpansionContext<'a> {
     }
     pub fn into_result(
         self,
+        _db: &'db dyn SyntaxGroup,
         expanded: String,
         code_mappings: Vec<CodeMapping>,
         attr_names: Vec<SmolStr>,
-    ) -> PluginResult {
+    ) -> PluginResult<'db> {
         let msg = if attr_names.len() == 1 {
             "the attribute macro"
         } else {
@@ -1013,19 +1037,19 @@ impl<'a> InnerAttrExpansionContext<'a> {
     }
 }
 
-enum InnerAttrExpansionResult {
+enum InnerAttrExpansionResult<'db> {
     None,
-    Some(PluginResult),
+    Some(PluginResult<'db>),
 }
 
 impl MacroPlugin for ProcMacroHostPlugin {
     #[tracing::instrument(level = "trace", skip_all)]
-    fn generate_code(
+    fn generate_code<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        item_ast: ast::ModuleItem,
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
         _metadata: &MacroPluginMetadata<'_>,
-    ) -> PluginResult {
+    ) -> PluginResult<'db> {
         // We first check if the ast item uses any proc macros. If not, we exit early.
         // This is strictly a performance optimization, as gathering expansion metadata can be costly.
         if !self.uses_proc_macros(db, &item_ast) {
@@ -1092,20 +1116,21 @@ impl MacroPlugin for ProcMacroHostPlugin {
     }
 }
 
-enum AttrExpansionFound {
+enum AttrExpansionFound<'db> {
     Some {
         expansion: ProcMacroId,
         args: TokenStream,
-        stable_ptr: SyntaxStablePtrId,
+        stable_ptr: SyntaxStablePtrId<'db>,
     },
     None,
     Last {
         expansion: ProcMacroId,
         args: TokenStream,
-        stable_ptr: SyntaxStablePtrId,
+        stable_ptr: SyntaxStablePtrId<'db>,
     },
 }
-impl AttrExpansionFound {
+
+impl<'db> AttrExpansionFound<'db> {
     pub fn as_name(&self) -> Option<SmolStr> {
         match self {
             AttrExpansionFound::Some { expansion, .. }
@@ -1149,12 +1174,12 @@ impl ProcMacroInlinePlugin {
 
 impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
     #[tracing::instrument(level = "trace", skip_all)]
-    fn generate_code(
+    fn generate_code<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        syntax: &ast::ExprInlineMacro,
+        db: &'db dyn SyntaxGroup,
+        syntax: &ast::ExprInlineMacro<'db>,
         _metadata: &MacroPluginMetadata<'_>,
-    ) -> InlinePluginResult {
+    ) -> InlinePluginResult<'db> {
         let stable_ptr = syntax.clone().stable_ptr(db).untyped();
         let arguments = syntax.arguments(db);
         let token_stream = TokenStream::from_syntax_node(db, &arguments);
@@ -1212,10 +1237,10 @@ impl InlineMacroExprPlugin for ProcMacroInlinePlugin {
     }
 }
 
-fn into_cairo_diagnostics(
+fn into_cairo_diagnostics<'db>(
     diagnostics: Vec<Diagnostic>,
-    stable_ptr: SyntaxStablePtrId,
-) -> Vec<PluginDiagnostic> {
+    stable_ptr: SyntaxStablePtrId<'db>,
+) -> Vec<PluginDiagnostic<'db>> {
     diagnostics
         .into_iter()
         .map(|diag| PluginDiagnostic {

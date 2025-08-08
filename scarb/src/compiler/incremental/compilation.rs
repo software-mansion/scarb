@@ -7,6 +7,7 @@ use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::{FilesGroup, FilesGroupEx};
 use cairo_lang_filesystem::ids::{BlobLongId, CrateId};
+use cairo_lang_filesystem::set_crate_config;
 use cairo_lang_lowering::cache::generate_crate_cache;
 use itertools::Itertools;
 use std::env;
@@ -16,16 +17,16 @@ use tracing::debug;
 
 const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
-pub enum IncrementalContext {
+pub enum IncrementalContext<'db> {
     Disabled,
     Enabled {
         fingerprints: UnitFingerprint,
-        cached_crates: Vec<CrateId>,
+        cached_crates: Vec<CrateId<'db>>,
     },
 }
 
-impl IncrementalContext {
-    pub fn cached_crates(&self) -> &[CrateId] {
+impl<'db> IncrementalContext<'db> {
+    pub fn cached_crates(&self) -> &[CrateId<'db>] {
         match self {
             IncrementalContext::Disabled => &[],
             IncrementalContext::Enabled {
@@ -37,11 +38,11 @@ impl IncrementalContext {
 }
 
 #[tracing::instrument(skip_all, level = "info")]
-pub fn load_incremental_artifacts(
+pub fn load_incremental_artifacts<'db>(
     unit: &CairoCompilationUnit,
-    db: &mut RootDatabase,
+    db: &'db mut RootDatabase,
     ws: &Workspace<'_>,
-) -> Result<IncrementalContext> {
+) -> Result<IncrementalContext<'db>> {
     if !incremental_allowed(unit) {
         return Ok(IncrementalContext::Disabled);
     }
@@ -112,7 +113,7 @@ fn load_component_cache(
         let blob_id = db.intern_blob(BlobLongId::OnDisk(cache_file.as_std_path().to_path_buf()));
         if let Some(mut core_conf) = db.crate_config(crate_id) {
             core_conf.cache_file = Some(blob_id);
-            db.set_crate_config(crate_id, Some(core_conf));
+            set_crate_config!(db, crate_id, Some(core_conf));
         }
         Ok(true)
     } else {
@@ -121,10 +122,10 @@ fn load_component_cache(
 }
 
 #[tracing::instrument(skip_all, level = "info")]
-pub fn save_incremental_artifacts(
+pub fn save_incremental_artifacts<'db>(
     unit: &CairoCompilationUnit,
-    db: &RootDatabase,
-    ctx: IncrementalContext,
+    db: &'db RootDatabase,
+    ctx: IncrementalContext<'db>,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let IncrementalContext::Enabled {

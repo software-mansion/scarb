@@ -18,24 +18,23 @@ use cairo_lang_syntax::node::db::SyntaxGroup;
 use cairo_lang_syntax::node::ids::SyntaxStablePtrId;
 pub use inner_attribute::*;
 pub use item_attribute::*;
-use smol_str::{SmolStr, ToSmolStr};
 
 #[derive(Default)]
-pub struct AttributePluginResult {
-    diagnostics: Vec<PluginDiagnostic>,
+pub struct AttributePluginResult<'db> {
+    diagnostics: Vec<PluginDiagnostic<'db>>,
     remove_original_item: bool,
     code: Option<PluginGeneratedFile>,
 }
 
-impl AttributePluginResult {
+impl<'db> AttributePluginResult<'db> {
     pub fn new() -> Self {
         Self::default()
     }
 
     pub fn with_diagnostics(
         mut self,
-        db: &dyn SyntaxGroup,
-        call_site_stable_ptr: SyntaxStablePtrId,
+        db: &'db dyn SyntaxGroup,
+        call_site_stable_ptr: SyntaxStablePtrId<'db>,
         diagnostics: Vec<AdaptedDiagnostic>,
     ) -> Self {
         let diagnostics = diagnostics.into_iter().map(Into::into).collect();
@@ -43,7 +42,7 @@ impl AttributePluginResult {
         self
     }
 
-    pub fn with_plugin_diagnostics(mut self, diagnostics: Vec<PluginDiagnostic>) -> Self {
+    pub fn with_plugin_diagnostics(mut self, diagnostics: Vec<PluginDiagnostic<'db>>) -> Self {
         self.diagnostics = diagnostics;
         self
     }
@@ -59,8 +58,8 @@ impl AttributePluginResult {
     }
 }
 
-impl From<AttributePluginResult> for PluginResult {
-    fn from(value: AttributePluginResult) -> Self {
+impl<'db> From<AttributePluginResult<'db>> for PluginResult<'db> {
+    fn from(value: AttributePluginResult<'db>) -> Self {
         PluginResult {
             diagnostics: value.diagnostics,
             remove_original_item: value.remove_original_item,
@@ -70,7 +69,7 @@ impl From<AttributePluginResult> for PluginResult {
 }
 
 pub struct AttributeGeneratedFile {
-    name: SmolStr,
+    name: String,
     content: String,
     code_mappings: Vec<CodeMapping>,
     aux_data: Option<DynGeneratedFileAuxData>,
@@ -78,9 +77,9 @@ pub struct AttributeGeneratedFile {
 }
 
 impl AttributeGeneratedFile {
-    pub fn new(name: impl ToSmolStr) -> Self {
+    pub fn new(name: impl ToString) -> Self {
         Self {
-            name: name.to_smolstr(),
+            name: name.to_string(),
             content: Default::default(),
             code_mappings: Default::default(),
             aux_data: Default::default(),
@@ -88,14 +87,14 @@ impl AttributeGeneratedFile {
         }
     }
 
-    pub fn from_patch_builder(name: impl ToSmolStr, item_builder: PatchBuilder<'_>) -> Self {
+    pub fn from_patch_builder(name: impl ToString, item_builder: PatchBuilder<'_>) -> Self {
         let (expanded, mut code_mappings) = item_builder.build();
         // PatchBuilder::build() adds additional mapping at the end,
         // which wraps the whole outputted code.
         // We remove it, so we can properly translate locations spanning multiple token spans.
         code_mappings.pop();
         Self {
-            name: name.to_smolstr(),
+            name: name.to_string(),
             content: expanded,
             code_mappings,
             aux_data: Default::default(),
