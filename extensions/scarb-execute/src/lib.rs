@@ -1,6 +1,7 @@
 #![deny(clippy::dbg_macro)]
 #![deny(clippy::disallowed_methods)]
 
+use crate::hint_processor::ExecuteHintProcessor;
 use crate::output::{ExecutionOutput, ExecutionResources, ExecutionSummary};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use bincode::enc::write::Writer;
@@ -21,13 +22,14 @@ use scarb_extensions_cli::execute::{
     Args, BuildTargetSpecifier, ExecutionArgs, OutputFormat, ProgramArguments,
 };
 use scarb_metadata::{Metadata, MetadataCommand, PackageMetadata, ScarbCommand, TargetMetadata};
-use scarb_oracle_hint_processor::OracleHintProcessor;
 use scarb_ui::Ui;
 use scarb_ui::args::{PackagesFilter, ToEnvVars, WithManifestPath};
 use scarb_ui::components::Status;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
+
+mod hint_processor;
 
 pub(crate) mod output;
 
@@ -152,8 +154,11 @@ pub fn execute(
         panic_traceback: Default::default(),
     };
 
-    let mut hint_processor =
-        OracleHintProcessor::new(cairo_hint_processor, args.run.experimental_oracles);
+    let mut hint_processor = ExecuteHintProcessor {
+        cairo_hint_processor,
+        oracle_experiment_enabled: args.run.experimental_oracles,
+        oracle_hint_service: Default::default(),
+    };
 
     let proof_mode = args.run.target.is_standalone();
 
