@@ -445,7 +445,7 @@ impl<'db> Module<'db> {
     }
 
     /// Recursively traverses all the module and gets all the item [`DocumentableItemId`]s.
-    pub(crate) fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+    pub(crate) fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
         let mut ids: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
 
         ids.insert(self.item_data.id, &self.item_data);
@@ -567,7 +567,8 @@ pub(crate) fn get_ancestors_vector<'db>(
             ancestors.insert(0, module_id);
         }
         ModuleId::MacroCall { .. } => {
-            todo!("TODO(#2262): Correctly handle declarative macros.")
+            // TODO(#2262): Correctly handle declarative macros.
+            ancestors.insert(0, module_id);
         }
     }
     ancestors.clone()

@@ -6443,6 +6443,7 @@ dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-sierra-generator",
  "cairo-lang-sierra-to-casm",
+ "cairo-lang-sierra-type-size",
  "cairo-lang-starknet",
  "cairo-lang-starknet-classes",
  "cairo-lang-syntax",
@@ -6485,7 +6486,6 @@ dependencies = [
  "predicates",
  "pubgrub",
  "ra_ap_toolchain",
- "rayon",
  "redb",
  "reqwest",
  "salsa",
@@ -6622,7 +6622,6 @@ dependencies = [
  "scarb-ui",
  "serde",
  "serde_json",
- "smol_str",
  "snapbox",
  "thiserror 2.0.12",
 ]

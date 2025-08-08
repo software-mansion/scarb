@@ -3,10 +3,11 @@ use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::plugin::MacroPlugin;
-use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_filesystem::ids::CrateInput;
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_sierra_to_casm::compiler::SierraToCasmConfig;
 use cairo_lang_sierra_to_casm::metadata::{calc_metadata, calc_metadata_ap_change_only};
+use cairo_lang_sierra_type_size::ProgramRegistryInfo;
 use indoc::formatdoc;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -44,12 +45,12 @@ impl Compiler for LibCompiler {
         TargetKind::LIB.clone()
     }
 
-    fn compile<'db>(
+    fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateId<'db>],
+        cached_crates: &[CrateInput],
         offloader: &Offloader<'_>,
-        db: &'db mut RootDatabase,
+        db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
@@ -125,6 +126,7 @@ impl Compiler for LibCompiler {
 
         if props.casm {
             let program = &program_artifact.program;
+            let program_info = ProgramRegistryInfo::new(program)?;
 
             let span = trace_span!("casm_calc_metadata");
             let metadata = {
@@ -132,10 +134,10 @@ impl Compiler for LibCompiler {
 
                 if unit.compiler_config.enable_gas {
                     debug!("calculating Sierra variables");
-                    calc_metadata(program, Default::default())
+                    calc_metadata(program, &program_info, Default::default())
                 } else {
                     debug!("calculating Sierra variables with no gas validation");
-                    calc_metadata_ap_change_only(program)
+                    calc_metadata_ap_change_only(program, &program_info)
                 }
                 .context("failed calculating Sierra variables")?
             };
@@ -147,7 +149,12 @@ impl Compiler for LibCompiler {
                     gas_usage_check: unit.compiler_config.enable_gas,
                     max_bytecode_size: usize::MAX,
                 };
-                cairo_lang_sierra_to_casm::compiler::compile(program, &metadata, sierra_to_casm)?
+                cairo_lang_sierra_to_casm::compiler::compile(
+                    program,
+                    &program_info,
+                    &metadata,
+                    sierra_to_casm,
+                )?
             };
 
             let span = trace_span!("serialize_casm");

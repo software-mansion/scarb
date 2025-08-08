@@ -113,7 +113,7 @@ impl ProcMacroHostPlugin {
 
         for arg in attr.args.clone() {
             if let AttributeArgVariant::Unnamed(Expr::String(s)) = arg.variant {
-                return s.string_value(db.upcast());
+                return s.string_value(db);
             }
         }
 

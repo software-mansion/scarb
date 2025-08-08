@@ -530,7 +530,7 @@ impl ProcMacroHostPlugin {
             if last {
                 let structured_attr = attr.clone().structurize(db);
                 let found = self.find_expansion(&ExpansionQuery::with_cairo_name(
-                    structured_attr.id.clone(),
+                    structured_attr.id,
                     ExpansionKind::Attr,
                 ));
                 if let Some(found) = found {
@@ -753,7 +753,7 @@ impl ProcMacroHostPlugin {
         let content = result.token_stream.to_string();
         PluginResult {
             code: Some(PluginGeneratedFile {
-                name: file_name.into(),
+                name: file_name,
                 code_mappings: Vec::new(),
                 content,
                 diagnostics_note: Some(format!(
@@ -899,7 +899,7 @@ impl ProcMacroHostPlugin {
 
         for arg in attr.args.clone() {
             if let AttributeArgVariant::Unnamed(Expr::String(s)) = arg.variant {
-                return s.string_value(db.upcast());
+                return s.string_value(db);
             }
         }
 

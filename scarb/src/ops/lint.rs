@@ -1,5 +1,3 @@
-use std::{collections::HashMap, sync::Arc, vec};
-
 use crate::{
     DEFAULT_MODULE_MAIN_FILE,
     compiler::{
@@ -11,22 +9,24 @@ use crate::{
     core::{PackageId, PackageName, Target, TargetKind},
     ops,
 };
+use std::ops::Deref;
+use std::{collections::HashMap, sync::Arc, vec};
 
 use anyhow::anyhow;
 use anyhow::{Context, Result};
+use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId};
 use cairo_lang_defs::{db::DefsGroup, diagnostic_utils::StableLocation, ids::ModuleId};
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
+use cairo_lang_filesystem::ids::CrateInput;
 use cairo_lang_filesystem::{
     db::{FilesGroup, FilesGroupEx},
     ids::CrateLongId,
     override_file_content,
 };
 use cairo_lang_formatter::FormatterConfig;
+use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::{
-    SemanticDiagnostic,
-    db::{PluginSuiteInput, SemanticGroup},
-    diagnostic::SemanticDiagnosticKind,
-    plugin::PluginSuite,
+    SemanticDiagnostic, db::SemanticGroup, diagnostic::SemanticDiagnosticKind, plugin::PluginSuite,
 };
 use cairo_lint::{
     CAIRO_LINT_TOOL_NAME, CorelibContext, LinterAnalysisDatabase, LinterDiagnosticParams,
@@ -46,11 +46,11 @@ use super::{
     CompilationUnitsOpts, FeaturesOpts, compile_unit, plugins_required_for_units, validate_features,
 };
 
-struct CompilationUnitDiagnostics {
-    pub db: LinterAnalysisDatabase,
-    pub corelib_context: CorelibContext,
+struct CompilationUnitDiagnostics<'db> {
+    pub db: &'db LinterAnalysisDatabase,
+    pub corelib_context: CorelibContext<'db>,
     pub linter_params: LinterDiagnosticParams,
-    pub diagnostics: Vec<SemanticDiagnostic>,
+    pub diagnostics: Vec<SemanticDiagnostic<'db>>,
     pub formatter_config: FormatterConfig,
 }
 
@@ -98,19 +98,16 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     // We store the state of the workspace diagnostics, so we can decide upon throwing an error later on.
     // Also we want to apply fixes only if there were no previous errors.
     let mut packages_with_error: Vec<PackageName> = Default::default();
-    let mut diagnostics_per_cu: Vec<CompilationUnitDiagnostics> = Default::default();
+    let mut diagnostics_per_cu: Vec<CompilationUnitDiagnostics<'_>> = Default::default();
 
-    for package in opts.packages {
-        let linter_params = LinterDiagnosticParams {
-            only_generated_files: false,
-            tool_metadata: cairo_lint_tool_metadata(&package)?,
-        };
+    let mut dbs: Vec<(&Package, &CairoCompilationUnit, LinterAnalysisDatabase)> = vec![];
+
+    for package in opts.packages.iter() {
         let package_name = &package.id.name;
-        let formatter_config = package.fmt_config()?;
         let package_compilation_units = if opts.test {
             let mut result = vec![];
             let integration_test_compilation_unit =
-                find_integration_test_package_id(&package).map(|id| {
+                find_integration_test_package_id(package).map(|id| {
                     compilation_units
                         .iter()
                         .find(|compilation_unit| compilation_unit.main_package_id() == id)
@@ -186,114 +183,121 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
                 .collect::<Vec<_>>()
         };
 
-        for compilation_unit in filtered_by_target_names_package_compilation_units {
-            match compilation_unit {
-                CompilationUnit::ProcMacro(_) => {
-                    continue;
-                }
-                CompilationUnit::Cairo(compilation_unit) => {
-                    ws.config()
-                        .ui()
-                        .print(Status::new("Linting", &compilation_unit.name()));
+        dbs.extend(
+            filtered_by_target_names_package_compilation_units
+                .into_iter()
+                .filter_map(|compilation_unit| match compilation_unit {
+                    CompilationUnit::ProcMacro(_) => None,
+                    CompilationUnit::Cairo(compilation_unit) => Some(
+                        build_lint_database(compilation_unit, ws)
+                            .map(|db| (package, compilation_unit, db)),
+                    ),
+                })
+                .collect::<Result<Vec<_>>>()?,
+        );
+    }
 
-                    let db = build_lint_database(compilation_unit, ws)?;
-                    let corelib_context = CorelibContext::new(&db);
+    for (package, compilation_unit, db) in dbs.iter() {
+        let linter_params = LinterDiagnosticParams {
+            only_generated_files: false,
+            tool_metadata: cairo_lint_tool_metadata(package)?,
+        };
+        let package_name = package.id.name.clone();
+        let formatter_config = package.fmt_config()?;
 
-                    let main_component = compilation_unit.main_component();
-                    let crate_id = main_component.crate_id(&db);
+        ws.config()
+            .ui()
+            .print(Status::new("Linting", &compilation_unit.name()));
 
-                    // Diagnostics generated by the `cairo-lint` plugin.
-                    // Only user-defined code is included, since virtual files are filtered by the `linter`.
-                    let diags = db
-                        .crate_modules(crate_id)
-                        .iter()
-                        .flat_map(|module_id| {
-                            let linter_diags = db
-                                .linter_diagnostics(
-                                    corelib_context.clone(),
-                                    linter_params.clone(),
-                                    *module_id,
-                                )
-                                .into_iter()
-                                .map(|diag| {
-                                    SemanticDiagnostic::new(
-                                        StableLocation::new(diag.stable_ptr),
-                                        SemanticDiagnosticKind::PluginDiagnostic(diag),
-                                    )
-                                });
+        let corelib_context = CorelibContext::new(db);
 
-                            if let Ok(semantic_diags) = db.module_semantic_diagnostics(*module_id) {
-                                linter_diags
-                                    .chain(semantic_diags.get_all())
-                                    .collect::<Vec<_>>()
-                            } else {
-                                linter_diags.collect::<Vec<_>>()
-                            }
-                        })
-                        .collect_vec();
+        let main_component = compilation_unit.main_component();
+        let crate_id = main_component.crate_id(db);
 
-                    // Filter diagnostics if `SCARB_ACTION_PATH` was provided.
-                    let diagnostics = match &absolute_path {
-                        Some(path) => diags
-                            .into_iter()
-                            .filter(|diag: &SemanticDiagnostic| {
-                                let file_id = diag.stable_location.file_id(&db);
-
-                                if let Ok(diag_path) = canonicalize(file_id.full_path(&db)) {
-                                    (path.is_dir() && diag_path.starts_with(path))
-                                        || (path.is_file() && diag_path == *path)
-                                } else {
-                                    false
-                                }
-                            })
-                            .collect::<Vec<_>>(),
-                        None => diags,
-                    };
-
-                    // Display diagnostics.
-                    for diag in &diagnostics {
-                        match diag.severity() {
-                            Severity::Error => {
-                                if let Some(code) = diag.error_code() {
-                                    ws.config().ui().error_with_code(
-                                        code.as_str(),
-                                        format_diagnostic(diag, &db),
-                                    )
-                                } else {
-                                    ws.config().ui().error(format_diagnostic(diag, &db))
-                                }
-                            }
-                            Severity::Warning => {
-                                if let Some(code) = diag.error_code() {
-                                    ws.config()
-                                        .ui()
-                                        .warn_with_code(code.as_str(), format_diagnostic(diag, &db))
-                                } else {
-                                    ws.config().ui().warn(format_diagnostic(diag, &db))
-                                }
-                            }
-                        }
-                    }
-
-                    let warnings_allowed =
-                        compilation_unit.compiler_config.allow_warnings && !opts.deny_warnings;
-
-                    if diagnostics.iter().any(|diag| {
-                        matches!(diag.severity(), Severity::Error)
-                            || (!warnings_allowed && matches!(diag.severity(), Severity::Warning))
-                    }) {
-                        packages_with_error.push(package_name.clone());
-                    }
-                    diagnostics_per_cu.push(CompilationUnitDiagnostics {
-                        db,
-                        corelib_context,
-                        linter_params: linter_params.clone(),
-                        diagnostics,
-                        formatter_config: formatter_config.clone(),
+        // Diagnostics generated by the `cairo-lint` plugin.
+        // Only user-defined code is included, since virtual files are filtered by the `linter`.
+        let diags = db
+            .crate_modules(crate_id)
+            .iter()
+            .flat_map(|module_id| {
+                let linter_diags = db
+                    .linter_diagnostics(corelib_context.clone(), linter_params.clone(), *module_id)
+                    .into_iter()
+                    .map(|diag| {
+                        SemanticDiagnostic::new(
+                            StableLocation::new(diag.stable_ptr),
+                            SemanticDiagnosticKind::PluginDiagnostic(diag),
+                        )
                     });
+
+                if let Ok(semantic_diags) = db.module_semantic_diagnostics(*module_id) {
+                    linter_diags
+                        .chain(semantic_diags.get_all())
+                        .collect::<Vec<_>>()
+                } else {
+                    linter_diags.collect::<Vec<_>>()
+                }
+            })
+            .collect_vec();
+
+        // Filter diagnostics if `SCARB_ACTION_PATH` was provided.
+        let diagnostics = match &absolute_path {
+            Some(path) => diags
+                .into_iter()
+                .filter(|diag: &SemanticDiagnostic<'_>| {
+                    let file_id = diag.stable_location.file_id(db);
+
+                    if let Ok(diag_path) = canonicalize(file_id.full_path(db)) {
+                        (path.is_dir() && diag_path.starts_with(path))
+                            || (path.is_file() && diag_path == *path)
+                    } else {
+                        false
+                    }
+                })
+                .collect::<Vec<_>>(),
+            None => diags,
+        };
+
+        // Display diagnostics.
+        for diag in &diagnostics {
+            match diag.severity() {
+                Severity::Error => {
+                    if let Some(code) = diag.error_code() {
+                        ws.config()
+                            .ui()
+                            .error_with_code(code.as_str(), format_diagnostic(diag, db))
+                    } else {
+                        ws.config().ui().error(format_diagnostic(diag, db))
+                    }
+                }
+                Severity::Warning => {
+                    if let Some(code) = diag.error_code() {
+                        ws.config()
+                            .ui()
+                            .warn_with_code(code.as_str(), format_diagnostic(diag, db))
+                    } else {
+                        ws.config().ui().warn(format_diagnostic(diag, db))
+                    }
                 }
             }
         }
+
+        let warnings_allowed =
+            compilation_unit.compiler_config.allow_warnings && !opts.deny_warnings;
+
+        if diagnostics.iter().any(|diag| {
+            matches!(diag.severity(), Severity::Error)
+                || (!warnings_allowed && matches!(diag.severity(), Severity::Warning))
+        }) {
+            packages_with_error.push(package_name.clone());
+        }
+        diagnostics_per_cu.push(CompilationUnitDiagnostics {
+            db,
+            corelib_context,
+            linter_params: linter_params.clone(),
+            diagnostics,
+            formatter_config: formatter_config.clone(),
+        });
     }
 
     packages_with_error = packages_with_error
@@ -328,12 +332,12 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
             formatter_config,
         } in diagnostics_per_cu.into_iter()
         {
-            let fixes = get_fixes(&db, &corelib_context, &linter_params, diagnostics);
+            let fixes = get_fixes(db, &corelib_context, &linter_params, diagnostics);
             for (file_id, fixes) in fixes.into_iter() {
                 ws.config()
                     .ui()
-                    .print(Status::new("Fixing", &file_id.file_name(&db)));
-                apply_file_fixes(file_id, fixes, &db, formatter_config.clone())?;
+                    .print(Status::new("Fixing", &file_id.file_name(db)));
+                apply_file_fixes(file_id, fixes, db, formatter_config.clone())?;
             }
         }
     }
@@ -392,12 +396,12 @@ fn build_lint_database(
     if unit.compiler_config.unsafe_panic {
         b.with_unsafe_panic();
     }
-    let mut db = b.build()?;
+    let db = b.build()?;
 
-    apply_plugins(&mut db, plugins);
-    inject_virtual_wrapper_lib(&mut db, unit)?;
+    apply_plugins(db.get_mut(), plugins);
+    inject_virtual_wrapper_lib(db.get_mut(), unit)?;
 
-    Ok(db)
+    Ok(db.deref().clone())
 }
 
 /// Sets the plugin suites for crates related to the library components
@@ -407,14 +411,50 @@ fn apply_plugins(
     plugins_for_components: HashMap<CompilationUnitComponentId, PluginSuite>,
 ) {
     for (component_id, suite) in plugins_for_components {
-        let crate_id = db.intern_crate(CrateLongId::Real {
+        let crate_id = CrateLongId::Real {
             name: component_id.cairo_package_name(),
             discriminator: component_id.to_discriminator(),
-        });
-
-        let interned_suite = db.intern_plugin_suite(suite);
-        db.set_override_crate_plugins_from_suite(crate_id, interned_suite);
+        }
+        .into_crate_input(db);
+        set_override_crate_plugins_from_suite(db, crate_id, suite);
     }
+}
+
+pub fn set_override_crate_plugins_from_suite(
+    db: &mut LinterAnalysisDatabase,
+    crate_input: CrateInput,
+    plugins: PluginSuite,
+) {
+    let mut overrides = db.macro_plugin_overrides_input().as_ref().clone();
+    overrides.insert(
+        crate_input.clone(),
+        plugins.plugins.into_iter().map(MacroPluginLongId).collect(),
+    );
+    db.set_macro_plugin_overrides_input(overrides.into());
+
+    let mut overrides = db.analyzer_plugin_overrides_input().as_ref().clone();
+    overrides.insert(
+        crate_input.clone(),
+        plugins
+            .analyzer_plugins
+            .into_iter()
+            .map(AnalyzerPluginLongId)
+            .collect(),
+    );
+    db.set_analyzer_plugin_overrides_input(overrides.into());
+
+    let mut overrides = db.inline_macro_plugin_overrides_input().as_ref().clone();
+    overrides.insert(
+        crate_input,
+        Arc::new(
+            plugins
+                .inline_macro_plugins
+                .into_iter()
+                .map(|(key, value)| (key, InlineMacroExprPluginLongId(value)))
+                .collect(),
+        ),
+    );
+    db.set_inline_macro_plugin_overrides_input(overrides.into());
 }
 
 /// Generates a wrapper lib file for appropriate compilation units.

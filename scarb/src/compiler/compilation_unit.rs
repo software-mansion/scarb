@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow, ensure};
 use cairo_lang_filesystem::cfg::CfgSet;
 use cairo_lang_filesystem::db::{CrateIdentifier, FilesGroup};
-use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
 use camino::{Utf8Path, Utf8PathBuf};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -107,6 +107,15 @@ pub struct CompilationUnitComponent {
 }
 
 impl CompilationUnitComponent {
+    /// Returns a [`CrateInput`] of a crate associated with the [`CompilationUnitComponent`].
+    pub fn crate_input(&self, db: &dyn FilesGroup) -> CrateInput {
+        CrateLongId::Real {
+            name: self.cairo_package_name(),
+            discriminator: self.id.to_discriminator(),
+        }
+        .into_crate_input(db)
+    }
+
     /// Returns a [`CrateId`] of a crate associated with the [`CompilationUnitComponent`].
     pub fn crate_id<'db>(&self, db: &'db dyn FilesGroup) -> CrateId<'db> {
         db.intern_crate(CrateLongId::Real {
@@ -125,7 +134,7 @@ impl From<&CompilationUnitComponent>
         // Always remember to verify this invariant when changing the internals.
         Self {
             name: value.cairo_package_name().to_string(),
-            discriminator: value.id.to_discriminator().map(Into::into),
+            discriminator: value.id.to_discriminator(),
         }
     }
 }

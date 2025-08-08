@@ -6,10 +6,13 @@ use crate::core::Workspace;
 use anyhow::{Context, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_filesystem::db::{FilesGroup, FilesGroupEx};
-use cairo_lang_filesystem::ids::{BlobLongId, CrateId};
+use cairo_lang_filesystem::ids::{BlobLongId, CrateInput};
 use cairo_lang_filesystem::set_crate_config;
 use cairo_lang_lowering::cache::generate_crate_cache;
+use cairo_lang_lowering::db::LoweringGroup;
+use cairo_lang_utils::Upcast;
 use itertools::Itertools;
+use salsa::par_map;
 use std::env;
 use std::io::Write;
 use std::ops::Deref;
@@ -17,16 +20,16 @@ use tracing::debug;
 
 const SCARB_INCREMENTAL: &str = "SCARB_INCREMENTAL";
 
-pub enum IncrementalContext<'db> {
+pub enum IncrementalContext {
     Disabled,
     Enabled {
         fingerprints: UnitFingerprint,
-        cached_crates: Vec<CrateId<'db>>,
+        cached_crates: Vec<CrateInput>,
     },
 }
 
-impl<'db> IncrementalContext<'db> {
-    pub fn cached_crates(&self) -> &[CrateId<'db>] {
+impl IncrementalContext {
+    pub fn cached_crates(&self) -> &[CrateInput] {
         match self {
             IncrementalContext::Disabled => &[],
             IncrementalContext::Enabled {
@@ -38,11 +41,11 @@ impl<'db> IncrementalContext<'db> {
 }
 
 #[tracing::instrument(skip_all, level = "info")]
-pub fn load_incremental_artifacts<'db>(
+pub fn load_incremental_artifacts(
     unit: &CairoCompilationUnit,
-    db: &'db mut RootDatabase,
+    db: &mut RootDatabase,
     ws: &Workspace<'_>,
-) -> Result<IncrementalContext<'db>> {
+) -> Result<IncrementalContext> {
     if !incremental_allowed(unit) {
         return Ok(IncrementalContext::Disabled);
     }
@@ -54,25 +57,33 @@ pub fn load_incremental_artifacts<'db>(
 
     let mut cached_crates = Vec::new();
 
-    for component in unit.components.iter() {
-        let fingerprint = fingerprints
-            .get(&component.id)
-            .expect("component fingerprint must exist in unit fingerprints");
-        let fingerprint = match fingerprint.deref() {
-            ComponentFingerprint::Library(lib) => lib,
-            ComponentFingerprint::Plugin(_plugin) => {
-                unreachable!("we iterate through components not plugins");
-            }
-        };
-        let loaded =
-            load_component_cache(fingerprint, db, unit, component, ws).with_context(|| {
-                format!(
-                    "failed to load cache for `{}` component",
-                    component.target_name()
-                )
-            })?;
+    let loaded_components = unit
+        .components
+        .iter()
+        .map(|component| {
+            let fingerprint = fingerprints
+                .get(&component.id)
+                .expect("component fingerprint must exist in unit fingerprints");
+            let fingerprint = match fingerprint.deref() {
+                ComponentFingerprint::Library(lib) => lib,
+                ComponentFingerprint::Plugin(_plugin) => {
+                    unreachable!("we iterate through components not plugins");
+                }
+            };
+            let loaded =
+                load_component_cache(fingerprint, db, unit, component, ws).with_context(|| {
+                    format!(
+                        "failed to load cache for `{}` component",
+                        component.target_name()
+                    )
+                })?;
+            Ok((component, loaded))
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    for (component, loaded) in loaded_components.into_iter() {
         if loaded {
-            cached_crates.push(component.crate_id(db));
+            cached_crates.push(component.crate_input(db));
         }
     }
 
@@ -122,10 +133,10 @@ fn load_component_cache(
 }
 
 #[tracing::instrument(skip_all, level = "info")]
-pub fn save_incremental_artifacts<'db>(
+pub fn save_incremental_artifacts(
     unit: &CairoCompilationUnit,
-    db: &'db RootDatabase,
-    ctx: IncrementalContext<'db>,
+    db: &RootDatabase,
+    ctx: IncrementalContext,
     ws: &Workspace<'_>,
 ) -> Result<()> {
     let IncrementalContext::Enabled {
@@ -147,28 +158,25 @@ pub fn save_incremental_artifacts<'db>(
         })
         .collect_vec();
 
-    let snapshot = salsa::ParallelDatabase::snapshot(db);
-    rayon::scope(move |s| {
-        for (component, fingerprint) in components.into_iter() {
-            let snapshot = salsa::ParallelDatabase::snapshot(&*snapshot);
-            s.spawn(move |_| {
-                let fingerprint = match fingerprint.deref() {
-                    ComponentFingerprint::Library(lib) => lib,
-                    ComponentFingerprint::Plugin(_plugin) => {
-                        unreachable!("we iterate through components not plugins");
-                    }
-                };
-                save_component_cache(fingerprint, snapshot, unit, component, ws)
-                    .with_context(|| {
-                        format!(
-                            "failed to save cache for `{}` component",
-                            component.target_name()
-                        )
-                    })
-                    .unwrap();
-            });
-        }
-    });
+    let db = Box::new(db.clone());
+
+    let group: &dyn LoweringGroup = db.as_ref().upcast();
+    let results: Vec<Result<()>> =
+        par_map(group, components, move |group, (component, fingerprint)| {
+            let fingerprint = match fingerprint.deref() {
+                ComponentFingerprint::Library(lib) => lib,
+                ComponentFingerprint::Plugin(_plugin) => {
+                    unreachable!("we iterate through components not plugins");
+                }
+            };
+            save_component_cache(fingerprint, group, unit, component, ws).with_context(|| {
+                format!(
+                    "failed to save cache for `{}` component",
+                    component.target_name()
+                )
+            })
+        });
+    results.into_iter().collect::<Result<Vec<_>>>()?;
 
     Ok(())
 }
@@ -176,7 +184,7 @@ pub fn save_incremental_artifacts<'db>(
 #[tracing::instrument(skip_all, level = "trace")]
 fn save_component_cache(
     fingerprint: &Fingerprint,
-    db: salsa::Snapshot<RootDatabase>,
+    db: &dyn LoweringGroup,
     unit: &CairoCompilationUnit,
     component: &CompilationUnitComponent,
     ws: &Workspace<'_>,
@@ -215,8 +223,8 @@ fn save_component_cache(
             "cache file",
             ws.config(),
         )?;
-        let crate_id = component.crate_id(&*db);
-        let Some(cache_blob) = generate_crate_cache(&*db, crate_id).ok() else {
+        let crate_id = component.crate_id(db);
+        let Some(cache_blob) = generate_crate_cache(db, crate_id).ok() else {
             return Ok(());
         };
         cache_file

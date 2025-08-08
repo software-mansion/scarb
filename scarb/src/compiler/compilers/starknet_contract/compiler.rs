@@ -1,9 +1,8 @@
 use anyhow::{Context, Result, ensure};
-use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleId, NamedLanguageElementId};
-use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
 use cairo_lang_semantic::db::SemanticGroup;
 use cairo_lang_semantic::items::us::SemanticUseEx;
 use cairo_lang_semantic::items::visibility::Visibility;
@@ -11,7 +10,6 @@ use cairo_lang_semantic::resolve::ResolvedGenericItem::Module;
 use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::{ContractDeclaration, find_contracts, module_contract};
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
-use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_syntax::node::ast::OptionAliasClause;
 use itertools::Itertools;
@@ -74,12 +72,12 @@ impl Compiler for StarknetContractCompiler {
         TargetKind::STARKNET_CONTRACT.clone()
     }
 
-    fn compile<'db>(
+    fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateId<'db>],
+        cached_crates: &[CrateInput],
         offloader: &Offloader<'_>,
-        db: &'db mut RootDatabase,
+        db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
@@ -116,11 +114,16 @@ impl Compiler for StarknetContractCompiler {
             props.build_external_contracts.clone(),
         )?;
 
-        let CompiledContracts {
-            contract_paths,
-            contracts,
-            classes,
-        } = get_compiled_contracts(contracts, compiler_config, db)?;
+        let contract_paths = contracts
+            .iter()
+            .map(|decl| decl.module_id().full_path(db))
+            .collect::<Vec<_>>();
+        trace!(contracts = ?contract_paths);
+        let span = trace_span!("compile_starknet");
+        let classes = {
+            let _guard = span.enter();
+            compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
+        };
 
         check_allowed_libfuncs(&props, &contracts, &classes, db, unit, ws)?;
 
@@ -163,35 +166,6 @@ impl Compiler for StarknetContractCompiler {
 
         Ok(())
     }
-}
-
-pub struct CompiledContracts<'db> {
-    pub contract_paths: Vec<String>,
-    pub contracts: Vec<ContractDeclaration<'db>>,
-    pub classes: Vec<ContractClass>,
-}
-
-pub fn get_compiled_contracts<'db>(
-    contracts: Vec<ContractDeclaration<'db>>,
-    compiler_config: CompilerConfig<'_>,
-    db: &'db mut RootDatabase,
-) -> Result<CompiledContracts<'db>> {
-    let contract_paths = contracts
-        .iter()
-        .map(|decl| decl.module_id().full_path(db))
-        .collect::<Vec<_>>();
-    trace!(contracts = ?contract_paths);
-
-    let span = trace_span!("compile_starknet");
-    let classes = {
-        let _guard = span.enter();
-        compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
-    };
-    Ok(CompiledContracts {
-        contract_paths,
-        contracts,
-        classes,
-    })
 }
 
 pub fn find_project_contracts<'db>(

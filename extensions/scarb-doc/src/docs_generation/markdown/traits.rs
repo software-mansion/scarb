@@ -888,7 +888,7 @@ pub trait WithPath {
 }
 
 pub trait WithItemData {
-    fn item_data(&self) -> &ItemData;
+    fn item_data(&self) -> &ItemData<'_>;
 }
 
 impl<T: WithItemData> WithPath for T {
@@ -906,7 +906,7 @@ impl<T: WithItemData> WithPath for T {
 }
 
 impl<'db> WithItemData for ItemData<'db> {
-    fn item_data(&self) -> &ItemData {
+    fn item_data(&self) -> &ItemData<'_> {
         self
     }
 }

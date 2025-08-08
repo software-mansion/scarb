@@ -137,7 +137,7 @@ impl ArtifactsWriter {
             casm_classes,
         }: Artifacts<'db>,
         offloader: &Offloader<'_>,
-        db: &'db mut RootDatabase,
+        db: &'db RootDatabase,
         ws: &Workspace<'_>,
     ) -> anyhow::Result<()> {
         let span = trace_span!("serialize_starknet");
@@ -163,7 +163,7 @@ impl ArtifactsWriter {
 
             let mut artifact = ContractArtifacts::new(
                 package_name,
-                &contract_name,
+                contract_name,
                 contract_selector.full_path().as_str(),
                 &declaration.module_id().full_path(db),
             );

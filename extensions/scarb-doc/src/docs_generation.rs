@@ -68,7 +68,7 @@ trait DocItem {
     const HEADER: &'static str;
 
     fn name(&self) -> &str;
-    fn doc(&self) -> &Option<Vec<DocumentationCommentToken>>;
+    fn doc(&self) -> &Option<Vec<DocumentationCommentToken<'_>>>;
     fn signature(&self) -> &Option<String>;
     fn full_path(&self) -> &str;
     fn doc_location_links(&self) -> &Vec<DocLocationLink>;
@@ -85,7 +85,7 @@ macro_rules! impl_doc_item {
                 &self.item_data.name
             }
 
-            fn doc(&self) -> &Option<Vec<DocumentationCommentToken>> {
+            fn doc(&self) -> &Option<Vec<DocumentationCommentToken<'_>>> {
                 &self.item_data.doc
             }
 

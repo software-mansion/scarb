@@ -82,7 +82,7 @@ fn get_root_ptr<'db>(
         index: _,
     } = current_ptr.long(db)
     {
-        current_ptr = parent_ptr;
+        current_ptr = *parent_ptr;
     }
     current_ptr
 }
