@@ -19,7 +19,7 @@ use tracing::debug;
 
 const AUTO_WITHDRAW_GAS_FLAG: &str = "add_withdraw_gas";
 
-pub fn ensure_gas_enabled(db: &mut RootDatabase) -> anyhow::Result<()> {
+pub fn ensure_gas_enabled(db: &RootDatabase) -> anyhow::Result<()> {
     let flag = FlagId::new(db, FlagLongId(AUTO_WITHDRAW_GAS_FLAG.into()));
     let flag = db.get_flag(flag);
     ensure!(

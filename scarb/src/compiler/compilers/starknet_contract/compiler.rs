@@ -116,11 +116,16 @@ impl Compiler for StarknetContractCompiler {
             props.build_external_contracts.clone(),
         )?;
 
-        let CompiledContracts {
-            contract_paths,
-            contracts,
-            classes,
-        } = get_compiled_contracts(contracts, compiler_config, db)?;
+        let contract_paths = contracts
+            .iter()
+            .map(|decl| decl.module_id().full_path(db))
+            .collect::<Vec<_>>();
+        trace!(contracts = ?contract_paths);
+        let span = trace_span!("compile_starknet");
+        let classes = {
+            let _guard = span.enter();
+            compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
+        };
 
         check_allowed_libfuncs(&props, &contracts, &classes, db, unit, ws)?;
 
@@ -163,35 +168,6 @@ impl Compiler for StarknetContractCompiler {
 
         Ok(())
     }
-}
-
-pub struct CompiledContracts<'db> {
-    pub contract_paths: Vec<String>,
-    pub contracts: Vec<ContractDeclaration<'db>>,
-    pub classes: Vec<ContractClass>,
-}
-
-pub fn get_compiled_contracts<'db>(
-    contracts: Vec<ContractDeclaration<'db>>,
-    compiler_config: CompilerConfig<'_>,
-    db: &'db mut RootDatabase,
-) -> Result<CompiledContracts<'db>> {
-    let contract_paths = contracts
-        .iter()
-        .map(|decl| decl.module_id().full_path(db))
-        .collect::<Vec<_>>();
-    trace!(contracts = ?contract_paths);
-
-    let span = trace_span!("compile_starknet");
-    let classes = {
-        let _guard = span.enter();
-        compile_prepared_db(db, &contracts.iter().collect::<Vec<_>>(), compiler_config)?
-    };
-    Ok(CompiledContracts {
-        contract_paths,
-        contracts,
-        classes,
-    })
 }
 
 pub fn find_project_contracts<'db>(
