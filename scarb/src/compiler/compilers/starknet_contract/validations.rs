@@ -6,7 +6,7 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::ids::NamedLanguageElementId;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::flag::Flag;
-use cairo_lang_filesystem::ids::FlagId;
+use cairo_lang_filesystem::ids::{FlagId, FlagLongId};
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::allowed_libfuncs::{
     AllowedLibfuncsError, BUILTIN_EXPERIMENTAL_LIBFUNCS_LIST, ListSelector,
@@ -20,7 +20,7 @@ use tracing::debug;
 const AUTO_WITHDRAW_GAS_FLAG: &str = "add_withdraw_gas";
 
 pub fn ensure_gas_enabled(db: &mut RootDatabase) -> anyhow::Result<()> {
-    let flag = FlagId::new(db, AUTO_WITHDRAW_GAS_FLAG);
+    let flag = FlagId::new(db, FlagLongId(AUTO_WITHDRAW_GAS_FLAG.into()));
     let flag = db.get_flag(flag);
     ensure!(
         flag.map(|f| matches!(*f, Flag::AddWithdrawGas(true)))
@@ -30,11 +30,11 @@ pub fn ensure_gas_enabled(db: &mut RootDatabase) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn check_allowed_libfuncs(
+pub fn check_allowed_libfuncs<'db>(
     props: &Props,
-    contracts: &[ContractDeclaration],
+    contracts: &[ContractDeclaration<'db>],
     classes: &[ContractClass],
-    db: &RootDatabase,
+    db: &'db RootDatabase,
     unit: &CairoCompilationUnit,
     ws: &Workspace<'_>,
 ) -> anyhow::Result<()> {

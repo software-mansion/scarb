@@ -6,14 +6,14 @@ use cairo_lang_syntax::node::{SyntaxNode, db::SyntaxGroup};
 
 /// Helps creating TokenStream based on multiple SyntaxNodes,
 /// which aren't descendants or ascendants of each other inside the SyntaxTree.
-pub struct TokenStreamBuilder<'a> {
-    db: &'a dyn SyntaxGroup,
-    nodes: Vec<SyntaxNode>,
+pub struct TokenStreamBuilder<'db> {
+    db: &'db dyn SyntaxGroup,
+    nodes: Vec<SyntaxNode<'db>>,
     metadata: Option<TokenStreamMetadata>,
 }
 
-impl<'a> TokenStreamBuilder<'a> {
-    pub fn new(db: &'a dyn SyntaxGroup) -> Self {
+impl<'db> TokenStreamBuilder<'db> {
+    pub fn new(db: &'db dyn SyntaxGroup) -> Self {
         Self {
             db,
             nodes: Vec::default(),
@@ -21,7 +21,7 @@ impl<'a> TokenStreamBuilder<'a> {
         }
     }
 
-    pub fn add_node(&mut self, node: SyntaxNode) {
+    pub fn add_node(&mut self, node: SyntaxNode<'db>) {
         self.nodes.push(node);
     }
 
@@ -47,7 +47,11 @@ impl<'a> TokenStreamBuilder<'a> {
         }
     }
 
-    pub fn token_from_syntax_node(&self, node: SyntaxNode, ctx: &AllocationContext) -> Vec<Token> {
+    pub fn token_from_syntax_node(
+        &self,
+        node: SyntaxNode<'db>,
+        ctx: &AllocationContext,
+    ) -> Vec<Token> {
         let span_without_trivia = node.span_without_trivia(self.db);
         let span_with_trivia = node.span(self.db);
         let text = node.get_text(self.db);
@@ -90,8 +94,8 @@ impl<'a> TokenStreamBuilder<'a> {
     }
 }
 
-impl Extend<SyntaxNode> for TokenStreamBuilder<'_> {
-    fn extend<T: IntoIterator<Item = SyntaxNode>>(&mut self, iter: T) {
+impl<'db> Extend<SyntaxNode<'db>> for TokenStreamBuilder<'db> {
+    fn extend<T: IntoIterator<Item = SyntaxNode<'db>>>(&mut self, iter: T) {
         for node in iter {
             self.add_node(node);
         }

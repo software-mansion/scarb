@@ -106,7 +106,7 @@ impl ProcMacroHostPlugin {
         markers
     }
 
-    fn extract_key(db: &dyn SemanticGroup, attr: Attribute) -> Option<String> {
+    fn extract_key<'db>(db: &'db dyn SemanticGroup, attr: Attribute<'db>) -> Option<String> {
         if attr.id != FULL_PATH_MARKER_KEY {
             return None;
         }

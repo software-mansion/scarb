@@ -36,12 +36,12 @@ impl Compiler for ExecutableCompiler {
         TargetKind::EXECUTABLE.clone()
     }
 
-    fn compile(
+    fn compile<'db>(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateId],
+        cached_crates: &[CrateId<'db>],
         _offloader: &Offloader<'_>,
-        db: &mut RootDatabase,
+        db: &'db mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         ensure!(
@@ -91,12 +91,12 @@ impl Compiler for ExecutableCompiler {
     }
 }
 
-fn compile_executable(
+fn compile_executable<'db>(
     unit: &CairoCompilationUnit,
-    db: &RootDatabase,
+    db: &'db RootDatabase,
     ws: &Workspace<'_>,
     executable_path: Option<&str>,
-    main_crate_ids: Vec<CrateId>,
+    main_crate_ids: Vec<CrateId<'db>>,
     mut diagnostics_reporter: DiagnosticsReporter<'_>,
     config: ExecutableConfig,
 ) -> Result<CompiledFunction> {
@@ -169,11 +169,11 @@ fn multiple_executables_error_message(executables: Vec<String>, scarb_toml: &Utf
 
 /// Search crates identified by `main_crate_ids` for functions annotated with `#[executable]` attribute.
 /// If `executable_path` is provided, only functions with exactly the same path will be returned.
-fn find_executable_functions(
-    db: &RootDatabase,
-    main_crate_ids: Vec<CrateId>,
+fn find_executable_functions<'db>(
+    db: &'db RootDatabase,
+    main_crate_ids: Vec<CrateId<'db>>,
     executable_path: Option<&str>,
-) -> Vec<ConcreteFunctionWithBodyId> {
+) -> Vec<ConcreteFunctionWithBodyId<'db>> {
     let mut executables: Vec<_> = find_executable_function_ids(db, main_crate_ids)
         .into_iter()
         .filter_map(|(id, labels)| {
@@ -194,14 +194,17 @@ fn find_executable_functions(
 /// Returns the path to the function that the executable is wrapping.
 ///
 /// If the executable is not wrapping a function, returns the full path of the executable.
-fn originating_function_path(db: &RootDatabase, wrapper: ConcreteFunctionWithBodyId) -> String {
+fn originating_function_path<'db>(
+    db: &'db RootDatabase,
+    wrapper: ConcreteFunctionWithBodyId<'db>,
+) -> String {
     let semantic = wrapper.base_semantic_function(db);
     let wrapper_name = semantic.name(db);
     let wrapper_full_path = semantic.full_path(db);
     let Some(function_name) = wrapper_name.strip_prefix(EXECUTABLE_PREFIX) else {
         return wrapper_full_path;
     };
-    let Some(wrapper_path_to_module) = wrapper_full_path.strip_suffix(wrapper_name.as_str()) else {
+    let Some(wrapper_path_to_module) = wrapper_full_path.strip_suffix(wrapper_name) else {
         return wrapper_full_path;
     };
     format!("{wrapper_path_to_module}{function_name}")

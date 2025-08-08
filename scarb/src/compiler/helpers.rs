@@ -41,19 +41,23 @@ impl<W: Write> Write for CountingWriter<W> {
     }
 }
 
-pub fn build_compiler_config<'c>(
-    db: &RootDatabase,
+pub fn build_compiler_config<'c, 'db>(
+    db: &'db RootDatabase,
     unit: &CairoCompilationUnit,
-    main_crate_ids: &[CrateId],
-    cached_crates: &[CrateId],
+    main_crate_ids: &[CrateId<'db>],
+    cached_crates: &[CrateId<'db>],
     ws: &Workspace<'c>,
-) -> CompilerConfig<'c> {
+) -> CompilerConfig<'c>
+where
+    'db: 'c,
+{
     let ignore_warnings_crates = db
         .crates()
         .into_iter()
         .filter(|crate_id| !main_crate_ids.contains(crate_id))
+        .map(|c| c.long(db).clone().into_crate_input(db))
         .collect_vec();
-    let crates_to_check: HashSet<CrateId> = db
+    let crates_to_check: HashSet<CrateId<'db>> = db
         .crates()
         .into_iter()
         .filter(|crate_id| !cached_crates.contains(crate_id))
@@ -91,7 +95,12 @@ pub fn build_compiler_config<'c>(
     // So if there were any diagnostics here to show, it would mean that the cache is outdated - thus
     // we should not use it in the first place.
     // Note we still add the main crate, as we want it to be checked for warnings.
-    .with_crates(&crates_to_check.into_iter().collect_vec());
+    .with_crates(
+        &crates_to_check
+            .into_iter()
+            .map(|c| c.long(db).clone().into_crate_input(db))
+            .collect_vec(),
+    );
     CompilerConfig {
         diagnostics_reporter: if unit.compiler_config.allow_warnings {
             diagnostics_reporter.allow_warnings()
@@ -135,7 +144,10 @@ impl From<cairo_lang_lowering::utils::InliningStrategy> for InliningStrategy {
     }
 }
 
-pub fn collect_main_crate_ids(unit: &CairoCompilationUnit, db: &RootDatabase) -> Vec<CrateId> {
+pub fn collect_main_crate_ids<'db>(
+    unit: &CairoCompilationUnit,
+    db: &'db RootDatabase,
+) -> Vec<CrateId<'db>> {
     let main_component = unit.main_component();
     vec![main_component.crate_id(db)]
 }

@@ -322,6 +322,8 @@ fn check_unit(unit: CompilationUnit, ws: &Workspace<'_>) -> Result<()> {
                 .diagnostics_reporter
                 .ensure(&db)
                 .map_err(|err| err.into());
+            let _ = main_crate_ids;
+            drop(compiler_config);
             let span = trace_span!("drop_db");
             {
                 let _guard = span.enter();

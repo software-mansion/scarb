@@ -44,12 +44,12 @@ impl Compiler for LibCompiler {
         TargetKind::LIB.clone()
     }
 
-    fn compile(
+    fn compile<'db>(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateId],
+        cached_crates: &[CrateId<'db>],
         offloader: &Offloader<'_>,
-        db: &mut RootDatabase,
+        db: &'db mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;

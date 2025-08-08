@@ -103,7 +103,11 @@ impl ProcMacroHostPlugin {
         })
     }
 
-    fn uses_proc_macros(&self, db: &dyn SyntaxGroup, item_ast: &ast::ModuleItem) -> bool {
+    fn uses_proc_macros<'db>(
+        &self,
+        db: &'db dyn SyntaxGroup,
+        item_ast: &ast::ModuleItem<'db>,
+    ) -> bool {
         // Check on inner attributes too.
         let inner_attrs: HashSet<_> = match item_ast {
             ast::ModuleItem::Impl(imp) => {
@@ -132,7 +136,7 @@ impl ProcMacroHostPlugin {
         };
 
         if !DeclaredProcMacroInstances::declared_attributes(self).into_iter().any(|declared_attr|
-            item_ast.has_attr(db, &declared_attr) || inner_attrs.contains(&declared_attr)
+            item_ast.has_attr(db, &declared_attr) || inner_attrs.contains(&*declared_attr)
         )
             // Plugins can implement own derives.
             && !item_ast.has_attr(db, "derive")
@@ -178,9 +182,9 @@ impl ProcMacroHostPlugin {
             .expect("procedural macro must be registered in proc macro host")
     }
 
-    fn calculate_metadata(
-        db: &dyn SyntaxGroup,
-        item_ast: ast::ModuleItem,
+    fn calculate_metadata<'db>(
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
         edition: Edition,
     ) -> TokenStreamMetadata {
         let stable_ptr = item_ast.clone().stable_ptr(db).untyped();
@@ -193,12 +197,12 @@ impl ProcMacroHostPlugin {
 
 impl MacroPlugin for ProcMacroHostPlugin {
     #[tracing::instrument(level = "trace", skip_all)]
-    fn generate_code(
+    fn generate_code<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        item_ast: ast::ModuleItem,
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
         metadata: &MacroPluginMetadata<'_>,
-    ) -> PluginResult {
+    ) -> PluginResult<'db> {
         // We first check if the ast item uses any proc macros. If not, we exit early.
         // This is strictly a performance optimization, as gathering expansion metadata can be costly.
         if !self.uses_proc_macros(db, &item_ast) {

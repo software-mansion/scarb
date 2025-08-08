@@ -20,25 +20,25 @@ use itertools::Itertools;
 use smol_str::SmolStr;
 use std::collections::HashSet;
 
-pub enum InnerAttrExpansionResult {
+pub enum InnerAttrExpansionResult<'db> {
     None,
-    Some(AttributePluginResult),
+    Some(AttributePluginResult<'db>),
 }
 
-pub struct InnerAttrExpansionContext<'a> {
+pub struct InnerAttrExpansionContext<'a, 'db> {
     host: &'a ProcMacroHostPlugin,
     // Metadata returned for expansions.
-    diagnostics: Vec<PluginDiagnostic>,
+    diagnostics: Vec<PluginDiagnostic<'db>>,
     aux_data: EmittedAuxData,
     any_changed: bool,
-    item_builder: PatchBuilder<'a>,
+    item_builder: PatchBuilder<'db>,
 }
 
-impl<'a> InnerAttrExpansionContext<'a> {
-    pub fn new<'b: 'a>(
-        host: &'b ProcMacroHostPlugin,
-        db: &'a dyn SyntaxGroup,
-        item_ast: &'a ast::ModuleItem,
+impl<'a, 'db> InnerAttrExpansionContext<'a, 'db> {
+    pub fn new(
+        host: &'a ProcMacroHostPlugin,
+        db: &'db dyn SyntaxGroup,
+        item_ast: &ast::ModuleItem<'db>,
     ) -> Self {
         Self {
             diagnostics: Vec::new(),
@@ -49,15 +49,15 @@ impl<'a> InnerAttrExpansionContext<'a> {
         }
     }
 
-    pub fn add_node(&mut self, node: SyntaxNode) {
+    pub fn add_node(&mut self, node: SyntaxNode<'db>) {
         self.item_builder.add_node(node);
     }
 
     fn register_diagnotics(
         &mut self,
-        db: &dyn SyntaxGroup,
+        db: &'db dyn SyntaxGroup,
         diagnostics: Vec<AdaptedDiagnostic>,
-        stable_ptr: SyntaxStablePtrId,
+        stable_ptr: SyntaxStablePtrId<'db>,
     ) {
         let diagnostics = diagnostics.into_iter().map(Into::into).collect();
         self.diagnostics
@@ -66,8 +66,8 @@ impl<'a> InnerAttrExpansionContext<'a> {
 
     pub fn register_result_metadata(
         &mut self,
-        db: &dyn SyntaxGroup,
-        input: &AttrExpansionArgs,
+        db: &'db dyn SyntaxGroup,
+        input: &AttrExpansionArgs<'db>,
         original: String,
         result: ProcMacroResult,
     ) {
@@ -98,7 +98,7 @@ impl<'a> InnerAttrExpansionContext<'a> {
             ));
     }
 
-    pub fn into_result(self, attr_names: Vec<SmolStr>) -> AttributePluginResult {
+    pub fn into_result(self, attr_names: Vec<SmolStr>) -> AttributePluginResult<'db> {
         let msg = if attr_names.len() == 1 {
             "the attribute macro"
         } else {
@@ -117,10 +117,10 @@ impl<'a> InnerAttrExpansionContext<'a> {
     }
 }
 
-fn rewrite_node_patch_from_expansion_result(
+fn rewrite_node_patch_from_expansion_result<'db>(
     token_stream: TokenStream,
-    input: &AttrExpansionArgs,
-) -> RewriteNode {
+    input: &AttrExpansionArgs<'db>,
+) -> RewriteNode<'db> {
     let code_mappings = generate_code_mappings(
         &token_stream,
         input.attribute_location.adapted_call_site().into(),
@@ -132,11 +132,11 @@ fn rewrite_node_patch_from_expansion_result(
 }
 
 impl ProcMacroHostPlugin {
-    pub(crate) fn expand_inner_attr(
+    pub(crate) fn expand_inner_attr<'db>(
         &self,
-        db: &dyn SyntaxGroup,
-        item_ast: ast::ModuleItem,
-    ) -> InnerAttrExpansionResult {
+        db: &'db dyn SyntaxGroup,
+        item_ast: ast::ModuleItem<'db>,
+    ) -> InnerAttrExpansionResult<'db> {
         let mut context = InnerAttrExpansionContext::new(self, db, &item_ast);
         let mut used_attr_names: HashSet<SmolStr> = Default::default();
         let mut all_none = true;
@@ -274,12 +274,12 @@ impl ProcMacroHostPlugin {
         }
     }
 
-    fn do_expand_inner_attr(
-        &self,
-        db: &dyn SyntaxGroup,
-        context: &mut InnerAttrExpansionContext<'_>,
-        found: AttrExpansionFound,
-        func: &impl TypedSyntaxNode,
+    fn do_expand_inner_attr<'a, 'db>(
+        &'a self,
+        db: &'db dyn SyntaxGroup,
+        context: &mut InnerAttrExpansionContext<'a, 'db>,
+        found: AttrExpansionFound<'db>,
+        func: &impl TypedSyntaxNode<'db>,
         token_stream: AdaptedTokenStream,
     ) -> bool {
         let mut all_none = true;

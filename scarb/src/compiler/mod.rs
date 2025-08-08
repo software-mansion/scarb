@@ -23,7 +23,7 @@ pub trait Compiler: Sync {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateId],
+        cached_crates: &[CrateId<'_>],
         offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,

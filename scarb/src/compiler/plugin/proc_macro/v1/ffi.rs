@@ -26,11 +26,11 @@ use libloading::os::windows::Symbol as RawSymbol;
 use smol_str::{SmolStr, ToSmolStr};
 
 pub trait FromSyntaxNode {
-    fn from_syntax_node(db: &dyn SyntaxGroup, node: &impl TypedSyntaxNode) -> Self;
+    fn from_syntax_node<'db>(db: &'db dyn SyntaxGroup, node: &impl TypedSyntaxNode<'db>) -> Self;
 }
 
 impl FromSyntaxNode for TokenStream {
-    fn from_syntax_node(db: &dyn SyntaxGroup, node: &impl TypedSyntaxNode) -> Self {
+    fn from_syntax_node<'db>(db: &'db dyn SyntaxGroup, node: &impl TypedSyntaxNode<'db>) -> Self {
         let mut builder = PatchBuilder::new(db, node);
         builder.add_node(node.as_syntax_node());
         Self::new(builder.build().0)
