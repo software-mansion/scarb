@@ -20,7 +20,7 @@ use crate::compiler::plugin::proc_macro::compilation::{
 use crate::core::publishing::manifest_normalization::prepare_manifest_for_publish;
 use crate::core::publishing::source::list_source_files;
 use crate::core::{Config, Package, PackageId, PackageName, Target, TargetKind, Workspace};
-use crate::flock::{FileLockGuard, Filesystem};
+use crate::flock::{Filesystem, LockedFile};
 use crate::internal::restricted_names;
 use crate::{
     CARGO_LOCKFILE_FILE_NAME, CARGO_MANIFEST_FILE_NAME, DEFAULT_LICENSE_FILE_NAME,
@@ -79,7 +79,7 @@ pub fn package(
     packages: &[PackageId],
     opts: &PackageOpts,
     ws: &Workspace<'_>,
-) -> Result<Vec<FileLockGuard>> {
+) -> Result<Vec<LockedFile>> {
     before_package(ws)?;
 
     packages
@@ -92,7 +92,7 @@ pub fn package_one(
     package_id: PackageId,
     opts: &PackageOpts,
     ws: &Workspace<'_>,
-) -> Result<FileLockGuard> {
+) -> Result<LockedFile> {
     package(&[package_id], opts, ws).map(|mut v| v.pop().unwrap())
 }
 
@@ -158,7 +158,7 @@ fn package_one_impl(
     pkg_id: PackageId,
     opts: &PackageOpts,
     ws: &Workspace<'_>,
-) -> Result<FileLockGuard> {
+) -> Result<LockedFile> {
     let pkg = ws.fetch_package(&pkg_id)?;
 
     ws.config()
@@ -410,11 +410,11 @@ fn prepare_archive_recipe(
 
 fn run_verify(
     pkg: &Package,
-    tar: FileLockGuard,
+    tar: LockedFile,
     ws: &Workspace<'_>,
     features: ops::FeaturesOpts,
     ignore_cairo_version: bool,
-) -> Result<FileLockGuard> {
+) -> Result<LockedFile> {
     ws.config()
         .ui()
         .print(Status::new("Verifying", &pkg.id.tarball_name()));

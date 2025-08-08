@@ -23,7 +23,7 @@ use crate::core::registry::client::{
 };
 use crate::core::registry::index::{IndexConfig, IndexRecords};
 use crate::core::{Config, Package, PackageId, PackageName, SourceId};
-use crate::flock::{FileLockGuard, Filesystem};
+use crate::flock::{Filesystem, LockedFile};
 
 // TODO(mkaput): Progressbar.
 
@@ -112,7 +112,7 @@ impl RegistryClient for HttpRegistryClient<'_> {
         &self,
         package: PackageId,
         create_scratch_file: CreateScratchFileCallback,
-    ) -> Result<RegistryDownload<FileLockGuard>> {
+    ) -> Result<RegistryDownload<LockedFile>> {
         let index_config = self.index_config.load().await?;
         let dl_url = index_config.dl.expand(package.into())?;
 
@@ -152,7 +152,7 @@ impl RegistryClient for HttpRegistryClient<'_> {
         Ok(self.index_config.load().await?.upload.is_some())
     }
 
-    async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload> {
+    async fn publish(&self, package: Package, tarball: LockedFile) -> Result<RegistryUpload> {
         let auth_token = env::var("SCARB_REGISTRY_AUTH_TOKEN").map_err(|_| {
             anyhow!(
                 "missing authentication token. \

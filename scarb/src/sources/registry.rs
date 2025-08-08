@@ -17,7 +17,7 @@ use crate::core::{
     Checksum, Config, DependencyVersionReq, ManifestDependency, Package, PackageId, SourceId,
     Summary,
 };
-use crate::flock::FileLockGuard;
+use crate::flock::LockedFile;
 use crate::sources::PathSource;
 use std::collections::HashSet;
 
@@ -156,7 +156,7 @@ impl RegistrySource<'_> {
     async fn load_package(
         &self,
         id: PackageId,
-        archive: FileLockGuard,
+        archive: LockedFile,
         checksum: Checksum,
     ) -> Result<Package> {
         self.config

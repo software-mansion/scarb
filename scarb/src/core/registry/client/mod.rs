@@ -3,7 +3,7 @@ use async_trait::async_trait;
 
 use crate::core::registry::index::IndexRecords;
 use crate::core::{Config, Package, PackageId, PackageName};
-use crate::flock::FileLockGuard;
+use crate::flock::LockedFile;
 
 pub mod cache;
 pub mod http;
@@ -42,7 +42,7 @@ pub enum RegistryUpload {
     Success,
 }
 
-pub type CreateScratchFileCallback = Box<dyn FnOnce(&Config) -> Result<FileLockGuard> + Send>;
+pub type CreateScratchFileCallback = Box<dyn FnOnce(&Config) -> Result<LockedFile> + Send>;
 
 #[async_trait]
 pub trait RegistryClient: Send + Sync {
@@ -62,7 +62,7 @@ pub trait RegistryClient: Send + Sync {
 
     /// Download the package `.tar.zst` file.
     ///
-    /// Returns a [`FileLockGuard`] to the downloaded `.tar.zst` file.
+    /// Returns a [`LockedFile`] to the downloaded `.tar.zst` file.
     ///
     /// ## Callbacks
     ///
@@ -80,7 +80,7 @@ pub trait RegistryClient: Send + Sync {
         &self,
         package: PackageId,
         create_scratch_file: CreateScratchFileCallback,
-    ) -> Result<RegistryDownload<FileLockGuard>>;
+    ) -> Result<RegistryDownload<LockedFile>>;
 
     /// State whether packages can be published to this registry.
     ///
@@ -97,5 +97,5 @@ pub trait RegistryClient: Send + Sync {
     /// The `package` argument must correspond to just packaged `tarball` file.
     /// The client is free to use information within `package` to send to the registry.
     /// Package source is not required to match the registry the package is published to.
-    async fn publish(&self, package: Package, tarball: FileLockGuard) -> Result<RegistryUpload>;
+    async fn publish(&self, package: Package, tarball: LockedFile) -> Result<RegistryUpload>;
 }

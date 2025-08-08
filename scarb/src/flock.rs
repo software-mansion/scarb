@@ -1,4 +1,4 @@
-use std::fs::{File, OpenOptions};
+use std::fs::{File, OpenOptions, TryLockError};
 use std::ops::{Deref, DerefMut};
 use std::path::Path;
 use std::sync::{Arc, Weak};
@@ -6,8 +6,6 @@ use std::{fmt, io};
 
 use anyhow::{Context, Result, ensure};
 use camino::{Utf8Path, Utf8PathBuf};
-use fs4::tokio::AsyncFileExt;
-use fs4::{FileExt, lock_contended_error};
 use scarb_ui::components::Status;
 use std::mem;
 use tokio::sync::Mutex;
@@ -25,14 +23,19 @@ pub enum FileLockKind {
     Exclusive,
 }
 
+/// Represents a file that has been locked for exclusive or shared access.
+///
+/// The struct holds both the locked file handle and the path to the file.
+/// The file becomes unlocked when this object is dropped.
 #[derive(Debug)]
-pub struct FileLockGuard {
-    file: Option<File>,
+pub struct LockedFile {
+    // NOTE: File will become unlocked when this structure is dropped.
+    file: File,
     path: Utf8PathBuf,
     lock_kind: FileLockKind,
 }
 
-impl FileLockGuard {
+impl LockedFile {
     pub fn path(&self) -> &Utf8Path {
         self.path.as_path()
     }
@@ -57,45 +60,39 @@ impl FileLockGuard {
         Ok(self)
     }
 
-    pub fn into_async(mut self) -> AsyncFileLockGuard {
-        AsyncFileLockGuard {
-            file: self.file.take().map(tokio::fs::File::from_std),
-            path: std::mem::take(&mut self.path),
+    pub fn into_async(mut self) -> AsyncLockedFile {
+        AsyncLockedFile {
+            file: tokio::fs::File::from_std(self.file),
+            path: mem::take(&mut self.path),
             lock_kind: self.lock_kind,
         }
     }
 }
 
-impl Deref for FileLockGuard {
+impl Deref for LockedFile {
     type Target = File;
 
     fn deref(&self) -> &Self::Target {
-        self.file.as_ref().unwrap()
+        &self.file
     }
 }
 
-impl DerefMut for FileLockGuard {
+impl DerefMut for LockedFile {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.file.as_mut().unwrap()
+        &mut self.file
     }
 }
 
-impl Drop for FileLockGuard {
-    fn drop(&mut self) {
-        if let Some(file) = self.file.take() {
-            let _ = FileExt::unlock(&file);
-        }
-    }
-}
-
+/// An async version of [`LockedFile`].
 #[derive(Debug)]
-pub struct AsyncFileLockGuard {
-    file: Option<tokio::fs::File>,
+pub struct AsyncLockedFile {
+    // NOTE: File will become unlocked when this structure is dropped.
+    file: tokio::fs::File,
     path: Utf8PathBuf,
     lock_kind: FileLockKind,
 }
 
-impl AsyncFileLockGuard {
+impl AsyncLockedFile {
     pub fn path(&self) -> &Utf8Path {
         self.path.as_path()
     }
@@ -104,37 +101,26 @@ impl AsyncFileLockGuard {
         self.lock_kind
     }
 
-    pub async fn into_sync(mut self) -> FileLockGuard {
-        FileLockGuard {
-            file: match self.file.take() {
-                None => None,
-                Some(file) => Some(file.into_std().await),
-            },
-            path: std::mem::take(&mut self.path),
+    pub async fn into_sync(mut self) -> LockedFile {
+        LockedFile {
+            file: self.file.into_std().await,
+            path: mem::take(&mut self.path),
             lock_kind: self.lock_kind,
         }
     }
 }
 
-impl Deref for AsyncFileLockGuard {
+impl Deref for AsyncLockedFile {
     type Target = tokio::fs::File;
 
     fn deref(&self) -> &Self::Target {
-        self.file.as_ref().unwrap()
+        &self.file
     }
 }
 
-impl DerefMut for AsyncFileLockGuard {
+impl DerefMut for AsyncLockedFile {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.file.as_mut().unwrap()
-    }
-}
-
-impl Drop for AsyncFileLockGuard {
-    fn drop(&mut self) {
-        if let Some(file) = self.file.take() {
-            let _ = file.unlock();
-        }
+        &mut self.file
     }
 }
 
@@ -144,16 +130,16 @@ pub struct AdvisoryLock<'f> {
     description: String,
     file_lock: Mutex<
         // This Arc is shared between all guards within the process.
-        // Here it is Weak, because AdvisoryLock itself does not keep the lock
+        // Here it is Weak because AdvisoryLock itself doesn't keep the lock
         // (only guards do).
-        Weak<FileLockGuard>,
+        Weak<LockedFile>,
     >,
     filesystem: &'f Filesystem,
     config: &'f Config,
 }
 
 pub struct AdvisoryLockGuard {
-    _inner: Arc<FileLockGuard>,
+    _inner: Arc<LockedFile>,
 }
 
 impl AdvisoryLock<'_> {
@@ -161,7 +147,7 @@ impl AdvisoryLock<'_> {
     ///
     /// This lock is global per-process and can be acquired recursively.
     /// An RAII structure is returned to release the lock, and if this process abnormally
-    /// terminates the lock is also released.
+    /// terminates, the lock is also released.
     pub async fn acquire_async(&self) -> Result<AdvisoryLockGuard> {
         let mut slot = self.file_lock.lock().await;
 
@@ -172,7 +158,7 @@ impl AdvisoryLock<'_> {
                 let path = self.path.clone();
                 let description = self.description.clone();
 
-                // HACK: We know that we will not use &Config outside scope of this function,
+                // HACK: We know that we will not use &Config outside the scope of this function,
                 //   but `tokio::spawn_blocking` lifetime bounds force us to think so.
                 let config: &'static Config = unsafe { mem::transmute(self.config) };
                 let lock = tokio::task::spawn_blocking(move || {
@@ -192,7 +178,7 @@ impl AdvisoryLock<'_> {
 
 /// A [`Filesystem`] is intended to be a globally shared, hence locked, resource in Scarb.
 ///
-/// The [`Utf8Path`] of a file system cannot be learned unless it's done in a locked fashion,
+/// The [`Utf8Path`] of a file system can't be learned unless it is done in a locked fashion,
 /// and otherwise functions on this structure are prepared to handle concurrent invocations across
 /// multiple instances of Scarb and its extensions.
 ///
@@ -212,7 +198,7 @@ impl Filesystem {
 
     /// Creates a new [`Filesystem`] to be rooted at the given path.
     ///
-    /// This variant uses [`create_output_dir::create_output_dir`] function to create root
+    /// This variant uses [`create_output_dir::create_output_dir`] function to create the root
     /// directory.
     pub fn new_output_dir(root: Utf8PathBuf) -> Self {
         Self {
@@ -236,12 +222,12 @@ impl Filesystem {
         }
     }
 
-    /// Get path to this [`Filesystem`] root without ensuring the path exists.
+    /// Get a path to this [`Filesystem`] root without ensuring the path exists.
     pub fn path_unchecked(&self) -> &Utf8Path {
         self.root.as_unchecked()
     }
 
-    /// Get path to this [`Filesystem`] root, ensuring the path exists.
+    /// Get a path to this [`Filesystem`] root, ensuring the path exists.
     pub fn path_existent(&self) -> Result<&Utf8Path> {
         self.root.as_existent()
     }
@@ -254,9 +240,9 @@ impl Filesystem {
     /// Opens exclusive access to a [`File`], returning the locked version of it.
     ///
     /// This function will create a file at `path` if it doesn't already exist (including
-    /// intermediate directories) else if it does exist, it will be truncated. It will then acquire
+    /// intermediate directories), else if it does exist, it will be truncated. It will then acquire
     /// an exclusive lock on `path`. If the process must block waiting for the lock, the
-    /// `description` annotated with _blocking_ status message is printed to [`Config::ui`].
+    /// `description` annotated with a _blocking_ status message is printed to [`Config::ui`].
     ///
     /// The returned file can be accessed to look at the path and also has read/write access to
     /// the underlying file.
@@ -265,7 +251,7 @@ impl Filesystem {
         path: impl AsRef<Utf8Path>,
         description: &str,
         config: &Config,
-    ) -> Result<FileLockGuard> {
+    ) -> Result<LockedFile> {
         self.open(
             path.as_ref(),
             OpenOptions::new()
@@ -281,10 +267,10 @@ impl Filesystem {
 
     /// Opens shared access to a [`File`], returning the locked version of it.
     ///
-    /// This function will fail if `path` doesn't already exist, but if it does then it will
+    /// This function will fail if `path` doesn't already exist, but if it does, then it will
     /// acquire a shared lock on `path`.
-    /// If the process must block waiting for the lock, the `description` annotated with _blocking_
-    /// status message is printed to [`Config::ui`].
+    /// If the process must block waiting for the lock, the `description` annotated with
+    /// a _blocking_ status message is printed to [`Config::ui`].
     ///
     /// The returned file can be accessed to look at the path and also has read
     /// access to the underlying file.
@@ -294,7 +280,7 @@ impl Filesystem {
         path: impl AsRef<Utf8Path>,
         description: &str,
         config: &Config,
-    ) -> Result<FileLockGuard> {
+    ) -> Result<LockedFile> {
         self.open(
             path.as_ref(),
             OpenOptions::new().read(true),
@@ -306,10 +292,10 @@ impl Filesystem {
 
     /// Opens exclusive access to a [`File`], returning the locked version of it.
     ///
-    /// This function will fail if `path` doesn't already exist, but if it does then it will
+    /// This function will fail if `path` doesn't already exist, but if it does, then it will
     /// acquire an exclusive lock on `path`.
-    /// If the process must block waiting for the lock, the `description` annotated with _blocking_
-    /// status message is printed to [`Config::ui`].
+    /// If the process must block waiting for the lock, the `description` annotated with
+    /// a _blocking_ status message is printed to [`Config::ui`].
     ///
     /// The returned file can be accessed to look at the path and also has read
     /// access to the underlying file.
@@ -319,7 +305,7 @@ impl Filesystem {
         path: impl AsRef<Utf8Path>,
         description: &str,
         config: &Config,
-    ) -> Result<FileLockGuard> {
+    ) -> Result<LockedFile> {
         self.open(
             path.as_ref(),
             OpenOptions::new().read(true),
@@ -336,7 +322,7 @@ impl Filesystem {
         lock_kind: FileLockKind,
         description: &str,
         config: &Config,
-    ) -> Result<FileLockGuard> {
+    ) -> Result<LockedFile> {
         let path = self.root.as_existent()?.join(path);
 
         let file = opts
@@ -350,8 +336,8 @@ impl Filesystem {
                     &path,
                     description,
                     config,
-                    &FileExt::try_lock_exclusive,
-                    &FileExt::lock_exclusive,
+                    &File::try_lock,
+                    &File::lock,
                 )?;
             }
             FileLockKind::Shared => {
@@ -360,14 +346,14 @@ impl Filesystem {
                     &path,
                     description,
                     config,
-                    &FileExt::try_lock_shared,
-                    &FileExt::lock_shared,
+                    &File::try_lock_shared,
+                    &File::lock_shared,
                 )?;
             }
         }
 
-        Ok(FileLockGuard {
-            file: Some(file),
+        Ok(LockedFile {
+            file,
             path,
             lock_kind,
         })
@@ -392,8 +378,8 @@ impl Filesystem {
     /// Remove the directory underlying this filesystem and create it again.
     ///
     /// # Safety
-    /// This is very simple internal method meant to be used in very specific use-cases, so its
-    /// implementation does not handle all cases.
+    /// This is a very simple internal method meant to be used in very specific use-cases, so its
+    /// implementation doesn't handle all cases.
     /// 1. Panics if this is an output filesystem.
     /// 2. Child filesystems will stop working properly after recreation.
     pub(crate) unsafe fn recreate(&self) -> Result<()> {
@@ -414,7 +400,7 @@ impl Filesystem {
         self.path_unchecked().join(OK_FILE).exists()
     }
 
-    /// Marks this filesystem as being properly set up (whatever this means is up to user),
+    /// Marks this filesystem as being properly set up (whatever this means is up to the user),
     /// by creating a `.scarb-ok` file.
     pub fn mark_ok(&self) -> Result<()> {
         let _ = fsx::create(self.path_existent()?.join(OK_FILE))?;
@@ -436,17 +422,17 @@ impl fmt::Debug for Filesystem {
     }
 }
 
-/// The following sequence of if statements & advisory locks implements a file system-based
-/// mutex, that synchronizes extraction logic. The first condition checks if extraction has
+/// The following sequence of if statements and advisory locks implements a file-system-based
+/// mutex that synchronises extraction logic. The first condition checks if extraction has
 /// happened in the past. If not, then we acquire the advisory lock (which means waiting for
-/// our time slice to do the job). Successful lock acquisition does not mean though that we
+/// our time slice to do the job). Successful lock acquisition doesn't mean, though, that we
 /// still have to perform the extraction! While we waited for our time slice, another process
 /// could just do the extraction! The second condition prevents repeating the work.
 ///
-/// This is actually very important for correctness. The another process that performed
-/// the extraction, will highly probably soon try to read the extracted files. If we recreate
-/// the filesystem now, we will cause that process to crash. That's what happened on Windows
-/// in examples tests, when the second condition was missing.
+/// This is actually very important for correctness. Another process that performed the extraction
+/// will highly probably soon try to read the extracted files. If we recreate the filesystem now,
+/// we will cause that process to crash. That is what happened on Windows in example tests
+/// when the second condition was missing.
 macro_rules! protected_run_if_not_ok {
     ($fs:expr, $lock:expr, $body:block) => {{
         let fs: &$crate::flock::Filesystem = $fs;
@@ -468,19 +454,19 @@ fn acquire(
     path: &Utf8Path,
     description: &str,
     config: &Config,
-    lock_try: &dyn Fn(&File) -> io::Result<()>,
+    lock_try: &dyn Fn(&File) -> Result<(), TryLockError>,
     lock_block: &dyn Fn(&File) -> io::Result<()>,
 ) -> Result<()> {
     match lock_try(file) {
         Ok(()) => return Ok(()),
-        Err(err) if err.kind() == io::ErrorKind::Unsupported => {
+        Err(TryLockError::WouldBlock) => {
+            // Pass-through
+        }
+        Err(TryLockError::Error(err)) if err.kind() == io::ErrorKind::Unsupported => {
             // Ignore locking on filesystems that look like they don't implement file locking.
             return Ok(());
         }
-        Err(err) if is_lock_contended_error(&err) => {
-            // Pass-through
-        }
-        Err(err) => {
+        Err(TryLockError::Error(err)) => {
             Err(err).with_context(|| format!("failed to lock file: {path}"))?;
         }
     }
@@ -494,9 +480,4 @@ fn acquire(
     lock_block(file).with_context(|| format!("failed to lock file: {path}"))?;
 
     Ok(())
-}
-
-fn is_lock_contended_error(err: &io::Error) -> bool {
-    let t = lock_contended_error();
-    err.raw_os_error() == t.raw_os_error() || err.kind() == t.kind()
 }
