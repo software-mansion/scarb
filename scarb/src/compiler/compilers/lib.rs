@@ -45,12 +45,12 @@ impl Compiler for LibCompiler {
         TargetKind::LIB.clone()
     }
 
-    fn compile<'db>(
+    fn compile(
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateInput],
         offloader: &Offloader<'_>,
-        db: &'db mut RootDatabase,
+        db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
@@ -126,7 +126,7 @@ impl Compiler for LibCompiler {
 
         if props.casm {
             let program = &program_artifact.program;
-            let program_info = ProgramRegistryInfo::new(&program)?;
+            let program_info = ProgramRegistryInfo::new(program)?;
 
             let span = trace_span!("casm_calc_metadata");
             let metadata = {

@@ -28,12 +28,12 @@ impl Compiler for TestCompiler {
         TargetKind::TEST.clone()
     }
 
-    fn compile<'db>(
+    fn compile(
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateInput],
         offloader: &Offloader<'_>,
-        db: &'db mut RootDatabase,
+        db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let target_dir = unit.target_dir(ws);

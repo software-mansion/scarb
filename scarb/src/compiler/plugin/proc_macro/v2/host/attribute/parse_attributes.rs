@@ -36,7 +36,7 @@ impl ProcMacroHostPlugin {
             if last {
                 let structured_attr = attr.clone().structurize(db);
                 let found = self.find_expansion(&ExpansionQuery::with_cairo_name(
-                    structured_attr.id.clone(),
+                    structured_attr.id,
                     ExpansionKind::Attr,
                 ));
                 if let Some(found) = found {

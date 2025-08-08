@@ -108,7 +108,7 @@ pub struct CompilationUnitComponent {
 
 impl CompilationUnitComponent {
     /// Returns a [`CrateInput`] of a crate associated with the [`CompilationUnitComponent`].
-    pub fn crate_input<'db>(&self, db: &'db dyn FilesGroup) -> CrateInput {
+    pub fn crate_input(&self, db: &dyn FilesGroup) -> CrateInput {
         CrateLongId::Real {
             name: self.cairo_package_name(),
             discriminator: self.id.to_discriminator(),
@@ -134,7 +134,7 @@ impl From<&CompilationUnitComponent>
         // Always remember to verify this invariant when changing the internals.
         Self {
             name: value.cairo_package_name().to_string(),
-            discriminator: value.id.to_discriminator().map(Into::into),
+            discriminator: value.id.to_discriminator(),
         }
     }
 }

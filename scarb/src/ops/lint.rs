@@ -107,7 +107,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
         let package_compilation_units = if opts.test {
             let mut result = vec![];
             let integration_test_compilation_unit =
-                find_integration_test_package_id(&package).map(|id| {
+                find_integration_test_package_id(package).map(|id| {
                     compilation_units
                         .iter()
                         .find(|compilation_unit| compilation_unit.main_package_id() == id)
@@ -206,7 +206,7 @@ pub fn lint(opts: LintOptions, ws: &Workspace<'_>) -> Result<()> {
     for (package, compilation_unit, db) in dbs.iter() {
         let linter_params = LinterDiagnosticParams {
             only_generated_files: false,
-            tool_metadata: cairo_lint_tool_metadata(&package)?,
+            tool_metadata: cairo_lint_tool_metadata(package)?,
         };
         let package_name = package.id.name.clone();
         let formatter_config = package.fmt_config()?;

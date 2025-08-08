@@ -36,12 +36,12 @@ impl Compiler for ExecutableCompiler {
         TargetKind::EXECUTABLE.clone()
     }
 
-    fn compile<'db>(
+    fn compile(
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateInput],
         _offloader: &Offloader<'_>,
-        db: &'db mut RootDatabase,
+        db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         ensure!(

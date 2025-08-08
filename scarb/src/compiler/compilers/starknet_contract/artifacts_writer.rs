@@ -163,7 +163,7 @@ impl ArtifactsWriter {
 
             let mut artifact = ContractArtifacts::new(
                 package_name,
-                &contract_name,
+                contract_name,
                 contract_selector.full_path().as_str(),
                 &declaration.module_id().full_path(db),
             );

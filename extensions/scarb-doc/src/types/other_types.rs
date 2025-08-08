@@ -213,7 +213,7 @@ impl<'db> Struct<'db> {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
         self.members
             .iter()
             .map(|item| (item.item_data.id, &item.item_data))
@@ -278,7 +278,7 @@ impl<'db> Enum<'db> {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
         self.variants
             .iter()
             .map(|item| (item.item_data.id, &item.item_data))
@@ -409,7 +409,7 @@ impl<'db> Trait<'db> {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
         let mut result: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
         self.trait_constants.iter().for_each(|item| {
             result.insert(item.item_data.id, &item.item_data);
@@ -553,7 +553,7 @@ impl<'db> Impl<'db> {
         })
     }
 
-    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId, &ItemData> {
+    pub fn get_all_item_ids(&self) -> HashMap<DocumentableItemId<'_>, &ItemData<'_>> {
         let mut result: HashMap<DocumentableItemId, &ItemData> = HashMap::default();
         self.impl_constants.iter().for_each(|item| {
             result.insert(item.item_data.id, &item.item_data);

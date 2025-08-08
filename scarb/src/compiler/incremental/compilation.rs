@@ -223,8 +223,8 @@ fn save_component_cache(
             "cache file",
             ws.config(),
         )?;
-        let crate_id = component.crate_id(&*db);
-        let Some(cache_blob) = generate_crate_cache(&*db, crate_id).ok() else {
+        let crate_id = component.crate_id(db);
+        let Some(cache_blob) = generate_crate_cache(db, crate_id).ok() else {
             return Ok(());
         };
         cache_file

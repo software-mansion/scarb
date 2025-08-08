@@ -1,5 +1,4 @@
 use anyhow::{Context, Result, ensure};
-use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::{ModuleId, NamedLanguageElementId};
@@ -11,7 +10,6 @@ use cairo_lang_semantic::resolve::ResolvedGenericItem::Module;
 use cairo_lang_starknet::compile::compile_prepared_db;
 use cairo_lang_starknet::contract::{ContractDeclaration, find_contracts, module_contract};
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
-use cairo_lang_starknet_classes::contract_class::ContractClass;
 use cairo_lang_syntax::node::TypedSyntaxNode;
 use cairo_lang_syntax::node::ast::OptionAliasClause;
 use itertools::Itertools;
@@ -74,12 +72,12 @@ impl Compiler for StarknetContractCompiler {
         TargetKind::STARKNET_CONTRACT.clone()
     }
 
-    fn compile<'db>(
+    fn compile(
         &self,
         unit: &CairoCompilationUnit,
         cached_crates: &[CrateInput],
         offloader: &Offloader<'_>,
-        db: &'db mut RootDatabase,
+        db: &mut RootDatabase,
         ws: &Workspace<'_>,
     ) -> Result<()> {
         let props: Props = unit.main_component().targets.target_props()?;
