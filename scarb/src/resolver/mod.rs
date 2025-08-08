@@ -16,7 +16,7 @@ use pubgrub::{Incompatibility, State};
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::thread;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::{Notify, mpsc, oneshot};
 
 mod in_memory_index;
 mod provider;
@@ -76,11 +76,16 @@ pub async fn resolve(
     let (request_sink, request_stream): (mpsc::Sender<Request>, mpsc::Receiver<Request>) =
         mpsc::channel(300);
 
-    let requests_fut = state
-        .clone()
-        .fetch(registry, request_stream)
-        .map_err(|err| format_err!(err))
-        .fuse();
+    let notify = Arc::new(Notify::new());
+
+    let requests_fut = {
+        let notify = notify.clone();
+        state
+            .clone()
+            .fetch(registry, request_stream, notify)
+            .map_err(|err| format_err!(err))
+            .fuse()
+    };
 
     for summary in summaries {
         for dep in summary.full_dependencies() {
@@ -120,7 +125,26 @@ pub async fn resolve(
             .and_then(|result| result)
     };
 
-    let (_, resolve) = tokio::try_join!(requests_fut, resolve_fut)?;
+    // The `select!` will start polling both branches and return with the first future that completes.
+    // In practice, `requests_fut` should never complete first, as the resolver thread must drop
+    // the `request_sink` for it to complete.
+    // We ensure it does not, indeed, by synchronizing the `requests_fut` completion with a notification.
+    // This way we can return as soon as the resolution completes, without waiting for any dangling
+    // registry requests to complete.
+    let resolve = tokio::select! {
+        resolve = resolve_fut => {
+            // Notify the requests future that the resolution is done and it can complete.
+            notify.notify_one();
+            resolve
+        },
+        requests_result = requests_fut => {
+            // If the requests future returns with error, propagate it and drop the resolution.
+            requests_result?;
+            // If the requests future completes without an error, something went wrong.
+            Err(DependencyProviderError::ChannelClosed.into())
+        }
+    }?;
+
     resolve.check_checksums(&lockfile)?;
     Ok(resolve)
 }
