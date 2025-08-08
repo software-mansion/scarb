@@ -204,6 +204,7 @@ fn build_record(summary: Summary, checksum: Checksum) -> IndexRecord {
         checksum,
         no_core: summary.no_core,
         yanked: false,
+        audited: false,
     }
 }
 
