@@ -9,7 +9,7 @@ use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_diagnostics::{FormattedDiagnosticEntry, Severity};
 use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_filesystem::ids::{CrateId, CrateInput};
 use itertools::Itertools;
 use serde::Serialize;
 use std::collections::HashSet;
@@ -45,7 +45,7 @@ pub fn build_compiler_config<'c, 'db>(
     db: &'db RootDatabase,
     unit: &CairoCompilationUnit,
     main_crate_ids: &[CrateId<'db>],
-    cached_crates: &[CrateId<'db>],
+    cached_crates: &[CrateInput],
     ws: &Workspace<'c>,
 ) -> CompilerConfig<'c>
 where
@@ -60,7 +60,7 @@ where
     let crates_to_check: HashSet<CrateId<'db>> = db
         .crates()
         .into_iter()
-        .filter(|crate_id| !cached_crates.contains(crate_id))
+        .filter(|crate_id| !cached_crates.contains(&crate_id.long(db).clone().into_crate_input(db)))
         .chain(main_crate_ids.iter().cloned())
         .collect();
     let diagnostics_reporter = DiagnosticsReporter::callback({

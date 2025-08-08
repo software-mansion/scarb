@@ -2,7 +2,7 @@ use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::{CrateId, CrateLongId};
+use cairo_lang_filesystem::ids::{CrateId, CrateInput, CrateLongId};
 use cairo_lang_sierra::program::VersionedProgram;
 use cairo_lang_starknet::contract::ContractDeclaration;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
@@ -31,7 +31,7 @@ impl Compiler for TestCompiler {
     fn compile<'db>(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateId<'db>],
+        cached_crates: &[CrateInput],
         offloader: &Offloader<'_>,
         db: &'db mut RootDatabase,
         ws: &Workspace<'_>,
@@ -147,7 +147,7 @@ impl Compiler for TestCompiler {
 
 struct ContractsCompilationArgs<'db> {
     main_crate_ids: Vec<CrateId<'db>>,
-    cached_crates: Vec<CrateId<'db>>,
+    cached_crates: Vec<CrateInput>,
     contracts: Vec<ContractDeclaration<'db>>,
     build_external_contracts: Option<Vec<ContractSelector>>,
 }

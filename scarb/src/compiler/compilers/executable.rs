@@ -13,7 +13,7 @@ use cairo_lang_executable::compile::{
 };
 use cairo_lang_executable::executable::Executable;
 use cairo_lang_executable::plugin::{EXECUTABLE_PREFIX, EXECUTABLE_RAW_ATTR};
-use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_filesystem::ids::{CrateId, CrateInput};
 use cairo_lang_lowering::ids::ConcreteFunctionWithBodyId;
 use cairo_lang_sierra_generator::executables::find_executable_function_ids;
 use camino::Utf8Path;
@@ -39,7 +39,7 @@ impl Compiler for ExecutableCompiler {
     fn compile<'db>(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateId<'db>],
+        cached_crates: &[CrateInput],
         _offloader: &Offloader<'_>,
         db: &'db mut RootDatabase,
         ws: &Workspace<'_>,

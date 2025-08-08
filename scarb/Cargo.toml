@@ -31,6 +31,7 @@ cairo-lang-parser.workspace = true
 cairo-lang-semantic.workspace = true
 cairo-lang-sierra-generator.workspace = true
 cairo-lang-sierra-to-casm.workspace = true
+cairo-lang-sierra-type-size.workspace = true
 cairo-lang-sierra.workspace = true
 cairo-lang-starknet-classes.workspace = true
 cairo-lang-starknet.workspace = true

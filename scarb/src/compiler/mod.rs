@@ -1,6 +1,6 @@
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_filesystem::ids::CrateId;
+use cairo_lang_filesystem::ids::CrateInput;
 pub use compilation_unit::*;
 pub use profile::*;
 pub use repository::*;
@@ -23,7 +23,7 @@ pub trait Compiler: Sync {
     fn compile(
         &self,
         unit: &CairoCompilationUnit,
-        cached_crates: &[CrateId<'_>],
+        cached_crates: &[CrateInput],
         offloader: &Offloader<'_>,
         db: &mut RootDatabase,
         ws: &Workspace<'_>,

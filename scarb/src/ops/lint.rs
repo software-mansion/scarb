@@ -14,14 +14,18 @@ use crate::{
 
 use anyhow::anyhow;
 use anyhow::{Context, Result};
+use cairo_lang_compiler::db::RootDatabase;
+use cairo_lang_defs::ids::{InlineMacroExprPluginLongId, MacroPluginLongId};
 use cairo_lang_defs::{db::DefsGroup, diagnostic_utils::StableLocation, ids::ModuleId};
 use cairo_lang_diagnostics::{DiagnosticEntry, Severity};
+use cairo_lang_filesystem::ids::CrateInput;
 use cairo_lang_filesystem::{
     db::{FilesGroup, FilesGroupEx},
     ids::CrateLongId,
     override_file_content,
 };
 use cairo_lang_formatter::FormatterConfig;
+use cairo_lang_semantic::ids::AnalyzerPluginLongId;
 use cairo_lang_semantic::{
     SemanticDiagnostic,
     db::{PluginSuiteInput, SemanticGroup},
@@ -407,14 +411,50 @@ fn apply_plugins(
     plugins_for_components: HashMap<CompilationUnitComponentId, PluginSuite>,
 ) {
     for (component_id, suite) in plugins_for_components {
-        let crate_id = db.intern_crate(CrateLongId::Real {
+        let crate_id = CrateLongId::Real {
             name: component_id.cairo_package_name(),
             discriminator: component_id.to_discriminator(),
-        });
-
-        let interned_suite = db.intern_plugin_suite(suite);
-        db.set_override_crate_plugins_from_suite(crate_id, interned_suite);
+        }
+        .into_crate_input(db);
+        set_override_crate_plugins_from_suite(db, crate_id, suite);
     }
+}
+
+pub fn set_override_crate_plugins_from_suite(
+    db: &mut LinterAnalysisDatabase,
+    crate_input: CrateInput,
+    plugins: PluginSuite,
+) {
+    let mut overrides = db.macro_plugin_overrides_input().as_ref().clone();
+    overrides.insert(
+        crate_input.clone(),
+        plugins.plugins.into_iter().map(MacroPluginLongId).collect(),
+    );
+    db.set_macro_plugin_overrides_input(overrides.into());
+
+    let mut overrides = db.analyzer_plugin_overrides_input().as_ref().clone();
+    overrides.insert(
+        crate_input.clone(),
+        plugins
+            .analyzer_plugins
+            .into_iter()
+            .map(AnalyzerPluginLongId)
+            .collect(),
+    );
+    db.set_analyzer_plugin_overrides_input(overrides.into());
+
+    let mut overrides = db.inline_macro_plugin_overrides_input().as_ref().clone();
+    overrides.insert(
+        crate_input,
+        Arc::new(
+            plugins
+                .inline_macro_plugins
+                .into_iter()
+                .map(|(key, value)| (key, InlineMacroExprPluginLongId(value)))
+                .collect(),
+        ),
+    );
+    db.set_inline_macro_plugin_overrides_input(overrides.into());
 }
 
 /// Generates a wrapper lib file for appropriate compilation units.
